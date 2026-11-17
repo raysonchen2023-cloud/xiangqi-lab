@@ -8,14 +8,14 @@
      ⑤ 讀螢幕（11b-a11y.js）的每步念法、格子念法換成英文：axmMoveLine／axmCellLabel／axmPcName 在英文時換成這裡的版本（指定，不是重新宣告，不撞名），
         axSay、axsAlert 包一層先翻再念。英文記譜用 WXF（C2.5、H8+7；同一路兩子用 +C.5／-R+1），念法寫成完整英文「Cannon 2 traverses to 5」。
    不翻：棋子與印章上的字、3D 園子畫布裡的字、未收錄的劇情與說明文件。第一、二章現有主線與七星星夜茶話會已有英文，範圍見 art/docs/i18n.md。
-   不要放進字典的字：隱私、官階、進階（07s2／07s4／07m5 用畫面上的字找段落）（下船、上星槎 11/16 起 07w9 中英都認，已拿掉）、估計棋力（07y9）、正在對戰（07x3）、取代這支手機（07s4）——I18N_GUARD，測試會檢查。
+   不要放進字典的字：隱私、進階（07s2／07s4／07m5 用畫面上的字找段落；官階 11/17 起改用 data-sm-title 標記找，已拿掉）（下船、上星槎 11/16 起 07w9 中英都認，已拿掉）、估計棋力（07y9）、正在對戰（07x3）、取代這支手機（07s4）——I18N_GUARD，測試會檢查。
    ⑥ 第 15 輪 X3（評審 P41.1、P41.2、P42.1、P71.2）：字典擴大到設定說明小字、線上大廳與安全、連線狀態小卡、一盞茶、每日同題、棋譜庫、千秋盃、星槎入口；
       核心流程「鍵值化」：I18N_KEY＋i18nT("鍵","中文")／data-i18n="鍵"（08b 對局頁與結果、05-settings 標題、09b 線上結果、底欄），原文改字也不會失效；
       I18N_AGUARD 是別的模組拿來找按鈕的 aria-label／title，英文也不換；英文模式注入 html[lang=en] 的防爆版樣式（I18N_CSS）。
    前綴 i18n／I18N_；測試 xiangqi-lab/tools/test-i18n.js；include 在 m.html 最後（07dq-daily.js 後面）。 */
 /* #I18N-PURE-BEGIN：到 #I18N-PURE-END 是不碰畫面的資料與純函式，test-i18n.js 用 vm 直接載入 */
 const I18N_CJK=/[㐀-鿿豈-﫿]/;
-const I18N_GUARD=["隱私","官階","進階","估計棋力","正在對戰","取代這支手機"];
+const I18N_GUARD=["隱私","進階","估計棋力","正在對戰","取代這支手機"];   /* 11/17 開發者選單（第 10 輪）：官階拿掉——05-settings 的官階標題標了 data-sm-title，07s2 照標記找，英文翻成 Rank */
 /* 象棋術語用通行英文；WXF 字母 K A E H R C P */
 const I18N_PL={"帥":"K","將":"K","仕":"A","士":"A","相":"E","象":"E","傌":"H","馬":"H","俥":"R","車":"R","炮":"C","砲":"C","包":"C","兵":"P","卒":"P"};
 const I18N_PN={K:"General",A:"Advisor",E:"Elephant",H:"Horse",R:"Chariot",C:"Cannon",P:"Soldier"};
@@ -60,7 +60,7 @@ const I18N_EN={
   "互動":"interact",
   "問":"Ask",
   "問題":"a question",
-  "目前的官階":"Current official rank",
+  "目前的官階":"'s current rank",
   "到「挑戰電腦 → 🥇 晉級賽」贏棋升段，":"Win ranked computer games to advance your chess rank. ",
   "就跟著升官（九品官 → 一品官），官服、頂戴、腰帶都會換":" rises in rank along with you (Grade 9 → Grade 1), and the robe, hat and belt change too",
   "背景音樂與鼓聲":"Music and drums",
@@ -411,7 +411,7 @@ const I18N_EN={
   "雷借花":"Lei Jiehua","駱躍梅":"Luo Yuemei","電腦":"Computer","對方":"Opponent","你":"You","紅方":"Red","黑方":"Black","職業頂尖":"top professional",
   "練習":"Practice","朝代擂台":"Dynasty arena","走去驛站":"Walk to the inn","這盤已經結束":"This game is over","還沒輪到你":"It's not your turn yet","聲控走棋":"Voice moves",
   "驛站的棋友":"Inn player","石桌往事":"Stone Table Tales","園子裡的路人棋友":"Garden passer-by","黑洞星盤":"Black-hole star board","不計分":"unrated","幻譜星門":"Phantom star gate",
-  "第十四顆":"The fourteenth","鏡像":"Mirror","星樞":"Star Pivot","🏮 官階":"🏮 Title",
+  "第十四顆":"The fourteenth","鏡像":"Mirror","星樞":"Star Pivot","🏮 官階":"🏮 Rank","官階":"Rank","🏛 官階":"🏛 Rank",
   /* 段位與難度說明（local.js 的 RANKS、LVDESC） */
   "新手":"Novice","全力":"Full strength","常常亂走":"often plays randomly","會漏子":"sometimes hangs pieces","偶有失誤":"makes occasional mistakes","小失誤":"makes small mistakes",
   "很少失誤":"rarely makes mistakes","幾乎不失誤":"almost never makes mistakes","不放水":"no mercy","人類幾乎贏不了":"nearly unbeatable for humans","段位與開新局":"Rank and new game","換難度":"Change level",

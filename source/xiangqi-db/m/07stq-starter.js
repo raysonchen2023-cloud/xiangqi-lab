@@ -73,6 +73,8 @@ function stqEnvNow(){const E={};try{E.J=!!journey()}catch(e){}try{E.slots=Object
   try{E.bh=!!store.get("bhXuDone",null)}catch(e){}try{E.restored=!!sessionStorage.getItem("xqRestored")}catch(e){}return E}
 function stqCan(){try{let qa=false;try{qa=localStorage.getItem("xq_stqQa")==="1"}catch(e){}return(!navigator.webdriver||qa)&&!!window.XQCore&&typeof Board==="function"}catch(e){return false}}
 function stqPeekOk(){try{return!!(typeof DEVUNLOCK==="function"&&DEVUNLOCK())}catch(e){return false}}   /* 11/16 開發者視角跟玩家一樣：本機不再自動生效，要開發者測試台「🔓 全部解鎖試玩」開著 */
+/* 11/17 iMac 模擬器 A：還是全新玩家（沒有旅程、沒有新手練習紀錄、看不出玩過）＝開 App 一定要走開頭畫面→新手練習；05b saveBoot 用它決定重新載入後要不要照樣出開頭畫面 */
+function stqFresh(){if(!STQ_ON)return false;try{if(journey())return false;if(stqSt0())return false;return!stqOldOf(stqEnvNow())}catch(e){return false}}
 /* 練習中（還沒畢業）：07mnq 的 mnqTick 看到就不自動跳授印禮 */
 function stqHold(){if(!STQ_ON)return false;const S=stqSt0();return!!(S&&S.st==="run")}
 /* ---------- 開 App：05b titleScreen 第一行問這裡；回 true＝這裡接手了 ---------- */

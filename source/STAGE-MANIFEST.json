@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "7b85ccf3de051a0bbef2279c77f7d85fb008f5bf",
- "madeAt": "2026-11-16T21:56:38.200Z",
+ "commit": "c3aeec6f0bee96f7e8d27b7a5f938347f5d998ba",
+ "madeAt": "2026-11-17T00:00:46.515Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -334,6 +334,7 @@
   "xiangqi-lab/tools/test-pv-stepper.js": "local",
   "xiangqi-lab/tools/test-qixing.js": "local",
   "xiangqi-lab/tools/test-quiz-check-exit.js": "local",
+  "xiangqi-lab/tools/test-r11-1117.js": "local",
   "xiangqi-lab/tools/test-r17-qa.js": "local",
   "xiangqi-lab/tools/test-r4-1117.js": "local",
   "xiangqi-lab/tools/test-raid-label-1116.js": "local",
@@ -543,8 +544,8 @@
   "test-unlock-fx-1116.js": "指令排除：要讀只在開發者電腦與 CDN 的場景圖（data/guanxing、homemap 等），公開副本沒有這些圖",
   "test-i18n-ext-1116.js": "指令排除：要讀英文外掛字典 xiangqi-db/i18n-en.json（只放在 CDN 的 data/i18n-en.json，公開副本沒有）"
  },
- "version": "20261117-0542",
- "indexSha1": "a4ef12e2e4c5",
+ "version": "20261117-0757",
+ "indexSha1": "868b69bb86c4",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",

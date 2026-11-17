@@ -119,48 +119,75 @@ const battleKeepTxt=keep=>(keep||[]).map(p=>({A:"仕",B:"相",R:"俥",N:"傌",C:
 /* 11/17 測試員 D 第 7 輪 P2-6：地圖是 SVG，07i18n 不翻 SVG 裡的字（地名、戰役名、無障礙名稱一直是中文）→ 英文時在這裡先查字典；翻不出回 null（照原文）。中文照舊不動 */
 function btEn(s){try{if(typeof document!=="undefined"&&/^en/.test(document.documentElement.lang||"")&&typeof i18nText==="function")return i18nText(String(s))}catch(e){}return null}
 /* 地圖上的戰役名：中文去掉「之戰／之役／之圍」；英文照同一個規矩去掉 Battle of／Siege of／Campaign；（約）＝(approx.)；字寬照英文字算（約 0.56 個中文字寬） */
-function btMapName(c){const sx=/之戰$|之役$|之圍$/.test(c.name),en=btEn(c.name);if(!en)return{t:c.name.replace(/之戰$|之役$|之圍$/,""),ap:c.approx?"（約）":"",w:c.name.replace(/之戰$|之役$|之圍$/,"").length+(c.approx?3:0)};
-  const t=sx?en.replace(/^(Battle|Siege) of (the )?/,"").replace(/ Campaign$/,""):en,ap=c.approx?" (approx.)":"",L=btWrap(t+ap,18);return{t,ap,w:Math.max(...L.map(s=>s.length))*.56,L}}
+function btMapName(c){const sx=/之戰$|之役$|之圍$/.test(c.name),en=btEn(c.name);if(!en)return{t:c.name.replace(/之戰$|之役$|之圍$/,""),ap:c.approx?"（約）":"",w:(c.name.replace(/之戰$|之役$|之圍$/,"").length+(c.approx?3:0))*1.05};
+  const t=sx?en.replace(/^(Battle|Siege) of (the )?/,"").replace(/ Campaign$/,""):en,ap=c.approx?" (approx.)":"",L=btWrap(t+ap,18);return{t,ap,w:Math.max(...L.map(s=>s.length))*.64,L}}
 /* 11/17 測試員 B 第 8 輪：英文戰役名太長（「Nomad Dress and Mounted Archery · Zhao Conquers Zhongshan」）在直式地圖邊上被切掉 → 照字數折成幾行（每行最多約 n 個字、最多 4 行；一個字太長就自己一行） */
 function btWrap(s,n){const W=String(s).split(" "),L=[];let cur="";for(const x of W){if(cur&&(cur+" "+x).length>n){L.push(cur);cur=x}else cur=cur?cur+" "+x:x}if(cur)L.push(cur);
   while(L.length>4){const a=L.pop();L[L.length-1]+=" "+a}return L}
 function btMapAria(c,st){const en=btEn(c.name),se=en&&btEn(st);return en?en+" · "+(se||st):c.name+"・"+st}
-function battleMapHTML(k,cards,S,RJ,LJ,op){op=op||{};const P=cards.map(c=>Array.isArray(c.xy)?[+c.xy[0],+c.xy[1]]:null);if(!P.length||P.some(p=>!p))return"";   /* op（意見回饋 770 滿版地圖用）：A 取景寬高比、k 點和字放大倍數、px 地圖實際寬度（算觸控熱區）、bare 不要底下的圖例 */
-  const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]),pad=7,A=op.A||4/3;let w=Math.max(Math.max(...xs)-Math.min(...xs)+2*pad,30),h=Math.max(Math.max(...ys)-Math.min(...ys)+2*pad,22);if(w/h<A)w=h*A;else h=w/A;
-  let vx=(Math.max(...xs)+Math.min(...xs))/2-w/2,vy=(Math.max(...ys)+Math.min(...ys))/2-h/2;if(w<=100)vx=Math.max(0,Math.min(100-w,vx));if(h<=100)vy=Math.max(0,Math.min(100-h,vy));
-  const r=w*0.021*(op.k||1),f=n=>+n.toFixed(2),mob=(()=>{try{return matchMedia("(pointer:coarse)").matches||innerWidth<820}catch(e){return false}})();
+function battleMapHTML(k,cards,S,RJ,LJ,op){op=op||{};if(op.px&&op.px<60)op=Object.assign({},op,{px:0});
+  if(op.top>0||op.bot>0)op=Object.assign({},op,{top:op.top>0?Math.ceil(op.top/8)*8:0,bot:op.bot>0?Math.ceil(op.bot/8)*8:0});   /* 11/17 測試員 D 第 15 輪：同一卷每次進來排得不一樣——頁名條、卷分頁、清單鈕量到的高度差幾 px（字型載入前後）就會換位置 → 以 8px 為一格 */
+  const LAND=!!op.land;   /* 11/17 開發者選單（第 15 輪）：橫式（含寬螢幕）地圖上只標編號 1～5，不畫戰役名和引線；名字看右邊抽屜和「☰ 戰役清單」；讀螢幕名稱照舊是完整戰役名 */   /* 11/17 測試員 B 第 10 輪 N10-1：容器還沒撐開時量到的寬度（約 10px）不能拿來算觸控熱區和上緣，當作沒量到 */
+  const P=cards.map(c=>Array.isArray(c.xy)?[+c.xy[0],+c.xy[1]]:null);if(!P.length||P.some(p=>!p))return"";   /* op（意見回饋 770 滿版地圖用）：A 取景寬高比、k 點和字放大倍數、px 地圖實際寬度（算觸控熱區）、bare 不要底下的圖例 */
+  const xs=P.map(p=>p[0]),ys=P.map(p=>p[1]),A=op.A||4/3,ft=op.bare&&op.top>0&&op.px>0?Math.min(.45,op.top*A/op.px):0,fb=op.bare&&op.bot>0&&op.px>0?Math.min(.3,op.bot*A/op.px):0;   /* 11/17 測試員 B 第 12 輪 N12-2：fb＝底部被「☰ 戰役清單」鈕蓋住的比例 */const vbOf=pd=>{let w=Math.max(Math.max(...xs)-Math.min(...xs)+2*pd,30,(Math.max(...xs)-Math.min(...xs))/.85),h=Math.max(Math.max(...ys)-Math.min(...ys)+2*pd,22)/(1-ft-fb);if(w/h<A)w=h*A;else h=w/A;return[w,h]};
+  let[w,h]=vbOf(7);const pad=Math.max(7,w*.021*(op.px>0?Math.min(op.k||1,560/op.px):(op.k||1))*1.6);if(pad>7)[w,h]=vbOf(pad);   /* 11/17 測試員 D 第 12 輪：留白至少一個點的圓圈（1.6 r），邊上的點不會被切掉；太近推開的距離由下面把點收回框裡處理 */
+     /* 11/17 測試員 B 第 11 輪 N10-2：ft＝地圖上緣被頁名條、卷分頁蓋住的比例；取景框往上多留這一條，戰役點不會壓在「卷」分頁上（中英文都一樣） */
+  let vx=(Math.max(...xs)+Math.min(...xs))/2-w/2,vy=(Math.max(...ys)+Math.min(...ys))/2-h*(1+ft-fb)/2;if(w<=100)vx=Math.max(0,Math.min(100-w,vx));else vx=50-w/2;if(ft||fb){if(h<=100)vy=Math.max(0,Math.min(100-h,vy));vy=Math.max(Math.max(...ys)+pad-h+fb*h,Math.min(Math.min(...ys)-pad-ft*h,vy))}else if(h<=100)vy=Math.max(0,Math.min(100-h,vy));else vy=50-h/2;{const mg=.075*w;vx=Math.max(Math.max(...xs)+mg-w,Math.min(Math.min(...xs)-mg,vx))}   /* 11/17 測試員 D 第 12 輪：靠底圖邊上的戰役點（漢「大宛」「郅支」）原本被取景框切掉半個圓圈 → 左右至少留 7.5%（寧可露一點米色） */   /* 11/17 測試員 B 第 10 輪 N10-2：取景框比底圖寬（橫式手機）時底圖置中，不再靠左、右半邊整片米色（點的座標都在 0～100，置中後一定在框裡） */
+  const kk=op.px>0?Math.min(op.k||1,560/op.px):(op.k||1),r=w*0.021*kk,f=n=>+n.toFixed(2),mob=(()=>{try{return matchMedia("(pointer:coarse)").matches||innerWidth<820}catch(e){return false}})();
   /* 太近的兩個點（例如長治、高平）推開一點，免得印疊在一起 */
   const Q=P.map(p=>p.slice());for(let it=0;it<24;it++)for(let a=0;a<Q.length;a++)for(let b=a+1;b<Q.length;b++){const dx=Q[b][0]-Q[a][0],dy=Q[b][1]-Q[a][1],d=Math.hypot(dx,dy)||.01,need=r*2.7;if(d<need){const m=(need-d)/2;Q[a][0]-=dx/d*m;Q[a][1]-=dy/d*m;Q[b][0]+=dx/d*m;Q[b][1]+=dy/d*m}}
   const G=i=>op.idx?op.idx[i]:i,open=cards.map((c,i)=>battleOpen(k,G(i),S));let e=0;for(let i=0;i<cards.length;i++)if(open[i])e=i;
+  /* 11/17 測試員 B／D 第 13 輪：每個戰役點實際畫出來的外圈（含光暈）——可以打的星形＋光暈約 2.6 個 rr、打下的約 1.9、旗艦金圈 2.15、還沒開 .9；標籤、地名都不能壓到（含自己那個） */
+  const VR=j=>{const c=cards[j],rr=c.flag?r*1.3:r;return Math.max(S[G(j)]?rr*1.9:open[j]?rr*2.6:rr*.9,c.flag?rr*2.15:0)};
+  {const yT=vy+ft*h,yB=vy+h-fb*h;Q.forEach((q,j)=>{const m=VR(j)+r*.2;q[0]=Math.max(vx+m,Math.min(vx+w-m,q[0]));if(yB-yT>2*m)q[1]=Math.max(yT+m,Math.min(yB-m,q[1]))})}   /* 11/17 測試員 D 第 12、13 輪：推開以後的點收回看得到的範圍，照外圈留邊（發光圈不碰清單鈕） */
   const sk=op.sk||k,seen=(store.get("battleSeen",{})||{})[sk];const grow=seen!=null&&e>(seen|0);if(!op.dots){const M=store.get("battleSeen",{})||{};if(M[sk]!==e){M[sk]=e;store.set("battleSeen",M)}}
   const inV=(x,y)=>x>=vx-2&&x<=vx+w+2&&y>=vy-2&&y<=vy+h+2;
   /* 11/17 測試員 D 第 9 輪：滿版地圖（op.bare）上緣約 104px 被頁名條（.bt2-bar）和「卷一」分頁（.bt2-vt）蓋住；英文時地名、戰役名不放進這一條（換算成取景框的單位），左上國名不再被「Vol. 1」蓋住 */
-  const TOPR=op.bare&&op.px&&btEn("古戰場")?Math.min(h*.3,104*h*A/op.px):0;
+  const TOPR=op.bare&&op.px?Math.min(h*.45,(op.top>0?op.top:104)*h*A/op.px):0;
   const RE=RJ&&RJ[k],realm=RE&&Array.isArray(RE.realms)?RE.realms.map(z=>(z.p||[]).map(p=>`<path d="M${p.map(q=>f(q[0])+" "+f(q[1])).join("L")}Z" fill="${esc(z.c)}" fill-opacity="${z.d?.06:.1}" stroke="${esc(z.c)}" stroke-opacity=".55" stroke-width="${f(w*.0035)}"${z.d?` stroke-dasharray="${f(w*.012)} ${f(w*.008)}"`:""}/>`).join("")).join(""):"";
-  const fs=w*.024*(op.k||1),lab=(LJ&&Array.isArray(LJ[k])?LJ[k]:[]).filter(L=>L[4]===1&&inV(+L[1],+L[2])).map(L=>{const[nm,x,y,ty]=L,nE=btEn(nm),fsz=ty==="n"?fs*1.15:fs*.9,hw=nE?nE.length*fsz*.28:0;let tx=L[5]!=null?+L[5]:+x,ty2=L[6]!=null?+L[6]:+y;if(nE){tx=Math.max(vx+hw+fsz*.3,Math.min(vx+w-hw-fsz*.3,tx));ty2=Math.max(vy+TOPR+fsz*.7,ty2)}   /* 11/17 測試員 B 第 8 輪：英文地名比中文長，靠邊的（左上紅字國名）會超出取景框 → 英文時字的中心往內收（中文照舊） */const col=ty==="n"?"#961A12":ty==="r"?"#284E68":ty==="c"?"#3a2a1c":"#463220";
+  const fs=w*.024*kk,BOTR=op.bare&&op.bot>0&&op.px>0?op.bot*h*A/op.px:0,MB=Q.map(([x,y],j)=>{const R=VR(j)+fs*.15;return[x-R,y-R,x+R,y+R]}),LBX=[],labF=()=>(LJ&&Array.isArray(LJ[k])?LJ[k]:[]).filter(L=>L[4]===1&&inV(+L[1],+L[2])).map(L=>{const[nm,x,y,ty]=L,nE=btEn(nm),fsz=ty==="n"?fs*1.15:fs*.9,hw=nE?nE.length*fsz*.32:0;let tx=L[5]!=null?+L[5]:+x,ty2=L[6]!=null?+L[6]:+y,drop=0;if(nE)tx=Math.max(vx+hw+fsz*.3,Math.min(vx+w-hw-fsz*.3,tx));ty2=Math.max(vy+TOPR+fsz*.7,ty2);{const lw=(nE||nm).length*fsz*(nE?.64:1.05)/2,lh2=fsz*.62;for(let t=0;t<3;t++)for(const b of MB.concat(boxes,LBX))if(tx+lw>b[0]&&tx-lw<b[2]&&ty2+lh2>b[1]&&ty2-lh2<b[3]){const up=b[1]-lh2-fsz*.15,dn=b[3]+lh2+fsz*.15;ty2=Math.abs(up-ty2)<=Math.abs(dn-ty2)&&up>vy+TOPR+lh2?up:dn}ty2=Math.min(vy+h-BOTR-fsz*.7,ty2);const bb=[tx-lw,ty2-lh2,tx+lw,ty2+lh2];if(MB.concat(boxes,LBX).some(b=>bb[0]<b[2]&&bb[2]>b[0]&&bb[1]<b[3]&&bb[3]>b[1]))drop=1;else LBX.push(bb)}if(drop)return"";   /* 11/17 測試員 D 第 12 輪：地名在戰役名放好之後才放（labF），讓開戰役點、戰役名、前面的地名；挪不開就這張圖不畫這個地名 */   /* 11/17 測試員 B 第 12 輪 N12-2：地名壓到戰役點的圓圈就往上或往下挪開；也不放進底部「☰ 戰役清單」那一條 */   /* 11/17 測試員 B 第 8 輪：英文地名比中文長，靠邊的（左上紅字國名）會超出取景框 → 英文時字的中心往內收（中文照舊） */const col=ty==="n"?"#961A12":ty==="r"?"#284E68":ty==="c"?"#3a2a1c":"#463220";
     return`${ty==="c"?`<circle cx="${f(x)}" cy="${f(y)}" r="${f(r*.22)}" fill="#3a2a1c" opacity=".55"/>`:""}<text x="${f(tx)}" y="${f(ty2)}" font-size="${f(ty==="n"?fs*1.15:fs*.9)}" fill="${col}" stroke-width="${f(fs*.2)}" text-anchor="middle" dominant-baseline="middle" class="bt-ml${ty==="r"?" rv":""}">${esc(nE||nm)}</text>`}).join("");
   const seg=(a,b)=>`M${f(Q[a][0])} ${f(Q[a][1])}L${f(Q[b][0])} ${f(Q[b][1])}`;
   let route="";if(!op.dots)for(let i=0;i<e;i++){const nw=grow&&i===e-1;route+=`<path d="${seg(i,i+1)}" class="bt-rt${nw?" nw":""}" stroke-width="${f(r*.42)}" pathLength="100"/>`}
   const star=R=>{const s=R*.2;return`M0 ${f(-R)}L${f(s)} ${f(-s)}L${f(R)} 0L${f(s)} ${f(s)}L0 ${f(R)}L${f(-s)} ${f(s)}L${f(-R)} 0L${f(-s)} ${f(-s)}Z`};
   /* 戰役名放哪一邊：右、左、上、下照順序試，挑不壓到別的點、別的名字的那一邊 */
-  const fz=fs*1.05,boxes=[],hit=(a,b)=>a[0]<b[2]&&a[2]>b[0]&&a[1]<b[3]&&a[3]>b[1],dots=Q.map(([x,y],j)=>{const R=cards[j].flag?r*2.6:r*1.3;return[x-R,y-R,x+R,y+R]});
+  const fz=fs*1.05,boxes=[],hit=(a,b)=>a[0]<b[2]&&a[2]>b[0]&&a[1]<b[3]&&a[3]>b[1],dots=Q.map(([x,y],j)=>{const R=VR(j)+fz*.18;return[x-R,y-R,x+R,y+R]});
   /* 英文（LB[i].L＝折好的幾行）：多行時左右兩邊的字上下置中、上面那邊往上長、下面那邊往下長；挑好位置後還超出取景框就往內收（中文只有一行、不收，版面照舊） */
-  const lh=fz*1.1,LB=cards.map(btMapName),place=cards.map((c,i)=>{const[x,y]=Q[i],tw=(LB[i].w+(c.flag?1:0))*fz,g=r*(c.flag?2.8:1.45),u=r*(c.flag?2.9:1.7),ex=LB[i].L?(LB[i].L.length-1)*lh:0;
-    const C=[["start",g,r*.4-ex/2,[x+g,y-fz*.6-ex/2,x+g+tw,y+fz*.5+ex/2]],["end",-g,r*.4-ex/2,[x-g-tw,y-fz*.6-ex/2,x-g,y+fz*.5+ex/2]],["middle",0,-u-ex,[x-tw/2,y-u-fz*.9-ex,x+tw/2,y-u+fz*.2]],["middle",0,u+fz*.8,[x-tw/2,y+u-fz*.1,x+tw/2,y+u+fz*.9+ex]]];
-    if(x>vx+w*.66)C.unshift(C.splice(1,1)[0]);
-    const ok=z=>z[3][0]>=vx&&z[3][2]<=vx+w&&!boxes.some(b=>hit(b,z[3]))&&!dots.some((d,j)=>j!==i&&hit(d,z[3]));let pick=C.find(ok)||C.find(z=>!boxes.some(b=>hit(b,z[3])))||C[0];
-    if(LB[i].L){const bx=pick[3],m=fz*.3,dx=bx[0]<vx+m?vx+m-bx[0]:bx[2]>vx+w-m?vx+w-m-bx[2]:0,dy=bx[1]<vy+m+TOPR?vy+m+TOPR-bx[1]:bx[3]>vy+h-m?vy+h-m-bx[3]:0;if(dx||dy)pick=[pick[0],pick[1]+dx,pick[2]+dy,[bx[0]+dx,bx[1]+dy,bx[2]+dx,bx[3]+dy]]}
-    boxes.push(pick[3]);return pick});
-  const mk=cards.map((c,i)=>{const[x,y]=Q[i],s=S[G(i)],o=open[i],[anc,tx,ty]=place[i],nm=esc(LB[i].t),approx=esc(LB[i].ap),rr=c.flag?r*1.3:r,ring=c.flag?`<circle r="${f(rr*1.75)}" fill="none" stroke="#D4A017" stroke-width="${f(rr*.2)}"/><circle r="${f(rr*2.05)}" fill="none" stroke="#F6D36B" stroke-width="${f(rr*.08)}" opacity=".9"/>`:"";
+  /* 英文（LB[i].L＝折好的幾行）：多行時左右兩邊的字上下置中、上面那邊往上長、下面那邊往下長；每個候選位置先往取景框內收（cl）再挑不壓到別人的。
+     11/17 測試員 B 第 10 輪 N10-4：四個位置都壓到別人＝上下錯開一、兩行再試；還是壓到＝字縮小（.82、.68 倍，place[i][4]）再找；都不行挑壓到最少的。中文只有原本四個位置、不收、不縮 */
+  const lh=fz*1.25,LB=cards.map(btMapName),place=cards.map((c,i)=>{if(LAND)return null;const[x,y]=Q[i],g=VR(i)+fz*.3,u=VR(i)+fz*.35;
+    const mkC=sc=>{const F=fz*sc,tw=(LB[i].w+(c.flag?1:0))*F,ex=LB[i].L?(LB[i].L.length-1)*lh*sc:0;
+      const C=[["start",g,F*.3-ex/2,[x+g,y-F*.5-ex/2,x+g+tw,y+F*.6+ex/2]],["end",-g,F*.3-ex/2,[x-g-tw,y-F*.5-ex/2,x-g,y+F*.6+ex/2]],["middle",0,-u-ex-F*.3,[x-tw/2,y-u-F*1.1-ex,x+tw/2,y-u]],["middle",0,u+F*.8,[x-tw/2,y+u,x+tw/2,y+u+F*1.1+ex]]];
+      if(x>vx+w*.66)C.unshift(C.splice(1,1)[0]);return C.map(z=>z.concat(sc))};
+    const sh=(z,d)=>[z[0],z[1],z[2]+d,[z[3][0],z[3][1]+d,z[3][2],z[3][3]+d],z[4]];
+    const cl=(z,T)=>{if(!LB[i].L)return z;if(T==null)T=TOPR;const bx=z[3],m=fz*.3,dx=bx[0]<vx+m?vx+m-bx[0]:bx[2]>vx+w-m?vx+w-m-bx[2]:0,dy=bx[1]<vy+m+T?vy+m+T-bx[1]:bx[3]>vy+h-m-BOTR?vy+h-m-BOTR-bx[3]:0;return dx||dy?[z[0],z[1]+dx,z[2]+dy,[bx[0]+dx,bx[1]+dy,bx[2]+dx,bx[3]+dy],z[4]]:z};
+    const C=mkC(1),CC=C.map(z=>cl(z)),ok=z=>z[3][0]>=vx&&z[3][2]<=vx+w&&z[3][1]>=vy+TOPR&&z[3][3]<=vy+h-BOTR&&!boxes.some(b=>hit(b,z[3]))&&!dots.some(d=>hit(d,z[3]));
+    /* 11/17 測試員 B 第 14 輪 N14-1、D 第 14 輪：每個戰役名一定要明確屬於自己的點——字框離自己的點不超過 2.5 個字高（near），而且字框中心離自己的點比離任何別的點都近（mine）；
+       做不到時依序：縮字（最小 .6 倍）＋上下、左右錯開 → 畫一條細引線連回自己的點（線不穿過別的點的外圈）→ 挑壓到最少、最靠近的。（第 13 輪：不收「只壓到光暈」的位置） */
+    const near=z=>{const b=z[3];return Math.hypot(Math.max(b[0]-x,0,x-b[2]),Math.max(b[1]-y,0,y-b[3]))<=VR(i)+fz*2.5},
+      mine=z=>{const b=z[3],cx=(b[0]+b[2])/2,cy=(b[1]+b[3])/2,d=Math.hypot(cx-x,cy-y);return Q.every((q,j)=>j===i||Math.hypot(cx-q[0],cy-q[1])>d+fz*.3)},ok2=z=>ok(z)&&near(z)&&mine(z);
+    let pick=CC.find(ok2);
+    if(!pick){const ov=z=>boxes.concat(dots).reduce((t,b)=>t+Math.max(0,Math.min(b[2],z[3][2])-Math.max(b[0],z[3][0]))*Math.max(0,Math.min(b[3],z[3][3])-Math.max(b[1],z[3][1])),0);
+      const sx=(z,d)=>[z[0],z[1]+d,z[2],[z[3][0]+d,z[3][1],z[3][2]+d,z[3][3]],z[4]],more=(sc,D,Ee)=>{const B=mkC(sc),E=[];for(const z of B){const bw=z[3][2]-z[3][0];for(const d of D)for(const e of Ee)E.push(sx(sh(z,d*fz*sc),e*bw))}return E.map(z=>cl(z))};
+      let all=CC;for(const sc of[1,.82,.7,.6]){const E=more(sc,[0,-1.2,1.2,-2.4,2.4],[0,-.5,.5]);all=all.concat(E);pick=E.find(ok2);if(pick)break}
+      if(!pick){const segN=(ax,ay,bx,by)=>Q.filter((q,j)=>{if(j===i)return false;const ux=bx-ax,uy=by-ay,L2=ux*ux+uy*uy||1,t=Math.max(0,Math.min(1,((q[0]-ax)*ux+(q[1]-ay)*uy)/L2));return Math.hypot(ax+t*ux-q[0],ay+t*uy-q[1])<=VR(j)}).length;let best=null;
+        out:for(const sc of[.82,.6,.5]){const E=more(sc,[-2.4,2.4,-3.6,3.6,-4.8,4.8,-6,6,-7.2,7.2,-8.4,8.4,-9.6,9.6],[0,-.5,.5,-1,1,-1.5,1.5,-2,2,-3,3,-4,4]);all=all.concat(E);
+          for(const z of E){if(!ok(z))continue;const b=z[3],ex=Math.max(b[0],Math.min(x,b[2])),ey=Math.max(b[1],Math.min(y,b[3])),d=Math.hypot(ex-x,ey-y);if(d<=VR(i)*1.2)continue;
+            const sx0=x+(ex-x)/d*VR(i),sy0=y+(ey-y)/d*VR(i),cr=segN(sx0,sy0,ex,ey),L=[sx0-x,sy0-y,ex-x,ey-y];if(!cr){pick=z.slice();pick[5]=L;break out}if(!best||cr*1e4+d<best.k)best={k:cr*1e4+d,z,L}}}
+        if(!pick&&best){pick=best.z.slice();pick[5]=best.L}}   /* 線一定得穿過別的點（點擠成一團）：挑穿過最少、最短的——字不壓東西比線不穿點重要 */
+      if(!pick){const inB=z=>z[3][0]>=vx&&z[3][2]<=vx+w&&z[3][1]>=vy+TOPR&&z[3][3]<=vy+h-BOTR,sc=z=>ov(z)+(inB(z)?0:1e6)+(near(z)?0:1e5)+(mine(z)?0:1e4);pick=all.reduce((p,z)=>sc(z)<sc(p)?z:p)}}
+    pick=pick||CC[0];
+    {const b=pick[3],m=fz*.1;boxes.push([b[0]-m,b[1]-m,b[2]+m,b[3]+m])}return pick});   /* 11/17 第 13 輪：字框四周多留一點（實際字寬、行高比估算的大一點） */
+  const mk=cards.map((c,i)=>{const[x,y]=Q[i],s=S[G(i)],o=open[i],[anc,tx,ty]=place[i]||[],NF=LAND&&op.px?11.5*w/op.px:0,nm=esc(LB[i].t),approx=esc(LB[i].ap),rr=c.flag?r*1.3:r,ring=c.flag?`<circle r="${f(rr*1.75)}" fill="none" stroke="#D4A017" stroke-width="${f(rr*.2)}"/><circle r="${f(rr*2.05)}" fill="none" stroke="#F6D36B" stroke-width="${f(rr*.08)}" opacity=".9"/>`:"";
     if(op.dots){const d=r*.75;return`<g class="bt-mk bt-dot${s?" seal":o?" next":" lock"}" data-mk="${G(i)}" transform="translate(${f(x)} ${f(y)})" role="button" aria-label="${esc(btMapAria(c,s?"已打下":o?"可以打":"還沒開"))}"><circle class="bt-hit" r="${f(Math.max(d*2.4,20*w/(op.px||400)))}" fill="none" pointer-events="all"/><circle class="bt-selr" r="${f(d*2.6)}" fill="none" stroke-width="${f(d*.35)}"/>${s?`<rect x="${f(-d)}" y="${f(-d)}" width="${f(d*2)}" height="${f(d*2)}" rx="${f(d*.3)}" fill="${s.h?"#FFF4E0":"#A8321F"}" stroke="#A8321F" stroke-width="${f(d*.25)}"/>`:o?`<circle r="${f(d*1.1)}" fill="#F6D36B" stroke="#A8321F" stroke-width="${f(d*.3)}"/>`:`<circle r="${f(d*.8)}" fill="none" stroke="#3A2E24" stroke-width="${f(d*.25)}" opacity=".8"/>`}</g>`}
-    const body=(op.px?`<circle class="bt-hit" r="${f(Math.max(rr*2.4,24*w/op.px))}" fill="none" pointer-events="all"/><circle class="bt-selr" r="${f(rr*3.2)}" fill="none" stroke-width="${f(rr*.32)}"/>`:"")+ring+(s?`<circle r="${f(rr*2.2)}" fill="url(#btGlow)" opacity=".7"/><rect x="${f(-rr*1.1)}" y="${f(-rr*1.1)}" width="${f(rr*2.2)}" height="${f(rr*2.2)}" rx="${f(rr*.3)}" fill="${s.h?"#FFF4E0":"#B22A1F"}" stroke="${s.h?"#B22A1F":"#F2C14E"}" stroke-width="${f(rr*.18)}"/><path class="bt-mt" d="M${f(-rr*.5)} ${f(rr*.75)}V${f(-rr*.75)}" stroke="${s.h?"#B22A1F":"#FFF4E0"}" stroke-width="${f(rr*.2)}" fill="none"/><path class="bt-mt" d="M${f(-rr*.42)} ${f(-rr*.75)}L${f(rr*.72)} ${f(-rr*.38)}L${f(-rr*.42)} ${f(0)}Z" fill="${s.h?"none":"#FFF4E0"}" stroke="${s.h?"#B22A1F":"#FFF4E0"}" stroke-width="${f(rr*.12)}"/>`
-      :o?`<circle r="${f(rr*3)}" fill="url(#btGlow)" class="bt-glow"/><path d="${star(rr*2.3)}" fill="#F6D36B" class="bt-star"/><circle r="${f(rr)}" fill="#C8322A" stroke="#F6D36B" stroke-width="${f(rr*.25)}"/><text y="${f(rr*.4)}" font-size="${f(rr*1.15)}" fill="#fff" class="bt-mt">${G(i)+1}</text>`
-      :`<circle r="${f(rr*.75)}" fill="#8f8577" stroke="#fff" stroke-width="${f(rr*.15)}" opacity=".8"/><text y="${f(rr*.3)}" font-size="${f(rr*.85)}" fill="#fff" class="bt-mt">${G(i)+1}</text>`);
-    return`<g class="bt-mk${s?" seal":o?" next":" lock"}${c.flag?" flag":""}" data-mk="${G(i)}" transform="translate(${f(x)} ${f(y)})" role="button" aria-label="${esc(btMapAria(c,s?"已打下":o?"可以打":"還沒開"))}">${body}<text x="${f(tx)}" y="${f(ty)}" font-size="${f(fz)}" stroke-width="${f(fs*.28)}" text-anchor="${anc}" class="bt-mn${o||s?"":" off"}">${LB[i].L?LB[i].L.map((z,j)=>`<tspan x="${f(tx)}" dy="${j?f(lh):0}">${j?"":c.flag?"⭐":""}${esc(z)}</tspan>`).join(""):`${c.flag?"⭐":""}${nm}${approx}`}</text></g>`}).join("");
+    const body=(op.px?`<circle class="bt-hit" r="${f(Math.max(rr*2.4,24*w/op.px))}" fill="none" pointer-events="all"/><circle class="bt-selr" r="${f(rr*3.2)}" fill="none" stroke-width="${f(rr*.32)}"/>`:"")+ring+(s?`<circle r="${f(rr*2.2)}" fill="url(#btGlow)" opacity=".7"/><rect x="${f(-rr*1.1)}" y="${f(-rr*1.1)}" width="${f(rr*2.2)}" height="${f(rr*2.2)}" rx="${f(rr*.3)}" fill="${s.h?"#FFF4E0":"#B22A1F"}" stroke="${s.h?"#B22A1F":"#F2C14E"}" stroke-width="${f(rr*.18)}"/>${LAND?`<text y="${f(Math.max(rr*1.15,NF)*.35)}" font-size="${f(Math.max(rr*1.15,NF))}" fill="${s.h?"#B22A1F":"#fff"}" class="bt-mt">${G(i)+1}</text>`:`<path class="bt-mt" d="M${f(-rr*.5)} ${f(rr*.75)}V${f(-rr*.75)}" stroke="${s.h?"#B22A1F":"#FFF4E0"}" stroke-width="${f(rr*.2)}" fill="none"/><path class="bt-mt" d="M${f(-rr*.42)} ${f(-rr*.75)}L${f(rr*.72)} ${f(-rr*.38)}L${f(-rr*.42)} ${f(0)}Z" fill="${s.h?"none":"#FFF4E0"}" stroke="${s.h?"#B22A1F":"#FFF4E0"}" stroke-width="${f(rr*.12)}"/>`}`
+      :o?`<circle r="${f(rr*3)}" fill="url(#btGlow)" class="bt-glow"/><path d="${star(rr*2.3)}" fill="#F6D36B" class="bt-star"/><circle r="${f(Math.max(rr,NF*.85))}" fill="#C8322A" stroke="#F6D36B" stroke-width="${f(rr*.25)}"/><text y="${f(NF?Math.max(rr*1.15,NF)*.35:rr*.4)}" font-size="${f(Math.max(rr*1.15,NF))}" fill="#fff" class="bt-mt">${G(i)+1}</text>`
+      :`<circle r="${f(Math.max(rr*.75,NF*.8))}" fill="#8f8577" stroke="#fff" stroke-width="${f(rr*.15)}" opacity=".8"/><text y="${f(NF?Math.max(rr*.85,NF)*.35:rr*.3)}" font-size="${f(Math.max(rr*.85,NF))}" fill="#fff" class="bt-mt">${G(i)+1}</text>`);
+    return`<g class="bt-mk${s?" seal":o?" next":" lock"}${c.flag?" flag":""}" data-mk="${G(i)}" transform="translate(${f(x)} ${f(y)})" role="button" aria-label="${esc(btMapAria(c,s?"已打下":o?"可以打":"還沒開"))}">${body}${place[i]?`${place[i][5]?`<path class="bt-ld" d="M${f(place[i][5][0])} ${f(place[i][5][1])}L${f(place[i][5][2])} ${f(place[i][5][3])}" fill="none" stroke="#5a4632" stroke-opacity=".75" stroke-width="${f(fs*.07)}" pointer-events="none"/>`:""}<text x="${f(tx)}" y="${f(ty)}" font-size="${f(fz*(place[i][4]||1))}" stroke-width="${f(fs*.28*(place[i][4]||1))}" text-anchor="${anc}" class="bt-mn${o||s?"":" off"}">${LB[i].L?LB[i].L.map((z,j)=>`<tspan x="${f(tx)}" dy="${j?f(lh*(place[i][4]||1)):0}">${j?"":c.flag?"⭐":""}${esc(z)}</tspan>`).join(""):`${c.flag?"⭐":""}${nm}${approx}`}</text>`:""}</g>`}).join("");
   return`<div class="bt-map"><svg viewBox="${f(vx)} ${f(vy)} ${f(w)} ${f(h)}" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${esc(btEn(eraLabel(k)+"戰役地圖")||eraLabel(k)+"戰役地圖")}">
     <defs><radialGradient id="btGlow"><stop offset="0" stop-color="#FFF1BF" stop-opacity=".95"/><stop offset=".45" stop-color="#F2C14E" stop-opacity=".5"/><stop offset="1" stop-color="#F2C14E" stop-opacity="0"/></radialGradient></defs>
     <rect x="${f(vx-5)}" y="${f(vy-5)}" width="${f(w+10)}" height="${f(h+10)}" fill="#EFE5CF"/><filter id="btInk" color-interpolation-filters="sRGB"><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncR type="linear" slope="1.3" intercept="-0.18"/><feFuncG type="linear" slope="1.3" intercept="-0.18"/><feFuncB type="linear" slope="1.3" intercept="-0.18"/></feComponentTransfer><feColorMatrix type="matrix" values=".757 0 0 0 .18  0 .749 0 0 .149  0 0 .687 0 .125  0 0 0 1 0"/></filter><image href="data/eramap/${esc(k)}${mob?"_m":""}.webp" x="0" y="0" width="100" height="100" preserveAspectRatio="none" filter="url(#btInk)"/>
-    <g>${realm}</g><g>${lab}</g><g fill="none">${route}</g><g>${mk}</g></svg>
+    <g>${realm}</g><g>${labF()}</g><g fill="none">${route}</g><g>${mk}</g></svg>
     ${op.bare?"":`<div class="bt-map-cap">${RE&&RE.year?`🗺 ${esc(eraLabel(k))}・${esc(RE.year)}的疆域　`:""}<span class="bt-k s">⚑</span>已攻下　<span class="bt-k n">✦</span>下一場　<span class="bt-k l">●</span>還沒開　<span class="bt-k n">⭐</span>旗艦戰役（先聽軍師獻策）　（約）地點只能標大概</div>`}</div>`}
 /* ---------- 古戰場頁 #/battle ---------- */
 /* 11/17 測試員 D 第 9 輪 P3-1：英文頂欄「⚔ Ancient battlefield · Qin dynasty」375 寬要三行（標題最多兩行，被切成「Qi…」）→ 英文時頂欄用短名「⚔ Battlefield · Qin」，頁內大標照舊寫全名；中文不變 */
@@ -176,14 +203,14 @@ function Battlefield(v){const k=shipHere();setTop(btTopT(k),"^#/port");setTabs(f
     const pk=await battlePicks(k);if(!v.isConnected)return;const S=battleSeals()[k]||{},n=cards.filter((c,i)=>S[i]).length,tt=battleTitleOf(k);
     const modeTxt=(c,i)=>{const m=battleMode(c);if(m==="hold"){const H=battleHoldCfg(B,c);return H?`${battleHoldNm(c)}：敵軍先動，撐過 ${H.n} 步，${battleKeepTxt(H.keep)}一顆都不能丟`:"守城（設定準備中）"}
       if(m==="odds"){const O=battleOddsCfg(B,c);return O?`⚖ 讓子對弈：你少了${esc(O.cut)}，跟第 ${O.lv} 級「${esc((typeof FINE_NM!=="undefined"&&FINE_NM[O.lv-1])||"")}」電腦下一盤，贏了才算`:"讓子對弈（設定準備中）"}
-      const P=pk[i]&&D.byId[pk[i]];return P?`📜 殘局題：${esc(P.t)}・${cjLv(P.d)}・${cjSrc(P)}`:"題目準備中"};
+      const P=pk[i]&&D.byId[pk[i]];return P?`📜 <span>殘局題：</span><span>${esc(P.t)}</span>・<span>${cjLv(P.d)}</span>・<span>${cjSrc(P)}</span>`:"題目準備中"};   /* 11/17 測試員 B N15-1：標籤、題名、難度、出處各自一個節點，英文時標籤先翻得出來（出處的賽事名、書名之後再翻） */
     const ready=(c,i)=>battleMode(c)==="puzzle"?!!(pk[i]&&D.byId[pk[i]]):battleMode(c)==="hold"?!!battleHoldCfg(B,c):!!battleOddsCfg(B,c);
     if(BTL_MAP_ON)return battleField2(v,k,{cards,S,tt,modeTxt,ready,RJ,LJ});
     v.innerHTML=`<div class="pad bt-page">${battleMapHTML(k,cards,S,RJ,LJ)}<div class="card bt-head"><b>⚔ ${esc(eraLabel(k))}・${cards.length} 場戰役</b><div class="muted">已攻下 ${n}／${cards.length}${tt?"・🏅 "+esc(tt):"・集滿一卷 5 場：千秋印的古戰場那一邊亮起來、稱號「"+esc(shipShort(k))+"・百戰之將」＋一件珍品"}・題目和電腦強度照🎚 ${esc(diffOf().n)}<br>照年代一場一場打：打下一場，路線就延伸到下一場。</div></div>
       ${cards.map((c,i)=>{const s=S[i],o=battleOpen(k,i,S),ok=o&&ready(c,i);return`<button class="card bt-card${s?" done":""}${o?"":" lock"}${c.flag?" flag":""}" data-bi="${i}" id="btc${i}"${ok?"":" disabled"}>
         <span class="bt-pic" style="background-image:url(data/shipmap/port_${k}.webp);background-position:${(i*23)%100}% 40%"><span class="bt-pic-n">${esc(c.name)}</span><img src="data/battles/${esc(c.img||c.id+".webp")}" alt="" loading="lazy" onerror="this.remove()"></span>
         <span class="bt-seal">${s?(s.h?"⚐":"🚩"):o?"⚔":"🔒"}</span><span class="tx"><b>${i+1}・${esc(c.name)}${c.flag?'<em class="bt-flag">⭐ 旗艦戰役</em>':""}</b><small>${esc(c.year)}${c.sides?"・"+esc(c.sides):""}${c.prov?`・<em class="bt-prov">${provOf(c)&&provOf(c).kind?"【"+esc(provOf(c).label)+"】":esc(c.prov)}</em>`:""}</small>
-        ${c.at?`<small>📍 ${c.approx?"約在":""}${esc(c.at)}</small>`:""}<span class="bt-line">${esc(c.line)}</span><span class="bt-tag">🗡 計謀：${esc(c.trick)}　📘 道理：${esc(c.lesson)}</span>
+        ${c.at?`<small>📍 ${c.approx?"約在":""}${esc(c.at)}</small>`:""}<span class="bt-line">${esc(c.line)}</span><span class="bt-tag">🗡 <span>計謀：</span><span>${esc(c.trick)}</span>　📘 <span>道理：</span><span>${esc(c.lesson)}</span></span>
         <span class="muted bt-q">${o?`${s?"🚩 已攻下・":""}${modeTxt(c,i)}`:`🔒 ${esc(battleLockTxt(k,i))}`}</span></span></button>`}).join("")}
       <p class="muted" style="font-size:12.5px;margin:8px 2px 0;line-height:1.7">點一張戰役卡開打：殘局題解開（看答案不算）、守城撐過步數、讓子對弈贏棋，就算攻下、插一面小旗。棋盤上的局面是借那場仗的道理出題，不是當年的戰況；標【有爭議／傳說】的，是史書記載不完全確定的地方（跟「📜 文史考據」頁同一套說法）；地圖上標「約」的，是地點只能標大概。</p>
       <button class="btn ghost" id="btBack" style="width:100%;margin-top:10px">⚓ 回渡口</button></div>`;
@@ -200,25 +227,53 @@ const BTL_VOL_ON=true;   /* 開發者 11/8：卷二 60 場經史學顧問考核�
 let BTL_FIT=null;
 function battleAtSet(k,i){try{sessionStorage.setItem("btAt",k+":"+i)}catch(e){}}
 function battleAtGet(k){try{const m=/^(\w+):(\d+)$/.exec(sessionStorage.getItem("btAt")||"");return m&&m[1]===k?+m[2]:-1}catch(e){return-1}}
-function battleField2(v,k,X){const{cards,S,tt,modeTxt,ready,RJ,LJ}=X,N=cards.length,n=cards.filter((c,i)=>S[i]).length,RE=RJ&&RJ[k];
+/* 11/17 測試員 B 第 11 輪 N10-2：橫式手機（844×390）也套到寬螢幕版面，右邊 42% 留給戰役抽屜；抽屜沒開時那塊整片米色 → 抽屜沒開（.bt2 沒有 .sh）時地圖撐滿 */
+function btCss(){if(typeof document==="undefined"||document.getElementById("btCss"))return;const s=document.createElement("style");s.id="btCss";s.textContent="@media (min-width:820px){.bt2:not(.sh) .bt2-map{right:0}.bt2:not(.sh) .bt2-info{right:10px}.bt2:not(.sh) .bt2-vt{right:10px}}";document.head.append(s)}
+/* 11/17 測試員 B／D 第 13 輪 (b)：估算的字框跟實際畫出來的有落差（字型、光暈）→ 畫完、字型載完以後量實際的框（getBoundingClientRect，跟頁面上的分頁、按鈕同一套座標）：
+   障礙＝每個戰役點畫出來的圖形（星形、光暈、金圈、印，不含看不見的點選熱區）、頁名條、卷分頁（含「全部／All」）、ⓘ、「☰ 戰役清單」、前面已經放好的字；
+   字型載完再等 0.4 秒（抽屜打開時地圖平移的動畫走完）才量；戰役名：第 1 次往上或往下挪到剛好不壓（最多 2.5 個字高），第 2 次（或要挪太遠）就縮字（.85 倍，多行的行距一起縮）；
+   11/17 測試員 D 第 14 輪：地名是陪襯——戰役名不讓地名；地名讓所有東西，挪一次還壓到就不畫（visibility:hidden）。最多 2 次，回傳調了幾個 */
+function btFix(M,W){const sv=M&&M.querySelector&&M.querySelector("svg");if(!sv||typeof sv.getBoundingClientRect!=="function")return 0;const vb=sv.viewBox&&sv.viewBox.baseVal,R=sv.getBoundingClientRect();if(!vb||!vb.width||!R.width)return 0;
+  const sc=Math.max(R.width/vb.width,R.height/vb.height),box=e=>{const q=e.getBoundingClientRect();return[q.left,q.top,q.right,q.bottom]},hit=(a,b)=>a[0]<b[2]-1&&a[2]>b[0]+1&&a[1]<b[3]-1&&a[3]>b[1]+1;
+  const UI=W&&W.querySelectorAll?[...W.querySelectorAll(".bt2-bar,.bt2-vt button,.bt2-btn")].filter(e=>!e.hidden&&e.getClientRects().length).map(box):[];let n=0;
+  const shrink=t=>{const k=.85;t.setAttribute("font-size",String(+(+t.getAttribute("font-size")*k).toFixed(2)));for(const z of t.querySelectorAll("tspan")){const dy=+z.getAttribute("dy");if(dy)z.setAttribute("dy",String(+(dy*k).toFixed(2)))}};
+  const away=(b,o)=>{const up=o[1]-b[3]-2,dn=o[3]-b[1]+2;return Math.abs(up)<=Math.abs(dn)&&b[1]+up>=R.top?up:dn};
+  for(let pass=0;pass<2;pass++){
+    const MK=[...sv.querySelectorAll("g.bt-mk")].map(g=>{const L=[...g.children].filter(c=>String(c.tagName).toLowerCase()!=="text"&&!(c.classList&&(c.classList.contains("bt-hit")||c.classList.contains("bt-selr")||c.classList.contains("bt-ld")))).map(box).filter(b=>b[2]>b[0]);
+      return L.length?[Math.min(...L.map(b=>b[0])),Math.min(...L.map(b=>b[1])),Math.max(...L.map(b=>b[2])),Math.max(...L.map(b=>b[3]))]:null}).filter(Boolean);
+    const DN=[],DL=[];let moved=0;
+    /* 戰役名：只讓戰役點、按鈕、分頁、前面的戰役名；挪動最多 2.5 個字高（不然看不出配哪個點），超過就縮字 */
+    for(const t of sv.querySelectorAll("text.bt-mn")){let b=box(t);const bad=MK.concat(UI,DN).find(o=>hit(b,o));
+      if(bad){moved++;n++;const d=away(b,bad),fp=+t.getAttribute("font-size")*sc;if(pass===0&&Math.abs(d)<=fp*2.5)t.setAttribute("y",String(+(+t.getAttribute("y")+d/sc).toFixed(2)));else shrink(t);b=box(t)}
+      DN.push(b)}
+    /* 地名：讓所有東西（戰役點、按鈕、分頁、戰役名、前面的地名）；挪一次還壓到就不畫 */
+    for(const t of sv.querySelectorAll("text.bt-ml")){if(t.getAttribute("visibility")==="hidden")continue;let b=box(t);const obs=MK.concat(UI,DN,DL),bad=obs.find(o=>hit(b,o));
+      if(bad){moved++;n++;t.setAttribute("y",String(+(+t.getAttribute("y")+away(b,bad)/sc).toFixed(2)));b=box(t);if(obs.some(o=>hit(b,o))){t.setAttribute("visibility","hidden");continue}}
+      DL.push(b)}
+    if(!moved)break}
+  return n}
+function btFixSoon(M,W){const go=()=>{try{if(M.isConnected)btFix(M,W)}catch(e){}};try{const fr=typeof document!=="undefined"&&document.fonts&&document.fonts.ready;Promise.resolve(fr||0).then(()=>setTimeout(()=>requestAnimationFrame(go),400))}catch(e){go()}}
+function battleField2(v,k,X){btCss();const{cards,S,tt,modeTxt,ready,RJ,LJ}=X,N=cards.length,n=cards.filter((c,i)=>S[i]).length,RE=RJ&&RJ[k];
   const VS=[...new Set(cards.map(c=>c.vol||1))].sort((a,b)=>a-b),multi=BTL_VOL_ON&&VS.length>1,vOf=i=>(cards[i]&&cards[i].vol)||1,vFirst=vo=>cards.findIndex(c=>(c.vol||1)===vo);
   let vol=(()=>{if(!multi)return 1;const a=battleAtGet(k);if(a>=0&&cards[a])return vOf(a);let best=1;for(const vo of VS){const ix=cards.map((c,j)=>j).filter(j=>vOf(j)===vo);if(ix.some(j=>!S[j]&&battleOpen(k,j,S)))best=vo}return best})();
   v.innerHTML=`<div class="bt2${multi?" vt":""}" id="bt2"><div class="bt2-map" id="bt2M"></div>
     <div class="bt2-bar"><h2>⚔ ${esc(eraLabel(k))}古戰場</h2><span>已攻下 ${n}／${N}${tt?"・🏅 "+esc(tt):""}</span></div>${multi?'<div class="bt2-vt" id="bt2V" role="tablist"></div>':""}
     <button class="bt2-btn bt2-info" id="bt2I" aria-label="圖例和玩法說明">ⓘ</button><button class="bt2-btn bt2-lst" id="bt2L">☰ 戰役清單</button>
     <div class="bt2-sh" id="bt2S" hidden><div class="bt2-hd" id="bt2H" role="button" tabindex="0" data-axk aria-label="拉開或收起"><i></i></div><div class="bt2-bd" id="bt2B"></div></div></div>`;
-  const W=v.querySelector("#bt2"),M=W.querySelector("#bt2M"),Sh=W.querySelector("#bt2S"),Bd=W.querySelector("#bt2B");let sel=-1,lastA=0,off=0;
+  const W=v.querySelector("#bt2"),M=W.querySelector("#bt2M"),Sh=W.querySelector("#bt2S"),Bd=W.querySelector("#bt2B");let sel=-1,lastA=0,lastW=0,fitN=0,off=0;
   const wide=()=>{try{return matchMedia("(min-width:820px)").matches}catch(e){return false}};
   const mark=()=>M.querySelectorAll("[data-mk]").forEach(g=>g.classList.toggle("sel",+g.dataset.mk===sel));
   const pan=()=>{const sv=M.querySelector("svg");if(!sv)return;const g=sel>=0&&M.querySelector(`[data-mk="${sel}"]`);
     if(!g||wide()||Sh.hidden||Sh.classList.contains("full")){off=0;sv.style.transform="";return}
     const mr=M.getBoundingClientRect(),vb=sv.viewBox.baseVal,tm=/translate\(([-\d.]+) ([-\d.]+)\)/.exec(g.getAttribute("transform")||"");if(!tm||!vb||!vb.height)return;const sc=Math.max(mr.width/vb.width,mr.height/vb.height),y=mr.top+(mr.height-vb.height*sc)/2+(+tm[2]-vb.y)*sc,wr=W.getBoundingClientRect(),top=wr.bottom-wr.height*.6,want=mr.top+(top-mr.top)*.5;
     off=y>top-40?Math.round(y-want):0;sv.style.transform=off?`translateY(${-off}px)`:""};
-  const fit=()=>{if(!W.isConnected){if(BTL_FIT===fit)BTL_FIT=null;return}const r=W.getBoundingClientRect(),vh=(window.visualViewport&&visualViewport.height)||innerHeight;W.style.height=Math.max(360,Math.round(vh-r.top-(wide()?12:0)))+"px";
-    const mr=M.getBoundingClientRect(),A=mr.width/Math.max(1,mr.height);if(Math.abs(A-lastA)<.01&&M.firstChild)return;lastA=A;off=0;
+  const fit=()=>{if(!W.isConnected){if(BTL_FIT===fit)BTL_FIT=null;return}const r=W.getBoundingClientRect(),vh=(window.visualViewport&&visualViewport.height)||innerHeight;W.style.height=Math.max(200,Math.round(vh-r.top-(wide()?12:0)))+"px";   /* 11/17 測試員 D 第 12 輪：原本最少 360px，橫式手機（812×375、844×390）超出畫面、不能捲，底部的戰役點和「☰ 戰役清單」被切掉 → 照畫面剩下的高度 */
+    const mr=M.getBoundingClientRect();if(mr.width<60||mr.height<60){if(fitN++<40)setTimeout(fit,80);return}fitN=0;   /* 11/17 測試員 B 第 10 輪 N10-1：第一次進來容器還沒撐開（量到約 10px），先不排、晚一點再量 */
+    const A=mr.width/Math.max(1,mr.height);if(Math.abs(A-lastA)<.01&&Math.abs(mr.width-lastW)<2&&M.firstChild)return;lastA=A;lastW=mr.width;off=0;
+    const tb=Math.max(0,...[W.querySelector(".bt2-bar"),W.querySelector("#bt2V")].filter(Boolean).map(e=>{const q=e.getBoundingClientRect();return q.height?q.bottom-mr.top:0}))+6;   /* 頁名條、卷分頁蓋住地圖上緣多高（英文換行時會變高） */
     const idx=multi&&vol>0?cards.map((c,j)=>j).filter(j=>vOf(j)===vol):null;
-    M.innerHTML=battleMapHTML(k,idx?idx.map(j=>cards[j]):cards,S,RJ,LJ,{A,bare:1,px:mr.width,k:mr.width<600?1.3:1.1,idx,sk:idx&&vol>1?k+"/"+vol:k,dots:multi&&vol===0});
-    M.querySelectorAll("[data-mk]").forEach(g=>g.addEventListener("click",e=>{e.stopPropagation();vibrate(5);show(+g.dataset.mk)}));mark();pan()};
+    M.innerHTML=battleMapHTML(k,idx?idx.map(j=>cards[j]):cards,S,RJ,LJ,{A,bare:1,px:mr.width,land:wide()||innerWidth>innerHeight,top:tb,bot:(e=>{if(!e)return 0;const q=e.getBoundingClientRect();return q.height&&getComputedStyle(e).display!=="none"?Math.max(0,mr.bottom-q.top)+6:0})(W.querySelector("#bt2L")),k:mr.width<600?1.3:1.1,idx,sk:idx&&vol>1?k+"/"+vol:k,dots:multi&&vol===0});
+    M.querySelectorAll("[data-mk]").forEach(g=>g.addEventListener("click",e=>{e.stopPropagation();vibrate(5);show(+g.dataset.mk)}));mark();pan();btFixSoon(M,W)};
   const tabs=()=>{const T=W.querySelector("#bt2V");if(!T)return;T.innerHTML=VS.map(vo=>{const f=vFirst(vo),o=battleOpen(k,f,S),a=battleVolSeals(k,vo,S),z=cards.filter(c=>(c.vol||1)===vo).length;
       return`<button class="bt2-vb${vo===vol?" on":""}${o?"":" lock"}" data-vo="${vo}" role="tab" aria-selected="${vo===vol}">${o?"":"🔒"}卷${BTL_VN[vo]||vo}<small>${a}/${z}</small></button>`}).join("")+`<button class="bt2-vb${vol===0?" on":""}" data-vo="0" role="tab" aria-selected="${vol===0}">全部</button>`;
     T.querySelectorAll("[data-vo]").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);setVol(+b.dataset.vo);if(!Sh.hidden&&sel>=0&&vol>0&&vOf(sel)!==vol)close()})};
@@ -227,11 +282,11 @@ function battleField2(v,k,X){const{cards,S,tt,modeTxt,ready,RJ,LJ}=X,N=cards.len
   const card=i=>{const c=cards[i],s=S[i],o=battleOpen(k,i,S),ok=o&&ready(c,i);
     return`<div class="bt-pic bt2-pic${o?"":" lock"}" ${pic(c,i)}><span class="bt-pic-n">${esc(c.name)}</span><img src="data/battles/${esc(c.img||c.id+".webp")}" alt="" onerror="this.remove()">${s?`<span class="bt-seal">${s.h?"⚐":"🚩"}</span>`:""}</div>
       <div class="bt2-tx">${multi?`<small class="bt2-vl">卷${BTL_VN[vOf(i)]||vOf(i)}</small>`:""}<b>${i+1}・${esc(c.name)}${c.flag?'<em class="bt-flag">⭐ 旗艦戰役</em>':""}</b><small>${esc(c.year)}${c.sides?"・"+esc(c.sides):""}${c.prov?`・<em class="bt-prov">${provOf(c)&&provOf(c).kind?"【"+esc(provOf(c).label)+"】":esc(c.prov)}</em>`:""}</small>
-      ${c.at?`<small>📍 ${c.approx?"約在":""}${esc(c.at)}</small>`:""}<span class="bt-line">${esc(c.line)}</span>${c.hist&&!c.flag?`<details class="bt2-hist"><summary>📜 史實</summary><p>${esc(c.hist)}</p>${c.histSrc?`<p class="muted">出處：${esc(c.histSrc)}</p>`:""}</details>`:""}<span class="bt-tag">🗡 計謀：${esc(c.trick)}　📘 道理：${esc(c.lesson)}</span>
+      ${c.at?`<small>📍 ${c.approx?"約在":""}${esc(c.at)}</small>`:""}<span class="bt-line">${esc(c.line)}</span>${c.hist&&!c.flag?`<details class="bt2-hist"><summary>📜 史實</summary><p>${esc(c.hist)}</p>${c.histSrc?`<p class="muted">出處：${esc(c.histSrc)}</p>`:""}</details>`:""}<span class="bt-tag">🗡 <span>計謀：</span><span>${esc(c.trick)}</span>　📘 <span>道理：</span><span>${esc(c.lesson)}</span></span>
       <span class="muted bt-q">${o?`${s?(s.h?"⚐ 用過提示（空心旗），不看提示再打一次就換成實心旗・":"🚩 已攻下・"):""}${modeTxt(c,i)}`:`🔒 ${esc(battleLockTxt(k,i))}${/才會開$/.test(battleLockTxt(k,i))?"":"才開"}`}</span>
       ${s&&c.flag?`<details class="bt2-hist"><summary>📜 歷史上其實是這樣</summary><p>${esc(c.flag.hist)}</p>${c.flag.src?`<p class="muted">出處：${esc(c.flag.src)}</p>`:""}</details>`:""}</div>
       <div class="bt2-nav"><button class="btn ghost" data-go="${i-1}"${i<1?" disabled":""}>‹ 上一場</button><button class="btn" id="bt2Go"${ok?"":" disabled"}>${!o?"🔒 還沒開":!ok?"題目準備中":c.flag?(s?"⭐ 再打一次":"⭐ 聽軍師獻策"):s?"⚔ 再打一次":"⚔ 開戰"}</button><button class="btn ghost" data-go="${i+1}"${i>=N-1?" disabled":""}>下一場 ›</button></div>`};
-  const open=full=>{Sh.hidden=false;Sh.classList.toggle("full",!!full);Sh.style.transform="";W.classList.add("sh");Bd.scrollTop=0;requestAnimationFrame(pan)};
+  const open=full=>{Sh.hidden=false;Sh.classList.toggle("full",!!full);Sh.style.transform="";W.classList.add("sh");Bd.scrollTop=0;requestAnimationFrame(()=>{if(wide())fit();pan()})};
   const close=()=>{if(wide())return list();Sh.hidden=true;W.classList.remove("sh");sel=-1;mark();pan();try{sessionStorage.removeItem("btAt")}catch(e){}};
   function show(i,keep){if(!cards[i])return;const wasFull=keep&&!Sh.hidden&&Sh.classList.contains("full");if(multi&&vOf(i)!==vol){vol=vOf(i);lastA=0;tabs();fit()}sel=i;battleAtSet(k,i);Bd.innerHTML=card(i);mark();open(wasFull);
     Bd.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{vibrate(5);show(+b.dataset.go,1)});
@@ -250,7 +305,8 @@ function battleField2(v,k,X){const{cards,S,tt,modeTxt,ready,RJ,LJ}=X,N=cards.len
       if(Math.abs(dy)<6)open(!full);else if(dy<-40)open(true);else if(dy>60){if(full)open(false);else close()}};
     H.addEventListener("pointerup",up);H.addEventListener("pointercancel",up)}
   tabs();BTL_FIT=fit;if(!battleField2.rs){battleField2.rs=1;addEventListener("resize",()=>{if(BTL_FIT)BTL_FIT()})}
-  requestAnimationFrame(()=>{fit();const a=battleAtGet(k);if(a>=0&&cards[a])show(a);else if(wide()){let j=cards.findIndex((c,i)=>!S[i]&&battleOpen(k,i,S));show(j<0?0:j)}});
+  try{const FO=document.fonts;if(FO&&FO.status!=="loaded"&&FO.ready)FO.ready.then(()=>{if(W.isConnected){lastA=0;fit()}})}catch(e){}   /* 11/17 測試員 D 第 15 輪：字型還沒載完時量到的頁名條高度不一樣，載完再排一次（排版本身沒有亂數，同樣的尺寸排出來一樣） */
+  requestAnimationFrame(()=>{if(wide())W.classList.add("sh");fit();const a=battleAtGet(k);if(a>=0&&cards[a])show(a);else if(wide()){let j=cards.findIndex((c,i)=>!S[i]&&battleOpen(k,i,S));show(j<0?0:j)}});
   setTimeout(fit,350);
   return{}}
 /* ---------- 守城、讓子的入口 #/battle/<朝代>/<第幾張> ---------- */

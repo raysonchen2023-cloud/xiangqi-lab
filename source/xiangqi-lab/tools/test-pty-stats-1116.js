@@ -44,8 +44,10 @@ test("〔行為〕卡片：已加入的有三格與可以點的「招式 n／N�
 });
 
 test("〔行為〕練滿的又正陪你走：按鈕都不用出現，不留一條空的按鈕列；其他人照舊（11/16 取消隊長：每張卡最多兩顆＝＋星輝、帶他出門，沒有「隊長」標籤與「設為隊長」）", () => {
-  const K = load(), A = K.ptyCardHTML(K.P, "x_swordboy", 3), B = K.ptyCardHTML(K.P, "x_miaogirl", 3);
-  assert.ok(!A.includes('class="pty-a"')); assert.ok(B.includes('class="pty-a"'));
+  const K = load(), A0 = K.ptyCardHTML(K.P, "x_swordboy", 3); K.P.m.x_swordboy.xp = K.PTY.cap(3);
+  const A = K.ptyCardHTML(K.P, "x_swordboy", 3), B = K.ptyCardHTML(K.P, "x_miaogirl", 3);
+  assert.ok(A0.includes('data-a="give"'), "練滿但這一級還沒加滿：照樣有＋星輝（11/17 B N17-1）");
+  assert.ok(!A.includes('class="pty-a"'), "加滿了又正陪你走：不留空的按鈕列"); assert.ok(B.includes('class="pty-a"'));
   for (const a of ["give", "look"]) assert.ok(B.includes(`data-a="${a}"`), a);
   for (const h of [A, B]) { assert.ok(!h.includes('data-a="lead"') && !h.includes("隊長"), "沒有隊長標籤、沒有設為隊長鈕"); assert.ok((h.match(/data-a="(?:give|look|lead)"/g) || []).length <= 2, "最多兩顆鈕") }
   assert.ok(SRC.includes("黑洞裡全隊已學會的招都會帶上場") && !SRC.includes("最多 4 招"), "卡冊說明行：全隊招式全部帶上場（11/16 不限 4 招）");
@@ -80,4 +82,21 @@ test("〔行為〕卡冊最上面一列全隊體力：就是人間體力的上�
   assert.equal(K.ptyTeamHTML(), '<div class="pty-row top pty-team"><span>全隊體力</span><small>（人間、黑洞都是這個數）</small><b>53</b></div>');
   assert.equal(load({ noBh: 1 }).ptyTeamHTML(), "");
   assert.ok(SRC.includes(".pty-st{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);"), "每位的數值從四格變三格");
+});
+
+test("〔行為〕11/17 開發者：角色卡的條改成星輝條——這一級加了多少、還差多少升級；練滿時照實際寫還能加多少或等修為升級", () => {
+  const K = load(), base = K.PTY.base, need = K.PTY.need;
+  /* 齊轍 Lv 3 起點、修為 5：還沒頂到 */
+  K.P.m.x_swordboy.xp = base(3) + 30;
+  let A = K.ptyCardHTML(K.P, "x_swordboy", 5);
+  assert.ok(A.includes(`<div class="pty-xpt"><span>✨ 星輝 30／${need(3)}</span><span>還差 ${need(3) - 30} 升 Lv 4</span></div>`), "加了 30、還差多少升 Lv 4");
+  assert.ok(A.includes(`width:${(100 * 30 / need(3)).toFixed(1)}%`), "條照這一級的進度");
+  /* 等級＝修為 3：練滿但還能加 */
+  A = K.ptyCardHTML(K.P, "x_swordboy", 3);
+  assert.ok(A.includes(`<span>還能加 ${need(3) - 1 - 30}（升 Lv 4 要等你修為升級）</span>`) && A.includes("（練滿了，等你升級）"), "練滿：還能加到這一級滿");
+  assert.ok(A.includes(`<span>✨ 星輝 30／${need(3) - 1}</span>`), "練滿時分母＝這一級加得到的上限（D 第 17 輪：459/460 卻寫滿了）");
+  /* 加到這一級的頂 */
+  K.P.m.x_swordboy.xp = K.PTY.cap(3);
+  A = K.ptyCardHTML(K.P, "x_swordboy", 3);
+  assert.ok(A.includes("<span>滿了，等你修為升 Lv 4</span>") && A.includes(`<span>✨ 星輝 ${need(3) - 1}／${need(3) - 1}</span>`) && A.includes('style="width:100.0%"'), "加滿了：數字寫滿、條也滿，跟「滿了」一致");
 });

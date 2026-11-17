@@ -181,7 +181,7 @@ test("〔原始碼〕字典沒有重複的鍵（物件字面量重複時後面�
 });
 test("保留字（別的模組用畫面上的字找段落）不在字典裡，翻譯結果也是 null", () => {
   for (const g of R.I18N_GUARD) { assert.ok(!Object.prototype.hasOwnProperty.call(R.I18N_EN, g), "字典不能有：" + g); assert.equal(T(g), null, g) }
-  assert.deepEqual([...R.I18N_GUARD].sort(), ["估計棋力", "取代這支手機", "官階", "正在對戰", "進階", "隱私"].sort());
+  assert.deepEqual([...R.I18N_GUARD].sort(), ["估計棋力", "取代這支手機", "正在對戰", "進階", "隱私"].sort());   /* 11/17 第 10 批：官階拿掉（05-settings 標 data-sm-title，07s2 照標記找），翻成 Rank */
 });
 test("翻譯規則：沒有中文回 null；翻不完整（還剩中文）整句不換；前後圖示與全形標點保留成英文標點", () => {
   assert.equal(T("Level 3"), null); assert.equal(T(""), null);

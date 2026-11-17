@@ -40,7 +40,7 @@ test("〔照舊〕數值列仍跟上次給玩家看過的快照比（兩盤之�
 });
 
 test("〔接點〕08b 結算一開始先 grwArm，才 journeyGameEnd（發這盤修為）；grwArm 記下當時的等級", () => {
-  const i = CPU.indexOf('grwArm(KIND(st))'), j = CPU.indexOf("journeyGameEnd(st)", i); assert.ok(i > 0 && j > i);
+  const i = CPU.indexOf('grwArm(KIND(st),st.id)'), j = CPU.indexOf("journeyGameEnd(st)", i); assert.ok(i > 0 && j > i);
   assert.ok(GRW.includes("GRW.pre=null;try{GRW.pre=xpInfo().L}catch(e){}"));
-  assert.ok(GRW.includes("grwHtml(grwDiff(grwBase(old,pre),now))"));
+  assert.ok(GRW.includes("grwHtml(grwDiff(grwBase(base,pre),now))"), "第 10 批起 base＝這一盤的開局快照（沒有才用上次的 old，grwPick）");
 });

@@ -654,10 +654,11 @@ function sg2Old(st){const me=document.getElementById("gsvMe"),en=document.getEle
   const b=me.querySelector("#sg2OldGo");if(b)b.onclick=()=>gsvSelect(R&&R.k||store.get("era","classic"),!!(R&&R.cover))}
 /* ---------- 結算：存檔鍵 gsv 的 v2＝{關:{難度:{w,l,d,st:[三顆星],best:{rnd,hp}}}}（舊的 c、h 不動） ---------- */
 const SG2_XP=[0,20,40,60],SG2_DUST=[0,3,4,6];
-/* 這一盤的獎勵（sg2End、sg2Result 都叫；同一盤只發一次，記在 bhtdDust.la／g 跟 07bht 同一套）：回 {xp, dust, total} */
+/* 這一盤的獎勵（sg2End、sg2Result 都叫；同一盤只發一次，記在 bhtdDust.la／g 跟 07bht 同一套）：回 {xp, dust, total}
+   11/17 開發者選單：序章 9 關（LV[n].pro）重打不給星塵，只有第一次破關給；易／中／難正式關照舊每場贏都給（天賦 600～800、「至少 100 場」的節奏） */
 function sg2Award(st){const td=st&&st.td;if(!sg2On(st)||!st.result)return null;let D=null;try{D=typeof bhtdDust==="function"?bhtdDust():null}catch(e){}if(!D)return null;
   if(D.la&&D.la.id===st.id)return D.la;const win=st.result.w===st.human,ns=win?SG2G.stars(td).filter(Boolean).length:0,P=gsvProg(),R=((P.v2||{})[td.lv]||{})[td.diff]||{};
-  const first=win&&!(R.w>(D.g.includes(st.id)?1:0)),xp=first?SG2_XP[td.diff]||0:0,dust=win?(SG2_DUST[ns]||0)+((typeof dglXiangFx==="function"&&dglXiangFx().dust)||0):0,done=D.g.includes(st.id);
+  const first=win&&!(R.w>(D.g.includes(st.id)?1:0)),xp=first?SG2_XP[td.diff]||0:0,pro=!!(GSV.LV[td.lv]&&GSV.LV[td.lv].pro),dust=win&&(first||!pro)?(SG2_DUST[ns]||0)+((typeof dglXiangFx==="function"&&dglXiangFx().dust)||0):0,done=D.g.includes(st.id);
   if(!done){D.d+=dust;D.g=D.g.concat([st.id]).slice(-20);try{if(xp&&typeof addXP==="function")addXP(xp,"星門圍城","gs2:"+td.lv+":"+td.diff)}catch(e){}}
   const A={id:st.id,win,xp,dust,total:D.d,first};D.la=A;try{store.set("bhtdDust",D)}catch(e){}return A}
 function sg2End(st){if(!sg2On(st)||!st.result)return;try{sg2Award(st)}catch(e){console.warn("[sg2]",e)}const P=gsvProg();if(P.g.includes(st.id))return;const td=st.td,n=td.lv,d=td.diff;P.v2=Object.assign({},P.v2);P.v2[n]=Object.assign({},P.v2[n]);

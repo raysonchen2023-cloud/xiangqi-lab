@@ -142,9 +142,9 @@ test("〔原始碼〕減少動態的樣式：@media (prefers-reduced-motion:redu
 
 test("〔原始碼〕接點：08b 結算先 grwArm（一般對電腦、黑洞塔防、星門圍城、黑洞星樞都從這裡出）；07bhw 車輪戰結算 grwArm 後開結果視窗；05b JOURNEY_KEYS 有 grw；m.html 在 07mnq 後面 include；07i18n 翻得出升級那句", () => {
   const blk = cut(CPU, "if(st.result&&shownResult!==", "const win=st.result.w===st.human,draw0=");
-  assert.ok(blk.includes('try{if(typeof grwArm==="function")grwArm(KIND(st))}catch(e){}'), "08b 結算那一段 grwArm");
+  assert.ok(blk.includes('try{if(typeof grwArm==="function")grwArm(KIND(st),st.id)}catch(e){}'), "08b 結算那一段 grwArm（第 10 批起帶這盤的 id）");
   assert.ok(blk.indexOf("grwArm(") < blk.indexOf("journeyGameEnd(st)"), "在發修為之前（快照比的是這盤之後）");
-  const tail = CPU.slice(CPU.indexOf("grwArm(KIND(st))"));
+  const tail = CPU.slice(CPU.indexOf("grwArm(KIND(st),st.id)"));
   for (const f of ["bhResultModal(st,win,draw0,XPR)", "battleResultModal(st,win,draw0,XPR)", "gxResultModal(st,win,draw0,XPR)"]) assert.ok(tail.includes(f), "08b 之後才分流：" + f);
   const bhr = cut(BH, "function bhResultModal(", "\n/*");
   assert.ok(bhr.includes("gsvResult(st,win,draw0,XPR)") && bhr.includes("bhtdResult(st,win,draw0,XPR)"), "星門圍城、黑洞塔防的結果視窗從 bhResultModal 分出去");

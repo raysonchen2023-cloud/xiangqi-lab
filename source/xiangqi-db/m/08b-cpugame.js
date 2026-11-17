@@ -13,6 +13,10 @@ function CpuGame(v,practicePage,mode){
     {const rk=OFF&&store.get("cpuRanked",true);return{kind:"cpu",ranked:rk,lx:store.get("cpuLevel",6),human:"r",...zgArg(cpuOppPref(),rk,zgXOn(cpuOppPref()))}}};
   setTabs(false);gameLayout(v);
   let st=null,sel=-1,shownResult=null,busy=false,pHint=null;   // pHint：錯棋重練時在棋盤上畫 Pikafish 的建議
+  /* 11/17 N11-1（測試員 B）：星門圍城按「↻ 再打一次」（07sg2 sg2Result → gsvStart → jStart，同一個對局頁、不重新掛載，shownResult 沒清）、再兩手將死——
+     新的一盤跟上一盤結果一樣（{w:r,why:將死}）、步數也一樣，舊的「結果＋步數」鍵對得上，整段結算（結果視窗、gsvEnd 記錄、修為）都被當成「已經處理過」跳掉。
+     鍵加上這一盤的 id：同一盤輪詢多次照樣只結算一次，換了一盤（再打一次、重打本關、再挑戰）一定會結算 */
+  const cgResKey=s=>(s&&s.id||"")+"|"+JSON.stringify(s.result)+s.moves.length;
   const bd=Board(i=>tap(i));v.querySelector("#bbox").append(bd.svg);
   try{window.cgPlay={tap:i=>tap(i),sel:()=>sel,rr:()=>{if(st)render(st)}}}catch(e){}   /* 11/14 黑洞塔防（07bht-td.js）：取消選取、預選的子輪到你時選起來、換視角立刻重畫 */
   // 🏯 朝代擂台：在公園 3D 裡打（意見回饋 319），沒開公園時先帶你去公園
@@ -162,7 +166,7 @@ function CpuGame(v,practicePage,mode){
     {const xl=typeof bhxLocked==="function"&&bhxLocked(st);acts.new.hidden=xl;if(xl){acts.resign.hidden=true;acts.setup.hidden=true}}   /* 11/16 開發者「打完boss才能繼續」：序局還沒打完，不放新局、認輸、擺盤（07bh bhxLocked） */
     /* 開發者 11/11「下一盤目標」：跟電腦的新一盤開始時提示一次上盤留下的目標 */
     if(!st.result&&!st.practice&&KIND(st)==="cpu"&&st.id&&typeof ngGet==="function"){const g=ngGet();if(g&&g.from!==st.id&&g.shown!==st.id){store.set("nextGoal",{...g,shown:st.id});setTimeout(()=>toast("🎯 本盤目標："+NG_TXT(g)),900)}}
-    if(st.result&&shownResult!==JSON.stringify(st.result)+st.moves.length){shownResult=JSON.stringify(st.result)+st.moves.length;const xp0=store.get("xp",0);try{if(typeof grwArm==="function")grwArm(KIND(st))}catch(e){}   /* 11/15 對戰後的角色成長（07grw）：接下來的結果視窗（一般對電腦、黑洞塔防、星門圍城、黑洞星樞都從這裡出）插數值變化 */try{journeyGameEnd(st)}catch(e){}try{if(typeof shipGameDone==="function")shipGameDone(st)}catch(e){}try{if(typeof chdGameEnd==="function")chdGameEnd(st,MODE)}catch(e){}   /* 意見回饋 774：千秋起手式、七星破擂（07q-chardiff.js） */
+    if(st.result&&shownResult!==cgResKey(st)){shownResult=cgResKey(st);const xp0=store.get("xp",0);try{if(typeof grwArm==="function")grwArm(KIND(st),st.id)}catch(e){}   /* 11/15 對戰後的角色成長（07grw）：接下來的結果視窗（一般對電腦、黑洞塔防、星門圍城、黑洞星樞都從這裡出）插數值變化 */try{journeyGameEnd(st)}catch(e){}try{if(typeof shipGameDone==="function")shipGameDone(st)}catch(e){}try{if(typeof chdGameEnd==="function")chdGameEnd(st,MODE)}catch(e){}   /* 意見回饋 774：千秋起手式、七星破擂（07q-chardiff.js） */
       {const ud=undoDrop(st);if(ud)setTimeout(()=>{vibrate([20,40,60]);toast(ud)},1200)}
       /* 意見回饋 376：結果視窗寫出這盤的修為變化（石桌往事、驛站、擂台、挑戰電腦都一樣），不再只靠一閃而過的小提示 */
       const xpD=store.get("xp",0)-xp0,XI=xpInfo(),XPR=xpD>0?`<div class="xpres">✨ 修為 <b>+${xpD}</b><small>Lv ${XI.L}・${esc(XI.title)}${XI.need?`・${XI.rest}／${XI.need}`:""}</small><div class="st-bar"><i style="width:${XI.need?Math.round(XI.rest*100/XI.need):100}%"></i></div></div>`:"";
@@ -384,7 +388,7 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
     if(first&&!practicePage){try{s=await api("/play/open",openArgs())}catch(e){s=await api("/play/state")}}else s=await api("/play/state");
     if(first){first=false;opened=true;
       /* 意見回饋 607：從「📊 檢討」的報告退回來（REVIEW_BACK 對得上這盤）、或回到已經下完的錯棋重練：不自動開新局、不跳結果視窗，顯示終局盤面 */
-      {const rb=REVIEW_BACK;REVIEW_BACK=null;if(s.result&&(practicePage&&s.practice||rb&&rb.id===s.id&&KIND(s)===MODE)){shownResult=JSON.stringify(s.result)+s.moves.length;render(s);return}}
+      {const rb=REVIEW_BACK;REVIEW_BACK=null;if(s.result&&(practicePage&&s.practice||rb&&rb.id===s.id&&KIND(s)===MODE)){shownResult=cgResKey(s);render(s);return}}
       /* 回饋 838（開發者 11/9 選：全模式中斷接續）：古戰場讓子對弈先載戰役資料（冷啟動直接接續時 BATTLE_CARDS 還是空的：戰役名、下一場、集滿一卷的獎勵會對不上） */
       if(String(s.journey||"").startsWith("bt:")&&typeof battleData==="function")try{await battleData()}catch(e){}
       /* 回饋 838：這盤在對局頁開著時還沒下完、後來（電腦在背景走完、或關掉 App 前送出的那步）才分出勝負——照常跑一次結果（修為、闖關、驛站、擂台印、掉寶），不要直接跳走或開新局把它吞掉 */
@@ -392,10 +396,10 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
       /* 意見回饋 413：石桌往事頁沒有石桌往事那盤（或那盤已經下完）就回去選，不畫別的模式的棋 */
       if(MODE==="journey"&&(KIND(s)!=="journey"||s.result)){navReplace(KIND(s)==="journey"&&s.journey?jBack(s.journey):"#/adventure");return}
       /* 朝代擂台：還沒開始、或上一盤已經下完，先出擂主卡（選朝代、看集章簿） */
-      if(MODE==="arena"&&(s.result||!s.moves.length)){if(s.result)shownResult=JSON.stringify(s.result)+s.moves.length;render(s);if(!NAV_POP)setTimeout(()=>arenaBtn[1](),300);return}   /* 意見回饋 607：只有新進來才自動彈擂主卡，用返回退回這頁不彈 */
+      if(MODE==="arena"&&(s.result||!s.moves.length)){if(s.result)shownResult=cgResKey(s);render(s);if(!NAV_POP)setTimeout(()=>arenaBtn[1](),300);return}   /* 意見回饋 607：只有新進來才自動彈擂主卡，用返回退回這頁不彈 */
       /* 戰績頁「開始積分挑戰」「下一盤獎勵棋」：這盤的模式不同就換（下到一半會先問） */
       if(MODE==="cpu"){const w=store.get("cpuWant",null);if(w){store.set("cpuWant",null);setTimeout(()=>{if(st&&modeOf(st)!==w)switchMode(w)},400)}}
-      if(s.result){shownResult=JSON.stringify(s.result)+s.moves.length;const rk=OFF&&!!store.get("cpuRanked",!!s.ranked);await post("/play/new",{human:s.human,lx:s.level||store.get("cpuLevel",6),ranked:rk,...zgArg(cpuOppPref(),rk)});s.ranked=rk;
+      if(s.result){shownResult=cgResKey(s);const rk=OFF&&!!store.get("cpuRanked",!!s.ranked);await post("/play/new",{human:s.human,lx:s.level||store.get("cpuLevel",6),ranked:rk,...zgArg(cpuOppPref(),rk)});s.ranked=rk;
       toast(s.ranked?`新的一局・晉級賽`:cr?`新的一局・🚗 獎勵第 ${s.level} 級`:`新的一局・第 ${s.level} 級`);return}
       if(typeof rsEntry==="function")rsEntry(s,MODE,()=>{if(MODE==="journey")navReplace(s.journey?jBack(s.journey):"#/adventure");else route()})}   /* 對局中途可接續：隔了一陣子回到這盤，問要不要繼續（07m4-resume.js） */
     render(s)},()=>st&&st.thinking?500:1500);

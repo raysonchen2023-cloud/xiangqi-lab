@@ -8,6 +8,11 @@
 //   ⑥ 第 5 批（測試員第 5 輪）：星門預告、齊轍木棋靈、書架小人台詞、對局頁（電腦說明、棋規、3D 提示）、幻譜星門結果第一行、引擎下載提示
 //   ⑦ 第 7 批（測試員 D 第 7 輪）：快速對局 3D 封面（名言白話說明、出處、進園子提示與 toast）、3D 走棋提示、黑洞偏航視窗與七星台詞、我的角色（出生年、金印、書齋物件）、古戰場（大標、地名、戰役名、地圖短名）
 //   ⑧ 第 8 批（測試員 D／B 第 8 輪）：我的角色「？」細則、3D 效能紀錄、提示裡的按鈕名＝2D board、七星統一叫 Cloud River Seven Stars、古戰場每朝每卷英文標籤都在框裡
+//   ⑩ 第 10 批：古戰場戰役清單（N・名、年代、卷開放條件）、英文戰役名不重疊（直式、橫式）、官階＝Rank
+//   ⑫ 第 12 批：古戰場四種手機尺寸（直式 375×812、390×844，橫式 812×375、844×390）× 中英文：標籤不重疊、戰役點看得到、清單鈕在畫面內、字級
+//   ⑬ 第 13 批：古戰場保守估算（英文字寬 .64、中文 1.05、行高 1.25、戰役點外圈含光暈），新玩家與全部打下兩種狀態
+//   ⑭ 第 14 批：古戰場每個戰役名離自己的點比離別的點近、不超過 2.5 個字高（秦卷一、漢卷一、隋卷二點名，四種尺寸 × 中英文）
+//   ⑮ 第 15 批：古戰場橫式只標編號（每朝每卷）、抽屜標籤與「年代・甲 對 乙（人）」格式
 // 外掛字典只放 CDN，公開副本沒有：沒有檔案就標略過。
 // 用法 node --test xiangqi-lab/tools/test-i18n-ext-1117.js
 "use strict";
@@ -215,8 +220,8 @@ test("設定頁：本命棋子那一句（七種棋子 × 夥伴名字）、旅�
   assert.equal(ok(X, "本命棋子「俥」跟著首頁陪你走的夥伴（現在是齊轍）。"), "Your signature piece, the Chariot, goes with the companion walking with you on the home screen (now Qi Zhe).");
   for (const pc of PCS) for (const nm of NAMES) ok(X, "本命棋子「" + pc + "」跟著首頁陪你走的夥伴（現在是" + nm + "）。");
   for (const n of [1, 2, 3]) ok(X, "七星吵架、漏字信、不速之客、星夜茶話、大掃除；一天最多 " + n + " 次，不會扣東西");
-  assert.equal(X.i18nText("官階"), null, "官階在 I18N_GUARD：07s2／07s4／07m5 用畫面字找段落");
-  assert.ok(!Object.prototype.hasOwnProperty.call(JSON.parse(fs.readFileSync(EXT, "utf8")).en, "官階"));
+  assert.equal(X.i18nText("官階"), "Rank", "第 10 批起官階不是保留字，內建翻成 Rank（07s2 改用 data-sm-title 找段落）");
+  assert.ok(!Object.prototype.hasOwnProperty.call(JSON.parse(fs.readFileSync(EXT, "utf8")).en, "官階"), "內建就有，外掛不用重複");
 });
 
 test("星門圍城 11/17 新字串：資料卡（原本／被打降／天賦／護帥）、攻擊預覽「防 D→D1」、跳字、短提示（七種棋子）、序章教學句（兩種結尾）、缺資料的舊句", t => {
@@ -491,8 +496,8 @@ test("第 7 批 P2-5：我的角色——七星的「朝代・出生年・幾歲
   for (const e of ["秦", "漢", "三國", "魏晉", "南北朝", "隋", "唐", "五代", "宋", "北宋", "南宋", "元", "明", "清"]) { ok(X, e + "・前 99 年生・十歲上船"); ok(X, e + "・1200 年生・十六歲上船"); ok(X, e + "・1200 年生") }
   assert.ok(Z.includes("lbl(\"mzSeal\",`金印 ${sealGoldN()}／13`)"), "07z4 金印標籤樣板改了");
   for (let g = 0; g <= 13; g++) assert.equal(ok(X, `金印 ${g}／13`), `Gold seals ${g}/13`);
-  assert.equal(X.i18nText("官階"), null, "「官階」是保留字（I18N_GUARD），單獨不翻");
-  assert.equal(ok(X, "官階 新手"), "Official rank Novice");
+  assert.equal(ok(X, "官階"), "Rank", "第 10 批：官階＝Rank");
+  assert.equal(ok(X, "官階 新手"), "Rank Novice");
   const ER = ["", "classic", "qin", "han", "sanguo", "weijin", "nanbei", "sui", "tang", "wudai", "song", "yuan", "ming", "qing"], SC = ER.slice(2);
   const ET = (s, at) => { s = String(s || ""); const i = SC.indexOf(at); let p; do { p = s; s = s.replace(/\{\{(<?)([a-z]+):([^{}]*)\}\}/g, (m, lt, e, x) => { const f = SC.indexOf(e); return (i < 0 || f < 0 ? !lt : lt ? i < f : i >= f) ? x : "" }) } while (s !== p); return s };
   for (const s of lit(Z, "MZ_SPOTS")) if (s[5] !== "官階") ok(X, s[5]);
@@ -524,7 +529,7 @@ test("第 7 批 P2-6：古戰場大標（各朝）、地圖地名（labels.json 
     assert.equal(c.a(b, "可以打"), full + " · Ready to fight");
   }
   assert.ok(nb > 250, "戰役有抽到");
-  assert.deepEqual(JSON.parse(JSON.stringify(c.f({ name: "桂陵之戰", approx: 1 }))), { t: "Guiling", ap: " (approx.)", w: 17 * .56, L: ["Guiling (approx.)"] });
+  assert.deepEqual(JSON.parse(JSON.stringify(c.f({ name: "桂陵之戰", approx: 1 }))), { t: "Guiling", ap: " (approx.)", w: 17 * .64, L: ["Guiling (approx.)"] });   /* 第 13 批起字寬係數 .64 */
   assert.equal(c.f({ name: "胡服騎射・趙滅中山" }).t, "Nomad Dress and Mounted Archery · Zhao Conquers Zhongshan");
   assert.equal(c.f({ name: "白登之圍" }).t, "Baideng"); assert.equal(c.f({ name: "寧夏之役" }).t, "Ningxia");
   ok(X, "（約）地點只能標大概"); ok(X, "旗艦戰役（先聽軍師獻策）　（約）地點只能標大概");
@@ -650,4 +655,231 @@ test("第 9 批 古戰場滿版地圖：英文時地名、戰役名不放進上�
     for (const m of html.matchAll(/transform="translate\(([-\d.]+) ([-\d.]+)\)"(?:(?!<\/g>).)*?<text x="[-\d.]+" y="([-\d.]+)" font-size="([\d.]+)"[^>]*class="bt-mn[^"]*">(.*?)<\/text><\/g>/g)) { assert.ok(+m[2] + +m[3] - +m[4] >= TOP - eps, `${k} 卷${vo} 戰役名「${m[5]}」在上緣那條裡`); n++ }
   } }
   assert.ok(n > 300, "檢查了 " + n + " 個");
+});
+
+/* ===== 第 10 批（測試員 B 第 10 輪 N10-3／N10-4、開發者選單官階＝Rank）===== */
+test("第 10 批 N10-3 古戰場戰役清單：「N・戰役名（⭐）」、年代各種寫法、「年代・狀態」、卷的開放條件、卷標頭——每朝每卷整組翻得出", t => {
+  if (!fs.existsSync(EXT)) return t.skip(SKIP);
+  const BF = path.join(ROOT, "xiangqi-db", "art", "canju", "battles2.json"); if (!fs.existsSync(BF)) return t.skip("沒有 xiangqi-db/art 的戰役資料");
+  const X = load(true), G = M("m/07g-battle.js"), BJ = JSON.parse(fs.readFileSync(BF, "utf8"));
+  for (const s of ["<b>${i+1}・${esc(c.name)}${c.flag?\" ⭐\":\"\"}</b><small>${esc(c.year)}・${s?(s.h?\"⚐ 用過提示\":\"🚩 已攻下\"):o?\"⚔ 可以打\":\"🔒 還沒開\"}</small>",
+    "卷${BTL_VN[vo]||vo}・${battleVolSeals(k,vo,S)}／${cards.filter(z=>(z.vol||1)===vo).length}${o?\"\":\"　🔒 \"+esc(battleLockTxt(k,i))}",
+    "return`卷${BTL_VN[q.pv]||q.pv}先打下 ${q.need} 場，卷${BTL_VN[vo]||vo}才會開`", "<b>${i+1}・${esc(c.name)}${c.flag?'<em class=\"bt-flag\">⭐ 旗艦戰役</em>':\"\"}</b>"]) assert.ok(G.includes(s), "07g 清單樣板改了：" + s);
+  const VN = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九"];
+  let n = 0;
+  for (const k in BJ.eras) BJ.eras[k].forEach((c, i) => {
+    assert.match(ok(X, (i + 1) + "・" + c.name + (c.flag ? " ⭐" : "")), /^\d+ · [A-Z]/);
+    ok(X, (i + 1) + "・" + c.name); ok(X, c.year);
+    for (const st of ["🚩 已攻下", "⚐ 用過提示", "⚔ 可以打", "🔒 還沒開"]) assert.ok(ok(X, c.year + "・" + st).includes(" · "), c.year); n++ });
+  assert.ok(n > 290);
+  assert.equal(ok(X, "4・胡服騎射・趙滅中山"), "4 · Nomad Dress and Mounted Archery · Zhao Conquers Zhongshan");
+  assert.equal(ok(X, "前 307–前 296 年"), "307–296 BCE"); assert.equal(ok(X, "約前 250 年代（趙孝成王時）"), "c. 250s BCE (reign of King Xiaocheng of Zhao)");
+  for (let v = 2; v <= 5; v++) for (const need of [1, 3, 5]) {
+    const L = `卷${VN[v - 1]}先打下 ${need} 場，卷${VN[v]}才會開`;
+    assert.equal(ok(X, L), `Capture ${need} in Vol. ${v - 1} to open Vol. ${v}`); ok(X, "🔒 " + L);
+    assert.equal(ok(X, `卷${VN[v]}・0／5　🔒 ${L}`), `Vol. ${v} · 0/5   🔒 Capture ${need} in Vol. ${v - 1} to open Vol. ${v}`);
+  }
+});
+test("第 10 批 N10-4 古戰場英文戰役名：直式、橫式每朝每卷，標籤互相不重疊（估計的字框）", t => {
+  if (!fs.existsSync(EXT)) return t.skip(SKIP);
+  const LF = path.join(ROOT, "xiangqi-db", "art", "eramap", "labels.json"), BF = path.join(ROOT, "xiangqi-db", "art", "canju", "battles2.json");
+  if (!fs.existsSync(LF) || !fs.existsSync(BF)) return t.skip("沒有 xiangqi-db/art 的地圖資料");
+  const X = load(true), G = M("m/07g-battle.js"), LJ = JSON.parse(fs.readFileSync(LF, "utf8")), BJ = JSON.parse(fs.readFileSync(BF, "utf8"));
+  const src = G.slice(G.indexOf("function btEn("), G.indexOf("/* 11/17 測試員 D 第 9 輪 P3-1"));
+  const c = { document: { documentElement: { lang: "en" } }, i18nText: s => X.i18nText(s), battleOpen: () => true, store: { get: (k, d) => d, set() {} }, matchMedia: () => ({ matches: true }), innerWidth: 390,
+    esc: s => String(s == null ? "" : s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])), eraLabel: k => k };
+  vm.createContext(c); vm.runInContext(src + ";this.H=battleMapHTML", c);
+  const un = s => s.replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  let bad = [], n = 0;
+  for (const k in BJ.eras) { const all = BJ.eras[k]; for (const vo of [...new Set(all.map(b => b.vol || 1))]) for (const [A, px] of [[390 / 600, 390], [490 / 334, 490]]) {
+    const idx = all.map((b, j) => j).filter(j => (all[j].vol || 1) === vo), html = c.H(k, idx.map(j => all[j]), {}, null, LJ, { A, bare: 1, px, top: 108, k: px < 600 ? 1.3 : 1.1, idx, sk: k });
+    const B = [];
+    for (const m of html.matchAll(/transform="translate\(([-\d.]+) ([-\d.]+)\)"(?:(?!<\/g>).)*?<text x="([-\d.]+)" y="([-\d.]+)" font-size="([\d.]+)"[^>]*text-anchor="(\w+)" class="bt-mn[^"]*">(.*?)<\/text><\/g>/g)) {
+      const [, X0, Y0, tx, ty, fz, anc, body] = m, L = body.includes("<tspan") ? [...body.matchAll(/<tspan[^>]*>(.*?)<\/tspan>/g)].map(z => un(z[1])) : [un(body)];
+      const wd = Math.max(...L.map(s => s.replace("⭐", "").length * .56 + (s.includes("⭐") ? 1 : 0))) * +fz, x = +X0 + +tx, y = +Y0 + +ty, l = anc === "start" ? x : anc === "end" ? x - wd : x - wd / 2;
+      B.push({ t: L.join(" "), b: [l, y - +fz * .8, l + wd, y + (L.length - 1) * +fz * 1.1 + +fz * .2] }); n++ }
+    for (let a = 0; a < B.length; a++) for (let b = a + 1; b < B.length; b++) { const p = B[a].b, q = B[b].b, sh = Math.min(p[2], q[2]) - Math.max(p[0], q[0]), sv = Math.min(p[3], q[3]) - Math.max(p[1], q[1]);
+      if (sh > (p[2] - p[0]) * .08 && sv > (p[3] - p[1]) * .15) bad.push(`${k} 卷${vo} A=${A.toFixed(2)}：「${B[a].t}」×「${B[b].t}」`) }
+  } }
+  assert.ok(n > 500, "檢查了 " + n);
+  assert.deepEqual(bad, [], "重疊的標籤");
+});
+test("第 10 批 C-7 官階＝Rank：說明句、讀螢幕名稱「官階 X」", t => {
+  if (!fs.existsSync(EXT)) return t.skip(SKIP);
+  const X = load(true), CX = M("m/07i-codex.js");
+  assert.ok(CX.includes("nm:\"官階\",lv:1,say:\"挑戰電腦的積分越高，官階越高（九品升到一品）；官名跟著朝代換。\""), "07i-codex 官階那一格改了");
+  assert.equal(ok(X, "官階"), "Rank"); assert.equal(ok(X, "官階 新手"), "Rank Novice"); assert.equal(ok(X, "🏛 官階"), "🏛 Rank");
+  assert.ok(ok(X, "挑戰電腦的積分越高，官階越高（九品升到一品）；官名跟著朝代換。").includes("rank"));
+  assert.ok(ok(X, "修為、官階是等級，不算進去；寶物、棋盤、棋譜這些沒有上限的只寫已收。").startsWith("XP and rank"));
+  for (const [k, v] of Object.entries(JSON.parse(fs.readFileSync(EXT, "utf8")).en)) if (k.includes("官階")) assert.ok(!/[Oo]fficial rank/.test(v), k + " → " + v);
+});
+
+/* ===== 第 12 批（測試員 B N12-2、測試員 D 第 12 輪）：古戰場四種手機尺寸 × 中英文 ===== */
+test("第 12 批 古戰場：直式 375×812、390×844，橫式 812×375、844×390，中英文——標籤（地名＋戰役名）不重疊、戰役點完整在看得到的範圍（不在頁名條／卷分頁、清單鈕底下）、清單鈕在畫面內、字級跟直式差不多", t => {
+  if (!fs.existsSync(EXT)) return t.skip(SKIP);
+  const LF = path.join(ROOT, "xiangqi-db", "art", "eramap", "labels.json"), BF = path.join(ROOT, "xiangqi-db", "art", "canju", "battles2.json");
+  if (!fs.existsSync(LF) || !fs.existsSync(BF)) return t.skip("沒有 xiangqi-db/art 的地圖資料");
+  const X = load(true), G = M("m/07g-battle.js"), LJ = JSON.parse(fs.readFileSync(LF, "utf8")), BJ = JSON.parse(fs.readFileSync(BF, "utf8"));
+  const src = G.slice(G.indexOf("function btEn("), G.indexOf("/* 11/17 測試員 D 第 9 輪 P3-1"));
+  const mk = lang => { const c = { document: { documentElement: { lang } }, i18nText: s => lang === "en" ? X.i18nText(s) : null, battleOpen: () => true, store: { get: (k, d) => d, set() {} }, matchMedia: () => ({ matches: true }), innerWidth: 390,
+    esc: s => String(s == null ? "" : s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])), eraLabel: k => k }; vm.createContext(c); vm.runInContext(src + ";this.H=battleMapHTML", c); return c.H };
+  const un = s => s.replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  const cw = s => [...s].reduce((a, ch) => a + (/[㐀-鿿豈-﫿⭐（）・]/.test(ch) ? 1 : .56), 0);   /* 估計字寬（中文、全形＝1 個字級，英文約 0.56） */
+  /* fit 的高度：畫面高－頂欄（約 59px）－寬螢幕的 12px，最少 200；頁名條＋卷分頁蓋住上面約 116px；清單鈕（底下 16px、高 46px）蓋住下面 68px */
+  const VP = [[375, 812, 375, 0], [390, 844, 390, 0], [812, 375, 812, 0], [844, 390, 490, 1], [844, 390, 829, 1]];
+  assert.ok(G.includes("W.style.height=Math.max(200,Math.round(vh-r.top-(wide()?12:0)))+\"px\";"), "fit 的高度算法改了，這裡的模擬要跟著改");
+  const bad = []; let n = 0, nl = 0;
+  for (const lang of ["zh-Hant", "en"]) { const H = mk(lang);
+    for (const [vw, vh, px, wide] of VP) {
+      const Hh = Math.max(200, vh - 59 - (wide ? 12 : 0)); assert.ok(59 + Hh <= vh, `${vw}×${vh}：地圖高度超出畫面`);
+      assert.ok(Hh - 16 - 46 >= 0, `${vw}×${vh}：清單鈕在畫面內`);
+      const A = px / Hh, k = px < 600 ? 1.3 : 1.1, TOP = 116, BOT = 68;
+      for (const era in BJ.eras) { const all = BJ.eras[era]; for (const vo of [...new Set(all.map(b => b.vol || 1))]) {
+        const idx = all.map((b, j) => j).filter(j => (all[j].vol || 1) === vo), html = H(era, idx.map(j => all[j]), {}, null, LJ, { A, bare: 1, px, top: TOP, bot: BOT, k, idx, sk: era });
+        const [vx, vy, w, h] = html.match(/viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"/).slice(1).map(Number), s = px / w, B = [], tag = `${lang} ${vw}×${vh} ${era} 卷${vo}`;
+        for (const m of html.matchAll(/<text x="([-\d.]+)" y="([-\d.]+)" font-size="([\d.]+)"[^>]*class="bt-ml[^"]*">(.*?)<\/text>/g)) { const t = un(m[4]), fz = +m[3], hw = cw(t) * fz / 2; B.push({ t, b: [+m[1] - hw, +m[2] - fz * .55, +m[1] + hw, +m[2] + fz * .55] }); nl++ }
+        for (const m of html.matchAll(/class="bt-mk[^"]*"[^>]*transform="translate\(([-\d.]+) ([-\d.]+)\)"(?:(?!<\/g>).)*?<text x="([-\d.]+)" y="([-\d.]+)" font-size="([\d.]+)"[^>]*text-anchor="(\w+)" class="bt-mn[^"]*">(.*?)<\/text><\/g>/g)) {
+          const [, X0, Y0, tx, ty, fz0, anc, body] = m, fz = +fz0, L = body.includes("<tspan") ? [...body.matchAll(/<tspan[^>]*>(.*?)<\/tspan>/g)].map(z => un(z[1])) : [un(body)];
+          const wd = Math.max(...L.map(cw)) * fz, x = +X0 + +tx, y = +Y0 + +ty, l = anc === "start" ? x : anc === "end" ? x - wd : x - wd / 2;
+          B.push({ t: L.join(" "), b: [l, y - fz * .75, l + wd, y + (L.length - 1) * fz * 1.1 + fz * .2] });
+          assert.ok(fz * s <= 15.5, `${tag}：戰役名字級 ${(fz * s).toFixed(1)}px 太大（直式約 12～13px）`);
+          const cx = +X0, cy = +Y0, R = w * .021 * Math.min(k, 560 / px) * 1.3;
+          if (!(cx - R >= vx - .01 && cx + R <= vx + w + .01 && cy - R >= vy + TOP / s - .5 && cy + R <= vy + h - BOT / s + .5)) bad.push(`${tag}：戰役點「${L.join(" ")}」被切到或在頁名條／清單鈕底下`);
+          n++ }
+        for (let a = 0; a < B.length; a++) for (let b = a + 1; b < B.length; b++) { const p = B[a].b, q = B[b].b, ox = Math.min(p[2], q[2]) - Math.max(p[0], q[0]), oy = Math.min(p[3], q[3]) - Math.max(p[1], q[1]);
+          if (ox * s > 3 && oy * s > 3) bad.push(`${tag}：「${B[a].t}」×「${B[b].t}」重疊 ${(ox * s).toFixed(0)}×${(oy * s).toFixed(0)}px`) }
+      } }
+    } }
+  assert.ok(n > 2000 && nl > 1000, `檢查了戰役 ${n}、地名 ${nl}`);
+  assert.deepEqual(bad, [], bad.length + " 個問題");
+});
+
+/* ===== 第 13 批（測試員 B N13-1、測試員 D 第 13 輪）：保守的估算字框（英文字寬 .64、中文 1.05、行高 1.25）＋每個戰役點的外圈含光暈（含自己那個）＋上緣分頁、底部清單鈕 ===== */
+test("第 13 批 古戰場（保守估算）：直式 375×812、390×844，橫式 812×375、844×390，中英文——標籤不壓任何戰役點的外圈（含自己）、不壓別的標籤、不進分頁列和清單鈕；秦卷一的桂陵／伊闕、第 4 場四行標籤特別點名", t => {
+  if (!fs.existsSync(EXT)) return t.skip(SKIP);
+  const LF = path.join(ROOT, "xiangqi-db", "art", "eramap", "labels.json"), BF = path.join(ROOT, "xiangqi-db", "art", "canju", "battles2.json");
+  if (!fs.existsSync(LF) || !fs.existsSync(BF)) return t.skip("沒有 xiangqi-db/art 的地圖資料");
+  const X = load(true), G = M("m/07g-battle.js"), LJ = JSON.parse(fs.readFileSync(LF, "utf8")), BJ = JSON.parse(fs.readFileSync(BF, "utf8"));
+  const src = G.slice(G.indexOf("function btEn("), G.indexOf("/* 11/17 測試員 D 第 9 輪 P3-1"));
+  const mk = lang => { const c = { document: { documentElement: { lang } }, i18nText: s => lang === "en" ? X.i18nText(s) : null, battleOpen: (k, i, S) => i === 0 || !!S[i - 1] || !!S[i], store: { get: (k, d) => d, set() {} }, matchMedia: () => ({ matches: true }), innerWidth: 390,
+    esc: s => String(s == null ? "" : s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])), eraLabel: k => k }; vm.createContext(c); vm.runInContext(src + ";this.H=battleMapHTML", c); return c.H };
+  const un = s => s.replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  const cw = s => [...s].reduce((a, ch) => a + (/[㐀-鿿豈-﫿⭐（）・]/.test(ch) ? 1.05 : .64), 0);
+  const VP = [[375, 812, 375, 0], [390, 844, 390, 0], [812, 375, 812, 0], [844, 390, 490, 1], [844, 390, 829, 1]], bad = [], seen = { gl: 0, yq: 0, n4: 0 };
+  for (const lang of ["zh-Hant", "en"]) { const H = mk(lang);
+    for (const [vw, vh, px, wide] of VP) for (const SS of ["fresh", "done"]) {
+      const Hh = Math.max(200, vh - 59 - (wide ? 12 : 0)), A = px / Hh, k = px < 600 ? 1.3 : 1.1, TOP = 116, BOT = 68;
+      for (const era in BJ.eras) { const all = BJ.eras[era]; for (const vo of [...new Set(all.map(b => b.vol || 1))]) {
+        const idx = all.map((b, j) => j).filter(j => (all[j].vol || 1) === vo), cs = idx.map(j => all[j]), S0 = SS === "done" ? Object.fromEntries(idx.map(j => [j, {}])) : {}, html = H(era, cs, S0, null, LJ, { A, bare: 1, px, top: TOP, bot: BOT, k, idx, sk: era });
+        const [vx, vy, w, h] = html.match(/viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"/).slice(1).map(Number), s = px / w, r = w * .021 * Math.min(k, 560 / px), tag = `${lang} ${SS} ${vw}×${vh}${wide && px < 600 ? "(抽屜開)" : ""} ${era} 卷${vo}`;
+        const top = vy + TOP / s, bot = vy + h - BOT / s, B = [], MKS = [];
+        for (const m of html.matchAll(/<g class="bt-mk([^"]*)"[^>]*transform="translate\(([-\d.]+) ([-\d.]+)\)"/g)) { const fl = / flag/.test(m[1]), rr = fl ? r * 1.3 : r, R = Math.max(/ seal/.test(m[1]) ? rr * 1.9 : / next/.test(m[1]) ? rr * 2.6 : rr * .9, fl ? rr * 2.15 : 0); MKS.push([+m[2] - R, +m[3] - R, +m[2] + R, +m[3] + R]) }
+        for (const m of html.matchAll(/<text x="([-\d.]+)" y="([-\d.]+)" font-size="([\d.]+)"[^>]*class="bt-ml[^"]*">(.*?)<\/text>/g)) { const t2 = un(m[4]), fz = +m[3], hw = cw(t2) * fz / 2; B.push({ t: t2, b: [+m[1] - hw, +m[2] - fz * .6, +m[1] + hw, +m[2] + fz * .6] }) }
+        for (const m of html.matchAll(/class="bt-mk[^"]*"[^>]*transform="translate\(([-\d.]+) ([-\d.]+)\)"(?:(?!<\/g>).)*?<text x="([-\d.]+)" y="([-\d.]+)" font-size="([\d.]+)"[^>]*text-anchor="(\w+)" class="bt-mn[^"]*">(.*?)<\/text><\/g>/g)) {
+          const [, X0, Y0, tx, ty, fz0, anc, body] = m, fz = +fz0, L = body.includes("<tspan") ? [...body.matchAll(/<tspan[^>]*>(.*?)<\/tspan>/g)].map(z => un(z[1])) : [un(body)];
+          const wd = Math.max(...L.map(cw)) * fz, x = +X0 + +tx, y = +Y0 + +ty, l = anc === "start" ? x : anc === "end" ? x - wd : x - wd / 2;
+          B.push({ t: L.join(" "), b: [l, y - fz * .8, l + wd, y + (L.length - 1) * fz * 1.25 + fz * .25] }) }
+        for (const x of B) {
+          if (/^(伊闕|Yique)$/.test(x.t) && era === "qin" && vo === 1) seen.yq++; if (/桂陵|Guiling/.test(x.t)) seen.gl++; if (/胡服騎射|Nomad Dress/.test(x.t)) seen.n4++;
+          for (const o of MKS) { const ox = Math.min(x.b[2], o[2]) - Math.max(x.b[0], o[0]), oy = Math.min(x.b[3], o[3]) - Math.max(x.b[1], o[1]); if (ox * s > 1 && oy * s > 1) bad.push(`${tag}：「${x.t}」壓到戰役點的外圈 ${(ox * s).toFixed(0)}×${(oy * s).toFixed(0)}px`) }
+          if (x.b[1] < top - 1 / s || x.b[3] > bot + 1 / s) bad.push(`${tag}：「${x.t}」進到分頁列或清單鈕那一條`) }
+        for (let a = 0; a < B.length; a++) for (let b = a + 1; b < B.length; b++) { const p = B[a].b, q = B[b].b, ox = Math.min(p[2], q[2]) - Math.max(p[0], q[0]), oy = Math.min(p[3], q[3]) - Math.max(p[1], q[1]);
+          if (ox * s > 1 && oy * s > 1) bad.push(`${tag}：「${B[a].t}」×「${B[b].t}」重疊 ${(ox * s).toFixed(0)}×${(oy * s).toFixed(0)}px`) }
+      } }
+    } }
+  assert.ok(seen.gl > 0 && seen.n4 > 0, "桂陵、第 4 場都有檢查到");
+  assert.deepEqual(bad, [], bad.length + " 個問題");
+});
+
+/* ===== 第 14 批（測試員 B N14-1、測試員 D 第 14 輪）：每個戰役名明確屬於自己的點 ===== */
+test("第 14 批 古戰場：秦卷一、漢卷一、隋卷二（加上每朝每卷）直式兩種、橫式兩種尺寸，中英文——戰役名中心離自己的點比離別的點都近、離自己的點不超過 2.5 個字高；做不到的有細引線連回自己的點", t => {
+  if (!fs.existsSync(EXT)) return t.skip(SKIP);
+  const LF = path.join(ROOT, "xiangqi-db", "art", "eramap", "labels.json"), BF = path.join(ROOT, "xiangqi-db", "art", "canju", "battles2.json");
+  if (!fs.existsSync(LF) || !fs.existsSync(BF)) return t.skip("沒有 xiangqi-db/art 的地圖資料");
+  const X = load(true), G = M("m/07g-battle.js"), LJ = JSON.parse(fs.readFileSync(LF, "utf8")), BJ = JSON.parse(fs.readFileSync(BF, "utf8"));
+  const src = G.slice(G.indexOf("function btEn("), G.indexOf("/* 11/17 測試員 D 第 9 輪 P3-1"));
+  const mk = lang => { const c = { document: { documentElement: { lang } }, i18nText: s => lang === "en" ? X.i18nText(s) : null, battleOpen: (k, i, S) => i === 0 || !!S[i - 1] || !!S[i], store: { get: (k, d) => d, set() {} }, matchMedia: () => ({ matches: true }), innerWidth: 390,
+    esc: s => String(s == null ? "" : s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])), eraLabel: k => k }; vm.createContext(c); vm.runInContext(src + ";this.H=battleMapHTML", c); return c.H };
+  const un = s => s.replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  const cw = s => [...s].reduce((a, ch) => a + (/[㐀-鿿豈-﫿⭐（）・]/.test(ch) ? 1.05 : .64), 0);
+  const VP = [[375, 812, 375, 0], [390, 844, 390, 0], [812, 375, 812, 0], [844, 390, 490, 1], [844, 390, 829, 1]], bad = [], NAMED = { "qin/1": 0, "han/1": 0, "sui/2": 0 }; let nLd = 0, n = 0;
+  for (const lang of ["zh-Hant", "en"]) { const H = mk(lang);
+    for (const [vw, vh, px, wide] of VP) for (const SS of ["fresh", "done"]) {
+      const Hh = Math.max(200, vh - 59 - (wide ? 12 : 0)), A = px / Hh, k = px < 600 ? 1.3 : 1.1;
+      for (const era in BJ.eras) { const all = BJ.eras[era]; for (const vo of [...new Set(all.map(b => b.vol || 1))]) {
+        const idx = all.map((b, j) => j).filter(j => (all[j].vol || 1) === vo), S0 = SS === "done" ? Object.fromEntries(idx.map(j => [j, {}])) : {};
+        const html = H(era, idx.map(j => all[j]), S0, null, LJ, { A, bare: 1, px, top: 116, bot: 68, k, idx, sk: era }), w = +html.match(/viewBox="[-\d.]+ [-\d.]+ ([\d.]+)/)[1], fz0 = w * .024 * Math.min(k, 560 / px) * 1.05, r = w * .021 * Math.min(k, 560 / px);
+        if ((era + "/" + vo) in NAMED) NAMED[era + "/" + vo]++;
+        const P = [...html.matchAll(/<g class="bt-mk([^"]*)"[^>]*transform="translate\(([-\d.]+) ([-\d.]+)\)"(?:(?!<\/g>).)*?(<path class="bt-ld" d="M([-\d.]+) ([-\d.]+)L([-\d.]+) ([-\d.]+)"[^>]*>)?<text x="([-\d.]+)" y="([-\d.]+)" font-size="([\d.]+)"[^>]*text-anchor="(\w+)" class="bt-mn[^"]*">(.*?)<\/text><\/g>/g)];
+        for (const [i, m] of P.entries()) {
+          const fl = / flag/.test(m[1]), rr = fl ? r * 1.3 : r, VR = Math.max(/ seal/.test(m[1]) ? rr * 1.9 : / next/.test(m[1]) ? rr * 2.6 : rr * .9, fl ? rr * 2.15 : 0);
+          const X0 = +m[2], Y0 = +m[3], fz = +m[11], anc = m[12], L = m[13].includes("<tspan") ? [...m[13].matchAll(/<tspan[^>]*>(.*?)<\/tspan>/g)].map(z => un(z[1])) : [un(m[13])];
+          const wd = Math.max(...L.map(cw)) * fz, x = X0 + +m[9], y = Y0 + +m[10], l = anc === "start" ? x : anc === "end" ? x - wd : x - wd / 2, b = [l, y - fz * .8, l + wd, y + (L.length - 1) * fz * 1.25 + fz * .25];
+          const tag = `${lang} ${SS} ${vw}×${vh}${wide && px < 600 ? "(抽屜開)" : ""} ${era} 卷${vo}「${L.join(" ")}」`; n++;
+          if (m[4]) { nLd++; assert.ok(Math.abs(Math.hypot(+m[5], +m[6]) - VR) < .05, tag + "：引線從自己的點的外圈出發"); const ex = X0 + +m[7], ey = Y0 + +m[8];
+            assert.ok(ex >= b[0] - .2 && ex <= b[2] + .2 && ey >= b[1] - fz && ey <= b[3] + fz, tag + "：引線接到自己的字"); continue }
+          const cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2, dOwn = Math.hypot(cx - X0, cy - Y0);
+          for (const [j, q] of P.entries()) if (j !== i && Math.hypot(cx - +q[2], cy - +q[3]) <= dOwn) bad.push(`${tag}：字的中心離第 ${j + 1} 個點比離自己的點近`);
+          const dist = Math.hypot(Math.max(b[0] - X0, 0, X0 - b[2]), Math.max(b[1] - Y0, 0, Y0 - b[3]));
+          if (dist > VR + fz0 * 2.5 + .05) bad.push(`${tag}：離自己的點 ${(dist - VR).toFixed(1)}，超過 2.5 個字高（${(fz0 * 2.5).toFixed(1)}）`);
+        }
+      } }
+    } }
+  assert.ok(Object.values(NAMED).every(v => v >= 20), "秦卷一、漢卷一、隋卷二都在每種尺寸、中英文、兩種進度下檢查到");
+  assert.ok(n > 3000, "檢查了 " + n + " 個戰役名（其中引線 " + nLd + " 個）");
+  assert.deepEqual(bad, [], bad.length + " 個問題");
+});
+
+/* ===== 第 15 批（開發者選單「橫式只標編號」、測試員 D 排版穩定、測試員 B N15-1） ===== */
+test("第 15 批 古戰場橫式（812×375、844×390 抽屜開／沒開）每朝每卷、中英文：不輸出戰役名、引線，只有編號（字至少 11px）；點與編號不進分頁列、清單鈕；地名不壓點、不互壓；同一卷排兩次一樣", t => {
+  if (!fs.existsSync(EXT)) return t.skip(SKIP);
+  const LF = path.join(ROOT, "xiangqi-db", "art", "eramap", "labels.json"), BF = path.join(ROOT, "xiangqi-db", "art", "canju", "battles2.json");
+  if (!fs.existsSync(LF) || !fs.existsSync(BF)) return t.skip("沒有 xiangqi-db/art 的地圖資料");
+  const X = load(true), G = M("m/07g-battle.js"), LJ = JSON.parse(fs.readFileSync(LF, "utf8")), BJ = JSON.parse(fs.readFileSync(BF, "utf8"));
+  const src = G.slice(G.indexOf("function btEn("), G.indexOf("/* 11/17 測試員 D 第 9 輪 P3-1"));
+  const mk = lang => { const c = { document: { documentElement: { lang } }, i18nText: s => lang === "en" ? X.i18nText(s) : null, battleOpen: (k, i, S) => i === 0 || !!S[i - 1] || !!S[i], store: { get: (k, d) => d, set() {} }, matchMedia: () => ({ matches: true }), innerWidth: 812,
+    esc: s => String(s == null ? "" : s).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch])), eraLabel: k => k }; vm.createContext(c); vm.runInContext(src + ";this.H=battleMapHTML", c); return c.H };
+  const cw = s => [...s].reduce((a, ch) => a + (/[㐀-鿿豈-﫿⭐（）・]/.test(ch) ? 1.05 : .64), 0), un = s => s.replace(/&amp;/g, "&");
+  const bad = []; let n = 0;
+  for (const lang of ["zh-Hant", "en"]) { const H = mk(lang);
+    for (const [vw, vh, px, wide] of [[812, 375, 812, 0], [844, 390, 490, 1], [844, 390, 829, 1]]) for (const SS of ["fresh", "done"]) {
+      const Hh = Math.max(200, vh - 59 - (wide ? 12 : 0)), A = px / Hh;
+      for (const era in BJ.eras) { const all = BJ.eras[era]; for (const vo of [...new Set(all.map(b => b.vol || 1))]) {
+        const idx = all.map((b, j) => j).filter(j => (all[j].vol || 1) === vo), S0 = SS === "done" ? Object.fromEntries(idx.map(j => [j, {}])) : {}, op = { A, bare: 1, px, land: true, top: 116, bot: 68, k: 1.1, idx, sk: era };
+        const html = H(era, idx.map(j => all[j]), S0, null, LJ, op), tag = `${lang} ${SS} ${vw}×${vh} ${era} 卷${vo}`; n++;
+        if (html !== H(era, idx.map(j => all[j]), S0, null, LJ, Object.assign({}, op, { top: 113, bot: 70 }))) bad.push(tag + "：量到的高度差幾 px 就排得不一樣");
+        if (/class="bt-mn|class="bt-ld/.test(html)) bad.push(tag + "：橫式還有戰役名或引線");
+        const [vx, vy, w, h] = html.match(/viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"/).slice(1).map(Number), s = px / w, r = w * .021 * Math.min(1.1, 560 / px), top = vy + 120 / s, bot = vy + h - 72 / s, MK = [];
+        const G2 = [...html.matchAll(/<g class="bt-mk([^"]*)"[^>]*transform="translate\(([-\d.]+) ([-\d.]+)\)"[^>]*aria-label="([^"]+)">(.*?)<\/g>/g)];
+        if (G2.length !== idx.length) bad.push(tag + "：戰役點數目不對");
+        for (const g of G2) { const fl = / flag/.test(g[1]), rr = fl ? r * 1.3 : r, R = Math.max(/ seal/.test(g[1]) ? rr * 1.9 : / next/.test(g[1]) ? rr * 2.6 : rr * .9, fl ? rr * 2.15 : 0), x = +g[2], y = +g[3];
+          MK.push([x - R, y - R, x + R, y + R]);
+          if (y - R < top - .5 / s || y + R > bot + .5 / s || x - R < vx - .01 || x + R > vx + w + .01) bad.push(`${tag}：第 ${g[4]} 的點進到分頁列／清單鈕或出框`);
+          const nm = g[5].match(/<text y="[-\d.]+" font-size="([\d.]+)"[^>]*class="bt-mt">(\d+)<\/text>/); if (!nm) bad.push(`${tag}：「${g[4]}」沒有編號`); else if (+nm[1] * s < 11) bad.push(`${tag}：編號只有 ${(+nm[1] * s).toFixed(1)}px`);
+          if (/[a-zA-Z]/.test(lang === "en" ? "" : "x") && !/[㐀-鿿]/.test(g[4])) bad.push(tag + "：中文讀螢幕名稱不見了");
+          if (lang === "en" && /[㐀-鿿]/.test(g[4])) bad.push(`${tag}：英文讀螢幕名稱還是中文「${g[4]}」`) }
+        const B = [];
+        for (const m of html.matchAll(/<text x="([-\d.]+)" y="([-\d.]+)" font-size="([\d.]+)"[^>]*class="bt-ml[^"]*">(.*?)<\/text>/g)) { const t2 = un(m[4]), fz = +m[3], hw = cw(t2) * fz / 2; B.push({ t: t2, b: [+m[1] - hw, +m[2] - fz * .6, +m[1] + hw, +m[2] + fz * .6] }) }
+        for (const [a, x] of B.entries()) { for (const o of MK) if (Math.min(x.b[2], o[2]) - Math.max(x.b[0], o[0]) > 1 / s && Math.min(x.b[3], o[3]) - Math.max(x.b[1], o[1]) > 1 / s) bad.push(`${tag}：地名「${x.t}」壓到戰役點`);
+          for (const y of B.slice(a + 1)) if (Math.min(x.b[2], y.b[2]) - Math.max(x.b[0], y.b[0]) > 1 / s && Math.min(x.b[3], y.b[3]) - Math.max(x.b[1], y.b[1]) > 1 / s) bad.push(`${tag}：地名「${x.t}」×「${y.t}」`);
+          if (x.b[1] < top - 1 / s || x.b[3] > bot + 1 / s) bad.push(`${tag}：地名「${x.t}」進到分頁列或清單鈕` ) }
+      } }
+    } }
+  assert.ok(n > 300, "排了 " + n + " 張");
+  assert.deepEqual(bad, [], bad.length + " 個問題");
+});
+test("第 15 批 N15-1 古戰場抽屜：計謀、道理、殘局題、難度各自一個節點翻得出；「年代・甲 對 乙（人）」組合格式（pat，名字翻不出照原文）", t => {
+  if (!fs.existsSync(EXT)) return t.skip(SKIP);
+  const X = load(true), G = M("m/07g-battle.js");
+  assert.ok(G.includes("<span class=\"bt-tag\">🗡 <span>計謀：</span><span>${esc(c.trick)}</span>　📘 <span>道理：</span><span>${esc(c.lesson)}</span></span>"), "07g 計謀、道理標籤各自一個節點");
+  assert.ok(G.includes("`📜 <span>殘局題：</span><span>${esc(P.t)}</span>・<span>${cjLv(P.d)}</span>・<span>${cjSrc(P)}</span>`"), "07g 殘局題各段各自一個節點");
+  assert.ok(G.includes("<small>${esc(c.year)}${c.sides?\"・\"+esc(c.sides):\"\"}"), "07g 年代・對陣樣板");
+  for (const s of ["計謀：", "道理：", "殘局題：", "初級", "中級", "高級", "大師收官", "📜 史實", "出處：", "📜 歷史上其實是這樣", "📍 約在"]) ok(X, s);
+  assert.equal(ok(X, "前 204 年・漢（韓信）對 趙"), "204 BCE · Han (Han Xin) vs Zhao");
+  assert.equal(ok(X, "前 307–前 296 年・趙 對 中山"), "307–296 BCE · Zhao vs Zhongshan");
+  assert.equal(X.i18nText("前 206 年・漢 對 雍（章邯）"), "206 BCE · Han vs Yong (章邯)", "人名之後大批翻譯，這批照原文");
+  const BJ = path.join(ROOT, "xiangqi-db", "art", "canju", "battles2.json");
+  if (fs.existsSync(BJ)) { const J = JSON.parse(fs.readFileSync(BJ, "utf8")); let n = 0, done = 0;
+    for (const k in J.eras) for (const c of J.eras[k]) if (c.sides) { n++; const r = X.i18nText(c.year + "・" + c.sides); if (r != null && / vs /.test(r) && !/[㐀-鿿]/.test(r.replace(/\([^)]*\)/g, ""))) done++ }
+    assert.ok(done / n > .5, `年代・對陣翻得出結構的 ${done}／${n}`) }
 });

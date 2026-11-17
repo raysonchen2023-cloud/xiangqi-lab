@@ -94,7 +94,7 @@ const axKey=s=>String(s==null?"":s).replace(/[\p{Extended_Pictographic}\u{FE0F}\
 let AX_LAST={t:"",at:0};
 function axSay(t){if(!t||!document.body)return;let r=document.getElementById("axLive");
   if(!r){r=document.createElement("div");r.id="axLive";r.className="ax-sr";r.setAttribute("role","status");r.setAttribute("aria-live","polite");r.setAttribute("aria-atomic","false");r.setAttribute("data-noi18n","");document.body.append(r)}
-  const now=Date.now();if(axKey(t)===axKey(AX_LAST.t)&&now-AX_LAST.at<3000)return t;const me=AX_LAST={t,at:now};
+  const now=Date.now(),k=axKey(t);if(k===axKey(AX_LAST.t)&&now-AX_LAST.at<3000)return t;for(const d of r.children)if(now-(d._at||0)<3000&&axKey(d.textContent)===k)return t;   /* 11/17 第 10 輪：中間插了別句也一樣：3 秒內播報區已經有同一句（去掉圖示後相同）就不再寫 */const me=AX_LAST={t,at:now};
   setTimeout(()=>{if(me.gone)return;const d=document.createElement("div");d.textContent=t;d._at=Date.now();r.append(d);while(r.children.length>4)r.firstChild.remove()},50);return t}
 /* 11/17 測試員 B 第 8 輪 N8-2：視窗不是按按鈕關的（換頁、程式自己收掉）時，播報區的舊句子會一直留著（換頁、進對局後還在）→ 換頁時把 1.5 秒以前寫的行清掉（剛念的、換頁後才念的頁名不動） */
 function axGc(){try{const r=document.getElementById("axLive");if(r)for(const d of[...r.children])if(Date.now()-(d._at||0)>1500)d.remove()}catch(e){}}
@@ -151,7 +151,11 @@ let VOICE=null,VOICE_FIT=false;const pickVoice=()=>{try{const sex=store.get("voi
   const zh=speechSynthesis.getVoices().filter(v=>/^(zh|cmn|yue)/i.test(v.lang)),rank=v=>/zh[-_]TW/i.test(v.lang)?0:/zh[-_]HK/i.test(v.lang)?2:1;zh.sort((a,b)=>rank(a)-rank(b));
   const fit=zh.find(v=>re.test(v.name)&&!(sex==="m"&&V_FEMALE.test(v.name)));VOICE=fit||zh[0]||null;VOICE_FIT=!!fit}catch(e){}};
 if(window.speechSynthesis){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
-let voicePrimed=false;const primeVoice=()=>{if(voicePrimed||!window.speechSynthesis)return;voicePrimed=true;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;speechSynthesis.speak(u)}catch(e){}};
+/* 11/17 iMac 模擬器 B：iOS 原生 App 在開頭畫面點一下，整個 App 卡住約 60 秒——點擊（unlockAudio）第一次呼叫 speechSynthesis.speak（下面的靜音暖機），
+   系統語音服務在主執行緒等語言設定（TTSPreferencesCopyDefaultOutputLanguageIdentifierForUserPreferences → semaphore_wait）。
+   原生 App（native-bridge.js 設 window.XQ_NATIVE，或 UA 帶 XQQianqiuApp/）不做暖機：WKWebView 本來就允許之後直接朗讀，真的要報「吃」「將軍」時（sayCall）才第一次呼叫 speak。網頁版照舊 */
+function voiceNoPrime(){try{return!!window.XQ_NATIVE||/XQQianqiuApp\//.test(String(navigator.userAgent||""))}catch(e){return false}}
+let voicePrimed=false;const primeVoice=()=>{if(voicePrimed||!window.speechSynthesis)return;voicePrimed=true;if(voiceNoPrime())return;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;speechSynthesis.speak(u)}catch(e){}};
 // 「吃！」「將軍！」改用錄好的音檔（意見回饋 155：iPhone 內建中文語音只有女聲，壓低音高還是女聲）
 // data/voice/<m|f>-<chi|jj>-<s|n|f>.wav：男聲＝志偉、女聲＝雅婷（Windows 語音合成），慢／中／快三種速度；檔案還沒到就先用手機內建語音
 const VC_RAW={},VC_P={};let VC_DEC={ctx:null};

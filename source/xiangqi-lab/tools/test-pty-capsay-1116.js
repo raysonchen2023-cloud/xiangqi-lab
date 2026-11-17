@@ -26,7 +26,7 @@ test("〔原始碼〕畫面上不再出現「角色等級不能超過修為」�
 test("〔原始碼〕夥伴練滿：卡片註記與按＋星輝的提示都改成講結果；練滿的人照舊沒有＋星輝鈕", () => {
   assert.ok(PTY.includes('${top?(L>=100?"（練滿了）":"（練滿了，等你升級）"):""}'));
   assert.ok(PTY.includes('toast(g?`✨ 給了 ${g} 星輝`:"已經跟你一樣高了，等你升級再練")'));
-  assert.ok(PTY.includes('${top?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}'));
+  assert.ok(PTY.includes('${top&&!room?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}'), "11/17 B N17-1：練滿但這一級還沒加滿，照樣給＋星輝鈕；加滿了才沒有");
 });
 
 test("〔混合〕11/16 開發者「要怎麼升級？」→ 選單「寫還差幾點＋去哪裡賺」：最上面寫還差幾點；有夥伴練滿時多一行去哪裡賺修為＋去下一盤", () => {

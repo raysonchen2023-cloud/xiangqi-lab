@@ -450,6 +450,8 @@ function shipGateSay(N){vibrate([20,40,20]);const here=shipHere()===N.k;sheet(N.
   const bind=()=>b.querySelectorAll("[data-sg]").forEach(x=>x.onclick=()=>{const t=N.T[+x.dataset.sg];closeSheet();if(t&&t.go)location.hash=t.go});bind();
   if(!N.first&&shipPuzzles(N.k)===null)shipBank().then(()=>{const N2=shipSailNeed(),L=b.querySelector("#sgList");if(!N2||N2.first||N2.k!==N.k||!L||!L.isConnected)return;N=N2;L.innerHTML=shipTaskList(N,here);bind()}).catch(()=>{})})}   /* 題庫載好再畫一次，「看答案的不算」那句才出得來 */
 /* 起航 #/ship/sail：船尾舵與帆；天上寫下一站（說書人預告、棋理、這一朝的棋、建議修為），舵旁的星光＝起航。十三站都停靠過＝旅程終點卡 */
+/* 11/17 iMac 0542 模擬器 D：有說明卡的頁不顯示甲板上走路的小人（div.xqbot 是 body 直屬、fixed、z-index 900，會走過卡片標題和「起航」鈕）；樣式跟著頁面，換頁就拿掉 */
+const SHS_NOBOT="<style>body:has(.shs-card)>.xqbot{display:none!important}</style>";
 function ShipSail(v){setTop("⛵ 起航",null,[["🏠",()=>goHome(),"回首頁"]]);setTabs(false);   /* 11/13 開發者：左上角「‹ 回星槎」拿掉，改成船板上的場景大字標籤 ssUp（跟渡口一樣） */v.className="view";const ap=shipAppr(),k=shipHere(),nx=ap?null:shipNextStop(),allIn=!ap&&!nx&&!!shipDockList(),I=xpInfo(),[sx,sy]=SAIL_SPOT;
   let card,sp=[],cap,sub;
   if(nx){const Ln=SHIP_LESSON[nx]||{},Hn=typeof HIST!=="undefined"?HIST[nx]:null,lvH=SHIP_LV[shipOrder().indexOf(nx)]||0;cap="⛵ 下一站・"+esc(shipShort(nx));sub="現在停靠："+esc(shipShort(k));
@@ -459,7 +461,7 @@ function ShipSail(v){setTop("⛵ 起航",null,[["🏠",()=>goHome(),"回首頁"]
   else{cap="⛵ 起航";sub=ap?"說書人的學徒":"";card=ap?`<b>📜 十三站都能去</b><p>說書人的學徒不用照順序起航；回星槎頁，在航線上點想去的那一站。</p>`:`<b>還沒選角色</b><p>回星槎頁，從頭開始這段旅程。</p>`;sp=[["ssBack",sx,sy,"🌌 看航線","回星槎頁"]]}
   if(shipFinaleOpen()){const fd=shipLearned("finale");sp.push(["ssFin",FIN_SPOT[0],FIN_SPOT[1],"♟ 千秋歸位",fd?"✅ 石桌已補全":"終章・七人共局",fd?"":"hot"]);card+=fd?`<p class="muted">✅ 石桌已補全：七顆棋子都歸位了。</p>`:`<p class="shp-say">說書人：「歸位以前，再陪老朽看一局？」</p>`}   /* 終章（元件 C）：13 站都學會才出現 */
   if(!sp.some(s=>s[0]==="ssBack"))sp.push(["ssUp",UP_SPOT[0],UP_SPOT[1],"⛵ 回星槎",""]);
-  v.innerHTML=shpPage("page_sail",cap,sub,sp,`<div class="shs-card">${card}</div>`);
+  v.innerHTML=shpPage("page_sail",cap,sub,sp,`<div class="shs-card">${card}</div>`+SHS_NOBOT);
   shpOn(v,"#ssUp",()=>goUp("#/adventure"));shpOn(v,"#ssFin",()=>{location.hash="#/ship/lv/finale/xl-finale"});shpOn(v,"#ssGo",()=>shipSailGo(()=>goUp("#/adventure")));shpOn(v,"#ssDb",()=>{location.hash="#/db"});shpOn(v,"#ssBack",()=>goUp("#/adventure"));if(allIn&&typeof chdEndBind==="function")chdEndBind(v);shpFit(v);return{}}
 const SAIL_SPOT=[52,72],FIN_SPOT=[52,86],UP_SPOT=[20,86];
 const SHIP_PG={lesson:ShipLesson,shelf:ShipShelf,bag:ShipBag,sail:ShipSail};
@@ -774,7 +776,7 @@ function ShipPhantom(v){setTop("🀄 千秋石桌","#/port");setTabs(false);v.cl
   else{const k=S.lastK,C=k&&S.cards[k];card=gh+'<b>幻影</b><p class="shp-say">「'+(C?'記住這句口訣：「'+esc((SHIP_LESSON[k]||{}).k||"")+'」。帶回'+esc(shipShort(k))+'，再試一次吧！':'石桌上的紅子，要等七位旅伴都走過自己的路，才會全部回來。卡住的時候，再來找我。')+'」</p></div></div>'+(C?'<div class="row" style="gap:8px;margin-top:8px"><button class="btn" id="phBack">⛵ 回'+esc(shipShort(k))+'再試一次</button></div>':'')}
   const solid=phSolid().filter(s=>s>=1).length;
   card+='<p style="margin:10px 0 0"><b>歸位之兆</b>　石桌上的紅子：'+solid+'／7</p>'+phTableHTML()+'<p class="muted" style="font-size:12.5px;margin:2px 0 0">每學會一站、每次跟幻影練過，紅子就更清楚一點；七顆都回來，就是「千秋歸位」的時候。</p>';
-  v.innerHTML=shpPage("page_canju","🀄 千秋石桌","青石園・幻影指導局",[],'<div class="shs-card">'+card+'</div>');
+  v.innerHTML=shpPage("page_canju","🀄 千秋石桌","青石園・幻影指導局",[],'<div class="shs-card">'+card+'</div>'+SHS_NOBOT);
   if(glow!=null){const e=v.querySelectorAll(".ph-pc")[glow];if(e)e.classList.add("glow");const T=phGet();delete T.glow;store.set("phState",T)}
   const pl=v.querySelector("#phPlay");if(pl)pl.onclick=async()=>{vibrate(5);pl.disabled=true;let id=null;try{id=await phPick(N)}catch(e){}if(!id){pl.disabled=false;toast("題目還在載入，再按一次");return}location.hash="#/canju/ph/"+N.k+"/"+id};
   const bk=v.querySelector("#phBack");if(bk)bk.onclick=()=>{const k=S.lastK,id=S.lastId;vibrate(5);try{shipEra(k)}catch(e){}setTimeout(()=>{location.hash=id?shipHref(k,id):"#/ship/pz"},60)};

@@ -525,6 +525,7 @@ function saveBoot(){if(SAVE_OLD!==null){store.set("saveMig1",Date.now());if(SAVE
   try{const u=JSON.parse(localStorage.getItem("xqUpdBack")||"null");localStorage.removeItem("xqUpdBack");if(u&&Date.now()-(+u.t||0)<180000){shown=true;sessionStorage.setItem("xqTitleShown","1");sessionStorage.setItem("xqUpdBoot",String(Date.now()));if(u.h&&/^#\//.test(u.h)&&!/^#\/./.test(location.hash||""))location.hash=u.h}}catch(e){}   /* 11/16 開發者選單「只管更新」：3 分鐘內的更新重載（02-shell markDone 記的）＝不出開頭畫面，網址沒帶頁面就回到原本那一頁；真的關掉 App 再開照舊出開頭畫面 */
   if(pro){if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhxBack==="function")bhxBack(true);setTimeout(()=>{if(typeof bhxLandNew==="function"&&bhxLandNew())return;prologue()},1500)}   /* 有舊旅程的人在開頭選好角色：換格會重新載入，載入後一樣降落經典星槎 */   /* 換格開新旅程會重新載入：等序幕的 1.5 秒先蓋黑洞底，不露出首頁 */
   if(!pro&&typeof bhxResume==="function"&&bhxResume())return;   /* 11/16 P0：開新旅程到一半被重新載入＝接回序局邀局卡（07bh bhxResume），不掉回舊旅程 */
+  if(shown&&typeof stqFresh==="function"&&stqFresh())shown=false;   /* 11/17 iMac 模擬器 A：全新玩家在開頭畫面等新手練習時點一下，被重新載入（原生 App 卡住後 WebView 重開、隔離重整、雙份存檔還原……），sessionStorage 的 xqTitleShown 還在，就略過開頭畫面、落在首頁「還沒登船」。還是全新玩家（07stq stqFresh：沒旅程、沒練習紀錄、不是舊玩家）就照樣出開頭畫面，stqBoot 接手進新手練習 */
   if(shown||navigator.webdriver||!/^(#\/?)?$/.test(location.hash||""))return;titleScreen({})}
 setTimeout(()=>{try{saveBoot()}catch(e){console.warn("saveBoot",e)}},0);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveNow(true)});

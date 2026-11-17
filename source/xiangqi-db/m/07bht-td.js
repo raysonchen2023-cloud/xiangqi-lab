@@ -590,7 +590,7 @@ body.bh-full.bhtd-on .bt-aux{flex-wrap:wrap;gap:5px}body.bh-full.bhtd-on .bt-aux
 #bhtdOv{position:fixed;inset:0;pointer-events:none;z-index:42;overflow:hidden}.pk-veil #bhtdOv,.pk-veil #gsvOv{visibility:hidden}
 body.bhtd-tg #bhtlTip{pointer-events:none;opacity:.35}
 #bhtdOv svg{position:absolute;inset:0;width:100%;height:100%}
-.bt-mk{position:absolute;left:0;top:0;transform:translate(-50%,-50%);pointer-events:none;display:flex;align-items:center;justify-content:center;font-family:var(--serif);will-change:transform}
+.bt-mk:not(g){position:absolute;left:0;top:0;transform:translate(-50%,-50%);pointer-events:none;display:flex;align-items:center;justify-content:center;font-family:var(--serif);will-change:transform}
 .bt-mk.eye{width:calc(var(--c)*.95);height:calc(var(--c)*.95);border-radius:50%;border:2px solid rgba(255,224,138,.9);box-shadow:0 0 14px 4px rgba(255,214,120,.55),inset 0 0 10px rgba(255,214,120,.5);animation:btEye 2s ease-in-out infinite}
 .bt-mk.eye::after{content:"👑";position:absolute;top:-1.25em;font-size:15px;line-height:1;filter:drop-shadow(0 0 4px #FFB000)}.bt-mk.eye.sib{opacity:.72;border-style:dashed}.bt-mk.eye.sib::after{display:none}
 @keyframes btEye{50%{box-shadow:0 0 22px 8px rgba(255,214,120,.75),inset 0 0 14px rgba(255,214,120,.7)}}

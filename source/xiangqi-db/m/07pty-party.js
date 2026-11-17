@@ -114,7 +114,7 @@ function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.c
 .pty-tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:9px;margin-left:4px;background:#f3e3b5;color:#5a4300}
 .pty-tag.look{background:#dbeafe;color:#1e3a8a}
 .pty-m{font-size:13px;color:var(--muted,#6b6257)}
-.pty-xp{height:7px;border-radius:4px;background:#e8dfcf;overflow:hidden;margin:4px 0}.pty-xp b{display:block;height:100%;background:#d4a017}
+.pty-xp{height:7px;border-radius:4px;background:#e3e8f1;overflow:hidden;margin:2px 0 4px}.pty-xp b{display:block;height:100%;background:linear-gradient(90deg,#d4a017,#2b6cb0)}.pty-xpt{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:#2b6cb0;margin-top:4px}.pty-xpt span:last-child{color:var(--muted,#6b6257)}
 .pty-a{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.pty-a .btn{flex:1 1 0;width:auto;min-width:0;min-height:40px;margin:0;padding:6px 8px;font-size:14px;white-space:nowrap}
 .pty-st{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
 .pty-st>span{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;border-radius:8px;background:rgba(128,110,80,.12)}
@@ -170,13 +170,14 @@ function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])
   const img=`<img src="data/xs/prev_${c}.webp" alt="">`;
   if(!PTY.has(P,c)){const j=PTY.JOIN[c],at=j&&typeof eraLabel==="function"?eraLabel(j.st):"";const goal=P.hint&&P.hint[c]&&PTY_GOAL[c];
     return`<div class="pty-c lk">${img}<div><div class="pty-n">？？？<small>${esc(C.pc||"")}</small></div><div class="pty-m">${goal?esc(goal):`星槎停靠${esc(at)}時相遇`}</div></div></div>`}
-  const lv=PTY.lv(P,c,L),x=P.m[c].xp,b0=PTY.base(lv),nd=PTY.need(lv),top=lv>=L,pct=top?100:Math.max(0,Math.min(100,100*(x-b0)/nd));
+  const lv=PTY.lv(P,c,L),x=P.m[c].xp,b0=PTY.base(lv),nd=PTY.need(lv),top=lv>=L,dn=lv>=100?1:top?Math.max(1,PTY.cap(L)-b0):nd,got=Math.max(0,Math.min(dn,x-b0)),pct=lv>=100?100:Math.max(0,Math.min(100,100*got/dn));   /* 練滿時分母＝這一級加得到的上限（PTY.cap，比升級要的少 1），條上的數字跟「滿了」「還能加」對得起來 */
+  const room=Math.max(0,PTY.cap(L)-x),gsay=lv>=100?"已到最高級":!top?`還差 ${nd-got} 升 Lv ${lv+1}`:room>0?`還能加 ${room}（升 Lv ${lv+1} 要等你修為升級）`:`滿了，等你修為升 Lv ${L+1}`;   /* 11/17 開發者：金色條改成星輝條（這一級加了多少、還差多少升級） */
   const skP=ptySkPool(c),skN=skP.filter(s=>s.lv<=lv).length;   /* 11/16：招式從那一行小字搬成一列可以點的「招式 n／N ›」 */
   const tg=P.look===c?`<span class="pty-tag look">陪你走</span>`:"";
   return`<div class="pty-c" data-c="${c}">${img}<div><div class="pty-n">${esc(C.n)}<small>${esc(C.nk||"")}</small>${tg}</div>
-    <div class="pty-m">${esc(C.pc||"")}・${esc(era)}・Lv ${lv}${top?(L>=100?"（練滿了）":"（練滿了，等你升級）"):""}</div><div class="pty-xp" aria-hidden="true"><b style="width:${pct.toFixed(1)}%"></b></div></div>
+    <div class="pty-m">${esc(C.pc||"")}・${esc(era)}・Lv ${lv}${top?(L>=100?"（練滿了）":"（練滿了，等你升級）"):""}</div><div class="pty-xpt"><span>✨ 星輝 ${got}／${lv>=100?got:dn}</span><span>${gsay}</span></div><div class="pty-xp" aria-hidden="true"><b style="width:${pct.toFixed(1)}%"></b></div></div>
     ${ptyStatHTML(c,lv)}${skP.length?`<button type="button" class="pty-row" data-a="sk"><span>招式</span><b>${skN}／${skP.length}</b><i aria-hidden="true">›</i></button>`:""}${typeof SG2G!=="undefined"&&typeof sg2TalSheet==="function"&&typeof sg2TalGet==="function"?`<button type="button" class="pty-row" data-a="tal"><span>天賦</span><b>${(sg2TalGet()[c]||[]).length}／${SG2G.TAL_MAX}</b><i aria-hidden="true">›</i></button>`:""}
-    ${(a=>a?`<div class="pty-a">${a}</div>`:"")(`${top?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}`)}</div>`}   /* 兩顆都不用出現時（練滿了又正陪你走）不留一條空白 */
+    ${(a=>a?`<div class="pty-a">${a}</div>`:"")(`${top&&!room?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}`)}</div>`}   /* 兩顆都不用出現時（練滿了又正陪你走）不留一條空白 */
 function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0){try{toast("還沒有開始旅程")}catch(e){}return}ptyCss();
   sheet("🌟 雲河七星",b=>{const draw=()=>{const P=ptyGet(),L=ptyL(),sy=b.scrollTop;
     b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L,ptyXpNd())}</p>`+ptyXpHow(P,L)+ptyTeamHTML()+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+

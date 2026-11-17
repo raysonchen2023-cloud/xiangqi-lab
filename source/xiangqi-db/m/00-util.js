@@ -279,13 +279,20 @@ addEventListener("popstate",()=>{const s1=history.state||{},d0=NAV_D;if(typeof s
    ④按鈕第三格寫字串（例如 "wide"）＝次要按鈕再加這個 class（結果視窗裡自己一整排） */
 function modal(html,buttons,cls){if(Date.now()<MODAL_HOLD){const rn=ROUTE_N,go=()=>{const i=MODAL_Q.indexOf(go);if(i<0)return;MODAL_Q.splice(i,1);if(rn===ROUTE_N)modal(html,buttons,cls)};MODAL_Q.push(go);setTimeout(go,MODAL_HOLD-Date.now()+30);return null}
   const m=document.createElement("div");m.className="modal"+(cls?" "+cls:"")+(document.querySelector(".kx,.kx-dim")?" ovk":"");m.innerHTML=`<div class="box">${html}<div class="mb"></div></div>`;
-  for(const[label,fn,ghost]of buttons){const b=document.createElement("button");b.className="btn"+(ghost?" ghost":"")+(typeof ghost==="string"?" "+ghost:"");b.textContent=label;b.onclick=()=>{m.remove();try{if(m._ax&&typeof axUnsay==="function")axUnsay(m._ax)}catch(e){}fn&&fn()};m.querySelector(".mb").append(b)}   /* 11/17 測試員 D 第 7 輪 P3-3：視窗關掉時，播報區裡這個視窗念過的那一行一起拿掉 */
-  document.body.append(m);m.setAttribute("role","dialog");try{mdTop(m)}catch(e){}try{if(typeof i18nApply==="function"&&/^en/.test(document.documentElement.lang||""))i18nApply(m.querySelector(".box"))}catch(e){}/* 11/17 N6-6：英文時先把視窗換成英文再念（播報區不留中文） */try{if(typeof axSay==="function")m._ax=axSay(m.querySelector(".box").innerText.replace(/\s+/g," ").trim().slice(0,160))}catch(e){}try{mdSayEn(m)}catch(e){}return m}   /* 回饋 847（讀螢幕盲棋）：結果視窗（贏了、輸了、和棋）跳出來時讀出來 */
+  for(const[label,fn,ghost]of buttons){const b=document.createElement("button");b.className="btn"+(ghost?" ghost":"")+(typeof ghost==="string"?" "+ghost:"");b.textContent=label;b.onclick=()=>{m.remove();try{mdUnsay(m)}catch(e){}fn&&fn()};m.querySelector(".mb").append(b)}   /* 11/17 測試員 D 第 7 輪 P3-3：視窗關掉時，播報區裡這個視窗念過的那一行一起拿掉 */
+  document.body.append(m);m.setAttribute("role","dialog");try{mdTop(m)}catch(e){}try{if(typeof i18nApply==="function"&&/^en/.test(document.documentElement.lang||""))i18nApply(m.querySelector(".box"))}catch(e){}/* 11/17 N6-6：英文時先把視窗換成英文再念（播報區不留中文） */try{mdSay(m)}catch(e){}return m}   /* 回饋 847（讀螢幕盲棋）：結果視窗（贏了、輸了、和棋）跳出來時讀出來 */
+/* 11/17 測試員 D 第 10 輪：英文模式「加到主畫面」視窗開著時播報區寫了兩次（先寫一句、外掛字典載完 mdSayEn 又寫一句）→ 英文模式、視窗的字還有中文（外掛字典還沒載完）先不念，交給 mdSayEn 翻好再念一次；
+   念過的每一句都記在 m._axs，任何一顆按鈕關視窗（No thanks、I've already added it、OK, adding it now…）全部清掉（mdUnsay） */
+function mdSay(m){if(typeof axSay!=="function")return;m._axs=m._axs||[];let en=false;try{en=typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){}
+  if(en&&/[\u3400-\u9fff]/.test(m.querySelector(".box").innerText)&&typeof i18nExtLoad==="function"&&typeof i18nApply==="function"){m._ax="";mdSayEn(m);return}
+  m._ax=axSay(m.querySelector(".box").innerText.replace(/\s+/g," ").trim().slice(0,160));if(m._ax)m._axs.push(m._ax)}
 /* 11/17 測試員 B 第 8 輪 N8-2：英文模式重新整理後跳的視窗（序局邀局「星樞棋局・序局」）開得比英文外掛字典（i18n-en.json）載完還早——畫面晚一點會換成英文，播報區卻留著當下念的中文全文。
    英文模式、念的那句還有中文：等外掛字典載完再把視窗翻一次，播報區那一行換成英文（拿掉中文那行、念英文那句）；視窗已經關了就不做。07i18n i18nBoot 也會對開機前就開著的視窗再叫一次 */
-function mdSayEn(m){let en=false;try{en=typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){}if(!en||!m||!m._ax||typeof i18nExtLoad!=="function"||typeof i18nApply!=="function"||!/[㐀-鿿]/.test(m._ax))return;
-  Promise.resolve(i18nExtLoad()).then(()=>{if(!m.isConnected)return;const bx=m.querySelector(".box");if(!bx)return;try{i18nApply(bx)}catch(e){}const t=bx.innerText.replace(/\s+/g," ").trim().slice(0,160);if(!t||t===m._ax)return;
-    try{if(typeof axUnsay==="function")axUnsay(m._ax);m._ax=axSay(t)}catch(e){}}).catch(()=>{})}
+function mdSayEn(m){let en=false;try{en=typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){}if(!en||!m||typeof i18nExtLoad!=="function"||typeof i18nApply!=="function")return;
+  const L0=m._axs||(m._axs=m._ax?[m._ax]:[]);if(L0.length&&!L0.some(x=>/[\u3400-\u9fff]/.test(x)))return;   /* 念過的都是英文＝不用再念；還沒念（mdSay 先不念的）或念過中文＝等字典載完再念 */
+  Promise.resolve(i18nExtLoad()).then(()=>{if(!m.isConnected)return;const bx=m.querySelector(".box");if(!bx)return;try{i18nApply(bx)}catch(e){}const t=bx.innerText.replace(/\s+/g," ").trim().slice(0,160);if(!t)return;const K=typeof axKey==="function"?axKey:x=>x;if((m._axs||[]).some(x=>K(x)===K(t)))return;
+    try{mdUnsay(m);m._axs=[];m._ax=axSay(t);if(m._ax)m._axs.push(m._ax)}catch(e){}}).catch(()=>{})}
+function mdUnsay(m){if(!m||typeof axUnsay!=="function")return;for(const x of m._axs||[m._ax])if(x)axUnsay(x)}
 /* 11/11 模擬玩家問題 8：確認框要在最上層——全站地圖（07z6 #stmOv，z-index 9000）、各頁的大面板（950 上下）開著時跳的確認框（例如地圖上點「這站棋理」）
    以前固定 z-index 60，開在地圖底下，看起來像沒反應。跳出來時看 body 底下正開著、蓋住畫面的固定層，比它高一層；最多到 9990（家長時段、過場、預載畫面照舊在最上面） */
 function mdTop(m){let z=0;const VA=innerWidth*innerHeight;for(const el of document.body.children){if(el===m||el.classList.contains("toast")||el.classList.contains("modal"))continue;const cs=getComputedStyle(el);if(cs.position!=="fixed"||cs.display==="none"||cs.visibility==="hidden"||cs.opacity==="0")continue;const n=parseInt(cs.zIndex,10);if(!(n>z&&n<9990))continue;

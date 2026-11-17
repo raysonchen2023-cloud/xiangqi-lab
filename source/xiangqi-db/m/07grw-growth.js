@@ -30,6 +30,9 @@ function grwBootOf(o,n){if(!o||o.v!==GRW_V)return n;if(o.sid===n.sid)return o;co
    「修為升到 Lv N！」只算這一盤升的：grwArm（08b 結算一開始、發這盤修為之前）記下當時的等級 pre；o＝上次給玩家看過的快照。
    六項數值照舊跟上次的快照比（兩盤之間點的天賦、練的等級照樣在下一盤告訴玩家「a → b」），只有升級那句改用 pre 當起點 */
 function grwBase(o,p){if(!o||o.v!==GRW_V||!grwNum(p))return o;return Object.assign({},o,{lv:p})}
+/* 11/17 開發者選單（第 10 輪）：星門圍城結算的成長列只算這一局——開局時記下快照（grwGame，store grwG＝{id,s}），結算時跟它比，局外的變化（別處賺的修為、點的天賦）不算進來。
+   g＝開局快照、gid＝這次結算的那一盤（grwArm 第二個參數）：同一盤才用開局快照，不然照舊用上次給玩家看過的快照 o */
+function grwPick(o,g,gid){return g&&gid&&g.id===String(gid)&&g.s&&g.s.v===GRW_V?g.s:o}
 /* #GRW-PURE-END */
 
 const GRW={arm:0,k:"",sid:Date.now().toString(36)+Math.random().toString(36).slice(2,7)};
@@ -50,7 +53,7 @@ function grwNow(){const o={v:GRW_V,sid:GRW.sid,at:Date.now(),c:"",lv:1};
     if(typeof bhtdTal==="function"){o.sk=BHTD.SK.filter(s=>s.ch===S.ck&&s.lv<=o.lv).length;try{o.tal=((bhtdDust()||{}).t||[]).length}catch(e){}}}}catch(e){}
   return o}
 /* 對局結束時呼叫（08b 結算、07bhw 車輪戰）：接下來第一個結果視窗插成長那一塊 */
-function grwArm(k){if(!GRW_ON)return;GRW.arm=Date.now();GRW.k=String(k||"");GRW.pre=null;try{GRW.pre=xpInfo().L}catch(e){}}   /* 11/17 B-8：記下發這盤修為之前的等級（grwBase） */
+function grwArm(k,gid){if(!GRW_ON)return;GRW.arm=Date.now();GRW.k=String(k||"");GRW.gid=gid==null?"":String(gid);GRW.pre=null;try{GRW.pre=xpInfo().L}catch(e){}}   /* 11/17 B-8：記下發這盤修為之前的等級（grwBase） */
 const grwArmed=()=>!!GRW.arm&&Date.now()-GRW.arm<GRW_TTL;
 function grwCss(){try{if(typeof document==="undefined"||document.getElementById("grwCss"))return;const s=document.createElement("style");s.id="grwCss";s.textContent=`
 .grw{width:100%;max-width:300px;box-sizing:border-box;margin:8px auto 2px;padding:8px 12px;border:1px solid var(--line);border-radius:12px;font-size:14.5px;line-height:1.7;text-align:left}
@@ -69,10 +72,13 @@ function grwAnim(box){if(grwRM()||typeof requestAnimationFrame!=="function"||!bo
     const step=t=>{if(!b.isConnected)return;const p=Math.max(0,Math.min(1,(t-t0)/GRW_MS)),e=1-Math.pow(1-p,3);b.textContent=String(Math.round(a+(z-a)*e));
       if(p<1)requestAnimationFrame(step);else{b.textContent=String(z);b.classList.add("pop")}};requestAnimationFrame(step)});return true}
 /* 結果視窗出來了：比快照 → 有變化就插在按鈕上面 → 更新快照 */
-function grwShow(m){GRW.arm=0;const now=grwNow(),old=grwLoad(),pre=GRW.pre;GRW.pre=null;grwSave(now);if(!old||!m||!m.querySelector)return"";
-  const h=grwHtml(grwDiff(grwBase(old,pre),now));if(!h)return"";grwCss();const mb=m.querySelector(".mb");if(mb)mb.insertAdjacentHTML("beforebegin",h);else{const bx=m.querySelector(".box");if(bx)bx.insertAdjacentHTML("beforeend",h)}
+function grwShow(m){GRW.arm=0;const now=grwNow(),old=grwLoad(),pre=GRW.pre,gid=GRW.gid;GRW.pre=null;GRW.gid="";grwSave(now);let g=null;try{g=store.get("grwG",null)}catch(e){}
+  const base=grwPick(old,g,gid);if(base!==old)try{store.set("grwG",null)}catch(e){}if(!base||!m||!m.querySelector)return"";
+  const h=grwHtml(grwDiff(grwBase(base,pre),now));if(!h)return"";grwCss();const mb=m.querySelector(".mb");if(mb)mb.insertAdjacentHTML("beforebegin",h);else{const bx=m.querySelector(".box");if(bx)bx.insertAdjacentHTML("beforeend",h)}
   try{grwAnim(m.querySelector(".grw"))}catch(e){}return h}
 /* 包一層 00-util modal：GRW_TTL 內第一個結果視窗（cls 有 res）插成長那一塊；殺棋動畫延後的視窗（回傳 null）等真的畫出來那一次 */
 if(GRW_ON&&typeof modal==="function"){const f0=modal;modal=function(html,buttons,cls){const m=f0.apply(this,arguments);try{if(m&&grwArmed()&&/(^|\s)res(\s|$)/.test(String(cls||"")))grwShow(m)}catch(e){}return m}}
+/* 開局（07bhg gsvTick 換到新的一盤）：記下這一盤開局時的六項；同一盤只記一次（中途離開再回來、重新整理都照開局那一份） */
+function grwGame(id){if(!GRW_ON||!id)return;try{const g=store.get("grwG",null);if(g&&g.id===String(id))return;store.set("grwG",{id:String(id),s:grwNow()})}catch(e){}}
 function grwBoot(){try{if(!GRW_ON)return;const n=grwNow(),o=grwLoad(),z=grwBootOf(o,n);if(z!==o)grwSave(z)}catch(e){}}
 if(typeof window!=="undefined"&&typeof document!=="undefined")setTimeout(grwBoot,1500);
