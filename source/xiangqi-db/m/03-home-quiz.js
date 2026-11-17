@@ -334,7 +334,7 @@ function Terms(v,pick){
 
 // 玩法：目標、棋盤、七種棋子、勝負和
 /* 11/17 第 20 輪 D N5（P1，英文玩家學規則的主要頁面）：中文那段一句被 <b> 切成好幾段，07i18n 只能一段一段翻，結果中英混雜 → 英文介面直接用整段英文（結構、看走法按鈕、data-pc 都一樣） */
-function rulesPlayEn(P){const pc=(n,d,i)=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:flex-start"><b style="min-width:72px">${n}</b><span style="flex:1">${d}</span><button class="pill" data-pc="${i}" style="white-space:nowrap;font-size:13px">👀 See the move</button></div>`;
+function rulesPlayEn(P){const pc=(n,d,i)=>`<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:start"><b style="min-width:64px">${n}</b><span style="min-width:0">${d}</span><span></span><button class="pill" data-pc="${i}" style="justify-self:start;white-space:nowrap;font-size:13px">👀 See the move</button></div>`;   /* 11/17 第 21 輪 79：英文說明比中文長，「See the move」放到說明下面，說明欄用整個寬度 */
   return P("🎯 Goal","Two players take turns, and <b style=\"color:var(--red)\">Red moves first</b>. You win by <b>checkmating</b> the opponent's General (it is in check and no move can escape). Leaving the opponent with <b>no legal move</b> (stalemate) is also a win.")+
   P("🗺 The board","The board has 9 vertical and 10 horizontal lines. Pieces stand on the <b>intersections</b>, not inside the squares. The empty band across the middle is the <b>river</b> (Chu River and Han Border), splitting the board into Red's and Black's halves. Each side has a 3×3 area marked with an X, the <b>palace</b>; the General and the Advisors must stay inside it.")+
   P("♟ How each piece moves",[

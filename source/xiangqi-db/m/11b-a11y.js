@@ -57,7 +57,7 @@ const AXM_ICON={"✕":"關閉","×":"關閉","✖":"關閉","‹":"返回","‹ 
 const AXM_PICT=/[\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{20E3}]/u;
 function axmSpeak(t){const s=String(t||"").replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{20E3}]/gu,"").replace(/\s*・\s*/g,"，").replace(/\s+/g," ").replace(/^[\s，]+|[\s，]+$/g,"").trim();return typeof axmEn==="function"?axmEn(s):s}
 /* 11/17 第 20 輪 D N4：英文介面時，組出來的名字（「氣吞關右，擺譜中殘局，Red wins」）照「，」分段各自翻；整段翻得出就用整段，翻不出的段（題名、人名）留原文 */
-function axmEn(s){try{if(typeof i18nLang!=="function"||i18nLang()!=="en"||typeof i18nText!=="function"||!/[㐀-鿿]/.test(s))return s;const w=i18nText(s);if(w!=null&&!/[㐀-鿿]/.test(w))return w;return s.split("，").map(p=>{const t=p.trim()&&/[㐀-鿿]/.test(p)?i18nText(p.trim()):null;return t!=null?t:p.trim()}).join(", ")}catch(e){return s}}
+function axmEn(s){try{if(typeof i18nLang!=="function"||i18nLang()!=="en"||typeof i18nText!=="function"||!/[㐀-鿿]/.test(s))return s;const w=i18nText(s);if(w!=null&&!/[㐀-鿿]/.test(w))return w;const T=s.split("，").map(p=>{const q=p.trim(),t=q&&/[㐀-鿿]/.test(q)?i18nText(q):null;return t!=null&&!/[㐀-鿿]/.test(t)?t:q});let o=T[0];for(let i=1;i<T.length;i++)o+=(/[㐀-鿿]/.test(T[i-1])||/[㐀-鿿]/.test(T[i])?"，":", ")+T[i];return o}catch(e){return s}}   /* 11/17 第 21 輪 77：旁邊還是中文的照舊用「，」 */
 function axmHideIn(root){if(!root||root.nodeType!==1)return;const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),L=[];let n;while((n=w.nextNode()))if(n.nodeValue&&(AXM_PICT.test(n.nodeValue)||n.nodeValue.includes("・"))&&!(n.parentElement&&n.parentElement.closest("[aria-hidden=true],svg")))L.push(n);
   for(const t of L){const f=document.createDocumentFragment();for(const part of t.nodeValue.split(/((?:[\p{Extended_Pictographic}\u{FE0F}\u{200D}\u{20E3}]+)|・)/u)){if(!part)continue;if(AXM_PICT.test(part)||part==="・"){const sp=document.createElement("span");sp.setAttribute("aria-hidden","true");sp.textContent=part;f.append(sp)}else f.append(document.createTextNode(part))}t.replaceWith(f)}}
 function axmIconName(text,title){const t=String(text||"").replace(/\s+/g,"");if(title&&String(title).trim())return String(title).trim();if(!t)return null;if(AXM_ICON[t])return AXM_ICON[t];const t2=[...t].filter(c=>c.charCodeAt(0)!==0xFE0F&&c.charCodeAt(0)!==0x200D).join("");return AXM_ICON[t2]||null}
@@ -124,7 +124,7 @@ function axmFocusDesc(){const a=document.activeElement;if(!a||a===document.body|
 function axmWhereNow(){let page="";try{const ti=document.getElementById("title");page=typeof axsPageName==="function"?axsPageName(ti?ti.textContent:"",location.hash,typeof usePlace==="function"?usePlace:null):(ti?ti.textContent.trim():"")}catch(e){}
   let game=null;const pb=document.getElementById("pBot"),pt=document.getElementById("pTop");
   if(document.querySelector("#view .ax-sq")||pb){const st=document.getElementById("stat"),stx=st?st.textContent.replace(/^[^\p{L}\p{N}]+/u,"").trim():"";
-    const sc=document.querySelector("#view .ax-sq [data-k][aria-label*='已選取']"),ch=document.querySelector("#strip .chip:last-child");
+    const sc=document.querySelector("#view .ax-sq [data-k][aria-label*='已選取'],#view .ax-sq [data-k][aria-label*=', selected']"),ch=document.querySelector("#strip .chip:last-child");
     game={turn:pb&&pb.classList.contains("on")?"輪到你":pt&&pt.classList.contains("on")?"輪到對手":stx,sel:sc?sc.getAttribute("aria-label").split("，").slice(0,3).join("，"):"",last:ch?ch.textContent.replace(/^\d+/,"").trim():""}}
   let map="";try{map=typeof axsPageMap==="function"?axsPageMap(location.hash):""}catch(e){}
   return axmWhereText({page,focus:axmFocusDesc(),game,map})}

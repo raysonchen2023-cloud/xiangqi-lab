@@ -170,12 +170,14 @@ function gcnDqOpts(){const pad=n=>String(n).padStart(2,"0"),o=[],end=gcnDqEnd(),
 /* 已排好的提醒落在禁玩時段（家長事後改了時間、或舊版排的）：改排到還允許的最後一格；回傳改成的「hh:mm」，沒改回傳 ""（E 第 20 輪 N20-4）。開機、改設定同時觸發時排隊一個一個查（GCN.dqP），不會重複排 */
 function gcnDqFix(){const D=gcnDqApi();if(!gcnNat()||!D||typeof D.status!=="function")return Promise.resolve("");
   return GCN.dqP=(GCN.dqP||Promise.resolve()).catch(()=>{}).then(()=>D.status()).then(st=>{const S=gcnDqOf(st),pad=n=>String(n).padStart(2,"0"),O=gcnDqOpts();if(!S.on||O.includes(pad(S.h)+":"+pad(S.m)))return"";
-    const t=O[O.length-1],[h,m]=t.split(":").map(Number);return Promise.resolve(D.enable(h,m)).then(r=>{if(!(r&&r.ok))return"";if(gcnLang()==="en")gcnDqEn(h,m);return t})}).catch(()=>"")}
-function gcnDqPaint(box,D,S,moved){try{const en=gcnLang()==="en",pad=n=>String(n).padStart(2,"0"),opts=gcnDqOpts();
+    const t=O[O.length-1],[h,m]=t.split(":").map(Number);return Promise.resolve(D.enable(h,m)).then(r=>{if(!(r&&r.ok))return"";if(gcnLang()==="en")gcnDqEn(h,m);GCN.dqMoved=t;return t})}).catch(()=>"")}
+function gcnDqPaint(box,D,S,moved){try{if(!moved&&S.on&&GCN.dqMoved)moved=GCN.dqMoved;   /* E 第 21 輪 R21-1：改排過就一直寫「已改到」，直到有人動了提醒 */
+  const en=gcnLang()==="en",pad=n=>String(n).padStart(2,"0"),opts=gcnDqOpts();
   let cur=pad(S.h)+":"+pad(S.m);const bad=!opts.includes(cur);if(bad)cur=opts[opts.length-1];
   box.innerHTML=`<label style="display:flex;align-items:center;gap:8px;min-height:44px;flex:1 1 200px"><input type="checkbox" id="gcnDqOn" ${S.on?"checked":""} style="width:22px;height:22px"><span>${en?"🔔 Remind me about the Daily Puzzle":"🔔 每天提醒我做每日同題"}</span></label><select id="gcnDqT" style="min-height:44px;font-size:16px" aria-label="${en?"Reminder time":"提醒時間"}">${opts.map(t=>`<option value="${t}"${t===cur?" selected":""}>${t}</option>`).join("")}</select>${S.on&&(bad||moved)?`<p style="flex-basis:100%;margin:0;font-size:13px;color:#b03a2e">${moved?(en?"The reminder fell in the parental rest hours, so it was moved to "+moved+".":"提醒時間落在家長設定的休息時段，已改到 "+moved+"。"):(en?"The current reminder time falls in the parental rest hours. Pick an earlier time.":"現在的提醒時間落在家長設定的休息時段，請改早一點。")}</p>`:""}`;
   const cb=box.querySelector("#gcnDqOn"),sel=box.querySelector("#gcnDqT");
-  const apply=()=>{const on=cb.checked,[h,m]=sel.value.split(":").map(Number);
+  const apply=()=>{GCN.dqMoved="";try{const pm=box.querySelector("p");if(pm&&typeof pm.remove==="function")pm.remove()}catch(e){}   /* E 第 22 輪 R22-1：動了提醒就當場拿掉「已改到」那行，不用離開再回來 */
+    const on=cb.checked,[h,m]=sel.value.split(":").map(Number);
     Promise.resolve(on?D.enable(h,m):D.disable()).then(r=>{if(on&&!(r&&r.ok)){cb.checked=false;try{toast(en?"Notifications are off for this app. Turn them on in iPhone Settings → Notifications.":(r&&r.why)||"沒有通知權限，可到 iPhone 設定 → 通知 打開")}catch(e){}return}
       if(on){if(en)gcnDqEn(h,m);try{toast(en?"Reminder set for "+pad(h)+":"+pad(m)+" every day":"每天 "+pad(h)+":"+pad(m)+" 提醒你")}catch(e){}}},()=>{cb.checked=false})};
   cb.onchange=apply;sel.onchange=()=>{if(cb.checked)apply()}}catch(e){}}

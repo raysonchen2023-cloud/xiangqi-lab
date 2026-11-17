@@ -288,7 +288,7 @@ function cpdList(v,who){setTabs(false);setTop("🤝 合作殘譜","#/hub/battle"
   const L=[P0].concat(AL.filter(x=>x!==P0));
   v.innerHTML=`<div class="cpd-pad">
     <div class="cpd-hero"><img src="data/xs/prev_${esc(k)}.webp" alt="" onerror="this.remove()"><div class="bub"><b>${esc(coopNk(k))}撿到半張棋譜</b>${esc(P0.say.intro)}</div></div>
-    <div class="muted" style="font-size:13px;margin-bottom:4px">同一支手機：紅方一個人、黑方一個人輪流走。不是比輸贏，要<b>一起</b>達成棋譜上的目標。</div>
+    <div class="muted" style="font-size:13px;margin-bottom:4px">${(typeof i18nLang==="function"&&i18nLang()==="en")?"On one phone, one person plays Red and one plays Black, taking turns. It's not about winning: work <b>together</b> to reach the goal in the manual.":"同一支手機：紅方一個人、黑方一個人輪流走。不是比輸贏，要<b>一起</b>達成棋譜上的目標。"}</div>   <!-- 11/17 第 22 輪 S6／R22-3：英文整段寫（原本 work／together／to 黏在一起） -->
     <div class="cpd-modes"><button data-m="two" class="${mode==="two"?"on":""}">👥 兩個人一起<br><small style="font-weight:400">一人紅、一人黑</small></button><button data-m="solo" class="${mode==="solo"?"on":""}">🙂 一人分飾兩角<br><small style="font-weight:400">紅黑都自己走</small></button></div>
     ${L.map(x=>{const d=done[x.id],pc=coopPcOf(x.who);return`<button class="card cpd-item${x===P0&&who?" on":""}" data-id="${x.id}"><span class="pc">${esc(pc||"棋")}</span><span class="tx"><b>${esc(x.t)}</b>　<span class="muted" style="font-size:12.5px">${esc(coopNk(x.who))}的棋譜</span><small>${esc(x.gt)}・最少 ${x.min} 步</small></span><span class="st">${d?"⭐".repeat(d.s):"☆"}</span></button>`}).join("")}
   </div>`;
@@ -340,8 +340,9 @@ function cpdPlay(v,id){const P=COOP_DESK.find(x=>x.id===id);if(!P||!COOP_R||!cpd
     let k=0;while(k<moves.length&&R.same(moves[k],sol[k]))k++;
     modal(`<h2 style="font-size:19px">走岔了</h2><p>從這裡不好走到目標。退回最後一個還在正路上的地方（第 ${k} 步），再看提示？</p>`,[["退回正路",()=>{moves=moves.slice(0,k);hintMv=sol[k]||null;draw()}],["先不要",null,true]])}
   function goalBox(){modal(`<div class="cpd-goal"><h2 style="font-size:19px">🎯 棋譜上的目標</h2><p><b>${esc(P.gt)}</b></p><p>最少 ${P.min} 步、最多 ${P.max} 步（紅黑各走一次算兩步）。</p>
-    <p class="muted">棋盤上<span style="color:#E39B0F">橘色虛線框</span>＝要去的地方，淡淡的字＝要站上去的棋子；做到了會變<span style="color:#2E9E4F">綠框</span>。${P.goal.draw||P.goal.none?'<span style="color:#C62828">紅圈</span>＝還要下場的棋子。':""}</p>
-    <p class="muted">紅黑照規則輪流走，可是要<b>互相讓路</b>，不是互相吃。</p></div>`,[["知道了",null]])}
+    ${(typeof i18nLang==="function"&&i18nLang()==="en")?`<p class="muted"><span style="color:#E39B0F">Orange dashed frames</span> mark where pieces must go, and the faint characters show which piece should stand there; when a piece gets there the frame turns <span style="color:#2E9E4F">green</span>.${P.goal.draw||P.goal.none?' <span style="color:#C62828">Red circles</span> mark pieces that still have to leave the board.':""}</p>
+    <p class="muted">Red and Black take turns by the normal rules, but you have to <b>make way for each other</b>, not capture each other.</p>`:`<p class="muted">棋盤上<span style="color:#E39B0F">橘色虛線框</span>＝要去的地方，淡淡的字＝要站上去的棋子；做到了會變<span style="color:#2E9E4F">綠框</span>。${P.goal.draw||P.goal.none?'<span style="color:#C62828">紅圈</span>＝還要下場的棋子。':""}</p>
+    <p class="muted">紅黑照規則輪流走，可是要<b>互相讓路</b>，不是互相吃。</p>`}</div>`,[["知道了",null]])}   /* 11/17 第 22 輪 S6：目標視窗的操作說明（第一盤一開始就跳）英文介面整段寫英文 */
   draw();if(!store.get("coopGoalSeen",false)){store.set("coopGoalSeen",true);setTimeout(goalBox,400)}
   return{stop(){alive=false}}}
 /* 同桌對弈頁（同一支手機輪流下時）動作列加「🤝 合作」 */
@@ -386,7 +387,7 @@ function CoopLobbyPage(v){setTabs(false);setTop("🧩 殘篇閣","#/lobby");
   function paint(){if(!alive)return;const V=core.view();
     if(V.ph==="playing"||V.ph==="done"){if(lastPh!=="playing"){lastPh="playing";playLayout()}if(V.ph==="done")doneBox();statPaint();pump();return}
     lastPh=V.ph;bd=null;shown=0;v.className="view";
-    if(V.ph==="idle"){v.innerHTML=`<div class="cpd-pad"><div class="card" style="margin-bottom:10px"><b>🧩 合力補全殘篇</b><p style="margin:6px 0 0;line-height:1.6">一張殘篇要兩個人合力才補得完：<br>📜 <b>看譜人</b>看得到正解，可是不能動棋子，只能用暗語提示；<br>♟ <b>下棋人</b>可以動棋子，可是看不到正解。<br>目標：<b>3 步之內將死黑方</b>。不計分，隨時可以離開。</p></div>
+    if(V.ph==="idle"){v.innerHTML=`<div class="cpd-pad"><div class="card" style="margin-bottom:10px"><b>🧩 合力補全殘篇</b><p style="margin:6px 0 0;line-height:1.6">${(typeof i18nLang==="function"&&i18nLang()==="en")?"A fragment takes two people working together:<br>📜 The <b>Reader</b> sees the answer but can't move pieces, only give coded hints;<br>♟ The <b>Player</b> moves the pieces but can't see the answer.<br>Goal: <b>mate Black within 3 moves</b>. Unscored; leave any time.":"一張殘篇要兩個人合力才補得完：<br>📜 <b>看譜人</b>看得到正解，可是不能動棋子，只能用暗語提示；<br>♟ <b>下棋人</b>可以動棋子，可是看不到正解。<br>目標：<b>3 步之內將死黑方</b>。不計分，隨時可以離開。"}</p></div>
       <div class="cpl-roles"><button data-r="A"><span class="i">📜</span><span><b>我想當看譜人</b><small>看正解、用暗語提示</small></span></button><button data-r="B"><span class="i">♟</span><span><b>我想當下棋人</b><small>聽暗語、動棋子</small></span></button><button data-r="any"><span class="i">🎲</span><span><b>都可以</b><small>看搭檔需要什麼</small></span></button></div>
       <button class="btn ghost" id="ai">🤖 跟小帥 AI 一起玩（小帥看譜、我下棋）</button>${cplTestRoom()?'<p class="muted" style="font-size:12px;margin-top:10px">🧪 測試房</p>':""}</div>`;
       v.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{vibrate(8);core.wait(b.dataset.r)});v.querySelector("#ai").onclick=()=>core.aiStart();return}

@@ -1,10 +1,10 @@
-# 驗證紀錄（版本 20261117-1144）
+# 驗證紀錄（版本 20261117-1427）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/17 12:30:56（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 2185 項＝**通過 2107**、**失敗 0**、**略過 78**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `f5942627ac97`），對應的發布版：`20261117-1144`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 產生時間：2026/11/17 15:28:56（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 2219 項＝**通過 2131**、**失敗 0**、**略過 88**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（切自 commit `9da4b71b7e3f`），對應的發布版：`20261117-1427`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔（和少數只給它們用的工具）有43 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -83,6 +83,16 @@
 - ﹣ B N20-3／N20-4：卡冊 Lv 100 寫「已滿級」不寫分數；＋星輝、陪你走按鈕 44 高（test-r20-dbe-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ B N20-6：星門圍城第一次破關的結算分開標首勝獎勵（成長列另含闖關星）；獎勵邏輯不動（test-r20-dbe-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ E N20-2／N20-6：審查備註照實際行為寫（點一下就走過去、選了目的地才問、取名視窗）；CRLF 算也 ≤4000（test-r20-dbe-1117.js；沒有 xiangqi-ios（公開副本不含））
+- ﹣ 77：組起來的讀螢幕名稱分段翻（翻不出的局名留原文，旁邊是中文用「，」）；canvas 的 aria 也翻；字典晚到時重算 axm 名字（test-r21-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ 78：#/pos 擺局頁說明整句有英文（test-r21-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ 74：合作殘譜英文：說明、7 題目標、殘篇閣標題（🧩 換成圖之後）；粗體後面接的字前面有空格（test-r21-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ S7：錯棋重練每一題的提示行（前面有「🔁 第 N 步：」）整行英文；棋評用語（妙著、正著、穩著、緩著、失著、敗著）都有英文（test-r22-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ S5／R22-3：殘篇閣 AI 按鈕、7 題開場泡泡有英文；R22-5 擂主卡主按鈕和擂台提示（test-r22-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ S1：#/theme 清單的說明列（說明・N 題・正確率 N%）英文（test-r22-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ T1：錯棋重練其他幾句（開頭那行、評分中、練會了）中文樣板英文介面都翻得出；中文版的「・再錯一次就給提示」也有句型（test-r23-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ T2：電腦棋手出問題時狀態列的三種訊息、src/local.js 其他給玩家看的訊息，英文介面翻得出（放進 DOM 的字只補字典、不改 src）（test-r23-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ T5：擂台 3D 入場過場的兩行字（park3d.js 放進 DOM 的）英文介面翻得出，不用改 src（test-r23-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ R23-2：系統給的預設名字「棋友＋4 碼」（net.js、舊版預設名）英文介面顯示 Player ＋4 碼；玩家自己取的名字不動；不改 src/net.js（test-r23-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ 8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 10 原生設定：loggingBehavior＝none、CFBundleLocalizations 有 en、CAPACITOR_DEBUG 只在 Debug 設定檔（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
@@ -97,7 +107,7 @@
 | 行為 | 1213 項（通過 1208、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 695 項（通過 628、略過 67） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-inst-stq-1117.js`、`test-ios-native-1116.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r4-1117.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 729 項（通過 652、略過 77） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-inst-stq-1117.js`、`test-ios-native-1116.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-noscore.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r4-1117.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -517,7 +527,7 @@
 ### E21 無障礙：螢幕報讀與鍵盤模式、高對比主題（對比 ≥7:1）、字級最大 2 倍與跟著系統字級、靜態稽核
 
 - 從哪一版：0100（下一版）
-- 自動測試：42 項（行為 21、混合 4、原始碼比對 7、待分類 10）
+- 自動測試：43 項（行為 21、混合 4、原始碼比對 7、待分類 11）
   - ✔ 〔行為〕axsPan：翻轉棋盤（執黑）左右對調；路數跟 11b axmPos 念的一樣（一路在右）
   - ✔ 〔行為〕axsLoadStep：超過 0.8 秒才念「載入中…」，好了念「載入完成」；很快就好不念；標籤跟著工作
   - ✔ 〔原始碼〕空間導覽：XQDOC 有 tour；a11y-tour.md 兩邊一樣、寫到首頁、茶肆、大廳、棋譜庫、園子和園子地點清單；不含會被當成載入提示的字
@@ -552,6 +562,7 @@
   - ✔ 〔原始碼〕park3d：draw 用 pkcbMarks 畫提示、look 的 hc／cb 換了會重畫棋面、新記號不經色調映射、高對比棋面與側邊用 PKCB
   - ✔ 〔原始碼〕06-cpu：hc 含 cbMode、parkLook 只在高對比棋子時才不畫風格底圖；07cb：cbApply 呼叫 cbPark；說明文件兩份一樣、3D 已套用
   - ✔ 〔待分類〕D P2-2：英文字幕可以換行（字級照中文字數算、原本不換行）；只在 html[lang=en]
+  - ✔ 〔待分類〕T3：棋盤格讀螢幕名稱的後綴（已選取、預定落點、可以吃、可以走到這裡、被將軍、剛走到這裡）英文介面直接英文；11b 找選中格子兩種都認
   - ✔ 〔待分類〕N6-6 讀螢幕播報區：視窗的字在第 160 字是空白時也對得上，念英文；英文時 modal 先翻再念
   - ✔ 〔待分類〕N7-1 英文 480px 以下返回鈕最多佔頂欄 40%、放不下刪節號（字留在按鈕裡，讀螢幕念全文）；星門圍城只留「‹」的規則比它具體；中文不套用
   - ✔ 〔待分類〕P3-3 讀螢幕播報區：同一句 3 秒內只寫一次；視窗按鈕關掉時把那個視窗念過的那一行拿掉；英文包一層也回傳實際寫進去的那句
@@ -670,7 +681,7 @@
 | test-figview-ghost-1115.js | — | 5 | 0 | 2 |  | 7／7 |
 | test-gate-siege-3d.js | — | 19 | 3 | 3 |  | 25／25 |
 | test-gate-siege.js | — | 37 | 1 | 2 |  | 40／40 |
-| test-gc-native-1117.js | — | 0 | 0 | 0 | 19 | 19／19 |
+| test-gc-native-1117.js | — | 0 | 0 | 0 | 21 | 21／21 |
 | test-ghost-game-1116.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-growth.js | — | 9 | 1 | 4 |  | 14／14 |
 | test-grw-lv-1117.js | — | 0 | 0 | 0 | 4 | 4／4 |
@@ -758,6 +769,9 @@
 | test-r19-1117.js | — | 0 | 0 | 0 | 14 | 8／14（略過 6） |
 | test-r20-1117.js | — | 0 | 0 | 0 | 2 | 2／2 |
 | test-r20-dbe-1117.js | — | 0 | 0 | 0 | 19 | 14／19（略過 5） |
+| test-r21-1117.js | — | 0 | 0 | 0 | 10 | 7／10（略過 3） |
+| test-r22-1117.js | — | 0 | 0 | 0 | 10 | 7／10（略過 3） |
+| test-r23-1117.js | — | 0 | 0 | 0 | 12 | 8／12（略過 4） |
 | test-r4-1117.js | — | 0 | 0 | 0 | 49 | 49／49 |
 | test-raid-label-1116.js | — | 1 | 0 | 0 |  | 1／1 |
 | test-redblue-public.js | — | 29 | 0 | 1 |  | 30／30 |
@@ -1675,6 +1689,8 @@
 - ✔ 〔待分類〕E 第 20 輪 N20-4：已排的提醒落在禁玩時段就改排到還允許的最後一格；沒落在裡面不動
 - ✔ 〔待分類〕E 第 20 輪 N20-4：家長事後改禁玩時間（store.set fmCfg）就重排；開機、回前景、打開提醒卡也會檢查
 - ✔ 〔待分類〕E 第 20 輪 N20-5：兒童模式不登入 Game Center、不放「🎮 Game Center 成就」鈕；切成兒童模式時把鈕拿掉
+- ✔ 〔待分類〕E 第 21 輪 R21-1：改排過的「已改到 hh:mm」每次畫提醒卡都寫（頁面重畫也看得到），有人動了提醒才拿掉
+- ✔ 〔待分類〕E 第 22 輪 R22-1：在提醒卡改時間或開關，「已改到」那行當場拿掉
 
 ### test-ghost-game-1116.js
 
@@ -2751,6 +2767,47 @@
 - ✔ 〔待分類〕E N20-7：大師對局出處英文＝年份＋英文賽事名（翻不出寫 Grandmaster game）；中文照舊
 - ✔ 〔待分類〕E N20-8：privacy.md、family.md 最後核對 11 月 17 日（兩份一致；11/17 那句只在 App 版）
 - ✔ 〔待分類〕E N20-9：兵印的點選範圍比 44 多撐 1px（換成整數像素後也有 44×44）
+
+### test-r21-1117.js
+
+- ✔ 〔待分類〕76：⋯ 選單點了換頁的項目，先等卡片那筆紀錄退完（popstate）才做；沒有卡片紀錄照舊馬上做
+- ✔ 〔待分類〕79：3D 切換鈕從 ⋯ 選單按也換名稱（aria-label、data-lb 一起換）
+- ﹣ 略過 〔待分類〕77：組起來的讀螢幕名稱分段翻（翻不出的局名留原文，旁邊是中文用「，」）；canvas 的 aria 也翻；字典晚到時重算 axm 名字（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ✔ 〔待分類〕77：11b axmEn 分段時，翻不出的段旁邊照舊用「，」
+- ﹣ 略過 〔待分類〕78：#/pos 擺局頁說明整句有英文（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ✔ 〔待分類〕71：意見回饋頁補滿高度時最多放大到左右各裁 3.3%，招諫口（圖寬約 96%）留在畫面內
+- ✔ 〔待分類〕73：英文總覽的橫排標籤蓋住底圖的直書紙條；You are here 冒號後有空格；75：拉把 z-index
+- ﹣ 略過 〔待分類〕74：合作殘譜英文：說明、7 題目標、殘篇閣標題（🧩 換成圖之後）；粗體後面接的字前面有空格（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ✔ 〔待分類〕79：英文介面新產生的預設名字 Player XXXX（中文照舊棋友 XXXX）
+- ✔ 〔待分類〕79：codex「已收 N 個」、棋規碑英文排版（看走法放到說明下面）、消寒圖 SVG 的一九～九九、大廳出口照英文寬度再推
+
+### test-r22-1117.js
+
+- ﹣ 略過 〔待分類〕S7：錯棋重練每一題的提示行（前面有「🔁 第 N 步：」）整行英文；棋評用語（妙著、正著、穩著、緩著、失著、敗著）都有英文（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ✔ 〔待分類〕S5／S6／R22-3：合作殘譜說明、殘篇閣說明、目標視窗的操作說明，英文介面整段英文（不黏字、沒有全形句點）；中文照舊
+- ﹣ 略過 〔待分類〕S5／R22-3：殘篇閣 AI 按鈕、7 題開場泡泡有英文；R22-5 擂主卡主按鈕和擂台提示（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ 略過 〔待分類〕S1：#/theme 清單的說明列（說明・N 題・正確率 N%）英文（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ✔ 〔待分類〕S3／R22-2：英文總覽標籤自己就是一塊招牌，至少跟紙條一樣寬一樣高、字換行置中；不再另外畫直條
+- ✔ 〔待分類〕S2：英文大廳出口標籤可以換行、字小一點，整段留在按鈕裡
+- ✔ 〔待分類〕S4：頂欄按鈕的 data-lb 一換，「⋯」的讀螢幕名稱當場跟著換
+- ✔ 〔待分類〕R22-4：青銅匭三個口各多撐 1px（375×812 換成整數像素後也有 44）
+- ✔ 〔待分類〕N22-1：⋯ 選單的項目一定等卡片那筆退完（popstate）才做；history.back 延後 0／300／600／900／2000ms 都成功，不靠計時
+- ✔ 〔待分類〕N22-2：選單項目做完（#/pvp 切 3D）當場重寫「⋯」的讀螢幕名稱；N22-3 星門圍城對局中那顆照實際效果叫（其他對局不變）
+
+### test-r23-1117.js
+
+- ✔ 〔待分類〕T1：錯棋重練評分後的每一種組合（👍／❌ 兩種 × 第幾次 × 沒提示／再錯一次／提示一～三 × 棋評 × 棋子），英文介面整句英文
+- ﹣ 略過 〔待分類〕T1：錯棋重練其他幾句（開頭那行、評分中、練會了）中文樣板英文介面都翻得出；中文版的「・再錯一次就給提示」也有句型（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ 略過 〔待分類〕T2：電腦棋手出問題時狀態列的三種訊息、src/local.js 其他給玩家看的訊息，英文介面翻得出（放進 DOM 的字只補字典、不改 src）（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ✔ 〔待分類〕T3：棋盤格讀螢幕名稱的後綴（已選取、預定落點、可以吃、可以走到這裡、被將軍、剛走到這裡）英文介面直接英文；11b 找選中格子兩種都認
+- ✔ 〔待分類〕T4：星門圍城開局時「⋯」的名稱也照 gsvParkLb（建立後再對兩次，gsvViewUi 每次通知重寫）
+- ﹣ 略過 〔待分類〕T5：擂台 3D 入場過場的兩行字（park3d.js 放進 DOM 的）英文介面翻得出，不用改 src（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ✔ 〔待分類〕R23-1：「⋯」同一項在 popstate 回來前被觸發兩次（同一瞬間、popstate 前後各一次）只退一次、只做一次
+- ﹣ 略過 〔待分類〕R23-2：系統給的預設名字「棋友＋4 碼」（net.js、舊版預設名）英文介面顯示 Player ＋4 碼；玩家自己取的名字不動；不改 src/net.js（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ✔ 〔待分類〕N23-1：「切到 3D 星盤／回平面棋盤」內建字典就翻得出（外掛字典還沒載到也行），「⋯」的讀螢幕名稱組出來也是英文
+- ✔ 〔待分類〕N23-2：星門圍城開局（gsvTick fresh）一掛上 gsv-on 就通知「⋯」重寫名稱
+- ✔ 〔待分類〕N23-3：星門圍城切 3D 只影響這一局——記下原本的 park3d，切回平面、離開星門圍城、下次開 App（不在對局頁）時還原；玩家自己開的 3D 不動
+- ✔ 〔待分類〕B 備註：「⋯」連點兩下，第二下落在剛開的卡片暗幕上不會把卡片關掉（暗幕出現 0.35 秒內點了不關）
 
 ### test-r4-1117.js
 

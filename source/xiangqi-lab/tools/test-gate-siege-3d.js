@@ -72,7 +72,8 @@ test("星門圍城的預設維持平面；選過會記住（存檔鍵 gsvView）
   X.gsvSetView("top");assert.equal(E.get("gsvView"),"top");assert.equal(X.gsvVw(),"top");assert.equal(E.get("park3d"),true);assert.equal(E.log.rr,1,"換視角＝對局頁重畫一次");
   X.gsvSetView("tilt");assert.equal(E.get("gsvView"),"tilt");X.gsvSetView("tilt");assert.equal(E.log.rr,2,"同一個視角不重畫");
   X.gsvSetView("亂填");assert.equal(E.get("gsvView"),"tilt","不認得的值不存");
-  X.gsvSetView("flat");assert.equal(E.get("gsvView"),"flat");assert.equal(E.get("park3d"),true,"回平面不去關 park3d（別的模式照玩家原本的設定）");
+  X.gsvSetView("flat");assert.equal(E.get("gsvView"),"flat");assert.equal(E.get("park3d"),null,"回平面＝park3d 還原成玩家原本的設定（原本沒設；第 23 輪 N23-3）");assert.equal(E.get("gsvP3Bak"),null,"記下的原值用掉了");
+  {const E4=boot({store:{park3d:"true"}}),st4=game(E4,1);E4.X.gsvSetView("top");E4.X.gsvSetView("flat");assert.equal(E4.get("park3d"),true,"玩家自己開的 3D 不會被關掉");assert.equal(E4.get("gsvP3Bak"),undefined,"原本就是 true 不用記")}
   assert.equal(E.get("bhtdView"),undefined,"沒寫到舊版塔防的鍵");
   /* 記住：換一個全新的 App、帶同一份存檔 */
   const E2=boot({store:{gsvView:JSON.stringify("tilt")}});assert.equal(E2.X.gsvVw(),"tilt");assert.equal(E2.X.gsvFlat(game(E2,1)),false);
@@ -263,7 +264,7 @@ test("「更多」選單那顆「去園子下棋（3D）」：星門圍城對局
   let[,fn]=X.parkBtn(()=>E.log.redraw++);fn();   /* 手機「⋯ 更多」的清單直接呼叫 fn()（沒有事件物件） */
   assert.equal(X.gsvVw(),"top");assert.equal(E.get("gsvView"),"top");assert.equal(E.get("park3d"),true);assert.equal(X.gsvFlat(st),false);assert.ok(E.log.rr>=1,"自己叫對局頁重畫");assert.equal(E.log.redraw,0,"不走原本那條");
   assert.match(E.log.toast.pop(),/3D 星盤/);assert.equal(X.parkOn(),true);assert.equal(X.parkLabel(),"回棋盤模式","重畫後頂欄那顆換字");
-  [,fn]=X.parkBtn(()=>E.log.redraw++);fn({currentTarget:null});assert.equal(X.gsvVw(),"flat");assert.equal(E.get("park3d"),true,"回平面是改星門圍城自己的視角，不是把玩家的 park3d 關掉");
+  [,fn]=X.parkBtn(()=>E.log.redraw++);fn({currentTarget:null});assert.equal(X.gsvVw(),"flat");assert.equal(E.get("park3d"),null,"回平面：park3d 還原成玩家原本的設定（第 23 輪 N23-3：星門圍城的 3D 只影響這一局）");
   assert.equal(E.log.toast.pop(),"回到平面棋盤");assert.equal(X.parkLabel(),"去園子下棋（3D）");
   X.gsvSetView("tilt");X.gsvSetView("flat");X.parkBtn(()=>{})[1]();assert.equal(X.gsvVw(),"tilt","回 3D 用上一次的 3D 視角");
   assert.deepEqual(["flat","top","tilt"].map(v=>X.gsvParkTo(v,"top")),["top","flat","flat"]);assert.equal(X.gsvParkTo("flat","tilt"),"tilt");assert.equal(X.gsvParkTo("flat",undefined),"top")});

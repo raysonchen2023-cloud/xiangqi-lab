@@ -1,6 +1,7 @@
 // ================= 棋盤 =================
 // opts：flip, last{f,t}, sel, targets[], hint[f,t], check
 // 棋盤風格（設定頁可選）。auto＝跟著 App 的深淺色
+const AX_SUF=[["，已選取","，預定落點，再按一次落子","，可以吃","，可以走到這裡","，被將軍","，剛走到這裡"],[", selected",", planned destination, press again to move",", can capture",", can move here",", in check",", just moved here"]];
 const BOARD_THEMES=[
   ["auto","跟著頁面風格",{bg:"var(--wood)",grid:"var(--grid)",piece:"var(--piece)",r:"var(--red)",b:"var(--blk)",mv:"var(--accent2)"}],
   ["wood3d","立體木紋",{bg:["#F0CD8E","#B9813F"],grid:"#4A2E12",piece:"#F8ECD4",r:"#B3261E",b:"#1B1F1C",mv:"#2F6B4F",bevel:1,tex:"grain"}],
@@ -657,6 +658,7 @@ function Board(onTap,onSwipe){
       axG.querySelectorAll("[data-k]").forEach(r=>r.setAttribute("tabindex",+r.dataset.k===k?"0":"-1"));const n=axG.querySelector(`[data-k="${k}"]`);if(n)n.focus()});
     axRB=document.createElement("button");axRB.type="button";axRB.className="ax-sr ax-rb";axRB.textContent="讀出盤面";axRB.onclick=()=>axSay(axBoardText(lastBoard))}
   else{svg.setAttribute("role","img");svg.setAttribute("aria-label","棋盤")}
+  /* 已選取、預定落點、可以吃、可以走到這裡、被將軍、剛走到這裡（[0] 中文、[1] 英文；11b 用「已選取／, selected」找選中的格子） */
   const axPos=sq=>{const k=flip?89-sq:sq;return[AX_CN[9-k%9]+"路",AX_CN[10-(k/9|0)]+"排"]};
   const axPc=p=>(sideOf(p)==="r"?"紅":"黑")+NAMES[sideOf(p)][p.toUpperCase()];
   function axBoardText(b){if(!b)return"還沒有擺棋子";const out=[];
@@ -669,7 +671,7 @@ function Board(onTap,onSwipe){
     const tg=new Set(o.targets||[]),L=o.last||{};
     axG.querySelectorAll("[data-k]").forEach(r=>{const k=+r.dataset.k,sq=flip?89-k:k,p=board[sq],[f,rk]=axPos(sq);
       let t=typeof axmCellLabel==="function"?axmCellLabel(p,k):p?axPc(p)+"，"+f+"，第"+rk:f+rk+"，空";   /* 11/12 無障礙：「紅方 炮，八路，第三排」（11b-a11y.js） */
-      if(sq===o.sel)t+="，已選取";if(sq===pendSq)t+="，預定落點，再按一次落子";if(tg.has(sq))t+=p?"，可以吃":"，可以走到這裡";if(sq===o.check)t+="，被將軍";else if(sq===L.t&&L.f!==L.t&&p)t+="，剛走到這裡";
+      {const X=AX_SUF[(typeof i18nLang==="function"&&i18nLang()==="en")?1:0];if(sq===o.sel)t+=X[0];if(sq===pendSq)t+=X[1];if(tg.has(sq))t+=p?X[2]:X[3];if(sq===o.check)t+=X[4];else if(sq===L.t&&L.f!==L.t&&p)t+=X[5]}   /* 11/17 第 23 輪 T3：英文介面後綴直接寫英文（svg 子元素不翻；格子名字 i18nCellLabel 本來就是英文） */
       if(axLab[k]!==t){axLab[k]=t;r.setAttribute("aria-label",t)}});
     for(const c of svg.children)if(c!==axG&&!c.hasAttribute("aria-hidden"))c.setAttribute("aria-hidden","true");
     if(typeof axmRing==="function")axmRing(svg)}   /* 11/12 無障礙：鍵盤焦點框畫在最上面（重畫後補回來） */

@@ -776,9 +776,9 @@ function gsvStart(n,k,cover,sk,force,hard,diff){const C=gsvC();if(!C)return toas
   jStart(J,{human:"r",lx:V.depth,journey:J,lv:{fen:GSV.startFen(n,C),turn:"r",noPerpetual:true},td:{mode:typeof SG2G!=="undefined"?SG2G.MODE:GSV.MODE,lv:n,diff,sk:P.sk["*"]}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
     if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}setTimeout(()=>toast(`🌠 星門圍城・${typeof SG2G!=="undefined"?SG2G.nameOf(n):GSV.lvName(n)}・${V.nm}（${["","易","中","難"][diff]}）`),700);{const ws=typeof ptyWoodSay==="function"?ptyWoodSay(GSV.plan(n).red.map(x=>String(x[0]).toUpperCase())):"";if(ws)setTimeout(()=>toast(ws),5200)}setTimeout(()=>toast("✦ 星樞："+V.say),3200)},!!force)}
 /* ---------- 對局中（07bh bhTick 叫） ---------- */
-function gsvHide(){if(typeof document==="undefined")return;document.body&&document.body.classList.remove("gsv-on","gsv-3d");for(const id of["gsvEn","gsvMe","gsvOv","gsvView"]){const e=document.getElementById(id);if(e)e.remove()}GSV_TG=null;GSV_MK="";GSV_HK="";GSV_P3=0;GSV_VB=null;try{gsvViewMenu(false)}catch(e){}}   /* 11/15：頂欄「👁」視角鈕、視角小選單一起收；11/17 第 8 輪：留著重用的那顆也放掉 */
+function gsvHide(){if(typeof document==="undefined")return;document.body&&document.body.classList.remove("gsv-on","gsv-3d");for(const id of["gsvEn","gsvMe","gsvOv","gsvView"]){const e=document.getElementById(id);if(e)e.remove()}GSV_TG=null;GSV_MK="";GSV_HK="";GSV_P3=0;GSV_VB=null;try{gsvViewMenu(false)}catch(e){}gsvP3Back()}   /* 第 23 輪 N23-3：離開星門圍城，玩家原本的 3D 設定回來 */   /* 11/15：頂欄「👁」視角鈕、視角小選單一起收；11/17 第 8 輪：留著重用的那顆也放掉 */
 function gsvTick(st){if(typeof document==="undefined")return;if(!gsvIs(st)||!/^#\/journey\/play/.test(location.hash||"")){if(GSV_ST||document.getElementById("gsvMe"))gsvHide();GSV_ST=null;return}
-  const fresh=!GSV_ST||GSV_ST.id!==st.id;GSV_ST=st;gsvCss();document.body.classList.add("gsv-on");if(fresh){GSV_TG=null;GSV_INFO=false;GSV_HK=""}
+  const fresh=!GSV_ST||GSV_ST.id!==st.id;GSV_ST=st;gsvCss();document.body.classList.add("gsv-on");if(fresh){GSV_TG=null;GSV_INFO=false;GSV_HK="";setTimeout(()=>{try{document.dispatchEvent(new Event("xq-topmore"))}catch(e){}},0)}   /* 11/17 第 23 輪 N23-2：開局 gsv-on 一掛上就通知「⋯」重寫名稱（不等 👁 鈕做出來） */
   if(fresh&&!st.result)try{if(typeof grwGame==="function")grwGame(st.id)}catch(e){}   /* 11/17 開發者選單（第 10 輪）：結算的成長列只算這一局——開局記下快照（07grw grwGame；同一盤只記一次） */
   const bb=document.getElementById("bbox");if(!bb||!bb.parentNode)return;
   let en=document.getElementById("gsvEn");if(!en){en=document.createElement("div");en.id="gsvEn";bb.after(en);en.addEventListener("click",gsvClick);GSV_HK=""}
@@ -913,8 +913,14 @@ function gsvVwNext(v){return({top:"tilt",tilt:"flat",flat:"top"})[v]||"top"}   /
 function gsvParkTo(v,last){return v==="flat"?(last==="tilt"?"tilt":"top"):"flat"}   /* 「更多」那顆：平面 → 上一次的 3D 視角（沒有就全局俯視）；已經在 3D → 回平面 */
 function gsvP3Step(v,p3,asked){return v==="flat"||p3===true?null:asked?(p3===false?"fail":null):"ask"}   /* 要 3D 時怎麼動 park3d：ask＝第一次，把它打開；fail＝開過卻被關掉（3D 開不起來）；null＝不用動 */
 const gsvVw=()=>{let v="flat",f=false;try{v=store.get("gsvView","flat")}catch(e){}try{f=typeof focusOn==="function"&&!!focusOn()}catch(e){}return gsvVwNorm(v,f)};
+/* 11/17 第 23 輪 N23-3（測試員 B）：星門圍城切過一次 3D 星盤，park3d 就一直是 true，之後挑戰電腦直接開成 3D 園子（蓋掉「新手預設平面」，開發者 11/12）。
+   比照黑洞序局的 bhxP3：星門圍城要把 park3d 打開時，先記下原本的值（store gsvP3Bak，原本就是 true＝玩家自己選的，不記）；切回平面、離開星門圍城（gsvHide）就還原。
+   App 在星門圍城 3D 時被關掉：下次開 App 不在星門圍城對局頁就還原 */
+function gsvP3On(){try{if(store.get("park3d",null)!==true&&!store.get("gsvP3Bak",null))store.set("gsvP3Bak",{v:store.get("park3d",null)});store.set("park3d",true)}catch(e){}}
+function gsvP3Back(){try{const b=store.get("gsvP3Bak",null);if(!b)return false;store.set("gsvP3Bak",null);store.set("park3d",b.v==null?null:b.v);return true}catch(e){return false}}
+try{if(typeof location!=="undefined"&&!/^#\/journey\/play/.test(location.hash||""))gsvP3Back()}catch(e){}
 function gsvP3Sync(){const v=gsvVw();if(v==="flat"){GSV_P3=0;return v}GSV_V3=v;let p=null;try{p=store.get("park3d",null)}catch(e){}const s=gsvP3Step(v,p,GSV_P3);
-  if(s==="ask"){try{store.set("park3d",true)}catch(e){}GSV_P3=1}else if(s==="fail"){GSV_P3=0;try{store.set("gsvView","flat")}catch(e){}return"flat"}else if(p===true)GSV_P3=1;return v}
+  if(s==="ask"){gsvP3On();GSV_P3=1}else if(s==="fail"){GSV_P3=0;try{store.set("gsvView","flat")}catch(e){}return"flat"}else if(p===true)GSV_P3=1;return v}
 /* 平面棋盤：07bht bhtdFlat 問這裡（08b render 一開頭、頂欄還沒畫）；選了 3D 就在這裡先把 park3d 打開 */
 function gsvFlat(st){if(!gsvIs(st))return false;try{return gsvP3Sync()==="flat"}catch(e){return true}}   /* 出錯（這支還沒載完就被問到）＝平面 */
 function gsvParkEx(st){if(!gsvIs(st))return{bhBoss:null,tdCam:null};let v="flat";try{v=gsvP3Sync()}catch(e){}return{bhBoss:null,tdCam:v==="flat"?null:v,tdFx:typeof bhtdFxLv==="function"?bhtdFxLv():2}}
@@ -922,10 +928,12 @@ function gsv3d(){try{return typeof bhtd3d==="function"&&!!bhtd3d()}catch(e){retu
 function gsvSetView(v){if(!gsvVwOk(v)||v===gsvVw())return;
   if(v!=="flat")try{if(typeof focusOn==="function"&&focusOn()){const fb=!!store.get("focusBoard",false);if(fb)store.set("focusBoard",false);
       if(focusOn()){if(fb)store.set("focusBoard",true);toast("純淨畫面、螢幕報讀模式用平面棋盤");return}if(typeof focusApply==="function")focusApply()}}catch(e){}   /* 照 06-cpu parkBtn：專注棋盤模式開著又要 3D＝把專注模式關掉；純淨畫面、螢幕報讀還開著就不切（那兩種一律平面） */
-  try{store.set("gsvView",v);if(v!=="flat"){store.set("park3d",true);GSV_P3=1;GSV_V3=v}}catch(e){}
+  try{store.set("gsvView",v);if(v!=="flat"){gsvP3On();GSV_P3=1;GSV_V3=v}else gsvP3Back()}catch(e){}
   try{if(v!=="flat"&&typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.setTdCam)PARK.v.setTdCam(v,typeof bhtdFxLv==="function"?bhtdFxLv():2)}catch(e){}
   GSV_MK="";try{if(typeof window!=="undefined"&&window.cgPlay&&window.cgPlay.rr)window.cgPlay.rr()}catch(e){}gsvViewUi()}   /* 平面↔3D：08b 重畫（PARK_OFF 照 bhtlFlat→bhtdFlat→gsvFlat），頂欄那顆的字也跟著換 */
 function gsvVwFix(){if(gsvVw()==="flat"||gsvP3Sync()!=="flat")return;GSV_MK="";gsvViewUi();try{if(typeof window!=="undefined"&&window.cgPlay&&window.cgPlay.rr)window.cgPlay.rr()}catch(e){}}   /* gsvFrame 每秒查一次：3D 載入失敗是事後才把 park3d 關掉的，那時沒有人重畫 */
+/* 11/17 第 22 輪 N22-3：「⋯」選單裡那顆在星門圍城對局中叫什麼（02-shell topMore 用；不在星門圍城對局＝null，照原本的名字） */
+function gsvParkLb(){try{const st=GSV_ST;if(!st||!gsvIs(st)||typeof document==="undefined"||!document.body||!document.body.classList.contains("gsv-on"))return null;return gsvVw()==="flat"?"切到 3D 星盤":"回平面棋盤"}catch(e){return null}}
 function gsvParkBtn(){const st=GSV_ST;if(!st||!gsvIs(st)||typeof document==="undefined"||!document.body||!document.body.classList.contains("gsv-on"))return false;
   const to=gsvParkTo(gsvVw(),GSV_V3),go=()=>{try{gsvSetView(to);if(gsvVw()===to)toast(to==="flat"?"回到平面棋盤":"🌀 3D 星盤（右上 👁 換視角）")}catch(e){console.warn("[gsv]",e)}};try{vibrate(8)}catch(e){}
   /* 11/15 實機：從「⋯ 更多」那張卡片按的時候，卡片在瀏覽器歷史多墊了一層（00-util sheet 的 xqSheet），當下就重畫頂欄會把返回鍵算成「回這一頁自己」（字變成「回園子對局」、按了不動）——等卡片關掉、那一層退掉再切 */
@@ -938,7 +946,7 @@ function gsvViewUi(){if(typeof document==="undefined"||typeof BHTD_VW==="undefin
   GSV_VB=b;const v=gsvVw();if(b.dataset.v!==v){b.dataset.v=v;b.innerHTML=`<span aria-hidden="true">👁</span><small>${BHTD_VW[v]}</small>`}
   /* 11/17 測試員 D 第 7 輪 P3-2：切到 3D 總覽後選單是 Overview，頂欄這顆的 aria-label 卻還是「View: Flat board」。原本名稱只在 dataset.v 換了的那一次寫、英文靠翻譯觀察器事後換；
      改成每次都對一次（gsvVwLb：中文照舊、英文直接給英文），跟現在的視角不一樣就重寫——不靠觀察器、也不怕按鈕被重畫過 */
-  const L=gsvVwLb(v);if(b.getAttribute("aria-label")!==L[0])b.setAttribute("aria-label",L[0]);if(b.title!==L[1])b.title=L[1]}
+  const L=gsvVwLb(v);if(b.getAttribute("aria-label")!==L[0])b.setAttribute("aria-label",L[0]);if(b.title!==L[1])b.title=L[1];try{document.dispatchEvent(new Event("xq-topmore"))}catch(e){}}   /* 11/17 第 23 輪 T4：通知 02-shell 的「⋯」照 gsvParkLb 重寫名稱 */
 let GSV_VB=null,GSV_VBF=0;   /* VB＝頂欄「👁」那一顆（重畫頂欄後放回去同一顆）；VBF＝上次按它的時間 */
 function gsvVwLb(v){const a="視角："+BHTD_VW[v]+"（點一下換下一種）",t="視角："+BHTD_VW[v];let en=false;try{en=/^en/.test(document.documentElement.lang||"")&&typeof i18nText==="function"}catch(e){}
   if(!en)return[a,t];const tr=s=>{try{const r=i18nText(s);return r==null?s:r}catch(e){return s}};return[tr(a),tr(t)]}

@@ -273,7 +273,7 @@ const I18N_EN={
   "↩ 掀簾・回雲弈閣":"↩ Back to Play",
   "↩ 掀簾・回觀星閣":"↩ Back to Play",
   /* 頂欄、底欄、共用按鈕 */
-  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","去園子下棋（3D）":"Play in the garden (3D)","回棋盤模式":"Back to board mode","更多":"More",
+  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","去園子下棋（3D）":"Play in the garden (3D)","回棋盤模式":"Back to board mode","切到 3D 星盤":"Switch to 3D star board","回平面棋盤":"Back to 2D board",   /* 第 23 輪 N23-1：星門圍城「⋯」那顆（外掛字典還沒載到也翻得出） */"更多":"More",
   "關閉":"Close","取消":"Cancel","確定":"OK","繼續":"Continue","結束":"End","下一步":"Next","上一步":"Previous","自動播放":"Autoplay","分享給朋友":"Share with friends",
   "開啟螢幕報讀與鍵盤模式":"Turn on screen reader & keyboard mode","螢幕報讀與鍵盤模式：開著（按一下關掉）":"Screen reader & keyboard mode: on (tap to turn off)",   /* 0540 驗收：英文讀屏第一個碰到的按鈕 */
   "回報問題":"Report a problem","意見回饋":"Feedback","我的角色":"My character","加到主畫面":"Add to Home Screen","線上大廳":"Online lobby","走回雅間":"Back to the private room",
@@ -1408,7 +1408,8 @@ function i18nIsSkip(el){if(!el||el.nodeType!==1)return false;if(/^(SCRIPT|STYLE|
 /* 11/17 第 18 輪 D P2-3：開關（<input type="checkbox" class="sw" aria-label="…">）、輸入框的 aria-label、title、placeholder 一直是中文——INPUT、TEXTAREA 在跳過名單裡（裡面的字是玩家打的、不能動），
    整個元素連屬性一起跳過，讀螢幕念「螢幕報讀與鍵盤模式」「匿名送出對局評分」…。改成：這兩種只翻屬性（值照舊不動）；自己或外層標了 data-nocc／data-noi18n、外層在跳過名單裡的照舊不翻 */
 /* 11/17 第 19 輪 D P2-3（4.0 無障礙）：棋盤預覽、地圖這類 <svg role="img" aria-label="棋盤"> 整個在跳過名單裡（裡面的棋子字不能翻），連 svg 自己的 aria-label 也一直是中文 → svg 本身跟 INPUT 一樣只翻屬性，裡面的子元素照舊不動 */
-function i18nFieldEl(el){return!!(el&&el.nodeType===1&&/^(INPUT|TEXTAREA|SVG)$/i.test(el.nodeName)&&!el.hasAttribute("data-nocc")&&!el.hasAttribute("data-noi18n")&&!i18nInSkip(el.parentNode))}
+/* 11/17 第 21 輪 77：#/weekly 週報 <canvas role="img" aria-label="…的學習週報…"> 也一樣只翻屬性（畫布在跳過名單裡） */
+function i18nFieldEl(el){return!!(el&&el.nodeType===1&&/^(INPUT|TEXTAREA|SVG|CANVAS)$/i.test(el.nodeName)&&!el.hasAttribute("data-nocc")&&!el.hasAttribute("data-noi18n")&&!i18nInSkip(el.parentNode))}
 function i18nInSkip(n){for(let e=n&&n.nodeType===1?n:n&&n.parentNode;e&&e.nodeType===1;e=e.parentNode)if(i18nIsSkip(e))return true;return false}
 /* data-i18n="鍵"：換掉這個元素「自己的」最後一段字（子元素裡的圖示不動，前後空白照留）；data-i18n-n 是 {n}；原文記在 I18N_ORIG，一樣可以還原。字典沒有這個鍵就回 false，照一般字典替換 */
 function i18nKeyEl(el){const k=el&&el.getAttribute&&el.getAttribute("data-i18n");if(!k||!Object.prototype.hasOwnProperty.call(I18N_KEY,k))return false;
@@ -1421,7 +1422,11 @@ function i18nTextNode(n,checked){const v=n.nodeValue;if(v&&!I18N_CJK.test(v)&&v.
   const pe=n.parentNode;if(pe&&pe.nodeType===1&&pe.hasAttribute&&pe.hasAttribute("data-i18n")&&i18nKeyEl(pe))return;
   const t=i18nLine(v);if(t!=null&&t!==v){I18N_ORIG.set(n,{o:v,t});n.nodeValue=t}}
 function i18nEl(el){i18nKeyEl(el);i18nAttrs(el)}
-function i18nAttrs(el){for(const a of I18N_ATTR){const v=el.getAttribute&&el.getAttribute(a);if(!v||!I18N_CJK.test(v)||I18N_AGUARD.includes(v.trim()))continue;const t=i18nLine(v);if(t==null||t===v)continue;
+/* 11/17 第 21 輪 77：讀螢幕名稱常是好幾段用「，」接起來的（#/db「局名，類別，Red wins」）；整段翻不出時一段一段翻，翻不出的段（局名、人名）留原文；
+   兩段都翻好才用英文逗號，旁邊是中文的照舊用「，」（不會變成「走一步就將軍, 逼對方先解」） */
+function i18nParts(v){const P=String(v).split("，");if(P.length<2)return null;let n=0;const T=P.map(p=>{const s=p.trim();if(!s||!I18N_CJK.test(s))return s;const t=i18nText(s);if(t!=null&&!I18N_CJK.test(t)){n++;return t}return s});if(!n)return null;
+  let o=T[0];for(let i=1;i<T.length;i++)o+=(I18N_CJK.test(T[i-1])||I18N_CJK.test(T[i])?"，":", ")+T[i];return o}
+function i18nAttrs(el){for(const a of I18N_ATTR){const v=el.getAttribute&&el.getAttribute(a);if(!v||!I18N_CJK.test(v)||I18N_AGUARD.includes(v.trim()))continue;let t=i18nLine(v);if(t==null||t===v)t=i18nParts(v);if(t==null||t===v)continue;
   let m=I18N_AORIG.get(el);if(!m){m={};I18N_AORIG.set(el,m)}m[a]={o:v,t};el.setAttribute(a,t)}}
 function i18nWalk(n,txt,el){if(!n)return;if(n.nodeType===3){txt(n);return}if(n.nodeType!==1&&n.nodeType!==9&&n.nodeType!==11)return;if(n.nodeType===1){if(i18nIsSkip(n)){if(el===i18nEl&&i18nFieldEl(n))i18nAttrs(n);return}el(n)}
   for(let c=n.firstChild;c;c=c.nextSibling)i18nWalk(c,txt,el)}
@@ -1457,7 +1462,7 @@ function i18nBoot(){try{document.documentElement.lang=i18nHtmlLang()}catch(e){}
 /* 外掛字典（介面補字）：抓到就併進字典，整頁沒翻到的再翻一次；抓不到就只用內建的 */
 let I18N_EXT=null;
 function i18nExtLoad(){if(I18N_EXT)return I18N_EXT;if(typeof fetch!=="function")return I18N_EXT=Promise.resolve(0);
-  I18N_EXT=fetch("data/i18n-en.json").then(r=>r.ok?r.json():null).then(o=>{const n=i18nExtMerge(o);if(n&&document.body)try{i18nApply(document.body)}catch(e){}return n}).catch(()=>0);return I18N_EXT}
+  I18N_EXT=fetch("data/i18n-en.json").then(r=>r.ok?r.json():null).then(o=>{const n=i18nExtMerge(o);if(n&&document.body){try{i18nApply(document.body)}catch(e){}try{if(typeof axmFix==="function")axmFix(document.body)}catch(e){}try{document.dispatchEvent(new Event("xq-i18n-ext"))}catch(e){}}return n})   /* 11/17 第 21 輪 77：字典比畫面晚到時，11b 用中文組好的讀螢幕名稱（按鈕文字有圖示或・的）照翻好的字重算一次；也通知 07w9 出口標籤照英文寬度重新推回畫面內 */.catch(()=>0);return I18N_EXT}
 /* 底欄四顆（m.html 寫死的）照 data-go 標上鍵，不靠字 */
 const I18N_TABK={"#/":"tab.home","#/lobby":"tab.online","#/db":"tab.library","#/settings":"tab.settings"};
 function i18nTabKeys(){try{document.querySelectorAll("#tabbar [data-go]").forEach(b=>{const k=I18N_TABK[b.getAttribute("data-go")];if(k&&!b.hasAttribute("data-i18n"))b.setAttribute("data-i18n",k)})}catch(e){}}
@@ -1517,7 +1522,14 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
   "html[lang=en] #stmOv .lb{writing-mode:horizontal-tb;text-orientation:mixed;width:auto!important;height:auto!important;white-space:nowrap;font-size:3.4cqw;line-height:1.2;letter-spacing:0;padding:.3em .55em;background:#F6EFE2;border:1px solid #d8c8b0;box-shadow:0 1px 3px rgba(60,40,20,.18)}",
   "html[lang=en] #stmOv .lb[data-l=acad],html[lang=en] #stmOv .lb[data-l=svc]{transform:translateX(calc(-100% + 7.5cqw))}",
   /* 11/17 第 20 輪 D N6：#/cpuroom 段位牌「Novice · 50 pts to promotion」比框長（框 max-width 46%、字不換行）→ 英文可以換行 */
-  "html[lang=en] .cr-page .shp-spot b{white-space:normal;line-height:1.25;text-align:center}"].join("\n");
+  "html[lang=en] .cr-page .shp-spot b{white-space:normal;line-height:1.25;text-align:center}",
+  /* 11/17 第 22 輪 S3／R22-2：第 21 輪另外畫一條同形狀的米色長條去蓋，結果標籤下面還是掛著一條空白直條（L 形）→ 改成標籤自己就是一塊招牌：
+     從紙條的左上角起，至少跟紙條一樣寬（7.5cqw）、一樣高（19.8cqw），字太長就換行、置中，整條紙條都在招牌底下，看起來是一塊寫了字的紙板，不再有空白直條 */
+  "html[lang=en] #stmOv .lb{z-index:1;white-space:normal!important;text-align:center;min-width:calc(7.5cqw + 2px);max-width:27cqw;min-height:calc(19.8cqw + 2px);margin:-1px 0 0 -1px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;line-height:1.15}",
+  "html[lang=en] #stmOv .lb[data-l=acad],html[lang=en] #stmOv .lb[data-l=svc]{margin:-1px -1px 0 0}",
+  /* 11/17 第 22 輪 S2：大廳左下出口「↩ Back to Cloud Chess Pavilion」比按鈕寬、左右被裁 → 英文出口標籤可以換行、字小一點，整段留在按鈕裡 */
+  "html[lang=en] .shp-spot.ex-spot{max-width:min(52vw,210px)}html[lang=en] .shp-spot.ex-spot b{white-space:normal;font-size:12.5px;line-height:1.2;letter-spacing:0;text-align:center}",
+  "html[lang=en] #stmOv .here b{margin-left:.3em}"].join("\n");
 
 function i18nCss(){try{if(document.getElementById("i18nCss"))return;const s=document.createElement("style");s.id="i18nCss";s.textContent=I18N_CSS;(document.head||document.body).appendChild(s)}catch(e){}}
 /* 英文系統、還沒選過語言：開 App 4 秒後提示一次（不自動切） */

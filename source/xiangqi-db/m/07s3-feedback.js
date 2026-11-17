@@ -121,7 +121,7 @@ function fbpCss(){if(document.getElementById("fbpCss"))return;const s=document.c
 /* 11/17 第 19 輪 E19-4（測試員 E 第 19 輪 P3-4）：393 寬實測「申冤」只點得到 39×45（被旁邊的口擋到）、「招諫」外框右緣到 399（超出畫面 6px）。
    原因：① 右緣只看 innerWidth 和 #view——iPhone 的 WebView 頁面有東西橫向超出時 innerWidth 會跟著變大（不是看得到的寬度）；② 兵印量不到（還沒排好、被藏）時整個退回 r07Solve，那條路不管畫面邊、太擠只擴到不重疊。
    改成：看得到的左右緣再取 documentElement.clientWidth、visualViewport；兵印不在也照這套排三個口；排完逐塊檢查（都在畫面內、每塊至少 44×44、兩兩不重疊），不合格才退回 r07Solve，退回的結果也推回畫面內 */
-function fbpSlotLay(L,B,M){if(!L||L.length<3)return null;const[a,c,d,s]=L,b2=d.y+d.h,sx=Math.max(B.l+M,Math.min(a.x+a.w,B.r-M)),cx=v=>v.x+v.w/2,cl=(l,w)=>{const x=Math.max(B.l,Math.min(l,B.r-w));return[x,x+w]};
+function fbpSlotLay(L,B,M){if(!L||L.length<3)return null;M+=1;   /* 11/17 第 22 輪 R22-4：375×812 申冤量到 43（範圍邊在半個像素上，換成整數像素少 1）→ 三個口各多撐 1px */const[a,c,d,s]=L,b2=d.y+d.h,sx=Math.max(B.l+M,Math.min(a.x+a.w,B.r-M)),cx=v=>v.x+v.w/2,cl=(l,w)=>{const x=Math.max(B.l,Math.min(l,B.r-w));return[x,x+w]};
   const[dl,dr]=cl(cx(d)-Math.max(M,d.w)/2,Math.max(M,d.w)),[sl,sr]=s?cl(cx(s)-Math.max(M+1,s.w)/2,Math.max(M+1,s.w)):[0,0];
   const H=[{l:sx-M,r:sx,t:b2,b:b2+M},{l:sx,r:sx+M,t:b2,b:b2+M},{l:dl,r:dr,t:b2-M,b:b2}];if(s)H.push({l:sl,r:sr,t:b2+M,b:Math.max(b2+2*M+1,s.y+s.h)});   /* 11/17 第 20 輪 E N20-9：兵印跟申冤的點選範圍剛好相接，換成整數像素後兵印少 1px（43）→ 往下多撐 1px */
   const hit=(q,v)=>Math.min(q.r,v.x+v.w)-Math.max(q.l,v.x)>0&&Math.min(q.b,v.y+v.h)-Math.max(q.t,v.y)>0;

@@ -12,7 +12,7 @@ const EX_HUB_LB="‹ 回棋鎮";
 function exIn(s){const go=()=>{if(!s.isConnected)return;const V=document.getElementById("view"),P=s.closest(".shp-page");if(!V||!P)return;const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),L=Math.max(vr.left,pr.left)+6,R=Math.min(vr.right,pr.right)-6;
   if(s.dataset.exL!=null)s.style.left=s.dataset.exL;const q=s.getBoundingClientRect();if(!q.width||R-L<q.width)return;const d=q.left<L?L-q.left:q.right>R?R-q.right:0;if(d){if(s.dataset.exL==null)s.dataset.exL=s.style.left;s.style.left="calc("+s.dataset.exL+" + "+Math.round(d)+"px)"}
   exInY(s,V,P);requestAnimationFrame(()=>{try{if(typeof r07Hit==="function")r07Hit()}catch(e){}})};   /* 標籤挪過位置，07z R07 的點選範圍要照新位置馬上重算（r07HitSoon 已經排著就會被略過，點選範圍會停在舊位置被裁掉的樣子） */
-  requestAnimationFrame(go);setTimeout(go,700)}
+  requestAnimationFrame(go);setTimeout(go,700);setTimeout(go,1600);try{document.addEventListener("xq-i18n-ext",()=>requestAnimationFrame(go),{once:true})}catch(e){}}   /* 11/17 第 21 輪 79：英文字典晚到時標籤變寬（↩ Back to Cloud Chess Pavilion），照新寬度再推一次 */
 /* 11/12 第 11 輪觸控測試（touch-stress 失敗案例 1、2）：iPhone SE（375×667）上「↩ 回藏譜石窟」「↩ 回挑戰電腦」放在圖的 87～88%，
    掉到畫面外只露 6～20px；場景頁又藏了頂欄返回鍵，等於沒有出口。放好後也往上推：標籤下緣不超過「#view 看得到的下緣」與
    「視窗高 − max(12px, 底部安全區)」，44px 高的點選範圍（m.css .shp-spot::before）也一起算進去 */

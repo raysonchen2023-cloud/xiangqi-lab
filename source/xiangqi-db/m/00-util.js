@@ -76,8 +76,10 @@ function myName(){return meInfo().name}
 /* 意見回饋 604（開發者）：預設名字「棋友」＋4 位 16 進位（取自這支手機的代號）；跟線上看得到的名字撞到就換一組 */
 function defaultName(){const used=new Set();try{if(window.XQNet&&XQNet.people)XQNet.people().forEach(p=>used.add(p.name))}catch(e){}
   let h=(meInfo().id.match(/[0-9a-f]/gi)||[]).join("").slice(0,4).toUpperCase();
-  for(let i=0;(!/^[0-9A-F]{4}$/.test(h)||used.has("棋友"+h))&&i<50;i++)h=Math.floor(Math.random()*65536).toString(16).toUpperCase().padStart(4,"0");
-  return"棋友"+h}
+  const pre=defaultNamePre();   /* 11/17 第 21 輪 79：英文介面新產生的預設名字寫 Player XXXX（已經存起來的名字不動） */
+  for(let i=0;(!/^[0-9A-F]{4}$/.test(h)||used.has(pre+h))&&i<50;i++)h=Math.floor(Math.random()*65536).toString(16).toUpperCase().padStart(4,"0");
+  return pre+h}
+function defaultNamePre(){try{return typeof i18nLang==="function"&&i18nLang()==="en"?"Player ":"棋友"}catch(e){return"棋友"}}
 function setMyName(n){const m=meInfo();m.name=String(n||"").replace(/[\u0000-\u001f<>]/g,"").trim().slice(0,16);try{localStorage.setItem("xq_me",JSON.stringify(m))}catch(e){}}
 // iPad 的瀏覽器自稱 Mac，用觸控點數分辨
 const MY_KIND=/iPad/.test(navigator.userAgent)||/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1?"iPad":/iPhone/.test(navigator.userAgent)?"iPhone":/Android/.test(navigator.userAgent)?"Android":/Windows/.test(navigator.userAgent)?"Windows":/Mac/.test(navigator.userAgent)?"Mac":"";
@@ -258,7 +260,7 @@ function sheet(title,build){
   /* 11/11 模擬玩家問題 8：介紹卡（園子裡點人、點物件）沒有關閉鈕、Esc 也沒用。卡片右上角一律補一顆 ✕（卡片裡已經有 ✕ 按鈕的就不重複）；Esc 見下方 shEsc */
   try{if(![...sh.querySelectorAll("button")].some(x=>/^\s*✕/.test(x.textContent||""))){const x=document.createElement("button");x.type="button";x.className="sh-x";x.textContent="✕";x.title="關閉";x.setAttribute("aria-label","關閉");x.onclick=e=>{e.stopPropagation();closeSheet()};sh.append(x)}}catch(e){}
   sh.getBoundingClientRect();setTimeout(()=>{sc.classList.add("show");sh.classList.add("show")},16);
-  sc.onclick=closeSheet;
+  {const t0=Date.now();sc.onclick=()=>{if(Date.now()-t0<350)return;closeSheet()}}   /* 11/17 第 23 輪（測試員 B 備註）：「⋯」選單連點兩下時，第二下落在剛開的卡片暗幕上，卡片馬上又關掉 → 暗幕剛出現 0.35 秒內點到不關 */
   // 往下拉關閉
   let y0=null;sh.querySelector(".grab").parentElement.addEventListener("touchstart",e=>{if(e.target.closest(".sh-b"))return;y0=e.touches[0].clientY},{passive:true});
   sh.addEventListener("touchend",e=>{if(y0!=null&&e.changedTouches[0].clientY-y0>60)closeSheet();y0=null});

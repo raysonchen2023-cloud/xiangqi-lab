@@ -64,7 +64,7 @@ test("D N4：棋盤群組名英文；axm 組出來的名字在英文介面分段
   const A = M("11b-a11y.js"), src = between(A, "function axmSpeak(t){", "\n/* 11/17 第 20 輪 D N4") + "\n" + between(A, "function axmEn(s){", "\n");
   const D = { "擺譜中殘局": "Composed middlegame endgame", "第 2 課・仕（還沒開）": "Lesson 2 · Advisor (locked)" };
   const run = (lang, s) => vm.runInNewContext(src + ";axmSpeak(S)", { S: s, i18nLang: () => lang, i18nText: x => D[x] != null ? D[x] : /[㐀-鿿]/.test(x) ? null : x });
-  assert.equal(run("en", "氣吞關右・擺譜中殘局・Red wins"), "氣吞關右, Composed middlegame endgame, Red wins", "題名留原文，其他段翻");
+  assert.equal(run("en", "氣吞關右・擺譜中殘局・Red wins"), "氣吞關右，Composed middlegame endgame, Red wins", "題名留原文，其他段翻；旁邊是中文的照舊用「，」（第 21 輪 77）");
   assert.equal(run("en", "🎯 擺譜中殘局"), "Composed middlegame endgame", "整段翻得出就用整段");
   assert.equal(run("zh", "氣吞關右・擺譜中殘局"), "氣吞關右，擺譜中殘局", "中文照舊");
 });
@@ -160,7 +160,7 @@ test("B N20-2／N20-5／N20-7：古戰場寬但矮的橫式也限圖高；直式
   for (const [w, h] of [[812, 375], [667, 375], [820, 375], [844, 390], [932, 430]]) assert.ok(ok(w, h), w + "×" + h);
   for (const [w, h] of [[1024, 768], [1280, 800], [390, 844]]) assert.ok(!ok(w, h), w + "×" + h + "（寬螢幕、直式照舊）");
   assert.ok(css.includes(".bt2-pic{max-height:40vh}"));
-  assert.ok(css.includes('.bt2-hd{position:relative}.bt2-hd::before{content:"";position:absolute;left:0;right:0;top:-8px;bottom:-8px}'), "28＋8＋8＝44");
+  assert.ok(css.includes('.bt2-hd{position:relative;z-index:2}.bt2-hd::before{content:"";position:absolute;left:0;right:0;top:-8px;bottom:-8px}'), "28＋8＋8＝44（第 21 輪 75：z-index 蓋過下面的戰役圖片）");
   assert.ok(css.includes("@media (orientation:landscape){body:has(.bt2.sh) .xqbot{visibility:hidden!important}}"));
   /* 844×390：標題底在按鈕列上面（同 test-r19 的估算） */
   const H = 390 - 56 - 12, title = 10 + .4 * 390 + 10 + 18 + 2 * 16 * 1.35, nav = 44 + 8 + 2 + 10; assert.ok(title <= H - nav, title + " / " + (H - nav));

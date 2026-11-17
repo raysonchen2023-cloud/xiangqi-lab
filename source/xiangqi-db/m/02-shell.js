@@ -68,9 +68,27 @@ function setTop(title,back,right){{const mc=document.getElementById("meChip");if
      對局頁（挑戰電腦、擂台、同桌、雲河棋路、錯棋重練）寬度不到 520 時，右邊兩個以上的圖示收進一顆「⋯」，點了列出每一項的圖示＋名稱；地圖鈕照舊 */
   try{if(right&&right.length>=2&&innerWidth<520&&/^#\/(cpu|arena|pvp|journey\/play|redo\/play)(\/|$)/.test(location.hash||""))topMore(tr,right)}catch(e){}
   if(back&&back!=="#/"&&!(right&&right.length>=2)){const h=document.createElement("button");h.className="ib";h.textContent="🏠";h.title="回首頁";h.setAttribute("aria-label","回首頁");h.dataset.home="1";h.onclick=()=>goHome();tr.append(h)}}   /* 11/17 第 19 輪 D P2-4：標 data-home（07t3、07w9 用它找這顆鈕），英文介面的 aria-label／title 才能翻成 Home（07i18n I18N_AGUARD 拿掉回首頁） */   /* 意見回饋 607：🏠 退回首頁，不往前推一頁 */
-function topMore(tr,right){const bs=[...tr.querySelectorAll(".ib")];bs.forEach(b=>b.hidden=true);const m=document.createElement("button");m.className="ib";m.textContent="⋯";m.title="更多";m.setAttribute("aria-label","更多："+right.map(r=>r[2]||r[0]).join("、"));
-  m.onclick=()=>{try{vibrate(5)}catch(e){}sheet("更多",b=>{b.innerHTML=`<div style="display:grid;gap:8px">${right.map((r,i)=>`<button class="btn" data-i="${i}" style="display:flex;align-items:center;gap:10px;justify-content:flex-start;min-height:48px;margin:0"><span style="font-size:20px;min-width:28px;text-align:center">${esc(r[0])}</span><span>${esc(r[2]||"")}</span></button>`).join("")}</div>`;
-    b.querySelectorAll("[data-i]").forEach(x=>x.onclick=()=>{closeSheet();const f=right[+x.dataset.i][1];if(typeof f==="function")setTimeout(f,0)})})};tr.append(m)}
+function topMore(tr,right){try{topMoreRun.w=false}catch(e){}   /* 第 23 輪 R23-1：新的頁面（頂欄重畫）不再等上一張選單的 popstate */
+  const bs=[...tr.querySelectorAll(".ib")];bs.forEach(b=>b.hidden=true);const m=document.createElement("button");m.className="ib";m.textContent="⋯";m.title="更多";m.setAttribute("aria-label","更多："+right.map(r=>r[2]||r[0]).join("、"));
+  /* 11/17 第 21 輪 76：選單裡的名稱照頂欄那顆（藏起來的）按鈕現在的字（3D 切換鈕切完會換名稱），讀螢幕名稱英文時直接組英文（大小寫跟選單一致） */
+  /* 11/17 第 22 輪 N22-3：星門圍城對局中，園子那顆（data-lb 照舊是「回棋盤模式／去園子下棋（3D）」，別的模組靠它找）實際是切 3D 星盤 → 選單和讀螢幕照 07bhg gsvParkLb 寫實際效果；其他對局不變 */
+  const lbOf=i=>{const x=bs[i],v=(x&&(x.dataset.lb||x.getAttribute("aria-label")))||right[i][2]||"";try{if(typeof gsvParkLb==="function"&&/^(回棋盤模式|去園子下棋（3D）)$/.test(v)){const g=gsvParkLb();if(g)return g}}catch(e){}return v},icOf=i=>{const x=bs[i];return(x&&x.textContent)||right[i][0]};
+  /* 11/17 第 22 輪 S4：#/pvp 從選單切到 3D 以後，頂欄那顆的 data-lb 換了，「⋯」的讀螢幕名稱也當場跟著換 */
+  try{const mo=new MutationObserver(()=>{if(m.isConnected)m.setAttribute("aria-label",al())});bs.forEach(x=>mo.observe(x,{attributes:true,attributeFilter:["data-lb"]}))}catch(e){}
+  const al=()=>{const L=right.map((r,i)=>lbOf(i)||r[0]);try{if(typeof i18nLang==="function"&&i18nLang()==="en"&&typeof i18nText==="function")return"More: "+L.map(t=>{const e=i18nText(t);return e!=null&&!/[㐀-鿿]/.test(e)?e:t}).join(", ")}catch(e){}return"更多："+L.join("、")};m.setAttribute("aria-label",al());
+  /* 11/17 第 23 輪 T4：星門圍城開局時 gsv-on 還沒掛上，建立當下名稱是「去園子下棋」——之後再對兩次，07bhg gsvViewUi 每次也發 xq-topmore 通知重寫 */
+  {const rf=()=>{if(!m.isConnected){document.removeEventListener("xq-topmore",rf);return}const a=al();if(m.getAttribute("aria-label")!==a)m.setAttribute("aria-label",a)};document.addEventListener("xq-topmore",rf);setTimeout(rf,0);setTimeout(rf,900)}
+  m.onclick=()=>{try{vibrate(5)}catch(e){}m.setAttribute("aria-label",al());sheet("更多",b=>{b.innerHTML=`<div style="display:grid;gap:8px">${right.map((r,i)=>`<button class="btn" data-i="${i}" style="display:flex;align-items:center;gap:10px;justify-content:flex-start;min-height:48px;margin:0"><span style="font-size:20px;min-width:28px;text-align:center">${esc(icOf(i))}</span><span>${esc(lbOf(i))}</span></button>`).join("")}</div>`;
+    /* 11/17 第 21 輪 76（#/arena「⋯」→ 回星槎沒反應）：原本 closeSheet() 排了一個 setTimeout 退掉開卡片時推的那筆紀錄（history.back），緊接著 setTimeout(f) 的 goUp／navReplace
+       先把「卡片那一筆」換成目的地，退回的那一下才到，又回到 #/arena。改成：卡片那筆由這裡自己退（closeSheet(true) 不再排退回），等 popstate 退完才做選單那一項；400ms 內沒等到也照做 */
+    b.querySelectorAll("[data-i]").forEach(x=>x.onclick=()=>{const f=right[+x.dataset.i][1];topMoreItem(b,f,()=>{if(m.isConnected)m.setAttribute("aria-label",al())})})})};tr.append(m)}   /* 11/17 第 22 輪 N22-2：選單項目做完（#/pvp 切 3D、星門圍城切星盤）當場重寫「⋯」的讀螢幕名稱 */
+/* 11/17 第 22 輪 N22-1（測試員 B：手機變慢時 history.back 晚到 600～900ms，第 21 輪「最多等 400ms」先做了選單項目，晚到的退上一頁又把網址退回 #/arena）：
+   不靠計時——卡片那筆的退回一定會觸發 popstate，等它真的來了才做選單那一項；history.back 丟錯（沒有紀錄可退）才當場做。after＝做完以後要更新的東西（「⋯」的名字） */
+/* 11/17 第 23 輪 R23-1（測試員 E）：同一張選單在 popstate 回來前被觸發兩次（程式連叫兩次 click、VoiceOver 連按、很慢的機器）＝退兩次，從 #/arena 多退一頁 →
+   一張選單只認第一次（b.dataset.tmr）；topMoreRun 等 popstate 的期間（topMoreRun.w）別的觸發也一律不理，選單項目只做一次 */
+function topMoreItem(b,f,after){if(b&&b.dataset){if(b.dataset.tmr)return false;b.dataset.tmr="1"}return topMoreRun(f,after)}
+function topMoreRun(f,after){if(topMoreRun.w)return false;const run=()=>{setTimeout(()=>{try{if(typeof f==="function")f()}finally{if(typeof after==="function"){setTimeout(after,0);setTimeout(after,600)}}},0)};let s=null;try{s=history.state}catch(e){}
+  if(!(s&&s.xqSheet)){closeSheet();run();return true}closeSheet(true);topMoreRun.w=true;let done=false;const go=()=>{if(done)return;done=true;topMoreRun.w=false;removeEventListener("popstate",go);run()};addEventListener("popstate",go);try{history.back()}catch(e){go()}return true}
 function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").children)b.classList.toggle("on",b.dataset.go===on)}
 for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);if(b.dataset.go==="#/")goHome();else location.hash=b.dataset.go};   /* 意見回饋 607：底部「首頁」也是退回首頁 */
 function route(){

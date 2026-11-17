@@ -121,6 +121,9 @@ const XH_Q=["sq033","gm2007-4nr33K1AR2b","sq088","gm2007-94A43AK1B2r","sq110","g
 /* 冬至的日期（臺灣時間）：用 Meeus《天文算法》第 27 章（含 24 個週期項）算的，例如 2025 年 12/21 23:03、2026 年 12/22 04:50、2027 年 12/22 10:42 */
 const XH_SOL={2025:"2025-12-21",2026:"2026-12-22",2027:"2027-12-22",2028:"2028-12-21",2029:"2029-12-21",2030:"2030-12-22",2031:"2031-12-22",2032:"2032-12-21",2033:"2033-12-21",2034:"2034-12-22",2035:"2035-12-22",2036:"2036-12-21",2037:"2037-12-21",2038:"2038-12-22",2039:"2039-12-22",2040:"2040-12-21"};
 const XH_FROM=2026,XH_MAKE=3,XH_NINE=["一九","二九","三九","四九","五九","六九","七九","八九","九九"];
+/* 11/17 第 21 輪 79：消寒圖 SVG 上的「一九～九九」（svg 裡的字 07i18n 不翻）英文介面寫 1st Nine～9th Nine */
+const XH_NINE_EN=["1st","2nd","3rd","4th","5th","6th","7th","8th","9th"].map(x=>x+" Nine");
+function xhNineLb(b){try{if(typeof i18nLang==="function"&&i18nLang()==="en")return XH_NINE_EN[b]}catch(e){}return XH_NINE[b]}
 /* 表外的年份：Meeus 的平均冬至公式（誤差在一小時內），換成臺灣時間的日期 */
 function xhSol(y){if(XH_SOL[y])return XH_SOL[y];const Y=(y-2000)/1000,jd=2451900.05952+365242.74049*Y-.06223*Y*Y-.00823*Y*Y*Y+.00032*Y*Y*Y*Y;return new Date((jd-2440587.5)*864e5+8*36e5).toISOString().slice(0,10)}
 const xhDN=k=>Math.floor(Date.parse(k+"T00:00:00Z")/864e5),xhKey=n=>new Date(n*864e5).toISOString().slice(0,10),xhMD=k=>(+k.slice(5,7))+"/"+(+k.slice(8,10));
@@ -153,7 +156,7 @@ function xhBrush(segs,w0,w1){const P=[];segs.forEach((g,si)=>{for(let i=si?1:0;i
   const n=P.length,L=[],R=[];for(let i=0;i<n;i++){const a=P[Math.max(0,i-1)],b=P[Math.min(n-1,i+1)],dx=b[0]-a[0],dy=b[1]-a[1],d=Math.hypot(dx,dy)||1,t=i/(n-1),
     w=(w0+(w1-w0)*Math.pow(t,.8))*(1+.12*Math.sin(i*1.7))/2;L.push([P[i][0]-dy/d*w,P[i][1]+dx/d*w]);R.push([P[i][0]+dy/d*w,P[i][1]-dx/d*w])}
   const q=a=>a.map(p=>p[0].toFixed(1)+" "+p[1].toFixed(1));return{d:"M"+q(L).join("L")+"L"+q(R.reverse()).join("L")+"Z",c:"M"+q(P).join("L")}}
-function xhSVG(st){let p="";XH_B.forEach(([x,y],b)=>{p+=`<g>${xhPetals(x,y,b,st,true)}<text x="${b===6?x+40:x}" y="${b===6?y+4:y+38}" class="xh-t">${XH_NINE[b]}</text></g>`});
+function xhSVG(st){let p="";XH_B.forEach(([x,y],b)=>{p+=`<g>${xhPetals(x,y,b,st,true)}<text x="${b===6?x+40:x}" y="${b===6?y+4:y+38}" class="xh-t">${xhNineLb(b)}</text></g>`});
   let br="",dry="";for(const[s,w0,w1]of XH_STROKES){const B=xhBrush(s,w0,w1);br+=`<path d="${B.d}"/>`;if(w0>=4.5)dry+=`<path d="${B.c}" stroke-width="${(w0*.28).toFixed(1)}"/>`}
   const moss=[[44,312],[110,244],[158,200],[205,160],[246,128],[286,80],[121,196],[262,170]].map(([x,y],i)=>`<ellipse cx="${x}" cy="${y}" rx="${1.6+i%3*.5}" ry="${1.1+i%2*.4}" transform="rotate(${i*37} ${x} ${y})"/>`).join("");
   return`<svg class="xh-svg" viewBox="0 0 360 340" role="img" aria-label="九九消寒圖：一枝素梅，九朵、每朵九瓣"><defs><filter id="xhRough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.6"/></filter>

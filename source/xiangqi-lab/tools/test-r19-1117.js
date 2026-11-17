@@ -101,7 +101,7 @@ test("D P2-3：svg 本身的 aria-label 翻成英文（棋盤預覽），裡面�
   assert.equal(C.i18nFieldEl(svg), true); assert.equal(C.i18nFieldEl(pc), false);
   const keep = el("svg", { "aria-label": "棋盤", "data-noi18n": "" }); C.i18nApply(el("body", {}, [keep])); assert.equal(keep.getAttribute("aria-label"), "棋盤");
   assert.ok(M("01-board.js").includes('svg.setAttribute("role","img");svg.setAttribute("aria-label","棋盤")'));
-  assert.ok(I18N.includes("/^(INPUT|TEXTAREA|SVG)$/i.test(el.nodeName)"));
+  assert.ok(I18N.includes("/^(INPUT|TEXTAREA|SVG|CANVAS)$/i.test(el.nodeName)"));   /* 第 21 輪：canvas 也只翻屬性 */
 });
 test("D P2-3：省電模式、四顆靜音鈕的 aria-label 有英文", { skip: SKIP }, () => {
   const C = i18nKit(true), T = s => C.i18nText(s);

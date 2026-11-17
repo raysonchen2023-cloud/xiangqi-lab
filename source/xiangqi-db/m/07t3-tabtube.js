@@ -109,12 +109,14 @@ function ttFan(open,quiet){const fan=document.getElementById("ttFan"),sc=documen
    圖比畫面高（小手機、iPad）照舊照寬度放、可以往下捲。座標都是圖的百分比，走路、出口、桌面跳躍、面板都跟著圖，不會錯位 */
 /* 11/17 Windows 測試員 B-11：手機補滿高度時圖比畫面寬、左右各裁掉一截（marginLeft 是負的），圖上的標籤 .shp-spot 會推回來，
    左上角的站名條 .shp-cap 卻還貼著圖的左緣，「現在停靠：秦」的「現」被切掉。站名條左右各縮回裁掉的那一截（--ttCx），對齊看得到的範圍。W＝看得到的寬、w＝圖寬 */
-const ttCapX=(W,w)=>Math.max(0,-Math.round((W-w)/2));   /* 跟 marginLeft 同一個取整，左緣剛好對齊 */
+const ttCapX=(W,w)=>Math.max(0,-Math.round((W-w)/2));
+/* 11/17 第 21 輪 71：意見回饋頁（青銅匭）的「招諫」口畫在圖寬 96% 左右，393×852、430×932 補滿到底時左右各裁 23／27px 把口裁掉 → 這一頁最多只放大到「左右各裁掉圖寬 3.3%」（口的右緣約 96%，再留一點邊），圖下多出來的一點空白照留 */
+const TT_FBP_EDGE=.033;   /* 跟 marginLeft 同一個取整，左緣剛好對齊 */
 function ttFill(){const V=document.getElementById("view");if(!V)return;const P=V.querySelector(".shp-page.cq");if(!P){V.classList.remove("tt-fillx");try{r07Off(V)}catch(e){}return}const im=P.querySelector(":scope>img");if(!im)return;
   const go=()=>{if(!P.isConnected)return;P.style.width="";P.style.marginLeft="";P.style.maxWidth="";P.style.removeProperty("--ttCx");V.classList.remove("tt-fillx");P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.dataset.ttL!=null)b.style.left=b.dataset.ttL});
     if(!TABTUBE_ON)return;const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),av=vr.top+V.clientHeight-(parseFloat(getComputedStyle(V).paddingBottom)||0)-pr.top,nw=im.naturalWidth||768,nh=im.naturalHeight||1376,W=pr.width,H=W*nh/nw;
     try{if(r07Wide(V,P,vr,pr,nw,nh))return}catch(e){}   /* v5 改善單 R07：寬螢幕、橫放的矮螢幕另外排（見 r07Wide）；手機直向不會進去 */
-    if(!W||av-H<2||av>H*1.25)return;const set=h=>{const w=Math.round(h*nw/nh);Object.assign(P.style,{maxWidth:"none",width:w+"px",marginLeft:Math.round((W-w)/2)+"px"});P.style.setProperty("--ttCx",ttCapX(W,w)+"px")};V.classList.add("tt-fillx");set(av);
+    if(!W||av-H<2||av>H*1.25)return;const set=h=>{let w=Math.round(h*nw/nh);if(P.classList&&P.classList.contains("fbp-page")){const cap=Math.floor(W/(1-2*TT_FBP_EDGE));if(w>cap)w=cap}Object.assign(P.style,{maxWidth:"none",width:w+"px",marginLeft:Math.round((W-w)/2)+"px"});P.style.setProperty("--ttCx",ttCapX(W,w)+"px")};V.classList.add("tt-fillx");set(av);
     {const ex=V.scrollHeight-V.clientHeight;if(ex>0&&ex<40)set(av-ex)}   /* 圖下還有一點邊距（.pad 之類）就扣掉，免得多出幾 px 可以捲 */
     requestAnimationFrame(()=>{const ox=parseFloat(P.style.left)||0;P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{if(b.classList.contains("hmp-side"))return;if(b.dataset.ttL==null)b.dataset.ttL=b.style.left;const q=b.getBoundingClientRect(),m=6,ql=q.left-ox,qr=q.right-ox;let d=0;if(ql<vr.left+m)d=vr.left+m-ql;else if(qr>vr.right-m)d=vr.right-m-qr;if(d)b.style.left="calc("+b.dataset.ttL+" + "+Math.round(d)+"px)"})})};   /* 11/14 首頁三屏長卷（07hmp）：鏡頭是 P 的 style.left，量的時候扣掉；左右兩屏的標籤（.hmp-side）不推 */
   if(im.complete&&im.naturalWidth)go();else im.addEventListener("load",go,{once:true})}

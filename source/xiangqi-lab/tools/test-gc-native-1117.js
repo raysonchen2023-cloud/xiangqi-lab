@@ -294,3 +294,30 @@ test("E 第 20 輪 N20-5：兒童模式不登入 Game Center、不放「🎮 Gam
   N.ctx.__cfg.kid = true; N.run('store.set("fmCfg",{kid:true})'); await N.flush();
   assert.equal(removed, 1, "切成兒童模式時把鈕拿掉");
 });
+
+test("E 第 21 輪 R21-1：改排過的「已改到 hh:mm」每次畫提醒卡都寫（頁面重畫也看得到），有人動了提醒才拿掉", async () => {
+  const A = mkDq({on:true,h:21,m:30,cfg:{late:"20:00"}});
+  assert.equal(await A.run("gcnDqFix()"), "19:30");
+  const cb = {checked:true}, sel = {value:"19:30"}, box = {innerHTML:"", querySelector:q => q === "#gcnDqOn" ? cb : sel};
+  A.ctx.__box = box;
+  A.run("gcnDqPaint(__box,XQNative.daily,{on:true,h:19,m:30})");
+  assert.ok(box.innerHTML.includes("已改到 19:30"), "第一次畫卡有寫");
+  A.run("gcnDqPaint(__box,XQNative.daily,{on:true,h:19,m:30})");
+  assert.ok(box.innerHTML.includes("已改到 19:30"), "頁面重畫換了一張卡也還有寫");
+  cb.onchange(); await A.flush();
+  A.run("gcnDqPaint(__box,XQNative.daily,{on:true,h:19,m:30})");
+  assert.ok(!box.innerHTML.includes("已改到"), "動過提醒之後就不再寫");
+});
+
+test("E 第 22 輪 R22-1：在提醒卡改時間或開關，「已改到」那行當場拿掉", async () => {
+  const A = mkDq({on:true,h:21,m:30,cfg:{late:"20:00"}});
+  await A.run("gcnDqFix()");
+  let removed = 0; const p = {remove(){ removed++ }};
+  const cb = {checked:true}, sel = {value:"18:30"}, box = {innerHTML:"", querySelector:q => q === "#gcnDqOn" ? cb : q === "p" ? p : sel};
+  A.ctx.__box = box;
+  A.run("gcnDqPaint(__box,XQNative.daily,{on:true,h:19,m:30})");
+  assert.ok(box.innerHTML.includes("已改到 19:30"));
+  sel.onchange(); await A.flush();
+  assert.equal(removed, 1, "改時間時當場拿掉提示");
+  assert.deepEqual(JSON.parse(JSON.stringify(A.dq.slice(-1))), [[18,30]], "照新選的時間排");
+});

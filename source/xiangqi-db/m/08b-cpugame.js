@@ -1,5 +1,15 @@
 /* 第 15 輪 X3 鍵值化：核心字串用鍵，英文模式回 07i18n.js I18N_KEY 的英文，其他（或沒有 07i18n）照原文 */
 function cgT(k,z,v){return typeof i18nT==="function"?i18nT(k,z,v):z}
+/* 11/17 第 23 輪 T1：錯棋重練評分後的提示是好幾段拼起來的（棋評、第幾次、提示一～三、卡關泡泡、棋子名），字典句型對不完 → 英文介面這幾句直接組英文；中文照舊 */
+function rdxEn(){try{return typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){return false}}
+function rdxQ(q){try{const t=typeof i18nText==="function"?i18nText(String(q||"")):null;return t!=null&&!/[㐀-鿿]/.test(t)?t:String(q||"")}catch(e){return String(q||"")}}
+function rdxMv(cn){try{const w=typeof i18nWxf==="function"?i18nWxf(cn):null;return w||String(cn||"")}catch(e){return String(cn||"")}}
+function rdxPc(p){try{return typeof i18nPcName==="function"?i18nPcName(p).replace(/^(Red|Black) /,""):p}catch(e){return p}}
+function rdxMk(){try{return typeof parkOn==="function"&&parkOn()?"yellow circle":"blue frame"}catch(e){return"blue frame"}}
+/* 評分後那一行：ok＝穩著／緩著比上次好；same＝還是同一級（或都在失著以下）；fail＝第幾次；lv＝0 沒有提示、1～3 提示幾、-1＝「再錯一次就給提示」 */
+function rdxLine(o){const mv=rdxMv(o.cn),q=rdxQ(o.q),q0=rdxQ(o.q0),mk=rdxMk();let s=o.ok?`👍 "${mv}" is ${q}, better than last time's ${q0}, so this drill counts as mastered; to go for the Best move, tap ↶ Undo and try again`:o.same?`❌ "${mv}" is still ${q}. Tap ↶ Undo and think again`:`❌ "${mv}" is ${q}, no better than last time's ${q0}. Tap ↶ Undo and think again`;
+  s+=` (attempt ${o.fail})`;if(o.lv===3)s+=`\n💡 Hint 3: the ${mk} marks the suggested destination (the computer suggests "${rdxMv(o.bc)}")`;else if(o.lv===2)s+=`\n💡 Hint 2: ${o.say} (the ${mk} marks the piece to move)`;else if(o.lv===1)s+=`\n💡 Hint 1: the piece in the ${mk} is the key`;else if(o.lv===-1)s+=" · one more miss and you get a hint";return s}
+function rdxSay(pc,cap,ck){return`Move your ${rdxPc(pc)}`+(cap?`; it can capture the opponent's ${rdxPc(cap)}`:"")+(ck?`; it gives check`:"")+(!cap&&!ck?" to a better square and see what it can threaten":"")}
 const CG_STK={k:"",t:0};   /* 11/13 晚：電腦這一步從什麼時候開始想（卡住 25 秒出「重新開一局」） */
 /* hspx P0 開發者 11/13「點下我的棋力沒反應，甚至出現第二張圖（畫面整個往上捲、下面一片空白）」：結果視窗的「看我的棋力 ›」以前靠 tick 事後綁 onclick，沒綁上就點不動；
    改成全域點擊委派：什麼時候按都有反應。先關視窗、把被 iOS 捲走的頁面捲回頂，再去「我的棋力」 */
@@ -332,16 +342,17 @@ async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{cons
         pa.innerHTML='<button class="pill" id="pEnd">✅ 練會了，結束這題</button>';pa.querySelector("#pEnd").onclick=()=>{vibrate(5);post("/play/resign").catch(()=>{}).finally(()=>{toast("✅ 這題練會了");if(!P0.t01)location.hash="#/redo"})}}return}   /* ChatGPT 改善單 T01：主流程來的練習留在這頁，結算視窗接著給「練一題同樣的棋理」 */
     const HB=practiceBoard(),HM=bc?bcMove(HB,st.human,bc):null,C0=window.XQCore;let say="";
     if(HM&&fail>=3&&C0){const pc=HB[HM.f],cap=HB[HM.t],after=C0.make(HB,HM.f,HM.t),ck=C0.inCheck(after,opp(st.human)),nm=x=>C0.NAMES[C0.sideOf(x)][x.toUpperCase()];
-      say=`動你的「${nm(pc)}」`+(cap?`，可以吃掉對方的「${nm(cap)}」`:"")+(ck?"，走了就是將軍":"")+(!cap&&!ck?"，先把它調到更好的位置，看看能威脅到什麼":"")}
+      say=rdxEn()?rdxSay(pc,cap,ck):`動你的「${nm(pc)}」`+(cap?`，可以吃掉對方的「${nm(cap)}」`:"")+(ck?"，走了就是將軍":"")+(!cap&&!ck?"，先把它調到更好的位置，看看能威脅到什麼":"")}
     if(HM&&fail>=2){if(!d.hint){d.hint=true;all[P0.key]=d;store.set("redoDone",all)}const want=fail>=4?{f:HM.f,t:HM.t,n:P0.base}:{f:HM.f,t:null,n:P0.base};if(!pHint||pHint.t!==want.t||pHint.f!==want.f){pHint=want;setTimeout(draw,0)}}
-    if(nz&&HM&&typeof stuckNudge==="function")setTimeout(()=>stuckNudge(`卡住了嗎？${say?say+"。":""}${hintMk()}那顆子就是關鍵，按 ↶ 悔棋再試一次！`),300);
+    if(nz&&HM&&typeof stuckNudge==="function")setTimeout(()=>stuckNudge(rdxEn()?`Stuck? ${say?say+". ":""}The piece in the ${rdxMk()} is the key. Tap ↶ Undo and try again!`:`卡住了嗎？${say?say+"。":""}${hintMk()}那顆子就是關鍵，按 ↶ 悔棋再試一次！`),300);
     /* v5 R08：比上次好＝已經記成練會（d.ok，錯棋列表會打勾），這裡也照說；穩著、緩著但沒比原本好的，直接說沒有比上次好 */
+    if(rdxEn()){s2.textContent=rdxLine({ok,same:m.q===P0.q||(qi(P0.q)>=4&&qi(m.q)>=4)||qi(m.q)>=9,cn:m.cn,q:m.q,q0:P0.q,fail,bc,say,lv:!HM?0:fail>=4?3:fail>=3?2:fail>=2?1:-1})}else
     s2.textContent=(ok?`👍 「${m.cn}」是${m.q}，比上次的${P0.q}好，這題算練會了；想挑戰正著，按 ↶ 悔棋再試`:`❌ 「${m.cn}」${m.q===P0.q||(qi(P0.q)>=4&&qi(m.q)>=4)||qi(m.q)>=9?"還是"+m.q:`是${m.q}，沒有比上次的${P0.q}好`}，按 ↶ 悔棋再想一次`)+`（第 ${fail} 次）`+
       (!HM?"":fail>=4?`\n💡 提示三：${hintMk()}是建議的落點（電腦建議走「${bc}」）`:fail>=3?`\n💡 提示二：${say}（${hintMk()}是該動的子）`:fail>=2?`\n💡 提示一：${hintMk()}這顆子就是關鍵`:"・再錯一次就給提示");
     if(fail>=4&&bc&&pa.dataset.k===P0.key+"|"+bc)pa.hidden=false;
     else if(fail>=4&&bc){pa.hidden=false;pa.dataset.k=P0.key+"|"+bc;pa.innerHTML='<button class="pill" id="pHn">💡 在棋盤上看建議</button><button class="pill" id="pPv">▶ 推演後面</button>';
       pa.querySelector("#pHn").onclick=()=>{const mv=bcMove(practiceBoard(),st.human,bc);if(!mv)return toast("找不到這步");vibrate(5);
-        pHint={...mv,n:P0.base};if(st.moves.length>P0.base)toast(`按 ↶ 悔棋回到起點，就看得到建議的那一步（${hintMk()}）`);draw()};
+        pHint={...mv,n:P0.base};if(st.moves.length>P0.base)toast(rdxEn()?`Tap ↶ Undo to go back to the start and you'll see the suggested move (${rdxMk()})`:`按 ↶ 悔棋回到起點，就看得到建議的那一步（${hintMk()}）`);draw()};
       pa.querySelector("#pPv").onclick=()=>{vibrate(5);pvSheet(bc)}}}
   // 開新局。下到一半（雙方都走過）：積分挑戰會算輸，一定要確認；自選難度換成積分挑戰也問一下，免得誤觸把棋丟掉
   function startNew(o){const ranked=OFF&&!!o.ranked,m=ranked?"rank":"free";

@@ -475,7 +475,7 @@ function pkSwTap(ex,i){const L0=PARK&&PARK.last,s0=L0&&L0.o&&L0.o.sel>=0?L0.o.se
 const parkIcon=()=>parkOn()?"▦":"🌳",parkLabel=()=>parkOn()?"回棋盤模式":"去園子下棋（3D）";
 const parkBtn=redraw=>[parkIcon(),e=>{if(typeof gsvParkBtn==="function"&&gsvParkBtn())return;   /* 11/15 黑洞星門圍城對局中：這顆（手機收在「⋯ 更多」裡）＝切到 3D 星盤／回平面棋盤，視角由 07bhg-gatesiege.js 記（gsvView），它自己重畫 */const fo=focusOn()&&!PARK_LK&&!PARK_OFF;   /* 專注棋盤模式開著又按「去園子」：等於把專注模式關掉 */
   if(fo){store.set("focusBoard",false);focusApply();store.set("park3d",true)}else store.set("park3d",!parkOn());vibrate(8);toast(parkOn()?`${fo?"已關閉專注棋盤模式。":""}🌳 園子 3D 棋盤：${BOTN()}坐在對面跟你下（拖曳可以看四周）`:"回到棋盤模式");
-  const b=e&&e.currentTarget;if(b){b.textContent=parkIcon();b.title=parkLabel()}redraw()},parkLabel()];
+  const b=(e&&e.currentTarget)||(typeof pkSwTb==="function"?pkSwTb():null);if(b){const l=parkLabel();b.textContent=parkIcon();b.title=l;b.setAttribute("aria-label",l);b.dataset.lb=l}redraw()},parkLabel()];   /* 11/17 第 21 輪 79：從「⋯」選單按（沒有 currentTarget）也找得到頂欄那顆；aria-label、data-lb 一起換，選單和讀螢幕的名稱才會跟著變 */
 // ================= 🧪 擺盤推演（意見回饋 250）：對局中跳到另一張棋盤，從當下局面紅黑兩邊都自己走，試各種變化；不影響正在下的那盤 =================
 // eng＝能不能請 Pikafish 分析（積分挑戰、網路對戰中不行，免得變成作弊）
 function setupSheet(board0,side0,flip0,eng){if(!board0)return;const H=[{board:board0.slice(),side:side0,last:null,cn:"",check:-1}];let sel=-1,legal=null,flip=!!flip0,hint=null;
