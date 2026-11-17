@@ -5,6 +5,10 @@
 const XQ_CDN="https://xiangqi-cdn.pages.dev/";
 /* 11/17 App Store 審查（測試員 E）：xqNat()＝原生 App（iOS 的 native-bridge.js 設 window.XQ_NATIVE，或 UA 帶 XQQianqiuApp/），各模組共用這一個判斷。
    2.5.2 原生版不從網路下載可執行的程式碼：原生版只替 data/（圖、聲音、資料）向 CDN 補抓，engine/（wasm、引擎 js）一律只用安裝包裡的；網頁版照舊 data/、engine/ 都補 */
+/* 11/17 iMac 測試員 J P1-2（準則 2.1）：分享出去的連結（教練作業、分享局面、邀朋友…）的網址開頭。原生版的頁面在 http://127.0.0.1:47822（XQLoopback）或 capacitor://localhost，
+   別人拿到打不開——只有網頁版本身是 https 公開網址時才用自己的網址，其他（原生、localhost、區網 http）一律用公開網址 APP_HOME。跟每日同題的 dqBase 同一套判斷 */
+function xqShareBase(){let o="",p="/";try{o=location.origin||"";p=location.pathname||"/"}catch(e){}
+  if(!xqNat()&&/^https:\/\//.test(o)&&!/^https:\/\/(localhost|127\.|\[::1\]|[^/]*\.localhost(:|$))/.test(o))return o+p;return"https://raysonchen2023-cloud.github.io/xiangqi-lab/"}
 function xqNat(){try{return!!(typeof window!=="undefined"&&window.XQ_NATIVE)||(typeof navigator!=="undefined"&&/XQQianqiuApp\//.test(String(navigator.userAgent||"")))}catch(e){return false}}
 const xqCdnRel=u=>{try{const x=new URL(u,location.href);if(x.origin!==location.origin)return"";const b=location.pathname.replace(/[^/]*$/,""),p=x.pathname.startsWith(b)?decodeURI(x.pathname.slice(b.length)):"";return(xqNat()?/^data\//:/^(data|engine)\//).test(p)?p:""}catch(e){return""}};
 /* 11/17 iMac 模擬器 P0：第一次造訪 service worker 還沒接管時，棋盤的棋子、底圖是 SVG <image>（tagName 小寫 image），以前不在名單裡，全部變成「?」；SVG 的換 href */
@@ -307,7 +311,11 @@ function mdTop(m){let z=0;const VA=innerWidth*innerHeight;for(const el of docume
 function modalSkip(){MODAL_HOLD=0;MODAL_Q.slice().forEach(f=>{try{f()}catch(e){}})}
 /* 11/17 第 20 輪 B N20-1（P1）：通用 .modal 只有換過字級（html[data-fz]）才能捲；橫式手機（高 375～430）放不下的視窗（星門圍城第一次破關的結算、古戰場 ⓘ、線上大廳安全須知）按鈕在畫面外、卡死 →
    比照 .modal.gsv-rd：畫面矮（高度 ≤500）時視窗可以上下捲、從上面排起，放得下時 .box 照樣置中（margin:auto 0）。直式手機、iPad 高度都超過 500，不受影響。m.css 不能改（發版只換模組），從這裡注入 */
-const MDLOW_CSS="@media (max-height:500px){.modal{overflow-y:auto;align-items:flex-start;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.modal>.box{margin:auto 0;flex:none}}";
+/* 11/18 第 30 輪 R30-1（P1）：英文序局邀局卡（.modal.prolog）在網頁版可視高度 575 以下（iPhone SE 用 Safari 375×553、320×568）字比中文長，「Enter the game」被擠到畫面外、又不能捲 →
+   不再只限高度 ≤500：所有視窗放不下時都能上下捲（放得下照舊置中，margin:auto 0）；高度用 100dvh（Safari 網址列、工具列佔掉的那段不算）；
+   序幕、邀局、星盤暫合這類卡（.prolog）按鈕列黏在卡片底部（sticky，讓開 Home 條），內文在上面捲，按鈕一直看得到、點得到 */
+const MDLOW_CSS=".modal{overflow-y:auto;align-items:flex-start;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.modal>.box{margin:auto 0;flex:none}@supports (height:100dvh){.modal{bottom:auto;height:100dvh}}"
+  +".modal.prolog>.box>.mb{position:sticky;bottom:env(safe-area-inset-bottom,0px);z-index:1;background:inherit;margin-left:-20px;margin-right:-20px;margin-bottom:-24px;padding:6px 20px 24px;border-radius:0 0 22px 22px}";
 function mdLowCss(){try{if(typeof document==="undefined"||document.getElementById("mdLowCss"))return;const s=document.createElement("style");s.id="mdLowCss";s.textContent=MDLOW_CSS;(document.head||document.documentElement).append(s)}catch(e){}}
 mdLowCss();
 /* 回饋 835（開發者 11/9 選：過場點兩下跳過）：不擋手的大動畫——蓋印（stampFx、本命星 chdSealFx）、開局大字、將軍、開局名——本來就 pointer-events:none、點得到底下，
@@ -394,3 +402,126 @@ addEventListener("xq-rules-mismatch",()=>toast("雙方棋規版本不同，請�
    07w7 還沒載入或出錯時退回時辰（卯～申白天、酉～寅夜），不會丟錯。頂欄時辰鐘照舊顯示時辰，不問這個 */
 function xqNight(d){try{if(typeof sw7HomeNightA==="function"&&typeof sw7SeaNow==="function"){if(!d&&typeof sw7NightNow==="function")return!!sw7NightNow();return sw7HomeNightA(d,sw7SeaNow())>0}}catch(e){}
   d=d||new Date();const i=Math.floor(((d.getHours()+1)%24)/2);return!(i>=3&&i<=8)}
+/* 11/17 iMac 測試員 H（P1，準則 4.0／2.1）：iPhone Duo 這種狀態列和相機在右側的機型（右側安全區 84px），右上角的 ✕ 和功能鍵被壓住、點了開控制中心；
+   錯棋重練的「全部錯棋」面板看不到 ✕ 而且點外面、往下滑都關不掉。m.css 不能改，這裡補一份「左右安全區」樣式（沒有側邊安全區的機型 env() 是 0，畫面不變）：
+   頂欄、底部卡片（#sheet，含右上 ✕）、彈窗、滑出面板（07w .xqs）、術語碑面板，以及 fixed 而且貼著左右邊的按鈕／浮窗，都讓開 env(safe-area-inset-left／right)。
+   .xqs 往下滑關閉另外在 07w-shipwalk 補。測試 test-imac-h1514.js 用 CSS 變數模擬右側 84px 檢查 */
+const SAFE_LR_CSS=`.topbar{padding-left:calc(6px + env(safe-area-inset-left,0px));padding-right:calc(6px + env(safe-area-inset-right,0px))}
+.sheet{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.sheet .sh-x{right:calc(10px + env(safe-area-inset-right,0px))}
+.modal{padding-left:calc(24px + env(safe-area-inset-left,0px));padding-right:calc(24px + env(safe-area-inset-right,0px))}
+.xqs.xqs{width:min(calc(94vw - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)),520px);left:calc(50% + (env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)) / 2)}
+html .tb-pn{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+html .dgl-float{right:calc(10px + env(safe-area-inset-right,0px))}
+html .cpl-door{right:calc(12px + env(safe-area-inset-right,0px))}
+html .fig-item,html .fm-rib,html .sw7-bxp{left:calc(12px + env(safe-area-inset-left,0px));right:calc(12px + env(safe-area-inset-right,0px))}
+html .hq-h{padding-right:calc(14px + env(safe-area-inset-right,0px))}
+html .mf-zx{right:calc(12px + env(safe-area-inset-right,0px))}
+.hq-h button{min-width:44px;min-height:44px}
+.hq-pv{position:relative}.hq-pv::after{content:"";position:absolute;left:-8px;right:-8px;top:50%;height:44px;transform:translateY(-50%)}
+.mf-zx::after{content:"";position:absolute;left:50%;top:50%;width:44px;height:44px;transform:translate(-50%,-50%)}
+html .shp-spot:not(.ex-spot),html .shp-hs{z-index:155}`;   /* 11/17 iMac G P3-8：星槎頁走動的角色（07w .shw-me，z-index 150）走到底部按鈕上時，點「回棋鎮」會點到角色、跳出問問題選單 → 圖上的入口標籤一律在角色上面（角色的對話泡泡、選單照舊在最上面） */   /* 11/17 iMac 測試員 G P3-3：「關於」文牒右上 ✕（17×27）、名冊右上 ✕（16×25）、「隱私說明 ›」（63×16）可點範圍撐到 44（07s4 是禁改檔，樣式從這裡補） */
+/* 11/17 iMac 測試員 H（iPhone Duo 466×678）P3 與 F（iPhone 18 Pro）P3-1：點擊區、版面小修（樣式只加在這裡，m.css 不動）
+   ① H P3-2／F P3-1：錯棋重練的篩選（#rf「全部」21pt）、我的戰績分頁與篩選（.st-tabs／.st-seg／.st-res 33pt）、結算框「看我的棋力 ›」（.rg-go 27pt）、示範棋局的上一步／播放／下一步（24pt）補到 44 高。
+      千秋盃屏風「對陣金榜／英雄帖／大掛盤」、首頁地點標籤、星槎入口都是 .shp-spot：外框看起來 27～33 高，點擊判定由 07z 的 .shp-spot::before 撐到 44（相鄰太近才縮），星槎「🌀 立體」由 m.css .shp-gy::before 上下各撐 11px（24＋22＝46）。
+   ② H P3-3：展開「📜 本局棋規」（details.rule-note[open]）時，下面的「🧊 3D 場景」不再往上疊到說明最後一行（原本 m.css 給它 margin-top:-14px）。
+   ③ H P3-4：車輪戰桌號頁籤（.sim-tb）原本固定 42 高，字放大時「你」下半被切 → 高度跟著字、至少 44。
+   ④ H P3-5：中文窄螢幕（≤480）頂欄標題純文字時可以換兩行（檢討頁「你 對 …」被右邊圖示擠到截斷）；英文早就有同一條（07i18n）。
+   ⑤ H P3-10：挑戰電腦的「悔棋」灰色（.xq-off），點了說明不能悔棋（08b undoAsk）。 */
+const TAP44_CSS=`#rf button,.st-tabs button,.st-seg button,.st-res button,#dmP,#dmG,#dmN{min-height:44px}
+.rg-go{min-height:44px;display:flex!important;align-items:center;justify-content:flex-end}
+details.rule-note[open]+.pk3d-back button{margin-top:6px}
+.sim-tb{height:auto!important;min-height:44px;padding:3px 0 4px!important}
+@media (max-width:480px){html:not([lang^=en]) #title:not(:has(*)){white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-height:1.15;font-size:calc(16px * min(var(--fz,1),1.3));letter-spacing:.02em;overflow-wrap:anywhere}}
+.xq-off{opacity:.45;filter:grayscale(1)}
+.gx-top,.gxd-top,#dglXs .xs-top{padding-left:calc(12px + env(safe-area-inset-left,0px))!important;padding-right:calc(12px + env(safe-area-inset-right,0px))!important}
+html .sw7-now{right:calc(3% + env(safe-area-inset-right,0px))}
+#view.view,.view{padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+.sheet .sh-x{width:44px;height:44px;line-height:44px;top:4px}
+.sheet:has(> .sh-x) .sh-t{padding-right:calc(60px + env(safe-area-inset-right,0px))}
+html[data-lefty] .sheet .sh-x{left:calc(10px + env(safe-area-inset-left,0px))}
+.scrim,.xqs-s{cursor:pointer;touch-action:manipulation}
+.shw-menu button{min-height:44px}
+html .me-nick{right:calc(10px + env(safe-area-inset-right,0px))}
+.me-nick::after{content:"";position:absolute;left:0;right:0;top:50%;height:44px;transform:translateY(-50%)}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html .bk-title{right:calc(16px + env(safe-area-inset-right,0px))}
+html .ld-q{padding-left:calc(28px + env(safe-area-inset-left,0px));padding-right:calc(28px + env(safe-area-inset-right,0px))}
+html .xsm-ban{left:calc(8px + env(safe-area-inset-left,0px));right:calc(8px + env(safe-area-inset-right,0px))}
+.xsm-ban button{min-height:44px;min-width:44px}
+.bk-mark{margin-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+.view:has(> .shp-page){padding-bottom:env(safe-area-inset-bottom,0px)}
+body:has(.shl-board)>.xqbot,body:has(.bt2)>.xqbot{display:none!important}
+#meXp,#gdMeB,#gdMeH{min-height:44px;min-width:44px}
+html[lang^=en] .me-seal{writing-mode:horizontal-tb;width:auto;min-width:60px;max-width:140px;height:auto;min-height:60px;padding:6px 8px;font-size:12px;line-height:1.15;text-align:center;white-space:normal;word-break:normal;overflow-wrap:break-word}
+html[lang^=en] .me-seal .two{writing-mode:horizontal-tb;letter-spacing:0}
+html[lang^=en] #title .sw7-hd{white-space:normal;overflow:visible;text-overflow:clip;font-size:10.5px;line-height:1.25;letter-spacing:0}
+@media (max-width:480px){html[lang^=en] #title:has(.sw7-hd){display:block!important;-webkit-line-clamp:unset!important;max-height:none!important;overflow:visible!important}}
+html .toast{z-index:9990}
+.xqs.xqs{bottom:auto;max-height:calc(100% - var(--xqT,56px) - var(--xqB,64px) - 16px)}
+#sndTry,#bgmTest{min-height:44px}
+#fcmBar{opacity:.78}#fcmBar button{min-height:44px;font-weight:700;border-width:1.5px}
+html .modal{padding-top:max(24px,calc(env(safe-area-inset-top,0px) + 12px));padding-bottom:max(24px,calc(env(safe-area-inset-bottom,0px) + 12px))}
+html .fm-ov{padding-top:max(16px,calc(env(safe-area-inset-top,0px) + 10px));padding-bottom:max(16px,calc(env(safe-area-inset-bottom,0px) + 10px))}
+#stmOv::before{content:"";position:fixed;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:#F4EDE0;z-index:5;pointer-events:none}
+html:is([data-fz=xxl],[data-fz=max]) .xqs.xqs{width:calc(100vw - 12px - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px))}
+html:is([data-fz=xxl],[data-fz=max]) .xqs-h{letter-spacing:0;padding-left:48px;padding-right:48px;font-size:calc(17px * min(var(--fz,1),1.25));line-height:1.2}
+html:is([data-fz=xl],[data-fz=xxl],[data-fz=max]) :is(.btn,.xqs-b button,.sheet button){white-space:normal;height:auto;min-height:44px;overflow-wrap:anywhere;text-overflow:clip}
+html:is([data-fz=xxl],[data-fz=max]) .xqs-b{padding-left:2px;padding-right:2px;margin:0 2px}
+@media (max-width:340px){#xqTitle .ld-qt{font-size:17px;line-height:1.45}#xqTitle .ld-q{top:max(3vh,env(safe-area-inset-top,0px));padding-left:18px;padding-right:18px}}
+@media (max-width:360px){html[lang^=en] #topbar #back{font-size:0;max-width:48px;min-width:44px}html[lang^=en] #topbar #back b{font-size:26px}html[lang^=en] #view #stat{white-space:normal;text-overflow:clip}}
+.hq-ft .hq-pv::after{top:auto;bottom:0;transform:none}.hq-ft .hq-upd::before{top:0;bottom:auto;height:max(100%,44px)}
+#mzXp::after{content:"";position:absolute;top:0;bottom:0;right:0;width:max(100%,44px)}`;
+/* 11/17 測試員 E 第 29 輪 R29-1：英文文牒「Privacy notes ›」「Check for updates」放不下一行、換成上下兩行時，兩顆的透明熱區（各 44 高、上下置中）疊在一起，
+   點隱私說明的中間點到檢查更新 → 隱私說明的熱區改成從自己底邊往上長、檢查更新從自己頂邊往下長：同一行時兩顆左右並排照舊各 44 高，換行時上下各管各的，不再重疊。
+   R29-7：我的角色頁的「修為」（場景熱點 #mzXp）只有 28 寬，左邊是千秋印譜（大塊）、右邊隔 4px 是園子棋友 → 透明熱區往左長到 44 寬（蓋進印譜右緣一點），不碰園子棋友 */
+/* 11/17 測試員 D 第 29 輪 Z1～Z3（320 寬）：開頭畫面長引文壓到大標題 → 引文字小一點、往上；英文窄螢幕頂欄返回鈕的字（Back to Sta…）擠掉頁名、把 🎬 推出畫面 → 360 以下英文返回鈕只留「‹」（字還在，讀螢幕照念）；
+   棋譜檢討頁第一行狀態被刪節號截掉 → 窄螢幕英文可以換行 */
+/* 11/17 iMac I P3-8：最大字級時，設定房間面板標題（「🔒 系統・隱私・家長」）拆成三行、內文一行只剩約 5 個字、「分享給朋友」被切 →
+   特大、最大字級：面板加寬到幾乎整個畫面、標題字距收掉、字小一點；按鈕的字可以換行（不切字、不出刪節號），高度跟著字 */
+/* 11/17 iMac I P3：① 提示（toast）原本 z-index 70，在設定房間的面板（.xqs 949）、驛路文牒（950）底下看不到——例如點「🔒 星槎還沒停靠」的朝代其實有說明，只是被面板蓋住 → 提到 9990。
+   ② 設定房間的器物面板（.xqs）原本上下都釘死（內容只有兩張卡片也拉滿整個畫面）→ 高度跟著內容走，太長才捲。③ 「▶ 試聽」（#sndTry）、「▶ 測試背景音樂」撐到 44；純淨畫面右上「📜 著法」「✕ 還原」44 高、加深（原本 .3 透明度幾乎看不見）。
+   ④ 彈窗（.modal、家長／兒童模式的 .fm-ov）上下讓開動態島與 Home 指示條；全站地圖（#stmOv）往上捲時，狀態列那一條補不透明底，內容不再從時間、電量底下穿過。 */
+/* 11/17 iMac I P2：英文「我的角色」的官印（.me-seal，直排 60×60）放英文官階會一個字母一行、壓到按鈕 → 英文改橫排、寬度跟著字；
+   英文首頁頂欄第二行（.sw7-hd：船上第幾天・節氣・時辰）在窄螢幕被切成「…Sta…」→ 英文可以換行、字小一點，整個標題不再限兩行 */
+/* 11/17 iMac K P2-1、P2-2：底部抽屜（sheet：官階、雲河櫃坊、西市各攤、千秋印譜、園子棋友、二十八宿清單、信件…）右上 ✕ 原本 36×36（::before 撐到 44 判定）→ 外框直接 44×44，右邊讓開安全區（SAFE_LR_CSS）；
+   暗幕（.scrim、.xqs-s）加 cursor:pointer——iOS 對沒有游標樣式的 div 點擊偶爾要點兩下才送 click；往下拉把手關閉原本就有（00-util sheet 的 touchend）。
+   角色小選單（問問題、聽棋語、我的角色，.shw-menu 33 高）、我的角色暱稱（.me-nick 33 高）補到 44 */
+/* 11/17 iMac 測試員 K（iPhone Duo）P1-1、P1-2：
+   ⑥ 觀星臺的全螢幕面板——十三星系（07gx .gx-ov，含全景版 .gxp）、今日異象／自由擺陣（07gxd .gxd-ov）、二十八宿（07dgl #dglXs）——唯一的 ✕ 在頂列最右邊，
+      Duo 的相機在那一側，點了被系統吃掉（十三星系沒有別的出口）→ 頂列左右讓開安全區（上面 TAP44_CSS），而且四個面板都能「往下滑」關閉（xqOvSwipe，等於按 ✕）。
+   ⑦ 首頁右上的節氣章（.sw7-now）讓開右側安全區；頂欄（含右上全站地圖鈕）、首頁稱號與修為（.hq-h）在 SAFE_LR_CSS 已經讓開。
+   ⑧ K P1-3：整個頁面內容區（.view：對局棋盤的平面和 3D 園子、車輪戰棋館、地圖頁都在裡面）左右讓開安全區，棋盤不會疊進側邊安全區：
+      今日異象、自由擺陣、車輪戰最右一路不再被時鐘、Wi-Fi 蓋住。沒有側邊安全區的手機（直式 iPhone）env() 是 0，畫面不變 */
+/* 11/17 iMac K P2-4：滿版圖頁（.shp-page：西市「七星來訪」等）靠下的入口標籤，在矮螢幕上落進 Home 指示條區或畫面外（Duo 662–691，畫面 678）。
+   換頁、轉向、改大小後量一次：標籤底部超過「畫面高－底部安全區－6px」就整顆往上挪到看得到的地方（記下原本的 top，下次照原位重算，不會越挪越高） */
+function xqSpotClampY(){try{const V=document.getElementById("view");if(!V)return;let sb=0;{const p=document.createElement("div");p.style.cssText="position:fixed;left:0;bottom:0;width:1px;height:env(safe-area-inset-bottom,0px);visibility:hidden;pointer-events:none";document.body.append(p);sb=p.offsetHeight||0;p.remove()}
+  const lim=Math.min(innerHeight,window.visualViewport?visualViewport.height:innerHeight)-sb-6,scr=V.scrollHeight>V.clientHeight+4&&getComputedStyle(V).overflowY!=="hidden";   /* 頁面捲得動（底下有 TAP44_CSS 補的 padding-bottom）就不挪，捲下去看得到 */
+  if(scr){V.querySelectorAll(".shp-page .shp-spot").forEach(b=>{if(b.dataset.xqTop0!=null)b.style.top=b.dataset.xqTop0});return}
+  V.querySelectorAll(".shp-page .shp-spot").forEach(b=>{if(b.dataset.xqTop0==null)b.dataset.xqTop0=b.style.top||"";else b.style.top=b.dataset.xqTop0;if(!b.dataset.xqTop0)return;
+    const r=b.getBoundingClientRect();if(!r.height||r.bottom<=lim)return;b.style.top="calc("+b.dataset.xqTop0+" - "+Math.ceil(r.bottom-lim)+"px)"})}catch(e){}}
+try{const go=()=>[400,1200].forEach(t=>setTimeout(xqSpotClampY,t));addEventListener("hashchange",go);addEventListener("resize",go);addEventListener("orientationchange",go);setTimeout(go,0)}catch(e){}
+const XQ_OV_SWIPE=[[".gx-ov",".gx-x"],[".gxd-ov",".gxd-x"],["#dglXs",'[data-x="close"]']];
+(function(){try{if(typeof document==="undefined"||!document.addEventListener)return;let st=null;
+  const find=t=>{for(const[o,x]of XQ_OV_SWIPE){const ov=t&&t.closest&&t.closest(o);if(ov)return{ov,x}}return null};
+  const fire=(s,cx,cy)=>{const dy=cy-s.y,dx=Math.abs(cx-s.x);if(!(dy>90&&dx<dy*.6&&Date.now()-s.t<900)||!document.contains(s.f.ov)||s.f.ov.dataset.xqSw)return;
+    s.f.ov.dataset.xqSw="1";const b=s.f.ov.querySelector(s.f.x);if(b){try{b.click()}catch(x){}}};   /* 同一下滑 touch、pointer 都可能送到：只按一次 ✕ */
+  document.addEventListener("pointerdown",e=>{st=null;if(e.isPrimary===false)return;const f=find(e.target);if(!f)return;
+    /* 從面板上半部往下滑才算（下半部常是可以捲的清單、棋盤）；可以捲的面板要先捲到頂 */
+    if(e.clientY>innerHeight*.45||f.ov.scrollTop>0)return;st={x:e.clientX,y:e.clientY,t:Date.now(),f}},true);
+  document.addEventListener("pointerup",e=>{const s=st;st=null;if(s)fire(s,e.clientX,e.clientY)},true);
+  /* iPhone 上面板捲到頂再往下拉，瀏覽器會接手做回彈、送 pointercancel、不送 pointerup → 另外用 touch 事件（不會被取消）再判斷一次 */
+  let ts=null;document.addEventListener("touchstart",e=>{ts=null;const t=e.touches&&e.touches[0];if(!t||e.touches.length>1)return;const f=find(e.target);if(!f||t.clientY>innerHeight*.45||f.ov.scrollTop>0)return;ts={x:t.clientX,y:t.clientY,t:Date.now(),f}},{capture:true,passive:true});
+  document.addEventListener("touchend",e=>{const s=ts;ts=null;const t=e.changedTouches&&e.changedTouches[0];if(s&&t)fire(s,t.clientX,t.clientY)},{capture:true,passive:true});
+  document.addEventListener("pointercancel",()=>{st=null},true);
+  document.addEventListener("keydown",e=>{if(e.key!=="Escape")return;for(const[o,x]of XQ_OV_SWIPE){const ov=document.querySelector(o);if(ov){const b=ov.querySelector(x);if(b){b.click();return}}}},true);
+}catch(e){}})();
+function safeLRCss(){try{if(document.getElementById("safeLRCss"))return;const s=document.createElement("style");s.id="safeLRCss";s.textContent=SAFE_LR_CSS+"\n"+TAP44_CSS;document.head.append(s)}catch(e){}}
+safeLRCss();
+/* 11/17 iMac 測試員 G P3-1：每次開 App 會抓兩次 fixes.json——05-settings 的修正通知（myFixes）和 07s3 的開發者回信各自 fetch 一次（原生版由 native-bridge 轉去 CDN）。
+   同一次開 App 裡，同一個資料檔（fixes.json、banlist.json）只真的抓一次，其他呼叫共用同一份回應（各拿一份 clone）；抓失敗（或不是 200）就不留，下次照常重抓。
+   什麼時候才叫（進大廳才抓停權名單、送過回饋才在開 App 時抓修正清單、兒童模式都不抓）在 07x4-lobbysafe.js 尾段 */
+(function(){try{const f0=typeof window!=="undefined"&&window.fetch;if(!f0||f0.__xqDedupe)return;const C=new Map(),RE=/(^|\/)data\/(fixes|banlist)\.json(\?|$)/;
+  const w=function(u,o){try{const s=String(u&&u.url||u||"");if(RE.test(s)&&!(o&&o.method&&o.method!=="GET")){const k=s.replace(/\?.*$/,"").replace(/^.*\/data\//,"data/"),now=Date.now(),c=C.get(k);
+    if(c)return c.p.then(r=>r.clone());const p=f0.call(window,u,o);C.set(k,{t:now,p});p.then(r=>{if(!r||!r.ok)C.delete(k);else if(/fixes/.test(k))window.XQ_FIXES_GOT=1},()=>C.delete(k));return p.then(r=>r.clone())}}catch(e){}return f0.apply(window,arguments)};
+  w.__xqDedupe=1;window.fetch=w}catch(e){}})();

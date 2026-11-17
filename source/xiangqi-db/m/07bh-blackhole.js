@@ -379,6 +379,7 @@ function bhxGuard(st,f,t){if(!st||st.journey!==BHX_ID||st.result)return null;
 function bhxEnd(){store.set("bhXuDone",Date.now())}
 function bhxAfter(){bhxEnd();if(!(MODAL_HOLD>Date.now()))opVol(.25,1.2);   /* 新絕殺動畫在播：音量由 bhMateSnd 處理 */   /* 將死：第 2 首淡下來 */
   modal(`<div class="em">✨</div><h2>星盤暫合</h2><p class="pl-say">✦ 星樞：「${esc(BHX_TXT.win)}」</p>`,[["循著茶香",()=>{const old=+store.get("bhXuOld",0)===1;store.set("bhXuOld",0);{const p3=store.get("bhxP3",null);if(p3){store.set("park3d",p3.v==null?null:!!p3.v);store.set("bhxP3",null)}}   /* 11/16 P0：序局把 3D 打開，離開時還原（新手預設平面，11/12 決定） */if(!old&&(store.get("bhxFresh",0)||!journey())&&!store.get("bhxPick",null))store.set("bhxPick","x_swordboy");   /* 11/16 P0：略過序章電影（或減少動態）也要建新旅程——bhxPick 原本只在電影流星裡才記 */
+    if(old){bhxBack(false);opStop(2);location.hash="#/";toast("序章看完了，旅程照你原本的進度繼續");return}   /* 11/17 晚開發者選單「補播只播電影和黑洞對戰」：舊玩家模式（07stq 補播、只看序章）不播第 2 段電影、不接第 3 首，直接回首頁；新的旅程照舊往下播 */
     opPlay(3,{fade:.8});   /* 第 3 首〈七星歸槎〉：按「循著茶香」那一下開始 */
     if(!old&&journey()&&!store.get("bhxFresh",0)){try{if(typeof shipEra==="function")shipEra("classic");else{store.set("era","classic");store.set("eraUser",null);applyEra()}}catch(e){}store.set("bhxLand",Date.now())}   /* hspx 開發者 11/12「每個角色打完黑洞的第一站，要統一降落到經典首頁，而不是每個人的主場」：首頁朝代設回經典（停靠紀錄照舊有主場；舊玩家只看序章不動） */
     bhxBack(true);   /* hspx 開發者 11/12「黑洞絕殺後會先跳到一個不該出現的頁面」：換頁前先蓋上黑洞底幕，星槎頁不會在電影淡入前閃出來；電影播完才拿掉 */
@@ -630,6 +631,10 @@ function bhxQuestTick(){try{const J=journey();if(!J||!store.get("bhxLand",null))
   const onHome=/^#\/adventure\/?$/.test(location.hash||"")&&document.visibilityState==="visible"&&!TITLE&&!document.querySelector(".modal,#bhxPg,#bhxVx");
   if(!onHome){BHX_IDLE=0;return}BHX_IDLE+=15;if(BHX_IDLE<300)return;BHX_IDLE=0;store.set("bhxQuest",q+1);bhxQuest(hm,D)}catch(e){}}
 function bhxQuest(hm,D){const c=typeof myChar==="function"?myChar():null,C=c&&WX_CHARS[c],nk=C?(C.nk||C.n):"我",el=eraLabel(hm);
+  /* 11/17 測試員 D Y1 開場路線續：降落後的「任務：回到家鄉」英文介面整張是中文組字 → 英文介面直接給英文（名字、朝代名查字典） */
+  if(typeof i18nLang==="function"&&i18nLang()==="en"){const T=s=>{try{return(typeof i18nText==="function"&&i18nText(String(s)))||String(s)}catch(e){return String(s)}},E=T(el);
+    return modal(`<div class="em">📜</div><h2>Quest: return to ${esc(E)}</h2>${C?`<p class="pl-say"><img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()" style="width:44px;height:44px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">${esc(T(C.n))}: “The Star Raft can take us back to ${esc(E)}. There's a game waiting for me on the stone table there.”</p>`:""}<p class="muted" style="font-size:13px">In the garden of your home dynasty you'll find ${esc(T(nk))}'s home game and Qianqiu endgames. Set sail on the Star Raft to get there.</p>`,
+      [["⛵ Set sail for "+E,()=>{location.hash="#/adventure";setTimeout(()=>{try{shipGoTo(hm)}catch(e){}},700)}],["Later",null,true]],"prolog")}
   modal(`<div class="em">📜</div><h2>任務：回到${esc(el)}</h2>${C?`<p class="pl-say"><img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()" style="width:44px;height:44px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:6px">${esc(C.n)}：「星槎可以載我們回${esc(el)}。那裡的石桌，還有一盤等我的棋。」</p>`:""}<p class="muted" style="font-size:13px">家鄉朝代的園子裡，有${esc(nk)}的主場棋局和千秋殘局。搭星槎起航就能過去。</p>`,
     [["⛵ 起航前往"+el,()=>{location.hash="#/adventure";setTimeout(()=>{try{shipGoTo(hm)}catch(e){}},700)}],["之後再去",null,true]],"prolog")}
 if(typeof window!=="undefined"&&typeof document!=="undefined"&&!navigator.webdriver)(typeof bgpEvery==="function"?bgpEvery:setInterval)(bhxQuestTick,15000);

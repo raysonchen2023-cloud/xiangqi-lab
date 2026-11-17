@@ -23,19 +23,23 @@ function lbsSetOf(){if(!LBS_SET)LBS_SET=new Set(lbsList().map(x=>String(x.id)));
 window.XQ_BLOCKED=id=>!!id&&(lbsSetOf().has(String(id))||lbsBanned(id));   /* 回饋 852：停權名單上的人也當成已封鎖 */
 
 /* ---------- 回饋 852（停權名單）：開發者用 tools/ban.js 改 data/banlist.json 再發布（只有開發者能 push，所以不用另外簽名）。
-   App 每次打開、每次進大廳都抓一次（最多每 10 分鐘一次），fetch 用 no-store；網址帶 ?pre=1，src/sw.js 才不會攔下來拿舊的快取（sw.js 一般 json 是先看快取）。
+   11/17 iMac G P3-1→P2（準則 5.1.1／5.1.2）：不再一開 App 就抓。只在進到用得到名單的連線功能（#/lobby、#/join、#/cup、#/coop/lobby、#/watch 對人）時抓，
+   同一次開 App 只抓一次（抓失敗 1 分鐘後下次進大廳再試）；兒童模式或家長關掉線上大廳（fmNetOff）時不抓。fetch 用 no-store；網址帶 ?pre=1，src/sw.js 才不會攔下來拿舊的快取（sw.js 一般 json 是先看快取）。
    抓到存在 xq_banList，離線時用上次的。名單上的別人＝已封鎖（XQ_BLOCKED）；自己在名單上（XQ_SELFBANNED）：大廳只顯示說明，src/net.js 不公開在線狀態、不能邀請配對報名 ---------- */
-const LBS_BAN_GAP=10*60000;
+const LBS_BAN_GAP=60000;
 let LBS_BANC=null;
 function lbsBanIds(){if(LBS_BANC)return LBS_BANC;const B=lbsLs.get("banList",null);LBS_BANC=B&&B.ids&&typeof B.ids==="object"?B.ids:{};return LBS_BANC}
 function lbsBanned(id){return!!id&&Object.prototype.hasOwnProperty.call(lbsBanIds(),String(id))}
 window.XQ_BANNED=id=>lbsBanned(id);
 window.XQ_SELFBANNED=()=>{try{return lbsBanned(meInfo().id)}catch(e){return false}};
-let LBS_BAN_P=null;
-function lbsBanFetch(){if(LBS_BAN_P)return LBS_BAN_P;if(Date.now()-(+lbsLs.get("banAt",0)||0)<LBS_BAN_GAP)return Promise.resolve(false);lbsLs.set("banAt",Date.now());
+let LBS_BAN_P=null,LBS_BAN_OK=false,LBS_BAN_TRY=0;
+function lbsNetQuiet(){try{return typeof fmNetOff==="function"&&!!fmNetOff()}catch(e){return false}}   /* 兒童模式或家長關掉線上大廳：停權名單、修正清單都不抓 */
+function lbsBanFetch(){if(LBS_BAN_P)return LBS_BAN_P;if(LBS_BAN_OK||lbsNetQuiet()||Date.now()-LBS_BAN_TRY<LBS_BAN_GAP)return Promise.resolve(false);LBS_BAN_TRY=Date.now();lbsLs.set("banAt",Date.now());
   LBS_BAN_P=fetch("data/banlist.json?pre=1&t="+Math.floor(Date.now()/60000),{cache:"no-store"}).then(r=>r.ok?r.json():null).then(j=>{if(!j||typeof j.ids!=="object"||!j.ids)return false;
-    const old=JSON.stringify(lbsBanIds());lbsLs.set("banList",{v:j.v||1,at:j.at||"",ids:j.ids,got:Date.now()});LBS_BANC=null;if(JSON.stringify(j.ids)!==old)lbsPing();return true}).catch(()=>false).finally(()=>{LBS_BAN_P=null});return LBS_BAN_P}
-setTimeout(()=>{try{if(OFF)lbsBanFetch()}catch(e){}},2500);
+    const old=JSON.stringify(lbsBanIds());LBS_BAN_OK=true;lbsLs.set("banList",{v:j.v||1,at:j.at||"",ids:j.ids,got:Date.now()});LBS_BANC=null;if(JSON.stringify(j.ids)!==old)lbsPing();return true}).catch(()=>false).finally(()=>{LBS_BAN_P=null});return LBS_BAN_P}
+const LBS_BAN_RT=/^#\/(lobby|join|cup|coop\/lobby|watch(?!\/ai))(\/|\?|$)/;   /* 用到停權名單的連線功能 */
+function lbsBanRoute(){try{if(OFF&&LBS_BAN_RT.test(location.hash||""))lbsBanFetch()}catch(e){}}
+try{addEventListener("hashchange",lbsBanRoute);setTimeout(lbsBanRoute,1200)}catch(e){}   /* 直接用 #/lobby 網址開 App 也算進大廳 */
 /* 改了名單：重送一次自己的在線狀態，伺服器回傳那一則時大廳就會重畫（net.js 收到 u/ 會發 people） */
 function lbsPing(){LBS_SET=null;try{if(window.XQNet&&XQNet.refresh)XQNet.refresh()}catch(e){}try{window.dispatchEvent(new CustomEvent("xq-block"))}catch(e){}}
 function lbsBlock(p){if(!p||!p.id)return;const L=lbsList().filter(x=>x.id!==p.id);L.push({id:String(p.id),name:String(p.name||"棋友").slice(0,16),at:Date.now()});store.set("lbBlock",L.slice(-300));lbsPing();toast(`🚫 已封鎖 ${lbnShow(p)||"這位棋友"}`)}
@@ -82,7 +86,7 @@ if(typeof postForm==="function"){const f0=postForm;postForm=async function(rec){
   const r=await f0.apply(this,arguments);if(rec&&rec.rid)try{lbsMineSet(rec.rid,"sent")}catch(e){}return r}}
 /* ---------- 檢舉追蹤編號：以上 ---------- */
 let LBS_MINE_AT=0,LBS_MINE_P=null;
-function lbsMineFetch(force){if(LBS_MINE_P)return LBS_MINE_P;if(!force&&Date.now()-LBS_MINE_AT<10*60000)return Promise.resolve([]);if(!lbsMine().some(x=>{const k=lbsMineState(x);return k==="sent"||k==="seen"||k==="q"}))return Promise.resolve([]);LBS_MINE_AT=Date.now();
+function lbsMineFetch(force){if(LBS_MINE_P)return LBS_MINE_P;if(lbsNetQuiet()||(!force&&!xqfbSent()))return Promise.resolve([]);if(!force&&Date.now()-LBS_MINE_AT<10*60000)return Promise.resolve([]);if(!lbsMine().some(x=>{const k=lbsMineState(x);return k==="sent"||k==="seen"||k==="q"}))return Promise.resolve([]);LBS_MINE_AT=Date.now();
   LBS_MINE_P=fetch("data/fixes.json?v="+encodeURIComponent(window.XQ_BUILD||"")).then(r=>r.ok?r.json():null).then(j=>j&&j.reports?lbsMineApply(j.reports):[]).catch(()=>[]).finally(()=>{LBS_MINE_P=null});return LBS_MINE_P}
 setTimeout(()=>{try{if(OFF)lbsMineFetch().then(n=>{if(n&&n.length)toast(`🛠 你的檢舉 ${n[0]}${n.length>1?` 等 ${n.length} 筆`:""} 開發者已處理了`)})}catch(e){}},9000);
 function lbsMineWhen(t){try{return new Date(+t||Date.now()).toLocaleString("zh-TW",{hour12:false,month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"})}catch(e){return""}}
@@ -131,6 +135,11 @@ function lbsCss(){if(document.getElementById("lbsCss"))return;const s=document.c
   s.textContent=`.lbs-row{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap;margin:12px 0 2px;padding-top:10px;border-top:1px dashed var(--line)}
 .lbs-row button{font:inherit;font-size:14px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:inherit;cursor:pointer}
 .lbs-row button[data-lbs="blk"]{color:var(--red,#b3261e)}.lbs-row .muted{font-size:13px}
+/* 11/17 iMac 測試員 G-1（準則 1.2，P1）：名帖在深色底上時「🚩 檢舉」字色 rgb(30,19,12) 疊在底色 rgb(31,26,21)，只看得到一面小旗子，審查員會以為沒有檢舉 →
+   三顆鈕一律用自己的深底淺字＋框線，不管名帖是淺色還是深色都看得清楚（對比都在 9:1 以上）；高度 44（網頁版同一支程式，一起修） */
+#sheet .lbs-row button[data-lbs],.lbs-row button[data-lbs]{min-height:44px;font-size:15px!important;font-weight:700;padding:8px 16px;border-radius:999px;border:2px solid #E2B13C!important;background:#7A1E14!important;color:#FFF4E0!important;opacity:1!important}
+#sheet .lbs-row button[data-lbs="blk"],#sheet .lbs-row button[data-lbs="un"],.lbs-row button[data-lbs="blk"],.lbs-row button[data-lbs="un"]{border-color:#D9CDB8!important;background:#2E2721!important;color:#FFF4E0!important}
+#sheet .lbs-row .muted,.lbs-row .muted{color:inherit!important;opacity:.9}
 .lbs-why .item.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--card))}
 .lbs-bl{display:flex;align-items:center;gap:10px;margin-bottom:8px}.lbs-bl b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #lbSafe .opt button{flex:1;min-width:0}
@@ -389,3 +398,108 @@ function lbsIntro(again){lbsCss();try{store.set("lbIntro",+store.get("lbIntro",0
     <p class="muted" style="font-size:12.5px;margin:4px 0 0">${again?"":"這張說明只會自動跳一次；"}之後可以在「設定房間的 🔒 系統・隱私・家長 → 🛡 大廳安全須知」再看。</p>`,[["我知道了",null]])}
 if(typeof Lobby==="function"){const f2=Lobby;Lobby=function(v){const r=f2.apply(this,arguments);
   try{if(!store.get("lbIntro",0)&&!window.XQ_SELFBANNED())setTimeout(()=>{try{if(/^#\/lobby/.test(location.hash)&&!store.get("lbIntro",0)&&!window.XQ_SELFBANNED())lbsIntro(false)}catch(e){}},700)}catch(e){}return r}}
+
+/* ---------- 11/17 iMac 測試員 G P3-1 升 P2（準則 5.1.1／5.1.2，兒童取向）：修正清單 data/fixes.json 什麼時候抓（網頁版、原生版同一套；native-bridge 把網址轉去哪裡不變，只改什麼時候叫） ----------
+   fixes.json 是飛鴿傳書（修好回信、開發者回覆）、修正通知（checkFixes）、信房告示榜、檢舉處理進度的共同來源。
+   ① 這支手機真的送出成功過意見回饋或檢舉（store fbSentAt：postForm 送成功才記，排隊中、送失敗不算；兒童模式送的只有文字、沒有線上 ID、對不到回信，也不記）：開 App 時照舊抓一次。
+   ② 沒送過：開 App 不抓；打開意見回饋頁（信房告示榜）、修正紀錄、我的檢舉時才抓。只打開、沒送出，不算送過。
+   ③ 兒童模式或家長關掉線上大廳（fmNetOff）：一律不抓（告示榜寫明不下載；飛鴿不飛來——兒童模式的回饋本來就不帶線上 ID，開發者的回信對不到這支手機）。
+   同一次開 App 最多真的連一次：00-util 的 fetch 共用，成功一次後整個工作階段共用同一份。
+   舊存檔（這版以前沒有 fbSentAt）：有 fbMine（寄出時記下的那一句）而且不是全部還在排隊，或有已送出的檢舉，就當送過（只補記一次）。 */
+function xqfbSent(){try{return(+store.get("fbSentAt",0)||0)>0}catch(e){return false}}
+(function(){try{if(store.get("fbSentAt",null)!=null)return;const m=store.get("fbMine",[])||[],q=(store.get("fbQueue",[])||[]).filter(r=>r&&!/玩家/.test(String(r.type||"")));
+  let rep=false;try{rep=lbsMine().some(x=>{const k=lbsMineState(x);return k==="sent"||k==="seen"||k==="done"})}catch(e){}
+  store.set("fbSentAt",(m.length&&m.length>q.length)||rep?(m.length&&+m[m.length-1].at)||1:0)}catch(e){}})();
+if(typeof postForm==="function"){const f0=postForm;postForm=async function(rec){const r=await f0.apply(this,arguments);
+  try{if(rec&&!/玩家/.test(String(rec.type||""))&&!(typeof fmKid==="function"&&fmKid()))store.set("fbSentAt",Date.now())}catch(e){}return r}}   /* 丟錯（沒網路、排隊）就不會走到這裡 */
+if(typeof checkFixes==="function"){const f0=checkFixes;checkFixes=function(){if(lbsNetQuiet()||!xqfbSent())return Promise.resolve();return f0.apply(this,arguments)}}
+if(typeof myFixes==="function"){const f0=myFixes;myFixes=function(){if(lbsNetQuiet())return Promise.resolve({dev:false,items:[],quiet:1});return f0.apply(this,arguments)}}
+if(typeof fblPending==="function"){const f0=fblPending;fblPending=function(){if(lbsNetQuiet()||!(xqfbSent()||window.XQ_FIXES_GOT))return Promise.resolve([]);return f0.apply(this,arguments)}}
+/* 設定 → 隱私卡片（文字在 05-settings；這裡在開關前面補一段「什麼時候連網下載」，原生版、網頁版各一種寫法；英文在 07i18n 的 I18N_EN） */
+const XQ_NETWHEN_NAT="如果你送過意見回饋，App 開啟時會從 Cloudflare 下載一次修正清單和開發者回覆，讓你收到飛鴿傳書；沒送過就只在打開意見回饋時下載。進入線上大廳時，會從 GitHub Pages 下載一次停權名單。這兩個網站跟任何連線一樣會看到你的 IP 位址，但不會收到你的名字、存檔或棋譜。兒童模式開著，或家長關閉線上大廳時，兩份都不下載。";
+const XQ_NETWHEN_WEB="如果你送過意見回饋，開網頁時會下載一次修正清單和開發者回覆（跟這個網站的其他檔案一樣放在 GitHub Pages 和 Cloudflare），讓你收到飛鴿傳書；沒送過就只在打開意見回饋時下載。進入線上大廳時，會下載一次停權名單。這兩個網站跟任何連線一樣會看到你的 IP 位址，但不會收到你的名字、存檔或棋譜。兒童模式開著，或家長關閉線上大廳時，兩份都不下載。";
+function xqNetWhenInject(v){const t=v&&v.querySelector('.sec-t[data-sm-title="隱私"]'),c=t&&t.nextElementSibling;if(!c||c.querySelector(".xq-netwhen"))return;
+  const p=document.createElement("p");p.className="xq-netwhen";p.style.cssText="margin:8px 0 0";p.textContent=(typeof xqNat==="function"&&xqNat())?XQ_NETWHEN_NAT:XQ_NETWHEN_WEB;
+  const l=c.querySelector("label");if(l)c.insertBefore(p,l);else c.append(p)}
+if(typeof Settings==="function"){const f0=Settings;Settings=function(v){const r=f0.apply(this,arguments);try{xqNetWhenInject(v)}catch(e){}return r}}
+
+/* ---------- 11/17 iMac 測試員 I P1-2（準則 5.1.1／5.1.2）：驛路文牒「隱私說明 ›」的摘要跟實際不一致 ----------
+   原本（07s4 hq-pv）用中文標題「隱私」找設定的隱私卡片，英文介面標題翻成 Privacy 就找不到，退回「這個版本沒有送出任何資料」（This version sends no data）；
+   中文摘要又寫死「每 7 天送名字…」（App 版玩家登記預設關），也沒提三個匿名上傳。07s4 是 reps 管的檔，不改它：在 document 捕獲階段先接走這顆鈕，
+   改開 xqPrivSum()——照這支手機「現在的開關狀態」逐項寫（玩家登記、三個匿名上傳、健康摘要；兒童模式／家長關大廳時全部不送），不靠標題文字，中英各一份；
+   下面接完整說明文件按鈕、「📜 關於與開源授權」（I P1-4：iOS 上的入口）和城市選單。 */
+function xqPrivRows(){const en=typeof i18nLang==="function"&&i18nLang()==="en",nat=typeof xqNat==="function"&&xqNat(),S=(k,d)=>{try{return store.get(k,d)}catch(e){return d}};
+  const quiet=lbsNetQuiet(),reg=!quiet&&!S("repOff",nat),stk=!quiet&&!S("stkOff",false),cpa=!quiet&&!S("cpuAnonOff",false),lrn=!quiet&&!S("learnAnonOff",false),tel=!quiet&&!!S("teleOptIn",false)&&lrn;
+  const on=b=>en?(b?"On":"Off"):(b?"開著":"關著");
+  return en?[
+    `Player registration: <b>${on(reg)}</b>${reg?" — every 7 days (or when your name or rank changes) your lobby name, device ID, rank, app version and device type go to the developer for troubleshooting.":` — nothing is sent.${nat?" (Off by default in the app.)":""}`}`,
+    `Anonymous stuck signals: <b>${on(stk)}</b>. Anonymous game scores: <b>${on(cpa)}</b>. Anonymous learning progress: <b>${on(lrn)}</b>.${nat?" (All three are off by default in the app.)":""} They contain no name or device ID.`,
+    `Anonymous daily health summary: <b>${on(tel)}</b> (off by default).`,
+    quiet?"Kids Mode or the parental lobby switch is on: none of the above is sent, and the fix list and ban list aren't downloaded.":"Feedback and reports are sent only when you tap Send. If you've sent feedback, the fix list is downloaded once when the app opens; the ban list only when you enter the lobby.",
+    "Game records, saves and chat are never sent. The app doesn't look up where you are; you choose whether the lobby shows your city."
+  ]:[
+    `玩家登記：<b>${on(reg)}</b>${reg?"——每 7 天（或名字、段位改變時）送大廳名字、裝置代號、段位、App 版本、裝置種類給開發者，用來查問題。":`——不送。${nat?"（App 版預設關）":""}`}`,
+    `匿名記錄卡住的地方：<b>${on(stk)}</b>；匿名對局評分：<b>${on(cpa)}</b>；匿名學習進度：<b>${on(lrn)}</b>。${nat?"（App 版這三個預設都關）":""}不含名字和裝置代號。`,
+    `每天自動送匿名健康摘要：<b>${on(tel)}</b>（預設關）。`,
+    quiet?"兒童模式或家長關閉線上大廳：以上全部不送，修正清單和停權名單也不下載。":"意見回饋、檢舉只在你按送出時送。送過意見回饋的話，開 App 時下載一次修正清單；停權名單只在進大廳時下載。",
+    "不送棋譜、存檔和聊天內容；不查你在哪裡，城市要不要在大廳顯示由你自己選。"]}
+function xqPrivSum(){const en=typeof i18nLang==="function"&&i18nLang()==="en";
+  sheet(en?"Privacy notes":"隱私說明",b=>{b.innerHTML=`<ul data-noi18n style="line-height:1.8;margin:0;padding-left:1.2em">${xqPrivRows().map(x=>`<li>${x}</li>`).join("")}</ul>`
+      +`<p class="muted" data-noi18n style="font-size:13px;margin:8px 0 0">${en?"Change these in Settings → “🔒 Privacy”.":"開關在設定房間的「🔒 隱私・家長」。"}</p>`
+      +(()=>{let id="";try{id=(meInfo()||{}).id||""}catch(e){}return id?`<div class="card" data-noi18n style="margin-top:10px;padding:10px 12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap"><span style="flex:1;min-width:0">${en?"Device ID":"裝置代號"}：<b style="font-family:ui-monospace,Menlo,Consolas,monospace;word-break:break-all">${esc(id)}</b><br><span class="muted" style="font-size:12.5px">${en?"A random code made by the app (not a phone serial number). Include it when you email to ask for deletion.":"App 自己產生的隨機代號（不是手機序號）；寫信申請刪除資料時附上。"}</span></span><button type="button" class="btn ghost" id="xqPsId" style="width:auto;min-height:44px;margin:0">📋 ${en?"Copy":"複製"}</button></div>`:""})()   /* 11/17 iMac I P3-10：支援文件請寫信的人附上裝置代號，App 裡要看得到——照 App 原本就有的匿名裝置代號（meInfo().id）顯示，不新增任何識別碼 */
+      +(typeof xqDocBtns==="function"?xqDocBtns():"")+`<button type="button" class="btn ghost" id="xqPsLic" style="width:100%;margin-top:8px">📜 關於與開源授權</button>`;
+    {const cp=b.querySelector("#xqPsId");if(cp)cp.onclick=async()=>{let id="";try{id=(meInfo()||{}).id||""}catch(e){}let ok=false;try{await navigator.clipboard.writeText(id);ok=true}catch(e){}toast(ok?(en?"Device ID copied":"裝置代號已複製"):id)}}
+    const lic=b.querySelector("#xqPsLic"),al=document.querySelector("#aLic");if(lic){if(al)lic.onclick=()=>{vibrate(5);closeSheet();setTimeout(()=>{try{al.click()}catch(e){}},120)};else lic.remove()}
+    const sel=document.querySelector("#myCityS");if(sel){const l=document.createElement("label");l.style.cssText="display:flex;align-items:center;gap:8px;margin-top:12px";l.innerHTML=`<span style="flex:1">🏙 大廳顯示我的城市</span>`;const s2=sel.cloneNode(true);s2.removeAttribute("id");s2.value=sel.value;s2.onchange=()=>{sel.value=s2.value;if(typeof sel.onchange==="function")sel.onchange()};l.append(s2);b.append(l)}})}
+/* 11/17 測試員 D 第 29 輪 Y6：「📜 關於與開源授權」英文介面大段中文、粗體前後黏字（afree、onThis phoneand）——05-settings 的 aboutLicSheet 是一段段中文組的，字典對不上。
+   05-settings 不動（reps 管）：這裡換成中英兩份寫好的版本（內容同原本；「會送出去的」那句照現在實際寫：玩家登記、匿名統計看隱私的開關），#aLic、隱私說明裡那顆都叫 aboutLicSheet，換這一個就好 */
+if(typeof aboutLicSheet==="function"&&!aboutLicSheet.__xq){const lic0=aboutLicSheet;aboutLicSheet=function(){try{const en=typeof i18nLang==="function"&&i18nLang()==="en",nat=typeof setNat==="function"&&setNat(),RP=typeof ABOUT_REPO!=="undefined"?ABOUT_REPO:"https://github.com/raysonchen2023-cloud/xiangqi-lab",R=RP+"/blob/main/",L=(u,t)=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`;
+  sheet(en?"📜 About and open-source licenses":"📜 關於與開源授權",b=>{b.innerHTML=`<div data-noi18n style="line-height:1.85;font-size:15px">`+(en?
+    `<p style="margin:0 0 10px">Xiangqi Qianqiu is a <b>free, non-commercial</b> project to promote xiangqi (Chinese chess): no fees, no in-app purchases, no ads.</p>
+    <p style="margin:0 0 10px">Xiangqi Qianqiu © 2026 Hung-Sheng Chen. The code (including interface text, scene stories and dialogue written in the code) is licensed under the GNU GPL version 3 or later (GPL-3.0-or-later). Source code: ${L(RP+"/tree/main/source","source/")}, full license: ${L(R+"LICENSE","LICENSE")}. Original images, music, 3D models and long-form story are licensed under CC BY-NC-SA 4.0 (${L(R+"LICENSE-ASSETS.md","details")}); grandmaster biographies and voice clips follow their original sources. The third-party components below are used under their own licenses.</p>
+    <div class="sec-t" style="margin-top:6px">The Pikafish chess engine</div>
+    <p style="margin:0 0 6px">Computer play and game analysis use the open-source engine Pikafish (version Pikafish-2026-09-06), compiled to WebAssembly and run on your device. It is licensed under the GNU GPL version 3.</p>
+    <p style="margin:0 0 6px">As the GPL requires, our modified engine source and build method are public: ${L(RP+"/tree/main/pikafish-src","pikafish-src (modified file + build script)")}; original source: ${L("https://github.com/official-pikafish/Pikafish","official-pikafish/Pikafish")}; full license: ${L(R+"LICENSE-Pikafish-GPL3.txt","GPL-3.0")}.</p>
+    <p style="margin:0 0 10px">The engine's neural network weights (pikafish.nnue) follow Pikafish's ${L(R+"NNUE-License.md","NNUE license")}: lawful use only, no commercial use without permission. Xiangqi Qianqiu is not used commercially.</p>
+    <div class="sec-t">Other open-source components</div>
+    <ul style="margin:0 0 10px;padding-left:1.2em"><li>three.js (3D garden, raised pieces) — MIT</li><li>opencc-js (Traditional/Simplified conversion) — MIT (${L(R+"LICENSE-opencc-js.txt","full license")})</li><li>jsQR (QR code reading) — Apache-2.0</li><li>QRCode.js (QR code generation) — MIT</li>
+      <li>Dynasty fonts: Iansui, TW-Kai, LXGW WenKai TC, GenRyuMin, Zhuque Fangsong, Cactus Serif, GenWanMin — SIL OFL 1.1, subset to the characters used, with internal names changed (${L(R+"data/fonts/LICENSES.md","font list and sources")})</li></ul>
+    <div class="sec-t">Where your data is stored</div>
+    <p style="margin:0 0 6px">Game records, puzzle progress, characters, collections and settings are stored on <b>this device</b>${nat?" inside the app":" in your browser"} and are not uploaded to a cloud.</p>
+    <p style="margin:0 0 6px">What the app sends or downloads over the network, when, and which switches control it are all listed in the privacy notes: <button type="button" class="btn ghost" id="alPriv" style="min-height:44px;margin-top:6px">🔒 Privacy notes ›</button></p>
+    <p style="margin:0 0 8px">To delete all data on this device, use the button below (you'll be asked twice); ${nat?"deleting the app does the same":"deleting the app or clearing this site's data in your browser does the same"}. Deletion <b>can't be undone</b>; before changing phones, move your save with “Move to a new phone” in Settings.</p>
+    <button class="btn ghost" id="alWipe" style="width:100%;color:var(--red);border-color:var(--red)">🗑 Delete all data on this phone</button></div>
+    <button class="btn" id="alOk" style="width:100%;margin-top:14px">OK</button>`
+    :`<p style="margin:0 0 10px">《象棋千秋》是一個推廣中國象棋的<b>免費、非商業</b>學習計畫：不收費、沒有內購、沒有廣告。</p>
+    <p style="margin:0 0 10px">《象棋千秋》© 2026 陳泓昇（Hung-Sheng Chen）。程式碼（包括寫在程式裡的介面文字、場景小故事和對白）依 GNU GPL 第 3 版或更新版（GPL-3.0-or-later）授權，原始碼公開：${L(RP+"/tree/main/source","source/")}、${L(R+"LICENSE","授權全文")}。自製的圖片、音樂、3D 模型和長篇劇情依 CC BY-NC-SA 4.0 授權（${L(R+"LICENSE-ASSETS.md","說明")}）；特級大師小傳和語音檔照原來源的條件。下面這些別人做的元件，照它們各自的授權使用。</p>
+    <div class="sec-t" style="margin-top:6px">象棋引擎 Pikafish</div>
+    <p style="margin:0 0 6px">電腦下棋和複盤分析用的是開源引擎 Pikafish（版本 Pikafish-2026-09-06），編成 WebAssembly 在手機裡跑，授權是 GNU GPL 第 3 版。</p>
+    <p style="margin:0 0 6px">照 GPL 的規定，我們改過的引擎原始碼和建置方法都公開：${L(RP+"/tree/main/pikafish-src","pikafish-src（改過的檔案＋建置腳本）")}；原版原始碼：${L("https://github.com/official-pikafish/Pikafish","official-pikafish/Pikafish")}；授權全文：${L(R+"LICENSE-Pikafish-GPL3.txt","GPL-3.0")}。</p>
+    <p style="margin:0 0 10px">引擎的神經網路權重（pikafish.nnue）照 Pikafish 的 ${L(R+"NNUE-License.md","NNUE 授權")}：只能合法使用、未經許可不得商用。《象棋千秋》不做商業用途。</p>
+    <div class="sec-t">其他開源元件</div>
+    <ul style="margin:0 0 10px;padding-left:1.2em"><li>three.js（3D 園子、立體棋子）— MIT</li><li>opencc-js（繁簡轉換）— MIT（${L(R+"LICENSE-opencc-js.txt","授權全文")}）</li><li>jsQR（讀 QR 碼）— Apache-2.0</li><li>QRCode.js（產生 QR 碼）— MIT</li>
+      <li>朝代字型：芫荽、全字庫正楷體、霞鶩文楷、源流明體、朱雀仿宋、仙人掌明體、源雲明體 — SIL OFL 1.1，只取用到的字、改了內部名稱（${L(R+"data/fonts/LICENSES.md","字型清單與來源")}）</li></ul>
+    <div class="sec-t">你的資料存在哪裡</div>
+    <p style="margin:0 0 6px">對局紀錄、解題進度、角色、收藏和設定，都存在<b>這支手機</b>${nat?"的 App 裡":"的瀏覽器裡"}，不會上傳到雲端。</p>
+    <p style="margin:0 0 6px">App 什麼時候會連網、送出或下載哪些東西、由哪些開關管，都寫在隱私說明：<button type="button" class="btn ghost" id="alPriv" style="min-height:44px;margin-top:6px">🔒 隱私說明 ›</button></p>
+    <p style="margin:0 0 8px">想把這支手機裡的資料全部刪掉，按下面這顆按鈕（會確認兩次）；${nat?"刪掉 App 也一樣":"刪掉 App、或在瀏覽器清除這個網站的資料也一樣"}。刪掉後<b>無法復原</b>；換手機前請先用設定裡的「換手機」把存檔搬過去。</p>
+    <button class="btn ghost" id="alWipe" style="width:100%;color:var(--red);border-color:var(--red)">🗑 刪除這支手機的全部資料</button></div>
+    <button class="btn" id="alOk" style="width:100%;margin-top:14px">知道了</button>`);
+    b.querySelector("#alOk").onclick=closeSheet;b.querySelector("#alWipe").onclick=()=>{closeSheet();setTimeout(wipeAsk,120)};
+    /* 11/17 E 第 29 輪 R29-3：「會送出去的」不再自己列一份（會跟隱私說明走樣）→ 直接開同一份隱私說明（xqPrivSum：摘要＋privacy 文件） */
+    {const pv=b.querySelector("#alPriv");if(pv)pv.onclick=()=>{try{vibrate(5)}catch(x){}closeSheet();setTimeout(()=>{try{xqPrivSum()}catch(x){}},120)}}})}catch(e){return lic0.apply(this,arguments)}};aboutLicSheet.__xq=1}
+/* 11/17 iMac I P3：換手機按「舊手機・產生轉移碼」原本直接產生、直接上傳，沒有確認 → 先說清楚會發生什麼（照 05-settings／05b 的實際規則：整份存檔和棋譜庫用 10 碼轉移碼加密，
+   暫放線上大廳伺服器 30 分鐘，新手機收下或按作廢就刪；這支手機的存檔照樣留著），按「產生轉移碼」才做。設定頁的 #xfOut、驛路文牒的左半驛券都叫 xfSend，包這一層兩邊都有 */
+if(typeof xfSend==="function"&&!xfSend.__ask){const f0=xfSend;xfSend=function(){const en=typeof i18nLang==="function"&&i18nLang()==="en",a=arguments,self=this;
+    return new Promise(res=>{modal(en?`<div class="em">🎒</div><h2>Create a transfer code?</h2><p data-noi18n style="text-align:left;line-height:1.7">Your whole save and game library will be encrypted with a 10-character transfer code and held on the online lobby server for <b>30 minutes</b>. Enter the code on the new phone within 30 minutes; the copy on the server is deleted as soon as the new phone receives it, or when you cancel the code. <b>The save on this phone stays here.</b></p>`
+      :`<div class="em">🎒</div><h2>產生轉移碼？</h2><p style="text-align:left;line-height:1.7">會把這支手機的整份存檔和棋譜庫，用一組 10 碼的轉移碼加密，暫放在線上大廳的伺服器 <b>30 分鐘</b>。請在 30 分鐘內到新手機輸入；新手機收下、或你按「作廢這組碼」，伺服器上那一份就刪掉。<b>這支手機上的存檔照樣留著。</b></p>`,
+      [[en?"Create code":"產生轉移碼",()=>res(f0.apply(self,a))],[en?"Cancel":"取消",()=>res(null),true]])})};xfSend.__ask=1}
+/* 11/17 iMac I P2：驛路文牒整張圖照畫面縮放，文牒上的「隱私說明 ›」縮到約 6～8pt。07s4 不改（reps 管）：在文牒的標題列（.hq-h，不跟著縮放）補一顆正常大小的「🔒 隱私說明」（15px、44 高），點了一樣開 xqPrivSum */
+try{setInterval(()=>{try{if(!/^#\/settings/.test(location.hash||""))return;document.querySelectorAll(".hq-pn .hq-h").forEach(h=>{if(h.querySelector(".xq-hq-pv"))return;const b=document.createElement("button");b.type="button";b.className="xq-hq-pv";
+    b.textContent=(typeof i18nLang==="function"&&i18nLang()==="en")?"🔒 Privacy":"🔒 隱私說明";b.style.cssText="margin-left:auto;min-height:44px;padding:0 12px;border:1.5px solid #8a2a18;border-radius:99px;background:rgba(255,248,236,.9);color:#8a2a18;font:800 15px/1.2 var(--serif,serif);cursor:pointer";
+    b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}xqPrivSum()};const x=h.querySelector("button[aria-label]");if(x){x.style.marginLeft="6px";h.insertBefore(b,x)}else h.append(b)})}catch(e){}},700)}catch(e){}
+/* 11/18 第 30 輪 R30-3：英文文牒的「Developer Hung-Sheng Chen」跟右邊驛券的「Generate code」黏在一起——07s4 的縮字（pn._tf → hqFitAll）是在中文時量的，
+   翻譯器（外掛字典晚到）把字換成比較長的英文以後沒有重量，字超出文牒那一格。07s4 不改（reps 管）：文牒開著時文牒、驛券的字變了就叫 pn._tf() 重量一次 */
+try{setInterval(()=>{try{if(!/^#\/settings/.test(location.hash||""))return;document.querySelectorAll(".hq-pn.open").forEach(pn=>{if(typeof pn._tf!=="function")return;const di=pn.querySelector(".hq-di"),q=pn.querySelector(".hq-q"),sig=(di?di.textContent:"")+"|"+(q?q.textContent:"")+"|"+innerWidth;
+    if(pn._xqSig===sig)return;pn._xqSig=sig;pn._tf()})}catch(e){}},500)}catch(e){}
+try{document.addEventListener("click",e=>{const t=e.target&&e.target.closest&&e.target.closest(".hq-pv");if(!t)return;e.preventDefault();e.stopImmediatePropagation();try{vibrate(5)}catch(x){}xqPrivSum()},true)}catch(e){}

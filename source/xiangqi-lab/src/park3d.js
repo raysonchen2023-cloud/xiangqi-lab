@@ -634,6 +634,8 @@
     const grp=new T.Group();K.build(grp);grp.traverse(m=>{if(m.isMesh&&m.material===folM){m.castShadow=false;m.renderOrder=1}});return grp}
 
   // 家具本體：EK＝朝代；X＝場景裡共用的東西（sc、M、地面高度、長椅位置、石材、鐵）
+  /* 星空環景（黑洞、幻譜星門那張 360 圖：data/park/blackhole_*.webp、bh_*.webp）＝今日異象、自由擺陣、十三星系、黑洞的對局；園子、橋上、棋館、雲河鎮的環景不算 */
+  function parkSkyBg(bg){return/(^|\/)(blackhole|bh)_[\w-]*\.webp(\?|$)/.test(String(bg||""))}
   function buildFurn(EK,E,X){const{sc,M,GY,SY,BZ,BL}=X,K=new Kit(),root=new T.Group();sc.add(root);const YS=SY+.22,flames=[];let OX=0,OZ=0;
     const mm=(map,o)=>M(0xffffff,Object.assign({map},o||{}));
     const BXG=new T.BoxGeometry(1,1,1),CYC={},cyG=n=>CYC[n]||(CYC[n]=new T.CylinderGeometry(1,1,1,n)),SPG=new T.SphereGeometry(1,16,12);
@@ -926,7 +928,7 @@
     const PP=PROP_IMG[EK],STOOLS=[[-14.5,1.5],[14.5,-1.5]],LAMPS=[-1,1].map(sx=>[sx,sx*8.1,-17.5]),DT=-9.35;   // DT＝手繪長榻的台座頂面高度
     if(X.bridge)F.classic().table();else f.table();
     /* 室內（車輪戰棋館）：桌子照這一朝（車輪戰指定明朝＝木方桌），兩張木凳；不放長榻、燈、手繪道具 */
-    if(X.indoor){F3D=true;for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;f.stool()}}   /* 11/11：橋上用圓石桌（首頁橋上畫的是圓石桌），不用這一朝花園的木桌 */
+    if(X.indoor){F3D=true;if(!X.sky)for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;f.stool()}}   /* 11/17 iMac K P3-8（開發者選「星空場景不放凳子」）：今日異象、自由擺陣、十三星系（星空環景 X.sky）不放兩張凳子——俯視時像左右兩個白色空圓 */   /* 11/11：橋上用圓石桌（首頁橋上畫的是圓石桌），不用這一朝花園的木桌 */
     /* 開發者 11/11（首頁橋上石桌，Gemini 75 方案 A「溯江望槎」）：X.bridge＝在渡口青石拱橋中央下——只有石桌和兩張青石鼓凳，左右各一道宋式素面矮石欄（尋杖欄板），
        不放這一朝花園的長榻、燈、手繪道具和樹（那些是後園的東西） */
     if(X.indoor||X.giant){}   /* 黑洞巨盤（11/12 hspx 進黑洞要等 6～7 秒）：長榻、凳子、燈、手繪道具反正都藏起來，不建也不載圖 */
@@ -935,7 +937,7 @@
       K.at();OX=OZ=0;for(const sx of[-1,1]){const x=sx*21;bx(X.stone2,x,FY+4.6,-3,.7,.7,34,null,4);bx(X.stone,x,FY+2.3,-3,.45,3.6,34,null,4);
         for(let z=-19;z<=13;z+=8)bx(X.stone2,x,FY+2.6,z,1.3,5.2,1.3,null,4)}}
     else if(PP&&X.FL==null){if(f.dais)f.dais(DT,15,5.4);else bx(X.stone2,0,(GY+DT)/2,BZ,15,DT-GY,5.4,null,4)}   /* 地面抬高後長榻直接放在地上，不用台座 */
-    else{F3D=true;f.bench();for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;f.stool()}for(const[sx,x,z]of LAMPS){OX=x;OZ=z;K.at(OX,0,OZ);f.lamp(sx)}}
+    else{F3D=true;f.bench();if(!X.sky)for(const[x,z]of STOOLS){K.at(x,0,z);OX=x;OZ=z;f.stool()}for(const[sx,x,z]of LAMPS){OX=x;OZ=z;K.at(OX,0,OZ);f.lamp(sx)}}
     K.at();K.build(root);OX=OZ=0;
     if(PP&&!X.bridge&&!X.indoor&&!X.giant)paint();
     // ---- 手繪道具立牌：一張去背圖貼在平面上，轉向座位（鏡頭只在座位上轉頭，不會走動，所以永遠看到正面）；
@@ -1438,7 +1440,7 @@
     const infos=[];   // 意見回饋 240：點得到、會跳說明的物件
     const bills=[];   // 意見回饋 375：鏡頭可以繞著桌子轉，貼圖（道具、座椅）每一格都轉向鏡頭
     const fades=[];   /* 意見回饋 421：轉頭時剛好擋在畫面正中間、桌子後面的樹，淡成水墨的薄影，讓遠景透出來 */
-    const furn=buildFurn(EK,E,{sc,M,GY,FL,TR,SY,BZ,BL,stone,stone2,iron,infos,bills,fades,bridge:!!opt.bridge,indoor:!!opt.indoor,giant:!!opt.giant});
+    const furn=buildFurn(EK,E,{sc,M,GY,FL,TR,SY,BZ,BL,stone,stone2,iron,infos,bills,fades,bridge:!!opt.bridge,indoor:!!opt.indoor,giant:!!opt.giant,sky:parkSkyBg(opt.bg)});
     // 木棋盤嵌在桌上：深色實木框，和灰色石桌對比清楚
     const wood=M(furn.frame,{roughness:.55}),GWB=[mesh(new T.BoxGeometry(BW+.5,.6,BH+.5),wood,[0,.24,0]),mesh(new T.BoxGeometry(BW+.62,.08,BH+.62),wood,[0,-.0,0])];   // 厚木棋盤＋底座線腳（意見回饋 215）
     const btex=boardTex(()=>{try{btex.image.getContext("2d").clearRect(0,0,1,1);drawBoard(btex.image.getContext("2d"),btex.image.width,btex.image.height,null);btex.needsUpdate=true}catch(e){}});const bplane=new T.Mesh(new T.PlaneGeometry(BW,BH),new T.MeshStandardMaterial({map:btex,roughness:.6}));bplane.rotation.x=-PI/2;bplane.position.y=TOP-.02+.03;bplane.receiveShadow=true;sc.add(bplane);
@@ -2562,7 +2564,8 @@
       if(pinch){if(ptrs.size<2){pinch=null;const p=[...ptrs.values()][0];down=p?{x:p.x,y:p.y,t:performance.now(),y0:tyaw,p0:tpitch,moved:true}:null}return}
       if(!down)return;const d=down;down=null;if(d.moved)return;const inH=IN.ph==="held";   /* 11/11 入座運鏡中點的這一下：用玩家當下看到的畫面照常吸附、選子，處理完才跳到 topfit */
       try{const now=performance.now();
-      if(now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=now;let fg=null;if(GIANT)try{fg=gntFocus(e.clientX,e.clientY,70)}catch(_){}const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){if(opt.onTap)opt.onTap(i);return}if(fg)return;   /* 黑洞：點到角色＝鎖定放大中心，不開旁邊物件的介紹 */
+      const i0=pick(e.clientX,e.clientY),onPc=i0>=0||i0===-2;   /* 11/17 iMac H P2-3：按「＋」放大後點棋子，兩下太快（選子、再點落點）會被當成「點兩下回全盤」，鏡頭又縮回去。點到棋盤格（選子、走子）一律照常處理，只有點在棋盤外的兩下才回正 */
+      if(!onPc&&now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=onPc?0:now;let fg=null;if(GIANT)try{fg=gntFocus(e.clientX,e.clientY,70)}catch(_){}const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){if(opt.onTap)opt.onTap(i);return}if(fg)return;   /* 黑洞：點到角色＝鎖定放大中心，不開旁邊物件的介紹 */
       if(opt.onInfo){const k=infoPick();if(k)opt.onInfo(k)}}finally{if(inH)inEnd(true)}};
     cvs.addEventListener("pointerup",up);cvs.addEventListener("lostpointercapture",e=>{if(!ptrs.has(e.pointerId)&&!TDPT.has(e.pointerId))return;if(TDC){TDPT.delete(e.pointerId);if(TDPT.size<2&&TDOR.pin){TDOR.pin=null;TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700)}return}ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!ptrs.size)down=null});   /* 11/16 P0：沒送 pointerup 就失去追蹤＝當放開（正常放開時 up 已經刪掉，這裡什麼都不做） */
     cvs.addEventListener("pointercancel",e=>{if(TDC){tdDragEnd(true);TDP=null;TDPT.delete(e.pointerId);TDOR.pin=null;if(TDOR.hold){TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700)}return}ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null;if(IN.ph==="held")inEnd(true)});

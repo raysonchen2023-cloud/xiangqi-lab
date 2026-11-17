@@ -4,6 +4,7 @@
      左牆木腰牌＝我的段位、分數、勝負；桌前兩個棋罐＝執紅／執黑；右牆四卷卷軸＝練功房四段難度（初學乍練 1～4、略有小成 5～9、登堂入室 10～14、宗師之境 15～18）；
      桌子正中的茶爐（秦～五代是溫酒爐）＝開局；對面空座疊一個半透明的「幻影棋客」（挑戰電腦的對手圖 data/pika2/）；最下方竹簾＝回茶坊（07w9 出口）。
    後兩卷在前一卷還沒通關任何一級時畫淡一點（只是提醒，照樣可以選）。
+   11/17 iMac H P3-6：原本小字寫「前一卷還沒通關」，看起來像鎖住、其實能點。照上面這行的原意（只提示不鎖）改成「可以直接選，建議先贏過前一卷」。
    圖分三組：明清（原圖，不分朝代也用這張）、宋元（_song：湯瓶風爐、建盞、書卷）、秦～五代（_han：矮案坐席、溫酒爐、竹簡、漆奩）。
    開關 CPUROOM_ON（false＝茶坊照舊直接進 #/cpu）；圖片網址帶 CR_IMGV；前綴 cr */
 const CPUROOM_ON=true;
@@ -20,7 +21,11 @@ const CR_GUIDE="想升段就進晉級賽，想練新招就進練功房，想考�
 const CR_GO={rank:"開始晉級賽",free:"開始練習",blind:"開始盲棋"};
 const CR_RULE="可回來續下；若未下完就另開新局，原局判負。";   /* 11/12 ChatGPT 文案檢查第 1 條（開發者核准）：改短、像規則判定 */
 const crMode=()=>crRanked()?"rank":crBlind()?"blind":"free";
-function crInfo(md,lv,sd,o){o=o||{};const s=sd==="b"?"執黑後走":"執紅先走";
+/* 11/17 測試員 D 第 29 輪 Y9：英文介面——練習卡片（crInfo）、選難度的分組小字、最上面的說明、名牌和開始鈕的讀螢幕名稱，都是中文組字（字典對不上，還出現 "No. 1-Lv 4"）→ 英文介面直接給英文 */
+const crEn=()=>{try{return typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){return false}},crT=s=>{try{return(typeof i18nText==="function"&&i18nText(String(s)))||String(s)}catch(e){return String(s)}};
+const CR_LVTIP_EN="📏 <b>Level N</b> is the computer opponent's strength (1 weakest, 18 strongest; the Phantom Player and the Smiling Shopkeeper both use these levels). In brackets is the <b>rank</b> with the same strength: Novice → Beginner 1–3 → Amateur 1–9 → Pro. Winning ranked games raises this rank. <b>XP Lv</b> is experience from the story and puzzles and has nothing to do with playing strength.";
+function crInfo(md,lv,sd,o){o=o||{};if(crEn()){const s=sd==="b"?"Black, moves second":"Red, moves first";if(md==="rank")return`Opponent matched to rank “${crT(o.rank||"新手")}” · ${s} · rated`;return`Level ${lv}${o.passed?" (cleared)":""} · ${s} · ${md==="blind"?"unrated, 3 peeks":"no rank points lost"}`}
+  const s=sd==="b"?"執黑後走":"執紅先走";
   if(md==="rank")return`對手照段位「${o.rank||"新手"}」配 · ${s} · 算段位分`;
   return`第 ${lv} 級${o.passed?"（已通關）":""} · ${s} · ${md==="blind"?"不算段位、可偷看 3 次":"不扣段位分"}`}
 function crDiffSheet(){sheet("模式差在哪？",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 8px">${esc(CR_GUIDE)}</p>`+["rank","free","blind"].filter(k=>k!=="rank"||OFF).map(k=>{const T=CR_TXT[k];
@@ -77,7 +82,7 @@ function crLive(){const s=CR_ST;return!!(s&&s.kind==="cpu"&&!s.result&&(s.moves|
 /* 11/11 笑面掌櫃：練功房、盲棋可以選對手（store cpuOpp）；晉級賽固定幻影棋客 */
 const crOpp=()=>crRanked()?"km":cpuOppPref();
 function crPaint(P){const rk=crRanked(),bl=crBlind(),lv=crLevel(),sd=crSide(),CR=(CR_ST&&CR_ST.cpuRate)||{},zo=crOpp()==="zhanggui";
-  {const gh=P.querySelector(".cr-ghost");if(gh)gh.classList.toggle("zg",zo);const nb=P.querySelector("#crOpp");if(nb){nb.textContent="👤 "+(zo?OPT_ZG.name:OPT_KM.name)+(rk?"":" ▾");nb.setAttribute("aria-label",rk?"名牌，晉級賽固定對手：幻影棋客":"名牌，按下可換對手，目前對手："+(zo?OPT_ZG.name:OPT_KM.name))}}{const gb=P.querySelector(".cr-ghost i b");if(gb){gb.textContent=sd==="b"?"帥":"將";gb.style.color=sd==="b"?"#C8102E":"#1e1a16"}}
+  {const gh=P.querySelector(".cr-ghost");if(gh)gh.classList.toggle("zg",zo);const nb=P.querySelector("#crOpp");if(nb){nb.textContent="👤 "+(zo?OPT_ZG.name:OPT_KM.name)+(rk?"":" ▾");nb.setAttribute("aria-label",crEn()?(rk?"Name plate. Ranked games use a fixed opponent: "+crT("幻影棋客"):"Name plate. Tap to change opponent. Current opponent: "+crT(zo?OPT_ZG.name:OPT_KM.name)):rk?"名牌，晉級賽固定對手：幻影棋客":"名牌，按下可換對手，目前對手："+(zo?OPT_ZG.name:OPT_KM.name))}}{const gb=P.querySelector(".cr-ghost i b");if(gb){gb.textContent=sd==="b"?"帥":"將";gb.style.color=sd==="b"?"#C8102E":"#1e1a16"}}
   {const rt=P.querySelector("#crRankT");if(rt){rt.classList.toggle("on",rk);rt.setAttribute("aria-pressed",String(rk))}}P.querySelector("#crFree").classList.toggle("on",!rk&&!bl);P.querySelector("#crBlind").classList.toggle("on",bl);
   P.querySelector("#crFree").setAttribute("aria-pressed",String(!rk&&!bl));P.querySelector("#crBlind").setAttribute("aria-pressed",String(bl));
   P.querySelector("#crRed").classList.toggle("on",sd==="r");P.querySelector("#crBlack").classList.toggle("on",sd==="b");
@@ -88,7 +93,7 @@ function crPaint(P){const rk=crRanked(),bl=crBlind(),lv=crLevel(),sd=crSide(),CR
   {const sb=P.querySelector("#crScroll");if(sb)sb.setAttribute("aria-label",`卷軸，按下可換難度，目前第 ${lv} 級`+(crPassed(lv)?"，已通關":""))}
   const live=crLive(),lm=live?(CR_ST.ranked?"晉級賽":CR_ST.blind?`盲棋第 ${CR_ST.level} 級`:`練功房第 ${CR_ST.level} 級`):"";
   const md=rk?"rank":bl?"blind":"free",zx=!rk&&zgXOn(crOpp()),info=zx?`${OPT_ZG.name}・${ZG_X.name}：${ZG_X.desc}你執${sd==="b"?"黑方（後走）":"紅方（先走）"}。`:crInfo(md,lv,sd,{rank:rkTw(CR.rank||"新手"),passed:crPassed(lv)});   /* 掌櫃真功夫：不跟等級走，說明換成這一格的 */
-  {const gb=P.querySelector("#crGo"),ic=crEra()==="han"?"🍶":"🍵";if(gb){gb.querySelector("b").textContent=ic+" "+CR_GO[md];gb.setAttribute("aria-label",CR_GO[md]+"："+info)}}
+  {const gb=P.querySelector("#crGo"),ic=crEra()==="han"?"🍶":"🍵";if(gb){gb.querySelector("b").textContent=ic+" "+CR_GO[md];gb.setAttribute("aria-label",crEn()?crT(CR_GO[md])+": "+(zx?crT(info):info):CR_GO[md]+"："+info)}}
   P.querySelector(".cr-card").innerHTML=`<p class="cr-one">${esc(info)}</p>`+(rk?`<p class="cr-rule">⚠ ${esc(CR_RULE)}</p>`:"")+
     (live?`<div class="cr-cont"><span>上一盤${lm}還沒下完</span><button type="button" id="crCont">繼續上一盤 ›</button></div>`:"")+
     `<button type="button" class="cr-more" id="crDiff" aria-haspopup="dialog">模式差在哪？</button>`;
@@ -96,8 +101,8 @@ function crPaint(P){const rk=crRanked(),bl=crBlind(),lv=crLevel(),sd=crSide(),CR
   const db=P.querySelector("#crDiff");if(db)db.onclick=e=>{e.stopPropagation();vibrate(5);crDiffSheet()};
   try{crFit(P)}catch(e){}}
 function crPick(P){const lv0=crLevel();
-  sheet("📚 練功房・選難度",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 10px;font-size:13.5px;line-height:1.6">${CR_LVTIP}</p><div class="cr-pick">${CR_LV.map(([a,z,nm,note],i)=>{const dim=crGrpDim(i);let h="";for(let n=a;n<=z;n++)h+=`<button type="button" data-l="${n}" class="${n===lv0?"on":""}"><b>${n}</b>${esc(rkTw(crLvName(n)||""))}${crPassed(n)?"<i>✔ 通關</i>":""}</button>`;
-      return`<div class="cr-sec${dim?" dim":""}"><h4><span>${esc(nm)}</span><small>第 ${a}～${z} 級${note?"・"+esc(note):""}${dim?"・前一卷還沒通關":""}</small></h4><div class="cr-lvs">${h}</div></div>`}).join("")}${crOpp()==="zhanggui"?`<div class="cr-sec"><h4><span>${esc(OPT_ZG.name)}</span><small>${esc(ZG_X.desc)}</small></h4><div class="cr-lvs"><button type="button" data-zx="1" class="${zgXOn("zhanggui")?"on":""}"><b>${esc(ZG_X.short)}</b>${esc(ZG_X.name)}</button></div></div>`:""}</div>`;   /* 開發者 11/12：笑面掌櫃多一格「掌櫃真功夫」 */
+  sheet("📚 練功房・選難度",b=>{b.innerHTML=`<p class="muted"${crEn()?" data-noi18n":""} style="margin:0 0 10px;font-size:13.5px;line-height:1.6">${crEn()?CR_LVTIP_EN:CR_LVTIP}</p><div class="cr-pick">${CR_LV.map(([a,z,nm,note],i)=>{const dim=crGrpDim(i);let h="";for(let n=a;n<=z;n++)h+=`<button type="button" data-l="${n}" class="${n===lv0?"on":""}"><b>${n}</b>${esc(rkTw(crLvName(n)||""))}${crPassed(n)?"<i>✔ 通關</i>":""}</button>`;
+      return`<div class="cr-sec${dim?" dim":""}"><h4><span>${esc(nm)}</span><small${crEn()?" data-noi18n":""}>${crEn()?`Levels ${a}–${z}${note?" · "+esc(crT(note)):""}${dim?" · open to play; beating the previous scroll first is suggested":""}`:`第 ${a}～${z} 級${note?"・"+esc(note):""}${dim?"・可以直接選，建議先贏過前一卷":""}`}</small></h4><div class="cr-lvs">${h}</div></div>`}).join("")}${crOpp()==="zhanggui"?`<div class="cr-sec"><h4><span>${esc(OPT_ZG.name)}</span><small>${esc(ZG_X.desc)}</small></h4><div class="cr-lvs"><button type="button" data-zx="1" class="${zgXOn("zhanggui")?"on":""}"><b>${esc(ZG_X.short)}</b>${esc(ZG_X.name)}</button></div></div>`:""}</div>`;   /* 開發者 11/12：笑面掌櫃多一格「掌櫃真功夫」 */
     b.querySelectorAll("[data-l]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("cpuLevel",+x.dataset.l);store.set("zgX",false);closeSheet();crPaint(P)});
     {const z=b.querySelector("[data-zx]");if(z)z.onclick=()=>{vibrate(5);store.set("zgX",true);closeSheet();crPaint(P)}}})}
 function crRankSheet(){const CR=(CR_ST&&CR_ST.cpuRate)||{},span=CR.hi!=null?CR.hi-CR.lo:0,pct=span?Math.round(100*(CR.pts-CR.lo)/span):100;

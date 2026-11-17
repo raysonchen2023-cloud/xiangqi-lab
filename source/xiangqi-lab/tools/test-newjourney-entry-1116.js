@@ -52,5 +52,6 @@ test("〔行為〕11/16 開發者「或是開頭畫面」：存檔面板最下�
 test("〔原始碼〕選格頁照舊：空格「用這格」、有存檔的「覆蓋這格」先問「清掉並開始」；新的旅程一律從開頭的序局來", () => {
   assert.ok(SRC.includes('<p class="xqt-h">新的旅程要存在哪一格？</p>') && SRC.includes('<button data-ns="${n}" class="warn">覆蓋這格</button>') && SRC.includes('<button data-ns="${n}" class="main">用這格</button>'));
   assert.ok(SRC.includes('[["清掉並開始",()=>titlePaint("pick",{mode:"new",slot:n,c:opt.c})],["取消",null,true]]'));
-  assert.ok(SRC.includes('if(opt.mode==="new"&&!opt.c&&typeof bhxNewJourney==="function"){bhxNewJourney(opt.slot||1);return}'));
+  /* 11/17 晚開發者「統一用齊轍開始，不要任何選角畫面」：帶預選同伴（opt.c）也一樣走開場，先記開場後要接新手練習（07stq stqXuArm） */
+  assert.ok(SRC.includes('if(opt.mode==="new"&&typeof bhxNewJourney==="function"){try{if(typeof stqXuArm==="function")stqXuArm()}catch(e){}bhxNewJourney(opt.slot||1);return}'));
 });

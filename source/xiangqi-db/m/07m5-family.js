@@ -101,7 +101,7 @@ function fmCss(){if(document.getElementById("fmCss"))return;const s=document.cre
 .fm-rib{position:fixed;left:12px;right:12px;top:calc(var(--xqT,56px) + 8px);z-index:900;display:flex;align-items:center;gap:8px;padding:8px 10px 8px 14px;border-radius:14px;background:color-mix(in srgb,var(--card) 92%,transparent);color:var(--ink);border:1.5px solid color-mix(in srgb,var(--accent) 45%,var(--line));box-shadow:0 4px 14px rgba(0,0,0,.18);font-size:14.5px}
 .fm-rib b{flex:1;min-width:0}.fm-rib button{flex:none;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:6px 10px;font-size:13px;cursor:pointer}
 .fm-rib.fm-pulse{animation:fmPulse .9s ease-out 1}
-.fm-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14.5px}.fm-row:last-of-type{border-bottom:0}.fm-row b{text-align:right}
+.fm-row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14.5px}.fm-row:last-of-type{border-bottom:0}.fm-row b{text-align:right}/* 11/17 iMac V P3-7：右邊說明太長時左邊「護眼提醒」被折成兩行 → 中文標籤不折、讓右邊的說明換行（英文標籤長，照舊可以換行） */.fm-row>span{flex:0 0 auto;white-space:nowrap}.fm-row>b{flex:1 1 auto;min-width:0}html[lang=en] .fm-row>span{flex:0 1 auto;white-space:normal}
 .fm-ed{text-align:left;padding:4px 16px 0}.fm-ed .sec-t{margin:12px 0 6px}.fm-ed .opt{flex-wrap:wrap}
 .fm-kidl{margin:6px 0 0;padding-left:1.3em;font-size:13px;line-height:1.7;text-align:left}.fm-kidl li{margin-bottom:2px}
 .fm-sw{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line);font-size:14.5px}
@@ -139,7 +139,7 @@ function fmSafe(){const now=Date.now(),pg=fmP()[0]||"";if(pg==="pvp")return fals
   if(document.body.classList.contains("xqt-on")||document.getElementById("preov"))return false;
   if(FM_E.done&&now-FM_E.done>=2500)return true;
   if(document.querySelector(".modal,#sheet,.sm-dw.open"))return false;
-  if(FM_E.pc&&now-FM_E.pc<5000)return true;
+  if(FM_E.pc&&now-FM_E.pc<5000&&!fmBusy())return true;   /* 11/17 iMac K P3-9：剛換頁 5 秒內原本一律算安全時機，換進對局頁時提醒會蓋在剛開的棋盤上 → 換進的是對局頁就照「下完這盤」等 */
   return!fmBusy()}
 function fmTick(){if(!FM_ON)return;const now=Date.now();if(document.hidden){FM_E.last=now;return}
   const dt=Math.max(0,Math.min(now-FM_E.last,15e3));FM_E.last=now;if(now-FM_E.act<FM_IDLE){FM_E.acc+=dt;fmSesAdd(dt,now)}fmSaveE();
@@ -153,19 +153,20 @@ function fmWarn(){const L=fmLeft();if(L==null||L>FM_WARN||L<=0)return;const k=lo
   const t=`再 ${Math.max(1,Math.ceil(L))} 分鐘今天的時間就到囉，把這盤下完就休息吧！`;toast("⏳ "+t);fmSay(t)}
 
 /* ---------- 護眼小卡 ---------- */
-function fmEye(){const m=Math.round(FM_E.acc/6e4),nm=fmNm(),say="看看遠方的山，休息一下眼睛吧！";fmSay(say);
+function fmEye(){const m=Math.round(FM_E.acc/6e4),nm=fmNm(),say="看看遠方的山，休息一下眼睛吧！",sn=!!store.get("fmEyeSn",false);store.set("fmEyeSn",false);fmSay(say);
+  /* 11/17 iMac I P3-7：上次按「等一下再說」或「提早結束」，這次是 15 分鐘後的再提醒——原本照累積時間寫「你已經專心玩了 15 分鐘」（提早結束會把累積歸零），跟設定的「每 30 分鐘」對不起來 → 照實寫「又過了 15 分鐘」 */
   const C=2*Math.PI*48,ov=fmOverlay(`<div class="fm-card fm-eye">${fmHills(fmNight())}
-    <div class="fm-say"><span class="fm-pc">${esc(fmPc())}</span><div><b>${esc(nm)}</b><p id="fmEyeT">你已經專心玩了 ${m} 分鐘囉。<br>${say}</p></div></div>
+    <div class="fm-say"><span class="fm-pc">${esc(fmPc())}</span><div><b>${esc(nm)}</b><p id="fmEyeT">${sn?`又過了 ${FM_EYE_SNOOZE} 分鐘囉。`:`你已經專心玩了 ${m} 分鐘囉。`}<br>${say}</p></div></div>
     <div class="fm-ring" id="fmRing" hidden><svg viewBox="0 0 112 112"><circle cx="56" cy="56" r="48" fill="none" stroke="var(--line)" stroke-width="8"/><circle class="fm-rg" cx="56" cy="56" r="48" fill="none" stroke-width="8" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="0"/></svg><b id="fmEyeN">${FM_EYE_SEC}</b></div>
     <div class="fm-btns" id="fmEyeB"><button class="btn" id="fmRest">好，我休息一下</button><button class="btn ghost" id="fmSkip">等一下再說</button></div></div>`);
   const T=ov.querySelector("#fmEyeT"),B=ov.querySelector("#fmEyeB");let tm=0;
-  ov.querySelector("#fmSkip").onclick=()=>{vibrate(5);FM_E.due=FM_E.acc+FM_EYE_SNOOZE*6e4;fmSaveE();fmClose();toast(`好，${FM_EYE_SNOOZE} 分鐘後再提醒你`)};
+  ov.querySelector("#fmSkip").onclick=()=>{vibrate(5);FM_E.due=FM_E.acc+FM_EYE_SNOOZE*6e4;fmSaveE();store.set("fmEyeSn",true);fmClose();toast(`好，${FM_EYE_SNOOZE} 分鐘後再提醒你`)};
   ov.querySelector("#fmRest").onclick=()=>{vibrate(8);FM_E.acc=0;FM_E.due=FM_EYE_MIN*6e4;fmSaveE();const R=ov.querySelector("#fmRing"),N=ov.querySelector("#fmEyeN"),G=ov.querySelector(".fm-rg");R.hidden=false;
     T.innerHTML="把眼睛看向窗外最遠的地方，<br>找一找有沒有山、樹或雲……";B.innerHTML='<button class="btn ghost" id="fmEarly">提早結束</button>';let n=FM_EYE_SEC;
     const step=()=>{if(!ov.isConnected){clearInterval(tm);return}n--;N.textContent=String(Math.max(0,n));G.style.strokeDashoffset=(C*(FM_EYE_SEC-n)/FM_EYE_SEC).toFixed(1);
       if(n===10)T.innerHTML="眨眨眼睛，慢慢地深呼吸……";
       if(n<=0){clearInterval(tm);vibrate([20,40,20]);T.innerHTML="眼睛休息好了 ✨<br>謝謝你照顧自己的眼睛！";B.innerHTML='<button class="btn" id="fmBack">繼續玩</button>';B.querySelector("#fmBack").onclick=()=>fmClose();fmSay("眼睛休息好了，繼續加油！")}};
-    tm=setInterval(step,1000);B.querySelector("#fmEarly").onclick=()=>{clearInterval(tm);FM_E.due=FM_E.acc+FM_EYE_SNOOZE*6e4;fmSaveE();fmClose()}}}
+    tm=setInterval(step,1000);B.querySelector("#fmEarly").onclick=()=>{clearInterval(tm);FM_E.due=FM_E.acc+FM_EYE_SNOOZE*6e4;fmSaveE();store.set("fmEyeSn",true);fmClose()}}}
 
 /* ---------- 防沉迷：每次遊玩提醒（兒童模式 kid／一般玩家 gen）＋兒童模式晚上提示（只在 fmSafe 的時機跳，不打斷棋局） ---------- */
 function fmSesCard(k){const s=fmSesGet(),m=Math.max(1,Math.round(s.acc/6e4)),kid=k==="kid",nm=fmNm(),say=kid?"休息一下吧！站起來走一走、喝口水。":"已經玩很久囉，起來動一動吧！";fmSay(say);
@@ -263,12 +264,12 @@ function fmKidEdit(card){const c=fmCfg(),N={kid:c.kid?1:0,ses:c.ses,lim:c.lim,ni
   const ov=fmOverlay(`<div class="fm-card fm-pad"><div style="font-size:40px">👧</div><h2>兒童模式</h2><div class="fm-ed">
     ${opt("kid",[[1,"開"],[0,"關"]])}
     <ul class="fm-kidl"><li>🔒 資料零收集：匿名資料、玩家登記都不送，手機裡排隊中的也丟掉</li><li>🙅 不跟陌生人互動：線上大廳、千秋盃、觀戰關閉；同桌對弈照常</li><li>🌐 不開外站：問小帥只用 App 裡的內容，不顯示 Google、Gemini、維基百科</li><li>✉ 意見回饋只送文字，不附截圖、聯絡方式</li></ul>
-    <div class="sec-t">⏰ 每次玩多久提醒休息</div>${opt("ses",FM_KID_SES.map(v=>[v,v+" 分"]))}
+    <div class="sec-t">⏰ 每次玩多久提醒休息</div>${opt("ses",FM_KID_SES.map(v=>[v,v+" 分鐘"]))}
     <p class="muted" style="font-size:12.5px;margin:4px 0 0">時間到了會等這盤下完，才溫和提醒「休息一下吧」，不會打斷棋局。</p>
-    <div class="sec-t">⏱ 每天最多玩（可不設）</div>${opt("lim",FM_LIM_OPT.map(v=>[v,v?v+" 分":"不限制"]))}
+    <div class="sec-t">⏱ 每天最多玩（可不設）</div>${opt("lim",FM_LIM_OPT.map(v=>[v,v?v+" 分鐘":"不限制"]))}
     <p class="muted" style="font-size:12.5px;margin:4px 0 0">到了以後只能看週報和設定，不能開新局；明天自動重新算。</p>
     <div class="sec-t">🌙 晚上幾點提醒早點睡</div>${opt("night",FM_NT_OPT.map(v=>[v,v||"不提醒"]))}</div>
-    <div class="fm-btns"><button class="btn" id="fmSave">存好</button><button class="btn ghost" id="fmNo">取消</button></div></div>`,true);
+    <div class="fm-btns"><button class="btn" id="fmSave">儲存</button><button class="btn ghost" id="fmNo">取消</button></div></div>`,true);
   ov.querySelectorAll(".opt[data-k]").forEach(g=>g.querySelectorAll("button").forEach(b=>b.onclick=()=>{vibrate(5);const k=g.dataset.k;N[k]=k==="night"?b.dataset.v:+b.dataset.v;g.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b))}));
   ov.querySelector("#fmNo").onclick=()=>fmClose(true);
   ov.querySelector("#fmSave").onclick=()=>{const was=c.kid,on=!!N.kid;store.set("fmCfg",Object.assign({},store.get("fmCfg",null)||{},{kid:on,ses:N.ses,lim:N.lim,night:N.night}));
@@ -278,13 +279,13 @@ function fmKidEdit(card){const c=fmCfg(),N={kid:c.kid?1:0,ses:c.ses,lim:c.lim,ni
 function fmKidSync(){try{const on=fmKid();if(on)fmCss();document.body.classList.toggle("fm-kid",on)}catch(e){}}
 function fmEdit(card){const c=fmCfg();const ov=fmOverlay(`<div class="fm-card fm-pad"><h2>👪 家長與護眼</h2><div class="fm-ed">
     <div class="sec-t">👁 護眼提醒</div><div class="opt" data-k="eye">${[[1,"開"],[0,"關"]].map(([v,l])=>`<button data-v="${v}"${(c.eye?1:0)===v?' class="on"':""}>${l}</button>`).join("")}</div>
-    <p class="muted" style="font-size:12.5px;margin:4px 0 0">每玩 ${FM_EYE_MIN} 分鐘，${esc(fmNm())}會在下完一盤或換頁時，提醒看遠方 ${FM_EYE_SEC} 秒。</p>
-    <div class="sec-t">⏱ 每天最多玩</div><div class="opt" data-k="lim">${FM_LIM_OPT.map(v=>`<button data-v="${v}"${c.lim===v?' class="on"':""}>${v?v+" 分":"不限制"}</button>`).join("")}</div>
+    <p class="muted" style="font-size:12.5px;margin:4px 0 0">每玩 ${FM_EYE_MIN} 分鐘，${esc(fmNm())}會在下完一盤或換頁時，提醒看遠方 ${FM_EYE_SEC} 秒。<span>選「等一下再說」或「提早結束」，會在 ${FM_EYE_SNOOZE} 分鐘後再提醒。</span></p>
+    <div class="sec-t">⏱ 每天最多玩</div><div class="opt" data-k="lim">${FM_LIM_OPT.map(v=>`<button data-v="${v}"${c.lim===v?' class="on"':""}>${v?v+" 分鐘":"不限制"}</button>`   /* 11/17 iMac I P2：「N 分」英文被通用規則當成分數（pts），家長設定是時間，寫「分鐘」→ min */).join("")}</div>
     <div class="sec-t">🌙 幾點以後不能玩</div><div class="opt" data-k="late">${FM_LATE_OPT.map(v=>`<button data-v="${v}"${c.late===v?' class="on"':""}>${v||"不限制"}</button>`).join("")}</div>
     <p class="muted" style="font-size:12.5px;margin:4px 0 0">設了時間，從那時候到早上 ${FM_WAKE} 點都不能玩。</p>
     <div class="sec-t">🌐 線上大廳</div><div class="opt" data-k="net">${[[1,"開"],[0,"關"]].map(([v,l])=>`<button data-v="${v}"${(c.net?1:0)===v?' class="on"':""}>${l}</button>`).join("")}</div>
     <p class="muted" style="font-size:12.5px;margin:4px 0 0">關掉以後，孩子不會出現在線上大廳，也不能跟陌生人下棋、收邀請；挑戰電腦、故事、殘局、棋譜照常可以玩。${c.kid?"<b>兒童模式開著時，線上大廳一律關閉。</b>":""}</p></div>
-    <div class="fm-btns"><button class="btn" id="fmSave">存好</button><button class="btn ghost" id="fmNo">取消</button></div></div>`,true);
+    <div class="fm-btns"><button class="btn" id="fmSave">儲存</button><button class="btn ghost" id="fmNo">取消</button></div></div>`,true);
   const N={eye:c.eye?1:0,lim:c.lim,late:c.late,net:c.net?1:0};
   ov.querySelectorAll(".opt[data-k]").forEach(g=>g.querySelectorAll("button").forEach(b=>b.onclick=()=>{vibrate(5);const k=g.dataset.k;N[k]=k==="late"?b.dataset.v:+b.dataset.v;g.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b))}));
   ov.querySelector("#fmNo").onclick=()=>fmClose(true);

@@ -23,6 +23,32 @@ const I18N_NUM={"一":1,"二":2,"三":3,"四":4,"五":5,"六":6,"七":7,"八":8,
 const I18N_MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 /* 字典：鍵＝畫面上的繁中（不含前後圖示、全形驚嘆號問號等，那些 i18nText 會自己處理）；值＝英文 */
 const I18N_EN={
+  /* 11/17 iMac H P3-10、J P1-1：灰色悔棋的說明（跟 I18N_KEY 的 undo.cpuNo 同一句）、開發者才看得到的講解說明、一般玩家連不到電腦時的訊息 */
+  "挑戰電腦不能悔棋（要比真實力）；擂台、石桌往事的對局可以悔棋":"No undo against the computer (it's a true test of strength); arena and Stone Table Tales games allow undo",
+  "還沒有可以悔的棋：走過一步以後才能悔棋":"Nothing to undo yet: you can undo after you've made a move",
+  /* 11/18 第 30 輪 R30-2：英文序局走對那一步的提示（07bh BHX_TXT.good）、小帥（src/bot3d.js）勝負和的泡泡、齊轍（新玩家一律是他，05b XQ_MELINE）的開局、吃子、勝負和台詞 */
+  "俥有路了，直取星心":"The chariot's road is open — straight for the star's heart","齊轍：俥有路了，直取星心":"Qi Zhe: The chariot's road is open — straight for the star's heart",
+  "我們贏了":"We won","太厲害了":"Amazing","勝利！耶～":"Victory! Yay~","你是冠軍":"You're the champion","贏啦贏啦":"We won, we won",
+  "嗚嗚…輸了":"Boo-hoo… we lost","好可惜…":"So close…","沒關係，再來一盤":"It's okay, let's play another","下次一定贏":"We'll win next time","我陪你複盤吧":"Let's review the game together",
+  "和棋～勢均力敵":"A draw~ evenly matched","握手言和":"Let's shake hands on a draw","平分秋色":"Honors even",
+  "看準了，就一直走":"Eyes on the target — straight ahead","這盤，我走直路。":"This game, I'm taking the straight road.","直直衝過去，拿下":"Charge straight through — got it","這條路是我的":"This road is mine",
+  "看準了，一直走——贏了":"Eyes on the target, straight ahead — we won","直路也能走到底":"The straight road goes all the way","……我是不是又衝太快了？":"…Did I charge in too fast again?","下次我先看清楚路。":"Next time I'll look at the road first.","誰也過不去，那就改天再走。":"Nobody can get through — we'll try again another day.",   /* 11/17 B 第 29 輪 N29-1：錯棋重練還沒走棋時點灰色悔棋（跟 I18N_KEY undo.noMove 同一句） */
+  "講解會用到你的 Claude 或 ChatGPT 額度，分析和評等不會。":"Explanations use your Claude or ChatGPT quota; analysis and rating don't.",
+  "這個功能目前不能用":"This feature isn't available right now",
+  /* 11/17 iMac I P3：裝置代號（隱私說明裡）、換手機產生轉移碼前的確認（07x4；英文介面直接用英文那份，這裡讓中文片段也翻得出）、大師小傳的來源網站名 */
+  "裝置代號":"Device ID","App 自己產生的隨機代號（不是手機序號）；寫信申請刪除資料時附上。":"A random code made by the app (not a phone serial number). Include it when you email to ask for deletion.","裝置代號已複製":"Device ID copied",
+  "產生轉移碼？":"Create a transfer code?","產生轉移碼":"Create code","會把這支手機的整份存檔和棋譜庫，用一組 10 碼的轉移碼加密，暫放在線上大廳的伺服器":"Your whole save and game library will be encrypted with a 10-character transfer code and held on the online lobby server for",
+  "。請在 30 分鐘內到新手機輸入；新手機收下、或你按「作廢這組碼」，伺服器上那一份就刪掉。":". Enter the code on the new phone within 30 minutes; the copy on the server is deleted as soon as the new phone receives it, or when you cancel the code.","這支手機上的存檔照樣留著。":"The save on this phone stays here.",
+  "維基百科":"Wikipedia","廣東象棋網":"gdchess.com","互動百科":"Baike.com","百度百科":"Baidu Baike","360百科":"360 Baike","新華網":"Xinhua","澎湃新聞":"The Paper","搜狐":"Sohu","新浪":"Sina","金羊網":"Ycwb","新民網":"Xinmin","鳳凰網":"ifeng","界面新聞":"Jiemian","知乎":"Zhihu","中國新聞網":"China News","國家體育總局":"General Administration of Sport of China","虎嗅":"Huxiu",
+  /* 11/17 iMac I P1-2：隱私摘要（07x4 xqPrivRows）英文介面直接用英文那份；這裡只是讓中文片段也翻得出（混用時不會露中文） */
+  "開著":"On","關著":"Off","（App 版預設關）":"(Off by default in the app.)","（App 版這三個預設都關）":"(All three are off by default in the app.)","（預設關）。":"(off by default).",
+  "——每 7 天（或名字、段位改變時）送大廳名字、裝置代號、段位、App 版本、裝置種類給開發者，用來查問題。":" — every 7 days (or when your name or rank changes) your lobby name, device ID, rank, app version and device type go to the developer for troubleshooting.",
+  "兒童模式或家長關閉線上大廳：以上全部不送，修正清單和停權名單也不下載。":"Kids Mode or the parental lobby switch is on: none of the above is sent, and the fix list and ban list aren't downloaded.",
+  "意見回饋、檢舉只在你按送出時送。送過意見回饋的話，開 App 時下載一次修正清單；停權名單只在進大廳時下載。":"Feedback and reports are sent only when you tap Send. If you've sent feedback, the fix list is downloaded once when the app opens; the ban list only when you enter the lobby.",
+  "不送棋譜、存檔和聊天內容；不查你在哪裡，城市要不要在大廳顯示由你自己選。":"Game records, saves and chat are never sent. The app doesn't look up where you are; you choose whether the lobby shows your city.",
+  /* 11/17 G P3-1：設定隱私卡片「什麼時候連網下載」（07x4 xqNetWhenInject，原生版／網頁版） */
+  "如果你送過意見回饋，App 開啟時會從 Cloudflare 下載一次修正清單和開發者回覆，讓你收到飛鴿傳書；沒送過就只在打開意見回饋時下載。進入線上大廳時，會從 GitHub Pages 下載一次停權名單。這兩個網站跟任何連線一樣會看到你的 IP 位址，但不會收到你的名字、存檔或棋譜。兒童模式開著，或家長關閉線上大廳時，兩份都不下載。":"If you have sent feedback, the app downloads the fix list and developer replies from Cloudflare once when it opens, so carrier-pigeon letters can reach you; if you haven't, they are downloaded only when you open Feedback. When you enter the online lobby, the app downloads the ban list from GitHub Pages once. Like any connection, these sites see your IP address, but they receive no name, save or game record. With Kids Mode on, or the online lobby turned off by a parent, neither is downloaded.",
+  "如果你送過意見回饋，開網頁時會下載一次修正清單和開發者回覆（跟這個網站的其他檔案一樣放在 GitHub Pages 和 Cloudflare），讓你收到飛鴿傳書；沒送過就只在打開意見回饋時下載。進入線上大廳時，會下載一次停權名單。這兩個網站跟任何連線一樣會看到你的 IP 位址，但不會收到你的名字、存檔或棋譜。兒童模式開著，或家長關閉線上大廳時，兩份都不下載。":"If you have sent feedback, the site downloads the fix list and developer replies once when it opens (from GitHub Pages and Cloudflare, like the site's other files), so carrier-pigeon letters can reach you; if you haven't, they are downloaded only when you open Feedback. When you enter the online lobby, the ban list is downloaded once. Like any connection, these sites see your IP address, but they receive no name, save or game record. With Kids Mode on, or the online lobby turned off by a parent, neither is downloaded.",
 "正在播放":"Now playing",
 "編鐘":"Bronze bells",
 "排簫":"Panpipes",
@@ -95,7 +121,19 @@ const I18N_EN={
   "這個名字會顯示在線上大廳和對戰裡。":"This name appears in the online lobby and games.",
   "難度只管星槎裡的電腦對手和千秋殘局的題目。隨時可以換；已經停靠的站、學會的棋理都不會收回。":"Difficulty affects raft computer opponents and journey puzzles. Change it anytime; visited stops and learned lessons stay unlocked.",
   "新手～入門1・練子力、一步殺、不漏子":"Beginner to Novice 1 · Pieces, mate in one and avoiding losses",
-  "入局":"First Steps",
+  "入局":"Enter the game",   /* 11/17 測試員 D Z5：原本 First Steps 像「新手入門」，「入局」是開始下這一局 */
+  /* 11/17 測試員 D Y3：開頭畫面一開機就畫，外掛字典還沒到；「▶ 繼續（開場進行中）」那一版的小連結留中文 → 開頭畫面的字放進內建字典（第一個畫面就翻得出） */
+  "象棋千秋 開頭畫面":"Xiangqi Qianqiu title screen","📂 讀入存檔檔案":"📂 Import Save File","📱 從舊手機搬資料":"📱 Move Data from Old Phone","新的旅程要存在哪一格？":"Which slot should the new journey be saved in?","覆蓋這格":"Overwrite this slot","用這格":"Use this slot","清掉並開始":"Clear and start",
+  /* 11/17 測試員 D Y4：3D 巨盤的控制鈕讀螢幕名稱（park3d.js 寫的中文 aria-label；src 不動，交給翻譯器的屬性翻譯）、太虛星尊的台詞泡泡（bossfx3d.js） */
+  "搖桿：移動要去的格子":"Joystick: move to the target square","望遠鏡：放大遠方":"Spyglass: zoom into the distance","關掉望遠鏡":"Close the spyglass","翻到棋盤背面":"Flip to the underside of the board","轉到棋盤背面":"Turn to the underside of the board","轉回棋盤正面":"Turn back to the top of the board",
+  "調整棋距":"Adjust board spacing","棋盤格距":"Board spacing","星隕！":"Meteor fall!","畫地為牢。":"Bound where you stand.","退下！":"Stand back!",
+  /* 11/17 測試員 D Y13：羈絆冊（園子棋友）上面的說明 */
+  "石桌往事的園子裡，女棋手偶爾會請你看一盤棋；幫她解開，羈絆就多一級。她們大多在自己家鄉的朝代出現。":"In the Stone Table Tales gardens, women players sometimes ask you to look at a game; help her solve it and your bond grows a level. Most of them appear in their home dynasty.",
+  "她們都是這個遊戲編出來的棋友；身分小卡寫的是她那個朝代的文化背景，不是她本人的史料。「稀有」「傳說」只表示多難遇到。":"They are fictional chess friends made for this game; each profile card describes the culture of her dynasty, not historical records of her. \"Rare\" and \"Legendary\" only mean how hard she is to meet.",
+  "頭像外框的顏色，代表她有多難遇到：":"The colour of the portrait frame shows how hard she is to meet:",
+  /* 11/17 測試員 D Y1：序幕卡上七位的第一句台詞（05b prologue 英文介面查這裡） */
+  "看準了，就一直走！":"Eyes on the target — straight ahead!","慢慢來，先把家顧好。":"Take it slow — guard home first.","隔一個，剛剛好！":"One in between — just right!","前面堵住了？那我拐個彎！":"Blocked ahead? Then I'll turn the corner!",
+  "我就在這裡，哪也不去。":"I'm staying right here. I'm not going anywhere.","有我在，誰也別想碰他。":"While I'm here, no one touches him.","往前走，絕不退！":"Forward, never back!",
   "破陣":"Breakthrough",
   "國手":"Master",
   "千秋":"Qianqiu",
@@ -379,7 +417,7 @@ const I18N_EN={
   "初學乍練":"Novice tier","略有小成":"Developing tier","登堂入室":"Advanced tier","宗師之境":"Master tier","高手也難勝":"Hard even for experts",
   "晉級賽":"Ranked","練功房":"Practice room","盲棋":"Blindfold","十八級難度任你挑，放心試新招。":"Pick any of 18 levels and try new ideas freely.",
   "開始晉級賽":"Start ranked game","開始練習":"Start practice","開始盲棋":"Start blindfold game","執黑後走":"Black, moves second","執紅先走":"Red, moves first","已通關":"cleared",
-  "不算段位、可偷看 3 次":"Unrated, 3 peeks allowed","不扣段位分":"No rank points lost","模式差在哪":"How do the modes differ","前一卷還沒通關":"previous scroll not cleared yet",
+  "不算段位、可偷看 3 次":"Unrated, 3 peeks allowed","不扣段位分":"No rank points lost","模式差在哪":"How do the modes differ","前一卷還沒通關":"previous scroll not cleared yet","尚未相遇":"Not met yet","尚未開啟":"Not opened yet","「回到當年」要從石桌往事進來：在星槎的書架打開一回，讀完點「🕰 回到當年」，就會帶你到那一盤當年的棋。":"\"Back to that year\" starts from Stone Table Tales: open a chapter on the Starship bookshelf, finish reading, then tap \"🕰 Back to that year\" to play that historic game.","📚 去書架":"📚 To the bookshelf","可以直接選，建議先贏過前一卷":"open to play; beating the previous scroll first is suggested",
   "我的晉級賽段位":"My ranked level","開不了局":"Can't start a game","晉級賽下到一半開新局會算輸。":"Starting a new game in the middle of a ranked game counts as a loss.",
   "可以接著下，或放棄那盤開新局。":"You can continue it, or abandon it and start a new game.","繼續上一盤":"Continue last game","開新局（上一盤算輸）":"New game (last one counts as a loss)",
   "開新局":"New game","點卷軸換難度":"Tap a scroll to change the level","點名牌換對手":"Tap the name plate to change opponent","段位":"Rank","選難度":"Choose level","執紅":"Play Red","執黑":"Play Black",
@@ -586,7 +624,7 @@ const I18N_EN={
   "題庫要先下載才能玩（連上網路再打開一次）。":"The puzzles must be downloaded first (connect to the internet and open this again).","現在解":"Solve now","卡住了嗎？我把第一步要動的那顆子框起來了，想想它能走到哪裡！":"Stuck? I've framed the piece that moves first. Think about where it can go!",
   "珍品藏局":"Treasure puzzles","古法殘局":"Classical endgames","找不到這件珍品的藏局（資料可能更新了）。":"Can't find this treasure's puzzle (the data may have been updated).","還沒找到這件珍品，撿到了才能解它藏著的殘局。":"You haven't found this treasure yet; pick it up to unlock its hidden endgame.",
   "回去":"Go back","回珍品冊":"Back to the treasure album","回今日茶單":"Back to today's menu","找不到這一題（題庫可能更新了）。":"Can't find this puzzle (the puzzle set may have been updated).","免費":"free","已全部提示":"All hints given",
-  "看答案":"Show answer","跳過一壺":"Skip the pot","這一步已經全部提示了":"All hints for this move have been given","提示棋還不能用":"Hint tokens can't be used yet","藍框這顆子就是關鍵（再一顆提示棋會指出落點）":"The piece in the blue frame is the key (another hint token shows the destination)",
+  "看答案":"Show answer","🔒 隱私・家長":"🔒 Privacy","隱私・家長":"Privacy","看示範":"See demo","👀 看示範":"👀 See demo","跳過一壺":"Skip the pot","這一步已經全部提示了":"All hints for this move have been given","提示棋還不能用":"Hint tokens can't be used yet","藍框這顆子就是關鍵（再一顆提示棋會指出落點）":"The piece in the blue frame is the key (another hint token shows the destination)",
   "藍框：要動的子和要去的位置":"Blue frame: the piece to move and where it goes","藍框這顆子就是這一步要動的":"The piece in the blue frame is the one to move","守住了！按「下一步」看後續":"Held! Tap \"Next\" to see what follows","對了！按「下一步」看後續":"Correct! Tap \"Next\" to see what follows",
   "守住了":"Held","對了":"Correct","困斃！對方一步都動不了":"Stalemate! The opponent can't move at all","好棋":"Good move","這步也能贏":"This move also wins","就是古譜原來那一手":"exactly the move from the old manual","對方的反駁":"Opponent's refutation",
   "直接看局面":"look at the position directly","退回重想":"Go back and rethink","收回了，這一步不算走錯":"Taken back; this move doesn't count as a mistake","自動播完":"Autoplay to end","看答案這題就沒有修為和心得，珍品也不會打上「已解」，確定？":"Viewing the answer means no XP or insight for this puzzle, and the treasure won't be marked \"Solved\". Continue?",
@@ -628,7 +666,7 @@ const I18N_EN={
   "只跟最好的走法比，不是整盤誰好":"compared only with the best move, not who's better overall","按 ▶ 看你走完以後的局面；想換一步試試，按「↻ 從這步重下」。":"Tap ▶ to see the position after your move; to try another move, tap \"↻ Replay from this move\".",
   "精彩的一盤":"A great game","開局局面":"Starting position","左右滑棋盤可換步":"swipe the board to change moves","回顧中":"Reviewing","繼續推演":"Keep playing out","回到棋譜":"Back to the game record","下一步變著":"Next move variation",
   "Pikafish 怎麼預判、在哪裡埋伏":"How Pikafish predicts and where it sets traps","點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":"Tap pieces to move freely; tap 🔍 for Pikafish analysis.","Pikafish 分析":"Pikafish analysis","之前存的分析，不用重算":"saved analysis, no need to recompute",
-  "Pikafish 思考中":"Pikafish thinking","重新分析":"Analyze again","評等這條著法":"Rate this line","請 Claude 講解":"Ask Claude to explain","請 GPT 講解":"Ask GPT to explain","分數是紅方視角，1.0 約等於一個兵。講解會用到你的 Claude 或 ChatGPT 額度，分析和評等不會。":"Scores are from Red's point of view; 1.0 is about one pawn. Explanations use your Claude or ChatGPT quota; analysis and rating don't.",
+  "Pikafish 思考中":"Pikafish thinking","重新分析":"Analyze again","評等這條著法":"Rate this line","請 Claude 講解":"Ask Claude to explain","請 GPT 講解":"Ask GPT to explain","分數是紅方視角，1.0 約等於一個兵。講解會用到你的 Claude 或 ChatGPT 額度，分析和評等不會。":"Scores are from Red's point of view; 1.0 is about one pawn. Explanations use your Claude or ChatGPT quota; analysis and rating don't.","分數是紅方視角，1.0 約等於一個兵。":"Scores are from Red's point of view; 1.0 is about one pawn.","這裡還沒有大師對局":"No master games here yet","這個頁面目前不開放":"This page isn't available","其他棋譜都在「📚 棋譜」裡。":"Other game records are in \"📚 Library\".",
   "講解中":"Explaining","大約半分鐘到幾分鐘":"about half a minute to a few minutes","開始評等，每步約 0.6 秒":"Rating started, about 0.6 s per move","評等完成":"Rating complete","賽後報告還在評等，好了會通知你":"The post-game report is still being rated; you'll be notified when it's ready",
   "評等中":"Rating","取消評等":"Cancel rating","Pikafish 在背景評等，可以先看棋，評好會通知你":"Pikafish is rating in the background; you can look at the game meanwhile and will be notified when it's done","評好了":"Rated","看報告":"View report",
   "賽後報告":"Post-game report","這份報告讀的是之前存在手機裡的評等，不用重算。":"This report uses ratings already saved on the phone; no recomputing needed.","賽後心得":"Post-game notes","從這一步和電腦下":"Play the computer from this move","複製 FEN":"Copy FEN",
@@ -751,6 +789,10 @@ const I18N_EN={
   "打開遠征令":"Open Expedition Orders","出發":"Set off","這一章即將開放":"This chapter is coming soon","即將開放":"Coming soon","試玩":"Preview","再看一次":"Watch again","前往":"Go",
   "配樂收藏":"Music collection","先看完上一章":"Finish the previous chapter first",
   /* 11/15 遠征令面板拿掉：配樂收藏、再看第一章搬到設定 → 聲音（07mnq mnqSndRow、mnqMusic、mnqNotes） */
+  "重看開場":"Rewatch the opening","天河初裂":"The Sky River Splits",   /* 11/17 晚：更多玩法、設定 → 聲音 → 氛圍的「🎬 重看開場」（07stq stqXuReplay） */
+  "再開一段旅程":"Start a new journey","踏上旅程":"Set out","不練了，踏上旅程":"Skip practice and set out",
+  "回開頭畫面":"Back to title screen","開場進行中，接著剛才那一段":"Opening in progress — pick up where you left off","練習進度會留著，之後從「▶ 繼續」接著練":"Your practice progress is kept — resume from \"▶ Continue\"",   /* 11/17 晚 iMac I P3：開新旅程途中的「回開頭畫面」、開頭畫面「▶ 繼續」這一趟（07stq stqXu*、05b、08b） */
+  "每段旅程都由齊轍出發，其他六位在星槎旅程中陸續加入。想從頭再走一次，請回開頭畫面開始「新的旅程」——可以存到另一格，不會蓋掉這段。":"Every journey begins with Qi Zhe; the other six join along the Star Raft's route. To start over, go back to the title screen and begin a \"New journey\" — you can save it to another slot without overwriting this one.",   /* 11/17 晚開發者「統一齊轍」：破關卡（07q）、旅程鎖定（05b journeyLock）、一步殺頁（05b fwPaint）不再暗示可以選主角 */
   "再看第一章":"Rewatch Chapter 1","看第一章":"Watch Chapter 1","星槎停到新朝代，就會收進那一朝的配樂。":"When the Star Raft reaches a new dynasty, that dynasty's music is added here.",
   "角色成長":"Character growth",
   "收下七星授印禮，星槎啟航":"Received the Seven Stars Seal Ceremony; the Star Raft sets sail",
@@ -899,7 +941,7 @@ const I18N_KEY={
   "tab.home":"Home","tab.online":"Online","tab.library":"Library","tab.settings":"Settings",
   "cpu.title":"Play the computer","game.items":"Items","game.undo":"Undo","game.new":"New","game.resign":"Resign","game.review":"Review","game.setup":"Setup","game.peek":"Peek","game.undoN":"Undo ({n})",
   "game.resignAsk":"Resign this game?","game.thinking":"🤔 Thinking…","game.check":"⚠ Check!","game.yourMove":"👉 Your move","game.stuck":"Computer taking too long?","game.stuckNew":"🔄 Start a new game",
-  "undo.note":"After an undo, this game no longer counts toward \"My strength\" (the result still counts).","dlg.ok":"OK","dlg.cancel":"Cancel",
+  "undo.note":"After an undo, this game no longer counts toward \"My strength\" (the result still counts).","undo.cpuNo":"No undo against the computer (it's a true test of strength); arena and Stone Table Tales games allow undo","undo.noMove":"Nothing to undo yet: you can undo after you've made a move","dlg.ok":"OK","dlg.cancel":"Cancel",
   "res.win":"You won!","res.draw":"Draw","res.lose":"You lost this one","res.review":"📊 Review","res.home":"🏠 Home","res.viewBoard":"View board","res.again":"Play again","res.nextLevel":"Next level ›",
   "res.keyMove":"🔎 Understand the key move of this game ›","res.rankedAgain":"Play another ranked game ›","res.quickNote":"This was a quick game; it doesn't count toward your rank.",
   "net.win.r":"Red ({n}) wins","net.win.b":"Black ({n}) wins",
@@ -927,6 +969,10 @@ const I18N_AGUARD=[];   /* 11/17 第 20 輪 D N4：剩下的四個（回星槎�
 const I18N_XSD_PC={帥:"General",將:"General",仕:"Advisor",士:"Advisor",相:"Elephant",象:"Elephant",俥:"Chariot",車:"Chariot",傌:"Horse",馬:"Horse",炮:"Cannon",包:"Cannon",兵:"Soldier",卒:"Soldier"};   /* 暗棋動態句的棋子名（字典裡的棋子名是 WXF 記譜字母，不適合整句） */
 const i18nXsdPc=(c,p)=>(c?(c==="紅"?"Red ":"Black "):"")+(I18N_XSD_PC[p]||p);
 const I18N_PAT=[
+  [/^再 (\d+) 分升「(.+?)」・(\d+) 勝 (\d+) 負 (\d+) 和$/,(m,T)=>{const r=T(m[2]);return r==null?null:m[1]+" pts to "+r+" · "+m[3]+"W "+m[4]+"L "+m[5]+"D"}],   /* 11/17 測試員 D Z5：晉級等級卡那一行整句翻（分段翻時段位名後面多一個引號） */
+  [/^(常遇到|少遇到|很難得遇到)・遇過 (\d+)／(\d+)$/,m=>({"常遇到":"Often met","少遇到":"Seldom met","很難得遇到":"Very rarely met"})[m[1]]+" · met "+m[2]+"/"+m[3]],   /* 11/17 測試員 D Y13：羈絆冊的稀有度說明 */
+  [/^\+(\d+) 修為（今日第一次練習 \+(\d+)）$/,m=>"+"+m[1]+" XP (first practice today +"+m[2]+")"],   /* 11/17 測試員 D Y5：練習完成的修為小籤 */
+  [/^準備 Pikafish 引擎 (\d+)%$/,m=>"Preparing the Pikafish engine "+m[1]+"%"],   /* 11/17 iMac H：原生版引擎是從本機讀（02-shell） */
   [/^(\d+) 天$/,m=>m[1]+" days"],
   [/^(\d+) 次$/,m=>m[1]+" times"],
   [/^(\d+) 毫秒$/,m=>m[1]+" ms"],
@@ -971,7 +1017,7 @@ const I18N_PAT=[
   [/^往後算\s*(\d+)\s*步，(.+)$/,(m,T)=>{const r=T(m[2]);return r==null?null:"Looks "+m[1]+" moves ahead, "+r}],
   [/^每步想\s*([\d.]+)\s*秒$/,m=>"thinks "+m[1]+" s per move"],
   [/^積分\s*([+\-−±]?\d+)\s*→\s*(\d+)\s*分$/,m=>"Rating "+m[1].replace("−","-")+" → "+m[2]+" pts"],
-  [/^再\s*(\d+)\s*分升\s*「?(.+?)」?$/,(m,T)=>{const r=T(m[2]);return r==null?null:m[1]+" pts to "+r}],
+  [/^再\s*(\d+)\s*分升\s*[「"“]?(.+?)[」"”]?$/,(m,T)=>{const r=T(m[2]);return r==null?null:m[1]+" pts to "+r}],   /* 11/17 測試員 D Z5：段位名外面的「」先被換成引號時，後面的引號沒吃掉（"…Beginner 1\""）→ 兩種引號都認 */
   [/^(升為|降為)\s*(.+)$/,(m,T)=>{const r=T(m[2]);return r==null?null:(m[1]==="升為"?"Promoted to ":"Dropped to ")+r}],
   [/^(\d+)\s*勝\s*(\d+)\s*負\s*(\d+)\s*和$/,m=>m[1]+"W "+m[2]+"L "+m[3]+"D"],
   [/^([紅黑])方(稍好|明顯好|大占上風)$/,m=>(m[1]==="紅"?"Red ":"Black ")+{"稍好":"slightly better","明顯好":"clearly better","大占上風":"much better"}[m[2]]],
@@ -1382,7 +1428,7 @@ function i18nHtmlLang(){const c=i18nCur();return c==="en"?"en":c==="cn"?"zh-Hans
    這個檔的 const 還沒初始化時（比這個檔先畫的頁面）也回中文，之後開機掃描照字典換。模組裡呼叫前先 typeof i18nT==="function" */
 function i18nT(k,z,v){try{if(i18nLang()==="en"&&Object.prototype.hasOwnProperty.call(I18N_KEY,k)){let s=I18N_KEY[k];if(v)s=s.replace(/\{(\w+)\}/g,(m,x)=>v[x]!=null?String(v[x]):m);return s}}catch(e){}return z}
 /* 手機系統語言是英文、又還沒選過語言：建議英文（只提示，不自動切） */
-function i18nSuggest(){try{if(localStorage.getItem("m_lang")!=null)return null;const L=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||""]);return/^en\b/i.test(String(L[0]||""))?"en":null}catch(e){return null}}
+function i18nSuggest(){try{if(localStorage.getItem("m_lang")!=null||localStorage.getItem("m_langAuto")!=null)return null;   /* 11/17：第一次打開已經照系統語言自動選過（m.html 開頭，m_langAuto），之後玩家改回中文就不再建議英文 */const L=(navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language||""]);return/^en\b/i.test(String(L[0]||""))?"en":null}catch(e){return null}}
 /* 設定頁「文字」那排按鈕、頂欄 🌐 都走這裡：k＝"tw" 繁體、"cn" 簡體、"en" English；換了就重新載入 */
 function i18nPick(k){const cur=i18nCur();if(k===cur)return;const re=()=>setTimeout(()=>{try{location.reload()}catch(e){}},300);
   if(k==="en"){store.set("lang","en");try{localStorage.setItem("xq_zhMode",JSON.stringify("tw"))}catch(e){}try{toast("🌐 Switching to English…")}catch(e){}re();return}
@@ -1401,7 +1447,7 @@ function i18nSheet(){const cur=i18nCur(),L=[["tw","繁體中文","zh-Hant"],["cn
       ${(()=>{try{return typeof xqDocShow==="function"&&!xqDocShow("i18n")}catch(e){return false}})()?"":`<button type="button" class="lk" data-xqdoc="i18n" style="margin-top:8px">🌐 About the English UI / 英文介面說明</button>`}`;   /* 11/17 第 19 輪 E19-1：原生版白名單沒有 i18n，按了打不開 → 不畫 */
     b.querySelectorAll("[data-lang]").forEach(x=>x.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();i18nPick(x.dataset.lang)})})}
 /* ================= 畫面：掃描文字節點、屬性，換成英文；原文記起來可以還原 ================= */
-const I18N_ATTR=["aria-label","title","placeholder","label"];   /* 11/17：加 label（下拉選單分組 optgroup 的標題，例如棋子聲音的分類） */
+const I18N_ATTR=["aria-label","title","placeholder","label","alt"];   /* 11/17 測試員 D Y14：場景圖的 alt（讀螢幕會念）也翻 */   /* 11/17：加 label（下拉選單分組 optgroup 的標題，例如棋子聲音的分類） */
 const I18N_ORIG=new WeakMap(),I18N_AORIG=new WeakMap();
 /* 不翻的地方：程式、輸入框、棋盤（SVG 上的棋子字）、畫布、頭像圓章（.av 只放得下一個字）、語言選項（data-nocc）、特別標 data-noi18n 的 */
 function i18nIsSkip(el){if(!el||el.nodeType!==1)return false;if(/^(SCRIPT|STYLE|TEXTAREA|INPUT|CODE|PRE|SVG|CANVAS)$/i.test(el.nodeName))return true;if(/^OPTION$/i.test(el.nodeName)&&!el.hasAttribute("value"))return true;   /* 11/17 測試員 D：下拉選單以前整個不翻（SELECT 在跳過名單），棋子聲音、大廳城市一直是中文；選項有寫 value 的只換顯示的字、值不變，沒寫 value 的照舊不翻（value 預設就是那段字，換了會壞）；語言選單照舊靠 data-nocc 跳過 */
@@ -1419,8 +1465,15 @@ function i18nKeyEl(el){const k=el&&el.getAttribute&&el.getAttribute("data-i18n")
   if(n.nodeValue!==t){const o=I18N_ORIG.get(n);I18N_ORIG.set(n,{o:o&&n.nodeValue===o.t?o.o:n.nodeValue,t});n.nodeValue=t}return true}
 /* 11/17 第 20 輪 D N6：沒有中文、只是用了全形斜線「／」的字（文牒「1 MB／about 851 MB」、「3／13」），英文介面換成半形 /（原文記在 I18N_ORIG，一樣可以還原） */
 function i18nSlash(n,checked){const v=n.nodeValue;if(!v||v.indexOf("／")<0||I18N_CJK.test(v))return;try{if(i18nLang()!=="en")return}catch(e){return}if(!checked&&i18nInSkip(n))return;const pe=n.parentNode;if(pe&&pe.closest&&pe.closest("[data-noi18n],[data-nocc]"))return;const t=v.replace(/\s*／\s*/g,"/");if(t!==v){I18N_ORIG.set(n,{o:v,t});n.nodeValue=t}}
+/* 11/17 iMac 測試員 V P2-1：記譜碑、術語碑「下面國字是Red的路數」——一句話被 <b>紅方</b> 切成好幾段，整句翻不出、只有「紅方」這種短詞翻得出，變成中英混雜（比整句中文更糟）。
+   規則：句子裡的粗體／斜體／span 這種行內小段（父元素是 B、STRONG、EM、I、SPAN、A、Q、SMALL、U、MARK），所在的那一句（最近的 P、LI、DD、TD、BLOCKQUOTE、FIGCAPTION）
+   其他部分還有中文、而且整句翻不出來，這一小段就不翻——寧可整句維持中文。按鈕、標籤這種不在句子裡的照舊翻 */
+function i18nHalf(n,pe,v){try{if(!pe||pe.nodeType!==1||!/^(B|STRONG|EM|I|SPAN|A|Q|SMALL|U|MARK)$/.test(pe.nodeName)||!pe.closest)return false;
+  const bl=pe.closest("p,li,dd,td,blockquote,figcaption");if(!bl||bl===pe)return false;const full=String(bl.textContent||"").trim(),me=String(v).trim();
+  if(!full||full===me)return false;const rest=full.replace(me,"");if(!I18N_CJK.test(rest))return false;return i18nText(full)==null}catch(e){return false}}
 function i18nTextNode(n,checked){const v=n.nodeValue;if(v&&!I18N_CJK.test(v)&&v.indexOf("／")>=0)return i18nSlash(n,checked);if(!v||!I18N_CJK.test(v))return;if(!checked&&i18nInSkip(n))return;
   const pe=n.parentNode;if(pe&&pe.nodeType===1&&pe.hasAttribute&&pe.hasAttribute("data-i18n")&&i18nKeyEl(pe))return;
+  if(i18nHalf(n,pe,v))return;
   const t=i18nLine(v);if(t!=null&&t!==v){I18N_ORIG.set(n,{o:v,t});n.nodeValue=t}}
 function i18nEl(el){i18nKeyEl(el);i18nAttrs(el)}
 /* 11/17 第 21 輪 77：讀螢幕名稱常是好幾段用「，」接起來的（#/db「局名，類別，Red wins」）；整段翻不出時一段一段翻，翻不出的段（局名、人名）留原文；
@@ -1542,6 +1595,10 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
   "@media (max-width:480px){html[lang=en] #title{overflow-wrap:normal!important;word-break:normal;max-height:2.35em;overflow:hidden!important}html[lang=en] #topbar.clk-on #title{max-height:76px}}",
   /* 11/17 第 27 輪 X3（測試員 D）：#/lobby、#/db、#/settings 這種「標題不顯示、只留時辰鐘」的頁（07w8 clk-nt，標題字是透明的），英文兩行規則照樣把看不見的標題撐成兩行、頂欄 83px，上面空一塊 → 這種頁標題只排一行（頂欄跟中文一樣 63px） */
   "html[lang=en] #topbar.clk-nt #title{white-space:nowrap!important;-webkit-line-clamp:1;max-height:56px}",
+  /* 11/17 第 28 輪 N28-5（測試員 B，同 N27-3）：320 寬英文首頁（有時辰鐘）標題被截成「Xi…／Qi…」：標題左邊讓給星晷 62px、右邊又有官階牌，兩行都只剩不到 60px →
+     360 寬以下英文改成「標題一行在最上面、整條寬度，星晷和時辰字在下面」：標題不讓左邊（padding-left 6），底下讓 60px 給星晷（56＋4），一行不換；頂欄高 2＋20＋60＋2＋3＝87px。
+     連線、斷網都一樣（斷網時 07w8 再在最上面多一條 24px 放離線牌）；放不下照舊由 07w8 offtFit 縮字 */
+  "@media (max-width:360px){html[lang=en] #topbar.clk-on:not(.clk-nt) #title{padding-left:6px!important;padding-bottom:60px!important;white-space:nowrap!important;-webkit-line-clamp:1!important;max-height:none!important}}",
   /* 11/17 第 27 輪 N27-1（測試員 B，第 25 輪 V5 的退步）：標題位置放的是按鈕（挑戰電腦「Ranked／Practice room」分頁鈕 .cpu-seg 高 44px），V5 的 max-height:2.35em（37.6px）把鈕的下半截切掉 →
      標題裡有按鈕、選單、分頁的不限高（V5 只管純文字標題）；選擇器強度蓋過 V5 和有時辰鐘時的 76px */
   "@media (max-width:480px){html[lang=en] #topbar #title:has(button,select,[role=tablist]){max-height:none!important}}",
@@ -1556,3 +1613,29 @@ function i18nCss(){try{if(document.getElementById("i18nCss"))return;const s=docu
 /* 英文系統、還沒選過語言：開 App 4 秒後提示一次（不自動切） */
 function i18nHintOnce(){try{if(i18nSuggest()!=="en"||store.get("langHint",false))return;setTimeout(()=>{try{if(store.get("langHint",false))return;store.set("langHint",true);toast("🌐 English UI: Settings ⚙ → 🌐 (top right)")}catch(e){}},4000)}catch(e){}}
 if(typeof document!=="undefined"&&document.body)i18nBoot();
+/* 11/17 iMac 測試員 I P3-3：簡體只轉字形（OpenCC 台灣→大陸是逐字），用詞還是臺灣的（服务器寫成「伺服器」、屏幕寫成「萤幕」、反馈寫成「回馈」…）。
+   zh.js（xiangqi-lab/src）先把整個畫面逐字轉成簡體；這裡在後面再補一層「兩岸用詞」：只在簡體模式、只換下面這些「轉完字以後的簡體寫法」，長的詞先換。
+   只放電腦、網路、App 介面的用詞；不放單字、不放棋的術語（車馬炮、將軍、殘局、棋譜…都不在表裡）；「資料」只換「資料庫／資料檔／資料夾／匿名資料」這幾個確定是 data 的詞。 */
+const ZH_CN_WORDS=[["意见回馈","意见反馈"],["伺服器","服务器"],["萤幕","屏幕"],["回馈","反馈"],["珐瑯","珐琅"],["影片","视频"],["软体","软件"],["硬体","硬件"],["行动网路","移动网络"],["网路","网络"],   /* zh-lint-ok：簡體模式的兩岸用詞對照表（本來就是簡體） */
+  ["预设值","默认值"],["预设","默认"],["登入","登录"],["程式","程序"],["讯息","信息"],["档案","文件"],["匿名资料","匿名数据"],["资料库","数据库"],["资料档","数据文件"],["资料夹","文件夹"],   /* zh-lint-ok */
+  ["介面","界面"],["支援","支持"],["设定","设置"],["帐号","账号"],["视窗","窗口"],["搜寻","搜索"],["选单","菜单"],["图示","图标"],["记忆体","内存"],["字型","字体"],["解析度","分辨率"],   /* zh-lint-ok */
+  ["连结","链接"],["列印","打印"],["品质","质量"],["滑鼠","鼠标"],["线上","在线"],["储存空间","存储空间"],["储存","保存"],["简讯","短信"],["捷径","快捷方式"],["部落格","博客"],["使用者","用户"],   /* zh-lint-ok */
+  ["汇出","导出"],["汇入","导入"],["最佳化","优化"]];   /* zh-lint-ok */
+function zhCnWords(s){s=String(s==null?"":s);for(const[a,b]of ZH_CN_WORDS)if(s.includes(a))s=s.split(a).join(b);return s}
+(function(){try{if(typeof window==="undefined"||typeof document==="undefined"||!window.XQ_ZH||typeof XQ_ZH.mode!=="function"||XQ_ZH.mode()!=="cn")return;
+  const AT=["placeholder","aria-label","title"],fix=n=>{const t=n.nodeValue;if(!t||!/[一-鿿]/.test(t))return;const u=zhCnWords(t);if(u!==t)n.nodeValue=u};
+  const el=e=>{for(const a of AT){const v=e.getAttribute&&e.getAttribute(a);if(v&&/[一-鿿]/.test(v)){const u=zhCnWords(v);if(u!==v)e.setAttribute(a,u)}}};
+  const walk=r=>{if(!r)return;if(r.nodeType===3){fix(r);return}if(r.nodeType!==1||/^(SCRIPT|STYLE|TEXTAREA)$/.test(r.tagName))return;el(r);r.querySelectorAll&&r.querySelectorAll("[placeholder],[aria-label],[title]").forEach(el);
+    const w=document.createTreeWalker(r,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode()))fix(n)};
+  const go=()=>{walk(document.body);new MutationObserver(ms=>{for(const m of ms){if(m.type==="characterData")fix(m.target);else if(m.type==="attributes")el(m.target);else m.addedNodes.forEach(walk)}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:AT});
+    try{const t0=document.title;setTimeout(()=>{document.title=zhCnWords(document.title||t0)},1500)}catch(e){}};
+  if(document.body)go();else addEventListener("DOMContentLoaded",go)}catch(e){}})();
+/* 11/18 第 30 輪 R30-2、R30-3（測試員）：英文介面小帥（src/bot3d.js）的閒聊有上千句中文（棋諺、公園故事、特級大師資料自動組的「單霞麗：上海／上海隊」…），字典翻不完，
+   走路角色頭上（07w 收 xq-bot-said）、小帥自己的泡泡都冒中文。src 不動：英文介面時 ① xq-bot-said 這句翻不成整句英文就攔下（capture、比 07w 早），角色頭上不冒；
+   ② 小帥自己的泡泡（.xqbot 底下沒有子元素、有字的那一層）翻譯器翻完還有中文就藏起來（下一句照常）。翻得出的照翻（勝負和、齊轍的台詞已補進字典） */
+function i18nBotOk(s){s=String(s||"").trim();if(!s||!I18N_CJK.test(s))return true;const t=i18nText(s);return t!=null&&!I18N_CJK.test(t)}
+(function(){try{if(typeof window==="undefined"||typeof document==="undefined"||i18nLang()!=="en")return;
+  addEventListener("xq-bot-said",e=>{try{if(!i18nBotOk(e.detail))e.stopImmediatePropagation()}catch(x){}},true);
+  let q=0;const chk=()=>{q=0;try{document.querySelectorAll(".xqbot>div").forEach(d=>{if(d.children.length||!d.textContent)return;if(I18N_CJK.test(d.textContent))d.style.opacity="0"})}catch(e){}};
+  const go=()=>{try{new MutationObserver(()=>{if(!q)q=requestAnimationFrame(chk)}).observe(document.body,{subtree:true,childList:true,characterData:true})}catch(e){}};
+  if(document.body)go();else addEventListener("DOMContentLoaded",go)}catch(e){}})();

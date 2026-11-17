@@ -194,7 +194,9 @@ test("E19-1：原生版白名單外的 [data-xqdoc] 全站藏起來；英文介�
 
 // ---------- E19-2／E19-3 ----------
 test("E19-2：隱私、家長文件用 app-only 補 Game Center、每日提醒、小工具、兒童模式不回報；兩份一致；網頁版看不到", () => {
-  const S = M("05-settings.js"), xqDocVar = vm.runInNewContext(between(S, "function xqDocVar(", "function xqDocBtns(") + ";xqDocVar");
+  const S = M("05-settings.js"), xqDocVar0 = vm.runInNewContext(between(S, "function xqDocVar(", "function xqDocBtns(") + ";xqDocVar");
+  /* 11/17 iMac G-4 起 Game Center、小工具的句子另外包 gc-only／widget-only（07gc-native gcnDocFeat，照 XQNative.has 決定）；這裡驗「兩個外掛都在」的原生 App，沒有外掛的細測在 test-imac-g1514.js */
+  const G = M("07gc-native.js"), feat = vm.runInNewContext(between(G, "function gcnDocFeat(t,keep){", "\ntry{if(typeof xqDocVar") + ";gcnDocFeat"), xqDocVar = (t, nat) => xqDocVar0(feat(t, { gc: true, widget: true }), nat);
   for (const f of ["privacy.md", "family.md"]) {
     const a = rd("xiangqi-db/art/docs/" + f), b = rd("xiangqi-lab/site/data/docs/" + f); assert.equal(a, b, f + " 兩份要一致");
     const nat = xqDocVar(a, true), web = xqDocVar(a, false);
@@ -209,10 +211,14 @@ test("E19-2：隱私、家長文件用 app-only 補 Game Center、每日提醒�
 test("E19-2／E19-3：審查備註 Native 段寫 Game Center、每日提醒、今日茶單的位置；設定標籤點兩下、對局中換頁確認；Notes 在 4000 字內", { skip: SKIP_IOS }, () => {
   const s = fs.readFileSync(IOS, "utf8").replace(/\r\n/g, "\n"), a = s.indexOf("```\nThank you"), b = s.indexOf("\n```", a + 3), N = s.slice(a + 4, b);
   assert.ok(N.length <= 4000, "Notes " + N.length + " 字"); assert.ok(s.includes("目前 " + N.length + " 字（Windows 換行算 " + N.replace(/\n/g, "\r\n").length + " 字），上限 4000"));   /* 第 20 輪：字數寫 LF 和 CRLF 兩種 */
-  for (const k of ["🎮 Game Center 成就", "Game Center achievements", "珍品冊", "千秋印譜", "🔔 每天提醒我做每日同題", "Remind me about the Daily Puzzle", "今日茶單", "Today's tea", "local notification",
+  for (const k of ["🔔 每天提醒我做每日同題", "Remind me about the Daily Puzzle", "local notification",
     "再點一次，直接進去", "Tap again to go straight in", "確定前往", "取消", "This game will be saved"]) assert.ok(N.includes(k), k);
+  /* 11/17 iMac G-4 起：Game Center、桌面小工具只在裝了 --gc-widget 的建置才有 → 不寫進 Notes，放在 Notes 後面「有那兩個外掛才換上」的那一段 */
+  const after = s.slice(b);
+  for (const k of ["🎮 Game Center 成就", "Game Center achievements", "珍品冊", "千秋印譜", "今日茶單", "Today's tea"]) { assert.ok(!N.includes(k), "Notes 不寫：" + k); assert.ok(after.includes(k), "條件段落有：" + k) }
+  assert.match(after, /只有裝了 `node scripts\/install-native\.js --gc-widget`/);
   const AP = fs.readFileSync(path.join(ROOT, "xiangqi-ios", "appstore", "app-privacy.md"), "utf8");
-  assert.match(AP, /Game Center 成就[^\n]*不算追蹤/);
+  assert.match(AP, /Game Center 成就[^\n]*不算追蹤/); assert.match(AP, /\*\*只有裝了 --gc-widget 的建置才有\*\*/);
   /* 備註裡的字跟程式對得上 */
   assert.ok(M("07w-shipwalk.js").includes('e.textContent="再點一次，直接進去"'));
   assert.ok(M("07z6-sitemap.js").includes("這盤會先存起來，回來可以接著下。要去「${name}」嗎？`,go,\"確定前往\")"));

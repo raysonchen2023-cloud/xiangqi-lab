@@ -181,6 +181,9 @@ const SW7_SEA_TXT={spring:{e:"🌸",n:"春天來了",q:"竹外桃花三兩枝，
   autumn:{e:"🍂",n:"秋天到了",q:"見一葉落，而知歲之將暮。",s:"《淮南子・說山訓》",w:"看到一片葉子落下來，就知道這一年快要過完了。",say:"哇，換季了！柳樹都變黃了，葉子掉到河裡了！",p:["#d9a441","#c8642c","#e8c25a","#a8462a"]},
   winter:{e:"❄",n:"冬天到了",q:"歲寒，然後知松柏之後彫也。",s:"《論語・子罕》",w:"天氣最冷的時候，才看得出松樹柏樹最晚凋零。",say:"哇，冬天了！柳樹的葉子都掉光了，只有松樹還是綠的。",p:["#ffffff","#eef3f8","#dfe8f1"]}};
 function sw7SeaNow(){try{const o=SW7_PAGES.find(x=>x.k==="home");return SW7_HSEA[sw7TermFor(null,o)]||"spring"}catch(e){return""}}
+/* 11/17 西市、觀星臺冬景（07xsm xsmWinter、07gxt gxtWinter 問這裡）：跟首頁換季圖同一個判斷——設定「場景節氣天氣」開著（sw7On）而且這一季是冬（SW7_HSEA：立冬～大寒）；
+   關掉時首頁用原圖（sw7HomeWx 回 ""），這兩處也用原圖。日夜照舊各自問 00-util xqNight，三處同時換季、同時入夜 */
+function sw7WinterNow(){try{return sw7On()&&sw7SeaNow()==="winter"}catch(e){return false}}
 /* 11/17 iPhone 模擬器測試：首頁上方寫「立冬」，卻跳「🍂 秋天到了」——換季小籤的季節照節氣算（立春、立夏、立秋、立冬起算，跟頂端的節氣同一套 tdTerm）；
    首頁換哪一張季節圖（SW7_HSEA）、飄的東西、小帥那句（講的是圖上看到的）照舊跟著圖。（11/17 晚 SW7_HSEA 也改成照節氣，兩邊已經一樣） */
 function sw7CardSea(t){return SW7_SPRING.has(t)?"spring":SW7_SUMMER.has(t)?"summer":SW7_WINTER.has(t)?"winter":t?"autumn":""}
@@ -213,6 +216,12 @@ function sw7SeaWait(P,f){const t0=Date.now();const k=()=>{if(!P.isConnected)retu
 /* 11/17 iMac 模擬器（第 7 項追加）：換季小籤跟「把象棋千秋加到主畫面？」同時跳會互相蓋——排隊，一次一個：視窗、卡片、新手練習、主線電影、黑洞序章開著時小籤先等（不算進 2 分鐘），
    02-shell 自動問加到主畫面那邊也會等小籤（.sw7-slip）收掉 */
 const sw7SeaQ=()=>{try{return!!document.querySelector(".modal,#sheet,#stqPg,#mnfPg,#bhxPg")}catch(e){return false}};
+/* 11/17 第 28 輪 Y4（測試員 D）：英文換季小籤標題被字典拼成 "❄ winter reached"，古詩文和出處是中文 → 英文時整張用這組：
+   標題 "Winter is here"；《論語》用 James Legge 的通行英譯（1861，公有領域，標 Analects 和篇章）；其他三句是這裡自己譯的（標詩人和詩題） */
+const SW7_SEA_EN={spring:{n:"Spring is here",q:"Beyond the bamboo, two or three sprays of peach blossom; when the river warms in spring, the ducks are the first to know.",s:"Su Shi, “Spring River at Dusk, after Huichong’s Painting”"},
+  summer:{n:"Summer is here",q:"Lotus leaves stretch to the sky in endless green; lotus flowers in the sun glow a red like no other.",s:"Yang Wanli, “Seeing Lin Zifang Off from Jingci Temple at Dawn”"},
+  autumn:{n:"Autumn is here",q:"Seeing a single leaf fall, one knows the year is drawing to its close.",s:"Huainanzi, “Discourse on Mountains”"},
+  winter:{n:"Winter is here",q:"When the year becomes cold, then we know how the pine and the cypress are the last to lose their leaves.",s:"Confucius, Analects IX.27 (tr. James Legge)"}};
 function sw7SeaPlay(P,ov,sea){const T=SW7_SEA_TXT[sea],rm=sw7RM(),D=rm?900:2800,t0=performance.now();
   const step=now=>{if(!ov.isConnected)return;const u=Math.min(1,(now-t0)/D);
     if(rm)ov.style.opacity=String(1-u);else{const e=u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2,r=(e*150).toFixed(1),m=`radial-gradient(circle at 50% 46%,transparent ${r}%,rgba(0,0,0,.55) calc(${r}% + 6%),#000 calc(${r}% + 16%))`;ov.style.webkitMaskImage=m;ov.style.maskImage=m}
@@ -222,7 +231,8 @@ function sw7SeaPlay(P,ov,sea){const T=SW7_SEA_TXT[sea],rm=sw7RM(),D=rm?900:2800,
     d.style.setProperty("--dx",((Math.random()-.5)*120).toFixed(0)+"px");d.style.setProperty("--dy",(40+Math.random()*45).toFixed(0)+"vh");d.style.setProperty("--rt",((Math.random()-.5)*720).toFixed(0)+"deg");P.append(d);setTimeout(()=>d.remove(),7600)}}
   let C=T;try{C=SW7_SEA_TXT[sw7CardSea(sw7TermFor(null,SW7_PAGES.find(x=>x.k==="home")))]||T}catch(e){}   /* 11/17：小籤的季節照節氣（sw7CardSea） */
   let say=T.say;try{say=sw7SeaSay(sw7TermFor(null,SW7_PAGES.find(x=>x.k==="home")),sea)||T.say}catch(e){}   /* 11/17 D P3-1：小帥那句兼顧節氣（sw7SeaSay） */
-  const sl=document.createElement("div");sl.className="sw7-slip";sl.setAttribute("role","status");sl.innerHTML=`<b>${C.e} ${esc(C.n)}</b><q>${esc(C.q)}</q><small>${esc(C.s)}</small>`;   /* 開發者 11/9「拿掉底下的白話文，味道整個變調」：小籤只留古詩文和出處 */
+  const ck=Object.keys(SW7_SEA_TXT).find(k=>SW7_SEA_TXT[k]===C),CE=typeof tmxEn==="function"&&tmxEn()&&SW7_SEA_EN[ck];
+  const sl=document.createElement("div");sl.className="sw7-slip";sl.setAttribute("role","status");sl.innerHTML=CE?`<b>${C.e} ${esc(CE.n)}</b><q>${esc(CE.q)}</q><small>${esc(CE.s)}</small>`:`<b>${C.e} ${esc(C.n)}</b><q>${esc(C.q)}</q><small>${esc(C.s)}</small>`;   /* 第 28 輪 Y4：英文小籤整張英文（SW7_SEA_EN） */   /* 開發者 11/9「拿掉底下的白話文，味道整個變調」：小籤只留古詩文和出處 */
   const off=()=>{sl.classList.remove("on");setTimeout(()=>sl.remove(),800)};sl.onclick=off;P.append(sl);setTimeout(()=>sl.classList.add("on"),rm?100:900);setTimeout(off,rm?6500:8000);
   setTimeout(()=>{try{if(typeof BOT!=="undefined"&&BOT&&BOT.say)BOT.say(say,5);else window.dispatchEvent(new CustomEvent("xq-bot-said",{detail:say}))}catch(e){}},rm?400:2600)}
 /* 開發者 11/9「除了白天和晚上，也會有傍晚的夕陽和日出」：首頁有畫好的季節就換日出、夕陽圖（home_<季>_dawn／_dusk，跟季節圖同構圖）。

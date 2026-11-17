@@ -82,11 +82,13 @@ test("同機對下認輸：沒取名字時不再寫「黑方（黑方）」；�
 const ov = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
 test("〔混合〕設定場景：字體、本命棋子、小鎖匣的 44px 點選範圍互不重疊，也不超出 375px 畫面", () => {
   const arr = new Function("return " + cut(SET, "const SM_SPOTS=[", "]];").slice("const SM_SPOTS=".length, -1))();
-  const W = 375, H = 375 * 1376 / 768, w = { smBrush: 62, smKnife: 93, smLock: 44 };
+  /* 11/17 iMac G P3-2 起小鎖匣寫出字「🔒 隱私・家長」（約 100px）；也跟右邊的「🔔 棋子聲」比 */
+  const W = 375, H = 375 * 1376 / 768, w = { smBrush: 62, smKnife: 93, smLock: 100, smBell: 70 };
   const box = id => { const [, x, y] = arr.find(z => z[0] === id); const cx = x / 100 * W, cy = y / 100 * H; return rect(cx - w[id] / 2 - 6, cy - 22, w[id] + 12, 44) };
-  const B = box("smBrush"), K = box("smKnife"), L = box("smLock");
-  assert.ok(!ov(B, K), "字體 vs 本命棋子"); assert.ok(!ov(B, L), "字體 vs 小鎖匣"); assert.ok(!ov(K, L), "本命棋子 vs 小鎖匣");
+  const B = box("smBrush"), K = box("smKnife"), L = box("smLock"), E = box("smBell");
+  assert.ok(!ov(B, K), "字體 vs 本命棋子"); assert.ok(!ov(B, L), "字體 vs 小鎖匣"); assert.ok(!ov(K, L), "本命棋子 vs 小鎖匣"); assert.ok(!ov(L, E), "小鎖匣 vs 棋子聲");
   for (const r of [B, K, L]) assert.ok(r.right - 6 <= W && r.left + 6 >= 0, "標籤在畫面內");
+  assert.equal(arr.find(z => z[0] === "smLock")[3], "🔒 隱私・家長", "寫出字，不只圖示");
 });
 test("〔混合〕棋譜庫：書樓三口箱 44px 互不重疊；經典世界的三冊合成一顆（點了開三冊選單）", () => {
   const LB = new Function("return " + cut(LIB, "const LB_BOX=", "];").slice("const LB_BOX=".length, -1))();

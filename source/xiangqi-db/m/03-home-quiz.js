@@ -62,7 +62,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
   {const hl=v.querySelector("#hLegend");if(hl){const t=hl.closest(".tile");if(t)t.onclick=()=>{vibrate(5);location.hash="#/adventure"}}}
   {const q=v.querySelector("#hQuick");if(q){const go=e=>{e.stopPropagation();e.preventDefault();vibrate(5);location.hash="#/cpu"};q.onclick=go;q.onkeydown=e=>{if(e.key==="Enter"||e.key===" ")go(e)}}}   /* 意見回饋 674：⚡ 下一盤 */
   {const hx=v.querySelector("#hXP");if(hx){const t=hx.closest(".tile");if(t)t.onclick=()=>{vibrate(5);xpSheet()}}}
-  {const ha=v.querySelector("#hArena");if(ha)ha.onclick=()=>{vibrate(5);store.set("park3d",true);location.hash="#/arena"}}
+  {const ha=v.querySelector("#hArena");if(ha)ha.onclick=()=>{vibrate(5);arP3On();location.hash="#/arena"}}
   standaloneOnlineWarn(v.firstElementChild||v);
   if(OFF){if(RI)homeStatus(v.querySelector("#hStatus"));if(window.XQ_justConnected){XQ_justConnected=false;if(DEVMODE())setTimeout(()=>toast("已連上電腦！"),300)}}
   const qb=store.get("quizBest",null);if(qb&&v.querySelector("#hQuiz"))v.querySelector("#hQuiz").textContent="最好："+qb.rank;
@@ -84,7 +84,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
       O=(st.others||(st.other?[st.other]:[])).map(z=>({...z,me:(z.n%2?"b":"r")===z.human})),pick=k=>cur&&cur.kind===k?cur:O.find(z=>z.kind===k)||null,
       G={cpu:pick("cpu"),arena:pick("arena"),journey:pick("journey")},
       line=g=>`⏳ ${g.kind==="arena"?(typeof ARENA!=="undefined"&&ARENA[g.arena]?ARENA[g.arena].name:"擂台"):g.practice?"錯棋重練":g.ranked?"晉級賽":`第 ${g.level} 級`}下到第 ${Math.floor(g.n/2)+1} 回合・${g.me?"輪到你走":"輪到電腦"}`,
-      go=kind=>{vibrate(5);if(kind==="arena")store.set("park3d",true);location.hash=kind==="arena"?"#/arena":"#/cpu"};   /* 意見回饋 319：朝代擂台在公園 3D 裡 */
+      go=kind=>{vibrate(5);if(kind==="arena")arP3On();location.hash=kind==="arena"?"#/arena":"#/cpu"};   /* 意見回饋 319：朝代擂台在公園 3D 裡 */
     if(e&&G.cpu){const tile=e.closest(".tile");e.innerHTML=`${esc(e.textContent)}<span class="rsm">${esc(line(G.cpu))}</span>`;
       if(tile){tile.classList.add("resume");const g=tile.querySelector(".go");if(g)g.textContent="繼續下 ›";tile.onclick=()=>go("cpu")}}
     else if(e&&cur&&cur.kind!=="cpu"){const tile=e.closest(".tile");   /* 擂台在桌上、挑戰電腦沒有收著的：點「挑戰電腦」開一盤新的，擂台那盤先收起來 */
@@ -283,6 +283,15 @@ function Guess(v){
 
 // ================= 象棋術語：殺法、開局、戰術、棋形、規則 =================
 // 象棋規則（意見回饋 137）：上方三個分頁「玩法／記譜法／術語」；術語＝原本的象棋術語
+/* 11/17 iMac 測試員 V P3-3：新存檔進過朝代擂台後 park3d 變成 true、一直不還原，之後第一盤快速對局直接開 3D，蓋掉「新手第一盤預設平面」→
+   比照星門圍城（07bhg gsvP3On／gsvP3Back）：進擂台時切 3D 只算這一局，先記下原本的設定（arP3Bak）；離開 #/arena 就還原。
+   擂台裡自己按了「去園子／回棋盤」＝玩家自己的選擇，就不還原（06-cpu parkBtn 會清掉 arP3Bak）。App 在擂台裡被關掉：下次打開不在擂台就還原 */
+/* 11/17 iMac H P2-3（準則 4.0）：擂台也能切平面；寬度小於 500pt（Duo 外螢幕、小手機）進擂台預設平面（跟「新手第一盤預設平面」同一個想法），寬的照舊 3D。一樣只算這一局，離開就還原 */
+const arP3Want=()=>{try{return!((+innerWidth||0)>0&&innerWidth<500)}catch(e){return true}};
+function arP3On(){try{const w=arP3Want();if(store.get("park3d",null)!==w&&!store.get("arP3Bak",null))store.set("arP3Bak",{v:store.get("park3d",null)});store.set("park3d",w)}catch(e){}}
+function arP3Back(){try{const b=store.get("arP3Bak",null);if(!b)return false;store.set("arP3Bak",null);store.set("park3d",b.v==null?null:b.v);return true}catch(e){return false}}
+function arP3Leave(h){try{if(!/^#\/arena(\/|$)/.test(String(h||"")))arP3Back()}catch(e){}}
+try{addEventListener("hashchange",()=>arP3Leave(location.hash));setTimeout(()=>arP3Leave(location.hash),0)}catch(e){}
 function Terms(v,pick){
   setTop("象棋規則","#/");setTabs(true,"#/");
   let tab=pick?"terms":store.get("rulesTab","play");
@@ -297,7 +306,7 @@ function Terms(v,pick){
   const qi=v.querySelector("#q");qi.oninput=()=>paint();
   function paint(){const k=qi.value.trim(),box=v.querySelector("#list");box.innerHTML="";
     const its=D.items.filter(t=>(cat==="全部"||t.k===cat)&&(!k||t.n.includes(k)||t.d.includes(k)));
-    v.querySelectorAll("#cats button").forEach(b=>b.classList.toggle("on",b.textContent===cat));
+    v.querySelectorAll("#cats button").forEach(b=>b.classList.toggle("on",(b.dataset.c||b.textContent)===cat));
     for(const t of its){const b=document.createElement("button");b.className="item";
       b.innerHTML=`<span class="lb">${{殺法:"⚔",開局:"🚩",戰術:"🎯",棋形:"🧩",規則:"⚖",俗語:"🏮"}[t.k]||"•"}</span><span class="tx"><b>${esc(t.n)}${t.ex||t.op||t.sh?' <span class="pill" style="font-size:11px">有例局</span>':""}</b><span>${esc(t.d.slice(0,40))}${t.d.length>40?"…":""}</span></span><span class="muted">›</span>`;
       b.onclick=()=>open(t);box.append(b)}
@@ -328,13 +337,18 @@ function Terms(v,pick){
         ctl.querySelector("#p").onclick=()=>{stopAuto();if(n>0){n--;draw()}};const nb=ctl.querySelector("#n");if(nb)nb.onclick=()=>{stopAuto();if(n<t.op.moves.length){n++;draw()}};
         const rb=ctl.querySelector("#r");if(rb)rb.onclick=play};play()}})}
   api("/terms/data").then(d=>{D=d;const cats=["全部",...new Set(d.items.map(x=>x.k))],cb=v.querySelector("#cats");
-    for(const c of cats){const b=document.createElement("button");b.textContent=c;b.onclick=()=>{cat=c;paint()};cb.append(b)}
+    /* 11/17 iMac V P2-1：分類鈕英文（「棋形」「俗語」字典沒有）；「目前選哪個」改看 data-c，不看鈕上的字（英文介面字被翻掉就對不上） */
+    const EN=typeof i18nLang==="function"&&i18nLang()==="en",CL={全部:"All",殺法:"Mates",開局:"Openings",戰術:"Tactics",棋形:"Shapes",規則:"Rules",俗語:"Sayings"};
+    for(const c of cats){const b=document.createElement("button");b.dataset.c=c;b.textContent=EN&&CL[c]?CL[c]:c;b.onclick=()=>{cat=c;paint()};cb.append(b)}
+    if(EN){qi.placeholder="Search terms (Chinese names), e.g. 馬後炮, 屏風馬";qi.setAttribute("data-noi18n","")}
     v.querySelector("#src").textContent=d.note;paint();if(pick){const t=d.items.find(x=>x.n===pick);if(t)open(t)}}).catch(e=>{v.querySelector("#list").innerHTML=`<div class="card muted">⚠ ${esc(e.message)}</div>`});
   return{}}
 
 // 玩法：目標、棋盤、七種棋子、勝負和
 /* 11/17 第 20 輪 D N5（P1，英文玩家學規則的主要頁面）：中文那段一句被 <b> 切成好幾段，07i18n 只能一段一段翻，結果中英混雜 → 英文介面直接用整段英文（結構、看走法按鈕、data-pc 都一樣） */
-function rulesPlayEn(P){const pc=(n,d,i)=>`<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:start"><b style="min-width:64px">${n}</b><span style="min-width:0">${d}</span><span></span><button class="pill" data-pc="${i}" style="justify-self:start;white-space:nowrap;font-size:13px">👀 See the move</button></div>`;   /* 11/17 第 21 輪 79：英文說明比中文長，「See the move」放到說明下面，說明欄用整個寬度 */
+/* 11/17 iMac 測試員 V P3-5：棋規碑「看走法／See the move」小膠囊只有 119×19 → 透明的 ::after 把可點高度撐到 44（外觀不變；每列上下各有 8px 留白，不會蓋到別列） */
+function rulesPcCss(){if(document.getElementById("rulesPcCss"))return;const s=document.createElement("style");s.id="rulesPcCss";s.textContent=".pill[data-pc]{position:relative}.pill[data-pc]::after{content:\"\";position:absolute;left:-4px;right:-4px;top:50%;height:44px;transform:translateY(-50%)}";document.head.append(s)}
+function rulesPlayEn(P){try{rulesPcCss()}catch(e){}const pc=(n,d,i)=>`<div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;padding:8px 0;border-bottom:1px solid var(--line);align-items:start"><b style="min-width:64px">${n}</b><span style="min-width:0">${d}</span><span></span><button class="pill" data-pc="${i}" style="justify-self:start;white-space:nowrap;font-size:13px">👀 See the move</button></div>`;   /* 11/17 第 21 輪 79：英文說明比中文長，「See the move」放到說明下面，說明欄用整個寬度 */
   return P("🎯 Goal","Two players take turns, and <b style=\"color:var(--red)\">Red moves first</b>. You win by <b>checkmating</b> the opponent's General (it is in check and no move can escape). Leaving the opponent with <b>no legal move</b> (stalemate) is also a win.")+
   P("🗺 The board","The board has 9 vertical and 10 horizontal lines. Pieces stand on the <b>intersections</b>, not inside the squares. The empty band across the middle is the <b>river</b> (Chu River and Han Border), splitting the board into Red's and Black's halves. Each side has a 3×3 area marked with an X, the <b>palace</b>; the General and the Advisors must stay inside it.")+
   P("♟ How each piece moves",[
@@ -349,7 +363,7 @@ function rulesPlayEn(P){const pc=(n,d,i)=>`<div style="display:grid;grid-templat
   P("🤝 Draws and forbidden repetition","The game is a <b>draw</b> when both players agree; when neither side has a Chariot, Horse, Cannon or Soldier left; or after 60 moves in a row with no capture.<br>When the same position appears for the <b>3rd time</b>, the referee checks who is repeating:<br>・<b>Perpetual check</b> (checking again and again): the side doing it loses; if both sides do it, it is a draw.<br>・<b>Perpetual chase</b> (chasing the same piece again and again): a loss. Chasing a protected piece, a piece that can capture back, or chasing with the General or a Soldier does not count; but a Horse or Cannon chasing a Chariot counts even if the Chariot is protected.<br>・One check plus one chase is not a loss but a draw; if both sides just shuffle back and forth, it is also a draw.<br>・Complex cycles the computer cannot judge are marked \"cycle needs review\", and you can take a draw or play a different move.<br>Leaving the opponent with <b>no legal move</b> (stalemate) is a win.")+
   P("💡 Beginner tips","1. In the opening, bring out your Horses, Cannons and Chariots; don't keep moving the same piece.<br>2. Before every move, ask: what is the opponent's last move threatening?<br>3. The Chariot is worth the most (about 9 points), Horse and Cannon about 4–5 each, Advisor and Elephant about 2 each, a Soldier 1 before crossing the river and 2 after.<br>To look up a term, open the \"📚 Terms\" tab.")+
   P("🏅 Understanding levels","The app has four kinds of \"level\", and they mean different things:<br>・<b>Level N</b> (1–18): how strong the computer opponent is when you play the computer; higher is stronger.<br>・<b>Rank</b> (Novice → Beginner 1–3 → Amateur levels 1–9 → Pro): your playing strength; it rises when you win ranked games and online games. The rank in brackets after \"Level N\" is roughly how strong that computer level plays.<br>・<b>Official title</b>: your mascot is promoted along with your rank; it is just a nicer name for it.<br>・<b>XP Lv</b>: experience from the Star Raft story and solving puzzles; <b>it has nothing to do with playing strength</b>.")}
-function rulesPlay(box){const P=(t,h)=>`<div class="sec-t">${t}</div><div class="card" style="line-height:1.8">${h}</div>`;
+function rulesPlay(box){try{rulesPcCss()}catch(e){}const P=(t,h)=>`<div class="sec-t">${t}</div><div class="card" style="line-height:1.8">${h}</div>`;
   if(typeof i18nLang==="function"&&i18nLang()==="en")box.innerHTML=rulesPlayEn(P);else box.innerHTML=P("🎯 目標","兩人對下，<b style=\"color:var(--red)\">紅方先走</b>，之後輪流各走一步。把對方的<b>帥／將</b>「將死」（被將軍而且怎麼走都躲不掉）就贏了；讓對方<b>無棋可走</b>（困斃）也算贏。")+
   P("🗺 棋盤","棋盤有 9 條直線、10 條橫線，棋子放在<b>交叉點</b>上，不是放在格子裡。中間空白的一條叫<b>河界</b>（楚河漢界），把棋盤分成紅黑兩邊。兩邊底部畫了斜線「米」字的 3×3 區域叫<b>九宮</b>，帥（將）和仕（士）只能待在裡面。")+
   P("♟ 七種棋子怎麼走",[

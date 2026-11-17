@@ -1,3 +1,8 @@
+/* 11/17 iMac 測試員 J P1-1（準則 2.1、2.3、5.1.2(i)）：古譜庫 Pikafish 分析裡的「請 Claude 講解」「請 GPT 講解」要連開發者的電腦（裁判程式 --tunnel），還會用到 Claude／ChatGPT 額度——
+   一般玩家（原生版、網頁版都一樣）看不到，只有開發者工具開著（DEVTOOLS＝開發者模式＋測試台開關）才出現；分析、評等照舊 */
+/* 11/17 K 那則：網頁版要不要讓一般玩家也看到，等開發者回覆，先做成開關 AN_LLM_WEB（false＝網頁版也只給開發者，目前的做法；true＝網頁版一般玩家照舊看得到）。原生版一律只給開發者 */
+const AN_LLM_WEB=false;
+function anDev(){try{if(typeof DEVTOOLS==="function"&&DEVTOOLS())return true;return!!AN_LLM_WEB&&!(typeof xqNat==="function"&&xqNat())}catch(e){return false}}
 // ================= 棋譜庫（清單） =================
 const libState={c:null,q:"",player:"",side:"",res:"",limit:60};
 function Library(v,c0){
@@ -44,7 +49,7 @@ function Library(v,c0){
     if(DEVREMOTE()&&grp==="gm"){const x=document.createElement("button");x.className="sync";x.textContent="☁ 從電腦同步";x.onclick=()=>syncSheet();box.append(x)}
     const on=box.querySelector(".on"),x=on?on.offsetLeft-box.offsetLeft:0;box.scrollLeft=on&&x+on.offsetWidth>box.clientWidth-12?x-(box.clientWidth-on.offsetWidth)/2:0}
   function showNone(){v.querySelector("#pf").hidden=true;v.querySelector("#clr").hidden=true;v.querySelector("#cnt").textContent="";v.querySelector("#more").innerHTML="";
-    empty("🏆","還沒有大師對局<br>從電腦同步到手機，沒網路也能看",["☁ 從電腦同步",()=>syncSheet()])}
+    if(DEVREMOTE())empty("🏆","還沒有大師對局<br>從電腦同步到手機，沒網路也能看",["☁ 從電腦同步",()=>syncSheet()]);else empty("🏆","這裡還沒有大師對局",null)}   /* 11/17 iMac J P1-1：「從電腦同步」是開發者連電腦用的，一般玩家不顯示 */
   async function load(c){libState.c=c;store.set("libC",c);const bk=books.find(b=>b.key===c);grp=bk?grpOf(bk):grp||"old";paintCols();v.scrollTop=0;
     v.querySelector("#items").innerHTML='<div class="lib-empty">載入中…</div>';v.querySelector("#more").innerHTML="";
     try{data=await api("/db/items?c="+encodeURIComponent(c))}catch(e){data=null;empty("⚠",esc(e.message));return}
@@ -83,7 +88,11 @@ function Library(v,c0){
   function bioHtml(p){const L=[p.born&&("生於 "+p.born+(p.died?"，卒於 "+p.died:"")),p.from,p.gm&&(p.gm+" 年獲特級大師")].filter(Boolean).join("・");
     return`<div class="muted" style="margin-bottom:6px">${esc(L)}</div>${p.titles&&p.titles.length?`<ul style="margin:0 0 6px;padding-left:20px">${p.titles.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>`:""}${p.style?`<div><b>棋風：</b>${esc(p.style)}</div>`:""}<p style="margin:6px 0 0;line-height:1.7">${esc(p.bio||"")}</p>`}
   function bioSheet(name){getBios().then(B=>{const p=B[name];if(!p)return toast("還沒有這位棋手的介紹");
-    sheet((p.zh||name)+"・生平",b=>{b.innerHTML=bioHtml(p)+`<p class="muted" style="font-size:12px;margin-top:10px">資料整理自公開網路資料，如有錯誤歡迎回饋。${(p.src||[]).length?"<br>參考："+p.src.map((u,i)=>`<a href="${esc(u)}" target="_blank" rel="noopener">${i+1}</a>`).join("、"):""}</p>`})})}
+    sheet((p.zh||name)+"・生平",b=>{b.innerHTML=bioHtml(p)+`<p class="muted" style="font-size:12px;margin-top:10px">${(p.src||[]).length?"資料來源："+p.src.map(u=>`<a href="${esc(u)}" target="_blank" rel="noopener">${esc(bioSrcName(u))}</a>`).join("、")+"<br>":""}小傳由開發者根據上列公開資料改寫，如有錯誤歡迎回饋。</p>`})})}
+  /* 11/17 開發者選單「特級大師小傳要在畫面上標出處」：每篇下面一行「資料來源：」，照 gmbios.json 的 src 欄位（72 篇都有），網站名稱照網址；認不得的網站就寫網域，不猜名字 */
+  function bioSrcName(u){let h="";try{h=new URL(u).hostname.replace(/^(www|m)\./,"")}catch(e){return String(u||"")}
+    const N=[["wikipedia.org","維基百科"],["gdchess.com","廣東象棋網"],["baike.com","互動百科"],["baike.baidu.com","百度百科"],["baike.so.com","360百科"],["news.cn","新華網"],["thepaper.cn","澎湃新聞"],["sohu.com","搜狐"],["sina.cn","新浪"],["sina.com.cn","新浪"],["ycwb.com","金羊網"],["xinmin.cn","新民網"],["ifeng.com","鳳凰網"],["jiemian.com","界面新聞"],["zhihu.com","知乎"],["chinanews.com","中國新聞網"],["sport.gov.cn","國家體育總局"],["huxiu.com","虎嗅"]];
+    for(const[d,n]of N)if(h===d||h.endsWith("."+d))return n;return h}
   function playerSheet(){const pl=data.players||Object.entries(data.items.reduce((m,it)=>{for(const n of[it.red,it.black])if(n)m[n]=(m[n]||0)+1;return m},{})).sort((a,b)=>b[1]-a[1]).map(([name,count])=>({name,count}));
     sheet("篩選棋手",b=>{const paint=()=>{b.innerHTML=`<div class="muted">執</div><div class="opt">${[["","紅黑都看"],["r","只看執紅"],["b","只看執黑"]].map(([k,l])=>`<button data-s="${k}" class="${libState.side===k?"on":""}">${l}</button>`).join("")}</div>
         <div class="muted">結果</div><div class="opt">${[["","全部"],["w","他贏的"],["l","他輸的"],["d","和局"]].map(([k,l])=>`<button data-r="${k}" class="${libState.res===k?"on":""}">${l}</button>`).join("")}</div>
@@ -157,6 +166,18 @@ function mvArrowName(){try{const eR=curEra(),EA=eR&&ERA_ARROW[eR.k];if(EA){const
 function dbStatEn(ply,max,cn,g,ev,rv){const T=typeof tmxT==="function"?tmxT:x=>x,W=typeof tmxW==="function"?tmxW:x=>x;
   if(!ply)return T("開局局面・左右滑棋盤可換步");const q=g&&g.q&&g.q!=="—"?T(g.q):"",e=ev!=null&&typeof evt==="function"?evt(ev):"";
   return`${rv?"📖 Reviewing · ":""}Move ${ply}/${max} ${W(cn)}`+(q?` [${q}]`:"")+(e?" · "+(q?"after this move: ":"")+T(e):"")}
+/* 11/17 第 28 輪 Y1（測試員 D）：自由走棋（推演）的著法紀錄英文是「1. 紅方 C8.5【捉卒】　正著」——方別、戰術標籤（local.js lineInfo：吃X、將軍、捉X、Y、將死、困斃）、評語都沒翻 →
+   英文整句自己寫："1. Red C8.5 [Attacks Soldier] Best"，著法 WXF；底下「Pikafish 認為更好的是」也英文 */
+const DB_PC_EN={帥:"General",將:"General",仕:"Advisor",士:"Advisor",相:"Elephant",象:"Elephant",傌:"Horse",馬:"Horse",俥:"Chariot",車:"Chariot",炮:"Cannon",砲:"Cannon",兵:"Soldier",卒:"Soldier"};
+function dbTagEn(t){t=String(t||"");const pc=s=>DB_PC_EN[s]||s,m=/^([吃捉])(.+)$/.exec(t);
+  if(m)return(m[1]==="吃"?"Captures ":"Attacks ")+m[2].split("、").map(pc).join(" & ");return{將軍:"Check",將死:"Checkmate",困斃:"Stalemate"}[t]||(typeof tmxT==="function"?tmxT(t):t)}
+/* 推演來源（FREE.src：自由走棋、Pikafish 雙方接著下、Pikafish 第 N 條變化（局面）、＋自己改走）英文 */
+function dbSrcEn(s){const T=typeof tmxT==="function"?tmxT:x=>x;s=String(s||"自由走棋");const own=s.endsWith("＋自己改走");if(own)s=s.slice(0,-5);
+  const m=/^Pikafish 第 (\d+) 條變化（(.+)）$/.exec(s),b=s==="自由走棋"?"Free play":s==="Pikafish 雙方接著下"?"Pikafish plays on for both sides":m?`Pikafish line ${m[1]} (${T(m[2])})`:T(s);return b+(own?" + your own moves":"")}
+function dbFreeNoteEn(F,m){const T=typeof tmxT==="function"?tmxT:x=>x,W=typeof tmxW==="function"?tmxW:x=>x;
+  if(!m)return`Starting position (after move ${F.base}). Tap ▶ or swipe left to step through`+(F.src&&String(F.src).startsWith("Pikafish")?" and see how Pikafish reads ahead and where it sets traps":"")+"; tap a piece to try your own move.";
+  const g=m.g,q=g&&g.q&&g.q!=="—"?T(g.q):"";
+  return`${F.base+F.cur}. ${m.by==="r"?"Red":"Black"} ${W(m.cn)}`+(m.tags&&m.tags.length?` [${m.tags.map(dbTagEn).join(", ")}]`:"")+(q?" "+q:"")+(g&&g.q&&g.q!=="正著"&&g.q!=="妙著"&&g.bc?`\nPikafish prefers: ${W(g.bc)}`:"")}
 function dbNoteLines(s){const T=typeof tmxT==="function"?tmxT:x=>x;return String(s||"").split("\n").map(x=>x.trim()?T(x):x).join("\n")}
 function mkNoteEn(K,arrow,pend){const T=typeof tmxT==="function"?tmxT:x=>x,W=typeof tmxW==="function"?tmxW:x=>x,L=+K.g.loss||0,big=!isFinite(L)||L>=2000,Q=K.q?T(K.q):"",
     lk=typeof tmxEvLinkEn==="function"?tmxEvLinkEn(K.g.ev,K.side):"",ref=K.bcn?`Pikafish's suggestion "${W(K.bcn)}"`:"Pikafish's top choice",
@@ -364,7 +385,7 @@ function Viewer(v,c,id){
     v.querySelector("#evf").style.width=evPct(ev)+"%";
     const st=v.querySelector("#stat");st.classList.toggle("hot",!!FREE);
     if(FREE){const EN=typeof tmxEn==="function"&&tmxEn(),T=EN&&typeof tmxT==="function"?tmxT:x=>x;st.classList.toggle("dbst",!!EN);
-      st.textContent=EN?`🔭 ${T(FREE.src||"自由走棋")} · ${FREE.cur}/${FREE.all.length}`+(ev!=null?" · "+T(evt(ev)):""):`🔭 ${FREE.src||"自由走棋"}・${FREE.cur}／${FREE.all.length}`+(ev!=null?"・"+evt(ev):"")}   /* 第 27 輪 X1：自由走棋的狀態列英文也整句 */
+      st.textContent=EN?`🔭 ${dbSrcEn(FREE.src)} · ${FREE.cur}/${FREE.all.length}`+(ev!=null?" · "+T(evt(ev)):""):`🔭 ${FREE.src||"自由走棋"}・${FREE.cur}／${FREE.all.length}`+(ev!=null?"・"+evt(ev):"")}   /* 第 27 輪 X1：自由走棋的狀態列英文也整句 */
     else if(KM){st.classList.add("hot");st.textContent=`🔎 最關鍵的一步・第 ${KM.p} 步之前，輪到${PLAYER[KM.side]}走`}   /* T01 關鍵步模式 */
     else{const g=ply>0&&gradeOf(ply),EN=typeof tmxEn==="function"&&tmxEn();st.classList.toggle("dbst",!!EN);
       st.textContent=EN?dbStatEn(ply,maxPly(line),ply>0?s[ply-1].cn:"",g,ev,ply<maxPly(line)):ply===0?"開局局面・左右滑棋盤可換步":`${ply<maxPly(line)?"📖 回顧中・":""}第 ${ply}／${maxPly(line)} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+(g&&g.q?"走完後":"")+evt(ev):"")}   /* 評比循環第 1 輪：評等字後面的局面句加「走完後」，看得出評等（這步跟最好的比）和局面（走完整盤誰好）是兩件事 */
@@ -385,6 +406,7 @@ function Viewer(v,c,id){
     // 評註
     const note=v.querySelector("#note");
     if(FREE){const m=last,g=m&&m.g;
+      if(typeof tmxEn==="function"&&tmxEn())note.textContent=dbFreeNoteEn(FREE,m);else   /* 第 28 輪 Y1：英文整句（方別、戰術標籤、評語、著法 WXF） */
       note.textContent=!m?`起點局面（第 ${FREE.base} 步之後）。按 ▶ 或往左滑，一步一步看${FREE.src&&FREE.src.startsWith("Pikafish")?" Pikafish 怎麼預判、在哪裡埋伏":""}；點棋子可以自己改走。`
         :`${FREE.base+FREE.cur}. ${PLAYER[m.by]} ${m.cn}`+(m.tags&&m.tags.length?`【${m.tags.join("、")}】`:"")+(g&&g.q&&g.q!=="—"?`　${g.q}`:"")
          +(g&&g.q&&g.q!=="正著"&&g.q!=="妙著"&&g.bc?`\nPikafish 認為更好的是：${g.bc}`:"")}
@@ -417,11 +439,11 @@ function Viewer(v,c,id){
         b.innerHTML=a?(a.dead?`<p>${PLAYER[pos.side]}沒有合法著法（被將死或困斃）。</p>`:`${a.cached?'<p class="muted">📁 之前存的分析，不用重算</p>':""}<div class="anl">${a.lines.map((l,i)=>`<div class="ln"><b>${i+1}. ${esc(l.cn)}</b>　<span class="pill">${evt(l.vr)}</span><div class="pv">${esc(l.pv.join(" "))}</div><div class="muted" style="font-size:11px">往後算 ${l.depth||"?"} 步（約 ${Math.round((l.depth||0)/2)} 回合）</div><button class="pill" data-play="${i}" style="margin-top:6px;border-color:var(--accent);color:var(--accent);font-weight:700;padding:5px 12px">▶ 推演這條變化（${l.pv.length} 步）</button></div>`).join("")}</div>`)
           :'<p class="muted" style="text-align:center;padding:20px">Pikafish 思考中…（約 1.5 秒）</p>';
         b.insertAdjacentHTML("beforeend",`<div class="opt" style="margin-top:12px"><button id="re">🔄 重新分析</button><button id="gr">📊 評等這條著法</button></div>
-          <div class="opt"><button id="ec">💬 請 Claude 講解</button><button id="eg">💬 請 GPT 講解</button></div><div id="llm" style="white-space:pre-wrap;font-size:14px"></div>
-          <p class="muted" style="font-size:12px">分數是紅方視角，1.0 約等於一個兵。講解會用到你的 Claude 或 ChatGPT 額度，分析和評等不會。</p>`);
+          ${anDev()?'<div class="opt"><button id="ec">💬 請 Claude 講解</button><button id="eg">💬 請 GPT 講解</button></div><div id="llm" style="white-space:pre-wrap;font-size:14px"></div>':""}
+          <p class="muted" style="font-size:12px">分數是紅方視角，1.0 約等於一個兵。${anDev()?"講解會用到你的 Claude 或 ChatGPT 額度，分析和評等不會。":""}</p>`);
         b.querySelectorAll("[data-play]").forEach(x=>x.onclick=()=>{closeSheet();playLine(+x.dataset.play)});
         b.querySelector("#re").onclick=()=>run(true);b.querySelector("#gr").onclick=()=>{closeSheet();gradeLine()};
-        b.querySelector("#ec").onclick=()=>explain("claude");b.querySelector("#eg").onclick=()=>explain("gpt")};
+        {const ec=b.querySelector("#ec"),eg=b.querySelector("#eg");if(ec)ec.onclick=()=>explain("claude");if(eg)eg.onclick=()=>explain("gpt")}};
       const run=async fresh=>{if(fresh)AN=null;paint();try{const d=await api("/an/engine",{...pos,ms:1500,multipv:3,fresh:!!fresh});AN={k,...d};show();if($("#sheet"))paint()}catch(e){toast(e.message)}};
       const explain=async who=>{const box=b.querySelector("#llm");box.textContent=(who==="gpt"?"GPT":"Claude")+" 講解中…（大約半分鐘到幾分鐘）";
         const hist=(FREE?seq(line,FREE.base).map(m=>m.cn).concat(FREE.all.slice(0,FREE.cur).map(m=>m.cn)):seq(line,ply).map(m=>m.cn)).join(" ");

@@ -271,7 +271,7 @@ test("還原只動自己換過的：程式之後自己改的字不被蓋回去",
 });
 test("英文模式：MutationObserver 監看整頁；新加的節點、改過的字、改過的 aria-label 都會換", () => {
   const { MO, doc } = loadFull("en"); assert.ok(MO.cb, "英文模式要裝 MutationObserver");
-  assert.equal(MO.target, doc.body); assert.ok(MO.opts.subtree && MO.opts.characterData && MO.opts.childList); assert.deepEqual([...MO.opts.attributeFilter], ["aria-label", "title", "placeholder", "label"]);   /* 11/17 加 label：下拉選單分組標題 */
+  assert.equal(MO.target, doc.body); assert.ok(MO.opts.subtree && MO.opts.characterData && MO.opts.childList); assert.deepEqual([...MO.opts.attributeFilter], ["aria-label", "title", "placeholder", "label", "alt"]);   /* 11/17 D 第 29 輪 Y14：場景圖 alt 也翻 */   /* 11/17 加 label：下拉選單分組標題 */
   const t = doc.createElement("div"); t.innerHTML = `<b>確定認輸？</b><button aria-label="認輸">🏳</button>`; doc.body.appendChild(t);
   MO.cb([{ type: "childList", addedNodes: [t] }]); assert.equal(t.textContent, "Resign this game?🏳"); assert.equal(t.querySelector("button").getAttribute("aria-label"), "Resign");
   const n = t.querySelector("b").firstChild; n.nodeValue = "和局"; MO.cb([{ type: "characterData", target: n }]); assert.equal(n.nodeValue, "Draw");
@@ -360,7 +360,7 @@ const NEWREG = [
   ["05 走棋音效選單", SET, "function sndPicker(", "// 修正通知"],
   ["11b 無障礙設定列", A11Y, "function axmSetRows(", "\nfunction axmFzSysRow"],
   ["02 線上大廳（配對、邀請、觀戰、時制、棋友資料）", SHELL, "function Lobby(v){", "const APP_HOME="],
-  ...["07x2-lobbymap.js", "07x3-rostermap.js", "07x4-lobbysafe.js", "07hs-netsig.js", "07c-canju.js", "07c2-canjumap.js", "07dq-daily.js", "10-db.js", "10b-libmap.js", "07y4-termsmap.js", "06c-cup.js", "07w9-exits.js"].map(f => [f, rd(path.join(M, f)), "", null])
+  ...["07x2-lobbymap.js", "07x3-rostermap.js", "07x4-lobbysafe.js", "07hs-netsig.js", "07c-canju.js", "07c2-canjumap.js", "07dq-daily.js", "10-db.js", "10b-libmap.js", "07y4-termsmap.js", "06c-cup.js", "07w9-exits.js"].map(f => [f, rd(path.join(M, f)).replace(/if\(typeof aboutLicSheet==="function"&&!aboutLicSheet\.__xq\)\{[\s\S]*?aboutLicSheet\.__xq=1\}/, ""), "", null])   /* 11/17 D 第 29 輪 Y6：「關於與開源授權」中英兩份都寫在程式裡（英文介面直接用英文那份，test-r29d-1117.js 驗），不靠字典 */
 ];
 /* 單獨翻不出來是正常的：程式組字的片段（頭尾是標點或「」、單一個中文字）、保留字、系統給小朋友的稱號（人名一律不翻）；另列的是棋子字、語言名稱、隱私全文（超過 600 字）、《中華民國象棋規則》條文片段、棋手生平的組字 */
 const CN = (...c) => String.fromCharCode(...c);   /* 簡體字用字碼組（原始碼不放簡體字，zh-lint 才不會報） */

@@ -18,7 +18,7 @@ test("下拉選單不再整個跳過；有 value 的選項會翻，沒 value 的
   for (const n of ["SCRIPT", "STYLE", "TEXTAREA", "INPUT", "CODE", "PRE", "SVG", "CANVAS"]) assert.equal(skip(el(n, {})), true, n + " 照舊跳過");
 });
 test("分組標題（optgroup label）也翻", () => {
-  assert.match(SRC, /const I18N_ATTR=\["aria-label","title","placeholder","label"\];/);
+  assert.match(SRC, /const I18N_ATTR=\["aria-label","title","placeholder","label"(,"alt")?\];/);
 });
 test("城子的英文統一成 Chengzi（內建字典與劇情句）", () => {
   assert.ok(SRC.includes('"城子": "Chengzi"'), "城子 → Chengzi");

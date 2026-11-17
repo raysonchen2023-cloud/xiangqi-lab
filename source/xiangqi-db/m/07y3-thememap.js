@@ -19,7 +19,7 @@ const SHW_TM={el:30,h:[.073,70,.002],look0:[50,50],home:"home",
   E:"home-c1 c1-l1 c1-r1 c1-c2 c2-l2 c2-r2 c2-c3 c3-l3 c3-r3 c3-c4 c4-l4 c4-r4"};
 const TM_NODE=["l1","r1","l2","r2","l3","r3","l4","r4"];
 const tmPc=(x,y)=>[x/7.68,y/13.76];
-const tmDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
+const tmDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"&&xqNight())};   /* 11/17 第 28 輪 N28-2：有夜版圖的頁一律照實際日落（00-util xqNight，跟首頁同一個判斷）；深色主題照舊 */
 const TM_GLYPH={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵",k:"將",a:"士",b:"象",n:"馬",r:"車",c:"砲",p:"卒"};
 /* 例局棋盤 SVG（9 直 10 橫、河界、九宮 X；紅子朱字、黑子墨字；小牌上只畫子不寫字） */
 function tmBoard(bd,big){const L=[];for(let i=0;i<9;i++)L.push(i%8?`M${i} 0V4M${i} 5V9`:`M${i} 0V9`);for(let j=0;j<10;j++)L.push(`M0 ${j}H8`);L.push("M3 0L5 2M5 0L3 2M3 7L5 9M5 7L3 9");

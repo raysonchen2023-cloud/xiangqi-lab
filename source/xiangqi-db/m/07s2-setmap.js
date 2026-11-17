@@ -14,7 +14,7 @@ const SM_IMGV="2300";   /* 11/9 修圖：石磬改曲尺形（日夜兩張） */
 /* 入口：[id, 左%, 上%, 大字, 分頁, 要捲到的元素]（量 768×1376 的 set_day_v2，標籤放在東西上方） */
 const SM_SPOTS=[
   ["smFan",15,10.5,"🪭 朝代配色","look","#era"],["smWin",55,15,"🪟 淺色／深色","look","#pt"],["smBoard",50,31,"♟ 試看棋盤","look","#pv"],
-  ["smBrush",74,31.5,"🖌 字體","look","#ftM"],["smKnife",86,22,"🔪 本命棋子","bot","[data-bp],.bpc"],["smLock",92,33,"🔒","more","#dm"],   /* 11/12 第 11 輪觸控測試：字體與本命棋子原本上下貼在一起（重疊）、小鎖匣貼右緣被裁；三個拉開、往畫面內收，44px 高的點選範圍也不互蓋 */
+  ["smBrush",74,31.5,"🖌 字體","look","#ftM"],["smKnife",86,22,"🔪 本命棋子","bot","[data-bp],.bpc"],["smLock",67,40.8,"🔒 隱私・家長","more","#dm"],   /* 11/17 iMac 測試員 G P3-2：原本只有 🔒 圖示（iPad 上只剩 44pt 寬的小圖），隱私、刪除資料都在這裡，審查員可能找不到 → 寫出字，位置往畫面內收、跟字體、棋子聲的 44px 範圍不疊 */   /* 11/12 第 11 輪觸控測試：字體與本命棋子原本上下貼在一起（重疊）、小鎖匣貼右緣被裁；三個拉開、往畫面內收，44px 高的點選範圍也不互蓋 */
   ["smRobe",16,39.5,"👘 換造型","bot","#meFig"],["smTag",7,57,"🏮 官階","bot",".botN"],["smMirror",32,50.5,"🪞 3D 立繪","bot","#meFig"],
   ["smInc",55,48.5,"🕯 氛圍","sound","#snd3"],["smQin",76,49.5,"🎵 語音報棋","sound","#snd2"],["smBell",93,45,"🔔 棋子聲","sound","#snd"],
   ["smMail",70,70.5,"✉ 意見回饋","more","#fb"],["smNote",55,77,"📒 修正紀錄","more","#fxh"],["smPass",86,76,"📜 關於","more","#about"],["smPack",48,83,"🎒 換手機","more","#xfOut"]];   /* 第 12 輪 F2：換手機 48,84 → 48,83（iPhone SE 加安全區時，下緣的 44px 點選範圍被畫面底切掉 2～3px） */
@@ -23,9 +23,14 @@ const SM_SPOTS=[
    內容是從 05-settings 原本畫好、綁好的設定「整塊搬」過來的同一批節點（事件、即時生效、存檔都照舊），收起時原封不動搬回原位（留一個註解節點當書籤）。
    SM_EP［入口］＝要搬的區塊：sec:選擇器＝那一格所在的整段（往上含標題 .sec-t、往下到下一個標題前）；head:＝只要標題＋那一格；el:＝只要那一格；title:文字＝標題正好是這幾個字的那一段；btn:＝單獨一顆按鈕。
    沒有列在這裡的入口照舊：菱花鏡＝看 3D 立繪、信插／手札＝意見回饋頁、文牒／書箱＝07s4 的換手機面板。整卷畫軸（四個分頁全部設定）留著，入口改成頂欄的「📜 全部設定」。 */
-const SM_EP={smFan:["sec:#era"],smWin:["sec:#pt"],smBoard:["el:#pv","sec:#th","el:#hiCon","sec:#mv","sec:#rsO"],smBrush:["head:#ftM","sec:#fzM","head:#zhO"],
+let SM_CUR_EP="";   /* 目前（最後）打開的是哪個器物的面板（I P3-11：重畫後照原樣再開） */
+const SM_EP={smFan:["sec:#era"],smWin:["sec:#pt"],smBoard:["el:#pv","sec:#th","el:#hiCon","sec:#mv","sec:#rsO","sec:#blitzSw"],smBrush:["head:#ftM","sec:#fzM","head:#zhO"],
   smKnife:["sec:.bpc","el:#chdForm"],smRobe:["sec:#meFig","sec:#dglSw","sec:#botT","sec:#epSw"],smTag:["title:官階"],
-  smInc:["sec:#snd3"],smQin:["sec:#snd2"],smBell:["sec:#snd"],smLock:["sec:#axmSw","btn:#sh","btn:#a2h","sec:#fmSet","title:隱私","title:進階"]};   /* 11/12：♿ 無障礙（螢幕報讀與鍵盤模式、高對比、測試與證據，11b-a11y.js axmSetRows）原本在設定房間沒有入口，放在小鎖匣最上面；棋規（#rsO 千秋休閒規則／臺灣棋規原型）也沒有入口，放進「試看棋盤」最後面 */   /* 11/9：小鎖匣加家長與護眼（843，07m5）；線上大廳的名字與封鎖名單（841／842，07x4）接在「我的角色」卡後面，跟著衣帽架一起出現 */
+  smInc:["sec:#snd3"],smQin:["sec:#snd2"],smBell:["sec:#snd"],smLock:["sec:#axmSw","btn:#sh","btn:#a2h","sec:#fmSet","title:隱私","btn:#aLic","title:進階"]};   /* 11/12：♿ 無障礙（螢幕報讀與鍵盤模式、高對比、測試與證據，11b-a11y.js axmSetRows）原本在設定房間沒有入口，放在小鎖匣最上面；棋規（#rsO 千秋休閒規則／臺灣棋規原型）也沒有入口，放進「試看棋盤」最後面 */   /* 11/9：小鎖匣加家長與護眼（843，07m5）；線上大廳的名字與封鎖名單（841／842，07x4）接在「我的角色」卡後面，跟著衣帽架一起出現 */
+/* 11/17 iMac I P1-1（「⚙ 更多設定」整區在 iOS 沒有入口）：逐項對過——深淺色＝支摘窗、字體／字級／文字＝筆筒、棋規＋電腦下棋節奏整段（快棋、預走、左手、純淨畫面、擂主台詞、震動、高對比、色弱、專注棋盤）＋走棋顯示＝炕桌「♟ 試看棋盤」；
+   對手形象（#ol）、棋子樣式（#ps）兩段本來就 display:none、沒有內容。I P1-4：「📜 關於與開源授權」（#aLic）放進小鎖匣「🔒 隱私・家長」，驛路文牒的「隱私說明」裡也有一顆（07x4 xqPrivSum）。
+   test-imac-i1757.js 掃 05-settings 設定頁每一個控制項，都要在某個器物的面板裡 */
+/* 11/17 iMac H P3-9：「⚡ 快棋模式」「⏳ 預走」（還有電腦下棋節奏、左手模式，05-settings 同一段）原本只在整卷設定裡、設定房間的器物都沒有入口 → 跟著炕桌「♟ 試看棋盤」面板一起出現（排在棋規後面） */
 /* 11/13 晚：平日體力開關（07dgl-stamina.js dglSetRow 畫的 #dglSw）跟著衣帽架「我的角色」面板一起出現 */
 /* 11/12 ChatGPT UI 冗餘盤查（story/104 號）第 7 項：棋盤外觀三個入口照「點了會改什麼」命名——摺扇＝朝代配色、支摘窗＝淺色／深色、炕桌＝試看棋盤（預覽、試走、材質、特效）；
    面板裡 05-settings 畫的小節標題（棋盤的朝代樣式、棋盤風格、深淺色）在這裡換成同一套字（SM_SECNM，只換畫面上的字，不動設定值與存檔），從場景點進去看到的面板標題、小節標題一致。
@@ -67,7 +72,7 @@ function smCss(){if(document.getElementById("smCss"))return;const s=document.cre
 .sm-dw-h button{position:relative}.sm-dw-h button::before{content:"";position:absolute;left:min(-4px,calc((100% - 44px) / 2));right:min(-4px,calc((100% - 44px) / 2));top:min(-4px,calc((100% - 44px) / 2));bottom:min(-4px,calc((100% - 44px) / 2))}
 .hq-upd,.hq-pv{position:relative}.hq-upd::before,.hq-pv::before{content:"";position:absolute;left:min(0px,calc((100% - 44px) / 2));right:min(0px,calc((100% - 44px) / 2));top:min(0px,calc((100% - 44px) / 2));bottom:min(0px,calc((100% - 44px) / 2))}
 @media (prefers-reduced-motion:reduce){.sm-dw{transition:none}.sm-flash{animation:none}}`;document.head.append(s)}
-const smDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
+const smDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"&&xqNight())};   /* 11/17 第 28 輪 N28-2：有夜版圖的頁一律照實際日落（00-util xqNight，跟首頁同一個判斷）；深色主題照舊 */
 const smMute=()=>!store.get("mvSound",false)&&!store.get("voiceCall",true)&&!store.get("bgm",true);
 /* 棋盤四角雙線性內插：u 往下（0..1）、v 往右（0..1）→ 圖上像素 */
 const smAt=(u,v)=>{const[a,b,c,d]=SM_BOARD.q;return[a[0]*(1-u)*(1-v)+b[0]*u*(1-v)+c[0]*u*v+d[0]*(1-u)*v,a[1]*(1-u)*(1-v)+b[1]*u*(1-v)+c[1]*u*v+d[1]*(1-u)*v]};
@@ -107,7 +112,7 @@ function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySele
     if(t==="title"){const h=[...root.querySelectorAll(".sec-t")].find(x=>(x.dataset.smTitle||x.textContent).trim()===q);return h?secOf(h):[]}
     const el=root.querySelector(q);if(!el)return[];if(t==="btn")return[el];const x=topOf(el);if(!x)return[];return t==="el"?[x]:secOf(x,t==="head")};
   const epBack=()=>{for(const[n,ph]of moved){if(ph.parentNode){ph.parentNode.insertBefore(n,ph);ph.remove()}}moved=[];EW.innerHTML=""};
-  const epOpen=id=>{if(!ES)return false;epBack();const seen=new Set();let n=0;
+  const epOpen=id=>{if(!ES)return false;SM_CUR_EP=id;epBack();const seen=new Set();let n=0;
     for(const k of SM_EP[id]){let box=EW;if(k.startsWith("btn:")){box=EW.querySelector(":scope>.items.sm-epb");if(!box){box=document.createElement("div");box.className="items sm-epb";box.style.padding="0";EW.append(box)}}
       for(const x of pick(k)){if(seen.has(x)||EW.contains(x))continue;seen.add(x);const ph=document.createComment("sm-ep");x.parentNode.insertBefore(ph,x);moved.push([x,ph]);box.append(x);n++}}
     if(!n){epBack();return false}smSecNm(EW);const sp=SM_SPOTS.find(z=>z[0]===id);if(id==="smBoard")try{tbPv()}catch(e){}ES.open(null,SM_EPT[id]||(sp?sp[3]:"設定"));return true};
@@ -121,6 +126,12 @@ function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySele
   for(const[id,,,,tab,sel]of SM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
     b.onclick=()=>{vibrate(5);if(id==="smMirror"){const f=root.querySelector("#meFig");if(f){f.click();return}}if((id==="smMail"||id==="smNote")&&typeof FEEDBACK_PAGE_ON!=="undefined"&&FEEDBACK_PAGE_ON){location.hash=id==="smMail"?"#/feedback":"#/feedback/fixes";return}if(SM_EP[id]&&epOpen(id))return;open(tab,sel)}}   /* 回饋 799：信插、手札一下直達意見回饋頁（07s3） */
   smScene(P);
+  /* 11/17 iMac I P3-11：在面板裡切「高對比主題」「螢幕報讀與鍵盤」「高對比」「專注棋盤」這類開關，有的會讓設定頁整頁重畫（11b axmHctSet 會 route()），面板跟著不見、要重點小鎖匣 →
+     切之前記下是哪個器物的面板（sessionStorage smReopen），設定頁重畫完照原樣再打開；沒重畫（面板還開著）就把記號清掉 */
+  if(ES){ES.b.addEventListener("change",e=>{const t=e.target,id=SM_CUR_EP;if(!id||!t||!/^(axmSw|hctSw|hiCon|focB|cbSw|fzSysSw)$/.test(t.id||""))return;try{sessionStorage.setItem("smReopen",id)}catch(x){}
+      setTimeout(()=>{try{if(sessionStorage.getItem("smReopen")===id&&ES.on&&ES.on()&&document.contains(ES.el))sessionStorage.removeItem("smReopen")}catch(x){}},1500)},true);
+    let ro="";try{ro=sessionStorage.getItem("smReopen")||"";sessionStorage.removeItem("smReopen")}catch(x){}
+    if(ro&&SM_EP[ro])setTimeout(()=>{try{if(!ES.on()&&/^#\/settings/.test(location.hash||""))epOpen(ro)}catch(x){}},120)}
   /* 設定改了（深淺色、聲音、朝代棋盤、高對比）：畫軸開著時每次改都重畫場景 */
   root.addEventListener("click",()=>setTimeout(()=>smScene(P),80));root.addEventListener("change",()=>setTimeout(()=>smScene(P),80));
   if(typeof shpFit==="function")shpFit(v);

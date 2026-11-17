@@ -167,8 +167,10 @@ document.addEventListener("keydown",e=>{if(e.key!=="Tab")return;const D=axmTopDl
   if(!D.contains(a)){e.preventDefault();F[e.shiftKey?F.length-1:0].focus();return}
   if(e.shiftKey&&(i===0||a===D)){e.preventDefault();F[F.length-1].focus()}else if(!e.shiftKey&&i===F.length-1){e.preventDefault();F[0].focus()}},true);
 /* 全頁保險：圖示按鈕補名字、role=button 補 tabindex 和鍵盤、img 補 alt、狀態列補 aria-live、棋鐘 role=timer */
+/* 11/17 測試員 D Z4：讀螢幕名稱用 textContent 會把主標、副標黏在一起（「ContinueChariot · Qi Zhe」「Rewatch the openingThe Sky River Splits」）→ 每一段文字之間補一個空格 */
+function axmTxt(el){try{const w=document.createTreeWalker(el,NodeFilter.SHOW_TEXT),L=[];let n;while((n=w.nextNode())){const t=(n.nodeValue||"").trim();if(t)L.push(t)}return L.join(" ")}catch(e){return el.textContent||""}}
 function axmFix(root){if(!root||root.nodeType!==1)return;const one=el=>{
-    if(el.matches("button,[role=button]")&&(!el.hasAttribute("aria-label")||el._axmAl)&&!el.hasAttribute("aria-labelledby")&&!el.classList.contains("ax-sr")){const raw=el.textContent||"",tx=raw.replace(/\s+/g,"");
+    if(el.matches("button,[role=button]")&&(!el.hasAttribute("aria-label")||el._axmAl)&&!el.hasAttribute("aria-labelledby")&&!el.classList.contains("ax-sr")){const raw=axmTxt(el),tx=raw.replace(/\s+/g,"");
       if(!/[\p{L}\p{N}]/u.test(tx)){if(!el.hasAttribute("aria-label")){const n=axmIconName(tx,el.getAttribute("title")||(el.querySelector("img[alt]:not([alt=''])")||{}).alt);if(n)el.setAttribute("aria-label",n)}}
       else if(AXM_PICT.test(raw)||raw.includes("・")){const n=axmSpeak(raw);if(n&&el.getAttribute("aria-label")!==n){el.setAttribute("aria-label",n);el._axmAl=1}}
       else if(el._axmAl){el.removeAttribute("aria-label");el._axmAl=0}}
@@ -192,6 +194,9 @@ axmApply();
 /* 第 5 輪 P16.5：主畫面 #view 補 main 地標、頂欄補 banner（讀螢幕可以用地標跳） */
 {const v=document.getElementById("view"),tb=document.getElementById("topbar");if(v&&!v.getAttribute("role"))v.setAttribute("role","main");if(tb&&!tb.getAttribute("role"))tb.setAttribute("role","banner")}
 if(fzSysOn())try{fzApply()}catch(e){}
+/* 11/17 iMac I P3-8：冷啟動時「跟著系統字級」沒套上（data-fz 沒設，要切到背景再回來才變成最大）：05-settings 第一次 fzApply 時這支還沒載入（axmSysFz 不存在），
+   這裡那一次又太早（WebView 的系統字級、字型還沒就緒，量到的是預設值）→ 載入完、0.3／1.2／3 秒後各再套一次；pageshow（從快取回來）也套 */
+try{const re=()=>{try{if(fzSysOn())fzApply()}catch(e){}};[300,1200,3000].forEach(t=>setTimeout(re,t));addEventListener("load",re);addEventListener("pageshow",re)}catch(e){}
 /* 自動提示一次：用 Tab 鍵、系統減少動態效果、強制色彩 */
 function axmAsk(why){if(axmOn()||store.get("axmAsk",0))return;
   const busy=()=>!!document.querySelector(".modal,#sheet.show,#preov,#bhxPg,#mnfPg,#mnfRite,#mnvPg,#mnqCard,#mnqGf,#xqTitle:not(.out)");   /* 電影、對話章節與任務／授印卡播放中，延後詢問，避免覆蓋故事和解題操作。 */

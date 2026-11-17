@@ -395,7 +395,13 @@ function xqSheet(v,o){xqSheetCss();o=o||{};const sc=document.createElement("div"
     go(sel){let n=0;const f=()=>{if(sel==null){b.scrollTop=0;return}const t=typeof sel==="string"?b.querySelector(sel):sel;
       if(t&&b.contains(t)){b.scrollTop=Math.max(0,b.scrollTop+t.getBoundingClientRect().top-b.getBoundingClientRect().top-6)}else if(++n<25)setTimeout(f,120)};setTimeout(f,40)},
     open(sel,t){if(t!=null)S.title(t);if(!S.on()){el.classList.add("open");sc.classList.add("open");if(typeof xqPanelNav==="function")un=xqPanelNav(()=>{un=null;shut()})}S.go(sel);xqSheetDup(S)}};
-  el._S=S;S.title(o.t);{let q=0;new MutationObserver(()=>{clearTimeout(q);q=setTimeout(()=>xqSheetDup(S),80)}).observe(b,{childList:true,subtree:true})}el.querySelector(".xqs-h button").onclick=()=>S.close();sc.onclick=()=>S.close();return S}
+  el._S=S;S.title(o.t);{let q=0;new MutationObserver(()=>{clearTimeout(q);q=setTimeout(()=>xqSheetDup(S),80)}).observe(b,{childList:true,subtree:true})}el.querySelector(".xqs-h button").onclick=()=>S.close();sc.onclick=()=>S.close();
+  /* 11/17 iMac 測試員 H（P1）：「全部錯棋」這種面板在右側有安全區的機型看不到 ✕，點外面、往下滑也關不掉（只能再點一次 21pt 高的「全部」）→
+     ① 往下滑關：在標題、或內容已經捲到最上面時往下滑 70px 以上就收起；② 點外面關：面板開著時點面板以外的地方（遮罩被別的圖層蓋住也一樣）就收起 */
+  {let y0=null;el.addEventListener("touchstart",e=>{const bb=e.target.closest&&e.target.closest(".xqs-b");y0=bb&&bb.scrollTop>0?null:e.touches[0].clientY},{passive:true});
+    el.addEventListener("touchend",e=>{if(y0==null)return;const dy=e.changedTouches[0].clientY-y0;y0=null;if(dy>70&&S.on())S.close()},{passive:true});
+    document.addEventListener("pointerdown",e=>{if(!el.isConnected||!S.on())return;const t=e.target;if(t&&t.nodeType===1&&(el.contains(t)||t.closest(".modal,#sheet,.toast")))return;S.close()},true)}
+  return S}
 /* 回饋 834（開發者 11/9 截圖：面板標題「語音報棋」底下又一行「語音報子」，「太冗餘重複，盤查所有類似頁面」）：
    面板一打開（或內容換了），看面板裡「第一個看得到的東西」：如果是一行小標（.sec-t，裡面沒有按鈕或連結），而且
    ①整張面板只有這一個小標，或 ②小標跟面板標題的漢字一樣／互相包含（例如「🕯 氛圍」底下的「氛圍」），就把那行小標藏起來，標題已經說了。
@@ -476,6 +482,8 @@ function shwBotHook(S){if(S.botHook||!S.box||!S.box.isConnected)return;S.botHook
     menu=document.createElement("div");menu.className="shw-menu";const bot=typeof BOT!=="undefined"&&BOT&&BOT.act;
     menu.innerHTML=`<button type="button" data-a="ask">💬 問問題</button>${bot?'<button type="button" data-a="tale">📜 聽棋語</button>':""}<button type="button" data-a="me">🙂 我的角色</button>`;
     L.append(menu);const W=L.clientWidth||S.I.clientWidth,left=head[0]>W*.6;Object.assign(menu.style,{top:Math.max(4,head[1]-10)+"px",left:left?"":(head[0]+18)+"px",right:left?(W-head[0]+18)+"px":""});
+    /* 11/17 iMac K P2-4：角色站在畫面下緣時，選單最後一顆「我的角色」落在 Home 指示條區或畫面外（Duo y 646–679，畫面 678）→ 量一次，超出就往上挪（留 Home 指示條 34px＋8px） */
+    try{const r=menu.getBoundingClientRect(),lim=(window.visualViewport?visualViewport.height:innerHeight)-42;if(r.bottom>lim)menu.style.top=Math.max(4,(parseFloat(menu.style.top)||0)-(r.bottom-lim))+"px"}catch(e){}
     menu.querySelectorAll("button").forEach(b=>b.onclick=ev=>{ev.stopPropagation();const a=b.dataset.a;shut();
       if(a==="ask"){if(typeof askSheet==="function")askSheet();else try{window.dispatchEvent(new CustomEvent("xq-bot-ask"))}catch(err){}}
       else if(a==="tale"){try{BOT.act(Math.random()*(BOT.count||1)|0)}catch(err){}}

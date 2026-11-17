@@ -62,6 +62,8 @@ test("W1：375／393／430／320 × 中英 × 連線斷網：頂欄高、鐘範�
   assert.equal(V.enMaxClk, 2 * V.lh + V.tPadB, "英文有鐘時標題上限＝兩行＋底下讓位（76px）");
   const rows = [];
   for (const w of [320, 375, 393, 430]) for (const lang of ["zh", "en"]) for (const net of ["on", "off"]) for (const gap of [false, true]) {
+    /* 第 28 輪 N28-5 起 360 寬以下英文改成「標題一行在上、星晷在下」（07i18n），那種排法在 test-r28-1117.js 細測；這裡照舊算 375 以上和中文 */
+    if (w <= 360 && lang === "en") { rows.push(`${w} en：見 test-r28`); continue }
     const lines = LINES[lang][w], L = layout(V, lang, lines, gap), tag = `${w} ${lang} ${net}${gap ? " gapfix" : ""}`;
     assert.ok(!L.hidden, tag + "：標題字沒被切");
     assert.ok(L.clk[0] >= 0, tag + "：鐘上緣 " + L.clk[0] + " 在畫面內");

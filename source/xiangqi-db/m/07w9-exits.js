@@ -65,7 +65,7 @@ function exSync(){if(!EXIT_ON)return;clearTimeout(EX_T);const k=exKey(),t0=Date.
       if(!box){if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}exCss();
       const mk=(cls,x,y,t,fn)=>{if(box.querySelector("."+cls))return;const s=document.createElement("button");s.type="button";s.className=sp.className.split(" ")[0]+" "+cls;s.style.left=x+"%";s.style.top=y+"%";s.textContent=t;s.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(z){}fn()};box.append(s)};
       mk("ex-set",SHIP_SET[0],SHIP_SET[1],SHIP_SET[2],()=>{location.hash="#/settings"});   /* 星槎中間艙房門口＝天字客房（設定） */
-      if(b&&!b.hidden&&typeof b.onclick==="function"){mk("ex-home",62,92,typeof hbIsCl==="function"&&hbIsCl()?"🏘 回時光之苑":"🏘 回棋鎮",()=>{const bb=document.getElementById("back");if(bb&&typeof bb.onclick==="function")bb.onclick()});exCls("add")}   /* 右下下船石階＝回首頁 */
+      if(b&&!b.hidden&&typeof b.onclick==="function"){mk("ex-home",62,92,typeof hbIsCl==="function"&&hbIsCl()?"🏘 回時光之苑":"🏘 回棋鎮",()=>{if(typeof goHome==="function")goHome();else location.hash="#/"});   /* 11/17 iMac V P3-6：寫「回棋鎮」就真的回首頁（以前借返回鈕，返回鈕是回上一頁，兩次都退到上一頁） */exCls("add")}   /* 右下下船石階＝回首頁 */
       return}
     if(!P){exCls("remove");if(Date.now()-t0<4000)EX_T=setTimeout(go,150);return}
     exCss();const DY=exDyn(k),E=DY||exFind(k),hasBack=b&&!b.hidden&&typeof b.onclick==="function";

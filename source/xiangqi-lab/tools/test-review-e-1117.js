@@ -64,7 +64,7 @@ test("2 玩家登記：原生版沒選過＝不送、自己打開才送；網頁
   assert.match(SET, /rp\.checked=!store\.get\("repOff",typeof setNat==="function"&&setNat\(\)\);/, "開關的初始值跟送出判斷用同一個預設");
   assert.match(SET, /\(\(typeof setNat==="function"&&setNat\(\)\)\?'<b [^>]*>玩家登記預設關閉，你在下面打開「📨 送出玩家登記給開發者」才會送。<\/b>':''\)\+'App 每 7 天/, "隱私卡片在原生版寫明預設關");
   const P = rd("xiangqi-db/art/docs/privacy.md"), kit = docKit(true);
-  assert.match(kit.xqDocVar(P, true), /iPhone App：\*\*預設關閉\*\*/); assert.ok(!/iPhone App：\*\*預設關閉\*\*/.test(kit.xqDocVar(P, false)), "網頁版隱私說明不出現原生版那句");
+  /* 11/17 iMac G P3-4 起不寫死 iPhone（iPad 也會跑）→「App 版」 */ assert.match(kit.xqDocVar(P, true), /App 版：\*\*預設關閉\*\*/); assert.ok(!/App 版：\*\*預設關閉\*\*/.test(kit.xqDocVar(P, false)), "網頁版隱私說明不出現原生版那句");
 });
 
 // ---------- 3. 設定：進階、證據類文件 ----------

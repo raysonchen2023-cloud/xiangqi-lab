@@ -26,7 +26,7 @@ const SHW_CJ_BASE={el:42,h:[.085,70,.0012],look0:[52,45],home:"home",N:{home:[50
 const cjmPc=(x,y)=>[x/7.68,y/13.76];
 /* 秦到隋組：陶臼挪到桌面左後角 (48–196, 438–572 像素)，桌面走路多一塊障礙 */
 function cjmShw(g){if(g!=="weijin")return SHW_CJ_BASE;const B=JSON.parse(JSON.stringify(SHW_CJ_BASE));B.TB.tea.ob.push([[6,32],[25.5,32],[25.5,41.5],[6,41.5]]);return B}
-const cjmDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
+const cjmDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"&&xqNight())};   /* 11/17 第 28 輪 N28-2：有夜版圖的頁一律照實際日落（00-util xqNight，跟首頁同一個判斷）；深色主題照舊 */
 /* 今天的季節花葉（依月份，一天一種）：[名稱, 顏色, 形狀] */
 function cjmLeaf(){const m=new Date().getMonth()+1,d=new Date().getDate();
   const S=m>=3&&m<=5?[["桃花瓣","#f2b8c0","p"],["杏花瓣","#f6dcd8","p"]]:m>=6&&m<=8?[["荷花瓣","#f4c6cf","l"]]:m>=9&&m<=11?[["桂花","#f0c24a","s"],["楓葉","#c8442c","m"]]:[["梅花瓣","#fbf3ee","p"],["紅梅瓣","#d4505a","p"]];return S[d%S.length]}

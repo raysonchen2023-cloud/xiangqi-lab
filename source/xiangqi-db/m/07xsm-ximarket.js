@@ -6,6 +6,7 @@
    場景圖 data/ximarket/（park/ximarket 轉來，process_art.py MAPS["ximarket"]）：外景白天 xm_day、夜景 xm_night（768×1376，器物位置相同，座標共用）；茶坊內景 xm_tea。只有直幅。
      日夜：11/17 開發者選單改成「全部照實際日落」（取代第 3 項 A 的照時辰）：問 00-util xqNight，跟首頁同一個判斷；頁面開著每分鐘看一次，跨過日落、日出會自己換；一張載不到就換另一張（XSM_BAD）。
      茶坊窗外固定下雨（第 18 項 A，程式畫的雨；減少動態時不動）；茶坊只有一張圖，夜裡蓋一層暗藍（日夜跟著西市換）。
+     11/17 冬景：立冬～大寒三張都換 _winter 版（xsmSrc，季節跟首頁同一個判斷 07w7 sw7WinterNow）；茶坊冬天窗外畫的是雪，程式畫的雨改成細小、慢慢飄的雪（data-win）。
    標籤只放大字、不放圖示（第 5 項 A：寫玩法名）：領禮物＝櫃坊、七星來訪＝老槐樹下、找棋子＝棋具攤、暗棋＝聽雨茶坊、聽曲＝樂棚（第 10 項 A）。
      這一版只做場景頁：「暗棋」這一攤可以進茶坊看內景；其他攤灰色帶鎖，點了跳「還沒開張，敬請期待。」（第 12 項 A）。
      11/14 開發者：茶坊中間的暗棋桌第一個開張，點了到 #/ximarket/dark 玩臺灣暗棋（07xsd-xsmdark.js，對電腦）。
@@ -28,7 +29,7 @@
      西市背景配樂（第 13 項的「西市燈影」「聽雨暗棋」還沒有檔，先借三首；茶坊、暗棋同一組）：白天＝漢 han/paixiao_6（排簫）、唐 tang/pipa_1（琵琶）輪流（漢唐長安的西市）；
        夜裡＝宋 song/qin_3（古琴）、唐 tang/pipa_1 輪流（說明卡寫的「借宋代夜市和唐代上元燈會」）。離開 #/ximarket 就還給朝代配樂（bgmForce(null)）；背景音樂關著就不放。
      首頁「🏮 西市」、外景的「領禮物」「七星來訪」：有禮可領、有人來訪還沒見到時發亮（.hot，第 17 項 A，不加數字）。存檔鍵 xsmStall（05b JOURNEY_KEYS）。 */
-const XSM_ON=true,XSM_IMGV="1113";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓 */
+const XSM_ON=true,XSM_IMGV="1117";   /* 圖的版本：同檔名換圖時改掉，手機才會重抓（11/17 加冬景三張改 1117） */
 const XSM_OFF="還沒開張，敬請期待。";
 const XSM_TX={pos:"各朝的貨色，都在這裡湊成一市。",intro:"西市，原本是城西那座市集的名字。漢朝、唐朝的長安城都有。千秋時光之苑不屬於任何朝代，各朝的貨色就都擺到這裡來了。"};
 /* [id, 大字, 左%, 上%, 還沒開張？]（量 xm_day 768×1376；標籤放在攤位上方，不擋主體） */
@@ -40,6 +41,12 @@ const XSM_SPOTS=[
   ["xsmVisit","七星來訪",81,74,0]];   /* 市門右邊的老槐樹：樹下石墩、木凳上方（11/16 開張） */
 const XSM_TEA_SPOTS=[["xsmDark","暗棋",50,44,0]];   /* 茶坊中間那張暗棋桌（量 xm_tea 768×1376）；11/14 開張：點了開一盤臺灣暗棋（07xsd-xsmdark.js） */
 const XSM_HOME={"":[16,59],p34:[16,60],l1610:[19,71]};   /* 首頁橋左邊（跟觀星臺 GXT_HOME 左右對稱，再往下挪開左岸告示牌；原圖量 home_classic 768×1376，p34 量 1536×2048，l1610 量 2560×1600） */
+/* 11/17 測試員 B 第 29 輪 N29-7：茶坊不放走路角色，到處走的小帥（src/bot3d.js）照「禁區」挑空位，整張圖都沒有禁區，就會站到窗框、櫃台茶壺上。
+   bot3d 不動（src）：在圖上蓋四塊透明、不攔點選的禁區（data-bot-avoid，bot3d KO_T 會避開），只留暗棋桌前、櫃台左邊那塊地面（左 26～54%、上 50～77%，量 xm_tea 768×1376；冬景同位置）。
+   [左, 上, 右, 下] %：上半（牆、窗、花架）、左邊（兩張方桌和條凳）、右邊（櫃台、燈籠）、下面（櫃台前緣和最下面的條凳） */
+const XSM_TEA_FLOOR=[26,50,54,77];
+const XSM_TEA_NOBOT=(F=>[[0,0,100,F[1]],[0,F[1],F[0],100],[F[2],F[1],100,100],[F[0],F[3],F[2],100]])(XSM_TEA_FLOOR);
+const xsmTeaNoBot=()=>XSM_TEA_NOBOT.map(r=>`<i class="xsm-nobot" data-bot-avoid aria-hidden="true" style="left:${r[0]}%;top:${r[1]}%;width:${r[2]-r[0]}%;height:${r[3]-r[1]}%"></i>`).join("");
 const XSM_RAIN=[[53,12,60,31],[69.5,14,82,36]];   /* 茶坊窗外看得到雨的兩塊（左、上、右、下 %） */
 const XSM_BAD={};   /* 這次開 App 載不到的圖（d＝白天、n＝夜景），換另一張不再試 */
 /* ---------- 11/16 四攤的資料 ---------- */
@@ -130,7 +137,12 @@ function xsmOpen(){if(!XSM_ON)return false;   /* 11/16 選單「場景入口照�
 function xsmDay(d){try{if(typeof xqNight==="function")return!xqNight(d)}catch(e){}d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
 /* 想要白天／夜景 → 實際用哪一張（那張載不到就換另一張；兩張都壞就照原本那張） */
 const xsmPickDay=day=>day?!XSM_BAD.d:(!!XSM_BAD.n&&!XSM_BAD.d);
-const xsmSrc=(day,tea)=>tea?`data/ximarket/xm_tea.webp?v=${XSM_IMGV}`:`data/ximarket/xm_${xsmPickDay(day)?"day":"night"}.webp?v=${XSM_IMGV}`;
+/* 11/17 冬景（開發者選單「做 7 張、接進 App」）：立冬～大寒換 xm_day_winter、xm_night_winter、xm_tea_winter（gpt-image-2 照原圖換季，標籤、出口、13 個藏點都對齊原圖）；
+   季節跟首頁同一個判斷（07w7 sw7WinterNow），日夜照舊 xsmDay（xqNight）。冬景載不到記在 XSM_BAD.wd／wn／wt，退回原圖。win 不給＝問現在是不是冬天 */
+const xsmWinter=()=>{try{return typeof sw7WinterNow==="function"&&!!sw7WinterNow()}catch(e){return false}};
+const xsmWk=(day,tea)=>"w"+(tea?"t":day?"d":"n");
+const xsmSrc=(day,tea,win)=>{if(win===undefined)win=xsmWinter();const d=tea?false:xsmPickDay(day),w=win&&!XSM_BAD[xsmWk(d,tea)]?"_winter":"";
+  return tea?`data/ximarket/xm_tea${w}.webp?v=${XSM_IMGV}`:`data/ximarket/xm_${d?"day":"night"}${w}.webp?v=${XSM_IMGV}`};
 /* 標籤 [id,左,上,大字,還沒開張] */
 const xsmSpots=L=>(L||XSM_SPOTS).map(s=>[s[0],s[2],s[3],s[1],!!s[4]]);
 /* ---------- 11/16 四攤的純計算（不碰 DOM；test-xsm-stalls-1116.js 用 vm 跑） ---------- */
@@ -210,8 +222,11 @@ function xsmCss(){if(document.getElementById("xsmCss"))return;const s=document.c
 .xsm-page .shp-spot.lock{border-color:#8a8476;background:rgba(28,26,30,.68);box-shadow:none}.xsm-page .shp-spot.lock b{color:#c9c2b2;font-size:14px}
 .xsm-tea .xsm-rain{position:absolute;z-index:1;pointer-events:none;overflow:hidden;opacity:.6;background-image:repeating-linear-gradient(100deg,rgba(255,255,255,0) 0 9px,rgba(232,240,250,.6) 9px 10px,rgba(255,255,255,0) 10px 23px);background-size:46px 58px;animation:xsmRain .55s linear infinite}
 @keyframes xsmRain{to{background-position:-10px 58px}}
+.xsm-tea[data-win="1"] .xsm-rain{opacity:.85;background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 1.1px,rgba(255,255,255,0) 1.7px),radial-gradient(circle,rgba(246,250,255,.75) 0 .8px,rgba(255,255,255,0) 1.4px);background-size:23px 29px,37px 41px;background-position:0 0,11px 17px;animation:xsmSnow 8s linear infinite}
+@keyframes xsmSnow{to{background-position:-23px 58px,-26px 99px}}
 .xsm-tea::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(16,24,58,.4);mix-blend-mode:multiply;opacity:0;transition:opacity .6s}.xsm-tea[data-day=""]::after{opacity:1}
-@media (prefers-reduced-motion:reduce){.xsm-tea .xsm-rain{animation:none}}
+.xsm-tea .xsm-nobot{position:absolute;z-index:0;pointer-events:none;background:none}
+@media (prefers-reduced-motion:reduce){.xsm-tea .xsm-rain,.xsm-tea[data-win="1"] .xsm-rain{animation:none}}
 .xsm-pc{position:absolute;z-index:2;width:22px;height:22px;margin:-11px 0 0 -11px;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle at 40% 35%,#f6e7c4,#d4b072);border:1.5px solid #7a4a1f;color:#a3271d;font:900 13px/19px var(--serif,serif);text-align:center;pointer-events:none;opacity:.85;transform:rotate(-14deg);box-shadow:0 1px 2px rgba(0,0,0,.4)}
 .xsm-pc.glow{animation:xsmGlow 1s ease-in-out 3}.xsm-pc.got{animation:xsmGot .9s ease-out forwards}
 @keyframes xsmGlow{50%{opacity:1;box-shadow:0 0 0 6px rgba(242,201,76,.75),0 0 16px rgba(242,201,76,.95)}}@keyframes xsmGot{to{opacity:0;transform:translateY(-26px) scale(1.7)}}
@@ -262,7 +277,7 @@ function xsmAfter(v,P){const im=P.querySelector(":scope>img");
   if(typeof shpFit==="function")shpFit(v);try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 /* 換日夜：先載好再換；載不到記下來（下次 xsmSrc 自己換另一張） */
 function xsmSwap(P,day){const im=P.querySelector(":scope>img");if(!im)return;const nd=xsmPickDay(day),src=xsmSrc(nd);if(im.getAttribute("src")===src)return;
-  const pre=new Image();pre.onload=()=>{if(!P.isConnected)return;P.dataset.day=nd?"1":"";im.src=src};pre.onerror=()=>{XSM_BAD[nd?"d":"n"]=1};pre.src=src}
+  const pre=new Image();pre.onload=()=>{if(!P.isConnected)return;P.dataset.day=nd?"1":"";im.src=src};pre.onerror=()=>{if(/_winter\./.test(src))XSM_BAD[xsmWk(nd)]=1;else XSM_BAD[nd?"d":"n"]=1};pre.src=src}   /* 11/17 冬景載不到＝只記冬景那張壞了，下一分鐘換回原圖 */
 function xsmIntro(){modal(`<h3>🏮 西市</h3><p><b>${esc(XSM_TX.pos)}</b></p><p>${esc(XSM_TX.intro)}</p>`,[["逛逛西市",null]])}
 function xsmWalk(v){if(typeof shwPage!=="function"||typeof SHIP_WALK_ON==="undefined"||!SHIP_WALK_ON)return;try{shwPage(v,xsmWalkCfg(),"xsm")}catch(e){}}
 function XsmPage(v,sub){try{if(xsmOpen()){if(sub==="dark"&&typeof xsdBgmOn==="function")xsdBgmOn();else xsmBgmOn()}}catch(e){}   /* 11/16 西市背景配樂（外景、茶坊、暗棋都是這一組） */
@@ -275,11 +290,12 @@ function XsmPage(v,sub){try{if(xsmOpen()){if(sub==="dark"&&typeof xsdBgmOn==="fu
   v.append(P);xsmBind(P,XSM_SPOTS);
   try{xsmMark(P)}catch(e){}try{xsmHuntInit(v,P)}catch(e){}   /* 11/16：有禮、有人來的標籤發亮；今天那顆棋子藏到圖上 */
   const im=P.querySelector(":scope>img");
-  im.onerror=()=>{const sh=P.dataset.day==="1";XSM_BAD[sh?"d":"n"]=1;const n2=xsmPickDay(sh);if(n2!==sh){P.dataset.day=n2?"1":"";im.src=xsmSrc(n2)}};
+  im.onerror=()=>{const sh=P.dataset.day==="1";if(/_winter\./.test(im.getAttribute("src")||"")){XSM_BAD[xsmWk(sh)]=1;im.src=xsmSrc(sh);return}   /* 11/17 冬景載不到＝先退回同一個時辰的原圖 */
+    XSM_BAD[sh?"d":"n"]=1;const n2=xsmPickDay(sh);if(n2!==sh){P.dataset.day=n2?"1":"";im.src=xsmSrc(n2)}};
   /* 07w9 的出口晚一點才放進來：補 id（走路角色的入口代號 HS.xsmExit） */
   try{const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}const s=P.querySelector(".ex-spot");if(s&&!s.id)s.id="xsmExit"});mo.observe(P,{childList:true})}catch(e){}
-  /* 每分鐘看一次時辰，跨過卯時、酉時就換日夜 */
-  {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmPickDay(xsmDay());if(d!==(P.dataset.day==="1"))xsmSwap(P,d);
+  /* 每分鐘看一次：跨過日落、日出就換日夜；11/17 跨過立冬（或大寒過完）換季也換（xsmSwap 網址一樣就不動） */
+  {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmPickDay(xsmDay());xsmSwap(P,d);
     try{const w=xsmDay()?XSM_BGM_D:XSM_BGM_N;if(typeof BGM!=="undefined"&&(BGM.force===XSM_BGM_D||BGM.force===XSM_BGM_N)&&BGM.force!==w)bgmForce(w)}catch(e){}},60000)}   /* 11/16 配樂也跟著換日夜（樂棚正在放的不動） */
   xsmAfter(v,P);
   xsmWalk(v);   /* 走路角色（3D 載不到、減少動態時 07w 不攔點選，入口照舊直接開） */
@@ -288,10 +304,14 @@ function XsmPage(v,sub){try{if(xsmOpen()){if(sub==="dark"&&typeof xsdBgmOn==="fu
 function xsmTea(v){setTop("🍵 聽雨茶坊","#/ximarket");setTabs(true,"#/");v.className="view";
   if(!xsmOpen()){toast("🏮 西市還沒開市");navReplace("#/");return{}}
   xsmCss();const P=document.createElement("div");P.className="shp-page cq xsm-page xsm-tea";P.dataset.day=xsmDay()?"1":"";
-  P.innerHTML=`<img src="${xsmSrc(false,1)}" alt="聽雨茶坊：方桌、條凳、靠背椅，窗外下著雨，中間一張暗棋桌">`+
-    XSM_RAIN.map(r=>`<i class="xsm-rain" style="left:${r[0]}%;top:${r[1]}%;width:${r[2]-r[0]}%;height:${r[3]-r[1]}%"></i>`).join("")+xsmBtns(XSM_TEA_SPOTS);
+  const s0=xsmSrc(false,1),isW=s=>/_winter\./.test(s||"");P.dataset.win=isW(s0)?"1":"";   /* 11/17 冬景：窗外是雪，XSM_RAIN 那兩塊改畫雪（CSS data-win） */
+  P.innerHTML=`<img src="${s0}" alt="聽雨茶坊：方桌、條凳、靠背椅，窗外${isW(s0)?"飄著雪":"下著雨"}，中間一張暗棋桌">`+
+    XSM_RAIN.map(r=>`<i class="xsm-rain" style="left:${r[0]}%;top:${r[1]}%;width:${r[2]-r[0]}%;height:${r[3]-r[1]}%"></i>`).join("")+xsmTeaNoBot()+xsmBtns(XSM_TEA_SPOTS);
   v.append(P);xsmBind(P,XSM_TEA_SPOTS);
-  {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmDay()?"1":"";if(d!==P.dataset.day)P.dataset.day=d},60000)}
+  const im=P.querySelector(":scope>img");
+  im.onerror=()=>{if(isW(im.getAttribute("src"))){XSM_BAD.wt=1;P.dataset.win="";im.src=xsmSrc(false,1)}};   /* 冬景載不到＝原圖＋雨 */
+  {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmDay()?"1":"";if(d!==P.dataset.day)P.dataset.day=d;
+    const s=xsmSrc(false,1);if(im.getAttribute("src")!==s){P.dataset.win=isW(s)?"1":"";im.src=s}},60000)}   /* 11/17 跨過立冬也換季 */
   xsmAfter(v,P);
   return{}}
 /* ---------- 11/16 四攤：存檔 ---------- */

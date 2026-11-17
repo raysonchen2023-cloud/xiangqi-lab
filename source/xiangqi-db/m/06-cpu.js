@@ -290,9 +290,12 @@ function pkNoGame(get){const J=k=>{try{const v=get(k);return v==null?null:JSON.p
   const R=J("xq_cpuRate");if(R&&((R.w|0)+(R.l|0)+(R.d|0)>0||(Array.isArray(R.hist)&&R.hist.length>0)))return false;
   const N=J("xq_netSaved");if(Array.isArray(N)&&N.length)return false;
   return !["xq_record","m_record","xq_arenaStamps","xq_simulRec"].some(k=>nz(J(k)))}
-let PK_DEF=null;
-function pkDef3d(){try{const raw=localStorage.getItem("xq_play");let id=null;try{const p=JSON.parse(raw||"null");id=p&&p.id||null}catch(e){}
-  if(!PK_DEF||PK_DEF.id!==id)PK_DEF={id,v:!pkNoGame(k=>localStorage.getItem(k))};return PK_DEF.v}catch(e){return true}}
+/* 11/17 iMac H P3-7（練功房開局後 2～3 秒自己切到 3D，第一下點空）：原本照「這盤棋的 id」決定，新開一盤時頁面先用舊的那盤（剛下完的第一盤）畫平面，
+   等新的一盤開好、id 換了才重算成 3D，畫面就在開局後跳過去。改成「每進一個頁面算一次」：進頁面當下就決定好，在這一頁裡（含結算、下一盤）不會中途換；
+   換頁（網址第一段變了）才重算。第一盤照舊平面、下完的結算畫面不會突然跳成 3D；之後進對局頁一開始就是 3D（照 11/12 開發者選的「甲」），不會開局後才跳 */
+let PK_DEF=null,PK_VISIT=0;
+try{addEventListener("hashchange",e=>{try{const a=String(new URL(e.oldURL).hash||"").split("/")[1]||"",b=String(location.hash||"").split("/")[1]||"";if(a!==b)PK_VISIT++}catch(x){PK_VISIT++}})}catch(e){}
+function pkDef3d(){try{localStorage.getItem("xq_play");   /* 讀不到 localStorage（丟例外）就照原本預設 3D */if(!PK_DEF||PK_DEF.vis!==PK_VISIT)PK_DEF={vis:PK_VISIT,v:!pkNoGame(k=>localStorage.getItem(k))};return PK_DEF.v}catch(e){return true}}
 const parkOn=()=>!PARK_OFF&&!(focusOn()&&!PARK_LK)&&(v=>v==null?pkDef3d():v)(store.get("park3d",null));   /* 意見回饋 247：13 個朝代都上線了，挑戰電腦、真人對戰預設在公園下（玩家自己切回棋盤模式會記住）；11/12 新玩家第一盤例外，見 pkDef3d */
 const botVis=on=>document.querySelectorAll(".xqbot").forEach(x=>x.style.visibility=on?"":"hidden");
 function parkLoad(){const v="?v="+encodeURIComponent(window.XQ_BUILD||"");return PARK_LOADING||(PARK_LOADING=(async()=>{await loadScript(OFF?"three.min.js":"/m/three.min.js");
@@ -423,6 +426,9 @@ function pkBench(){const v=typeof PARK!=="undefined"&&PARK&&PARK.v;if(!v||!v.ben
     if(ok)toast("量測中：鏡頭會自己轉 10 秒，先不要操作");else toast("3D 畫面還沒準備好，等它出現再試一次")},450)}
 /* 回饋 871（開發者 11/12「車輪戰出現小帥妹過場動畫」）：ex.quietMate＝不播入座運鏡（坐著看小帥／小帥妹 1.8 秒再拉到俯視）、不讓小帥說「我是小帥妹，幫你加油！」。
    車輪戰（08s-simul.js）的開場只有 simIntro 棋館過場；ex.gate 也一定要給（沒給 gate／arena 時 park3d 的載入畫面是「小帥妹走去園子」） */
+/* 11/17 iMac I P2：3D 園子的對話泡泡畫在 3D 畫面上（不是網頁文字），英文介面的翻譯器碰不到 → 交給 park3d 之前先翻（say／oppSay 兩個入口；翻不出就照原文） */
+function pkI18nWrap(pv){try{if(!pv||pv.__i18n)return;pv.__i18n=1;const T=s=>{try{if(typeof i18nLang==="function"&&i18nLang()==="en"&&typeof i18nText==="function"){const t=i18nText(String(s));if(t)return t}}catch(e){}return s};
+  for(const k of["say","oppSay"])if(typeof pv[k]==="function"){const f=pv[k];pv[k]=function(t,...a){return f.call(this,T(t),...a)}}}catch(e){}}
 function parkDraw(host,bd,board,o,ex){
   if(typeof whl3dOn==="function"&&whl3dOn())return;   /* 11/15 車輪戰 3D 開著（07bhw-wheel.js，全螢幕蓋在上面、自己有一個 3D 實例）：底下被蓋住的對局頁先不建 3D，全場只留一個實例（iPhone 記憶體）；離開車輪戰時它會叫對局頁重畫 */
   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
@@ -434,7 +440,7 @@ function parkDraw(host,bd,board,o,ex){
   if(!PARK||PARK.host!==host||!document.body.contains(PARK.v.el)){if(PARK)PARK.v.destroy();
     if(ex.gate&&ex.gate.qk)ex.gate=Object.assign({},ex.gate,{quote:parkQuote(ex.gate.qk)});   /* 名言只在真的建公園、要顯示過場時才抽，不然每次重畫都抽一次，會跟上次重複 */
     const pv=XQPark3D.create(host,{giant:!!ex.giant,   /* hspx（開發者 11/12）：黑洞星樞棋局的巨盤模式（07bh-blackhole.js） */view:ex.giant?null:store.get("parkView","")||null,intro:store.get("parkView","")||ex.quietMate?null:pkIntroKey(ex),   /* 11/11：玩家存過的視角一開始就用；沒存過的手機直式 park3d 用 topfit（俯視＋拉近） */arena:ex.arena||null,gate:ex.gate||null,bg:ex.bg||null,bridge:!!ex.bridge,ground:ex.ground||null,era:ex.era||null,indoor:!!ex.indoor,   /* 11/11：車輪戰棋館＝明朝家具、室內（不放園子的樹和道具） */   /* 11/11：首頁橋上石桌（07y hbBridge）＝橋上家具＋橋面地面；換場景靠 bg 不同就會重建 */onTap:i=>{if(!pkGateEat())pkSwTap(ex,i)},onInfo:k=>{if(!pkGateEat())parkInfo(k)},onDestroy:()=>{if(PARK&&PARK.v===pv){PARK=null;botVis(true)}}});
-    if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null,ground:ex.ground||null,ik:pkIntroKey(ex)};try{pkGateWatch(pv)}catch(e){}parkUi(host,pv);setTimeout(()=>{try{if(!ex.quietMate)pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
+    if(!pv){toast("這台裝置沒辦法顯示 3D，先用棋盤模式");store.set("park3d",false);return}if(typeof pkI18nWrap==="function")pkI18nWrap(pv);PARK={host,v:pv,era:store.get("era","classic"),bg:ex.bg||null,ground:ex.ground||null,ik:pkIntroKey(ex)};try{pkGateWatch(pv)}catch(e){}parkUi(host,pv);setTimeout(()=>{try{if(!ex.quietMate)pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)setTimeout(()=>pv.oppSay(ex.oppHello,2.6),1400)}catch(e){}},700)}
   /* 意見回饋 417：園子上方標出朝代和那個朝代對園子的叫法（例如「唐朝・園林」「漢朝・苑囿」） */
   /* 11/17 測試員 D（英文、手機直式 376 寬）：「🔭 Star Terrace · Omen of the Day」「🌌 Phantom star gate · Ziyuan」場名置中又不換行（m.css .pkname nowrap、字距 .14em），寬約 324px，壓住右上「👁 Eye level」視角鈕（.pkview，約 96px 寬）。
      只在英文介面：場名中心往左挪 52px、寬度上限讓出右邊鈕的位置（100% - 124px），字縮一點、字距收小，太長就換行；中文版面不動。橫向（m.css 1375 把場名移到左邊 top:56px）照舊靠左 */
@@ -474,7 +480,7 @@ function pkSwTap(ex,i){const L0=PARK&&PARK.last,s0=L0&&L0.o&&L0.o.sel>=0?L0.o.se
 // 意見回饋 241：在公園裡按鈕換成「▦」（回棋盤模式），在棋盤模式是「🌳」（去公園）
 const parkIcon=()=>parkOn()?"▦":"🌳",parkLabel=()=>parkOn()?"回棋盤模式":"去園子下棋（3D）";
 const parkBtn=redraw=>[parkIcon(),e=>{if(typeof gsvParkBtn==="function"&&gsvParkBtn())return;   /* 11/15 黑洞星門圍城對局中：這顆（手機收在「⋯ 更多」裡）＝切到 3D 星盤／回平面棋盤，視角由 07bhg-gatesiege.js 記（gsvView），它自己重畫 */const fo=focusOn()&&!PARK_LK&&!PARK_OFF;   /* 專注棋盤模式開著又按「去園子」：等於把專注模式關掉 */
-  if(fo){store.set("focusBoard",false);focusApply();store.set("park3d",true)}else store.set("park3d",!parkOn());vibrate(8);toast(parkOn()?`${fo?"已關閉專注棋盤模式。":""}🌳 園子 3D 棋盤：${BOTN()}坐在對面跟你下（拖曳可以看四周）`:"回到棋盤模式");
+  if(fo){store.set("focusBoard",false);focusApply();store.set("park3d",true)}else store.set("park3d",!parkOn());try{store.set("arP3Bak",null)}catch(x){}vibrate(8);toast(parkOn()?`${fo?"已關閉專注棋盤模式。":""}🌳 園子 3D 棋盤：${BOTN()}坐在對面跟你下（拖曳可以看四周）`:"回到棋盤模式");
   const b=(e&&e.currentTarget)||(typeof pkSwTb==="function"?pkSwTb():null);if(b){const l=parkLabel();b.textContent=parkIcon();b.title=l;b.setAttribute("aria-label",l);b.dataset.lb=l}redraw()},parkLabel()];   /* 11/17 第 21 輪 79：從「⋯」選單按（沒有 currentTarget）也找得到頂欄那顆；aria-label、data-lb 一起換，選單和讀螢幕的名稱才會跟著變 */
 // ================= 🧪 擺盤推演（意見回饋 250）：對局中跳到另一張棋盤，從當下局面紅黑兩邊都自己走，試各種變化；不影響正在下的那盤 =================
 // eng＝能不能請 Pikafish 分析（積分挑戰、網路對戰中不行，免得變成作弊）

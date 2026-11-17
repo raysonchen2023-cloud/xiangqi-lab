@@ -13,9 +13,9 @@ const CODE=CPU.slice(a,e);
 const UTIL=rd("00-util.js").split("\n").find(l=>l.startsWith("const store="));
 function boot(init){const mem=new Map(Object.entries(init||{}).map(([k,v])=>[k,typeof v==="string"?v:JSON.stringify(v)]));
   const localStorage={getItem:k=>mem.has(k)?mem.get(k):null,setItem:(k,v)=>mem.set(k,String(v)),removeItem:k=>mem.delete(k),key:i=>[...mem.keys()][i]??null,get length(){return mem.size}};
-  const ctx={localStorage};vm.createContext(ctx);
+  const H=[],loc={hash:"#/cpu"},ctx={localStorage,location:loc,URL,addEventListener:(t,fn)=>{if(t==="hashchange")H.push(fn)}};vm.createContext(ctx);
   vm.runInContext(UTIL+"\nvar PARK_OFF=false,PARK_LK=false;function focusOn(){return false}\n"+CODE+"\nthis.T={parkOn,pkNoGame,pkDef3d,store};",ctx);
-  const T=ctx.T;T.put=(k,v)=>localStorage.setItem(k,JSON.stringify(v));return T}
+  const T=ctx.T;T.put=(k,v)=>localStorage.setItem(k,JSON.stringify(v));T.go=h=>{const o="https://x/"+loc.hash;loc.hash=h;H.forEach(fn=>fn({oldURL:o}))};return T}
 /* 開機就會寫的東西：一盤空的 xq_play（moves 是空的）、今日茶單 m_cj、看過訓練營 m_campSeen——都不算「下完過一盤」 */
 const FRESH={xq_play:{seq:1,id:"g0",moves:[],result:null},m_cj:{day:"2026-11-12"},m_campSeen:true,m_quizLog:[1,2]};
 test("全新手機（什麼都沒有）：預設平面棋盤",()=>{
@@ -42,17 +42,21 @@ test("存過 park3d 的照存的值：新玩家自己選 3D 就是 3D；老玩�
 test("新玩家按頂欄「🌳 去園子下棋（3D）」（store.set(park3d,!parkOn())）：切到 3D 並記住",()=>{
   const T=boot(FRESH);assert.equal(T.parkOn(),false);T.store.set("park3d",!T.parkOn());assert.equal(T.parkOn(),true);
   assert.equal(T.store.get("park3d"),true)});
-test("第一盤下完、還在結算畫面（同一盤 id）不會突然跳成 3D；開下一盤（id 換了）才回到 3D 預設",()=>{
+test("第一盤下完、還在結算畫面不會突然跳成 3D；同一頁直接開下一盤也不在開局後才跳（iMac H P3-7）；換頁再進對局頁才回到 3D 預設",()=>{
   const T=boot({...FRESH,xq_play:{id:"g1",moves:[[70,67]],result:null}});assert.equal(T.parkOn(),false);
   T.put("xq_play",{id:"g1",moves:[[70,67],[19,22]],result:"紅勝"});T.put("xq_record",{"3":{w:1,l:0,d:0}});
   assert.equal(T.parkOn(),false,"同一盤結算時還是平面");
-  T.put("xq_play",{id:"g2",moves:[],result:null});assert.equal(T.parkOn(),true,"第二盤回到 3D 預設")});
+  T.put("xq_play",{id:"g2",moves:[],result:null});assert.equal(T.parkOn(),false,"同一頁開下一盤：還是平面（以前這裡 2～3 秒後跳 3D，第一下點空）");
+  T.go("#/cpu/x");assert.equal(T.parkOn(),false,"網址第一段沒變（同一頁）不算換頁");
+  T.go("#/cpuroom");T.go("#/cpu");assert.equal(T.parkOn(),true,"換頁再進對局頁：一進來就是 3D 預設（不會開局後才跳）");
+  T.put("xq_play",{id:"g3",moves:[],result:null});assert.equal(T.parkOn(),true,"這一頁裡維持")});
 test("localStorage 壞掉（讀取丟例外）：照原本預設 3D，不當機",()=>{
   const T=boot({});const ctx2={localStorage:{getItem(){throw new Error("x")},setItem(){throw new Error("x")}}};vm.createContext(ctx2);
   vm.runInContext(UTIL+"\nvar PARK_OFF=false,PARK_LK=false;function focusOn(){return false}\n"+CODE+"\nthis.T={parkOn};",ctx2);
   assert.equal(ctx2.T.parkOn(),true);assert.ok(T)});
 test("〔原始碼〕設定頁的 3D 開關、螢幕報讀「園子地點清單」用同一個預設（pkDef3d）；頂欄切換鈕名稱照舊「回棋盤模式」／「去園子下棋（3D）」",()=>{
-  assert.match(rd("05-settings.js"),/p3\.checked=!!store\.get\("park3d",typeof pkDef3d==="function"\?pkDef3d\(\):true\)/);
+  /* 11/17 iMac I：設定頁藏起來（display:none）的「3D 園子棋盤」開關連程式拿掉了（切 3D 用對局頁頂欄的鈕），不再有 p3.checked 那行 */
+  assert.ok(!/id="p3d"|querySelector\("#p3d"\)/.test(rd("05-settings.js")),"藏起來的 3D 開關已拿掉");
   assert.match(rd("11c-a11ysnd.js"),/pk=store\.get\("park3d",typeof pkDef3d==="function"\?pkDef3d\(\):true\)/);
   assert.ok(CPU.includes('parkLabel=()=>parkOn()?"回棋盤模式":"去園子下棋（3D）"'));
   for(const f of fs.readdirSync(M).filter(x=>/\.js$/.test(x)))assert.ok(!/store\.get\("park3d",true\)/.test(rd(f)),f+" 還有寫死 3D 預設")});

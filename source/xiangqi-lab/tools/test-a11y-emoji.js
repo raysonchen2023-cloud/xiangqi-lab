@@ -34,7 +34,7 @@ const doc = { createElement: t => new E(t), createTextNode: v => new T(v), creat
 /* ---- 把 axmFix 和它用到的函式原樣切出來 ---- */
 const cut = re => { const m = SRC.match(re); assert.ok(m, "切不出 " + re); return m[0] };
 const code = [cut(/^const AXM_ICON=.*$/m), cut(/^const AXM_PICT=.*$/m), cut(/^function axmSpeak\(t\)\{.*\}$/m), cut(/^function axmHideIn\(root\)\{[\s\S]*?t\.replaceWith\(f\)\}\}$/m),
-  cut(/^function axmIconName\(text,title\)\{.*\}$/m), cut(/^function axmFix\(root\)\{[\s\S]*?\.forEach\(one\)\}$/m)].join("\n");
+  cut(/^function axmIconName\(text,title\)\{.*\}$/m), cut(/^function axmTxt\(el\)\{.*$/m), cut(/^function axmFix\(root\)\{[\s\S]*?\.forEach\(one\)\}$/m)].join("\n");
 const api = new Function("document", "NodeFilter", "axmDlgAdd", code + "\nreturn{axmFix,axmSpeak,axmHideIn};")(doc, { SHOW_TEXT: 4 }, () => {});
 const btn = (txt, attrs) => { const b = new E("button"); b.textContent = txt; for (const k in attrs || {}) b.setAttribute(k, attrs[k]); return b };
 

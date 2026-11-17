@@ -121,7 +121,8 @@ function gcnKick(k){if(!GCN.inst)return;if(k==="cj")GCN.wDirty=true;clearTimeout
 /* 包一層 store.set：寫到 GCN_KEYS 的鍵就排一次重算（原本的寫入照舊、先做） */
 function gcnHookStore(){if(GCN.hooked||typeof store!=="object"||!store||typeof store.set!=="function")return;GCN.hooked=true;const s0=store.set;
   store.set=function(k){const r=s0.apply(this,arguments);try{if(GCN_KEYS.has(k))gcnKick(k)}catch(e){}try{if(k==="fmCfg")setTimeout(gcnFmChanged,0)}catch(e){}return r}}
-function gcnFmChanged(){gcnDqFix();try{if(gcnKid()){const x=document.querySelector("#gcnBtn");if(x&&x.remove)x.remove()}else if(!GCN.auth)gcnAuth()}catch(e){}}
+/* 11/17 iMac 測試員 V P3-4：在設定頁改禁玩時間、每日提醒被改排時，設定頁本身沒有提示（要到每日同題頁才看得到）→ 改排了就當場 toast 一句 */
+function gcnFmChanged(){try{const p=gcnDqFix();if(p&&typeof p.then==="function")p.then(t=>{if(t&&typeof toast==="function")toast(gcnLang()==="en"?"🔔 Daily reminder moved to "+t:"🔔 每日提醒已改到 "+t)}).catch(()=>{})}catch(e){}try{if(gcnKid()){const x=document.querySelector("#gcnBtn");if(x&&x.remove)x.remove()}else if(!GCN.auth)gcnAuth()}catch(e){}}
 
 /* ---------- ③ 今日茶單小工具 ---------- */
 function gcnTermImg(t){const sea=(typeof SW7_HSEA!=="undefined"&&SW7_HSEA&&SW7_HSEA[t])||"spring";let pre="";
@@ -174,11 +175,11 @@ function gcnDqFix(){const D=gcnDqApi();if(!gcnNat()||!D||typeof D.status!=="func
 function gcnDqPaint(box,D,S,moved){try{if(!moved&&S.on&&GCN.dqMoved)moved=GCN.dqMoved;   /* E 第 21 輪 R21-1：改排過就一直寫「已改到」，直到有人動了提醒 */
   const en=gcnLang()==="en",pad=n=>String(n).padStart(2,"0"),opts=gcnDqOpts();
   let cur=pad(S.h)+":"+pad(S.m);const bad=!opts.includes(cur);if(bad)cur=opts[opts.length-1];
-  box.innerHTML=`<label style="display:flex;align-items:center;gap:8px;min-height:44px;flex:1 1 200px"><input type="checkbox" id="gcnDqOn" ${S.on?"checked":""} style="width:22px;height:22px"><span>${en?"🔔 Remind me about the Daily Puzzle":"🔔 每天提醒我做每日同題"}</span></label><select id="gcnDqT" style="min-height:44px;font-size:16px" aria-label="${en?"Reminder time":"提醒時間"}">${opts.map(t=>`<option value="${t}"${t===cur?" selected":""}>${t}</option>`).join("")}</select>${S.on&&(bad||moved)?`<p style="flex-basis:100%;margin:0;font-size:13px;color:#b03a2e">${moved?(en?"The reminder fell in the parental rest hours, so it was moved to "+moved+".":"提醒時間落在家長設定的休息時段，已改到 "+moved+"。"):(en?"The current reminder time falls in the parental rest hours. Pick an earlier time.":"現在的提醒時間落在家長設定的休息時段，請改早一點。")}</p>`:""}`;
+  box.innerHTML=`<label style="display:flex;align-items:center;gap:8px;min-height:44px;flex:1 1 200px"><input type="checkbox" id="gcnDqOn" ${S.on?"checked":""} style="width:22px;height:22px"><span>${en?"🔔 Remind me about the Daily Puzzle":"🔔 每天提醒我做每日同題"}</span></label><select id="gcnDqT" style="min-height:44px;height:44px;min-width:96px;padding:0 8px;font-size:16px" aria-label="${en?"Reminder time":"提醒時間"}">${opts.map(t=>`<option value="${t}"${t===cur?" selected":""}>${t}</option>`).join("")}</select>${S.on&&(bad||moved)?`<p style="flex-basis:100%;margin:0;font-size:13px;color:#b03a2e">${moved?(en?"The reminder fell in the parental rest hours, so it was moved to "+moved+".":"提醒時間落在家長設定的休息時段，已改到 "+moved+"。"):(en?"The current reminder time falls in the parental rest hours. Pick an earlier time.":"現在的提醒時間落在家長設定的休息時段，請改早一點。")}</p>`:""}`;
   const cb=box.querySelector("#gcnDqOn"),sel=box.querySelector("#gcnDqT");
   const apply=()=>{GCN.dqMoved="";try{const pm=box.querySelector("p");if(pm&&typeof pm.remove==="function")pm.remove()}catch(e){}   /* E 第 22 輪 R22-1：動了提醒就當場拿掉「已改到」那行，不用離開再回來 */
     const on=cb.checked,[h,m]=sel.value.split(":").map(Number);
-    Promise.resolve(on?D.enable(h,m):D.disable()).then(r=>{if(on&&!(r&&r.ok)){cb.checked=false;try{toast(en?"Notifications are off for this app. Turn them on in iPhone Settings → Notifications.":(r&&r.why)||"沒有通知權限，可到 iPhone 設定 → 通知 打開")}catch(e){}return}
+    Promise.resolve(on?D.enable(h,m):D.disable()).then(r=>{if(on&&!(r&&r.ok)){cb.checked=false;try{toast(en?"Notifications are off for this app. Turn them on in the Settings app → Notifications.":String((r&&r.why)||"沒有通知權限，可到「設定」App → 通知 打開").replace(/iPhone ?設定/g,"「設定」App"))   /* 11/17 iMac G P3-4：iPad（含相容模式）也會跑，不寫死 iPhone */}catch(e){}return}
       if(on){if(en)gcnDqEn(h,m);try{toast(en?"Reminder set for "+pad(h)+":"+pad(m)+" every day":"每天 "+pad(h)+":"+pad(m)+" 提醒你")}catch(e){}}},()=>{cb.checked=false})};
   cb.onchange=apply;sel.onchange=()=>{if(cb.checked)apply()}}catch(e){}}
 /* 英文介面：bridge 排的通知內容寫死中文，排好之後用同一個 id（1001）重排一次英文內容（E 第 19 輪 P3-2） */
@@ -193,3 +194,33 @@ function gcnInstall(){if(GCN.inst)return false;GCN.inst=true;gcnGlue();gcnHookSt
   const go=()=>setTimeout(()=>{gcnAuth();gcnWidgetPush();gcnDqFix()},GCN_BOOT_MS);
   if(document.readyState==="complete")go();else addEventListener("load",go);return true}
 if(gcnNat())gcnInstall();
+
+/* ---------- 11/17 iMac 測試員 G-4（準則 5.1.1、2.3）：文件裡的 Game Center、桌面小工具，只在這個建置真的有那個外掛時才寫 ----------
+   隱私、家長文件（data/docs/privacy.md、family.md）第 13 項等處用兩種註解標記包起來：gc-only（Game Center，外掛 XQGameCenter）、widget-only（今日茶單小工具，外掛 XQWidgetData）；
+   原生 App 而且 XQNative.has(外掛) 才留，沒有就整段拿掉（Apple 帳號還沒通過、沒裝 --gc-widget 的建置就不會寫成有這兩個功能）。網頁版本來就看不到（包在 app-only 裡）。
+   做法：包一層 05-settings 的 xqDocVar（文件顯示前都經過它），先處理這兩種標記，再交給原本的 web-only／app-only；標記獨佔一行時連那一行一起拿掉（跟 xqDocVar 同一套） */
+function gcnHasPlug(n){try{const N=window.XQNative;return!!(gcnNat()&&N&&typeof N.has==="function"&&N.has(n))}catch(e){return false}}
+function gcnDocFeat(t,keep){keep=keep||{gc:gcnHasPlug("XQGameCenter"),widget:gcnHasPlug("XQWidgetData")};const out=[];let sk=0;
+  for(const l of String(t==null?"":t).split("\n")){const M=/<!--(\/?)(gc|widget)-only-->/g;let r="",i=0,m,had=false;
+    while((m=M.exec(l))){had=true;if(!sk)r+=l.slice(i,m.index);i=m.index+m[0].length;if(!keep[m[2]])sk=Math.max(0,sk+(m[1]?-1:1))}
+    if(!sk)r+=l.slice(i);if(had){if(r.trim())out.push(r)}else if(!sk)out.push(l)}
+  return out.join("\n")}
+/* 11/17 iMac 測試員 I P1-3（準則 2.1、2.3）：App 裡顯示的說明文件（棋規與裁決、已知限制、畫面證據、素材與授權…，網頁版、原生版都一樣）藏起開發用內容——
+   測試檔名（test-*.js）和「主要自動測試／相關測試／測試：」那幾行、跑測試的紀錄行、原始碼檔名與行號（m/07xx.js、xxx.js:123）、「沒有真人試玩」這類驗證狀態。
+   正本 md 不動（GitHub 上的原文照舊給要查的人看）；App 內顯示前經過 xqDocClean */
+const XQDOC_DROP=[/^\s*(?:[-*]\s+)?(?:\*\*)?(?:主要自動測試|相關測試|裁判測試局例|純函式的測試|自動測試|測試)(?:（[^）]*）)?(?:\*\*)?\s*[:：]/,/^\s*[-*]\s+\d{1,2}\/\d{1,2}\s*跑[:：]/,/^\s*[-*]\s+\*\*沒有真人試玩\*\*/,/^\s*[-*]\s+\*\*程式[:：]\*\*/,/〔原始碼〕/,/^\s*[-*]\s+規則核心[:：]\s*`/,/^\s*`?(?:node\s+--test\s+)?xiangqi-lab\/tools\/test-[\w-]+\.js`?\s*逐一驗證[:：]?\s*$/];
+/* 11/17 測試員 D Y7：說明文件只有中文正本（設計如此）。英文介面打開時，標題下面先一句英文說明，不讓人以為翻譯壞了 */
+function xqDocEnNote(t){try{if(!(typeof i18nLang==="function"&&i18nLang()==="en"))return t;const N="> This document is available in Chinese only. The rest of the app is in English; questions are welcome via Feedback.\n\n";
+  t=String(t||"");if(/^\s*#/.test(t)){const i=t.indexOf("\n");return i<0?t+"\n\n"+N:t.slice(0,i+1)+"\n"+N+t.slice(i+1)}return N+t}catch(e){return t}}
+function xqDocClean(t){try{const out=[];for(const l of String(t||"").split("\n")){if(XQDOC_DROP.some(r=>r.test(l)))continue;
+    let x=l.replace(/\*\*[^*\n]*沒有真人試玩[^*\n]*\*\*/g,"").replace(/[，、；]?[^，。；\n]*沒有真人試玩[^，。；\n]*[。]?/g,"")
+      .replace(/[；;，,]?\s*測試\s*`[^`\n]+`(?:（[^）\n]*）)?(?:\s*[、，]\s*`[^`\n]+`(?:（[^）\n]*）)?)*/g,"")
+      .replace(/(?:程式|關卡資料在|判斷規則寫在)\s*`[^`\n]+\.js`(?:（[^）\n]*）)?\s*[，、；]?/g,"")
+      .replace(/`[^`\n]*\.js` 的\s*/g,"").replace(/（第\s*\d+\s*行起?）/g,"").replace(/第\s*\d+\s*行起?[，、]?\s*/g,"")
+      .replace(/（[^（）\n]*`[^`\n]*\.js(?::\d+)?`[^（）\n]*）/g,"")
+      .replace(/`(?:node\s+--test\s+)?[^`\n]*\.js(?::\d+)?`(?:（[^）\n]*項）)?/g,"")
+      .replace(/`[^`\n]*\.(?:css|html)(?::\d+)?`/g,"").replace(/\b[\w./-]+\.(?:css|html):\d+/g,"").replace(/（[^（）\n]*真人測試[^（）\n]*）/g,"").replace(/(?:不改\s*)?\bm\.html\s*[：:]\s*/g,"")   /* 11/17 測試員 D Y7：a11y 的「m.css:行號」、音效設計的「（給真人測試用，還沒做過）」、i18n 的「m.html：…」 */
+      .replace(/\b[\w./-]+\.js:\d+/g,"").replace(/\btest-[\w-]+\.js\b/g,"")
+      .replace(/(?:\s*[、，；])+(?=\s*[。；|]|\s*$)/g,"").replace(/^(\s*[-*]\s+)[、，；]\s*/,"$1").replace(/（\s*）/g,"").replace(/\*\*【程式已實作】\*\*\s*\|/g,"**【程式已實作】** |").replace(/[ 　]{2,}/g," ").replace(/。{2,}/g,"。").replace(/待開發者確認/g,"資料補齊中");   /* I P1-4：「待開發者確認」不在 App 裡出現（素材與授權頁的正本已改寫；其他文件的殘留在這裡換成中性說法） */
+    if(l.trim()&&!x.replace(/[\s\-*|、，。；：:`]/g,""))continue;out.push(x)}return out.join("\n")}catch(e){return t}}
+try{if(typeof xqDocVar==="function"&&!xqDocVar.__gcn){const f0=xqDocVar;xqDocVar=function(t,nat){return xqDocEnNote(f0(xqDocClean(gcnDocFeat(t)),nat))};xqDocVar.__gcn=1}}catch(e){}

@@ -9,7 +9,8 @@ function LegendScene(v,key){
   const C=window.XQCore,bd=Board(x=>tap(x)),nm=s=>s===hero?S.hero:S.other;
   const cn=(b,m)=>{try{return C.notate(b,m.f,m.t)}catch(e){return""}},apply=(b,m)=>{const n=b.slice();n[m.t]=n[m.f];n[m.f]=null;return n};
   (async()=>{const D=await legendData();S=D&&(D.scenes||[]).find(x=>x.key===key);
-    if(!S){v.innerHTML='<div class="pad"><div class="card muted">找不到這段往事。</div></div>';return}
+    if(!S){v.innerHTML='<div class="pad"><div class="card" style="line-height:1.8"><b>找不到這段往事。</b><p class="muted" style="margin:6px 0 10px">「回到當年」要從石桌往事進來：在星槎的書架打開一回，讀完點「🕰 回到當年」，就會帶你到那一盤當年的棋。</p><button class="btn" id="lgGo" style="width:100%">📚 去書架</button></div></div>';   /* 11/17 iMac K P3-6：直接打開 #/legend（沒帶哪一段）只有一行字 → 補一句從哪裡進、一顆入口 */
+      {const g=v.querySelector("#lgGo");if(g)g.onclick=()=>{location.hash="#/ship/shelf"}}return}
     try{it=await api(`/db/item?c=${S.c}&id=${encodeURIComponent(S.id)}`)}catch(e){v.innerHTML=`<div class="pad"><div class="card muted">棋譜載入失敗：${esc(e.message)}</div></div>`;return}
     mv=it.lines[0].moves.map(m=>Array.isArray(m)?{f:m[0],t:m[1]}:m);stop=(+it.jump||1)-1;hero=stop%2?"b":"r";
     ply=Math.max(0,stop-(S.lead||14));board=it.board?it.board.slice():C.parseFen(C.START);for(let i=0;i<ply;i++)board=apply(board,mv[i]);

@@ -78,6 +78,9 @@ self.addEventListener("fetch",e=>{
   const rel=relOf(url);
   /* 回饋 852：停權名單一律直接上網（GitHub），不快取、不轉 CDN */
   if(rel==="data/banlist.json")return;
+  /* 11/17：support.html、privacy.html（App Store Connect 的支援網址、隱私權政策網址；不帶 .html 的 /support、/privacy 也算）是獨立網頁，
+     直接問網路，不能被下面「頁面一律給快取裡的 index.html」換成 App */
+  if(/\/(support|privacy)(\.html)?\/?$/.test(url.pathname))return;
   const isNnue=url.pathname.endsWith("/pikafish.nnue"),isPage=req.mode==="navigate",isBig=/\/data\/gmgames\.json$/.test(url.pathname);
   // 比賽對局分包（20 多 MB）：App 下載後自己存在手機資料庫，這裡不再另存一份
   /* 回饋 853：照樣不存，但改從 CDN 拿（CDN 不通就退回 GitHub） */

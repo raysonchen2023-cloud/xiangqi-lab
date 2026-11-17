@@ -1,4 +1,5 @@
 /* ================= 🔰 新手練習「先走再學」（開發者 11/15 定案；story/新手任務10案_回覆二與合併_1115.md 最後的「Claude 合併建議」）=================
+   ★ 11/17 晚改順序（檔尾「開場順序」那段）：不再一打開就進練習；開頭畫面按「新的旅程」→ 開場電影 → 黑洞序局 → 降落、序幕 → 才是這裡的練習。下面「直接出現棋盤」「stqBoot 接手」是 11/15 的舊寫法。
    第一次開 App 的新玩家：不先選角、不看授印禮、不看第一章電影，直接出現棋盤（#stqPg 全螢幕）。六個任務一條線，畫面上只有一句目標和棋盤：
      1 俥走到亮格（3 格）→ 2 俥吃掉亮著的黑子（3 顆）→ 3 將軍（2 題）→ 4 封住退路（先標出黑將的逃點，一步殺；解開說「這一步封住了退路」）
      → 5 換擺法再解 2 題一步殺（落點、方向都跟第 4 題不同）→ 6 跟最弱的電腦各走四步（4 個雙方回合過關，可以接著下完）。
@@ -76,21 +77,16 @@ function stqPeekOk(){try{return!!(typeof DEVUNLOCK==="function"&&DEVUNLOCK())}ca
 /* 11/17 iMac 模擬器 A：還是全新玩家（沒有旅程、沒有新手練習紀錄、看不出玩過）＝開 App 一定要走開頭畫面→新手練習；05b saveBoot 用它決定重新載入後要不要照樣出開頭畫面 */
 function stqFresh(){if(!STQ_ON)return false;try{if(journey())return false;if(stqSt0())return false;return!stqOldOf(stqEnvNow())}catch(e){return false}}
 /* 練習中（還沒畢業）：07mnq 的 mnqTick 看到就不自動跳授印禮 */
-function stqHold(){if(!STQ_ON)return false;const S=stqSt0();return!!(S&&S.st==="run")}
+function stqHold(){if(!STQ_ON)return false;const S=stqSt0();if(S&&S.st==="run")return true;if(S&&S.st==="wait"&&stqXuWaitLive(S))return true;return stqXuBusy()}   /* 11/17 晚開場順序：開場（電影、黑洞序局、降落、序幕）還在跑、或補播中，也算「先別跳別的視窗」（02-shell 加到主畫面、07mnq 授印禮看這裡） */
 /* ---------- 開 App：05b titleScreen 第一行問這裡；回 true＝這裡接手了 ---------- */
 function stqBoot(opt){if(!STQ_ON||(opt&&opt.view))return false;opt=opt||{};
   let pk=false;try{pk=stqPeekOk()&&localStorage.getItem("xq_stqPeek")==="1";if(pk)localStorage.removeItem("xq_stqPeek")}catch(e){}
   if(pk){titleClose();stqOpen({peek:true});return true}
-  const S=stqSt0();if(S&&S.st==="run"){if(!stqCan())return false;titleClose();stqOpen();return true}
-  if(S)return false;
-  if(stqOldOf(stqEnvNow())){stqSave({v:STQ_V,st:"old",at:Date.now()});return false}
-  if(!stqCan())return false;
-  /* 先確定 IndexedDB 裡也沒有存檔（有的話開機會還原，就不是新玩家），跟 05b 新手秒開局同一套 */
-  titlePaint("wait",opt);
-  fwSaved().then(s=>{if(!TITLE||TITLE.dataset.v!=="wait")return;
-    if(s||stqSt0()||stqOldOf(stqEnvNow())){titlePaint(s||!fwNeed()?"menu":typeof bhxNeed==="function"&&bhxNeed()?"xu":"first",opt);return}
-    titleClose();stqBegin()}).catch(()=>{if(TITLE&&TITLE.dataset.v==="wait")titlePaint("menu",opt)});
-  return true}
+  /* 開發者 11/17 晚「App 一進去後，會有『新的旅程』或是『讀檔』」：全新玩家不再一打開就進練習，開頭畫面照 05b 原本的寫法（全新＝「⚔ 新的旅程」＋讀入存檔／搬資料，有旅程＝繼續／新的旅程／存檔與讀檔）；
+     按「新的旅程」才走 電影 → 黑洞序局 → 降落、序幕 → 新手練習（stqXuArm 記 wait，05b prologue 的「入局」叫 stqXuAfter 開練習）。練習做到一半的人按「▶ 繼續」接著練（stqXuResume） */
+  if(stqSt0())return false;
+  if(stqOldOf(stqEnvNow()))stqSave({v:STQ_V,st:"old",at:Date.now()});
+  return false}
 /* 預設角色的旅程：跟 05b journeyStart 寫一樣的鍵（角色、性別、棋子、家鄉朝代、停靠站、難度），不走黑洞序局、不出序幕 */
 function stqJourney(c){const C=WX_CHARS[c];if(!C||journey())return false;
   store.set("slotCur",curSlot()||1);store.set("pChar",c);store.set("pSex",C.sx);store.set("pStyle","real");store.set("botPiece",C.pc);store.set("onboard1",true);
@@ -110,11 +106,16 @@ function stqCss(){if(document.getElementById("stqCss"))return;try{if(typeof mnqC
 #stqPg.on{opacity:1}
 #stqPg .stq-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;width:min(560px,100%)}
 @media (max-width:350px){#stqPg .stq-top{justify-content:center}}
+/* 11/17 測試員 B 第 29 輪 N29-5：390 寬頂欄折行、「⋯」掉到第二行 → 430 寬以下一律一行：任務燈縮成 22px、「我會下棋」縮字，放不下就在鈕裡換兩行（高照舊 44） */
+@media (max-width:430px){#stqPg .stq-top{flex-wrap:nowrap;gap:6px}#stqPg .stq-lp{gap:3px}#stqPg .stq-lp span{width:22px;height:22px;font-size:12px}#stqPg .stq-sk{flex:1 1 auto;min-width:0;white-space:normal;font-size:13px;line-height:1.15;padding:4px 8px}}
 #stqPg .stq-lp{display:flex;gap:5px;flex:none}
 #stqPg .stq-lp span{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 13px/1 var(--serif,serif);background:#cdbb98;color:#5b4a3a}
 #stqPg .stq-lp span.on{background:radial-gradient(circle,#fff3c4,#f2b33d 60%,#b8741a);color:#7a3a10;box-shadow:0 0 10px rgba(242,179,61,.85)}
 #stqPg .stq-lp span.cur{box-shadow:0 0 0 2px #b3261e;color:#b3261e;background:#f8f0dc}
 #stqPg .stq-sk{flex:0 1 auto;min-height:44px;padding:6px 12px;border-radius:99px;border:1.5px solid #8a5a2b;background:#fffaf0;color:#5b3a1a;font:800 14px/1.2 var(--serif,serif);white-space:nowrap}
+#stqPg .stq-mo{flex:none;width:44px;height:44px;border-radius:50%;border:1.5px solid #8a5a2b;background:#fffaf0;color:#5b3a1a;font:900 20px/1 var(--serif,serif)}
+#stqPg .stq-mn{display:flex;flex-direction:column;align-items:flex-end;gap:4px;width:min(560px,100%)}#stqPg .stq-mn[hidden]{display:none}
+#stqPg .stq-mn button{min-height:44px;padding:6px 16px;border-radius:12px;border:1.5px solid #8a5a2b;background:#fffaf0;color:#3b2a1a;font:800 15px var(--serif,serif)}#stqPg .stq-mn small{font-size:12px;color:#6f5f4c}
 #stqPg .stq-g{margin:4px 0 0;min-height:2.6em;display:flex;align-items:center;justify-content:center;text-align:center;font:900 clamp(19px,5.6vw,24px)/1.3 var(--serif,serif);letter-spacing:.04em;text-wrap:balance;max-width:min(560px,100%)}
 #stqPg .stq-g.ok{color:#9e1b15}#stqPg .stq-g.no{color:#7a3b12}
 #stqPg .stq-c{min-height:20px;font:700 15px var(--serif,serif);color:#8a6a3b}
@@ -139,12 +140,13 @@ function stqCss(){if(document.getElementById("stqCss"))return;try{if(typeof mnqC
 let STQ_UI=null;
 function stqOpen(o){o=o||{};if(document.getElementById("stqPg")||!window.XQCore||typeof Board!=="function")return;stqCss();try{navClear()}catch(e){}
   const pg=document.createElement("div");pg.id="stqPg";pg.setAttribute("role","dialog");pg.setAttribute("aria-modal","true");pg.setAttribute("aria-label","新手練習");
-  pg.innerHTML=`<div class="stq-top"><div class="stq-lp" role="img" aria-label="新手練習進度">${STQ_T.map((x,i)=>`<span>${i+1}</span>`).join("")}</div><button type="button" class="stq-sk">我會下棋，直接開始</button></div>
+  pg.innerHTML=`<div class="stq-top"><div class="stq-lp" role="img" aria-label="新手練習進度">${STQ_T.map((x,i)=>`<span>${i+1}</span>`).join("")}</div><button type="button" class="stq-sk">我會下棋，直接開始</button>${o.peek?"":`<button type="button" class="stq-mo" aria-label="更多" aria-expanded="false">⋯</button>`}</div><div class="stq-mn" hidden><button type="button" class="stq-lv">回開頭畫面</button><small>練習進度會留著，之後從「▶ 繼續」接著練</small></div>
     <p class="stq-g" role="status" aria-live="polite"></p><div class="stq-c" aria-hidden="true"></div><div class="stq-bd"></div><div class="stq-ft"><button type="button" class="stq-h">💡 提示</button><button type="button" class="stq-nx" hidden>完成練習</button></div>`;
   document.body.append(pg);requestAnimationFrame(()=>pg.classList.add("on"));
   const U=STQ_UI={pg,peek:!!o.peek,bd:Board(x=>stqTap(x)),n:0,B:null,step:0,sel:-1,busy:false,miss:0,hk:null,mark:-1,esc:[],sealed:[],turn:"r",rounds:0,ply:0,end:false,passed:false,last:null,ck:-1,gid:0};
   pg.querySelector(".stq-bd").append(U.bd.svg);
   pg.querySelector(".stq-sk").onclick=()=>{try{vibrate(6)}catch(e){}stqGrad("skip")};
+  {const mo=pg.querySelector(".stq-mo"),mn=pg.querySelector(".stq-mn");if(mo&&mn){mo.onclick=()=>{try{vibrate(5)}catch(e){}mn.hidden=!mn.hidden;mo.setAttribute("aria-expanded",String(!mn.hidden))};pg.querySelector(".stq-lv").onclick=()=>{try{vibrate(6)}catch(e){}stqXuLeave()}}}   /* 11/17 晚 iMac I P3：練習中「⋯」→ 回開頭畫面（練習進度 stq 照留，「▶ 繼續」接著練） */
   pg.querySelector(".stq-h").onclick=()=>{try{vibrate(5)}catch(e){}stqHint()};
   pg.querySelector(".stq-nx").onclick=()=>{try{vibrate(8)}catch(e){}stqGrad("all")};
   const n0=U.peek?(o.n|0):stqSt().n|0;stqLoad(Math.min(STQ_T.length-1,n0));if(!U.peek&&n0>=STQ_T.length){stqGrad("all");return}   /* 六個都做完、還沒按「完成練習」就關掉了：直接到畢業 */
@@ -242,10 +244,74 @@ function stqMore(){stqCss();let mq=false;if(typeof MNQ_PANEL_ON!=="undefined"&&M
   const L=[["🤖","對弈電腦",typeof CpuRoom==="function"?"#/cpuroom":"#/cpu"],["🍵","一盞茶殘局","#/canju"],["📝","棋力測驗","#/quiz"],["🔰","新手訓練營","#/camp"]];
   /* 11/15 第一章入口原本只在「設定 → 氛圍」（07mnq mnqSndRow）：首頁「下一步」打開的這張清單也放一顆（有角色或看過任何一段才放；看完＝「再看第一章」） */
   let c1="";try{if(typeof mnqChapter==="function"&&typeof MNQ_SEGS!=="undefined"&&MNQ_SEGS.classic){const M=mnqSt(),lit=!!M.lamp.classic;if(lit||M.gift.a1||MNQ_SEGS.classic.some(id=>M.seg[id])||mnqEnv().hasChar)c1=lit?"再看第一章":"看第一章"}}catch(e){c1=""}
-  sheet("更多玩法",b=>{b.innerHTML=`<div class="stq-more">${L.map(([i,t,h])=>`<button type="button" class="item" data-h="${h}"><span class="lb" style="font-size:22px">${i}</span><span class="tx"><b>${esc(t)}</b></span></button>`).join("")}${c1?`<button type="button" class="item" data-k="c1"><span class="lb" style="font-size:22px">🎬</span><span class="tx"><b>${c1}</b><small class="muted" style="display:block">河圖初渡</small></span></button>`:""}${mq?`<button type="button" class="btn ghost" data-k="mnq" style="width:100%">⛵ 星槎遠征令</button>`:""}</div>`;
+  sheet("更多玩法",b=>{b.innerHTML=`<div class="stq-more">${L.map(([i,t,h])=>`<button type="button" class="item" data-h="${h}"><span class="lb" style="font-size:22px">${i}</span><span class="tx"><b>${esc(t)}</b></span></button>`).join("")}${c1?`<button type="button" class="item" data-k="c1"><span class="lb" style="font-size:22px">🎬</span><span class="tx"><b>${c1}</b><small class="muted" style="display:block">河圖初渡</small></span></button>`:""}${stqXuReplayOk()?`<button type="button" class="item" data-k="op"><span class="lb" style="font-size:22px">🎬</span><span class="tx"><b>重看開場</b><small class="muted" style="display:block">天河初裂</small></span></button>`:""}${mq?`<button type="button" class="btn ghost" data-k="mnq" style="width:100%">⛵ 星槎遠征令</button>`:""}</div>`;
     b.querySelectorAll("[data-h]").forEach(x=>x.onclick=()=>{try{vibrate(6)}catch(e){}closeSheet();location.hash=x.dataset.h});
     const k1=b.querySelector("[data-k=c1]");if(k1)k1.onclick=()=>{try{vibrate(6)}catch(e){}closeSheet();setTimeout(()=>{try{mnqChapter("classic")}catch(e){}},250)};
+    const op=b.querySelector("[data-k=op]");if(op)op.onclick=()=>{try{vibrate(6)}catch(e){}closeSheet();setTimeout(stqXuReplay,250)};
     const m=b.querySelector("[data-k=mnq]");if(m)m.onclick=()=>{closeSheet();setTimeout(()=>{try{mnqPanel()}catch(e){}},250)}})}
 /* 重新整理、或開 App 時開頭畫面沒出來（同一個分頁已經看過）：練習還沒做完、人在首頁、沒有別的視窗，就接著開 */
-function stqAuto(){try{if(!STQ_ON||STQ_UI||!stqHold()||!stqCan())return;if(typeof TITLE!=="undefined"&&TITLE)return;if(!/^(#\/?)?$/.test(location.hash||""))return;if(document.querySelector(".modal,#sheet,#mnqGf,#mnfPg,#bhxPg,#bhxVx"))return;stqOpen()}catch(e){}}
+function stqAuto(){try{if(!STQ_ON||STQ_UI||(stqSt0()||{}).st!=="run"||!stqCan())return;if(typeof TITLE!=="undefined"&&TITLE)return;if(!/^(#\/?)?$/.test(location.hash||""))return;if(document.querySelector(".modal,#sheet,#mnqGf,#mnfPg,#bhxPg,#bhxVx"))return;stqOpen()}catch(e){}}
 if(typeof window!=="undefined"&&typeof document!=="undefined"&&typeof navigator!=="undefined")setTimeout(stqAuto,1500);
+/* ================= 11/17 晚 開場順序（開發者：「遊戲一開始就要出現電影 黑洞對戰 跟後續 然後 再來才是新手練習的畫面」「不分新手老手都要能看到」「App 一進去後，會有『新的旅程』或是『讀檔』」）=================
+   新的旅程（全新玩家、老玩家都一樣）：開頭畫面「⚔ 新的旅程」→ 05b 先叫 stqXuArm（stq 記 {st:"wait"}）→ 07bh bhxNewJourney：電影〈天河初裂〉→ 黑洞序局 → 星盤暫合、第 2 段電影 → journeyStart 建齊轍的旅程
+     → 降落經典星槎 → 說書人序幕；序幕按「入局」（05b prologue）叫 stqXuAfter：記「看過開場」（opSeen，在 05b JOURNEY_KEYS，跟存檔格、轉移碼走）、wait 換成 run、開新手練習 → 畢業回首頁。主角一律齊轍，不出選角畫面。
+   讀檔（▶ 繼續、存檔與讀檔、讀入存檔、搬資料）：練習做到一半＝接著練（stqXuResume）；有旅程、沒有 opSeen、這支手機也還沒下完過序局（07bh bhxNeed）＝回到首頁或星槎頁、沒有別的視窗時補播一次
+     電影＋黑洞序局（07bh bhXuStart(true)：下完回首頁，不重做練習）。一開始播就記 opSeen（只播一次；中途關掉不再自動播，要看用「🎬 重看開場」）。這支手機下完過序局的存檔不播，直接補記 opSeen。
+     補播接手 07bh「大更新：第〇章與黑洞序局」那張問卷（先記 bhXuAsk，那張不再跳）。手上有下到一半的石桌往事類對局就先不補播（07-legend jStart 會先問要不要接那盤，序局會被擋住），下次開 App 再試。
+   重看開場（stqXuReplay，更多玩法、設定 → 聲音 → 氛圍）：只重播電影（減少動態＝兩頁分鏡），不開對局、不動進度、不發獎勵；電影裡會記的 bhxPick／bhxFresh 播完還原。
+   名稱前綴 stqXu／STQ_XU，存檔鍵 opSeen（11/17 grep 過 m/、m.html、site/ 都沒人用）。 */
+let STQ_XU=0,STQ_XUN=0,STQ_XUT=0,STQ_XUR=0;
+function stqXuArm(){if(!STQ_ON)return;let P=null;try{P=stqSt0();if(P&&P.st==="wait")P=P.prev||null;if(P)P=Object.assign({},P,{prev:undefined})}catch(e){P=null}stqSave({v:STQ_V,st:"wait",at:Date.now(),n:0,done:{},got:{},c0:STQ_C0,prev:P})}   /* prev＝開新旅程前的練習紀錄：讀別格存檔放棄這趟時還原（stqXuCancel） */
+function stqXuWaitLive(S){try{if(store.get("bhxFresh",0))return true;const J=journey();return!!(J&&+J.born>=(+S.at||0)-1000)}catch(e){return false}}
+function stqXuAfter(){if(!STQ_ON)return false;try{store.set("opSeen",1)}catch(e){}try{saveNow(true)}catch(e){}const S=stqSt0();if(!S||S.st!=="wait")return false;
+  if(!stqCan()){stqSave({v:STQ_V,st:"run",at:Date.now(),n:0,done:{},got:{},c0:STQ_C0});return false}
+  setTimeout(()=>{try{if(!STQ_UI)stqBegin()}catch(e){}},400);return true}
+function stqXuBusy(){if(STQ_XUR)return true;try{if(typeof document!=="undefined"&&document.querySelector("#bhxPg,#bhxVx,#bhxBk"))return true}catch(e){}if(!STQ_XU)return false;try{return!(+store.get("bhXuDone",0)>=STQ_XU)||+store.get("bhXuOld",0)===1}catch(e){return false}}
+/* 要不要補播：E＝stqXuEnv 收集的（測試直接傳）。"play"＝補播；"mark"＝這支手機下完過序局，只補記 opSeen；""＝不動 */
+function stqXuNeedOf(E){E=E||{};if(!E.on||!E.J||E.seen||E.fresh||E.st==="run"||E.st==="wait")return"";if(!E.need)return"mark";return E.can&&!E.game?"play":""}
+function stqXuJGame(){const U=G=>!!(G&&G.journey&&G.journey!=="bh:xu"&&!G.result&&Array.isArray(G.moves)&&G.moves.length);
+  try{if(U(JSON.parse(localStorage.getItem("xq_play")||"null")))return true;let S=JSON.parse(localStorage.getItem("xq_play2")||"null");if(S&&S.moves)S={x:S};if(S&&typeof S==="object")for(const k in S)if(U(S[k]))return true}catch(e){}return false}
+function stqXuEnv(){const E={on:!!STQ_ON};try{E.J=!!journey()}catch(e){}try{E.seen=!!store.get("opSeen",0)}catch(e){}try{E.fresh=!!store.get("bhxFresh",0)}catch(e){}try{E.st=(stqSt0()||{}).st||""}catch(e){}
+  try{E.need=typeof bhxNeed==="function"&&!!bhxNeed()}catch(e){}E.can=typeof bhXuStart==="function";E.game=stqXuJGame();return E}
+function stqXuFree(){try{if(typeof TITLE!=="undefined"&&TITLE)return false;if(document.visibilityState==="hidden")return false;if(!/^(#\/?(adventure\/?)?)?$/.test(location.hash||""))return false;
+  return!document.querySelector(".modal,#sheet,#stqPg,#bhxPg,#bhxVx,#bhxBk,#preov,#xqTitle,#mnfPg,#mnvPg,#mnfRite,#mnqGf,#mnqCard,.sw7-slip,.rfx,.qp-ov")}catch(e){return false}}
+function stqXuGo(){STQ_XU=Date.now();try{store.set("opSeen",1);if(!store.get("bhXuAsk",null))store.set("bhXuAsk",STQ_XU)}catch(e){}try{saveNow(true)}catch(e){}try{if(typeof opPre==="function")opPre()}catch(e){}
+  try{bhXuStart(true)}catch(e){STQ_XU=0;try{console.warn("stqXuGo",e)}catch(x){}return false}
+  try{if(!/^#\/adventure/.test(location.hash||""))location.hash="#/adventure"}catch(e){}return true}   /* 背後換到星槎頁（跟開頭畫面「新的旅程」一樣）：首頁的接續對局等小視窗只在首頁跳，不會疊到電影上；序局下完 07bh 自己帶回首頁 */
+/* 11/17 晚 iMac I P3（「新的旅程」開在第 3 格，重開 App 直接掉進序局「星樞棋局」、看不到開頭畫面，「⋯」也沒有出口；再重開一次又變回「繼續（第 2 格）」）：
+   開新旅程走到一半＝stqXuMid 回那一段：xu＝電影／邀局／序局／星盤暫合（07bh bhxFresh、還沒降落）、land＝新旅程建好了還沒降落、pro＝降落了、序幕的「入局」還沒按、run＝練習中。
+   冷開機（05b saveBoot：這次開 App 還沒出過開頭畫面）一律先出開頭畫面，不管網址停在哪一頁；主按鈕「▶ 繼續」接回那一段（stqXuMidGo），xu／land 的卡片寫正在開的那一格（bhxSlot），不再寫舊旅程那一格。
+   序局頁（08b 頂欄「⋯」）、序幕卡、練習頁（右上「⋯」）都有「回開頭畫面」（stqXuLeave）：只是暫時離開，序局照開發者決定不能略過，下次「▶ 繼續」接回同一盤。讀別格存檔＝放棄這一趟（stqXuCancel，05b slotLoad 叫）。
+   原本 11/17 下午的 stqXuHeal（30 秒前降落、序幕沒按＝直接改成練習）拿掉：改成開頭畫面「▶ 繼續」接回序幕 */
+function stqXuMidOf(E){E=E||{};if(!E.on)return"";if(E.fresh&&!E.land)return E.nj&&E.done?"land":"xu";if(E.st==="wait"&&E.nj)return"pro";return E.st==="run"?"run":""}
+function stqXuMid(){const E={on:!!STQ_ON};try{const S=stqSt0()||{},J=journey();E.st=S.st||"";E.fresh=!!store.get("bhxFresh",0);E.land=!!store.get("bhxLand",null);E.done=!!store.get("bhXuDone",null);E.nj=!!(J&&S.at&&+J.born>=(+S.at)-1000)}catch(e){}return stqXuMidOf(E)}
+function stqXuSlot(){try{return(+store.get("bhxSlot",0)||0)||(typeof curSlot==="function"?curSlot():0)||1}catch(e){return 1}}
+/* 開頭畫面的按鈕（05b tsmMenu 排好的清單）：開場途中、新旅程還沒落地＝主按鈕換成「▶ 繼續」這一趟（xm），舊旅程的繼續、先逛逛、開始故事不放 */
+function stqXuMenu(BL,m){if(m!=="xu"&&m!=="land")return BL;const L=["xm"].concat((BL||[]).filter(k=>!/^(go|cont|later|story)$/.test(k)));if(L.indexOf("new")<0)L.splice(1,0,"new");return L}
+function stqXuMidGo(){const m=stqXuMid();
+  if(m==="land"){try{if(typeof bhxLandNew==="function"&&bhxLandNew())return m}catch(e){}}
+  if(m==="xu"||m==="land"){let P=null;try{P=JSON.parse(localStorage.getItem("xq_play")||"null")}catch(e){}
+    if(P&&P.journey==="bh:xu"&&!P.result){try{if(typeof bhxBack==="function")bhxBack(false)}catch(e){}if(/^#\/journey\/play/.test(location.hash||"")){try{route()}catch(e){}}else location.hash="#/journey/play";return"xu-game"}   /* 序局下到一半：回同一盤（對局頁自己接） */
+    try{if(typeof bhxResume==="function"&&bhxResume())return"xu-resume"}catch(e){}   /* 電影、邀局途中＝邀局卡；序局下完＝星盤暫合（07bh） */
+    try{if(typeof bhxNewJourney==="function"){bhxNewJourney(stqXuSlot());return"xu-new"}}catch(e){}return""}
+  if(m==="pro"){const onA=()=>/^#\/adventure/.test(location.hash||"");try{if(!onA())location.hash="#/adventure"}catch(e){}
+    /* 11/17 B 第 29 輪 N29-3：0.5 秒後還不在星槎頁（例如別的地方用 history.go 往回跳，晚一步把網址換走）就再換一次、再等一下才出序幕卡，序幕卡一定在星槎上 */
+    const pro=n=>{try{if(!onA()&&n<4){location.hash="#/adventure";setTimeout(()=>pro(n+1),400);return}prologue()}catch(e){}};setTimeout(()=>pro(0),500);return m}
+  if(m==="run"){setTimeout(()=>{try{if(!STQ_UI&&stqCan())stqOpen()}catch(e){}},400);return m}
+  return""}
+function stqXuLeave(){try{if(STQ_UI)stqClose()}catch(e){}try{if(typeof OP!=="undefined"&&OP.on&&typeof opStop==="function")opStop(1)}catch(e){}try{if(typeof bhxBack==="function")bhxBack(false)}catch(e){}try{if(typeof closeSheet==="function"&&document.getElementById("sheet"))closeSheet()}catch(e){}try{titleScreen({})}catch(e){}}
+function stqXuCancel(){try{if(store.get("bhxFresh",0)&&!store.get("bhxLand",null)){store.set("bhxFresh",0);store.set("bhxPick",null)}const S=stqSt0();if(S&&S.st==="wait"){if(S.prev&&S.prev.v)stqSave(S.prev);else store.set("stq",null)}}catch(e){}}
+function stqXuTick(){STQ_XUT=0;try{const r=stqXuNeedOf(stqXuEnv());if(r==="mark"){store.set("opSeen",1);try{saveNow(true)}catch(e){}return}if(r!=="play")return;
+  if(!store.get("bhXuAsk",null))store.set("bhXuAsk",Date.now());
+  if(!stqXuFree()){const t=typeof TITLE!=="undefined"&&!!TITLE;if(t||++STQ_XUN<60)STQ_XUT=setTimeout(stqXuTick,2500);return}
+  stqXuGo()}catch(e){}}
+function stqXuKick(ms){if(STQ_XUT)clearTimeout(STQ_XUT);STQ_XUN=0;STQ_XUT=setTimeout(stqXuTick,ms==null?600:ms)}
+/* 05b 開頭畫面「▶ 繼續」按下去叫：開新旅程走到一半＝接回那一段；練習做到一半＝接著練；不然看要不要補播 */
+function stqXuResume(){const m=stqXuMid();if(m==="xu"||m==="land"||m==="pro"){stqXuMidGo();return}setTimeout(()=>{try{if(!STQ_UI&&(stqSt0()||{}).st==="run"&&stqCan()&&!document.querySelector(".modal,#sheet,#bhxPg,#bhxVx")){stqOpen();return}}catch(e){}stqXuKick(900)},400)}
+function stqXuReplayOk(){try{return!!STQ_ON&&typeof bhxFilm==="function"&&typeof OP_FILM1!=="undefined"&&typeof opPlay==="function"}catch(e){return false}}
+function stqXuReplay(){if(!stqXuReplayOk()||stqXuBusy()||document.getElementById("stqPg"))return false;let pk=null,fr=0;try{pk=store.get("bhxPick",null);fr=store.get("bhxFresh",0)}catch(e){}STQ_XUR=Date.now();
+  let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
+  const done=()=>{STQ_XUR=0;try{store.set("bhxPick",pk);store.set("bhxFresh",fr)}catch(e){}try{opStop(1)}catch(e){}try{bhxBack(false)}catch(e){}};
+  try{bhxBack(true)}catch(e){}try{opPlay(1,{fade:.3})}catch(e){}
+  try{if(rm&&typeof bhxPages==="function")bhxPages(["p1","p5"],done,true);else bhxFilm(OP_FILM1,done)}catch(e){done();return false}return true}
+if(typeof window!=="undefined"&&typeof document!=="undefined"&&typeof navigator!=="undefined"&&!navigator.webdriver)setTimeout(stqXuTick,1200);

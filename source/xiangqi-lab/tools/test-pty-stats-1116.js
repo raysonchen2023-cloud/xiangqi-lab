@@ -38,7 +38,7 @@ test("〔行為〕卡片：已加入的有三格與可以點的「招式 n／N�
   const K = load(), A = K.ptyCardHTML(K.P, "x_swordboy", 3), B = K.ptyCardHTML(K.P, "x_miaogirl", 3), C = K.ptyCardHTML(K.P, "x_shuai", 3);
   assert.ok(A.includes('class="pty-st"') && A.includes('<button type="button" class="pty-row" data-a="sk"><span>招式</span><b>1／2</b><i aria-hidden="true">›</i></button>'), "齊轍 Lv 3：兩招學會一招");
   assert.ok(B.includes('<b>1／1</b>') && B.includes("<small>攻擊力</small><b>101</b>"), "小梅 Lv 1");
-  assert.ok(!C.includes("pty-st") && !C.includes('data-a="sk"') && C.includes("？？？"), "還沒加入的只有剪影那一張");
+  assert.ok(!C.includes("pty-st") && !C.includes('data-a="sk"') && C.includes("尚未相遇"), "還沒加入的只有剪影那一張（11/17 iMac F P2-2：「？？？」改成「尚未相遇」）");
   const m = A.slice(A.indexOf('<div class="pty-m">'), A.indexOf('<div class="pty-xp"')); assert.ok(!m.includes("招式"), "原本那一行小字裡的「招式 n／N」拿掉，不重複");
   assert.ok(!load({ noBh: 1 }).ptyCardHTML(K.P, "x_swordboy", 3).includes("pty-row"), "沒有黑洞模組時沒有招式列");
 });

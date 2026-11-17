@@ -39,7 +39,7 @@ const GX_HINT={ziyuan:"四門炮要有炮架才兇：先兌掉中路的子，少
 const gxMode=k=>GX_MODES.find(m=>m[0]===k)||GX_MODES[1];
 const gxLx=(g,R,base)=>g.lx?g.lx:Math.max(1,Math.min(18,base+(GX_R[g.id]||0)+gxMode(R.m)[2]+(g.twice&&R.ph===2?1:0)));
 const gxSeals=()=>store.get("gxSeal",null)||{};
-const gxOpen=()=>(store.get("bhCount",0)||0)>0||(!!store.get("dvtGxAll",0)&&typeof DEVMODE==="function"&&DEVMODE());   /* 開發者測試台「全部星系解鎖」 */
+const gxOpen=()=>(store.get("bhCount",0)||0)>0||(()=>{try{return typeof gxtOpen==="function"&&!!gxtOpen()}catch(e){return false}})()||(!!store.get("dvtGxAll",0)&&typeof DEVMODE==="function"&&DEVMODE());   /* 開發者測試台「全部星系解鎖」 */   /* 11/17 晚 K P1-5（開發者選單選 B）：星門圍城、黑洞序局都不加 bhCount，新存檔十三星系永遠打不開 → 另外認「打贏星門圍城」，跟觀星臺同一個條件（07gxt gxtOpen）；bhCount 與偏航設計都不動 */
 const gxDocked=()=>{try{return typeof shipDocked==="function"?shipDocked().length:0}catch(e){return 0}};
 const gxAllDone=()=>GX_ORD.every(k=>gxSeals()[k])||(!!store.get("dvtGxAll",0)&&typeof DEVMODE==="function"&&DEVMODE());
 /* 這個星系現在能不能挑戰；不能的話回原因 */

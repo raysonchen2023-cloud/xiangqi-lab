@@ -141,7 +141,7 @@ function route(){
   if(p[0]==="lesson"&&typeof LsnPage==="function")return screen=LsnPage(v,p[1]||"");   /* ChatGPT 改善單 I01（開發者 11/11）：棋理體驗 #/lesson/<站>（m/07z7-lesson.js） */
   if(p[0]==="lab"&&p[1]==="grab"&&typeof GrbLab==="function")return screen=GrbLab(v);   /* ChatGPT 改善單 I02：先吃子還是先解圍小實驗（m/07z8-grablab.js） */
   if(p[0]==="cup")return screen=CupPage(v);   /* 意見回饋 635：千秋盃 */
-  if(p[0]==="watch"){if(p[1]==="ai")return screen=Watch(v);navReplace("#/lobby");return}   /* 意見回饋 290：觀戰併進線上大廳 */
+  if(p[0]==="watch"){if(p[1]==="ai"){let dv=false;try{dv=!!(DEVREMOTE()||DEVTOOLS())}catch(e){}if(OFF&&!dv){navReplace("#/");return}return screen=Watch(v)}navReplace("#/lobby");return}   /* 意見回饋 290：觀戰併進線上大廳 */   /* 11/17 E 第 29 輪 R29-5：離線版（App、網站）一般玩家直接打 #/watch/ai 會看到「電腦上的 GPT 和 Claude」和裁判程式 --tunnel 說明 → 導回首頁（比照 #/fbadmin）；開發者（DEVTOOLS 或已連上電腦）照舊 */
   if(p[0]==="stats")return screen=Stats(v);
   if(p[0]==="weekly")return screen=Weekly(v);   /* 開發者 11/8 核准：家長學習週報（m/04c-weekly.js） */
   if(p[0]==="codex"&&typeof Codex==="function"){store.set("dbReturn",null);return screen=Codex(v)}   /* Gemini 評估 11/8（開發者核准）：千秋大百科（m/07i-codex.js） */
@@ -150,7 +150,7 @@ function route(){
   if(p[0]==="openings")return screen=Openings(v);
   if(p[0]==="garage"){navReplace("#/");return}   /* 開發者 11/11：車庫整個拿掉，舊連結回首頁 */
   if(p[0]==="settings")return screen=Settings(v);
-  if(p[0]==="fbadmin")return screen=FbAdmin(v);
+  if(p[0]==="fbadmin"){if(typeof xqNat==="function"&&xqNat()){navReplace("#/");return}return screen=FbAdmin(v)}   /* 11/17 iMac 測試員 G：意見回饋管理頁原生 App 一律擋掉（回首頁）；網頁版照舊（一般介面本來就沒有入口） */
   if(p[0]==="quiz")return screen=Quiz(v);
   if(p[0]==="guess")return screen=Guess(v);
   if(/^pos(\?|$)/.test(p[0]||"")&&typeof PosRestore==="function")return screen=PosRestore(v,p[0]==="pos"?p[1]||"":"");   /* 11/11 ChatGPT 介面報告 P2：分享網址 #/pos?fen=…（m/10d-coach.js posRQuery） */   /* 評比第 4 輪：局面還原 #/pos（FEN、擺子）、#/pos/play 從局面和電腦下（m/10d-coach.js） */
@@ -174,7 +174,7 @@ function route(){
   if(p[0]==="terms")return screen=Terms(v,p[1]);
   // AI 對局在開發者的電腦上，要連上電腦才看得到；一般玩家（或連線已被清掉）從舊連結進來時說明清楚，不要卡在「載入中」（意見回饋 135）
   if((p[0]==="db"&&p[1]==="ai"||p[0]==="watch"&&p[1]==="ai")&&OFF&&!DEVREMOTE()){setTop("AI 對局","#/");setTabs(false);
-    v.innerHTML='<div class="home"><div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">📺</div><b>AI 對局只在開發者的電腦上</b><br><span class="muted">這部分要連上開發者的電腦才看得到，一般玩家不需要。其他棋譜都在「📚 棋譜」裡。</span><div class="row" style="gap:8px;margin-top:12px;justify-content:center"><button class="btn" id="g1">📚 去棋譜</button><button class="btn ghost" id="g2">回首頁</button></div></div></div>';
+    v.innerHTML='<div class="home"><div class="card" style="text-align:center;line-height:1.8"><div style="font-size:40px">📺</div><b>這個頁面目前不開放</b><br><span class="muted">其他棋譜都在「📚 棋譜」裡。</span><div class="row" style="gap:8px;margin-top:12px;justify-content:center"><button class="btn" id="g1">📚 去棋譜</button><button class="btn ghost" id="g2">回首頁</button></div></div></div>';
     (v.querySelector("#g1")||{}).onclick=()=>location.hash="#/db";(v.querySelector("#g2")||{}).onclick=()=>location.hash="#/";return screen={}}
   if(p[0]==="db"&&p.length>=3)return screen=Viewer(v,p[1],p.slice(2).join("/"));
   if(p[0]==="db")return screen=Library(v,p[1]);
@@ -273,11 +273,11 @@ if(OFF&&/XQQianqiuApp\//.test(navigator.userAgent)&&(!self.crossOriginIsolated||
   const show=()=>{if(document.querySelector("#preov,.modal,#sheet.show")&&++tries<30)return setTimeout(show,3000);if(mute){toast("⚠ "+NATIVE_OLDWV);return}
     modal(`<div class="em">📱</div><h2>${NATIVE_IOS?"電腦棋手沒有啟動成功":"電腦棋手需要更新手機元件"}</h2><p style="text-align:left">${esc(NATIVE_OLDWV)}。</p><p class="muted" style="text-align:left">${NATIVE_IOS?"聯絡方式在設定房間「🔒 系統・隱私・家長」的「📮 聯絡與支援」。":"更新好以後，把 App 完全關掉再打開就能用。"}<br>現在照樣能用：同桌對弈（兩人在這支手機輪流下）、殘局、古譜與大師對局、測驗、線上對弈。<br>${NATIVE_IOS?"要等電腦棋手啟動成功才能用":"要等更新才能用"}：挑戰電腦、擂台、棋局分析與提示。</p>${wv&&!NATIVE_IOS?`<p class="muted">目前的 WebView 版本：${esc(wv)}</p>`:""}`,[["知道了",null],["這個版本不再跳出",()=>store.set("oldWvMute",wv),true]])};
   setTimeout(show,2500)}
-if(OFF&&window.XQEngine){let bar=null;
+if(OFF&&window.XQEngine){let bar=null;const NAT=typeof xqNat==="function"&&xqNat();
   XQEngine.onProgress((got,total)=>{if(!bar){keepAwake("engine",()=>!!bar);bar=document.createElement("div");bar.className="toast";if(/^#[/](cpu|arena|pvp|quiz|watch|journey[/]play|redo[/]play|legend)([/]|$)/.test(location.hash))bar.style.display="none";   /* QA P2-6：下棋、讀故事時不蓋引擎下載進度 */
   bar.style.bottom="auto";bar.style.top="calc(70px + var(--safeT))";document.body.append(bar);setTimeout(()=>{if(bar)bar.style.display="none"},1200)}
-    const p=Math.round(got/total*100);bar.textContent=`第一次使用：下載 Pikafish 引擎 ${p}%（${(got/1048576).toFixed(0)}／${(total/1048576).toFixed(0)} MB）`;
-    if(got>=total){bar&&bar.remove();bar=null;toast("✅ Pikafish 引擎下載完成")}})}
+    const p=Math.round(got/total*100);bar.textContent=NAT?`準備 Pikafish 引擎 ${p}%`:`第一次使用：下載 Pikafish 引擎 ${p}%（${(got/1048576).toFixed(0)}／${(total/1048576).toFixed(0)} MB）`;
+    if(got>=total){bar&&bar.remove();bar=null;if(!NAT)toast("✅ Pikafish 引擎下載完成")}})}   /* 11/17 iMac 測試員 H P2（準則 2.5.2 觀感）：原生 App 的引擎在安裝包裡、是從本機讀，不是下載 → 原生版進度寫「準備」、讀完不跳「下載完成」 */
 function connectSheet(){const r=OFF&&XQ.remoteInfo();
   sheet("連線到電腦",b=>{b.innerHTML=`<p>連上電腦後可以：看 AI 對戰、請 Claude/GPT 講解、把特級大師與許銀川對局同步到手機。挑戰電腦、雙人對戰、古譜研究不需要連線。</p>
     <p class="muted">怎麼連：在電腦執行 <b>node xiangqi-referee.js --tunnel</b>，按下面「📷 掃描」對準電腦頁面上「📱 手機」的 QR code。只要掃過一次就好：電腦程式重開後網址雖然會換，App 會自己找到新網址。</p>
@@ -522,7 +522,7 @@ if(OFF&&!isStandalone()&&/iPhone|iPad|Android/.test(MY_KIND)){let instTry=0;cons
 // 網址上的 ?openExternalBrowser=1 只是給 LINE 看的，打開後拿掉
 if(/[?&]openExternalBrowser=1/.test(location.search))try{history.replaceState(history.state,"",location.pathname+location.hash)}catch(e){}
 async function shareSheet(){
-  const app=(OFF&&/^https:/.test(location.origin)?location.origin+location.pathname:APP_HOME)+"?openExternalBrowser=1";   // LINE 裡點開會改用手機的瀏覽器
+  const app=(OFF?xqShareBase():APP_HOME)+"?openExternalBrowser=1";   /* 11/17 iMac J P1-2：原生版、localhost 一律給公開網址 */   // LINE 裡點開會改用手機的瀏覽器
   // 給一般玩家：只有 App 本身。連到電腦的 QR code 放在「🔗 連線到電腦」裡（只有連過電腦的裝置看得到）
   try{await loadScript("qrcode.min.js")}catch(e){return toast(e.message)}
   sheet("分享象棋千秋",b=>{
@@ -536,7 +536,7 @@ async function shareSheet(){
       try{await navigator.clipboard.writeText(app);toast("已複製連結")}catch(e){prompt("複製這個連結",app)}}})}
 // 給開發者：讓自己的另一台裝置也連到電腦（含存取碼，只給自己或信任的人）
 async function deviceQR(base,key){
-  const app=/^https:/.test(location.origin)?location.origin+location.pathname:APP_HOME,u=`${app}#connect=${encodeURIComponent(base)}&k=${encodeURIComponent(key)}`;
+  const app=xqShareBase(),u=`${app}#connect=${encodeURIComponent(base)}&k=${encodeURIComponent(key)}`;
   try{await loadScript("qrcode.min.js")}catch(e){return toast(e.message)}
   sheet("讓另一台裝置連到電腦",b=>{b.innerHTML=`<p style="text-align:center">用另一台手機／平板的相機掃這個 QR code，打開後就會連到你的電腦。</p><div class="qrbox" id="qrc"></div>
     <p class="muted" style="text-align:center">⚠ 含存取碼：掃到的人能操作電腦上的對局。只給自己的裝置或信任的人。</p>`;

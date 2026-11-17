@@ -189,7 +189,7 @@ async function preloadAll(){if(!OFF||!("caches" in window))return PRE_FIRST_OK()
 setTimeout(()=>{try{preloadAll().catch(()=>PRE_FIRST_OK())}catch(e){PRE_FIRST_OK()}},0);
 // 產生「對手掃這個就能加入、自動坐另一邊」的網址
 async function joinLink(other){
-  if(OFF){const r=XQ.remoteInfo();if(!r)return null;return location.origin+location.pathname+`#connect=${encodeURIComponent(r.base)}&k=${encodeURIComponent(r.key)}&seat=${other}`}
+  if(OFF){const r=XQ.remoteInfo();if(!r)return null;return xqShareBase()+`#connect=${encodeURIComponent(r.base)}&k=${encodeURIComponent(r.key)}&seat=${other}`}
   const d=await api("/remote"),us=d.urls||[],u=us.find(x=>/\/m\?k=/.test(x)&&/^https:/.test(x))||us.find(x=>/\/m\?k=/.test(x));
   return u?u+"#/join/"+other:null}
 function PvpGame(v){

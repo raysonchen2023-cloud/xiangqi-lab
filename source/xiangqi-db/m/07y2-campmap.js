@@ -14,7 +14,7 @@ const CP_FLAGS=[[377,815],[304,789],[182,721],[227,675],[294,650],[373,629],[531
 const CP_PATH=[[380,930],[264,879],[200,814],[207,750],[279,711],[421,696],[500,650],[436,593],[414,571],[336,529],[257,496],[314,464],[486,450],[543,414],[514,371],[421,350],[393,304]];
 const CP_NODE=CP_FLAGS.map(([x,y])=>{const bx=x-12,by=y+45;let k=0,d=1e9;CP_PATH.forEach(([px,py],i)=>{const e=(px-bx)**2+(py-by)**2;if(e<d){d=e;k=i}});return k});
 const cpPc=(x,y)=>[x/7.68,y/13.76];
-const cpDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
+const cpDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"&&xqNight())};   /* 11/17 第 28 輪 N28-2：有夜版圖的頁一律照實際日落（00-util xqNight，跟首頁同一個判斷）；深色主題照舊 */
 function cpCfg(cur){const N={},E=[];CP_PATH.forEach(([x,y],i)=>{const[a,b]=cpPc(x,y);N["w"+i]=[+a.toFixed(2),+b.toFixed(2)];if(i)E.push(`w${i-1}-w${i}`)});
   const HS={};CP_FLAGS.forEach(([x,y],i)=>{const[a,b]=cpPc(x,y);HS["cpF"+(i+1)]=["w"+CP_NODE[i],+a.toFixed(2),+b.toFixed(2),"bow"]});
   const home="w"+CP_NODE[Math.max(0,Math.min(11,cur-1))],nx=CP_FLAGS[Math.min(11,cur)]||CP_FLAGS[11];

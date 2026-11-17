@@ -33,7 +33,14 @@ function spmPool(J, obj, era) {
   return (P && P[era]) || null;
 }
 /* aria-label：月亮：聽一首唐詩 */
+/* 11/17 第 28 輪 Y5（測試員 D）：英文介面入夜後月亮熱區的 aria-label／title 是中文「月亮：聽一首歷代詩」（資料 poems.json 的範本組的，兩份字典都沒有）→
+   英文時熱區名稱、詩卡的標頭、出處、按鈕都用英文（詩本身是中文原文，照舊；詩人、書名是專有名詞照原文） */
+const SPM_EN = { obj: { moon: "Moon" }, era: { qin: "pre-Qin", han: "Han", sanguo: "Three Kingdoms", weijin: "Wei-Jin", nanbei: "Northern and Southern Dynasties", sui: "Sui", tang: "Tang", wudai: "Five Dynasties", song: "Song", yuan: "Yuan", ming: "Ming", qing: "Qing" } };
+function spmEn() { try { return typeof tmxEn === "function" && tmxEn(); } catch (e) { return false; } }
+function spmNameEn(obj) { return SPM_EN.obj[obj] || String(obj || "").replace(/^./, c => c.toUpperCase()); }
+function spmEraEn(era) { return era === "classic" || !SPM_EN.era[era] ? "" : SPM_EN.era[era]; }
 function spmLabel(J, obj, era) {
+  if (spmEn()) { const e = spmEraEn(era); return spmNameEn(obj) + ": hear " + (e ? "a " + e + " poem" : "a poem from the ages"); }
   const o = (J.objects || {})[obj] || {}, el = (J.eraLabel || {})[era] || "";
   const tpl = o.labelTpl || "{name}：聽一首{eraLabel}詩";
   return tpl.replace("{name}", o.name || obj).replace("{eraLabel}", el);
@@ -50,21 +57,22 @@ function spmNext(obj, era, n) {
 /* 詩詞卡：詩題、詩人（朝代）、全文、出處；『再一首』原地換下一首（不另開卡、不多推一筆歷史） */
 function spmRender(body, J, obj, era) {
   const pool = spmPool(J, obj, era);
-  if (!pool || !pool.length) { body.textContent = "（這一朝暫時還沒有收詩）"; return; }
+  const EN = spmEn();
+  if (!pool || !pool.length) { body.textContent = EN ? "(No poems for this dynasty yet)" : "（這一朝暫時還沒有收詩）"; return; }
   const i = spmNext(obj, era, pool.length), p = pool[i];
-  const nm = (J.objects[obj] || {}).name || obj;
+  const nm = (J.objects[obj] || {}).name || obj, ne = spmNameEn(obj), ee = spmEraEn(era);
   if (typeof vibrate === "function") try { vibrate(5); } catch (e) {}
-  const tail = p.excerpt ? "（節錄）" : "";
+  const tail = p.excerpt ? (EN ? " (excerpt)" : "（節錄）") : "";
   body.innerHTML =
-    '<div class="muted" style="margin:-4px 0 10px">' + esc(nm) + '・' + esc((J.eraLabel || {})[era] || "") + '當代詩詞</div>' +
+    '<div class="muted" style="margin:-4px 0 10px">' + (EN ? esc(ne) + " · " + (ee ? esc(ee) + "-era poetry" : "poems through the ages") : esc(nm) + '・' + esc((J.eraLabel || {})[era] || "") + '當代詩詞') + '</div>' +
     '<p style="font:700 17px/1.4 var(--serif,serif);margin:0 0 4px">' + esc(p.title) + '</p>' +
     '<p class="muted" style="margin:0 0 10px;font-size:13px">' + esc(p.poet) + '（' + esc(p.dynasty) + '）' + esc(tail) + '</p>' +
     '<p style="line-height:2;margin:0 0 12px;font-size:17px">' + esc(p.text) + '</p>' +
-    '<p class="muted" style="margin:0 0 14px;font-size:13px">出處：' + esc(p.source) +
-      ' ・ <a href="' + esc(p.ref) + '" target="_blank" rel="noopener">查證原文</a></p>';
+    '<p class="muted" style="margin:0 0 14px;font-size:13px">' + (EN ? "Source: " : "出處：") + esc(p.source) +
+      ' ・ <a href="' + esc(p.ref) + '" target="_blank" rel="noopener">' + (EN ? "Check the original" : "查證原文") + '</a></p>';
   const b = document.createElement("button");
-  b.type = "button"; b.className = "btn"; b.textContent = "🔁 再一首";
-  b.setAttribute("aria-label", "再換一首" + ((J.eraLabel || {})[era] || "") + "詠" + esc(nm) + "的詩");
+  b.type = "button"; b.className = "btn"; b.textContent = EN ? "🔁 Another poem" : "🔁 再一首";
+  b.setAttribute("aria-label", EN ? "Another " + (ee ? ee + " " : "") + "poem about the " + ne.toLowerCase() : "再換一首" + ((J.eraLabel || {})[era] || "") + "詠" + esc(nm) + "的詩");
   b.onclick = e => { e.stopPropagation(); spmRender(body, J, obj, era); };
   body.append(b);
 }
@@ -72,7 +80,7 @@ function spmShow(obj, era) {
   spmData().then(J => {
     if (!J || !spmPool(J, obj, era)) return;
     const nm = (J.objects[obj] || {}).name || obj;
-    sheet("🌙 " + nm, body => spmRender(body, J, obj, era));
+    sheet("🌙 " + (spmEn() ? spmNameEn(obj) : nm), body => spmRender(body, J, obj, era));
   });
 }
 /* 在座標框上疊透明按鈕；一個框一個物件一顆。朝代變了（換停靠、換季）就更新 label 或移除（該朝沒詩時） */

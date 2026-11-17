@@ -53,7 +53,7 @@ async function xfSend(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)r
   sheet("📱 產生轉移碼",async b=>{b.innerHTML='<p class="muted">整理資料、加密中…</p>';
     try{const U=await xfUpload(code);
       setTimeout(()=>xfWipe(U.K,U.n),XF_TTL);
-      b.innerHTML=`<p>在新手機打開象棋千秋 →「設定 → ⚙ 系統 → 📱 換手機 → 輸入轉移碼」<!-- 意見回饋 607：設定的分頁是「⚙ 系統」 -->，輸入：</p><div style="font:900 34px/1.3 ui-monospace,monospace;letter-spacing:.12em;text-align:center;margin:12px 0;color:var(--accent)">${shown}</div>
+      b.innerHTML=`<p>在新手機打開象棋千秋 →「設定 → 🎒 換手機 → 新手機・輸入轉移碼」<!-- 11/17 iMac 測試員 G P3-5：設定改成房間，換手機在書箱「🎒 換手機」，點右半「新手機・輸入轉移碼」 -->，輸入：</p><div style="font:900 34px/1.3 ui-monospace,monospace;letter-spacing:.12em;text-align:center;margin:12px 0;color:var(--accent)">${shown}</div>
         <p class="muted" style="font-size:13px">30 分鐘內有效（到 ${new Date(U.exp).toLocaleTimeString().slice(0,-3)}），新手機收到後就失效。這支手機的資料不會被刪掉。資料大小約 ${U.kb} KB${U.games?`，含 ${U.games} 盤棋譜`:""}。新手機會用它自己的裝置代號，這支手機保留原本的。</p><button class="btn ghost" id="xfX" style="width:100%">作廢這組碼</button>`;
       b.querySelector("#xfX").onclick=()=>{xfWipe(U.K,U.n);toast("這組轉移碼已作廢");closeSheet()}}
     catch(e){b.innerHTML=`<p>⚠ ${esc(e.message||String(e))}</p>`}})}
@@ -286,11 +286,8 @@ function Settings(v){
       <div class="opt" id="tbb" style="justify-content:center;margin-top:8px"><!-- 意見回饋 620：「示範一步」跟「走一步」重複，只留走一步（會照設定播特效和音效） -->${[["mv","♟ 走一步"],["cap","💥 吃子"],["ck","⚔ 將軍"],["op","🚩 開局動畫"]].map(([k,l])=>`<button data-tst="${k}">${l}</button>`).join("")}</div></div>   <!-- 意見回饋 537：預覽和測試併成一個棋盤；547：小字提示都拿掉 -->
     <div class="sec-t">棋盤的朝代樣式</div><p class="muted" style="font-size:12.5px;margin:0 2px 6px">只換棋盤和棋子的樣子；要去別的朝代，請到雲河星槎。</p><div class="eragrid erasw" id="era"></div>
     <div class="sec-t">棋盤風格</div>
-    <label class="row" style="display:none"><span><b>3D 園子棋盤</b></span><input type="checkbox" class="sw" id="p3d"></label>   <!-- 意見回饋 488；672（開發者 11/6）：3D 園子棋盤、對手形象、棋子樣式不給玩家選，照目前的設定 -->
-    <div class="thgrid thsw" id="th"></div>
-    <div class="sec-t" style="display:none">對手形象</div><div class="opt" id="ol" style="display:none"></div>
-    <div class="sec-t" style="display:none">棋子樣式</div><div class="opt" id="ps" style="display:none"></div>
-    <details class="card" style="padding:10px 12px;margin-top:14px"><summary style="font-weight:700;cursor:pointer" data-i18n="set.more">⚙ 更多設定</summary>   <!-- 意見回饋 576（開發者）：只留「更多設定」，後面的說明拿掉 -->   <!-- 意見回饋 537：不常改的收在這裡 -->
+    <!-- 意見回饋 488；672（開發者 11/6）：3D 園子棋盤、對手形象、棋子樣式不給玩家選，照目前的設定。11/17 iMac I：藏起來（display:none）的這三個設定連同程式整段拿掉，不留玩家走不到的設定 -->
+    <div class="thgrid thsw" id="th"></div>    <details class="card" style="padding:10px 12px;margin-top:14px"><summary style="font-weight:700;cursor:pointer" data-i18n="set.more">⚙ 更多設定</summary>   <!-- 意見回饋 576（開發者）：只留「更多設定」，後面的說明拿掉 -->   <!-- 意見回饋 537：不常改的收在這裡 -->
     <div class="sec-t">深淺色</div><div class="opt" id="pt"></div><p class="muted" id="ptN" style="display:none"></p>${typeof sw7SetRow==="function"?sw7SetRow():""}
     <div class="sec-t" data-i18n="set.font">字體</div><div class="opt" id="ftM"></div>
     <div class="sec-t" id="fzT" data-i18n="set.fontSize">字級</div><div class="opt" id="fzM" role="group" aria-labelledby="fzT"></div><p class="muted" id="fzN" style="font-size:12.5px;margin:4px 2px 0">面板、對局文字、小說都跟著放大；棋盤上的棋子不變。</p>${typeof axmFzSysRow==="function"?axmFzSysRow():""}   <!-- 回饋 846（開發者 11/9 選：字級放大）；11/12 無障礙：跟著系統字級 -->
@@ -339,7 +336,7 @@ function Settings(v){
       <button class="item" id="sh"><span class="lb">${ETIMG("share","","📤")}</span><span class="tx"><b>分享給朋友</b><span>QR code・LINE</span></span><span class="muted">›</span></button></div>
     <div class="sec-t" data-i18n="set.about">關於</div><div class="card" id="about" style="line-height:1.9">
       <div class="row" style="justify-content:space-between">${aboutK("App")}<b>象棋千秋</b></div>
-      <div class="row" style="justify-content:space-between">${aboutK("開發者")}<b>hungshengc</b></div>
+      <div class="row" style="justify-content:space-between">${aboutK("開發者")}<b>Hung-Sheng Chen</b></div>
       <div class="row" style="justify-content:space-between;align-items:center">${aboutK("版本")}<span class="row" style="gap:8px;align-items:center"><b>${esc(window.XQ_BUILD&&!/__BUILD__/.test(window.XQ_BUILD)?window.XQ_BUILD:"開發中")}</b>${OFF?'<button class="pill" id="aUpd">檢查更新</button>':""}</span></div>   <!-- 意見回饋 531：系統更新從首頁搬到這裡 -->
       ${aboutSizes()}   <!-- 意見回饋 661：整包大小、這支手機已用多少 -->
       <button class="btn ghost" id="aLic" style="width:100%;margin-top:8px">📜 關於與開源授權</button>   <!-- 開發者 11/11 選規劃書方案 10 -->
@@ -391,8 +388,6 @@ function Settings(v){
     {const xo=v.querySelector("#xfOut"),xi=v.querySelector("#xfIn");if(xo)xo.onclick=()=>{vibrate(5);xfSend()};if(xi)xi.onclick=()=>{vibrate(5);xfRecv()}}
     /* 意見回饋 574（開發者）：外觀頁的 3D 園子棋盤、對手形象、棋子樣式拿掉 emoji */
     /* 意見回饋 442、456（開發者）：對手形象可以選——3D 立體小人（跟小帥一樣是立體的，每個人帽子、衣服不同）或畫好的立繪 */
-    {const ol=v.querySelector("#ol");if(ol){const cur=store.get("oppLook","real");ol.innerHTML=[["3d","Q 版 3D"],["real","真實 3D"],["art","畫好的立繪"]].map(([k,l])=>`<button data-ol="${k}" class="${cur===k?"on":""}">${l}</button>`).join("");
-      ol.querySelectorAll("[data-ol]").forEach(x=>x.onclick=()=>{vibrate(5);store.set("oppLook",x.dataset.ol);paint()})}}
     {const oa=v.querySelector("#obAgain");if(oa)oa.onclick=()=>{vibrate(5);saveSheet()}}{const dp=v.querySelector("#dfPick");if(dp)dp.onclick=()=>{vibrate(5);diffSheet(()=>{dp.textContent="🎚 "+diffOf().n})}}   /* 意見回饋 668 */
     v.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{vibrate(5);if(!window.XQ_setRulePref){toast("這個版本還不能切換棋規");return}const id=XQ_setRulePref(b.dataset.rs);
       v.querySelectorAll("[data-rs]").forEach(x=>x.classList.toggle("on",x.dataset.rs===id));const n=v.querySelector("#rsN");if(n)n.innerHTML=rsNote();
@@ -402,14 +397,11 @@ function Settings(v){
     {const nl=v.querySelector("#nmLook");if(nl)nl.onclick=()=>{vibrate(5);nameSheet(false)};
      /* 意見回饋 519／520：從線上大廳按「改名」過來，直接捲到改名字的地方、亮一下，再打開改名視窗 */
      if(store.get("setFocus","")==="name"&&nl){store.set("setFocus","");setTimeout(()=>{const c=nl.closest(".card");c.scrollIntoView({block:"center",behavior:"smooth"});c.style.transition="box-shadow .3s";c.style.boxShadow="0 0 0 3px var(--accent,#B3261E)";setTimeout(()=>{c.style.boxShadow="";nameSheet(false)},700)},120)}}   /* 意見回饋 498：改名字只放在外觀這裡 */
-    {const p3=v.querySelector("#p3d");if(p3){p3.checked=!!store.get("park3d",typeof pkDef3d==="function"?pkDef3d():true);p3.onchange=()=>{vibrate(5);store.set("park3d",p3.checked);toast(p3.checked?"下棋時會在 3D 園子裡":"下棋時用平面棋盤")}}}
     if(typeof chdFormBind==="function")chdFormBind(v);   /* 意見回饋 774 本命化形開關（07q-chardiff.js） */
     {v.querySelectorAll("[data-pace]").forEach(b=>b.onclick=()=>{vibrate(5);store.set("cpuPace",b.dataset.pace);v.querySelectorAll("[data-pace]").forEach(x=>x.classList.toggle("on",x===b))});const hp=v.querySelector("#hapSw");if(hp)hp.checked=store.get("haptic",true)!==false;const bz=v.querySelector("#blitzSw");if(bz)bz.checked=!!store.get("blitz",false);const pm=v.querySelector("#premoveSw");if(pm)pm.checked=store.get("premove",true)!==false;const lf=v.querySelector("#leftySw");if(lf)lf.checked=!!store.get("lefty",false);const cu=v.querySelector("#cleanSw");if(cu)cu.checked=!!store.get("cleanUI",false);const bk=v.querySelector("#bossSw");if(bk)bk.checked=store.get("bossKey",true)!==false}   /* 第 11 輪 F4 電腦下棋節奏、X2 震動回饋（勾選後的存檔、試震由 07hp-haptics.js 監聽 #hapSw） */
     {const cb=v.querySelector("#cbSw");if(cb){cb.checked=!!store.get("cbMode",false);cb.onchange=()=>{vibrate(5);store.set("cbMode",cb.checked);if(typeof cbApply==="function")cbApply();toast(cb.checked?"已打開色弱模式":"已關閉色弱模式")}}}   /* 第 11 輪 F3 色弱模式 */
     {const hcI=v.querySelector("#hiCon");if(hcI){hcI.checked=!!store.get("hiCon",false);hcI.onchange=()=>{store.set("hiCon",hcI.checked);hcApply();/* 回饋 848（色盲高對比） */vibrate(5);try{if(PARK){PARK.v.destroy();PARK=null}}catch(e){}show(true)}}}
     {const fbI=v.querySelector("#focB");if(fbI){fbI.checked=focusOn();fbI.onchange=()=>{store.set("focusBoard",fbI.checked);focusApply();vibrate(5);toast(fbI.checked?"已開啟「專注棋盤模式」，隱藏背景動畫與裝飾。":"已關閉專注棋盤模式")}}}
-    v.querySelector("#ps").innerHTML=[["classic","傳統"],["solid","實心"],["3d","立體"]].map(([k,l])=>`<button data-p="${k}" class="${ps===k?"on":""}">${l}</button>`).join("");
-    v.querySelectorAll("[data-p]").forEach(x=>x.onclick=()=>{store.set("pieceStyle",x.dataset.p);paint();show(false)});
     const pt=store.get("pageTheme","auto");v.querySelector("#pt").innerHTML=[["auto","跟著手機"],["light","☀ 淺色"],["dark","🌙 深色"]].map(([k,l])=>`<button data-m="${k}" class="${pt===k?"on":""}">${l}</button>`).join("");
     v.querySelectorAll("[data-m]").forEach(x=>x.onclick=()=>{const k=x.dataset.m;store.set("pageTheme",k);if(k==="auto")delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=k;paint()});
     /* 意見回饋 611：字體跟著朝代（每個朝代一套書法或刻本字）或跟著手機（手機內建字體） */

@@ -54,12 +54,12 @@ const BOT_FAQ=[
  [["分析","評等","賽後報告","好棋","壞棋"],"看棋譜時按「🔍 分析」或右上角「📊 賽後報告」，Pikafish 會評每一步，並用藍色箭頭畫出建議走法。"],
  [["記譜","記譜法","怎麼看棋譜","進退平"],"記譜是「棋子＋所在直線＋進退平＋數字」，例如「炮二平五」。紅方用中文數字、黑方用阿拉伯數字。詳細看「象棋規則 → 記譜法」。","#/terms","打開象棋規則"],
  [["規則","怎麼下","玩法","怎麼走","新手"],"「象棋規則 → 玩法」有每種棋子怎麼走，還有棋盤示範。","#/terms","打開象棋規則"],
- [["意見回饋","回報","bug","錯誤","建議"],"到「設定 → ⚙ 系統 → 意見回饋」可以回報問題或提建議，也能附截圖。","#/settings","打開設定"],
+ [["意見回饋","回報","bug","錯誤","建議"],"到「設定」房間點「✉ 意見回饋」可以回報問題或提建議，也能附截圖。","#/settings","打開設定"],
  [["名字","改名"],"到「設定 → 🙂 角色 → 改名」可以改名字，線上對戰時對手會看到。","#/settings","打開設定"],
  [["城市","位置","IP"],"線上大廳會顯示大概的城市（用網路位置推估）。"],
  [["離線","沒網路","網路"],"加到手機主畫面後，大部分功能（棋譜、和電腦下棋）離線也能用；線上對戰需要網路。"],
  [["安裝","主畫面","App"],"iPhone 用 Safari 打開，按「分享 → 加入主畫面」，就能像 App 一樣全螢幕使用。"],
- [["更新","版本","新版"],"App 會自動更新，有新版時會提示；版本號在「設定 → ⚙ 系統 → 關於」。","#/settings","打開設定"],
+ [["更新","版本","新版"],"App 會自動更新，有新版時會提示；版本號在「設定」房間的「📜 關於」。","#/settings","打開設定"],
  [["你好","嗨","哈囉","hello","Hi","hi"],"你好！我是{BOT} 👋 可以問我象棋術語、開局、殺法、特級大師、比賽棋譜，或「怎麼提升實力」。"],
  [["謝謝","感謝","3Q"],"不客氣！有問題隨時長按我 😊"],
  [["早安","午安","晚安"],"你好呀～今天也來下一盤吧！"],
@@ -284,24 +284,35 @@ const ASK_POOL=[
   ["背一首詩","李白的詩","杜甫的詩","靜夜思","登鸛雀樓","春曉"],
   ["黑洞是什麼","光合作用是什麼","火山是什麼","彩虹是什麼"],
   ["35×12","88×88","一百二十八除以八","3 的 10 次方"]];
-function askSheet(){sheet("🤖 問"+ASKN(),b=>{   /* 意見回饋 668：扮演雲河七星時，小帥是「問小帥」的嚮導 */
+/* 11/17 iMac 測試員 K P1-3（開發者決定拿掉）：問小帥的「🔎 Google AI 回答」「✨ 問 Gemini」和上面那行「用你手機的網路直接問 Google（免費）」整塊（#aiB）。
+   原生版一律不畫；網頁版要不要一起拿掉還在等開發者回覆，先做成開關 ASK_EXT_AI_WEB（true＝網頁版照舊留著，false＝網頁版也拿掉）。
+   拿掉時整個 #aiB 不畫（不留空白區塊或分隔線），問小帥只留本機能回答的部分；兒童模式本來就藏（07m5） */
+const ASK_EXT_AI_WEB=false;   /* 11/17 開發者「這兩個都拿掉」：網頁版也不顯示 */
+function askExtAiOn(){try{if(typeof xqNat==="function"&&xqNat())return false;return!!ASK_EXT_AI_WEB}catch(e){return false}}
+/* 11/17 測試員 D 第 29 輪 Y8：英文介面——標題、說明、輸入框提示是中文；英文問「What is a cannon?」本機答不出，掉到中文百科、回了不相干的條目。
+   英文介面：標題、說明、提示換英文；問題裡沒有中文（本機的知識庫和棋譜都是中文）就直接用英文說「還不會回答」，不去查百科 */
+const askEn=()=>{try{return typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){return false}};
+const askNmEn=()=>{const n=ASKN();try{return(typeof i18nText==="function"&&i18nText(n))||n}catch(e){return n}};
+function askSheet(){sheet(askEn()?"🤖 Ask "+askNmEn():"🤖 問"+ASKN(),b=>{   /* 意見回饋 668：扮演雲河七星時，小帥是「問小帥」的嚮導 */
   // 意見回饋 243：建議的問題每次隨機換（剛剛小帥說過的話最多放 2 句，其他從題庫隨機挑 6 個，類別盡量不重複）
   const pick=(arr,n)=>{const a=arr.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a.slice(0,n)};
   const pool=pick(ASK_POOL.map(g=>pick(g,1)[0]),6),sug=[...BOT_SAID.slice(0,2),...pool].filter((x,i,a)=>a.indexOf(x)===i);
-  b.innerHTML=`<p class="muted" style="margin-top:0">問我象棋術語、開局、殺法、特級大師、比賽棋譜（例如「胡榮華 對 呂欽」「1990 五羊盃」「屏風馬破當頭炮」），或 App 怎麼用；象棋以外的也可以問，例如「臺北天氣」「背一首詩」「黑洞是什麼」「35×12」。能示範的，我會直接帶你到棋盤上看。<br>之後隨時<b>長按小人</b>就能問我。</p>
-    <div class="row" style="gap:8px"><input id="aq" placeholder="例如：五七炮是什麼？" style="flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:var(--card);color:var(--ink)"><button class="btn" id="ag" style="width:auto;padding:10px 16px">問</button></div>
+  b.innerHTML=(askEn()?`<p class="muted" data-noi18n style="margin-top:0">Ask me about xiangqi terms, openings, mating patterns, grandmasters, tournament games, or how to use the app. For now I understand questions <b>in Chinese</b> only — tap a suggestion below to try. When I can show it, I'll take you to the board.<br>Any time later, <b>long-press the little figure</b> to ask me.</p>`
+    :`<p class="muted" style="margin-top:0">問我象棋術語、開局、殺法、特級大師、比賽棋譜（例如「胡榮華 對 呂欽」「1990 五羊盃」「屏風馬破當頭炮」），或 App 怎麼用；象棋以外的也可以問，例如「臺北天氣」「背一首詩」「黑洞是什麼」「35×12」。能示範的，我會直接帶你到棋盤上看。<br>之後隨時<b>長按小人</b>就能問我。</p>`)+`
+    <div class="row" style="gap:8px"><input id="aq" placeholder="${askEn()?"Type a question in Chinese":"例如：五七炮是什麼？"}" style="flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:16px;background:var(--card);color:var(--ink)"><button class="btn" id="ag" style="width:auto;padding:10px 16px">問</button></div>
     <div class="chips" id="asug" style="margin-top:8px;flex-wrap:wrap">${sug.map(x=>`<button class="chip" data-q="${esc(x)}">${esc(x.length>14?x.slice(0,13)+"…":x)}</button>`).join("")}</div><div id="aa" style="margin-top:12px"></div>
-    <div id="aiB" style="margin-top:10px"><div class="muted" style="font-size:12px;margin-bottom:6px">想聽 AI 怎麼說？用你手機的網路直接問 Google（免費）。AI 有時會答錯，以上面有標出處的資料為準：</div>
-      <div class="row" style="gap:8px"><button class="btn ghost" id="aiG" style="flex:1;padding:11px 6px">🔎 Google AI 回答</button><button class="btn ghost" id="aiM" style="flex:1;padding:11px 6px">✨ 問 Gemini</button></div></div>`;
+    ${askExtAiOn()?`<div id="aiB" style="margin-top:10px"><div class="muted" style="font-size:12px;margin-bottom:6px">想聽 AI 怎麼說？用你手機的網路直接問 Google（免費）。AI 有時會答錯，以上面有標出處的資料為準：</div>
+      <div class="row" style="gap:8px"><button class="btn ghost" id="aiG" style="flex:1;padding:11px 6px">🔎 Google AI 回答</button><button class="btn ghost" id="aiM" style="flex:1;padding:11px 6px">✨ 問 Gemini</button></div></div>`:""}`;
   const qi=b.querySelector("#aq"),aa=b.querySelector("#aa");
   // 意見回饋 207、208：用玩家自己手機的網路問 Google 的免費 AI（不用金鑰）；Google 不讓 App 直接拿答案，所以開在 Google／Gemini 的畫面
-  {const aiB=b.querySelector("#aiB"),cur=()=>qi.value.trim(),open=u=>{if(typeof xqExtOpen==="function"){xqExtOpen(u);return}const w=window.open(u,"_blank","noopener");if(!w)location.href=u};   /* 11/9：離開 App 先請家長確認（07m5-family.js） */
+  if(b.querySelector("#aiB")){const aiB=b.querySelector("#aiB"),cur=()=>qi.value.trim(),open=u=>{if(typeof xqExtOpen==="function"){xqExtOpen(u);return}const w=window.open(u,"_blank","noopener");if(!w)location.href=u};   /* 11/9：離開 App 先請家長確認（07m5-family.js） */
     b.querySelector("#aiG").onclick=()=>{const q=cur();if(!q){qi.focus();return toast("先在上面打你想問的問題")}open("https://www.google.com/search?udm=50&hl=zh-TW&q="+encodeURIComponent(q))};
     b.querySelector("#aiM").onclick=async()=>{const q=cur();if(!q){qi.focus();return toast("先在上面打你想問的問題")}let ok=false;try{await navigator.clipboard.writeText(q);ok=true}catch(e){}
       toast(ok?"問題已複製，到 Gemini 長按輸入框貼上就能問":"打開 Gemini 後，把問題貼上去問");open("https://gemini.google.com/app")};
     qi.addEventListener("keydown",e=>{if(e.key==="Enter")aiB.hidden=false});b.querySelector("#ag").addEventListener("click",()=>aiB.hidden=false);b.addEventListener("click",e=>{if(e.target.closest("[data-q]"))aiB.hidden=false})}
   const say2=t=>{if(typeof BOT!=="undefined"&&BOT)BOT.say(t,2)};
   const ask=async q=>{q=String(q||"").trim();if(!q)return;qi.value=q;
+    if(askEn()&&!/[㐀-鿿]/.test(q)){aa.innerHTML=`<div class="card" data-noi18n><b>I can't answer that yet 🙇</b><div class="muted" style="margin-top:6px;line-height:1.6">I only understand questions in Chinese for now. Try one of the suggested questions above.</div></div>`;say2("I can't answer that yet.");return}   /* D Y8：英文問題不去查中文百科 */
     {const wk=worldIntent(q);if(wk){aa.innerHTML='<div class="muted">查一下…</div>';const a=await worldAsk(wk,q);if(a){aa.innerHTML=worldCard(a);say2(wk==="wx"?"天氣查到了！":wk==="poem"?"我來吟一首～":"我知道！");return}}}
     aa.innerHTML='<div class="muted">想一想…（第一次會翻一下棋譜）</div>';const kb=await askKB();let r=askFind(kb,q);
     const G=await askGames().catch(()=>null),gr=G?askGamesFind(G,q):null;let gl=gr&&gr.list.length?gr:null,gl2=null;

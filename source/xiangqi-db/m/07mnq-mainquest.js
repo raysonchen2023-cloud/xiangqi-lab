@@ -247,13 +247,15 @@ function mnqNotes(){mnqCss();const S=mnqSt();
 /* 設定 → 聲音 → 氛圍（05-settings.js 背景音樂那張卡 #snd3 呼叫）：♪ 配樂收藏（有收藏才出現）、🎬 再看第一章（收過授印禮或看過第一章才出現；還沒看完寫「看第一章」）。
    設定頁重畫會再叫一次：先拿掉舊的 #mnqSnd 再放 */
 function mnqSndRow(box){if(!box||!box.querySelector)return;mnqCss();const old=box.querySelector("#mnqSnd");if(old)old.remove();
-  const S=mnqSt(),lit=!!S.lamp.classic,ch=!!(S.gift.a1||lit||(MNQ_SEGS.classic||[]).some(id=>S.seg[id]));if(!S.music.length&&!ch)return;
+  const S=mnqSt(),lit=!!S.lamp.classic,ch=!!(S.gift.a1||lit||(MNQ_SEGS.classic||[]).some(id=>S.seg[id]));let op=false;try{op=typeof stqXuReplayOk==="function"&&stqXuReplayOk()}catch(e){}if(!S.music.length&&!ch&&!op)return;   /* 11/17 晚：「🎬 重看開場」（07stq stqXuReplay，只重播開場電影、不動進度）所有人都有 */
   const d=document.createElement("div");d.id="mnqSnd";
   d.innerHTML=(S.music.length?`<button type="button" class="mnq-sr" data-k="mu"><span><b>♪ 配樂收藏</b><small>配樂 ${S.music.length} 首</small></span><i aria-hidden="true">›</i></button>`:"")+
-    (ch?`<button type="button" class="mnq-sr" data-k="c1"><span><b>${lit?"🎬 再看第一章":"🎬 看第一章"}</b><small>河圖初渡</small></span><i aria-hidden="true">›</i></button>`:"");
+    (ch?`<button type="button" class="mnq-sr" data-k="c1"><span><b>${lit?"🎬 再看第一章":"🎬 看第一章"}</b><small>河圖初渡</small></span><i aria-hidden="true">›</i></button>`:"")+
+    (op?`<button type="button" class="mnq-sr" data-k="op"><span><b>🎬 重看開場</b><small>天河初裂</small></span><i aria-hidden="true">›</i></button>`:"");
   box.append(d);
   const mu=d.querySelector("[data-k=mu]");if(mu)mu.onclick=()=>{try{vibrate(5)}catch(e){}mnqMusic()};
-  const c1=d.querySelector("[data-k=c1]");if(c1)c1.onclick=()=>{try{vibrate(5)}catch(e){}mnqChapter("classic")}}
+  const c1=d.querySelector("[data-k=c1]");if(c1)c1.onclick=()=>{try{vibrate(5)}catch(e){}mnqChapter("classic")};
+  const opb=d.querySelector("[data-k=op]");if(opb)opb.onclick=()=>{try{vibrate(5)}catch(e){}try{stqXuReplay()}catch(e){}}}
 /* 遠征令最下面的開發者列（開發者模式或本機才有）：試玩下架的章（開關＋重新載入）、把下架的章進度清掉從頭試 */
 function mnqDevRow(b){if(!mnqPeekOk())return;const off=Object.entries(MNQ_CHAP_ALL).filter(([,c])=>c.off).map(([e])=>e);if(!off.length)return;const d=document.createElement("div");d.className="mnq-dev";
   d.innerHTML=`<div class="sec-t">🛠 開發者</div><button type="button" class="mnq-mu" data-k="pk">${MNQ_PEEK?"✅":"⬜"} 試玩下架的章（${esc(off.map(mnqShort).join("、"))}）：${MNQ_PEEK?"開":"關"}</button>${MNQ_PEEK?`<button type="button" class="mnq-mu" data-k="rs">↺ 下架的章從頭試（清掉這幾章的進度）</button>`:""}`;b.append(d);

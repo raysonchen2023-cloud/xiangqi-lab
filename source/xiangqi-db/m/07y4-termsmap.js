@@ -11,7 +11,7 @@ const TB2_IMGV="2340";
 const TB_STELE=[["play","棋規",122,643,210,807,153,583,190,623,166,545,"sl"],["note","記譜",333,630,453,857,373,567,410,620,393,510,"sm"],["terms","術語",577,693,677,933,613,657,653,700,640,583,"sr"]];
 const SHW_TB={el:38,h:[.085,70,.0012],look0:[50,50],home:"home",N:{home:[50,94.5],mid:[50,76.3],sl:[24.7,67.6],sm:[52,69.8],sr:[78,77]},E:"home-mid mid-sl mid-sm mid-sr"};
 const tbPc=(x,y)=>[x/7.68,y/13.76];
-const tb2Dark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
+const tb2Dark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"&&xqNight())};   /* 11/17 第 28 輪 N28-2：有夜版圖的頁一律照實際日落（00-util xqNight，跟首頁同一個判斷）；深色主題照舊 */
 /* 記譜用：標好一到九路的棋盤（紅方在下，路數從紅方右手邊數；黑方在上，用 1～9 從黑方右手邊數） */
 function tbFiles(){const L=[];for(let i=0;i<9;i++)L.push(i%8?`M${i} 0V4M${i} 5V9`:`M${i} 0V9`);for(let j=0;j<10;j++)L.push(`M0 ${j}H8`);L.push("M3 0L5 2M5 0L3 2M3 7L5 9M5 7L3 9");
   const R="九八七六五四三二一",B="123456789";let T="";for(let i=0;i<9;i++){T+=`<text x="${i}" y="10.15" text-anchor="middle" font-size=".55" fill="#f0b8a8" font-weight="700">${R[i]}</text><text x="${i}" y="-.55" text-anchor="middle" font-size=".5" fill="#e9e1d0">${B[i]}</text>`}

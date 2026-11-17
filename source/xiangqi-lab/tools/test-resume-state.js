@@ -249,7 +249,7 @@ test("保存紀錄：事件順序（新的在前）、連續自動存檔合成�
 
 /* ---------- 原始碼有接上（防止之後改壞） ---------- */
 test("〔原始碼〕開頭畫面 menu 照 tsmMenu 排、fwNeed 走 tsmFirst、journeyStart 只在 had 或沒進度時清、local.js 舊分頁不寫回",()=>{
-  assert.match(SAVE,/view==="menu"\)\{[^\n]*\n\s*const BL=tsmMenu\(/);
+  assert.match(SAVE,/view==="menu"\)\{[^\n]*\n\s*(?:const|let) BL=tsmMenu\(/);   /* 11/17 晚 iMac I P3：BL 改成 let（開新旅程途中 07stq stqXuMenu 換主按鈕） */
   assert.match(SAVE,/function fwNeed\(\)\{try\{return tsmFirst\(/);
   assert.match(START_SRC,/if\(had\|\|!tsmProgNow\(\)\.any\)\{const fw=localStorage\.getItem\("m_firstWin"\),fr=!!store\.get\("bhxFresh",0\),xu=fr\?localStorage\.getItem\("m_bhXuDone"\):null,xp=fr\?localStorage\.getItem\("m_bhxPick"\):null;saveApply\(\{\}\)/,"開發者 11/12：只有在這一趟開頭選好角色（bhxFresh）才把序局紀錄帶進新旅程；一般新旅程從開頭來");
   assert.match(LOCAL,/analyzeList\(S,\(\)=>\{if\(P===S\)savePlay\(\)\},\(\)=>P!==S\|\|/);

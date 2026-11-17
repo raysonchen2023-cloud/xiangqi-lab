@@ -299,7 +299,7 @@ function HwMake(v){setTop("🧑‍🏫 教練作業","#/canju");if(typeof setTab
       body.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{const k=+b.dataset.up;if(k>0){const t=Dr.items[k-1];Dr.items[k-1]=Dr.items[k];Dr.items[k]=t;save();paint([k-1>0?"up:"+(k-1):"rm:0"]);say("移到第 "+k+" 題")}});
       {const m=body.querySelector("#hwMore");if(m)m.onclick=()=>{const nx=P[Dr.lim];Dr.lim+=40;paint(nx?["add:"+nx.k+":"+nx.id]:[])}}
       {const s=body.querySelector("#hwSeeSel");if(s)s.onclick=()=>{const c=body.querySelector("#hwSelCard"),h=body.querySelector("#hwSelH");if(c)c.scrollIntoView({block:"start",behavior:"smooth"});if(h)try{h.focus({preventScroll:true})}catch(e){}}}
-      body.querySelector("#hwMk").onclick=()=>{if(!Dr.items.length)return;const code=hwEnc({title:Dr.title,items:Dr.items}),url=location.href.split("#")[0]+"#/hw/"+code,o=body.querySelector("#hwOut");
+      body.querySelector("#hwMk").onclick=()=>{if(!Dr.items.length)return;const code=hwEnc({title:Dr.title,items:Dr.items}),url=xqShareBase()+"#/hw/"+code,   /* 11/17 iMac J P1-2：不用 location.href（原生版是 127.0.0.1） */o=body.querySelector("#hwOut");
         o.innerHTML=`<p class="muted" style="font-size:13px;margin:10px 0 4px">把這個連結傳給學生（${Dr.items.length} 題）：</p><input class="hw-url" readonly id="hwU" aria-label="作業連結"><div class="opt" style="margin:8px 0 0"><button class="on" id="hwUc">📋 複製連結</button>${navigator.share?'<button id="hwUs">📤 分享</button>':""}<button id="hwUt">▶ 自己先試做</button></div>`;
         const u=o.querySelector("#hwU");u.value=url;u.onclick=()=>u.select();
         o.querySelector("#hwUc").onclick=async()=>{try{await navigator.clipboard.writeText(url);toast("已複製作業連結")}catch(e){try{prompt("複製這個連結",url)}catch(x){}}};
@@ -525,7 +525,7 @@ function PosRestore(v,sub){posRCss();if(typeof setTabs==="function")setTabs(fals
     else if(sel<0){if(b[i])sel=i}else{if(i!==sel){b[i]=b[sel];b[sel]=null}sel=-1}if(typeof vibrate==="function")vibrate(5);upd(false,true)}
   v.querySelector("#prA").onclick=()=>{const k=fenChk(ta.value);if(!k.board){E.innerHTML=`<ul class="pr-err">${k.errs.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`;return}b=k.board.slice();side=k.side;sel=-1;upd(false,true)};
   v.querySelector("#prC").onclick=()=>pgnOut(C.fen(b,side),"FEN","txt","copy");
-  v.querySelector("#prSh").onclick=()=>{const u=posRShareUrl(location.href,C.fen(b,side));if(navigator.share)navigator.share({title:"象棋局面",text:"輪到"+PLAYER[side]+"走",url:u}).catch(()=>{});else pgnOut(u,"局面網址","txt","copy")};
+  v.querySelector("#prSh").onclick=()=>{const u=posRShareUrl(xqShareBase(),C.fen(b,side));   /* 11/17 iMac J P1-2 */if(navigator.share)navigator.share({title:"象棋局面",text:"輪到"+PLAYER[side]+"走",url:u}).catch(()=>{});else pgnOut(u,"局面網址","txt","copy")};
   {const m=v.querySelector("#prMine");if(m)m.onclick=()=>{const k=fenChk(D.fen);if(!k.board)return;b=k.board.slice();side=k.side;sel=-1;flip=false;mine=true;m.closest(".card").remove();upd()}}
   v.querySelectorAll("[data-sd]").forEach(x=>x.onclick=()=>{side=x.dataset.sd;upd(false,true)});
   v.querySelector("#prS").onclick=()=>{b=C.parseFen(C.START);side="r";sel=-1;upd(false,true)};

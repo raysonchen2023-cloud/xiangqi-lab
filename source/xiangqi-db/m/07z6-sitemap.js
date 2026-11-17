@@ -8,7 +8,7 @@ const SITEMAP_ON=true;
 /* [區代號, 圖示, 區名, 一句說明, 入口[[名字, 網址, 搜尋關鍵字, 開放條件（STM_LOCK 的鍵，沒有＝一直開著）]]] */
 const STM_AREAS=[
   ["tea","🍵","對弈茶樓","真人、電腦、擂台",[["對戰總覽","#/hub/battle","下棋 對戰"],["西市","#/ximarket","西市 市集 聽雨茶坊 茶坊 暗棋 攤 逛街","xsm"],["挑戰電腦","#/cpu","電腦 AI 人機 練功房 晉級賽"],["車輪戰","#/simul","一對多 車輪 多盤 同時 大師 表演"],["同桌對弈","#/pvp","兩人 雙人 面對面 家人 身邊同桌 石桌"],["線上大廳","#/lobby","真人 網路 連線 觀戰 線上"],...(typeof CUP_ENTRY_ON==="undefined"||CUP_ENTRY_ON?[["千秋盃","#/cup","比賽 盃賽 週六"]]:[]),["朝代擂台","#/arena","擂主 擂台"],["同桌合作殘譜","#/coop","合作 一起"]]],
-  ["acad","🎍","練棋書院","新手、殘局、測驗",[["學習總覽","#/hub/learn","學棋 學習"],["新手訓練營","#/camp","新手 入門 教學 第一次 怎麼走"],["棋力測驗","#/quiz","測驗 考試 程度"],["一盞茶殘局","#/canju","每日 殘局 解題"],["千秋殘局","#/ship/pz","殘局 解題 星槎"],["猜著法","#/guess","猜 大師"],["主題訓練","#/theme","主題 殺法 練習"],["錯棋重練","#/redo","錯題 複習 重練"],["象棋規則","#/terms","規則 術語 走法 怎麼下 名詞 碑林 等級 段位 修為"],["這站棋理（目前停靠的站）","#/ship/lesson","棋理 這一站"],["小實驗：棋理體驗・唐站","#/lesson/tang","棋理 體驗 唐 唐站 棄仕 解殺 實驗 小實驗"],["小實驗：先吃子還是先解圍","#/lab/grab","吃子 解圍 威脅 實驗 小實驗 貪吃"]]],
+  ["acad","🎍","練棋書院","新手、殘局、測驗",[["學習總覽","#/hub/learn","學棋 學習"],["新手訓練營","#/camp","新手 入門 教學 第一次 怎麼走"],["棋力測驗","#/quiz","測驗 考試 程度"],["一盞茶殘局","#/canju","每日 殘局 解題"],["千秋殘局","#/ship/pz","殘局 解題 星槎"],["猜著法","#/guess","猜 大師"],["主題訓練","#/theme","主題 殺法 練習"],["錯棋重練","#/redo","錯題 複習 重練"],["象棋規則","#/terms","規則 術語 走法 怎麼下 名詞 碑林 等級 段位 修為"],["這站棋理（目前停靠的站）","#/ship/lesson","棋理 這一站"],["棋理體驗・唐站","#/lesson/tang","棋理 體驗 唐 唐站 棄仕 解殺 實驗 小實驗"],["先吃子還是先解圍","#/lab/grab","吃子 解圍 威脅 實驗 小實驗 貪吃"]]],
   ["lib","📚","藏書閣","古譜、大師、棋譜",[["棋譜庫","#/db","古譜 大師 棋譜 對局 比賽 研究"],["我的開局","#/openings","開局 布局"]]],
   ["ship","☁️","雲河渡口","星槎、故事、朝代",[["雲河星槎","#/adventure","星槎 冒險 故事 船"],["觀星臺","#/guanxing","觀星臺 觀景台 黑洞 星門圍城 十三星系 星圖 天賦 二十八宿","gxt"],["雲河棋路","#/journey","棋路 關卡 闖關"],["朝代渡口","#/port","渡口 園子 驛站 下船"],["古戰場","#/battle","戰役 戰場"],["星槎書架","#/ship/shelf","小說 書架 書"],["繼續閱讀","#/ship/read","閱讀 小說 章"],["起航","#/ship/sail","起航 換朝代 開船"]]],
   ["yard","🏡","個人小院","角色、戰績、收藏",[["我的角色","#/me","角色 頭像 官階 修為"],["我的戰績","#/stats","戰績 勝率 成長"],["學習週報","#/weekly","週報 一週"],["行囊","#/ship/bag","行囊 寶物 收藏"],["珍品冊","#/me/relics","珍品 收藏"],["千秋大百科","#/codex","百科 文化 圖鑑"],["九九消寒圖","#/xiaohan","消寒 節氣 冬天"]]],
@@ -77,7 +77,20 @@ function stmBtn(){if(!SITEMAP_ON)return;const tr=document.getElementById("topRig
   b.onclick=()=>{try{vibrate(5)}catch(e){}stmOpen()};tr.append(b)}
 if(SITEMAP_ON&&typeof setTop==="function"){const stmTop0=setTop;setTop=function(){const r=stmTop0.apply(this,arguments);try{stmBtn()}catch(e){}return r}}
 let stmLast=null;
-function stmClose(){const o=document.getElementById("stmOv");if(!o)return;o.classList.remove("on");removeEventListener("hashchange",stmClose);document.removeEventListener("keydown",stmKey,true);setTimeout(()=>o.remove(),200);if(stmLast&&stmLast.isConnected)try{stmLast.focus()}catch(e){}stmLast=null}
+/* 11/17 iMac 測試員 G P3-10：地圖頁是米色底，原生 App 的狀態列是白字（capacitor.config StatusBar style DARK）看不清 → 打開地圖時狀態列改深色字（LIGHT），關掉換回白字；網頁版沒有這個外掛，不動 */
+/* 11/17 iMac I P2：開頭畫面、淺色主題的頁面、高對比主題也一樣是淺底白字 → xqBarAuto：量畫面最上緣（狀態列底下）實際的底色，亮就深色字、暗就白字；
+   換頁、開關面板（body 底下的節點、class 變了）、回到前景、每 2 秒各量一次，跟上次一樣就不再叫外掛。網頁版沒有這個外掛，不動 */
+let XQB_LAST=null;
+function xqBarAuto(){try{if(!(typeof xqNat==="function"&&xqNat())||document.hidden)return;const el=document.elementFromPoint(Math.round(innerWidth/2),1);let x=el,c=null;
+  while(x&&x.nodeType===1){const b=getComputedStyle(x).backgroundColor,m=b&&b.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);if(m&&(m[4]==null||+m[4]>.5)){c=[+m[1],+m[2],+m[3]];break}x=x.parentElement}
+  if(!c){const m=getComputedStyle(document.body).backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/);if(m)c=[+m[1],+m[2],+m[3]]}if(!c)return;
+  const light=xqBarLight(c);if(light===XQB_LAST)return;stmBar(light)}catch(e){}}
+const xqBarLight=c=>(.2126*c[0]+.7152*c[1]+.0722*c[2])/255>.6;
+try{let t=0;const soon=d=>{clearTimeout(t);t=setTimeout(xqBarAuto,d||250)};addEventListener("hashchange",()=>{soon(300);setTimeout(xqBarAuto,1200)});document.addEventListener("visibilitychange",()=>soon(200));
+  new MutationObserver(()=>soon()).observe(document.documentElement,{attributes:true,attributeFilter:["class","data-theme","data-hct","data-hicon","style"]});
+  addEventListener("load",()=>{try{new MutationObserver(()=>soon()).observe(document.body,{childList:true,attributes:true,attributeFilter:["class"]})}catch(e){}soon(600)});setInterval(xqBarAuto,2000)}catch(e){}
+function stmBar(light){XQB_LAST=!!light;try{const N=window.XQNative,P=N&&typeof N.plug==="function"&&(typeof N.has!=="function"||N.has("StatusBar"))?N.plug("StatusBar"):null;if(P&&typeof P.setStyle==="function")Promise.resolve(P.setStyle({style:light?"LIGHT":"DARK"})).catch(()=>{})}catch(e){}}
+function stmClose(){const o=document.getElementById("stmOv");if(!o)return;stmBar(false);o.classList.remove("on");removeEventListener("hashchange",stmClose);document.removeEventListener("keydown",stmKey,true);setTimeout(()=>o.remove(),200);if(stmLast&&stmLast.isConnected)try{stmLast.focus()}catch(e){}stmLast=null}
 function stmKey(e){const o=document.getElementById("stmOv");if(!o)return;if(e.key==="Escape"){e.preventDefault();stmClose();return}
   if(e.key==="Tab"){const f=[...o.querySelectorAll("button,input")].filter(x=>!x.disabled&&x.offsetParent!==null);if(!f.length)return;const a=f[0],z=f[f.length-1];
     if(e.shiftKey&&document.activeElement===a){e.preventDefault();z.focus()}else if(!e.shiftKey&&document.activeElement===z){e.preventDefault();a.focus()}}}
@@ -103,7 +116,7 @@ function stmOpen(){if(document.getElementById("stmOv"))return;stmCss();stmLast=d
     <div id="stmSub"></div>
     <button class="all" id="stmAll" aria-expanded="false">≡ 顯示全部入口清單</button>
     <div class="list" id="stmL" hidden>${STM_AREAS.map(A=>`<section data-a="${A[0]}"><h3>${A[1]} ${esc(A[2])}</h3><ul>${A[4].map(e=>`<li data-k="${esc((e[0]+" "+stmNm(e)+" "+e[2]+" "+A[2]).toLowerCase())}">${entry(e)}</li>`).join("")}</ul></section>`).join("")}<p class="none" id="stmNone" hidden>找不到這個入口，換個字試試看。</p></div></div>`;
-  document.body.append(o);requestAnimationFrame(()=>o.classList.add("on"));
+  document.body.append(o);requestAnimationFrame(()=>o.classList.add("on"));stmBar(true);
   const G=o.querySelector("#stmG"),L=o.querySelector("#stmL"),Q=o.querySelector("#stmQ"),AL=o.querySelector("#stmAll");
   const bind=root=>root.querySelectorAll(".go[data-r]").forEach(b=>b.onclick=()=>{try{vibrate(5)}catch(e){}stmGo(b.dataset.n,b.dataset.r)});
   /* 底圖載得到＝點圖上的地方；載不到（離線、CDN 慢）＝退回色塊卡片。點了在圖下方展開那一區的入口（再點一次收起） */

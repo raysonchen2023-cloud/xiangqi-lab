@@ -109,7 +109,8 @@ function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.c
 .pty-top b{font-size:16px}.pty-pool{color:#2b6cb0}.pty-top{margin-bottom:4px}.pty-cap{margin:0 0 10px}.pty-how{margin:-4px 0 6px}.pty-xpgo{display:block;width:100%;margin:0 0 12px}
 .pty-c{display:grid;grid-template-columns:64px 1fr;gap:4px 10px;align-items:start;padding:10px;border:1px solid var(--line,#d8cfbf);border-radius:12px;margin:0 0 10px;background:var(--card,#fffaf0)}
 .pty-c img{width:64px;height:85px;object-fit:cover;object-position:top;border-radius:8px;background:#efe6d6}
-.pty-c.lk img{filter:brightness(0) opacity(.55)}.pty-c.lk{opacity:.85}
+.pty-sil{display:block;width:64px;height:85px;border-radius:8px;overflow:hidden;background:radial-gradient(ellipse at 50% 38%,#fffaf0 0,#efe3cf 62%,#e3d4bb 100%)}
+.pty-c.lk img{filter:brightness(0) opacity(.62);object-fit:contain;object-position:center bottom;background:none;border-radius:0}.pty-c.lk{opacity:.85}
 .pty-n{font-weight:700;font-size:16px}.pty-n small{font-weight:400;font-size:13px;color:var(--muted,#6b6257);margin-left:4px}
 .pty-tag{display:inline-block;font-size:12px;padding:1px 7px;border-radius:9px;margin-left:4px;background:#f3e3b5;color:#5a4300}
 .pty-tag.look{background:#dbeafe;color:#1e3a8a}
@@ -167,10 +168,13 @@ const ptyCapSay=(L,nd)=>L>=100?"夥伴最高練到 Lv 100":nd>0?`夥伴最高練
 const ptyXpNd=()=>{try{const X=xpInfo();return X.L<100?Math.max(1,X.need-X.rest):0}catch(e){return 0}};
 function ptyXpHow(P,L){if(L>=100||!PTY.ORDER.some(c=>PTY.has(P,c)&&PTY.lv(P,c,L)>=L))return"";
   return`<p class="pty-m pty-how">下一盤電腦（贏 +40、輸 +15）、解千秋殘局（+15）、打星門圍城，都會加修為。</p><button type="button" class="btn ghost pty-xpgo" id="ptyXpGo">♟ 去下一盤</button>`}
+/* 11/17 iMac F P2-2（準則 2.1）：還沒遇到的夥伴原本寫「？？？」、立繪 brightness(0) 又裁成 64×85 填滿（object-fit:cover），整格變一塊灰，看起來像沒做完的佔位。
+   改成整個人的剪影（同一張立繪，contain 不裁、淺色底）＋「尚未相遇」（英文 Not met yet），下面照舊寫在哪裡相遇；不出新圖 */
 function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])||{n:c},era=typeof eraLabel==="function"&&typeof CHAR_ERA!=="undefined"?eraLabel(CHAR_ERA[c]):"";
   const img=`<img src="data/xs/prev_${c}.webp" alt="">`;
   if(!PTY.has(P,c)){const j=PTY.JOIN[c],at=j&&typeof eraLabel==="function"?eraLabel(j.st):"";const goal=P.hint&&P.hint[c]&&PTY_GOAL[c];
-    return`<div class="pty-c lk">${img}<div><div class="pty-n">？？？<small>${esc(C.pc||"")}</small></div><div class="pty-m">${goal?esc(goal):`星槎停靠${esc(at)}時相遇`}</div></div></div>`}
+    /* 11/17 測試員 B 第 29 輪 N29-2：濾鏡 brightness(0) 也會把同一個 img 的淺色底壓成黑，整格變灰塊、看不出人形 → 淺色底放到外層 .pty-sil，濾鏡只套在人物圖 */
+    return`<div class="pty-c lk"><span class="pty-sil">${img}</span><div><div class="pty-n">尚未相遇<small>${esc(C.pc||"")}</small></div><div class="pty-m">${goal?esc(goal):`星槎停靠${esc(at)}時相遇`}</div></div></div>`}
   const lv=PTY.lv(P,c,L),x=P.m[c].xp,b0=PTY.base(lv),nd=PTY.need(lv),top=lv>=L,dn=lv>=100?1:top?Math.max(1,PTY.cap(L)-b0):nd,got=Math.max(0,Math.min(dn,x-b0)),pct=lv>=100?100:Math.max(0,Math.min(100,100*got/dn));   /* 練滿時分母＝這一級加得到的上限（PTY.cap，比升級要的少 1），條上的數字跟「滿了」「還能加」對得起來 */
   const room=Math.max(0,PTY.cap(L)-x),gsay=lv>=100?"已到最高級":!top?`還差 ${nd-got} 升 Lv ${lv+1}`:room>0?`還能加 ${room}（升 Lv ${lv+1} 要等你修為升級）`:`滿了，等你修為升 Lv ${L+1}`;   /* 11/17 開發者：金色條改成星輝條（這一級加了多少、還差多少升級） */
   const skP=ptySkPool(c),skN=skP.filter(s=>s.lv<=lv).length;   /* 11/16：招式從那一行小字搬成一列可以點的「招式 n／N ›」 */

@@ -306,7 +306,7 @@ function shipPort(k){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);walk
 function shipPark(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);store.set("park3d",true);
   jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},()=>{shipNav("#/journey/play",rep);setTimeout(()=>{const r=store.get("parkNpc",null),n=r&&typeof PARK_NPC!=="undefined"&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`);if(k==="classic")setTimeout(()=>tellerTalk(),900)},600)})}   /* 意見回饋 674：青石園有說書人 */
 function shipInn(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);walk("inn",()=>shipNav("#/journey/inn",rep))}
-function shipArena(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);store.set("park3d",true);shipNav("#/arena",rep)}
+function shipArena(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);if(typeof arP3On==="function")arP3On();else store.set("park3d",true);shipNav("#/arena",rep)}   /* iMac V P3-3：擂台的 3D 只算這一局（03-home-quiz arP3On） */
 
 /* ---------- 渡口 #/port（意見回饋 697，開發者 11/6 定案方案 B）：每一朝的中心。星槎「⚓ 下船」到這裡；三扇門 🌳 園子、🏮 驛站、🏯 擂台，另有「⛵ 回星槎」。
    園子、驛站、擂台的「‹」回渡口，渡口的「‹」回星槎；門之間走步行小卡 ---------- */
@@ -730,7 +730,7 @@ function homeRecGame(st){try{if(!st)return null;const nm=(k,j)=>k==="journey"?(t
   if(st.moves&&st.moves.length&&!st.result&&HREC_KIND[st.kind])return{go:HREC_KIND[st.kind][0],t:`♟ 接著下：${nm(st.kind,st.journey)}`,park:st.kind==="journey"&&st.journey==="park"};
   const o=(st.others||[]).find(z=>z&&z.n&&HREC_KIND[z.kind]);return o?{go:HREC_KIND[o.kind][0],t:`♟ 接著下：${nm(o.kind,o.journey)}`,sw:o.kind,park:o.kind==="journey"&&o.journey==="park"}:null}catch(e){return null}}
 /* 11/11 AI 模擬玩家五人都找不到兩個小實驗：今日推薦在茶單之後先推沒去過的小實驗（去過就記在 labSeen，不再推） */
-function hrecLab(){try{const s=store.get("labSeen",{});if(!s.grab)return{go:"#/lab/grab",t:"⚖️ 小實驗：先吃子還是先解圍？"};if(!s.tang)return{go:"#/lesson/tang",t:"🧩 小實驗：唐站棋理體驗"};return null}catch(e){return null}}
+function hrecLab(){try{const s=store.get("labSeen",{});if(!s.grab)return{go:"#/lab/grab",t:"⚖️ 先吃子還是先解圍？"};if(!s.tang)return{go:"#/lesson/tang",t:"🧩 唐站棋理體驗"};return null}catch(e){return null}}
 addEventListener("hashchange",()=>{try{const m=/^#\/(lab\/grab|lesson\/tang)/.exec(location.hash);if(m){const s=store.get("labSeen",{});s[m[1]==="lab/grab"?"grab":"tang"]=1;store.set("labSeen",s)}}catch(e){}});
 function homeRecBind(v){const b=v&&v.querySelector("#hRec");if(!b)return;let R={go:"#/cpu",t:"🤖 跟電腦下一盤"};
   const set=r=>{if(!r||!b.isConnected)return;R=r;const t=b.querySelector("#hRecT");if(t)t.textContent=r.t;b.dataset.go=r.go;b.setAttribute("aria-label","今日推薦："+r.t);

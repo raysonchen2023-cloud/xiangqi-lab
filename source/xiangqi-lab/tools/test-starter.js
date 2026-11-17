@@ -170,8 +170,9 @@ test("〔混合〕老玩家判定：選過角、存檔格、舊玩家過渡、�
   for (const s of ["journey()", "slotMetaAll()", "SAVE_OLD", "firstWin", "FW_PLAYED", "tsmProgNow().any", "M.gift.a1", "M.seg", "bhXuDone", "xqRestored"]) assert.ok(E.includes(s), "沒看 " + s);
   /* 開機：已經有存檔紀錄（不論做完、跳過、老玩家）就不再開練習；老玩家記成 old */
   const B = SRC.slice(SRC.indexOf("function stqBoot("), SRC.indexOf("function stqJourney("));
-  assert.ok(B.includes('if(S&&S.st==="run")') && B.includes("if(S)return false;") && B.includes('stqSave({v:STQ_V,st:"old",at:Date.now()})'));
-  assert.ok(B.includes("fwSaved().then"), "先確定 IndexedDB 沒有存檔才當新玩家");
+  /* 11/17 晚開場順序（開發者「App 一進去後，會有『新的旅程』或是『讀檔』」）：stqBoot 不再接手（不再一打開就進練習）；全新玩家照 05b 開頭畫面，按「新的旅程」走開場，序幕後才練習 */
+  assert.ok(B.includes("if(stqSt0())return false;") && B.includes('stqSave({v:STQ_V,st:"old",at:Date.now()})'));
+  assert.ok(!B.includes("stqBegin(") && !B.includes("fwSaved().then"), "stqBoot 不再自己開練習");
 });
 
 test("〔混合〕存檔有版本：stqSt0 沒有 v 的當成沒有；stqMig 補欄位、n 夾在 0～6；練習中 stqHold＝true、首頁鈕＝接著練，其他＝更多玩法", () => {
@@ -239,8 +240,13 @@ test("〔原始碼〕接點：m.html 在 07mnq 前面 include；05b titleScreen 
   assert.ok(G.includes('mnqGrant("a1")'), "一次領授印禮的入門物品");
   /* 11/15 更多玩法清單（stqMore）多了一顆玩家自己按才開的「第一章」入口；練習流程本身（清單以外的程式）照樣不演、不播 */
   /* 11/16 首頁那顆在第一章還沒看完時寫「📖 第一章」（stqC1／stqHome／stqHomeGo），也是玩家自己按才開 */
-  const FLOW = SRC.slice(0, SRC.indexOf("/* 11/16 開發者「如果一開始沒選第一章")) + SRC.slice(SRC.indexOf("function stqAuto("));
+  /* 11/17 晚開場順序：練習本身照樣不演、不播；開場（電影、黑洞序局）改在練習之前，由檔尾「開場順序」那段（stqXu*）接 07bh——那段另外檢查：只有補播叫 bhXuStart(true) */
+  const XU0 = SRC.indexOf("/* ================= 11/17 晚 開場順序");
+  assert.ok(XU0 > 0, "檔尾要有開場順序那段");
+  const FLOW = SRC.slice(0, SRC.indexOf("/* 11/16 開發者「如果一開始沒選第一章")) + SRC.slice(SRC.indexOf("function stqAuto("), XU0);
   assert.ok(!/mnqGift\(|mnqChapter\(|mnfPlay\(|bhXuStart\(|prologue\(/.test(FLOW), "不演授印禮儀式、不播第一章電影、不走黑洞序局");
+  const XUC = SRC.slice(XU0).match(/bhXuStart\([^)]*\)/g) || [];
+  assert.ok(XUC.length >= 1 && XUC.every(s => s === "bhXuStart(true)"), "開場順序那段只有補播叫序局（下完回首頁的舊玩家模式）：" + XUC);
   assert.equal((SRC.match(/mnqChapter\(/g) || []).length, 2, "整支只有更多玩法清單那一顆、首頁那顆（第一章還沒看完）會開第一章");
   assert.ok(SRC.includes("journeyRepick(c)") && SRC.includes("obCarousel(box,L,"), "選角用現有的 obCarousel、換人用 journeyRepick");
   assert.ok(SRC.includes("我會下棋，直接開始"), "右上角跳過鈕");

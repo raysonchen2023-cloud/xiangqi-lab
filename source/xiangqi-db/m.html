@@ -59,8 +59,23 @@
       if(!K.length){for(i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(!SKIP.test(k))put(k,localStorage.getItem(k))}SOFT={};return}
       var miss=[];for(i=0;i<K.length;i++)if(localStorage.getItem(K[i])===null||SOFT[K[i]])miss.push(i);
       if(miss.length&&(miss.length>=5||localStorage.length<K.length/2)&&!sessionStorage.getItem("xqRestored")){
+        /* 11/17 第一次打開照系統語言：下面那段在 localStorage 是空的時候自動選了語言（XQSave.soft，沒寫進 IndexedDB）；其實是老玩家的資料被系統清掉、這裡要從 IndexedDB 搬回來 → 自動選的語言不算數，拿掉（IndexedDB 有自己選過的就照搬回來的） */
+        if(sessionStorage.getItem("xqLangAuto")){["m_lang","xq_zhMode","m_langAuto"].forEach(function(k){try{if(K.indexOf(k)<0)oR.call(localStorage,k)}catch(e){}})}
         miss.forEach(function(j){try{oS.call(localStorage,K[j],V[j])}catch(e){}});sessionStorage.setItem("xqRestored","1");location.reload()}}}catch(e){}});
   try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persisted().then(function(p){if(!p)return navigator.storage.persist()}).catch(function(){})}catch(e){}})();
+</script>
+<script>
+/* 11/17 開發者選單「第一次打開時介面語言照系統語言」（原生 App、網頁版都一樣；iMac：英文系統第一次打開還是中文，審查員多半用英文系統）：
+   ① 只在「還沒有任何存檔」（localStorage 沒有 m_／xq_ 開頭的鍵）時決定一次；玩家自己選過的（m_lang、xq_zhMode）、老玩家（已經有存檔）都不動。
+   ② 系統語言：navigator.languages[0]，沒有就 navigator.language。原生 App 也照用（iMac 11/17 在 iOS 模擬器實測：WKWebView 照實回傳系統語言，
+      格式「語言-地區」：英文 en-US、繁中 zh-TW、簡中 zh-CN、日文 ja；iPad／Mac 的繁中可能是不帶地區的 zh-Hant）。
+   ③ 兩層：/^zh[-_](TW|HK|MO|Hant)/i → 繁中（預設，不寫）；其他 /^zh/i（zh-CN、zh-SG、zh-Hans…、單純 zh）→ 簡中（xq_zhMode＝cn，zh.js 的正式選項）；其他一律英文（m_lang＝en）。
+   ④ 寫入用 XQSave.soft（只寫 localStorage、還沒寫進 IndexedDB），記 m_langAuto＝選了哪一個；萬一其實是存檔被清掉的老玩家，上面那段從 IndexedDB 搬回來時會把自動選的拿掉。
+   這段要在 zh.js 之前跑（zh.js 一載入就看 xq_zhMode），所以放在這裡，不放 07i18n。XQ_LANG_OF 給 07i18n 和測試用 */
+(function(){var f=function(t){t=String(t||"");return/^zh[-_](tw|hk|mo|hant)/i.test(t)?"tw":/^zh/i.test(t)?"cn":"en"};window.XQ_LANG_OF=f;
+  try{var L=window.localStorage;if(!L)return;for(var i=0;i<L.length;i++){var k=String(L.key(i)||"");if(k.indexOf("m_")===0||k.indexOf("xq_")===0)return}
+    var nv=window.navigator||{},t=(nv.languages&&nv.languages.length?nv.languages[0]:"")||nv.language||"",c=f(t),w=function(k,v){try{if(window.XQSave&&XQSave.soft)XQSave.soft(k,v);else L.setItem(k,v)}catch(e){}};
+    if(c==="en")w("m_lang",JSON.stringify("en"));else if(c==="cn")w("xq_zhMode",JSON.stringify("cn"));w("m_langAuto",JSON.stringify(c));window.XQ_LANG_AUTO=c;try{sessionStorage.setItem("xqLangAuto","1")}catch(e){}}catch(e){}})();
 </script>
 <script>
 // 安全網：打開 4 秒後畫面還是空的（更新到一半、程式出錯），顯示「修復」按鈕：清掉 App 快取重新下載（引擎、棋譜、戰績都不會刪）

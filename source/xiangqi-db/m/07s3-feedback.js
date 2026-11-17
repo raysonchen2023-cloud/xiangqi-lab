@@ -27,7 +27,7 @@ const SHW_FBP={el:40,h:[.085,70,.0012],look0:[42,60],home:"home",
     ob:[[[45,43.2],[75.5,47.4],[63.6,53.4],[33.5,47.9]],[[43.5,41],[51,41],[51,43.6],[43.5,43.6]],[[65,41],[79,41],[79,46.3],[65,46.3]],[[78.5,44],[85.5,44],[85.5,48],[78.5,48]],[[71.5,47.8],[81.5,47.8],[81.5,52.5],[71.5,52.5]]]}},TS:{".fbp-paper":"fbpWrite",".fbp-slip":"fbpBoard",".fbp-slipn":"fbpBoard"},   /* 回饋 816：點書案桌面任何一處＝跳上案角；點信箋本身＝先跳上去再打開 */   /* 回饋 808：點「寫信」＝走到書案左前角、跳上案角（不站在信箋上），揮手後打開信箋 */
   HS:{fbpBoard:["brd",18,40,"bow"],fbpWrite:["tb",50,47,"wave"]}};
 const fbpPc=(x,y)=>[x/7.68,y/13.76];
-const fbpDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
+const fbpDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"&&xqNight())};   /* 11/17 第 28 輪 N28-2：有夜版圖的頁一律照實際日落（00-util xqNight，跟首頁同一個判斷）；深色主題照舊 */
 /* 錯誤模式的淡棋盤（程式畫，保證畫對）：9 直 10 橫、河界、九宮 X */
 function fbpGrid(){const L=[];for(let i=0;i<9;i++)L.push(i%8?`M${i} 0V4M${i} 5V9`:`M${i} 0V9`);for(let j=0;j<10;j++)L.push(`M0 ${j}H8`);L.push("M3 0L5 2M5 0L3 2M3 7L5 9M5 7L3 9");
   return`<svg class="fbp-grid" viewBox="-.6 -.6 9.2 10.2" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><path d="${L.join("")}" fill="none" stroke="currentColor" stroke-width=".06"/></svg>`}
@@ -264,6 +264,7 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋",fbpFrom()||"#/s
     P.querySelector("#fbpBoard").onclick=()=>{vibrate(5);openB()};P.querySelectorAll(".fbp-slip,.fbp-slipn").forEach(e=>e.onclick=()=>{vibrate(5);openB()});
     (typeof myFixes==="function"?myFixes():Promise.resolve(null)).then(F=>{if(!v.isConnected)return;const cap=bw.querySelector(".fbp-bw-c");
       if(!F){fl.innerHTML='<p class="fbp-bw-m">讀不到修正紀錄</p>';return}
+      if(F.quiet){fl.innerHTML='<p class="fbp-bw-m">兒童模式或線上大廳關閉時，不下載修正紀錄。</p>';return}   /* 11/17 G P3-1：07x4 的 myFixes 外層在 fmNetOff 時不連網 */
       FX=F;cap.textContent=F.dev?"全部的修正，最新的在最上面":"你回報、已經修好的問題";fl.innerHTML="";if(F.items.length)more();else fl.innerHTML=fixList([],F.dev);
       const top=F.items.slice(0,3);P.querySelectorAll(".fbp-slip").forEach((e,i)=>{const x=top[i];if(!x)return;e.style.display="";fbpSlipFit(e,String(x.n||"已修正").replace(/^[✅\s]+/,""))});
       /* 回饋 861（開發者 11/10）「不用把張數寫出來」：告示榜不再標「共 N 張」 */}).catch(()=>{if(v.isConnected)fl.innerHTML='<p class="fbp-bw-m">讀不到修正紀錄</p>'});

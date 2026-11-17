@@ -14,6 +14,7 @@
       不接 WebAudio 低通（iOS 會把 AudioContext 關掉重建，接上的音樂元素會永遠沒聲音）。iPhone Safari 不能改 audio.volume，那裡聽不出差別。
    開關：CLK_ON（星晷＋香篆鐘）、LK_ON（爛柯懸棋）、CLK_SND_ON（音樂淡出淡入）；前綴 clk／lk */
 const CLK_ON=true,LK_ON=true,CLK_SND_ON=true;
+const CLK_ZHI_PY=["Zi","Chou","Yin","Mao","Chen","Si","Wu","Wei","Shen","You","Xu","Hai"];   /* 十二地支的拼音（英文讀螢幕標籤用，D Z6） */
 const CLK_ZHI="子丑寅卯辰巳午未申酉戌亥";
 /* 十二時辰：[古名, 古名白話, 生肖圖示, 生肖, 生肖小故事（民間說法）]；古名的出處見 story/時辰鐘考究說明.md */
 const CLK_SC=[
@@ -124,6 +125,9 @@ function clkMake(){if(CLK.box)return;const x=document.createElement("div");x.cla
 /* 回饋 848（開發者 11/9「在這一頁加入在哪個朝代」）：時辰鐘旁的小字前面加上星槎停靠的朝代，例如「⛵ 魏晉・第 4 天・立冬」；還沒登船、在雲河（classic）不寫 */
 const CLK_ERA={qin:"秦",han:"漢",sanguo:"三國",weijin:"魏晉",nanbei:"南北朝",sui:"隋",tang:"唐",wudai:"五代",song:"宋",yuan:"元",ming:"明",qing:"清"};
 function clkEraZh(){try{const e=typeof shipAt==="function"?shipAt():"";return CLK_ERA[e]?CLK_ERA[e]+"・":""}catch(x){return""}}
+/* 24 節氣拼音（英文時辰鐘那一行的簡寫） */
+const CLK_TERM_PY={立春:"Lichun",雨水:"Yushui",驚蟄:"Jingzhe",春分:"Chunfen",清明:"Qingming",穀雨:"Guyu",立夏:"Lixia",小滿:"Xiaoman",芒種:"Mangzhong",夏至:"Xiazhi",小暑:"Xiaoshu",大暑:"Dashu",
+  立秋:"Liqiu",處暑:"Chushu",白露:"Bailu",秋分:"Qiufen",寒露:"Hanlu",霜降:"Shuangjiang",立冬:"Lidong",小雪:"Xiaoxue",大雪:"Daxue",冬至:"Dongzhi",小寒:"Xiaohan",大寒:"Dahan"};
 function clkPaint(){const b=CLK.el;if(!b)return;const N=new Date(),h=clkHr(N),i=clkIdx(N),k=CLK_SC[i],ship=b.classList.contains("ship"),S=clkSky(h),q=s=>b.querySelector(s);
   q(".s1").setAttribute("stop-color",S.c1);q(".clk-sky0").setAttribute("fill",S.c1);q(".s2").setAttribute("stop-color",S.c2);q(".clk-lst").setAttribute("opacity",S.st.toFixed(2));q(".clk-cl").setAttribute("stroke-opacity",(.3*(1-S.st)).toFixed(2));
   q(".clk-zs").setAttribute("fill",S.ink);q(".clk-tk").setAttribute("stroke",S.ink);q(".clk-in").setAttribute("stroke",S.ink);q(".clk-in").setAttribute("stroke-opacity",".35");
@@ -131,7 +135,14 @@ function clkPaint(){const b=CLK.el;if(!b)return;const N=new Date(),h=clkHr(N),i=
   const big=q(".clk-big");big.textContent=CLK_ZHI[i]+"時";big.setAttribute("fill",S.ink);q(".clk-ptr").setAttribute("fill",S.st>.5?"#ffd978":"#a3361f");
   {let a=15*h+CLK_A0+90;if(CLK.rot!=null)a+=Math.round((CLK.rot-a)/360)*360;CLK.rot=a;q(".clk-rot").style.transform=`rotate(${a.toFixed(2)}deg)`;const hb=q(".clk-hub");if(hb)hb.setAttribute("fill",S.st>.5?"#ffd978":"#a3361f")}   /* 指針指著子＝0 點（子在正上方）；過半夜不倒轉一圈 */
   const bn=typeof sw7Born==="function"?sw7Born():0,tm=typeof sw7Term==="function"?sw7Term(N):"",day=bn&&typeof sw7OnDay==="function"?sw7OnDay(bn,N):0;
-  if(CLK.sm){const B=CLK.sm.querySelector(".clk-sl>b"),L=CLK.sm.querySelectorAll(".clk-sl>span");if(B)B.textContent=CLK_ZHI[i]+"時";L[0].textContent=(day?`⛵ ${clkEraZh()}第 ${day} 天`:"⛵ 還沒登船")+(tm?"・"+tm:"");if(L[1])L[1].textContent=""}
+  const EN=typeof tmxEn==="function"&&tmxEn(),T=EN&&typeof tmxT==="function"?tmxT:x=>x;
+  if(CLK.sm){const B=CLK.sm.querySelector(".clk-sl>b"),L=CLK.sm.querySelectorAll(".clk-sl>span");if(B)B.textContent=CLK_ZHI[i]+"時";
+    /* 11/17 iMac V P3-1：英文第三行「Qin · Day 1 · Start of Winter」太長被截成「Sta…」→ 英文的節氣在這一行用拼音簡寫（Lidong），完整英文名照舊在讀螢幕標籤和船齡卡 */
+    L[0].textContent=EN?T(day?`⛵ ${clkEraZh()}第 ${day} 天`:"⛵ 還沒登船")+(tm?" · "+(CLK_TERM_PY[tm]||T(tm)):""):(day?`⛵ ${clkEraZh()}第 ${day} 天`:"⛵ 還沒登船")+(tm?"・"+tm:"");if(L[1])L[1].textContent=""}
+  /* iMac V P3-7：英文介面時辰鐘的讀螢幕標籤還是中文 → 英文整句（時段、節氣用字典的英文） */
+  /* 11/17 測試員 D Z6：剛開機時外掛字典還沒到，「亥時」「立冬」翻不出來，讀螢幕標籤夾中文 → 時段直接用數字（clkHH）、地支用拼音、節氣用字典，字典沒到就用拼音（CLK_TERM_PY），不靠字典也全是英文 */
+  if(EN){const hh=clkHH(i),tmE=tm?(()=>{const x=T(tm);return x&&!/[㐀-鿿]/.test(x)?x:(CLK_TERM_PY[tm]||"")})():"";
+    b.setAttribute("aria-label",ship?T("雲河無歲月：在星槎上，時辰不走。點了看船齡"):`It's ${hh[0]}:00–${hh[1]}:00 now (the ${CLK_ZHI_PY[i]} double-hour)${tmE?", solar term: "+tmE:""}. Tap for the raft's age and the twelve double-hours`);return}
   b.setAttribute("aria-label",ship?"雲河無歲月：在星槎上，時辰不走。點了看船齡":`現在是${CLK_ZHI[i]}時（${k[0]}，${clkHH(i)[0]} 點到 ${clkHH(i)[1]} 點）${tm?"，節氣"+tm:""}。點了看船齡和十二時辰`)}
 /* 每次換頁（包一層 setTop）：判斷這一頁要不要星晷、在不在船上。框一直留在頂欄；剛出現時先保持上一頁（陸地／船上）的樣子，下兩格再換成這一頁的樣子＝淡入淡出 */
 function clkMode(m){const on=m==="ship";CLK.box.classList.toggle("ship",on);CLK.el.classList.toggle("ship",on)}
@@ -219,10 +230,15 @@ if(LK_ON){let lkq=0;const kick=()=>{if(lkq)return;lkq=1;setTimeout(()=>{lkq=0;tr
    放得下就什麼都不動；網路回來（牌子拿掉）就恢復原樣。換頁、標題翻成英文、牌子出現或消失、轉向時都重算 */
 /* 第 26 輪 R26-5（測試員 E）：離線牌窄螢幕縮成 📴 的規則原本只寫在時辰鐘樣式（clkCss）裡，冷開對局頁（沒先經過有時辰鐘的頁面）時還沒插進來，中文牌子是全寬「📴 離線」 →
    同一段也放進這裡；這段樣式在這個檔載入時就插（不等時辰鐘），牌子一出現就生效。clkCss 裡那段留著（兩段一樣，誰先插都行） */
-const OFFT_CSS="#topbar #offChip{position:relative;z-index:2}@media (max-width:480px){#topbar #offChip{font-size:0!important;padding:6px 8px!important}#topbar #offChip::before{content:\"📴\";font-size:15px;line-height:1}}#topbar.offt1 #title{font-size:14px!important;letter-spacing:0!important}#topbar.offt1 #title img.ti{display:none}#topbar.offt2 #title{font-size:13px!important}#topbar.offt2 #back{font-size:0!important;padding:0 6px!important;min-width:40px;max-width:none!important;text-align:center}#topbar.offt2 #back b{font-size:28px!important}@media (max-width:480px){#topbar.clk-on #offChip{align-self:flex-start;margin:0 2px 0 0;padding:1px 5px!important}}@media (max-width:360px){html[lang=en] #topbar.clk-on #offChip{position:absolute;left:6px;top:calc(var(--safeT,0px) + 1px);margin:0}}#topbar.segf1 .cpu-seg button{font-size:12px!important;letter-spacing:-.02em!important;padding:0 2px!important}#topbar.segf1 .cpu-seg button img{display:none}#topbar.segf2 .cpu-seg button{font-size:11px!important;white-space:normal!important;word-break:keep-all;line-height:1.1!important;text-overflow:clip!important}";
+const OFFT_CSS="#topbar #offChip{position:relative;z-index:2}@media (max-width:480px){#topbar #offChip{font-size:0!important;padding:6px 8px!important}#topbar #offChip::before{content:\"📴\";font-size:15px;line-height:1}}#topbar.offt1 #title{font-size:14px!important;letter-spacing:0!important}#topbar.offt1 #title img.ti{display:none}#topbar.offt2 #title{font-size:13px!important}#topbar.offt2 #back{font-size:0!important;padding:0 6px!important;min-width:40px;max-width:none!important;text-align:center}#topbar.offt2 #back b{font-size:28px!important}@media (max-width:480px){#topbar.clk-on #offChip{align-self:flex-start;margin:0 2px 0 0;padding:1px 5px!important}}@media (max-width:360px){#topbar:has(.cpu-seg) #offChip{display:none!important}}@media (max-width:480px){#topbar #offChip::after{content:\"\";position:absolute;left:50%;top:50%;width:max(100%,44px);height:44px;transform:translate(-50%,-50%)}#topbar.clk-on #offChip{position:absolute;left:50%;top:calc(var(--safeT,0px) + 3px);margin:0;transform:translateX(-50%)}#topbar.clk-on:has(#offChip){padding-top:calc(var(--safeT,0px) + 26px)}#topbar.clk-on #offChip::after{top:-3px;transform:translateX(-50%)}}#topbar.segf1 .cpu-seg button{font-size:12px!important;letter-spacing:-.02em!important;padding:0 2px!important}#topbar.segf1 .cpu-seg button img{display:none}#topbar.segf2 .cpu-seg button{font-size:11px!important;white-space:normal!important;word-break:keep-all;line-height:1.1!important;text-overflow:clip!important}";
 /* 11/17 第 27 輪 R27-2／X2（測試員 E、D：320 寬斷網，📴 牌壓到時辰字、英文標題剩「X… / Q…」）：
    有時辰鐘的頁（首頁等）牌子原本跟標題一樣垂直置中，正好落在下面兩行時辰字上 → 窄螢幕改貼頂、上下留白縮小（高約 20px，落在時辰字上面那一段）；
-   英文 360 寬以下標題本來就是兩行（頂欄 83px，星晷從 y≈22 開始）：牌子拿出排版、放到星晷上面的左上角，標題拿回 43px，縮字後看得出「Xiangqi / Qianqiu」 */
+   英文 360 寬以下標題本來就是兩行（頂欄 83px，星晷從 y≈22 開始）：牌子拿出排版、放到星晷上面的左上角，標題拿回 43px，縮字後看得出「Xiangqi / Qianqiu」
+   11/17 第 28 輪 Y3／R28-1（測試員 D、E）：① 320 寬英文牌子還是壓到星晷外圈的「亥」字 → 有牌子時頂欄上面多留 24px（只在 360 寬以下英文、斷網），牌子放在這一條裡，星晷和標題整個往下；
+     ② 縮小後的牌子只有 33×19 → 用透明的 ::after 把可點範圍撐到 44×44，往上長（貼著牌子底邊），不蓋到下面的時辰字、星晷；外觀不變；
+     ③ R28-2：320 寬斷網的挑戰電腦，牌子把「Ranked／Practice room」擠到 30px 寬 → 360 寬以下標題是分頁鈕的頁不放牌子（這頁本來就能離線玩，網路狀態在別頁照常顯示） */
+/* 11/17 第 29 輪 R29-8（測試員 E）：② 的熱區往上長，牌子貼在畫面頂端，上半截在畫面外（實際點得到 45×22）→ 480 寬以下有時辰鐘的頁，斷網時頂欄上面一律多留 24px（原本只有 360 寬以下英文），
+   牌子放在這一條的正中間（拿出排版），透明熱區從這一條頂端往下 44px（下面是標題列中間的字，不是按鈕；時辰字、星晷整個往下移，不會蓋到）；沒有時辰鐘的頁（對局頁 39×29）熱區以牌子為中心撐到 44×44 */
 function offtCss(){if(document.getElementById("offtCss"))return;const s=document.createElement("style");s.id="offtCss";s.textContent=OFFT_CSS;document.head.append(s)}
 function offtFit(){const tb=document.getElementById("topbar"),t=document.getElementById("title");if(!tb||!t)return;offtCss();
   const had=tb.classList.contains("offt1");tb.classList.remove("offt1","offt2","segf1","segf2");
@@ -238,6 +254,8 @@ function offtFit(){const tb=document.getElementById("topbar"),t=document.getElem
   if(had||tb.classList.contains("offt1"))try{if(typeof clkPlace==="function"&&CLK.box&&CLK.box.isConnected)clkPlace()}catch(e){}}
 try{offtCss()}catch(e){}
 {let offtQ=0;const kick=()=>{if(offtQ)return;offtQ=setTimeout(()=>{offtQ=0;try{offtFit()}catch(e){}},30)};
-  const init=()=>{try{const tb=document.getElementById("topbar"),t=document.getElementById("title");if(tb)new MutationObserver(kick).observe(tb,{childList:true});if(t)new MutationObserver(kick).observe(t,{childList:true,subtree:true,characterData:true});const tr=document.getElementById("topRight");if(tr)new MutationObserver(kick).observe(tr,{childList:true})}catch(e){}
+  const init=()=>{try{const tb=document.getElementById("topbar"),t=document.getElementById("title");if(tb)new MutationObserver(kick).observe(tb,{childList:true});if(t)new MutationObserver(kick).observe(t,{childList:true,subtree:true,characterData:true});const tr=document.getElementById("topRight");if(tr)new MutationObserver(kick).observe(tr,{childList:true});
+      /* 第 28 輪 Y2（測試員 D）：返回鈕的字（例如英文 "‹Back to Ferry"）是標題排好之後才換上去的，這時沒有重算，標題被擠成「Dyna…」→ 返回鈕的字、顯示與否改了也重算 */
+      const bk=document.getElementById("back");if(bk)new MutationObserver(kick).observe(bk,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:["hidden"]})}catch(e){}
     for(const k of ["online","offline","resize","hashchange"])addEventListener(k,kick);kick()};
   if(document.readyState==="loading")addEventListener("DOMContentLoaded",init);else init()}

@@ -110,7 +110,7 @@ function gxdResultModal(st,win,draw0,XPR){const r=gxdSettle(st)||{won:win,k:gxdK
 /* ---------- 3D：星空背景、點遠方的說明 ---------- */
 function gxdParkEx(st){if(!gxdIs(st))return null;const k=gxdKind(st.journey),om=k==="omen",nm=om?"今日異象":"自由擺陣";
   return{bg:"data/park/blackhole_360.webp",ground:"data/gxground/"+GXD_GND[gxdHash(st.journey)%GXD_GND.length]+".webp",indoor:true,era:"classic",bgName:"🔭 觀星臺・"+nm,gxd:{k},oppHello:om?GXD_TXT.hiO:GXD_TXT.hiF,quietMate:true,watchers:[],crowd:null,
-    gate:{img:["data/guanxing/gx_tai_w.webp"],icon:om?"🌗":"🀄",title:nm,sub:om?GXD_TXT.omen:GXD_TXT.free,bg:"#05060d",quiet:true}}}
+    gate:{img:[(()=>{try{if(typeof gxtSrc==="function")return gxtSrc("w",false)}catch(e){}return"data/guanxing/gx_tai_w.webp"})()],icon:om?"🌗":"🀄",title:nm,sub:om?GXD_TXT.omen:GXD_TXT.free,bg:"#05060d",quiet:true}}}   /* 11/17 B 第 29 輪 N29-4 同類：開局過場的觀星臺圖原本寫死秋景原圖 → 照季節（07gxt gxtSrc，冬天換冬景、載不到退回原圖） */
 function gxdParkInfo(k){let x=null;try{x=typeof PARK!=="undefined"&&PARK&&PARK.last&&PARK.last.ex&&PARK.last.ex.gxd||null}catch(e){}
   if(!x||!(k==="bg"||/^(pano|map):/.test(String(k))))return false;const om=x.k==="omen";
   sheet(om?"🌗 今日異象":"🀄 自由擺陣",b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">觀星臺・天頂黑洞後面的星空</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(om?"今天的異象所有人同一盤：陣容照圭表上的星象排好，隔天換一套。走法跟一般象棋一樣，將死對方就贏，可以一直重來。":"你親手擺的陣，電腦也照同樣的點數預算、按一種風格擺一陣。走法跟一般象棋一樣，將死對方就贏。")}</p>`});return true}

@@ -208,7 +208,8 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");P._hmSrc0=hk?`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`:P.querySelector(":scope>img").getAttribute("src");
   if(hk){const im1=P.querySelector(":scope>img");im1.onerror=()=>{const kk=P.dataset.hmw;if(kk&&HMW[kk]){HMW_BAD[kk]=1;hmwSet(P,"")}}}   /* 寬版載不到＝退回原圖 */if(typeof hbCss==="function")hbCss();else home.style.display="none";
   try{if(typeof hmpInit==="function")hmpInit(P,hk,wv)}catch(e){}   /* 11/14 三屏長卷（07hmp-pano.js）：千秋時光之苑、原圖、這個變體有長卷＝左右各接一屏 */
-  {const im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;P._hmSrc0=pre.src;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
+  {const im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;P._hmSrc0=pre.src;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}
+  if(!hk){P._hmWv=wv;const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}try{hmWvRefresh(P)}catch(e){}},60000)}   /* 11/17 第 28 輪 N28-1：首頁開著跨過入夜／天亮也換圖（hmWvRefresh） */   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;   /* 寬版只換座標，id 跟點了去哪都一樣 */
     b.onclick=()=>{vibrate(5);if(GO[id]){location.hash=GO[id];return}if(id==="hmRec"){if(typeof TODAY_MAP_ON!=="undefined"&&TODAY_MAP_ON){location.hash="#/today";return}hmRecSheet();return}if(id==="hmQuick"){try{sessionStorage.setItem("xqFromHome","1")}catch(e){}try{if(window.XQNet&&XQNet.active&&XQNet.active()&&!XQNet.playing())XQNet.leave()}catch(e){}location.hash="#/pvp"}}}   /* 11/11：記下從首頁進來（07y hbFromHome：回首頁、不走後園） */
@@ -279,3 +280,12 @@ html[data-hicon] .shp-spot.hot::before,html[data-hicon] .shp-hs.hot::before{left
     const V=document.getElementById("view");if(V)new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.nodeType===1&&(n.matches(R07_HIT_SEL)||n.querySelector(R07_HIT_SEL))){r07HitSoon();return}}).observe(V,{childList:true,subtree:true});
     new MutationObserver(go).observe(document.documentElement,{attributes:true,attributeFilter:["data-fz","data-hicon","class"]});
     if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go);go()}catch(e){}})();
+/* 11/17 第 28 輪 N28-1（測試員 B）：首頁開著跨過入夜（17:31）只蓋了月夜層，底圖還是白天那張，重新開首頁才是畫好的夜景圖；西市、觀星臺會當場換 →
+   首頁每分鐘問一次 07w7 sw7HomeWx()（季節、晨昏、夜景、雨雪變體），跟開頁時挑的不一樣就換：先把新的中間那張、長卷左右兩屏（07hmp，有的話）都載好再一起換，不閃白；
+   載不到就留原來那張。換好之後 07w7 重畫一次（月夜層只在沒換到夜景圖時才蓋，換到了就拿掉）。天亮、換季、晨昏同樣處理。寬版（07z hmw，沒有變體時才用）不在這裡換 */
+function hmWvRefresh(P){if(!P||!P.isConnected||P.dataset.hmw||P._hmWvBusy)return false;const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"";if(!wv||wv===P._hmWv)return false;
+  const im0=P.querySelector(":scope>img");if(!im0)return false;let cl=false;try{cl=typeof hbIsCl==="function"&&hbIsCl()}catch(e){}
+  const pv=typeof hmpVar==="function"?hmpVar("",wv,cl):"",srcs=["data/homemap/home_"+wv+".webp?v="+HM_IMGV].concat(pv&&typeof hmpSrc==="function"?[hmpSrc(pv,"l"),hmpSrc(pv,"r")]:[]);
+  P._hmWvBusy=true;let left=srcs.length,fail=false;const done=()=>{if(--left)return;P._hmWvBusy=false;if(fail||!P.isConnected)return;
+    im0.src=srcs[0];P._hmSrc0=srcs[0];P._hmWv=wv;P._hmpWv=wv;try{if(typeof hmpSet==="function")hmpSet(P,P.dataset.hmw||"")}catch(e){}try{if(typeof sw7Tick==="function")sw7Tick()}catch(e){}};
+  for(const s of srcs){const im=new Image();im.onload=done;im.onerror=()=>{fail=true;done()};im.src=s}return true}

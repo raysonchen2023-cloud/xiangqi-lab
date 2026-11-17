@@ -241,7 +241,9 @@ function chdPieceHref(s,p,o){if(!CHD5_ON)return"";const c=chdMe(),B=CHD_BM[c];if
 const CHD_FORM_NM={x_swordboy:"黑漆青銅俥",x_spiritgirl:"青玉相",x_martialgirl:"朱漆爆竹紋炮",x_miaogirl:"鑲銀傌",x_shuai:"赤金帥",x_shi:"紅繩硬木仕",x_bing:"青石兵"};
 function chdFormRow(){if(!CHD5_ON)return"";const c=chdMe();if(!c)return"";const op=chdFormOpen();
   return`<label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>本命化形</b><br><small class="muted">${op?`自己的${esc(WX_CHARS[c].pc)}換成「${esc(CHD_FORM_NM[c])}」；只有你看得到`:"雲河星槎 13 站都學會以後解鎖"}</small></span><input type="checkbox" class="sw" id="chdForm"${op?"":" disabled"}></label>`}
-function chdFormBind(v){const x=v&&v.querySelector("#chdForm");if(!x)return;x.checked=chdFormOn();x.onchange=()=>{chdSet(S=>{if(x.checked)delete S.form;else S.form=0});try{vibrate(5)}catch(e){}}}
+function chdFormBind(v){const x=v&&v.querySelector("#chdForm");if(!x)return;x.checked=chdFormOn();
+  /* 11/17 iMac I P3：還沒解鎖時開關是 disabled，點了沒有任何反應 → 點那一列就說為什麼不能開、怎麼解鎖 */
+  if(x.disabled){const r=x.closest("label");if(r&&!r.__chdTip){r.__chdTip=1;r.addEventListener("click",e=>{if(!x.disabled)return;e.preventDefault();try{vibrate(8)}catch(_){}toast("本命化形還沒解鎖：雲河星槎 13 站的棋理都學會以後就能打開")})}}x.onchange=()=>{chdSet(S=>{if(x.checked)delete S.form;else S.form=0});try{vibrate(5)}catch(e){}}}
 
 /* ---------- 我的角色頁：本命修行卡（07-legend.js Me 呼叫 chdMeCard）---------- */
 function chdMeCard(){const c=chdMe();if(!c)return null;chdCss();const C=WX_CHARS[c],T=chdT(c)||{},rows=[];
@@ -262,21 +264,21 @@ function chdMeCard(){const c=chdMe();if(!c)return null;chdCss();const C=WX_CHARS
 const CHD_END_ON=true;
 const CHD_END={
   "":{t:"千秋局罷星河闊",x:"說書人撫鬚輕嘆：「客官，十三朝的殘譜補全了。棋枰上雖有楚河漢界，俥走直路、傌走日字、兵過河才橫行，各有各的走法；走過這一程的人，也各有各的歸處。」",
-    inv:"「方才那位小客官的旅程已經圓滿。雲河之上，另有六顆星的軌跡還暗著。客官若有閒，換一位同行，再走一趟千秋之局？」",b1:"換一位再起航",b2:"留駐千秋局",to:""},
+    inv:"「方才那位小客官的旅程已經圓滿。雲河之上，另有六顆星的軌跡還暗著。客官若有閒，再開一段旅程，走一趟千秋之局？」",b1:"再開一段旅程",b2:"留駐千秋局",to:""},
   x_swordboy:{t:"俥行通路見爹心",x:"直衝的俥，終於學會先替自己找一條通路。阿轍明白了：那天爹把車轉進小路，不是走歪路，是想帶發燒的他活著走到醫者面前。腰牌上輪紋裡的泥擦乾淨了，他的手也不必再攥得那麼緊。",
-    inv:"他的直路走通了。可那個坐凳子都不肯坐直、偏愛繞彎的小梅，在元朝的草原上又繞過了多少路？",b1:"用小梅再走一次",b2:"留駐千秋局",to:"x_miaogirl"},
+    inv:"他的直路走通了。可那個坐凳子都不肯坐直、偏愛繞彎的小梅，在元朝的草原上又繞過了多少路？",b1:"再開一段旅程",b2:"留駐千秋局",to:"x_miaogirl"},
   x_spiritgirl:{t:"飛相巡河候魚書",x:"雙相連環，家門穩固。燕子總怕自己一離開，家就空了。後來她才懂，相雖不過河，心可以過；暫時離開，和不要這個家，原來分得清。江口那封輾轉來的信，她收在懷裡：娘已到江南，平安。",
-    inv:"茶棚的風雨停了。可那嗓門最大、隔山就敢打炮的花兒，一聽見雷聲，為什麼總要先找地方躲？",b1:"用花兒再走一次",b2:"留駐千秋局",to:"x_martialgirl"},
+    inv:"茶棚的風雨停了。可那嗓門最大、隔山就敢打炮的花兒，一聽見雷聲，為什麼總要先找地方躲？",b1:"再開一段旅程",b2:"留駐千秋局",to:"x_martialgirl"},
   x_martialgirl:{t:"借子開花響連天",x:"當頭炮再響，也得先有炮架。花兒明白了，自己不必一個人衝在最前面：退到後面替人當炮架，替人留一段安靜，也是本事。她回到臨安，先敲了門；爺爺替她留著一盞燈。",
-    inv:"炮要借子，仕卻總擋在人前。明朝那個話少、走路老走在別人身前半步的連城，心裡其實想去哪裡？",b1:"用連城再走一次",b2:"留駐千秋局",to:"x_shi"},
+    inv:"炮要借子，仕卻總擋在人前。明朝那個話少、走路老走在別人身前半步的連城，心裡其實想去哪裡？",b1:"再開一段旅程",b2:"留駐千秋局",to:"x_shi"},
   x_miaogirl:{t:"躍馬掛角尋舊姓",x:"馬走日字，最怕蹩腳。小梅繞了無數個彎，看出過沙色不對，也在長草裡躲過一回，才發現：多知道一個姓，沒有少掉一個家。帽頂那顆紅珠，草原上的人一眼就認得。",
-    inv:"她的彎路繞回了家。清朝揚州那個在雪裡跑腿、草鞋補了又補的溪兒，走這一趟，又會遇見誰？",b1:"用溪兒再走一次",b2:"留大漠馳馬",to:"x_bing"},
+    inv:"她的彎路繞回了家。清朝揚州那個在雪裡跑腿、草鞋補了又補的溪兒，走這一趟，又會遇見誰？",b1:"再開一段旅程",b2:"留大漠馳馬",to:"x_bing"},
   x_shuai:{t:"出帥助攻定乾坤",x:"將帥不可照面，帥也不出九宮，卻能出帥助攻。方庭碰了碰胸前的長命鎖，扶著屏風等一口氣，終於自己走了出去。九宮方寸之地，也是他的棋盤。",
-    inv:"他走出屏風了。可一直走在他身前半步的連城，在長安金市聽見商隊鈴聲時，心裡在想什麼？",b1:"用連城再走一次",b2:"留休寧聽雨",to:"x_shi"},
+    inv:"他走出屏風了。可一直走在他身前半步的連城，在長安金市聽見商隊鈴聲時，心裡在想什麼？",b1:"再開一段旅程",b2:"留休寧聽雨",to:"x_shi"},
   x_shi:{t:"棄仕解殺路始寬",x:"仕守九宮，他一直以為，只有擋在前面才算護人。直到在長安那盤殘局裡，他想明白什麼時候該撐仕、什麼時候該棄仕解殺：最好的盾牌，是讓對方自己變強。回到休寧那天，他沒有先跨出去，等方庭自己走出屏風。",
-    inv:"他學會了退半步。那個總被他護在身後的方庭，獨自坐到櫃前的時候，心裡又是什麼光景？",b1:"用方庭再走一次",b2:"留駐千秋局",to:"x_shuai"},
+    inv:"他學會了退半步。那個總被他護在身後的方庭，獨自坐到櫃前的時候，心裡又是什麼光景？",b1:"再開一段旅程",b2:"留駐千秋局",to:"x_shuai"},
   x_bing:{t:"小卒過河步生蓮",x:"兵卒過河，再無退路，卻能左右橫行。她一步一步踏過揚州的雪，回頭時，雪地裡不只有自己的腳印。懷裡那面拼起來的祈福小旗，是她走過十三朝，最捨不得放手的東西。",
-    inv:"她的旗拼起來了。元朝草原上那頂鈸笠帽的紅珠，是誰一針一針縫上去的？換小梅走一趟，就知道了。",b1:"用小梅再走一次",b2:"隨漕船揚帆",to:"x_miaogirl"}};
+    inv:"她的旗拼起來了。元朝草原上那頂鈸笠帽的紅珠，是誰一針一針縫上去的？下回在星槎上遇見小梅，問問她就知道了。",b1:"再開一段旅程",b2:"隨漕船揚帆",to:"x_miaogirl"}};
 const chdEndSpot=()=>CHD_END_ON?[["ssEnd",24,64,"🏁 破關卡",(chdMe()?chdNk(chdMe())+"的":"")+"結局","hot"]]:[];
 function chdEndBind(v){if(!CHD_END_ON||!v)return;const b=v.querySelector("#ssEnd");if(b)b.onclick=()=>{try{vibrate(8)}catch(e){}chdEndShow()};if(!chdSt().end)setTimeout(()=>{if(v.isConnected)chdEndShow()},700)}
 function chdEndShow(){if(!CHD_END_ON||document.querySelector(".chd-end"))return;chdCss();const c=chdMe(),E=CHD_END[c]||CHD_END[""],to=E.to,T=to&&WX_CHARS[to];if(!chdSt().end)chdSet(S=>{S.end=Date.now()});

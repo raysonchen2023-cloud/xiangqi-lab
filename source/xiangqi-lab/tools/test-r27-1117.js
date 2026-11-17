@@ -84,8 +84,9 @@ function bar() {
     chipIcon: num(OF, /#topbar #offChip::before\{content:\\?"📴\\?";font-size:(\d+)px;line-height:1\}/, "牌子圖示"),
     chipPadV: num(OF, /#topbar\.clk-on #offChip\{align-self:flex-start;[^}]*padding:(\d+)px \d+px!important/, "窄螢幕牌子上下留白"),
     chipPadH: num(OF, /#topbar\.clk-on #offChip\{align-self:flex-start;[^}]*padding:\d+px (\d+)px!important/, "窄螢幕牌子左右留白"),
-    chipTop: num(OF, /html\[lang=en\] #topbar\.clk-on #offChip\{position:absolute;left:\d+px;top:calc\(var\(--safeT,0px\) \+ (\d+)px\)/, "英文牌子 top"),
-    chipLeft: num(OF, /html\[lang=en\] #topbar\.clk-on #offChip\{position:absolute;left:(\d+)px/, "英文牌子 left"),
+    /* 11/17 第 29 輪 R29-8：480 寬以下有時辰鐘的頁斷網時，中英文都把牌子放到頂欄上面多出來的那一條、置中（left:50%） */
+    chipTop: num(OF, /#topbar\.clk-on #offChip\{position:absolute;left:[^;]+;top:calc\(var\(--safeT,0px\) \+ (\d+)px\)/, "牌子 top"),
+    chipLeft: /#topbar\.clk-on #offChip\{position:absolute;left:50%;/.test(OF) ? 0 : NaN,
     chipBorder: num(M("05-settings.js"), /c\.style\.cssText="flex:none;border:([\d.]+)px solid currentColor/, "牌子外框（05-settings offChip）"),
     offt1: num(OF, /#topbar\.offt1 #title\{font-size:(\d+)px!important/, "縮字 offt1")
   };
@@ -97,9 +98,17 @@ test("R27-2／X2：窄螢幕有時辰鐘的頁，📴 牌貼頂（不落在時�
   const H = lines => V.padT + lines * V.lh + V.tPadB + V.padB + V.border, clkTop = lines => H(lines) - V.border - V.clkBot - V.dial, clkTextTop = lines => H(lines) - V.border - V.clkBot - (V.smF * 1.3 + V.bF * V.bLh + 1);
   /* 中文（一行）：牌子貼頂，從 padding-top 起；底邊要在時辰字上緣之上 */
   assert.ok(V.padT + chipH <= clkTextTop(1), `中文：牌子 ${V.padT}～${V.padT + chipH}、時辰字 ${clkTextTop(1).toFixed(1)} 起`);
-  /* 英文 ≤360（兩行）：牌子絕對定位在左上角，底邊在星晷上緣之上、右邊在標題字左邊 */
-  assert.ok(V.chipTop + chipH <= clkTop(2), `英文：牌子 ${V.chipTop}～${V.chipTop + chipH}、星晷 ${clkTop(2)} 起`);
-  assert.ok(V.chipLeft + chipW <= 6 + V.tPadL, `英文：牌子 x ${V.chipLeft}～${V.chipLeft + chipW}、標題字 ${6 + V.tPadL} 起`);
+  /* 英文 ≤360（兩行）：牌子絕對定位在左上角，底邊在星晷上緣之上、右邊在標題字左邊。
+     第 28 輪 Y3 起有牌子時頂欄上面多一條（padding-top 從 CSS 讀），星晷和標題整個往下；第 27 輪的版本（沒有這條）星晷從 22 起、牌子會碰到外圈的字 */
+  const OF = W8.slice(W8.indexOf("const OFFT_CSS="), W8.indexOf("\n", W8.indexOf("const OFFT_CSS="))), band = num(OF, /#topbar\.clk-on:has\(#offChip\)\{padding-top:calc\(var\(--safeT,0px\) \+ (\d+)px\)\}/, "有牌子時的頂欄上緣");
+  /* 第 28 輪 N28-5 起 360 寬以下英文：標題一行、底下讓的高度照 07i18n 那條規則（不再是兩行＋36） */
+  const nPadB = num(I18N_CSS, /@media \(max-width:360px\)\{html\[lang=en\] #topbar\.clk-on:not\(\.clk-nt\) #title\{padding-left:\d+px!important;padding-bottom:(\d+)px!important/, "窄螢幕英文標題底下");
+  const Hb = () => band + V.lh + nPadB + V.padB + V.border, clkTopB = () => Hb() - V.border - V.clkBot - V.dial;
+  assert.ok(V.chipTop + chipH <= clkTopB(2) - 20, `英文：牌子 ${V.chipTop}～${V.chipTop + chipH}、星晷 ${clkTopB(2)} 起（外圈的字往上凸約 20px 也碰不到）`);
+  assert.ok(V.chipTop + chipH <= band, `英文：牌子在多出來那一條裡（標題從 ${band} 起）`);
+  assert.ok(clkTop(2) - 20 < V.chipTop + chipH, "對照：沒有多那一條時，牌子會碰到星晷外圈（D 看到的「亥」）");
+  /* 第 28 輪 N28-5 起 360 寬以下英文標題改成一行在最上面（從 x≈12 起，不再讓左邊 62px）：牌子跟標題是上下分開（牌子在多出來那一條、標題在它下面），不是左右分開 */
+  assert.ok(V.chipLeft + chipW > 0 && V.chipTop + chipH <= band, `英文：牌子 x ${V.chipLeft}～${V.chipLeft + chipW}、y ${V.chipTop}～${V.chipTop + chipH}，標題從 y ${band} 起`);
   /* 320 寬標題寬度（輸入值是測試員 E 截圖量的：連線時標題字寬 72；斷網時牌子在排版裡佔 39＋間距 4）：牌子移出排版就拿回這段；縮成 offt1 的字級後「Xiangqi」一行放得下 */
   const MEASURED_CONTENT_ON = 72, word = px => 7 * px * 0.6;
   assert.ok(word(V.offt1) <= MEASURED_CONTENT_ON, `標題字寬 ${MEASURED_CONTENT_ON}、Xiangqi ${word(V.offt1).toFixed(0)}（${V.offt1}px）`);

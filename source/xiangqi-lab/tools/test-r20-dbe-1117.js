@@ -148,10 +148,10 @@ test("D N6：電腦房段位牌英文可換行、星槎「🌀 立體」推回�
 
 // ---------- B ----------
 test("B N20-1（P1）：畫面矮（≤500）時通用 .modal 可以捲、從上面排、放得下照樣置中；直式、iPad 不受影響", () => {
-  const U = M("00-util.js"), css = vm.runInNewContext("(" + U.match(/const MDLOW_CSS=("[^\n]*");/)[1] + ")");
-  assert.equal(css, "@media (max-height:500px){.modal{overflow-y:auto;align-items:flex-start;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.modal>.box{margin:auto 0;flex:none}}");
+  /* 11/18 第 30 輪 R30-1：不再只限高度 ≤500，所有高度放不下都能捲（test-r30-1118.js 驗） */
+  const U = M("00-util.js"), css = vm.runInNewContext(U.match(/const MDLOW_CSS=([^\n]*\n[^\n]*);\n/)[1]);
+  assert.ok(css.startsWith(".modal{overflow-y:auto;align-items:flex-start;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.modal>.box{margin:auto 0;flex:none}"));
   assert.ok(U.includes("mdLowCss();"));
-  const hit = h => h <= 500; for (const [w, h] of [[812, 375], [667, 375], [844, 390], [932, 430]]) assert.ok(hit(h), w + "×" + h); for (const [w, h] of [[390, 844], [375, 667], [1024, 768], [1133, 744]]) assert.ok(!hit(h), w + "×" + h);
   assert.ok(!rd("xiangqi-db/m.css").includes("max-height:500px){.modal"), "m.css 沒動");
 });
 test("B N20-2／N20-5／N20-7：古戰場寬但矮的橫式也限圖高；直式拉把點擊區 44；橫式抽屜開著藏小帥", () => {
@@ -198,7 +198,8 @@ test("E N20-2／N20-6：審查備註照實際行為寫（點一下就走過去�
   assert.ok(!/two taps|再點才進去/.test(N), "不再寫要點兩下");
   assert.ok(N.includes("picking another place on 🗺 first asks") && N.includes("在 🗺 選了別處，會先問「確定前往／取消」"));
   assert.ok(N.includes("a naming window and \"線上大廳安全須知\""));
-  assert.ok(N.includes("(Qianqiu seal album)"));
+  /* 11/17 iMac G-4 起 Game Center 那句搬到 Notes 外面「裝了 --gc-widget 才換上」的那一段（目前送審建置沒有 Game Center） */
+  assert.ok(!N.includes("(Qianqiu seal album)") && s.slice(b).includes("(Qianqiu seal album)"));
 });
 test("E N20-6：第一次取名視窗照玩家登記的設定寫（原生版預設關）；網頁版原文", () => {
   const S = M("02-shell.js");

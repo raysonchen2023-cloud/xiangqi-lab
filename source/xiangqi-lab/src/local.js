@@ -725,7 +725,7 @@ var XQ=(function(){
   parseConnect();
   function remoteInfo(){return ls.get("remote",null)}
   async function remote(u,b,opt){const r=remoteInfo();
-    if(!r)throw new Error("這個功能要連上電腦：在電腦執行裁判程式（加 --tunnel），再用手機掃電腦上的 QR code");
+    if(!r)throw new Error((typeof DEVMODE==="function"&&DEVMODE())?"這個功能要連上電腦：在電腦執行裁判程式（加 --tunnel），再用手機掃電腦上的 QR code":"這個功能目前不能用");   /* 11/17 iMac J P1-1：一般玩家不看到開發者連電腦的說明 */
     // 手機剛從背景切回來、或 4G 訊號不穩時，第一個請求常常直接失敗；讀取類的請求自動再試兩次
     const go=()=>fetch(r.base+u,{method:b===undefined?"GET":"POST",headers:{"x-xq-key":r.key,"content-type":"application/json",...(window.XQ_ME?XQ_ME():{})},body:b===undefined?undefined:JSON.stringify(b),signal:opt&&opt.signal||(!(opt&&opt.raw)&&window.AbortSignal&&AbortSignal.timeout?AbortSignal.timeout(15000):undefined)});
     let res;for(let i=0;;i++){try{res=await go();break}

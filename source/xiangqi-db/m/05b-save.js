@@ -48,6 +48,7 @@ const JOURNEY_KEYS=["sw7Box","pSex","pChar","pStyle","party","botPiece","onboard
   .concat(["cpuRate","bonusKeys","record","arenaStamps","play","play2","playPrev","playBak"].map(k=>"xq_"+k));   /* 評比循環第 2 輪：playPrev（上一版，存檔壞掉時讀）、playBak（被別的分頁換掉的棋）跟著存檔格走；保存紀錄 xq_saveLog 是這支手機的，不跟格子走 */
 JOURNEY_KEYS.push("m_gxdOmen","m_gxdFree","m_gxdDone");   /* 11/16 開發者：觀星臺今日異象（當天成績）、自由擺陣（上次擺的陣、難度、戰績）、結算過的那一盤（07gxd-daily.js）；另加一行，不動上面清單的字 */
 JOURNEY_KEYS.push("m_bhDrift1");   /* 11/16 hspx P1（開發者「還沒起航偏離軌道就馬上跳出觀星臺和西市的過場」）：bhDrift1＝這一趟第一次起航必定偏航用過了沒（07bh bhFirstDrift），原本整支手機共用，舊旅程用過、新旅程就不偏航。另外加一行，不動上面清單的字（好幾支測試比對清單結尾） */
+JOURNEY_KEYS.push("m_opSeen");   /* 11/17 晚開場順序（07stq 檔尾 stqXu*）：opSeen＝這段旅程看過開場（電影＋黑洞序局，或補播過一次）；跟存檔格走，換手機轉移碼（XQSave.dump 整份 localStorage）也帶到。另外加一行，不動上面清單的字 */
 JOURNEY_KEYS.push("m_xsmStall");   /* 11/16 開發者（西市四攤，07xsm-ximarket.js）：xsmStall＝找棋子（這一副找到第幾顆、湊齊幾副、哪天找過）、老槐樹下今天是誰來、見過了沒、小禮收了沒。另外加一行，不動上面清單的字（好幾支測試比對清單結尾） */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -113,16 +114,21 @@ function jFrame(){try{const c=myChar();if(!c)return"";const nk=WX_CHARS[c].nk||W
 function lockFix(){try{const c=myChar();if(c&&WX_CHARS[c].pc&&store.get("botPiece","")!==WX_CHARS[c].pc)store.set("botPiece",WX_CHARS[c].pc)}catch(e){}}
 function pieceLock(){const c=myChar();if(!c)return;const C=WX_CHARS[c];modal(`<div class="em">🔒</div><h2>${esc(C.n)}就是「${esc(C.pc)}」</h2><p class="muted">雲河七星每個人都是一顆棋子：棋子跟著角色，這段旅程不能換。</p>`,[["好",null]])}
 function journeyLock(){const J=journey();if(!J)return titleScreen({});
-  modal(`<div class="em">🔒</div><h2>${esc(meName())}的旅程正在進行</h2><p class="muted">這段旅程選定的角色不能更換。想用別人的身分出發，請回開頭畫面開始「新的旅程」——可以存到另一格，不會蓋掉這段。</p>`,
+  modal(`<div class="em">🔒</div><h2>${esc(meName())}的旅程正在進行</h2><p class="muted">每段旅程都由齊轍出發，其他六位在星槎旅程中陸續加入。想從頭再走一次，請回開頭畫面開始「新的旅程」——可以存到另一格，不會蓋掉這段。</p>`,
     [["回開頭畫面",()=>titleScreen({})],["💾 存檔與讀檔",saveSheet,true],["好",null,true]])}   /* 11/13 晚：「最後改選一次」拿掉，見 titleScreen */
 /* 入局序幕：開新旅程選好角色後看到的三句話 */
 function prologue(){const c=myChar();if(!c)return;if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhXuStart==="function"){bhXuStart(false);return}   /* hspx 開發者 11/12：建好角色先從星渦掉進黑洞下序局（07bh-blackhole.js），下完才回到這裡 */
   const C=WX_CHARS[c],era=store.get("era","classic"),nk=C.nk||C.n;
   const place=era==="classic"?"船艙裡的石桌亮了起來，風裡多了千年前的聲音。":`船艙裡那張刻著棋盤的石桌亮了起來——窗外是${eraLabel(era)}的園子。`;
-  modal(`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><h2>${esc(C.pc)}・${esc(C.n)}</h2><p class="pl-say">「${esc(C.say||"")}」</p><p>一艘叫「雲河」的星槎靠了岸。船頭的說書人一拍醒木：「上船吧，${esc(nk)}。」${esc(nk)}踏上船板，在船艙的石桌上擺下第一顆子——</p><p>${esc(place)}</p>`,[["入局",()=>{try{if(typeof BGM!=="undefined"&&BGM.force==="bh_2.mp3")bgmForce(null)}catch(e){}let nx=0;try{nx=+sessionStorage.getItem("xqFwNext")||0;sessionStorage.removeItem("xqFwNext")}catch(e){}
+  /* 11/17 測試員 D 第 29 輪 Y1（P1）：英文介面的序幕卡正文三段原本是中文（三段都是組出來的句子，字典對不上）→ 英文介面直接組英文：角色名、台詞、朝代名各自查字典（07i18n 內建都有），整段一起寫 */
+  const EN=typeof i18nLang==="function"&&i18nLang()==="en",TT=s=>{try{const t=typeof i18nText==="function"?i18nText(String(s||"")):null;return t||String(s||"")}catch(e){return String(s||"")}};
+  const body=EN?`<p class="pl-say">“${esc(TT(C.say))}”</p><p>A star raft called the “Cloud River” pulled up to the shore. The storyteller at the bow struck his clapper: “Come aboard, ${esc(TT(nk))}.” ${esc(TT(nk))} stepped onto the deck and set the first piece on the stone table in the cabin —</p><p>${esc(era==="classic"?"The stone table in the cabin lit up, and the wind carried voices from a thousand years ago.":`The stone table carved with a board lit up — outside the window is the garden of ${TT(eraLabel(era))}.`)}</p>`
+    :`<p class="pl-say">「${esc(C.say||"")}」</p><p>一艘叫「雲河」的星槎靠了岸。船頭的說書人一拍醒木：「上船吧，${esc(nk)}。」${esc(nk)}踏上船板，在船艙的石桌上擺下第一顆子——</p><p>${esc(place)}</p>`;
+  modal(`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><h2>${esc(C.pc)}・${esc(C.n)}</h2>${body}`,[["入局",()=>{try{if(typeof BGM!=="undefined"&&BGM.force==="bh_2.mp3")bgmForce(null)}catch(e){}let nx=0;try{nx=+sessionStorage.getItem("xqFwNext")||0;sessionStorage.removeItem("xqFwNext")}catch(e){}
     /* 開發者 11/11 選 v3 規劃書 B01：第一課選了「下一盤簡單的棋」——看完序幕直接開練功房第 1 級（不算分）；開不了就照舊進首頁 */
-    if(nx&&Date.now()-nx<9e5){api("/play/new",{human:"r",lx:1,ranked:false}).then(()=>{location.hash="#/cpu"}).catch(()=>{try{route()}catch(e){}});return}
-    try{route()}catch(e){}}]],"prolog")}
+    let sq=false;try{sq=typeof stqXuAfter==="function"&&stqXuAfter()}catch(e){}   /* 11/17 晚開場順序（07stq 檔尾）：記「看過開場」；這趟是開頭畫面「新的旅程」來的＝接著開新手練習（0.4 秒後蓋上，練習畢業回首頁） */
+    if(!sq&&nx&&Date.now()-nx<9e5){api("/play/new",{human:"r",lx:1,ranked:false}).then(()=>{location.hash="#/cpu"}).catch(()=>{try{route()}catch(e){}});return}
+    try{route()}catch(e){}}]].concat(typeof stqXuMid==="function"&&stqXuMid()==="pro"?[["回開頭畫面",()=>{try{stqXuLeave()}catch(e){}},true]]:[]),"prolog")}   /* 11/17 晚 iMac I P3：開新旅程的序幕（07stq stqXuMid＝pro）可以暫時回開頭畫面，「▶ 繼續」再接回序幕 */
 
 /* ---------- 新的旅程、讀檔、改選 ---------- */
 async function journeyStart(n,c,nm,df){c="x_swordboy";   /* 11/15 七星改版（開發者選單）：不再選角，新旅程一律齊轍開局；其他六位在星槎旅程中加入（07pty-party.js） */
@@ -141,7 +147,7 @@ function journeyRepick(c){const C=WX_CHARS[c],J=journey();if(!C||!J||J.re!==1)re
   try{window.dispatchEvent(new Event("xq-look"))}catch(e){}saveNow(true);toast("換好了："+C.n+"（之後就鎖定了）")}
 async function slotLoad(n){let S=null;try{S=await slotGet(n)}catch(e){}
   if(!S||!S.data){const M=slotMetaAll();delete M[n];store.set("slotMeta",M);return toast("這格讀不到資料")}
-  if(journey()&&curSlot()&&curSlot()!==n)await saveNow(true);SAVE_LOCK=true;store.set("slotCur",n);saveApply(S.data);toast("讀取中…");saveReload()}
+  if(journey()&&curSlot()&&curSlot()!==n)await saveNow(true);try{if(typeof stqXuCancel==="function")stqXuCancel()}catch(e){}SAVE_LOCK=true;store.set("slotCur",n);saveApply(S.data);toast("讀取中…");saveReload()}   /* 11/17 晚 iMac I P3：開新旅程走到一半改讀別格＝放棄那一趟（07stq stqXuCancel），重新載入後不會又被 07bh bhxResume 拉回序局 */
 async function slotDel(n){try{await slotRm(n)}catch(e){}const M=slotMetaAll();delete M[n];store.set("slotMeta",M)}
 function slotCopyAsk(from,after){const M=slotMetaAll(),L=[1,2,3].filter(n=>n!==from);
   modal(`<div class="em">📋</div><h2>把第 ${from} 格複製到…</h2><p class="muted">複製一份當備份。被選到的那格原本的進度會被蓋掉。</p>`,
@@ -382,7 +388,8 @@ function titleScreen(opt){opt=opt||{};try{navClear()}catch(e){}try{sessionStorag
     document.body.append(o);TITLE=o;document.body.classList.add("xqt-on");try{ldShow(o)}catch(e){}
     /* 開發者 11/11「這個莫名其妙的紅圈按扭拿掉」：標題畫面右上角的 ⚙ 設定鈕拿掉（設定從星槎天字客房進） */}
   const J=journey();
-  if(!opt.view&&typeof stqBoot==="function"&&stqBoot(opt))return;   /* 開發者 11/15 新手練習「先走再學」（m/07stq-starter.js）：全新玩家直接出棋盤、練習做到一半的接著做；老玩家照下面原本的流程 */
+  if(!opt.view&&typeof stqBoot==="function"&&stqBoot(opt))return;   /* 11/17 晚起 stqBoot 只剩開發者預覽會接手（回 true）；全新玩家照下面出「⚔ 新的旅程」＋讀檔，按下去才走開場 → 新手練習（07stq 檔尾「開場順序」）。11/15「先走再學」一打開就進練習已拿掉 */
+  if(!opt.view&&typeof stqXuMid==="function"&&/^(xu|land)$/.test(stqXuMid())){titlePaint("menu",opt);return}   /* 11/17 晚 iMac I P3：開新旅程走到一半（07stq stqXuMid）＝直接出選單，主按鈕「▶ 繼續」接回那一段（全新玩家也一樣，不出「⚔ 新的旅程」那一頁） */
   if(!opt.view&&fwNeed()){titlePaint("wait",opt);fwSaved().then(s=>{if(TITLE&&TITLE.dataset.v==="wait")titlePaint(s||!fwNeed()?"menu":typeof bhxNeed==="function"&&bhxNeed()?"xu":"first",opt)});return}   /* 新手秒開局：先確定 IndexedDB 裡也沒有存檔（不然開機會從存檔還原），才出一步殺 */
   if(!opt.view&&J&&J.re===1){store.set("journey",{...J,re:2});try{saveNow(true)}catch(e){}}   /* 開發者 11/13 晚（iPad 舊存檔更新後一開就被帶去選角）：拿掉「存檔功能上線了＋最後改選一次」公告，舊存檔直接當「就是這位」；換角色請開新的旅程（從開場流星選） */
   titlePaint(opt.view||"menu",opt)}
@@ -392,16 +399,18 @@ function titlePaint(view,opt){const o=TITLE;if(!o)return;opt=opt||{};const inn=o
   /* hspx 開發者 11/12「讓遊戲一進去，把選角放到七星降落後才讓玩家選角，黑洞對戰直接放最一開頭」：全新玩家的開頭畫面只有一顆「入局」（手機要先點一下才能放音樂），
      按下去就是星渦 → 第〇章 → 黑洞序局 → 七星流星裡點一顆星選角（07bh-blackhole.js）；原本選角前的「新手秒開局」一步殺拿掉（開發者選，序局本身就是一步殺）。換手機的人留讀入存檔、搬資料 */
   if(view==="xu"){try{if(typeof opPre==="function")opPre()}catch(e){}   /* 開場三首先下載好（按「入局」那一下就能出聲） */
-    b.innerHTML=`<button class="btn xqt-main" id="tXu">入局</button><div class="xqt-lk"><button type="button" id="tIm">📂 讀入存檔檔案</button><button type="button" id="tXf">📱 從舊手機搬資料</button></div>`;
-    b.querySelector("#tXu").onclick=()=>{vibrate(10);if(typeof bhXuStart==="function"){bhXuStart(false);titleClose();location.hash="#/adventure"}else titlePaint("menu",{})};   /* 先蓋星渦再關開頭畫面；背後開星槎頁（首頁 3D 園子太重，會讓過場頓一下） */
+    b.innerHTML=`<button class="btn xqt-main" id="tXu">⚔ 新的旅程</button><div class="xqt-lk"><button type="button" id="tIm">📂 讀入存檔檔案</button><button type="button" id="tXf">📱 從舊手機搬資料</button></div>`;   /* 11/17 晚開發者「App 一進去後，會有『新的旅程』或是『讀檔』」：全新安裝沒有存檔格，讀檔照這裡原本的寫法＝讀入存檔檔案、從舊手機搬資料兩個小連結（不放灰掉的「存檔與讀檔」） */
+    b.querySelector("#tXu").onclick=()=>{vibrate(10);try{if(typeof stqXuArm==="function")stqXuArm()}catch(e){}if(typeof bhxNewJourney==="function"){bhxNewJourney(1);return}if(typeof bhXuStart==="function"){bhXuStart(false);titleClose();location.hash="#/adventure"}else titlePaint("menu",{})};   /* 11/17 晚開場順序：新的旅程＝電影 → 黑洞序局 → 降落、序幕 → 新手練習（07stq stqXuArm 記下，序幕「入局」後開練習）。跟有旅程的人開新旅程走同一條 bhxNewJourney（記 bhxFresh，中途重新載入 07bh bhxResume 接得回來）；它自己先蓋星渦再關開頭畫面、背後開星槎頁 */   /* 先蓋星渦再關開頭畫面；背後開星槎頁（首頁 3D 園子太重，會讓過場頓一下） */
     b.querySelector("#tXf").onclick=()=>{vibrate(6);titleClose();xfRecv()};b.querySelector("#tIm").onclick=()=>{vibrate(6);slotImportPick(1,null,true)};return}const back=v=>`<button class="btn ghost xqt-bk" data-tb="${v||"menu"}">‹ 返回</button>`;
   if(view==="news"){const nm=meName();
     b.innerHTML=`<div class="xqt-msg"><h3>💾 存檔功能上線了</h3><p>你目前的進度已經存在第 1 格，角色是「${esc(nm)}」。從今天起，角色選定後就不能再換；想玩別的角色，可以在開頭畫面開始「新的旅程」，存到第 2、3 格。</p><p class="muted">這次更新送你一次「最後改選」：只換角色，修為、官階、故事進度都保留。</p></div><button class="btn" id="tKeep">就是${esc(nm)}</button><button class="btn ghost" id="tRe">最後改選一次</button>`;
     b.querySelector("#tKeep").onclick=()=>{vibrate(8);const j=journey();if(j){store.set("journey",{...j,re:2});saveNow(true)}titlePaint("menu",{})};
     b.querySelector("#tRe").onclick=()=>{vibrate(5);titlePaint("pick",{mode:"repick"})}}
   else if(view==="menu"){   /* 11/11 第二輪問題 1：按鈕照 tsmMenu（狀態機）排；沒選角色但手機裡有進度＝主按鈕「▶ 繼續／▶ 接著下」，不逼選角 */
-    const BL=tsmMenu({J:!!J,prog:!J&&tsmProgNow().any,slots:Object.keys(M).length,off:!!OFF}),lk=[];let h="";
-    for(const k of BL){if(k==="go"){const m=saveMetaNow(),n=curSlot();h+=`<button class="xqt-go" id="tGo"><img src="${slotImg(m.c)}" alt="" onerror="this.style.visibility='hidden'"><span><b>▶ 繼續</b><small><span>${esc(m.pc)}・${esc(m.nm)}</span>　<span>修為 Lv ${m.lv}${m.rk?"・"+esc(m.rk):""}</span></small><small>故事 ${m.st}／36・遊玩 ${fmtSec(m.sec)}${n?`・第 ${n} 格`:""}</small></span></button>`}
+    let BL=tsmMenu({J:!!J,prog:!J&&tsmProgNow().any,slots:Object.keys(M).length,off:!!OFF});const lk=[];let h="";
+    try{if(typeof stqXuMenu==="function")BL=stqXuMenu(BL,stqXuMid())}catch(e){}   /* 11/17 晚 iMac I P3：開新旅程走到一半＝主按鈕換成「▶ 繼續」這一趟（xm），寫正在開的那一格，不寫舊旅程那一格 */
+    for(const k of BL){if(k==="xm"){const n=typeof stqXuSlot==="function"?stqXuSlot():1;h+=`<button class="xqt-go" id="tXm"><img src="${slotImg("x_swordboy")}" alt="" onerror="this.style.visibility='hidden'"><span><b>▶ 繼續</b><small>新的旅程・第 ${n} 格</small><small>開場進行中，接著剛才那一段</small></span></button>`}
+      else if(k==="go"){const m=saveMetaNow(),n=curSlot();h+=`<button class="xqt-go" id="tGo"><img src="${slotImg(m.c)}" alt="" onerror="this.style.visibility='hidden'"><span><b>▶ 繼續</b><small><span>${esc(m.pc)}・${esc(m.nm)}</span>　<span>修為 Lv ${m.lv}${m.rk?"・"+esc(m.rk):""}</span></small><small>故事 ${m.st}／36・遊玩 ${fmtSec(m.sec)}${n?`・第 ${n} 格`:""}</small></span></button>`}
       else if(k==="cont"){const T=tsmContTxt(tsmLatest());h+=`<button class="xqt-go" id="tCont"><img src="${slotImg(myChar()||mySex())}" alt="" onerror="this.style.visibility='hidden'"><span><b>${esc(T.t)}</b><small>${esc(T.s)}</small><small>還沒選角色也能玩；想聽故事時再選</small></span></button>`}
       else if(k==="new")h+=`<button class="btn ${J?"ghost":"xqt-main"}" id="tNew">⚔ 新的旅程</button>`;
       else if(k==="story")h+=`<button class="btn ghost" id="tNew">🎭 開始故事</button>`;
@@ -411,14 +420,15 @@ function titlePaint(view,opt){const o=TITLE;if(!o)return;opt=opt||{};const inn=o
       else if(k==="im")lk.push('<button type="button" id="tIm">📂 讀入存檔檔案</button>')}
     b.innerHTML=h+(lk.length?`<div class="xqt-lk">${lk.join("")}</div>`:"");
     const on=(id,fn)=>{const e=b.querySelector(id);if(e)e.onclick=()=>{vibrate(6);fn()}};
-    on("#tGo",()=>{titleClose();if(!/^(#\/?)?$/.test(location.hash||""))goHome()});on("#tCont",tsmGoOn);on("#tLater",tsmLater);
+    on("#tGo",()=>{titleClose();let mid="";try{mid=typeof stqXuMid==="function"?stqXuMid():""}catch(e){}if(!/^(xu|land|pro)$/.test(mid)&&!/^(#\/?)?$/.test(location.hash||""))goHome();try{   /* 11/17 測試員 B 第 29 輪 N29-3：序幕卡「回開頭畫面」再「▶ 繼續」：goHome 用 history.go 往回跳是非同步的，會在 stqXuMidGo 換到 #/adventure 之後才跳回首頁，序幕卡疊在首頁上 → 開場途中（xu／land／pro）不先回首頁，交給 stqXuMidGo 去那一段該在的頁 */if(typeof stqXuResume==="function")stqXuResume()}catch(e){}});on("#tCont",tsmGoOn);   /* 11/17 晚開場順序（07stq stqXuResume）：練習做到一半＝接著練；沒看過開場的舊存檔＝補播一次電影＋黑洞序局 */on("#tLater",tsmLater);
     on("#tNew",()=>{if(J)titlePaint("slots",{mode:"new"});else{const e=[1,2,3].find(n=>!M[n])||1;titlePaint("pick",{mode:"new",slot:e})}});
+    on("#tXm",()=>{try{if(typeof stqXuMidGo==="function")stqXuMidGo()}catch(e){}titleClose()});   /* 先接回（07bh 會先蓋黑洞底幕）再關開頭畫面 */
     on("#tSv",()=>titlePaint("save",{}));on("#tXf",()=>{titleClose();xfRecv()});on("#tIm",()=>slotImportPick([1,2,3].find(n=>!M[n])||1,null,true))}
   else if(view==="slots"){const cur=curSlot();if(opt.mode==="new"&&typeof opPre==="function")try{opPre()}catch(e){}   /* 11/13 晚：新旅程一定從開場來，選格這幾秒先下載開場曲與圖 */
     b.innerHTML=`<p class="xqt-h">新的旅程要存在哪一格？</p>`+[1,2,3].map(n=>slotCardHTML(n,M[n],n===cur&&!!J)+`<div class="sv-a">${M[n]?`<button data-ns="${n}" class="warn">覆蓋這格</button>`:`<button data-ns="${n}" class="main">用這格</button>`}</div>`).join("")+back();
     b.querySelectorAll("[data-ns]").forEach(x=>x.onclick=()=>{vibrate(5);const n=+x.dataset.ns,m=M[n];if(!m)return titlePaint("pick",{mode:"new",slot:n,c:opt.c});
       modal(`<div class="em">⚠</div><h2>覆蓋第 ${n} 格？</h2><p class="sv-w">「${esc(m.pc)}・${esc(m.nm)}・Lv ${m.lv|0}・遊玩 ${fmtSec(m.sec)}」會被清掉，無法復原。</p>`,[["清掉並開始",()=>titlePaint("pick",{mode:"new",slot:n,c:opt.c})],["取消",null,true]])})}
-  else if(view==="pick"){if(opt.mode==="new"&&!opt.c&&typeof bhxNewJourney==="function"){bhxNewJourney(opt.slot||1);return}   /* 開發者 11/12「點選新的旅程不會從開頭開始」：新旅程一律從開頭的黑洞序局來，在七星流星裡選角 */
+  else if(view==="pick"){if(opt.mode==="new"&&typeof bhxNewJourney==="function"){try{if(typeof stqXuArm==="function")stqXuArm()}catch(e){}bhxNewJourney(opt.slot||1);return}   /* 11/17 晚開發者「統一用齊轍開始，不要任何選角畫面」：原本帶 opt.c（07f shipNewJourney 破關卡「用〇〇再走一次」預選同伴）會停在這裡的選角輪播，拿掉 !opt.c；新旅程一律走開場，序幕後接新手練習（07stq stqXuArm） */   /* 開發者 11/12「點選新的旅程不會從開頭開始」：新旅程一律從開頭的黑洞序局來，在七星流星裡選角 */
     const L=obPicks(),re=opt.mode==="repick",cur=myChar();
     b.innerHTML=`<p class="xqt-h">${re?"最後一次改選：選定後就鎖住了":"選一位，用他的眼睛走進千秋棋局"}</p><div id="tPk"></div>${!J&&!re?'<button class="btn ghost" id="tLater">之後再選，先逛逛 ›</button>':""}${back(re?"news":J?"slots":"menu")}`;   /* 11/11 第二輪問題 1：還沒有旅程的人可以先不選（之後從「我的角色」頁的「🔒 旅程」、或下次開頭畫面再選） */
     {const e=b.querySelector("#tLater");if(e)e.onclick=()=>{vibrate(5);tsmLater()}}
@@ -474,26 +484,28 @@ const FW_FEN2="4k4/R8/9/9/9/9/9/9/9/3K4R";
 function fwPaint(box,more){fwCSS();const C=window.XQCore,B0=C.parseFen(more?FW_FEN2:FW_FEN),RK=B0.indexOf("R"),slot=()=>[1,2,3].find(n=>!slotMetaAll()[n])||1;
   const MT=C.legal(B0,"r").find(([f,t])=>{const nb=C.make(B0,f,t);return C.inCheck(nb,"b")&&!C.legal(nb,"b").length})||[RK,RK+3];
   let sel=-1,busy=false,miss=0,mark=-1,hk=null,done=false;
-  box.innerHTML=`<div class="fw-say"><img src="data/actors/teller.webp" alt="" onerror="this.remove()"><p><b>說書人</b>「${more?"再來一手：這回紅方有兩顆俥。一顆已經擋住黑將下面那一排，另一顆走哪裡，能把黑將困住？":"客官，先試一手：紅俥走哪裡，能把黑將困住？"}」</p></div>
-    <div class="fw-bd" id="fwBd"></div><p class="fw-st" id="fwSt" role="status" aria-live="polite">先點紅色的「俥」，再點它要去的地方。</p><button class="btn ghost fw-sk" id="fwSk" type="button">${more?"不練了，選一位角色出發 ›":"跳過，我會下棋了 ›"}</button>`;
+  /* 11/17 測試員 D 第 29 輪 Y2：英文介面這一頁大多是中文（狀態列、對錯、結果卡、第二題）→ 每句都給英文（L(中,英)）；棋步用 07i18n 的 i18nMove 寫成 WXF＋白話 */
+  const EN=typeof i18nLang==="function"&&i18nLang()==="en",L=(z,e)=>EN?e:z,MV=tx=>{if(!EN)return tx;try{const m=typeof i18nMove==="function"&&i18nMove(tx);if(m)return m.wxf+" ("+m.say+")"}catch(e){}return tx};
+  box.innerHTML=`<div class="fw-say"><img src="data/actors/teller.webp" alt="" onerror="this.remove()"><p><b>${L("說書人","Storyteller")}</b>${L("「","“")}${more?L("再來一手：這回紅方有兩顆俥。一顆已經擋住黑將下面那一排，另一顆走哪裡，能把黑將困住？","One more: this time Red has two chariots. One already blocks the row below the black general. Where should the other go to trap the general?"):L("客官，先試一手：紅俥走哪裡，能把黑將困住？","Try a move, friend: where should the red chariot go to trap the black general?")}${L("」","”")}</p></div>
+    <div class="fw-bd" id="fwBd"></div><p class="fw-st" id="fwSt" role="status" aria-live="polite">${L("先點紅色的「俥」，再點它要去的地方。","Tap the red chariot first, then tap where it should go.")}</p><button class="btn ghost fw-sk" id="fwSk" type="button">${more?L("不練了，踏上旅程 ›","Done practicing — set out ›"):L("跳過，我會下棋了 ›","Skip, I know how to play ›")}</button>`;
   const bd=Board(x=>tap(x));box.querySelector("#fwBd").append(bd.svg);
   const st=(t,c)=>{const e=box.querySelector("#fwSt");if(e){e.innerHTML=t;e.className="fw-st"+(c?" "+c:"")}};
   const draw=()=>{bd.draw(B0,{sel,targets:sel>=0?C.legal(B0,"r").filter(([f])=>f===sel).map(x=>x[1]):[],...(hk?{hint:hk}:{})});if(mark>=0)fwX(bd.svg,mark)};
   const go=()=>{vibrate(10);if(TITLE)titlePaint("pick",{mode:"new",slot:slot()})};
-  const nx=k=>{try{if(k==="cpu")sessionStorage.setItem("xqFwNext",String(Date.now()));else sessionStorage.removeItem("xqFwNext")}catch(e){}fnStep(k==="cpu"?"nxcpu":"nxhome");go()};
+  const nx=k=>{try{sessionStorage.removeItem("xqFwNext")}catch(e){}fnStep("nxhome");go()};   /* 11/17 晚：「下一盤簡單的棋」拿掉，不再記 xqFwNext（序幕、tsmLater 讀到空的就照常走） */
   box.querySelector("#fwSk").onclick=()=>{if(done||more)return go();vibrate(5);store.set("firstWin",{at:Date.now(),skip:1});fnStep("fwskip");titlePaint("menu",{})};
   function tap(x){if(busy||done)return;const L=C.legal(B0,"r");if(sel>=0&&L.some(([f,t])=>f===sel&&t===x))return move(sel,x);sel=L.some(([f])=>f===x)?x:-1;if(sel>=0)vibrate(5);draw()}
   function move(f,t){const nb=C.make(B0,f,t),tx=C.notate(B0,f,t),ck=C.inCheck(nb,"b"),mate=ck&&!C.legal(nb,"b").length;sel=-1;busy=true;
     if(mate){done=true;mark=-1;hk=null;vibrate(20);bd.draw(nb,{last:{f,t},check:C.kingSq(nb,"b"),fx:true});if(!more)store.set("firstWin",{at:Date.now(),miss});fnStep(more?"fwok2":"fwok");
-      st(`✔ ${esc(tx)}——將死！`,"ok");setTimeout(fwChime,900);
-      setTimeout(()=>{if(!TITLE||TITLE.dataset.v!=="first")return;const sk=box.querySelector("#fwSk");if(sk){sk.className="btn xqt-main fw-go";sk.textContent="選一位角色，出發 ›"}
-        if(more)st(`說書人一拍醒木：「漂亮！兩顆俥一上一下，把黑將夾在中間——棋手管這一手叫『雙俥錯』。」`,"ok");else st(`說書人一拍醒木：「好眼力！${miss?"試了幾次就找到了，":"一出手就找到了，"}黑將上下左右都沒路走——這就叫『將死』。」`,"ok");
-        if(more)modal(`<div class="em">🎉</div><h2>又將死了！</h2><p>一顆俥守住下面那一排，另一顆俥衝到底將軍——黑將往下、往旁邊都逃不掉。</p><p><b>要不要直接下一盤簡單的棋？</b></p><p class="muted" style="font-size:13px">下棋、逛逛之前，會先請你選一位角色。下的那一盤是練功房第 1 級，不算分。</p>`,[["🤖 下一盤簡單的棋 ›",()=>nx("cpu")],["先逛逛",()=>nx("home"),true]]);
-        else modal(`<div class="em">🎉</div><h2>將死！漂亮的第一手</h2><p>俥一平過去，黑將往下走還在俥的直線上，往旁邊走又會跟紅帥面對面——無路可逃。</p><p>象棋比的就是：誰先把對方的將（帥）困住。${miss?"多想幾次就找到答案，這就是下棋的樂趣。":"一次就找到，眼力真好！"}</p><p><b>要再練一題，還是直接下一盤簡單的棋？</b></p><p class="muted" style="font-size:13px">下棋、逛逛之前，會先請你選一位角色。下的那一盤是練功房第 1 級，不算分。</p>`,[["🤖 下一盤簡單的棋 ›",()=>nx("cpu")],["🧩 再練一題",()=>{fnStep("nxmore");vibrate(5);fwPaint(box,1)},true],["先逛逛",()=>nx("home"),true]])},2600);return}
+      st(`✔ ${esc(MV(tx))}${L("——將死！"," — Checkmate!")}`,"ok");setTimeout(fwChime,900);
+      setTimeout(()=>{if(!TITLE||TITLE.dataset.v!=="first")return;const sk=box.querySelector("#fwSk");if(sk){sk.className="btn xqt-main fw-go";sk.textContent=L("踏上旅程 ›","Set out ›")}
+        if(more)st(L(`說書人一拍醒木：「漂亮！兩顆俥一上一下，把黑將夾在中間——棋手管這一手叫『雙俥錯』。」`,`The storyteller strikes his clapper: “Beautiful! One chariot above, one below, with the general caught between — players call this the ‘double chariot’ mate.”`),"ok");else st(L(`說書人一拍醒木：「好眼力！${miss?"試了幾次就找到了，":"一出手就找到了，"}黑將上下左右都沒路走——這就叫『將死』。」`,`The storyteller strikes his clapper: “Sharp eyes! ${miss?"You found it after a few tries — ":"You found it on the first try — "}the black general has nowhere to go, up, down or sideways. That's called checkmate.”`),"ok");
+        if(more)modal(`<div class="em">🎉</div><h2>${L("又將死了！","Checkmate again!")}</h2><p>${L("一顆俥守住下面那一排，另一顆俥衝到底將軍——黑將往下、往旁邊都逃不掉。","One chariot guards the row below; the other charges to the end and gives check. The black general can't escape down or sideways.")}</p>`,[[L("踏上旅程 ›","Set out ›"),()=>nx("home")]]);   /* 11/17 晚開發者選單「拿掉這個選項」：「🤖 下一盤簡單的棋」「先逛逛」拿掉（新的旅程一律 開場 → 黑洞序局 → 序幕 → 新手練習，練習第 6 課就是跟最弱的電腦下），只留踏上旅程 */
+        else modal(`<div class="em">🎉</div><h2>${L("將死！漂亮的第一手","Checkmate! A beautiful first move")}</h2><p>${L("俥一平過去，黑將往下走還在俥的直線上，往旁邊走又會跟紅帥面對面——無路可逃。","The chariot slides across. If the black general steps down, it's still on the chariot's line; if it steps sideways, it faces the red general — nowhere to run.")}</p><p>${L("象棋比的就是：誰先把對方的將（帥）困住。","That's what xiangqi is about: trapping the other side's general first.")}${miss?L("多想幾次就找到答案，這就是下棋的樂趣。"," Finding it after a few tries is the fun of the game."):L("一次就找到，眼力真好！"," First try — great eye!")}</p>`,[[L("踏上旅程 ›","Set out ›"),()=>nx("home")],[L("🧩 再練一題","🧩 One more puzzle"),()=>{fnStep("nxmore");vibrate(5);fwPaint(box,1)},true]])},2600);return}
     miss++;mark=t;vibrate([20,40,20]);bd.draw(nb,{last:{f,t},check:ck?C.kingSq(nb,"b"):-1});fwX(bd.svg,t);
-    const why=ck?"將軍了！可是黑將還能躲開。":"這步沒有將到黑將，它還能自由走動。";st(`✘ ${esc(tx)}：${why}`,"no");
+    const why=ck?L("將軍了！可是黑將還能躲開。","Check! But the black general can still get away."):L("這步沒有將到黑將，它還能自由走動。","This move doesn't check the black general; it can still move freely.");st(`✘ ${esc(MV(tx))}${L("：",": ")}${why}`,"no");
     setTimeout(()=>{if(!TITLE||TITLE.dataset.v!=="first"||done)return;busy=false;hk=miss>=2?[MT[0],MT[1]]:[MT[0]];draw();
-      st(`✘ 剛才走的是 ${esc(tx)}（紅色 ✗）。💡 ${miss>=2?"藍框就是俥和它要去的位置，點點看！":more?"靠近黑將的那顆俥已經封住它往下的路；藍框這顆俥要去將軍，讓黑將往旁邊也逃不掉。":"紅帥守著中間這一路，黑將不能跟帥面對面；俥要去封住黑將「那一條直線」。"}`,"no")},1500)}
+      st(L(`✘ 剛才走的是 ${esc(tx)}（紅色 ✗）。💡 `,`✘ You played ${esc(MV(tx))} (red ✗). 💡 `)+(miss>=2?L("藍框就是俥和它要去的位置，點點看！","The blue frames show the chariot and where it should go. Give it a try!"):more?L("靠近黑將的那顆俥已經封住它往下的路；藍框這顆俥要去將軍，讓黑將往旁邊也逃不掉。","The chariot next to the black general already blocks its way down; the chariot in the blue frame should give check so it can't escape sideways either."):L("紅帥守著中間這一路，黑將不能跟帥面對面；俥要去封住黑將「那一條直線」。","The red general guards the middle file, and the generals can't face each other, so the chariot needs to cut off the black general's line.")),"no")},1500)}
   draw()}
 
 /* ---------- 新手流失數據（開發者 11/8 核准）：新玩家從打開到下完第一盤，每一步距離第一次打開幾秒 ----------
@@ -529,10 +541,18 @@ function saveBoot(){if(SAVE_OLD!==null){store.set("saveMig1",Date.now());if(SAVE
   let pro=false,shown=false;try{pro=!!sessionStorage.getItem("xqPrologue");if(pro)sessionStorage.removeItem("xqPrologue");shown=!!sessionStorage.getItem("xqTitleShown")}catch(e){}
   try{const u=JSON.parse(localStorage.getItem("xqUpdBack")||"null");localStorage.removeItem("xqUpdBack");if(u&&Date.now()-(+u.t||0)<180000){shown=true;sessionStorage.setItem("xqTitleShown","1");sessionStorage.setItem("xqUpdBoot",String(Date.now()));if(u.h&&/^#\//.test(u.h)&&!/^#\/./.test(location.hash||""))location.hash=u.h}}catch(e){}   /* 11/16 開發者選單「只管更新」：3 分鐘內的更新重載（02-shell markDone 記的）＝不出開頭畫面，網址沒帶頁面就回到原本那一頁；真的關掉 App 再開照舊出開頭畫面 */
   if(pro){if(typeof bhxNeed==="function"&&bhxNeed()&&typeof bhxBack==="function")bhxBack(true);setTimeout(()=>{if(typeof bhxLandNew==="function"&&bhxLandNew())return;prologue()},1500)}   /* 有舊旅程的人在開頭選好角色：換格會重新載入，載入後一樣降落經典星槎 */   /* 換格開新旅程會重新載入：等序幕的 1.5 秒先蓋黑洞底，不露出首頁 */
+  if(!pro&&!shown&&!navigator.webdriver&&typeof stqXuMid==="function"&&stqXuMid()){titleScreen({});return}   /* 11/17 晚 iMac I P3：關掉 App 再開（這次還沒出過開頭畫面）時開新旅程走到一半（電影、序局、降落、序幕、練習）＝不管網址停在哪一頁都先出開頭畫面，「▶ 繼續」接回那一段（07stq stqXuMid／stqXuMidGo）；每次重開都一樣 */
   if(!pro&&typeof bhxResume==="function"&&bhxResume())return;   /* 11/16 P0：開新旅程到一半被重新載入＝接回序局邀局卡（07bh bhxResume），不掉回舊旅程 */
   if(shown&&typeof stqFresh==="function"&&stqFresh())shown=false;   /* 11/17 iMac 模擬器 A：全新玩家在開頭畫面等新手練習時點一下，被重新載入（原生 App 卡住後 WebView 重開、隔離重整、雙份存檔還原……），sessionStorage 的 xqTitleShown 還在，就略過開頭畫面、落在首頁「還沒登船」。還是全新玩家（07stq stqFresh：沒旅程、沒練習紀錄、不是舊玩家）就照樣出開頭畫面，stqBoot 接手進新手練習 */
   if(shown||navigator.webdriver||!/^(#\/?)?$/.test(location.hash||""))return;titleScreen({})}
-setTimeout(()=>{try{saveBoot()}catch(e){console.warn("saveBoot",e)}},0);
+/* 11/17 測試員 B 第 29 輪 N29-6：冷開時 saveBoot 在 setTimeout 0 才出開頭畫面，首頁先畫出來閃 9～70ms。
+   這支跟 route() 在同一段 script 裡同步跑完、瀏覽器還沒畫第一格：這次還沒出過開頭畫面（跟 saveBoot 同一套判斷：不是自動化、沒有 xqTitleShown／xqPrologue／更新重載、網址是首頁）
+   就先蓋一層跟開頭畫面同色的底幕（#xqBootCov，比開頭畫面低一層）；saveBoot 跑完（開頭畫面已經蓋上，或決定不出）下一格拿掉；保險 4 秒一定拿掉。不改 m.html */
+function xqBootCovOff(){try{const d=document.getElementById("xqBootCov");if(d)d.remove()}catch(e){}}
+function xqBootCovNeed(o){return!o.wd&&!o.shown&&!o.pro&&!o.upd&&/^(#\/?)?$/.test(o.hash||"")}
+try{if(xqBootCovNeed({wd:!!navigator.webdriver,shown:!!sessionStorage.getItem("xqTitleShown"),pro:!!sessionStorage.getItem("xqPrologue"),upd:!!localStorage.getItem("xqUpdBack"),hash:location.hash})&&document.body){
+  const d=document.createElement("div");d.id="xqBootCov";d.setAttribute("aria-hidden","true");d.style.cssText="position:fixed;inset:0;z-index:9997;background:#F3ECDD";document.body.append(d);setTimeout(xqBootCovOff,4000)}}catch(e){}
+setTimeout(()=>{try{saveBoot()}catch(e){console.warn("saveBoot",e)}try{requestAnimationFrame(()=>xqBootCovOff())}catch(e){xqBootCovOff()}},0);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")saveNow(true)});
 addEventListener("pagehide",()=>{saveNow(true)});
 addEventListener("hashchange",()=>{if(Date.now()-SAVE_HC>20000){SAVE_HC=Date.now();saveNow(true)}});
@@ -613,6 +633,12 @@ function cpaOn(){try{return!store.get("cpuAnonOff",false)&&!navigator.webdriver&
    關掉時設定頁用 XQNet.dropIRT(lrnAnonType) 丟掉排隊中的這幾類。後台 collect-anon.js 收到後保留一年。xiangqi-lab/tools/test-retention.js 有測 */
 function lrnAnonType(x){const t=x&&x.t;return t!=="stk"&&t!=="cpu"}
 function lrnAnonOn(){try{return!store.get("learnAnonOff",false)}catch(e){return false}}
+/* 11/17 開發者選單 D2：原生 App 的三個匿名資料開關（📍 卡住的地方 stkOff、📊 對局評分 cpuAnonOff、📈 學習進度 learnAnonOff）預設改成關，跟「玩家登記原生版預設關」一致；網頁版照舊預設開。
+   只動「從來沒設過」的：全新安裝（這次打開時手機裡沒有任何存檔＝m.html 開頭那段記了 XQ_LANG_AUTO）→ 寫成關；已經有存檔的原生玩家 → 寫成開（照他們原本的狀態，不硬改）。
+   玩家自己切過的（store 裡已經有值）一律不動。寫成明確的值，之後設定頁（05-settings 讀 !store.get(…Off,false)）就照這個顯示 */
+function anonNatDefault(){try{if(!(typeof xqNat==="function"&&xqNat()))return 0;const fresh=!!(typeof window!=="undefined"&&window.XQ_LANG_AUTO);let n=0;
+  for(const k of["stkOff","cpuAnonOff","learnAnonOff"])if(store.get(k,null)===null){store.set(k,fresh);n++}return n}catch(e){return 0}}
+anonNatDefault();
 window.XQ_ANON_OK=x=>!lrnAnonType(x)||lrnAnonOn();
 function cpaRnd(n){const a=new Uint8Array(n);crypto.getRandomValues(a);return[...a].map(x=>(x%36).toString(36)).join("")}
 function cpaDone(st,full){try{if(!st||!st.id||!st.result)return;const sent=store.get("cpaSent",[])||[];if(sent.includes(st.id))return;store.set("cpaSent",sent.concat(st.id).slice(-60));

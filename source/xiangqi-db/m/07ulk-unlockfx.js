@@ -17,6 +17,10 @@ const ulkCl=()=>{try{return typeof hbIsCl==="function"&&hbIsCl()}catch(e){return
 function ulkPick(S){for(const p of ULK_PLACES){const k=p.k;if(S.open[k]&&!S.seen[k]&&!(S.done&&S.done[k]))return k}return null}
 function ulkState(){const st=k=>{try{return!!store.get(k,0)}catch(e){return true}};let done={};try{done=store.get("ulkFx",null)||{}}catch(e){}
   const o={open:{},seen:{},done};for(const p of ULK_PLACES){let on=false;try{on=!!p.open()}catch(e){}o.open[p.k]=on;o.seen[p.k]=st(p.seen)}return o}
+/* 11/17 測試員 B 第 29 輪 N29-4：過場圖原本寫死原圖（img），冬天打贏星門圍城看到的是秋景、點進去卻是冬景 → 跟場景本身用同一個選圖（07gxt gxtSrc、07xsm xsmSrc：季節＋日夜＋載不到退回），
+   橫螢幕的觀星臺用寬版（同 gxtKind 的門檻）；兩支都沒有（測試、拆檔）才用 img；冬景圖載不到時 onerror 退回 img 原圖 */
+function ulkImg(p,day){try{if(p.k==="gxt"&&typeof gxtSrc==="function"){let k="";try{const W=innerWidth,H=innerHeight;k=typeof gxtKind==="function"?gxtKind(W,H,W,H):""}catch(e){}return gxtSrc(k,day)}
+  if(p.k==="xsm"&&typeof xsmSrc==="function")return xsmSrc(day,false)}catch(e){}return p.img[day?0:1]}
 const ulkDay=()=>{try{if(typeof gxtDay==="function")return gxtDay()}catch(e){}const h=new Date().getHours();return h>=5&&h<17};
 let ULK_BUSY=false;
 /* 現在能不能播：在首頁、沒有別的視窗或過場蓋著 */
@@ -35,8 +39,8 @@ function ulkCss(){if(document.getElementById("ulkCss"))return;const s=document.c
 function ulkPlay(k,after){const p=ULK_PLACES.find(x=>x.k===k);if(!p)return;ULK_BUSY=true;ulkCss();
   try{const d=store.get("ulkFx",null)||{};d[k]=1;store.set("ulkFx",d)}catch(e){}
   const o=document.createElement("div");o.id="ulkOv";o.setAttribute("role","dialog");o.setAttribute("aria-label",p.nm+"開放了");
-  o.innerHTML=`<img src="${p.img[ulkDay()?0:1]}" alt=""><button type="button" class="skip">點一下繼續</button><div class="cap"><small>新地點開放</small><b>${esc(p.nm)}</b><p>${esc(p.say)}</p>${(w=>w?`<p class="at">${esc(w)}</p>`:"")(ulkWhere(p,ulkCl()))}</div>`;
-  document.body.append(o);let gone=false,t=0;
+  o.innerHTML=`<img src="${ulkImg(p,ulkDay())}" alt=""><button type="button" class="skip">點一下繼續</button><div class="cap"><small>新地點開放</small><b>${esc(p.nm)}</b><p>${esc(p.say)}</p>${(w=>w?`<p class="at">${esc(w)}</p>`:"")(ulkWhere(p,ulkCl()))}</div>`;
+  document.body.append(o);{const im=o.querySelector("img"),f0=p.img[ulkDay()?0:1];if(im)im.onerror=()=>{if(im.getAttribute("src")!==f0)im.src=f0}}let gone=false,t=0;
   const end=()=>{if(gone)return;gone=true;clearTimeout(t);o.classList.remove("on");setTimeout(()=>{o.remove();ULK_BUSY=false;try{if(after)after()}catch(e){}},500)};
   o.onclick=()=>{try{vibrate(5)}catch(e){}end()};
   const go=()=>{requestAnimationFrame(()=>o.classList.add("on"));t=setTimeout(end,ULK_MS+500)};const im=o.querySelector("img");

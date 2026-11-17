@@ -49,5 +49,6 @@ test("〔照舊〕別的視窗一直開著：最多等 3 分鐘（45 次）就�
 test("〔原始碼〕stqHold 先問、再看視窗；07stq 的 stqHold 就是練習中（st:run）", () => {
   assert.ok(LINE.includes('if((typeof stqHold==="function"&&stqHold())||document.getElementById("stqPg")){setTimeout(instAsk,4000);return}'));
   assert.ok(LINE.indexOf("stqHold()") < LINE.indexOf('document.querySelector(".modal,.sw7-slip")'), "練習中的等待不算進 instTry");
-  assert.ok(rd("xiangqi-db/m/07stq-starter.js").includes('function stqHold(){if(!STQ_ON)return false;const S=stqSt0();return!!(S&&S.st==="run")}'));
+  /* 11/17 晚開場順序：stqHold 練習中（run）照舊是 true，另外開場還在跑（wait）、補播中（stqXuBusy）也算——播放中不跳「加到主畫面」 */
+  assert.ok(rd("xiangqi-db/m/07stq-starter.js").includes('function stqHold(){if(!STQ_ON)return false;const S=stqSt0();if(S&&S.st==="run")return true;if(S&&S.st==="wait"&&stqXuWaitLive(S))return true;return stqXuBusy()}'));
 });

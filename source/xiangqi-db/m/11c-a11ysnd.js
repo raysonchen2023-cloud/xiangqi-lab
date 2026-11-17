@@ -128,7 +128,7 @@ function sxmPieceMats(){const L=[["實木（即時合成）","木子 380Hz 共�
 function sxmDexMore(){const Z="一二三四五六七八九",P=sxmPanRow().map(([f,p])=>Z[f-1]+"路 "+(p>0?"+":"")+p).join("・"),S='class="muted" style="margin:0 0 8px;line-height:1.7"';
   return`<div class="sec-t" style="margin-top:14px">聲像對第幾路</div><p ${S}>聲像（-1 最左、+1 最右）＝（畫面第幾欄 − 4）÷ 4 × 0.8，每一路差 0.2，最邊邊只到 ±0.8，戴單耳也聽得到：${P}。</p>`
     +`<div class="sec-t" style="margin-top:14px">棋子落子的材質</div><p ${S}>落子、吃子在 設定 → 聲音「棋子聲」選，全部是程式合成的仿材質聲，不是實物錄音：</p><ul style="margin:0 0 8px;padding-left:1.3em;line-height:1.7">${sxmPieceMats().map(([n,d])=>`<li><b>${n}</b>　<span class="muted">${d}</span></li>`).join("")}</ul>`
-    +`<div class="sec-t" style="margin-top:14px">其他聲音</div><ul style="margin:0;padding-left:1.3em;line-height:1.7"><li><b>將軍「鏘」</b>　<span class="muted">合成方波 880→1320Hz，過 3800Hz 低通，1.5 秒內只響一次</span></li><li><b>語音報棋</b>　<span class="muted">「吃！」「將軍！」，Windows 內建語音合成錄成的音檔，男聲、女聲</span></li><li><b>背景音樂</b>　<span class="muted">每個朝代的古風曲，AI（Lyria）生成，不是真人演奏</span></li></ul>`}
+    +`<div class="sec-t" style="margin-top:14px">其他聲音</div><ul style="margin:0;padding-left:1.3em;line-height:1.7"><li><b>將軍「鏘」</b>　<span class="muted">合成方波 880→1320Hz，過 3800Hz 低通，1.5 秒內只響一次</span></li><li><b>語音報棋</b>　<span class="muted">「吃！」「將軍！」，電腦語音合成錄成的音檔，男聲、女聲</span></li><li><b>背景音樂</b>　<span class="muted">每個朝代的古風曲，AI（Lyria）生成，不是真人演奏</span></li></ul>`}
 /* #SXM-PURE-END */
 /* #AXS-CORE-BEGIN：要用到 store、AC（01-board 的 AudioContext）、withAudio，測試用假的換進去 */
 var AXS_S;

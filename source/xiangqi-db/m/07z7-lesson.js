@@ -120,8 +120,8 @@ body:has(.lsn-note) .xqbot{visibility:hidden}
 /* 11/11 AI 模擬玩家：停在別站的人找不到唐站體驗；別站也放一顆，寫明是唐站的，並加「先吃子還是先解圍」 */
 function lsnShipAdd(v,k){const box=v.querySelector(".shl-more");if(!box||box.querySelector("#slTry"))return;lsnCss();
   const own=!!LSN_SET[k],to=own?k:Object.keys(LSN_SET)[0];if(!to)return;
-  const b=document.createElement("button");b.className="btn ghost lsn-entry";b.id="slTry";b.textContent=own?"🧩 動手試這一頁棋理":"🧩 小實驗：唐站棋理體驗";b.onclick=()=>lsnGo("#/lesson/"+to);
-  const g=document.createElement("button");g.className="btn ghost lsn-entry";g.textContent="⚖️ 小實驗：先吃子還是先解圍";g.onclick=()=>lsnGo("#/lab/grab");box.prepend(b,g)}
+  const b=document.createElement("button");b.className="btn ghost lsn-entry";b.id="slTry";b.textContent=own?"🧩 動手試這一頁棋理":"🧩 唐站棋理體驗";b.onclick=()=>lsnGo("#/lesson/"+to);
+  const g=document.createElement("button");g.className="btn ghost lsn-entry";g.textContent="⚖️ 先吃子還是先解圍";   /* 11/17 iMac K P2-5：「小實驗：」前綴拿掉（審查員可能看成測試功能），功能不動 */g.onclick=()=>lsnGo("#/lab/grab");box.prepend(b,g)}
 /* 主題訓練清單（07-legend.js Theme）最下面加「小實驗」：棋理體驗、先吃子還是先解圍 */
 function lsnThemeAdd(v){const pad=v.querySelector(".pad");if(!pad||pad.querySelector(".lsn-lab"))return;lsnCss();
   const L=Object.keys(LSN_SET).filter(k=>typeof SHIP_LESSON!=="undefined"&&SHIP_LESSON[k]).map(k=>[`#/lesson/${k}`,"🧩",`棋理體驗・${SHIP_LESSON[k].t}`]);
@@ -194,7 +194,7 @@ function LsnPage(v,k){const L=LSN_SET[k],Ls=typeof SHIP_LESSON!=="undefined"&&SH
       <table class="lsn-res"><tr><th>第 1 題</th><td>${esc(P&&P.src&&P.src.title||"")}<br>看懂威脅：${a.thAt?"一次就找到 ✔":"看了箭頭才知道"}<br>走一步解圍：${ln(a)}</td></tr>
       <tr><th>第 2 題</th><td>${Q?cjSrc(Q):""}<br>不給提示：${ln(c)}</td></tr></table>
       <p class="lsn-sum">${esc(sum)}</p>${Ls.k?`<p class="lsn-k">口訣：${esc(Ls.k)}</p>`:""}</div>
-      <button class="btn" id="lsBack">回原處</button><button class="btn ghost" id="lsAgain">再做一次</button>${typeof GrbLab==="function"?`<button class="btn ghost" id="lsLab">⚖️ 下一個小實驗：先吃子還是先解圍</button>`:""}
+      <button class="btn" id="lsBack">回原處</button><button class="btn ghost" id="lsAgain">再做一次</button>${typeof GrbLab==="function"?`<button class="btn ghost" id="lsLab">⚖️ 下一題：先吃子還是先解圍</button>`:""}
       <p class="lsn-free">這是練習：不記進度、不加修為、不算題目統計。</p></div>`;
     q("#lsBack").onclick=()=>{try{vibrate(5)}catch(e){}goUp(BK)};q("#lsAgain").onclick=()=>{reset();P2=null;puzzle(D.byId[L.q1],"q1")};const lb=q("#lsLab");if(lb)lb.onclick=()=>lsnGo("#/lab/grab")}
   intro();return{stop(){st.tok++}}}
