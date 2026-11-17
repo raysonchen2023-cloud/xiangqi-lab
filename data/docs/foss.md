@@ -193,7 +193,7 @@ node source/run-tests.js            # 重跑自動測試（不連網、不開瀏
 
 1. **原始碼：** `xiangqi-db/m.html`（頁面骨架，每支程式一行 `//#include m/xx.js`）、`xiangqi-db/m/*.js`（約 90 支模組，共用同一個全域）、`xiangqi-db/m.css`；`xiangqi-lab/src/*.js`（`net.js`、`local.js`、`park3d.js` 等，原樣複製）；`xiangqi-referee.js`（規則、記譜、裁判，`core.js` 從這裡抽出來）；資料和素材在 `xiangqi-db/`。
 2. **組頁面：** `xiangqi-db/tools/mhtml.js` 的 `assemble()` 把每一行 `//#include` 換成那支檔案的內容、`m.css` 換成 `<style>`，組出來跟拆檔以前逐字一樣。
-3. **建網站：** `node xiangqi-lab/tools/build-site.js` 清空 `site/`（保留 `.git`）→ 從裁判程式抽出 `core.js` → 複製引擎和權重 → 複製資料（簡體來源轉繁體）→ 組好的頁面改成離線版寫成 `index.html` → 複製 `src/*` → 授權檔、`pikafish-src/`、README → 產生 `preload.json` → 算版本號（全部檔案的 SHA-1；內容沒變就沿用上一版號碼）寫進 `sw.js` 和 `index.html`。
+3. **建網站：** `node xiangqi-lab/tools/build-site.js` 清空 `site/`（保留 `.git`）→ 從 `xiangqi-referee.js` 抽出 `core.js` → 複製引擎和權重 → 複製資料（簡體來源轉繁體）→ 組好的頁面改成離線版寫成 `index.html` → 複製 `src/*` → 授權檔、`pikafish-src/`、README → 產生 `preload.json` → 算版本號（全部檔案的 SHA-1；內容沒變就沿用上一版號碼）寫進 `sw.js` 和 `index.html`。
 4. **發布檢查：** `node xiangqi-lab/tools/verify-release.js site/index.html site/sw.js --manifest site/release.json` 檢查控制字元、`index.html` 和 `sw.js` 版本一致、每一段內嵌程式的語法，並逐支比對每個模組有沒有原封不動在 `index.html` 裡；有錯就不准發。
 5. **寫指紋：** 同一個指令寫出 [release.json](https://raysonchen2023-cloud.github.io/xiangqi-lab/release.json)：版本、`index.html` 和 `sw.js` 的 SHA-1 前 12 碼、每支模組的指紋、跟原始碼不一樣的模組（`differsFromSource`），發布時再補上 `buildSource`、`intentionalDiffs`（刻意不發布的差異和原因）。
 6. **上傳：** 圖片、音樂等大檔用 `cdn-deploy.js` 同步到 Cloudflare；GitHub 倉庫只放程式、引擎、小資料檔。

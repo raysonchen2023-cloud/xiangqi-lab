@@ -44,7 +44,7 @@
 
 ## 二、OpenAI gpt-image-2 生成的圖片
 
-- **用在哪裡**：部分圖片（數量少）。
+- **用在哪裡**：部分圖片（數量少）。已確定的：2026-11-17 西市、觀星臺冬景 7 張，用 gpt-image-2 API 以原圖編輯換季生成（清單見〈素材與授權〉第四項）。
 - **條款重點**（[Services Agreement](https://openai.com/policies/services-agreement/) 2026 年 1 月 1 日生效版、[Service Terms](https://openai.com/policies/service-terms/)、[使用條款](https://openai.com/policies/terms-of-use/)）：
   - 所有權：使用者擁有輸出內容，OpenAI 把它有的權利轉讓給使用者；但輸出不保證獨一無二。
   - 散布、商用：條款沒有禁止。

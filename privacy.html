@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>象棋千秋 隱私權政策 · Xiangqi Qianqiu Privacy Policy</title>
+<meta name="description" content="象棋千秋（Xiangqi Qianqiu）的隱私權政策：存在裝置裡的資料、會送出去的資料、保留期限、怎麼刪除、兒童模式。">
+<link rel="icon" href="data:,">
+<style>
+:root{--bg:#f7f2e8;--fg:#2a2118;--mut:#65584a;--card:#fffaf1;--line:#e0d3bd;--acc:#9b2c1f;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--bg:#17130f;--fg:#efe6d8;--mut:#b9ab96;--card:#221c16;--line:#3d3329;--acc:#f3957a}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.75 -apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei","Segoe UI",sans-serif;overflow-wrap:anywhere}
+main{max-width:760px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 56px max(16px,env(safe-area-inset-left))}
+h1{font-size:1.6em;line-height:1.3;margin:.2em 0 .3em}
+h2{font-size:1.25em;margin:1.8em 0 .5em;padding-top:.6em;border-top:1px solid var(--line)}
+h3{font-size:1.05em;margin:1.4em 0 .3em}
+p,li{margin:.35em 0}
+ul{padding-left:1.3em}
+a{color:var(--acc)}
+.mut{color:var(--mut);font-size:.92em}
+.lang{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px}
+.lang a,.nav a{display:inline-flex;align-items:center;min-height:44px;padding:0 14px;border:1px solid var(--line);border-radius:22px;background:var(--card);text-decoration:none;color:var(--fg)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 16px;margin:12px 0}
+.mail{font-weight:700;font-size:1.05em}
+section[lang=en]{margin-top:3em}
+</style>
+</head>
+<body>
+<main>
+<nav class="lang" aria-label="語言 Language"><a href="#zh">中文</a><a href="#en">English</a><a href="support.html">象棋千秋 支援 · Support</a></nav>
+
+<section id="zh" lang="zh-Hant">
+<h1>象棋千秋 隱私權政策</h1>
+<p class="mut">最後更新：2026 年 11 月 17 日。適用於 App Store 上的《象棋千秋》App（iPhone、iPad）和網頁版（raysonchen2023-cloud.github.io/xiangqi-lab）。兩者不一樣的地方會分開寫。</p>
+
+<div class="box">
+<p><b>重點</b></p>
+<ul>
+<li>不用註冊帳號；沒有廣告、沒有內購，也沒有放任何分析、追蹤或廣告 SDK；不賣資料、不跨 App 追蹤。</li>
+<li>大部分資料只存在你的裝置裡。會送出去的，下面一項一項寫清楚。</li>
+<li>App 版的三種匿名統計和玩家登記<b>預設關閉</b>，你自己打開才送。</li>
+<li>兒童模式一次關掉線上大廳和所有資料上傳。</li>
+<li>聯絡：<a class="mail" href="mailto:xiangqiqianqiu.app@gmail.com">xiangqiqianqiu.app@gmail.com</a></li>
+</ul>
+</div>
+
+<h2 id="zh-local">存在你裝置裡的資料</h2>
+<ul>
+<li>對局紀錄和棋譜、解題和故事進度、存檔、角色與收藏、設定、暱稱、家長設定、封鎖名單。App 版存在 App 自己的儲存空間（別的 App 讀不到）；網頁版存在瀏覽器裡這個網站的資料。</li>
+<li>一組 App 自己產生的隨機「裝置代號」（不是手機序號），線上大廳和玩家登記會用到。</li>
+<li>每天用了多久（只留 60 天），只在裝置裡算，給學習週報和家長時段用。</li>
+<li>本機使用與健康紀錄：功能使用次數、使用天數、錯誤、載入情形、啟動時間等。只存在裝置裡，預設不送出；你可以在設定 →「🔒 系統・隱私・家長」→ 隱私「📊 本機使用與健康紀錄」查看、複製、存成檔案或清除。不記名字、裝置代號、棋譜、存檔、你打的字、位置、IP。</li>
+<li>App 版的圖片、音樂、引擎和大師棋譜都在安裝包裡；網頁版下載過的放在瀏覽器快取。這些不是個人資料。</li>
+</ul>
+
+<h2 id="zh-sent">會送出去的資料</h2>
+
+<h3 id="zh-lobby">線上大廳</h3>
+<ul>
+<li>送到：開發者租用的 EMQX 雲端訊息伺服器（新加坡）。打開 App 就會連線，用來收對戰邀請和新版通知。</li>
+<li>內容：裝置代號、大廳顯示的名字（新玩家預設用系統給的「稱號」）、上線狀態、積分和勝負和、裝置種類、角色外觀、你自己選的城市（預設不顯示）、線上對局的棋步和結果、最近 30 盤的戰績摘要、邀請和快捷語表情，以及線上對局簽名用的公開金鑰（私鑰只在裝置裡）。</li>
+<li>聊天只能用 App 內建的快捷語，不能打字。訊息沒有端對端加密，懂技術的人有可能看到大廳上的公開內容。<b>請不要用真名當名字。</b></li>
+<li>保留：離線時上線狀態自動清掉；戰績摘要 90 天沒更新就清掉；每一盤線上對局的棋譜保留 30 天。</li>
+</ul>
+
+<h3 id="zh-reg">玩家登記</h3>
+<ul>
+<li>送到：開發者的 Google 表單（存進開發者的 Google 試算表）。</li>
+<li>內容：裝置代號、大廳顯示的名字、線上段位和戰績、App 版本、裝置種類、是不是 App 版、畫面大小、使用時間摘要（總時間和最常待的三個地方）。不送棋譜、存檔。</li>
+<li>什麼時候：名字或段位改變、距離上次超過 7 天，或距離上次超過一天而且又用了 30 分鐘以上。</li>
+<li>用途：查問題、校正難度。保留到最後一次登記後一年。</li>
+<li><b>App 版預設關閉</b>，你在設定 →「🔒 系統・隱私・家長」→ 隱私打開「📨 送出玩家登記給開發者」才會送。網頁版預設開，同一個開關可以關。家長關閉線上大廳時不送。</li>
+</ul>
+
+<h3 id="zh-anon">匿名統計（App 版預設關閉）</h3>
+<p>三類，各有自己的開關（設定 →「🔒 系統・隱私・家長」→ 隱私）。<b>App 版預設關閉</b>，你打開才送；2026 年 11 月 17 日以前就裝了 App、沒關過的，維持原本的狀態。網頁版預設開，可以關。關掉時，裝置裡還沒送出的也一起丟掉。</p>
+<ul>
+<li><b>📍 匿名卡關訊號</b>：這次開 App 走過哪些頁、各停幾秒，以及「卡住」的訊號（例如同一頁很久沒操作、連點不能點的地方、新手課同一步錯好幾次、程式出錯），加上 App 版本和裝置類型。每次開 App 換一組亂數，不含名字、裝置代號、棋譜、打的字、截圖、位置。保留 90 天。</li>
+<li><b>📊 匿名對局評分</b>：跟電腦下完一盤後，每一步的評估分數和評語、總分、電腦級數、勝負、手數、提示和悔棋次數、你的段位、App 版本、裝置類型，加上一組 App 產生的匿名碼。不含名字、裝置代號、著法、存檔。用來校正評分方式。保留一年。</li>
+<li><b>📈 匿名學習進度</b>：測驗、殘局、讀譜和猜著法的作答（題號、對錯、秒數）、成長曲線（最多每兩天一次），以及全新安裝時從打開到下完第一盤的新手流程秒數。不含名字和裝置代號。用來校正題目難度、改善新手引導。保留一年。</li>
+</ul>
+<p>這些資料經過線上大廳的伺服器，傳到開發者電腦上的收資料程式（伺服器不保留）。內容沒有名字和裝置代號，但它們跟線上大廳走同一條連線，伺服器在技術上看得到連線的 IP 位址和裝置代號。</p>
+
+<h3 id="zh-health">匿名健康摘要（預設關閉）</h3>
+<ul>
+<li>只有你打開「🩺 每天自動送匿名健康摘要」才會送，每天最多一次。</li>
+<li>內容：程式出錯的次數、最多 5 筆錯誤訊息（前 80 個字、檔名、行號；看起來像名字、代號或網址的字送出前會遮掉）、卡頓次數、啟動時間中位數、載入失敗的個數、App 版本、裝置類型。沒有任何編號，開發者對不出哪幾份是同一台裝置送的。</li>
+<li>用途：找出哪一版、哪種裝置比較常出錯或比較慢。保留 90 天。兒童模式、家長關閉線上大廳時一律不送。</li>
+</ul>
+
+<h3 id="zh-feedback">你自己按送出的：意見回饋、檢舉</h3>
+<ul>
+<li>意見回饋：你寫的內容、你選擇附上的截圖或照片和聯絡方式，加上裝置代號、你取的名字、段位、App 版本、裝置、當時在哪一頁。送到開發者的 Google 表單；沒網路時先存在裝置裡，之後補送。<b>聯絡方式請由家長填寫。</b></li>
+<li>檢舉：原因、補充說明、對方的代號和名字、在哪裡發生、對方最近的快捷語，加上你的裝置代號。對方不會知道是誰檢舉的。</li>
+<li>送出成功後，App 會在大廳送一個不含內容的提醒，讓開發者知道有新回饋。</li>
+<li>保留：處理完後一年；讓對方被停權的檢舉保留到停權結束。</li>
+</ul>
+
+<h3 id="zh-files">公開資料檔：修正清單和停權名單</h3>
+<ul>
+<li>如果你送過意見回饋，App 開啟時會從 Cloudflare 下載一次修正清單和開發者回覆，讓你收到飛鴿傳書（App 裡告訴你「你回報的問題修好了」或開發者回你的信）；沒送過就只在打開意見回饋時下載。網頁版從這個網站本身（GitHub Pages 和 Cloudflare）下載。</li>
+<li>進入線上大廳（或千秋盃、觀戰這些連線功能）時，會從 GitHub Pages 下載一次停權名單；同一次開 App 只下載一次。</li>
+<li>「送過」只算真的送出成功的意見回饋或檢舉；只打開意見回饋頁、沒有送出，不算。</li>
+<li>這兩份都是公開的檔案，只下載、不上傳任何東西。這兩個網站跟任何連線一樣會看到你的 IP 位址，但不會收到你的名字、存檔或棋譜。</li>
+<li>兒童模式開著，或家長關閉線上大廳時，這兩份都不下載，也不會有飛鴿傳書。</li>
+</ul>
+
+<h3 id="zh-download">下載和更新</h3>
+<ul>
+<li>App 版從 App Store 下載和更新（照 Apple 的規則）。程式、引擎、圖片、音樂都在安裝包裡；只有安裝包裡缺某個圖片或資料檔時，才會向 Cloudflare Pages 補抓那一個檔（程式和引擎一律只用安裝包裡的）。</li>
+<li>網頁版從 GitHub Pages 載入，圖片和大檔從 Cloudflare Pages 下載。</li>
+<li>這些平台會照它們自己的規則記錄連線（例如 IP 位址）。</li>
+</ul>
+
+<h3 id="zh-ask">問小帥：天氣和百科</h3>
+<ul>
+<li>問天氣：你打的地名送到 Open-Meteo 查天氣。問百科：你打的問題送到中文維基百科。</li>
+<li>問小帥沒有「Google AI 回答」「問 Gemini」這兩顆，不會把你的問題送到 Google。兒童模式不查天氣和百科。</li>
+</ul>
+
+<h3 id="zh-move">換手機</h3>
+<ul>
+<li>只有你按「🎒 換手機」產生轉移碼時才會送：整份存檔和棋譜庫用 10 碼轉移碼加密（AES-GCM）後，暫放在線上大廳的伺服器。新手機收到後馬上刪除，或你按「作廢這組碼」刪除；30 分鐘後失效，過期沒人收的會被清掉。</li>
+</ul>
+
+<h3 id="zh-daily">每日同題的分享成績</h3>
+<ul>
+<li>只有你按「📤 分享成績」或「🖼 成績圖」時，才把成績交給裝置的分享選單（或剪貼簿、圖片），送給誰由你決定；App 自己不送到任何伺服器。內容只有方格、步數、走錯次數這類成績，看不出答案，不含名字和代號。</li>
+</ul>
+
+<h3 id="zh-mic">麥克風（🎤 聲控走棋）和相機</h3>
+<ul>
+<li>麥克風：只有下棋時你按 🎤，App 才請系統打開麥克風聽一句棋步。辨識由裝置系統內建的語音辨識處理（App 版是 Apple 的 Siri 與聽寫；網頁版依瀏覽器而定），App 只拿到辨識出的文字，比對成一步棋就丟掉；不錄音、不保存、不送給開發者。可在設定 →「走棋顯示與特效」關掉「🎤 聲控走棋」。</li>
+<li>相機：只在「意見回饋」附圖時你選「拍照」才用，照片只在你按送出時隨回饋傳給開發者。</li>
+</ul>
+
+<h3 id="zh-native">每日提醒、Game Center 成就、桌面小工具（只有 App 版）</h3>
+<ul>
+<li>每日提醒：裝置本機排的通知，開關和時間只存在裝置裡，不經過伺服器。</li>
+<li>Game Center 成就和桌面小工具「今日茶單」：只有內建這兩項功能的 App 版本才有；你從 App Store 裝的這一版如果沒有，就不會用到。
+  <ul>
+  <li>Game Center 成就：只有你在裝置上登入 Game Center 時，App 才把成就進度交給 Apple 的 Game Center（照 Apple 的隱私政策處理），不經過我們的伺服器。兒童模式不回報。</li>
+  <li>桌面小工具：App 把今天的節氣、三題殘局和完成進度寫在裝置裡給小工具讀，不送到任何伺服器。</li>
+  </ul>
+</li>
+</ul>
+
+<h2 id="zh-keep">保留期限</h2>
+<ul>
+<li>意見回饋、檢舉：處理完後一年（讓對方被停權的檢舉保留到停權結束）。</li>
+<li>玩家登記：最後一次登記後一年。刪除請求：處理完後一年，當作處理紀錄。</li>
+<li>線上大廳戰績摘要：90 天沒更新就清。線上對局棋譜：30 天。</li>
+<li>匿名卡關訊號、匿名健康摘要：90 天。匿名對局評分、匿名學習進度：一年。</li>
+<li>換手機的加密存檔：新手機收到或作廢就刪；30 分鐘失效。</li>
+</ul>
+
+<h2 id="zh-not">我們不做的事</h2>
+<ul>
+<li>不用 GPS，也不用網路位置查你在哪裡。</li>
+<li>不讀聯絡人、相簿。</li>
+<li>不放廣告、不賣資料、不跨 App 追蹤。</li>
+</ul>
+
+<h2 id="zh-delete">怎麼刪除</h2>
+<ul>
+<li>伺服器上的資料：設定 →「🔒 系統・隱私・家長」→ 隱私「🗑 申請刪除我在伺服器上的資料」，或寫信到下面的信箱（主旨寫「刪除資料」，附上裝置代號；裝置代號在設定房間書案上的驛路文牒「🔒 隱私說明」裡，可以按「📋 複製」）。開發者會在 30 天內刪掉這個裝置代號送過的意見回饋、檢舉、玩家登記，以及線上大廳伺服器上你的戰績摘要和對局棋譜。</li>
+<li>裝置裡的資料：設定裡的「🗑 刪除這支手機的全部資料」（會確認兩次，刪了不能復原），或直接刪掉 App；網頁版也可以在瀏覽器清除這個網站的資料。</li>
+<li>請先申請刪除伺服器上的資料，再刪裝置裡的：裝置資料刪掉後裝置代號會換新，就對不到以前送出的資料了。</li>
+<li>匿名資料沒有名字和裝置代號，對不到是誰，所以沒辦法單獨刪，會照上面的期限自動刪除。</li>
+</ul>
+
+<h2 id="zh-kids">兒童與家長</h2>
+<ul>
+<li>App 不問年齡。新玩家在大廳預設用系統稱號；要改回自己取的名字，要先答對家長確認題。</li>
+<li>家長可以在設定 →「🔒 系統・隱私・家長」→「👪 家長與護眼」整個關掉線上大廳，也可以設每天時間上限和晚上幾點以後不能玩。關掉線上大廳時，玩家登記、匿名統計、健康摘要都不送，修正清單和停權名單也不下載；App 目前仍會連上伺服器收新版通知。</li>
+<li>「👧 兒童模式」（開、關都要先答對家長確認題）一次做到：線上大廳、千秋盃、觀戰關閉（同一台裝置兩個人輪流下的同桌對弈照常）；玩家登記、匿名統計、健康摘要都不送，開啟時裝置裡排隊中的也一起丟掉；意見回饋只送孩子寫的文字、App 版本和裝置類型（不附截圖、聯絡方式、裝置代號、名字）；問小帥不查天氣和百科；Game Center 成就不回報；修正清單和停權名單不下載。</li>
+</ul>
+
+<h2 id="zh-contact">聯絡我們</h2>
+<p>《象棋千秋》由 Hung-Sheng Chen（陳泓昇）個人開發。隱私相關的問題、刪除資料的申請，請寫信到 <a class="mail" href="mailto:xiangqiqianqiu.app@gmail.com">xiangqiqianqiu.app@gmail.com</a>（主旨寫「隱私」或「刪除資料」），或在 App 裡用「💬 回報問題」。更多說明見 <a href="support.html">象棋千秋 支援</a>。</p>
+</section>
+
+<section id="en" lang="en">
+<h1>Xiangqi Qianqiu Privacy Policy</h1>
+<p class="mut">Last updated: 17 November 2026. Applies to the Xiangqi Qianqiu app on the App Store (iPhone, iPad) and the web version (raysonchen2023-cloud.github.io/xiangqi-lab). Where they differ, both are described.</p>
+
+<div class="box">
+<p><b>In short</b></p>
+<ul>
+<li>No account needed. No ads, no in-app purchases, and no analytics, tracking or advertising SDKs. We don't sell data or track you across apps.</li>
+<li>Most data stays on your device. Everything that is sent is listed below.</li>
+<li>In the app, the three anonymous statistics and player registration are <b>off by default</b>; they are sent only if you turn them on.</li>
+<li>Kids Mode turns off the online lobby and all data uploads at once.</li>
+<li>Contact: <a class="mail" href="mailto:xiangqiqianqiu.app@gmail.com">xiangqiqianqiu.app@gmail.com</a></li>
+</ul>
+</div>
+
+<h2 id="en-local">Data stored on your device</h2>
+<ul>
+<li>Game records, puzzle and story progress, saves, characters and collections, settings, nickname, parental settings and your block list. The app keeps them in its own storage (other apps can't read it); the web version keeps them in your browser's data for this site.</li>
+<li>A random "device ID" generated by the app (not a hardware serial number), used by the online lobby and player registration.</li>
+<li>Daily play time (last 60 days), computed only on the device for the weekly study report and parental time limits.</li>
+<li>Local usage and health log: feature use counts, days used, errors, loading and startup times. Stored only on the device and not sent by default. View, copy, export or clear it in Settings → "🔒 System · Privacy · Parents" → Privacy → "📊 Usage and health log on this device". It contains no name, device ID, game record, save, typed text, location or IP.</li>
+<li>In the app, images, music, the engine and master games are part of the install package; the web version keeps downloaded files in the browser cache. These are not personal data.</li>
+</ul>
+
+<h2 id="en-sent">Data that is sent</h2>
+
+<h3 id="en-lobby">Online lobby</h3>
+<ul>
+<li>Sent to: an EMQX cloud messaging server (Singapore) rented by the developer. The app connects when it opens, to receive game invitations and new-version notices.</li>
+<li>Contents: device ID, lobby display name (new players use a system-given title by default), online status, rating and win/loss/draw record, device type, character appearance, the city you choose to show (hidden by default), moves and results of online games, a summary of your last 30 games, invitations and preset quick messages, and the public key used to sign online games (the private key stays on the device).</li>
+<li>Chat uses built-in quick messages only; free typing isn't possible. Messages are not end-to-end encrypted, so technically skilled people could see public lobby content. <b>Please don't use your real name.</b></li>
+<li>Retention: online status is cleared when you go offline; game summaries are cleared after 90 days without updates; each online game record is kept for 30 days.</li>
+</ul>
+
+<h3 id="en-reg">Player registration</h3>
+<ul>
+<li>Sent to: the developer's Google Form (stored in the developer's Google Sheet).</li>
+<li>Contents: device ID, lobby display name, online rank and record, app version, device type, whether it's the app version, screen size, and a usage summary (total time and the three most-used areas). No game records or saves.</li>
+<li>When: when your name or rank changes, after 7 days, or after more than a day plus 30 minutes of use.</li>
+<li>Purpose: troubleshooting and difficulty calibration. Kept for one year after the last registration.</li>
+<li><b>Off by default in the app</b>; it is sent only if you turn on "📨 Send player registration to the developer" in Settings → "🔒 System · Privacy · Parents" → Privacy. On by default on the web, where the same switch turns it off. Not sent when a parent has turned off the online lobby.</li>
+</ul>
+
+<h3 id="en-anon">Anonymous statistics (off by default in the app)</h3>
+<p>Three kinds, each with its own switch (Settings → "🔒 System · Privacy · Parents" → Privacy). <b>Off by default in the app</b>; sent only if you turn them on. If you installed the app before 17 November 2026 and never turned them off, they keep their previous state. On by default on the web, and can be turned off. Turning a switch off also discards anything not yet sent.</p>
+<ul>
+<li><b>📍 Anonymous stuck signals</b> (switch "Anonymously record where I get stuck"): pages visited in this session and time on each, plus "stuck" signals (such as no activity on a page for a long time, repeated taps on something not tappable, repeated mistakes on the same tutorial step, program errors), with app version and device type. A new random code each session; no name, device ID, game record, typed text, screenshot or location. Kept 90 days.</li>
+<li><b>📊 Anonymous game evaluations</b> (switch "Send game scores anonymously"): after a game against the computer, per-move evaluation scores and comments, overall score, computer level, result, move count, hints and undos, your rank, app version and device type, plus an anonymous code generated by the app. No name, device ID, moves or save. Used to calibrate scoring. Kept one year.</li>
+<li><b>📈 Anonymous learning progress</b>: answers to quizzes, endgames, game study and move guessing (question number, right or wrong, seconds), growth curve (at most every two days), and, on a fresh install, how long each tutorial step took until the first game is finished. No name or device ID. Used to calibrate difficulty and improve the tutorial. Kept one year.</li>
+</ul>
+<p>These pass through the online lobby server to a collector program on the developer's computer (the server doesn't keep them). They contain no name or device ID, but because they use the same connection as the lobby, the server can technically see the connection's IP address and device ID.</p>
+
+<h3 id="en-health">Anonymous health summary (off by default)</h3>
+<ul>
+<li>Sent only if you turn on "🩺 Send an anonymous health summary daily", at most once a day.</li>
+<li>Contents: number of program errors, up to 5 error messages (first 80 characters, file name, line number; anything that looks like a name, ID or URL is masked before sending), slowdown count, median startup time, number of failed loads, app version and device type. No identifier at all, so the developer can't tell which summaries came from the same device.</li>
+<li>Purpose: find which versions and devices have more errors or are slower. Kept 90 days. Never sent in Kids Mode or when a parent has turned off the online lobby.</li>
+</ul>
+
+<h3 id="en-feedback">What you send yourself: feedback and reports</h3>
+<ul>
+<li>Feedback: what you write, any screenshots or photos and contact details you choose to attach, plus device ID, your chosen name, rank, app version, device, and the page you were on. Sent to the developer's Google Form; if offline, it waits on the device and is sent later. <b>Contact details should be filled in by a parent.</b></li>
+<li>Reports: reason, notes, the other player's ID and name, where it happened, their recent quick messages, plus your device ID. The other player is not told who reported them.</li>
+<li>After a successful send, the app posts a content-free notice in the lobby so the developer knows there is new feedback.</li>
+<li>Retention: one year after it is resolved; reports that led to a suspension are kept until the suspension ends.</li>
+</ul>
+
+<h3 id="en-files">Public data files: fix list and ban list</h3>
+<ul>
+<li>If you have sent feedback, the app downloads the fix list and developer replies from Cloudflare once when it opens, so carrier-pigeon letters (in-app notes that a problem you reported is fixed, or a reply from the developer) can reach you; if you haven't, they are downloaded only when you open Feedback. The web version downloads them from the site itself (GitHub Pages and Cloudflare).</li>
+<li>When you enter the online lobby (or other online features such as the Qianqiu Cup or watching games), the app downloads the ban list from GitHub Pages once; at most once each time the app is opened.</li>
+<li>"Sent" means feedback or a report that was actually sent successfully. Opening the Feedback page without sending doesn't count.</li>
+<li>Both are public files: they are only downloaded, and nothing is uploaded. Like any connection, these sites see your IP address, but they receive no name, save or game record.</li>
+<li>With Kids Mode on, or the online lobby turned off by a parent, neither file is downloaded and there are no carrier-pigeon letters.</li>
+</ul>
+
+<h3 id="en-download">Downloads and updates</h3>
+<ul>
+<li>The app is downloaded and updated through the App Store (under Apple's rules). The code, engine, images and music are in the install package. Only if an image or data file is missing from the package does the app fetch that one file from Cloudflare Pages (code and the engine always come from the package).</li>
+<li>The web version loads from GitHub Pages, with images and large files from Cloudflare Pages.</li>
+<li>These platforms log connections (such as IP addresses) under their own rules.</li>
+</ul>
+
+<h3 id="en-ask">Ask Xiao Shuai: weather and encyclopedia</h3>
+<ul>
+<li>Weather: the place name you type is sent to Open-Meteo. Encyclopedia: your question is sent to Chinese Wikipedia.</li>
+<li>Ask Xiao Shuai has no "Google AI answer" or "Ask Gemini" buttons, so your question is never sent to Google. Kids Mode doesn't look up weather or the encyclopedia.</li>
+</ul>
+
+<h3 id="en-move">Moving to a new phone</h3>
+<ul>
+<li>Sent only when you tap "🎒 Move to a new phone" and create a transfer code: your whole save and game library are encrypted (AES-GCM) with the 10-character transfer code and held briefly on the online lobby server. They are deleted as soon as the new phone receives them or you tap "Cancel This Code"; the code expires after 30 minutes, and unclaimed data is cleared.</li>
+</ul>
+
+<h3 id="en-daily">Sharing Daily Puzzle results</h3>
+<ul>
+<li>Only when you tap "📤 Share result" or "🖼 Result image" is your result handed to the device's share sheet (or clipboard, or an image); you choose where it goes. The app itself sends it to no server. It contains only the result grid, move count and mistakes, which don't reveal the answer, and no name or ID.</li>
+</ul>
+
+<h3 id="en-mic">Microphone (🎤 voice moves) and camera</h3>
+<ul>
+<li>Microphone: only when you tap 🎤 during a game does the app ask the system to listen for one move. Recognition is done by the device's built-in speech recognition (in the app, Apple's Siri and Dictation; on the web, it depends on the browser). The app receives only the recognized text, matches it to a legal move and discards it; nothing is recorded, kept or sent to the developer. Turn off "🎤 Voice moves" in Settings → "Move display and effects".</li>
+<li>Camera: used only if you choose "Take Photo" when attaching a picture to Feedback. The photo is sent with your feedback only when you tap Send.</li>
+</ul>
+
+<h3 id="en-native">Daily reminder, Game Center achievements, home-screen widget (app only)</h3>
+<ul>
+<li>Daily reminder: a local notification scheduled on the device. The switch and time are stored only on the device and never go through a server.</li>
+<li>Game Center achievements and the "Today's tea" widget exist only in app builds that include them; if the version you installed from the App Store doesn't have them, they aren't used.
+  <ul>
+  <li>Game Center: only if you are signed in to Game Center on the device does the app pass achievement progress to Apple's Game Center (handled under Apple's privacy policy). It never goes through our servers. Not reported in Kids Mode.</li>
+  <li>Widget: the app writes today's solar term, three endgame puzzles and your progress on the device for the widget to read. Nothing is sent to any server.</li>
+  </ul>
+</li>
+</ul>
+
+<h2 id="en-keep">Retention</h2>
+<ul>
+<li>Feedback and reports: one year after resolution (reports that led to a suspension: until the suspension ends).</li>
+<li>Player registration: one year after the last registration. Deletion requests: one year after handling, as a record.</li>
+<li>Online lobby game summaries: cleared after 90 days without updates. Online game records: 30 days.</li>
+<li>Anonymous stuck signals and health summaries: 90 days. Anonymous game evaluations and learning progress: one year.</li>
+<li>Encrypted transfer data: deleted when received or cancelled; expires after 30 minutes.</li>
+</ul>
+
+<h2 id="en-not">What we don't do</h2>
+<ul>
+<li>No GPS, and no network-based location lookup.</li>
+<li>No access to contacts or the photo library.</li>
+<li>No ads, no selling data, no cross-app tracking.</li>
+</ul>
+
+<h2 id="en-delete">How to delete your data</h2>
+<ul>
+<li>Data on our servers: Settings → "🔒 System · Privacy · Parents" → Privacy → "🗑 Request deletion of my data on the server", or email the address below (subject "Delete data", with your device ID, which is under "🔒 Privacy" on the Courier Pass on the desk in the Settings room; tap "📋 Copy"). Within 30 days the developer deletes the feedback, reports and player registrations sent from that device ID, and your game summaries and game records on the online lobby server.</li>
+<li>Data on the device: "🗑 Delete all data on this phone" in Settings (confirmed twice; can't be undone), or simply delete the app. On the web you can also clear this site's data in your browser.</li>
+<li>Please request server deletion first: after the device data is deleted the device ID changes, and earlier submissions can no longer be matched.</li>
+<li>Anonymous data has no name or device ID and can't be matched to you, so it can't be deleted individually; it is deleted automatically after the periods above.</li>
+</ul>
+
+<h2 id="en-kids">Children and parents</h2>
+<ul>
+<li>The app doesn't ask for age. New players use a system-given title in the lobby; switching back to a self-chosen name requires answering a parent check question.</li>
+<li>In Settings → "🔒 System · Privacy · Parents" → "👪 Parents and eye breaks", a parent can turn off the online lobby entirely and set a daily time limit and a bedtime. With the lobby off, player registration, anonymous statistics and health summaries are not sent, and the fix list and ban list are not downloaded; the app still connects to the server for new-version notices.</li>
+<li>"👧 Kids Mode" (turning it on or off requires a parent check question) does all of this at once: the online lobby, Qianqiu Cup and watching games are closed (two players taking turns on one device still works); player registration, anonymous statistics and health summaries are not sent, and anything queued is discarded when it is turned on; feedback sends only the child's text, app version and device type (no screenshots, contact details, device ID or name); Ask Xiao Shuai doesn't look up weather or the encyclopedia; Game Center achievements are not reported; the fix list and ban list are not downloaded.</li>
+</ul>
+
+<h2 id="en-contact">Contact</h2>
+<p>Xiangqi Qianqiu is developed by Hung-Sheng Chen as an individual. For privacy questions or deletion requests, email <a class="mail" href="mailto:xiangqiqianqiu.app@gmail.com">xiangqiqianqiu.app@gmail.com</a> (subject "Privacy" or "Delete data"), or use "💬 Report a problem" in the app. See also <a href="support.html">Xiangqi Qianqiu Support</a>.</p>
+</section>
+</main>
+</body>
+</html>

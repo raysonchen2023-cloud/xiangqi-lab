@@ -1,0 +1,53 @@
+diff --git a/src/uci.cpp b/src/uci.cpp
+index 1cc837c..3e1e196 100644
+--- a/src/uci.cpp
++++ b/src/uci.cpp
+@@ -32,6 +32,33 @@
+ #include <variant>
+ #include <vector>
+ 
++#ifdef __EMSCRIPTEN__
++    // 網頁版：瀏覽器沒有標準輸入，改由網頁呼叫 uci_command() 把指令放進佇列
++    #include <condition_variable>
++    #include <deque>
++    #include <mutex>
++    #include <emscripten/emscripten.h>
++namespace {
++std::mutex              webMutex;
++std::condition_variable webCv;
++std::deque<std::string> webQueue;
++bool web_getline(std::string& cmd) {
++    std::unique_lock<std::mutex> lk(webMutex);
++    webCv.wait(lk, [] { return !webQueue.empty(); });
++    cmd = std::move(webQueue.front());
++    webQueue.pop_front();
++    return true;
++}
++}
++extern "C" EMSCRIPTEN_KEEPALIVE void uci_command(const char* cmd) {
++    {
++        std::lock_guard<std::mutex> lk(webMutex);
++        webQueue.emplace_back(cmd);
++    }
++    webCv.notify_one();
++}
++#endif
++
+ #include "benchmark.h"
+ #include "engine.h"
+ #include "memory.h"
+@@ -100,9 +127,14 @@ void UCIEngine::loop() {
+ 
+     do
+     {
++#ifdef __EMSCRIPTEN__
++        if (cli.argc == 1 && !web_getline(cmd))
++            cmd = "quit";
++#else
+         if (cli.argc == 1
+             && !getline(std::cin, cmd))  // Wait for an input or an end-of-file (EOF) indication
+             cmd = "quit";
++#endif
+ 
+         currentCmd = cmd;
+         std::istringstream is(cmd);

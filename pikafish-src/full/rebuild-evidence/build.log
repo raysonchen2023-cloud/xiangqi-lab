@@ -1,0 +1,14 @@
+== Pikafish 釘版本重建 2026-11-12T19:51:05Z
+上游 Pikafish-2026-09-06 commit：要 4c17cee11f888ae1d48a9494f2e2239f019f0a1f，實際 4c17cee11f888ae1d48a9494f2e2239f019f0a1f
+uci.cpp SHA-256：要 149644b9781bbc7c3c8422ba9406ceaa20db1fad2d384ea96d0d8189ef20be5e，實際 149644b9781bbc7c3c8422ba9406ceaa20db1fad2d384ea96d0d8189ef20be5e
+Emscripten：6.0.13-git（releases-eb132757325583b787fe9414b09afea9442b72ad-64bit）
+emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 6.0.13-git (e13ee988ce3d87a738dd8f3661d02223308c412a)
+clang version 24.0.0git (https://github.com/llvm/llvm-project 83ee07799c341b60965f07892f7bb3d175da05be)
+SOURCE_DATE_EPOCH=1793361600（2026-10-30）LC_ALL=C
+編譯 36 個檔案：./attacks.cpp ./benchmark.cpp ./bitboard.cpp ./engine.cpp ./evaluate.cpp ./external/common/debug.cpp ./external/common/entropy_common.cpp ./external/common/error_private.cpp ./external/common/fse_decompress.cpp ./external/common/pool.cpp ./external/common/threading.cpp ./external/common/xxhash.cpp ./external/common/zstd_common.cpp ./external/decompress/huf_decompress.cpp ./external/decompress/zstd_ddict.cpp ./external/decompress/zstd_decompress.cpp ./external/decompress/zstd_decompress_block.cpp ./main.cpp ./memory.cpp ./misc.cpp ./movegen.cpp ./movepick.cpp ./nnue/features/full_threats.cpp ./nnue/features/half_ka_v2_hm.cpp ./nnue/network.cpp ./nnue/nnue_accumulator.cpp ./nnue/nnue_misc.cpp ./position.cpp ./score.cpp ./search.cpp ./thread.cpp ./timeman.cpp ./tt.cpp ./tune.cpp ./uci.cpp ./ucioption.cpp
+編譯旗標：-O3 -DNDEBUG -std=c++17 -fno-exceptions -DIS_64BIT -msse -msse2 -mssse3 -msse4.1 -msimd128 -DUSE_SSE2 -DUSE_SSSE3 -DUSE_SSE41 -DUSE_POPCNT -DUSE_SLOPPY_ATOMICS -pthread -flto
+連結旗標：-sPROXY_TO_PTHREAD -sPTHREAD_POOL_SIZE=6 -sEXIT_RUNTIME=0 -sINITIAL_MEMORY=192MB -sALLOW_MEMORY_GROWTH -sMAXIMUM_MEMORY=2GB -sSTACK_SIZE=3MB -sDEFAULT_PTHREAD_STACK_SIZE=4MB -sMODULARIZE -sEXPORT_NAME=PikafishModule -sENVIRONMENT=web,worker,node -sEXPORTED_FUNCTIONS=_main,_uci_command -sEXPORTED_RUNTIME_METHODS=ccall,FS -sFILESYSTEM=1
+em++: warning: -pthread + ALLOW_MEMORY_GROWTH may run non-wasm code slowly, consider -sGROWABLE_ARRAYBUFFERS=2 [-Wpthreads-mem-growth]
+BUILD-OK（36 秒）
+dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7  pikafish.js
+7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331  pikafish.wasm
