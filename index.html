@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261117-1514";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261117-1757";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -2012,6 +2012,11 @@ function provLine(x){const p=provOf(x);if(!p)return"";const bk=p.book?"📖 出�
 /* 文件頁（xqDocIn）：md 裡打的【史實…】【有爭議…】【演義…】【遊戲創作…】套上同一組樣式 */
 function provDoc(h){return String(h).replace(/【(史實|有爭議|演義・小說|遊戲創作)([^】<]{0,20})】/g,(m,a)=>`<span class="prov prov-${a==="史實"?"hist":a==="有爭議"?"legend":a==="遊戲創作"?"game":"novel"}">${m}</span>`)}
 addEventListener("xq-rules-mismatch",()=>toast("雙方棋規版本不同，請一起更新遊戲後再開新局。"));
+/* 11/17 開發者「天氣錯誤」（17:06 首頁還是黃昏、西市和觀星臺已經是夜景有月亮）＋選單：日夜全部照實際日落。
+   全站換夜景圖的判斷都問這一個：照 07w7 首頁同一套（sw7NightNow＝當季日落、黃昏結束後算夜，SW7_TODW）；d＝指定時刻（測試用）。
+   07w7 還沒載入或出錯時退回時辰（卯～申白天、酉～寅夜），不會丟錯。頂欄時辰鐘照舊顯示時辰，不問這個 */
+function xqNight(d){try{if(typeof sw7HomeNightA==="function"&&typeof sw7SeaNow==="function"){if(!d&&typeof sw7NightNow==="function")return!!sw7NightNow();return sw7HomeNightA(d,sw7SeaNow())>0}}catch(e){}
+  d=d||new Date();const i=Math.floor(((d.getHours()+1)%24)/2);return!(i>=3&&i<=8)}
 // ================= 棋盤 =================
 // opts：flip, last{f,t}, sel, targets[], hint[f,t], check
 // 棋盤風格（設定頁可選）。auto＝跟著 App 的深淺色
@@ -2970,6 +2975,19 @@ function tmxPlain(q,loss,ev,by){const l=+loss,L=loss!=null&&loss!==""&&isFinite(
     緩著:`不算錯，但有更好的走法：這步比最好的走法少了${L||" "+R}的價值`,失著:`走錯了：這步比最好的走法少了${L||" "+R}的價值`,
     敗著:`大錯：這步比最好的走法少了${L||" "+R}的價值`}[q];if(!x)return"";
   const k=["緩著","失著","敗著"].includes(q)?evLink(ev,by):"";return`「${q}」＝${x}${k?"；"+k:""}。`}
+/* 11/17 第 26 輪 W2：英文介面的評等說明、檢討頁說明（10-db mkNoteEn 也用）——著法用 WXF、評等用現有六個英文詞（Brilliant／Best／Good／Slow／Mistake／Blunder）；中文照舊走 tmxPlain */
+function tmxEn(){try{return typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){return false}}
+function tmxT(s){s=String(s==null?"":s);try{const t=typeof i18nText==="function"?i18nText(s):null;return t!=null&&!/[㐀-鿿]/.test(t)?t:s}catch(e){return s}}
+function tmxW(cn){try{const w=typeof i18nWxf==="function"?i18nWxf(cn):null;return w||String(cn||"")}catch(e){return String(cn||"")}}
+function tmxPawnEn(cp){return Math.abs(+cp||0)<75?"about half a pawn":"about "+pawnN(cp)+" pawns"}
+function tmxEvLinkEn(ev,by){if(ev==null||ev===""||!isFinite(+ev)||typeof evt!=="function")return"";const e=evt(+ev);if(!e)return"";const v=+ev,sg=by==="r"?1:by==="b"?-1:0;
+  return(Math.abs(v)>=30&&sg&&Math.sign(v)===sg?"still, overall after this move: ":"overall after this move: ")+tmxT(e)}
+function tmxPlainEn(q,loss,ev,by){const l=+loss,L=loss!=null&&loss!==""&&isFinite(l)&&l>=30&&l<2000&&!(q==="失著"&&l<=150)&&!(q==="敗著"&&l<=400)?tmxPawnEn(l):"";
+  const R=String(TMX_RNG[q]||"").replace("～","–").replace(" 個兵以上","+ pawns").replace(" 個兵"," pawns"),a=L||R,
+    x={妙著:"Great move! This is the only best move; the others are much worse",正著:"The best move (or nearly as good as the best)",穩著:"Good, only slightly worse than the best move",
+      緩著:`Not bad, but there was a better move. This one is worth ${a} less than the best move`,失著:`A mistake. This move is worth ${a} less than the best move`,
+      敗著:`A blunder. This move is worth ${a} less than the best move`}[q];if(!x)return"";
+  const k=["緩著","失著","敗著"].includes(q)?tmxEvLinkEn(ev,by):"";return`"${tmxT(q)}": ${x}${k?"; "+k:""}.`}
 /* 小泡泡：指著 el（在上面放不下就放下面），ms 毫秒後或點畫面任何地方就收；成功顯示回 true */
 function tmxBub(el,html,ms){try{document.querySelectorAll(".tmx-bub").forEach(x=>x.remove());if(!el||!el.isConnected)return false;const r=el.getBoundingClientRect();if(!r.width||r.bottom<0||r.top>innerHeight)return false;
   const b=document.createElement("div");b.className="tmx-bub";b.dataset.nomvt="1";b.setAttribute("role","status");b.innerHTML=html;document.body.append(b);
@@ -3002,15 +3020,15 @@ function tmxMove(c,m,i){vibrate(5);let s="";try{MVT_RE.lastIndex=0;if(m.cn&&MVT_
   tmxBub(c,`<b>第 ${i+1} 步　${esc(m.cn||"")}</b>${s?"<br>"+esc(s):""}${g?"<br>"+esc(g):""}${tr?"<br>⚠ "+esc(tr):""}`,7000)}
 if(typeof renderStrip==="function"){const f0=renderStrip;renderStrip=function(box,moves,curIdx,onPick){const r=f0.apply(this,arguments);try{tmxStrip(box,moves,onPick)}catch(e){}return r}}
 document.addEventListener("click",e=>{const t=e.target;if(!t||!t.closest)return;
-  const q=t.closest(".chip .q[data-tq]");if(q){e.preventDefault();e.stopPropagation();vibrate(5);TMX_T=Date.now();tmxBub(q,esc(tmxPlain(q.dataset.tq,q.dataset.tl,q.dataset.te,q.dataset.tb))+(q.dataset.tr?"<br>⚠ "+esc(q.dataset.tr):""),6000);return}
-  const r=t.closest(".rp-q > span");if(r){const g=TMX_QS.find(k=>r.textContent.includes(k));if(g){vibrate(5);tmxBub(r,esc(tmxPlain(g)),6000)}}},true);
+  const q=t.closest(".chip .q[data-tq]");if(q){e.preventDefault();e.stopPropagation();vibrate(5);TMX_T=Date.now();tmxBub(q,tmxEn()?esc(tmxPlainEn(q.dataset.tq,q.dataset.tl,q.dataset.te,q.dataset.tb))+(q.dataset.tr?"<br>⚠ "+esc(tmxT(q.dataset.tr)):""):esc(tmxPlain(q.dataset.tq,q.dataset.tl,q.dataset.te,q.dataset.tb))+(q.dataset.tr?"<br>⚠ "+esc(q.dataset.tr):""),6000);return}
+  const r=t.closest(".rp-q > span");if(r){const g=TMX_QS.find(k=>r.textContent.includes(k));if(g){vibrate(5);tmxBub(r,esc(tmxEn()?tmxPlainEn(g):tmxPlain(g)),6000)}}},true);
 /* ③ 記譜提示：畫面上（不在泡泡、吐司裡）第一次出現看得到的 .mvt，等 1.5 秒（過場、蓋章動畫先收）再指著它講一次 */
 const tmxVis=el=>{if(!el||!el.offsetParent||el.closest(".tmx-bub"))return false;const r=el.getBoundingClientRect();if(!(r.width>0&&r.top>=50&&r.bottom<=innerHeight-60&&r.left>=0&&r.right<=innerWidth))return false;return !tmxClipped(el,r)};
 /* 回饋 872／873：記譜在可捲的框裡被裁掉（例如漂流瓶的說明被擠成一條線）就不算看得到，泡泡不要指著看不見的字 */
 function tmxClipped(el,r){try{for(let p=el.parentElement;p&&p!==document.body;p=p.parentElement){const s=getComputedStyle(p);if(s.overflow==="visible"&&s.overflowY==="visible")continue;const q=p.getBoundingClientRect();if(r.top<q.top-1||r.bottom>q.bottom+1)return true}}catch(e){}return false}
 function tmxMvtHint(){if(TMX_MV||TMX_MVT||(typeof bhtlHush==="function"&&bhtlHush()))return;if(![...document.querySelectorAll(".mvt")].some(tmxVis))return;
   TMX_MVT=setTimeout(()=>{TMX_MVT=0;if(TMX_MV||document.querySelector(".tmx-bub,.kjfx,.pkhint")||fxBusy())return;const y=[...document.querySelectorAll(".mvt")].find(tmxVis);if(!y)return;
-    if(tmxBub(y,`💡 藍色虛線的走法（像「${esc(y.dataset.mv)}」）<b>點一下</b>，就會在棋盤上畫箭頭，還會用白話說它怎麼走。`,8000)){TMX_MV=true;store.set("tmxMvt",true);TMX_T=Date.now()}},1500)}
+    if(tmxBub(y,tmxEn()?`💡 <b>Tap</b> a move underlined in blue dashes (like "${esc(tmxW(y.dataset.mv))}") to draw its arrow on the board and explain it in plain words.`:`💡 藍色虛線的走法（像「${esc(y.dataset.mv)}」）<b>點一下</b>，就會在棋盤上畫箭頭，還會用白話說它怎麼走。`,8000)){TMX_MV=true;store.set("tmxMvt",true);TMX_T=Date.now()}},1500)}
 
 
 // ================= 版面骨架與路由 =================
@@ -3103,11 +3121,22 @@ function topMore(tr,right){try{topMoreRun.w=false}catch(e){}   /* 第 23 輪 R23
    一張選單只認第一次（b.dataset.tmr）；topMoreRun 等 popstate 的期間（topMoreRun.w）別的觸發也一律不理，選單項目只做一次 */
 function topMoreItem(b,f,after){if(b&&b.dataset){if(b.dataset.tmr)return false;b.dataset.tmr="1"}return topMoreRun(f,after)}
 function topMoreRun(f,after){if(topMoreRun.w)return false;const run=()=>{setTimeout(()=>{try{if(typeof f==="function")f()}finally{if(typeof after==="function"){setTimeout(after,0);setTimeout(after,600)}}},0)};let s=null;try{s=history.state}catch(e){}
-  if(!(s&&s.xqSheet)){closeSheet();run();return true}closeSheet(true);topMoreRun.w=true;let done=false;const go=()=>{if(done)return;done=true;topMoreRun.w=false;topMoreRun.cx=null;removeEventListener("popstate",go);run()};
+  if(!(s&&s.xqSheet)&&!topMoreRun.pend){closeSheet();run();return true}closeSheet(true);topMoreRun.w=true;let done=false;const hn=()=>{try{return location.hash}catch(e){return null}},H=hn();topMoreRun.h=H;
+  /* 11/17 第 25 輪 R25-2（測試員 E）：popstate 晚到超過 1.5 秒、解鎖後又按別的項目，第一筆 history.back() 已經送出收不回來，再退一次就多退一頁 →
+     ① 還有一筆退回在路上（topMoreRun.pend）就不再退，等那一筆；② 落腳的紀錄還是卡片那種（xqSheet）就繼續等（00-util 的 popstate 會再往回走一格），落到一般頁面才做選單項目 */
+  const fin=()=>{done=true;topMoreRun.w=false;topMoreRun.cx=null;topMoreRun.h=null;removeEventListener("popstate",go);run()},go=()=>{if(done)return;if(hn()!==H){topMoreRun.drop();return}let st=null;try{st=history.state}catch(e){}if(st&&st.xqSheet)return;fin()};
+  /* 11/17 第 26 輪 R26-2（測試員 E）：popstate 漏掉後，玩家自己換頁（改網址）時，換頁的 popstate 反而讓排隊中的「回星槎」跑起來、跳去 #/adventure →
+     go 先看網址：已經不是按選單時那一頁，就整筆放掉（排隊的項目、還有一筆退回在路上的記號都清掉，不做舊項目）；下面 hashchange 也同樣清；6 秒重送也只在還停在原頁時 */
   /* 11/17 第 24 輪（測試員 E 觀察 97）：popstate 一直不來，同一頁的「⋯」會一直不理點選 → 1.5 秒後先解除鎖定（不做選單項目，免得回到「晚到的退上一頁把網址蓋回去」）；
      popstate 真的來了照樣做；解鎖後又按了別的選單項目，舊的這筆就取消（topMoreRun.cx），不會兩項都做 */
   try{if(typeof topMoreRun.cx==="function")topMoreRun.cx()}catch(e){}topMoreRun.cx=()=>{done=true;removeEventListener("popstate",go)};setTimeout(()=>{if(!done)topMoreRun.w=false},1500);
-  addEventListener("popstate",go);try{history.back()}catch(e){go()}return true}
+  /* 11/17 第 26 輪 N26-3（測試員 B）：上面 ① 的「等那一筆」沒有上限 → 退上一頁永遠不來時，這一頁的選單再也不動作（1514 是過 1.5 秒就能再用）。
+     晚到和永遠不來分不出來，所以給上限：pend 記第一筆送出的時間，超過 6 秒（晚到 2～5 秒的都等得到）還沒到，就當它丟了，重送一次退上一頁，照常等 popstate 再做選單項目 */
+  const bk=()=>{topMoreRun.pend=Date.now();try{history.back()}catch(e){topMoreRun.pend=false;fin()}};
+  addEventListener("popstate",go);if(topMoreRun.pend){const p0=topMoreRun.pend;setTimeout(()=>{if(!done&&topMoreRun.pend===p0&&hn()===H)bk()},Math.max(0,(typeof p0==="number"?p0:0)+6000-Date.now()));return true}bk();return true}
+try{addEventListener("popstate",()=>{topMoreRun.pend=false})}catch(e){}
+topMoreRun.drop=()=>{try{if(typeof topMoreRun.cx==="function")topMoreRun.cx()}catch(e){}topMoreRun.cx=null;topMoreRun.pend=false;topMoreRun.w=false;topMoreRun.h=null};
+try{addEventListener("hashchange",()=>{let h=null;try{h=location.hash}catch(e){}if(topMoreRun.h!=null&&h!==topMoreRun.h)topMoreRun.drop()})}catch(e){}   /* 第 26 輪 R26-2：換到別頁就放掉排隊中的選單項目 */   /* 第 25 輪 R25-2：退回到了（不管是誰的） */
 function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").children)b.classList.toggle("on",b.dataset.go===on)}
 for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);if(b.dataset.go==="#/")goHome();else location.hash=b.dataset.go};   /* 意見回饋 607：底部「首頁」也是退回首頁 */
 function route(){
@@ -21462,7 +21491,7 @@ html[data-hicon] .shp-spot.hot::before,html[data-hicon] .shp-hs.hot::before{left
      ② 星槎圖上一個「🌌 星淵」熱點（包 07gx 的 gxShipHs，跟「🌌 幻譜星門」同一個時機畫）。
    解鎖：第一次打贏黑洞（07bh bhGameEnd 記的 bhWin＞0，或塔防破過任何一關 bhtd.c；序局 bh:xu 不算）才出現；開發者模式（DEVMODE）一律看得到。網址直接進、還沒解鎖＝回首頁。
    場景圖 data/guanxing/：直幅 gx_tai（768×1376）、寬版 gx_tai_w（1376×768，iPad 橫向、電腦）；白天版 gx_tai_day／gx_tai_day_w（器物位置相同，座標共用）。
-     日夜照人間時辰（07w8 clkIdx，頂欄時辰鐘同一個判斷）：卯時～申時（約 05:00～17:00）白天版，酉時～寅時夜景；頁面開著跨過時辰會自己換；白天圖載不到退回夜景（GXT_BAD）。
+     日夜：11/17 開發者選單改成「全部照實際日落」（取代原本的照時辰）：問 00-util xqNight，跟首頁同一個判斷；頁面開著每分鐘看一次，跨過日落、日出會自己換；白天圖載不到退回夜景（GXT_BAD）。
      直幅／寬版：可用寬 ÷ 可用高 ≥ GXT_LAND 而且畫面短邊 ≥ 600 用寬版（跟首頁寬版同一個短邊門檻；手機橫放照舊直幅＋07t3 側欄選單）；轉向、改視窗大小時原地換圖、換座標。
    標籤只放大字（記憶「場景標籤只放大字」），跟圖上器物對應：
      天頂墨色黑洞＝黑洞車輪戰（11/16 開張：07bhw whlOpen）、星圖石碑＝十三星系（07gx gxMap）、青銅渾儀＝星淵遠征（07bht bhtdOpen 關卡卡片）、圭表＝今日異象、石棋桌＝自由擺陣（11/16 開發者：兩個都開張，07gxd-daily.js gxdOmen／gxdFree）、
@@ -21513,8 +21542,9 @@ function gxtOpen(){if(!GXT_ON)return false;   /* 11/16 開發者「我把開發�
   try{return gxtWon(0,typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
 /* 直幅 "" 或寬版 "w"：W 可用寬、av 可用高、vw／vh 畫面寬高 */
 function gxtKind(W,av,vw,vh){if(!(W>0&&av>=120))return"";return W/av>=GXT_LAND&&Math.min(vw,vh)>=GXT_LMIN?"w":""}
-/* 白天？卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
-function gxtDay(d){d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
+/* 白天？11/17 開發者選單「日夜全部照實際日落」：問 00-util xqNight（跟首頁同一個判斷：07w7 sw7NightNow，當季日落、黃昏結束才入夜）。
+   沒有 xqNight 才退回原本的時辰判斷：卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
+function gxtDay(d){try{if(typeof xqNight==="function")return!xqNight(d)}catch(e){}d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
 const gxtSrc=(k,day)=>`data/guanxing/gx_tai${day&&!GXT_BAD[k?"w":"p"]?"_day":""}${k?"_w":""}.webp?v=${GXT_IMGV}`;
 /* 這一版的標籤座標 [id,左,上,大字,未通] */
 const gxtSpots=k=>GXT_SPOTS.map(s=>[s[0],k?s[4]:s[2],k?s[5]:s[3],s[1],!!s[6]]);
@@ -22479,7 +22509,7 @@ if(typeof addEventListener==="function")addEventListener("hashchange",()=>{try{i
      只在千秋時光之苑（經典世界 hbIsCl）出現（第 1 項 A）；領過七星授印禮（07mnq 存檔 "mnq".gift.a1）才出現（第 2 項 B）；開發者模式一律看得到。網址直接進、還沒解鎖＝回首頁。
      第一次進來以前首頁標籤是 .hot（第 17 項；之後「有禮可領、有人來訪」也要亮，等那兩個玩法做好再接，不加紅點數字）。
    場景圖 data/ximarket/（park/ximarket 轉來，process_art.py MAPS["ximarket"]）：外景白天 xm_day、夜景 xm_night（768×1376，器物位置相同，座標共用）；茶坊內景 xm_tea。只有直幅。
-     日夜照人間時辰（07w8 clkIdx，頂欄時辰鐘同一個判斷）：卯時～申時白天，酉時～寅時夜景（第 3 項 A）；頁面開著跨過時辰會自己換；一張載不到就換另一張（XSM_BAD）。
+     日夜：11/17 開發者選單改成「全部照實際日落」（取代第 3 項 A 的照時辰）：問 00-util xqNight，跟首頁同一個判斷；頁面開著每分鐘看一次，跨過日落、日出會自己換；一張載不到就換另一張（XSM_BAD）。
      茶坊窗外固定下雨（第 18 項 A，程式畫的雨；減少動態時不動）；茶坊只有一張圖，夜裡蓋一層暗藍（日夜跟著西市換）。
    標籤只放大字、不放圖示（第 5 項 A：寫玩法名）：領禮物＝櫃坊、七星來訪＝老槐樹下、找棋子＝棋具攤、暗棋＝聽雨茶坊、聽曲＝樂棚（第 10 項 A）。
      這一版只做場景頁：「暗棋」這一攤可以進茶坊看內景；其他攤灰色帶鎖，點了跳「還沒開張，敬請期待。」（第 12 項 A）。
@@ -22600,8 +22630,9 @@ const xsmGot=M=>!!(M&&typeof M==="object"&&M.gift&&typeof M.gift==="object"&&M.g
 function xsmOpen(){if(!XSM_ON)return false;   /* 11/16 選單「場景入口照玩家進度」：全部解鎖試玩也不打開西市入口 */
   /* 11/16 hspx P1 選單「打贏星門圍城才開」：跟觀星臺同一個條件（07gxt gxtWon：這一趟旅程的星門圍城或舊塔防贏過）；原本收下七星授印禮就開，新旅程一降落很快就拿到。xsmGot 留著不用 */
   try{return typeof gxtWon==="function"&&gxtWon(0,typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
-/* 白天？卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
-function xsmDay(d){d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
+/* 白天？11/17 開發者選單「日夜全部照實際日落」：問 00-util xqNight（跟首頁同一個判斷：07w7 sw7NightNow，當季日落、黃昏結束才入夜）。
+   沒有 xqNight 才退回原本的時辰判斷：卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
+function xsmDay(d){try{if(typeof xqNight==="function")return!xqNight(d)}catch(e){}d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
 /* 想要白天／夜景 → 實際用哪一張（那張載不到就換另一張；兩張都壞就照原本那張） */
 const xsmPickDay=day=>day?!XSM_BAD.d:(!!XSM_BAD.n&&!XSM_BAD.d);
 const xsmSrc=(day,tea)=>tea?`data/ximarket/xm_tea.webp?v=${XSM_IMGV}`:`data/ximarket/xm_${xsmPickDay(day)?"day":"night"}.webp?v=${XSM_IMGV}`;
@@ -23496,6 +23527,25 @@ const LM_TBL={};   /* 對局 gid → 桌子的位置（同一盤一直坐同一�
 /* 入口標籤：[id, 左%, 上%, 大字]（量 768×1376 的 lobby_v4，標籤放在東西上方） */
 /* 11/10 開發者：拿掉「千秋盃」（只留茶坊二樓那個入口）、「我的戰績」（跟學習書院的重複）；「挑戰電腦」不放在線上對戰天井（只有開發者的 📺 AI 對戰才出現） */
 /* 11/10 天井照茶坊重畫（lobby_re3：右牆黑板、兩面紅旗、左邊白牆廂房、門口兩盆松；art_lobbyre*.json、史學顧問核過）：名冊改到右牆黑板、AI 對戰改到一樓左廂門口 */
+/* 11/17 第 25 輪 R25-1（測試員 E：審查員常切飛航模式）：斷網時在大廳按隨機配對會一直「找對手中…」、名冊按了沒反應 →
+   沒有網路時，大廳、千秋盃、觀戰、殘篇閣這幾頁要連線的入口一按就跳離線說明（05-settings offInfo），不往下做；找對手中途斷網就取消，跳說明 */
+const LM_NET_HASH=/^#\/(lobby|cup|watch|coop\/lobby)(\/|$)/,LM_NET_SEL="#lmGong,#lmList,#lmAi,.lm-t[data-g],.lm-lp[data-p],.lm-more,#sk1,#cupE,#cupb,[data-w],[data-p],#mfMe,#mfCup,#mfBox,.cpl-roles [data-r],#cp2Book";   /* 第 26 輪 R26-3（測試員 E）：千秋盃茶樓的「英雄帖」（07y7 #cp2Book）斷網時也直接跳離線說明，不再開面板等 8 秒說「擂台資訊還沒收到」 */
+function lmOffline(){try{return navigator.onLine===false}catch(e){return false}}
+function lmOffInfo(){try{if(typeof offInfo==="function")return offInfo()}catch(e){}try{toast("📴 沒有網路：線上大廳要連上網路才能用")}catch(e){}}
+function lmOffGuard(e){try{if(!lmOffline()||!LM_NET_HASH.test(location.hash||""))return false;const V=document.getElementById("view"),t=e.target&&e.target.closest&&e.target.closest(LM_NET_SEL);if(!t||!V||!V.contains(t))return false;
+  e.preventDefault();e.stopImmediatePropagation();try{vibrate(5)}catch(x){}lmOffInfo();return true}catch(x){return false}}
+function lmOffSeek(){try{const was=lmOffSeek.was;lmOffSeek.was=false;const on=!!(window.XQNet&&XQNet.seeking&&XQNet.seeking());if(!on&&!was)return false;if(on){const b=document.querySelector("#sk0");if(b)b.click()}lmOffSeekSay();return true}catch(e){return false}}
+/* 11/17 第 26 輪 R26-4（測試員 E）：找對手中途斷網有取消，但那句「已取消找對手」沒出現——05-settings 的 offline 先跑（離線牌、一般提示、大廳重畫），重畫時找對手已經被收掉，等 lmOffSeek 再看 seeking() 就是 false。
+   改成：① offline 一來（捕獲階段，比別的 offline 早）先記下「斷網那一刻在找對手」；② 另外盯著 XQNet 的 people（找對手開／關都會送），從找對手變成沒在找、而且沒有網路，也補這句。3 秒內只說一次，蓋過一般的離線提示 */
+/* 11/17 第 27 輪 R27-1（測試員 E：12 次漏 2 次，都在網頁英文）：① 這句如果在 offline 事件派送當中就說了（例如別的監聽先把找對手收掉、people 先到），
+   後面 05-settings 的一般離線提示會把它蓋掉 → 一律晚 120ms 才跳（一般提示是同步跳的，這句一定排在後面）；② 找對手是在連線已經斷掉時被收掉的（網路通知比 offline 事件早到），
+   也算「斷網取消」：lmSkWatch 記下收掉的時間和當時連線狀態，offline 一來 4 秒內收掉、而且當時已經不是連著的，也說；③ 畫面上還有「取消找對手」鈕（#sk0）也算正在找 */
+function lmOffSeekSay(){const n=Date.now();if(n-(lmOffSeekSay.t||0)<3000)return;lmOffSeekSay.t=n;setTimeout(()=>{try{toast("📴 網路斷了，已取消找對手；連上網路再配對")}catch(e){}},120)}
+function lmSkWatch(){try{const on=!!(window.XQNet&&XQNet.seeking&&XQNet.seeking());if(lmSkWatch.on&&!on){let st="";try{st=XQNet.status?XQNet.status():""}catch(e){}lmSkWatch.offAt=Date.now();lmSkWatch.offNet=lmOffline()||st!=="up";if(lmOffline())lmOffSeekSay()}lmSkWatch.on=on}catch(e){}}
+function lmSkWas(){try{if(window.XQNet&&XQNet.seeking&&XQNet.seeking())return true;if(lmSkWatch.on)return true;if(lmSkWatch.offNet&&Date.now()-(lmSkWatch.offAt||0)<4000)return true;return!!document.querySelector("#sk0")}catch(e){return false}}
+function lmSkHook(){try{if(lmSkHook.ok||!window.XQNet||typeof XQNet.on!=="function")return;lmSkHook.ok=1;XQNet.on("people",lmSkWatch);lmSkWatch()}catch(e){}}
+try{document.addEventListener("click",lmOffGuard,true);addEventListener("offline",()=>setTimeout(lmOffSeek,0))}catch(e){}
+try{addEventListener("offline",()=>{lmSkHook();try{lmOffSeek.was=lmSkWas()}catch(e){}},true);addEventListener("hashchange",lmSkHook);lmSkHook()}catch(e){}
 const LM_SPOTS=[["lmGong",50,50.5,"🎲 隨機配對"],["lmList",88,27,"📜 名冊"],["lmAi",25,42.5,"📺 AI 對戰"]];
 /* 11/10 開發者「按下隨機配對，做一個敲鑼的動畫」：天井中央那面鑼（秦～五代的圖畫的是鼓）被敲一下——
    鑼槌從角色那邊揮過去，鑼面（從同一張圖切出來的圓）晃動、金色聲波一圈圈散開，配 01-board 合成的鑼聲；鼓就敲兩下「咚、咚」、鼓面一彈一彈。
@@ -23693,7 +23743,7 @@ const MF_CARD=[[491,778],[608,778],[675,924],[524,924]],MF_BD=[93,245,368,397],M
 const SHW_MF={W:768,H:1376,el:40,h:[.072,88,.0012],look0:[50,60],home:"home",N:{home:[34,95],front:[50,88],l:[20,88],r:[78,88]},E:"home-front front-l front-r home-l",
   HS:{mfMe:["r",75,62,"bow"],mfCup:["r",80,53,"bow"],mfBox:["l",17,50,"wave"]}};
 let MF_GO=null;   /* 從大廳場景的「＋N 人」（翻開客簿）或「更多棋局」（列出全部棋局）進來 */
-const mfDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const mfDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 const mfTx=t=>String(t||"").replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{23E9}-\u{23FA}️‍›]/gu,"").replace(/\s+/g," ").trim();
 function mfM3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
@@ -24123,7 +24173,7 @@ const LBN_RE={
   laiN:/賴\s*[:=]|\+\s*賴/,
   impK:/官方|宮方|倌方|公告|公吿|[開开][發发発]者|[開开][發发発][團团][隊队]|裁判|客服|[系係][統统]|管[理里裡哩][員员]|版主|站[長长]|工作人[員员]|官[網网]/,
   impW:/(?:^|[^a-z])(?:admin|official|moderator|developer|sysop)/,
-  dflt:/^棋友[0-9A-F]{4}$/
+  dflt:/^(棋友|Player )[0-9A-Fa-f]{4}$/   /* 11/17 第 25 輪 V3：系統給的預設名字一律放行——英文預設名「Player XXXX」（00-util defaultName，第 21 輪起）4 碼剛好全是數字（約 15%）時被「4 位以上數字」擋掉；net.js 的「棋友＋代號前 4 碼」是小寫 */
 };
 /* 不雅字詞清單（11/13 開發者選：髒話、性相關、歧視、人身攻擊；判成 rude）——開發者可以直接增刪：每一行是一個正規式，詞跟詞用 | 隔開。
    比對前名字已經 NFKC、轉小寫、拿掉空白和標點（「幹 你」「f.u.c.k」一樣擋）。
@@ -25017,7 +25067,7 @@ const HQ_DOC=[82,392,440,632],HQ_Q=[446,428,686,553],HQ_CEN=[646,352],HQ_BOX=[56
 const SHW_HQ={W:768,H:1376,el:45,h:[.08,72,.0012],look0:[50,40],home:"home",N:{home:[24,88],front:[40,70],box:[62,80]},E:"home-front front-box home-box",
   HS:{hqBox:["box",70,85,"bow"],hqCheer:["front",60,40,"cheer"]}};
 let HQ_ACT=null;   /* 這支手機剛產生、還有效的轉移碼 {code, exp}（只放記憶體） */
-const hqDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const hqDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function hqCss(){if(document.getElementById("hqCss"))return;const s=document.createElement("style");s.id="hqCss";s.textContent=`
 .hq-pn{position:fixed;left:0;right:0;top:var(--xqT,0px);bottom:var(--xqB,0px);z-index:950;background:#2a2018;overflow:hidden;transform:translateY(calc(100% + var(--xqB,0px) + 24px));transition:transform .3s ease;color:#2a1f15}
 .hq-pn.open{transform:none}.hq-pn.hq-dk{background:#121826}
@@ -25518,7 +25568,7 @@ function tdHpNodes(st,onl){const N=[],g=onl||(typeof homeRecGame==="function"?ho
   const c=N.findIndex(x=>!x.done);N.forEach((x,i)=>{x.st=x.done?"done":i===c?"cur":c>=0&&i>c?"later":"todo"});return N}
 function tdTerm(d){d=d||new Date();const m=d.getMonth()+1,day=d.getDate();let t=TD_TERMS[TD_TERMS.length-1][2];for(const[a,b,n]of TD_TERMS)if(m>a||(m===a&&day>=b))t=n;return t}
 function tdTermTag(d){d=d||new Date();const m=d.getMonth()+1,day=d.getDate(),t=tdTerm(d);return TD_TERMS.some(([a,b,n])=>a===m&&b===day&&n===t)?"今日・"+t:"節氣・"+t}
-const tdDarkNow=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=20||h<5};
+const tdDarkNow=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=20||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 20～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 /* 長方形（w×h）→ 告示紙四邊形的 CSS matrix3d */
 function tdM3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
@@ -25653,7 +25703,7 @@ const GM2_SCI={k:"gm2",nm:"特級大師",it:[
 /* 這一組要登記的物件（g 沒寫＝每組都有；原圖那組＝song） */
 const gm2Sci=g=>Object.assign({},GM2_SCI,{it:GM2_SCI.it.filter(x=>!x.g||x.g.split(" ").includes(g||"song"))});
 let GM2_ST={era:"",q:""},GM2_ITEMS=null,GM2_P=null;
-const gm2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=20||h<5};
+const gm2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=20||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 20～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 const gm2Era=p=>{const y=parseInt(p&&p.born)||0;return!y?"":y<1950?"a":y<1970?"b":y<1980?"c":"d"};
 function gm2M3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
@@ -25830,7 +25880,7 @@ const cp2Sci=g=>Object.assign({},CP2_SCI,{it:CP2_SCI.it.filter(x=>!x.g||x.g.spli
 const SHW_CP2={el:40,h:[.085,70,.0012],look0:[50,40],home:"home",N:{home:[50,96],mid:[50,86],top:[50,78]},E:"home-mid mid-top",
   HS:{cp2Book:["top",51,57,"wave"],cp2Scr:["mid",50,42,"idle"],cp2Brd:["top",81,49,"idle"]}};
 const cp2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
-const cp2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const cp2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function cp2M3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
   return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${x0},${y0},0,1)`}
@@ -25985,7 +26035,7 @@ const RD2_POND="polygon(10.4% 23.3%,95.7% 21.8%,95.7% 42.5%,78.1% 46.5%,67.7% 51
 const SHW_RD2={el:40,h:[.1,92,.003],look0:[46,66],home:"home",N:{home:[52,97],desk:[46,91],mid:[72,92],rail:[86,82]},E:"home-desk desk-mid mid-rail home-mid",
   HS:{rd2Book:["desk",46,66,"wave"],rd2Stack:["desk",23,65,"wave"],rd2Pole:["rail",80,32,"wave"],rd2All:["mid",83,72,"idle"]}};
 const rd2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
-const rd2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const rd2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function rd2Css(){if(document.getElementById("rd2Css"))return;const s=document.createElement("style");s.id="rd2Css";s.textContent=`
 .rd2-page{margin:0 0 6px}
 .rd2-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -26077,7 +26127,7 @@ const EX2_SCROLL=[["ex2S0","#go",385,718,372,652,"我是新手"],["ex2S1","#go3"
 const SHW_EX2={el:40,h:[.09,92,.003],look0:[50,60],home:"home",N:{home:[50,97],altar:[50,83]},E:"home-altar",
   HS:{ex2S0:["altar",50,64,"bow"],ex2S1:["altar",50,64,"bow"],ex2S2:["altar",50,64,"bow"],ex2Book:["altar",25,50,"idle"]}};
 const ex2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
-const ex2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const ex2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function ex2Css(){if(document.getElementById("ex2Css"))return;const s=document.createElement("style");s.id="ex2Css";s.textContent=`
 .ex2-page{margin:0 0 6px}
 .ex2-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -26135,7 +26185,7 @@ const JZ2_LAMP=[632,312],JZ2_BOOK=[225,715],JZ2_SCROLL=[480,712];
 const SHW_JZ2={el:40,h:[.085,92,.0028],look0:[46,40],home:"home",N:{home:[45,97],mid:[46,82],desk:[44,70],tbl:[62,86]},E:"home-mid mid-desk mid-tbl",
   HS:{jz2Rank:["desk",44,34,"idle"],jz2Book:["desk",29,52,"idle"],jz2Scroll:["desk",62,52,"idle"],jz2Tbl:["tbl",86,75,"idle"],jz2Lamp:["desk",82,23,"idle"]}};
 const jz2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
-const jz2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const jz2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function jz2M3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
   return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${x0},${y0},0,1)`}
@@ -26238,7 +26288,7 @@ const SHW_KJ2={el:40,h:[.085,92,.0028],look0:[50,40],home:"home",N:{home:[50,97]
     ob:[[[11,35.5],[28.5,35.5],[26.5,47.5],[9.5,47.5]],[[31,30],[69.5,30],[72.5,50.5],[28,50.5]],[[73,38],[89.5,38],[91.5,50],[75,50]],[[62,25],[67,24.5],[91,34.5],[84,36.5],[62,28]],[[33,52.5],[68,52.5],[68.5,57],[32,57]]]}},   /* 回饋 816：點矮几桌面＝跳上比較近的那一角 */   /* 身高照「矮几前」那一點的透視（這頁透視縮得快，照桌腳會太小） */   /* 回饋 808：點朱冊／墨冊＝跳上矮几前面左右兩角（冊子前的空處，不站在棋枰和紙籤上） */
   HS:{kj2Brd:["front",50,38,"cheer"],kj2Red:["tl",20,42,"idle"],kj2Blk:["tr",82,44,"idle"],kj2Slip:["front",50,55,"idle"],kj2Scr:["front",76,32,"idle"]}};
 const kj2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
-const kj2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const kj2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function kj2M3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
   return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${x0},${y0},0,1)`}
@@ -26372,7 +26422,7 @@ const MZ_SCI=[{n:"明式亮格櫃",nd:"{{ming:明式}}亮格櫃",t:"上面開敞
   {n:"明式長畫桌",nd:"{{ming:明式}}長畫桌",t:"四條腿在四個角、腳是馬蹄足，還加了棖子。{{ming:照明式家具的分法，腿在四角的叫「桌」，腿縮進去的才叫「案」，所以}}這是一張畫桌。",
     s:[[[45,868],[800,868],[800,905],[45,905]],[[45,905],[78,905],[78,1150],[45,1150]],[[675,905],[708,905],[708,1150],[675,1150]]]},
   {n:"油盞",dn:"n",t:"小瓷盞裝油、放一根燈草點著，擱在矮木座上，沒有燈罩、也沒有玻璃。{{ming:宋到明的瓷油盞常帶一個小把手。}}",s:[[[414,740],[492,740],[492,802],[414,802]]]}];
-const mzDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const mzDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 let MZ_FIG=null;   /* 舞台上 3D 角色（fig3d 回傳的 {B,r}），走路角色沒出現時揮手、歡呼用 */
 function mzCss(){if(document.getElementById("mzCss"))return;const s=document.createElement("style");s.id="mzCss";s.textContent=`
 .shp-page.mz-wall{position:relative;margin:10px 0 6px;border-radius:6px;user-select:none;-webkit-user-select:none}
@@ -28281,7 +28331,7 @@ function spmAuto() {
 const SW7_ON=true;
 /* 節氣的小點綴（沒在下雨雪的時候）：[效果, 粒子數, 顏色]；fog 第二格 1＝霜降（偏白）；fly＝螢火（只在夜景圖） */
 const SW7_AMB={"立春":["petal",8,"#f6e1e6"],"春分":["petal",12,"#f2b4bf"],"立夏":["fluff",9],"夏至":["fly",9],"小暑":["fly",11],"大暑":["fly",13],
-  "立秋":["leaf",6,"#b29a3e"],"處暑":["leaf",8,"#c08a34"],"白露":["fog",0],"秋分":["leaf",12,"#c8642c"],"寒露":["leaf",10,"#b5512a"],"霜降":["fog",1],"立冬":["leaf",8,"#8f5a2e"]};
+  "立秋":["leaf",6,"#b29a3e"],"處暑":["leaf",8,"#c08a34"],"白露":["fog",0],"秋分":["leaf",12,"#c8642c"],"寒露":["leaf",10,"#b5512a"],"霜降":["fog",1],"立冬":["fog",1]};   /* 11/17 開發者選單「季節照節氣、立冬起冬景」：立冬換成冬天的圖，不再飄落葉，改成霜白的薄霧（跟霜降同一種） */
 /* 節氣 → 這一天會下雨、下雪的機率 [雨, 雪]（以江南水鄉為準，地點再乘 sw7RgMul） */
 const SW7_PREC={"小寒":[.15,.35],"大寒":[.15,.4],"立春":[.3,.15],"雨水":[.5,.06],"驚蟄":[.5,0],"春分":[.45,0],"清明":[.6,0],"穀雨":[.55,0],"立夏":[.45,0],"小滿":[.5,0],"芒種":[.6,0],"夏至":[.55,0],
   "小暑":[.4,0],"大暑":[.35,0],"立秋":[.35,0],"處暑":[.3,0],"白露":[.25,0],"秋分":[.25,0],"寒露":[.2,0],"霜降":[.15,0],"立冬":[.2,.03],"小雪":[.2,.25],"大雪":[.12,.45],"冬至":[.12,.4]};
@@ -28302,8 +28352,10 @@ function sw7Rng(a){return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t
 function sw7Precip(t,rg,d){d=d||new Date();const B=SW7_PREC[t];if(!B)return null;const[mr,ms]=sw7RgMul(rg,t),pr=B[0]*mr,ps=B[1]*ms,R=sw7Rng(sw7Hash(sw7Day(d)+"|"+rg)),r=R(),ty=r<ps?"snow":r<ps+pr?"rain":"";
   const W=[];for(let i=0;i<6;i++)W.push(R()<.62);if(!W.some(Boolean))W[Math.floor(R()*6)]=true;const a=.55+R()*.45;
   return ty&&W[Math.floor(d.getHours()/4)]?{t:ty,a}:null}
-/* 卯辰（5～9 點）青、酉（17～19 點）暖；a＝0～1 的強度 */
-function sw7Tint(d){d=d||new Date();const h=d.getHours()+d.getMinutes()/60;
+/* 清晨青、黃昏暖；a＝0～1 的強度。11/17 開發者選單「入夜接近實際天黑」：時段跟著臺北當天的日出日落（sw7Todw）——
+   晨光＝天亮（日出前 25 分）起 4 小時，頭 1 小時漸強；黃昏＝入夜（日落後 25 分）前 2 小時，最後 18 分漸弱。算不出來才用原本固定的卯辰（5～9 點）、酉（17～19 點） */
+function sw7Tint(d){d=d||new Date();const h=d.getHours()+d.getMinutes()/60;let w=null;try{w=sw7Todw(d)}catch(e){w=null}
+  if(w){const a0=w[0],n0=w[3];if(h>=a0&&h<a0+4)return{c:"dawn",a:h<a0+1?h-a0:h<a0+2.5?1:(a0+4-h)/1.5};if(h>=n0-2&&h<n0)return{c:"dusk",a:h<n0-1?.3+(h-(n0-2))*.7:h<n0-.3?1:(n0-h)/.3};return null}
   if(h>=5&&h<9)return{c:"dawn",a:h<6?h-5:h<7.5?1:(9-h)/1.5};
   if(h>=17&&h<19)return{c:"dusk",a:h<18?.3+(h-17)*.7:h<18.7?1:(19-h)/.3};
   return null}
@@ -28421,9 +28473,12 @@ const SW7_SNOWY=new Set(["小雪","大雪","冬至","小寒","大寒"]);
 /* 開發者 11/9「首頁變秋天的時候還是綠色的葉子，冬天也不會變，要符合天氣和大自然」：首頁照季節換整張圖（同一張原圖改的，構圖、入口、走路的路都不變）——
    春（立春～穀雨）＝home_spring（柳樹嫩黃綠、桃花杏花、盆栽牡丹；設定關掉「場景節氣天氣」才用原圖）；夏（立夏～處暑，立秋、處暑柳樹還綠）＝home_summer（柳濃綠、岸邊荷花）；
    秋（白露～立冬）＝home_autumn（柳葉轉黃、蘆花、遠山赭紅、書院旁闊葉樹黃紅，松竹照舊綠）；冬（小雪～大寒）＝home_winter（柳枝光禿、枯草、松竹常青）。
-   下雪照舊換 home_snow；雨景圖 home_rain 的柳樹是春天的綠，只在春夏用，秋冬下雨就用那一季的圖、雨由程式畫。季節圖不再做 ⑤ 的換色（已經畫好了） */
-const SW7_HSEA={"立春":"spring","雨水":"spring","驚蟄":"spring","春分":"spring","清明":"spring","穀雨":"spring","立夏":"summer","小滿":"summer","芒種":"summer","夏至":"summer","小暑":"summer","大暑":"summer","立秋":"summer","處暑":"summer",
-  "白露":"autumn","秋分":"autumn","寒露":"autumn","霜降":"autumn","立冬":"autumn","小雪":"winter","大雪":"winter","冬至":"winter","小寒":"winter","大寒":"winter"};
+   下雪照舊換 home_snow；雨景圖 home_rain 的柳樹是春天的綠，只在春夏用，秋冬下雨就用那一季的圖、雨由程式畫。季節圖不再做 ⑤ 的換色（已經畫好了）
+   11/17 開發者選單「季節照節氣、立冬起就是冬景」：原本照 11/9 的看圖分界（立秋、處暑柳樹還綠算夏，立冬柳葉才轉黃算秋，小雪起才冬），頂端寫「立冬」畫面卻還在飄落葉；
+   改成跟頂端節氣（tdTerm）同一套：立春～穀雨春、立夏～大暑夏、立秋～霜降秋、立冬～大寒冬（跟 sw7CardSea 一樣，所以小籤、小帥那句、圖三者一致，SW7_SEA_MIX 那種兩邊不同的話不會再出現）。
+   四季的圖（宋＝home_<季>、十二朝 home_<朝>_<季>、經典 home_classic_<季>、晨昏、夜景、長卷 _pano_l／_pano_r、學習／對戰 hubmap 四季）都畫好了，換季只是換哪一張 */
+const SW7_HSEA={"立春":"spring","雨水":"spring","驚蟄":"spring","春分":"spring","清明":"spring","穀雨":"spring","立夏":"summer","小滿":"summer","芒種":"summer","夏至":"summer","小暑":"summer","大暑":"summer","立秋":"autumn","處暑":"autumn",
+  "白露":"autumn","秋分":"autumn","寒露":"autumn","霜降":"autumn","立冬":"winter","小雪":"winter","大雪":"winter","冬至":"winter","小寒":"winter","大寒":"winter"};
 /* ---------- 開發者 11/9「轉換季節的時候要有轉折感，讓玩家有『哇，換季了』的體驗」：首頁換季轉場 ----------
    這一季（SW7_HSEA，春夏秋冬，跟天氣無關）跟上次在首頁看到的季節（store hmSea）不一樣，就在新的季節圖載好時播一次（每季一次）：
    ① 先蓋一張上一季的圖；② 從橋上石桌那裡往外，新季節像墨在宣紙上暈開一樣一圈圈露出來（約 2.8 秒）；
@@ -28436,7 +28491,7 @@ const SW7_SEA_TXT={spring:{e:"🌸",n:"春天來了",q:"竹外桃花三兩枝，
   winter:{e:"❄",n:"冬天到了",q:"歲寒，然後知松柏之後彫也。",s:"《論語・子罕》",w:"天氣最冷的時候，才看得出松樹柏樹最晚凋零。",say:"哇，冬天了！柳樹的葉子都掉光了，只有松樹還是綠的。",p:["#ffffff","#eef3f8","#dfe8f1"]}};
 function sw7SeaNow(){try{const o=SW7_PAGES.find(x=>x.k==="home");return SW7_HSEA[sw7TermFor(null,o)]||"spring"}catch(e){return""}}
 /* 11/17 iPhone 模擬器測試：首頁上方寫「立冬」，卻跳「🍂 秋天到了」——換季小籤的季節照節氣算（立春、立夏、立秋、立冬起算，跟頂端的節氣同一套 tdTerm）；
-   首頁換哪一張季節圖（SW7_HSEA：立秋、處暑柳樹還綠，立冬才轉黃）、飄的東西、小帥那句（講的是圖上看到的）照舊跟著圖 */
+   首頁換哪一張季節圖（SW7_HSEA）、飄的東西、小帥那句（講的是圖上看到的）照舊跟著圖。（11/17 晚 SW7_HSEA 也改成照節氣，兩邊已經一樣） */
 function sw7CardSea(t){return SW7_SPRING.has(t)?"spring":SW7_SUMMER.has(t)?"summer":SW7_WINTER.has(t)?"winter":t?"autumn":""}
 /* 11/17 Windows 測試員 D P3-1，開發者選單「小帥那句兼顧節氣」：立冬那幾天小籤寫「❄ 冬天到了」（照節氣），首頁圖照 11/9 的分界還是黃柳秋景（不動），
    小帥卻說「柳樹都變黃了，葉子掉到河裡了！」像還在秋天。小籤的季節（照節氣）跟圖的季節不一樣的那幾天（立冬：冬／秋景；立秋、處暑：秋／夏景），
@@ -28487,14 +28542,26 @@ const SW7_HTOD=new Set(["spring","summer","autumn","winter",..."qin han sanguo w
    SW7_HERA＝已經畫好四季的朝代；宋、還沒畫好的朝代、還沒登船＝現在這套（宋代江南）。各朝還沒有雨景、雪景、晨昏圖：用那一季的圖，雨雪由程式畫 */
 const SW7_HERA={qin:1,han:1,sanguo:1,weijin:1,nanbei:1,sui:1,tang:1,wudai:1,yuan:1,ming:1,qing:1};   /* 11/9 漢朝、其餘十朝四季都經史學顧問核過（宋＝原本這套） */
 function sw7HomeEra(){try{const e=typeof shipAt==="function"?shipAt():"";return e&&e!=="song"&&SW7_HERA[e]?e:""}catch(x){return""}}
-/* 日出、夕陽的時段照季節（臺灣／江南大約的日出日落：夏天日出 5 點、日落 18:45；冬天日出 6:35、日落 17:15）；季節照首頁用的 SW7_HSEA */
+/* 日出、夕陽的時段照季節（臺灣／江南大約的日出日落：夏天日出 5 點、日落 18:45；冬天日出 6:35、日落 17:15）；季節照首頁用的 SW7_HSEA。
+   11/17 起只在 sw7Todw 算不出來時才用（退路） */
 const SW7_TODW={spring:[5.25,7.25,17.25,19],summer:[4.75,6.75,18,19.75],autumn:[5.25,7.5,16.75,18.5],winter:[6,8,16.5,18.25]};
+/* 11/17 開發者「天氣錯誤」第二次選單「入夜接近實際天黑」：原本照季節的 SW7_TODW，黃昏結束（入夜）比實際天黑晚 1 小時以上（11/17 要 18:30）。
+   改成照臺北一年的日出日落：SW7_SUN＝每月 1 日、16 日的 [日出, 日落]（當天 0 點起的分鐘，臺北 25.03N 121.57E，NOAA 公式，太陽上緣碰地平線），中間的日子照比例內插；
+   入夜＝日落後 25 分（民用曙暮光結束），天亮＝日出前 25 分。11/17：日出 6:12、日落 17:06 → 17:31 入夜；夏至：日落 18:46 → 19:11 入夜；冬至：日落 17:10 → 17:35 入夜。
+   sw7Todw(d)＝[天亮, 晨光（日出後 1 小時）結束, 黃昏（日落前 1 小時）開始, 入夜]，單位小時；首頁月夜層、夜景圖、晨昏圖、晨昏色調都看它，
+   全站日夜（00-util xqNight → sw7HomeNightA）也是這一個，改這裡全部一起變 */
+const SW7_SUN=[[399,1035],[400,1046],[396,1058],[388,1068],[377,1076],[363,1083],[346,1090],[331,1096],[318,1103],[309,1111],[304,1119],[303,1125],[307,1127],[313,1126],[321,1119],[328,1109],[334,1093],[340,1077],[345,1061],[352,1046],[361,1034],[371,1026],[382,1024],[392,1027]];
+function sw7Sun(d){d=d||new Date();const m=d.getMonth(),dd=d.getDate(),dim=new Date(d.getFullYear(),m+1,0).getDate(),f=m*2+(dd<16?(dd-1)/15:1+(dd-16)/(dim-15)),i=Math.floor(f),r=f-i,a=SW7_SUN[i%24],b=SW7_SUN[(i+1)%24];
+  return[(a[0]+(b[0]-a[0])*r)/60,(a[1]+(b[1]-a[1])*r)/60]}
+function sw7Todw(d){const[sr,ss]=sw7Sun(d);return[sr-25/60,sr+1,ss-1,ss+25/60]}
 /* 11/9 開發者「已經亥時但還是很亮」：首頁沒有夜景圖，日落後（夕陽時段結束）到日出前，整頁蓋一層月夜的深藍；剛入夜、天快亮時淡一點 */
 /* 11/9 開發者「對戰和學習還是亮著」：學習、對戰、線上大廳（露天庭院）也套同一層月夜；棋譜庫在室內不套 */
-function sw7HomeNightA(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;if(h>=w[3])return Math.min(1,.7+(h-w[3])*.6);if(h<w[0])return w[0]-h<.5?.7+(w[0]-h)*.6:1;return 0}
+function sw7HomeNightA(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=sw7TodwOr(d,sea);if(h>=w[3])return Math.min(1,.7+(h-w[3])*.6);if(h<w[0])return w[0]-h<.5?.7+(w[0]-h)*.6:1;return 0}
 /* 11/10 開發者「其他朝代的夜景也用 Gemini 重畫，後置的夜晚效果不好」：首頁、學習、對戰、天井日落後換畫好的夜景圖（<名>_night），不再整頁蓋月夜深藍；沒換到夜景圖（載不到、雨雪圖、設定關掉）才照舊蓋 */
 function sw7NightNow(){try{return sw7HomeNightA(null,sw7SeaNow())>0}catch(e){return false}}
-function sw7HomeTod(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;return h>=w[0]&&h<w[1]?"dawn":h>=w[2]&&h<w[3]?"dusk":""}
+/* 照當天日出日落（sw7Todw）；算不出來才照季節的 SW7_TODW（sea 只剩退路用） */
+function sw7TodwOr(d,sea){try{const w=sw7Todw(d);if(w.every(x=>isFinite(x)))return w}catch(e){}return SW7_TODW[sea]||SW7_TODW.autumn}
+function sw7HomeTod(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=sw7TodwOr(d,sea);return h>=w[0]&&h<w[1]?"dawn":h>=w[2]&&h<w[3]?"dusk":""}
 function sw7HomeWx(){if(!sw7On())return"";try{const o=SW7_PAGES.find(x=>x.k==="home"),t=sw7TermFor(null,o),p=sw7Precip(t,sw7Rg(o)),sea=SW7_HSEA[t]||"";
   const era=sw7HomeEra(),s2=sea||"spring",td=sw7HomeTod(null,s2),nt=sw7NightNow()?"_night":"";if(typeof hbIsCl==="function"&&hbIsCl())return"classic_"+s2+nt;   /* 11/10 經典世界首頁：只換千秋樹的季節色，晨昏用程式調色、不另外換雨雪圖 */
   if(era){const k=era+"_"+s2;return nt?k+nt:SW7_HTOD.has(k)&&td?k+"_"+td:k}if(nt)return s2+nt;
@@ -28850,7 +28917,7 @@ function clkCss(){if(document.getElementById("clkCss"))return;const s=document.c
 html.gapfix #topbar.clk-on{padding-top:calc(var(--safeT,0px) + 30px)}   /* 回饋 840（開發者 11/9「修正時鐘」截圖：iPhone 主畫面 App 星晷擠進瀏海、壓到標題）：02-shell 的 gapfix 會把頂欄往下推 34px，這裡原本用 #topbar 蓋掉了它，iPhone 上星晷就跑到狀態列底下；有 gapfix 時照樣多留這段 */
 #topbar.clk-nt #title{color:transparent;text-shadow:none}#topbar.clk-nt #title *{visibility:hidden}
 #topbar.clk-on #title{align-self:stretch;font-size:17px;line-height:20px;padding-left:62px;padding-bottom:36px}   /* 回饋 840b（開發者 11/9「時鐘還是無法完整顯示」）：改成完整小圓盤（56px）放在標題左邊，標題往右讓位；底下兩行小字＝現在的時辰、第幾天・節氣 */
-.clk-box{position:absolute;bottom:2px;display:none;align-items:flex-end;gap:8px;overflow:hidden;z-index:1}#topbar.clk-on .clk-box{display:flex}#topbar #offChip{position:relative;z-index:2}
+.clk-box{position:absolute;bottom:2px;display:none;align-items:flex-end;gap:8px;overflow:hidden;z-index:1}#topbar.clk-on .clk-box{display:flex}#topbar #offChip{position:relative;z-index:2}@media (max-width:480px){#topbar #offChip{font-size:0!important;padding:6px 8px!important}#topbar #offChip::before{content:"📴";font-size:15px;line-height:1}}
 .clk-sm{display:grid;flex:0 1 auto;min-width:0;cursor:pointer;padding-bottom:1px;font:600 11.5px/1.3 var(--serif,serif);letter-spacing:.02em;opacity:.9;text-align:left}.clk-sm>span{grid-area:1/1;transition:opacity 1.1s ease}.clk-sm .clk-sl>span{display:block;white-space:nowrap}.clk-sm .clk-sl>b{display:block;font-size:15px;line-height:1.2;font-weight:900;letter-spacing:.06em;color:var(--accent,#a3361f)}.clk-sm .clk-ss{white-space:nowrap}
 .clk-sm .clk-ss{opacity:0;align-self:end;font-size:12.5px}.clk-box.ship .clk-sm .clk-sl{opacity:0}.clk-box.ship .clk-sm .clk-ss{opacity:1}
 .clk-dial{display:block;flex:none;width:56px;height:56px;border-radius:50%;margin:0;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -29011,6 +29078,34 @@ function lkCard(){if(typeof vibrate==="function")vibrate(5);
   try{if(typeof SCI_REG!=="undefined"&&typeof sciMark==="function"){const R=SCI_REG.find(r=>r.D&&r.D.k==="sp2"),x=R&&R.D.it.find(y=>y.n==="懸在半空的棋子");if(x)sciMark(R.D,x)}}catch(e){}}
 if(LK_ON){let lkq=0;const kick=()=>{if(lkq)return;lkq=1;setTimeout(()=>{lkq=0;try{if(clkKey()==="/adventure")lkMount()}catch(e){}},250)};
   const init=()=>{try{new MutationObserver(kick).observe(document.body,{childList:true,subtree:true})}catch(e){}addEventListener("hashchange",kick);kick()};
+  if(document.readyState==="loading")addEventListener("DOMContentLoaded",init);else init()}
+
+/* ---------- 11/17 第 26 輪 N26-2（測試員 B）：斷網時頂欄多了離線牌（窄螢幕已縮成 📴 39px），右邊鈕多的頁（朝代擂台：體力、⋯）標題被擠成「朝代…」「Dyn…」 ----------
+   只在有離線牌時：標題放不下 → ① 縮字（14px）、拿掉標題前面的小圖示；② 還放不下 → 返回鈕只留「‹」（英文返回鈕的字最長，讓出來給頁名）、標題 13px。
+   放得下就什麼都不動；網路回來（牌子拿掉）就恢復原樣。換頁、標題翻成英文、牌子出現或消失、轉向時都重算 */
+/* 第 26 輪 R26-5（測試員 E）：離線牌窄螢幕縮成 📴 的規則原本只寫在時辰鐘樣式（clkCss）裡，冷開對局頁（沒先經過有時辰鐘的頁面）時還沒插進來，中文牌子是全寬「📴 離線」 →
+   同一段也放進這裡；這段樣式在這個檔載入時就插（不等時辰鐘），牌子一出現就生效。clkCss 裡那段留著（兩段一樣，誰先插都行） */
+const OFFT_CSS="#topbar #offChip{position:relative;z-index:2}@media (max-width:480px){#topbar #offChip{font-size:0!important;padding:6px 8px!important}#topbar #offChip::before{content:\"📴\";font-size:15px;line-height:1}}#topbar.offt1 #title{font-size:14px!important;letter-spacing:0!important}#topbar.offt1 #title img.ti{display:none}#topbar.offt2 #title{font-size:13px!important}#topbar.offt2 #back{font-size:0!important;padding:0 6px!important;min-width:40px;max-width:none!important;text-align:center}#topbar.offt2 #back b{font-size:28px!important}@media (max-width:480px){#topbar.clk-on #offChip{align-self:flex-start;margin:0 2px 0 0;padding:1px 5px!important}}@media (max-width:360px){html[lang=en] #topbar.clk-on #offChip{position:absolute;left:6px;top:calc(var(--safeT,0px) + 1px);margin:0}}#topbar.segf1 .cpu-seg button{font-size:12px!important;letter-spacing:-.02em!important;padding:0 2px!important}#topbar.segf1 .cpu-seg button img{display:none}#topbar.segf2 .cpu-seg button{font-size:11px!important;white-space:normal!important;word-break:keep-all;line-height:1.1!important;text-overflow:clip!important}";
+/* 11/17 第 27 輪 R27-2／X2（測試員 E、D：320 寬斷網，📴 牌壓到時辰字、英文標題剩「X… / Q…」）：
+   有時辰鐘的頁（首頁等）牌子原本跟標題一樣垂直置中，正好落在下面兩行時辰字上 → 窄螢幕改貼頂、上下留白縮小（高約 20px，落在時辰字上面那一段）；
+   英文 360 寬以下標題本來就是兩行（頂欄 83px，星晷從 y≈22 開始）：牌子拿出排版、放到星晷上面的左上角，標題拿回 43px，縮字後看得出「Xiangqi / Qianqiu」 */
+function offtCss(){if(document.getElementById("offtCss"))return;const s=document.createElement("style");s.id="offtCss";s.textContent=OFFT_CSS;document.head.append(s)}
+function offtFit(){const tb=document.getElementById("topbar"),t=document.getElementById("title");if(!tb||!t)return;offtCss();
+  const had=tb.classList.contains("offt1");tb.classList.remove("offt1","offt2","segf1","segf2");
+  /* 11/17 第 27 輪 N27-2（測試員 B）：挑戰電腦的標題位置是「晉級賽／練功房」兩顆分頁鈕（08b .cpu-seg），斷網時剩圖示加「…」→ 標題是分頁鈕時不縮標題、不動返回鈕，
+     改成照兩顆鈕的實際寬度：放不下先拿掉鈕上的小圖示、字縮成 12px（segf1）；還放不下 11px、可以換兩行（segf2）。鈕的高度不動（44px） */
+  const sg=t.querySelector?t.querySelector(".cpu-seg,[role=tablist]"):null;
+  if(sg){const bs=[...sg.querySelectorAll("button")],ov2=()=>bs.some(b=>b.scrollWidth>b.clientWidth+1||b.scrollHeight>b.clientHeight+1);if(bs.length&&ov2()){tb.classList.add("segf1");if(ov2())tb.classList.add("segf2")}return}
+  /* 11/17 第 27 輪 X4（測試員 D）：① 放得下也縮（390 寬 Dynasty Arena 16→13px）：英文兩行標題前面的小圖示比行高高，scrollHeight 多出幾 px 就被當成放不下 → 高度要多出半行以上才算；
+     ② 320 寬連線時頁名也被截成「D…」→ 480 寬以下連線也照實際寬度判斷：放不下先縮字；返回鈕只留「‹」只用在斷網、或標題是頁名這種短字（18 字以內，長句子照舊刪節號） */
+  const off=!!document.getElementById("offChip"),nar=(typeof innerWidth==="number"?innerWidth:9999)<=480,tx=t.textContent.trim();
+  if((off||nar)&&!tb.classList.contains("clk-nt")&&tx){let lh=20;try{lh=parseFloat(getComputedStyle(t).lineHeight)||20}catch(e){}const ov=()=>t.scrollWidth>t.clientWidth+1||t.scrollHeight>t.clientHeight+lh*.5;
+    if(ov()){tb.classList.add("offt1");if(ov()&&(off||tx.length<=18))tb.classList.add("offt2")}}
+  if(had||tb.classList.contains("offt1"))try{if(typeof clkPlace==="function"&&CLK.box&&CLK.box.isConnected)clkPlace()}catch(e){}}
+try{offtCss()}catch(e){}
+{let offtQ=0;const kick=()=>{if(offtQ)return;offtQ=setTimeout(()=>{offtQ=0;try{offtFit()}catch(e){}},30)};
+  const init=()=>{try{const tb=document.getElementById("topbar"),t=document.getElementById("title");if(tb)new MutationObserver(kick).observe(tb,{childList:true});if(t)new MutationObserver(kick).observe(t,{childList:true,subtree:true,characterData:true});const tr=document.getElementById("topRight");if(tr)new MutationObserver(kick).observe(tr,{childList:true})}catch(e){}
+    for(const k of ["online","offline","resize","hashchange"])addEventListener(k,kick);kick()};
   if(document.readyState==="loading")addEventListener("DOMContentLoaded",init);else init()}
 /* ================= 🚪 場景頁的「圖上出口」取代頂欄返回（回饋 845，開發者 11/9：「拿掉所有頁面的返回」「打勾處可以返回星槎」「其他的出入口」；範圍＝有滿版圖的場景頁）=================
    有滿版圖（.shp-page）而且頂欄本來有「‹ 返回」的頁：在圖上放一個出口標籤（門口、樓梯口、地板靠近讀者的那一邊），點了跟原本的返回一模一樣（呼叫 #back 的 onclick，
@@ -30714,6 +30809,26 @@ function mvColorName(){try{const eR=curEra(),EA=eR&&ERA_ARROW[eR.k];let c=EA?EA.
 /* 意見回饋 607（圖文不符盤查）：元朝（彩帶 #2456A6）、五代（毛筆 #23395B）的朝代箭頭也是藍色，跟 Pikafish 建議的藍色箭頭撞色。
    建議的說成「藍色直線箭頭（標 1、2、3）」；實際走的那條，選了朝代就用形狀說（矛形／毛筆／彩帶／連珠箭頭），經典（沒選朝代）才用顏色說 */
 function mvArrowName(){try{const eR=curEra(),EA=eR&&ERA_ARROW[eR.k];if(EA){const n={spear:"矛形箭頭",brush:"毛筆箭頭",ribbon:"彩帶箭頭",dots:"連珠箭頭"}[EA.k];if(n)return n}}catch(e){}return mvColorName()+"箭頭"}
+/* 11/17 第 26 輪 W2：英文介面的檢討頁說明——整段是一個好幾行的文字節點，翻譯器整段翻不出來就整段中文（測試員 D：關鍵一步解說全中文）。
+   英文時：關鍵一步（mkNote 的英文版）前兩行、評等說明直接用英文寫（著法 WXF、評等用 01-board tmxPlainEn），其他行（後果、為什麼、箭頭、兵數說明、分析中）一行一行翻；一般步的評語也一行一行翻。中文照舊 mkNote */
+/* 11/17 第 27 輪 X1（測試員 D）：英文檢討頁逐步看棋的狀態列是 "Reviewing · Move 1/4 C2+7 【Mistake】· 走完後黑…"——後半段局面句整句中文又被截斷、【】是全形 →
+   英文整句自己寫：著法 WXF、評等半形方括號、局面句 "after this move: Black slightly better, ahead by about 1.4 pawns"（evt 的中文交給字典翻）；狀態列加 .dbst，英文可以換行不截斷（07i18n） */
+function dbStatEn(ply,max,cn,g,ev,rv){const T=typeof tmxT==="function"?tmxT:x=>x,W=typeof tmxW==="function"?tmxW:x=>x;
+  if(!ply)return T("開局局面・左右滑棋盤可換步");const q=g&&g.q&&g.q!=="—"?T(g.q):"",e=ev!=null&&typeof evt==="function"?evt(ev):"";
+  return`${rv?"📖 Reviewing · ":""}Move ${ply}/${max} ${W(cn)}`+(q?` [${q}]`:"")+(e?" · "+(q?"after this move: ":"")+T(e):"")}
+function dbNoteLines(s){const T=typeof tmxT==="function"?tmxT:x=>x;return String(s||"").split("\n").map(x=>x.trim()?T(x):x).join("\n")}
+function mkNoteEn(K,arrow,pend){const T=typeof tmxT==="function"?tmxT:x=>x,W=typeof tmxW==="function"?tmxW:x=>x,L=+K.g.loss||0,big=!isFinite(L)||L>=2000,Q=K.q?T(K.q):"",
+    lk=typeof tmxEvLinkEn==="function"?tmxEvLinkEn(K.g.ev,K.side):"",ref=K.bcn?`Pikafish's suggestion "${W(K.bcn)}"`:"Pikafish's top choice",
+    pa=typeof tmxPawnEn==="function"?tmxPawnEn(L):"",df=K.q&&typeof tmxPlainEn==="function"?tmxPlainEn(K.q):"";
+  return[`🔎 The key move of this game: on move ${K.p} you played "${W(K.m.cn)}"${Q?` [${Q}]`:""}`,
+    (big?`This move is far worse than ${ref}`:`This move is worth ${pa} less than ${ref}`)+(Q?` (${Q})`:"")+(lk?`; ${lk}`:"")+".",
+    df?df.replace(/\.$/," (compared only with the best move, not who's better overall)."):"",
+    K.tk&&/^這時(已經有殺棋|原本有明顯優勢)/.test(K.tk)?"Pikafish's comment: "+T(K.tk):"",
+    K.best?`Blue straight arrow = Pikafish's suggested move; ${T(arrow)} = the move you played.`:"",
+    K.rk?"⚠ "+T(K.rk):"",
+    K.why||!K.rk?"💡 "+(K.why?T(K.why):"Want to know why it's bad? Tap 🔍 Analysis below to see the opponent's best reply."):"",
+    L>=30&&!big&&typeof TMX_PW==="string"?T(TMX_PW):"",
+    "Tap ▶ to see the position after your move; to try another move, tap \"↻ Replay from this move\"."].filter(Boolean).join("\n")+(pend&&pend.trim()?"\n"+T(pend.trim()):"")}
 function sugText(g,b){const L=(g.bp&&g.bp.length?g.bp:g.bm?[g.bm]:[]).slice(0,3);if(!L.length)return g.bc?`建議 ${g.bc}（藍色直線箭頭）`:"";
   const out=[];try{const C=window.XQCore;for(const u of L){const f=sqI(u.slice(0,2)),t=sqI(u.slice(2,4));if(!b[f]||!C)break;out.push(C.notate(b,f,t));b=b.slice();b[t]=b[f];b[f]=null}}catch(e){}
   if(!out.length)return`建議 ${g.bc||""}（藍色直線箭頭）`;return(out.length>1?"建議走法（藍色直線箭頭，標 1、2、3）："+out.map((x,i)=>`${i+1}. ${x}`).join("　"):`建議 ${out[0]}（藍色直線箭頭）`)+"\n"+mvArrowName()+"是實際走的"}
@@ -30907,9 +31022,11 @@ function Viewer(v,c,id){
     if(ev==null){const g=FREE?(last&&last.g):ply>0&&gradeOf(ply);if(g&&g.ev!=null)ev=g.ev}
     v.querySelector("#evf").style.width=evPct(ev)+"%";
     const st=v.querySelector("#stat");st.classList.toggle("hot",!!FREE);
-    if(FREE)st.textContent=`🔭 ${FREE.src||"自由走棋"}・${FREE.cur}／${FREE.all.length}`+(ev!=null?"・"+evt(ev):"");
+    if(FREE){const EN=typeof tmxEn==="function"&&tmxEn(),T=EN&&typeof tmxT==="function"?tmxT:x=>x;st.classList.toggle("dbst",!!EN);
+      st.textContent=EN?`🔭 ${T(FREE.src||"自由走棋")} · ${FREE.cur}/${FREE.all.length}`+(ev!=null?" · "+T(evt(ev)):""):`🔭 ${FREE.src||"自由走棋"}・${FREE.cur}／${FREE.all.length}`+(ev!=null?"・"+evt(ev):"")}   /* 第 27 輪 X1：自由走棋的狀態列英文也整句 */
     else if(KM){st.classList.add("hot");st.textContent=`🔎 最關鍵的一步・第 ${KM.p} 步之前，輪到${PLAYER[KM.side]}走`}   /* T01 關鍵步模式 */
-    else{const g=ply>0&&gradeOf(ply);st.textContent=ply===0?"開局局面・左右滑棋盤可換步":`${ply<maxPly(line)?"📖 回顧中・":""}第 ${ply}／${maxPly(line)} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+(g&&g.q?"走完後":"")+evt(ev):"")}   /* 評比循環第 1 輪：評等字後面的局面句加「走完後」，看得出評等（這步跟最好的比）和局面（走完整盤誰好）是兩件事 */
+    else{const g=ply>0&&gradeOf(ply),EN=typeof tmxEn==="function"&&tmxEn();st.classList.toggle("dbst",!!EN);
+      st.textContent=EN?dbStatEn(ply,maxPly(line),ply>0?s[ply-1].cn:"",g,ev,ply<maxPly(line)):ply===0?"開局局面・左右滑棋盤可換步":`${ply<maxPly(line)?"📖 回顧中・":""}第 ${ply}／${maxPly(line)} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+(g&&g.q?"走完後":"")+evt(ev):"")}   /* 評比循環第 1 輪：評等字後面的局面句加「走完後」，看得出評等（這步跟最好的比）和局面（走完整盤誰好）是兩件事 */
     const moves=FREE?FREE.all.map(m=>({...m,q:m.g&&m.g.q,loss:m.g&&m.g.loss,ev:m.g&&m.g.ev})):seq(line,endPly(line)).map((m,i)=>{const g=gradeOf(i+1);return{...m,by:moverAt(i+1),q:g&&g.q,loss:g&&g.loss,ev:g&&g.ev,rr:g&&g.rr,bmt:g&&g.bmt}});   /* ev：評等字泡泡接「走完整盤誰好」（01-board tmxPlain） */   /* rr、bmt：評等字泡泡講失著的具體後果（01-board tmx） */   /* 11/11 v6 第 3 點：帶 loss，點評等字時能說「少了約幾個兵」 */
     renderStrip(v.querySelector("#strip"),moves,FREE?FREE.cur-1:ply-1,FREE?i=>go(i+1):i=>go(i+1));
     // 變著；推演中則改放推演用的按鈕
@@ -30930,10 +31047,10 @@ function Viewer(v,c,id){
       note.textContent=!m?`起點局面（第 ${FREE.base} 步之後）。按 ▶ 或往左滑，一步一步看${FREE.src&&FREE.src.startsWith("Pikafish")?" Pikafish 怎麼預判、在哪裡埋伏":""}；點棋子可以自己改走。`
         :`${FREE.base+FREE.cur}. ${PLAYER[m.by]} ${m.cn}`+(m.tags&&m.tags.length?`【${m.tags.join("、")}】`:"")+(g&&g.q&&g.q!=="—"?`　${g.q}`:"")
          +(g&&g.q&&g.q!=="正著"&&g.q!=="妙著"&&g.bc?`\nPikafish 認為更好的是：${g.bc}`:"")}
-    else if(KM)note.textContent=mkNote(KM)+pendLine();   /* T01 關鍵步模式 */
+    else if(KM)note.textContent=typeof tmxEn==="function"&&tmxEn()?mkNoteEn(KM,mvArrowName(),pendLine()):mkNote(KM)+pendLine();   /* T01 關鍵步模式 */
     else{const ck=owner(line,ply)+"_"+ply,g=ply>0&&gradeOf(ply),
         rk=g&&(g.q==="失著"||g.q==="敗著")&&typeof mflRisk==="function"?mflRisk(boardAt(line,ply-1),moverAt(ply),s[ply-1],g):"";   /* ChatGPT 評審 11/11：失著的具體後果（只在分析線支持時） */
-      note.textContent=([ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",ply>0?gradeNote(g,boardAt(line,ply-1)):"",rk?"⚠ "+rk:""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":""))+pendLine()}
+      {const nt=([ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",ply>0?gradeNote(g,boardAt(line,ply-1)):"",rk?"⚠ "+rk:""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":""))+pendLine();note.textContent=typeof tmxEn==="function"&&tmxEn()?dbNoteLines(nt):nt}}
     if(FREE){acts.first.disabled=acts.prev.disabled=FREE.cur===0;acts.next.disabled=acts.last.disabled=FREE.cur>=FREE.all.length}
     else{acts.first.disabled=acts.prev.disabled=ply===0;acts.next.disabled=acts.last.disabled=ply>=endPly(line)}
     if(!(AN&&AN.k===posKey(pos)))lookupSoon()}
@@ -31185,7 +31302,7 @@ const SHW_SJ={W:768,H:1376,el:45,h:[.075,96,.001],look0:[50,60],home:"home",N:{h
     ob:[[[22,29.5],[78,29.5],[84,71.6],[16,71.6]],[[24,15],[40,15],[40,25],[24,25]],[[11,74],[39,74],[39,88],[11,88]],[[62.5,73.2],[83.5,73.2],[83.5,80.5],[62.5,80.5]],[[55,79],[91,79],[91,87],[55,87]]]}},   /* 回饋 816：點書案桌面空處＝跳上書案（書頁上的列、題簽、紙籤是按鈕，照舊） */   /* 回饋 808：換分類＝跳上書案下方的空處（書頁下面、硯台左邊），不擋清單 */
   HS:{sjGrp:["tb",50,60,"idle"]}};
 const sjKind=c=>["ai","play","pvp","study"].includes(c)?"shouchao":/^(gmgames|xuyinchuan)$/.test(c||"")?"juanzong":(typeof LB_OLD!=="undefined"&&LB_OLD.some(x=>x[0]===c))?"hantao":"xiang";
-const sjDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const sjDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 const sjCn=n=>{const d="〇一二三四五六七八九";n=Math.max(1,n|0);if(n<10)return d[n];if(n<100)return(n>=20?d[Math.floor(n/10)]:"")+"十"+(n%10?d[n%10]:"");return String(n)};
 /* 11/12 第 11 輪觸控測試（touch-stress）：觸控螢幕（粗指標或有觸控點）時，書頁一列、翻頁鍵、書口紙籤都至少 44px 高（面板加 .sj-co）；滑鼠照舊密排。
    觸控時一列 48px（書頁有透視，上頁的列在畫面上會縮到約 0.93 倍，48 才保證至少 44），上頁不放書名列、翻頁列搬到書下面的紙條上，兩頁只留 4px 邊，iPhone SE 每頁放得下 2 列 */
@@ -32541,7 +32658,13 @@ function axmClockSec(t){const m=String(t||"").match(/(\d+):(\d{2})(?::(\d{2}))?/
 function axmClockSay(prev,cur,who){if(prev==null||cur==null||cur>=prev)return"";if(prev>0&&cur<=0)return(who||"你")+"的時間到了，超時";   /* 第 5 輪：到 0 念「超時」（呼叫的地方改用 assertive） */
   for(const t of[300,60,30,10])if(prev>t&&cur<=t)return(who||"你")+"的時間剩 "+(t>=60?t/60+" 分鐘":t+" 秒");return""}
 /* 第 5 輪 P16.5「我在哪裡」（W 鍵）：o＝{page 頁名, focus 焦點說明, game:{turn 輪到誰, sel 選了哪顆, last 上一步}（不是對局頁＝沒有）, map 本頁地圖} */
-function axmWhereText(o){o=o||{};const L=["你在："+(o.page||"象棋千秋")];L.push(o.focus?"焦點在："+o.focus:"焦點還沒停在任何按鈕上，按 Tab 開始");
+/* 11/17 第 25 輪 V2：按 W「我在哪裡」英文介面整段英文（頁名、焦點、輪到誰、選了哪顆、上一步、本頁地圖） */
+function axmEnOn(){try{return typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){return false}}
+function axmEnT(s){try{const t=typeof i18nText==="function"?i18nText(String(s||"")):null;return t!=null&&!/[㐀-鿿]/.test(t)?t:String(s||"")}catch(e){return String(s||"")}}
+function axmWhereEn(o){const L=["You are on: "+(o.page?axmEnT(o.page):"Xiangqi Qianqiu")];L.push(o.focus?"Focus: "+axmEnT(o.focus):"Focus isn't on any button yet; press Tab to start");
+  if(o.game){const g=o.game;if(g.turn)L.push(g.turn==="輪到你"?"Your move":g.turn==="輪到對手"?"Opponent's move":axmEnT(g.turn));L.push(g.sel?"Selected: "+axmEnT(g.sel):"No piece selected");L.push(g.last?"Last move: "+axmEnT(g.last):"No moves yet")}
+  if(o.map)L.push(o.map);return L.join(". ")}
+function axmWhereText(o){o=o||{};if(axmEnOn())return axmWhereEn(o);const L=["你在："+(o.page||"象棋千秋")];L.push(o.focus?"焦點在："+o.focus:"焦點還沒停在任何按鈕上，按 Tab 開始");
   if(o.game){const g=o.game;if(g.turn)L.push(g.turn);L.push(g.sel?"選了："+g.sel:"還沒選子");L.push(g.last?"上一步："+g.last:"還沒有走棋")}
   if(o.map)L.push(o.map);return L.join("。")}
 /* 第 5 輪：螢幕報讀模式第一次打開的介紹（60 字內，ChatGPT 版加上 B 鍵） */
@@ -32626,7 +32749,7 @@ function axmWhereNow(){let page="";try{const ti=document.getElementById("title")
   let map="";try{map=typeof axsPageMap==="function"?axsPageMap(location.hash):""}catch(e){}
   return axmWhereText({page,focus:axmFocusDesc(),game,map})}
 function axmStatusText(){const st=document.getElementById("stat"),o=[];if(st&&st.textContent.trim())o.push(st.textContent.trim());
-  const ck=(id,w)=>{const c=document.querySelector("#"+id+" .clk");if(c&&c.textContent.trim())o.push(w+"剩 "+c.textContent.trim())};ck("pBot","你");ck("pTop","對手");return o.join("。")||"這一頁沒有對局狀態"}
+  const en=axmEnOn(),ck=(id,w)=>{const c=document.querySelector("#"+id+" .clk");if(c&&c.textContent.trim())o.push(en?(w==="你"?"You have ":"Opponent has ")+c.textContent.trim()+" left":w+"剩 "+c.textContent.trim())};ck("pBot","你");ck("pTop","對手");return o.join(en?". ":"。")||(en?"No game status on this page":"這一頁沒有對局狀態")}   /* 第 25 輪 V2：按 S 狀態英文 */
 document.addEventListener("keydown",e=>{if(!axmOn()||e.ctrlKey||e.metaKey||e.altKey||e.defaultPrevented)return;const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))return;
   const k=e.key;
   if(k==="b"||k==="B"){const q=document.querySelector(".ax-sq [data-k][tabindex='0']");if(q){e.preventDefault();q.focus()}}
@@ -32762,7 +32885,11 @@ function axsNote(){return"以左右聲像提示棋子在第幾路，不同動作
 function axsLogLine(e){e=e||{};const p=+e.pan||0,dir=Math.abs(p)<.05?"置中":p<0?"偏左":"偏右";return[axsName(e.kind),e.file?"第 "+e.file+" 路":"",dir,e.st||""].filter(Boolean).join("／")}
 function axsHms(t){const d=new Date(+t||0),z=n=>String(n).padStart(2,"0");return z(d.getHours())+":"+z(d.getMinutes())+":"+z(d.getSeconds())}
 /* 第 5 輪 P16.5 本頁地圖（只給螢幕報讀：換頁時第一次念、W 鍵也念）；方位照 art/docs/a11y-tour.md。沒有地圖的頁回 "" */
-function axsPageMap(hash){const h=String(hash||"#/").split("?")[0];
+/* 11/17 第 25 輪 V2：本頁地圖英文介面直接給英文（整句很長、07i18n 句型對不上）；11b 按 W「我在哪裡」也用這個 */
+const AXS_MAP_EN={"#/":"Page map: the Chu River ferry chess town. At the top center on the river is the Star Raft; upper left on the left bank is Play (the tavern), upper right on the right bank is Learn; in the middle on the left is Today's picks; the stone table on the bridge in the center is pass-and-play; at the very bottom is Quick game; the bottom navigation bar, left to right, is Home, Online, Library, Settings.","#/hub/battle":"Page map: you are standing in the teahouse courtyard. The square table in the center is online play (the lobby); the table at lower left is Play the computer; the table with the piece box at the very bottom left is pass-and-play; the left side room upstairs is the simul, and the storyteller's stage upstairs in the middle is the Qianqiu Cup.","#/lobby":"Page map: at the top is the lobby picture; in the center is random matching, at upper right is the roster, on the left is AI games; below the picture, top to bottom: the Qianqiu Cup, games being played, and the list of online players.","#/hub/learn":"Page map: you are standing in the front yard of the academy; the higher up, the deeper inside. At the bottom, left is the rules of xiangqi and right is the beginner camp; in the middle are Teatime endgames, mistake review and theme training, with My record on the left wall; the lectern in the center is the strength test, upper right is My openings; at the very back is the game library, and above it is move guessing.","#/db":"Page map: the game library is a study. Upper left is grandmasters; upper right is tournament games, with master games in the middle on the right; at the bottom center is continue studying, and lower right is my games.","game":"Page map: you are sitting at the stone table, with the board in the center and your opponent across from you. Top to bottom: your opponent's name card and clock, the board, your name card and clock, the status line, the moves played; the bottom row is the action buttons. Press B to go to the board."};
+function axsEnOn(){try{return typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){return false}}
+function axsPageMap(hash){const z=axsPageMapZh(hash);if(!z||!axsEnOn())return z;const h=String(hash||"#/").split("?")[0],k=h===""||h==="#"?"#/":/^#\/(cpu|arena|pvp|journey\/play|redo\/play)(\/|$)/.test(h)?"game":h;return AXS_MAP_EN[k]||z}
+function axsPageMapZh(hash){const h=String(hash||"#/").split("?")[0];
   if(h==="#/"||h==="#"||h==="")return"本頁地圖：楚河渡口棋鎮。上方正中間河上是雲河星槎；左上左岸是對戰（茶肆），右上右岸是學習；左邊中段是今日推薦；正中間橋上的石桌是身邊同桌；最下面是快速對局；底部導覽列由左到右是首頁、線上、棋譜、設定。";
   if(h==="#/hub/battle")return"本頁地圖：你站在茶樓的天井。正中間的八仙桌是線上對戰（大廳）；左下方的桌子是挑戰電腦；左邊最下面放棋盒的桌子是同桌對弈；二樓左邊廂房是車輪戰，二樓中間說書台是千秋盃。";
   if(h==="#/lobby")return"本頁地圖：上面是大廳的圖，正中間是隨機配對，右上是名冊，左邊是 AI 對戰；圖下面由上到下是千秋盃、正在對戰的棋局、線上棋友名單。";
@@ -32924,7 +33051,8 @@ document.addEventListener("keydown",e=>{if(!axmOn()||e.ctrlKey||e.metaKey||e.alt
 addEventListener("hashchange",()=>{if(!axmOn())return;const S=axsSt(),n=++S.pg;setTimeout(()=>{if(n!==S.pg||!axmOn())return;let nm="";
   try{const ti=document.getElementById("title");nm=axsPageName(ti?ti.textContent:"",location.hash,typeof usePlace==="function"?usePlace:null)}catch(e){}
   const mp=axsPageMap(location.hash),one=mp&&!S.maps.has(mp);if(one)S.maps.add(mp);   /* 第 5 輪 P16.5：主要頁面第一次進來多念「本頁地圖」，之後按 W 再聽 */
-  if(nm)try{axSay("頁面："+nm+(one?"。"+mp:""))}catch(e){}},500)});
+  if(nm)try{if(axsEnOn())axSay("Page: "+axsEnT(nm)+(one?". "+mp:""));else axSay("頁面："+nm+(one?"。"+mp:""))}catch(e){}},500)});   /* 第 25 輪 V2：英文念 Page: …（頁名翻好、地圖是英文） */
+function axsEnT(s){try{const t=typeof i18nText==="function"?i18nText(String(s||"")):null;return t!=null&&!/[㐀-鿿]/.test(t)?t:String(s||"")}catch(e){return String(s||"")}}
 /* P21.3 長時間載入：象棋引擎（XQEngine 在別的 script，晚一點才有就晚一點包）、等圖的水墨畫面（#preov）、畫面上短短的「載入中…／讀取中…／下載中…」 */
 function axsWrapEngine(){const X=window.XQEngine;if(!X||X._axs)return;X._axs=1;const o={load:X.load,prefetch:X.prefetch,search:X.search};
   if(o.prefetch)X.prefetch=function(){const p=o.prefetch.apply(this,arguments);return X.ready?p:axsBusy("象棋引擎下載",p)};
@@ -34240,7 +34368,7 @@ const I18N_EN={
   "↩ 掀簾・回雲弈閣":"↩ Back to Play",
   "↩ 掀簾・回觀星閣":"↩ Back to Play",
   /* 頂欄、底欄、共用按鈕 */
-  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","去園子下棋（3D）":"Play in the garden (3D)","回棋盤模式":"Back to board mode","正在對戰":"Playing now","切到 3D 星盤":"Switch to 3D star board","回平面棋盤":"Back to 2D board",   /* 第 23 輪 N23-1：星門圍城「⋯」那顆（外掛字典還沒載到也翻得出） */"更多":"More",
+  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","去園子下棋（3D）":"Play in the garden (3D)","回棋盤模式":"Back to board mode","正在對戰":"Playing now","📴 網路斷了，已取消找對手；連上網路再配對":"📴 The connection dropped, so matching was canceled; match again once you're online","📴 沒有網路：線上大廳要連上網路才能用":"📴 No internet: the online lobby needs a connection","切到 3D 星盤":"Switch to 3D star board","回平面棋盤":"Back to 2D board",   /* 第 23 輪 N23-1：星門圍城「⋯」那顆（外掛字典還沒載到也翻得出） */"更多":"More",
   "關閉":"Close","取消":"Cancel","確定":"OK","繼續":"Continue","結束":"End","下一步":"Next","上一步":"Previous","自動播放":"Autoplay","分享給朋友":"Share with friends",
   "開啟螢幕報讀與鍵盤模式":"Turn on screen reader & keyboard mode","螢幕報讀與鍵盤模式：開著（按一下關掉）":"Screen reader & keyboard mode: on (tap to turn off)",   /* 0540 驗收：英文讀屏第一個碰到的按鈕 */
   "回報問題":"Report a problem","意見回饋":"Feedback","我的角色":"My character","加到主畫面":"Add to Home Screen","線上大廳":"Online lobby","走回雅間":"Back to the private room",
@@ -34376,7 +34504,7 @@ const I18N_EN={
   "幻影棋客":"Phantom Player","笑面掌櫃":"Smiling Shopkeeper","掌櫃真功夫":"Shopkeeper, full strength",
   "掌櫃拿出真本事：強度照公開大師對局的勝率校準過，不跟著等級變。":"The Shopkeeper plays for real: his strength is calibrated against win rates in public master games and does not follow the level.","小帥":"Xiao Shuai","小師妹":"Xiao Shimei","齊轍":"Qi Zhe","田飛燕":"Tian Feiyan",
   "雷借花":"Lei Jiehua","駱躍梅":"Luo Yuemei","電腦":"Computer","對方":"Opponent","你":"You","紅方":"Red","黑方":"Black","職業頂尖":"top professional",
-  "練習":"Practice","朝代擂台":"Dynasty arena","走去驛站":"Walk to the inn","這盤已經結束":"This game is over","還沒輪到你":"It's not your turn yet","聲控走棋":"Voice moves",
+  "練習":"Practice","朝代擂台":"Dynasty Arena","走去驛站":"Walk to the inn","這盤已經結束":"This game is over","還沒輪到你":"It's not your turn yet","聲控走棋":"Voice moves",
   "驛站的棋友":"Inn player","石桌往事":"Stone Table Tales","園子裡的路人棋友":"Garden passer-by","黑洞星盤":"Black-hole star board","不計分":"unrated","幻譜星門":"Phantom star gate",
   "第十四顆":"The fourteenth","鏡像":"Mirror","星樞":"Star Pivot","🏮 官階":"🏮 Rank","官階":"Rank","🏛 官階":"🏛 Rank",
   /* 段位與難度說明（local.js 的 RANKS、LVDESC） */
@@ -34426,7 +34554,7 @@ const I18N_EN={
   "返回、更多、關閉鍵移到左下角，方便左手拇指按；棋盤和文字方向不變":"Back, More and Close move to the bottom left for your left thumb; the board and text direction stay the same","對局只留棋盤、名字、棋鐘和著法，適合直播、截圖（Esc 或右上角 ✕ 還原）":"Games show only the board, names, clocks and moves, good for streaming and screenshots (Esc or the ✕ at top right restores)",
   "電腦連按兩下 Esc、手機三指點一下，畫面換成試算表並靜音":"Press Esc twice on a computer or tap with three fingers on a phone: the screen turns into a spreadsheet and goes silent","落子、吃子、將軍、點錯時手機震一下（Android 有效；iPhone 的瀏覽器不支援震動）":"The phone vibrates on moves, captures, checks and mistaps (works on Android; iPhone browsers don't support vibration)",
   "黑子反白、提示加形狀，色弱也分得清":"Black pieces inverted and hints get shapes, easy to tell apart even with color blindness","色弱也分得清":"easy to tell apart even with color blindness","黑子加黑環、上一步改朱橘加外框、評語和長條加符號；紅綠色弱也分得清，3D 園子也套用":"Black pieces get a dark ring, the last move turns vermilion with an outline, and ratings and bars get symbols; works for red-green color blindness, in the 3D garden too",
-  "下棋時只留平面棋盤：收起 3D 園子、開局卷軸、吃子水墨字和小帥（朝代擂台除外）":"Only the flat board while playing: hides the 3D garden, opening scrolls, ink capture marks and Xiao Shuai (except in the Dynasty arena)","下棋時收起背景動畫與裝飾":"hides background animations and decorations while playing",
+  "下棋時只留平面棋盤：收起 3D 園子、開局卷軸、吃子水墨字和小帥（朝代擂台除外）":"Only the flat board while playing: hides the 3D garden, opening scrolls, ink capture marks and Xiao Shuai (except in the Dynasty Arena)","下棋時收起背景動畫與裝飾":"hides background animations and decorations while playing",
   "看我的 3D 角色":"View my 3D character","存檔":"Save","改名":"Rename","本週學習週報":"This week's learning report","最近 7 天學了什麼，可以存成圖片給家長看":"What you learned in the last 7 days; save it as an image for parents","顯示":"Display",
   "顯示 3D 象棋小人":"Show 3D piece buddy","圓滾滾的棋子小人，跟著朝代換造型":"A round little piece buddy that changes outfits with the dynasty","大小":"Size","點一下":"Tap","表演一個動作":"Performs an action","點兩下":"Double-tap","出去散步":"Goes for a walk",
   "停放時":"when parked","長按":"Long press","拖動":"Drag","放到任何地方":"Put it anywhere","點三下":"Triple-tap","鞠躬":"Bows","先藏起來":"and hides for now","藏起來之後，打開上面的「顯示 3D 象棋小人」就會回來":"After hiding, turn on \"Show 3D piece buddy\" above to bring it back",
@@ -35334,6 +35462,7 @@ var I18N_EX={},I18N_PATX=[],I18N_EXN=0;   /* 外掛字典與句型（var：i18nT
 function i18nExtPat(src,tpl,ty){const re=new RegExp(src);ty=String(ty||"");
   return[re,(m,t)=>{let bad=false;const out=String(tpl).replace(/\$(\d)/g,(x,d)=>{const g=m[+d]==null?"":String(m[+d]),k=ty[d-1];
     if(k==="t"){const r=t(g);if(r==null){bad=true;return""}return r}
+    if(k==="p"){const L=Object.prototype.hasOwnProperty.call(I18N_PL,g)?I18N_PL[g]:null;if(!L){bad=true;return""}return I18N_PN[L]}   /* 11/17 第 26 輪 W2：p＝棋子名（帥將仕士相象傌馬俥車炮砲兵卒 → General／Advisor…；不是棋子名整句不算）。舊版 App 不認得 p 就照抄中文、整句翻不出，跟沒加一樣 */
     if(k==="n"){const r=I18N_CJK.test(g)?t(g):g;if(r!=null&&!I18N_CJK.test(r))return r;if(g.length>12||/[\s，、；：。！？（）「」・…]/.test(g)){bad=true;return""}return I18N_NM0+g+I18N_NM1}return g});   /* 人名留原文只限 12 字內、沒有標點空白（不然整段翻不出的中文會被當人名放過） */return bad?null:out}]}
 function i18nExtMerge(o){if(!o||typeof o!=="object")return 0;let n=0;
   if(o.en)for(const k of Object.keys(o.en))if(!I18N_GUARD.includes(k)&&!Object.prototype.hasOwnProperty.call(I18N_EN,k)&&typeof o.en[k]==="string"){I18N_EX[k]=o.en[k];n++}
@@ -35501,7 +35630,20 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
   "html[lang=en] .opfx .opc{white-space:normal;max-width:92vw;box-sizing:border-box}html[lang=en] .opfx .txt b{font-size:.62em;line-height:1.12;text-align:center;white-space:normal}html[lang=en] .opfx .who{letter-spacing:.12em}",
   /* 11/17 第 24 輪 U6：名冊頁「Back to the courtyard」右邊被切、攤開的書句尾被截、紅名帖「Player…」被截 → 英文可以換行、靠右的標籤往左對齊 */
   "html[lang=en] .mf-hs span{white-space:normal;max-width:34vw;text-align:center;font-size:12px;line-height:1.2}html[lang=en] #mfDoor span{left:auto;right:0;transform:translateY(-100%)}",
-  "html[lang=en] .mf-bd b,html[lang=en] .mf-bd .mf-bm{white-space:normal;overflow:visible;text-overflow:clip;font-size:12px;line-height:1.3}html[lang=en] .mf-me b{white-space:normal;font-size:13px;line-height:1.15;overflow-wrap:anywhere;text-overflow:clip}",
+  "html[lang=en] .mf-bd b,html[lang=en] .mf-bd .mf-bm{white-space:normal;overflow:visible;text-overflow:clip;font-size:11.5px;line-height:1.22}html[lang=en] .mf-me b{white-space:nowrap;font-size:11.5px;line-height:1.15;letter-spacing:0;overflow:visible;text-overflow:clip}",
+  /* 11/17 第 25 輪 V4：看板最後一行被下緣切半（字再小一點、行距收）；紅名帖「Player 984D」換行後第二行被下面的 Free 蓋住 → 不換行、字縮小 */
+  /* 11/17 第 25 輪 V5：375 寬斷網時英文標題被拆成「Xiangqi / Qianq… / u」，u 壓在時辰上 → 窄螢幕英文標題不在字中間斷行，最多兩行、超過就藏掉 */
+  /* 11/17 第 26 輪 W1（V5 的退步）：全站 * 是 border-box，頂欄有時辰鐘時 #title 底下留 36px 給鐘的小字（07w8 #topbar.clk-on #title），max-height:2.35em 把這 36px 也算進去 → 標題只剩 40px 高、頂欄壓扁成 52px、鐘被推出畫面上緣、標題疊在時辰字上 → 有鐘時上限改成「兩行 20px＋底下 36px」＝76px（跟 1514 一樣），沒鐘時才用 2.35em */
+  "@media (max-width:480px){html[lang=en] #title{overflow-wrap:normal!important;word-break:normal;max-height:2.35em;overflow:hidden!important}html[lang=en] #topbar.clk-on #title{max-height:76px}}",
+  /* 11/17 第 27 輪 X3（測試員 D）：#/lobby、#/db、#/settings 這種「標題不顯示、只留時辰鐘」的頁（07w8 clk-nt，標題字是透明的），英文兩行規則照樣把看不見的標題撐成兩行、頂欄 83px，上面空一塊 → 這種頁標題只排一行（頂欄跟中文一樣 63px） */
+  "html[lang=en] #topbar.clk-nt #title{white-space:nowrap!important;-webkit-line-clamp:1;max-height:56px}",
+  /* 11/17 第 27 輪 N27-1（測試員 B，第 25 輪 V5 的退步）：標題位置放的是按鈕（挑戰電腦「Ranked／Practice room」分頁鈕 .cpu-seg 高 44px），V5 的 max-height:2.35em（37.6px）把鈕的下半截切掉 →
+     標題裡有按鈕、選單、分頁的不限高（V5 只管純文字標題）；選擇器強度蓋過 V5 和有時辰鐘時的 76px */
+  "@media (max-width:480px){html[lang=en] #topbar #title:has(button,select,[role=tablist]){max-height:none!important}}",
+  /* 11/17 第 27 輪 X1：英文檢討頁的狀態列（10-db .dbst）句子比中文長，可以換行、不截斷 */
+  "html[lang=en] #stat.dbst{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3;padding-top:2px;padding-bottom:2px}",
+  /* 11/17 第 25 輪 R25-5：英文「🧩 The Fragment Hall Is Open」橫幅（07q2 .cpl-door，右下角）太寬，往左蓋到左下的出口 → 英文縮字、可以換行、最寬 40vw，留在右邊 */
+  "html[lang=en] .cpl-door{font-size:13px;padding:8px 12px;max-width:40vw;white-space:normal;line-height:1.2;text-align:center}",
   "html[lang=en] .shp-spot.ex-spot{max-width:min(52vw,210px)}html[lang=en] .shp-spot.ex-spot b{white-space:normal;font-size:12.5px;line-height:1.2;letter-spacing:0;text-align:center}",
   "html[lang=en] #stmOv .here b{margin-left:.3em}"].join("\n");
 
