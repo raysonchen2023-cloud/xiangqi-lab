@@ -1613,7 +1613,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261117-1427";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261117-1514";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3103,7 +3103,11 @@ function topMore(tr,right){try{topMoreRun.w=false}catch(e){}   /* 第 23 輪 R23
    一張選單只認第一次（b.dataset.tmr）；topMoreRun 等 popstate 的期間（topMoreRun.w）別的觸發也一律不理，選單項目只做一次 */
 function topMoreItem(b,f,after){if(b&&b.dataset){if(b.dataset.tmr)return false;b.dataset.tmr="1"}return topMoreRun(f,after)}
 function topMoreRun(f,after){if(topMoreRun.w)return false;const run=()=>{setTimeout(()=>{try{if(typeof f==="function")f()}finally{if(typeof after==="function"){setTimeout(after,0);setTimeout(after,600)}}},0)};let s=null;try{s=history.state}catch(e){}
-  if(!(s&&s.xqSheet)){closeSheet();run();return true}closeSheet(true);topMoreRun.w=true;let done=false;const go=()=>{if(done)return;done=true;topMoreRun.w=false;removeEventListener("popstate",go);run()};addEventListener("popstate",go);try{history.back()}catch(e){go()}return true}
+  if(!(s&&s.xqSheet)){closeSheet();run();return true}closeSheet(true);topMoreRun.w=true;let done=false;const go=()=>{if(done)return;done=true;topMoreRun.w=false;topMoreRun.cx=null;removeEventListener("popstate",go);run()};
+  /* 11/17 第 24 輪（測試員 E 觀察 97）：popstate 一直不來，同一頁的「⋯」會一直不理點選 → 1.5 秒後先解除鎖定（不做選單項目，免得回到「晚到的退上一頁把網址蓋回去」）；
+     popstate 真的來了照樣做；解鎖後又按了別的選單項目，舊的這筆就取消（topMoreRun.cx），不會兩項都做 */
+  try{if(typeof topMoreRun.cx==="function")topMoreRun.cx()}catch(e){}topMoreRun.cx=()=>{done=true;removeEventListener("popstate",go)};setTimeout(()=>{if(!done)topMoreRun.w=false},1500);
+  addEventListener("popstate",go);try{history.back()}catch(e){go()}return true}
 function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").children)b.classList.toggle("on",b.dataset.go===on)}
 for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);if(b.dataset.go==="#/")goHome();else location.hash=b.dataset.go};   /* 意見回饋 607：底部「首頁」也是退回首頁 */
 function route(){
@@ -3396,7 +3400,7 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
         /* 開發者決定（Gemini 遊戲化審閱）：熟面孔——對戰過的棋友（本機的線上戰績記著 ID 和名字），在線上時亮起來、點一下就能邀請 */
         const FH=(()=>{let h=[];try{h=(XQNet.rating().hist||[])}catch(e){}const seen=new Set(),out=[];for(const x of h){if(!x.oid||seen.has(x.oid)||x.oid===XQNet.me().id||(XQNet.blocked&&XQNet.blocked(x.oid)))continue;seen.add(x.oid);out.push(x);if(out.length>=12)break}return out})();   /* 回饋 841（開發者 11/9 選：大廳檢舉封鎖）：封鎖的人不列進熟面孔 */
         const fam=FH.length?`<div class="sec-t">${ETIMG("o_familiar","","👥")} 熟面孔（${FH.filter(x=>ps.some(p=>p.id===x.oid)).length}／${FH.length} 在線上）</div><div class="famg">${FH.map(x=>{const on=ps.find(p=>p.id===x.oid),busy=on&&on.st==="playing";return`<${on?`span data-p="${esc(on.id)}"`:"span"} class="famc${on?" on":""}"><b>${on?"🟢":"⚪"} ${esc(on?lbnShow(on):lbnShow(x.oid,x.opp))}${devBotTag(x.oid)}</b><small>${on?(busy?"對戰中":on.st==="watching"?"觀戰中":"在線上・點一下邀請"):"上次 "+(x.res==="w"?"你贏":x.res==="l"?"你輸":"和棋")+"・"+new Date(x.at).toLocaleDateString()}</small></${"span"}>`}).join("")}</div>`:"";
-        return vis+fam+`<div class="sec-t">${ETIMG("h_battle","","⚔")} 正在對戰（${rest.length+(G?1:0)} 盤）${cloudLegend(anyBot)}</div>`+(mine||rest.length?mine+rest.map(card).join(""):`<div class="card muted" style="margin-bottom:8px">${up?"目前沒有人在對戰，有人開始下棋就會出現在這裡。":"連線中…"}</div>`)+
+        return vis+fam+`<div class="sec-t" data-sec="live">${ETIMG("h_battle","","⚔")} 正在對戰（${rest.length+(G?1:0)} 盤）${cloudLegend(anyBot)}</div>`+(mine||rest.length?mine+rest.map(card).join(""):`<div class="card muted" style="margin-bottom:8px">${up?"目前沒有人在對戰，有人開始下棋就會出現在這裡。":"連線中…"}</div>`)+
           `<div class="sec-t">${ETIMG("o_invite","","🟢")} 可以邀請的棋友（${free.filter(p=>p.st==="idle"||p.st==="seeking").length}）</div>`+
           (free.length?free.map(p=>`<div class="card row" data-p="${esc(p.id)}" role="button" tabindex="0" data-axk style="justify-content:space-between;margin-bottom:8px;cursor:pointer"><span style="flex:1;min-width:0"><span class="gc-p"><b>${esc(lbnShow(p))}</b>${cupBadge(p.id)}<small>${esc(XQNet.rankOf(p.pts))}${p.tc?`・⏱${+p.tc}分`:""}</small></span><span class="muted gc-sub">${p.st==="idle"&&p.doing?"📖 "+esc(String(p.doing).slice(0,10))+"中":ST[p.st]||""}${p.city?"・📍"+esc(p.city):""}</span></span>
             ${p.st==="idle"||p.st==="seeking"?`<button class="pill pill-main" data-i="${esc(p.id)}" style="padding:6px 12px">⚔ 邀請對戰</button>`:""}</div>`).join("")
@@ -23823,7 +23827,7 @@ function mfWrap(v){const dw=v.querySelector(".lm-dw"),lb=v.querySelector("#lb"),
     const np=S.pages.length;nav.querySelector("span").textContent=`第 ${S.pi+1}／${np} 頁`;nav.querySelector('[data-t="-1"]').disabled=S.pi<=0;nav.querySelector('[data-t="1"]').disabled=S.pi>=np-1;
     board();mine();cup();box()}
   /* 水牌：正在對戰 */
-  function board(){const H=bd.clientHeight||80,n=Math.max(1,Math.floor((H-8)/20)-1),sec=[...lb.querySelectorAll(".sec-t")].find(x=>x.textContent.includes("正在對戰"));
+  function board(){const H=bd.clientHeight||80,n=Math.max(1,Math.floor((H-8)/20)-1),sec=lb.querySelector('.sec-t[data-sec="live"]')||[...lb.querySelectorAll(".sec-t")].find(x=>x.textContent.includes("正在對戰"));   /* 11/17 第 24 輪 U5：照 02-shell 的 data-sec 找（英文介面那行字已經翻成 Playing now），「正在對戰」才能從 I18N_GUARD 拿掉 */
     const my=lb.querySelector("#myg"),G=[...lb.querySelectorAll("[data-w]")].map(w=>{const c=w.closest(".card"),ns=c?[...c.querySelectorAll(".gc-l1 .gc-p b")].map(b=>mfTx(b.textContent)):[],ws=c&&c.querySelector("[data-ws]");return{w,ws,t:ns.join(" 對 ")||"一盤棋",c:ws?(mfTx(ws.textContent).match(/\d+/)||[""])[0]:""}});
     const L=[];if(my)L.push(`<div class="mf-bl mine"><button type="button" data-my="1">我的對局・回到戰場</button></div>`);
     const room=n-L.length,show=G.length>room?G.slice(0,Math.max(0,room-1)):G;
@@ -28846,7 +28850,7 @@ function clkCss(){if(document.getElementById("clkCss"))return;const s=document.c
 html.gapfix #topbar.clk-on{padding-top:calc(var(--safeT,0px) + 30px)}   /* 回饋 840（開發者 11/9「修正時鐘」截圖：iPhone 主畫面 App 星晷擠進瀏海、壓到標題）：02-shell 的 gapfix 會把頂欄往下推 34px，這裡原本用 #topbar 蓋掉了它，iPhone 上星晷就跑到狀態列底下；有 gapfix 時照樣多留這段 */
 #topbar.clk-nt #title{color:transparent;text-shadow:none}#topbar.clk-nt #title *{visibility:hidden}
 #topbar.clk-on #title{align-self:stretch;font-size:17px;line-height:20px;padding-left:62px;padding-bottom:36px}   /* 回饋 840b（開發者 11/9「時鐘還是無法完整顯示」）：改成完整小圓盤（56px）放在標題左邊，標題往右讓位；底下兩行小字＝現在的時辰、第幾天・節氣 */
-.clk-box{position:absolute;bottom:2px;display:none;align-items:flex-end;gap:8px;overflow:hidden;z-index:1}#topbar.clk-on .clk-box{display:flex}
+.clk-box{position:absolute;bottom:2px;display:none;align-items:flex-end;gap:8px;overflow:hidden;z-index:1}#topbar.clk-on .clk-box{display:flex}#topbar #offChip{position:relative;z-index:2}
 .clk-sm{display:grid;flex:0 1 auto;min-width:0;cursor:pointer;padding-bottom:1px;font:600 11.5px/1.3 var(--serif,serif);letter-spacing:.02em;opacity:.9;text-align:left}.clk-sm>span{grid-area:1/1;transition:opacity 1.1s ease}.clk-sm .clk-sl>span{display:block;white-space:nowrap}.clk-sm .clk-sl>b{display:block;font-size:15px;line-height:1.2;font-weight:900;letter-spacing:.06em;color:var(--accent,#a3361f)}.clk-sm .clk-ss{white-space:nowrap}
 .clk-sm .clk-ss{opacity:0;align-self:end;font-size:12.5px}.clk-box.ship .clk-sm .clk-sl{opacity:0}.clk-box.ship .clk-sm .clk-ss{opacity:1}
 .clk-dial{display:block;flex:none;width:56px;height:56px;border-radius:50%;margin:0;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -29357,7 +29361,7 @@ function CpuGame(v,practicePage,mode){
           let b=null,all=true;ms.forEach((m,i)=>{if(m.by!==hu)return;const q=qNow(m);if(!q)all=false;if((q==="失著"||q==="敗著")&&(!b||(+m.loss||0)>b.loss))b={ply:i+1,cn:m.cn||"",q,loss:+m.loss||0,bc:m.bc||"",bm:m.bm||"",rr:m.rr,bmt:m.bmt}});return{b,all}};
         const show=b=>{const e=document.querySelector(".modal.res .reslook");if(!e)return false;seen=true;const rk=typeof mflRisk==="function"?mflRisk(null,hu,null,b):"";if(e.dataset.ply===b.ply+"|"+rk)return true;e.dataset.ply=b.ply+"|"+rk;
           if(mf){if(!rk){e.hidden=true;return true}e.textContent=`⚠ 第 ${b.ply} 步${b.cn?"「"+b.cn+"」":""}：${rk}`;e.style.cssText="width:100%;max-width:300px;box-sizing:border-box;margin:8px auto 2px;font-size:14px;line-height:1.6;text-align:left";e.hidden=false;return true}
-          e.innerHTML=`<span>🔎 這盤先看這一步：<b>第 ${b.ply} 步${b.cn?"「"+esc(b.cn)+"」":""}</b>（${b.q}）${rk?`<br><small>⚠ ${esc(rk)}</small>`:""}</span><span style="flex:none;color:var(--accent);font-weight:900">看 ›</span>`;
+          e.innerHTML=rdxEn()?`<span>🔎 Look at this move first: <b>move ${b.ply}${b.cn?" \""+esc(rdxMv(b.cn))+"\"":""}</b> (${esc(rdxQ(b.q))})${rk?`<br><small>⚠ ${esc(rk)}</small>`:""}</span><span style="flex:none;color:var(--accent);font-weight:900">View ›</span>`:`<span>🔎 這盤先看這一步：<b>第 ${b.ply} 步${b.cn?"「"+esc(b.cn)+"」":""}</b>（${b.q}）${rk?`<br><small>⚠ ${esc(rk)}</small>`:""}</span><span style="flex:none;color:var(--accent);font-weight:900">看 ›</span>`;   /* 11/17 第 24 輪 U2：英文整句寫（原本 first:move、"C2+1"(Mistake) 黏在一起，按鈕是「看 ›」）；⚠ 那行交給字典 */
           e.style.cssText="display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;max-width:260px;margin:10px auto 4px;padding:10px 12px;border:1px solid var(--accent);border-radius:12px;background:var(--bg);color:inherit;font:inherit;font-size:14.5px;line-height:1.5;text-align:left;cursor:pointer";e.hidden=false;
           e.onclick=()=>{const m=e.closest(".modal");if(m)m.remove();vibrate(5);mflKeySet(gid,hu,b,lxNow);review(false,gid,{ply:b.ply-1,why:"這盤先看這一步（"+b.q+"）",mfl:1})};return true};   /* ChatGPT 改善單 T01：跟主流程同一個關鍵步模式（停在那一步之前、兩條箭頭、白話為什麼、從這步重下） */
         const tick=()=>{n++;const has=!!document.querySelector(".modal.res .reslook");if(has)seen=true;if((seen&&!has)||(!seen&&n>5))return;
@@ -33978,7 +33982,7 @@ function dqResult(v,k,t){const r=dqRec(k),T=dqStats(t),sl=DQ.SLOT[dqSlot(k)];
    前綴 i18n／I18N_；測試 xiangqi-lab/tools/test-i18n.js；include 在 m.html 最後（07dq-daily.js 後面）。 */
 /* #I18N-PURE-BEGIN：到 #I18N-PURE-END 是不碰畫面的資料與純函式，test-i18n.js 用 vm 直接載入 */
 const I18N_CJK=/[㐀-鿿豈-﫿]/;
-const I18N_GUARD=["隱私","進階","估計棋力","正在對戰","取代這支手機"];   /* 11/17 開發者選單（第 10 輪）：官階拿掉——05-settings 的官階標題標了 data-sm-title，07s2 照標記找，英文翻成 Rank */
+const I18N_GUARD=["隱私","進階","估計棋力","取代這支手機"];   /* 11/17 第 24 輪 U5：正在對戰拿掉（02-shell 那一區標 data-sec="live"，07x3 名冊照標記找）；英文名冊的水牌標題、清單標題才翻得到 */   /* 11/17 開發者選單（第 10 輪）：官階拿掉——05-settings 的官階標題標了 data-sm-title，07s2 照標記找，英文翻成 Rank */
 /* 象棋術語用通行英文；WXF 字母 K A E H R C P */
 const I18N_PL={"帥":"K","將":"K","仕":"A","士":"A","相":"E","象":"E","傌":"H","馬":"H","俥":"R","車":"R","炮":"C","砲":"C","包":"C","兵":"P","卒":"P"};
 const I18N_PN={K:"General",A:"Advisor",E:"Elephant",H:"Horse",R:"Chariot",C:"Cannon",P:"Soldier"};
@@ -34236,7 +34240,7 @@ const I18N_EN={
   "↩ 掀簾・回雲弈閣":"↩ Back to Play",
   "↩ 掀簾・回觀星閣":"↩ Back to Play",
   /* 頂欄、底欄、共用按鈕 */
-  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","去園子下棋（3D）":"Play in the garden (3D)","回棋盤模式":"Back to board mode","切到 3D 星盤":"Switch to 3D star board","回平面棋盤":"Back to 2D board",   /* 第 23 輪 N23-1：星門圍城「⋯」那顆（外掛字典還沒載到也翻得出） */"更多":"More",
+  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","去園子下棋（3D）":"Play in the garden (3D)","回棋盤模式":"Back to board mode","正在對戰":"Playing now","切到 3D 星盤":"Switch to 3D star board","回平面棋盤":"Back to 2D board",   /* 第 23 輪 N23-1：星門圍城「⋯」那顆（外掛字典還沒載到也翻得出） */"更多":"More",
   "關閉":"Close","取消":"Cancel","確定":"OK","繼續":"Continue","結束":"End","下一步":"Next","上一步":"Previous","自動播放":"Autoplay","分享給朋友":"Share with friends",
   "開啟螢幕報讀與鍵盤模式":"Turn on screen reader & keyboard mode","螢幕報讀與鍵盤模式：開著（按一下關掉）":"Screen reader & keyboard mode: on (tap to turn off)",   /* 0540 驗收：英文讀屏第一個碰到的按鈕 */
   "回報問題":"Report a problem","意見回饋":"Feedback","我的角色":"My character","加到主畫面":"Add to Home Screen","線上大廳":"Online lobby","走回雅間":"Back to the private room",
@@ -35491,6 +35495,13 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
   "html[lang=en] #stmOv .lb{z-index:1;white-space:normal!important;text-align:center;min-width:calc(7.5cqw + 2px);max-width:27cqw;min-height:calc(19.8cqw + 2px);margin:-1px 0 0 -1px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;line-height:1.15}",
   "html[lang=en] #stmOv .lb[data-l=acad],html[lang=en] #stmOv .lb[data-l=svc]{margin:-1px -1px 0 0}",
   /* 11/17 第 22 輪 S2：大廳左下出口「↩ Back to Cloud Chess Pavilion」比按鈕寬、左右被裁 → 英文出口標籤可以換行、字小一點，整段留在按鈕裡 */
+  /* 11/17 第 24 輪 U1：斷網時頂欄的「📴 Offline」牌太寬，標題被擠成直排、牌子中間被時辰鐘蓋住 → 窄螢幕英文只留 📴（讀螢幕名稱照舊完整），07w8 讓牌子疊在時辰鐘上面 */
+  "@media (max-width:480px){html[lang=en] #offChip{font-size:0!important;padding:6px 8px!important}html[lang=en] #offChip::before{content:\"📴\";font-size:15px;line-height:1}}",
+  /* 11/17 第 24 輪 U3：開局名橫幅英文太長（Elephant Opening 左右被切）→ 字縮小、可以換行 */
+  "html[lang=en] .opfx .opc{white-space:normal;max-width:92vw;box-sizing:border-box}html[lang=en] .opfx .txt b{font-size:.62em;line-height:1.12;text-align:center;white-space:normal}html[lang=en] .opfx .who{letter-spacing:.12em}",
+  /* 11/17 第 24 輪 U6：名冊頁「Back to the courtyard」右邊被切、攤開的書句尾被截、紅名帖「Player…」被截 → 英文可以換行、靠右的標籤往左對齊 */
+  "html[lang=en] .mf-hs span{white-space:normal;max-width:34vw;text-align:center;font-size:12px;line-height:1.2}html[lang=en] #mfDoor span{left:auto;right:0;transform:translateY(-100%)}",
+  "html[lang=en] .mf-bd b,html[lang=en] .mf-bd .mf-bm{white-space:normal;overflow:visible;text-overflow:clip;font-size:12px;line-height:1.3}html[lang=en] .mf-me b{white-space:normal;font-size:13px;line-height:1.15;overflow-wrap:anywhere;text-overflow:clip}",
   "html[lang=en] .shp-spot.ex-spot{max-width:min(52vw,210px)}html[lang=en] .shp-spot.ex-spot b{white-space:normal;font-size:12.5px;line-height:1.2;letter-spacing:0;text-align:center}",
   "html[lang=en] #stmOv .here b{margin-left:.3em}"].join("\n");
 

@@ -1,6 +1,6 @@
 # 連線與資料架構
 
-最後核對：2026 年 11 月 17 日（對應版本 20261117-1427）。連線、同步、簽名、換手機各節是 11/11～11/13 逐項對照 App 程式寫的（`xiangqi-lab/src/net.js`、`site/sw.js`、`m/05-settings.js`、`m/05b-save.js`、`m/07x4-lobbysafe.js`、`tools/mqtt-prune.js`），這次沒有改；11/17 補了「App 玩法模組」「電腦引擎的分工」「只放 CDN 的資料」三節（對照 `m/07sg2-siege2.js`、`m/07pty-party.js`、`m/07gxt-guanxing.js`、`m/07gxd-daily.js`、`m/07xsm-ximarket.js`、`src/local.js`、`src/varengine.js` 等）。
+最後核對：2026 年 11 月 17 日（對應版本 20261117-1514）。連線、同步、簽名、換手機各節是 11/11～11/13 逐項對照 App 程式寫的（`xiangqi-lab/src/net.js`、`site/sw.js`、`m/05-settings.js`、`m/05b-save.js`、`m/07x4-lobbysafe.js`、`tools/mqtt-prune.js`），這次沒有改；11/17 補了「App 玩法模組」「電腦引擎的分工」「只放 CDN 的資料」三節（對照 `m/07sg2-siege2.js`、`m/07pty-party.js`、`m/07gxt-guanxing.js`、`m/07gxd-daily.js`、`m/07xsm-ximarket.js`、`src/local.js`、`src/varengine.js` 等）。
 
 這份說明《象棋千秋》哪些東西在手機、哪些經過網路、斷線或伺服器出事時各功能會怎樣，以及**哪些事目前不保證**。隱私面（送什麼、留多久、怎麼刪）請看「🔒 隱私與資料使用」。
 
