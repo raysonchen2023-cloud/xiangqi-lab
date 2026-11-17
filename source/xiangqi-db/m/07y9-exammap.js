@@ -15,7 +15,7 @@ const EX2_SCROLL=[["ex2S0","#go",385,718,372,652,"我是新手"],["ex2S1","#go3"
 const SHW_EX2={el:40,h:[.09,92,.003],look0:[50,60],home:"home",N:{home:[50,97],altar:[50,83]},E:"home-altar",
   HS:{ex2S0:["altar",50,64,"bow"],ex2S1:["altar",50,64,"bow"],ex2S2:["altar",50,64,"bow"],ex2Book:["altar",25,50,"idle"]}};
 const ex2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
-const ex2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const ex2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function ex2Css(){if(document.getElementById("ex2Css"))return;const s=document.createElement("style");s.id="ex2Css";s.textContent=`
 .ex2-page{margin:0 0 6px}
 .ex2-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}

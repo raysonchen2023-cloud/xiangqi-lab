@@ -150,6 +150,26 @@ function mvColorName(){try{const eR=curEra(),EA=eR&&ERA_ARROW[eR.k];let c=EA?EA.
 /* 意見回饋 607（圖文不符盤查）：元朝（彩帶 #2456A6）、五代（毛筆 #23395B）的朝代箭頭也是藍色，跟 Pikafish 建議的藍色箭頭撞色。
    建議的說成「藍色直線箭頭（標 1、2、3）」；實際走的那條，選了朝代就用形狀說（矛形／毛筆／彩帶／連珠箭頭），經典（沒選朝代）才用顏色說 */
 function mvArrowName(){try{const eR=curEra(),EA=eR&&ERA_ARROW[eR.k];if(EA){const n={spear:"矛形箭頭",brush:"毛筆箭頭",ribbon:"彩帶箭頭",dots:"連珠箭頭"}[EA.k];if(n)return n}}catch(e){}return mvColorName()+"箭頭"}
+/* 11/17 第 26 輪 W2：英文介面的檢討頁說明——整段是一個好幾行的文字節點，翻譯器整段翻不出來就整段中文（測試員 D：關鍵一步解說全中文）。
+   英文時：關鍵一步（mkNote 的英文版）前兩行、評等說明直接用英文寫（著法 WXF、評等用 01-board tmxPlainEn），其他行（後果、為什麼、箭頭、兵數說明、分析中）一行一行翻；一般步的評語也一行一行翻。中文照舊 mkNote */
+/* 11/17 第 27 輪 X1（測試員 D）：英文檢討頁逐步看棋的狀態列是 "Reviewing · Move 1/4 C2+7 【Mistake】· 走完後黑…"——後半段局面句整句中文又被截斷、【】是全形 →
+   英文整句自己寫：著法 WXF、評等半形方括號、局面句 "after this move: Black slightly better, ahead by about 1.4 pawns"（evt 的中文交給字典翻）；狀態列加 .dbst，英文可以換行不截斷（07i18n） */
+function dbStatEn(ply,max,cn,g,ev,rv){const T=typeof tmxT==="function"?tmxT:x=>x,W=typeof tmxW==="function"?tmxW:x=>x;
+  if(!ply)return T("開局局面・左右滑棋盤可換步");const q=g&&g.q&&g.q!=="—"?T(g.q):"",e=ev!=null&&typeof evt==="function"?evt(ev):"";
+  return`${rv?"📖 Reviewing · ":""}Move ${ply}/${max} ${W(cn)}`+(q?` [${q}]`:"")+(e?" · "+(q?"after this move: ":"")+T(e):"")}
+function dbNoteLines(s){const T=typeof tmxT==="function"?tmxT:x=>x;return String(s||"").split("\n").map(x=>x.trim()?T(x):x).join("\n")}
+function mkNoteEn(K,arrow,pend){const T=typeof tmxT==="function"?tmxT:x=>x,W=typeof tmxW==="function"?tmxW:x=>x,L=+K.g.loss||0,big=!isFinite(L)||L>=2000,Q=K.q?T(K.q):"",
+    lk=typeof tmxEvLinkEn==="function"?tmxEvLinkEn(K.g.ev,K.side):"",ref=K.bcn?`Pikafish's suggestion "${W(K.bcn)}"`:"Pikafish's top choice",
+    pa=typeof tmxPawnEn==="function"?tmxPawnEn(L):"",df=K.q&&typeof tmxPlainEn==="function"?tmxPlainEn(K.q):"";
+  return[`🔎 The key move of this game: on move ${K.p} you played "${W(K.m.cn)}"${Q?` [${Q}]`:""}`,
+    (big?`This move is far worse than ${ref}`:`This move is worth ${pa} less than ${ref}`)+(Q?` (${Q})`:"")+(lk?`; ${lk}`:"")+".",
+    df?df.replace(/\.$/," (compared only with the best move, not who's better overall)."):"",
+    K.tk&&/^這時(已經有殺棋|原本有明顯優勢)/.test(K.tk)?"Pikafish's comment: "+T(K.tk):"",
+    K.best?`Blue straight arrow = Pikafish's suggested move; ${T(arrow)} = the move you played.`:"",
+    K.rk?"⚠ "+T(K.rk):"",
+    K.why||!K.rk?"💡 "+(K.why?T(K.why):"Want to know why it's bad? Tap 🔍 Analysis below to see the opponent's best reply."):"",
+    L>=30&&!big&&typeof TMX_PW==="string"?T(TMX_PW):"",
+    "Tap ▶ to see the position after your move; to try another move, tap \"↻ Replay from this move\"."].filter(Boolean).join("\n")+(pend&&pend.trim()?"\n"+T(pend.trim()):"")}
 function sugText(g,b){const L=(g.bp&&g.bp.length?g.bp:g.bm?[g.bm]:[]).slice(0,3);if(!L.length)return g.bc?`建議 ${g.bc}（藍色直線箭頭）`:"";
   const out=[];try{const C=window.XQCore;for(const u of L){const f=sqI(u.slice(0,2)),t=sqI(u.slice(2,4));if(!b[f]||!C)break;out.push(C.notate(b,f,t));b=b.slice();b[t]=b[f];b[f]=null}}catch(e){}
   if(!out.length)return`建議 ${g.bc||""}（藍色直線箭頭）`;return(out.length>1?"建議走法（藍色直線箭頭，標 1、2、3）："+out.map((x,i)=>`${i+1}. ${x}`).join("　"):`建議 ${out[0]}（藍色直線箭頭）`)+"\n"+mvArrowName()+"是實際走的"}
@@ -343,9 +363,11 @@ function Viewer(v,c,id){
     if(ev==null){const g=FREE?(last&&last.g):ply>0&&gradeOf(ply);if(g&&g.ev!=null)ev=g.ev}
     v.querySelector("#evf").style.width=evPct(ev)+"%";
     const st=v.querySelector("#stat");st.classList.toggle("hot",!!FREE);
-    if(FREE)st.textContent=`🔭 ${FREE.src||"自由走棋"}・${FREE.cur}／${FREE.all.length}`+(ev!=null?"・"+evt(ev):"");
+    if(FREE){const EN=typeof tmxEn==="function"&&tmxEn(),T=EN&&typeof tmxT==="function"?tmxT:x=>x;st.classList.toggle("dbst",!!EN);
+      st.textContent=EN?`🔭 ${T(FREE.src||"自由走棋")} · ${FREE.cur}/${FREE.all.length}`+(ev!=null?" · "+T(evt(ev)):""):`🔭 ${FREE.src||"自由走棋"}・${FREE.cur}／${FREE.all.length}`+(ev!=null?"・"+evt(ev):"")}   /* 第 27 輪 X1：自由走棋的狀態列英文也整句 */
     else if(KM){st.classList.add("hot");st.textContent=`🔎 最關鍵的一步・第 ${KM.p} 步之前，輪到${PLAYER[KM.side]}走`}   /* T01 關鍵步模式 */
-    else{const g=ply>0&&gradeOf(ply);st.textContent=ply===0?"開局局面・左右滑棋盤可換步":`${ply<maxPly(line)?"📖 回顧中・":""}第 ${ply}／${maxPly(line)} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+(g&&g.q?"走完後":"")+evt(ev):"")}   /* 評比循環第 1 輪：評等字後面的局面句加「走完後」，看得出評等（這步跟最好的比）和局面（走完整盤誰好）是兩件事 */
+    else{const g=ply>0&&gradeOf(ply),EN=typeof tmxEn==="function"&&tmxEn();st.classList.toggle("dbst",!!EN);
+      st.textContent=EN?dbStatEn(ply,maxPly(line),ply>0?s[ply-1].cn:"",g,ev,ply<maxPly(line)):ply===0?"開局局面・左右滑棋盤可換步":`${ply<maxPly(line)?"📖 回顧中・":""}第 ${ply}／${maxPly(line)} 步 ${s[ply-1].cn}`+(g?`【${g.q}】`:"")+(ev!=null?"・"+(g&&g.q?"走完後":"")+evt(ev):"")}   /* 評比循環第 1 輪：評等字後面的局面句加「走完後」，看得出評等（這步跟最好的比）和局面（走完整盤誰好）是兩件事 */
     const moves=FREE?FREE.all.map(m=>({...m,q:m.g&&m.g.q,loss:m.g&&m.g.loss,ev:m.g&&m.g.ev})):seq(line,endPly(line)).map((m,i)=>{const g=gradeOf(i+1);return{...m,by:moverAt(i+1),q:g&&g.q,loss:g&&g.loss,ev:g&&g.ev,rr:g&&g.rr,bmt:g&&g.bmt}});   /* ev：評等字泡泡接「走完整盤誰好」（01-board tmxPlain） */   /* rr、bmt：評等字泡泡講失著的具體後果（01-board tmx） */   /* 11/11 v6 第 3 點：帶 loss，點評等字時能說「少了約幾個兵」 */
     renderStrip(v.querySelector("#strip"),moves,FREE?FREE.cur-1:ply-1,FREE?i=>go(i+1):i=>go(i+1));
     // 變著；推演中則改放推演用的按鈕
@@ -366,10 +388,10 @@ function Viewer(v,c,id){
       note.textContent=!m?`起點局面（第 ${FREE.base} 步之後）。按 ▶ 或往左滑，一步一步看${FREE.src&&FREE.src.startsWith("Pikafish")?" Pikafish 怎麼預判、在哪裡埋伏":""}；點棋子可以自己改走。`
         :`${FREE.base+FREE.cur}. ${PLAYER[m.by]} ${m.cn}`+(m.tags&&m.tags.length?`【${m.tags.join("、")}】`:"")+(g&&g.q&&g.q!=="—"?`　${g.q}`:"")
          +(g&&g.q&&g.q!=="正著"&&g.q!=="妙著"&&g.bc?`\nPikafish 認為更好的是：${g.bc}`:"")}
-    else if(KM)note.textContent=mkNote(KM)+pendLine();   /* T01 關鍵步模式 */
+    else if(KM)note.textContent=typeof tmxEn==="function"&&tmxEn()?mkNoteEn(KM,mvArrowName(),pendLine()):mkNote(KM)+pendLine();   /* T01 關鍵步模式 */
     else{const ck=owner(line,ply)+"_"+ply,g=ply>0&&gradeOf(ply),
         rk=g&&(g.q==="失著"||g.q==="敗著")&&typeof mflRisk==="function"?mflRisk(boardAt(line,ply-1),moverAt(ply),s[ply-1],g):"";   /* ChatGPT 評審 11/11：失著的具體後果（只在分析線支持時） */
-      note.textContent=([ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",ply>0?gradeNote(g,boardAt(line,ply-1)):"",rk?"⚠ "+rk:""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":""))+pendLine()}
+      {const nt=([ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",ply>0?gradeNote(g,boardAt(line,ply-1)):"",rk?"⚠ "+rk:""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":""))+pendLine();note.textContent=typeof tmxEn==="function"&&tmxEn()?dbNoteLines(nt):nt}}
     if(FREE){acts.first.disabled=acts.prev.disabled=FREE.cur===0;acts.next.disabled=acts.last.disabled=FREE.cur>=FREE.all.length}
     else{acts.first.disabled=acts.prev.disabled=ply===0;acts.next.disabled=acts.last.disabled=ply>=endPly(line)}
     if(!(AN&&AN.k===posKey(pos)))lookupSoon()}

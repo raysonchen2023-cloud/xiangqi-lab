@@ -36,6 +36,25 @@ const LM_TBL={};   /* 對局 gid → 桌子的位置（同一盤一直坐同一�
 /* 入口標籤：[id, 左%, 上%, 大字]（量 768×1376 的 lobby_v4，標籤放在東西上方） */
 /* 11/10 開發者：拿掉「千秋盃」（只留茶坊二樓那個入口）、「我的戰績」（跟學習書院的重複）；「挑戰電腦」不放在線上對戰天井（只有開發者的 📺 AI 對戰才出現） */
 /* 11/10 天井照茶坊重畫（lobby_re3：右牆黑板、兩面紅旗、左邊白牆廂房、門口兩盆松；art_lobbyre*.json、史學顧問核過）：名冊改到右牆黑板、AI 對戰改到一樓左廂門口 */
+/* 11/17 第 25 輪 R25-1（測試員 E：審查員常切飛航模式）：斷網時在大廳按隨機配對會一直「找對手中…」、名冊按了沒反應 →
+   沒有網路時，大廳、千秋盃、觀戰、殘篇閣這幾頁要連線的入口一按就跳離線說明（05-settings offInfo），不往下做；找對手中途斷網就取消，跳說明 */
+const LM_NET_HASH=/^#\/(lobby|cup|watch|coop\/lobby)(\/|$)/,LM_NET_SEL="#lmGong,#lmList,#lmAi,.lm-t[data-g],.lm-lp[data-p],.lm-more,#sk1,#cupE,#cupb,[data-w],[data-p],#mfMe,#mfCup,#mfBox,.cpl-roles [data-r],#cp2Book";   /* 第 26 輪 R26-3（測試員 E）：千秋盃茶樓的「英雄帖」（07y7 #cp2Book）斷網時也直接跳離線說明，不再開面板等 8 秒說「擂台資訊還沒收到」 */
+function lmOffline(){try{return navigator.onLine===false}catch(e){return false}}
+function lmOffInfo(){try{if(typeof offInfo==="function")return offInfo()}catch(e){}try{toast("📴 沒有網路：線上大廳要連上網路才能用")}catch(e){}}
+function lmOffGuard(e){try{if(!lmOffline()||!LM_NET_HASH.test(location.hash||""))return false;const V=document.getElementById("view"),t=e.target&&e.target.closest&&e.target.closest(LM_NET_SEL);if(!t||!V||!V.contains(t))return false;
+  e.preventDefault();e.stopImmediatePropagation();try{vibrate(5)}catch(x){}lmOffInfo();return true}catch(x){return false}}
+function lmOffSeek(){try{const was=lmOffSeek.was;lmOffSeek.was=false;const on=!!(window.XQNet&&XQNet.seeking&&XQNet.seeking());if(!on&&!was)return false;if(on){const b=document.querySelector("#sk0");if(b)b.click()}lmOffSeekSay();return true}catch(e){return false}}
+/* 11/17 第 26 輪 R26-4（測試員 E）：找對手中途斷網有取消，但那句「已取消找對手」沒出現——05-settings 的 offline 先跑（離線牌、一般提示、大廳重畫），重畫時找對手已經被收掉，等 lmOffSeek 再看 seeking() 就是 false。
+   改成：① offline 一來（捕獲階段，比別的 offline 早）先記下「斷網那一刻在找對手」；② 另外盯著 XQNet 的 people（找對手開／關都會送），從找對手變成沒在找、而且沒有網路，也補這句。3 秒內只說一次，蓋過一般的離線提示 */
+/* 11/17 第 27 輪 R27-1（測試員 E：12 次漏 2 次，都在網頁英文）：① 這句如果在 offline 事件派送當中就說了（例如別的監聽先把找對手收掉、people 先到），
+   後面 05-settings 的一般離線提示會把它蓋掉 → 一律晚 120ms 才跳（一般提示是同步跳的，這句一定排在後面）；② 找對手是在連線已經斷掉時被收掉的（網路通知比 offline 事件早到），
+   也算「斷網取消」：lmSkWatch 記下收掉的時間和當時連線狀態，offline 一來 4 秒內收掉、而且當時已經不是連著的，也說；③ 畫面上還有「取消找對手」鈕（#sk0）也算正在找 */
+function lmOffSeekSay(){const n=Date.now();if(n-(lmOffSeekSay.t||0)<3000)return;lmOffSeekSay.t=n;setTimeout(()=>{try{toast("📴 網路斷了，已取消找對手；連上網路再配對")}catch(e){}},120)}
+function lmSkWatch(){try{const on=!!(window.XQNet&&XQNet.seeking&&XQNet.seeking());if(lmSkWatch.on&&!on){let st="";try{st=XQNet.status?XQNet.status():""}catch(e){}lmSkWatch.offAt=Date.now();lmSkWatch.offNet=lmOffline()||st!=="up";if(lmOffline())lmOffSeekSay()}lmSkWatch.on=on}catch(e){}}
+function lmSkWas(){try{if(window.XQNet&&XQNet.seeking&&XQNet.seeking())return true;if(lmSkWatch.on)return true;if(lmSkWatch.offNet&&Date.now()-(lmSkWatch.offAt||0)<4000)return true;return!!document.querySelector("#sk0")}catch(e){return false}}
+function lmSkHook(){try{if(lmSkHook.ok||!window.XQNet||typeof XQNet.on!=="function")return;lmSkHook.ok=1;XQNet.on("people",lmSkWatch);lmSkWatch()}catch(e){}}
+try{document.addEventListener("click",lmOffGuard,true);addEventListener("offline",()=>setTimeout(lmOffSeek,0))}catch(e){}
+try{addEventListener("offline",()=>{lmSkHook();try{lmOffSeek.was=lmSkWas()}catch(e){}},true);addEventListener("hashchange",lmSkHook);lmSkHook()}catch(e){}
 const LM_SPOTS=[["lmGong",50,50.5,"🎲 隨機配對"],["lmList",88,27,"📜 名冊"],["lmAi",25,42.5,"📺 AI 對戰"]];
 /* 11/10 開發者「按下隨機配對，做一個敲鑼的動畫」：天井中央那面鑼（秦～五代的圖畫的是鼓）被敲一下——
    鑼槌從角色那邊揮過去，鑼面（從同一張圖切出來的圓）晃動、金色聲波一圈圈散開，配 01-board 合成的鑼聲；鼓就敲兩下「咚、咚」、鼓面一彈一彈。

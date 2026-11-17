@@ -29,13 +29,13 @@ test("〔純計算〕小籤的季節照節氣：立春、立夏、立秋、立�
   assert.equal(S(""), "", "節氣還不知道：交回原本的");
 });
 
-test("〔行為〕首頁頂端「立冬」：小籤寫「冬天到了」，不是「秋天到了」；圖還是秋景，飄落葉、小帥說立冬了柳葉才剛轉黃", () => {
-  const K = kit("立冬"); assert.equal(K.SW7_HSEA["立冬"], "autumn", "立冬的首頁圖照舊是秋景（柳葉轉黃）");
+test("〔行為〕首頁頂端「立冬」：小籤寫「冬天到了」，不是「秋天到了」；11/17 晚開發者選單「季節照節氣」起圖也是冬景，小帥照冬天那句", () => {
+  const K = kit("立冬"); assert.equal(K.SW7_HSEA["立冬"], "winter", "11/17 晚起立冬的首頁圖是冬景（原本照 11/9 分界是秋景）");
   const slip = K.play(K.SW7_HSEA["立冬"]);
   assert.match(slip.innerHTML, /冬天到了/); assert.ok(!/秋天到了/.test(slip.innerHTML));
   assert.match(slip.innerHTML, /歲寒，然後知松柏之後彫也/, "古詩文跟著小籤的季節");
-  /* 11/17 D P3-1 開發者選單「小帥那句兼顧節氣」：圖上是黃柳秋景、小籤寫冬天，小帥說「立冬了，柳葉才剛轉黃」（test-season-say-1117.js 細測） */
-  assert.deepEqual(K.said, ["哇，立冬了！柳葉才剛轉黃，一片一片飄到河裡了！"], "小帥那句兼顧節氣與圖");
+  /* 圖跟小籤同一季了，小帥照冬天的 say（不再說「柳葉才剛轉黃」） */
+  assert.deepEqual(K.said, [K.SW7_SEA_TXT.winter.say], "小帥照圖（冬）");
   assert.ok(!/上限/.test(slip.innerHTML));
 });
 

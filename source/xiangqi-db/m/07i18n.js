@@ -273,7 +273,7 @@ const I18N_EN={
   "↩ 掀簾・回雲弈閣":"↩ Back to Play",
   "↩ 掀簾・回觀星閣":"↩ Back to Play",
   /* 頂欄、底欄、共用按鈕 */
-  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","去園子下棋（3D）":"Play in the garden (3D)","回棋盤模式":"Back to board mode","正在對戰":"Playing now","切到 3D 星盤":"Switch to 3D star board","回平面棋盤":"Back to 2D board",   /* 第 23 輪 N23-1：星門圍城「⋯」那顆（外掛字典還沒載到也翻得出） */"更多":"More",
+  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","去園子下棋（3D）":"Play in the garden (3D)","回棋盤模式":"Back to board mode","正在對戰":"Playing now","📴 網路斷了，已取消找對手；連上網路再配對":"📴 The connection dropped, so matching was canceled; match again once you're online","📴 沒有網路：線上大廳要連上網路才能用":"📴 No internet: the online lobby needs a connection","切到 3D 星盤":"Switch to 3D star board","回平面棋盤":"Back to 2D board",   /* 第 23 輪 N23-1：星門圍城「⋯」那顆（外掛字典還沒載到也翻得出） */"更多":"More",
   "關閉":"Close","取消":"Cancel","確定":"OK","繼續":"Continue","結束":"End","下一步":"Next","上一步":"Previous","自動播放":"Autoplay","分享給朋友":"Share with friends",
   "開啟螢幕報讀與鍵盤模式":"Turn on screen reader & keyboard mode","螢幕報讀與鍵盤模式：開著（按一下關掉）":"Screen reader & keyboard mode: on (tap to turn off)",   /* 0540 驗收：英文讀屏第一個碰到的按鈕 */
   "回報問題":"Report a problem","意見回饋":"Feedback","我的角色":"My character","加到主畫面":"Add to Home Screen","線上大廳":"Online lobby","走回雅間":"Back to the private room",
@@ -409,7 +409,7 @@ const I18N_EN={
   "幻影棋客":"Phantom Player","笑面掌櫃":"Smiling Shopkeeper","掌櫃真功夫":"Shopkeeper, full strength",
   "掌櫃拿出真本事：強度照公開大師對局的勝率校準過，不跟著等級變。":"The Shopkeeper plays for real: his strength is calibrated against win rates in public master games and does not follow the level.","小帥":"Xiao Shuai","小師妹":"Xiao Shimei","齊轍":"Qi Zhe","田飛燕":"Tian Feiyan",
   "雷借花":"Lei Jiehua","駱躍梅":"Luo Yuemei","電腦":"Computer","對方":"Opponent","你":"You","紅方":"Red","黑方":"Black","職業頂尖":"top professional",
-  "練習":"Practice","朝代擂台":"Dynasty arena","走去驛站":"Walk to the inn","這盤已經結束":"This game is over","還沒輪到你":"It's not your turn yet","聲控走棋":"Voice moves",
+  "練習":"Practice","朝代擂台":"Dynasty Arena","走去驛站":"Walk to the inn","這盤已經結束":"This game is over","還沒輪到你":"It's not your turn yet","聲控走棋":"Voice moves",
   "驛站的棋友":"Inn player","石桌往事":"Stone Table Tales","園子裡的路人棋友":"Garden passer-by","黑洞星盤":"Black-hole star board","不計分":"unrated","幻譜星門":"Phantom star gate",
   "第十四顆":"The fourteenth","鏡像":"Mirror","星樞":"Star Pivot","🏮 官階":"🏮 Rank","官階":"Rank","🏛 官階":"🏛 Rank",
   /* 段位與難度說明（local.js 的 RANKS、LVDESC） */
@@ -459,7 +459,7 @@ const I18N_EN={
   "返回、更多、關閉鍵移到左下角，方便左手拇指按；棋盤和文字方向不變":"Back, More and Close move to the bottom left for your left thumb; the board and text direction stay the same","對局只留棋盤、名字、棋鐘和著法，適合直播、截圖（Esc 或右上角 ✕ 還原）":"Games show only the board, names, clocks and moves, good for streaming and screenshots (Esc or the ✕ at top right restores)",
   "電腦連按兩下 Esc、手機三指點一下，畫面換成試算表並靜音":"Press Esc twice on a computer or tap with three fingers on a phone: the screen turns into a spreadsheet and goes silent","落子、吃子、將軍、點錯時手機震一下（Android 有效；iPhone 的瀏覽器不支援震動）":"The phone vibrates on moves, captures, checks and mistaps (works on Android; iPhone browsers don't support vibration)",
   "黑子反白、提示加形狀，色弱也分得清":"Black pieces inverted and hints get shapes, easy to tell apart even with color blindness","色弱也分得清":"easy to tell apart even with color blindness","黑子加黑環、上一步改朱橘加外框、評語和長條加符號；紅綠色弱也分得清，3D 園子也套用":"Black pieces get a dark ring, the last move turns vermilion with an outline, and ratings and bars get symbols; works for red-green color blindness, in the 3D garden too",
-  "下棋時只留平面棋盤：收起 3D 園子、開局卷軸、吃子水墨字和小帥（朝代擂台除外）":"Only the flat board while playing: hides the 3D garden, opening scrolls, ink capture marks and Xiao Shuai (except in the Dynasty arena)","下棋時收起背景動畫與裝飾":"hides background animations and decorations while playing",
+  "下棋時只留平面棋盤：收起 3D 園子、開局卷軸、吃子水墨字和小帥（朝代擂台除外）":"Only the flat board while playing: hides the 3D garden, opening scrolls, ink capture marks and Xiao Shuai (except in the Dynasty Arena)","下棋時收起背景動畫與裝飾":"hides background animations and decorations while playing",
   "看我的 3D 角色":"View my 3D character","存檔":"Save","改名":"Rename","本週學習週報":"This week's learning report","最近 7 天學了什麼，可以存成圖片給家長看":"What you learned in the last 7 days; save it as an image for parents","顯示":"Display",
   "顯示 3D 象棋小人":"Show 3D piece buddy","圓滾滾的棋子小人，跟著朝代換造型":"A round little piece buddy that changes outfits with the dynasty","大小":"Size","點一下":"Tap","表演一個動作":"Performs an action","點兩下":"Double-tap","出去散步":"Goes for a walk",
   "停放時":"when parked","長按":"Long press","拖動":"Drag","放到任何地方":"Put it anywhere","點三下":"Triple-tap","鞠躬":"Bows","先藏起來":"and hides for now","藏起來之後，打開上面的「顯示 3D 象棋小人」就會回來":"After hiding, turn on \"Show 3D piece buddy\" above to bring it back",
@@ -1367,6 +1367,7 @@ var I18N_EX={},I18N_PATX=[],I18N_EXN=0;   /* 外掛字典與句型（var：i18nT
 function i18nExtPat(src,tpl,ty){const re=new RegExp(src);ty=String(ty||"");
   return[re,(m,t)=>{let bad=false;const out=String(tpl).replace(/\$(\d)/g,(x,d)=>{const g=m[+d]==null?"":String(m[+d]),k=ty[d-1];
     if(k==="t"){const r=t(g);if(r==null){bad=true;return""}return r}
+    if(k==="p"){const L=Object.prototype.hasOwnProperty.call(I18N_PL,g)?I18N_PL[g]:null;if(!L){bad=true;return""}return I18N_PN[L]}   /* 11/17 第 26 輪 W2：p＝棋子名（帥將仕士相象傌馬俥車炮砲兵卒 → General／Advisor…；不是棋子名整句不算）。舊版 App 不認得 p 就照抄中文、整句翻不出，跟沒加一樣 */
     if(k==="n"){const r=I18N_CJK.test(g)?t(g):g;if(r!=null&&!I18N_CJK.test(r))return r;if(g.length>12||/[\s，、；：。！？（）「」・…]/.test(g)){bad=true;return""}return I18N_NM0+g+I18N_NM1}return g});   /* 人名留原文只限 12 字內、沒有標點空白（不然整段翻不出的中文會被當人名放過） */return bad?null:out}]}
 function i18nExtMerge(o){if(!o||typeof o!=="object")return 0;let n=0;
   if(o.en)for(const k of Object.keys(o.en))if(!I18N_GUARD.includes(k)&&!Object.prototype.hasOwnProperty.call(I18N_EN,k)&&typeof o.en[k]==="string"){I18N_EX[k]=o.en[k];n++}
@@ -1534,7 +1535,20 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
   "html[lang=en] .opfx .opc{white-space:normal;max-width:92vw;box-sizing:border-box}html[lang=en] .opfx .txt b{font-size:.62em;line-height:1.12;text-align:center;white-space:normal}html[lang=en] .opfx .who{letter-spacing:.12em}",
   /* 11/17 第 24 輪 U6：名冊頁「Back to the courtyard」右邊被切、攤開的書句尾被截、紅名帖「Player…」被截 → 英文可以換行、靠右的標籤往左對齊 */
   "html[lang=en] .mf-hs span{white-space:normal;max-width:34vw;text-align:center;font-size:12px;line-height:1.2}html[lang=en] #mfDoor span{left:auto;right:0;transform:translateY(-100%)}",
-  "html[lang=en] .mf-bd b,html[lang=en] .mf-bd .mf-bm{white-space:normal;overflow:visible;text-overflow:clip;font-size:12px;line-height:1.3}html[lang=en] .mf-me b{white-space:normal;font-size:13px;line-height:1.15;overflow-wrap:anywhere;text-overflow:clip}",
+  "html[lang=en] .mf-bd b,html[lang=en] .mf-bd .mf-bm{white-space:normal;overflow:visible;text-overflow:clip;font-size:11.5px;line-height:1.22}html[lang=en] .mf-me b{white-space:nowrap;font-size:11.5px;line-height:1.15;letter-spacing:0;overflow:visible;text-overflow:clip}",
+  /* 11/17 第 25 輪 V4：看板最後一行被下緣切半（字再小一點、行距收）；紅名帖「Player 984D」換行後第二行被下面的 Free 蓋住 → 不換行、字縮小 */
+  /* 11/17 第 25 輪 V5：375 寬斷網時英文標題被拆成「Xiangqi / Qianq… / u」，u 壓在時辰上 → 窄螢幕英文標題不在字中間斷行，最多兩行、超過就藏掉 */
+  /* 11/17 第 26 輪 W1（V5 的退步）：全站 * 是 border-box，頂欄有時辰鐘時 #title 底下留 36px 給鐘的小字（07w8 #topbar.clk-on #title），max-height:2.35em 把這 36px 也算進去 → 標題只剩 40px 高、頂欄壓扁成 52px、鐘被推出畫面上緣、標題疊在時辰字上 → 有鐘時上限改成「兩行 20px＋底下 36px」＝76px（跟 1514 一樣），沒鐘時才用 2.35em */
+  "@media (max-width:480px){html[lang=en] #title{overflow-wrap:normal!important;word-break:normal;max-height:2.35em;overflow:hidden!important}html[lang=en] #topbar.clk-on #title{max-height:76px}}",
+  /* 11/17 第 27 輪 X3（測試員 D）：#/lobby、#/db、#/settings 這種「標題不顯示、只留時辰鐘」的頁（07w8 clk-nt，標題字是透明的），英文兩行規則照樣把看不見的標題撐成兩行、頂欄 83px，上面空一塊 → 這種頁標題只排一行（頂欄跟中文一樣 63px） */
+  "html[lang=en] #topbar.clk-nt #title{white-space:nowrap!important;-webkit-line-clamp:1;max-height:56px}",
+  /* 11/17 第 27 輪 N27-1（測試員 B，第 25 輪 V5 的退步）：標題位置放的是按鈕（挑戰電腦「Ranked／Practice room」分頁鈕 .cpu-seg 高 44px），V5 的 max-height:2.35em（37.6px）把鈕的下半截切掉 →
+     標題裡有按鈕、選單、分頁的不限高（V5 只管純文字標題）；選擇器強度蓋過 V5 和有時辰鐘時的 76px */
+  "@media (max-width:480px){html[lang=en] #topbar #title:has(button,select,[role=tablist]){max-height:none!important}}",
+  /* 11/17 第 27 輪 X1：英文檢討頁的狀態列（10-db .dbst）句子比中文長，可以換行、不截斷 */
+  "html[lang=en] #stat.dbst{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.3;padding-top:2px;padding-bottom:2px}",
+  /* 11/17 第 25 輪 R25-5：英文「🧩 The Fragment Hall Is Open」橫幅（07q2 .cpl-door，右下角）太寬，往左蓋到左下的出口 → 英文縮字、可以換行、最寬 40vw，留在右邊 */
+  "html[lang=en] .cpl-door{font-size:13px;padding:8px 12px;max-width:40vw;white-space:normal;line-height:1.2;text-align:center}",
   "html[lang=en] .shp-spot.ex-spot{max-width:min(52vw,210px)}html[lang=en] .shp-spot.ex-spot b{white-space:normal;font-size:12.5px;line-height:1.2;letter-spacing:0;text-align:center}",
   "html[lang=en] #stmOv .here b{margin-left:.3em}"].join("\n");
 

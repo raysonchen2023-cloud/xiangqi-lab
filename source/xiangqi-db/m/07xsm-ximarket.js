@@ -4,7 +4,7 @@
      只在千秋時光之苑（經典世界 hbIsCl）出現（第 1 項 A）；領過七星授印禮（07mnq 存檔 "mnq".gift.a1）才出現（第 2 項 B）；開發者模式一律看得到。網址直接進、還沒解鎖＝回首頁。
      第一次進來以前首頁標籤是 .hot（第 17 項；之後「有禮可領、有人來訪」也要亮，等那兩個玩法做好再接，不加紅點數字）。
    場景圖 data/ximarket/（park/ximarket 轉來，process_art.py MAPS["ximarket"]）：外景白天 xm_day、夜景 xm_night（768×1376，器物位置相同，座標共用）；茶坊內景 xm_tea。只有直幅。
-     日夜照人間時辰（07w8 clkIdx，頂欄時辰鐘同一個判斷）：卯時～申時白天，酉時～寅時夜景（第 3 項 A）；頁面開著跨過時辰會自己換；一張載不到就換另一張（XSM_BAD）。
+     日夜：11/17 開發者選單改成「全部照實際日落」（取代第 3 項 A 的照時辰）：問 00-util xqNight，跟首頁同一個判斷；頁面開著每分鐘看一次，跨過日落、日出會自己換；一張載不到就換另一張（XSM_BAD）。
      茶坊窗外固定下雨（第 18 項 A，程式畫的雨；減少動態時不動）；茶坊只有一張圖，夜裡蓋一層暗藍（日夜跟著西市換）。
    標籤只放大字、不放圖示（第 5 項 A：寫玩法名）：領禮物＝櫃坊、七星來訪＝老槐樹下、找棋子＝棋具攤、暗棋＝聽雨茶坊、聽曲＝樂棚（第 10 項 A）。
      這一版只做場景頁：「暗棋」這一攤可以進茶坊看內景；其他攤灰色帶鎖，點了跳「還沒開張，敬請期待。」（第 12 項 A）。
@@ -125,8 +125,9 @@ const xsmGot=M=>!!(M&&typeof M==="object"&&M.gift&&typeof M.gift==="object"&&M.g
 function xsmOpen(){if(!XSM_ON)return false;   /* 11/16 選單「場景入口照玩家進度」：全部解鎖試玩也不打開西市入口 */
   /* 11/16 hspx P1 選單「打贏星門圍城才開」：跟觀星臺同一個條件（07gxt gxtWon：這一趟旅程的星門圍城或舊塔防贏過）；原本收下七星授印禮就開，新旅程一降落很快就拿到。xsmGot 留著不用 */
   try{return typeof gxtWon==="function"&&gxtWon(0,typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
-/* 白天？卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
-function xsmDay(d){d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
+/* 白天？11/17 開發者選單「日夜全部照實際日落」：問 00-util xqNight（跟首頁同一個判斷：07w7 sw7NightNow，當季日落、黃昏結束才入夜）。
+   沒有 xqNight 才退回原本的時辰判斷：卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
+function xsmDay(d){try{if(typeof xqNight==="function")return!xqNight(d)}catch(e){}d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
 /* 想要白天／夜景 → 實際用哪一張（那張載不到就換另一張；兩張都壞就照原本那張） */
 const xsmPickDay=day=>day?!XSM_BAD.d:(!!XSM_BAD.n&&!XSM_BAD.d);
 const xsmSrc=(day,tea)=>tea?`data/ximarket/xm_tea.webp?v=${XSM_IMGV}`:`data/ximarket/xm_${xsmPickDay(day)?"day":"night"}.webp?v=${XSM_IMGV}`;

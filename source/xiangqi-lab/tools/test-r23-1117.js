@@ -122,7 +122,7 @@ test("R23-2：系統給的預設名字「棋友＋4 碼」（net.js、舊版預�
   assert.equal(C.i18nText("棋友77bf"), "Player 77bf"); assert.equal(C.i18nText("棋友7F4C"), "Player 7F4C");
   assert.equal(C.i18nText("棋友77bf（下棋人）"), "Player 77bf (Player)"); assert.equal(C.i18nText("先不要，用「棋友7F4C」"), "Not now, use \"Player 7F4C\"");
   assert.equal(C.i18nText("棋友12345"), null, "不是 4 碼的不當成預設名");
-  assert.match(C.i18nText("金陵小校尉（下棋人）") || "", /^金陵小校尉 \(Player\)$/, "玩家自己取的名字照原文");
+  assert.match(C.i18nText("雲河小棋手（下棋人）") || "", /^雲河小棋手 \(Player\)$/, "玩家自己取的名字照原文");   /* 第 25 輪：原本的例子「金陵小校尉」其實是系統稱號（現在會翻成 Jinling Little Captain），換成玩家自取的名字 */
   assert.ok(rd("xiangqi-lab/src/net.js").includes('const d="棋友"+id.slice(0,4);'), "net.js 照舊（傳出去的名字不變）");
 });
 

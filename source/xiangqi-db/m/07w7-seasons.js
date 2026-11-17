@@ -22,7 +22,7 @@
 const SW7_ON=true;
 /* 節氣的小點綴（沒在下雨雪的時候）：[效果, 粒子數, 顏色]；fog 第二格 1＝霜降（偏白）；fly＝螢火（只在夜景圖） */
 const SW7_AMB={"立春":["petal",8,"#f6e1e6"],"春分":["petal",12,"#f2b4bf"],"立夏":["fluff",9],"夏至":["fly",9],"小暑":["fly",11],"大暑":["fly",13],
-  "立秋":["leaf",6,"#b29a3e"],"處暑":["leaf",8,"#c08a34"],"白露":["fog",0],"秋分":["leaf",12,"#c8642c"],"寒露":["leaf",10,"#b5512a"],"霜降":["fog",1],"立冬":["leaf",8,"#8f5a2e"]};
+  "立秋":["leaf",6,"#b29a3e"],"處暑":["leaf",8,"#c08a34"],"白露":["fog",0],"秋分":["leaf",12,"#c8642c"],"寒露":["leaf",10,"#b5512a"],"霜降":["fog",1],"立冬":["fog",1]};   /* 11/17 開發者選單「季節照節氣、立冬起冬景」：立冬換成冬天的圖，不再飄落葉，改成霜白的薄霧（跟霜降同一種） */
 /* 節氣 → 這一天會下雨、下雪的機率 [雨, 雪]（以江南水鄉為準，地點再乘 sw7RgMul） */
 const SW7_PREC={"小寒":[.15,.35],"大寒":[.15,.4],"立春":[.3,.15],"雨水":[.5,.06],"驚蟄":[.5,0],"春分":[.45,0],"清明":[.6,0],"穀雨":[.55,0],"立夏":[.45,0],"小滿":[.5,0],"芒種":[.6,0],"夏至":[.55,0],
   "小暑":[.4,0],"大暑":[.35,0],"立秋":[.35,0],"處暑":[.3,0],"白露":[.25,0],"秋分":[.25,0],"寒露":[.2,0],"霜降":[.15,0],"立冬":[.2,.03],"小雪":[.2,.25],"大雪":[.12,.45],"冬至":[.12,.4]};
@@ -43,8 +43,10 @@ function sw7Rng(a){return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t
 function sw7Precip(t,rg,d){d=d||new Date();const B=SW7_PREC[t];if(!B)return null;const[mr,ms]=sw7RgMul(rg,t),pr=B[0]*mr,ps=B[1]*ms,R=sw7Rng(sw7Hash(sw7Day(d)+"|"+rg)),r=R(),ty=r<ps?"snow":r<ps+pr?"rain":"";
   const W=[];for(let i=0;i<6;i++)W.push(R()<.62);if(!W.some(Boolean))W[Math.floor(R()*6)]=true;const a=.55+R()*.45;
   return ty&&W[Math.floor(d.getHours()/4)]?{t:ty,a}:null}
-/* 卯辰（5～9 點）青、酉（17～19 點）暖；a＝0～1 的強度 */
-function sw7Tint(d){d=d||new Date();const h=d.getHours()+d.getMinutes()/60;
+/* 清晨青、黃昏暖；a＝0～1 的強度。11/17 開發者選單「入夜接近實際天黑」：時段跟著臺北當天的日出日落（sw7Todw）——
+   晨光＝天亮（日出前 25 分）起 4 小時，頭 1 小時漸強；黃昏＝入夜（日落後 25 分）前 2 小時，最後 18 分漸弱。算不出來才用原本固定的卯辰（5～9 點）、酉（17～19 點） */
+function sw7Tint(d){d=d||new Date();const h=d.getHours()+d.getMinutes()/60;let w=null;try{w=sw7Todw(d)}catch(e){w=null}
+  if(w){const a0=w[0],n0=w[3];if(h>=a0&&h<a0+4)return{c:"dawn",a:h<a0+1?h-a0:h<a0+2.5?1:(a0+4-h)/1.5};if(h>=n0-2&&h<n0)return{c:"dusk",a:h<n0-1?.3+(h-(n0-2))*.7:h<n0-.3?1:(n0-h)/.3};return null}
   if(h>=5&&h<9)return{c:"dawn",a:h<6?h-5:h<7.5?1:(9-h)/1.5};
   if(h>=17&&h<19)return{c:"dusk",a:h<18?.3+(h-17)*.7:h<18.7?1:(19-h)/.3};
   return null}
@@ -162,9 +164,12 @@ const SW7_SNOWY=new Set(["小雪","大雪","冬至","小寒","大寒"]);
 /* 開發者 11/9「首頁變秋天的時候還是綠色的葉子，冬天也不會變，要符合天氣和大自然」：首頁照季節換整張圖（同一張原圖改的，構圖、入口、走路的路都不變）——
    春（立春～穀雨）＝home_spring（柳樹嫩黃綠、桃花杏花、盆栽牡丹；設定關掉「場景節氣天氣」才用原圖）；夏（立夏～處暑，立秋、處暑柳樹還綠）＝home_summer（柳濃綠、岸邊荷花）；
    秋（白露～立冬）＝home_autumn（柳葉轉黃、蘆花、遠山赭紅、書院旁闊葉樹黃紅，松竹照舊綠）；冬（小雪～大寒）＝home_winter（柳枝光禿、枯草、松竹常青）。
-   下雪照舊換 home_snow；雨景圖 home_rain 的柳樹是春天的綠，只在春夏用，秋冬下雨就用那一季的圖、雨由程式畫。季節圖不再做 ⑤ 的換色（已經畫好了） */
-const SW7_HSEA={"立春":"spring","雨水":"spring","驚蟄":"spring","春分":"spring","清明":"spring","穀雨":"spring","立夏":"summer","小滿":"summer","芒種":"summer","夏至":"summer","小暑":"summer","大暑":"summer","立秋":"summer","處暑":"summer",
-  "白露":"autumn","秋分":"autumn","寒露":"autumn","霜降":"autumn","立冬":"autumn","小雪":"winter","大雪":"winter","冬至":"winter","小寒":"winter","大寒":"winter"};
+   下雪照舊換 home_snow；雨景圖 home_rain 的柳樹是春天的綠，只在春夏用，秋冬下雨就用那一季的圖、雨由程式畫。季節圖不再做 ⑤ 的換色（已經畫好了）
+   11/17 開發者選單「季節照節氣、立冬起就是冬景」：原本照 11/9 的看圖分界（立秋、處暑柳樹還綠算夏，立冬柳葉才轉黃算秋，小雪起才冬），頂端寫「立冬」畫面卻還在飄落葉；
+   改成跟頂端節氣（tdTerm）同一套：立春～穀雨春、立夏～大暑夏、立秋～霜降秋、立冬～大寒冬（跟 sw7CardSea 一樣，所以小籤、小帥那句、圖三者一致，SW7_SEA_MIX 那種兩邊不同的話不會再出現）。
+   四季的圖（宋＝home_<季>、十二朝 home_<朝>_<季>、經典 home_classic_<季>、晨昏、夜景、長卷 _pano_l／_pano_r、學習／對戰 hubmap 四季）都畫好了，換季只是換哪一張 */
+const SW7_HSEA={"立春":"spring","雨水":"spring","驚蟄":"spring","春分":"spring","清明":"spring","穀雨":"spring","立夏":"summer","小滿":"summer","芒種":"summer","夏至":"summer","小暑":"summer","大暑":"summer","立秋":"autumn","處暑":"autumn",
+  "白露":"autumn","秋分":"autumn","寒露":"autumn","霜降":"autumn","立冬":"winter","小雪":"winter","大雪":"winter","冬至":"winter","小寒":"winter","大寒":"winter"};
 /* ---------- 開發者 11/9「轉換季節的時候要有轉折感，讓玩家有『哇，換季了』的體驗」：首頁換季轉場 ----------
    這一季（SW7_HSEA，春夏秋冬，跟天氣無關）跟上次在首頁看到的季節（store hmSea）不一樣，就在新的季節圖載好時播一次（每季一次）：
    ① 先蓋一張上一季的圖；② 從橋上石桌那裡往外，新季節像墨在宣紙上暈開一樣一圈圈露出來（約 2.8 秒）；
@@ -177,7 +182,7 @@ const SW7_SEA_TXT={spring:{e:"🌸",n:"春天來了",q:"竹外桃花三兩枝，
   winter:{e:"❄",n:"冬天到了",q:"歲寒，然後知松柏之後彫也。",s:"《論語・子罕》",w:"天氣最冷的時候，才看得出松樹柏樹最晚凋零。",say:"哇，冬天了！柳樹的葉子都掉光了，只有松樹還是綠的。",p:["#ffffff","#eef3f8","#dfe8f1"]}};
 function sw7SeaNow(){try{const o=SW7_PAGES.find(x=>x.k==="home");return SW7_HSEA[sw7TermFor(null,o)]||"spring"}catch(e){return""}}
 /* 11/17 iPhone 模擬器測試：首頁上方寫「立冬」，卻跳「🍂 秋天到了」——換季小籤的季節照節氣算（立春、立夏、立秋、立冬起算，跟頂端的節氣同一套 tdTerm）；
-   首頁換哪一張季節圖（SW7_HSEA：立秋、處暑柳樹還綠，立冬才轉黃）、飄的東西、小帥那句（講的是圖上看到的）照舊跟著圖 */
+   首頁換哪一張季節圖（SW7_HSEA）、飄的東西、小帥那句（講的是圖上看到的）照舊跟著圖。（11/17 晚 SW7_HSEA 也改成照節氣，兩邊已經一樣） */
 function sw7CardSea(t){return SW7_SPRING.has(t)?"spring":SW7_SUMMER.has(t)?"summer":SW7_WINTER.has(t)?"winter":t?"autumn":""}
 /* 11/17 Windows 測試員 D P3-1，開發者選單「小帥那句兼顧節氣」：立冬那幾天小籤寫「❄ 冬天到了」（照節氣），首頁圖照 11/9 的分界還是黃柳秋景（不動），
    小帥卻說「柳樹都變黃了，葉子掉到河裡了！」像還在秋天。小籤的季節（照節氣）跟圖的季節不一樣的那幾天（立冬：冬／秋景；立秋、處暑：秋／夏景），
@@ -228,14 +233,26 @@ const SW7_HTOD=new Set(["spring","summer","autumn","winter",..."qin han sanguo w
    SW7_HERA＝已經畫好四季的朝代；宋、還沒畫好的朝代、還沒登船＝現在這套（宋代江南）。各朝還沒有雨景、雪景、晨昏圖：用那一季的圖，雨雪由程式畫 */
 const SW7_HERA={qin:1,han:1,sanguo:1,weijin:1,nanbei:1,sui:1,tang:1,wudai:1,yuan:1,ming:1,qing:1};   /* 11/9 漢朝、其餘十朝四季都經史學顧問核過（宋＝原本這套） */
 function sw7HomeEra(){try{const e=typeof shipAt==="function"?shipAt():"";return e&&e!=="song"&&SW7_HERA[e]?e:""}catch(x){return""}}
-/* 日出、夕陽的時段照季節（臺灣／江南大約的日出日落：夏天日出 5 點、日落 18:45；冬天日出 6:35、日落 17:15）；季節照首頁用的 SW7_HSEA */
+/* 日出、夕陽的時段照季節（臺灣／江南大約的日出日落：夏天日出 5 點、日落 18:45；冬天日出 6:35、日落 17:15）；季節照首頁用的 SW7_HSEA。
+   11/17 起只在 sw7Todw 算不出來時才用（退路） */
 const SW7_TODW={spring:[5.25,7.25,17.25,19],summer:[4.75,6.75,18,19.75],autumn:[5.25,7.5,16.75,18.5],winter:[6,8,16.5,18.25]};
+/* 11/17 開發者「天氣錯誤」第二次選單「入夜接近實際天黑」：原本照季節的 SW7_TODW，黃昏結束（入夜）比實際天黑晚 1 小時以上（11/17 要 18:30）。
+   改成照臺北一年的日出日落：SW7_SUN＝每月 1 日、16 日的 [日出, 日落]（當天 0 點起的分鐘，臺北 25.03N 121.57E，NOAA 公式，太陽上緣碰地平線），中間的日子照比例內插；
+   入夜＝日落後 25 分（民用曙暮光結束），天亮＝日出前 25 分。11/17：日出 6:12、日落 17:06 → 17:31 入夜；夏至：日落 18:46 → 19:11 入夜；冬至：日落 17:10 → 17:35 入夜。
+   sw7Todw(d)＝[天亮, 晨光（日出後 1 小時）結束, 黃昏（日落前 1 小時）開始, 入夜]，單位小時；首頁月夜層、夜景圖、晨昏圖、晨昏色調都看它，
+   全站日夜（00-util xqNight → sw7HomeNightA）也是這一個，改這裡全部一起變 */
+const SW7_SUN=[[399,1035],[400,1046],[396,1058],[388,1068],[377,1076],[363,1083],[346,1090],[331,1096],[318,1103],[309,1111],[304,1119],[303,1125],[307,1127],[313,1126],[321,1119],[328,1109],[334,1093],[340,1077],[345,1061],[352,1046],[361,1034],[371,1026],[382,1024],[392,1027]];
+function sw7Sun(d){d=d||new Date();const m=d.getMonth(),dd=d.getDate(),dim=new Date(d.getFullYear(),m+1,0).getDate(),f=m*2+(dd<16?(dd-1)/15:1+(dd-16)/(dim-15)),i=Math.floor(f),r=f-i,a=SW7_SUN[i%24],b=SW7_SUN[(i+1)%24];
+  return[(a[0]+(b[0]-a[0])*r)/60,(a[1]+(b[1]-a[1])*r)/60]}
+function sw7Todw(d){const[sr,ss]=sw7Sun(d);return[sr-25/60,sr+1,ss-1,ss+25/60]}
 /* 11/9 開發者「已經亥時但還是很亮」：首頁沒有夜景圖，日落後（夕陽時段結束）到日出前，整頁蓋一層月夜的深藍；剛入夜、天快亮時淡一點 */
 /* 11/9 開發者「對戰和學習還是亮著」：學習、對戰、線上大廳（露天庭院）也套同一層月夜；棋譜庫在室內不套 */
-function sw7HomeNightA(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;if(h>=w[3])return Math.min(1,.7+(h-w[3])*.6);if(h<w[0])return w[0]-h<.5?.7+(w[0]-h)*.6:1;return 0}
+function sw7HomeNightA(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=sw7TodwOr(d,sea);if(h>=w[3])return Math.min(1,.7+(h-w[3])*.6);if(h<w[0])return w[0]-h<.5?.7+(w[0]-h)*.6:1;return 0}
 /* 11/10 開發者「其他朝代的夜景也用 Gemini 重畫，後置的夜晚效果不好」：首頁、學習、對戰、天井日落後換畫好的夜景圖（<名>_night），不再整頁蓋月夜深藍；沒換到夜景圖（載不到、雨雪圖、設定關掉）才照舊蓋 */
 function sw7NightNow(){try{return sw7HomeNightA(null,sw7SeaNow())>0}catch(e){return false}}
-function sw7HomeTod(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=SW7_TODW[sea]||SW7_TODW.autumn;return h>=w[0]&&h<w[1]?"dawn":h>=w[2]&&h<w[3]?"dusk":""}
+/* 照當天日出日落（sw7Todw）；算不出來才照季節的 SW7_TODW（sea 只剩退路用） */
+function sw7TodwOr(d,sea){try{const w=sw7Todw(d);if(w.every(x=>isFinite(x)))return w}catch(e){}return SW7_TODW[sea]||SW7_TODW.autumn}
+function sw7HomeTod(d,sea){d=d||new Date();const h=d.getHours()+d.getMinutes()/60,w=sw7TodwOr(d,sea);return h>=w[0]&&h<w[1]?"dawn":h>=w[2]&&h<w[3]?"dusk":""}
 function sw7HomeWx(){if(!sw7On())return"";try{const o=SW7_PAGES.find(x=>x.k==="home"),t=sw7TermFor(null,o),p=sw7Precip(t,sw7Rg(o)),sea=SW7_HSEA[t]||"";
   const era=sw7HomeEra(),s2=sea||"spring",td=sw7HomeTod(null,s2),nt=sw7NightNow()?"_night":"";if(typeof hbIsCl==="function"&&hbIsCl())return"classic_"+s2+nt;   /* 11/10 經典世界首頁：只換千秋樹的季節色，晨昏用程式調色、不另外換雨雪圖 */
   if(era){const k=era+"_"+s2;return nt?k+nt:SW7_HTOD.has(k)&&td?k+"_"+td:k}if(nt)return s2+nt;

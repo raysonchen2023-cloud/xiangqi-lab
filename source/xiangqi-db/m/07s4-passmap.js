@@ -14,7 +14,7 @@ const HQ_DOC=[82,392,440,632],HQ_Q=[446,428,686,553],HQ_CEN=[646,352],HQ_BOX=[56
 const SHW_HQ={W:768,H:1376,el:45,h:[.08,72,.0012],look0:[50,40],home:"home",N:{home:[24,88],front:[40,70],box:[62,80]},E:"home-front front-box home-box",
   HS:{hqBox:["box",70,85,"bow"],hqCheer:["front",60,40,"cheer"]}};
 let HQ_ACT=null;   /* 這支手機剛產生、還有效的轉移碼 {code, exp}（只放記憶體） */
-const hqDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const hqDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function hqCss(){if(document.getElementById("hqCss"))return;const s=document.createElement("style");s.id="hqCss";s.textContent=`
 .hq-pn{position:fixed;left:0;right:0;top:var(--xqT,0px);bottom:var(--xqB,0px);z-index:950;background:#2a2018;overflow:hidden;transform:translateY(calc(100% + var(--xqB,0px) + 24px));transition:transform .3s ease;color:#2a1f15}
 .hq-pn.open{transform:none}.hq-pn.hq-dk{background:#121826}

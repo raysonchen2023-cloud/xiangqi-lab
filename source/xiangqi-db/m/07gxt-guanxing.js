@@ -4,7 +4,7 @@
      ② 星槎圖上一個「🌌 星淵」熱點（包 07gx 的 gxShipHs，跟「🌌 幻譜星門」同一個時機畫）。
    解鎖：第一次打贏黑洞（07bh bhGameEnd 記的 bhWin＞0，或塔防破過任何一關 bhtd.c；序局 bh:xu 不算）才出現；開發者模式（DEVMODE）一律看得到。網址直接進、還沒解鎖＝回首頁。
    場景圖 data/guanxing/：直幅 gx_tai（768×1376）、寬版 gx_tai_w（1376×768，iPad 橫向、電腦）；白天版 gx_tai_day／gx_tai_day_w（器物位置相同，座標共用）。
-     日夜照人間時辰（07w8 clkIdx，頂欄時辰鐘同一個判斷）：卯時～申時（約 05:00～17:00）白天版，酉時～寅時夜景；頁面開著跨過時辰會自己換；白天圖載不到退回夜景（GXT_BAD）。
+     日夜：11/17 開發者選單改成「全部照實際日落」（取代原本的照時辰）：問 00-util xqNight，跟首頁同一個判斷；頁面開著每分鐘看一次，跨過日落、日出會自己換；白天圖載不到退回夜景（GXT_BAD）。
      直幅／寬版：可用寬 ÷ 可用高 ≥ GXT_LAND 而且畫面短邊 ≥ 600 用寬版（跟首頁寬版同一個短邊門檻；手機橫放照舊直幅＋07t3 側欄選單）；轉向、改視窗大小時原地換圖、換座標。
    標籤只放大字（記憶「場景標籤只放大字」），跟圖上器物對應：
      天頂墨色黑洞＝黑洞車輪戰（11/16 開張：07bhw whlOpen）、星圖石碑＝十三星系（07gx gxMap）、青銅渾儀＝星淵遠征（07bht bhtdOpen 關卡卡片）、圭表＝今日異象、石棋桌＝自由擺陣（11/16 開發者：兩個都開張，07gxd-daily.js gxdOmen／gxdFree）、
@@ -55,8 +55,9 @@ function gxtOpen(){if(!GXT_ON)return false;   /* 11/16 開發者「我把開發�
   try{return gxtWon(0,typeof bhtdProg==="function"?bhtdProg():store.get("bhtd",null),store.get("gsv",null))}catch(e){return false}}
 /* 直幅 "" 或寬版 "w"：W 可用寬、av 可用高、vw／vh 畫面寬高 */
 function gxtKind(W,av,vw,vh){if(!(W>0&&av>=120))return"";return W/av>=GXT_LAND&&Math.min(vw,vh)>=GXT_LMIN?"w":""}
-/* 白天？卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
-function gxtDay(d){d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
+/* 白天？11/17 開發者選單「日夜全部照實際日落」：問 00-util xqNight（跟首頁同一個判斷：07w7 sw7NightNow，當季日落、黃昏結束才入夜）。
+   沒有 xqNight 才退回原本的時辰判斷：卯（05–07）～申（15–17）；時辰序號照 07w8 clkIdx（子＝0：23–01） */
+function gxtDay(d){try{if(typeof xqNight==="function")return!xqNight(d)}catch(e){}d=d||new Date();let i;try{i=typeof clkIdx==="function"?clkIdx(d):NaN}catch(e){i=NaN}if(!(i>=0))i=Math.floor(((d.getHours()+1)%24)/2);return i>=3&&i<=8}
 const gxtSrc=(k,day)=>`data/guanxing/gx_tai${day&&!GXT_BAD[k?"w":"p"]?"_day":""}${k?"_w":""}.webp?v=${GXT_IMGV}`;
 /* 這一版的標籤座標 [id,左,上,大字,未通] */
 const gxtSpots=k=>GXT_SPOTS.map(s=>[s[0],k?s[4]:s[2],k?s[5]:s[3],s[1],!!s[6]]);

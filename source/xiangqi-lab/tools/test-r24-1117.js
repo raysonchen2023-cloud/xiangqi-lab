@@ -68,7 +68,7 @@ test("U5：「正在對戰」從 I18N_GUARD 拿掉、內建字典有英文；02-
 test("U6：名冊頁英文標籤、書頁、紅名帖可以換行；回天井的標籤靠右對齊", () => {
   const css = i18nKit(false).I18N_CSS;
   assert.match(css, /html\[lang=en\] \.mf-hs span\{white-space:normal;max-width:34vw;/); assert.match(css, /html\[lang=en\] #mfDoor span\{left:auto;right:0;transform:translateY\(-100%\)\}/);
-  assert.match(css, /html\[lang=en\] \.mf-bd b,html\[lang=en\] \.mf-bd \.mf-bm\{white-space:normal;overflow:visible;text-overflow:clip;/); assert.match(css, /html\[lang=en\] \.mf-me b\{white-space:normal;/);
+  assert.match(css, /html\[lang=en\] \.mf-bd b,html\[lang=en\] \.mf-bd \.mf-bm\{white-space:normal;overflow:visible;text-overflow:clip;/); assert.match(css, /html\[lang=en\] \.mf-me b\{white-space:nowrap;font-size:11\.5px/);   /* 第 25 輪 V4：紅名帖改成不換行、縮字（換行的第二行被 Free 蓋住） */
   assert.ok(M("07x3-rostermap.js").includes('id="mfDoor"'));
 });
 test("E 觀察 97：等 popstate 超過 1.5 秒先解除鎖定、不做選單項目；popstate 真的來了才做；解鎖後按了別項，舊的取消（只做新的那項）", async () => {
@@ -82,7 +82,7 @@ test("E 觀察 97：等 popstate 超過 1.5 秒先解除鎖定、不做選單項
   /* 解鎖後同一頁再開選單按別項：舊的那筆取消，popstate 來了只做新的 */
   A.history.state = { xqSheet: 1 }; A.topMoreItem({ dataset: {} }, () => A.log.push("f2"));
   A.pend.splice(0).forEach(f => f()); await new Promise(r => setTimeout(r, 30));
-  assert.deepEqual(A.log, ["close(true)", "back", "close(true)", "back", "f2"]);
+  assert.deepEqual(A.log, ["close(true)", "back", "close(true)", "f2"], "第 25 輪 R25-2：前一筆退回還在路上就不再退，等它到了只做新的那項");
   /* 慢但會來（2 秒）：照樣做（第 22 輪 N22-1 的情境） */
   const B = mk(); B.topMoreItem({ dataset: {} }, () => B.log.push("f")); await new Promise(r => setTimeout(r, 1700)); B.pend.splice(0).forEach(f => f()); await new Promise(r => setTimeout(r, 30));
   assert.deepEqual(B.log, ["close(true)", "back", "f"]);

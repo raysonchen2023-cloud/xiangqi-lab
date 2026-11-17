@@ -20,7 +20,7 @@ const MF_CARD=[[491,778],[608,778],[675,924],[524,924]],MF_BD=[93,245,368,397],M
 const SHW_MF={W:768,H:1376,el:40,h:[.072,88,.0012],look0:[50,60],home:"home",N:{home:[34,95],front:[50,88],l:[20,88],r:[78,88]},E:"home-front front-l front-r home-l",
   HS:{mfMe:["r",75,62,"bow"],mfCup:["r",80,53,"bow"],mfBox:["l",17,50,"wave"]}};
 let MF_GO=null;   /* 從大廳場景的「＋N 人」（翻開客簿）或「更多棋局」（列出全部棋局）進來 */
-const mfDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const mfDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 const mfTx=t=>String(t||"").replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{23E9}-\u{23FA}️‍›]/gu,"").replace(/\s+/g," ").trim();
 function mfM3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;

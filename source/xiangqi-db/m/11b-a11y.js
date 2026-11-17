@@ -44,7 +44,13 @@ function axmClockSec(t){const m=String(t||"").match(/(\d+):(\d{2})(?::(\d{2}))?/
 function axmClockSay(prev,cur,who){if(prev==null||cur==null||cur>=prev)return"";if(prev>0&&cur<=0)return(who||"你")+"的時間到了，超時";   /* 第 5 輪：到 0 念「超時」（呼叫的地方改用 assertive） */
   for(const t of[300,60,30,10])if(prev>t&&cur<=t)return(who||"你")+"的時間剩 "+(t>=60?t/60+" 分鐘":t+" 秒");return""}
 /* 第 5 輪 P16.5「我在哪裡」（W 鍵）：o＝{page 頁名, focus 焦點說明, game:{turn 輪到誰, sel 選了哪顆, last 上一步}（不是對局頁＝沒有）, map 本頁地圖} */
-function axmWhereText(o){o=o||{};const L=["你在："+(o.page||"象棋千秋")];L.push(o.focus?"焦點在："+o.focus:"焦點還沒停在任何按鈕上，按 Tab 開始");
+/* 11/17 第 25 輪 V2：按 W「我在哪裡」英文介面整段英文（頁名、焦點、輪到誰、選了哪顆、上一步、本頁地圖） */
+function axmEnOn(){try{return typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){return false}}
+function axmEnT(s){try{const t=typeof i18nText==="function"?i18nText(String(s||"")):null;return t!=null&&!/[㐀-鿿]/.test(t)?t:String(s||"")}catch(e){return String(s||"")}}
+function axmWhereEn(o){const L=["You are on: "+(o.page?axmEnT(o.page):"Xiangqi Qianqiu")];L.push(o.focus?"Focus: "+axmEnT(o.focus):"Focus isn't on any button yet; press Tab to start");
+  if(o.game){const g=o.game;if(g.turn)L.push(g.turn==="輪到你"?"Your move":g.turn==="輪到對手"?"Opponent's move":axmEnT(g.turn));L.push(g.sel?"Selected: "+axmEnT(g.sel):"No piece selected");L.push(g.last?"Last move: "+axmEnT(g.last):"No moves yet")}
+  if(o.map)L.push(o.map);return L.join(". ")}
+function axmWhereText(o){o=o||{};if(axmEnOn())return axmWhereEn(o);const L=["你在："+(o.page||"象棋千秋")];L.push(o.focus?"焦點在："+o.focus:"焦點還沒停在任何按鈕上，按 Tab 開始");
   if(o.game){const g=o.game;if(g.turn)L.push(g.turn);L.push(g.sel?"選了："+g.sel:"還沒選子");L.push(g.last?"上一步："+g.last:"還沒有走棋")}
   if(o.map)L.push(o.map);return L.join("。")}
 /* 第 5 輪：螢幕報讀模式第一次打開的介紹（60 字內，ChatGPT 版加上 B 鍵） */
@@ -129,7 +135,7 @@ function axmWhereNow(){let page="";try{const ti=document.getElementById("title")
   let map="";try{map=typeof axsPageMap==="function"?axsPageMap(location.hash):""}catch(e){}
   return axmWhereText({page,focus:axmFocusDesc(),game,map})}
 function axmStatusText(){const st=document.getElementById("stat"),o=[];if(st&&st.textContent.trim())o.push(st.textContent.trim());
-  const ck=(id,w)=>{const c=document.querySelector("#"+id+" .clk");if(c&&c.textContent.trim())o.push(w+"剩 "+c.textContent.trim())};ck("pBot","你");ck("pTop","對手");return o.join("。")||"這一頁沒有對局狀態"}
+  const en=axmEnOn(),ck=(id,w)=>{const c=document.querySelector("#"+id+" .clk");if(c&&c.textContent.trim())o.push(en?(w==="你"?"You have ":"Opponent has ")+c.textContent.trim()+" left":w+"剩 "+c.textContent.trim())};ck("pBot","你");ck("pTop","對手");return o.join(en?". ":"。")||(en?"No game status on this page":"這一頁沒有對局狀態")}   /* 第 25 輪 V2：按 S 狀態英文 */
 document.addEventListener("keydown",e=>{if(!axmOn()||e.ctrlKey||e.metaKey||e.altKey||e.defaultPrevented)return;const t=e.target;if(t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)))return;
   const k=e.key;
   if(k==="b"||k==="B"){const q=document.querySelector(".ax-sq [data-k][tabindex='0']");if(q){e.preventDefault();q.focus()}}

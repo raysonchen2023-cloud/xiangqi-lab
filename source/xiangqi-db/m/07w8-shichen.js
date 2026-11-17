@@ -51,7 +51,7 @@ function clkCss(){if(document.getElementById("clkCss"))return;const s=document.c
 html.gapfix #topbar.clk-on{padding-top:calc(var(--safeT,0px) + 30px)}   /* 回饋 840（開發者 11/9「修正時鐘」截圖：iPhone 主畫面 App 星晷擠進瀏海、壓到標題）：02-shell 的 gapfix 會把頂欄往下推 34px，這裡原本用 #topbar 蓋掉了它，iPhone 上星晷就跑到狀態列底下；有 gapfix 時照樣多留這段 */
 #topbar.clk-nt #title{color:transparent;text-shadow:none}#topbar.clk-nt #title *{visibility:hidden}
 #topbar.clk-on #title{align-self:stretch;font-size:17px;line-height:20px;padding-left:62px;padding-bottom:36px}   /* 回饋 840b（開發者 11/9「時鐘還是無法完整顯示」）：改成完整小圓盤（56px）放在標題左邊，標題往右讓位；底下兩行小字＝現在的時辰、第幾天・節氣 */
-.clk-box{position:absolute;bottom:2px;display:none;align-items:flex-end;gap:8px;overflow:hidden;z-index:1}#topbar.clk-on .clk-box{display:flex}#topbar #offChip{position:relative;z-index:2}
+.clk-box{position:absolute;bottom:2px;display:none;align-items:flex-end;gap:8px;overflow:hidden;z-index:1}#topbar.clk-on .clk-box{display:flex}#topbar #offChip{position:relative;z-index:2}@media (max-width:480px){#topbar #offChip{font-size:0!important;padding:6px 8px!important}#topbar #offChip::before{content:"📴";font-size:15px;line-height:1}}
 .clk-sm{display:grid;flex:0 1 auto;min-width:0;cursor:pointer;padding-bottom:1px;font:600 11.5px/1.3 var(--serif,serif);letter-spacing:.02em;opacity:.9;text-align:left}.clk-sm>span{grid-area:1/1;transition:opacity 1.1s ease}.clk-sm .clk-sl>span{display:block;white-space:nowrap}.clk-sm .clk-sl>b{display:block;font-size:15px;line-height:1.2;font-weight:900;letter-spacing:.06em;color:var(--accent,#a3361f)}.clk-sm .clk-ss{white-space:nowrap}
 .clk-sm .clk-ss{opacity:0;align-self:end;font-size:12.5px}.clk-box.ship .clk-sm .clk-sl{opacity:0}.clk-box.ship .clk-sm .clk-ss{opacity:1}
 .clk-dial{display:block;flex:none;width:56px;height:56px;border-radius:50%;margin:0;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
@@ -212,4 +212,32 @@ function lkCard(){if(typeof vibrate==="function")vibrate(5);
   try{if(typeof SCI_REG!=="undefined"&&typeof sciMark==="function"){const R=SCI_REG.find(r=>r.D&&r.D.k==="sp2"),x=R&&R.D.it.find(y=>y.n==="懸在半空的棋子");if(x)sciMark(R.D,x)}}catch(e){}}
 if(LK_ON){let lkq=0;const kick=()=>{if(lkq)return;lkq=1;setTimeout(()=>{lkq=0;try{if(clkKey()==="/adventure")lkMount()}catch(e){}},250)};
   const init=()=>{try{new MutationObserver(kick).observe(document.body,{childList:true,subtree:true})}catch(e){}addEventListener("hashchange",kick);kick()};
+  if(document.readyState==="loading")addEventListener("DOMContentLoaded",init);else init()}
+
+/* ---------- 11/17 第 26 輪 N26-2（測試員 B）：斷網時頂欄多了離線牌（窄螢幕已縮成 📴 39px），右邊鈕多的頁（朝代擂台：體力、⋯）標題被擠成「朝代…」「Dyn…」 ----------
+   只在有離線牌時：標題放不下 → ① 縮字（14px）、拿掉標題前面的小圖示；② 還放不下 → 返回鈕只留「‹」（英文返回鈕的字最長，讓出來給頁名）、標題 13px。
+   放得下就什麼都不動；網路回來（牌子拿掉）就恢復原樣。換頁、標題翻成英文、牌子出現或消失、轉向時都重算 */
+/* 第 26 輪 R26-5（測試員 E）：離線牌窄螢幕縮成 📴 的規則原本只寫在時辰鐘樣式（clkCss）裡，冷開對局頁（沒先經過有時辰鐘的頁面）時還沒插進來，中文牌子是全寬「📴 離線」 →
+   同一段也放進這裡；這段樣式在這個檔載入時就插（不等時辰鐘），牌子一出現就生效。clkCss 裡那段留著（兩段一樣，誰先插都行） */
+const OFFT_CSS="#topbar #offChip{position:relative;z-index:2}@media (max-width:480px){#topbar #offChip{font-size:0!important;padding:6px 8px!important}#topbar #offChip::before{content:\"📴\";font-size:15px;line-height:1}}#topbar.offt1 #title{font-size:14px!important;letter-spacing:0!important}#topbar.offt1 #title img.ti{display:none}#topbar.offt2 #title{font-size:13px!important}#topbar.offt2 #back{font-size:0!important;padding:0 6px!important;min-width:40px;max-width:none!important;text-align:center}#topbar.offt2 #back b{font-size:28px!important}@media (max-width:480px){#topbar.clk-on #offChip{align-self:flex-start;margin:0 2px 0 0;padding:1px 5px!important}}@media (max-width:360px){html[lang=en] #topbar.clk-on #offChip{position:absolute;left:6px;top:calc(var(--safeT,0px) + 1px);margin:0}}#topbar.segf1 .cpu-seg button{font-size:12px!important;letter-spacing:-.02em!important;padding:0 2px!important}#topbar.segf1 .cpu-seg button img{display:none}#topbar.segf2 .cpu-seg button{font-size:11px!important;white-space:normal!important;word-break:keep-all;line-height:1.1!important;text-overflow:clip!important}";
+/* 11/17 第 27 輪 R27-2／X2（測試員 E、D：320 寬斷網，📴 牌壓到時辰字、英文標題剩「X… / Q…」）：
+   有時辰鐘的頁（首頁等）牌子原本跟標題一樣垂直置中，正好落在下面兩行時辰字上 → 窄螢幕改貼頂、上下留白縮小（高約 20px，落在時辰字上面那一段）；
+   英文 360 寬以下標題本來就是兩行（頂欄 83px，星晷從 y≈22 開始）：牌子拿出排版、放到星晷上面的左上角，標題拿回 43px，縮字後看得出「Xiangqi / Qianqiu」 */
+function offtCss(){if(document.getElementById("offtCss"))return;const s=document.createElement("style");s.id="offtCss";s.textContent=OFFT_CSS;document.head.append(s)}
+function offtFit(){const tb=document.getElementById("topbar"),t=document.getElementById("title");if(!tb||!t)return;offtCss();
+  const had=tb.classList.contains("offt1");tb.classList.remove("offt1","offt2","segf1","segf2");
+  /* 11/17 第 27 輪 N27-2（測試員 B）：挑戰電腦的標題位置是「晉級賽／練功房」兩顆分頁鈕（08b .cpu-seg），斷網時剩圖示加「…」→ 標題是分頁鈕時不縮標題、不動返回鈕，
+     改成照兩顆鈕的實際寬度：放不下先拿掉鈕上的小圖示、字縮成 12px（segf1）；還放不下 11px、可以換兩行（segf2）。鈕的高度不動（44px） */
+  const sg=t.querySelector?t.querySelector(".cpu-seg,[role=tablist]"):null;
+  if(sg){const bs=[...sg.querySelectorAll("button")],ov2=()=>bs.some(b=>b.scrollWidth>b.clientWidth+1||b.scrollHeight>b.clientHeight+1);if(bs.length&&ov2()){tb.classList.add("segf1");if(ov2())tb.classList.add("segf2")}return}
+  /* 11/17 第 27 輪 X4（測試員 D）：① 放得下也縮（390 寬 Dynasty Arena 16→13px）：英文兩行標題前面的小圖示比行高高，scrollHeight 多出幾 px 就被當成放不下 → 高度要多出半行以上才算；
+     ② 320 寬連線時頁名也被截成「D…」→ 480 寬以下連線也照實際寬度判斷：放不下先縮字；返回鈕只留「‹」只用在斷網、或標題是頁名這種短字（18 字以內，長句子照舊刪節號） */
+  const off=!!document.getElementById("offChip"),nar=(typeof innerWidth==="number"?innerWidth:9999)<=480,tx=t.textContent.trim();
+  if((off||nar)&&!tb.classList.contains("clk-nt")&&tx){let lh=20;try{lh=parseFloat(getComputedStyle(t).lineHeight)||20}catch(e){}const ov=()=>t.scrollWidth>t.clientWidth+1||t.scrollHeight>t.clientHeight+lh*.5;
+    if(ov()){tb.classList.add("offt1");if(ov()&&(off||tx.length<=18))tb.classList.add("offt2")}}
+  if(had||tb.classList.contains("offt1"))try{if(typeof clkPlace==="function"&&CLK.box&&CLK.box.isConnected)clkPlace()}catch(e){}}
+try{offtCss()}catch(e){}
+{let offtQ=0;const kick=()=>{if(offtQ)return;offtQ=setTimeout(()=>{offtQ=0;try{offtFit()}catch(e){}},30)};
+  const init=()=>{try{const tb=document.getElementById("topbar"),t=document.getElementById("title");if(tb)new MutationObserver(kick).observe(tb,{childList:true});if(t)new MutationObserver(kick).observe(t,{childList:true,subtree:true,characterData:true});const tr=document.getElementById("topRight");if(tr)new MutationObserver(kick).observe(tr,{childList:true})}catch(e){}
+    for(const k of ["online","offline","resize","hashchange"])addEventListener(k,kick);kick()};
   if(document.readyState==="loading")addEventListener("DOMContentLoaded",init);else init()}

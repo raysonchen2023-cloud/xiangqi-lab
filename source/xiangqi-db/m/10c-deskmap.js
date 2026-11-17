@@ -19,7 +19,7 @@ const SHW_SJ={W:768,H:1376,el:45,h:[.075,96,.001],look0:[50,60],home:"home",N:{h
     ob:[[[22,29.5],[78,29.5],[84,71.6],[16,71.6]],[[24,15],[40,15],[40,25],[24,25]],[[11,74],[39,74],[39,88],[11,88]],[[62.5,73.2],[83.5,73.2],[83.5,80.5],[62.5,80.5]],[[55,79],[91,79],[91,87],[55,87]]]}},   /* 回饋 816：點書案桌面空處＝跳上書案（書頁上的列、題簽、紙籤是按鈕，照舊） */   /* 回饋 808：換分類＝跳上書案下方的空處（書頁下面、硯台左邊），不擋清單 */
   HS:{sjGrp:["tb",50,60,"idle"]}};
 const sjKind=c=>["ai","play","pvp","study"].includes(c)?"shouchao":/^(gmgames|xuyinchuan)$/.test(c||"")?"juanzong":(typeof LB_OLD!=="undefined"&&LB_OLD.some(x=>x[0]===c))?"hantao":"xiang";
-const sjDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const sjDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 const sjCn=n=>{const d="〇一二三四五六七八九";n=Math.max(1,n|0);if(n<10)return d[n];if(n<100)return(n>=20?d[Math.floor(n/10)]:"")+"十"+(n%10?d[n%10]:"");return String(n)};
 /* 11/12 第 11 輪觸控測試（touch-stress）：觸控螢幕（粗指標或有觸控點）時，書頁一列、翻頁鍵、書口紙籤都至少 44px 高（面板加 .sj-co）；滑鼠照舊密排。
    觸控時一列 48px（書頁有透視，上頁的列在畫面上會縮到約 0.93 倍，48 才保證至少 44），上頁不放書名列、翻頁列搬到書下面的紙條上，兩頁只留 4px 邊，iPhone SE 每頁放得下 2 列 */

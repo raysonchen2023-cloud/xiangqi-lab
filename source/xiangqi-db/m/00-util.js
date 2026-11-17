@@ -389,3 +389,8 @@ function provLine(x){const p=provOf(x);if(!p)return"";const bk=p.book?"📖 出�
 /* 文件頁（xqDocIn）：md 裡打的【史實…】【有爭議…】【演義…】【遊戲創作…】套上同一組樣式 */
 function provDoc(h){return String(h).replace(/【(史實|有爭議|演義・小說|遊戲創作)([^】<]{0,20})】/g,(m,a)=>`<span class="prov prov-${a==="史實"?"hist":a==="有爭議"?"legend":a==="遊戲創作"?"game":"novel"}">${m}</span>`)}
 addEventListener("xq-rules-mismatch",()=>toast("雙方棋規版本不同，請一起更新遊戲後再開新局。"));
+/* 11/17 開發者「天氣錯誤」（17:06 首頁還是黃昏、西市和觀星臺已經是夜景有月亮）＋選單：日夜全部照實際日落。
+   全站換夜景圖的判斷都問這一個：照 07w7 首頁同一套（sw7NightNow＝當季日落、黃昏結束後算夜，SW7_TODW）；d＝指定時刻（測試用）。
+   07w7 還沒載入或出錯時退回時辰（卯～申白天、酉～寅夜），不會丟錯。頂欄時辰鐘照舊顯示時辰，不問這個 */
+function xqNight(d){try{if(typeof sw7HomeNightA==="function"&&typeof sw7SeaNow==="function"){if(!d&&typeof sw7NightNow==="function")return!!sw7NightNow();return sw7HomeNightA(d,sw7SeaNow())>0}}catch(e){}
+  d=d||new Date();const i=Math.floor(((d.getHours()+1)%24)/2);return!(i>=3&&i<=8)}

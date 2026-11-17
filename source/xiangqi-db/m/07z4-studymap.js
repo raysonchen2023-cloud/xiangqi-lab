@@ -51,7 +51,7 @@ const MZ_SCI=[{n:"明式亮格櫃",nd:"{{ming:明式}}亮格櫃",t:"上面開敞
   {n:"明式長畫桌",nd:"{{ming:明式}}長畫桌",t:"四條腿在四個角、腳是馬蹄足，還加了棖子。{{ming:照明式家具的分法，腿在四角的叫「桌」，腿縮進去的才叫「案」，所以}}這是一張畫桌。",
     s:[[[45,868],[800,868],[800,905],[45,905]],[[45,905],[78,905],[78,1150],[45,1150]],[[675,905],[708,905],[708,1150],[675,1150]]]},
   {n:"油盞",dn:"n",t:"小瓷盞裝油、放一根燈草點著，擱在矮木座上，沒有燈罩、也沒有玻璃。{{ming:宋到明的瓷油盞常帶一個小把手。}}",s:[[[414,740],[492,740],[492,802],[414,802]]]}];
-const mzDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const mzDark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 let MZ_FIG=null;   /* 舞台上 3D 角色（fig3d 回傳的 {B,r}），走路角色沒出現時揮手、歡呼用 */
 function mzCss(){if(document.getElementById("mzCss"))return;const s=document.createElement("style");s.id="mzCss";s.textContent=`
 .shp-page.mz-wall{position:relative;margin:10px 0 6px;border-radius:6px;user-select:none;-webkit-user-select:none}

@@ -88,11 +88,22 @@ function topMore(tr,right){try{topMoreRun.w=false}catch(e){}   /* 第 23 輪 R23
    一張選單只認第一次（b.dataset.tmr）；topMoreRun 等 popstate 的期間（topMoreRun.w）別的觸發也一律不理，選單項目只做一次 */
 function topMoreItem(b,f,after){if(b&&b.dataset){if(b.dataset.tmr)return false;b.dataset.tmr="1"}return topMoreRun(f,after)}
 function topMoreRun(f,after){if(topMoreRun.w)return false;const run=()=>{setTimeout(()=>{try{if(typeof f==="function")f()}finally{if(typeof after==="function"){setTimeout(after,0);setTimeout(after,600)}}},0)};let s=null;try{s=history.state}catch(e){}
-  if(!(s&&s.xqSheet)){closeSheet();run();return true}closeSheet(true);topMoreRun.w=true;let done=false;const go=()=>{if(done)return;done=true;topMoreRun.w=false;topMoreRun.cx=null;removeEventListener("popstate",go);run()};
+  if(!(s&&s.xqSheet)&&!topMoreRun.pend){closeSheet();run();return true}closeSheet(true);topMoreRun.w=true;let done=false;const hn=()=>{try{return location.hash}catch(e){return null}},H=hn();topMoreRun.h=H;
+  /* 11/17 第 25 輪 R25-2（測試員 E）：popstate 晚到超過 1.5 秒、解鎖後又按別的項目，第一筆 history.back() 已經送出收不回來，再退一次就多退一頁 →
+     ① 還有一筆退回在路上（topMoreRun.pend）就不再退，等那一筆；② 落腳的紀錄還是卡片那種（xqSheet）就繼續等（00-util 的 popstate 會再往回走一格），落到一般頁面才做選單項目 */
+  const fin=()=>{done=true;topMoreRun.w=false;topMoreRun.cx=null;topMoreRun.h=null;removeEventListener("popstate",go);run()},go=()=>{if(done)return;if(hn()!==H){topMoreRun.drop();return}let st=null;try{st=history.state}catch(e){}if(st&&st.xqSheet)return;fin()};
+  /* 11/17 第 26 輪 R26-2（測試員 E）：popstate 漏掉後，玩家自己換頁（改網址）時，換頁的 popstate 反而讓排隊中的「回星槎」跑起來、跳去 #/adventure →
+     go 先看網址：已經不是按選單時那一頁，就整筆放掉（排隊的項目、還有一筆退回在路上的記號都清掉，不做舊項目）；下面 hashchange 也同樣清；6 秒重送也只在還停在原頁時 */
   /* 11/17 第 24 輪（測試員 E 觀察 97）：popstate 一直不來，同一頁的「⋯」會一直不理點選 → 1.5 秒後先解除鎖定（不做選單項目，免得回到「晚到的退上一頁把網址蓋回去」）；
      popstate 真的來了照樣做；解鎖後又按了別的選單項目，舊的這筆就取消（topMoreRun.cx），不會兩項都做 */
   try{if(typeof topMoreRun.cx==="function")topMoreRun.cx()}catch(e){}topMoreRun.cx=()=>{done=true;removeEventListener("popstate",go)};setTimeout(()=>{if(!done)topMoreRun.w=false},1500);
-  addEventListener("popstate",go);try{history.back()}catch(e){go()}return true}
+  /* 11/17 第 26 輪 N26-3（測試員 B）：上面 ① 的「等那一筆」沒有上限 → 退上一頁永遠不來時，這一頁的選單再也不動作（1514 是過 1.5 秒就能再用）。
+     晚到和永遠不來分不出來，所以給上限：pend 記第一筆送出的時間，超過 6 秒（晚到 2～5 秒的都等得到）還沒到，就當它丟了，重送一次退上一頁，照常等 popstate 再做選單項目 */
+  const bk=()=>{topMoreRun.pend=Date.now();try{history.back()}catch(e){topMoreRun.pend=false;fin()}};
+  addEventListener("popstate",go);if(topMoreRun.pend){const p0=topMoreRun.pend;setTimeout(()=>{if(!done&&topMoreRun.pend===p0&&hn()===H)bk()},Math.max(0,(typeof p0==="number"?p0:0)+6000-Date.now()));return true}bk();return true}
+try{addEventListener("popstate",()=>{topMoreRun.pend=false})}catch(e){}
+topMoreRun.drop=()=>{try{if(typeof topMoreRun.cx==="function")topMoreRun.cx()}catch(e){}topMoreRun.cx=null;topMoreRun.pend=false;topMoreRun.w=false;topMoreRun.h=null};
+try{addEventListener("hashchange",()=>{let h=null;try{h=location.hash}catch(e){}if(topMoreRun.h!=null&&h!==topMoreRun.h)topMoreRun.drop()})}catch(e){}   /* 第 26 輪 R26-2：換到別頁就放掉排隊中的選單項目 */   /* 第 25 輪 R25-2：退回到了（不管是誰的） */
 function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").children)b.classList.toggle("on",b.dataset.go===on)}
 for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);if(b.dataset.go==="#/")goHome();else location.hash=b.dataset.go};   /* 意見回饋 607：底部「首頁」也是退回首頁 */
 function route(){

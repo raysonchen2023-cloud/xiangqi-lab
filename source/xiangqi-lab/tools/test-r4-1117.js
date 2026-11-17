@@ -84,7 +84,9 @@ test("N6-3 英文 480px 以下頂欄標題可換兩行（所有頁面）；返�
   /* 第 7 輪 N7-1 起返回鈕有寬度上限（字留著、放不下才刪節號；快速對局切換鈕那頁只留「‹」），規則都只對英文、480px 以下（N7-1 測試在檔尾） */
   for (const r of css.match(/[^\s{}"]*[^{}"]*#back\b[^{]*\{/g) || []) assert.match(r, /^(@media \(max-width:480px\)\{)?html\[lang=en\] /, "返回鈕的規則只對英文：" + r);
   assert.ok(!/#back\{[^}]*font-size:0/.test(css.replace(/\.topbar:has\(\.cpu-seg\) #back\{[^}]*\}/g, "")), "一般頁面返回鈕的字照留（只有快速對局切換鈕那頁只留 ‹）");
-  const tt = css.match(/[^\s{}"]* ?#title\{/g); assert.ok(tt.length >= 2); for (const r of tt) assert.equal(r, "html[lang=en] #title{", "只對英文：" + r);
+  /* 第 26 輪 W1 起多一條有時辰鐘時的上限 html[lang=en] #topbar.clk-on #title，一樣只對英文 */
+  /* 第 27 輪 X3 起再多一條沒有標題的頁 html[lang=en] #topbar.clk-nt #title，也只對英文 */
+  const tt = css.match(/[^\s{}"]* ?(?:#topbar\.clk-(?:on|nt) )?#title\{/g); assert.ok(tt.length >= 2); for (const r of tt) assert.ok(r === "html[lang=en] #title{" || r === "html[lang=en] #topbar.clk-on #title{" || r === "html[lang=en] #topbar.clk-nt #title{", "只對英文：" + r);
   assert.ok(I.includes("function i18nCss(){try{if(document.getElementById(\"i18nCss\"))return;"), "英文開機注入一次");
 });
 test("N6-4 星門圍城 3D 盤上的門記號：英文寫「Gate N」、中文照舊「門 N」；英文標籤寬度照字", () => {

@@ -15,7 +15,7 @@ const RD2_POND="polygon(10.4% 23.3%,95.7% 21.8%,95.7% 42.5%,78.1% 46.5%,67.7% 51
 const SHW_RD2={el:40,h:[.1,92,.003],look0:[46,66],home:"home",N:{home:[52,97],desk:[46,91],mid:[72,92],rail:[86,82]},E:"home-desk desk-mid mid-rail home-mid",
   HS:{rd2Book:["desk",46,66,"wave"],rd2Stack:["desk",23,65,"wave"],rd2Pole:["rail",80,32,"wave"],rd2All:["mid",83,72,"idle"]}};
 const rd2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
-const rd2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const rd2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function rd2Css(){if(document.getElementById("rd2Css"))return;const s=document.createElement("style");s.id="rd2Css";s.textContent=`
 .rd2-page{margin:0 0 6px}
 .rd2-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}

@@ -16,7 +16,7 @@ const SHW_KJ2={el:40,h:[.085,92,.0028],look0:[50,40],home:"home",N:{home:[50,97]
     ob:[[[11,35.5],[28.5,35.5],[26.5,47.5],[9.5,47.5]],[[31,30],[69.5,30],[72.5,50.5],[28,50.5]],[[73,38],[89.5,38],[91.5,50],[75,50]],[[62,25],[67,24.5],[91,34.5],[84,36.5],[62,28]],[[33,52.5],[68,52.5],[68.5,57],[32,57]]]}},   /* 回饋 816：點矮几桌面＝跳上比較近的那一角 */   /* 身高照「矮几前」那一點的透視（這頁透視縮得快，照桌腳會太小） */   /* 回饋 808：點朱冊／墨冊＝跳上矮几前面左右兩角（冊子前的空處，不站在棋枰和紙籤上） */
   HS:{kj2Brd:["front",50,38,"cheer"],kj2Red:["tl",20,42,"idle"],kj2Blk:["tr",82,44,"idle"],kj2Slip:["front",50,55,"idle"],kj2Scr:["front",76,32,"idle"]}};
 const kj2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
-const kj2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const kj2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function kj2M3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
   return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${x0},${y0},0,1)`}

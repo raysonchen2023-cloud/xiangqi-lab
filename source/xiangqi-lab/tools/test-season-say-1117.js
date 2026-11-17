@@ -20,21 +20,20 @@ function kit(term, extra) {
   return Object.assign(o, { said, els, play: sea => { o.sw7SeaPlay({ append() { } }, { isConnected: false, style: {} }, sea); return els.find(e => /<b>/.test(e.innerHTML)) } });
 }
 
-test("〔重現〕立冬：小籤冬天、圖秋景、小帥說「立冬了，柳葉才剛轉黃」（不再只說柳樹都變黃了）", () => {
+/* 11/17 晚開發者選單「季節照節氣、立冬起就是冬景」：SW7_HSEA 改成跟小籤（sw7CardSea）同一套，圖跟小籤不會再不同季，兼顧的那句（SW7_SEA_MIX）留著但用不到 */
+test("〔重現〕立冬：小籤冬天、圖也是冬景、小帥照冬天那句", () => {
   const K = kit("立冬"); const slip = K.play(K.SW7_HSEA["立冬"]);
-  assert.equal(K.SW7_HSEA["立冬"], "autumn", "圖不動");
+  assert.equal(K.SW7_HSEA["立冬"], "winter", "圖改照節氣");
   assert.match(slip.innerHTML, /❄ 冬天到了/, "小籤不動");
-  assert.deepEqual(K.said, ["哇，立冬了！柳葉才剛轉黃，一片一片飄到河裡了！"]);
+  assert.deepEqual(K.said, [K.SW7_SEA_TXT.winter.say]);
   assert.ok(!/上限/.test(K.said[0]));
 });
 
-test("〔全節氣〕小籤跟圖同一季的節氣：小帥照舊那一季的 say；不同季的（立秋、處暑、立冬）說兼顧的那句", () => {
+test("〔全節氣〕圖跟小籤一律同一季：小帥照那一季的 say（立秋、處暑、立冬也一樣）", () => {
   const K = kit("");
   for (const t of TERMS) {
     const sea = K.SW7_HSEA[t], got = K.sw7SeaSay(t, sea);
-    if (t === "立冬") assert.equal(got, "哇，立冬了！柳葉才剛轉黃，一片一片飄到河裡了！");
-    else if (t === "立秋" || t === "處暑") assert.equal(got, "哇，" + t + "了！柳樹還綠綠的，橋下的荷花也還開著喔！", t);
-    else assert.equal(got, K.SW7_SEA_TXT[sea].say, t);
+    assert.equal(got, K.SW7_SEA_TXT[sea].say, t);
   }
   assert.equal(K.sw7SeaSay("", "spring"), K.SW7_SEA_TXT.spring.say, "節氣還不知道：照圖");
 });

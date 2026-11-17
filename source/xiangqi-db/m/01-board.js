@@ -956,6 +956,19 @@ function tmxPlain(q,loss,ev,by){const l=+loss,L=loss!=null&&loss!==""&&isFinite(
     緩著:`不算錯，但有更好的走法：這步比最好的走法少了${L||" "+R}的價值`,失著:`走錯了：這步比最好的走法少了${L||" "+R}的價值`,
     敗著:`大錯：這步比最好的走法少了${L||" "+R}的價值`}[q];if(!x)return"";
   const k=["緩著","失著","敗著"].includes(q)?evLink(ev,by):"";return`「${q}」＝${x}${k?"；"+k:""}。`}
+/* 11/17 第 26 輪 W2：英文介面的評等說明、檢討頁說明（10-db mkNoteEn 也用）——著法用 WXF、評等用現有六個英文詞（Brilliant／Best／Good／Slow／Mistake／Blunder）；中文照舊走 tmxPlain */
+function tmxEn(){try{return typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){return false}}
+function tmxT(s){s=String(s==null?"":s);try{const t=typeof i18nText==="function"?i18nText(s):null;return t!=null&&!/[㐀-鿿]/.test(t)?t:s}catch(e){return s}}
+function tmxW(cn){try{const w=typeof i18nWxf==="function"?i18nWxf(cn):null;return w||String(cn||"")}catch(e){return String(cn||"")}}
+function tmxPawnEn(cp){return Math.abs(+cp||0)<75?"about half a pawn":"about "+pawnN(cp)+" pawns"}
+function tmxEvLinkEn(ev,by){if(ev==null||ev===""||!isFinite(+ev)||typeof evt!=="function")return"";const e=evt(+ev);if(!e)return"";const v=+ev,sg=by==="r"?1:by==="b"?-1:0;
+  return(Math.abs(v)>=30&&sg&&Math.sign(v)===sg?"still, overall after this move: ":"overall after this move: ")+tmxT(e)}
+function tmxPlainEn(q,loss,ev,by){const l=+loss,L=loss!=null&&loss!==""&&isFinite(l)&&l>=30&&l<2000&&!(q==="失著"&&l<=150)&&!(q==="敗著"&&l<=400)?tmxPawnEn(l):"";
+  const R=String(TMX_RNG[q]||"").replace("～","–").replace(" 個兵以上","+ pawns").replace(" 個兵"," pawns"),a=L||R,
+    x={妙著:"Great move! This is the only best move; the others are much worse",正著:"The best move (or nearly as good as the best)",穩著:"Good, only slightly worse than the best move",
+      緩著:`Not bad, but there was a better move. This one is worth ${a} less than the best move`,失著:`A mistake. This move is worth ${a} less than the best move`,
+      敗著:`A blunder. This move is worth ${a} less than the best move`}[q];if(!x)return"";
+  const k=["緩著","失著","敗著"].includes(q)?tmxEvLinkEn(ev,by):"";return`"${tmxT(q)}": ${x}${k?"; "+k:""}.`}
 /* 小泡泡：指著 el（在上面放不下就放下面），ms 毫秒後或點畫面任何地方就收；成功顯示回 true */
 function tmxBub(el,html,ms){try{document.querySelectorAll(".tmx-bub").forEach(x=>x.remove());if(!el||!el.isConnected)return false;const r=el.getBoundingClientRect();if(!r.width||r.bottom<0||r.top>innerHeight)return false;
   const b=document.createElement("div");b.className="tmx-bub";b.dataset.nomvt="1";b.setAttribute("role","status");b.innerHTML=html;document.body.append(b);
@@ -988,14 +1001,14 @@ function tmxMove(c,m,i){vibrate(5);let s="";try{MVT_RE.lastIndex=0;if(m.cn&&MVT_
   tmxBub(c,`<b>第 ${i+1} 步　${esc(m.cn||"")}</b>${s?"<br>"+esc(s):""}${g?"<br>"+esc(g):""}${tr?"<br>⚠ "+esc(tr):""}`,7000)}
 if(typeof renderStrip==="function"){const f0=renderStrip;renderStrip=function(box,moves,curIdx,onPick){const r=f0.apply(this,arguments);try{tmxStrip(box,moves,onPick)}catch(e){}return r}}
 document.addEventListener("click",e=>{const t=e.target;if(!t||!t.closest)return;
-  const q=t.closest(".chip .q[data-tq]");if(q){e.preventDefault();e.stopPropagation();vibrate(5);TMX_T=Date.now();tmxBub(q,esc(tmxPlain(q.dataset.tq,q.dataset.tl,q.dataset.te,q.dataset.tb))+(q.dataset.tr?"<br>⚠ "+esc(q.dataset.tr):""),6000);return}
-  const r=t.closest(".rp-q > span");if(r){const g=TMX_QS.find(k=>r.textContent.includes(k));if(g){vibrate(5);tmxBub(r,esc(tmxPlain(g)),6000)}}},true);
+  const q=t.closest(".chip .q[data-tq]");if(q){e.preventDefault();e.stopPropagation();vibrate(5);TMX_T=Date.now();tmxBub(q,tmxEn()?esc(tmxPlainEn(q.dataset.tq,q.dataset.tl,q.dataset.te,q.dataset.tb))+(q.dataset.tr?"<br>⚠ "+esc(tmxT(q.dataset.tr)):""):esc(tmxPlain(q.dataset.tq,q.dataset.tl,q.dataset.te,q.dataset.tb))+(q.dataset.tr?"<br>⚠ "+esc(q.dataset.tr):""),6000);return}
+  const r=t.closest(".rp-q > span");if(r){const g=TMX_QS.find(k=>r.textContent.includes(k));if(g){vibrate(5);tmxBub(r,esc(tmxEn()?tmxPlainEn(g):tmxPlain(g)),6000)}}},true);
 /* ③ 記譜提示：畫面上（不在泡泡、吐司裡）第一次出現看得到的 .mvt，等 1.5 秒（過場、蓋章動畫先收）再指著它講一次 */
 const tmxVis=el=>{if(!el||!el.offsetParent||el.closest(".tmx-bub"))return false;const r=el.getBoundingClientRect();if(!(r.width>0&&r.top>=50&&r.bottom<=innerHeight-60&&r.left>=0&&r.right<=innerWidth))return false;return !tmxClipped(el,r)};
 /* 回饋 872／873：記譜在可捲的框裡被裁掉（例如漂流瓶的說明被擠成一條線）就不算看得到，泡泡不要指著看不見的字 */
 function tmxClipped(el,r){try{for(let p=el.parentElement;p&&p!==document.body;p=p.parentElement){const s=getComputedStyle(p);if(s.overflow==="visible"&&s.overflowY==="visible")continue;const q=p.getBoundingClientRect();if(r.top<q.top-1||r.bottom>q.bottom+1)return true}}catch(e){}return false}
 function tmxMvtHint(){if(TMX_MV||TMX_MVT||(typeof bhtlHush==="function"&&bhtlHush()))return;if(![...document.querySelectorAll(".mvt")].some(tmxVis))return;
   TMX_MVT=setTimeout(()=>{TMX_MVT=0;if(TMX_MV||document.querySelector(".tmx-bub,.kjfx,.pkhint")||fxBusy())return;const y=[...document.querySelectorAll(".mvt")].find(tmxVis);if(!y)return;
-    if(tmxBub(y,`💡 藍色虛線的走法（像「${esc(y.dataset.mv)}」）<b>點一下</b>，就會在棋盤上畫箭頭，還會用白話說它怎麼走。`,8000)){TMX_MV=true;store.set("tmxMvt",true);TMX_T=Date.now()}},1500)}
+    if(tmxBub(y,tmxEn()?`💡 <b>Tap</b> a move underlined in blue dashes (like "${esc(tmxW(y.dataset.mv))}") to draw its arrow on the board and explain it in plain words.`:`💡 藍色虛線的走法（像「${esc(y.dataset.mv)}」）<b>點一下</b>，就會在棋盤上畫箭頭，還會用白話說它怎麼走。`,8000)){TMX_MV=true;store.set("tmxMvt",true);TMX_T=Date.now()}},1500)}
 
 

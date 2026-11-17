@@ -57,7 +57,7 @@ const cp2Sci=g=>Object.assign({},CP2_SCI,{it:CP2_SCI.it.filter(x=>!x.g||x.g.spli
 const SHW_CP2={el:40,h:[.085,70,.0012],look0:[50,40],home:"home",N:{home:[50,96],mid:[50,86],top:[50,78]},E:"home-mid mid-top",
   HS:{cp2Book:["top",51,57,"wave"],cp2Scr:["mid",50,42,"idle"],cp2Brd:["top",81,49,"idle"]}};
 const cp2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
-const cp2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||h>=19||h<5};
+const cp2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function cp2M3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
   return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${x0},${y0},0,1)`}
