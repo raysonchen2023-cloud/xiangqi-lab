@@ -15,7 +15,7 @@
    前綴 i18n／I18N_；測試 xiangqi-lab/tools/test-i18n.js；include 在 m.html 最後（07dq-daily.js 後面）。 */
 /* #I18N-PURE-BEGIN：到 #I18N-PURE-END 是不碰畫面的資料與純函式，test-i18n.js 用 vm 直接載入 */
 const I18N_CJK=/[㐀-鿿豈-﫿]/;
-const I18N_GUARD=["隱私","進階","估計棋力","正在對戰","取代這支手機"];   /* 11/17 開發者選單（第 10 輪）：官階拿掉——05-settings 的官階標題標了 data-sm-title，07s2 照標記找，英文翻成 Rank */
+const I18N_GUARD=["隱私","進階","估計棋力","取代這支手機"];   /* 11/17 第 24 輪 U5：正在對戰拿掉（02-shell 那一區標 data-sec="live"，07x3 名冊照標記找）；英文名冊的水牌標題、清單標題才翻得到 */   /* 11/17 開發者選單（第 10 輪）：官階拿掉——05-settings 的官階標題標了 data-sm-title，07s2 照標記找，英文翻成 Rank */
 /* 象棋術語用通行英文；WXF 字母 K A E H R C P */
 const I18N_PL={"帥":"K","將":"K","仕":"A","士":"A","相":"E","象":"E","傌":"H","馬":"H","俥":"R","車":"R","炮":"C","砲":"C","包":"C","兵":"P","卒":"P"};
 const I18N_PN={K:"General",A:"Advisor",E:"Elephant",H:"Horse",R:"Chariot",C:"Cannon",P:"Soldier"};
@@ -273,7 +273,7 @@ const I18N_EN={
   "↩ 掀簾・回雲弈閣":"↩ Back to Play",
   "↩ 掀簾・回觀星閣":"↩ Back to Play",
   /* 頂欄、底欄、共用按鈕 */
-  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","去園子下棋（3D）":"Play in the garden (3D)","回棋盤模式":"Back to board mode","切到 3D 星盤":"Switch to 3D star board","回平面棋盤":"Back to 2D board",   /* 第 23 輪 N23-1：星門圍城「⋯」那顆（外掛字典還沒載到也翻得出） */"更多":"More",
+  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","去園子下棋（3D）":"Play in the garden (3D)","回棋盤模式":"Back to board mode","正在對戰":"Playing now","切到 3D 星盤":"Switch to 3D star board","回平面棋盤":"Back to 2D board",   /* 第 23 輪 N23-1：星門圍城「⋯」那顆（外掛字典還沒載到也翻得出） */"更多":"More",
   "關閉":"Close","取消":"Cancel","確定":"OK","繼續":"Continue","結束":"End","下一步":"Next","上一步":"Previous","自動播放":"Autoplay","分享給朋友":"Share with friends",
   "開啟螢幕報讀與鍵盤模式":"Turn on screen reader & keyboard mode","螢幕報讀與鍵盤模式：開著（按一下關掉）":"Screen reader & keyboard mode: on (tap to turn off)",   /* 0540 驗收：英文讀屏第一個碰到的按鈕 */
   "回報問題":"Report a problem","意見回饋":"Feedback","我的角色":"My character","加到主畫面":"Add to Home Screen","線上大廳":"Online lobby","走回雅間":"Back to the private room",
@@ -1528,6 +1528,13 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
   "html[lang=en] #stmOv .lb{z-index:1;white-space:normal!important;text-align:center;min-width:calc(7.5cqw + 2px);max-width:27cqw;min-height:calc(19.8cqw + 2px);margin:-1px 0 0 -1px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;line-height:1.15}",
   "html[lang=en] #stmOv .lb[data-l=acad],html[lang=en] #stmOv .lb[data-l=svc]{margin:-1px -1px 0 0}",
   /* 11/17 第 22 輪 S2：大廳左下出口「↩ Back to Cloud Chess Pavilion」比按鈕寬、左右被裁 → 英文出口標籤可以換行、字小一點，整段留在按鈕裡 */
+  /* 11/17 第 24 輪 U1：斷網時頂欄的「📴 Offline」牌太寬，標題被擠成直排、牌子中間被時辰鐘蓋住 → 窄螢幕英文只留 📴（讀螢幕名稱照舊完整），07w8 讓牌子疊在時辰鐘上面 */
+  "@media (max-width:480px){html[lang=en] #offChip{font-size:0!important;padding:6px 8px!important}html[lang=en] #offChip::before{content:\"📴\";font-size:15px;line-height:1}}",
+  /* 11/17 第 24 輪 U3：開局名橫幅英文太長（Elephant Opening 左右被切）→ 字縮小、可以換行 */
+  "html[lang=en] .opfx .opc{white-space:normal;max-width:92vw;box-sizing:border-box}html[lang=en] .opfx .txt b{font-size:.62em;line-height:1.12;text-align:center;white-space:normal}html[lang=en] .opfx .who{letter-spacing:.12em}",
+  /* 11/17 第 24 輪 U6：名冊頁「Back to the courtyard」右邊被切、攤開的書句尾被截、紅名帖「Player…」被截 → 英文可以換行、靠右的標籤往左對齊 */
+  "html[lang=en] .mf-hs span{white-space:normal;max-width:34vw;text-align:center;font-size:12px;line-height:1.2}html[lang=en] #mfDoor span{left:auto;right:0;transform:translateY(-100%)}",
+  "html[lang=en] .mf-bd b,html[lang=en] .mf-bd .mf-bm{white-space:normal;overflow:visible;text-overflow:clip;font-size:12px;line-height:1.3}html[lang=en] .mf-me b{white-space:normal;font-size:13px;line-height:1.15;overflow-wrap:anywhere;text-overflow:clip}",
   "html[lang=en] .shp-spot.ex-spot{max-width:min(52vw,210px)}html[lang=en] .shp-spot.ex-spot b{white-space:normal;font-size:12.5px;line-height:1.2;letter-spacing:0;text-align:center}",
   "html[lang=en] #stmOv .here b{margin-left:.3em}"].join("\n");
 

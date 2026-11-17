@@ -51,7 +51,7 @@ function clkCss(){if(document.getElementById("clkCss"))return;const s=document.c
 html.gapfix #topbar.clk-on{padding-top:calc(var(--safeT,0px) + 30px)}   /* 回饋 840（開發者 11/9「修正時鐘」截圖：iPhone 主畫面 App 星晷擠進瀏海、壓到標題）：02-shell 的 gapfix 會把頂欄往下推 34px，這裡原本用 #topbar 蓋掉了它，iPhone 上星晷就跑到狀態列底下；有 gapfix 時照樣多留這段 */
 #topbar.clk-nt #title{color:transparent;text-shadow:none}#topbar.clk-nt #title *{visibility:hidden}
 #topbar.clk-on #title{align-self:stretch;font-size:17px;line-height:20px;padding-left:62px;padding-bottom:36px}   /* 回饋 840b（開發者 11/9「時鐘還是無法完整顯示」）：改成完整小圓盤（56px）放在標題左邊，標題往右讓位；底下兩行小字＝現在的時辰、第幾天・節氣 */
-.clk-box{position:absolute;bottom:2px;display:none;align-items:flex-end;gap:8px;overflow:hidden;z-index:1}#topbar.clk-on .clk-box{display:flex}
+.clk-box{position:absolute;bottom:2px;display:none;align-items:flex-end;gap:8px;overflow:hidden;z-index:1}#topbar.clk-on .clk-box{display:flex}#topbar #offChip{position:relative;z-index:2}
 .clk-sm{display:grid;flex:0 1 auto;min-width:0;cursor:pointer;padding-bottom:1px;font:600 11.5px/1.3 var(--serif,serif);letter-spacing:.02em;opacity:.9;text-align:left}.clk-sm>span{grid-area:1/1;transition:opacity 1.1s ease}.clk-sm .clk-sl>span{display:block;white-space:nowrap}.clk-sm .clk-sl>b{display:block;font-size:15px;line-height:1.2;font-weight:900;letter-spacing:.06em;color:var(--accent,#a3361f)}.clk-sm .clk-ss{white-space:nowrap}
 .clk-sm .clk-ss{opacity:0;align-self:end;font-size:12.5px}.clk-box.ship .clk-sm .clk-sl{opacity:0}.clk-box.ship .clk-sm .clk-ss{opacity:1}
 .clk-dial{display:block;flex:none;width:56px;height:56px;border-radius:50%;margin:0;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}

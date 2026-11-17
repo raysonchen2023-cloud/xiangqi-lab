@@ -154,7 +154,7 @@ function mfWrap(v){const dw=v.querySelector(".lm-dw"),lb=v.querySelector("#lb"),
     const np=S.pages.length;nav.querySelector("span").textContent=`第 ${S.pi+1}／${np} 頁`;nav.querySelector('[data-t="-1"]').disabled=S.pi<=0;nav.querySelector('[data-t="1"]').disabled=S.pi>=np-1;
     board();mine();cup();box()}
   /* 水牌：正在對戰 */
-  function board(){const H=bd.clientHeight||80,n=Math.max(1,Math.floor((H-8)/20)-1),sec=[...lb.querySelectorAll(".sec-t")].find(x=>x.textContent.includes("正在對戰"));
+  function board(){const H=bd.clientHeight||80,n=Math.max(1,Math.floor((H-8)/20)-1),sec=lb.querySelector('.sec-t[data-sec="live"]')||[...lb.querySelectorAll(".sec-t")].find(x=>x.textContent.includes("正在對戰"));   /* 11/17 第 24 輪 U5：照 02-shell 的 data-sec 找（英文介面那行字已經翻成 Playing now），「正在對戰」才能從 I18N_GUARD 拿掉 */
     const my=lb.querySelector("#myg"),G=[...lb.querySelectorAll("[data-w]")].map(w=>{const c=w.closest(".card"),ns=c?[...c.querySelectorAll(".gc-l1 .gc-p b")].map(b=>mfTx(b.textContent)):[],ws=c&&c.querySelector("[data-ws]");return{w,ws,t:ns.join(" 對 ")||"一盤棋",c:ws?(mfTx(ws.textContent).match(/\d+/)||[""])[0]:""}});
     const L=[];if(my)L.push(`<div class="mf-bl mine"><button type="button" data-my="1">我的對局・回到戰場</button></div>`);
     const room=n-L.length,show=G.length>room?G.slice(0,Math.max(0,room-1)):G;

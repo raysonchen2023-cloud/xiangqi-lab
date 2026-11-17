@@ -88,7 +88,11 @@ function topMore(tr,right){try{topMoreRun.w=false}catch(e){}   /* 第 23 輪 R23
    一張選單只認第一次（b.dataset.tmr）；topMoreRun 等 popstate 的期間（topMoreRun.w）別的觸發也一律不理，選單項目只做一次 */
 function topMoreItem(b,f,after){if(b&&b.dataset){if(b.dataset.tmr)return false;b.dataset.tmr="1"}return topMoreRun(f,after)}
 function topMoreRun(f,after){if(topMoreRun.w)return false;const run=()=>{setTimeout(()=>{try{if(typeof f==="function")f()}finally{if(typeof after==="function"){setTimeout(after,0);setTimeout(after,600)}}},0)};let s=null;try{s=history.state}catch(e){}
-  if(!(s&&s.xqSheet)){closeSheet();run();return true}closeSheet(true);topMoreRun.w=true;let done=false;const go=()=>{if(done)return;done=true;topMoreRun.w=false;removeEventListener("popstate",go);run()};addEventListener("popstate",go);try{history.back()}catch(e){go()}return true}
+  if(!(s&&s.xqSheet)){closeSheet();run();return true}closeSheet(true);topMoreRun.w=true;let done=false;const go=()=>{if(done)return;done=true;topMoreRun.w=false;topMoreRun.cx=null;removeEventListener("popstate",go);run()};
+  /* 11/17 第 24 輪（測試員 E 觀察 97）：popstate 一直不來，同一頁的「⋯」會一直不理點選 → 1.5 秒後先解除鎖定（不做選單項目，免得回到「晚到的退上一頁把網址蓋回去」）；
+     popstate 真的來了照樣做；解鎖後又按了別的選單項目，舊的這筆就取消（topMoreRun.cx），不會兩項都做 */
+  try{if(typeof topMoreRun.cx==="function")topMoreRun.cx()}catch(e){}topMoreRun.cx=()=>{done=true;removeEventListener("popstate",go)};setTimeout(()=>{if(!done)topMoreRun.w=false},1500);
+  addEventListener("popstate",go);try{history.back()}catch(e){go()}return true}
 function setTabs(show,on){$("#tabbar").hidden=!show;for(const b of $("#tabbar").children)b.classList.toggle("on",b.dataset.go===on)}
 for(const b of $("#tabbar").children)b.onclick=()=>{vibrate(5);if(b.dataset.go==="#/")goHome();else location.hash=b.dataset.go};   /* 意見回饋 607：底部「首頁」也是退回首頁 */
 function route(){
@@ -381,7 +385,7 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
         /* 開發者決定（Gemini 遊戲化審閱）：熟面孔——對戰過的棋友（本機的線上戰績記著 ID 和名字），在線上時亮起來、點一下就能邀請 */
         const FH=(()=>{let h=[];try{h=(XQNet.rating().hist||[])}catch(e){}const seen=new Set(),out=[];for(const x of h){if(!x.oid||seen.has(x.oid)||x.oid===XQNet.me().id||(XQNet.blocked&&XQNet.blocked(x.oid)))continue;seen.add(x.oid);out.push(x);if(out.length>=12)break}return out})();   /* 回饋 841（開發者 11/9 選：大廳檢舉封鎖）：封鎖的人不列進熟面孔 */
         const fam=FH.length?`<div class="sec-t">${ETIMG("o_familiar","","👥")} 熟面孔（${FH.filter(x=>ps.some(p=>p.id===x.oid)).length}／${FH.length} 在線上）</div><div class="famg">${FH.map(x=>{const on=ps.find(p=>p.id===x.oid),busy=on&&on.st==="playing";return`<${on?`span data-p="${esc(on.id)}"`:"span"} class="famc${on?" on":""}"><b>${on?"🟢":"⚪"} ${esc(on?lbnShow(on):lbnShow(x.oid,x.opp))}${devBotTag(x.oid)}</b><small>${on?(busy?"對戰中":on.st==="watching"?"觀戰中":"在線上・點一下邀請"):"上次 "+(x.res==="w"?"你贏":x.res==="l"?"你輸":"和棋")+"・"+new Date(x.at).toLocaleDateString()}</small></${"span"}>`}).join("")}</div>`:"";
-        return vis+fam+`<div class="sec-t">${ETIMG("h_battle","","⚔")} 正在對戰（${rest.length+(G?1:0)} 盤）${cloudLegend(anyBot)}</div>`+(mine||rest.length?mine+rest.map(card).join(""):`<div class="card muted" style="margin-bottom:8px">${up?"目前沒有人在對戰，有人開始下棋就會出現在這裡。":"連線中…"}</div>`)+
+        return vis+fam+`<div class="sec-t" data-sec="live">${ETIMG("h_battle","","⚔")} 正在對戰（${rest.length+(G?1:0)} 盤）${cloudLegend(anyBot)}</div>`+(mine||rest.length?mine+rest.map(card).join(""):`<div class="card muted" style="margin-bottom:8px">${up?"目前沒有人在對戰，有人開始下棋就會出現在這裡。":"連線中…"}</div>`)+
           `<div class="sec-t">${ETIMG("o_invite","","🟢")} 可以邀請的棋友（${free.filter(p=>p.st==="idle"||p.st==="seeking").length}）</div>`+
           (free.length?free.map(p=>`<div class="card row" data-p="${esc(p.id)}" role="button" tabindex="0" data-axk style="justify-content:space-between;margin-bottom:8px;cursor:pointer"><span style="flex:1;min-width:0"><span class="gc-p"><b>${esc(lbnShow(p))}</b>${cupBadge(p.id)}<small>${esc(XQNet.rankOf(p.pts))}${p.tc?`・⏱${+p.tc}分`:""}</small></span><span class="muted gc-sub">${p.st==="idle"&&p.doing?"📖 "+esc(String(p.doing).slice(0,10))+"中":ST[p.st]||""}${p.city?"・📍"+esc(p.city):""}</span></span>
             ${p.st==="idle"||p.st==="seeking"?`<button class="pill pill-main" data-i="${esc(p.id)}" style="padding:6px 12px">⚔ 邀請對戰</button>`:""}</div>`).join("")
