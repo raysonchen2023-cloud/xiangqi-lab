@@ -62,6 +62,10 @@ function smCss(){if(document.getElementById("smCss"))return;const s=document.cre
 .sm-dw-b{overflow:auto;padding:0 2px 18px;-webkit-overflow-scrolling:touch}
 .sm-scrim{position:fixed;inset:0;z-index:949;background:rgba(0,0,0,.22);display:none}.sm-scrim.open{display:block}
 .sm-epw{padding:2px 8px 6px}.sm-epw>.sec-t:first-child{margin-top:4px}.sm-epw details>summary{cursor:pointer}
+/* 11/17 第 18 輪（測試員 D P2-4、B N18-2／N18-3，審查 4.0 點擊區）：外觀大小不變，透明的 ::before 撐出至少 44×44 的點選範圍——
+   畫軸右上角的「✕ 收起畫軸」（約 16×27；標題列右邊留 14px，往右撐 14px 剛好到畫面邊）；文牒（07s4 換手機面板）底下的「檢查更新」朱印（.hq-upd，約 124×21）和「隱私說明 ›」（.hq-pv）：兩顆左右並排，只往上下撐，不會疊到對方 */
+.sm-dw-h button{position:relative}.sm-dw-h button::before{content:"";position:absolute;left:min(-4px,calc((100% - 44px) / 2));right:min(-4px,calc((100% - 44px) / 2));top:min(-4px,calc((100% - 44px) / 2));bottom:min(-4px,calc((100% - 44px) / 2))}
+.hq-upd,.hq-pv{position:relative}.hq-upd::before,.hq-pv::before{content:"";position:absolute;left:min(0px,calc((100% - 44px) / 2));right:min(0px,calc((100% - 44px) / 2));top:min(0px,calc((100% - 44px) / 2));bottom:min(0px,calc((100% - 44px) / 2))}
 @media (prefers-reduced-motion:reduce){.sm-dw{transition:none}.sm-flash{animation:none}}`;document.head.append(s)}
 const smDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)};
 const smMute=()=>!store.get("mvSound",false)&&!store.get("voiceCall",true)&&!store.get("bgm",true);

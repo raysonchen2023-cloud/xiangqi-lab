@@ -144,7 +144,9 @@ function mnqGift(k,era,after){mnqCss();const G=MNQ_GIFT[k];if(!G)return;const go
   try{o.querySelector("#mnqGf1").focus({preventScroll:true})}catch(e){}return got}
 /* ---------- 任務卡（章末、跳過後）：大字寫現在要做什麼 ---------- */
 function mnqNextCard(n){n=n||mnqNextOf(mnqSt(),mnqEnv());return{t:mnqNextTxt(n),b:"出發",g:"回首頁"}}
-const mnqNextTxt=n=>n.k==="panel"?(n.soon?"第"+MNQ_CN[n.soon-1]+"章即將開放":n.t):n.t;
+const mnqNextTxt=n=>n.k==="panel"?(n.soon&&!(typeof xqNat==="function"&&xqNat())?"第"+MNQ_CN[n.soon-1]+"章即將開放":n.t):n.t;   /* 11/17 App Store 審查（測試員 E，開發者選）：原生 App 不出現「第N章即將開放」，只寫面板名稱；網頁版照舊 */
+/* 同一次審查：還沒開放的章，網頁版跳「這一章即將開放」；原生 App 不跳（遠征令面板在原生版也只列已開放的章，正常點不到） */
+function mnqSoon(){if(typeof xqNat==="function"&&xqNat())return;toast("這一章即將開放")}
 function mnqTaskCard(n){mnqCss();n=n||mnqNextOf(mnqSt(),mnqEnv());const old=document.getElementById("mnqCard");if(old)old.remove();
   const o=document.createElement("div");o.id="mnqCard";o.setAttribute("role","dialog");o.setAttribute("aria-label","下一步："+mnqNextTxt(n));
   o.innerHTML=`<div class="cd-k">下一步</div><b>${esc(mnqNextTxt(n))}</b><div class="gf-b"><button type="button">出發</button><button type="button" class="g">回首頁</button></div>`;document.body.append(o);requestAnimationFrame(()=>o.classList.add("on"));
@@ -169,7 +171,7 @@ function mnqSolved(era,P,r,go){const C=MNQ_CHAP[era]||MNQ_CHAP.classic,S=mnqSt()
   let L=null;try{L=typeof shipPuzzles==="function"?shipPuzzles(era):null}catch(e){}
   const R={k:era,id:P.id,cn:r.cn,state,L,set:C.set};if(C.rite!=="solve"){go();return R}   /* "end"／"step"：先回去，儀式之後再演 */
   mnfSolveRite(Object.assign(R,{onDone:go}));return R}
-function mnqChapter(era){era=era||"classic";const C=MNQ_CHAP[era],segs=C&&C.segs;if(!segs)return toast("這一章即將開放");if(C.vn)return mnqVn(era);const S=mnqSt();
+function mnqChapter(era){era=era||"classic";const C=MNQ_CHAP[era],segs=C&&C.segs;if(!segs)return mnqSoon();if(C.vn)return mnqVn(era);const S=mnqSt();
   let i=segs.findIndex(id=>!S.seg[id]);if(i<0)i=0;try{mnfMusic(MNF_FILMS[segs[i]].mus)}catch(e){}   /* 點選當下先開配樂（iPhone） */
   const P=Object.assign({},MNF_QTE[C.qte]);mnqQteFor(era).then(x=>Object.assign(P,x)).catch(()=>{});segs.forEach(id=>mnfPre(id,C.set));
   const N="第"+MNQ_CN[mnqChN(era)-1]+"章・";let rite=null,all=false;
@@ -185,7 +187,7 @@ function mnqChapter(era){era=era||"classic";const C=MNQ_CHAP[era],segs=C&&C.segs
         if(res.skipped){if(res.card===1)mnqGo(n);else if(!/^#?\/?$/.test(location.hash||""))location.hash="#/";mnqHomeSync();return}mnqTaskCard(n)}})};
   play(i)}
 /* 對話場景的章（07mnv）：從第一場還沒看完的接著看；每看完一場記一次（S.seg）、每場花幾秒（S.vn[朝代].tm，開發者看節奏用）、選了哪個選項（S.vn[朝代].ch） */
-function mnqVn(era){const C=MNQ_CHAP[era],S=mnqSt(),CH=typeof MNV_CH!=="undefined"&&MNV_CH[C.vn];if(!CH||typeof mnvPlay!=="function")return toast("這一章即將開放");
+function mnqVn(era){const C=MNQ_CHAP[era],S=mnqSt(),CH=typeof MNV_CH!=="undefined"&&MNV_CH[C.vn];if(!CH||typeof mnvPlay!=="function")return mnqSoon();
   let i=C.segs.findIndex(id=>!S.seg[id]);if(i<0)i=0;const sc=CH.sc[i];if(sc&&sc.mus)try{mnfMusic(sc.mus[0],sc.mus[1])}catch(e){}   /* 點選當下先開配樂（iPhone） */
   const P=Object.assign({},MNF_QTE[C.qte]);mnqQteFor(era).then(x=>Object.assign(P,x)).catch(()=>{});try{mnvPre(C.vn)}catch(e){}
   const V=()=>{const S2=mnqSt();return[S2,S2.vn[era]||(S2.vn[era]={})]};
@@ -223,13 +225,14 @@ if(typeof homeMap==="function"){const f0=homeMap;homeMap=function(v){const r=f0.
 /* ---------- 星槎遠征令面板（11/15 MNQ_PANEL_ON＝false：拿掉，萬一還有人叫就改開配樂收藏） ---------- */
 let MNQ_AU=null;
 function mnqPanel(){if(!MNQ_PANEL_ON)return mnqMusic();mnqCss();const S=mnqSt(),E=mnqEnv(),n=mnqNextOf(S,E);
-  sheet("⛵ 星槎遠征令",b=>{const lit=MNQ_CH.filter(c=>S.lamp[c[0]]).length;
-    b.innerHTML=`<p style="margin:0 0 8px;font:800 17px var(--serif,serif)">航線亮了 ${lit}／13 盞</p><div class="mnq-rt">${MNQ_CH.map(([e,nm],i)=>{const on=!!S.lamp[e],has=!!MNQ_SEGS[e],pk=MNQ_PEEK&&has&&!!(MNQ_CHAP_ALL[e]&&MNQ_CHAP_ALL[e].off),ok=on||pk||mnqOpen(S,E,e),cur=ok&&!on;
+  sheet("⛵ 星槎遠征令",b=>{const lit=MNQ_CH.filter(c=>S.lamp[c[0]]).length,nat=typeof xqNat==="function"&&xqNat();   /* 11/17 App Store 審查（開發者選）：原生 App 只列已開放的章（亮過燈、開放了、或開發者試玩），不列「即將開放」「停靠…後開放」；網頁版照舊 13 章 */
+    const RT=MNQ_CH.map(([e,nm],i)=>{const on=!!S.lamp[e],has=!!MNQ_SEGS[e],pk=MNQ_PEEK&&has&&!!(MNQ_CHAP_ALL[e]&&MNQ_CHAP_ALL[e].off),ok=on||pk||mnqOpen(S,E,e),cur=ok&&!on;return{e,nm,i,on,has,pk,ok,cur}}).filter(r=>!nat||r.ok);
+    b.innerHTML=`<p style="margin:0 0 8px;font:800 17px var(--serif,serif)">航線亮了 ${lit}／${nat?RT.length:13} 盞</p><div class="mnq-rt">${RT.map(({e,nm,i,on,has,pk,ok,cur})=>{
       return`<button type="button" class="mnq-ln ${on?"on":cur?"cur":"off"}" data-e="${e}"${ok?"":' aria-disabled="true"'}><span class="lp">${on?"🏮":i+1}</span>${esc(nm)}<em>${pk&&!on?"🛠 試玩":on?"再看一次":cur?"前往":has?"停靠"+esc(mnqShort(e))+"後開放":"即將開放"}</em></button>`}).join("")}</div>
       ${S.music.length?`<div class="sec-t">♪ 配樂收藏</div>${S.music.map(m=>`<button type="button" class="mnq-mu" data-m="${esc(m)}">▶ <span class="mnq-mt">${esc(m)}</span></button>`).join("")}`:""}
       ${S.page.length?`<div class="sec-t">📜 星槎遠征札記</div>${S.page.map(e=>`<button type="button" class="item mnq-pg" data-pg="${e}"><span class="lb" style="font-size:20px">📜</span><span class="tx"><b>${esc((MNQ_CH.find(c=>c[0]===e)||[0,e])[1])}</b><span>${esc(S.clue[e]||(e==="classic"?MNQ_NOTE0:""))}</span></span><span class="mnq-pg-go" aria-hidden="true">›</span></button>`).join("")}`:""}`;
     b.querySelectorAll(".mnq-pg").forEach(x=>x.onclick=()=>mnqNote(x.dataset.pg));
-    b.querySelectorAll(".mnq-ln").forEach(x=>x.onclick=()=>{const e=x.dataset.e;if(!MNQ_SEGS[e]){toast("這一章即將開放");return}if(!S.lamp[e]&&!(MNQ_PEEK&&MNQ_CHAP_ALL[e].off)&&!mnqOpen(S,E,e)){toast(MNQ_CH.slice(0,mnqChN(e)-1).every(([p])=>!MNQ_CHAP[p]||mnqDone(S,p))?"星槎停靠"+mnqShort(e)+"，這一章就開放":"先看完上一章");return}closeSheet();setTimeout(()=>mnqChapter(e),250)});
+    b.querySelectorAll(".mnq-ln").forEach(x=>x.onclick=()=>{const e=x.dataset.e;if(!MNQ_SEGS[e]){mnqSoon();return}if(!S.lamp[e]&&!(MNQ_PEEK&&MNQ_CHAP_ALL[e].off)&&!mnqOpen(S,E,e)){toast(MNQ_CH.slice(0,mnqChN(e)-1).every(([p])=>!MNQ_CHAP[p]||mnqDone(S,p))?"星槎停靠"+mnqShort(e)+"，這一章就開放":"先看完上一章");return}closeSheet();setTimeout(()=>mnqChapter(e),250)});
     if(S.music.length&&typeof bgmTitles==="function")bgmTitles().then(T=>b.querySelectorAll(".mnq-mu").forEach(x=>{const t=(T||{})[x.dataset.m];if(t)x.querySelector(".mnq-mt").textContent="《"+t+"》"})).catch(()=>{});
     b.querySelectorAll(".mnq-mu").forEach(x=>x.onclick=()=>mnqListen(x));mnqDevRow(b)})}
 /* ---------- 11/15 ♪ 配樂收藏（從遠征令面板搬出來）：收藏資料、解鎖規則照舊（S.music；朝代遠征補給收那一朝前 2 首）；入口＝設定 → 聲音 → 氛圍（mnqSndRow）、遠征補給的按鈕 ---------- */

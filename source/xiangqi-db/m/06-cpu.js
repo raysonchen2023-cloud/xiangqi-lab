@@ -19,7 +19,7 @@ function voiceMove(ctx){const R=window.SpeechRecognition||window.webkitSpeechRec
   const r=new R();VC_REC=r;r.lang="zh-TW";r.interimResults=false;r.maxAlternatives=5;r.continuous=false;let got=false;
   const tip=document.createElement("div");tip.className="vc-tip";tip.innerHTML='<b>🎤 請說棋步</b><span>例如「馬八進七」「炮二平五」</span><button type="button">✕ 取消，改用手下</button>';document.body.append(tip);
   let tm=0;const end=()=>{clearTimeout(tm);tip.remove();document.removeEventListener("pointerdown",outside,true);window.removeEventListener("hashchange",end);if(VC_REC===r){VC_REC=null;VC_END=null}};
-  const outside=e=>{if(!tip.contains(e.target)&&!(e.target.closest&&e.target.closest('[title="聲控走棋"],[aria-label="聲控走棋"]')))vcCancel()};
+  const outside=e=>{if(!tip.contains(e.target)&&!(e.target.closest&&e.target.closest('[data-lb="聲控走棋"],[title="聲控走棋"],[aria-label="聲控走棋"]')))vcCancel()};
   VC_END=()=>{try{r.abort()}catch(e){}end()};tip.querySelector("button").onclick=e=>{e.stopPropagation();vcCancel();toast("已取消聲控，可以直接點棋盤下棋")};
   setTimeout(()=>document.addEventListener("pointerdown",outside,true),50);window.addEventListener("hashchange",end);tm=setTimeout(()=>{if(VC_REC===r&&!got){vcCancel();toast("沒聽到棋步，已取消聲控")}},8000);
   r.onresult=e=>{if(VC_REC!==r)return;got=true;const res=e.results[0],alts=[...res].map(x=>x.transcript);const c=ctx();if(!c||c.why){end();return toast(c&&c.why||"現在不能走棋")}
@@ -92,7 +92,7 @@ async function fig3d(host,look,o){o=o||{};
     if(pin&&ptrs.size>=2){const[a,c2]=[...ptrs.values()];setZ(pin.z*Math.hypot(a.x-c2.x,a.y-c2.y)/pin.d)}else if(drag){const dx=e.clientX-drag.x;if(Math.abs(dx)>4){drag.m=true;moved=true}ry=drag.ry+dx*.012}});
   const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pin=null;if(!ptrs.size){if(drag&&drag.m)host.dataset.dragged=Date.now();else if(drag&&!pin)itemTap(e);drag=null}};host.addEventListener("pointerup",up);host.addEventListener("pointercancel",up);
   if(o.zoom){host.addEventListener("wheel",e=>{e.preventDefault();setZ(zf*Math.exp(-e.deltaY*.0015))},{passive:false});
-    const zb=document.createElement("div");zb.style.cssText="position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;z-index:2";
+    const zb=document.createElement("div");zb.className="fvz";pkHitCss();zb.style.cssText="position:absolute;right:8px;bottom:8px;display:flex;flex-direction:column;gap:6px;z-index:2";
     for(const[l,f]of[["＋",1.25],["－",.8]]){const x=document.createElement("button");x.type="button";x.textContent=l;x.setAttribute("aria-label",f>1?"放大":"縮小");x.style.cssText="width:34px;height:34px;border-radius:50%;border:1px solid rgba(0,0,0,.15);background:rgba(255,250,240,.92);font:700 18px/1 sans-serif;color:#5a4630";
       x.addEventListener("pointerdown",e=>e.stopPropagation());x.onclick=e=>{e.stopPropagation();vibrate(5);setZ(zf*f)};zb.append(x)}host.append(zb)}
   const loop=()=>{if(!host.isConnected){try{r.dispose()}catch(e){}const fi=document.querySelector(".fig-item");if(fi)fi.remove();return}requestAnimationFrame(loop);if(document.hidden)return;const t=(performance.now()-t0)/1000;
@@ -342,7 +342,17 @@ function parkInfo(k){
   else if(E[k]){[t,x]=E[k]}else return;
   sheet(`${k==="bg"?"🏞":k==="opp"?"🤖":k==="mate"?"🙂":"🔎"} ${t}`,b=>{b.innerHTML=`<div class="muted" style="margin:-4px 0 8px">${esc(en)}${yr?`・${esc(yr)}`:""}${k==="bg"?"・遠方的風景":""}</div><p style="line-height:1.8;margin:0;font-size:16px">${esc(x)}</p>`})}
 /* 開發者決定（Gemini UI／UX 審閱）：3D 園子角落有「俯視／平視」切換；第一次進園子播 3 秒半透明的手勢提示（拖曳轉身、兩指縮放、點兩下回正） */
-function parkUi(host,pv){let b=host.querySelector(".pkview");if(!b){b=document.createElement("button");b.type="button";b.className="pkview";host.append(b)}
+/* 11/17 App Store 審查（測試員 E，指南 4.0 點擊區）：3D 棋盤的鏡頭鈕（park3d 右下 .pzoom 那一排 ＋／－／↔／⇅／🔭，34×34、間隔 6px）、3D 立繪的 ＋／－（.fvz）、右上「🎥 視角」／俯視平視鈕（.pkview，約 67×29）
+   看起來的大小不變，用 ::before 撐出透明的點選範圍：.pkview 每邊至少 4px、整塊至少 44×44；一排的圓鈕左右各 6px（寬 44）、上下只撐到間隔的一半（相鄰兩顆的點選範圍剛好碰到、不重疊），最上、最下那顆往外撐到 44 高 */
+/* 11/17 第 18 輪複驗（測試員 E 逐像素探測）：上面那版圓鈕間隔 6px，上下只能各撐 4px，相鄰兩顆的點選範圍只有 39～41 高 → 間隔改 12px（圓鈕本身大小不變，一排稍微拉長），每顆上下各撐 6px（34＋12＝46，相鄰剛好在間隔正中間相接、不重疊）；
+   左下「▦ 平面棋盤」（.pk2d，約 81×37，m.css 已是 position:absolute）上下撐到 44 高（每邊至少 3px） */
+function pkHitCss(){if(typeof document.getElementById!=="function"||document.getElementById("pkHitCss"))return;const s=document.createElement("style");s.id="pkHitCss";s.textContent=`.pkview::before{content:"";position:absolute;left:min(-4px,calc((100% - 44px) / 2));right:min(-4px,calc((100% - 44px) / 2));top:min(-4px,calc((100% - 44px) / 2));bottom:min(-4px,calc((100% - 44px) / 2))}
+.pzoom>button,.fvz>button{position:relative}
+.pzoom>button::before,.fvz>button::before{content:"";position:absolute;left:-6px;right:-6px;top:-6px;bottom:-6px}
+.pzoom>button:first-child::before,.fvz>button:first-child::before{top:-8px}.pzoom>button:last-child::before,.fvz>button:last-child::before{bottom:-8px}
+.pzoom,.fvz{gap:12px!important}
+.pk2d::before{content:"";position:absolute;left:min(0px,calc((100% - 44px) / 2));right:min(0px,calc((100% - 44px) / 2));top:min(-3px,calc((100% - 44px) / 2));bottom:min(-3px,calc((100% - 44px) / 2))}`;document.head.append(s)}
+function parkUi(host,pv){pkHitCss();let b=host.querySelector(".pkview");if(!b){b=document.createElement("button");b.type="button";b.className="pkview";host.append(b)}
   /* 11/11（AI 模擬玩家第二輪問題 5）：手機直式沒存過視角時，park3d 一開始就是「俯視＋拉近」（topfit，格距約 30px），按鈕要當成已經在俯視、下一個是平視；
      從按鈕切回俯視存成 topfit（拉近版）；以前存的 top／flat 照舊不動 */
   /* 開發者 11/12 hspx「增加切換不同視角的功能按鈕，加在平視那邊用選單選，可以切換很美很漂亮的角度」：黑洞巨盤（pv.views 有清單）這顆鈕改成「🎥 視角」，點了跳選單（park3d GVIEWS）；選的不存進 parkView（那是一般園子用的） */
@@ -433,7 +443,7 @@ function parkDraw(host,bd,board,o,ex){
   {let tg=host.querySelector(".pkname");if(!tg){tg=document.createElement("div");tg.className="pkname";if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(tg)}const k=store.get("era","classic");tg.textContent=ex.bgName||((k==="classic"?"經典":eraLabel(k))+"・"+(PW[k]||"園子"));tg.hidden=false}
   /* 回饋 847（讀螢幕盲棋）：3D 園子沒辦法逐格讀；給讀螢幕的人一顆看不見的按鈕，按了跟頂欄「回棋盤模式」一樣，換回可以逐格點選的平面棋盤 */
   if(!host.querySelector(".ax-park")){const ab=document.createElement("button");ab.type="button";ab.className="ax-sr ax-park";ab.textContent="改用平面棋盤，讀螢幕可以逐格點選";
-    ab.onclick=()=>{const tb=document.querySelector('#topRight button[aria-label="回棋盤模式"]');if(tb)tb.click();else{store.set("park3d",false);toast("回到棋盤模式")}};host.prepend(ab)}
+    ab.onclick=()=>{const tb=document.querySelector('#topRight button[data-lb="回棋盤模式"],#topRight button[aria-label="回棋盤模式"]');if(tb)tb.click();else{store.set("park3d",false);toast("回到棋盤模式")}};host.prepend(ab)}
   {const ik=pkIntroKey(ex);if(PARK.ik!==ik){PARK.ik=ik;if(!store.get("parkView","")&&!ex.quietMate&&PARK.v.intro)try{PARK.v.intro(ik)}catch(e){}}}   /* 11/11 入座運鏡：同一座園子換下一盤也播一次（park3d 自己記哪幾盤播過） */
   if(PARK.v.show)PARK.v.show();bd.svg.style.display="none";botVis(false);ex.look=parkLook();ex.blitz=typeof blzOn==="function"&&blzOn();   /* 第 13 輪 F4：快棋模式時 park3d 的走子動畫照 blzTab 的比例加快（07pm-premove.js） */if(ex.opp)ex.opp=oppFig(remoteLook(ex.opp));if(ex.mateLook&&ex.mateLook.sx)ex.mateLook=oppFig(remoteLook(ex.mateLook));if(!ex.mateLook)ex.mateLook=myLook();
   if(!PARK.crowd)PARK.crowd=parkCrowd();ex.crowd=PARK.crowd;if(Array.isArray(ex.watchers))ex.watchers=ex.watchers.map(w=>w&&w.bot&&w.bot.sx?{...w,bot:oppFig(remoteLook(w.bot))}:w);PARK.last={board,o,ex};PARK.v.draw(board,o,ex);pkSwUi(host)}
@@ -443,10 +453,10 @@ function parkDraw(host,bd,board,o,ex){
       頂欄沒有那顆（擂台下到一半、練習、盲棋）就不出現；專注棋盤模式開著也不出「回園子」。
    ② 3D 裡點了卻只是「取消選取」或什麼都沒選到（點空、點偏、點到對方的子）：前 3 次冒一句提示，指著 ① 那顆按鈕（store pkSwMiss＝提示過幾次）。
    判斷法：點之前記下 PARK.last；點完畫面有重畫（PARK.last 換了）而且沒有選到子、也不是再點一次同一顆子＝點偏。走成一步的會等伺服器回來才重畫，不會被算成點偏 */
-const pkSwTb=()=>document.querySelector('#topRight button[aria-label="回棋盤模式"],#topRight button[aria-label="去園子下棋（3D）"]');
+const pkSwTb=()=>document.querySelector('#topRight button[data-lb="回棋盤模式"],#topRight button[data-lb="去園子下棋（3D）"],#topRight button[aria-label="回棋盤模式"],#topRight button[aria-label="去園子下棋（3D）"]');
 function pkSwUi(host){try{if(!host)return;const tb=pkSwTb(),on=parkOn(),on3=on&&!!(PARK&&PARK.host===host);
   let b=host.querySelector(".pk2d");
-  if(on3&&tb&&!b){b=document.createElement("button");b.type="button";b.className="pk2d";b.innerHTML='<span aria-hidden="true">▦</span> 平面棋盤';b.setAttribute("aria-label","換成平面棋盤：棋子比較大、比較好點");
+  if(on3&&tb&&!b){b=document.createElement("button");b.type="button";b.className="pk2d";pkHitCss();b.innerHTML='<span aria-hidden="true">▦</span> 平面棋盤';b.setAttribute("aria-label","換成平面棋盤：棋子比較大、比較好點");
     b.onclick=e=>{e.stopPropagation();vibrate(5);const t=pkSwTb();if(t)t.click()};if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(b)}
   if(b)b.hidden=!(on3&&tb);if(!(on3&&tb)){const tp=host.querySelector(".pk2d-tip");if(tp)tp.remove()}
   const vw=host.closest(".view"),st=vw&&vw.querySelector("#stat");let r=vw&&vw.querySelector(".pk3d-back");const fl=!on&&!PARK_OFF&&!focusOn()&&!!tb&&!!st;

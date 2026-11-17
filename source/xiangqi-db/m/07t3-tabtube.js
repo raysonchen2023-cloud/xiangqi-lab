@@ -66,7 +66,7 @@ body.tt-on.tt-mode-mist #view{padding-bottom:var(--ttH,0px)}
 .tt-tip{position:fixed;right:calc(58px + env(safe-area-inset-right,0px));bottom:calc(36px + var(--safeB,0px) + var(--ttUp,0px));z-index:940;pointer-events:none;white-space:nowrap;padding:5px 12px;border-radius:999px;
   background:rgba(246,239,223,.94);color:#3a2618;border:1px solid rgba(90,64,30,.35);font:700 13px/1.3 var(--serif,serif);box-shadow:0 2px 6px rgba(0,0,0,.2);animation:ttTip 3.8s ease-in-out forwards}
 @keyframes ttTip{0%{opacity:0;transform:translateX(6px)}12%,80%{opacity:1;transform:none}100%{opacity:0}}
-body.tt-on #topRight .ib[aria-label="回首頁"]{display:none}   /* 回饋 830：籤筒在時，頂欄的 🏠 跟「首頁」竹籤重複，藏起來；籤筒藏著的頁（渡口、對局…）照舊有 🏠 */
+body.tt-on #topRight .ib[aria-label="回首頁"],body.tt-on #topRight .ib[data-home]{display:none}   /* 回饋 830：籤筒在時，頂欄的 🏠 跟「首頁」竹籤重複，藏起來；籤筒藏著的頁（渡口、對局…）照舊有 🏠 */
 .tt-dup{display:none!important}
 body.tt-on.tt-mode-tube #sndPill{right:calc(60px + env(safe-area-inset-right,0px))}
 @media (prefers-reduced-motion:reduce){.tt-tube.wig{animation:none}.tt-s{transition:none}.tt-tip{animation:none}}`;document.head.append(s)}
@@ -175,7 +175,7 @@ function ttDedupe(){const V=document.getElementById("view"),T=document.getElemen
     if(bn===tn){b.dataset.ttd="1";if(sm&&ttNorm(sm.textContent))b.classList.add("tt-dup");else c.classList.add("tt-dup")}
     else if(bn.startsWith(tn)&&/・/.test(bt)&&ttNorm(bt.split("・")[0])===tn){b.dataset.ttd="1";b.textContent=bt.slice(bt.indexOf("・")+1)}});
   const vt=V.getBoundingClientRect().top;V.querySelectorAll("h1,h2").forEach(h=>{if(h.closest(".xqs,.fbp-bw,.hq-pn,#sheet"))return;const r=h.getBoundingClientRect();if(r.top-vt<160&&ttNorm(h.textContent)===tn)h.classList.add("tt-dup")});
-  if(V.querySelector("#poBoard"))document.querySelectorAll('#topRight .ib[aria-label="回星槎"]').forEach(b=>b.classList.add("tt-dup"))}
+  if(V.querySelector("#poBoard"))document.querySelectorAll('#topRight .ib[data-lb="回星槎"],#topRight .ib[aria-label="回星槎"]').forEach(b=>b.classList.add("tt-dup"))}
 /* 讓位：籤筒蓋到圖上的入口標籤、景點或 07w 出口區時，往上挪到不蓋為止（每次 8px，最多畫面高 40%） */
 function ttAvoid(){const t=document.getElementById("ttTube");if(!t||t.hidden)return;const R=document.documentElement;R.style.setProperty("--ttUp","0px");
   const V=document.getElementById("view");if(!V)return;const ob=[];

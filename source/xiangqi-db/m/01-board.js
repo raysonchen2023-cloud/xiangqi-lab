@@ -646,7 +646,7 @@ function Board(onTap,onSwipe){
      照畫面上的順序排（上到下、左到右）；格子 pointer-events:none，一般玩家的點選、拖曳照舊落在棋盤上，只有 VoiceOver 點兩下／鍵盤 Enter 才會送到格子。
      重畫棋盤時這層不拿掉（焦點才不會跑掉）；其他畫出來的東西一律 aria-hidden。展示用的棋盤（沒有點選）整個當一張圖「棋盤」 */
   const AXI=!!onTap&&onTap.length>0;let axG=null,axRB=null,axSel=-1,axLastPU=0,axLab=[];
-  if(AXI){axG=el("g",{class:"ax-sq",role:"group","aria-label":"棋盤，每一格可以點選"});axG.setAttribute("style","pointer-events:none");
+  if(AXI){axG=el("g",{class:"ax-sq",role:"group","aria-label":(typeof i18nLang==="function"&&i18nLang()==="en")?"Board, every square can be selected":"棋盤，每一格可以點選"});   /* 11/17 第 20 輪 D N4：svg 裡的子元素在英文掃描的跳過名單裡，群組名直接寫英文（格子的名字本來就是英文） */axG.setAttribute("style","pointer-events:none");
     for(let k=0;k<90;k++){const q=el("rect",{x:X0+(k%9)*S-S/2,y:Y0+(k/9|0)*S-S/2,width:S,height:S,fill:"transparent",role:"button",tabindex:k===85?"0":"-1","data-k":k});axG.append(q)}
     svg.append(axG);
     axG.addEventListener("click",e=>{const q=e.target&&e.target.closest&&e.target.closest("[data-k]");if(!q)return;e.stopPropagation();if(Date.now()-axLastPU<500)return;const sq=flip?89-(+q.dataset.k):+q.dataset.k;axTap(sq)});

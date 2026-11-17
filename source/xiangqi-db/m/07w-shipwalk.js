@@ -283,7 +283,10 @@ shwStay=function(S){try{shwWin(S)}catch(e){}};
    這裡補上淡出淡入和桌上狀態）。整個 App 第一次走向入口時，標籤下面出一行小字「再點一次，直接進去」（約 3 秒，只出一次，記在 store 的 shwTapTip）。 */
 function shwTapTip(S,b){if(typeof store==="undefined"||store.get("shwTapTip",0))return;store.set("shwTapTip",1);const L=S.o.layer,lr=L.getBoundingClientRect(),br=b.getBoundingClientRect();if(!lr.width||!lr.height)return;
   const e=document.createElement("i");e.className="shw-xt shw-tt";e.setAttribute("aria-hidden","true");e.textContent="再點一次，直接進去";
-  e.style.left=Math.max(16,Math.min(84,(br.left+br.width/2-lr.left)/lr.width*100)).toFixed(2)+"%";e.style.top=Math.min(95,(br.bottom-lr.top)/lr.height*100+2.4).toFixed(2)+"%";L.append(e);setTimeout(()=>e.remove(),3400)}
+  e.style.left=Math.max(16,Math.min(84,(br.left+br.width/2-lr.left)/lr.width*100)).toFixed(2)+"%";e.style.top=Math.min(95,(br.bottom-lr.top)/lr.height*100+2.4).toFixed(2)+"%";L.append(e);shwTipClamp(e,L);try{requestAnimationFrame(()=>shwTipClamp(e,L))}catch(x){}setTimeout(()=>e.remove(),3400)}
+/* 11/17 第 20 輪 E N20-3、D N6：泡泡用百分比夾在 16%～84%，393／375 寬靠邊的標籤（🔒、🔔、🪭）泡泡左右超出畫面、英文更長 → 量實際寬度，夾在看得到的範圍裡（左右各留 8px）；泡泡是 translate(-50%) 置中 */
+function shwTipClamp(e,L){try{const lr=L.getBoundingClientRect(),w=e.getBoundingClientRect().width;if(!lr.width||!w)return;const vl=Math.max(lr.left,0),vr=Math.min(lr.right,innerWidth||lr.right),cx=e.getBoundingClientRect().left+w/2,lo=vl+w/2+8,hi=vr-w/2-8;
+  const x=hi<lo?(vl+vr)/2:Math.max(lo,Math.min(hi,cx));if(Math.abs(x-cx)>.5)e.style.left=(x-lr.left).toFixed(1)+"px"}catch(x){}}
 /* 開發者選定（同上第 3 項「地圖熱點視覺提示」）：入口淡淡呼吸光。光暈畫在入口對應的器物上（座標表 HS 的「面向位置」），不是標籤上；
    第一次進頁：全部入口依序淡淡亮一次（約 1.3 秒）；之後 20 秒沒碰畫面，才每 7 秒輪一個入口亮一下，一碰畫面就重新計時。角色在走、頁面藏起來時不亮。
    光暈比器物大一圈（約圖寬 28%，標籤蓋在器物上時外圈仍看得到），日景是暖黃淡光帶一圈淡墨邊、夜景是燈火色（screen 疊色）；pointer-events:none 不擋點選；prefers-reduced-motion 整個不出現。

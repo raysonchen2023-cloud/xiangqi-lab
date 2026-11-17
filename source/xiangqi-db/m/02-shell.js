@@ -62,12 +62,12 @@ function bkSet(B,back,bp){const h=location.hash||"#/",R=REVIEW_BACK;let to=bkTo(
   const nm=bkName(to);B.innerHTML="<b>‹</b>"+(nm?"回"+esc(nm):"返回");B.dataset.h=h;B.dataset.to=to}
 function setTop(title,back,right){{const mc=document.getElementById("meChip");if(mc)mc.remove()}$("#title").innerHTML=icoTitle(title);const B=$("#back"),bp={h:B.dataset.h||"",to:B.dataset.to||"",tx:B.textContent||""};B.hidden=!back;B.onclick=()=>typeof back==="string"&&back[0]==="^"?upTo(back.slice(1)):goBack(back);   /* 意見回饋 697：back 開頭是 "^"＝回那一層（upTo／goUp），不照瀏覽器上一頁 */
   try{bkSet(B,back,bp)}catch(e){}   /* 11/11 模擬玩家問題 3：每次都重寫返回鍵的字（照真的去處），分析頁沿用那盤棋的出口 */
-  const tr=$("#topRight");tr.innerHTML="";if(right)for(const[icon,fn,label]of right){const b=document.createElement("button");b.className="ib";b.textContent=icon;b.title=label||"";if(label)b.setAttribute("aria-label",label);b.onclick=fn;tr.append(b)}
+  const tr=$("#topRight");tr.innerHTML="";if(right)for(const[icon,fn,label]of right){const b=document.createElement("button");b.className="ib";b.textContent=icon;b.title=label||"";if(label){b.setAttribute("aria-label",label);b.dataset.lb=label}if(label==="回首頁")b.dataset.home="1";   /* 11/17 第 20 輪 D N4：data-lb 留原本的中文名（不翻），06-cpu、07bht、07bhg、07t3 改用 [data-lb="…"] 找這顆鈕，aria-label／title 才能在英文介面翻成英文 */b.onclick=fn;tr.append(b)}
   // 全螢幕畫面（沒有底部導覽列）一律加「回首頁」，加入主畫面的 App 模式沒有瀏覽器上一頁也能回去
   /* 開發者 11/11 選 ChatGPT UI 報告 UI-10：手機上下棋時頂欄太擠（返回、模式、好幾個純圖示，頁名被擠成「朝…」）。
      對局頁（挑戰電腦、擂台、同桌、雲河棋路、錯棋重練）寬度不到 520 時，右邊兩個以上的圖示收進一顆「⋯」，點了列出每一項的圖示＋名稱；地圖鈕照舊 */
   try{if(right&&right.length>=2&&innerWidth<520&&/^#\/(cpu|arena|pvp|journey\/play|redo\/play)(\/|$)/.test(location.hash||""))topMore(tr,right)}catch(e){}
-  if(back&&back!=="#/"&&!(right&&right.length>=2)){const h=document.createElement("button");h.className="ib";h.textContent="🏠";h.title="回首頁";h.setAttribute("aria-label","回首頁");h.onclick=()=>goHome();tr.append(h)}}   /* 意見回饋 607：🏠 退回首頁，不往前推一頁 */
+  if(back&&back!=="#/"&&!(right&&right.length>=2)){const h=document.createElement("button");h.className="ib";h.textContent="🏠";h.title="回首頁";h.setAttribute("aria-label","回首頁");h.dataset.home="1";h.onclick=()=>goHome();tr.append(h)}}   /* 11/17 第 19 輪 D P2-4：標 data-home（07t3、07w9 用它找這顆鈕），英文介面的 aria-label／title 才能翻成 Home（07i18n I18N_AGUARD 拿掉回首頁） */   /* 意見回饋 607：🏠 退回首頁，不往前推一頁 */
 function topMore(tr,right){const bs=[...tr.querySelectorAll(".ib")];bs.forEach(b=>b.hidden=true);const m=document.createElement("button");m.className="ib";m.textContent="⋯";m.title="更多";m.setAttribute("aria-label","更多："+right.map(r=>r[2]||r[0]).join("、"));
   m.onclick=()=>{try{vibrate(5)}catch(e){}sheet("更多",b=>{b.innerHTML=`<div style="display:grid;gap:8px">${right.map((r,i)=>`<button class="btn" data-i="${i}" style="display:flex;align-items:center;gap:10px;justify-content:flex-start;min-height:48px;margin:0"><span style="font-size:20px;min-width:28px;text-align:center">${esc(r[0])}</span><span>${esc(r[2]||"")}</span></button>`).join("")}</div>`;
     b.querySelectorAll("[data-i]").forEach(x=>x.onclick=()=>{closeSheet();const f=right[+x.dataset.i][1];if(typeof f==="function")setTimeout(f,0)})})};tr.append(m)}
@@ -99,7 +99,7 @@ function route(){
      電腦連線、選邊（seatSheet）仍只在開發者模式 */
   if(p[0]==="pvp")return screen=PvpGame(v);
   if(p[0]==="ouyu"&&typeof OuyuPage==="function")return screen=OuyuPage(v,p.slice(1));   /* 開發者 11/10：偶遇求助角色的解題頁 #/ouyu/<誰>/<題號>（m/07w5-ouyu.js） */
-  if(p[0]==="coop"&&typeof CoopPage==="function")return screen=CoopPage(v,p.slice(1));   /* 開發者 11/9：合作殘譜（同桌 #/coop、殘篇閣 #/coop/lobby；m/07q2-coop.js） */
+  if(p[0]==="coop"&&typeof CoopPage==="function"){try{return screen=CoopPage(v,p.slice(1))}catch(e){if(e instanceof ReferenceError&&!route.tdz){route.tdz=1;setTimeout(()=>{route.tdz=0;route()},0);return}throw e}}   /* 11/17 第 20 輪 D N1（P0）：冷開或重新整理 #/coop 時第一次 route() 比 07q2 的 const COOP_DESK_ON 早跑，丟 ReferenceError 整個 App 停在載入失敗（英文介面連字典都沒載）；照 #/daily 的做法等整支程式跑完再排一次 */   /* 開發者 11/9：合作殘譜（同桌 #/coop、殘篇閣 #/coop/lobby；m/07q2-coop.js） */
   if(p[0]==="lobby")return screen=Lobby(v);
   if(p[0]==="guanxing"&&typeof GxtPage==="function")return screen=GxtPage(v);   /* 開發者 11/13：觀星臺＝黑洞玩法總入口（07gxt-guanxing.js） */
   if(p[0]==="ximarket"&&typeof XsmPage==="function")return screen=XsmPage(v,p[1]||"");   /* 開發者 11/13：西市（#/ximarket）、聽雨茶坊（#/ximarket/tea）（07xsm-ximarket.js） */
@@ -231,12 +231,14 @@ if(OFF&&"serviceWorker" in navigator){
   if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(updating)return;if(+(sessionStorage.getItem("xqReload")||0)>0&&!self.crossOriginIsolated)return;notifyNew()})}
 /* 11/13 Android 舊 WebView 降級提示：原生 App 沒有跨來源隔離或 SharedArrayBuffer＝手機的 Android System WebView 太舊（模擬器的 WebView 133 就是），電腦棋手（多執行緒 Pikafish）一定載不起來。
    不重整、跳一次說明：要更新哪個 App、哪些功能照樣能用；引擎的下載、載入、搜尋都直接回這句（不再說「關掉重開」，也不白抓 48 MB 引擎檔）。只在原生 App 判斷，網頁版不受影響 */
-const NATIVE_OLDWV="這支手機的 Android System WebView 版本太舊，電腦棋手無法運作；請到 Play 商店更新「Android System WebView」或「Chrome」";
+const NATIVE_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+/* 11/17 第 18 輪複驗（測試員 E E-7）：iOS 上真正會失敗的多半是 App 內建的本機伺服器沒把跨來源隔離的標頭送出來（不是 iOS 太舊），原本「iOS 太舊，請更新 iOS」＋「目前的 WebView 版本」會誤導 → iOS 改說「沒有啟動成功，請重新開啟；一直失敗再更新 iOS 或聯絡我們」，不顯示 WebView 版本；Android 照舊 */
+const NATIVE_OLDWV=NATIVE_IOS?"電腦棋手沒有啟動成功，請把 App 完全關掉再重新開啟；若一直失敗，請更新 iOS 或聯絡我們":"這支手機的 Android System WebView 版本太舊，電腦棋手無法運作；請到 Play 商店更新「Android System WebView」或「Chrome」";   /* 11/17 App Store 審查（指南 2.3.10）：iOS 原生 App 萬一沒有跨來源隔離，說 iOS 的話，不提 Android、Play 商店 */
 if(OFF&&/XQQianqiuApp\//.test(navigator.userAgent)&&(!self.crossOriginIsolated||typeof SharedArrayBuffer==="undefined")){
   if(window.XQEngine){const no=()=>Promise.reject(new Error(NATIVE_OLDWV));XQEngine.load=no;XQEngine.search=no;XQEngine.prefetch=no}
   const wv=(navigator.userAgent.match(/Chrome\/([\d.]+)/)||[])[1]||"",mute=store.get("oldWvMute","")===wv;let tries=0;
   const show=()=>{if(document.querySelector("#preov,.modal,#sheet.show")&&++tries<30)return setTimeout(show,3000);if(mute){toast("⚠ "+NATIVE_OLDWV);return}
-    modal(`<div class="em">📱</div><h2>電腦棋手需要更新手機元件</h2><p style="text-align:left">${esc(NATIVE_OLDWV)}。</p><p class="muted" style="text-align:left">更新好以後，把 App 完全關掉再打開就能用。<br>現在照樣能用：同桌對弈（兩人在這支手機輪流下）、殘局、古譜與大師對局、測驗、線上對弈。<br>要等更新才能用：挑戰電腦、擂台、棋局分析與提示。</p>${wv?`<p class="muted">目前的 WebView 版本：${esc(wv)}</p>`:""}`,[["知道了",null],["這個版本不再跳出",()=>store.set("oldWvMute",wv),true]])};
+    modal(`<div class="em">📱</div><h2>${NATIVE_IOS?"電腦棋手沒有啟動成功":"電腦棋手需要更新手機元件"}</h2><p style="text-align:left">${esc(NATIVE_OLDWV)}。</p><p class="muted" style="text-align:left">${NATIVE_IOS?"聯絡方式在設定房間「🔒 系統・隱私・家長」的「📮 聯絡與支援」。":"更新好以後，把 App 完全關掉再打開就能用。"}<br>現在照樣能用：同桌對弈（兩人在這支手機輪流下）、殘局、古譜與大師對局、測驗、線上對弈。<br>${NATIVE_IOS?"要等電腦棋手啟動成功才能用":"要等更新才能用"}：挑戰電腦、擂台、棋局分析與提示。</p>${wv&&!NATIVE_IOS?`<p class="muted">目前的 WebView 版本：${esc(wv)}</p>`:""}`,[["知道了",null],["這個版本不再跳出",()=>store.set("oldWvMute",wv),true]])};
   setTimeout(show,2500)}
 if(OFF&&window.XQEngine){let bar=null;
   XQEngine.onProgress((got,total)=>{if(!bar){keepAwake("engine",()=>!!bar);bar=document.createElement("div");bar.className="toast";if(/^#[/](cpu|arena|pvp|quiz|watch|journey[/]play|redo[/]play|legend)([/]|$)/.test(location.hash))bar.style.display="none";   /* QA P2-6：下棋、讀故事時不蓋引擎下載進度 */
@@ -319,7 +321,7 @@ if(OFF)document.addEventListener("visibilitychange",()=>{if(document.hidden)retu
 // ================= 我的名字、誰在線上 =================
 function nameSheet(first){sheet(first?"👋 歡迎！取個名字吧":"我的名字",b=>{
   const sug=defaultName();if(first&&!myName())setMyName(sug);   // 意見回饋 181：先給預設名字，關掉不填也有名字
-  b.innerHTML=`<p class="muted">${first?"其他棋友會看到這個名字（例如線上對戰時，對手看到的就是你）。名字和段位也會定期送給開發者，詳見「設定 → 隱私」。":"這個名字會顯示在線上大廳和對戰裡。"}</p>
+  b.innerHTML=`<p class="muted">${first?((()=>{try{return store.get("repOff",typeof setNat==="function"&&setNat())}catch(e){return false}})()?"其他棋友會看到這個名字（例如線上對戰時，對手看到的就是你）。玩家登記預設關閉；你在「設定 → 隱私」打開以後，名字和段位才會定期送給開發者。":"其他棋友會看到這個名字（例如線上對戰時，對手看到的就是你）。名字和段位也會定期送給開發者，詳見「設定 → 隱私」。"):"這個名字會顯示在線上大廳和對戰裡。"}</p>
     <input id="nm" maxlength="16" placeholder="${sug}" value="${esc(myName())}" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;margin:4px 0 10px">
     <button class="btn" id="ok">確定</button>${first?'<button class="btn ghost" id="sk">先不要，用「'+sug+'」</button>':""}`;
   const save=n=>{setMyName(n);if(window.XQNet)XQNet.refresh();closeSheet();toast("你好，"+myName()+"！");api("/clients").catch(()=>{});route()};
@@ -493,9 +495,9 @@ async function shareSheet(){
   sheet("分享象棋千秋",b=>{
     b.innerHTML=`<p style="text-align:center">朋友用手機相機掃這個 QR code，就能打開<b>象棋千秋</b>。</p>
       <div class="qrbox" id="qrc"></div>
-      <p class="muted" style="text-align:center;margin:4px 0 10px">iPhone：Safari 打開 → 分享 →「加入主畫面」<br>Android：Chrome 選單 →「加到主畫面」<br>有新版會自動更新，不用再分享一次。</p>
+      ${xqNat()?"":`<p class="muted" style="text-align:center;margin:4px 0 10px">iPhone：Safari 打開 → 分享 →「加入主畫面」<br>Android：Chrome 選單 →「加到主畫面」<br>有新版會自動更新，不用再分享一次。</p>`}
       <button class="btn" id="sh">${navigator.share?"用 LINE／訊息分享連結":"複製連結"}</button>`;
-    new QRCode(b.querySelector("#qrc"),{text:app,width:220,height:220,correctLevel:QRCode.CorrectLevel.L});
+    new QRCode(b.querySelector("#qrc"),{text:app,width:220,height:220,correctLevel:QRCode.CorrectLevel.L});   /* 11/17 App Store 審查（測試員 E，指南 2.3.10）：原生 App 不放「加到主畫面」的瀏覽器安裝教學（裡面有 Android、Chrome），網頁版照舊 */
     b.querySelector("#sh").onclick=async()=>{
       if(navigator.share){try{await navigator.share({title:"象棋千秋",text:"一起來下象棋：",url:app})}catch(e){}return}
       try{await navigator.clipboard.writeText(app);toast("已複製連結")}catch(e){prompt("複製這個連結",app)}}})}

@@ -501,6 +501,8 @@ body.gsv-on .opfx{top:calc(var(--gsvTop,var(--bhTop,44px)) + var(--gsvEnH,62px) 
 @media (orientation:portrait){body.gsv-on:not(.gsv-3d) #gsvMe .gsv-tip{position:static;margin:0 0 3px;border-radius:10px}body.gsv-on:not(.gsv-3d) #gsvMe .gsv-tip~.sg2-skw{max-height:calc(var(--gsvMeH,190px) - 140px)}}
 /* N-6：「規則」鈕原本約 40×20 → 點擊區至少 44×32；上下用負邊界抵掉，那一行不會變高（下方面板的高度照舊） */
 #gsvMe .gsv-fx[data-x="rules"]{min-width:44px;min-height:32px;margin:-5px 0;padding:0 9px;box-sizing:border-box;touch-action:manipulation}
+/* 11/17 第 18 輪（測試員 D P2-4）：「規則」鈕 44×32 → 透明的 ::before 往上撐 12px（上面是 .sg2-inf 說明文字，不是按鈕），點選範圍 44×44；不往下撐（下面緊接招式鈕，不能疊到） */
+#gsvMe .gsv-fx[data-x="rules"]{position:relative}#gsvMe .gsv-fx[data-x="rules"]::before{content:"";position:absolute;left:0;right:0;top:min(0px,calc(100% - 44px));bottom:0}
 /* iMac 18：打不動的跳字大一號、淡藍（原本 14px 淡紫一閃就過） */
 .bt-fl.sg2no{font-size:17px;color:#bfe0ff}
 /* 第 3 輪 P3（測試員 D，English 375×812）：頂欄標題「Star Gate Siege · Prologue A1」被左邊「‹ Back to Star Terrace」、右邊「👁 Flat board」擠到只剩「Star」。
@@ -671,7 +673,7 @@ function sg2Result(st,win,draw0,XPR){gsvCss();const td=st.td,n=td.lv,V=GSV.LV[n]
   const P=gsvProg(),rec=((P.v2||{})[n]||{})[td.diff],now=win?SG2G.stars(td):[0,0,0],have=[0,1,2].map(i=>now[i]||(rec&&rec.st&&rec.st[i])?1:0);
   const G=SG2G.goals(td).map((g,i)=>now[i]?`<b>★ <span>${esc(g.t)}</span></b>`:have[i]?`★ <span>${esc(g.t)}</span>`:`<i>☆ <span>${esc(g.t)}</span></i>`).join("　");
   const kr=SG2.kingOf(S.b,"r"),kb=SG2.kingOf(S.b,"b"),hp=q=>q<0?"倒下":Math.max(0,S.h[q])+"／"+S.x[q];
-  let AW=null;try{AW=sg2Award(st)}catch(e){}const awH=AW&&(AW.xp||AW.dust)?`<p style="font-size:13.5px;text-align:center">${AW.xp?`✨ 第一次破這一關（${esc(td.dnm)}）：修為 +${AW.xp}　`:""}${AW.dust?`🌌 星塵 +${AW.dust}（共 ${AW.total}）`:""}</p>`:"";
+  let AW=null;try{AW=sg2Award(st)}catch(e){}const awH=AW&&(AW.xp||AW.dust)?`<p style="font-size:13.5px;text-align:center">${AW.xp?`✨ 第一次破這一關（${esc(td.dnm)}）：首勝獎勵修為 +${AW.xp}（下面的成長列另含闖關星）　`:""}${AW.dust?`🌌 星塵 +${AW.dust}（共 ${AW.total}）`:""}</p>`:"";
   modal(`<div class="em">${win?"✨":draw0?"🤝":"🌀"}</div><h2>${win?"破陣":draw0?"不分勝負":"星門失守"}</h2><p class="muted">${esc(why)}・🌠 星門圍城・${esc(SG2G.nameOf(n))}・${esc(V.nm||td.nm)}（${esc(td.dnm)}）</p>
     <p class="gsv-gl">${G}</p>${awH}
     <p style="font-size:13.5px;text-align:center"><b>打了 ${sg2Rnds(st)} 回合</b><span class="sg2-ex">・帥 ${hp(kr)}・敵將 ${hp(kb)}</span></p>

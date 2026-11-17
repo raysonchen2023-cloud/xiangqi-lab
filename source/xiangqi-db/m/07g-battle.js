@@ -228,7 +228,13 @@ let BTL_FIT=null;
 function battleAtSet(k,i){try{sessionStorage.setItem("btAt",k+":"+i)}catch(e){}}
 function battleAtGet(k){try{const m=/^(\w+):(\d+)$/.exec(sessionStorage.getItem("btAt")||"");return m&&m[1]===k?+m[2]:-1}catch(e){return-1}}
 /* 11/17 測試員 B 第 11 輪 N10-2：橫式手機（844×390）也套到寬螢幕版面，右邊 42% 留給戰役抽屜；抽屜沒開時那塊整片米色 → 抽屜沒開（.bt2 沒有 .sh）時地圖撐滿 */
-function btCss(){if(typeof document==="undefined"||document.getElementById("btCss"))return;const s=document.createElement("style");s.id="btCss";s.textContent="@media (min-width:820px){.bt2:not(.sh) .bt2-map{right:0}.bt2:not(.sh) .bt2-info{right:10px}.bt2:not(.sh) .bt2-vt{right:10px}}";document.head.append(s)}
+/* 11/17 第 19 輪（開發者選 Q3）：812×375、667×375 這類橫式手機寬度不到 820，抽屜從下面升起、橫向佔滿，「‹ 上一場／下一場 ›」壓在戰役標題上 → 橫式（寬大於高）一律用右側抽屜：
+   樣式＝m.css 寬螢幕那一套照搬到 (orientation:landscape) and (max-width:819.98px)（BTL_LAND_CSS），地圖讓出抽屜的寬度、重新排（fit 照地圖實際的寬高排，只標編號照舊）；btWide() 判斷改成「≥820 或橫式」 */
+/* 11/17 第 20 輪 B N20-2：820×375、844×390、932×430 這類寬但矮的橫式套的是 m.css 寬螢幕那一套（圖 max-height:none），標題被擠到按鈕列底下 → 也看高度：橫式而且高度 ≤500 一樣套這一段
+   N20-5：直式拉把（.bt2-hd）28 高 → ::before 往上下撐到 44（外觀不變）；N20-7：橫式抽屜開著時，右下的小帥和泡泡會蓋到抽屜 → 藏起來 */
+const BTL_LAND_CSS="@media (orientation:landscape) and (max-width:819.98px),(orientation:landscape) and (max-height:500px){.bt2-map{right:min(420px,42%)}.bt2-sh,.bt2-sh.full{left:auto;right:0;top:0;bottom:0;width:min(420px,42%);height:auto;border-radius:0;box-shadow:-3px 0 14px rgba(40,25,10,.22)}.bt2-hd{display:none}.bt2-bd{padding:10px 12px calc(10px + env(safe-area-inset-bottom));scroll-padding-bottom:72px}.bt2-bar{right:auto;max-width:calc(58% - 84px)}.bt2-info{right:calc(min(420px,42%) + 10px)}.bt2-lst{left:12px;transform:none;height:44px;padding:0 16px}.bt2.sh .bt2-lst{display:block}.bt2-vt{right:calc(min(420px,42%) + 10px)}.bt2-pic{max-height:40vh}.bt2-sh.full .bt2-pic{max-height:40vh}.bt2-tx b{font-size:16px}.bt2-nav{gap:6px;margin-top:10px}.bt2-nav .btn{min-height:44px;font-size:13.5px;line-height:1.2}.bt2:not(.sh) .bt2-map{right:0}.bt2:not(.sh) .bt2-info{right:10px}.bt2:not(.sh) .bt2-vt{right:10px}}"+".bt2-hd{position:relative}.bt2-hd::before{content:\"\";position:absolute;left:0;right:0;top:-8px;bottom:-8px}"+"@media (orientation:landscape){body:has(.bt2.sh) .xqbot{visibility:hidden!important}}";
+function btWide(){try{return matchMedia("(min-width:820px),(orientation:landscape)").matches}catch(e){return false}}
+function btCss(){if(typeof document==="undefined"||document.getElementById("btCss"))return;const s=document.createElement("style");s.id="btCss";s.textContent="@media (min-width:820px){.bt2:not(.sh) .bt2-map{right:0}.bt2:not(.sh) .bt2-info{right:10px}.bt2:not(.sh) .bt2-vt{right:10px}}"+BTL_LAND_CSS;document.head.append(s)}
 /* 11/17 測試員 B／D 第 13 輪 (b)：估算的字框跟實際畫出來的有落差（字型、光暈）→ 畫完、字型載完以後量實際的框（getBoundingClientRect，跟頁面上的分頁、按鈕同一套座標）：
    障礙＝每個戰役點畫出來的圖形（星形、光暈、金圈、印，不含看不見的點選熱區）、頁名條、卷分頁（含「全部／All」）、ⓘ、「☰ 戰役清單」、前面已經放好的字；
    字型載完再等 0.4 秒（抽屜打開時地圖平移的動畫走完）才量；戰役名：第 1 次往上或往下挪到剛好不壓（最多 2.5 個字高），第 2 次（或要挪太遠）就縮字（.85 倍，多行的行距一起縮）；
@@ -261,7 +267,7 @@ function battleField2(v,k,X){btCss();const{cards,S,tt,modeTxt,ready,RJ,LJ}=X,N=c
     <button class="bt2-btn bt2-info" id="bt2I" aria-label="圖例和玩法說明">ⓘ</button><button class="bt2-btn bt2-lst" id="bt2L">☰ 戰役清單</button>
     <div class="bt2-sh" id="bt2S" hidden><div class="bt2-hd" id="bt2H" role="button" tabindex="0" data-axk aria-label="拉開或收起"><i></i></div><div class="bt2-bd" id="bt2B"></div></div></div>`;
   const W=v.querySelector("#bt2"),M=W.querySelector("#bt2M"),Sh=W.querySelector("#bt2S"),Bd=W.querySelector("#bt2B");let sel=-1,lastA=0,lastW=0,fitN=0,off=0;
-  const wide=()=>{try{return matchMedia("(min-width:820px)").matches}catch(e){return false}};
+  const wide=btWide;
   const mark=()=>M.querySelectorAll("[data-mk]").forEach(g=>g.classList.toggle("sel",+g.dataset.mk===sel));
   const pan=()=>{const sv=M.querySelector("svg");if(!sv)return;const g=sel>=0&&M.querySelector(`[data-mk="${sel}"]`);
     if(!g||wide()||Sh.hidden||Sh.classList.contains("full")){off=0;sv.style.transform="";return}

@@ -81,6 +81,11 @@ function saveReload(flags){try{sessionStorage.setItem("xqTitleShown","1");for(co
 const slotImg=c=>/^x_/.test(c||"")?"data/xs/prev_"+c+".webp":c==="f"?"data/xs/xs_girl_idle.webp":"data/xs/xs_idle.webp";
 const fmtSec=s=>{s=s|0;const h=Math.floor(s/3600),m=Math.floor(s%3600/60);return h?`${h} 小時 ${m} 分`:`${m} 分鐘`};
 const fmtAt=t=>{if(!t)return"—";const d=new Date(t),n=new Date(),hm=String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");if(d.toDateString()===n.toDateString())return"今天 "+hm;if(d.toDateString()===new Date(n-864e5).toDateString())return"昨天 "+hm;return`${d.getMonth()+1}/${d.getDate()} ${hm}`};
+/* 11/17 第 18 輪 D P3-3：開頭畫面「▶ 繼續」那行照當下算（saveMetaNow），選格頁、存檔頁的格子卻是上次存檔時記的摘要（slotMeta）——升級後到下一次自動存檔（切背景、每 3 分鐘、換頁 20 秒一次、每盤下完）之前兩邊會對不上；
+   「↩ 回開頭畫面」先 saveNow 再 80ms 後就畫開頭畫面，IndexedDB 還沒寫完時一樣看到舊的。→ 使用中那一格（有旅程時）的修為、官階、故事、遊玩時間、難度一律照當下算，存檔時間照舊用上次真的存的時間 */
+function slotMetaLive(M){M=M||{};const n=curSlot();if(!n||!M[n]||!journey())return M;try{const o=Object.assign({},M);o[n]=Object.assign({},M[n],saveMetaNow(),{at:M[n].at});return o}catch(e){return M}}
+/* 11/17 第 18 輪 D P2-4（審查 4.0 點擊區）：存檔頁、開頭畫面選格頁那排按鈕（.sv-a button，m.css 的 min-height:40px）外觀不變，透明的 ::before 上下各撐 2px 到 44 高；換行時兩排間隔 6px，不會疊到 */
+(()=>{try{if(typeof document==="undefined"||!document.head||document.getElementById("svHitCss"))return;const s=document.createElement("style");s.id="svHitCss";s.textContent=".sv-a button{position:relative}.sv-a button::before{content:\"\";position:absolute;left:min(0px,calc((100% - 44px) / 2));right:min(0px,calc((100% - 44px) / 2));top:min(0px,calc((100% - 44px) / 2));bottom:min(0px,calc((100% - 44px) / 2))}";document.head.append(s)}catch(e){}})();
 function slotCardHTML(n,M,cur){if(!M)return`<div class="sv-c empty"><div class="sv-t"><div class="sv-n">第 ${n} 格</div><div class="sv-e">空白存檔</div></div></div>`;
   return`<div class="sv-c${cur?" cur":""}"><img src="${slotImg(M.c)}" alt="" onerror="this.style.visibility='hidden'"><div class="sv-t"><div class="sv-n">第 ${n} 格${cur?'<span class="sv-cur">使用中</span>':""}</div><b>${esc(M.pc||"")}・${esc(M.nm||"")}</b><small>修為 Lv ${M.lv|0}${M.lt?"・"+esc(M.lt):""}${M.rk?"・"+esc(M.rk):""}${M.df&&DIFF[M.df-1]?"・🎚 "+esc(DIFF[M.df-1].n):""}</small><small>故事 ${M.st|0}／36・遊玩 ${fmtSec(M.sec)}・存檔 ${fmtAt(M.at)}</small></div></div>`}
 const obPicks=()=>Object.entries(WX_CHARS).map(([k,c])=>({k,img:"data/xs/prev_"+k+".webp",n:c.n,nk:c.nk||c.n,pc:c.pc||"",s:c.s||"雲河七星",say:c.say||"",bio:c.bio||c.t||""}));   /* 雲河七星（意見回饋 668：開發者 11/6 後三位也就緒，七位都能選；小帥、小帥妹不再列出，舊存檔照用） */
@@ -311,7 +316,7 @@ if(typeof xf4Upload==="function"&&typeof xf4Download==="function"){xfUpload=xf4U
 setTimeout(()=>{try{if(localStorage.getItem("xq_xfOut"))xf2Watch()}catch(e){}},9000);
 
 /* ---------- 存檔與讀檔（開頭畫面、設定、我的頁共用） ---------- */
-function saveList(box,inTitle){const M=slotMetaAll(),cur=curSlot(),J=journey(),ex=store.get("exportAt",0),paint=()=>saveList(box,inTitle);
+function saveList(box,inTitle){const M=slotMetaLive(slotMetaAll()),cur=curSlot(),J=journey(),ex=store.get("exportAt",0),paint=()=>saveList(box,inTitle);
   box.innerHTML=`<p class="sv-h">自動存檔：切到背景、每 3 分鐘、換頁、每盤棋下完，都會存到「使用中」的那一格。<br>上次匯出成檔案：${ex?fmtAt(ex):"從未"}${!ex||Date.now()-ex>14*864e5?'<br><b class="sv-w">刪掉主畫面上的 App，存檔會一起不見；建議偶爾匯出一份放到「檔案」。</b>':""}</p>${inTitle?"":'<div class="sv-a"><button data-rl="1">🧾 對局保存紀錄</button></div>'}`
     +[1,2,3].map(n=>{const m=M[n],me=n===cur&&!!J;return slotCardHTML(n,m,me)+`<div class="sv-a">${me?`<button data-sa="save" data-n="${n}" class="main">立即存檔</button><button data-sa="exp" data-n="${n}">⬇ 匯出成檔案</button><button data-sa="copy" data-n="${n}">複製到別格</button>`
       :m?`<button data-sa="load" data-n="${n}" class="main">讀取</button><button data-sa="exp" data-n="${n}">⬇ 匯出</button><button data-sa="imp" data-n="${n}">⬆ 讀入檔案</button><button data-sa="del" data-n="${n}" class="warn">刪除</button>`
@@ -381,7 +386,7 @@ function titleScreen(opt){opt=opt||{};try{navClear()}catch(e){}try{sessionStorag
   if(!opt.view&&fwNeed()){titlePaint("wait",opt);fwSaved().then(s=>{if(TITLE&&TITLE.dataset.v==="wait")titlePaint(s||!fwNeed()?"menu":typeof bhxNeed==="function"&&bhxNeed()?"xu":"first",opt)});return}   /* 新手秒開局：先確定 IndexedDB 裡也沒有存檔（不然開機會從存檔還原），才出一步殺 */
   if(!opt.view&&J&&J.re===1){store.set("journey",{...J,re:2});try{saveNow(true)}catch(e){}}   /* 開發者 11/13 晚（iPad 舊存檔更新後一開就被帶去選角）：拿掉「存檔功能上線了＋最後改選一次」公告，舊存檔直接當「就是這位」；換角色請開新的旅程（從開場流星選） */
   titlePaint(opt.view||"menu",opt)}
-function titlePaint(view,opt){const o=TITLE;if(!o)return;opt=opt||{};const inn=o.querySelector(".xqt-in"),b=o.querySelector(".xqt-b"),J=journey(),M=slotMetaAll();o.dataset.v=view;
+function titlePaint(view,opt){const o=TITLE;if(!o)return;opt=opt||{};const inn=o.querySelector(".xqt-in"),b=o.querySelector(".xqt-b"),J=journey(),M=slotMetaLive(slotMetaAll());o.dataset.v=view;
   inn.classList.toggle("full",/^(pick|diff|confirm|save|slots|first)$/.test(view));inn.scrollTop=0;
   if(view==="wait"){b.innerHTML="";return}if(view==="first"){fwPaint(b);return}
   /* hspx 開發者 11/12「讓遊戲一進去，把選角放到七星降落後才讓玩家選角，黑洞對戰直接放最一開頭」：全新玩家的開頭畫面只有一顆「入局」（手機要先點一下才能放音樂），
@@ -396,7 +401,7 @@ function titlePaint(view,opt){const o=TITLE;if(!o)return;opt=opt||{};const inn=o
     b.querySelector("#tRe").onclick=()=>{vibrate(5);titlePaint("pick",{mode:"repick"})}}
   else if(view==="menu"){   /* 11/11 第二輪問題 1：按鈕照 tsmMenu（狀態機）排；沒選角色但手機裡有進度＝主按鈕「▶ 繼續／▶ 接著下」，不逼選角 */
     const BL=tsmMenu({J:!!J,prog:!J&&tsmProgNow().any,slots:Object.keys(M).length,off:!!OFF}),lk=[];let h="";
-    for(const k of BL){if(k==="go"){const m=saveMetaNow(),n=curSlot();h+=`<button class="xqt-go" id="tGo"><img src="${slotImg(m.c)}" alt="" onerror="this.style.visibility='hidden'"><span><b>▶ 繼續</b><small>${esc(m.pc)}・${esc(m.nm)}　修為 Lv ${m.lv}${m.rk?"・"+esc(m.rk):""}</small><small>故事 ${m.st}／36・遊玩 ${fmtSec(m.sec)}${n?`・第 ${n} 格`:""}</small></span></button>`}
+    for(const k of BL){if(k==="go"){const m=saveMetaNow(),n=curSlot();h+=`<button class="xqt-go" id="tGo"><img src="${slotImg(m.c)}" alt="" onerror="this.style.visibility='hidden'"><span><b>▶ 繼續</b><small><span>${esc(m.pc)}・${esc(m.nm)}</span>　<span>修為 Lv ${m.lv}${m.rk?"・"+esc(m.rk):""}</span></small><small>故事 ${m.st}／36・遊玩 ${fmtSec(m.sec)}${n?`・第 ${n} 格`:""}</small></span></button>`}
       else if(k==="cont"){const T=tsmContTxt(tsmLatest());h+=`<button class="xqt-go" id="tCont"><img src="${slotImg(myChar()||mySex())}" alt="" onerror="this.style.visibility='hidden'"><span><b>${esc(T.t)}</b><small>${esc(T.s)}</small><small>還沒選角色也能玩；想聽故事時再選</small></span></button>`}
       else if(k==="new")h+=`<button class="btn ${J?"ghost":"xqt-main"}" id="tNew">⚔ 新的旅程</button>`;
       else if(k==="story")h+=`<button class="btn ghost" id="tNew">🎭 開始故事</button>`;

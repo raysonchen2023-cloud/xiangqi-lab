@@ -273,7 +273,7 @@ const I18N_EN={
   "↩ 掀簾・回雲弈閣":"↩ Back to Play",
   "↩ 掀簾・回觀星閣":"↩ Back to Play",
   /* 頂欄、底欄、共用按鈕 */
-  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","更多":"More",
+  "象棋千秋":"Xiangqi Qianqiu","首頁":"Home","線上":"Online","棋譜":"Library","設定":"Settings","返回":"Back","回首頁":"Home","去園子下棋（3D）":"Play in the garden (3D)","回棋盤模式":"Back to board mode","更多":"More",
   "關閉":"Close","取消":"Cancel","確定":"OK","繼續":"Continue","結束":"End","下一步":"Next","上一步":"Previous","自動播放":"Autoplay","分享給朋友":"Share with friends",
   "開啟螢幕報讀與鍵盤模式":"Turn on screen reader & keyboard mode","螢幕報讀與鍵盤模式：開著（按一下關掉）":"Screen reader & keyboard mode: on (tap to turn off)",   /* 0540 驗收：英文讀屏第一個碰到的按鈕 */
   "回報問題":"Report a problem","意見回饋":"Feedback","我的角色":"My character","加到主畫面":"Add to Home Screen","線上大廳":"Online lobby","走回雅間":"Back to the private room",
@@ -463,7 +463,7 @@ const I18N_EN={
   "看我的 3D 角色":"View my 3D character","存檔":"Save","改名":"Rename","本週學習週報":"This week's learning report","最近 7 天學了什麼，可以存成圖片給家長看":"What you learned in the last 7 days; save it as an image for parents","顯示":"Display",
   "顯示 3D 象棋小人":"Show 3D piece buddy","圓滾滾的棋子小人，跟著朝代換造型":"A round little piece buddy that changes outfits with the dynasty","大小":"Size","點一下":"Tap","表演一個動作":"Performs an action","點兩下":"Double-tap","出去散步":"Goes for a walk",
   "停放時":"when parked","長按":"Long press","拖動":"Drag","放到任何地方":"Put it anywhere","點三下":"Triple-tap","鞠躬":"Bows","先藏起來":"and hides for now","藏起來之後，打開上面的「顯示 3D 象棋小人」就會回來":"After hiding, turn on \"Show 3D piece buddy\" above to bring it back",
-  "回到預設位置":"Back to default position","支援":"Support","回報錯誤、想要的功能":"Report bugs, request features","你回報、已經修好的問題":"Issues you reported that are fixed","開發者":"Developer","開始開發":"Development started","2026 年 10 月 29 日":"Oct 29, 2026",
+  "回到預設位置":"Back to default position","3D 小人大小":"3D mascot size","支援":"Support","回報錯誤、想要的功能":"Report bugs, request features","你回報、已經修好的問題":"Issues you reported that are fixed","開發者":"Developer","開始開發":"Development started","2026 年 10 月 29 日":"Oct 29, 2026",
   "版本":"Version","關於與開源授權":"About and open-source licenses","中炮":"Central Cannon","紅方開局":"Red's opening","已關閉開發者模式":"Developer mode off","已打開開發者模式":"Developer mode on","Q 版 3D":"Chibi 3D","真實 3D":"Realistic 3D",
   "畫好的立繪":"Illustrated portrait","這個版本還不能切換棋規":"This version can't switch rules yet","已換回千秋休閒規則":"Switched back to Qianqiu casual rules","千秋休閒規則":"Qianqiu casual rules","這個版本還不能切換":"This version can't switch yet",
   "下棋時會在 3D 園子裡":"Games will be in the 3D garden","下棋時用平面棋盤":"Games use the flat board","已打開色弱模式":"Color-blind mode on","已關閉色弱模式":"Color-blind mode off","已開啟「專注棋盤模式」，隱藏背景動畫與裝飾。":"Focus board mode on: background animations and decorations hidden.",
@@ -541,11 +541,14 @@ const I18N_EN={
   "遇到不舒服的名字或聊天：點他的名字，資料卡最下面有「🚩 檢舉」「🚫 封鎖」。":"If a name or chat makes you uncomfortable, tap their name: \"🚩 Report\" and \"🚫 Block\" are at the bottom of their card.","線上大廳暫時不能使用":"The online lobby is temporarily unavailable",
   "這個帳號暫時不能使用線上大廳，若有疑問請用意見回饋聯絡。":"This account can't use the online lobby for now. If you have questions, contact us through Feedback.","挑戰電腦、石桌往事、殘局、棋譜這些單機功能都照常可以玩。":"Offline features such as playing the computer, Stone Table Tales, endgames and the game library still work.",
   "兒童模式":"Kids mode","線上大廳關著":"the online lobby is closed","兒童模式不跟陌生人互動：線上大廳、千秋盃、觀戰都不開，資料也不送出去。":"Kids mode doesn't interact with strangers: the online lobby, Qianqiu Cup and watching are all closed, and no data is sent.",
-  "想打開，請家長到「設定房間的 🔒 小鎖匣 → 👪 家長與護眼 → 👧 兒童模式」。":"To change it, a parent can go to \"Settings room 🔒 small lockbox → 👪 Parents and eye care → 👧 Kids mode\".","到設定":"Go to Settings","線上大廳已由家長關閉":"The online lobby was closed by a parent",
-  "想打開，請家長到「設定房間的 🔒 小鎖匣 → 👪 家長與護眼 → 🔒 家長修改」。":"To change it, a parent can go to \"Settings room 🔒 small lockbox → 👪 Parents and eye care → 🔒 Parent changes\".","只能用快捷語":"Quick phrases only","大廳和對局裡不能打字，大家都只能用 App 內建的快捷語和表情":"You can't type in the lobby or in games; everyone uses only the app's built-in quick phrases and emotes",
+  "想打開，請家長到「設定房間的 🔒 系統・隱私・家長 → 👪 家長與護眼 → 👧 兒童模式」。":"To change it, a parent can go to \"Settings room 🔒 System · Privacy · Parents → 👪 Parents and eye care → 👧 Kids mode\".","到設定":"Go to Settings","線上大廳已由家長關閉":"The online lobby was closed by a parent",
+  "想打開，請家長到「設定房間的 🔒 系統・隱私・家長 → 👪 家長與護眼 → 🔒 家長修改」。":"To change it, a parent can go to \"Settings room 🔒 System · Privacy · Parents → 👪 Parents and eye care → 🔒 Parent changes\".","只能用快捷語":"Quick phrases only","大廳和對局裡不能打字，大家都只能用 App 內建的快捷語和表情":"You can't type in the lobby or in games; everyone uses only the app's built-in quick phrases and emotes",
   "不要給個資":"Don't share personal info","名字預設用系統給的「稱號」。不要把真名、學校、電話、住址、LINE、照片告訴任何人，也不要跟陌生人約到 App 外面":"Names default to the title given by the app. Don't tell anyone your real name, school, phone number, address, LINE or photos, and don't arrange to meet strangers outside the app",
   "不舒服就檢舉、封鎖":"Feel uncomfortable? Report and block","點對方的名字，資料卡最下面有「🚩 檢舉」「🚫 封鎖」。對方不會知道是誰檢舉的；封鎖後他的邀請、表情、聊天都不會出現。下棋時不想下了，可以直接認輸離開":"Tap their name: \"🚩 Report\" and \"🚫 Block\" are at the bottom of their card. They won't know who reported them; after blocking, their invitations, emotes and chat no longer appear. If you don't want to keep playing, you can just resign and leave",
-  "家長可以關掉大廳":"Parents can close the lobby","「設定房間的 🔒 小鎖匣 → 👪 家長與護眼」可以關閉線上大廳，或打開「👧 兒童模式」（不跟陌生人互動、資料不送出、提醒休息）":"\"Settings room 🔒 small lockbox → 👪 Parents and eye care\" can close the online lobby or turn on \"👧 Kids mode\" (no contact with strangers, no data sent, break reminders)",
+  "家長可以關掉大廳":"Parents can close the lobby",
+  /* 11/17 第 18 輪 D P2-2：安全須知最後一句原本沒有整句的字典，等 02-shell 的 emoWalk 把 🔒、🛡 換成圖示（文字被切成三段）後只翻得出中間「System · Privacy · Parents →」；整句放內建字典，畫出來當下（換圖示之前）就整句換掉 */
+  "這張說明只會自動跳一次；之後可以在「設定房間的 🔒 系統・隱私・家長 → 🛡 大廳安全須知」再看。":"This guide pops up automatically only once; you can read it again anytime at \"Settings room 🔒 System · Privacy · Parents → 🛡 Lobby safety\".",
+  "之後可以在「設定房間的 🔒 系統・隱私・家長 → 🛡 大廳安全須知」再看。":"You can read it again anytime at \"Settings room 🔒 System · Privacy · Parents → 🛡 Lobby safety\".","「設定房間的 🔒 系統・隱私・家長 → 👪 家長與護眼」可以關閉線上大廳，或打開「👧 兒童模式」（不跟陌生人互動、資料不送出、提醒休息）":"\"Settings room 🔒 System · Privacy · Parents → 👪 Parents and eye care\" can close the online lobby or turn on \"👧 Kids mode\" (no contact with strangers, no data sent, break reminders)",
   "我知道了":"I understand",
   /* 連線狀態小卡（07hs-netsig） */
   "已釘選":"Pinned","跟上次對局同一把":"same key as last game","第一次見到":"First seen","沒有金鑰":"No key","對方版本較舊":"opponent's version is older","裁判台認證":"referee verified","邀請有簽名":"signed invitation","斷線":"Disconnected","同步中":"Syncing",
@@ -668,7 +671,7 @@ const I18N_EN={
   "說書人學徒":"Storyteller's apprentice","13 站":"13 stops","還沒選角色":"No character chosen yet","看航線":"View route","回星槎頁":"Back to the Star Raft","石桌已補全":"Stone table complete","石桌補全了":"The stone table is complete",
   "傾斜手機看立體":"Tilt phone for 3D","先下這盤棋":"Play this game first","示範棋局":"Demo game","正文載入中":"Loading text","先往下讀":"Read on first","上一章":"Previous chapter","下一章":"Next chapter","跟電腦下一盤":"Play the computer","13 站都走完了":"All 13 stops done",
   "今天打千秋盃":"Qianqiu Cup today","找找靈感":"Find inspiration","再想一下":"Think again","跟幻影練一題":"Practice a puzzle with the Phantom","星槎停靠":"Star Raft docked","解這一局":"Solve this game","點一下跳過":"Tap to skip","雲河驛站":"Cloud River inn",
-  "船艙":"Cabin","🌟 換人":"🌟 Switch","🎭 開始故事":"🎭 Start the story","先逛逛，之後再開始故事":"Look around first, start the story later","📖 第一章":"📖 Chapter 1","📖 接著看第一章":"📖 Continue Chapter 1","⚔ 開新的旅程":"⚔ Start a new journey","↩ 回上一頁":"↩ Back","七星":"Seven Stars","▶ 接著下":"▶ Keep playing","＋ 開新局":"＋ New game","旅伴與軍師各獻一策，你採用哪一策？":"Your companions and the strategists each offer a plan. Which will you take?","去開頭畫面":"Go to the start screen","三格存檔都有人了":"All three save slots are used","航行難度":"Voyage difficulty","現在":"now","多數人選這個":"most people pick this","看這一站":"See this stop","千秋大百科":"Qianqiu encyclopedia",
+  "船艙":"Cabin","🌟 換人":"🌟 Switch","🎭 開始故事":"🎭 Start the story","先逛逛，之後再開始故事":"Look around first, start the story later","📖 第一章":"📖 Chapter 1","📖 接著看第一章":"📖 Continue Chapter 1","⚔ 開新的旅程":"⚔ Start a new journey","⚔ 新的旅程":"⚔ New Journey","新的旅程":"New journey","這支手機的 iOS 版本太舊，電腦棋手無法運作；請到「設定 → 一般 → 軟體更新」更新 iOS":"This phone's iOS is too old for the computer opponent to run; update iOS in Settings → General → Software Update","落子、吃子、將軍、點錯時手機震一下（用手機內建的觸覺回饋）":"The phone gives a light tap on moves, captures, checks and mistaps (using its built-in haptics)","玩家登記預設關閉，你在下面打開「📨 送出玩家登記給開發者」才會送。":"Player registration is off by default. It is sent only if you turn on \"📨 Send player registration to the developer\" below.","↩ 回上一頁":"↩ Back","七星":"Seven Stars","▶ 接著下":"▶ Keep playing","＋ 開新局":"＋ New game","旅伴與軍師各獻一策，你採用哪一策？":"Your companions and the strategists each offer a plan. Which will you take?","去開頭畫面":"Go to the start screen","三格存檔都有人了":"All three save slots are used","航行難度":"Voyage difficulty","現在":"now","多數人選這個":"most people pick this","看這一站":"See this stop","千秋大百科":"Qianqiu encyclopedia",
   "想多看一題":"One more puzzle","七星同局圖鑑":"Seven Stars puzzle album","熱身":"Warm-up","變化題":"Variation puzzles","選做":"optional","雲河":"Cloud River","秦":"Qin","漢":"Han","三國":"Three Kingdoms","魏晉":"Wei-Jin","南北朝":"Northern and Southern dynasties",
   "隋":"Sui","唐":"Tang","五代":"Five Dynasties","宋":"Song","元":"Yuan","明":"Ming","清":"Qing","我的起手":"My openings","棋力考校":"Strength test","我的勝負簿":"My record","分門習練":"Theme training","錯著重習":"Mistake drills","象戲規則":"Rules of xiangqi",
   "初學講武場":"Boot camp","初學教場":"Boot camp","初學校場":"Boot camp","棋譜石室":"Game library","棋譜祕閣":"Game library","棋譜書樓":"Game library","棋譜閣":"Game library","找真人選「線上對戰」；自己練選「挑戰電腦」":"To play people, choose \"Online play\"; to practice alone, choose \"Play the computer\"",
@@ -730,7 +733,7 @@ const I18N_EN={
   "Windows 上的啟動和出圖腳本":"Launch and image scripts on Windows","意見回饋管理頁（接 Google 表單和試算表）":"Feedback admin page (connected to Google Forms and Sheets)","棋譜、題庫、故事、朝代資料":"Game records, puzzles, stories, dynasty data",
   "線上大廳用 MQTT 通訊協定連線；Pikafish 的神經網路權重另外下載。":"The online lobby connects over MQTT; Pikafish's neural network weights are downloaded separately.","不用等機率：直接掉進黑洞、叫出小黑洞／星門、開任一星系、重設黑洞篇進度":"Skip the odds: fall into the black hole, summon a small black hole or star gate, open any galaxy, reset black-hole progress",
   "把 32 位虛擬玩家的積分、戰績、練習紀錄全部歸零？舊資料會整份存在電腦上，不會丟。":"Reset the ratings, records and practice logs of all 32 virtual players? The old data is kept in full on the computer.","這支手機要先用「連線到開發者的電腦」配對過，才能送出重置":"This phone must first be paired via \"Connect to the developer's computer\" before it can send a reset",
-  "想留著，先按「不要刪」，到設定用「📱 換手機」把存檔搬到別支手機。":"To keep it, tap \"Don't delete\" first, then use \"📱 Move to a new phone\" in Settings to move your save to another phone.","字級可以到「最大」2 倍，預設跟著手機的字級：在設定房間的「🖌 字體」。鍵盤：B 棋盤、R 讀盤面、S 狀態、M 上一步、W 我在哪、? 說明。":"Text can go up to \"Largest\" (2x) and follows the phone's text size by default: see \"🖌 Font\" in the settings room. Keyboard: B board, R read the board, S status, M last move, W where am I, ? help.",
+  "想留著，先按「不要刪」，到設定用「換手機」把存檔搬到別支手機。":"To keep it, tap \"Don't delete\" first, then use \"Move to a new phone\" in Settings to move your save to another phone.","字級可以到「最大」2 倍，預設跟著手機的字級：在設定房間的「🖌 字體」。鍵盤：B 棋盤、R 讀盤面、S 狀態、M 上一步、W 我在哪、? 說明。":"Text can go up to \"Largest\" (2x) and follows the phone's text size by default: see \"🖌 Font\" in the settings room. Keyboard: B board, R read the board, S status, M last move, W where am I, ? help.",
   "臺北":"Taipei","想跟家人朋友下棋，可以用":"To play with family and friends, use","（同一支手機兩個人輪流下）；挑戰電腦、石桌往事、殘局、棋譜都照常可以玩。":"(two players take turns on one phone); playing the computer, Stone Table Tales, endgames and the game library all still work.",
   "這張說明只會自動跳一次":"This guide pops up automatically only once","手機已把檢舉送出去":"the phone has sent the report","現在送不出去，檢舉先存在這支手機，有網路會自動補送":"it can't be sent right now; the report is saved on this phone and will be sent automatically when online",
   "局面還原（沒有存檔，要留下來請自己走幾步再按 💾 存成棋譜）":"Set up position (not saved; to keep it, play a few moves and tap 💾 Save as game record)","棋風":"Style",
@@ -919,7 +922,7 @@ const I18N_KEY={
   "rlg.reloaded":"The screen just reloaded. Your last game's result has been saved."   /* 11/13 開發者 P1：對局剛結束時頁面被重新載入（m/02r-reloadguard.js） */
 };
 /* 英文時不換的屬性值：別的模組用這幾個 aria-label／title 找按鈕（06-cpu 換園子、07t3 籤筒、07w9 出口），換掉就找不到 */
-const I18N_AGUARD=["回首頁","回星槎","聲控走棋","回棋盤模式","去園子下棋（3D）"];
+const I18N_AGUARD=[];   /* 11/17 第 20 輪 D N4：剩下的四個（回星槎、聲控走棋、回棋盤模式、去園子下棋（3D））也拿掉——頂欄按鈕標 data-lb（02-shell setTop），06-cpu、07bht、07bhg、07t3 改用 [data-lb] 找；動作列標 data-act（05-settings actionBar）。清單留著，之後真的要保留再加 */   /* 11/17 第 19 輪 D P2-4：「回首頁」拿掉——頂欄的 🏠（02-shell setTop）改標 data-home，07t3 籤筒、07w9 出口改用 [data-home] 找，讀螢幕在英文介面念 Home */
 /* 句型：[正規式, (比對結果, 翻譯函式)=>英文或 null]；T(字) 翻不出來會回 null，整句就不換 */
 const I18N_XSD_PC={帥:"General",將:"General",仕:"Advisor",士:"Advisor",相:"Elephant",象:"Elephant",俥:"Chariot",車:"Chariot",傌:"Horse",馬:"Horse",炮:"Cannon",包:"Cannon",兵:"Soldier",卒:"Soldier"};   /* 暗棋動態句的棋子名（字典裡的棋子名是 WXF 記譜字母，不適合整句） */
 const i18nXsdPc=(c,p)=>(c?(c==="紅"?"Red ":"Black "):"")+(I18N_XSD_PC[p]||p);
@@ -1394,7 +1397,7 @@ function i18nSheet(){const cur=i18nCur(),L=[["tw","繁體中文","zh-Hant"],["cn
       <p class="muted" id="i18nScopeEn" style="font-size:12.5px;line-height:1.6;margin:10px 2px 0" lang="en"><b>In English:</b> the tab bar and menus, games against the computer, the game page and results, settings, the online lobby, Teatime endgames, the Daily Puzzle, the game library, the Qianqiu Cup, and the main quest, Chapter 1 “Classic · First Crossing of the River Chart”: its task cards, chapter name and puzzle hints. Chapter 1 also has English film captions and dialogue, as do the Starry Night Tea Party greetings and farewells.</p>
       <p class="muted" style="font-size:12.5px;line-height:1.6;margin:4px 2px 0" lang="en"><b>Chinese only for now:</b> other story scenes (Stone Table Tales and the novel), other character lines, scene history notes, the full privacy statement and the guides.</p>
       <p class="muted" data-noi18n style="font-size:12.5px;line-height:1.6;margin:6px 2px 0">英文介面目前涵蓋：底欄與選單、跟電腦對局、對局頁與結果、設定、線上大廳、一盞茶殘局、每日同題、棋譜庫、千秋盃，以及主線第一章「古典・河圖初渡」的任務卡、章名和解題提示；第一章電影與對話、七星星夜茶話會開場與收尾也已翻譯。其他劇情仍只有中文：石桌往事、長篇、其他角色台詞、場景史料、隱私說明全文和說明文件。</p>
-      <button type="button" class="lk" data-xqdoc="i18n" style="margin-top:8px">🌐 About the English UI / 英文介面說明</button>`;
+      ${(()=>{try{return typeof xqDocShow==="function"&&!xqDocShow("i18n")}catch(e){return false}})()?"":`<button type="button" class="lk" data-xqdoc="i18n" style="margin-top:8px">🌐 About the English UI / 英文介面說明</button>`}`;   /* 11/17 第 19 輪 E19-1：原生版白名單沒有 i18n，按了打不開 → 不畫 */
     b.querySelectorAll("[data-lang]").forEach(x=>x.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();i18nPick(x.dataset.lang)})})}
 /* ================= 畫面：掃描文字節點、屬性，換成英文；原文記起來可以還原 ================= */
 const I18N_ATTR=["aria-label","title","placeholder","label"];   /* 11/17：加 label（下拉選單分組 optgroup 的標題，例如棋子聲音的分類） */
@@ -1402,19 +1405,25 @@ const I18N_ORIG=new WeakMap(),I18N_AORIG=new WeakMap();
 /* 不翻的地方：程式、輸入框、棋盤（SVG 上的棋子字）、畫布、頭像圓章（.av 只放得下一個字）、語言選項（data-nocc）、特別標 data-noi18n 的 */
 function i18nIsSkip(el){if(!el||el.nodeType!==1)return false;if(/^(SCRIPT|STYLE|TEXTAREA|INPUT|CODE|PRE|SVG|CANVAS)$/i.test(el.nodeName))return true;if(/^OPTION$/i.test(el.nodeName)&&!el.hasAttribute("value"))return true;   /* 11/17 測試員 D：下拉選單以前整個不翻（SELECT 在跳過名單），棋子聲音、大廳城市一直是中文；選項有寫 value 的只換顯示的字、值不變，沒寫 value 的照舊不翻（value 預設就是那段字，換了會壞）；語言選單照舊靠 data-nocc 跳過 */
   if(el.hasAttribute&&(el.hasAttribute("data-nocc")||el.hasAttribute("data-noi18n")))return true;return!!(el.classList&&el.classList.contains("av"))}
+/* 11/17 第 18 輪 D P2-3：開關（<input type="checkbox" class="sw" aria-label="…">）、輸入框的 aria-label、title、placeholder 一直是中文——INPUT、TEXTAREA 在跳過名單裡（裡面的字是玩家打的、不能動），
+   整個元素連屬性一起跳過，讀螢幕念「螢幕報讀與鍵盤模式」「匿名送出對局評分」…。改成：這兩種只翻屬性（值照舊不動）；自己或外層標了 data-nocc／data-noi18n、外層在跳過名單裡的照舊不翻 */
+/* 11/17 第 19 輪 D P2-3（4.0 無障礙）：棋盤預覽、地圖這類 <svg role="img" aria-label="棋盤"> 整個在跳過名單裡（裡面的棋子字不能翻），連 svg 自己的 aria-label 也一直是中文 → svg 本身跟 INPUT 一樣只翻屬性，裡面的子元素照舊不動 */
+function i18nFieldEl(el){return!!(el&&el.nodeType===1&&/^(INPUT|TEXTAREA|SVG)$/i.test(el.nodeName)&&!el.hasAttribute("data-nocc")&&!el.hasAttribute("data-noi18n")&&!i18nInSkip(el.parentNode))}
 function i18nInSkip(n){for(let e=n&&n.nodeType===1?n:n&&n.parentNode;e&&e.nodeType===1;e=e.parentNode)if(i18nIsSkip(e))return true;return false}
 /* data-i18n="鍵"：換掉這個元素「自己的」最後一段字（子元素裡的圖示不動，前後空白照留）；data-i18n-n 是 {n}；原文記在 I18N_ORIG，一樣可以還原。字典沒有這個鍵就回 false，照一般字典替換 */
 function i18nKeyEl(el){const k=el&&el.getAttribute&&el.getAttribute("data-i18n");if(!k||!Object.prototype.hasOwnProperty.call(I18N_KEY,k))return false;
   let n=null;for(let c=el.firstChild;c;c=c.nextSibling)if(c.nodeType===3&&c.nodeValue.trim())n=c;if(!n)return false;
   const p=el.getAttribute("data-i18n-n"),en=I18N_KEY[k].replace(/\{n\}/g,p==null?"":p),m=String(n.nodeValue).match(/^(\s*)[\s\S]*?(\s*)$/),t=m[1]+en+m[2];
   if(n.nodeValue!==t){const o=I18N_ORIG.get(n);I18N_ORIG.set(n,{o:o&&n.nodeValue===o.t?o.o:n.nodeValue,t});n.nodeValue=t}return true}
-function i18nTextNode(n,checked){const v=n.nodeValue;if(!v||!I18N_CJK.test(v))return;if(!checked&&i18nInSkip(n))return;
+/* 11/17 第 20 輪 D N6：沒有中文、只是用了全形斜線「／」的字（文牒「1 MB／about 851 MB」、「3／13」），英文介面換成半形 /（原文記在 I18N_ORIG，一樣可以還原） */
+function i18nSlash(n,checked){const v=n.nodeValue;if(!v||v.indexOf("／")<0||I18N_CJK.test(v))return;try{if(i18nLang()!=="en")return}catch(e){return}if(!checked&&i18nInSkip(n))return;const pe=n.parentNode;if(pe&&pe.closest&&pe.closest("[data-noi18n],[data-nocc]"))return;const t=v.replace(/\s*／\s*/g,"/");if(t!==v){I18N_ORIG.set(n,{o:v,t});n.nodeValue=t}}
+function i18nTextNode(n,checked){const v=n.nodeValue;if(v&&!I18N_CJK.test(v)&&v.indexOf("／")>=0)return i18nSlash(n,checked);if(!v||!I18N_CJK.test(v))return;if(!checked&&i18nInSkip(n))return;
   const pe=n.parentNode;if(pe&&pe.nodeType===1&&pe.hasAttribute&&pe.hasAttribute("data-i18n")&&i18nKeyEl(pe))return;
   const t=i18nLine(v);if(t!=null&&t!==v){I18N_ORIG.set(n,{o:v,t});n.nodeValue=t}}
 function i18nEl(el){i18nKeyEl(el);i18nAttrs(el)}
 function i18nAttrs(el){for(const a of I18N_ATTR){const v=el.getAttribute&&el.getAttribute(a);if(!v||!I18N_CJK.test(v)||I18N_AGUARD.includes(v.trim()))continue;const t=i18nLine(v);if(t==null||t===v)continue;
   let m=I18N_AORIG.get(el);if(!m){m={};I18N_AORIG.set(el,m)}m[a]={o:v,t};el.setAttribute(a,t)}}
-function i18nWalk(n,txt,el){if(!n)return;if(n.nodeType===3){txt(n);return}if(n.nodeType!==1&&n.nodeType!==9&&n.nodeType!==11)return;if(n.nodeType===1){if(i18nIsSkip(n))return;el(n)}
+function i18nWalk(n,txt,el){if(!n)return;if(n.nodeType===3){txt(n);return}if(n.nodeType!==1&&n.nodeType!==9&&n.nodeType!==11)return;if(n.nodeType===1){if(i18nIsSkip(n)){if(el===i18nEl&&i18nFieldEl(n))i18nAttrs(n);return}el(n)}
   for(let c=n.firstChild;c;c=c.nextSibling)i18nWalk(c,txt,el)}
 /* 把一整塊換成英文（root 預設 body） */
 function i18nApply(root){root=root||document.body;if(!root||i18nInSkip(root.nodeType===3?root:root.parentNode))return;i18nWalk(root,n=>i18nTextNode(n,true),i18nEl)}
@@ -1425,8 +1434,8 @@ function i18nRevert(root){root=root||document.body;if(!root)return;
   const w=(n)=>{if(!n)return;if(n.nodeType===3)return tx(n);if(n.nodeType===1)at(n);for(let c=n.firstChild;c;c=c.nextSibling)w(c)};w(root)}
 let I18N_MO=null,I18N_T0=null;
 function i18nWatch(){if(I18N_MO||typeof MutationObserver==="undefined"||!document.body)return;
-  I18N_MO=new MutationObserver(ms=>{for(const m of ms){try{if(m.type==="characterData")i18nTextNode(m.target);else if(m.type==="attributes"){if(!i18nInSkip(m.target))i18nAttrs(m.target)}
-    else for(const x of m.addedNodes){if(x.nodeType===3)i18nTextNode(x);else if(x.nodeType===1&&!i18nInSkip(x))i18nWalk(x,n=>i18nTextNode(n,true),i18nEl)}}catch(e){}}});
+  I18N_MO=new MutationObserver(ms=>{for(const m of ms){try{if(m.type==="characterData")i18nTextNode(m.target);else if(m.type==="attributes"){if(!i18nInSkip(m.target)||i18nFieldEl(m.target))i18nAttrs(m.target)}
+    else for(const x of m.addedNodes){if(x.nodeType===3)i18nTextNode(x);else if(x.nodeType===1&&!i18nInSkip(x))i18nWalk(x,n=>i18nTextNode(n,true),i18nEl);else if(i18nFieldEl(x))i18nAttrs(x)}}catch(e){}}});
   I18N_MO.observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:I18N_ATTR})}
 /* 讀螢幕播報：先翻再念。結果視窗跳出來時 00-util modal 會當場念視窗裡的字（那時還沒換成英文）：念之前先把那個視窗換好，改念英文 */
 function i18nSay(t){const s=String(t==null?"":t);if(!I18N_CJK.test(s))return s;const r=i18nText(s);if(r!=null)return r;
@@ -1457,6 +1466,10 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
   "html[lang=en] #acts button{font-size:12px;line-height:1.15;white-space:normal;overflow-wrap:break-word}",
   "html[lang=en] #tbb{flex-wrap:wrap}html[lang=en] #tbb button{flex:1 1 calc(50% - 8px);min-width:0;white-space:normal;padding:8px 6px;font-size:13px}",
   "html[lang=en] .st-tabs button{font-size:12.5px;padding-left:2px;padding-right:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+  /* 11/17 第 18 輪 D P3-1：設定四個分頁「Character」內容約 90px、按鈕只有 82px，變成「Charac…」→ 英文時圖示縮成 18px、字 11px、字距收一點（「圖示＋Character」約 74px），不再切字；360px 以下的窄螢幕只留字；overflow 改回 visible，05-settings 用 ::before 撐出的 44 高點選範圍才不會被裁掉。
+     「加到主畫面」那類清單項目的小字（.item .tx 裡的 span，m.css 一行加刪節號）英文常比中文長一倍（「Open it from the home screen icon: full screen, and you can play offline」410px 只看得到 247px）→ 英文時可以換行、不切 */
+  "html[lang=en] .st-tabs button{font-size:11px;letter-spacing:-.2px;padding-left:1px;padding-right:1px;text-overflow:clip;overflow:visible}html[lang=en] .st-tabs .tic .eic{width:18px;height:18px;vertical-align:-4px}@media (max-width:360px){html[lang=en] .st-tabs .tic{display:none}}",
+  "html[lang=en] .item .tx>span{white-space:normal;text-overflow:clip;overflow:visible;line-height:1.35}",
   "html[lang=en] #title{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}",
   /* 11/17 測試員 B 第 6 輪 N6-3：英文窄螢幕（480px 以下）頂欄標題被左邊「‹ Back to Ferry」擠成「Quic…」→ 跟星門圍城頁（07sg2 sg2Css）一樣可以換兩行、字小一點；兩行高度還在 44px 返回鈕之內，頂欄不長高；返回鈕的字照留（玩家要知道回哪裡） */
   "@media (max-width:480px){html[lang=en] #title{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:calc(16px * min(var(--fz,1),1.3));line-height:1.15;letter-spacing:.02em;overflow-wrap:break-word}}",
@@ -1494,7 +1507,17 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
   "html[lang=en] .clk-sm{max-width:calc(100vw - 214px)}",
   "html[lang=en] .clk-sm>span{min-width:0;overflow:hidden}",
   "html[lang=en] .clk-sm .clk-sl>span,html[lang=en] .clk-sm .clk-ss{font-size:10px;letter-spacing:0;overflow:hidden;text-overflow:ellipsis}",
-  "html[lang=en] .clk-sm .clk-sl>b{letter-spacing:0;white-space:nowrap}"].join("\n");
+  "html[lang=en] .clk-sm .clk-sl>b{letter-spacing:0;white-space:nowrap}",
+  /* 11/17 第 19 輪 D P2-2：開場電影字幕（07bh #bhxPg .bx-l）字級照中文一句幾個字算、不換行；英文一句長得多 → 英文可以換行、字距收窄、行高收一點 */
+  "html[lang=en] #bhxPg .bx-l,html[lang=en] #bhxPg .bx-n,html[lang=en] #bhxPg .bx-cap,html[lang=en] #bhxPg .bx-t{white-space:normal;letter-spacing:.02em;max-width:min(92vw,640px);margin-left:auto;margin-right:auto}",
+  "html[lang=en] #bhxPg .bx-l{font-size:min(var(--bxfs,24px),22px);line-height:1.45;margin-bottom:.25em}",
+  /* 11/17 第 20 輪 D N2：第二段電影（OP_FILM2）上方的 .fm-cap 不換行、字距 .2em、字級照 22 個中文字算 → "The Seven Stars fall like rain…" 寬 524，超出 375 */
+  "html[lang=en] #bhxPg .fm-cap{white-space:normal;letter-spacing:.03em;left:16px;right:16px;font-size:min(15px,4.2vw);line-height:1.45}",
+  /* 11/17 第 20 輪 E N20-1：🗺 總覽圖上六個區域標籤是直書紙籤（writing-mode:vertical-rl＋upright），英文變成一個字母一行 → 英文改橫排、自己帶紙底，靠右的兩張（練棋書院、服務亭）往左對齊紙籤右緣 */
+  "html[lang=en] #stmOv .lb{writing-mode:horizontal-tb;text-orientation:mixed;width:auto!important;height:auto!important;white-space:nowrap;font-size:3.4cqw;line-height:1.2;letter-spacing:0;padding:.3em .55em;background:#F6EFE2;border:1px solid #d8c8b0;box-shadow:0 1px 3px rgba(60,40,20,.18)}",
+  "html[lang=en] #stmOv .lb[data-l=acad],html[lang=en] #stmOv .lb[data-l=svc]{transform:translateX(calc(-100% + 7.5cqw))}",
+  /* 11/17 第 20 輪 D N6：#/cpuroom 段位牌「Novice · 50 pts to promotion」比框長（框 max-width 46%、字不換行）→ 英文可以換行 */
+  "html[lang=en] .cr-page .shp-spot b{white-space:normal;line-height:1.25;text-align:center}"].join("\n");
 
 function i18nCss(){try{if(document.getElementById("i18nCss"))return;const s=document.createElement("style");s.id="i18nCss";s.textContent=I18N_CSS;(document.head||document.body).appendChild(s)}catch(e){}}
 /* 英文系統、還沒選過語言：開 App 4 秒後提示一次（不自動切） */

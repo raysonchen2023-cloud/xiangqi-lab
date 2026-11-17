@@ -98,7 +98,9 @@ function fcmBootGo(){let first=false;try{first=!sessionStorage.getItem("fcmBoot"
 /* ---------- 狀態 ---------- */
 var FCM={boss:false,sv:null,media:[],esc:{last:0},escT:0,t3:{},pz:false,lp:0};
 function fcmCleanOn(){try{return!!store.get("cleanUI",false)}catch(e){return false}}
-function fcmBossEnabled(){try{return store.get("bossKey",true)!==false}catch(e){return true}}
+/* 11/17 App Store 審查（測試員 E，開發者選「拿掉老闆鍵」）：原生 App 不提供老闆鍵——設定頁不出現開關（05-settings），Esc 兩下、三指點一下都不觸發，fcmBoss(true) 也直接不做；網頁版照舊 */
+function fcmBossNat(){try{return typeof xqNat==="function"&&xqNat()}catch(e){return false}}
+function fcmBossEnabled(){if(fcmBossNat())return false;try{return store.get("bossKey",true)!==false}catch(e){return true}}
 function fcmBoardPage(){try{const v=document.getElementById("view");return!!(v&&v.querySelector(":scope>#bbox")&&v.querySelector(":scope>#acts"))}catch(e){return false}}
 
 /* ---------- 中斷恢復：被打斷時記下、棋鐘暫停 ---------- */
@@ -134,7 +136,7 @@ function fcmMute(on){try{if(typeof sxmApply==="function")sxmApply()}catch(e){}
 function fcmBossBind(o){const nb=o.querySelector("#fcmNb"),stop=()=>{if(FCM.lp){clearTimeout(FCM.lp);FCM.lp=0}};
   if(nb){nb.addEventListener("pointerdown",()=>{stop();FCM.lp=setTimeout(()=>{FCM.lp=0;fcmBoss(false)},800)});for(const t of["pointerup","pointercancel","pointerleave"])nb.addEventListener(t,stop)}
   o.addEventListener("contextmenu",e=>e.preventDefault())}
-function fcmBoss(on){on=!!on;if(on===FCM.boss)return false;FCM.boss=on;const de=document.documentElement;let app=null;try{app=document.querySelector(".app")}catch(e){}
+function fcmBoss(on){on=!!on;if(on===FCM.boss)return false;if(on&&fcmBossNat())return false;FCM.boss=on;const de=document.documentElement;let app=null;try{app=document.querySelector(".app")}catch(e){}
   if(on){const S=FCM.sv={title:document.title,ic:[],tc:null,foc:null,app:null};try{S.foc=document.activeElement}catch(e){}
     try{document.querySelectorAll('link[rel~="icon"]').forEach(l=>{S.ic.push([l,l.getAttribute("href")]);l.setAttribute("href",fcmIcon())})}catch(e){}
     try{const m=document.querySelector('meta[name="theme-color"]');if(m){S.tc=[m,m.getAttribute("content")];m.setAttribute("content","#ffffff")}}catch(e){}

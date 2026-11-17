@@ -115,7 +115,8 @@ function ptyCss(){if(document.getElementById("ptyCss"))return;const s=document.c
 .pty-tag.look{background:#dbeafe;color:#1e3a8a}
 .pty-m{font-size:13px;color:var(--muted,#6b6257)}
 .pty-xp{height:7px;border-radius:4px;background:#e3e8f1;overflow:hidden;margin:2px 0 4px}.pty-xp b{display:block;height:100%;background:linear-gradient(90deg,#d4a017,#2b6cb0)}.pty-xpt{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12px;color:#2b6cb0;margin-top:4px}.pty-xpt span:last-child{color:var(--muted,#6b6257)}
-.pty-a{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.pty-a .btn{flex:1 1 0;width:auto;min-width:0;min-height:40px;margin:0;padding:6px 8px;font-size:14px;white-space:nowrap}
+.pty-a{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}.pty-a .btn{flex:1 1 0;width:auto;min-width:0;min-height:44px;margin:0;padding:6px 8px;font-size:14px;white-space:nowrap}
+.pty-a .btn{position:relative}.pty-a .btn::before{content:"";position:absolute;left:min(0px,calc((100% - 44px) / 2));right:min(0px,calc((100% - 44px) / 2));top:min(0px,calc((100% - 44px) / 2));bottom:min(0px,calc((100% - 44px) / 2))}
 .pty-st{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px}
 .pty-st>span{display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 2px;border-radius:8px;background:rgba(128,110,80,.12)}
 .pty-st small{font-size:12px;color:var(--muted,#6b6257);white-space:nowrap}.pty-st b{font-size:16px;line-height:1.2}
@@ -175,7 +176,7 @@ function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])
   const skP=ptySkPool(c),skN=skP.filter(s=>s.lv<=lv).length;   /* 11/16：招式從那一行小字搬成一列可以點的「招式 n／N ›」 */
   const tg=P.look===c?`<span class="pty-tag look">陪你走</span>`:"";
   return`<div class="pty-c" data-c="${c}">${img}<div><div class="pty-n">${esc(C.n)}<small>${esc(C.nk||"")}</small>${tg}</div>
-    <div class="pty-m">${esc(C.pc||"")}・${esc(era)}・Lv ${lv}${top?(L>=100?"（練滿了）":"（練滿了，等你升級）"):""}</div><div class="pty-xpt"><span>✨ 星輝 ${got}／${lv>=100?got:dn}</span><span>${gsay}</span></div><div class="pty-xp" aria-hidden="true"><b style="width:${pct.toFixed(1)}%"></b></div></div>
+    <div class="pty-m">${esc(C.pc||"")}・${esc(era)}・Lv ${lv}${top?(L>=100?"（練滿了）":"（練滿了，等你升級）"):""}</div><div class="pty-xpt"><span>${lv>=100?"✨ 星輝・已滿級":`✨ 星輝 ${got}／${dn}`}</span><span>${gsay}</span></div><div class="pty-xp" aria-hidden="true"><b style="width:${pct.toFixed(1)}%"></b></div></div>
     ${ptyStatHTML(c,lv)}${skP.length?`<button type="button" class="pty-row" data-a="sk"><span>招式</span><b>${skN}／${skP.length}</b><i aria-hidden="true">›</i></button>`:""}${typeof SG2G!=="undefined"&&typeof sg2TalSheet==="function"&&typeof sg2TalGet==="function"?`<button type="button" class="pty-row" data-a="tal"><span>天賦</span><b>${(sg2TalGet()[c]||[]).length}／${SG2G.TAL_MAX}</b><i aria-hidden="true">›</i></button>`:""}
     ${(a=>a?`<div class="pty-a">${a}</div>`:"")(`${top&&!room?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}`)}</div>`}   /* 兩顆都不用出現時（練滿了又正陪你走）不留一條空白 */
 function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0){try{toast("還沒有開始旅程")}catch(e){}return}ptyCss();

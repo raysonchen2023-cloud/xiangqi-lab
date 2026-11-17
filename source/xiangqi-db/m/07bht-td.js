@@ -526,7 +526,7 @@ function bhtdTags(V){const t=[];if(V.tpl)t.push("星門："+V.tpl);if(V.ps)t.pus
   if(V.fsk&&V.fsk.length)t.push("星樞招："+V.fsk.map(k=>BHTD.FSK[k].nm).join("、"));return t}
 const bhtdKid=()=>{try{return typeof fmKid==="function"&&!!fmKid()}catch(e){return false}};
 function bhtdCss(){if(document.getElementById("bhtdCss"))return;const s=document.createElement("style");s.id="bhtdCss";s.textContent=`
-body.bhtd-on #acts button[aria-label="悔棋"],body.bhtd-on #acts button[aria-label="寶物"]{display:none!important}
+body.bhtd-on #acts button[data-act="undo"],body.bhtd-on #acts button[data-act="bag"],body.bhtd-on #acts button[aria-label="悔棋"],body.bhtd-on #acts button[aria-label="寶物"]{display:none!important}
 #bhtdEn,#bhtdMe{font-family:var(--serif);color:#f1e7cf;background:rgba(10,10,30,.86);border-radius:12px;padding:5px 9px;margin:4px 8px;box-sizing:border-box;user-select:none;-webkit-user-select:none}
 .bt-ttl{display:flex;align-items:baseline;gap:8px;font-size:12.5px;white-space:nowrap;overflow:hidden;margin-bottom:3px}.bt-ttl b{color:#FFE08A}.bt-ttl small{color:#c9bfe8}
 .bt-r1,.bt-r2{display:flex;align-items:center;gap:6px;min-width:0;min-height:22px}.bt-r2{margin-top:4px}
@@ -553,7 +553,7 @@ body.bhtd-on #acts button[aria-label="悔棋"],body.bhtd-on #acts button[aria-la
 .bt-sk.pulse{animation:btArm .5s ease-in-out 3}
 .bt-aux{display:flex;align-items:center;gap:6px;margin-top:6px}.bt-aux button{flex:1;font:inherit;font-size:13.5px;color:#f1e7cf;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.28);border-radius:12px;min-height:44px;cursor:pointer;touch-action:manipulation}.bt-aux button.bt-more{flex:0 0 52px}
 .bt-tip{font-size:12.5px;color:#FFE08A;margin-top:4px;display:flex;gap:8px;align-items:center;justify-content:center}.bt-tip button{font:inherit;font-size:12px;color:#f1e7cf;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:3px 12px;min-height:30px}
-body.bhtd-on #topRight button[aria-label="回棋盤模式"],body.bhtd-on #topRight button[aria-label="去園子下棋（3D）"],body.bhtd-on .xqbot,body.bhtd-on .pzoom,body.bhtd-on .gpad,body.bhtd-on .pkview,body.bhtd-on .pk2d,body.bhtd-on .pk2d-tip,body.bhtd-on .gs-ui,body.bhtd-on .gs-pop,body.bhtd-on .un-ui,body.bhtd-on .tele-ui,body.bhtd-on .pk3d-back{display:none!important}
+body.bhtd-on #topRight button[data-lb="回棋盤模式"],body.bhtd-on #topRight button[data-lb="去園子下棋（3D）"],body.bhtd-on #topRight button[aria-label="回棋盤模式"],body.bhtd-on #topRight button[aria-label="去園子下棋（3D）"],body.bhtd-on .xqbot,body.bhtd-on .pzoom,body.bhtd-on .gpad,body.bhtd-on .pkview,body.bhtd-on .pk2d,body.bhtd-on .pk2d-tip,body.bhtd-on .gs-ui,body.bhtd-on .gs-pop,body.bhtd-on .un-ui,body.bhtd-on .tele-ui,body.bhtd-on .pk3d-back{display:none!important}
 #bhtdView{display:inline-flex!important;align-items:center;gap:3px;font:600 12px var(--serif);white-space:nowrap;padding:0 8px!important;min-width:44px}#bhtdView small{font-size:11.5px}
 #bhtdViewM{position:fixed;z-index:9300;top:calc(var(--bhTop,48px) + 4px);right:calc(6px + env(safe-area-inset-right,0px));width:min(250px,80vw);box-sizing:border-box;background:rgba(10,10,30,.96);border:1px solid #E8C77A;border-radius:12px;padding:6px;color:#f1e7cf;font-family:var(--serif);box-shadow:0 8px 20px rgba(0,0,0,.5)}
 #bhtdViewM button{display:flex;width:100%;align-items:center;gap:8px;font:inherit;font-size:14px;color:inherit;background:transparent;border:0;border-radius:8px;padding:8px;min-height:44px;text-align:left;cursor:pointer}
@@ -1016,7 +1016,7 @@ function bhtdViewMenu(show){let m=document.getElementById("bhtdViewM");clearTime
   if(!m){m=document.createElement("div");m.id="bhtdViewM";m.setAttribute("role","menu");m.setAttribute("aria-label","視角");document.body.append(m);
     m.addEventListener("click",e=>{const b=e.target.closest("[data-v]");if(!b)return;e.stopPropagation();vibrate(5);bhtdSetView(b.dataset.v);bhtdViewMenu(false)});setTimeout(()=>addEventListener("pointerdown",bhtdViewOut,true),0)}
   const v=bhtdView();let port=false;try{port=matchMedia("(orientation:portrait)").matches}catch(e){}
-  m.innerHTML=Object.keys(BHTD_VW).map(k=>`<button type="button" role="menuitemradio" aria-checked="${k===v}" data-v="${k}" class="${k===v?"on":""}">${k===v?"●":"○"} ${BHTD_VW[k]}<small>${BHTD_VWD[k]}</small></button>`).join("")+(port?"<p>📱 手機轉成橫向，星盤會更大</p>":"");
+  m.innerHTML=Object.keys(BHTD_VW).map(k=>`<button type="button" role="menuitemradio" aria-checked="${k===v}" data-v="${k}" class="${k===v?"on":""}">${k===v?"●":"○"} ${BHTD_VW[k]}<small>${BHTD_VWD[k]}</small></button>`).join("")+(port&&!(typeof xqNat==="function"&&xqNat())?"<p>📱 手機轉成橫向，星盤會更大</p>":"");
   BHTD_VMT=setTimeout(()=>bhtdViewMenu(false),6000)}
 function bhtdSetView(v){if(!BHTD_VW[v]||v===bhtdView())return;try{store.set("bhtdView",v);if(v!=="flat")store.set("park3d",true)}catch(e){}
   try{if(v!=="flat"&&typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.setTdCam)PARK.v.setTdCam(v,bhtdFxLv())}catch(e){}

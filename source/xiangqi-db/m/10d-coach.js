@@ -169,7 +169,7 @@ function hwCss(){if(document.getElementById("hw-css"))return;const st=document.c
 .hw-chip{display:flex;flex-wrap:wrap;gap:6px}.hw-chip button{font-size:13px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:inherit}.hw-chip button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .hw-wrap .hw-seg{margin:0}.hw-thc{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-size:14px}.hw-thc>span{flex:1 1 auto;min-width:0}
 .hw-thx,.hw-chip .hw-thx{font-size:13px;min-height:34px;padding:5px 12px;border-radius:999px;border:1px dashed var(--line);background:var(--bg);color:inherit}
-.hw-card .tx b,.hw-card .tx span{white-space:normal;overflow:visible;text-overflow:clip}.hw-card .tx .hw-tg{margin-top:1px;opacity:.85}
+.hw-card .tx b,.hw-card .tx span{white-space:normal;overflow:visible;text-overflow:clip}.hw-card .tx>span>span{display:inline}.hw-card .tx .hw-tg{margin-top:1px;opacity:.85}
 .hw-card .lb{font-size:20px;min-width:30px}.hw-wrap .hw-card.on .lb{color:var(--accent);font-weight:900}
 .hw-bar{position:sticky;bottom:0;z-index:2;margin:0 -12px -28px;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(to bottom,transparent,var(--bg) 35%)}.hw-bar .btn{width:100%;background:var(--card)}
 .hw-vh{position:absolute!important;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;padding:0}
@@ -236,6 +236,10 @@ function hwCardInfo(x,P,th){th=th||"";const keep=t=>t&&t!==th&&t!=="殺棋"&&t!=
   if(x.k==="c"){if(!P)return{name:"殘局 "+x.id,sub:"",tags:[]};const s=P.src||{},ti=T(s.title),plain=s.book==="特級大師對局"||s.book==="星槎石桌";
     const name=ti?(plain?ti:"〈"+ti+"〉"):T(P.title)||T(P.name)||(P.t?P.t+" "+x.id:"殘局 "+x.id);
     const lv=P.d!=null&&typeof cjLv==="function"?cjLv(P.d):"";
+    /* 11/17 第 20 輪 D N5：英文介面跟每日同題一致——古譜寫「"書名" No. 局號」（〈題名〉551 個沒有英文），大師對局寫英文賽事名（翻不出就寫 Grandmaster game） */
+    if(typeof i18nLang==="function"&&i18nLang()==="en"){const tr=z=>{try{const r=typeof i18nText==="function"?i18nText(z):null;return r!=null&&!/[㐀-鿿]/.test(r)?r:null}catch(e){return null}},nn=/\d+/.exec(String(s.no||""));
+      if(s.book&&!plain&&nn)return{name:"\""+(tr(s.book)||s.book)+"\" No. "+nn[0],sub:[T(P.t),lv].filter(Boolean).join(" · "),tags:(P.th||[]).filter(keep).slice(0,3)};
+      if(s.book==="特級大師對局")return{name:tr(ti)||"Grandmaster game",sub:[s.year?T(s.year):"",T(P.t),lv].filter(Boolean).join(" · "),tags:(P.th||[]).filter(keep).slice(0,3)}}
     return{name,sub:[s.book?"《"+s.book+"》":"",s.book==="特級大師對局"&&s.year?T(s.year):"",T(P.t),lv].filter(Boolean).join(" · "),tags:(P.th||[]).filter(keep).slice(0,3)}}
   if(!P)return{name:"主題題 "+x.id,sub:"",tags:[]};
   return{name:T(P.title)||"主題題 "+x.id,sub:[T(P.src),T(P.rank)].filter(Boolean).join(" · "),tags:(P.tags||[]).filter(keep).slice(0,3)}}

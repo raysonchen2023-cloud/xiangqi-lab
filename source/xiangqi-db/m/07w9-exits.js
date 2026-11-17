@@ -49,7 +49,7 @@ function exFix(lb,E){try{const b=document.getElementById("back"),to=E[3]||(b&&b.
   if(k==="/"&&/棋鎮|時光之苑|首頁/.test(lb))return lb;if(/^\/(adventure|ship)(\/|$)/.test(k)&&/星槎|天字客房/.test(lb))return lb;return"↩ 回"+nm}catch(e){return lb}}
 function exKey(){return(location.hash||"#/").slice(1).split("?")[0].replace(/\/+$/,"")||"/"}
 function exCss(){if(document.getElementById("exCss"))return;const s=document.createElement("style");s.id="exCss";s.textContent=`
-body.xq-exit #back{display:none!important}body.xq-exit #topRight .ib[title="回首頁"]{display:none!important}   /* 回饋 849：場景頁走圖上出口，右上角的 🏠 也拿掉 */
+body.xq-exit #back{display:none!important}body.xq-exit #topRight .ib[title="回首頁"],body.xq-exit #topRight .ib[data-home]{display:none!important}   /* 回饋 849：場景頁走圖上出口，右上角的 🏠 也拿掉 */
 .shp-page .shp-spot.ex-spot{z-index:205}.shp-page .shp-spot.ex-spot b{font-size:13.5px;letter-spacing:.04em}
 .shp-spot.ex-hi,#back.ex-hi{animation:exHi 1.3s ease-in-out 3}@keyframes exHi{0%,100%{box-shadow:0 0 0 0 rgba(242,201,76,0)}50%{box-shadow:0 0 0 3px #f2c94c,0 0 14px 4px rgba(242,201,76,.75)}}
 @media (prefers-reduced-motion:reduce){.shp-spot.ex-hi,#back.ex-hi{animation:none;box-shadow:0 0 0 3px #f2c94c}}

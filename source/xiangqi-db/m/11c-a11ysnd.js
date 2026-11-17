@@ -267,7 +267,7 @@ function sxmMount(v){try{if(!v||!v.querySelector)return;sxmCss();
   const blk=(cls,html)=>{const d=document.createElement("div");d.className="sxm-x "+cls;d.innerHTML=html;return d};
   const clr=c=>{c.querySelectorAll(":scope>.sxm-x").forEach(x=>x.remove());return c};
   {const c=v.querySelector("#snd");if(c){clr(c).prepend(blk("sxm-top",`<div class="sxm-hd"><b>音量</b>${sxmAllBtn()}</div>`+sxmRow("piece")+sxmRow("cue")));
-    c.append(blk("sxm-bot",`<div class="sxm-lk"><button type="button" class="btn ghost axs-dx">🎼 音效圖鑑</button><button type="button" class="btn ghost" data-xqdoc="sound">🔊 音效設計</button></div>`))}}
+    c.append(blk("sxm-bot",`<div class="sxm-lk"><button type="button" class="btn ghost axs-dx">🎼 音效圖鑑</button>${(()=>{try{return typeof xqDocShow!=="function"||xqDocShow("sound")}catch(e){return true}})()?`<button type="button" class="btn ghost" data-xqdoc="sound">🔊 音效設計</button>`:""}</div>`))}}   /* 11/17 第 19 輪 E19-1：原生版白名單沒有 sound → 不畫 */
   {const c=v.querySelector("#snd2");if(c)clr(c).append(blk("sxm-bot",sxmRow("voice")))}
   {const c=v.querySelector("#snd3");if(c){const b=blk("sxm-bot",sxmRow("bgm")),l=c.querySelector('[data-t="bgm"]'),r=l&&l.closest("label");clr(c);if(r&&r.parentNode===c)r.after(b);else c.append(b)}}}catch(e){}}
 /* 畫面上所有滑桿、靜音鍵跟著存檔更新（同一頁、設定房間面板都可能開著） */

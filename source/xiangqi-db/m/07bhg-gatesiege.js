@@ -644,7 +644,7 @@ function gsvDevAll(){if(GSV_ALL!=null)return GSV_ALL;try{return!!(typeof DEVUNLO
 function gsvAll(v){GSV_ALL=v==null?null:!!v;return gsvDevAll()}
 if(typeof window!=="undefined")window.gsvAll=gsvAll;
 function gsvCss(){if(document.getElementById("gsvCss"))return;try{if(typeof bhtdCss==="function")bhtdCss()}catch(e){}const s=document.createElement("style");s.id="gsvCss";s.textContent=`
-body.gsv-on #acts button[aria-label="悔棋"],body.gsv-on #acts button[aria-label="寶物"],body.gsv-on .xqbot,body.gsv-on .pzoom,body.gsv-on .gpad,body.gsv-on .pkview,body.gsv-on .pk2d,body.gsv-on .pk2d-tip,body.gsv-on .pk3d-back,body.gsv-on #topRight .stm-btn,body.gsv-on #fcmBtn{display:none!important}
+body.gsv-on #acts button[data-act="undo"],body.gsv-on #acts button[data-act="bag"],body.gsv-on #acts button[aria-label="悔棋"],body.gsv-on #acts button[aria-label="寶物"],body.gsv-on .xqbot,body.gsv-on .pzoom,body.gsv-on .gpad,body.gsv-on .pkview,body.gsv-on .pk2d,body.gsv-on .pk2d-tip,body.gsv-on .pk3d-back,body.gsv-on #topRight .stm-btn,body.gsv-on #fcmBtn{display:none!important}
 body.gsv-on .view.fixed>#pTop,body.gsv-on .view.fixed>#pBot,body.gsv-on .view.fixed>#stat,body.gsv-on .view.fixed>.rule-note,body.gsv-on .view.fixed>.evline,body.gsv-on .view.fixed>#strip,body.gsv-on .view.fixed>#acts{display:none!important}
 #gsvEn,#gsvMe{position:fixed;z-index:43;left:0;right:0;font-family:var(--serif);color:#f1e7cf;background:rgba(8,8,24,.95);box-sizing:border-box;padding:4px 8px;user-select:none;-webkit-user-select:none}
 #gsvEn{top:var(--gsvTop,var(--bhTop,44px));height:var(--gsvEnH,62px)}#gsvMe{bottom:0;height:calc(var(--gsvMeH,190px) + env(safe-area-inset-bottom,0px));padding-bottom:calc(4px + env(safe-area-inset-bottom,0px))}
@@ -699,7 +699,7 @@ body.gsv-on .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max
 /* 11/15 星門圍城也能切 3D 星盤：頂欄「👁」視角鈕與小選單（樣式照舊版塔防 #bhtdView／#bhtdViewM）；3D 區裡黑洞自由鏡頭用的鈕（棋距、望遠鏡…）和場名收起來；
    頂欄上「回棋盤模式／去園子下棋（3D）」那顆收起來（有「👁」了；手機「⋯ 更多」裡那顆照樣能按，06-cpu parkBtn→gsvParkBtn）。
    3D 記號：貼地的加 g3（transform-origin 要 0 0，矩陣由 07bht bhtdGnd 算）；lb＝貼地記號的直立文字標籤；tg.hit＝選目標時角色身上的透明點擊區 */
-body.gsv-on #topRight button[aria-label="回棋盤模式"],body.gsv-on #topRight button[aria-label="去園子下棋（3D）"],body.gsv-on .gs-ui,body.gsv-on .gs-pop,body.gsv-on .un-ui,body.gsv-on .tele-ui,body.gsv-on #bbox .pkname{display:none!important}
+body.gsv-on #topRight button[data-lb="回棋盤模式"],body.gsv-on #topRight button[data-lb="去園子下棋（3D）"],body.gsv-on #topRight button[aria-label="回棋盤模式"],body.gsv-on #topRight button[aria-label="去園子下棋（3D）"],body.gsv-on .gs-ui,body.gsv-on .gs-pop,body.gsv-on .un-ui,body.gsv-on .tele-ui,body.gsv-on #bbox .pkname{display:none!important}
 body.gsv-on .view.fixed>#bbox .park3d{border-radius:0!important}
 #gsvView{display:inline-flex!important;align-items:center;gap:3px;font:600 12px var(--serif);white-space:nowrap;padding:0 8px!important;min-width:44px}#gsvView small{font-size:11.5px}
 #gsvViewM{position:fixed;z-index:9300;top:calc(var(--bhTop,48px) + 4px);right:calc(6px + env(safe-area-inset-right,0px));width:min(250px,80vw);box-sizing:border-box;background:rgba(10,10,30,.96);border:1px solid #E8C77A;border-radius:12px;padding:6px;color:#f1e7cf;font-family:var(--serif);box-shadow:0 8px 20px rgba(0,0,0,.5)}

@@ -15,7 +15,8 @@ function run(metas, inTitle) {
   const log = { title: [], closed: 0 }, el = {};
   const box = { html: "", set innerHTML(v) { this.html = v }, get innerHTML() { return this.html },
     querySelector(s) { if (s === "[data-nj]") return this.html.includes('data-nj="1"') ? (el.nj = el.nj || {}) : null; if (s === "[data-tm]") return this.html.includes('data-tm="1"') ? (el.tm = el.tm || {}) : null; return null }, querySelectorAll() { return [] } };
-  const ctx = { slotMetaAll: () => metas, curSlot: () => 1, journey: () => ({ c: "x_swordboy" }), store: { get: (k, d) => d }, fmtAt: () => "", vibrate() { }, esc: s => String(s), saveNow: () => { log.saved = (log.saved || 0) + 1 },
+  const ctx = { slotMetaAll: () => metas, slotMetaLive: M => M,   /* 11/17 第 18 輪：使用中那一格照當下算（test-r18-1117.js 測），這裡照原樣 */
+    curSlot: () => 1, journey: () => ({ c: "x_swordboy" }), store: { get: (k, d) => d }, fmtAt: () => "", vibrate() { }, esc: s => String(s), saveNow: () => { log.saved = (log.saved || 0) + 1 },
     slotCardHTML: (n, m, me) => `<div class="slot" data-n="${n}">${m ? m.nm : "空"}${me ? "（使用中）" : ""}</div>`, closeSheet: () => { log.closed++ }, titleScreen: o => log.title.push(o), setTimeout: f => f(), Date };
   vm.createContext(ctx); vm.runInContext(FN + ";this.saveList=saveList", ctx); ctx.saveList(box, !!inTitle); return { html: box.html, el, log };
 }

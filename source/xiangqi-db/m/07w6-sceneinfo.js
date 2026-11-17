@@ -19,6 +19,8 @@ function sciCss(){if(document.getElementById("sciCss"))return;const s=document.c
 .sci-tip{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:4;pointer-events:none;white-space:nowrap;padding:5px 14px;border-radius:999px;background:rgba(246,239,223,.92);color:#3a2618;border:1px solid rgba(90,64,30,.35);font:700 13px/1.3 var(--serif,serif);box-shadow:0 2px 6px rgba(0,0,0,.2);animation:sciTip 4.2s ease-in-out forwards}
 @keyframes sciTip{0%{opacity:0;transform:translate(-50%,-6px)}12%,78%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
 .sci-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
+/* 11/17 第 18 輪：上面這排是給讀螢幕的人用的隱形按鈕（整排裁成 1px、看不到也點不到；VoiceOver 選到後點兩下就開），量元素大小的工具會量到它們本身約 30×23 → 本身也給到 44×44，量起來一致 */
+.sci-sr button{min-width:44px;min-height:44px}
 @media (prefers-reduced-motion:reduce){.sci-fx.tap,.sci-fx.hint,.sci-tip{animation:none;opacity:.6}}`;document.head.append(s)}
 const sciIn=(s,p)=>{if(typeof s[0]==="number")return Math.hypot(p[0]-s[0],p[1]-s[1])<=s[2];let c=false;for(let i=0,j=s.length-1;i<s.length;j=i++){const a=s[i],b=s[j];if((a[1]>p[1])!==(b[1]>p[1])&&p[0]<(b[0]-a[0])*(p[1]-a[1])/(b[1]-a[1])+a[0])c=!c}return c};
 const sciArea=s=>{if(typeof s[0]==="number")return Math.PI*s[2]*s[2];let a=0;for(let i=0,j=s.length-1;i<s.length;j=i++)a+=(s[j][0]+s[i][0])*(s[j][1]-s[i][1]);return Math.abs(a/2)};
@@ -38,8 +40,22 @@ function sciEraText(t,at){t=t==null?"":String(t);if(t.indexOf("{{")<0)return t;c
 /* 這一頁現在看得到的物件（日夜、條件、fe 朝代門檻） */
 const sciLive=(D,P,I)=>{const n=sciNight(I),at=sciDock();return(D.it||[]).filter(x=>sciEraOk(x,at)&&(!x.dn||(x.dn==="n")===n)&&(!x.on||(()=>{try{return!!x.on(P)}catch(e){return false}})()))};
 /* 點到哪一件：重疊時取面積最小的那個形狀（香爐在桌上、畫心在掛軸裡） */
-function sciHit(D,P,I,p){if((D.no||[]).some(s=>sciIn(s,p)))return null;let best=null,ba=1e12;
-  for(const x of sciLive(D,P,I))for(const s of x.s){if(!sciIn(s,p))continue;const a=sciArea(s);if(a<ba){ba=a;best={x,s}}}return best}
+/* 11/17 第 18 輪（測試員 D P2-4／B，審查 4.0 點擊區）：圖上的小東西（設定房間的棋盒、硯台、燈檠、香几、腳踏…）照原本的形狀只有 22～36px，點不太到。
+   改成：形狀的外框（sciBox）寬或高不到 44 CSS px 的，在那個方向往外撐到 44（換算成圖上的像素：44 ÷ 圖的顯示寬度 × 圖寬）；點到撐出來的範圍也算點到它。
+   小東西優先（點在羅漢床上、但在棋盒撐出來的範圍裡＝棋盒）；幾件小東西撐出來的範圍重疊時，給離點的位置最近的那件（各自的範圍以中線切開，不會同一點算兩件）；
+   入口本體（no）照舊擋掉、不撐。撐出來的方塊不一定置中：靠左、置中、靠右（上下也一樣）九種擺法裡挑跟入口本體（no 的外框）疊得最少的那種（貼著炕桌入口的棋盒就往右邊撐）。
+   I＝圖（量顯示寬度）；量不到寬度（例如 node 測試沒給圖）時不撐，照原本的形狀判斷 */
+function sciBox(s){if(typeof s[0]==="number")return[s[0]-s[2],s[1]-s[2],s[0]+s[2],s[1]+s[2]];let l=1e9,t=1e9,r=-1e9,b=-1e9;for(const q of s){l=Math.min(l,q[0]);r=Math.max(r,q[0]);t=Math.min(t,q[1]);b=Math.max(b,q[1])}return[l,t,r,b]}
+function sciPad(D,s,need){const[l,t,r,b]=sciBox(s),w=r-l,h=b-t;if(w>=need&&h>=need)return null;const W=Math.max(w,need),H=Math.max(h,need),NB=(D.no||[]).map(sciBox);
+  const xs=w<need?[(l+r-W)/2,l,r-W]:[l],ys=h<need?[(t+b-H)/2,t,b-H]:[t];let best=null,bo=1e18;
+  for(const x0 of xs)for(const y0 of ys){let o=0;for(const n of NB)o+=Math.max(0,Math.min(x0+W,n[2])-Math.max(x0,n[0]))*Math.max(0,Math.min(y0+H,n[3])-Math.max(y0,n[1]));if(o<bo-1e-6){bo=o;best=[x0,y0,x0+W,y0+H]}}return best}
+function sciHit(D,P,I,p){if((D.no||[]).some(s=>sciIn(s,p)))return null;let best=null,ba=1e12,k=0;
+  try{const w=I&&I.getBoundingClientRect?I.getBoundingClientRect().width:0;k=w>0?w/(D.W||768):0}catch(e){}const need=k>0?44/k:0;let sm=null,sd=1e12,sa=1e12;
+  for(const x of sciLive(D,P,I))for(const s of x.s){const a=sciArea(s);
+    if(need){const q=sciPad(D,s,need);
+      if(q&&p[0]>=q[0]&&p[0]<=q[2]&&p[1]>=q[1]&&p[1]<=q[3]){const[l,t,r,b]=sciBox(s),d=sciIn(s,p)?0:Math.hypot(Math.max(l-p[0],0,p[0]-r),Math.max(t-p[1],0,p[1]-b));if(d<sd||(d===sd&&a<sa)){sd=d;sa=a;sm={x,s}}continue}}
+    if(!sciIn(s,p)){if(!need||typeof s[0]==="number")continue;const[l,t,r,b]=sciBox(s);if(a>=.6*(r-l)*(b-t)||p[0]<l||p[0]>r||p[1]<t||p[1]>b)continue}   /* 鏤空的形狀（琴桌是ㄇ字形：桌面一條＋兩隻腳，最寬實心處只有約 21px）：形狀不到外框六成的，整個外框都算它（桌腳中間的地板也算點到桌子）；比它小的東西照樣優先 */
+    if(a<ba){ba=a;best={x,s}}}return sm||best}
 /* 疊一張跟圖一樣大的 SVG，把形狀描出來（點到時亮一下、第一次進頁時全部淡淡閃一次） */
 function sciDraw(P,I,D,S,cls,ms){const W=D.W||768,H=D.H||1376,ns="http://www.w3.org/2000/svg",g=document.createElementNS(ns,"svg");g.setAttribute("class","sci-fx "+cls);g.setAttribute("aria-hidden","true");
   g.setAttribute("viewBox",`0 0 ${W} ${H}`);g.setAttribute("preserveAspectRatio","none");Object.assign(g.style,{left:I.offsetLeft+"px",top:I.offsetTop+"px",width:I.offsetWidth+"px",height:I.offsetHeight+"px"});

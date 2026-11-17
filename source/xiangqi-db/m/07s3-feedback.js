@@ -106,7 +106,53 @@ function fbpCss(){if(document.getElementById("fbpCss"))return;const s=document.c
 .fbp-bw.dk .fbp-bw-h{color:#e8b7a0}.fbp-bw.dk .fbp-bw-c,.fbp-bw.dk .muted,.fbp-bw.dk .fbp-bw-m{color:#b8a888}.fbp-bw.dk .fbp-bw-c{border-color:rgba(200,180,140,.35)}
 .fbp-bw.dk .card{background:rgba(255,255,255,.05);border-color:rgba(200,180,140,.2);color:#e9e0cc}
 .fbp-slip,.fbp-slipn{cursor:pointer;pointer-events:auto}
+.fbp-ty>button{position:relative}
+.fbp-slot::before,.fbp-ty>button::before,.fbp-page .fbp-seal::before{content:"";position:absolute;left:var(--r7l,min(-4px,calc((100% - 44px) / 2)));right:var(--r7r,min(-4px,calc((100% - 44px) / 2)));top:var(--r7t,min(-4px,calc((100% - 44px) / 2)));bottom:var(--r7b,min(-4px,calc((100% - 44px) / 2)))}
+.fbp-page .fbp-slot{z-index:5}
 @media (prefers-reduced-motion:reduce){.fbp-bw{transition:none}.fbp-pn{transition:none}.fbp-seal.stamp,.fbp-send .fbp-seal.stamp{animation:none}.fbp-page.sent .fbp-paper{transition:none}}`;document.head.append(s)}
+/* 11/17 App Store 審查（測試員 E，指南 4.0 點擊區）：青銅匭三個口（.fbp-slot，約 25×19）、右邊三張類型小籤（.fbp-ty 的按鈕，約 23 高）看起來的大小不變，
+   ::before 往外撐出透明的點選範圍；大小用 07z-homemap 的 r07Solve 算（至少 44×44，相鄰的在空隙正中間切開，絕不互相重疊，太擠的就只擴到不重疊為止），寫進 --r7l／--r7r／--r7t／--r7b。
+   沒有 r07Solve 時用樣式的底線（每邊至少 4px、整塊 44×44）。圖縮放、換頁、圖載好時重算 */
+/* 11/17 第 18 輪複驗（測試員 E 逐像素探測）：上面那版各算各的，結果「申冤」夾在「延恩」和「兵」印中間只剩約 31 高、「招諫」被畫面右緣切到 24～42 寬、中間那張類型籤 30 高；類型籤在 393 寬時右緣跑到 409（畫面外）。改成：
+   ① 三個口＋「兵」印一起排（fbpSlotLay，純計算）：延恩＝自己框的下緣往上 44；申冤、招諫並排在延恩下面（從申冤框的右緣切開，靠右放不下 44 就整組往左挪），各 44×44；兵印接在申冤下面 44×44。
+      口的 z-index 比兵印高一層：兵印最上面那一小條被申冤的點選範圍蓋住，兵印自己往下撐出完整的 44×44。四塊互不重疊。
+   ② 類型籤（fbpTyLay）：上下間距改成「44 − 籤高」，每張上下各撐 (44 − 籤高)/2，剛好相接不重疊；整排往上挪到延恩點選範圍的上面；右緣超出畫面（或 #view）就往左推回來。
+   ③ 算不出來（例如圖還沒載好、框的位置不合理）照舊用 r07Solve。單位都是框內的 px（框有縮放時 44 換成 44/k） */
+/* 11/17 第 19 輪 E19-4（測試員 E 第 19 輪 P3-4）：393 寬實測「申冤」只點得到 39×45（被旁邊的口擋到）、「招諫」外框右緣到 399（超出畫面 6px）。
+   原因：① 右緣只看 innerWidth 和 #view——iPhone 的 WebView 頁面有東西橫向超出時 innerWidth 會跟著變大（不是看得到的寬度）；② 兵印量不到（還沒排好、被藏）時整個退回 r07Solve，那條路不管畫面邊、太擠只擴到不重疊。
+   改成：看得到的左右緣再取 documentElement.clientWidth、visualViewport；兵印不在也照這套排三個口；排完逐塊檢查（都在畫面內、每塊至少 44×44、兩兩不重疊），不合格才退回 r07Solve，退回的結果也推回畫面內 */
+function fbpSlotLay(L,B,M){if(!L||L.length<3)return null;const[a,c,d,s]=L,b2=d.y+d.h,sx=Math.max(B.l+M,Math.min(a.x+a.w,B.r-M)),cx=v=>v.x+v.w/2,cl=(l,w)=>{const x=Math.max(B.l,Math.min(l,B.r-w));return[x,x+w]};
+  const[dl,dr]=cl(cx(d)-Math.max(M,d.w)/2,Math.max(M,d.w)),[sl,sr]=s?cl(cx(s)-Math.max(M+1,s.w)/2,Math.max(M+1,s.w)):[0,0];
+  const H=[{l:sx-M,r:sx,t:b2,b:b2+M},{l:sx,r:sx+M,t:b2,b:b2+M},{l:dl,r:dr,t:b2-M,b:b2}];if(s)H.push({l:sl,r:sr,t:b2+M,b:Math.max(b2+2*M+1,s.y+s.h)});   /* 11/17 第 20 輪 E N20-9：兵印跟申冤的點選範圍剛好相接，換成整數像素後兵印少 1px（43）→ 往下多撐 1px */
+  const hit=(q,v)=>Math.min(q.r,v.x+v.w)-Math.max(q.l,v.x)>0&&Math.min(q.b,v.y+v.h)-Math.max(q.t,v.y)>0;
+  return L.every((v,i)=>hit(H[i],v))&&H[0].t<a.y+a.h&&(!s||H[3].b>=s.y+s.h)&&fbpSlotOk(H.slice(0,3),B,M)?H:null}
+/* 三個口的點選範圍：都在 B（看得到的範圍）裡、每塊至少 M×M、兩兩不重疊（差 0.5px 內算對齊） */
+function fbpSlotOk(H,B,M){const e=.5;if(!H||H.length<3)return false;for(const q of H.slice(0,3)){if(q.l<B.l-e||q.r>B.r+e||q.t<(B.t||0)-e||(B.b!=null&&q.b>B.b+e))return false;if(q.r-q.l<M-e||q.b-q.t<M-e)return false}
+  for(let i=0;i<3;i++)for(let j=i+1;j<3;j++){const p=H[i],q=H[j];if(Math.min(p.r,q.r)-Math.max(p.l,q.l)>e&&Math.min(p.b,q.b)-Math.max(p.t,q.t)>e)return false}return true}
+/* 看得到的右緣（頁面座標）：innerWidth 在 iPhone 頁面橫向超出時會變大，再跟 documentElement.clientWidth、visualViewport、#view 取最小 */
+function fbpVisR(V){let r=innerWidth||1e9;try{const de=document.documentElement;if(de&&de.clientWidth)r=Math.min(r,de.clientWidth)}catch(e){}try{const vv=window.visualViewport;if(vv&&vv.width)r=Math.min(r,(vv.offsetLeft||0)+vv.width)}catch(e){}if(V)r=Math.min(r,V.getBoundingClientRect().right);return r}
+/* 類型籤：T＝每張籤的框、top＝這一排現在的上緣、lim＝最下面那張的點選範圍不能超過這條線、vr＝看得到的右緣；回 {top 新的上緣, gap 間距, dx 要往左推多少, H 點選範圍（照新位置）} */
+function fbpTyLay(T,top,lim,vr,M){if(!T||!T.length)return null;const h=Math.max(...T.map(v=>v.h)),g=Math.max(4,M-h),ext=Math.max(0,(M-h)/2),n=T.length,colH=n*h+(n-1)*g;
+  let t2=top;if(lim!=null&&t2+colH+ext>lim)t2=Math.max(ext,lim-ext-colH);const rmax=Math.max(...T.map(v=>v.x+v.w)),dx=vr!=null&&rmax>vr-2?rmax-(vr-2):0;
+  const H=T.map((v,i)=>{const y=t2+i*(h+g),x=v.x-dx,cx=x+v.w/2,w=Math.max(M,v.w);return{l:Math.min(x,cx-w/2),r:Math.max(x+v.w,cx+w/2),t:y-ext,b:y+h+ext,x,y}});
+  return{top:t2,gap:g,dx,H}}
+function fbpHit(P){try{if(!P||!P.isConnected)return;const f=v=>(Math.round(v*10)/10)+"px";
+  const put=(e,a,q)=>{const cs=getComputedStyle(e),own=a.w/(e.offsetWidth||a.w)||1,bl=parseFloat(cs.borderLeftWidth)||0,br=parseFloat(cs.borderRightWidth)||0,bt=parseFloat(cs.borderTopWidth)||0,bb=parseFloat(cs.borderBottomWidth)||0;
+    e.style.setProperty("--r7l",f((q.l-a.x)/own-bl));e.style.setProperty("--r7r",f((a.x+a.w-q.r)/own-br));e.style.setProperty("--r7t",f((q.t-a.y)/own-bt));e.style.setProperty("--r7b",f((a.y+a.h-q.b)/own-bb))};
+  const vis=e=>e&&e.offsetWidth&&e.getClientRects().length;
+  const S=[...P.querySelectorAll(".fbp-slot")].filter(vis),seal=P.querySelector(":scope>.fbp-seal"),C=S.length?S[0].offsetParent:null;if(!C)return;
+  const cr=C.getBoundingClientRect(),k=C.offsetWidth?cr.width/C.offsetWidth:1;if(!k||!cr.width)return;const W=cr.width/k,Hh=cr.height/k,M=44/k;
+  const box=e=>{const q=e.getBoundingClientRect();return{x:(q.left-cr.left)/k,y:(q.top-cr.top)/k,w:q.width/k,h:q.height/k}};
+  const V=document.getElementById("view"),vr0=fbpVisR(V),vr=(vr0-cr.left)/k,vl=(Math.max(0,V?V.getBoundingClientRect().left:0)-cr.left)/k,B={l:Math.max(0,vl),r:Math.min(W,vr),t:0,b:Hh};
+  const E=vis(seal)?[...S,seal]:S,L=E.map(box);let R=S.length===3?fbpSlotLay(L,B,M):null;
+  if(!R&&typeof r07Solve==="function"){R=r07Solve(L,{b:B,min:M}).H;if(R)R=R.map(q=>{const w=q.r-q.l,dx=q.r>B.r?q.r-B.r:q.l<B.l?q.l-B.l:0;return dx&&w<=B.r-B.l?Object.assign({},q,{l:q.l-dx,r:q.r-dx}):q})}if(R)E.forEach((e,i)=>put(e,L[i],R[i]));
+  const ty=P.querySelector(".fbp-ty"),TB=ty?[...ty.querySelectorAll(":scope>button")].filter(vis):[];if(!TB.length)return;
+  if(ty.dataset.t0==null)ty.dataset.t0=ty.style.top;ty.style.top=ty.dataset.t0;ty.style.marginRight="";ty.style.gap="";const T=TB.map(box),top0=box(ty).y,lim=R&&S.length===3?R[2].t:null,Y=fbpTyLay(T,top0,lim,vr,M);if(!Y)return;
+  ty.style.gap=f(Y.gap);ty.style.top=f(Y.top);if(Y.dx)ty.style.marginRight=f(Y.dx);
+  const T2=TB.map(box);TB.forEach((e,i)=>{const a=T2[i],q=Y.H[i],dy=a.y-Y.H[i].y,dx=a.x-Y.H[i].x;put(e,a,{l:q.l+dx,r:q.r+dx,t:q.t+dy,b:q.b+dy})})}catch(e){}}
+function fbpHitBind(P){const go=()=>requestAnimationFrame(()=>fbpHit(P));go();setTimeout(go,400);setTimeout(go,1500);
+  const im=P.querySelector("img");if(im&&!im.complete)im.addEventListener("load",go,{once:true});
+  if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}go()});ro.observe(P)}}
 /* 開發者 11/10：飛鴿傳書（秦～隋鴻雁傳書）。回饋 860「鴿子沒從窗戶飛走、動畫很粗糙」→ Gemini 64 方案 1「窗台駐足・振翅入雲」：
    信紙捲成小信筒 → 鳥從窗外飛進來（在窗外時只在窗洞裡看得到）、落在書案上低頭叼起信筒 → 跳上窗台回頭看（♫）→ 轉身從窗洞飛出去，越飛越小。
    窗洞＝底圖上量的四邊形 FBP_WINP（日夜兩張同構圖）；鳥在窗外時放進只露出窗洞的 .fbp-sky 圖層，看起來就是穿過窗洞。
@@ -167,6 +213,7 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋",fbpFrom()||"#/s
     const fit=()=>{const k=P.clientWidth/768;if(!k)return;const{o,x,y}=FBP_PAPER,X=[x[0]-o[0],x[1]-o[1]],Y=[y[0]-o[0],y[1]-o[1]],lx=Math.hypot(...X),ly=Math.hypot(...Y);
       Object.assign(paper.style,{left:o[0]*k+"px",top:o[1]*k+"px",width:lx*k+"px",height:ly*k+"px",transform:`matrix(${X[0]/lx},${X[1]/lx},${Y[0]/ly},${Y[1]/ly},0,0)`})};
     fit();if(window.ResizeObserver){if(st.ro)st.ro.disconnect();st.ro=new ResizeObserver(fit);st.ro.observe(P)}
+    fbpHitBind(P);   /* 11/17 審查 4.0：三個口、類型小籤的透明點選範圍 */
     /* 寫信的大箋：原本的 feedbackSheet 表單整份建在這裡（送出、附件、排隊都是原本的程式） */
     const pn=document.createElement("div");pn.className="fbp-pn";pn.setAttribute("role","dialog");pn.setAttribute("aria-label","寫信");v.append(pn);
     const s0=sheet;sheet=(t,f)=>{f(pn)};try{(FBP_F0||feedbackSheet)()}catch(e){}finally{sheet=s0}

@@ -104,7 +104,10 @@ const cjAllRelics=()=>typeof relicsMine==="function"&&Object.values(relicsMine()
 const cjZBind=b=>b.querySelectorAll("[data-rlgo]").forEach(y=>y.onclick=()=>{if(typeof relicGo==="function")return relicGo(y.dataset.rlgo);closeSheet();location.hash="#/canju/z/"+encodeURIComponent(y.dataset.rlgo)});
 
 /* ---------- 出處、文字 ---------- */
-function cjSrc(P,long){const s=P.src||{};if(s.book==="星槎石桌")return(typeof provChip==="function"?provChip(P):"")+"星槎石桌・"+esc(s.title);   /* 11/11 Gemini 架構報告第四項：手擺題標【遊戲創作】（00-util.js provChip） */   /* 意見回饋 685：手擺題不是古譜，不寫年份 */if(s.book==="特級大師對局")return`${esc(s.year)} ${esc(s.title)}${long&&s.red&&s.black?`・${esc(s.red)} 對 ${esc(s.black)}${s.result?"（"+esc(s.result)+"）":""}`:""}`;
+/* 11/17 第 20 輪 E N20-7：大師對局的出處是「年份 中文賽事名」（60 種賽事，很多是贊助盃名）→ 英文介面：賽事名翻得出（外掛字典的賽事 pat）就寫英文，翻不出就寫 Grandmaster game */
+function cjGmEn(s){try{if(typeof i18nLang!=="function"||i18nLang()!=="en")return null;const t=typeof i18nText==="function"?i18nText(String(s.title||"")):null;return`${esc(s.year||"")} ${esc(t!=null&&!/[㐀-鿿]/.test(t)?t:"Grandmaster game")}`.trim()}catch(e){return null}}
+function cjSrc(P,long){const s=P.src||{};if(s.book==="特級大師對局"){const g=cjGmEn(s);if(g)return g}if(s.book==="星槎石桌")return(typeof provChip==="function"?provChip(P):"")+"星槎石桌・"+esc(s.title);   /* 11/11 Gemini 架構報告第四項：手擺題標【遊戲創作】（00-util.js provChip） */   /* 意見回饋 685：手擺題不是古譜，不寫年份 */if(s.book==="特級大師對局")return`${esc(s.year)} ${esc(s.title)}${long&&s.red&&s.black?`・${esc(s.red)} 對 ${esc(s.black)}${s.result?"（"+esc(s.result)+"）":""}`:""}`;
+  {const nn=String(s.no||"").match(/\d+/);if(nn&&s.book&&typeof i18nLang==="function"&&i18nLang()==="en")return`《${esc(s.book)}》 No. ${nn[0]}`}   /* 11/17 第 19 輪 E19-5（2.1 在地化）：英文介面古譜的〈題名〉（551 個）沒有英文，題頭會留一段中文 → 寫書名＋局號（外掛字典 pat 把「《書名》 No. 局號」換成英文書名） */
   return`《${esc(s.book)}》〈${esc(s.title)}〉${long&&s.no?" "+esc(s.no):""}${long&&s.part?"・"+esc(s.part):""}`}
 const cjEra=P=>(P.src||{}).era?`<span class="cj-era">${esc(P.src.era)}</span>`:"";
 function cjTask(P){if(P.task)return P.task;if(P.t==="古譜校錯")return`古譜這裡走了「${P.book.cn}」。Pikafish 認為這步可以更好——你找得到嗎？`;

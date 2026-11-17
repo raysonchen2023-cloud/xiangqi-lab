@@ -397,7 +397,7 @@ test("I18N_KEY：鍵名是「區.項」、值都是英文；保留的屬性值�
   const K = R.I18N_KEY, ks = Object.keys(K);
   assert.ok(ks.length >= 50, "鍵只有 " + ks.length + " 個");
   for (const k of ks) { assert.match(k, /^[a-z]+(\.[A-Za-z0-9]+)+$/, "鍵名：" + k); assert.ok(K[k].trim() && !CJK.test(K[k]) && !/[“”‘’]/.test(K[k]), "值：" + k + "→" + K[k]) }
-  assert.deepEqual([...R.I18N_AGUARD].sort(), ["去園子下棋（3D）", "回星槎", "回棋盤模式", "回首頁", "聲控走棋"].sort());
+  assert.deepEqual([...R.I18N_AGUARD], []);   /* 11/17 第 20 輪 D N4：四個都拿掉（頂欄按鈕標 data-lb） */   /* 11/17 第 19 輪 D P2-4：回首頁拿掉（頂欄 🏠 標 data-home） */
 });
 /* 模組裡的鍵：cgT／i18nT("鍵","中文") 與 data-i18n="鍵">中文；樣板組出來的鍵另外列 */
 const KEYSRC = [["08b-cpugame.js", CPU], ["05-settings.js", SET], ["09b-preload.js", PRE]];
@@ -477,12 +477,12 @@ test("鍵值化＋MutationObserver：程式之後改了有鍵元素的字（改�
   const h = t.querySelector("h2"); h.firstChild.nodeValue = "平手"; MO.cb([{ type: "characterData", target: h.firstChild }]); assert.equal(h.textContent, "Draw");
   const b = t.querySelector("b"); b.textContent = "⚠ 將軍了"; MO.cb([{ type: "childList", addedNodes: [b.firstChild] }]); assert.equal(b.textContent, "⚠ Check!");
 });
-test("英文模式不換別的模組拿來找按鈕的 aria-label／title（I18N_AGUARD），其他屬性照換", () => {
+test("英文模式不換別的模組拿來找按鈕的 aria-label／title（I18N_AGUARD），其他屬性照換；頂欄 🏠（data-home）翻成 Home", () => {
   const { ctx, doc } = loadFull(null);
   doc.body.innerHTML = `<div id="topRight"><button class="ib" aria-label="回首頁" title="回首頁">🏠</button><button aria-label="聲控走棋" title="聲控走棋">🎤</button><button aria-label="去園子下棋（3D）">🌳</button><button aria-label="回棋盤模式">♟</button><button aria-label="回星槎">⛵</button><button aria-label="認輸" title="關閉">🏳</button></div>`;
   ctx.i18nApply(doc.body); const bs = doc.body.querySelectorAll("button");
-  assert.deepEqual(bs.slice(0, 5).map(b => b.getAttribute("aria-label")), ["回首頁", "聲控走棋", "去園子下棋（3D）", "回棋盤模式", "回星槎"]);
-  assert.equal(bs[0].getAttribute("title"), "回首頁"); assert.equal(bs[5].getAttribute("aria-label"), "Resign"); assert.equal(bs[5].getAttribute("title"), "Close");
+  assert.deepEqual(bs.slice(0, 5).map(b => b.getAttribute("aria-label")), ["Home", "Voice moves", "Play in the garden (3D)", "Back to board mode", "Back to Star Raft"]);   /* 11/17 第 20 輪：別的模組改用 data-lb 找，aria-label 都翻 */
+  assert.equal(bs[0].getAttribute("title"), "Home"); assert.equal(bs[5].getAttribute("aria-label"), "Resign"); assert.equal(bs[5].getAttribute("title"), "Close");
 });
 test("〔混合〕底欄照 data-go 標鍵（m.html 的字改了也一樣）；英文開機注入只對 html[lang=en] 生效的防爆版樣式，繁中不注入、m.css 沒動到", () => {
   const tb = HTML.slice(HTML.indexOf("<nav class=\"tabbar\" id=\"tabbar\">"), HTML.indexOf("</nav>") + 6);

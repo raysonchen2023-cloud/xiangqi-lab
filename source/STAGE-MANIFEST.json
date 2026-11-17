@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "c3aeec6f0bee96f7e8d27b7a5f938347f5d998ba",
- "madeAt": "2026-11-17T00:00:46.515Z",
+ "commit": "f5942627ac97ec4fc12499aee5c6afc6cf6d684a",
+ "madeAt": "2026-11-17T04:26:13.595Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -126,6 +126,7 @@
   "xiangqi-db/m/07stq-starter.js": "local=live",
   "xiangqi-db/m/07mnq-mainquest.js": "local=live",
   "xiangqi-db/m/07grw-growth.js": "local=live",
+  "xiangqi-db/m/07gc-native.js": "live",
   "xiangqi-db/m.html": "local",
   "xiangqi-db/m.css": "local",
   "xiangqi-db/m/README.md": "local（各模組說明）",
@@ -253,6 +254,7 @@
   "xiangqi-lab/tools/test-figview-ghost-1115.js": "local",
   "xiangqi-lab/tools/test-gate-siege-3d.js": "local",
   "xiangqi-lab/tools/test-gate-siege.js": "local",
+  "xiangqi-lab/tools/test-gc-native-1117.js": "local",
   "xiangqi-lab/tools/test-ghost-game-1116.js": "local",
   "xiangqi-lab/tools/test-growth.js": "local",
   "xiangqi-lab/tools/test-grw-lv-1117.js": "local",
@@ -336,6 +338,10 @@
   "xiangqi-lab/tools/test-quiz-check-exit.js": "local",
   "xiangqi-lab/tools/test-r11-1117.js": "local",
   "xiangqi-lab/tools/test-r17-qa.js": "local",
+  "xiangqi-lab/tools/test-r18-1117.js": "local",
+  "xiangqi-lab/tools/test-r19-1117.js": "local",
+  "xiangqi-lab/tools/test-r20-1117.js": "local",
+  "xiangqi-lab/tools/test-r20-dbe-1117.js": "local",
   "xiangqi-lab/tools/test-r4-1117.js": "local",
   "xiangqi-lab/tools/test-raid-label-1116.js": "local",
   "xiangqi-lab/tools/test-redblue-public.js": "local",
@@ -346,6 +352,7 @@
   "xiangqi-lab/tools/test-repwarn.js": "local",
   "xiangqi-lab/tools/test-resume-state.js": "local",
   "xiangqi-lab/tools/test-retention.js": "local",
+  "xiangqi-lab/tools/test-review-e-1117.js": "local",
   "xiangqi-lab/tools/test-rule-handshake.js": "local",
   "xiangqi-lab/tools/test-ruleset-cases.js": "local",
   "xiangqi-lab/tools/test-ruleset.js": "local",
@@ -496,6 +503,7 @@
   "m/05-settings.js",
   "m/07y-hubmap.js",
   "m/07s4-passmap.js",
+  "m/07gc-native.js",
   "src/sw.js"
  ],
  "absentModules": [],
@@ -544,8 +552,8 @@
   "test-unlock-fx-1116.js": "指令排除：要讀只在開發者電腦與 CDN 的場景圖（data/guanxing、homemap 等），公開副本沒有這些圖",
   "test-i18n-ext-1116.js": "指令排除：要讀英文外掛字典 xiangqi-db/i18n-en.json（只放在 CDN 的 data/i18n-en.json，公開副本沒有）"
  },
- "version": "20261117-0757",
- "indexSha1": "868b69bb86c4",
+ "version": "20261117-1144",
+ "indexSha1": "09c2dcc304df",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",

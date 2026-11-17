@@ -3,7 +3,10 @@
    有 service worker 時 sw.js 本來就先走 CDN；沒有 service worker 的瀏覽器（例如 LINE 內建瀏覽器、無痕視窗）直接向 GitHub 要檔，拿不到就自動改向 CDN 要一次：
    ①圖片、聲音載入失敗（error 事件，捕獲階段）換成 CDN 網址；②fetch 到 404 再問 CDN。只處理同源的 data/、engine/ 路徑，網址後面的 ?v= 不帶 */
 const XQ_CDN="https://xiangqi-cdn.pages.dev/";
-const xqCdnRel=u=>{try{const x=new URL(u,location.href);if(x.origin!==location.origin)return"";const b=location.pathname.replace(/[^/]*$/,""),p=x.pathname.startsWith(b)?decodeURI(x.pathname.slice(b.length)):"";return/^(data|engine)\//.test(p)?p:""}catch(e){return""}};
+/* 11/17 App Store 審查（測試員 E）：xqNat()＝原生 App（iOS 的 native-bridge.js 設 window.XQ_NATIVE，或 UA 帶 XQQianqiuApp/），各模組共用這一個判斷。
+   2.5.2 原生版不從網路下載可執行的程式碼：原生版只替 data/（圖、聲音、資料）向 CDN 補抓，engine/（wasm、引擎 js）一律只用安裝包裡的；網頁版照舊 data/、engine/ 都補 */
+function xqNat(){try{return!!(typeof window!=="undefined"&&window.XQ_NATIVE)||(typeof navigator!=="undefined"&&/XQQianqiuApp\//.test(String(navigator.userAgent||"")))}catch(e){return false}}
+const xqCdnRel=u=>{try{const x=new URL(u,location.href);if(x.origin!==location.origin)return"";const b=location.pathname.replace(/[^/]*$/,""),p=x.pathname.startsWith(b)?decodeURI(x.pathname.slice(b.length)):"";return(xqNat()?/^data\//:/^(data|engine)\//).test(p)?p:""}catch(e){return""}};
 /* 11/17 iMac 模擬器 P0：第一次造訪 service worker 還沒接管時，棋盤的棋子、底圖是 SVG <image>（tagName 小寫 image），以前不在名單裡，全部變成「?」；SVG 的換 href */
 addEventListener("error",e=>{const t=e.target;if(!t||!t.tagName||(t.dataset&&t.dataset.cdnTry))return;const svg=String(t.tagName).toLowerCase()==="image";if(!svg&&!/^(IMG|AUDIO|SOURCE|VIDEO)$/.test(t.tagName))return;const r=xqCdnRel(svg?(t.getAttribute("href")||t.getAttribute("xlink:href")||""):(t.currentSrc||t.src||""));if(!r)return;t.dataset.cdnTry="1";if(svg)t.setAttribute("href",XQ_CDN+r);else t.src=XQ_CDN+r},true);
 {const f0=window.fetch;if(f0)window.fetch=function(i,o){return f0.apply(this,arguments).then(res=>{if(res&&res.status===404){const r=xqCdnRel(typeof i==="string"?i:i&&i.url||"");if(r)return f0.call(window,XQ_CDN+r,{mode:"cors",credentials:"omit"}).then(x=>x.ok?x:res,()=>res)}return res})}}
@@ -300,6 +303,11 @@ function mdTop(m){let z=0;const VA=innerWidth*innerHeight;for(const el of docume
   const z0=parseInt(getComputedStyle(m).zIndex,10)||60;if(z>=z0)m.style.zIndex=String(Math.min(9990,z+1))}
 /* 意見回饋 607：點一下跳過殺棋動畫：等著的結果視窗馬上出來 */
 function modalSkip(){MODAL_HOLD=0;MODAL_Q.slice().forEach(f=>{try{f()}catch(e){}})}
+/* 11/17 第 20 輪 B N20-1（P1）：通用 .modal 只有換過字級（html[data-fz]）才能捲；橫式手機（高 375～430）放不下的視窗（星門圍城第一次破關的結算、古戰場 ⓘ、線上大廳安全須知）按鈕在畫面外、卡死 →
+   比照 .modal.gsv-rd：畫面矮（高度 ≤500）時視窗可以上下捲、從上面排起，放得下時 .box 照樣置中（margin:auto 0）。直式手機、iPad 高度都超過 500，不受影響。m.css 不能改（發版只換模組），從這裡注入 */
+const MDLOW_CSS="@media (max-height:500px){.modal{overflow-y:auto;align-items:flex-start;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.modal>.box{margin:auto 0;flex:none}}";
+function mdLowCss(){try{if(typeof document==="undefined"||document.getElementById("mdLowCss"))return;const s=document.createElement("style");s.id="mdLowCss";s.textContent=MDLOW_CSS;(document.head||document.documentElement).append(s)}catch(e){}}
+mdLowCss();
 /* 回饋 835（開發者 11/9 選：過場點兩下跳過）：不擋手的大動畫——蓋印（stampFx、本命星 chdSealFx）、開局大字、將軍、開局名——本來就 pointer-events:none、點得到底下，
    但會蓋住畫面 2～3 秒；現在點一下畫面就 0.15 秒淡掉收起（這一下照常傳下去，不吃掉點選）。存檔、修為、印都在播動畫之前就記好了，收掉動畫不影響 */
 const FX_TAP_SEL=".stampfx,.kjfx,.ckfx,.opfx";
