@@ -1,22 +1,22 @@
 《象棋千秋》可重現驗證紀錄（verify-all.js）
 ========================================
-執行時間：2026-11-18T06:25:44.565Z（UTC）＝ 2026-11-18 14:25:44（臺灣時間）
+執行時間：2026-11-18T07:33:38.929Z（UTC）＝ 2026-11-18 15:33:38（臺灣時間）
 Node.js：v24.20.0；作業系統：win32 10.0.26300 x64
 倉庫資料夾：<倉庫資料夾>
 倉庫 commit：（不是 git 檢出；用下面的雜湊對照）
-release.json：版本 20261118-1423、html 5e700c17ca16、sw 061aaf1f3ab3
+release.json：版本 20261118-1532、html e6e8714e9851、sw 8d4d3fcf51dd
 verify-all.js SHA-256：4204127ad2dd75bb8f95ed79039156af8cc4e52bfabd0ff04890588e4414af2b
 
 成品 SHA-256（SHA-1 前 12 碼）：
-  index.html  f6e6e7a1aa9a930fd9471de94615691bddd784d327b76922fb4badd829b65e61  (5e700c17ca16)
-  sw.js  9ba8be3f6ff4a7d10649fee33a88c6a16e7f33436a32870f6297d289367d79a2  (061aaf1f3ab3)
-  release.json  d7d23c4419e98fdaf6641ae926dea229c18a1a2599c03ba407ba7e24363ee587  (bbcd08b4554d)
+  index.html  73dfe34a7763c43885ae8f209f866f3fc220d7a1bb21deae27e6532550cb57b3  (e6e8714e9851)
+  sw.js  7b26e260a80221bb8cd9d7fc428fd5cf3b7adf1e340414409954f66c3426ca77  (8d4d3fcf51dd)
+  release.json  146987b4085dc4fef340e97e5878550287e4afcf1b534bee3a9e0406b1669def  (60ec4639b900)
   core.js  fdaea59621ff94d664218f14c1a11b9abe0d4566da7d3e45733caf34fa7a50d3  (972b7ec035c7)
   engine.js  e29baeb7161f3eb7e7246a58aba4d4b80c9c296532f820bb5baa1865af251536  (ce8dcc4b84c5)
   engine/pikafish.wasm  7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331  (d568cded4f5b)
   engine/pikafish.js  dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7  (77eca54d3204)
   engine/pikafish.nnue  7d13d73569a9b571ba0eb20cf1596247bc2a42738967e61afef6482b231e900e  (3a043e259a72)
-source/ 資料夾：550 個檔，樹雜湊 SHA-256 98f096ce76e886f13a8995b4151377f383e1f77db20eca5dd659aaba57de1992
+source/ 資料夾：550 個檔，樹雜湊 SHA-256 68f47ba2d75accde89d81372b97ffc67b713d1a6132e519eb8e4fa7644cc1182
 Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-256 489173747f8de4abec4f9dda704538fecb24af4c02f294e57b8f7ead857ad738
 （樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256＋換行」照路徑排序後再算 SHA-256）
 
@@ -32,15 +32,15 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
 工具 SHA-256：4874be00c4f2fce8b777204299e23339abf56c472ee57bc2e603a5edaaf00e78
 輸出：
   成品核對：<倉庫資料夾>
-    ✔ release.json：版本 20261118-1423、html 5e700c17ca16、sw 061aaf1f3ab3（檢查時間 2026-11-18T06:23:39.624Z）
-    ✔ index.html SHA-1 前 12 碼 5e700c17ca16，跟 release.json 一致
-    ✔ sw.js SHA-1 前 12 碼 061aaf1f3ab3，跟 release.json 一致
-    ✔ 版本號：index.html 20261118-1423、sw.js 20261118-1423、release.json 20261118-1423，三個一樣
-    ✔ release.json 自己註明有 15 支模組跟當時的原始碼不同（02-shell.js、05-settings.js、05b-save.js、07-legend.js、07pty-party.js、07d-garden.js、07bh-blackhole.js、07m2-innguest.js、07y-hubmap.js、07s4-passmap.js、07z9-school.js、08b-cpugame.js、11b-a11y.js、07i18n.js、07gc-native.js）；原始模組不公開，外部核對不了這一欄
+    ✔ release.json：版本 20261118-1532、html e6e8714e9851、sw 8d4d3fcf51dd（檢查時間 2026-11-18T07:32:53.215Z）
+    ✔ index.html SHA-1 前 12 碼 e6e8714e9851，跟 release.json 一致
+    ✔ sw.js SHA-1 前 12 碼 8d4d3fcf51dd，跟 release.json 一致
+    ✔ 版本號：index.html 20261118-1532、sw.js 20261118-1532、release.json 20261118-1532，三個一樣
+    ✔ release.json 自己註明有 17 支模組跟當時的原始碼不同（02-shell.js、05-settings.js、05b-save.js、06-cpu.js、07-legend.js、07pty-party.js、07d-garden.js、07bh-blackhole.js、07m2-innguest.js、07y-hubmap.js、07s4-passmap.js、07z9-school.js、08b-cpugame.js、11b-a11y.js、07i18n.js、07mnq-mainquest.js、07gc-native.js）；原始模組不公開，外部核對不了這一欄
   
   ✔ index.html、sw.js 跟 release.json 一致
 ----------------------------------------
-第 3 步 pikafish-verify：通過（結束代碼 0，0.1 秒）
+第 3 步 pikafish-verify：通過（結束代碼 0，0.0 秒）
 指令（在倉庫資料夾執行）：node source/xiangqi-lab/tools/pikafish-verify.js --dir . --record pikafish-src/build-record.json
 工具 SHA-256：da3a10677bdf0be32998e22fa6010bdc29055893678bd6553b224cb681fedc7c
 輸出：
@@ -64,7 +64,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   
   ✔ 全部符合（△ 是照實列出的缺口，不算失敗）
 ----------------------------------------
-第 4 步 run-tests：通過（結束代碼 0，177.1 秒）
+第 4 步 run-tests：通過（結束代碼 0，175.9 秒）
 指令（在倉庫資料夾執行）：node source/run-tests.js
 工具 SHA-256：8bb3d8506adec7c119e694a0620858ecf79d366ccc43368454192fce41f824b9
 輸出：
