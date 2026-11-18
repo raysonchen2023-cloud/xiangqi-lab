@@ -38,6 +38,23 @@ public class MainActivity extends BridgeActivity {
     /** 隔離有沒有設成功；native-bridge 之後可以讀這個值決定要不要顯示「引擎不能用」的說明。 */
     static boolean isolationAllowlisted = false;
 
+    /**
+     * 最小的 XQNative 橋（11/18）：網頁 01-board.js 的 ttsNat() 用 XQNative.has("XQSpeech")／plug("XQSpeech") 判斷有沒有原生朗讀。
+     * iOS 由 native-bridge.js 提供完整的 XQNative；Android 只需要這兩個，用文件開始注入，不改 index.html（保持跟 source/ 組出來的一致）。
+     * 不設 XQ_NATIVE（Android 版靠瀏覽器識別字串 XQQianqiuApp/ 判斷原生，別的 iOS 專屬功能都有先檢查存在才呼叫）。
+     */
+    static final String NATIVE_BRIDGE_JS =
+        "(function(){if(window.XQNative)return;"
+        + "var P=function(n){try{var C=window.Capacitor;return C&&C.Plugins&&C.Plugins[n]||null}catch(e){return null}};"
+        + "window.XQNative={android:true,plug:P,has:function(n){try{var C=window.Capacitor;"
+        + "return!!(C&&typeof C.isPluginAvailable==='function'?C.isPluginAvailable(n):P(n))}catch(e){return false}}};})();";
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(XQSpeechPlugin.class);   // 要在 super.onCreate 之前註冊，Bridge 建立時才會載入
+        super.onCreate(savedInstanceState);
+    }
+
     @Override
     protected void load() {
         // 允許清單要在頁面載入「之前」設；BridgeActivity.load() 會建立 Bridge 並開始載入網址。
@@ -48,6 +65,7 @@ public class MainActivity extends BridgeActivity {
         if (bridge != null) {
             bridge.setWebViewClient(new XQWebViewClient(bridge));
             installServiceWorkerClient(bridge);
+            installNativeBridge(bridge.getWebView());
             bridge.getWebView().stopLoading();
             bridge.getWebView().loadUrl(bridge.getAppUrl());
         }
@@ -71,6 +89,17 @@ public class MainActivity extends BridgeActivity {
                 return XQWebViewClient.addIsolationHeaders(request, bridge.getLocalServer().shouldInterceptRequest(request));
             }
         });
+    }
+
+    /** 文件一開始就注入 NATIVE_BRIDGE_JS（只給 App 自己的來源）；WebView 不支援就靠 XQWebViewClient.onPageFinished 補。 */
+    static void installNativeBridge(WebView wv) {
+        try {
+            if (wv != null && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                WebViewCompat.addDocumentStartJavaScript(wv, NATIVE_BRIDGE_JS, Collections.singleton(APP_ORIGIN));
+            }
+        } catch (RuntimeException e) {
+            Logger.error("XQ", "注入 XQNative 橋失敗（改由頁面載完時補）", e);
+        }
     }
 
     static boolean allowCrossOriginIsolation(WebView wv) {

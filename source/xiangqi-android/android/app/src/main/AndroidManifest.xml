@@ -35,6 +35,13 @@
         </provider>
     </application>
 
+    <!-- 11/18 系統語音報棋（XQSpeechPlugin）：Android 11 以上要宣告才看得到系統的語音引擎（套件可見性），不是權限 -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />

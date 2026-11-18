@@ -47,6 +47,17 @@ public class XQWebViewClient extends BridgeWebViewClient {
         return addIsolationHeaders(request, super.shouldInterceptRequest(view, request));
     }
 
+    /** 舊版 WebView 沒有「文件開始就注入」（DOCUMENT_START_SCRIPT）時的備援：頁面載完補一次 XQNative 橋（腳本自己會跳過重複）。 */
+    @Override
+    public void onPageFinished(WebView view, String url) {
+        super.onPageFinished(view, url);
+        try {
+            if (url != null && url.startsWith(MainActivity.APP_ORIGIN)) view.evaluateJavascript(MainActivity.NATIVE_BRIDGE_JS, null);
+        } catch (RuntimeException e) {
+            // 注入失敗只影響系統語音報棋，不影響下棋
+        }
+    }
+
     /**
      * 回應是 App 自己來源（https://localhost）的，就補上 ISOLATION_HEADERS；其他來源、沒有回應的照原樣回傳。
      * 頁面請求（上面的 shouldInterceptRequest）和 Service Worker 請求（MainActivity 的 ServiceWorkerClient）都走這裡。
