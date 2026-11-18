@@ -1,13 +1,13 @@
 {
- "version": "20261118-1740",
- "checkedAt": "2026-11-18T09:41:37.561Z",
- "html": "2dd9ffa2b5c3",
- "sw": "e998437d7970",
+ "version": "20261118-1909",
+ "checkedAt": "2026-11-18T11:11:38.464Z",
+ "html": "b8fa9357644b",
+ "sw": "952cff9ea7f5",
  "scripts": 6,
  "modules": {
   "00-util.js": "10252b867aec",
   "01-board.js": "9877ff81d682",
-  "02-shell.js": "e1e5a31dc4e2",
+  "02-shell.js": "8bb9b8494a55",
   "02r-reloadguard.js": "1bf8587b9a55",
   "03-home-quiz.js": "007d96948bf6",
   "04-stats.js": "10ceed08a1bd",
@@ -94,7 +94,8 @@
   "07z6-sitemap.js": "a12444d4e987",
   "07z7-lesson.js": "b8189f953a67",
   "07z8-grablab.js": "97182be22c4c",
-  "07z9-school.js": "90273feb4ad1",
+  "07z9-school.js": "c1402b55f1fa",
+  "07z9b-jianghu.js": "5c06b3352136",
   "07w6-sceneinfo.js": "b699c5fc5c9f",
   "07w6b-scenedata.js": "e1a6f1d31da0",
   "07w6c-scenepoem.js": "7ab9513f7fa7",
@@ -102,7 +103,7 @@
   "07w8-shichen.js": "11f43e1fae9a",
   "07w9-exits.js": "3e6ed61a3bf7",
   "08-scene.js": "882e5bfc1885",
-  "08b-cpugame.js": "1081c3cd8ae6",
+  "08b-cpugame.js": "a556420f9164",
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "aa7f74f8ada8",
   "09b-preload.js": "ca114adb381f",
@@ -126,10 +127,10 @@
   "07fl-fill.js": "a671f9a96f4f",
   "07mnf-mainfilm.js": "7f12d04d9270",
   "07mnv-mainvn.js": "348063327d1e",
-  "07stq-starter.js": "d81a8c1182ed",
-  "07mnq-mainquest.js": "58d7a6ebaed0",
+  "07stq-starter.js": "66cd71ec7120",
+  "07mnq-mainquest.js": "016299032ff4",
   "07grw-growth.js": "e89b02643c9b",
-  "07gc-native.js": "3485972790d8"
+  "07gc-native.js": "3e0188f61704"
  },
  "differsFromSource": [
   {

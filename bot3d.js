@@ -44,7 +44,7 @@
   // 小人的身體可以換成其他棋子（意見回饋 193）：紅方 帥仕相俥傌炮兵、黑方 將士象車馬砲卒；名字跟著變成「小X」
   const BP=()=>{const c=store.get("botPiece","帥");return typeof c==="string"&&c.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(c)?c:"帥"};
   const BLACK=c=>"將士象車馬砲卒".includes(c),BNAME=()=>"小"+({俥:"車",傌:"馬",砲:"炮"}[BP()]||BP())+(store.get("pSex","m")==="f"?"妹":"");
-  let PCO=null;const PC=()=>PCO||BP();
+  let PCO=null,PCR=null;const PC=()=>PCO||BP();   /* PCR：胸前字指定紅（true）或黑（false）；null＝照棋子字判斷（11/18 十派掌門的門派字） */
   const eraK=()=>{const k=store.get("era","classic");return TH[k]?k:"classic"};
   const faceTex=(ch,th,k)=>cv(512,(g,n)=>{const h=n/2;
     let gr=g.createRadialGradient(h*.8,h*.7,10,h,h,h);gr.addColorStop(0,"#FFF8E6");gr.addColorStop(.75,"#F2DCAE");gr.addColorStop(1,"#D9B577");g.fillStyle=gr;g.beginPath();g.arc(h,h,h,0,TAU);g.fill();
@@ -250,7 +250,7 @@
   let R3=null;try{fetch("data/tripo_app/ring3d.json").then(r=>r.ok?r.json():null).then(j=>{R3=j}).catch(()=>{})}catch(e){}
   /* 意見回饋 577（開發者：身上的帥字好醜，顏色、字體都重新規劃）：之前是紅字直接貼在模型深褐色的圓牌上（對比差、看起來偏粉）。
      改成一整面棋子：米白象牙底＋外圈深紅粗環、內圈細環，字用傳統棋子的字形（經典那套）、深紅色，下面一層淡淡的刻痕影子，像真的刻出來的棋子 */
-  const glyTex=(ch,k)=>cv(512,(g,n)=>{const h=n/2,red="帥仕相俥傌炮兵".includes(ch),ink=red?"#A3140E":"#1E1A16",sh=red?"rgba(110,20,10,.28)":"rgba(0,0,0,.25)",gp=typeof GLY!=="undefined"&&((GLY.classic&&GLY.classic[ch])||(GLY[k]&&GLY[k][ch]));
+  const glyTex=(ch,k,rd)=>cv(512,(g,n)=>{const h=n/2,red=rd!=null?!!rd:"帥仕相俥傌炮兵".includes(ch),ink=red?"#A3140E":"#1E1A16",sh=red?"rgba(110,20,10,.28)":"rgba(0,0,0,.25)",gp=typeof GLY!=="undefined"&&((GLY.classic&&GLY.classic[ch])||(GLY[k]&&GLY[k][ch]));
     let gr=g.createRadialGradient(h*.8,h*.72,n*.02,h,h,h);gr.addColorStop(0,"#FFF9EC");gr.addColorStop(.72,"#F4E3C1");gr.addColorStop(1,"#DDBE86");g.fillStyle=gr;g.beginPath();g.arc(h,h,h*.99,0,Math.PI*2);g.fill();
     g.strokeStyle="rgba(120,80,30,.55)";g.lineWidth=n*.012;g.beginPath();g.arc(h,h,h*.975,0,Math.PI*2);g.stroke();
     g.strokeStyle=ink;g.lineWidth=n*.034;g.beginPath();g.arc(h,h,h*.83,0,Math.PI*2);g.stroke();g.lineWidth=n*.009;g.beginPath();g.arc(h,h,h*.745,0,Math.PI*2);g.stroke();
@@ -385,7 +385,7 @@
   const GLY_PTS=[];for(let i=-4;i<=4;i++)for(let j=-4;j<=4;j++){const a=i/4,b=j/4;if(a*a+b*b<=1.0001)GLY_PTS.push([a,b])}
   const GLY_P9=[[0,0],[.75,0],[-.75,0],[0,.75],[0,-.75],[.53,.53],[-.53,.53],[.53,-.53],[-.53,-.53]];
   function glyPzCalc(g,R,rad,px,py,bb,sz){let pz=-1e9;const rc=new T.Raycaster(),SF=glySurf(g);for(const[dx,dy]of(R.g?GLY_PTS:GLY_P9)){rc.set(new T.Vector3(px+dx*rad,py+dy*rad,R.back?bb.min.z-sz.z-1:bb.max.z+sz.z+1),new T.Vector3(0,0,R.back?1:-1));let hz;if(SF){const z=glyCast(SF,rc);hz=z===null?-1e9:(R.back?-z:z)}else{const hit=rc.intersectObject(g,true)[0];hz=hit?(R.back?-hit.point.z:hit.point.z):-1e9}if(hz>pz)pz=hz}if(pz<-1e8)pz=R.back?-bb.min.z:bb.max.z;if(R.back)pz=-pz;return pz}
-  function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
+  function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meRd=PCR,meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
     /* hspx（開發者 11/12「車輪戰一開始切換棋客時，會先閃爍小帥的舊圖才變成 3D 角」）：要換真實模型時，Q 版先藏起來，模型載不到才放回來（原本 Q 版先露面、模型到了才藏） */
     const q0=[...B.bot.children];q0.forEach(ch=>{ch.visible=false});
@@ -416,7 +416,7 @@
         /* 意見回饋 564：有些圓牌是凹下去的碟形（明朝擂主），只量圓心的深度會被邊緣擋住、字看起來殘缺；在圓牌上量九個點，取最靠前的深度 */
         const gk=glyKey(o.glb,B.mixer,R,bb);let pz=glyPzGet(gk);   /* 11/18 N33-1：同一種模型同一面牌子算過就直接用（見 glySurf） */
         if(pz==null){pz=glyPzCalc(g,R,rad,px,py,bb,sz);glyPzPut(gk,pz)}   /* 開發者 11/6：齊轍的棋子揹在背後，圓牌貼在背面（ring3d.json 第 5 個值＝1） */if(R.z!=null)pz=bb.min.z+R.z*sz.z;   /* 意見回饋 665：少年阿古拉手上捧著棋盤，打點量到的是棋盤表面，圓片浮在胸口前面、一轉就偏到旁邊；ring3d.json 第 4 個值是校正量到的圓面深度 */
-        const d=new T.Mesh(new T.CircleGeometry(rad,48),new T.MeshBasicMaterial({map:glyTex(meCh,meK),color:0xEDE6D8,transparent:true,depthWrite:false,toneMapped:false}));d.name="meGly";{const _p=new T.Vector3(),_n=new T.Vector3(),_v=new T.Vector3();d.onBeforeRender=(rn,s2,cam)=>{try{d.getWorldPosition(_p);_n.set(0,0,1).transformDirection(d.matrixWorld);_v.copy(cam.position).sub(_p).normalize();d.material.opacity=Math.max(0,Math.min(1,(_n.dot(_v)-.3)/.3))}catch(e){}}}   /* 584：轉到側面時字面淡掉，不會看到一片紙浮在身上 */   /* 577：整面棋子、不受燈光影響（背光時不會變成深褐），顏色稍微壓暗一點才不會比身體亮太多 */
+        const d=new T.Mesh(new T.CircleGeometry(rad,48),new T.MeshBasicMaterial({map:glyTex(meCh,meK,meRd),color:0xEDE6D8,transparent:true,depthWrite:false,toneMapped:false}));d.name="meGly";{const _p=new T.Vector3(),_n=new T.Vector3(),_v=new T.Vector3();d.onBeforeRender=(rn,s2,cam)=>{try{d.getWorldPosition(_p);_n.set(0,0,1).transformDirection(d.matrixWorld);_v.copy(cam.position).sub(_p).normalize();d.material.opacity=Math.max(0,Math.min(1,(_n.dot(_v)-.3)/.3))}catch(e){}}}   /* 584：轉到側面時字面淡掉，不會看到一片紙浮在身上 */   /* 577：整面棋子、不受燈光影響（背光時不會變成深褐），顏色稍微壓暗一點才不會比身體亮太多 */
         d.position.set(px-c.x,py-bb.min.y,pz-c.z+(R.back?-1:1)*sz.y*(R.g?.016:.006));if(R.back)d.rotation.y=Math.PI;hold.add(d)}catch(e){}};
         const R0=ME_RING[meId]||R3e||GLe;
         /* 開發者 11/12 黑洞「雙方正面也要把棋子貼上去，不然會不知道對面是什麼棋」：o.gly.front＝{u,v,r} 時，另一面（胸前）再貼一個 */
@@ -812,7 +812,9 @@
   const faceApply=(P,F,blink,mOpen)=>{P.eyes.forEach((e,i)=>{e.g.scale.y=(P.stern&&F==="happy")?.7:F==="happy"||(F==="wink"&&i===1)?.12:blink?.1:1;e.brow.position.y=.15+(F==="open"||F==="happy"?.03:0);e.brow.rotation.z=PI/2+(F==="sad"?-.45*e.s:0)+(P.stern&&F!=="sad"?.28*e.s:0)});
     const o=P.stern?F==="open"&&!mOpen?false:!!mOpen:(mOpen||F==="open"||F==="happy");P.mouth.open.visible=o;P.mouth.smile.visible=!o;P.mouth.smile.rotation.z=F==="sad"?0:PI;P.mouth.smile.scale.y=F==="flat"||(P.stern&&F!=="happy")?.2:P.stern?.45:1;P.mouth.smile.position.y=F==="sad"?-.06:0;P.tear.visible=F==="sad"};
   window.XQBot3D={start,acts:Object.keys(ACTS),combos:COMBO.length,lines:LINES.length,figure:o=>{o=o||{};PCO=typeof o.p==="string"&&o.p.length===1&&"帥仕相俥傌炮兵將士象車馬砲卒".includes(o.p)?o.p:null;
-    try{const B=build(TH[o.e]?o.e:eraK(),o.g>=1&&o.g<=9?o.g:grade(),(C=>o.npc||C?{hat:C&&C.hat||o.hat,hc:C&&C.hc||o.hc,robe:C&&C.ring||o.robe,band:C&&C.band||o.band,acc:o.acc,shoe:C&&C.shoe||o.shoe,belt:C&&C.belt||o.belt,skin:C&&C.skin,top:C&&C.top,pin:C&&C.pin,band2:C&&C.band2,cus:C}:null)(typeof o.cus==="string"?CUS[o.cus]:o.cus));if(o.thin)thinify(B,!!o.wl);if(o.wl)wolongify(B);if(o.glb)attachGLB(B,o);return B}finally{PCO=null}},
+    /* 11/18 開發者選「掌門胸前圓牌印上門派字」：o.gch＝胸前圓牌改寫這個字（十派掌門的派名首字，不限棋子字），o.gred＝紅字（false＝黑字） */
+    if(typeof o.gch==="string"&&[...o.gch].length===1){PCO=o.gch;PCR=!!o.gred}
+    try{const B=build(TH[o.e]?o.e:eraK(),o.g>=1&&o.g<=9?o.g:grade(),(C=>o.npc||C?{hat:C&&C.hat||o.hat,hc:C&&C.hc||o.hc,robe:C&&C.ring||o.robe,band:C&&C.band||o.band,acc:o.acc,shoe:C&&C.shoe||o.shoe,belt:C&&C.belt||o.belt,skin:C&&C.skin,top:C&&C.top,pin:C&&C.pin,band2:C&&C.band2,cus:C}:null)(typeof o.cus==="string"?CUS[o.cus]:o.cus));if(o.thin)thinify(B,!!o.wl);if(o.wl)wolongify(B);if(o.glb)attachGLB(B,o);return B}finally{PCO=null;PCR=null}},
     /* 開發者 11/11：車輪戰真實 3D 棋客的桌上棋位牌（一面立著的木棋子，字面朝 +Z；r＝半徑），park3d 放在桌上對面那一角 */
     plate:(ch,r)=>{r=r||.75;const G=new T.Group(),wood=new T.MeshStandardMaterial({color:0x7A5230,roughness:.7}),c=new T.Mesh(new T.CylinderGeometry(r,r,r*.3,40),wood);c.rotation.x=PI/2;c.position.y=r*1.1;G.add(c);
       const f=new T.Mesh(new T.CircleGeometry(r*.95,40),new T.MeshBasicMaterial({map:glyTex(ch,eraK()),toneMapped:false}));f.position.set(0,r*1.1,r*.152);G.add(f);

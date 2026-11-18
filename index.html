@@ -1630,7 +1630,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261118-1740";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261118-1909";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -3334,6 +3334,7 @@ function route(){
   if(p[0]==="cpuroom"&&typeof CpuRoom==="function")return screen=CpuRoom(v);   /* 11/10 開發者：挑戰電腦的雅間（07z5-cpuroom.js） */
   if(p[0]==="simul"&&typeof SimulPage==="function")return screen=SimulPage(v);   /* 開發者 11/11 hspx：車輪戰（m/08s-simul.js） */
   if(p[0]==="lesson"&&typeof LsnPage==="function")return screen=LsnPage(v,p[1]||"");   /* ChatGPT 改善單 I01（開發者 11/11）：棋理體驗 #/lesson/<站>（m/07z7-lesson.js） */
+  if(p[0]==="jianghu"&&typeof Jianghu==="function")return screen=Jianghu(v);   /* 十州棋館：門派江湖長卷（開發者 11/18，m/07z9b-jianghu.js） */
   if(p[0]==="school"&&typeof OscPage==="function")return screen=OscPage(v,p[1]||"",p[2]||"");   /* 開局門派（開發者 11/18，m/07z9-school.js）：#/school 總覽、#/school/<角色> 修行頁、#/school/<角色>/<課> 上課 */
   if(p[0]==="lab"&&p[1]==="grab"&&typeof GrbLab==="function")return screen=GrbLab(v);   /* ChatGPT 改善單 I02：先吃子還是先解圍小實驗（m/07z8-grablab.js） */
   if(p[0]==="cup")return screen=CupPage(v);   /* 意見回饋 635：千秋盃 */
@@ -27971,6 +27972,7 @@ function oscCss(){if(document.getElementById("oscCss"))return;const s=document.c
 .osc-zm img{width:76px;height:102px;object-fit:contain;flex:none}
 .osc-zm .tx{flex:1;min-width:0}
 .osc-zm b{font-family:var(--serif);font-size:17px}
+.osc-zm .osc-op{display:block;margin:2px 0 0;font-size:13px;color:var(--muted)}   /* 11/18 測試員驗 1545（P3）：英文掌門卡名字和頭銜黏成「Fang YanbingMaster of the…」——.osc-op 原本只在門派卡（.osc-sc）有左邊距；掌門卡改成頭銜自己一行 */
 .osc-zm p{margin:4px 0;line-height:1.6;font-size:14px}
 .osc-zm-mine{border:2px solid var(--accent)}
 .osc-bar{font-size:13px;color:var(--muted);text-align:center;padding:2px 10px;line-height:1.5;overflow-wrap:anywhere}
@@ -28037,7 +28039,7 @@ function oscHome(v,c){oscCss();const P=typeof ptyGet==="function"?ptyGet():null;
           <div class="osc-row"><button class="btn ghost" data-sid="${s.id}">${oscL(`選${esc(s.nm)}`,`Choose ${esc(s.nm)}`)}</button></div></div></div>`}).join("")}
         <p class="osc-sub">${oscL(`推薦只是${esc(oscTa(c))}的教學偏好；本命子不限制門派，十派都能選。`,`The recommendation is just ${(()=>{try{return WX_CHARS[c].sx==="f"?"her":"his"}catch(e){return"their"}})()} teaching preference; a character's signature piece doesn't limit the choice. Any of the ten schools is open.`)}</p></div>`;
       v.querySelectorAll("[data-sid]").forEach(b=>b.onclick=()=>{try{vibrate(5)}catch(e){}oscJoinAsk(c,b.dataset.sid,draw)});return}
-    const S=oscSchE(sid),R=OSC.rec(o,c,sid),nx=OSC.next(o,c,sid),G=n=>oscGoalE(sid,n),D=oscL("・"," · ");setTop(oscL(`🏯 ${nm}的${S.nm}修行`,`🏯 ${nm} · ${S.nm}`),"#/school");
+    const S=oscSchE(sid),R=OSC.rec(o,c,sid),nx=OSC.next(o,c,sid),G=n=>oscGoalE(sid,n),D=oscL("・"," · ");setTop(oscL(`🏯 ${nm}的${S.nm}修行`,S.nm),"#/school");
     let h=`<div class="pad osc"><div class="card osc-sc">${oscSym(sid)}<div class="tx"><h2>${esc(S.nm)}</h2><p class="osc-sub">${esc(S.op)}${D}${esc(S.say)}</p>${["g","g2","g3"].filter(k=>R[k]).map((k,i)=>`<p><b>🏮 ${oscL(`${esc(nm)}已完成本派${OSC.pname(sid,i)}`,`${esc(nm)} completed this school's ${oscPnE(sid,i)}`)}</b></p>`).join("")}</div></div>`;
     for(const[a,z,pn]of OSC.PART){const open=OSC.state(o,c,sid,a)!=="locked",bs=OSC.side(sid)==="b";h+=`<div class="osc-st">${pn==="入門"?oscL("第一階段・入門","Stage 1 · Basics"):pn==="進階"?(bs?oscL("第二階段・進階：紅方十種走法","Stage 2 · Advanced: ten Red tries"):oscL("第二階段・進階：對方十種應法","Stage 2 · Advanced: ten replies by the opponent")):oscL("第三階段・"+OSC.pname(sid,2),"Stage 3 · "+oscPnE(sid,2))}${oscL(`（${OSC.count(o,c,sid,a,z)}／${z-a+1}）`,` (${OSC.count(o,c,sid,a,z)}/${z-a+1})`)}</div>`;
       if(!open){h+=`<p class="osc-sub">🔒 ${pn==="進階"?(bs?oscL("完成入門六課後開放：同一派的局面，紅方換十種走法，各自怎麼應對。","Opens after the six Basics lessons: the same school's position, with Red trying ten different moves, and how to answer each."):oscL("完成入門六課後開放：同一個開局，對方換十種應法，各自怎麼應對。","Opens after the six Basics lessons: the same opening, with ten different replies by the opponent, and how to handle each.")):(bs?oscL("入門和進階都完成後開放：換你執紅，學面對這一派時怎麼應。","Opens after Basics and Advanced: you play Red and learn how to face this school."):oscL("入門和進階都完成後開放：換你執黑，面對紅方六種開局，走本派的路。","Opens after Basics and Advanced: you play Black against six Red openings and follow your school's path."))}</p>`;continue}
@@ -28066,7 +28068,7 @@ function oscSwitch(c,done){if(typeof sheet!=="function")return;const o=oscGet(),
 function oscPlay(v,c,lk){oscCss();if(typeof lsnCss==="function")lsnCss();setTabs(false);const C=window.XQCore,m=/^([a-z_]+)_(\d\d)$/.exec(lk||""),sid=m&&m[1],n=m?+m[2]:0,BK="#/school/"+c;
   const o0=oscGet();if(!C||!m||!OSC.rec(o0,c,sid)||OSC.state(o0,c,sid,n)==="locked"){navReplace(BK);return{}}
   const H0=location.hash,here=()=>v.isConnected&&location.hash===H0,q=s=>v.querySelector(s),S=oscSchE(sid),nm=oscNmE(c),title=oscL(`第 ${n} 課・${OSC.title(sid,n)}`,`Lesson ${n} · ${oscTitleE(sid,n)}`);
-  setTop(oscL(`🏯 ${nm}・${S.nm}`,`🏯 ${nm} · ${S.nm}`),BK);const st={tok:0,fast:false};let D=null,LS=null,ex=null;
+  setTop(oscL(`🏯 ${nm}・${S.nm}`,S.nm),BK);   /* 11/18 測試員驗 1545（P3）：英文標題「🏯 Qi Zhe · Advisor-Corner Cannon School」在手機折兩行、下緣被頂欄切掉（圖示把第一行撐高）；英文這頁和修行頁標題只放派名、不帶圖示，中文照舊 */ const st={tok:0,fast:false};let D=null,LS=null,ex=null;
   const PE={K:"General",A:"Advisor",B:"Elephant",N:"Horse",R:"Chariot",C:"Cannon",P:"Soldier"},pc=(sd,x)=>oscL(C.NAMES[sd][x],PE[x]||"piece"),mv=s=>oscT(s);
   v.className="view";v.innerHTML=`<div class="pad osc"><p class="osc-sub">${oscL("課程載入中…","Loading lesson…")}</p></div>`;
   oscData(sid).then(d=>{if(!here())return;D=d;LS=oscLesson(D,sid,n);if(!LS||!LS.ex.length)throw new Error(oscL("這一課的資料還沒準備好","This lesson's data isn't ready yet"));start()}).catch(e=>{if(!here())return;v.innerHTML=`<div class="pad osc"><div class="card"><p>${esc(oscT(e.message))}</p></div><button class="btn ghost" id="oscB">${oscL("回修行頁","Back to training")}</button></div>`;q("#oscB").onclick=()=>goUp(BK)});
@@ -28081,15 +28083,15 @@ function oscPlay(v,c,lk){oscCss();if(typeof lsnCss==="function")lsnCss();setTabs
     const ck=bb=>C.inCheck(bb,"r")?C.kingSq(bb,"r"):C.inCheck(bb,"b")?C.kingSq(bb,"b"):-1;
     const draw=bb=>{bb=bb||b;bd.draw(bb,{flip,sel,last,check:ck(bb),targets:node&&node.k==="mv"&&sel>=0&&!busy?C.legal(bb,side).filter(([f])=>f===sel).map(x=>x[1]):[]});if(typeof lsnArrows==="function")lsnArrows(bd.svg,over,flip)};
     const help=()=>n<=2?[["hint","💡",oscL("提示","Hint"),hint]]:[["demo","👁",oscL("示範","Show me"),demo]];
-    const yourMove=()=>oscL("換你走","Your move"),Q=N=>oscT(N.q),acL=a=>a.map(mv).join(oscL("　","  "));
+    const yourMove=()=>oscL("換你走","Your move"),Q=N=>oscT(N.q),acL=a=>a.map(([x,me])=>oscL((me?"你 ":"對方 ")+mv(x),(me?"you ":"opponent ")+mv(x))).join(oscL("，",", "));
     function enter(N){node=N;sel=-1;busy=false;over=[];chBox("");nodeB=b;
       if(!N){finish();return}
       if(N.k==="ch"){stat(oscL("想一想","Think it over"));note(Q(N));acts([]);draw();chBox(`<div class="osc-ch">${N.o.map((x,i)=>`<button type="button" data-i="${i}">${esc(oscT(x[0]))}</button>`).join("")}</div>`);
         v.querySelectorAll(".osc-ch button").forEach(btn=>btn.onclick=()=>{const x=N.o[+btn.dataset.i];try{vibrate(5)}catch(e){}if(x[1]){btn.classList.add("yes");note(`✔ ${x[2]?oscT(x[2]):oscL("對。","Right.")}`);v.querySelectorAll(".osc-ch button").forEach(z=>z.disabled=true);acts([["go","›",oscL("繼續","Continue"),()=>enter(N.n),true]])}
           else{btn.classList.add("no");note(`✘ ${x[2]?oscT(x[2]):oscL("再想想。","Think again.")}\n${Q(N)}`)}});return}
       if(N.k==="err"){stat(oscL("常見錯法","Common mistake"));busy=true;const[f,t]=lsnSq(N.bad),cn=mv(C.notate(b,f,t)),acc=[];note(oscL(`先看一步常見的錯著：「${cn}」`,`First, a common mistake: "${cn}"`));acts([]);
-        const after=()=>oscL(`錯著「${cn}」之後，對方：${acL(acc)}`,`After the mistake "${cn}", the opponent plays: ${acL(acc)}`);
-        const bb0=b;lsnPlay(st,[N.bad].concat(N.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push(tx);note(after())}},()=>{if(!here())return;
+        const after=()=>oscL(`錯著「${cn}」之後：${acL(acc)}`,`After the mistake "${cn}": ${acL(acc)}`);   /* 11/18 測試員驗 1545（P3）：後續原本整串標「對方：馬7進5 炮八平五 馬2進3」，裡面混了自己的著法；改成每步標誰走（lsnPlay 的 i：錯著是 1，偶數＝對方、奇數＝自己；acc 存 [著法, 是不是自己]，acL 加上誰走） */
+        const bb0=b;lsnPlay(st,[N.bad].concat(N.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push([tx,i%2===1]);note(after())}},()=>{if(!here())return;
           note(`${after()}${N.x?"\n"+oscL(`你的${pc(side,N.x)}丟了。`,`You lose your ${pc(side,N.x)}.`):""}\n${oscT(N.w)}`);acts([["back","↩",oscL("回到錯著前，換你改","Go back and fix it"),()=>{b=bb0;last=null;enter(N.n)},true]])});return}
       stat(yourMove());note(Q(N));acts(help());draw()}
     function tap(x){if(busy||!node||node.k!=="mv")return;const Lg=C.legal(b,side);if(sel>=0&&Lg.some(([f,t])=>f===sel&&t===x)){const u=C.iccs(sel,x);sel=-1;return move(u)}
@@ -28100,8 +28102,8 @@ function oscPlay(v,c,lk){oscCss();if(typeof lsnCss==="function")lsnCss();setTabs
         if(!ok.r){setTimeout(()=>{if(here())enter(ok.n||null)},700);return}
         setTimeout(()=>{if(!here())return;const[f2,t2]=lsnSq(ok.r),c2=mv(C.notate(b,f2,t2));b=C.make(b,f2,t2);last={f:f2,t:t2};draw();note(oscL(`對方走「${c2}」。`,`The opponent plays "${c2}".`));setTimeout(()=>{if(here())enter(ok.n||null)},900)},800);return}
       const bad=N.bad&&N.bad[u];
-      if(bad){busy=true;const bb0=b,acc=[],hurt=oscL("這步會吃虧。對方的反擊：","This move loses material. The opponent's reply: ");stat("✘ "+cn);note(hurt);acts([]);try{vibrate([20,40,20])}catch(e){}
-        lsnPlay(st,[u].concat(bad.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push(tx);note(hurt+acL(acc))}},()=>{if(!here())return;
+      if(bad){busy=true;const bb0=b,acc=[],hurt=oscL("這步會吃虧。接下來：","This move loses material. What follows: ");stat("✘ "+cn);note(hurt);acts([]);try{vibrate([20,40,20])}catch(e){}
+        lsnPlay(st,[u].concat(bad.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push([tx,i%2===1]);note(hurt+acL(acc))}},()=>{if(!here())return;
           note(`${hurt}${acL(acc)}${bad.x?"\n"+oscL(`你的${pc(side,bad.x)}被吃掉了。`,`Your ${pc(side,bad.x)} gets captured.`):""}\n${Q(N)}`);acts([["back","↩",oscL("退回重想","Take it back"),()=>{b=bb0;last=null;busy=false;stat(yourMove());note(Q(N));acts(help());draw()},true]].concat(help()))});return}
       stat("✋ "+cn);note(`${N.no?oscT(N.no):oscL("這步不是這一課要練的。","That's not the move this lesson is practicing.")}\n${Q(N)}`);try{vibrate([10,30,10])}catch(e){}draw()}
     function hint(){if(busy||!node||node.k!=="mv")return;flag("h");over=[{f:lsnSq(node.h)[0],t:lsnSq(node.h)[1],c:"#2E7D32"}];sel=-1;stat(oscL("💡 提示","💡 Hint"));note(`${oscL("💡 可以試試箭頭這一步（不只這一步，符合目標的好棋都算）。","💡 Try the move shown by the arrow (other good moves that fit the goal also count).")}\n${Q(node)}`);draw()}
@@ -28139,7 +28141,9 @@ function zmGet(){try{return OSC.zmNorm(store.get("zm",null),PTY.ORDER)}catch(e){
 const zmImg=m=>`data/npc/${m.id}.webp`;
 /* look：3D 場景照園子棋友那一套（06-cpu NPC_LOOK）：有 n_zm_<派> 模型就用 3D，沒有就用 data/npc/zm_<派>.webp 立繪；不走驛站旅人的 data/actors/（掌門沒有那裡的圖） */
 function zmAct(j){const m=OSC.mst(j);if(!m||!/^inn:zm_/.test(String(j||"")))return null;
-  return{id:m.id,name:m.nm,ic:"🏯",pc:m.pc,img:zmImg(m),say:m.pre,win:m.win,lose:m.lose,zm:1,look:side=>typeof NPC_LOOK==="function"?NPC_LOOK({id:m.id,name:m.nm,say:m.pre,pc:m.pc},side):null}}
+  return{id:m.id,name:m.nm,ic:"🏯",pc:m.pc,img:zmImg(m),say:m.pre,win:m.win,lose:m.lose,zm:1,look:side=>{const L=typeof NPC_LOOK==="function"?NPC_LOOK({id:m.id,name:m.nm,say:m.pre,pc:m.pc},side):null;return L&&ZM_GCH[m.sid]?{...L,gch:ZM_GCH[m.sid],gred:OSC.mside(m)==="r"}:L}}}
+/* 11/18 開發者選「掌門胸前圓牌印上門派字」：派名第一個字；掌門執紅＝紅字、執黑＝黑字。立繪已用 tools/zm_disc_char.py 印上同一個字，3D 模型由 bot3d.js 照 ring3d.json 的圓牌位置貼上（figure 的 gch／gred） */
+const ZM_GCH={central:"中",screen:"屏",palace_horse:"反",same_cannon:"順",opposite_cannon:"列",pawn:"仙",elephant:"飛",horse:"起",cross_palace:"過",advisor_corner:"仕"};
 const zmLv=rl=>Math.max(1,Math.min(6,1+Math.floor(rl/3)));
 function zmArgs(m,rl,dx){const ms=OSC.mside(m);return{human:ms==="r"?"b":"r",level:zmLv(rl),rlv:rl,journey:"inn:"+m.id,...(dx!=null?{dx}:{})}}
 const zmSay=(m,s)=>oscL(`🏯 ${m.nm}：「${s}」`,`🏯 ${m.en}: "${oscT(s)}"`);
@@ -28175,6 +28179,166 @@ function zmHomeHTML(c,sid){const m=OSC.MST.find(x=>x.sid===sid);if(!m)return"";r
 /* 千秋大百科（07i-codex.js 的 CODEX）加一類：大百科的字照全站翻譯器翻（字典有這幾句） */
 try{if(typeof CODEX!=="undefined"&&Array.isArray(CODEX)&&!CODEX.some(x=>x.id==="zm"))CODEX.push({id:"zm",g:"book",ic:"🏯",nm:"十派掌門",
   say:"雲河棋會十派各有一位掌門。任何一位已加入隊伍的七星都能挑戰；每位掌門第一次被你贏，修為 +30。",v:()=>{const x=OSC.zmBeaten(zmGet()).length;return{x,y:OSC.MST.length,u:oscL("位","masters"),s:oscL(`贏過 ${x} 位掌門`,`Beat ${x} masters`)}},go:()=>{location.hash="#/school/masters"}})}catch(e){}
+/* ================= 🗺 十州棋館：門派江湖長卷（開發者 11/18；前綴 jh）=================
+   開發者原話：「請gemini規劃十個文案，要如何把門派畫出來在首頁或是其他地方，讓遊戲更具有rpg象棋江湖闖蕩感」→ 合併案「雲河棋會」→
+   「總共有10個門派，我希望散落在一張大地圖的不同州，大地圖的入口從首頁走到遠山那邊」「門派用城牆感覺好怪，我希望像是那種武當少林峨眉所在地那種場景」
+   「地圖要用環景的，然角色可以在地圖上移動」（選橫向 4 屏長卷）「要畫出10個門派的特色」
+   「現在就做，畫面切到這個長卷也要有淡入淡出的視覺效果，然後第一次進來要有文字描述歡迎光臨來到什麼地方之類的」。
+   規劃與考究：story/十州棋館圖_規劃_1118.md；圖：park/yunhe/pano_final.png（3024×1340，史學顧問 184～187 審過）→ art/yunhe/pano.webp → data/yunhe/。
+   地圖固定晚明江淮十州（各朝都有入口）；十派各一座山門駐地，門派旗號、掌門頭像、隨行角色都由程式疊在圖上（圖本身無字）。
+   點駐地 → 隨行角色沿路走過去 → 名帖小卡：拜師／繼續修行（開局門派 07z9）、挑戰掌門（zmStart）、這一派的棋友。
+   進出：首頁遠山「🗺 十州棋館」、找地方（雲河渡口）、開局棋路總覽與十派掌門頁頂上一顆按鈕；換頁時宣紙色淡出淡入（jhGo）；第一次進來有一段歡迎文字（store jhIntro）。
+   不改開局門派與掌門的規則、不加體力與貨幣、不新增匿名資料。不動 07z9-school.js（那一版在組候選版），用它的全域函式（OSC、oscL、oscT、oscSchE、oscNmE、oscJoinAsk、zmStart、zmImg）。
+   純函式 jhPath／jhNear／jhNodes 不碰 DOM，xiangqi-lab/tools/test-jianghu-1118.js 用 vm 跑 */
+const JH_ON=true,JH_IMGV="1118",JH_W=3024,JH_H=1340,JH_FADE=480;
+/* 首頁遠山的入口位置（左%、上%）：原圖、iPad 直版、橫版各量一次（左上方的遠山，避開星槎、西市、觀星臺） */
+const JH_HOME={"":[22,11],p34:[26,11],l1610:[32,10]};
+/* 十派駐地（長卷原圖像素）：s＝山門前石坪（角色站的地方，腳底）、f＝門派牌旗（標籤底部對齊的點） */
+const JH_SITE={central:{s:[870,510],f:[857,290]},screen:{s:[175,1180],f:[178,1030]},palace_horse:{s:[2690,1070],f:[2693,760]},
+  same_cannon:{s:[1300,300],f:[1300,130]},opposite_cannon:{s:[1900,960],f:[1890,640]},pawn:{s:[1150,780],f:[1143,560]},
+  elephant:{s:[520,640],f:[514,430]},horse:{s:[150,650],f:[200,360]},cross_palace:{s:[2180,1160],f:[1950,1100]},advisor_corner:{s:[2420,340],f:[2421,150]}};
+/* 道路的轉折點（沿圖上的土黃色小路、橋、渡口量的）與連線；駐地本身也是節點（名字＝派代號） */
+const JH_J={ja:[330,640],jb:[730,600],jc:[880,560],jd:[450,714],je:[420,880],jf:[300,1080],jg:[1080,330],jh:[900,800],ji:[1300,1000],jj:[1520,1000],
+  jk:[2000,1080],jl:[2400,1100],jm:[2550,700],jn:[2480,470]};
+const JH_E="horse-ja ja-elephant elephant-jb jb-jc jc-central elephant-jd jd-je je-jf jf-screen central-jg jg-same_cannon jb-jh jh-pawn pawn-ji ji-jj jj-opposite_cannon opposite_cannon-jk jk-cross_palace cross_palace-jl jl-palace_horse palace_horse-jm jm-jn jn-advisor_corner";
+const JH_START="elephant";   /* 第一次進來站在泗州（雲河鎮所在、地圖中心） */
+/* ---------- 純函式 ---------- */
+function jhNodes(){const N={};for(const k of Object.keys(JH_J))N[k]=JH_J[k];for(const k of Object.keys(JH_SITE))N[k]=JH_SITE[k].s;return N}
+function jhPath(a,b){const N=jhNodes();if(!N[a]||!N[b])return[];if(a===b)return[N[a].slice()];const G={};
+  for(const e of JH_E.split(" ")){const[x,y]=e.split("-");(G[x]=G[x]||[]).push(y);(G[y]=G[y]||[]).push(x)}
+  const d=(p,q)=>Math.hypot(N[p][0]-N[q][0],N[p][1]-N[q][1]),D={[a]:0},P={},Q=new Set(Object.keys(N));
+  while(Q.size){let u=null;for(const q of Q)if(D[q]!=null&&(u==null||D[q]<D[u]))u=q;if(u==null||u===b)break;Q.delete(u);
+    for(const w of G[u]||[])if(Q.has(w)){const nd=D[u]+d(u,w);if(D[w]==null||nd<D[w]){D[w]=nd;P[w]=u}}}
+  if(D[b]==null)return[];const out=[b];while(out[0]!==a)out.unshift(P[out[0]]);return out.map(k=>N[k].slice())}
+const jhLen=pts=>pts.reduce((s,p,i)=>i?s+Math.hypot(p[0]-pts[i-1][0],p[1]-pts[i-1][1]):0,0);
+/* 沿路走到 t（0～1）的位置與朝向（-1 往左、1 往右） */
+function jhAt(pts,t){if(!pts.length)return{x:0,y:0,dir:1};if(pts.length===1)return{x:pts[0][0],y:pts[0][1],dir:1};const L=jhLen(pts);let r=Math.max(0,Math.min(1,t))*L;
+  for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],l=Math.hypot(b[0]-a[0],b[1]-a[1]);if(r<=l||i===pts.length-1){const k=l?Math.min(1,r/l):1;return{x:a[0]+(b[0]-a[0])*k,y:a[1]+(b[1]-a[1])*k,dir:b[0]<a[0]?-1:1}}r-=l}
+  const z=pts[pts.length-1];return{x:z[0],y:z[1],dir:1}}
+/* ---------- 文字：中英並列（照 07z9 的 oscL；07z9 沒載到時退回中文） ---------- */
+const jhL=(zh,en)=>typeof oscL==="function"?oscL(zh,en):zh;
+const jhT=s=>typeof oscT==="function"?oscT(s):s;
+const jhSch=sid=>typeof oscSchE==="function"?oscSchE(sid):(typeof OSC!=="undefined"?OSC.sch(sid):null);
+const jhNm=c=>typeof oscNmE==="function"?oscNmE(c):c;
+const jhLook=()=>{try{const P=typeof ptyGet==="function"?ptyGet():null;return P&&typeof PTY!=="undefined"&&PTY.has(P,P.look)?P.look:""}catch(e){return""}};
+const jhCol={central:"#B23A2E",screen:"#2F4E8C",palace_horse:"#5B3E6E",same_cannon:"#A0522D",opposite_cannon:"#B87333",pawn:"#3E8E6E",elephant:"#6FA8A0",horse:"#A88A3C",cross_palace:"#3F7FA6",advisor_corner:"#B8902E"};
+function jhCss(){if(document.getElementById("jhCss"))return;const s=document.createElement("style");s.id="jhCss";s.textContent=`
+.view.jh-v{padding:0!important;overflow:hidden}
+body.jh-on .xqbot{display:none!important}
+.jh-wrap{position:relative;flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;background:#EFE6D2;scrollbar-width:thin}
+.jh-map{position:relative;height:100%;width:max-content}
+.jh-map>img{display:block;height:100%;width:auto;max-width:none;user-select:none;-webkit-user-drag:none}
+.jh-spot{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:0;cursor:pointer;color:#2b2118}
+.jh-spot .bn{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:10px;background:rgba(250,244,230,.92);border:2px solid var(--jc,#8a6a3a);box-shadow:0 2px 6px rgba(40,25,10,.25)}
+.jh-spot .bn img{width:30px;height:30px;border-radius:50%;object-fit:cover;object-position:50% 12%;background:#efe4cc;border:1.5px solid var(--jc,#8a6a3a)}
+.jh-spot .bn b{font:800 15px/1.1 var(--serif,serif);letter-spacing:.04em;white-space:nowrap}
+.jh-spot .bn .osc-sym{width:18px;height:18px;color:var(--jc,#8a6a3a)}
+.jh-spot .pole{width:3px;height:22px;background:linear-gradient(#6b4a2b,#3b2a1a);border-radius:2px}
+.jh-spot.won .bn{box-shadow:0 0 0 3px rgba(255,214,120,.55),0 0 14px rgba(255,190,80,.75)}
+.jh-spot.mine .bn{background:#fff6e0;border-width:3px}
+.jh-me{position:absolute;width:auto;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 3px 2px rgba(30,20,10,.35));transition:none}
+.jh-me.l{transform:translate(-50%,-100%) scaleX(-1)}
+#jhFade{position:fixed;inset:0;z-index:9400;background:#EFE6D2;opacity:0;pointer-events:none;transition:opacity ${JH_FADE}ms ease}
+#jhFade.on{opacity:1;pointer-events:auto}
+.home-page.jh-zoom{transition:transform ${JH_FADE+120}ms ease-in;transform:scale(1.12)}
+#jhIntro{position:fixed;inset:0;z-index:9300;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(20,14,8,.42);opacity:0;transition:opacity .9s ease}
+#jhIntro.on{opacity:1}
+#jhIntro .cd{max-width:30em;background:rgba(250,244,230,.97);border:1px solid #c9a96b;border-radius:16px;padding:22px 20px 18px;text-align:center;color:#2b2118;box-shadow:0 10px 30px rgba(0,0,0,.35);transform:translateY(12px);transition:transform .9s ease}
+#jhIntro.on .cd{transform:none}
+#jhIntro small{display:block;font-size:13px;letter-spacing:.25em;color:#9a6b2a;margin-bottom:6px}
+#jhIntro h2{font:900 26px/1.25 var(--serif,serif);letter-spacing:.08em;margin:0 0 12px}
+#jhIntro p{font:600 15.5px/1.75 var(--serif,serif);margin:0 0 10px;opacity:0;transition:opacity .8s ease}
+#jhIntro.on p{opacity:1}#jhIntro.on p:nth-of-type(2){transition-delay:.6s}#jhIntro.on p:nth-of-type(3){transition-delay:1.2s}
+#jhIntro .btn{margin-top:8px;min-width:10em}
+.jh-card{display:flex;gap:12px;align-items:flex-start}.jh-card img{width:72px;height:96px;object-fit:contain;flex:none}
+.jh-card .tx{flex:1;min-width:0}.jh-card b{font:800 17px var(--serif,serif)}.jh-card p{margin:4px 0;line-height:1.6;font-size:14px}
+@media (prefers-reduced-motion:reduce){#jhFade,#jhIntro,#jhIntro .cd,#jhIntro p,.home-page.jh-zoom{transition:opacity .2s!important;transform:none!important}}`;document.head.append(s)}
+/* ---------- 換頁的淡出淡入：先蓋一層宣紙色淡入，再換網址；長卷那頁圖載好後把這層淡出 ---------- */
+function jhFadeEl(){let f=document.getElementById("jhFade");if(!f){jhCss();f=document.createElement("div");f.id="jhFade";f.setAttribute("aria-hidden","true");document.body.append(f)}return f}
+function jhGo(hash,from){hash=hash||"#/jianghu";jhCss();const f=jhFadeEl();if(from)from.classList.add("jh-zoom");
+  setTimeout(()=>f.classList.add("on"),20);setTimeout(()=>{location.hash=hash;if(from)from.classList.remove("jh-zoom")},JH_FADE+40)}
+function jhFadeOut(){const f=document.getElementById("jhFade");if(!f)return;f.classList.add("on");setTimeout(()=>f.classList.remove("on"),40)}
+/* ---------- 長卷頁 #/jianghu ---------- */
+function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures"),"#/");if(typeof setTabs==="function")setTabs(false);v.className="view fixed jh-v";
+  document.body.classList.add("jh-on");   /* 小帥吉祥物在長卷上看起來像第二個隨行角色，這一頁藏起來（離開時拿掉） */
+  const f=jhFadeEl();f.classList.add("on");   /* 沒經過 jhGo（例如直接開網址）也先蓋著，圖好了再淡出 */
+  const c=jhLook(),o=typeof oscGet==="function"?oscGet():null,my=c&&o&&typeof OSC!=="undefined"?OSC.act(o,c):"",z=typeof zmGet==="function"?zmGet():null,beat=z&&typeof OSC!=="undefined"?OSC.zmBeaten(z):[];
+  let at=JH_START;try{const a=store.get("jhAt",null);if(a&&JH_SITE[a])at=a}catch(e){}
+  const wrap=document.createElement("div");wrap.className="jh-wrap";const map=document.createElement("div");map.className="jh-map";wrap.append(map);
+  const img=document.createElement("img");img.src=`data/yunhe/pano.webp?v=${JH_IMGV}`;img.alt=jhL("十州棋館圖：晚明江淮十州的十派山門","Map of the ten schools across the Jiang-Huai prefectures");img.draggable=false;map.append(img);
+  const pc=(x,y)=>`left:${(x/JH_W*100).toFixed(3)}%;top:${(y/JH_H*100).toFixed(3)}%`;
+  const sch=typeof OSC!=="undefined"?OSC.SCH:[];
+  for(const S0 of sch){const sid=S0.id,P=JH_SITE[sid];if(!P)continue;const S=jhSch(sid)||S0,m=typeof OSC!=="undefined"?OSC.MST.find(x=>x.sid===sid):null;
+    const b=document.createElement("button");b.type="button";b.className="jh-spot"+(beat.includes(m&&m.id)?" won":"")+(my===sid?" mine":"");b.dataset.sid=sid;b.style.cssText=pc(P.f[0],P.f[1])+`;--jc:${jhCol[sid]||"#8a6a3a"}`;
+    b.setAttribute("aria-label",S.nm+(m?jhL("，掌門"+m.nm,", master "+m.en):""));
+    b.innerHTML=`<span class="bn">${m?`<img src="data/npc/${m.id}.webp" alt="" onerror="this.remove()">`:""}${typeof oscSym==="function"?oscSym(sid):""}<b>${esc(S.nm)}</b></span><span class="pole" aria-hidden="true"></span>`;
+    b.onclick=()=>{try{vibrate(5)}catch(e){}walk(sid)};map.append(b)}
+  const me=document.createElement("img");me.className="jh-me";me.alt="";me.src=c?`data/xs/prev_${c}.webp`:"";if(!c)me.style.display="none";me.onerror=()=>{me.style.display="none"};map.append(me);
+  let busy=false;const place=(x,y,dir)=>{me.style.cssText=pc(x,y)+";height:9%";me.classList.toggle("l",dir<0)};place(...JH_SITE[at].s,1);
+  const scale=()=>map.clientHeight/JH_H,center=(x,smooth)=>{const L=x*scale()-wrap.clientWidth/2;try{wrap.scrollTo({left:Math.max(0,L),behavior:smooth?"smooth":"auto"})}catch(e){wrap.scrollLeft=Math.max(0,L)}};
+  const redu=()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}};
+  function walk(sid){if(busy)return;const pts=jhPath(at,sid);if(!pts.length){jhSheet(sid);return}
+    if(redu()||pts.length<2){const p=pts[pts.length-1];place(p[0],p[1],1);at=sid;try{store.set("jhAt",sid)}catch(e){}center(p[0],false);jhSheet(sid);return}
+    busy=true;const L=jhLen(pts),ms=Math.max(500,Math.min(4200,L/0.55)),t0=Date.now();
+    const step=()=>{if(!wrap.isConnected){busy=false;return}const t=Math.min(1,(Date.now()-t0)/ms),e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2,p=jhAt(pts,e);place(p.x,p.y,p.dir);center(p.x,false);
+      if(t<1)setTimeout(step,16);else{busy=false;at=sid;try{store.set("jhAt",sid)}catch(e){}jhSheet(sid)}};step()}   /* 用計時器推進：畫面在背景時 requestAnimationFrame 會停，計時器照走 */
+  v.innerHTML="";v.append(wrap);
+  const ready=()=>{if(!wrap.isConnected)return;center(JH_SITE[at].s[0],false);jhFadeOut();setTimeout(()=>jhIntro(),JH_FADE+80)};
+  if(img.complete&&img.naturalWidth)setTimeout(ready,0);else{img.onload=ready;img.onerror=ready}
+  setTimeout(()=>{if(f.classList.contains("on")&&wrap.isConnected)ready()},6000);   /* 圖很慢也不要一直蓋著 */
+  /* 英文模式直接開在這一頁：外掛字典（派名、人名）比畫面晚到，到了（07i18n 發 xq-i18n-ext）就照英文重畫一次（讀螢幕標籤才會是英文） */
+  try{if(typeof oscEn==="function"&&oscEn()&&!(typeof I18N_EXN!=="undefined"&&I18N_EXN>0)){const H0=location.hash,re=()=>{document.removeEventListener("xq-i18n-ext",re);if(wrap.isConnected&&location.hash===H0)Jianghu(v)};document.addEventListener("xq-i18n-ext",re)}}catch(e){}
+  return{}}
+/* ---------- 駐地小卡：拜師／繼續修行、挑戰掌門、這一派的棋友 ---------- */
+function jhSheet(sid){if(typeof sheet!=="function"||typeof OSC==="undefined")return;const S=jhSch(sid),m=OSC.MST.find(x=>x.sid===sid),c=jhLook(),o=typeof oscGet==="function"?oscGet():null,act=c&&o?OSC.act(o,c):"";
+  const mates=Object.values(OSC.NPC).filter(x=>x[0]===sid).map(x=>jhT(x[2])).slice(0,5);
+  sheet(`${S.nm}`,b=>{b.innerHTML=`<div class="jh-card">${m?`<img src="data/npc/${m.id}.webp" alt="" onerror="this.remove()">`:""}<div class="tx">
+      ${m?`<b>${esc(jhL(m.nm,m.en))}</b><p class="muted">${esc(jhL(S.nm+"掌門","Master of the "+S.nm))}</p><p>${esc(jhL("「"+m.say+"」",'"'+jhT(m.say)+'"'))}</p>`:""}
+      <p class="muted">${esc(jhL(`慣用${S.op}：${S.say}`,`Plays ${S.op}: ${S.say}`))}</p>${mates.length?`<p class="muted">${esc(jhL("門下棋友：","Players of this school: ")+mates.join(jhL("、",", ")))}</p>`:""}</div></div>
+    ${c?"":`<p class="muted">${esc(jhL("開始旅程、有了隊伍以後才能拜師和挑戰。","Start a journey and form a party to learn or challenge."))}</p>`}
+    <div class="osc-row" style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
+      ${c?`<button class="btn" id="jhLearn">${esc(act===sid?jhL(`繼續${jhNm(c)}的修行`,`Continue ${jhNm(c)}'s training`):jhL(`${jhNm(c)}拜入${S.nm}`,`${jhNm(c)} joins the ${S.nm}`))}</button>`:""}
+      ${c&&m?`<button class="btn ghost" id="jhZm">${esc(jhL(`🏯 挑戰${m.nm}`,`🏯 Challenge ${m.en}`))}</button>`:""}
+      <button class="btn ghost" id="jhAll">${esc(jhL("看十派總覽","See all ten schools"))}</button></div>`;
+    const q=s=>b.querySelector(s);
+    if(q("#jhLearn"))q("#jhLearn").onclick=()=>{try{closeSheet()}catch(e){}if(act===sid){location.hash="#/school/"+c;return}if(typeof oscJoinAsk==="function")setTimeout(()=>oscJoinAsk(c,sid,()=>{location.hash="#/school/"+c}),80)};
+    if(q("#jhZm"))q("#jhZm").onclick=()=>{try{closeSheet()}catch(e){}if(typeof zmStart==="function")zmStart(m,c)};
+    q("#jhAll").onclick=()=>{try{closeSheet()}catch(e){}location.hash="#/school"}})}
+/* ---------- 第一次進來的歡迎文字（整個帳號只播一次，store jhIntro；點按鈕或背景收起） ---------- */
+function jhIntro(force){let seen=0;try{seen=store.get("jhIntro",0)}catch(e){}if(seen&&!force)return;if(document.getElementById("jhIntro"))return;jhCss();
+  const c=jhLook(),nm=c?jhNm(c):"";const d=document.createElement("div");d.id="jhIntro";d.setAttribute("role","dialog");d.setAttribute("aria-modal","true");d.setAttribute("aria-labelledby","jhIntroT");
+  d.innerHTML=`<div class="cd"><small>${esc(jhL("初入江湖","INTO THE JIANGHU"))}</small><h2 id="jhIntroT">${esc(jhL("歡迎來到江淮十州","Welcome to the Ten Prefectures"))}</h2>
+    <p>${esc(jhL("萬曆年間，淮水、運河與長江，把江淮十州串成一條棋路。","In the Wanli years, the Huai River, the Grand Canal and the Yangtze linked ten prefectures into one road of chess."))}</p>
+    <p>${esc(jhL("雲河棋會的十個門派各據一方山水、開館授棋；每一派有自己的棋路，也有一位等你登門挑戰的掌門。","The ten schools of the Cloud River Chess Club each hold their own hills and waters. Every school has its own way of playing, and a master waiting for your challenge."))}</p>
+    <p>${esc(nm?jhL(`帶著${nm}，一州一州去拜師、踢館吧。點一座山門，${nm}就會走過去。`,`Take ${nm} from prefecture to prefecture to learn and to challenge. Tap a gate and ${nm} will walk there.`):jhL("點一座山門，看看那一派的掌門和棋路。","Tap a gate to meet that school's master."))}</p>
+    <button class="btn" id="jhIntroGo">${esc(jhL("開始遊歷","Start the journey"))}</button></div>`;
+  document.body.append(d);setTimeout(()=>d.classList.add("on"),40);
+  const close=()=>{try{store.set("jhIntro",1)}catch(e){}d.classList.remove("on");setTimeout(()=>d.remove(),500)};
+  d.querySelector("#jhIntroGo").onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}close()};d.onclick=e=>{if(e.target===d)close()};
+  setTimeout(()=>{try{d.querySelector("#jhIntroGo").focus()}catch(e){}},400)}
+/* 離開長卷頁：歡迎文字還開著就收掉（不記看過） */
+if(typeof addEventListener==="function")addEventListener("hashchange",()=>{if(/^#\/jianghu/.test(location.hash))return;document.body.classList.remove("jh-on");const d=document.getElementById("jhIntro");if(d)d.remove()});
+/* ---------- 首頁遠山「🗺 十州棋館」（照 07xsm 西市入口的掛法；各朝首頁都有） ---------- */
+function jhHomePos(P){const b=P&&P.querySelector("#hmJh");if(!b)return;const c=JH_HOME[P.dataset.hmw||""]||JH_HOME[""];b.style.left=c[0]+"%";b.style.top=c[1]+"%";delete b.dataset.ttL;b.style.marginLeft=""}
+function jhHomeSpot(v){if(!JH_ON)return;const P=v.querySelector(".home-page");if(!P||P.querySelector("#hmJh"))return;jhCss();
+  const k=P.dataset.hmw||"",c=JH_HOME[k]||JH_HOME[""],b=document.createElement("button");b.type="button";b.id="hmJh";b.className="shp-spot";
+  b.style.left=c[0]+"%";b.style.top=c[1]+"%";b.setAttribute("aria-label",jhL("十州棋館","Ten Prefectures"));b.innerHTML=`<b>${esc(jhL("🗺 十州棋館","🗺 Ten Prefectures"))}</b>`;
+  b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}jhGo("#/jianghu",P)};
+  let ref=null;try{const ord=hmFocusOrder((typeof hmwSpots==="function"?hmwSpots(k):[]).concat([["hmJh",c[0],c[1]]])).map(s=>s[0]),i=ord.indexOf("hmJh");for(let j=i+1;j<ord.length&&!ref;j++)ref=P.querySelector(":scope>#"+ord[j])}catch(e){}
+  if(!ref){const sp=P.querySelectorAll(":scope>.shp-spot");ref=sp.length?sp[0]:P.querySelector(":scope>.hm-go-bar")}
+  P.insertBefore(b,ref||null);try{if(typeof hmClamp==="function")hmClamp(P)}catch(e){}}
+if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(!hub)jhHomeSpot(v)}catch(e){}return r}}
+if(typeof hmwSet==="function"){const f1=hmwSet;hmwSet=function(P){const r=f1.apply(this,arguments);try{jhHomePos(P)}catch(e){}return r}}
+/* ---------- 開局棋路總覽、十派掌門頁頂上一顆按鈕（包一層 OscPage，不改 07z9） ---------- */
+if(typeof OscPage==="function"){const f2=OscPage;OscPage=function(v,c,lk){const r=f2.apply(this,arguments);try{if(!lk&&(!c||c==="masters"))setTimeout(()=>jhSchoolBtn(v),0)}catch(e){}return r}}
+function jhSchoolBtn(v){const pad=v.querySelector(".pad.osc");if(!pad||pad.querySelector("#jhOpen"))return;const b=document.createElement("button");b.type="button";b.id="jhOpen";b.className="btn";
+  b.textContent=jhL("🗺 走進十州棋館","🗺 Enter the Ten Prefectures");b.onclick=()=>{try{vibrate(5)}catch(e){}jhGo("#/jianghu")};pad.prepend(b)}
+/* 開局棋路的修行頁換畫時（oscHome 的 draw 會重畫 innerHTML）不加；總覽和掌門頁也會重畫 → 用 MutationObserver 不划算，改在重畫後的下一個點擊補上 */
+if(typeof document!=="undefined")document.addEventListener("click",()=>{if(!/^#\/school(\/masters)?$/.test(location.hash))return;setTimeout(()=>{const v=document.getElementById("view");if(v)jhSchoolBtn(v)},0)},true);
+/* ---------- 找地方（07z6）：雲河渡口加「十州棋館」、練棋書院加「開局棋路」 ---------- */
+try{if(typeof STM_AREAS!=="undefined"){const A=k=>STM_AREAS.find(a=>a[0]===k);const sh=A("ship"),ac=A("acad");
+  if(sh&&!sh[4].some(e=>e[1]==="#/jianghu"))sh[4].push([jhL("十州棋館","Ten Prefectures"),"#/jianghu","十州 門派 江湖 地圖 掌門 長卷 棋館 山門"]);
+  if(ac&&!ac[4].some(e=>e[1]==="#/school"))ac[4].push([jhL("開局棋路","Opening Paths"),"#/school","開局 門派 拜師 修行 中炮 屏風馬"])}}catch(e){}
 /* ================= 🔎 滿版圖「點畫裡的東西看說明」（開發者回饋 818：「對所有繪製的圖可以讓玩家點選物件，然後跳出顯示相關文件說明，就像在環景圖或對戰時點桌子上的物件那樣……不要把物件名稱直接寫上去，會太累亂，玩家點了再顯示」）=================
    圖上平常什麼都不標；點到登記過的東西＝跳出小卡（名稱＋兩三句白話介紹，跟 06-cpu.js 的 parkInfo 同一個 sheet 樣式），07w 的角色照舊走過去、轉身看那個東西。
    點選順序：入口標籤／告示紙等按鈕（07w 先攔、或按鈕自己處理）＞這裡登記的物件＞空地（07w 走路）。只在點到「圖本身」時才判斷，按鈕、連結、角色身上的透明按鈕一律不碰；
@@ -30466,6 +30630,7 @@ function CpuGame(v,practicePage,mode){
   /* 意見回饋 431：點對手頭像看他的 3D 人物（拖曳可以轉） */
   const oppInfo=()=>{if(!st)return null;const bot=st.human==="r"?"b":"r",N=parkNpcOf(st),L0=lvPlayOf(st),jk=(L0&&L0.lvp.opp)||(String(st.journey||"").startsWith("char:")?st.journey.slice(5):null);
     if(jk&&JCHAR[jk])return{look:JCHAR_LOOK(jk,bot),name:JCHAR[jk].name,img:`data/journey/char_${jk}_idle.webp`,say:JCHAR[jk].hi,age:AGE["j:"+jk]};
+    {const zm=typeof zmAct==="function"?zmAct(st.journey):null;if(zm){let age;try{age=OSC.mst(st.journey).age}catch(e){}return{look:zm.look(bot),name:zm.name,img:zm.img,say:zm.say,age}}}   /* 11/18 測試員驗 1821（P2）：掌門局（journey＝inn:zm_<派>）點左上頭像跳出「幻影棋客」——這裡原本認不得掌門，落到最後的預設；改成掌門本人（07z9-school.js zmAct，3D 有門派字） */
     {const ia=innActor(st.journey);if(ia)return{look:ACTOR_LOOK(ia.id,bot),name:ia.name,img:ia.img,say:ia.say.replace(/^「|」$/g,""),age:AGE["n:"+ia.id]}}
     {const ig=igAct(st.journey);if(ig)return{look:ig.look(bot),name:ig.name,img:ig.img,say:ig.hi,age:ig.age}}   /* 意見回饋 826：驛站今天路過的客人（07m2-innguest.js） */
     if(st.arena&&ARENA[st.arena])return{look:CHAMP_LOOK(st.arena,bot)||{p:bot==="r"?"帥":"將",e:st.arena,g:9},name:ARENA[st.arena].name,img:`data/champ/${st.arena}_idle.webp`,say:ARENA[st.arena].hi,age:AGE["c:"+st.arena]};
@@ -30566,7 +30731,8 @@ function CpuGame(v,practicePage,mode){
        改成先在 S2 算好要顯示的文字和 hot／wrap，跟上次寫進去的一樣就不動 DOM */
     const s2=v.querySelector("#stat"),S2={textContent:"",cls:{},classList:{add:(...a)=>a.forEach(k=>{S2.cls[k]=1}),toggle:(k,on)=>{if(on)S2.cls[k]=1;else delete S2.cls[k]}},after:x=>s2.after(x)};{const pa=v.querySelector("#pAct");if(pa&&!st.practice&&!pa.hidden)pa.hidden=true}
     if(!st.result&&st.repetition&&st.repetition.pending){S2.textContent=st.repetition.why;const pk=(st.id||"")+"|"+st.moves.length;if(repAsked!==pk){repAsked=pk;setTimeout(()=>{if(!st||st.result||!(st.repetition&&st.repetition.pending))return;   /* 開發者 11/11 選「人機遇待核給和局／悔棋」 */
-      modal(`<div class="em">⚖️</div><h2>循環待核</h2><p>${esc(st.repetition.why||"這個循環裁判沒辦法自動判。")}</p><p class="muted" style="font-size:13px">跟電腦下沒有人工裁判，你可以直接選和局，或退回你上一步之前換一步走。</p><p style="font-size:13.5px;text-align:left;line-height:1.7">🤝 同意和局：這盤記一盤和局${st.ranked?"（晉級賽照和局算分）":""}。<br>↶ 悔一步變著：退回你上一步再換一步，不算用悔棋，也不影響「我的棋力」。</p>`   /* 開發者 11/11 選 ChatGPT UI-13：寫清楚兩個選擇的後果（local.js /play/repdraw＝playEnd 和局、晉級賽 cpuRateApply；/play/repundo 不加 undoN） */,[["🤝 同意和局",()=>post("/play/repdraw")],["↶ 悔一步變著",()=>post("/play/repundo")],["繼續下",null]])},500)}}else if(st.msg)S2.textContent=st.msg;else if(st.result)S2.textContent=st.result.why;
+      modal(`<div class="em">⚖️</div><h2>循環待核</h2><p>${esc(st.repetition.why||"這個循環裁判沒辦法自動判。")}</p><p class="muted" style="font-size:13px">跟電腦下沒有人工裁判，你可以直接選和局，或退回你上一步之前換一步走。</p><p style="font-size:13.5px;text-align:left;line-height:1.7">🤝 同意和局：這盤記一盤和局${st.ranked?"（晉級賽照和局算分）":""}。<br>↶ 悔一步變著：退回你上一步再換一步，不算用悔棋，也不影響「我的棋力」。</p>`   /* 開發者 11/11 選 ChatGPT UI-13：寫清楚兩個選擇的後果（local.js /play/repdraw＝playEnd 和局、晉級賽 cpuRateApply；/play/repundo 不加 undoN） */,[["🤝 同意和局",()=>post("/play/repdraw")],["↶ 悔一步變著",()=>post("/play/repundo")],["繼續下",null]])},500)}}else if(st.msg){S2.textContent=st.msg;S2.classList.add("wrap")}else if(st.result)S2.textContent=st.result.why;
+    /* 11/18 測試員驗 1545（P3）：沒有多執行緒時那句說明（local.js playMsg，很長）在手機狀態列被截成「…multi-thre…」→ 有 st.msg 的時候狀態列換行（.status.wrap） */
     else if(st.thinking)S2.textContent=cgT("game.thinking","🤔 思考中…")+(typeof pmvLabel==="function"?pmvLabel(st):"");   /* 第 12 輪 F3：排了預走就寫「⏳ 已預走」 */   /* Gemini 評估 11/8（介面圖示化）：狀態列短字加圖示；誰在想看上面那排亮起來的頭像 */
     else{S2.textContent=st.check>=0?cgT("game.check","⚠ 被將軍！"):st.hint?"💡 提示："+st.hint.cn:cgT("game.yourMove","👉 輪到你")+(st.eval&&!st.td?`・${evt(st.eval.v)}`:"");S2.classList.toggle("hot",st.check>=0||!!st.hint)}
     if(st.practice&&!st.result&&!st.msg&&!(st.repetition&&st.repetition.pending))practiceBar(S2);
@@ -38372,13 +38538,14 @@ function stqCss(){if(document.getElementById("stqCss"))return;try{if(typeof mnqC
 #stqPg.on{opacity:1}
 #stqPg .stq-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;width:min(560px,100%)}
 @media (max-width:350px){#stqPg .stq-top{justify-content:center}}
-/* 11/17 測試員 B 第 29 輪 N29-5：390 寬頂欄折行、「⋯」掉到第二行 → 430 寬以下一律一行：任務燈縮成 22px、「我會下棋」縮字，放不下就在鈕裡換兩行（高照舊 44） */
-@media (max-width:430px){#stqPg .stq-top{flex-wrap:nowrap;gap:6px}#stqPg .stq-lp{gap:3px}#stqPg .stq-lp span{width:22px;height:22px;font-size:12px}#stqPg .stq-sk{flex:1 1 auto;min-width:0;white-space:normal;font-size:13px;line-height:1.15;padding:4px 8px}}
 #stqPg .stq-lp{display:flex;gap:5px;flex:none}
 #stqPg .stq-lp span{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 13px/1 var(--serif,serif);background:#cdbb98;color:#5b4a3a}
 #stqPg .stq-lp span.on{background:radial-gradient(circle,#fff3c4,#f2b33d 60%,#b8741a);color:#7a3a10;box-shadow:0 0 10px rgba(242,179,61,.85)}
 #stqPg .stq-lp span.cur{box-shadow:0 0 0 2px #b3261e;color:#b3261e;background:#f8f0dc}
 #stqPg .stq-sk{flex:0 1 auto;min-height:44px;padding:6px 12px;border-radius:99px;border:1.5px solid #8a5a2b;background:#fffaf0;color:#5b3a1a;font:800 14px/1.2 var(--serif,serif);white-space:nowrap}
+/* 11/17 測試員 B 第 29 輪 N29-5：390 寬頂欄折行、「⋯」掉到第二行 → 430 寬以下一律一行：任務燈縮成 22px、「我會下棋」縮字，放不下就在鈕裡換兩行（高照舊 44） */
+/* 11/18 測試員驗 1545（P3）：390 寬「我會下棋，直接開始」還是溢出 4px——這條 430 寬的規則原本寫在 .stq-lp／.stq-sk 基本樣式前面，同權重被後面蓋回 14px、不換行；移到基本樣式後面才生效 */
+@media (max-width:430px){#stqPg .stq-top{flex-wrap:nowrap;gap:6px}#stqPg .stq-lp{gap:3px}#stqPg .stq-lp span{width:22px;height:22px;font-size:12px}#stqPg .stq-sk{flex:1 1 auto;min-width:0;white-space:normal;font-size:13px;line-height:1.15;padding:4px 8px}}
 #stqPg .stq-mo{flex:none;width:44px;height:44px;border-radius:50%;border:1.5px solid #8a5a2b;background:#fffaf0;color:#5b3a1a;font:900 20px/1 var(--serif,serif)}
 #stqPg .stq-mn{display:flex;flex-direction:column;align-items:flex-end;gap:4px;width:min(560px,100%)}#stqPg .stq-mn[hidden]{display:none}
 #stqPg .stq-mn button{min-height:44px;padding:6px 16px;border-radius:12px;border:1.5px solid #8a5a2b;background:#fffaf0;color:#3b2a1a;font:800 15px var(--serif,serif)}#stqPg .stq-mn small{font-size:12px;color:#6f5f4c}
@@ -38687,6 +38854,8 @@ function mnqCss(){if(document.getElementById("mnqCss"))return;const s=document.c
 /* 11/18 開發者看商店截圖「這邊排版錯了」→ 選「四顆排整齊」：「更多玩法 ›」原本是小膠囊、跟上下三顆不同家，改成同寬（220）、同樣圓角方塊粗邊、半透明米色底，間距交給 .hm-go-bar 的 gap；圓角跟快速對局、回報問題同一個 var(--btn-r,10px)（秦、五代 14px），iMac 驗 1423 量到 14 vs 10 */
 .mnq-next{display:flex;align-items:center;justify-content:center;gap:6px;min-width:220px;max-width:100%;min-height:50px;padding:8px 22px;border:2px solid #8a5a2b;border-radius:var(--btn-r,10px);background:linear-gradient(#f8f0dc,#e6d3a6);color:#3b2a1a;font:900 19px/1.2 var(--serif,serif);letter-spacing:.06em;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;-webkit-tap-highlight-color:transparent;animation:mnqGlow 2.4s ease-in-out infinite}
 .mnq-next:active{transform:translateY(1px)}.mnq-next:focus-visible{outline:3px solid #f2c94c;outline-offset:3px}
+/* 11/18 測試員驗 1545（P3）：英文四顆各自照字長撐開（Prelude 220、More ways to play 235、Keep playing 224、Report a problem 250）。按鈕列本身是 max-content 寬＝最寬那顆，四顆改成撐滿這一列＝一樣寬；中文四顆都是 220，看起來不變；「加到主畫面」小膠囊那列照舊置中 */
+.hm-go-bar>.mnq-next,.hm-go-bar>.mnq-more,.hm-go-bar>.hm-go,.hm-go-bar>.hm-fb{align-self:stretch}
 @keyframes mnqGlow{50%{box-shadow:0 4px 14px rgba(0,0,0,.35),0 0 0 4px rgba(242,201,76,.45)}}
 #mnqGf,#mnqCard{position:fixed;inset:0;z-index:9200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:max(24px,calc(12px + env(safe-area-inset-top,0px))) 18px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff7e6;background:radial-gradient(circle at 50% 38%,rgba(70,36,10,.95),rgba(0,0,0,.97) 72%);opacity:0;transition:opacity .35s;overflow:auto}
 #mnqGf.on,#mnqCard.on{opacity:1}
@@ -39205,9 +39374,9 @@ function xqDocClean(t){try{const out=[];for(const l of String(t||"").split("\n")
       .replace(/`[^`\n]*\.(?:css|html)(?::\d+)?`/g,"").replace(/\b[\w./-]+\.(?:css|html):\d+/g,"").replace(/（[^（）\n]*真人測試[^（）\n]*）/g,"").replace(/(?:不改\s*)?\bm\.html\s*[：:]\s*/g,"")   /* 11/17 測試員 D Y7：a11y 的「m.css:行號」、音效設計的「（給真人測試用，還沒做過）」、i18n 的「m.html：…」 */
       .replace(/\b[\w./-]+\.js:\d+/g,"").replace(/\btest-[\w-]+\.js\b/g,"")
       .replace(/(?:\s*[、，；])+(?=\s*[。；|]|\s*$)/g,"").replace(/^(\s*[-*]\s+)[、，；]\s*/,"$1").replace(/（\s*）/g,"").replace(/\*\*【程式已實作】\*\*\s*\|/g,"**【程式已實作】** |").replace(/[ 　]{2,}/g," ").replace(/。{2,}/g,"。").replace(/待開發者確認/g,"資料補齊中");   /* I P1-4：「待開發者確認」不在 App 裡出現（素材與授權頁的正本已改寫；其他文件的殘留在這裡換成中性說法） */
-    if(x!==l)x=xqDocTidy(x);   /* 11/18 第 33 輪 N33-5：拿掉檔名後留下的「、、」「（、」「、 等」「的 （」「- ：」整理通順（只動被拿過字的那一行） */
+    if(x!==l)x=xqDocTidy(x);   /* 11/18 第 33 輪 N33-5：拿掉檔名後留下的「、、」「（、」「、 等」「的 （」「- ：」整理通順（只動被拿過字的那一行）；11/18 測試員驗 1545（P3）：驗證紀錄 139 行「跳過（；沒有 …）」——括號開頭的「；」也收掉 */
     if(l.trim()&&!x.replace(/[\s\-*|、，。；：:`]/g,""))continue;out.push(x)}return out.join("\n")}catch(e){return t}}
-function xqDocTidy(x){return String(x).replace(/、(?:\s*、)+/g,"、").replace(/、\s*（[^（）\n]*）(?=\s*(?:、|等))/g,"").replace(/([㐀-鿿])\s+、\s*(?=[㐀-鿿])/g,"$1").replace(/([㐀-鿿])\s+(?=[㐀-鿿])/g,"$1").replace(/([（(：:|])\s*[、，]\s*/g,"$1").replace(/\s*、\s*(?=[）)]|等)/g,"").replace(/\s*的\s*(?=（|[，。；]|$)/g,"").replace(/，(?:\s*，)+/g,"，")
+function xqDocTidy(x){return String(x).replace(/、(?:\s*、)+/g,"、").replace(/、\s*（[^（）\n]*）(?=\s*(?:、|等))/g,"").replace(/([㐀-鿿])\s+、\s*(?=[㐀-鿿])/g,"$1").replace(/([㐀-鿿])\s+(?=[㐀-鿿])/g,"$1").replace(/([（(：:|])\s*[、，；;]\s*/g,"$1").replace(/\s*、\s*(?=[）)]|等)/g,"").replace(/\s*的\s*(?=（|[，。；]|$)/g,"").replace(/，(?:\s*，)+/g,"，")
   .replace(/^(\s*[-*]\s+)[：:]\s*/,"$1").replace(/(\S)\s+([，。、；：）])/g,"$1$2").replace(/（\s*）/g,"").replace(/[ 　]{2,}/g," ")}
 try{if(typeof xqDocVar==="function"&&!xqDocVar.__gcn){const f0=xqDocVar;xqDocVar=function(t,nat){return xqDocEnNote(f0(xqDocClean(gcnDocFeat(t)),nat))};xqDocVar.__gcn=1}}catch(e){}
 </script></body></html>
