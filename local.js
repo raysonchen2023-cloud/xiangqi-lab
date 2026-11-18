@@ -83,7 +83,10 @@ var XQ=(function(){
     if(!it.result||(sd!=="r"&&sd!=="b")||!Array.isArray(ms))return{};if(c==="pvp"&&!ms.some(m=>m.q))return{};const n=ms.filter(m=>m.by===sd&&!m.q).length;return n?{pend:n}:{}};
 
   // ---------- 挑戰電腦 ----------
-  let P=null,playBusy=false,playSince=0,playMsg="",paBusy=false,paFxT=0,engFail=0,engWait=false;   /* 11/11：電腦出棋失敗的次數、是不是在等網路回來（playEngine） */
+  let P=null,playBusy=false,playSince=0,playMsg="",paBusy=false,paFxT=0,engFail=0,engWait=false,engNoCoi=false;   /* 11/11：電腦出棋失敗的次數、是不是在等網路回來（playEngine）；11/18 engNoCoi＝沒有多執行緒模式，重整前不再重試 */
+  /* 11/18 第 33 輪觀察：網頁版 Service Worker 沒裝好、沒有跨來源隔離時，引擎一啟動就丟錯，這裡卻當成「一時沒想好」每隔幾秒一直重試、畫面也只說「幾秒後會自動再想一次」。
+     改成：認得這種錯（engine.js 的 noCoi，或頁面本身就沒有隔離、引擎也還沒啟動），說清楚（跟 m/02-shell.js coiWarn 同一句），重整前不再空轉重試；開新局會再試一次 */
+  const ENG_NOCOI_MSG="⚠ 電腦棋手需要瀏覽器的「多執行緒模式」才能下棋，這次沒有開成功（背景的 Service Worker 沒有裝好）。請重新整理這一頁；還是不行，請換用最新版的 Chrome、Safari 或 Edge 再打開。";
   // 積分挑戰：跟線上對戰一樣的段位（新手～專2-2），但分開記分。電腦的強度跟著你目前的段位走，段位越高越難。
   const RANKS=[["新手",0],["入門1",50],["入門2",100],["入門3",150],["業1",200],["業2",300],["業3",400],["業4",500],["業5",600],["業6",700],["業7",800],["業8",900],["業9",1000],["專1-1",1150],["專1-2",1300],["專2-1",1500],["專2-2",1700]];
   const rankIdx=p=>{let i=0;for(let k=0;k<RANKS.length;k++)if((p||0)>=RANKS[k][1])i=k;return i};
@@ -362,6 +365,60 @@ var XQ=(function(){
     if(P.styleOn==null)P.styleOn=Math.random()<.9;if(!P.styleOn)return null;
     const list=(S[P.turn]||[])[Math.floor(P.moves.length/2)];if(!list)return null;const L=legal(P.board,P.turn);
     for(const u of list){const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(L.some(([a,b])=>a===f&&b===t))return[f,t]}return null}
+  /* 開局門派・棋友棋路（開發者 11/18，story/開局門派隨行入派循序訓練_Claude整併稿v3_2026-11-18.md 第十二節）：
+     園子棋友（journey park＋m_parkNpc）、驛站旅人與秘境棋友（inn:）各有主修／副修（跟 App 的 OSC.NPC 同一份對照，test-osc-npc-1118.js 檢查兩邊一樣）；
+     data/npc-book.json＝每一派在某個局面可以走的那幾步（tools/school/osc-npcbook.js 用 Pikafish 核驗，局面鍵＝fen(盤面,走方)），第一次輪到棋友走時才下載。
+     局面對得上才照表走（這一盤約 75% 先看主修、25% 先看副修，同一派的棋友因此走出不同分支），對不上（玩家離譜、換走序、出了表）就交回原本的引擎與難度、這一盤不再查表；
+     下載不到、練習、殘局起手、晉級賽、擂台都不查表。秘境棋友原本的 STYLE 留著當表下載不到時的備援 */
+  /* NPCBOOK:BEGIN */
+  const NPCB_MAX=6;
+  const NPC_SCH={"inn:tea":["elephant","pawn"],"inn:scholar":["advisor_corner","horse"],"inn:guard":["same_cannon","central"],"inn:monk":["screen","elephant"],"inn:teller":["opposite_cannon","cross_palace"],
+    "npc:niao":["elephant","screen"],"npc:duanjin":["same_cannon","central"],"npc:douhua":["pawn","advisor_corner"],"npc:fengzheng":["horse","pawn"],"npc:mujiang":["cross_palace","central"],"npc:amah":["screen","elephant"],"npc:daishu":["advisor_corner","palace_horse"],
+    "npc:tiaoshui":["pawn","horse"],"npc:genggu":["opposite_cannon","same_cannon"],"npc:maihua":["elephant","cross_palace"],"npc:w01_tang_lady":["advisor_corner","palace_horse"],"npc:w02_song_tea":["elephant","screen"],"npc:w03_yuan_rider":["horse","screen"],
+    "npc:w04_ming_scholar":["palace_horse","advisor_corner"],"npc:w05_qing_gege":["cross_palace","opposite_cannon"],"npc:w06_swordswoman":["opposite_cannon","central"],"npc:w07_fisher_girl":["pawn","palace_horse"],"npc:w08_embroider":["screen","elephant"],
+    "npc:w09_qin_player":["advisor_corner","elephant"],"npc:w10_general":["same_cannon","central"],"npc:w11_yuan_falconer":["horse","pawn"],"npc:w12_yuan_merchant":["opposite_cannon","cross_palace"],"npc:w13_yuan_singer":["opposite_cannon","same_cannon"],
+    "npc:w14_yuan_porcelain":["elephant","advisor_corner"],"npc:w15_yuan_archer":["central","horse"],"npc:w16_ming_poet":["cross_palace","pawn"],"npc:w17_ming_pipa":["elephant","cross_palace"],"npc:w18_ming_doctor":["palace_horse","pawn"],
+    "npc:w19_ming_teahouse":["pawn","advisor_corner"],"npc:w20_ming_guard":["screen","same_cannon"],"secret:liuji":["central","palace_horse"],"secret:zhangsanfeng":["screen","horse"],"secret:shinaian":["pawn","opposite_cannon"],
+    "secret:shenwansan":["elephant","advisor_corner"],"secret:changyuchun":["same_cannon","central"],"secret:wangmian":["cross_palace","elephant"],
+    /* 十派掌門（開發者 11/18，App 的 OSC.MST）：journey inn:zm_<派>，主修＝本派、副修照設計稿 story/十派掌門_設計稿_1118.md 第三節 */
+    "inn:zm_central":["central","same_cannon"],"inn:zm_screen":["screen","elephant"],"inn:zm_palace_horse":["palace_horse","screen"],"inn:zm_same_cannon":["same_cannon","central"],
+    "inn:zm_opposite_cannon":["opposite_cannon","cross_palace"],"inn:zm_pawn":["pawn","horse"],"inn:zm_elephant":["elephant","advisor_corner"],"inn:zm_horse":["horse","pawn"],
+    "inn:zm_cross_palace":["cross_palace","opposite_cannon"],"inn:zm_advisor_corner":["advisor_corner","palace_horse"]};
+  function npcKeyOf(G,ls){if(!G||G.practice||G.ranked||G.arena||G.start||G.ed)return"";if(G.journey==="park"){try{const r=JSON.parse(ls.getItem("m_parkNpc")||"null");return r&&r.game===G.id&&NPC_SCH["npc:"+r.id]?"npc:"+r.id:""}catch(e){return""}}
+    const j=String(G.journey||"");if(!j.startsWith("inn:"))return"";const id=j.slice(4);return NPC_SCH["inn:"+id]?"inn:"+id:NPC_SCH["secret:"+id]?"secret:"+id:""}
+  /* 照表挑一步：B＝npc-book.json、sch＝[主修,副修]、ord＝0 先主修／1 先副修、rnd＝亂數；表裡的著法再用規則確認一次合法 */
+  function npcBookPick(B,sch,board,side,ord,rnd){if(!B||!B.pos||!sch)return null;const o=B.pos[C.fen(board,side)];if(!o)return null;const L=ord?[sch[1],sch[0]]:[sch[0],sch[1]],Lg=C.legal(board,side);
+    for(const s of L){const M=(o[s]||[]).filter(u=>{const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4));return Lg.some(([a,b])=>a===f&&b===t)});if(M.length)return{u:M[Math.floor(rnd()*M.length)],s}}return null}
+  /* 出表後的棋風偏好（開發者 11/18 選「出表後的棋風偏好」；整併稿第十二節 3）：選步次序＝戰術安全 → 原本的難度策略（先照原樣挑好 mv0）→ 在可比較的候選裡偏好角色棋風。
+     只在引擎這一步本來就給的候選裡換（不多叫引擎、不加深度）；被將軍、有殺棋、只有一條候選（最高幾級）都不換；
+     換過去的那步不比 mv0 差 STY_EPS 厘兵、也不超出這一級原本允許的範圍（最好的 − margin），所以不會為了人設漏應將、錯過唯一防守；棋風分數比 mv0 高才換。
+     棋風分數照整併稿第二節各派「玩起來的辨識點」：中炮門中路壓力與出車、順炮列炮對攻、屏風馬雙馬站穩、反宮馬炮馬協調、仙人指路兵路、飛相出大子、起馬活馬、過宮炮橫向調度、仕角炮保留變化 */
+  const STY_EPS=20;
+  function npcStyleScore(sid,b,f,t,s){const p=String(b[f]||"").toUpperCase(),cap=!!b[t],r0=f/9|0,r1=t/9|0,fw=s==="r"?r0-r1:r1-r0,lat=r0===r1,ct=t%9,edge=ct===0||ct===8;
+    const chk=()=>C.inCheck(C.make(b,f,t),C.opp(s)),big=p==="R"||p==="N"||p==="C";
+    switch(sid){
+      case"central":return(ct===4&&big?1:0)+(p==="R"&&!cap&&fw>0?1:0);
+      case"same_cannon":return(cap?1:0)+(chk()?1:0)+(fw>0&&big?1:0);
+      case"opposite_cannon":return(cap?1:0)+(chk()?1:0)+(lat&&(p==="R"||p==="C")?1:0);
+      case"screen":return p==="N"&&!edge?2:(p==="B"||p==="A")&&!cap?1:0;
+      case"palace_horse":return(p==="N"||p==="C")&&!edge?1:0;
+      case"pawn":return p==="P"&&fw>0?2:p==="N"&&fw>0?1:0;
+      case"elephant":return(p==="R"||p==="N")&&!cap?1:0;
+      case"horse":return p==="N"&&!edge?(fw>0?2:1):0;
+      case"cross_palace":return lat&&(p==="R"||p==="C")?2:0;
+      case"advisor_corner":return(p==="C"||p==="N")&&!cap?1:0}
+    return 0}
+  /* r＝引擎結果（lines 照分數排）、mv0＝原本難度策略挑的那步、sid＝這位棋友這一盤的棋風（主修或副修）、margin＝這一級允許的範圍（沒有就只看 STY_EPS）；回傳 {mv,sw 換了沒} */
+  function npcStylePick(r,mv0,sid,board,side,margin){const keep={mv:mv0,sw:0};if(!r||!Array.isArray(r.lines)||r.lines.length<2||!sid||!mv0||C.inCheck(board,side))return keep;
+    const L=r.lines.filter(x=>x&&typeof x.mv==="string"&&Number.isFinite(x.v)),c0=L.find(x=>x.mv===mv0);if(!c0||L.length<2)return keep;const best=Math.max(...L.map(x=>x.v));
+    if(Math.abs(best)>=20000||Math.abs(c0.v)>=20000||L.some(x=>x.mate!=null))return keep;
+    const Lg=C.legal(board,side),sq2=u=>[C.parseSq(u.slice(0,2)),C.parseSq(u.slice(2,4))],ok=u=>{const[f,t]=sq2(u);return Lg.some(([a,b])=>a===f&&b===t)},sc=u=>{const[f,t]=sq2(u);return npcStyleScore(sid,board,f,t,side)};
+    const lo=Math.max(c0.v-STY_EPS,Number.isFinite(+margin)?best-margin:-Infinity);let pick=mv0,ps=sc(mv0);
+    for(const x of L){if(x.mv===mv0||x.v<lo||!ok(x.mv))continue;const s2=sc(x.mv);if(s2>ps){pick=x.mv;ps=s2}}
+    return{mv:pick,sw:pick!==mv0?1:0}}
+  /* NPCBOOK:END */
+  let npcBookP=null;
+  const npcBookLoad=()=>npcBookP||(npcBookP=fetch(BASE+"data/npc-book.json").then(r=>{if(!r.ok)throw new Error("npc-book "+r.status);return r.json()}).catch(()=>{npcBookP=null;return null}));
   /* STYLEPICK:BEGIN */
   /* 笑面掌櫃的棋風選步（開發者 11/11；說明 xiangqi-db/story/97_笑面掌櫃實作.md）。
      純函式：不碰 P、localStorage、畫面、引擎；只吃 XQCore（C）和傳進來的資料。xiangqi-db/tools/style_loop 的 Node 訓練循環會把 BEGIN～END 這一段原封不動抽出去共用，
@@ -478,6 +535,10 @@ var XQ=(function(){
   const engRace=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>{const e=new Error("ENG_TIMEOUT");e.tmo=1;j(e)},ms))]);
   async function playEngine(){
     if(!P||P.result||P.turn===P.human||playBusy)return;
+    {const nk=npcKeyOf(P,localStorage);if(nk&&P.moves.length<NPCB_MAX&&P.npcOut!==1){playBusy=true;const id=P.id,n=P.moves.length;let pk=null;   /* 棋友棋路：照表走（見上面 npcBookPick） */
+      try{const B=await npcBookLoad();if(P&&P.id===id&&P.moves.length===n&&!P.result&&P.turn!==P.human){if(P.npcOrd==null)P.npcOrd=Math.random()<.75?0:1;pk=npcBookPick(B,NPC_SCH[nk],P.board,P.turn,P.npcOrd,Math.random);if(!pk&&B)P.npcOut=1}}catch(e){}
+      if(pk){setTimeout(()=>{try{if(P&&P.id===id&&P.moves.length===n&&!P.result&&P.turn!==P.human){const f=parseSq(pk.u.slice(0,2)),t=parseSq(pk.u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0}}}finally{playBusy=false;setTimeout(playEngine,0)}},900);return}
+      playBusy=false;if(!P||P.id!==id||P.moves.length!==n||P.result)return}}
     {const sm=styleMove();if(sm){playBusy=true;setTimeout(()=>{try{if(P&&!P.result&&P.turn!==P.human)playApply(sm[0],sm[1])}finally{playBusy=false;setTimeout(playEngine,0)}},700);return}}
     playBusy=true;playSince=Date.now();const id=P.id,n=P.moves.length,lv=P.ranked?RLV[P.rk]||RLV[0]:P.rlv!=null?RLV[P.rlv]||RLV[0]:LEVELS[P.level-1]||LEVELS[2];   /* 意見回饋 548：驛站旅人用段位強度 rlv 浮動 */
     const t0=Date.now();   /* 11/10 開發者「我剛走完一步，電腦就馬上落子」：低等級用淺層深度幾毫秒就算完，至少等 1～1.5 秒再落子，讓玩家看清自己那一步 */
@@ -496,7 +557,8 @@ var XQ=(function(){
         const f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));if(!legal(P.board,P.turn).some(([a,b])=>a===f&&b===t))throw new Error("引擎給出不合法著法 "+mv);playApply(f,t);playMsg="";engFail=0;return}
       const hp=!zg&&HP.on(lv),zl=zg?zgLv(P,lv):lv;   /* 低段（新手～業1）擬人選步：見上面 HUMANPICK；zl＝掌櫃這一盤用的設定（真功夫＝固定節點數） */
       const r=await engRace(XQEngine.search(engPos(),zl.nodes?{nodes:zl.nodes}:lv.movetime?{movetime:lv.movetime}:{depth:lv.depth},zg?SP.mpvOf(zl):hp?HP.mpvOf(lv):lv.multipv||1),engTmo());
-      const mv=zg?SP.pick(r,zl,P.board,P.turn,Math.random).mv:hp?HP.pick(r,lv,P.board,P.turn,Math.random).mv:pickMove(r,lv);   /* 先挑好這一步，思考時間才看得到是不是回吃（F4） */
+      let mv=zg?SP.pick(r,zl,P.board,P.turn,Math.random).mv:hp?HP.pick(r,lv,P.board,P.turn,Math.random).mv:pickMove(r,lv);   /* 先挑好這一步，思考時間才看得到是不是回吃（F4） */
+      {const nk=!zg&&npcKeyOf(P,localStorage);if(nk){const sw=npcStylePick(r,mv,NPC_SCH[nk][P.npcOrd?1:0],P.board,P.turn,lv.margin);if(sw.sw){mv=sw.mv;P.npcSty=(P.npcSty|0)+1}}}   /* 出表後的棋風偏好：只在候選裡、安全範圍內換（見 npcStylePick） */
       {const w=TP.ms(P,mv,r,lv,cpuPace())-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}
       if(!P||P.id!==id||P.moves.length!==n||P.result)return;
       const f=parseSq(mv.slice(0,2)),t=parseSq(mv.slice(2,4));
@@ -507,12 +569,13 @@ var XQ=(function(){
     catch(e){engFail++;const off=typeof navigator!=="undefined"&&navigator.onLine===false,noEng=typeof XQEngine!=="undefined"&&!XQEngine.ready;
       if(e&&e.tmo)try{if(XQEngine.abort)XQEngine.abort()}catch(x){}
       playMsg=off&&noEng?"⚠ 沒有網路，電腦棋手還沒下載到這支手機。連上網路會自動接著下，也可以先去同桌對弈。":e&&e.tmo?"⏳ 電腦棋手卡住了，正在重新啟動；等不及可以按「新局」重新開一盤":"⏳ 電腦棋手一時沒想好，幾秒後會自動再想一次";try{const em=String(e&&e.message||e).slice(0,160);if(P)P.engErr=em;console.warn("[engine]",em)}catch(x){}   /* 11/13 開發者「這是什麼，對玩家來說會看不懂」：畫面上不放技術訊息（不合法著法 g3g4 之類），細節只留在 P.engErr 和主控台給除錯 */
-      if(off&&noEng&&!engWait){engWait=true;addEventListener("online",()=>{engWait=false;engFail=0;setTimeout(playEngine,800)},{once:true})}}
-    finally{playBusy=false;if(P&&P.engOver)return;if(!engFail)setTimeout(playEngine,0);else if(!engWait)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))}}
+      if(off&&noEng&&!engWait){engWait=true;addEventListener("online",()=>{engWait=false;engFail=0;setTimeout(playEngine,800)},{once:true})}
+      if((e&&e.noCoi)||(noEng&&typeof self!=="undefined"&&self.crossOriginIsolated===false)){engNoCoi=true;const nat=typeof navigator!=="undefined"&&/XQQianqiuApp\//.test(navigator.userAgent||"");playMsg=nat?"⚠ "+String(e&&e.message||"電腦棋手沒有啟動成功，請把 App 完全關掉再重新開啟").slice(0,160):ENG_NOCOI_MSG}}   /* 沒有多執行緒：說清楚、不再空轉（原生 App 用 02-shell NATIVE_OLDWV 那句，不提 Service Worker、瀏覽器） */
+    finally{playBusy=false;if(P&&P.engOver)return;if(!engFail)setTimeout(playEngine,0);else if(!engWait&&!engNoCoi)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))}}
   function playState(){ensureP();
     const CR=cpuRate(),ci=heldIdx(CR),nx=RANKS[ci+1];
     const SA=stashAll(),others=Object.values(SA).filter(g=>kindOf(g)!==kindOf(P)).map(g=>({kind:kindOf(g),opp:zgOn(g)?"zhanggui":null,arena:g.arena||null,journey:g.journey||null,ranked:!!g.ranked,reward:!!g.reward,level:g.level,n:g.moves.length,human:g.human}));
-    return{rules:C.REP_RULES,rc:P.rc||null,repetition:P.repetition||null,kind:kindOf(P),opp:zgOn(P)?"zhanggui":null,zgx:zgOn(P)&&!!P.zgx,others,other:others[0]||null,journey:P.journey||null,noPerp:!!P.noPerp,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,blind:/-b$/.test(String(P.id)),board:P.board,turn:P.turn,human:P.human,level:P.level,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
+    return{rules:C.REP_RULES,rc:P.rc||null,repetition:P.repetition||null,kind:kindOf(P),opp:zgOn(P)?"zhanggui":null,zgx:zgOn(P)&&!!P.zgx,others,other:others[0]||null,journey:P.journey||null,noPerp:!!P.noPerp,start:P.start||null,startTurn:P.startTurn||"r",id:P.id,blind:/-b$/.test(String(P.id)),board:P.board,turn:P.turn,human:P.human,level:P.level,rlv:P.rlv==null?null:P.rlv,ranked:!!P.ranked,reward:!!P.reward,arena:P.arena||null,stamp:P.stamp||null,prize:P.prize||null,rkName:P.ranked?RANKS[P.rk][0]:null,rate:P.rate||null,
       cpuRate:{pts:CR.pts,rank:RANKS[ci][0],w:CR.w,l:CR.l,d:CR.d,next:nx?nx[0]:null,toNext:nx?nx[1]-CR.pts:0,lo:RANKS[ci][1],hi:nx?nx[1]:null,hist:CR.hist},
       levels:LEVELS.map(l=>({n:l.n,name:l.name,desc:l.desc})),record:ls.get("record",{}),
       moves:P.moves.map(moveOut),result:P.result,practice:P.practice||null,thinking:playBusy&&P.turn!==P.human,msg:playMsg,eval:lastEv(P.moves),hint:P.hint,hintN:P.hintN||0,undoN:P.undoN||0,   /* 開發者 11/11 選 v3 規劃書 B03：這盤用過幾次提示、悔棋，給畫面標示用 */

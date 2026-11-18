@@ -42,7 +42,7 @@ var XQEngine=(function(){
   function load(){
     if(loading)return loading;const my=++LG;
     loading=(async()=>{
-      if(!self.crossOriginIsolated)throw new Error("瀏覽器還沒開啟多執行緒模式，請把 App 關掉重開一次");
+      if(!self.crossOriginIsolated){const er=new Error("電腦棋手需要瀏覽器的「多執行緒模式」才能下棋，這次沒有開成功（背景的 Service Worker 沒有裝好）。請重新整理這一頁；還是不行，請換用最新版的 Chrome、Safari 或 Edge 再打開。");er.noCoi=true;throw er}   /* 11/18 第 33 輪觀察：訊息跟 m/02-shell.js coiWarn、local.js 同一句；noCoi 讓 local.js 不再空轉重試 */
       const nnue=await prefetch();
       if(!window.PikafishModule)await loadScript(BASE+"engine/pikafish.js");
       /* 11/13 晚：啟動引擎、等 uciok／readyok 原本沒有時限，iPad 卡在這裡就永遠「思考中」；改成各有時限，逾時重置、拋錯讓 local.js 重試 */
