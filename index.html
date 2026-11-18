@@ -1630,7 +1630,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261118-1423";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261118-1532";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -26599,7 +26599,7 @@ const rd2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours()
 function rd2Css(){if(document.getElementById("rd2Css"))return;const s=document.createElement("style");s.id="rd2Css";s.textContent=`
 .rd2-page{margin:0 0 6px}
 .rd2-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-.rd2-pond{position:absolute;inset:0;clip-path:${RD2_POND};-webkit-clip-path:${RD2_POND}}
+.rd2-pond{position:absolute;inset:0;clip-path:${RD2_POND};-webkit-clip-path:${RD2_POND}}.rd2-cl .rd2-pond,.rd2-cl .rd2-pole{display:none}
 .rd2-ink{position:absolute;inset:0;background:radial-gradient(ellipse 46% 18% at 53% 38%,rgba(28,24,22,.62),rgba(28,24,22,.36) 55%,rgba(28,24,22,0) 100%);transition:opacity 1.2s}   /* 11/10 開發者截圖：iPhone 上 multiply 不作用，池面變成一大塊硬邊深灰；改成中間濃、往池邊淡開，不靠混色 */
 .rd2-clear{position:absolute;inset:0;background:linear-gradient(115deg,rgba(150,205,215,0),rgba(185,228,236,.6) 45%,rgba(150,205,215,0) 60%);mix-blend-mode:screen;background-size:220% 100%;animation:rd2Glint 4.5s ease-in-out infinite}
 @keyframes rd2Glint{0%{background-position:120% 0}100%{background-position:-20% 0}}
@@ -26630,9 +26630,9 @@ function rd2Season(){const m=new Date().getMonth()+1,se=m>=3&&m<=5?"sp":m>=6&&m<
 /* 離下次複習還有幾天（練會的題目裡最近的到期日；沒有就回 null） */
 function rd2Next(){const D=store.get("redoDone",{})||{},now=Date.now();let t=null;for(const k in D){const d=D[k];if(d&&d.ok&&d.due&&d.due>now&&(t==null||d.due<t))t=d.due}return t==null?null:Math.max(1,Math.ceil((t-now)/864e5))}
 function rd2Wrap(v,R){if(!REDO_MAP_ON||!v.querySelector("#rf"))return R;rd2Css();
-  const dk=rd2Dark(),P=document.createElement("div");P.className="shp-page cq rd2-page"+(dk?" rd2-night":"");
+  const dk=rd2Dark(),P=document.createElement("div"),src=xqClImg(`data/redomap/${dk?"redo_night":"redo_day"}.webp?v=${RD2_IMGV}`),cl=/_classic\.webp/.test(src);P.className="shp-page cq rd2-page"+(dk?" rd2-night":"")+(cl?" rd2-cl":"");   /* 11/18 開發者截圖：經典版底圖是雲海窗景、沒有洗墨池和竹竿，池水墨色、季節水草、晾的冊頁照原版圖位置疊上去變成一塊灰框（rd2-cl 收掉這兩層） */
   const sp=(id,x,y,t,cl)=>{const[a,b]=rd2Pc(x,y);return`<button class="shp-spot rd2-tag${cl?" "+cl:""}" id="${id}" style="left:${a}%;top:${b}%"><b>${t}</b></button>`};
-  P.innerHTML=`<img src="${xqClImg(`data/redomap/${dk?"redo_night":"redo_day"}.webp?v=${RD2_IMGV}`)}" alt="洗墨池邊的臨水書案">
+  P.innerHTML=`<img src="${src}" alt="${cl?"雲海邊的書案":"洗墨池邊的臨水書案"}">
     <div class="rd2-fx" aria-hidden="true"><div class="rd2-pond">${rd2Season()}</div><div class="rd2-stack"></div><div class="rd2-pole"></div><div class="rd2-ctxt"></div><div class="rd2-cen"></div></div>
     ${sp("rd2Book",RD2_BOOK[0],RD2_BOOK[1]-70,"📅 該複習")}${sp("rd2Stack",RD2_STACK[0]-20,RD2_STACK[1]-75,"還沒練會")}${sp("rd2Pole",610,370,"✅ 練會了")}${sp("rd2All",RD2_ALL[0],RD2_ALL[1],"全部","rd2-small")}`;
   v.insertBefore(P,v.firstChild);

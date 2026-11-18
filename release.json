@@ -1,8 +1,8 @@
 {
- "version": "20261118-1423",
- "checkedAt": "2026-11-18T06:23:39.624Z",
- "html": "5e700c17ca16",
- "sw": "061aaf1f3ab3",
+ "version": "20261118-1532",
+ "checkedAt": "2026-11-18T07:32:53.215Z",
+ "html": "e6e8714e9851",
+ "sw": "8d4d3fcf51dd",
  "scripts": 6,
  "modules": {
   "00-util.js": "10252b867aec",
@@ -16,7 +16,7 @@
   "05b-save.js": "3cf90dc8ea0a",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
-  "06-cpu.js": "997e268060e0",
+  "06-cpu.js": "c402c89b86bf",
   "06c-cup.js": "edc2e989a25e",
   "07-legend.js": "0cd151c6fd26",
   "07pty-party.js": "e1db2d2c2b68",
@@ -85,7 +85,7 @@
   "07y5-todaymap.js": "ad0d431c7381",
   "07y6-gmmap.js": "9d2726f6967c",
   "07y7-cupmap.js": "4cc39139f008",
-  "07y8-redomap.js": "12c877a148a5",
+  "07y8-redomap.js": "be823bf53581",
   "07y9-exammap.js": "c68330711826",
   "07z2-statmap.js": "695562f0cad6",
   "07z3-openmap.js": "4c7e03711be1",
@@ -94,7 +94,7 @@
   "07z6-sitemap.js": "a12444d4e987",
   "07z7-lesson.js": "b8189f953a67",
   "07z8-grablab.js": "97182be22c4c",
-  "07z9-school.js": "eafe5b9d07ea",
+  "07z9-school.js": "90273feb4ad1",
   "07w6-sceneinfo.js": "b699c5fc5c9f",
   "07w6b-scenedata.js": "e1a6f1d31da0",
   "07w6c-scenepoem.js": "7ab9513f7fa7",
@@ -127,7 +127,7 @@
   "07mnf-mainfilm.js": "7f12d04d9270",
   "07mnv-mainvn.js": "348063327d1e",
   "07stq-starter.js": "d81a8c1182ed",
-  "07mnq-mainquest.js": "ce5f2d905cc0",
+  "07mnq-mainquest.js": "58d7a6ebaed0",
   "07grw-growth.js": "e89b02643c9b",
   "07gc-native.js": "3485972790d8"
  },
@@ -147,6 +147,11 @@
    "module": "05b-save.js",
    "lines": 2,
    "sourceModified": "2026-11-18T04:35:33.597Z"
+  },
+  {
+   "module": "06-cpu.js",
+   "lines": 2,
+   "sourceModified": "2026-11-18T07:21:55.096Z"
   },
   {
    "module": "07-legend.js",
@@ -187,8 +192,8 @@
   },
   {
    "module": "07z9-school.js",
-   "lines": 417,
-   "sourceModified": "2026-11-18T05:23:28.598Z"
+   "lines": 438,
+   "sourceModified": "2026-11-18T07:23:36.850Z"
   },
   {
    "module": "08b-cpugame.js",
@@ -204,6 +209,11 @@
    "module": "07i18n.js",
    "lines": 5,
    "sourceModified": "2026-11-18T02:23:02.496Z"
+  },
+  {
+   "module": "07mnq-mainquest.js",
+   "lines": 3,
+   "sourceModified": "2026-11-18T07:07:12.341Z"
   },
   {
    "module": "07gc-native.js",
