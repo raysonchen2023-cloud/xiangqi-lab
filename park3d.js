@@ -150,7 +150,12 @@
   // 色彩管理（意見回饋 218）：這版 three（r149）用 encoding，不認 colorSpace；貼圖標成 sRGB、輸出也是 sRGB，顏色才不會被洗白
   let ANI=8;
   const srgb=t=>{if(T.sRGBEncoding!=null)t.encoding=T.sRGBEncoding;if(T.SRGBColorSpace)t.colorSpace=T.SRGBColorSpace;return t};
-  function cv(w,h,f){const c=document.createElement("canvas");c.width=w;c.height=h;f(c.getContext("2d"),w,h);const t=srgb(new T.CanvasTexture(c));t.anisotropy=ANI;return t}
+  /* 11/18 第 35 輪 N33-1：黑洞巨盤建場景（create）的那個長任務裡，程式畫的貼圖（木紋、石紋、雜點…）約 100ms。巨盤 create 期間（CVQ 不是 null）先只建畫布和貼圖，
+     畫的動作排隊（create 最後分段畫，每段 30ms 讓出主執行緒；淡入前等畫完）；在畫之前有人要用這張畫布（getContext）就先把它畫好，順序不會亂 */
+  let CVQ=null;
+  function cv(w,h,f){const c=document.createElement("canvas");c.width=w;c.height=h;const t=srgb(new T.CanvasTexture(c));t.anisotropy=ANI;
+    if(CVQ){let dn=false;const gc=HTMLCanvasElement.prototype.getContext,job=()=>{if(dn)return;dn=true;try{delete c.getContext}catch(e){}f(gc.call(c,"2d"),w,h);t.needsUpdate=true};c.getContext=function(){job();return gc.apply(c,arguments)};CVQ.push(job)}
+    else f(c.getContext("2d"),w,h);return t}
   const noise=(g,w,h,n,a,b)=>{for(let i=0;i<n;i++){g.fillStyle=`rgba(${a},${Math.random()*b})`;const s=1+Math.random()*3;g.fillRect(Math.random()*w,Math.random()*h,s,s)}};
   // ---------- 貼圖 ----------
   // 棋盤：較深的蜂蜜色木紋＋深褐粗線，在灰色石桌上一眼就看得出來；貼圖解析度提高，iPhone 上線條不糊
@@ -1058,7 +1063,7 @@
     return{frame:f.frame||0x5C3418,tick(s){for(const F of flames){const n=Math.sin(s*11+F.ph)*.5+Math.sin(s*17.3+F.ph*2)*.3+Math.sin(s*5.1+F.ph)*.2;
       if(F.k===2){F.o.scale.y=F.s*(1+.18*n);F.o.position.y=F.y0*(1+.09*n);F.o.rotation.y=s*.7+F.ph}else F.o.scale.setScalar(F.s*(1+(F.k?.07:.03)*n))}}}}
 
-  function create(host,opt){opt=opt||{};
+  function create(host,opt){opt=opt||{};CVQ=opt.giant?[]:null;let cvLeft=0,decPend=0;   /* 11/18 第 35 輪：巨盤的程式貼圖延後分段畫（見 cv） */
     const el=document.createElement("div");el.className="park3d";el.style.cssText="position:relative;width:100%;border-radius:14px;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none;background:#A9CBE8";
     host.append(el);
     /* 11/11 省電模式：建園子當下就判斷一次（電池要等非同步結果，之後每秒重判）；省電時抗鋸齒不開、畫素比最多 1、太陽不投影 */
@@ -1255,7 +1260,8 @@
           const sk=sky.material.map,sg=sk.image.getContext("2d"),gr=sg.createLinearGradient(0,0,0,sk.image.height),top=new T.Color(pc.top);
           gr.addColorStop(0,"#"+top.clone().lerp(new T.Color(1,1,1),.12).getHexString());gr.addColorStop(.36,pc.top);gr.addColorStop(.5,pc.top);gr.addColorStop(.58,pc.bot);gr.addColorStop(1,pc.bot);
           sg.fillStyle=gr;sg.fillRect(0,0,sk.image.width,sk.image.height);sk.needsUpdate=true;if(sc.fog){sc.fog.color.set(pc.bot);el.style.background=pc.bot}}catch(e){console.warn(e)}};   /* 黑洞巨盤沒有霧（sc.fog＝null）：以前這裡丟例外，底色也不換（維持 #05060d） */
-        if(loadImg(BI.src,put))setTimeout(put,0)}}
+        /* 11/18 第 35 輪 N33-1：drawPano 取上下緣平均色（getImageData）時才同步解碼整張全景大圖（222～364ms）→ 先 im.decode()（瀏覽器在背景解碼）好了才畫 */
+        const putD=()=>{const im=imgCache[BI.src];if(im&&im.decode&&im.naturalWidth){decPend++;const go=()=>{decPend--;put()};im.decode().then(go,go)}else put()};if(loadImg(BI.src,putD))setTimeout(putD,0)}}
     const M=(c,o)=>new T.MeshStandardMaterial(Object.assign({color:c,roughness:.8,metalness:0},o||{}));
     const mesh=(geo,mat,pos,o)=>{const m=new T.Mesh(geo,mat);if(pos)m.position.set(...pos);m.castShadow=!(o&&o.noCast);m.receiveShadow=true;sc.add(m);return m};
     const GY=-19,FL=(window.__FL||-6.6);   /* 意見回饋 398：桌子再矮一點（真實的桌高），坐的高度不變、凳子跟著變矮 */   /* 意見回饋 377、381：平台地面抬到 FL（跟真的一樣：桌高、凳子和長榻直接放在地上，不再墊高台座）；GY 只剩程式畫的家具還在用，地面以下看不到 */   // 地面高度（桌面＝0）
@@ -1734,6 +1740,10 @@
     const GNT_X={K:"x_shuai",A:"x_shi",B:"x_spiritgirl",N:"x_miaogirl",R:"x_swordboy",C:"x_martialgirl",P:"x_bing"},GNT_CH={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},GNT_H=1.55;
     /* 開發者 11/15「七星陸續加入」：還沒加入的那種紅子用無名「木棋靈」（data/tripo_app/x_wood.glb，七種共用；試做紀錄 xiangqi-db/art_try/wood_spirit_1115/紀錄.md），
        前後都貼本命字圓牌（量法：棋子圓心離腳底 0.368、半徑 0.273、盤面內圈 0.82，模型外框寬 0.746）；問 App 的 ptyHas（m/07pty-party.js），沒有這支（舊版、單獨開 3D）就照舊全部用七星 */
+    /* 11/18 開發者 iPhone「序局會 lag，boss 慢慢跑出來」：原本淡入只等圖片（inflight），棋子人模型（XQGLB 解析，iPhone 每顆幾百毫秒）淡入後才一顆一顆冒出來。
+       GLBW＝這座園子要用的棋子人模型 → 解析好了沒；waitShow 也等它們（照舊最多 6 秒）；淡入前 rd.compile 先把材質的 shader 編好（不在第一格畫面才編）。XQGLB 會記住解析結果，07bh 在邀局卡時就先解析好了 */
+    const GLBW={};function gntWaitGlb(u){if(!u||u in GLBW||typeof window.XQGLB!=="function")return;GLBW[u]=0;try{window.XQGLB(u).then(()=>{GLBW[u]=1},()=>{GLBW[u]=1})}catch(e){GLBW[u]=1}}
+    const gntGlbReady=()=>{let n=0;for(const k in GLBW){n++;if(!GLBW[k])return false}try{if(n&&typeof window.XQGLY_PEND==="function"&&window.XQGLY_PEND()>0)return false}catch(e){}return true};   /* 11/18 N33-1：bot3d 排隊貼牌子（glyLater）還沒做完也再等一下，淡入時牌子都在 */
     let GALL=false;   /* 11/16 開發者「開頭的黑洞對戰不能用木棋靈，要用所有七星3D角色」：App 傳 ex.allStars（07bh 序局 bh:xu）＝這一盤紅方七種子都用七星，不看誰加入了 */
     const GNT_WOOD="x_wood",GNT_WOODG={u:.5,v:.632,r:.334},gntWood=K=>{if(GALL)return false;try{return typeof window.ptyHas==="function"&&!!GNT_X[K]&&!window.ptyHas(GNT_X[K])}catch(e){return false}};
     /* 開發者 11/12「棋子字太小了，要符合角色背後的棋子」：七星背上本來都揹著一顆大木棋子；從背面正交圖量出那顆棋子的中心（u 由背面看的左邊、v 由頭頂）和半徑，
@@ -1749,6 +1759,7 @@
     const gntFig=(p,K,blk,bm)=>{const wd=!blk&&gntWood(K),n=gntCnt[p]=(gntCnt[p]||0)+1,body=n===1,g=new T.Group(),inner=new T.Group();g.add(inner);g.userData={p,pk:bm?p+"@"+bm.k:wd?p+"@w":p,wood:wd?1:0,th:GNT_H*.55*(bm?bm.s||1:1),giant:1,body};if(bm)g.scale.setScalar(bm.s||1);
       /* 開發者 11/12「底下踩著的棋子不用放上去，只要站角色即可」：不再墊本命棋子底座，角色直接站在棋盤格點上；
          「把棋子放在每個 3D 角色背後，然後他們要面向對方」：本命字圓牌貼在背上（gly.back），角色轉身面向敵陣（gntTake 依 flip 轉 180 度），玩家從後面看得到字 */
+      try{gntWaitGlb("data/tripo_app/"+(blk?GNT_XS[bm?bm.k:K]:wd?GNT_WOOD:GNT_X[K])+".glb")}catch(e){}   /* 11/18 序局卡頓：畫面淡入前也等棋子人模型（見 GLBW） */
       let B=null;try{B=window.XQBot3D&&XQBot3D.figure?XQBot3D.figure({glb:"data/tripo_app/"+(blk?GNT_XS[bm?bm.k:K]:wd?GNT_WOOD:GNT_X[K])+".glb",p:blk?NAMES.b[K]:GNT_CH[K],gly:wd?Object.assign({back:1,front:GNT_WOODG},GNT_WOODG):Object.assign({back:1,front:blk?{u:.5,v:.64,r:.26}:{u:.5,v:.66,r:.28}},(blk?GNT_GLYB:GNT_GLY)[bm?bm.k:K])}):null}catch(e){B=null}   /* 開發者 11/12「雙方正面也要把棋子貼上去」：胸前再貼一個（bot3d.js gly.front） */
       if(!B)return gntStone(p);inner.add(B.bot);g.userData.B=B;gntFigs.push(g);
       /* 放大倍數、位置一律在 inner 自己的座標算（量世界座標再扣掉 inner 的世界位置），不然角色會被拉回棋盤中心 */
@@ -2720,8 +2731,33 @@
         if(DEEPF){const o=TELE?.85*smooth(.9,.2,zoom):0;DEEPF.visible=o>.01;DEEPF.material.opacity=o}if(DEEPS.length)try{storyTick(s)}catch(e){}}orbTick(t,s);furn.tick(s);if(BENCH)rd.info.reset();if(GIANT&&FXH.size)fxH("main");if(GIANT&&MG){bplane.visible=false;BU.visible=false}rd.render(sc,cam);if(GIANT)try{gntMirror()}catch(e){bplane.visible=true;BU.visible=true}if(BENCH)benchRec(now);   /* 黑洞：棋盤底下的鏡像角色，畫在同一張畫面上 */PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
     // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒
     let drawn=false,shown=false;const t0=performance.now();PF.readyMs=null;PF.revealMs=null;PF.inflight=null;rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
-    const shownCb=[];const reveal=()=>{if(shown)return;shown=true;PW.shownAt=performance.now();PF.revealMs=Math.round(PW.shownAt-t0);PF.inflight=[...inflight].map(i=>String(i.src||"").split("/").pop()).slice(0,6);if(IN.ph==="wait"){INTRO_SEEN.add(IN.key);IN.ph="hold";IN.t0=performance.now()}rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);try{document.documentElement.classList.remove("pk-veil")}catch(e){}if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
-    const waitShow=()=>{if(stopped||shown)return;const mn=veil._qskip?1200:Math.max(1200,veil._qmin||0),dt=performance.now()-t0;if(drawn&&!inflight.size&&PF.readyMs==null)PF.readyMs=Math.round(dt);PF.pend=inflight.size?[...inflight].map(i=>String(i.src||"").split("/").pop().slice(0,40)).slice(0,6):null;PF.drawn=drawn;   /* 11/12 hspx「進黑洞要等 6～7 秒」：記下圖片載完、畫面出現各花幾毫秒（__PK.perf） */if((drawn&&!inflight.size&&dt>mn)||dt>Math.max(6000,veil._qskip?0:mn+2000)){requestAnimationFrame(()=>requestAnimationFrame(reveal));return}setTimeout(waitShow,80)};
+    const shownCb=[];const reveal=()=>{if(shown)return;shown=true;PW.shownAt=performance.now();PF.revealMs=Math.round(PW.shownAt-t0);PF.inflight=[...inflight].map(i=>String(i.src||"").split("/").pop()).slice(0,6);if(IN.ph==="wait"){INTRO_SEEN.add(IN.key);IN.ph="hold";IN.t0=performance.now()}try{rd.compile(sc,cam)}catch(e){}rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);try{document.documentElement.classList.remove("pk-veil")}catch(e){}if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
+    const waitShow=()=>{if(stopped||shown)return;const mn=veil._qskip?1200:Math.max(1200,veil._qmin||0),dt=performance.now()-t0;if(drawn&&!inflight.size&&PF.readyMs==null)PF.readyMs=Math.round(dt);PF.pend=inflight.size?[...inflight].map(i=>String(i.src||"").split("/").pop().slice(0,40)).slice(0,6):null;PF.drawn=drawn;   /* 11/12 hspx「進黑洞要等 6～7 秒」：記下圖片載完、畫面出現各花幾毫秒（__PK.perf） */if((drawn&&!inflight.size&&gntGlbReady()&&!cvLeft&&!decPend&&dt>mn)||dt>Math.max(6000,veil._qskip?0:mn+2000)){warmShaders(()=>requestAnimationFrame(()=>requestAnimationFrame(reveal)));return}setTimeout(waitShow,80)};
+    /* 11/18 第 33 輪 N33-1：淡入前 rd.compile 一次編完全部 shader，剖析看到 1.6 秒卡在同一個長任務（getProgramInfoLog）。
+       改成分段暖機：場景拆成幾十個小單位（子孫超過 40 個就再往下拆），每次只留一小批看得見、其他暫時藏起來（燈光一直都在，編出來的 shader 跟正式畫的一樣），
+       編完一批讓出主執行緒（setTimeout）再編下一批；每段最多約 40ms（一支 shader 本身編很久時就是那一支的時間）。reveal 裡的 rd.compile 留著，補沒編到的（已編過的直接跳過）。
+       暖機最多 3 秒，超過就直接淡入。純函式 warmUnits 測試用 vm 跑（tools/test-r35-1118.js） */
+    const warmUnits=(root,lim)=>{const U=[];const go=o=>{for(const c of o.children){if(c.isLight||!c.visible)continue;let n=0,lt=false;c.traverse(x=>{n++;if(x.isLight)lt=true});if(lt){if(c.children.length)go(c);continue}if(n>lim&&c.children.length>1)go(c);else U.push(c)}};go(root);return U};   /* 含燈光的那支不藏（往下拆），燈光數一直不變 */
+    /* 11/18 第 34 輪：每段只編一個單位（原本一段可能好幾個、一段就超過 200ms）；巨盤（序局）開第一格畫面前也先暖一次（第一格 frame 一次編完棋盤、背景那些 shader 佔 0.5 秒），見下面 warmRun 的呼叫 */
+    /* 11/18 第 35 輪 N33-1：上面那樣藏單位沒用——three r149 的 rd.compile(scene) 找材質用 scene.traverse（不看 visible），第一段就把整個場景 32 支 shader 一次編完（1978ms）。
+       改成暫時場景 WS：霧、環境貼圖照正式場景；燈光用同種類、同 castShadow 的替身（program 快取鍵裡的燈光數、陰影數一樣，編出來的就是正式畫面要用的那支）；
+       一次只放一個有材質的物件（它的子物件先拿開，輪到再各自編），編出新的 program（rd.info.programs 變多）就讓出主執行緒——每段大約一支 shader；
+       投影的深度 shader 只有真的 render 才會編（compile 不管）：有投影的物件照「有沒有骨架、正反面、透明裁切、變形」各挑一個，用 WS 真的 render 一次（畫布還藏在底幕後面）。
+       warmUnits 留著沒人叫（舊測試看它的拆法） */
+    const WS=new T.Scene(),WSL=[],warmProg=()=>{try{return(rd.info.programs||[]).length}catch(e){return 0}};
+    const warmLights=()=>{for(const l of WSL)try{if(l.shadow&&l.shadow.dispose)l.shadow.dispose()}catch(e){}WSL.length=0;
+      sc.traverseVisible(o=>{if(!o.isLight)return;try{const p=new o.constructor();p.castShadow=!!o.castShadow;p.layers.mask=o.layers.mask;if(o.shadow&&p.shadow){p.shadow.mapSize.copy(o.shadow.mapSize);p.shadow.bias=o.shadow.bias}WSL.push(p)}catch(e){}})};
+    const warmList=()=>{const O=[],D=new Map();sc.traverse(o=>{if(o.material&&!o.isLight)O.push(o);if(o.isMesh&&o.castShadow&&o.visible){const m=Array.isArray(o.material)?o.material[0]:o.material;if(!m)return;
+      const k=(o.isSkinnedMesh?1:0)+"|"+m.side+"|"+(m.alphaTest>0&&m.map?1:0)+"|"+(o.morphTargetInfluences?1:0);if(!D.has(k))D.set(k,o)}});return{O,D:[...D.values()]}};
+    const warmOne=(o,render)=>{const ch=o.children,fc=o.frustumCulled;o.children=[];WS.children=WSL.concat([o]);
+      try{if(render){o.frustumCulled=false;rd.render(WS,cam)}else rd.compile(WS,cam)}catch(e){}WS.children=[];o.children=ch;o.frustumCulled=fc};
+    const warmRun=(done,budget)=>{let L={O:[],D:[]};try{warmLights();L=warmList();WS.fog=sc.fog||null;WS.environment=sc.environment||null}catch(e){}const t0w=performance.now();let i=0,j=0;
+      const fin=()=>{for(const l of WSL)try{if(l.shadow&&l.shadow.dispose)l.shadow.dispose()}catch(e){}WSL.length=0;done()};
+      const step=()=>{if(stopped){fin();return}const t=performance.now(),p0=warmProg();
+        while(performance.now()-t<40){if(i<L.O.length)warmOne(L.O[i++],false);else if(j<L.D.length)warmOne(L.D[j++],true);else break;if(warmProg()!==p0)break}   /* 編出新的 program 就先讓出 */
+        if((i<L.O.length||j<L.D.length)&&performance.now()-t0w<budget)setTimeout(step,0);else fin()};
+      setTimeout(step,0)};
+    let warmed=false;const warmShaders=done=>{if(warmed||stopped){done();return}warmed=true;warmRun(done,4000)};
     /* 視角：俯視 top、平視 flat、數字＝俯角；11/11 新增 topfit＝俯視＋拉近到格距約 30px（只在手機直式；其他裝置等於 top）。
        top／flat 跟以前一樣（距離 1 倍、點兩下回到坐著看的角度），玩家存過的視角照舊；topfit 點兩下回到 topfit */
     /* 開發者 11/12 hspx「增加切換不同視角的功能，加在平視那邊用選單選，可以切換很美很漂亮的角度」：黑洞巨盤的預設視角（App 06-cpu parkUi 的「🎥 視角」選單）。
@@ -2737,7 +2773,8 @@
     fit();placeCam();
     if(GIANT){HOME={p:.5,z:1,fit:false};tpitch=pitch=.5}   /* 開發者 11/13：黑洞局在電腦、手機橫向（非直式）預設仰角原本是 0、鏡頭貼平棋盤；改成跟直式一樣 .5 */
     try{if(opt.view)setViewF(opt.view);else if(HFIT()&&!inStart(typeof opt.intro==="string"?opt.intro:null,false)){if(typeof opt.intro==="string")INTRO_SEEN.add(opt.intro);goTopFit(true)}}catch(e){}   /* opt.view＝玩家存過的視角（06-cpu 傳 store parkView）；沒存過的手機直式＝topfit */
-    requestAnimationFrame(frame);setTimeout(waitShow,80);
+    {const Q=CVQ;CVQ=null;if(Q&&Q.length){cvLeft=Q.length;const run=()=>{const t=performance.now();while(Q.length&&performance.now()-t<30){try{Q.shift()()}catch(e){}}cvLeft=Q.length;if(Q.length&&!stopped)setTimeout(run,0)};setTimeout(run,0)}}   /* 11/18 第 35 輪：巨盤 create 時排隊的程式貼圖，分段畫完（每段 30ms） */
+    if(GIANT)warmRun(()=>{if(!stopped)requestAnimationFrame(frame)},4000);else requestAnimationFrame(frame);setTimeout(waitShow,80);   /* 第 35 輪：一段一支 shader，給到 4 秒 */   /* 11/18 第 34 輪：巨盤第一格畫面前先分段暖 shader（最多 1.5 秒） */
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);
     function destroy(){if(stopped)return;stopped=true;try{if(!shown)document.documentElement.classList.remove("pk-veil")}catch(e){}document.removeEventListener("visibilitychange",onVis);PF.live=false;try{if(WX)WX.dispose()}catch(e){}WX=null;window.removeEventListener("resize",onRs);
       try{sc.traverse(o=>{const ms=o.material?(Array.isArray(o.material)?o.material:[o.material]):[];for(const m of ms){if(m&&m.map)freeTex(m.map);m&&m.dispose&&m.dispose()}if(o.geometry)o.geometry.dispose()});for(const k in faceCache){freeTex(faceCache[k]);delete faceCache[k]}}catch(e){}
