@@ -1,7 +1,7 @@
 {
  "ref": "origin/main",
- "commit": "d902a535ef77daf929e86cd7ca072ed6a19463a7",
- "madeAt": "2026-11-18T11:21:44.652Z",
+ "commit": "826e83dde3bb0ec4195f025c1192de8b420e4449",
+ "madeAt": "2026-11-18T12:17:34.575Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -258,6 +258,7 @@
   "xiangqi-lab/tools/test-fb897-1115.js": "local",
   "xiangqi-lab/tools/test-fdroid-evidence.js": "local",
   "xiangqi-lab/tools/test-figview-ghost-1115.js": "local",
+  "xiangqi-lab/tools/test-film-tap-1118.js": "local",
   "xiangqi-lab/tools/test-gate-siege-3d.js": "local",
   "xiangqi-lab/tools/test-gate-siege.js": "local",
   "xiangqi-lab/tools/test-gc-native-1117.js": "local",
@@ -624,8 +625,8 @@
   "test-osc-school-1118.js": "指令排除：要讀十派課程 opening-school/*.json（只放 CDN 與倉庫 data/，公開副本 source/ 沒有）",
   "test-zm-masters-1118.js": "指令排除：要讀掌門立繪 npc/zm_*.webp 與棋友開局表（只在開發者電腦與 CDN）"
  },
- "version": "20261118-1909",
- "indexSha1": "b8fa9357644b",
+ "version": "20261118-2016",
+ "indexSha1": "05a734cc120f",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",

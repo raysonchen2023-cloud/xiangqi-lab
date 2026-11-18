@@ -252,6 +252,7 @@ function bhxCss(){if(document.getElementById("bhxCss"))return;const s=document.c
 #bhxPg .bx-t{font-size:13px;letter-spacing:.3em;color:#E8C77A;margin-bottom:22px;text-shadow:0 1px 6px #000}
 #bhxPg .bx-l{font-size:var(--bxfs,clamp(20px,6vw,28px));white-space:nowrap;line-height:1.8;letter-spacing:.08em;font-weight:600;text-shadow:0 2px 12px #000,0 0 3px #000;opacity:0;transform:translateY(8px);transition:opacity .9s,transform .9s}
 #bhxPg .bx-l.on{opacity:1;transform:none}
+#bhxPg .bx-l.now,#bhxPg .bx-n.now{transition:none}   /* 11/18：點畫面快轉時，已經開始淡入的句子馬上顯示完整（bhxFilm 的 click） */
 #bhxPg .bx-t,#bhxPg .bx-n,#bhxPg .bx-cap{white-space:nowrap}
 #bhxPg .bx-n{margin-top:22px;font-size:14px;color:#e2d6b8;opacity:0;transition:opacity .9s;text-shadow:0 1px 6px #000}#bhxPg .bx-n.on{opacity:1}
 #bhxPg .bx-mt{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
@@ -689,6 +690,13 @@ function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduc
   /* 手指劃過撥出星光（開發者選）：不換頁 */
   const brush=e=>{if(o.dataset.pick==="1")return;const r=o.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;for(let k=0;k<(e.type==="pointerdown"?14:3);k++){const a=Math.random()*6.283,v=.3+Math.random()*1.6;add(x,y,Math.cos(a)*v,Math.sin(a)*v-.2,40+Math.random()*40,1+Math.random()*1.8,Math.random()<.3?"255,214,120":"200,225,255")}};
   o.addEventListener("pointerdown",brush);o.addEventListener("pointermove",e=>{if(e.buttons||e.pointerType==="touch")brush(e)});
+  /* 11/18 開發者「開場動畫每一句文字顯示時，可以用手指按下去當快速播完一句（玩家覺得太慢）」：點畫面（按鈕除外）＝正在淡入的這句馬上顯示完整，
+     配樂和畫面跳到下一句出現的時間（下一句在下一個鏡頭也一樣跳過去）；整部片的字都出完了，再點＝▶。劃過撥星光照舊（拖動不算點） */
+  o.addEventListener("click",e=>{if(fin||!S||o.dataset.pick==="1"||e.target.closest("button"))return;const t=opTime(),G=.05;
+    tx.querySelectorAll(".bx-l.on,.bx-n.on").forEach(x=>x.classList.add("now"));
+    const ts=F.shots.flatMap(Z=>(Z.say||[]).map(([s])=>s).concat(Z.nar?[Z.nar[0]]:[],Z.meteor!=null?[Z.meteor]:[])).filter(s=>s>t+G);   /* 整部片找下一句（不靠目前鏡頭，換鏡頭也接得上）；流星那一刻也算一站，不會被跳過 */
+    if(ts.length){try{vibrate(5)}catch(x){}opSeek(Math.min(...ts)+.01);return}
+    o.querySelector(".fm-nx").click()});
   const frame=()=>{if(fin)return;const t=opTime(),dt=lastT==null?0:Math.max(0,Math.min(.05,t-lastT));lastT=t;let i=F.shots.length-1;while(i>0&&F.shots[i].at>t)i--;if(i!==si)setShot(i);
     if(t>=F.end&&!(S&&S.meteor!=null)){finish();return}
     const a=S.at,b=nextAt(si),p=Math.max(0,Math.min(1,(t-a)/Math.max(.1,b-a))),e=p<.5?2*p*p:1-Math.pow(-2*p+2,2)/2;

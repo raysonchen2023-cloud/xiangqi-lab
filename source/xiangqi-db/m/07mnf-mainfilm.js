@@ -177,6 +177,7 @@ function mnfCss(){if(document.getElementById("mnfCss"))return;const s=document.c
 #mnfPg .mnf-lb.t{top:0;background:linear-gradient(#000,rgba(0,0,0,0))}#mnfPg .mnf-lb.b{bottom:0;background:linear-gradient(rgba(0,0,0,0),#000)}
 #mnfPg .mnf-sub{position:absolute;left:0;right:0;bottom:calc(9vh + env(safe-area-inset-bottom,0px));z-index:5;text-align:center;white-space:nowrap;font:700 var(--mnfs,26px)/1.4 var(--serif,serif);letter-spacing:.1em;color:#fff7e6;padding:.32em 0;background:linear-gradient(90deg,rgba(6,6,14,0),rgba(6,6,14,.74) 16%,rgba(6,6,14,.74) 84%,rgba(6,6,14,0));text-shadow:0 0 2px #000,0 0 2px #000,0 0 4px #000,0 2px 10px #000;opacity:0;transform:translateY(8px);transition:opacity .4s,transform .6s;pointer-events:none}
 #mnfPg .mnf-sub.on{opacity:1;transform:none;transition:opacity .7s,transform .7s}
+#mnfPg .mnf-sub.now,#mnfPg .mnf-sub.now.on{transition:none}   /* 11/18：點畫面快轉的那一句直接換上 */
 #mnfPg .mnf-big{position:absolute;left:0;right:0;top:calc(13vh + env(safe-area-inset-top,0px));z-index:6;text-align:center;white-space:nowrap;font:900 clamp(40px,calc(var(--mnfw,100vw)*.14),76px)/1 var(--serif,serif);letter-spacing:.2em;color:#ffe6a8;text-shadow:0 0 3px #2a1400,0 0 3px #2a1400,0 0 6px #000,0 0 24px rgba(255,190,90,.75),0 4px 14px #000;opacity:0;transform:scale(1.5);transition:opacity .35s,transform .45s cubic-bezier(.2,1.4,.4,1);pointer-events:none}
 #mnfPg .mnf-big.on{opacity:1;transform:none}
 #mnfPg .mnf-who{position:absolute;bottom:calc(17vh + env(safe-area-inset-bottom,0px));height:min(30vh,240px);aspect-ratio:3/4;z-index:4;background:center bottom/contain no-repeat;filter:drop-shadow(0 6px 14px rgba(0,0,0,.6));opacity:0;transition:opacity .6s,transform .7s cubic-bezier(.2,1,.3,1);pointer-events:none}
@@ -325,7 +326,7 @@ function mnfPlay(id,opt){opt=opt||{};const sourceFilm=opt.film||MNF_FILMS[id],F=
   const kbAt=(j,t)=>{const Z=F.shots[j];if(rm||!Z||!Z.kb)return[1,50,50];const[A,B]=Z.kb,e=ez((t-Z.at)/Math.max(.1,nextAt(j)-Z.at));return[0,1,2].map(k=>A[k]+(B[k]-A[k])*e)};
   const kbSet=(el,k)=>{const s=Math.max(1,k[0]),x=Math.max(0,Math.min(100,k[1])),y=Math.max(0,Math.min(100,k[2]));el.style.transformOrigin=`${x}% ${y}%`;el.style.transform=`scale(${s})`;return[s,x,y]};
   const fade=e=>{e.classList.add("gone");setTimeout(()=>e.remove(),560)};
-  let XO=null,GL=null,subT=0,subOff=0;
+  let XO=null,GL=null,subT=0,subOff=0,fast=false;   /* fast：點畫面快轉到下一句，那一句不等舊字淡出、不淡入，直接換上 */
   const setShot=i=>{const pi=si,prev=S;si=i;S=F.shots[i];fired={};const I=MNF_IMG[S.img],u=I?`url(${I.u})`:"none",same=!!prev&&prev.img===S.img,D=rm||!prev?0:S.tr!=null?S.tr:MNF_XD;
     if(prev&&!same&&D>0){if(XO)XO.el.remove();const old=st;XO={el:old,j:pi};st=document.createElement("div");st.className="mnf-st";st.innerHTML=`<div class="mnf-bg"></div>`;bg=st.firstChild;
       st.style.opacity="0";o.insertBefore(st,cv);void st.offsetWidth;st.style.transition=`opacity ${D}s ease-in-out,filter .6s`;st.style.opacity="1";
@@ -338,7 +339,7 @@ function mnfPlay(id,opt){opt=opt||{};const sourceFilm=opt.film||MNF_FILMS[id],F=
     const keepM=S.fx==="mist"||S.fx==="frz";for(const q of P)if(!q.o&&!(keepM&&q.k==="m"))q.o=rm?1:28;
     subHide();if(!(S.who||[]).length){who.classList.remove("on")}if(!S.big)big.classList.remove("on")};
   const subHide=()=>{clearTimeout(subT);if(sub.classList.contains("on")){sub.classList.remove("on");subOff=performance.now()}};
-  const subSet=tx=>{subHide();const w=rm?0:Math.max(0,420-(performance.now()-subOff)),show=()=>{sub.textContent=tx;void sub.offsetWidth;sub.classList.add("on")};if(w>20)subT=setTimeout(show,w);else show()};
+  const subSet=tx=>{sub.classList.toggle("now",fast);subHide();const w=rm||fast?0:Math.max(0,420-(performance.now()-subOff)),show=()=>{sub.textContent=tx;void sub.offsetWidth;sub.classList.add("on")};fast=false;if(w>20)subT=setTimeout(show,w);else show()};
   /* 段落結束：要接下一段（keepMusic）就不淡出，最後一格留著墊底，由下一段 mnfPlay 淡入後拿掉；1.5 秒內沒有下一段才自己淡出 */
   const finish=sk=>{if(fin)return;fin=true;cancelAnimationFrame(raf);clearTimeout(subT);removeEventListener("resize",fit);document.removeEventListener("visibilitychange",vis);res.skipped=!!sk;
     if(opt.keepMusic&&!rm){o.dataset.hand=bk.dataset.hand="1";setTimeout(()=>{if(o.dataset.hand==="1"&&o.isConnected){o.classList.remove("on");bk.classList.remove("on");setTimeout(()=>{o.remove();bk.remove()},520)}},1500);if(opt.onDone)setTimeout(()=>opt.onDone(res),0);return}
@@ -352,6 +353,12 @@ function mnfPlay(id,opt){opt=opt||{};const sourceFilm=opt.film||MNF_FILMS[id],F=
     if(Q){card({t:(MNF_QTE[Q.qte]||{}).big||F.card.t,b:"出發"},()=>{jEnd=true;seek(Q.at);});return}
     const c=(typeof opt.card==="function"?opt.card(F):opt.card)||F.card;card(c,k=>{res.card=k;finish(true)})};
   o.querySelector(".mnf-k").onclick=e=>{e.stopPropagation();skip()};
+  /* 11/18 開發者「開場動畫每一句文字可以用手指按下去快速播完一句（玩家覺得太慢）」「楔子的動畫也是一樣」：點畫面（按鈕、危機題、選擇卡除外）＝
+     影片時鐘跳到下一句字幕出現的時間，那一句立刻換上；中間有還沒做的危機題就停在危機題那一格，不會被跳過；後面沒有字幕了就不動 */
+  o.addEventListener("click",e=>{if(fin||PZ.size||o.classList.contains("qt")||o.querySelector(".mnf-card")||e.target.closest("button"))return;
+    const t=clock(),G=.05;let to=null;for(const Z of F.shots)for(const[s]of Z.say||[])if(s>t+G&&(to==null||s<to))to=s;
+    const Q=F.shots.find(x=>x.qte&&!qDone[x.at]&&x.at>t+G);if(Q&&(to==null||Q.at<to))to=Q.at;
+    if(to==null)return;if(typeof vibrate==="function")vibrate(5);fast=true;seek(to+.01)});
   const qte=Q=>{pause("qte");o.classList.add("qt");const PZL=(opt.qte&&opt.qte[Q.qte])||MNF_QTE[Q.qte];if(opt.vol!==0)mnfVol(.4,.6);
     mnfQte(o,PZL,r=>{qDone[Q.at]=1;res.qte[Q.qte]=r;o.classList.remove("qt");big.classList.remove("on");st.classList.remove("frz");if(opt.vol!==0)mnfVol(1,1.2);
       const go=()=>{if(jEnd){finish(true);return}seek(Q.at+.06);resume("qte")};if(typeof opt.onQte==="function"){try{opt.onQte(Q.qte,r,go)}catch(e){go()}}else go()})};
