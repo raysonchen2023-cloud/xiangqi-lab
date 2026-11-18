@@ -106,13 +106,14 @@ function stqCss(){if(document.getElementById("stqCss"))return;try{if(typeof mnqC
 #stqPg.on{opacity:1}
 #stqPg .stq-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;width:min(560px,100%)}
 @media (max-width:350px){#stqPg .stq-top{justify-content:center}}
-/* 11/17 測試員 B 第 29 輪 N29-5：390 寬頂欄折行、「⋯」掉到第二行 → 430 寬以下一律一行：任務燈縮成 22px、「我會下棋」縮字，放不下就在鈕裡換兩行（高照舊 44） */
-@media (max-width:430px){#stqPg .stq-top{flex-wrap:nowrap;gap:6px}#stqPg .stq-lp{gap:3px}#stqPg .stq-lp span{width:22px;height:22px;font-size:12px}#stqPg .stq-sk{flex:1 1 auto;min-width:0;white-space:normal;font-size:13px;line-height:1.15;padding:4px 8px}}
 #stqPg .stq-lp{display:flex;gap:5px;flex:none}
 #stqPg .stq-lp span{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:800 13px/1 var(--serif,serif);background:#cdbb98;color:#5b4a3a}
 #stqPg .stq-lp span.on{background:radial-gradient(circle,#fff3c4,#f2b33d 60%,#b8741a);color:#7a3a10;box-shadow:0 0 10px rgba(242,179,61,.85)}
 #stqPg .stq-lp span.cur{box-shadow:0 0 0 2px #b3261e;color:#b3261e;background:#f8f0dc}
 #stqPg .stq-sk{flex:0 1 auto;min-height:44px;padding:6px 12px;border-radius:99px;border:1.5px solid #8a5a2b;background:#fffaf0;color:#5b3a1a;font:800 14px/1.2 var(--serif,serif);white-space:nowrap}
+/* 11/17 測試員 B 第 29 輪 N29-5：390 寬頂欄折行、「⋯」掉到第二行 → 430 寬以下一律一行：任務燈縮成 22px、「我會下棋」縮字，放不下就在鈕裡換兩行（高照舊 44） */
+/* 11/18 測試員驗 1545（P3）：390 寬「我會下棋，直接開始」還是溢出 4px——這條 430 寬的規則原本寫在 .stq-lp／.stq-sk 基本樣式前面，同權重被後面蓋回 14px、不換行；移到基本樣式後面才生效 */
+@media (max-width:430px){#stqPg .stq-top{flex-wrap:nowrap;gap:6px}#stqPg .stq-lp{gap:3px}#stqPg .stq-lp span{width:22px;height:22px;font-size:12px}#stqPg .stq-sk{flex:1 1 auto;min-width:0;white-space:normal;font-size:13px;line-height:1.15;padding:4px 8px}}
 #stqPg .stq-mo{flex:none;width:44px;height:44px;border-radius:50%;border:1.5px solid #8a5a2b;background:#fffaf0;color:#5b3a1a;font:900 20px/1 var(--serif,serif)}
 #stqPg .stq-mn{display:flex;flex-direction:column;align-items:flex-end;gap:4px;width:min(560px,100%)}#stqPg .stq-mn[hidden]{display:none}
 #stqPg .stq-mn button{min-height:44px;padding:6px 16px;border-radius:12px;border:1.5px solid #8a5a2b;background:#fffaf0;color:#3b2a1a;font:800 15px var(--serif,serif)}#stqPg .stq-mn small{font-size:12px;color:#6f5f4c}

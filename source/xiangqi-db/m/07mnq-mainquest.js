@@ -97,6 +97,8 @@ function mnqCss(){if(document.getElementById("mnqCss"))return;const s=document.c
 /* 11/18 開發者看商店截圖「這邊排版錯了」→ 選「四顆排整齊」：「更多玩法 ›」原本是小膠囊、跟上下三顆不同家，改成同寬（220）、同樣圓角方塊粗邊、半透明米色底，間距交給 .hm-go-bar 的 gap；圓角跟快速對局、回報問題同一個 var(--btn-r,10px)（秦、五代 14px），iMac 驗 1423 量到 14 vs 10 */
 .mnq-next{display:flex;align-items:center;justify-content:center;gap:6px;min-width:220px;max-width:100%;min-height:50px;padding:8px 22px;border:2px solid #8a5a2b;border-radius:var(--btn-r,10px);background:linear-gradient(#f8f0dc,#e6d3a6);color:#3b2a1a;font:900 19px/1.2 var(--serif,serif);letter-spacing:.06em;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;-webkit-tap-highlight-color:transparent;animation:mnqGlow 2.4s ease-in-out infinite}
 .mnq-next:active{transform:translateY(1px)}.mnq-next:focus-visible{outline:3px solid #f2c94c;outline-offset:3px}
+/* 11/18 測試員驗 1545（P3）：英文四顆各自照字長撐開（Prelude 220、More ways to play 235、Keep playing 224、Report a problem 250）。按鈕列本身是 max-content 寬＝最寬那顆，四顆改成撐滿這一列＝一樣寬；中文四顆都是 220，看起來不變；「加到主畫面」小膠囊那列照舊置中 */
+.hm-go-bar>.mnq-next,.hm-go-bar>.mnq-more,.hm-go-bar>.hm-go,.hm-go-bar>.hm-fb{align-self:stretch}
 @keyframes mnqGlow{50%{box-shadow:0 4px 14px rgba(0,0,0,.35),0 0 0 4px rgba(242,201,76,.45)}}
 #mnqGf,#mnqCard{position:fixed;inset:0;z-index:9200;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:max(24px,calc(12px + env(safe-area-inset-top,0px))) 18px calc(24px + env(safe-area-inset-bottom,0px));text-align:center;color:#fff7e6;background:radial-gradient(circle at 50% 38%,rgba(70,36,10,.95),rgba(0,0,0,.97) 72%);opacity:0;transition:opacity .35s;overflow:auto}
 #mnqGf.on,#mnqCard.on{opacity:1}

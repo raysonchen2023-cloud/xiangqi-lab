@@ -222,8 +222,8 @@ function xqDocClean(t){try{const out=[];for(const l of String(t||"").split("\n")
       .replace(/`[^`\n]*\.(?:css|html)(?::\d+)?`/g,"").replace(/\b[\w./-]+\.(?:css|html):\d+/g,"").replace(/（[^（）\n]*真人測試[^（）\n]*）/g,"").replace(/(?:不改\s*)?\bm\.html\s*[：:]\s*/g,"")   /* 11/17 測試員 D Y7：a11y 的「m.css:行號」、音效設計的「（給真人測試用，還沒做過）」、i18n 的「m.html：…」 */
       .replace(/\b[\w./-]+\.js:\d+/g,"").replace(/\btest-[\w-]+\.js\b/g,"")
       .replace(/(?:\s*[、，；])+(?=\s*[。；|]|\s*$)/g,"").replace(/^(\s*[-*]\s+)[、，；]\s*/,"$1").replace(/（\s*）/g,"").replace(/\*\*【程式已實作】\*\*\s*\|/g,"**【程式已實作】** |").replace(/[ 　]{2,}/g," ").replace(/。{2,}/g,"。").replace(/待開發者確認/g,"資料補齊中");   /* I P1-4：「待開發者確認」不在 App 裡出現（素材與授權頁的正本已改寫；其他文件的殘留在這裡換成中性說法） */
-    if(x!==l)x=xqDocTidy(x);   /* 11/18 第 33 輪 N33-5：拿掉檔名後留下的「、、」「（、」「、 等」「的 （」「- ：」整理通順（只動被拿過字的那一行） */
+    if(x!==l)x=xqDocTidy(x);   /* 11/18 第 33 輪 N33-5：拿掉檔名後留下的「、、」「（、」「、 等」「的 （」「- ：」整理通順（只動被拿過字的那一行）；11/18 測試員驗 1545（P3）：驗證紀錄 139 行「跳過（；沒有 …）」——括號開頭的「；」也收掉 */
     if(l.trim()&&!x.replace(/[\s\-*|、，。；：:`]/g,""))continue;out.push(x)}return out.join("\n")}catch(e){return t}}
-function xqDocTidy(x){return String(x).replace(/、(?:\s*、)+/g,"、").replace(/、\s*（[^（）\n]*）(?=\s*(?:、|等))/g,"").replace(/([㐀-鿿])\s+、\s*(?=[㐀-鿿])/g,"$1").replace(/([㐀-鿿])\s+(?=[㐀-鿿])/g,"$1").replace(/([（(：:|])\s*[、，]\s*/g,"$1").replace(/\s*、\s*(?=[）)]|等)/g,"").replace(/\s*的\s*(?=（|[，。；]|$)/g,"").replace(/，(?:\s*，)+/g,"，")
+function xqDocTidy(x){return String(x).replace(/、(?:\s*、)+/g,"、").replace(/、\s*（[^（）\n]*）(?=\s*(?:、|等))/g,"").replace(/([㐀-鿿])\s+、\s*(?=[㐀-鿿])/g,"$1").replace(/([㐀-鿿])\s+(?=[㐀-鿿])/g,"$1").replace(/([（(：:|])\s*[、，；;]\s*/g,"$1").replace(/\s*、\s*(?=[）)]|等)/g,"").replace(/\s*的\s*(?=（|[，。；]|$)/g,"").replace(/，(?:\s*，)+/g,"，")
   .replace(/^(\s*[-*]\s+)[：:]\s*/,"$1").replace(/(\S)\s+([，。、；：）])/g,"$1$2").replace(/（\s*）/g,"").replace(/[ 　]{2,}/g," ")}
 try{if(typeof xqDocVar==="function"&&!xqDocVar.__gcn){const f0=xqDocVar;xqDocVar=function(t,nat){return xqDocEnNote(f0(xqDocClean(gcnDocFeat(t)),nat))};xqDocVar.__gcn=1}}catch(e){}

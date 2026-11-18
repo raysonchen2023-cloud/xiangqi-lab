@@ -93,5 +93,7 @@ test("⑤ N35-1「星盤展開中…」1.6 秒開始淡入（0.4 秒淡完，2.0
 test("快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡；暖機 WS 那段 11/18 第 36 輪又改過，不比）", { skip: T_SRC.length === 2 ? false : "沒有 1010 快照（只在這台電腦的暫存區）" }, () => {
   const [[, W, WM], [, K, KM]] = T_SRC, segs = [["  let CVQ=null;", "\n  const noise="], ["    let warmed=false;", "\n"], ["    {const Q=CVQ;CVQ=null;", "\n"], ["        const putD=", "\n"]];
   for (const [a, b] of segs) assert.equal(between(rd(W("park3d.js")), a, b), between(rd(K("park3d.js")), a, b), a);
-  assert.equal(rd(W("bot3d.js")), rd(K("bot3d.js")), "bot3d.js"); assert.equal(rd(WM("06-cpu.js")), rd(KM("06-cpu.js")), "06-cpu.js");
+  /* 11/18 掌門胸前門派字（figure 的 gch／gred、glyTex 第三個參數）之後 bot3d.js 整支不再跟快照一樣：只比緩衝區大小那段；排隊載入那段裡有 glyTex 的呼叫（這次加了參數），結構由上面「整段排隊」那項的關鍵句檢查 */
+  assert.equal(between(rd(W("bot3d.js")), "    let shrink=1,bufW=0,bufH=0;const applySize=", "\n    const setScale="), between(rd(K("bot3d.js")), "    let shrink=1,bufW=0,bufH=0;const applySize=", "\n    const setScale="), "bot3d.js applySize");
+  assert.equal(rd(WM("06-cpu.js")), rd(KM("06-cpu.js")), "06-cpu.js");
 });

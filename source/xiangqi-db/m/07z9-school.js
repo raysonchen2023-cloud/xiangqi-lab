@@ -246,6 +246,7 @@ function oscCss(){if(document.getElementById("oscCss"))return;const s=document.c
 .osc-zm img{width:76px;height:102px;object-fit:contain;flex:none}
 .osc-zm .tx{flex:1;min-width:0}
 .osc-zm b{font-family:var(--serif);font-size:17px}
+.osc-zm .osc-op{display:block;margin:2px 0 0;font-size:13px;color:var(--muted)}   /* 11/18 測試員驗 1545（P3）：英文掌門卡名字和頭銜黏成「Fang YanbingMaster of the…」——.osc-op 原本只在門派卡（.osc-sc）有左邊距；掌門卡改成頭銜自己一行 */
 .osc-zm p{margin:4px 0;line-height:1.6;font-size:14px}
 .osc-zm-mine{border:2px solid var(--accent)}
 .osc-bar{font-size:13px;color:var(--muted);text-align:center;padding:2px 10px;line-height:1.5;overflow-wrap:anywhere}
@@ -312,7 +313,7 @@ function oscHome(v,c){oscCss();const P=typeof ptyGet==="function"?ptyGet():null;
           <div class="osc-row"><button class="btn ghost" data-sid="${s.id}">${oscL(`選${esc(s.nm)}`,`Choose ${esc(s.nm)}`)}</button></div></div></div>`}).join("")}
         <p class="osc-sub">${oscL(`推薦只是${esc(oscTa(c))}的教學偏好；本命子不限制門派，十派都能選。`,`The recommendation is just ${(()=>{try{return WX_CHARS[c].sx==="f"?"her":"his"}catch(e){return"their"}})()} teaching preference; a character's signature piece doesn't limit the choice. Any of the ten schools is open.`)}</p></div>`;
       v.querySelectorAll("[data-sid]").forEach(b=>b.onclick=()=>{try{vibrate(5)}catch(e){}oscJoinAsk(c,b.dataset.sid,draw)});return}
-    const S=oscSchE(sid),R=OSC.rec(o,c,sid),nx=OSC.next(o,c,sid),G=n=>oscGoalE(sid,n),D=oscL("・"," · ");setTop(oscL(`🏯 ${nm}的${S.nm}修行`,`🏯 ${nm} · ${S.nm}`),"#/school");
+    const S=oscSchE(sid),R=OSC.rec(o,c,sid),nx=OSC.next(o,c,sid),G=n=>oscGoalE(sid,n),D=oscL("・"," · ");setTop(oscL(`🏯 ${nm}的${S.nm}修行`,S.nm),"#/school");
     let h=`<div class="pad osc"><div class="card osc-sc">${oscSym(sid)}<div class="tx"><h2>${esc(S.nm)}</h2><p class="osc-sub">${esc(S.op)}${D}${esc(S.say)}</p>${["g","g2","g3"].filter(k=>R[k]).map((k,i)=>`<p><b>🏮 ${oscL(`${esc(nm)}已完成本派${OSC.pname(sid,i)}`,`${esc(nm)} completed this school's ${oscPnE(sid,i)}`)}</b></p>`).join("")}</div></div>`;
     for(const[a,z,pn]of OSC.PART){const open=OSC.state(o,c,sid,a)!=="locked",bs=OSC.side(sid)==="b";h+=`<div class="osc-st">${pn==="入門"?oscL("第一階段・入門","Stage 1 · Basics"):pn==="進階"?(bs?oscL("第二階段・進階：紅方十種走法","Stage 2 · Advanced: ten Red tries"):oscL("第二階段・進階：對方十種應法","Stage 2 · Advanced: ten replies by the opponent")):oscL("第三階段・"+OSC.pname(sid,2),"Stage 3 · "+oscPnE(sid,2))}${oscL(`（${OSC.count(o,c,sid,a,z)}／${z-a+1}）`,` (${OSC.count(o,c,sid,a,z)}/${z-a+1})`)}</div>`;
       if(!open){h+=`<p class="osc-sub">🔒 ${pn==="進階"?(bs?oscL("完成入門六課後開放：同一派的局面，紅方換十種走法，各自怎麼應對。","Opens after the six Basics lessons: the same school's position, with Red trying ten different moves, and how to answer each."):oscL("完成入門六課後開放：同一個開局，對方換十種應法，各自怎麼應對。","Opens after the six Basics lessons: the same opening, with ten different replies by the opponent, and how to handle each.")):(bs?oscL("入門和進階都完成後開放：換你執紅，學面對這一派時怎麼應。","Opens after Basics and Advanced: you play Red and learn how to face this school."):oscL("入門和進階都完成後開放：換你執黑，面對紅方六種開局，走本派的路。","Opens after Basics and Advanced: you play Black against six Red openings and follow your school's path."))}</p>`;continue}
@@ -341,7 +342,7 @@ function oscSwitch(c,done){if(typeof sheet!=="function")return;const o=oscGet(),
 function oscPlay(v,c,lk){oscCss();if(typeof lsnCss==="function")lsnCss();setTabs(false);const C=window.XQCore,m=/^([a-z_]+)_(\d\d)$/.exec(lk||""),sid=m&&m[1],n=m?+m[2]:0,BK="#/school/"+c;
   const o0=oscGet();if(!C||!m||!OSC.rec(o0,c,sid)||OSC.state(o0,c,sid,n)==="locked"){navReplace(BK);return{}}
   const H0=location.hash,here=()=>v.isConnected&&location.hash===H0,q=s=>v.querySelector(s),S=oscSchE(sid),nm=oscNmE(c),title=oscL(`第 ${n} 課・${OSC.title(sid,n)}`,`Lesson ${n} · ${oscTitleE(sid,n)}`);
-  setTop(oscL(`🏯 ${nm}・${S.nm}`,`🏯 ${nm} · ${S.nm}`),BK);const st={tok:0,fast:false};let D=null,LS=null,ex=null;
+  setTop(oscL(`🏯 ${nm}・${S.nm}`,S.nm),BK);   /* 11/18 測試員驗 1545（P3）：英文標題「🏯 Qi Zhe · Advisor-Corner Cannon School」在手機折兩行、下緣被頂欄切掉（圖示把第一行撐高）；英文這頁和修行頁標題只放派名、不帶圖示，中文照舊 */ const st={tok:0,fast:false};let D=null,LS=null,ex=null;
   const PE={K:"General",A:"Advisor",B:"Elephant",N:"Horse",R:"Chariot",C:"Cannon",P:"Soldier"},pc=(sd,x)=>oscL(C.NAMES[sd][x],PE[x]||"piece"),mv=s=>oscT(s);
   v.className="view";v.innerHTML=`<div class="pad osc"><p class="osc-sub">${oscL("課程載入中…","Loading lesson…")}</p></div>`;
   oscData(sid).then(d=>{if(!here())return;D=d;LS=oscLesson(D,sid,n);if(!LS||!LS.ex.length)throw new Error(oscL("這一課的資料還沒準備好","This lesson's data isn't ready yet"));start()}).catch(e=>{if(!here())return;v.innerHTML=`<div class="pad osc"><div class="card"><p>${esc(oscT(e.message))}</p></div><button class="btn ghost" id="oscB">${oscL("回修行頁","Back to training")}</button></div>`;q("#oscB").onclick=()=>goUp(BK)});
@@ -356,15 +357,15 @@ function oscPlay(v,c,lk){oscCss();if(typeof lsnCss==="function")lsnCss();setTabs
     const ck=bb=>C.inCheck(bb,"r")?C.kingSq(bb,"r"):C.inCheck(bb,"b")?C.kingSq(bb,"b"):-1;
     const draw=bb=>{bb=bb||b;bd.draw(bb,{flip,sel,last,check:ck(bb),targets:node&&node.k==="mv"&&sel>=0&&!busy?C.legal(bb,side).filter(([f])=>f===sel).map(x=>x[1]):[]});if(typeof lsnArrows==="function")lsnArrows(bd.svg,over,flip)};
     const help=()=>n<=2?[["hint","💡",oscL("提示","Hint"),hint]]:[["demo","👁",oscL("示範","Show me"),demo]];
-    const yourMove=()=>oscL("換你走","Your move"),Q=N=>oscT(N.q),acL=a=>a.map(mv).join(oscL("　","  "));
+    const yourMove=()=>oscL("換你走","Your move"),Q=N=>oscT(N.q),acL=a=>a.map(([x,me])=>oscL((me?"你 ":"對方 ")+mv(x),(me?"you ":"opponent ")+mv(x))).join(oscL("，",", "));
     function enter(N){node=N;sel=-1;busy=false;over=[];chBox("");nodeB=b;
       if(!N){finish();return}
       if(N.k==="ch"){stat(oscL("想一想","Think it over"));note(Q(N));acts([]);draw();chBox(`<div class="osc-ch">${N.o.map((x,i)=>`<button type="button" data-i="${i}">${esc(oscT(x[0]))}</button>`).join("")}</div>`);
         v.querySelectorAll(".osc-ch button").forEach(btn=>btn.onclick=()=>{const x=N.o[+btn.dataset.i];try{vibrate(5)}catch(e){}if(x[1]){btn.classList.add("yes");note(`✔ ${x[2]?oscT(x[2]):oscL("對。","Right.")}`);v.querySelectorAll(".osc-ch button").forEach(z=>z.disabled=true);acts([["go","›",oscL("繼續","Continue"),()=>enter(N.n),true]])}
           else{btn.classList.add("no");note(`✘ ${x[2]?oscT(x[2]):oscL("再想想。","Think again.")}\n${Q(N)}`)}});return}
       if(N.k==="err"){stat(oscL("常見錯法","Common mistake"));busy=true;const[f,t]=lsnSq(N.bad),cn=mv(C.notate(b,f,t)),acc=[];note(oscL(`先看一步常見的錯著：「${cn}」`,`First, a common mistake: "${cn}"`));acts([]);
-        const after=()=>oscL(`錯著「${cn}」之後，對方：${acL(acc)}`,`After the mistake "${cn}", the opponent plays: ${acL(acc)}`);
-        const bb0=b;lsnPlay(st,[N.bad].concat(N.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push(tx);note(after())}},()=>{if(!here())return;
+        const after=()=>oscL(`錯著「${cn}」之後：${acL(acc)}`,`After the mistake "${cn}": ${acL(acc)}`);   /* 11/18 測試員驗 1545（P3）：後續原本整串標「對方：馬7進5 炮八平五 馬2進3」，裡面混了自己的著法；改成每步標誰走（lsnPlay 的 i：錯著是 1，偶數＝對方、奇數＝自己；acc 存 [著法, 是不是自己]，acL 加上誰走） */
+        const bb0=b;lsnPlay(st,[N.bad].concat(N.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push([tx,i%2===1]);note(after())}},()=>{if(!here())return;
           note(`${after()}${N.x?"\n"+oscL(`你的${pc(side,N.x)}丟了。`,`You lose your ${pc(side,N.x)}.`):""}\n${oscT(N.w)}`);acts([["back","↩",oscL("回到錯著前，換你改","Go back and fix it"),()=>{b=bb0;last=null;enter(N.n)},true]])});return}
       stat(yourMove());note(Q(N));acts(help());draw()}
     function tap(x){if(busy||!node||node.k!=="mv")return;const Lg=C.legal(b,side);if(sel>=0&&Lg.some(([f,t])=>f===sel&&t===x)){const u=C.iccs(sel,x);sel=-1;return move(u)}
@@ -375,8 +376,8 @@ function oscPlay(v,c,lk){oscCss();if(typeof lsnCss==="function")lsnCss();setTabs
         if(!ok.r){setTimeout(()=>{if(here())enter(ok.n||null)},700);return}
         setTimeout(()=>{if(!here())return;const[f2,t2]=lsnSq(ok.r),c2=mv(C.notate(b,f2,t2));b=C.make(b,f2,t2);last={f:f2,t:t2};draw();note(oscL(`對方走「${c2}」。`,`The opponent plays "${c2}".`));setTimeout(()=>{if(here())enter(ok.n||null)},900)},800);return}
       const bad=N.bad&&N.bad[u];
-      if(bad){busy=true;const bb0=b,acc=[],hurt=oscL("這步會吃虧。對方的反擊：","This move loses material. The opponent's reply: ");stat("✘ "+cn);note(hurt);acts([]);try{vibrate([20,40,20])}catch(e){}
-        lsnPlay(st,[u].concat(bad.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push(tx);note(hurt+acL(acc))}},()=>{if(!here())return;
+      if(bad){busy=true;const bb0=b,acc=[],hurt=oscL("這步會吃虧。接下來：","This move loses material. What follows: ");stat("✘ "+cn);note(hurt);acts([]);try{vibrate([20,40,20])}catch(e){}
+        lsnPlay(st,[u].concat(bad.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push([tx,i%2===1]);note(hurt+acL(acc))}},()=>{if(!here())return;
           note(`${hurt}${acL(acc)}${bad.x?"\n"+oscL(`你的${pc(side,bad.x)}被吃掉了。`,`Your ${pc(side,bad.x)} gets captured.`):""}\n${Q(N)}`);acts([["back","↩",oscL("退回重想","Take it back"),()=>{b=bb0;last=null;busy=false;stat(yourMove());note(Q(N));acts(help());draw()},true]].concat(help()))});return}
       stat("✋ "+cn);note(`${N.no?oscT(N.no):oscL("這步不是這一課要練的。","That's not the move this lesson is practicing.")}\n${Q(N)}`);try{vibrate([10,30,10])}catch(e){}draw()}
     function hint(){if(busy||!node||node.k!=="mv")return;flag("h");over=[{f:lsnSq(node.h)[0],t:lsnSq(node.h)[1],c:"#2E7D32"}];sel=-1;stat(oscL("💡 提示","💡 Hint"));note(`${oscL("💡 可以試試箭頭這一步（不只這一步，符合目標的好棋都算）。","💡 Try the move shown by the arrow (other good moves that fit the goal also count).")}\n${Q(node)}`);draw()}
@@ -414,7 +415,9 @@ function zmGet(){try{return OSC.zmNorm(store.get("zm",null),PTY.ORDER)}catch(e){
 const zmImg=m=>`data/npc/${m.id}.webp`;
 /* look：3D 場景照園子棋友那一套（06-cpu NPC_LOOK）：有 n_zm_<派> 模型就用 3D，沒有就用 data/npc/zm_<派>.webp 立繪；不走驛站旅人的 data/actors/（掌門沒有那裡的圖） */
 function zmAct(j){const m=OSC.mst(j);if(!m||!/^inn:zm_/.test(String(j||"")))return null;
-  return{id:m.id,name:m.nm,ic:"🏯",pc:m.pc,img:zmImg(m),say:m.pre,win:m.win,lose:m.lose,zm:1,look:side=>typeof NPC_LOOK==="function"?NPC_LOOK({id:m.id,name:m.nm,say:m.pre,pc:m.pc},side):null}}
+  return{id:m.id,name:m.nm,ic:"🏯",pc:m.pc,img:zmImg(m),say:m.pre,win:m.win,lose:m.lose,zm:1,look:side=>{const L=typeof NPC_LOOK==="function"?NPC_LOOK({id:m.id,name:m.nm,say:m.pre,pc:m.pc},side):null;return L&&ZM_GCH[m.sid]?{...L,gch:ZM_GCH[m.sid],gred:OSC.mside(m)==="r"}:L}}}
+/* 11/18 開發者選「掌門胸前圓牌印上門派字」：派名第一個字；掌門執紅＝紅字、執黑＝黑字。立繪已用 tools/zm_disc_char.py 印上同一個字，3D 模型由 bot3d.js 照 ring3d.json 的圓牌位置貼上（figure 的 gch／gred） */
+const ZM_GCH={central:"中",screen:"屏",palace_horse:"反",same_cannon:"順",opposite_cannon:"列",pawn:"仙",elephant:"飛",horse:"起",cross_palace:"過",advisor_corner:"仕"};
 const zmLv=rl=>Math.max(1,Math.min(6,1+Math.floor(rl/3)));
 function zmArgs(m,rl,dx){const ms=OSC.mside(m);return{human:ms==="r"?"b":"r",level:zmLv(rl),rlv:rl,journey:"inn:"+m.id,...(dx!=null?{dx}:{})}}
 const zmSay=(m,s)=>oscL(`🏯 ${m.nm}：「${s}」`,`🏯 ${m.en}: "${oscT(s)}"`);
