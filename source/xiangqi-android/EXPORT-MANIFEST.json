@@ -1,8 +1,8 @@
 {
  "schema": "xq-android-export/1",
- "madeAt": "2026-11-18T09:06:34.544Z",
- "files": 108,
- "treeSha256": "f32f344cc845d2642b27d6aa0faf711a111f2365da792c71e8a4ea0fd2979013",
+ "madeAt": "2026-11-18T09:45:37.447Z",
+ "files": 109,
+ "treeSha256": "263fbfea5130fd1db5ce668873b88083fcd3a41db47122d0c6ea903df42c9a88",
  "note": "樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256」照路徑排序、換行連起來再算 SHA-256（跟 clean-rebuild.js 的 source.treeSha256 同一種算法）",
  "excluded": [
   {
@@ -92,6 +92,7 @@
   "build-records/rebuild-20261113.json": "18f69b26c601b8767620fa123850cc38b608c156dffe76b53b78671d122405be",
   "build-records/toolchain-20261113.json": "bf2c4017c5791979797e58be3a23fdd4d7e7e591c29eb6ca332bacbc10b27489",
   "capacitor.config.json": "5efeef13dd68ce4ef6aa165789353bc0d5bd8a64445493b1bb667dccabb88a62",
+  "closed-test-intro.txt": "b6e10667ec9ecb8fecd9fd63f33d842daf8300b2705f167b9fc4a16c10457d8d",
   "fastlane/metadata/android/en-US/full_description.txt": "fc3c5a258ca849f95dde370b3bbe7134f23f5bd2aaebbf814a31b597453dc2f5",
   "fastlane/metadata/android/en-US/short_description.txt": "52d8014183fcf1ec95874115d1ae77091e57f917f9d4c35527d69dd615a9d083",
   "fastlane/metadata/android/en-US/title.txt": "bfa8b223b2170068cb8b3ff3d3d2a786adf8f5e652a61c4fde9d86a2e5f92673",

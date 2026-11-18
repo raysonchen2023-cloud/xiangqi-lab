@@ -1,11 +1,11 @@
 {
  "ref": "origin/main",
- "commit": "11cb8aa0f73d204b0c81c3239d19a88377edbc62",
- "madeAt": "2026-11-18T09:06:33.435Z",
+ "commit": "77c735dc259cfb8a8b3bb1fabe72c172956213f1",
+ "madeAt": "2026-11-18T09:45:36.144Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
-  "xiangqi-db/m/02-shell.js": "local=live",
+  "xiangqi-db/m/02-shell.js": "live",
   "xiangqi-db/m/02r-reloadguard.js": "local=live",
   "xiangqi-db/m/03-home-quiz.js": "local=live",
   "xiangqi-db/m/04-stats.js": "local=live",
@@ -92,7 +92,7 @@
   "xiangqi-db/m/07z6-sitemap.js": "local=live",
   "xiangqi-db/m/07z7-lesson.js": "local=live",
   "xiangqi-db/m/07z8-grablab.js": "local=live",
-  "xiangqi-db/m/07z9-school.js": "local=live",
+  "xiangqi-db/m/07z9-school.js": "live",
   "xiangqi-db/m/07w6-sceneinfo.js": "local=live",
   "xiangqi-db/m/07w6b-scenedata.js": "local=live",
   "xiangqi-db/m/07w6c-scenepoem.js": "local=live",
@@ -100,7 +100,7 @@
   "xiangqi-db/m/07w8-shichen.js": "local=live",
   "xiangqi-db/m/07w9-exits.js": "local=live",
   "xiangqi-db/m/08-scene.js": "local=live",
-  "xiangqi-db/m/08b-cpugame.js": "local=live",
+  "xiangqi-db/m/08b-cpugame.js": "live",
   "xiangqi-db/m/08s-simul.js": "local=live",
   "xiangqi-db/m/09-askbot.js": "local=live",
   "xiangqi-db/m/09b-preload.js": "local=live",
@@ -124,11 +124,11 @@
   "xiangqi-db/m/07fl-fill.js": "local=live",
   "xiangqi-db/m/07mnf-mainfilm.js": "local=live",
   "xiangqi-db/m/07mnv-mainvn.js": "local=live",
-  "xiangqi-db/m/07stq-starter.js": "local=live",
-  "xiangqi-db/m/07mnq-mainquest.js": "local=live",
+  "xiangqi-db/m/07stq-starter.js": "live",
+  "xiangqi-db/m/07mnq-mainquest.js": "live",
   "xiangqi-db/m/07grw-growth.js": "local=live",
-  "xiangqi-db/m/07gc-native.js": "local=live",
-  "xiangqi-db/m.html": "local",
+  "xiangqi-db/m/07gc-native.js": "live",
+  "xiangqi-db/m.html": "local（拿掉線上沒有的 include）",
   "xiangqi-db/m.css": "local",
   "xiangqi-db/m/README.md": "local（各模組說明）",
   "xiangqi-db/tools/mhtml.js": "local",
@@ -229,6 +229,7 @@
   "xiangqi-lab/tools/test-bhtl.js": "local",
   "xiangqi-lab/tools/test-bhx-allstars-1116.js": "local",
   "xiangqi-lab/tools/test-bhx-hold-1116.js": "local",
+  "xiangqi-lab/tools/test-bhx-refit-1118.js": "local",
   "xiangqi-lab/tools/test-bhx-resume-1116.js": "local",
   "xiangqi-lab/tools/test-bhx-skip-1116.js": "local",
   "xiangqi-lab/tools/test-blitz.js": "local",
@@ -296,6 +297,7 @@
   "xiangqi-lab/tools/test-ios-capsync-1118.js": "local",
   "xiangqi-lab/tools/test-ios-native-1116.js": "local",
   "xiangqi-lab/tools/test-ipad-fill.js": "local",
+  "xiangqi-lab/tools/test-jianghu-1118.js": "local",
   "xiangqi-lab/tools/test-land3d.js": "local",
   "xiangqi-lab/tools/test-lang-default-1117.js": "local",
   "xiangqi-lab/tools/test-layout-r16.js": "local",
@@ -519,6 +521,7 @@
   "xiangqi-android/build-records/rebuild-20261113.json": "local（Android 建置鏈，逐位元照抄）",
   "xiangqi-android/build-records/toolchain-20261113.json": "local（Android 建置鏈，逐位元照抄）",
   "xiangqi-android/capacitor.config.json": "local（Android 建置鏈，逐位元照抄）",
+  "xiangqi-android/closed-test-intro.txt": "local（Android 建置鏈，逐位元照抄）",
   "xiangqi-android/fastlane/metadata/android/en-US/full_description.txt": "local（Android 建置鏈，逐位元照抄）",
   "xiangqi-android/fastlane/metadata/android/en-US/short_description.txt": "local（Android 建置鏈，逐位元照抄）",
   "xiangqi-android/fastlane/metadata/android/en-US/title.txt": "local（Android 建置鏈，逐位元照抄）",
@@ -559,12 +562,20 @@
   "xiangqi-android/EXPORT-MANIFEST.json": "產生（每個檔的 SHA-256、樹雜湊、排除了什麼）"
  },
  "liveDiffers": [
+  "m/02-shell.js",
   "m/05-settings.js",
   "m/07y-hubmap.js",
   "m/07s4-passmap.js",
+  "m/07z9-school.js",
+  "m/08b-cpugame.js",
+  "m/07stq-starter.js",
+  "m/07mnq-mainquest.js",
+  "m/07gc-native.js",
   "src/sw.js"
  ],
- "absentModules": [],
+ "absentModules": [
+  "m/07z9b-jianghu.js"
+ ],
  "excludedTests": {
   "test-a11y-p16.js": "要讀不公開的開發資料（story/ 規劃稿、tools/review_loop、style_loop 評比資料）",
   "test-ai-levels.js": "要讀不公開的開發資料（story/ 規劃稿、tools/review_loop、style_loop 評比資料）",
@@ -613,8 +624,8 @@
   "test-osc-school-1118.js": "指令排除：要讀十派課程 opening-school/*.json（只放 CDN 與倉庫 data/，公開副本 source/ 沒有）",
   "test-zm-masters-1118.js": "指令排除：要讀掌門立繪 npc/zm_*.webp 與棋友開局表（只在開發者電腦與 CDN）"
  },
- "version": "20261118-1657",
- "indexSha1": "8d0e62ca749f",
+ "version": "20261118-1740",
+ "indexSha1": "2dd9ffa2b5c3",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",
@@ -627,8 +638,8 @@
   "xiangqi-lab/tools/qa/touch-stress.js（1 處）"
  ],
  "android": {
-  "files": 108,
-  "treeSha256": "f32f344cc845d2642b27d6aa0faf711a111f2365da792c71e8a4ea0fd2979013",
+  "files": 109,
+  "treeSha256": "263fbfea5130fd1db5ce668873b88083fcd3a41db47122d0c6ea903df42c9a88",
   "excluded": [
    {
     "pattern": "/^verify\\/(?!\\d\\d-swfix-[a-z0-9-]+\\.png$|sw-client-isolation\\.patch$)/",
