@@ -2670,7 +2670,7 @@
       if(!pwDue(now,PW.lastR,pwGap(PW.on,act,now-PW.lastAct))){pfAdd(PW.q,sec,1,0,0);return}   /* 省電＋閒置：這一格不畫 */
       const t=Math.min(PW.on&&!act?.6:.05,(now-last)/1000);last=now;   /* 省電閒置時一格可能隔 0.5 秒：計時器照實走；一開始動（走子、拖曳）就跟原本一樣最多 0.05 秒，走子動畫不會一格跳完 */
       if(el.clientWidth&&Math.abs(el.clientWidth-W)>1)fit();
-      else if((++roomN%60)===0){const rm=room(),want=TDC?rm:Math.round(el.clientWidth*clamp((VH0-300)/(el.clientWidth||300),1.14,1.32));if(Math.abs(Math.min(want,Math.max(.85*W,rm))-H)>3)fit()}   // 版面多一行、少一行時重新量
+      else if((++roomN%60)===0){const rm=room(),want=TDC||pkFullV()?rm:Math.round(   /* 11/18 開發者錄影「畫面跳動」：黑洞第一戰滿版時 fit 把高度撐到 rm（整個螢幕），這裡原本只認塔防、拿 1.32 倍寬當應有高度，永遠對不上 → 每 60 格（省電時約 2 秒）重跑一次 fit，鏡頭就跳一下再滑回來；滿版也照 rm 比 */el.clientWidth*clamp((VH0-300)/(el.clientWidth||300),1.14,1.32));if(Math.abs(Math.min(want,Math.max(.85*W,rm))-H)>3)fit()}   // 版面多一行、少一行時重新量
       yaw+=(tyaw-yaw)*Math.min(1,t*8);pitch+=(tpitch-pitch)*Math.min(1,t*8);zoom+=(tzoom-zoom)*Math.min(1,t*10);placeCam();fxShakeTick(now);if(flatV)mate.g.visible=zoom>1.12||Math.abs(Math.atan2(Math.sin(yaw),Math.cos(yaw)))>.35;   /* QA P2-5：平視（從小帥眼睛看）時拉遠或轉開，小帥要回到凳子上，不然只剩一張空凳子 */
       cineTick(now);const ETS=now<HSTOP?0:FXTS;{const cur=anims;anims=[];const keep=cur.filter(a=>{a.t+=(a.rt?t:t*ETS)*(a.k||1);const p=Math.min(1,a.t/a.d);a.f(p);if(p>=1){a.end&&a.end();return false}return true});anims=keep.concat(anims)}   /* 11/12：動畫結束時接著加的下一段（星塵爆開、星飛去排隊、吃子後縮回）先放新陣列再併回；以前直接 filter，end 裡 push 的會被丟掉 */
       if(selI>=0&&pieces[selI]){const g=pieces[selI];g.position.y=TOP+.32+(PW.on?0:Math.sin(now/180)*.06)}
