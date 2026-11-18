@@ -104,7 +104,7 @@ function bhFull(on,st){if(typeof document==="undefined")return;const b=document.
   try{const tb=document.getElementById("topbar"),h=tb?Math.round(tb.getBoundingClientRect().bottom):56;document.documentElement.style.setProperty("--bhTop",Math.max(0,h)+"px")}catch(e){}
   try{const port=matchMedia("(orientation:portrait)").matches,k="bhRot:"+(st&&st.id||"");if(port&&st&&!st.td&&!(typeof xqNat==="function"&&xqNat())&&!sessionStorage.getItem(k)){   /* 11/17 App Store 審查（測試員 E，指南 4.0）：iPhone 原生 App 鎖直式，不提示轉橫向；網頁版照舊 */   /* 11/14 塔防局直拿已經滿版：不再跳「轉橫向」，改在視角選單放一行靜態提示（07bht-td.js bhtdViewMenu）；轉向時（resize 沒帶 st）也不跳 */sessionStorage.setItem(k,"1");setTimeout(()=>{try{toast("📱 手機轉成橫向，黑洞星盤會滿版")}catch(e){}},1800)}}catch(e){}}
 if(typeof window!=="undefined"){addEventListener("hashchange",()=>{if(!/^#\/journey\/play/.test(location.hash))bhFull(false)});addEventListener("resize",()=>{if(document.body&&document.body.classList.contains("bh-full"))bhFull(true,null)})}
-function bhParkEx(st){bhFull(bhIs(st),st);if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,allStars:st.journey===BHX_ID   /* 11/16 開發者：序局紅方七種子都用七星 3D，不用木棋靈（park3d gntWood 看 ex.allStars） */,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",bhStars:bhStarsEx(),era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,...(typeof bhtdParkEx==="function"?bhtdParkEx(st):null),...(typeof bhfxParkEx==="function"?bhfxParkEx(st):null)   /* 11/14 太虛星尊上場：黑將外觀換成魔王（07bhf-bossfx.js；現在只有開發者測試台會開） */,
+function bhParkEx(st){bhFull(bhIs(st)&&!(st&&st.journey===BHX_ID),st);   /* 11/18：黑洞第一戰（序局）改用自己的直式也滿版的版面（bhxFullSync），不掛 bh-full、也不提示轉橫向 */if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,allStars:st.journey===BHX_ID   /* 11/16 開發者：序局紅方七種子都用七星 3D，不用木棋靈（park3d gntWood 看 ex.allStars） */,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",bhStars:bhStarsEx(),era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,...(typeof bhtdParkEx==="function"?bhtdParkEx(st):null),...(typeof bhfxParkEx==="function"?bhfxParkEx(st):null)   /* 11/14 太虛星尊上場：黑將外觀換成魔王（07bhf-bossfx.js；現在只有開發者測試台會開） */,
   gate:{img:["data/park/blackhole_360.webp"],icon:"🌀",title:"星樞棋局",sub:"墨色星渦的中心，有一張巨大的星盤",bg:"#05060d",quiet:true}}}
 /* 對局中：領先、落後各提醒一次；下到中盤星樞說一句伏筆（不說破幻影棋客是什麼） */
 let BH_T={id:null,s:{}};
@@ -272,7 +272,7 @@ html:has(#bhxPg),html:has(#bhxPg) body{background:#05060d}
 @keyframes bhxPkG{0%,100%{box-shadow:0 0 0 0 rgba(255,214,120,.25)}50%{box-shadow:0 0 18px 4px rgba(255,214,120,.45)}}
 #bhxPg .bx-cap{position:absolute;top:calc(8vh + env(safe-area-inset-top,0px));left:0;right:0;font-size:clamp(18px,5.4vw,25px);letter-spacing:.32em;font-weight:600;color:#FFE6A8;text-shadow:0 2px 12px #000,0 0 3px #000;opacity:0;transition:opacity 1s;pointer-events:none}#bhxPg .bx-cap.on{opacity:1}
 #bhxPg .bx-k{position:absolute;right:16px;top:calc(14px + env(safe-area-inset-top,0px));min-width:64px;min-height:44px;font-size:15px;color:#e2d6b8;background:rgba(0,0,0,.45);border:1px solid rgba(232,199,122,.55);border-radius:99px;padding:10px 18px}
-#bhxVx{position:fixed;inset:0;z-index:9001;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 50%,#000 0 6%,#2a1450 16%,#120a26 38%,#05060d 70%);overflow:hidden}
+#bhxVx{position:fixed;inset:0;z-index:9001;pointer-events:none;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 50%,#000 0 6%,#2a1450 16%,#120a26 38%,#05060d 70%);overflow:hidden}
 #bhxVx::before{content:"";position:absolute;width:120vmax;height:120vmax;background:conic-gradient(from 0deg,transparent 0 10%,rgba(180,107,255,.35) 14%,transparent 22% 40%,rgba(110,139,255,.3) 46%,transparent 54% 72%,rgba(180,107,255,.3) 78%,transparent 86%);border-radius:50%;animation:bhxSp 2.4s linear infinite;will-change:transform;transform:translateZ(0);backface-visibility:hidden}
 #bhxVx img{position:relative;width:min(46vw,220px);aspect-ratio:1;border-radius:50%;object-fit:cover;object-position:top;border:3px solid #E8C77A;box-shadow:0 0 30px rgba(180,107,255,.8);animation:bhxSk 1.7s cubic-bezier(.55,0,.9,.45) forwards}
 @keyframes bhxSp{to{transform:rotate(360deg)}}
@@ -352,6 +352,7 @@ function bhxMeteor(o,onDone,opt){opt=opt||{};bhxStarRev(o);const ALL=opt.mode===
     if(u>=D||(rm&&fa>=1)){R.done=true;if(!called){called=true;if(onDone)onDone()}return}raf=requestAnimationFrame(draw)};
   raf=requestAnimationFrame(draw);return R}
 /* 入口：選角確認後，角色頭像被墨色星渦捲進去（1.7 秒；減少動態＝0.5 秒） */
+/* 11/18 第 34 輪 N34-1（P3）：星渦（#bhxVx z 9001）在第 1 段電影開頭還在淡出（約 0.45 秒），蓋在電影的「略過」上面、按了沒反應 → 星渦純看的，不攔點擊（CSS pointer-events:none） */
 function bhxVortex(c,done){bhxCss();const o=document.createElement("div");o.id="bhxVx";o.setAttribute("aria-hidden","true");o.innerHTML=`<img src="${c?"data/xs/prev_"+c+".webp":bhxSeven()}" alt="" onerror="this.remove()">`;document.body.append(o);
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
   setTimeout(()=>{o.style.transition="opacity .4s";o.style.opacity="0";setTimeout(()=>o.remove(),450);if(done)done()},rm?500:1300)}
@@ -428,6 +429,61 @@ if(typeof addEventListener==="function"){
   addEventListener("popstate",()=>{try{const s=history.state||{};if(BHX_HOLD&&bhxOnPage()&&!s.bhxHold&&!s.xqSheet)history.pushState(Object.assign({},s,{bhxHold:1}),"",location.href)}catch(e){}});
   addEventListener("click",e=>{try{if(BHX_HOLD&&bhxOnPage()&&e.target&&e.target.closest&&e.target.closest("#meChip,#dglLoc")){e.stopPropagation();e.preventDefault()}}catch(x){}},true)}
 function bhxLocked(st){return!!(st&&st.journey===BHX_ID&&!st.result)}
+/* ===== 11/18 開發者「黑洞第一戰改成滿版戰鬥畫面」（截圖圈掉上下兩塊；「因為是有一場戰鬥，想讓視覺更飽滿一些」；選單：只有第一戰）=====
+   只套在序局（journey＝bh:xu）而且在 #/journey/play；星門圍城、十三星系、今日異象、練功房都不變。08b-cpugame.js 每次畫好棋盤叫 bhxFullSync(st)。
+   ① body.bhx-full：頂欄、對手列、形勢條、場名（🌀 黑洞・星樞棋局）、玩家列、「輪到你」、本關棋規、棋譜條、工具列（寶物、悔棋）都收起來；
+      棋盤框（#bbox）蓋滿整個螢幕（連瀏海、Home 條那幾條也是黑洞的底色），3D 畫布跟著滿版；浮在上面的按鈕（視角、平面棋盤、望遠鏡、翻轉、左右、＋／－）讓開安全區；
+      平面棋盤：棋盤（svg）四邊留安全區＋上下各讓出一排按鈕的空間，置中。
+   ② 左上「⋯」（44×44，讓開安全區）：🚪 回開頭畫面（stqXuLeave，不算略過；序局打完換成 ↩ 返回）、📜 本關棋規、🔊／🔇 聲音、🎒 寶物（按原本工具列那顆）；悔棋這一戰本來就不能用，不放。
+   ③ 輪到誰：棋盤下緣置中的小標籤（輪到你／星樞思考中…）＋輪到你時畫面四邊微微發金光；讀螢幕照舊由棋盤播報（標籤 aria-hidden，不重複念）。
+   ④ 開局時上方淡入「星樞・黑洞星盤」2 秒後淡出（取代對手列）；減少動態＝直接出現、直接消失。
+   ⑤ 離開（換頁、回開頭畫面、打完換頁）或換成別的對局：拿掉 bhx-full 和這幾個元件，頂欄、底部列恢復。
+   純函式 bhxFullOn 給測試用；BHXF.rm 可換（測試） */
+const BHXF={on:false,intro:null,rm:null};
+function bhxFullOn(st,hash){return!!st&&st.journey===BHX_ID&&/^#\/journey\/play(\/|$|\?)/.test(String(hash==null?(typeof location!=="undefined"?location.hash:""):hash))}
+function bhxFullRm(){if(BHXF.rm!=null)return!!BHXF.rm;try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}}
+function bhxFullCss(){if(document.getElementById("bhxFullCss"))return;const s=document.createElement("style");s.id="bhxFullCss";const T="env(safe-area-inset-top,0px)",B="env(safe-area-inset-bottom,0px)",L="env(safe-area-inset-left,0px)",R="env(safe-area-inset-right,0px)";
+  s.textContent=`body.bhx-full{background:#05060d!important}
+body.bhx-full #topbar,body.bhx-full .topbar,body.bhx-full .view.fixed>#pTop,body.bhx-full .view.fixed>#pBot,body.bhx-full .view.fixed>#stat,body.bhx-full .view.fixed>.rule-note,body.bhx-full .view.fixed>.evline,body.bhx-full .view.fixed>#strip,body.bhx-full .view.fixed>#acts,body.bhx-full .pkname,body.bhx-full .xqbot{display:none!important}
+body.bhx-full .view.fixed{background:#05060d!important}
+body.bhx-full .view.fixed>#bbox{position:fixed!important;inset:0!important;left:0!important;top:0!important;right:0!important;bottom:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;grid-column:auto!important;z-index:40;background:#05060d;border-radius:0!important;transition:box-shadow .4s}
+body.bhx-full .view.fixed>#bbox .park3d{border-radius:0!important;height:100%!important}
+body.bhx-full .view.fixed>#bbox>svg{width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;box-sizing:border-box;padding:calc(${T} + 60px) calc(${R} + 8px) calc(${B} + 60px) calc(${L} + 8px)}
+body.bhx-full .view.fixed>#bbox .pzoom{right:calc(8px + ${R})!important;bottom:calc(8px + ${B})!important}
+body.bhx-full .view.fixed>#bbox .gpad{bottom:calc(10px + ${B})!important}
+body.bhx-full .view.fixed>#bbox .pkview{top:calc(10px + ${T})!important;right:calc(10px + ${R})!important;bottom:auto!important;left:auto!important}
+body.bhx-full .view.fixed>#bbox .pk2d{top:auto!important;bottom:calc(10px + ${B})!important;left:calc(10px + ${L})!important}
+body.bhx-full .view.fixed>#bbox .pk2d-tip{bottom:calc(58px + ${B})!important}
+body.bhx-full .pk3d-back{position:fixed!important;left:calc(10px + ${L});bottom:calc(10px + ${B});margin:0!important;padding:0!important;z-index:45}
+body.bhx-full .pk3d-back button{margin:0!important;padding:6px 14px!important;min-height:44px;border-radius:99px;background:rgba(255,248,232,.94)!important;color:#3a2618!important}
+body.bhx-full.bhx-me .view.fixed>#bbox{box-shadow:inset 0 0 0 2px rgba(255,214,120,.42),inset 0 0 26px rgba(255,214,120,.22)}
+#bhxMo{position:fixed;z-index:46;left:calc(8px + ${L});top:calc(8px + ${T});width:44px;height:44px;border-radius:50%;border:1px solid rgba(232,199,122,.45);background:rgba(10,10,30,.55);color:#f1e7cf;font:800 20px/1 system-ui,sans-serif;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#bhxTurn{position:fixed;z-index:44;left:50%;bottom:calc(16px + ${B});transform:translateX(-50%);padding:4px 14px;border-radius:99px;background:rgba(10,10,30,.62);color:#f1e7cf;font:700 13px/1.5 var(--sans,system-ui);letter-spacing:.06em;white-space:nowrap;pointer-events:none;transition:opacity .3s}
+#bhxTurn.me{color:#FFE08A;box-shadow:0 0 0 1px rgba(255,214,120,.5),0 0 14px rgba(255,214,120,.35)}#bhxTurn.up{bottom:calc(150px + ${B})}#bhxTurn[hidden]{display:none}
+#bhxOpp{position:fixed;z-index:44;left:50%;top:calc(16px + ${T});transform:translateX(-50%);padding:4px 16px;border-radius:99px;background:rgba(10,10,30,.62);color:#e2d6b8;font:700 15px/1.5 var(--serif,serif);letter-spacing:.16em;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .5s}
+#bhxOpp.on{opacity:1}
+@media (prefers-reduced-motion:reduce){#bhxOpp,#bhxTurn,body.bhx-full .view.fixed>#bbox{transition:none!important}}`;document.head.append(s)}
+function bhxFullOff(){try{if(typeof document==="undefined"||!document.body)return;const b=document.body,was=b.classList.contains("bhx-full");b.classList.remove("bhx-full","bhx-me");for(const id of["bhxMo","bhxTurn","bhxOpp"]){const e=document.getElementById(id);if(e)e.remove()}
+  BHXF.on=false;if(was)setTimeout(()=>{try{dispatchEvent(new Event("resize"))}catch(e){}},0)}catch(e){}}   /* 3D 畫布照新的大小重排 */
+function bhxFullSync(st){try{if(typeof document==="undefined"||!document.body)return;if(!bhxFullOn(st)){if(BHXF.on||document.body.classList.contains("bhx-full"))bhxFullOff();return}
+  const b=document.body,fresh=!b.classList.contains("bhx-full");BHXF_ST=st;bhxFullCss();b.classList.add("bhx-full");BHXF.on=true;if(fresh)setTimeout(()=>{try{dispatchEvent(new Event("resize"))}catch(e){}},0);
+  let mo=document.getElementById("bhxMo");if(!mo){mo=document.createElement("button");mo.type="button";mo.id="bhxMo";mo.textContent="⋯";mo.setAttribute("aria-label","更多：回開頭畫面、本關棋規、聲音、寶物");mo.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}bhxFullMenu()};b.append(mo)}
+  let tn=document.getElementById("bhxTurn");if(!tn){tn=document.createElement("div");tn.id="bhxTurn";tn.setAttribute("aria-hidden","true");b.append(tn)}
+  const me=!st.result&&st.turn===st.human,txt=st.result?"":me?"輪到你":"星樞思考中…";if(tn.dataset.k!==txt){tn.dataset.k=txt;tn.textContent=txt}   /* 英文介面會被換成英文：照原文記在 data-k 比，不要每次重寫 */tn.hidden=!txt;tn.classList.toggle("me",me);b.classList.toggle("bhx-me",me);
+  try{const gp=document.querySelector(".view.fixed>#bbox .gpad");tn.classList.toggle("up",!!gp&&getComputedStyle(gp).display!=="none")}catch(e){}   /* 搖桿出來時標籤往上讓 */
+  if(BHXF.intro!==st.id){BHXF.intro=st.id;let op=document.getElementById("bhxOpp");if(!op){op=document.createElement("div");op.id="bhxOpp";op.setAttribute("aria-hidden","true");b.append(op)}op.textContent="星樞・黑洞星盤";
+    const rm=bhxFullRm();if(rm){op.classList.add("on");setTimeout(()=>{op.classList.remove("on")},2000)}else{setTimeout(()=>op.classList.add("on"),30);setTimeout(()=>op.classList.remove("on"),2530)}setTimeout(()=>{if(op.isConnected&&!op.classList.contains("on"))op.remove()},rm?2100:3100)}}catch(e){}}
+/* 「⋯」裡的選項（純函式：給測試看有哪些）；locked＝序局還沒打完 */
+function bhxFullItems(locked){const L=[];if(locked&&typeof stqXuLeave==="function")L.push(["🚪 回開頭畫面","leave"]);else L.push(["↩ 返回","back"]);
+  L.push(["📜 本關棋規","rule"]);let off=false;try{off=typeof sxmAllOff==="function"&&sxmAllOff()}catch(e){}L.push([off?"🔊 打開聲音":"🔇 關掉聲音","snd"]);L.push(["🎒 寶物","bag"]);return L}
+function bhxFullMenu(){const L=bhxFullItems(bhxFullLocked());
+  const go={leave:()=>{try{stqXuLeave()}catch(e){}},back:()=>{try{history.back()}catch(e){location.hash="#/"}},
+    rule:()=>{const rn=document.querySelector(".view.fixed>.rule-note");const t=(rn&&rn.textContent||"").replace(/\s+/g," ").trim()||"本關棋規：不判長將長捉";modal(`<div class="em">📜</div><h2>本關棋規</h2><p style="line-height:1.7">${esc(t.replace(/^📜\s*/,""))}</p>`,[["好",null]])},
+    snd:()=>{try{const M=sxmMute(sxmMix(),"all");store.set("sndMix",M);try{unlockAudio()}catch(x){}sxmApply();try{sxmSync()}catch(x){}toast(M.all?"🔇 全部聲音：靜音":"🔊 全部聲音：恢復")}catch(e){}},
+    bag:()=>{const bg=document.querySelector('.view.fixed>#acts button[data-act="bag"],.view.fixed>#acts button[aria-label="寶物"]');if(bg&&!bg.disabled)bg.click();else toast("這一戰用不到寶物")}};
+  modal(`<div class="em">⋯</div><h2>黑洞・星樞棋局</h2>`,L.map(([t,k])=>[t,go[k]]).concat([["關閉",null,true]]))}
+let BHXF_ST=null;function bhxFullLocked(){return BHXF_ST?bhxLocked(BHXF_ST):true}
+try{if(typeof addEventListener==="function")addEventListener("hashchange",()=>{if(!/^#\/journey\/play/.test(location.hash||""))bhxFullOff()})}catch(e){}   /* 換頁（回開頭畫面、打完回星槎）就恢復頂欄、底部列 */
 let BHX_W=0;
 function bhxGuard(st,f,t){if(!st||st.journey!==BHX_ID||st.result)return null;
   if(f===BHX_SOL[0]&&t===BHX_SOL[1]){setTimeout(()=>toast(BHX_TXT.good[0]+"："+BHX_TXT.good[1]),350);return null}

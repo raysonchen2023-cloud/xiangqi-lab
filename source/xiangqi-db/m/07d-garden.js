@@ -143,9 +143,10 @@ function npcBondBook(){const L=NPC_W(),M=npcBonds(),met=L.filter(n=>M[n.id]&&M[n
 function npcBondSheet(n){const D=NPC_BOND[n.id],x=bondOf(n.id),age=(typeof AGE!=="undefined"&&AGE["n:"+n.id])||"";
   npcRkCss();const rk=npcRkOf(n),[rkt,rkc]=npcRkC(rk);   /* 回饋 856：頭像框、等級小章 */
   sheet(`🌸 ${n.name}`,b=>{b.innerHTML=`<div class="gd-who"><img src="data/npc/${n.id}.webp" alt="" onerror="this.remove()" style="box-shadow:0 0 0 2.5px ${rkc}"><div><div>家鄉：<b>${esc(eraLabel(n.era))}</b>${age?`・${esc(age)}`:""}・原創棋友<span class="gd-rk-pill" style="background:${rkc}">${esc(rkt)}</span></div><div>羈絆 <span class="gd-h">${bondHearts(x.n)}</span>（${x.n}／3）</div><div class="muted" style="font-size:13px">「${esc(n.say)}」</div></div></div>
+    ${typeof oscNpcHTML==="function"?oscNpcHTML("npc:"+n.id,n.era):""}
     ${[0,1,2].map(i=>i<x.n?npcIdCard(n,i)+`<p class="gd-line">💬「${esc(D.l[i])}」</p>`:`<div class="gd-id off"><div class="gd-idh"><b>🔒 身分小卡 ${i+1}／3</b><span>羈絆第 ${i+1} 級解開</span></div></div>`).join("")}
     ${x.n>=3?`<button class="btn" id="gdMail" style="width:100%">💌 讀她寄來的信</button>`:""}<button class="btn ghost" id="gdBack" style="width:100%">回羈絆冊</button>`;
-    const m=b.querySelector("#gdMail");if(m)m.onclick=()=>npcMail(n);b.querySelector("#gdBack").onclick=()=>npcBondBook()})}
+    const m=b.querySelector("#gdMail");if(m)m.onclick=()=>npcMail(n);b.querySelector("#gdBack").onclick=()=>npcBondBook();if(typeof oscNpcBind==="function")oscNpcBind(b)})}   /* 開局門派（07z9-school.js，開發者 11/18）：她的門派、慣用開局 */
 /* 宋朝以前的棋友：信裡的棋是旅人帶去的今天的象棋，不是當朝棋法（史實盤查 H01，11/10） */
 const ERA_PRE_XQ={qin:"六博",han:"六博",sanguo:"六博",weijin:"六博、塞戲",nanbei:"六博、北周的象戲",sui:"北周傳下來的象戲",tang:"寶應象戲那一類沒有炮的象戲",wudai:"象戲（炮什麼時候加進來，還沒有定論）"};
 const eraXqNote=era=>ERA_PRE_XQ[era]?`<p class="muted" style="font-size:13px;margin:0 0 10px">📜 這是星槎棋友的信。信裡的棋，是你帶去教她的今天的象棋；${esc(eraLabel(era))}當時的人玩的是${ERA_PRE_XQ[era]}。</p>`:"";

@@ -42,7 +42,7 @@ test("卡住的那一步不會擋住排在後面的搜尋",async()=>{
   await assert.rejects(a);assert.equal((await b).best,"h2e2")});
 test("〔原始碼〕電腦落子遇到錯誤會隔幾秒自動重試（不是停在思考中）",()=>{
   assert.ok(LOCAL.includes("catch(e){engFail++;"));
-  assert.ok(LOCAL.includes("else if(!engWait)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))"))});
+  assert.ok(LOCAL.includes("else if(!engWait&&!engNoCoi)setTimeout(playEngine,Math.min(60000,1500*2**Math.min(engFail,6)))"))});   /* 11/18：沒有多執行緒（engNoCoi）時不空轉，見 test-r38-1118.js */
 test("引擎啟動一直不回（iPad 卡在第一盤）：不會永遠等，逾時拋錯、重置；下一次重新啟動成功",async()=>{
   const{E,made}=boot(["modhang","ok"]);
   await assert.rejects(E.search({moves:[]},{depth:3},1),/啟動太久/);assert.equal(E.ready,false);

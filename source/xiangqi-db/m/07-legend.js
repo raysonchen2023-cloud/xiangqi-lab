@@ -493,7 +493,7 @@ function innSheet(v){setTimeout(innDrop,1200);const I=xpInfo(),Sx=jSecrets(),nx=
   (v.querySelector("#toShip")||{}).onclick=()=>{vibrate(5);goUp("#/adventure")};
   v.querySelectorAll("[data-inn]").forEach(b=>b.onclick=()=>{const x=INN.concat(SECRETS).find(z=>z.id===b.dataset.inn);if(!x||(SECRETS.includes(x)&&!Sx[x.id]))return;
     const lv=x.who?secretLv(x):innLvN(x),rl=x.who?null:innRlv(x);
-    sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`${x.who?secretBio(x):""}<p class="muted" style="margin:0 0 2px">${esc(innCall(x))}</p><p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">第 ${lv} 級</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>`;
+    sheet(`${x.ic} ${x.name}`,c=>{c.innerHTML=`${x.who?secretBio(x):""}<p class="muted" style="margin:0 0 2px">${esc(innCall(x))}</p><p style="font-size:16px;line-height:1.8">${esc(x.say)}</p><p class="muted">第 ${lv} 級</p><button class="btn" id="ig" style="width:100%">⚔ 下一盤</button>${typeof oscNpcHTML==="function"?oscNpcHTML((x.who?"secret:":"inn:")+x.id):""}`;if(typeof oscNpcBind==="function")oscNpcBind(c);   /* 開局門派（07z9-school.js，開發者 11/18）：這位棋友的門派、慣用開局 */
       c.querySelector("#ig").onclick=()=>{closeSheet();if(rl!=null)store.set("innCur",{id:x.id,rl});jStart("inn:"+x.id,rl==null?{human:"r",level:lv,journey:"inn:"+x.id}:{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:"inn:"+x.id},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`${x.ic} ${x.name}：${x.say}`),500)})}})});
   if(typeof igBind==="function")igBind(v,IE);   /* 意見回饋 826：今天從別處路過的客人（07m2-innguest.js） */
   return{}}
@@ -1251,6 +1251,7 @@ function Theme(v,tag){if(tag){const T=THEMES.find(x=>x[0]===tag);if(!T){navRepla
     v.innerHTML=`<div class="pad"><div class="card" style="line-height:1.8">挑一個戰術主題，連做 10 題。<span class="muted" style="font-size:13.5px">題目是題庫裡的基本題和大師名局，照戰術分類；答對 6 題過關。</span></div>
       <div class="sec-t">主題</div><div class="items" style="padding:0">${THEMES.map(([k,d])=>{const x=TS[k],n=cnt(k),pc=x&&x.n?Math.round(x.ok*100/x.n):null;return`<button class="item" data-t="${k}" ${n?"":"disabled"}><span class="lb">${k===w?"🎯":"🧠"}</span><span class="tx"><b>${k}${k===w?' <span class="pill" style="font-size:11px">最需要練</span>':""}</b><span>${esc(d)}・${n} 題${pc!=null?`・正確率 ${pc}%`:""}</span></span><span class="muted">›</span></button>`}).join("")}</div></div>`;
     v.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash="#/theme/"+encodeURIComponent(b.dataset.t)});
+    try{if(typeof oscThemeAdd==="function")oscThemeAdd(v)}catch(e){}   /* 開局門派「開局棋路」入口（07z9-school.js，開發者 11/18） */
     try{if(typeof lsnThemeAdd==="function")lsnThemeAdd(v)}catch(e){}   /* ChatGPT 改善單 I01、I02：清單最下面「小實驗」（07z7-lesson.js） */}).catch(e=>{v.innerHTML='<div class="pad"><div class="card muted">'+esc(e.message)+'</div></div>'});return{}}
 /* ================= 🔰 新手訓練營 =================
    開發者決定（Gemini 象棋教學審閱）：每種棋子怎麼走、蹩馬腿、將軍、解將、雙車錯、馬後炮，一課走一步；局面都用規則程式驗過（將死的真的將死） */

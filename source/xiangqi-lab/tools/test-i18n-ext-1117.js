@@ -399,7 +399,7 @@ test("第 5 批：星門預告（門・棋、延遲過／入侵）、齊轍木�
   assert.ok(SH.includes("toast(\"✅ Pikafish 引擎已自動下載完成，離線也能下棋\")"), "02-shell.js 自動下載完成提示改了");
   for (const s of ["✅ Pikafish 引擎已自動下載完成，離線也能下棋", "✅ Pikafish 引擎下載完成", "✅ Pikafish 已在手機裡，可離線下棋與分析", "⬇ Pikafish 引擎還沒下載（約 48 MB）", "下載中…", "Pikafish 已下載，可以離線使用", "第一次使用：下載 Pikafish 引擎 35%（17／48 MB）", "⚠ 這支手機的 Android System WebView 版本太舊，電腦棋手無法運作；請到 Play 商店更新「Android System WebView」或「Chrome」"]) ok(X, s);
   for (const why of ["逾時", "Failed to fetch", "下載失敗：data/pikafish.nnue（404）"]) assert.ok(ok(X, "Pikafish 引擎下載失敗（" + why + "），請確認網路後再試一次").startsWith("Pikafish engine download failed ("));
-  const EJ = LAB("engine.js"); for (const s of ["瀏覽器還沒開啟多執行緒模式，請把 App 關掉重開一次", "電腦棋手啟動太久", "電腦棋手已重新啟動", "電腦棋手沒有回應，正在重新啟動（幾秒後自動再想一次）"]) { assert.ok(EJ.includes(s), "engine.js 改了：" + s); ok(X, s) }
+  const EJ = LAB("engine.js"); for (const s of ["電腦棋手需要瀏覽器的「多執行緒模式」才能下棋，這次沒有開成功（背景的 Service Worker 沒有裝好）。請重新整理這一頁；還是不行，請換用最新版的 Chrome、Safari 或 Edge 再打開。", "電腦棋手啟動太久", "電腦棋手已重新啟動", "電腦棋手沒有回應，正在重新啟動（幾秒後自動再想一次）"]) { assert.ok(EJ.includes(s), "engine.js 改了：" + s); ok(X, s) }
 });
 
 test("用詞統一：星輝＝Starshine（不跟內建 星芒＝Starglow 撞）、修為＝XP、星塵＝Stardust；天賦樹分號後小寫；外掛裡城子＝Chengzi", t => {

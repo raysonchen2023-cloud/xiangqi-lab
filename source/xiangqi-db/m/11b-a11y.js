@@ -199,8 +199,8 @@ if(fzSysOn())try{fzApply()}catch(e){}
 try{const re=()=>{try{if(fzSysOn())fzApply()}catch(e){}};[300,1200,3000].forEach(t=>setTimeout(re,t));addEventListener("load",re);addEventListener("pageshow",re)}catch(e){}
 /* 自動提示一次：用 Tab 鍵、系統減少動態效果、強制色彩 */
 function axmAsk(why){if(axmOn()||store.get("axmAsk",0))return;
-  const busy=()=>!!document.querySelector(".modal,#sheet.show,#preov,#bhxPg,#mnfPg,#mnfRite,#mnvPg,#mnqCard,#mnqGf,#xqTitle:not(.out)");   /* 電影、對話章節與任務／授印卡播放中，延後詢問，避免覆蓋故事和解題操作。 */
-  if(busy()){if((axmAsk.n=(axmAsk.n||0)+1)<60)setTimeout(()=>axmAsk(why),5000);return}   /* 電影可能好幾分鐘：最多等 5 分鐘 */
+  const busy=()=>{try{if(typeof stqHold==="function"&&stqHold())return true}catch(e){}return!!document.querySelector(".modal,#sheet.show,#preov,#bhxPg,#bhxBk,#bhxVx,#mnfPg,#mnfRite,#mnvPg,#mnqCard,#mnqGf,#ptyTr,#stqPg,#xqTitle:not(.out)")};   /* 11/18 第 33 輪 N33-4：減少動態時這一問跳在開場第〇章分頁、序局 3D 上 → 也看 07stq stqHold（開場、序局、新手練習還沒跑完）和黑洞底幕、星渦 */   /* 電影、對話章節與任務／授印卡播放中，延後詢問，避免覆蓋故事和解題操作。 */
+  if(busy()){let h=false;try{h=typeof stqHold==="function"&&stqHold()}catch(e){}if(h||(axmAsk.n=(axmAsk.n||0)+1)<60)setTimeout(()=>axmAsk(why),5000);return}   /* 開場、新手練習還沒跑完的等待不算進 60 次 */   /* 電影可能好幾分鐘：最多等 5 分鐘 */
   store.set("axmAsk",1);const fc=!!(window.matchMedia&&matchMedia("(forced-colors: active)").matches);
   const B=[["♿ 開啟螢幕報讀與鍵盤模式",()=>axmSet(true)]];if(fc&&!axmHct())B.push(["開啟高對比主題",()=>axmHctSet(true),true]);B.push(["先不用",()=>{try{toast("之後可以在設定房間的 🔒 小鎖匣 → ♿ 無障礙打開")}catch(e){}},true]);
   modal(`<div class="em" aria-hidden="true">♿</div><h2>要開「螢幕報讀與鍵盤模式」嗎？</h2><p style="line-height:1.7">${esc(why)}。開了以後下棋用平面棋盤，每一格都念得出來，方向鍵移動、Enter 選子落子，每一步也會念出來，裝飾動畫會關掉。</p>`,B)}

@@ -2345,10 +2345,11 @@
       if(box&&/^(sticky|fixed)$/.test(getComputedStyle(box).position)){   /* fixed＝黑洞橫向滿版（07bh bhFull） */const bs=getComputedStyle(box);return box.clientHeight-parseFloat(bs.paddingTop)-parseFloat(bs.paddingBottom)}   /* 11/12 iPhone 橫向（第 6 輪截圖 18）：對局頁變兩欄、左欄固定高度，3D 照左欄高度算，不再比螢幕高 */
       if(!view||getComputedStyle(view).overflow!=="hidden")return 1e9;
       let used=0;for(const c of view.children)if(c!==box&&!(parseFloat(getComputedStyle(c).flexGrow)>0))used+=c.offsetHeight;const cs=getComputedStyle(box);   /* 撐開空白的那格（flex:1）不算 */return view.clientHeight-used-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)};
-    const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);const rm=room();if(W*CAMV.hr>rm)CAMV.hr=Math.max(.3,rm/W);if(TDC&&rm>0&&rm<1e8)CAMV.hr=Math.max(.3,rm/W);   /* 11/14 塔防固定鏡頭：畫面高度直接撐滿版面給的格子（直拿滿版） */   /* 意見回饋 295：電腦的寬螢幕也照可用高度滿版（上下視角不變、左右看更廣），不再撐得比螢幕還高 */
+    const pkFullV=()=>{try{const b=el.parentElement;return!!b&&!!document.body&&document.body.classList.contains("bhx-full")&&getComputedStyle(b).position==="fixed"}catch(e){return false}};
+    const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);const rm=room();if(W*CAMV.hr>rm)CAMV.hr=Math.max(.3,rm/W);if(TDC&&rm>0&&rm<1e8)CAMV.hr=Math.max(.3,rm/W);   /* 11/14 塔防固定鏡頭：畫面高度直接撐滿版面給的格子（直拿滿版） */const FULLV=pkFullV();if(FULLV&&rm>0&&rm<1e8)CAMV.hr=Math.max(.3,rm/W);   /* 11/18 黑洞第一戰滿版（07bh bhxFullSync 掛 body.bhx-full、#bbox 蓋滿螢幕）：直式也撐滿整個高度 */   /* 意見回饋 295：電腦的寬螢幕也照可用高度滿版（上下視角不變、左右看更廣），不再撐得比螢幕還高 */
       // 畫面被壓矮（比 1.14 扁）時：上下視角維持 1.14 的範圍、左右看得更廣，不會把對面和近端的小帥切掉（意見回饋：5:49 截圖）
-      const vr=Math.max(CAMV.hr,1.14);CAMV.dp=Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*vr);H=Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
-      cam.fov=clamp(2*Math.atan(CAMV.ht*vr)*180/PI,38,62);CAMV.fov=cam.fov;cam.updateProjectionMatrix();   /* CAMV.fov：望遠鏡（GIANT TELE）拿來當 1 倍的視角 */
+      const vr=Math.max(CAMV.hr,1.14);CAMV.dp=FULLV?0:Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*vr);H=   /* 滿版：多出來的高度上下平分（棋盤在畫面中間，讓得開瀏海和 Home 條），不是全給下方 */Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
+      cam.fov=clamp(2*Math.atan(CAMV.ht*vr)*180/PI,38,FULLV?95:62);CAMV.fov=cam.fov;   /* 滿版直式：上下視角放寬（左右看到的寬度跟原本一樣，棋盤不會被左右切掉；多出來的上下是星空和盤底） */cam.updateProjectionMatrix();   /* CAMV.fov：望遠鏡（GIANT TELE）拿來當 1 倍的視角 */
       {const nn=CAMV.hr>=1.24;if(nn!==capNear){capNear=nn;if(lastCapB)layoutCaptured(lastCapB)}}if(HOME.fit)zfit();pwPoke(400)};
     const CO=window.__CAM||{},camBase=new T.Vector3(...(CO.b||[0,27,26])),look=new T.Vector3(...(CO.l||[0,-.3,-.4])),PIV=new T.Vector3(0,-.3,0);   /* 意見回饋 374：小帥坐到正對面，鏡頭往後、往上一點，從他背後看過去；406：座位抬高後鏡頭再拉高，小帥才不會擋到最下排 */
     // 拉近拉遠＝鏡頭沿著「棋盤中心→座位」這條線前後移動，看的方向不變
@@ -2728,7 +2729,7 @@
         lerp(B.head.rotation,"x",hx);lerp(B.head.rotation,"y",hy);tick(mate)}
       if(GIANT){gntTick(t,s);const tf=TELE?smooth(.06,.45,zoom):1;   /* 望遠鏡越放大：近景、中景越淡（像對焦到遠方）、遠方更暗的星星淡入 */
         for(const L of LAYER2){L.rotation.y+=Math.min(t,.1)*L.userData.spd;if(L.userData.op!=null){const o=L.userData.op*tf;if(L.material.opacity!==o)L.material.opacity=o}}
-        if(DEEPF){const o=TELE?.85*smooth(.9,.2,zoom):0;DEEPF.visible=o>.01;DEEPF.material.opacity=o}if(DEEPS.length)try{storyTick(s)}catch(e){}}orbTick(t,s);furn.tick(s);if(BENCH)rd.info.reset();if(GIANT&&FXH.size)fxH("main");if(GIANT&&MG){bplane.visible=false;BU.visible=false}rd.render(sc,cam);if(GIANT)try{gntMirror()}catch(e){bplane.visible=true;BU.visible=true}if(BENCH)benchRec(now);   /* 黑洞：棋盤底下的鏡像角色，畫在同一張畫面上 */PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
+        if(DEEPF){const o=TELE?.85*smooth(.9,.2,zoom):0;DEEPF.visible=o>.01;DEEPF.material.opacity=o}if(DEEPS.length)try{storyTick(s)}catch(e){}}orbTick(t,s);furn.tick(s);if(BENCH)rd.info.reset();const WG=warmGate();if(GIANT&&FXH.size)fxH("main");if(GIANT&&MG){bplane.visible=false;BU.visible=false}rd.render(sc,cam);if(GIANT)try{gntMirror()}catch(e){bplane.visible=true;BU.visible=true}if(WG)for(const o of WG)o.visible=true;   /* 第 36 輪：淡入前還沒暖過 shader 的先藏這一格（見 warmGate） */if(BENCH)benchRec(now);   /* 黑洞：棋盤底下的鏡像角色，畫在同一張畫面上 */PW.lastR=now;pfAdd(PW.q,sec,1,1,act?0:1);pwFps(now)}
     // 第一次 draw 之後，等所有圖片（背景、道具、棋盤、棋子、Pikafish）都載好才淡入；最多等 6 秒
     let drawn=false,shown=false;const t0=performance.now();PF.readyMs=null;PF.revealMs=null;PF.inflight=null;rd.domElement.style.opacity=0;rd.domElement.style.transition="opacity .35s";
     const shownCb=[];const reveal=()=>{if(shown)return;shown=true;PW.shownAt=performance.now();PF.revealMs=Math.round(PW.shownAt-t0);PF.inflight=[...inflight].map(i=>String(i.src||"").split("/").pop()).slice(0,6);if(IN.ph==="wait"){INTRO_SEEN.add(IN.key);IN.ph="hold";IN.t0=performance.now()}try{rd.compile(sc,cam)}catch(e){}rd.domElement.style.opacity=1;veil.style.opacity=0;setTimeout(()=>veil.remove(),400);try{document.documentElement.classList.remove("pk-veil")}catch(e){}if(veil._qmin){hint.style.opacity=1;setTimeout(()=>hint.style.opacity=0,4500)}shownCb.splice(0).forEach(f=>{try{f()}catch(e){}})};
@@ -2744,19 +2745,41 @@
        一次只放一個有材質的物件（它的子物件先拿開，輪到再各自編），編出新的 program（rd.info.programs 變多）就讓出主執行緒——每段大約一支 shader；
        投影的深度 shader 只有真的 render 才會編（compile 不管）：有投影的物件照「有沒有骨架、正反面、透明裁切、變形」各挑一個，用 WS 真的 render 一次（畫布還藏在底幕後面）。
        warmUnits 留著沒人叫（舊測試看它的拆法） */
-    const WS=new T.Scene(),WSL=[],warmProg=()=>{try{return(rd.info.programs||[]).length}catch(e){return 0}};
-    const warmLights=()=>{for(const l of WSL)try{if(l.shadow&&l.shadow.dispose)l.shadow.dispose()}catch(e){}WSL.length=0;
-      sc.traverseVisible(o=>{if(!o.isLight)return;try{const p=new o.constructor();p.castShadow=!!o.castShadow;p.layers.mask=o.layers.mask;if(o.shadow&&p.shadow){p.shadow.mapSize.copy(o.shadow.mapSize);p.shadow.bias=o.shadow.bias}WSL.push(p)}catch(e){}})};
-    const warmList=()=>{const O=[],D=new Map();sc.traverse(o=>{if(o.material&&!o.isLight)O.push(o);if(o.isMesh&&o.castShadow&&o.visible){const m=Array.isArray(o.material)?o.material[0]:o.material;if(!m)return;
-      const k=(o.isSkinnedMesh?1:0)+"|"+m.side+"|"+(m.alphaTest>0&&m.map?1:0)+"|"+(o.morphTargetInfluences?1:0);if(!D.has(k))D.set(k,o)}});return{O,D:[...D.values()]}};
-    const warmOne=(o,render)=>{const ch=o.children,fc=o.frustumCulled;o.children=[];WS.children=WSL.concat([o]);
-      try{if(render){o.frustumCulled=false;rd.render(WS,cam)}else rd.compile(WS,cam)}catch(e){}WS.children=[];o.children=ch;o.frustumCulled=fc};
-    const warmRun=(done,budget)=>{let L={O:[],D:[]};try{warmLights();L=warmList();WS.fog=sc.fog||null;WS.environment=sc.environment||null}catch(e){}const t0w=performance.now();let i=0,j=0;
-      const fin=()=>{for(const l of WSL)try{if(l.shadow&&l.shadow.dispose)l.shadow.dispose()}catch(e){}WSL.length=0;done()};
-      const step=()=>{if(stopped){fin();return}const t=performance.now(),p0=warmProg();
-        while(performance.now()-t<40){if(i<L.O.length)warmOne(L.O[i++],false);else if(j<L.D.length)warmOne(L.D[j++],true);else break;if(warmProg()!==p0)break}   /* 編出新的 program 就先讓出 */
-        if((i<L.O.length||j<L.D.length)&&performance.now()-t0w<budget)setTimeout(step,0);else fin()};
-      setTimeout(step,0)};
+    /* 11/18 第 36 輪 N33-1（iMac：入局到底幕拿掉 8.2 秒、getProgramInfoLog 一段 767ms）：內建瀏覽器記下每一支 program 在哪裡、為誰編——暖機後正式畫面還新編 24 支，原因：
+       ① 巨盤第一格前的暖機（4 秒預算）還沒跑完，淡入前的 warmShaders 又開一次；兩次共用 WS／WSL，後開的換掉燈光替身、先開的跑完把 WSL 清空 → 後半段 30 支都用「沒有燈」編（白編）；
+       ② 魔王 bossfx3d 在暖機途中（約 0.66 秒）往場景加兩盞點光源，program 快取鍵的點光源數 0→2，之前用 0 盞編的 25 支都不能用；
+       ③ 棋子人、魔王、牌子的模型在第一次暖機後才接上，淡入前（畫布還藏著）的某一格一次把它們 10～13 支 shader 編完＝一個長任務；
+       ④ three r149 的 render 先畫陰影、後 setupLights：投影深度 shader 的鍵用「上一次」設定的燈光數，正式場景第一格是 0 盞燈 → 深度 shader 用錯的燈光數多編一套；
+          而且共用的深度材質只在「有骨架／沒骨架」換過來時才重算要哪一支，暖機一個物件單獨畫不一定會編到。
+       改法：同時只跑一次暖機（再叫只排隊、跑完再掃一次新東西）；每段先比對燈光（lightSig），變了就換替身、從頭再掃；WM 記「材質＋版本＋燈光」暖過了、DK 記深度 shader 的種類＋燈光，暖過的直接跳過；
+       深度：WS 先 compile 一次（把 WS 的燈光狀態設好）再 render，畫陰影時把共用深度材質標成 needsUpdate，逼它照這個物件重算要哪一支；
+       正式場景：燈光一變（含第一格）先用「只有燈」的場景 compile 一次設好燈光狀態（primeL）；淡入前每一格先把還沒暖過的物件藏起來、排進暖機（warmGate），暖好下一格才畫。
+       暖機超過預算（WOFF）就不再藏，照舊在畫面裡編。純函式／流程測試：tools/test-n33-warm-1118.js（假 renderer 照 r149 的規則） */
+    const WS=new T.Scene(),WM=new WeakMap(),DK=new Set(),warmProg=()=>{try{return(rd.info.programs||[]).length}catch(e){return 0}};let WR=null,WOFF=false,LSIG=null;
+    const lightSig=()=>{let s="";sc.traverseVisible(o=>{if(o.isLight)s+=o.type+(o.castShadow?"*":"")+o.layers.mask+","});return s};
+    const mkLights=()=>{const A=[];sc.traverseVisible(o=>{if(!o.isLight)return;try{const p=new o.constructor();p.castShadow=!!o.castShadow;p.layers.mask=o.layers.mask;if(o.shadow&&p.shadow){p.shadow.mapSize.copy(o.shadow.mapSize);p.shadow.bias=o.shadow.bias}A.push(p)}catch(e){}});return A};
+    const freeLights=A=>{for(const l of A)try{if(l.shadow&&l.shadow.dispose)l.shadow.dispose()}catch(e){}};
+    const wMats=o=>{const M=o.material;return M?(Array.isArray(M)?M:[M]):[]};
+    const mOk=(o,sig)=>{for(const m of wMats(o)){if(!m)continue;const w=WM.get(m);if(!w||w.s!==sig||(w.v!==m.version&&w.n<4))return false}return true};   /* 同一組燈下版本一直換的材質（例如換圖的精靈）暖過 4 次就不再攔 */
+    const dKey=(o,sig)=>{const m=wMats(o)[0];return m?[o.isSkinnedMesh?1:0,m.side,m.shadowSide,m.map?1:0,m.alphaMap?1:0,m.alphaTest>0?1:0,m.displacementMap?1:0,o.morphTargetInfluences?1:0,sig].join("|"):null};
+    const dOk=(o,sig)=>{if(!o.isMesh||!o.castShadow)return true;const k=dKey(o,sig);return k===null||DK.has(k)};
+    const warmList=sig=>{const O=[],D=new Map();sc.traverse(o=>{if(o.isLight||!o.material)return;if(!mOk(o,sig))O.push(o);if(o.isMesh&&o.castShadow&&o.visible){const k=dKey(o,sig);if(k!==null&&!DK.has(k)&&!D.has(k))D.set(k,o)}});return{O,D:[...D.values()]}};
+    const warmOne=(o,R,dep)=>{const ch=o.children,fc=o.frustumCulled;o.children=[];if(dep)o.frustumCulled=false;WS.children=R.L.concat([o]);const rb=rd.renderBufferDirect;
+      if(dep)rd.renderBufferDirect=function(c,s,g,m){if(m&&(m.isMeshDepthMaterial||m.isMeshDistanceMaterial))m.needsUpdate=true;return rb.apply(this,arguments)};   /* 共用深度材質換版本＝這個物件一定重算要哪一支 */
+      try{rd.compile(WS,cam);if(dep)rd.render(WS,cam)}catch(e){}finally{rd.renderBufferDirect=rb}WS.children=[];o.children=ch;o.frustumCulled=fc;   /* compile 先設好 WS 的燈光狀態，render 的陰影才用對的燈光數 */
+      for(const m of wMats(o))if(m){const w=WM.get(m);WM.set(m,{v:m.version,s:R.sig,n:w&&w.s===R.sig?w.n+1:1})}if(dep){const k=dKey(o,R.sig);if(k!==null)DK.add(k)}};
+    const warmRun=(done,budget)=>{if(WR){WR.W.push(done);WR.again=1;WR.end=Math.max(WR.end,performance.now()+budget);return}   /* 已經在暖：排隊、預算從現在再算一次，跑完再掃一次 */
+      const R=WR={W:[done],again:0,end:performance.now()+budget,sig:null,L:[],O:[],D:[],i:0,j:0};
+      const relist=()=>{const s=lightSig();if(s!==R.sig){freeLights(R.L);R.L=mkLights();R.sig=s}WS.fog=sc.fog||null;WS.environment=sc.environment||null;const X=warmList(R.sig);R.O=X.O;R.D=X.D;R.i=R.j=0;R.again=0};
+      const left=()=>R.i<R.O.length||R.j<R.D.length||R.again;
+      const fin=()=>{freeLights(R.L);R.L=[];WR=null;if(left()&&!stopped)WOFF=true;for(const f of R.W)try{f()}catch(e){}};
+      const step=()=>{if(stopped){fin();return}const t=performance.now(),p0=warmProg();try{if(lightSig()!==R.sig)relist()}catch(e){}   /* 燈變了（魔王的點光源）：換替身、從頭掃 */
+        while(performance.now()-t<40){if(R.i<R.O.length){const o=R.O[R.i++];if(!mOk(o,R.sig))warmOne(o,R,false)}else if(R.j<R.D.length){const o=R.D[R.j++];if(!dOk(o,R.sig))warmOne(o,R,true)}else if(R.again){try{relist()}catch(e){R.again=0}}else break;if(warmProg()!==p0)break}   /* 編出新的 program 就先讓出 */
+        if(left()&&performance.now()<R.end)setTimeout(step,0);else fin()};
+      try{relist()}catch(e){}setTimeout(step,0)};
+    const primeL=()=>{const L=[];sc.traverseVisible(o=>{if(o.isLight)L.push(o)});const ch=sc.children;sc.children=L;try{rd.compile(sc,cam)}catch(e){}sc.children=ch};
+    const warmGate=()=>{if(!GIANT)return null;let sig;try{sig=lightSig();if(sig!==LSIG){LSIG=sig;primeL()}}catch(e){return null}if(shown||WOFF)return null;   /* 巨盤每一格：燈變了先設好燈光狀態；淡入前藏起還沒暖過的 */
+      const H=[];sc.traverseVisible(o=>{if(o.isLight||!o.material)return;if(!mOk(o,sig)||!dOk(o,sig)){o.visible=false;H.push(o)}});if(H.length){if(WR)WR.again=1;else warmRun(()=>{},4000)}return H};
     let warmed=false;const warmShaders=done=>{if(warmed||stopped){done();return}warmed=true;warmRun(done,4000)};
     /* 視角：俯視 top、平視 flat、數字＝俯角；11/11 新增 topfit＝俯視＋拉近到格距約 30px（只在手機直式；其他裝置等於 top）。
        top／flat 跟以前一樣（距離 1 倍、點兩下回到坐著看的角度），玩家存過的視角照舊；topfit 點兩下回到 topfit */

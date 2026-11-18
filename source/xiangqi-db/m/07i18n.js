@@ -1491,7 +1491,10 @@ for(const[z,e]of I18N_V7)I18N_PAT.push(i18nV7Pat(z,e));
 I18N_PAT.push([/^([^\s，。！？「」・：（）]{1,6})：「(.+)」$/,(m,T)=>{const a=T(m[1]),b=T(m[2]);return a==null||b==null?null:a+": \""+b+"\""}],
   [/^「([^「」]+)」$/,(m,T)=>{const b=T(m[1]);return b==null?null:"\""+b+"\""}],   /* 串門子視窗整句包在「」裡 */
   [/^(他們|他|她)的招式黑洞裡就能帶；在「雲河七星」卡冊可以換隨行的人，也可以分星輝給(他們|他|她)。$/,m=>({"他":"His","她":"Her","他們":"Their"})[m[1]]+" skills come along in the Black Hole. In the Cloud River Seven Stars album you can change your companion, or give Starshine to "+({"他":"him","她":"her","他們":"them"})[m[2]]+"."]);   /* 07pty 加入卡下面那行 */
-Object.assign(I18N_EN,{"設為隨行":"Set as companion","隨行中":"Your companion","隨行":"Companion",
+Object.assign(I18N_EN,{"電腦棋手還不能下":"The computer opponent can't play yet",   /* 11/18 第 33 輪：02-shell coiWarn（網頁版沒有多執行緒模式） */
+  "電腦棋手需要瀏覽器的「多執行緒模式」才能下棋，這次沒有開成功（背景的 Service Worker 沒有裝好）。請重新整理這一頁；還是不行，請換用最新版的 Chrome、Safari 或 Edge 再打開。":"The computer opponent needs the browser's multi-threaded mode, which didn't start this time (the background Service Worker didn't install). Please refresh this page. If that doesn't help, open the app in the latest Chrome, Safari or Edge.",
+  "現在照樣能用：同桌對弈、殘局、古譜與大師對局、測驗、線上對弈。":"You can still use: two players on one device, endgame puzzles, classic manuals and master games, quizzes, and online play.","重新整理":"Refresh","星樞思考中…":"Star Pivot is thinking…","🔊 打開聲音":"🔊 Sound on","🔇 關掉聲音":"🔇 Sound off","這一戰用不到寶物":"No items are needed in this battle",   /* 11/18 黑洞第一戰滿版（07bh bhxFullSync／bhxFullMenu） */"電腦棋手沒有啟動成功，請把 App 完全關掉再重新開啟":"The computer opponent didn't start. Please fully close the app and open it again",   /* 11/18 src/local.js 原生 App 沒有多執行緒時的備用句 */
+  "設為隨行":"Set as companion","隨行中":"Your companion","隨行":"Companion",
   "下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。黑洞裡全隊已學會的招都會帶上場；「隨行」是首頁上跟著你的那一位；來串門子的人也會找他說話。":"Half of the XP you earn from games, puzzles and Black Hole stages goes to everyone on the team automatically; the other half becomes Starshine for you to give to whoever you want to train. In the Black Hole, every skill your team has learned comes along. Your \"companion\" is the one who follows you on the home screen; visitors talk to them too."});
 /* #I18N-PURE-END */
 /* 目前語言：store "lang" 只有 "en" 才是英文；其他（沒設定）＝中文，繁簡照 zh.js。函式宣告會提前，設定頁比這個檔先畫也叫得到（只用 store，不碰這個檔的 const） */
@@ -1525,7 +1528,7 @@ const I18N_ATTR=["aria-label","title","placeholder","label","alt"];   /* 11/17 �
 const I18N_ORIG=new WeakMap(),I18N_AORIG=new WeakMap();
 /* 不翻的地方：程式、輸入框、棋盤（SVG 上的棋子字）、畫布、頭像圓章（.av 只放得下一個字）、語言選項（data-nocc）、特別標 data-noi18n 的 */
 function i18nIsSkip(el){if(!el||el.nodeType!==1)return false;if(/^(SCRIPT|STYLE|TEXTAREA|INPUT|CODE|PRE|SVG|CANVAS)$/i.test(el.nodeName))return true;if(/^OPTION$/i.test(el.nodeName)&&!el.hasAttribute("value"))return true;   /* 11/17 測試員 D：下拉選單以前整個不翻（SELECT 在跳過名單），棋子聲音、大廳城市一直是中文；選項有寫 value 的只換顯示的字、值不變，沒寫 value 的照舊不翻（value 預設就是那段字，換了會壞）；語言選單照舊靠 data-nocc 跳過 */
-  if(el.hasAttribute&&(el.hasAttribute("data-nocc")||el.hasAttribute("data-noi18n")))return true;return!!(el.classList&&el.classList.contains("av"))}
+  if(el.hasAttribute&&(el.hasAttribute("data-nocc")||el.hasAttribute("data-noi18n")))return true;return!!(el.classList&&(el.classList.contains("av")||el.classList.contains("xqdoc")))}   /* 11/18 第 33 輪 N33-6：說明文件（05-settings xqDocSheet 的 <article class="xqdoc">）只有中文正本、最上面已有一句英文說明；以前英文介面照樣逐段去翻，字典裡給別處用的短詞套進來就誤傷（「來源：」→ Earn:、「殺法、術語」→ mating patterns, Terms、一句翻一半中英混雜）→ 文件內文整篇不翻，照中文原樣 */
 /* 11/17 第 18 輪 D P2-3：開關（<input type="checkbox" class="sw" aria-label="…">）、輸入框的 aria-label、title、placeholder 一直是中文——INPUT、TEXTAREA 在跳過名單裡（裡面的字是玩家打的、不能動），
    整個元素連屬性一起跳過，讀螢幕念「螢幕報讀與鍵盤模式」「匿名送出對局評分」…。改成：這兩種只翻屬性（值照舊不動）；自己或外層標了 data-nocc／data-noi18n、外層在跳過名單裡的照舊不翻 */
 /* 11/17 第 19 輪 D P2-3（4.0 無障礙）：棋盤預覽、地圖這類 <svg role="img" aria-label="棋盤"> 整個在跳過名單裡（裡面的棋子字不能翻），連 svg 自己的 aria-label 也一直是中文 → svg 本身跟 INPUT 一樣只翻屬性，裡面的子元素照舊不動 */

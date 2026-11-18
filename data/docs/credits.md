@@ -8,9 +8,9 @@
 
 © 2026 陳泓昇（Chen Hung-Sheng）。
 
-- **程式碼**（App 的 HTML、CSS、JavaScript，`core.js`、`local.js`、`net.js` 等，以及建置與測試工具）：依 **GNU 通用公共授權第 3 版，或（由你選擇）任何更新的版本**（SPDX：`GPL-3.0-or-later`）授權。可以自由使用、研究、修改、再散布（包括商業用途），條件是散布時同樣用 GPL、附上原始碼和授權全文。全文在倉庫根目錄 [LICENSE](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/LICENSE)，可讀的原始碼在 [source/](https://github.com/raysonchen2023-cloud/xiangqi-lab/tree/main/source)。
+- **程式碼**（App 的 HTML、CSS、JavaScript，core.js、local.js、net.js 等，以及建置與測試工具）：依 **GNU 通用公共授權第 3 版，或（由你選擇）任何更新的版本**（SPDX：`GPL-3.0-or-later`）授權。可以自由使用、研究、修改、再散布（包括商業用途），條件是散布時同樣用 GPL、附上原始碼和授權全文。全文在倉庫根目錄 [LICENSE](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/LICENSE)，可讀的原始碼在 [source/](https://github.com/raysonchen2023-cloud/xiangqi-lab/tree/main/source)。
 - **開發者自製的素材**（放在 `data/` 底下的美術、AI 協助生成的圖片、Tripo 3D 模型、背景音樂、程式合成的音效，以及長篇劇情、角色對白、題目講解、棋史說明等資料檔裡的文字）：依 **創用 CC 姓名標示─非商業性─相同方式分享 4.0 國際（CC BY-NC-SA 4.0）** 授權。可以分享和改作，但要標示「《象棋千秋》陳泓昇」、不得作商業用途、改作要用同樣的授權。條文：[creativecommons.org/licenses/by-nc-sa/4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/)；哪些檔案算素材見倉庫根目錄 [LICENSE-ASSETS.md](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/LICENSE-ASSETS.md)。
-- **分界（看檔案放在哪裡）**：寫在程式檔（`.js`、`.css`、`.html`）裡的文字，包括介面文字、場景小故事和角色對白，跟著程式，是 GPL-3.0-or-later；放在 `data/` 底下的圖片、音訊、3D 模型和長篇劇情、題目等資料檔，是 CC BY-NC-SA 4.0。同一段對白寫在程式裡就是 GPL，放在劇情資料檔裡就是 CC BY-NC-SA。
+- **分界（看檔案放在哪裡）**：寫在程式檔（.js、.css、.html）裡的文字，包括介面文字、場景小故事和角色對白，跟著程式，是 GPL-3.0-or-later；放在 `data/` 底下的圖片、音訊、3D 模型和長篇劇情、題目等資料檔，是 CC BY-NC-SA 4.0。同一段對白寫在程式裡就是 GPL，放在劇情資料檔裡就是 CC BY-NC-SA。
 - **兩種都不是的**：特級大師小傳 `data/gmbios.json`（改寫自維基百科等，見第十一項）照原來源的條件，不以上面兩種授權。
 - **第三方的東西**：下面列出的別人做的元件和資料，照它們各自的授權使用，不適用上面兩種授權。總表見倉庫根目錄 [NOTICE.md](https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/NOTICE.md)。
 
@@ -29,7 +29,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 
 ### three.js（3D 園子、立體棋子）
 
-- 來源：three.js r149（`three.min.js`、`GLTFLoader.mjs`、`BufferGeometryUtils.mjs`）
+- 來源：three.js r149（three.min.js、GLTFLoader.mjs、BufferGeometryUtils.mjs）
 - 授權：MIT（檔頭寫著「Copyright 2010-2023 Three.js Authors / SPDX-License-Identifier: MIT」）
 - 怎麼用：原檔照用，沒有修改
 - 能不能散布：可以，要保留版權聲明和 MIT 全文
@@ -37,7 +37,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 
 ### opencc-js（繁簡轉換）
 
-- 來源：[nk2028/opencc-js](https://github.com/nk2028/opencc-js)（`opencc-cn2t.js`、`opencc-t2cn.js`）
+- 來源：[nk2028/opencc-js](https://github.com/nk2028/opencc-js)（opencc-cn2t.js、opencc-t2cn.js）
 - 授權：程式是 MIT（全文在 `LICENSE-opencc-js.txt`）。裡面的轉換字典是從 OpenCC 的資料產生的，[OpenCC](https://github.com/BYVoid/OpenCC) 是 Apache-2.0
 - 怎麼用：原檔照用
 - 能不能散布：可以，附 MIT 全文和 OpenCC 字典的 Apache-2.0 聲明
@@ -53,7 +53,7 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 
 ### QRCode.js（產生 QR 碼）
 
-- 來源：[davidshimjs/qrcodejs](https://github.com/davidshimjs/qrcodejs) 的 `qrcode.min.js`（跟上游原檔比對，SHA-1 完全相同 2d06c1f823f3…）
+- 來源：[davidshimjs/qrcodejs](https://github.com/davidshimjs/qrcodejs) 的 qrcode.min.js（跟上游原檔比對，SHA-1 完全相同 2d06c1f823f3…）
 - 授權：MIT
 - 怎麼用：原檔照用
 - 能不能散布：可以，要附 MIT 聲明
@@ -61,13 +61,13 @@ AI 生成素材（Gemini、OpenAI 圖片，Lyria 音樂，Tripo 3D 模型，AI �
 
 ### 自己寫的程式
 
-- `three-shim.mjs`、`core.js`（規則核心）、`local.js`、`net.js` 等：© 陳泓昇，AI（Claude、ChatGPT Codex）協助撰寫
+- three-shim.mjs、core.js（規則核心）、local.js、net.js 等：© 陳泓昇，AI（Claude、ChatGPT Codex）協助撰寫
 - 授權：GPL-3.0-or-later（第 3 版或更新版），原始碼在倉庫的 `source/`
 - 狀態：**已確認**為自有
 
 ## 二、象棋引擎與神經網路權重
 
-### Pikafish 引擎（`engine/pikafish.wasm`、`pikafish.js`）
+### Pikafish 引擎（engine/pikafish.wasm、pikafish.js）
 
 - 來源：[official-pikafish/Pikafish](https://github.com/official-pikafish/Pikafish)，版本標籤 Pikafish-2026-09-06
 - 授權：GNU GPL 第 3 版（全文 [LICENSE-Pikafish-GPL3.txt](https://raysonchen2023-cloud.github.io/xiangqi-lab/LICENSE-Pikafish-GPL3.txt)）

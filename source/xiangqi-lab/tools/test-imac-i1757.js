@@ -88,7 +88,7 @@ test("P1-3：App 內顯示的說明文件（全部 data/docs）藏起開發用�
   assert.equal(one("- 主要自動測試：`xiangqi-lab/tools/test-asian-rules.js`（30 項）。"), "");
   assert.equal(one("- **程式：** `xiangqi-referee.js` 的 `repetitionVerdict`（第 178 行起）。"), "");
   assert.equal(one("- **沒有真人試玩**：只用腳本對打調過。"), "");
-  assert.equal(one("見 foo.js:123 的說明"), "見 的說明");
+  assert.equal(one("見 foo.js:123 的說明"), "見的說明", "11/18 N33-5：拿掉檔名後中文字之間留下的空白也收掉（07gc xqDocTidy）");
 });
 
 test("P1-4：素材與授權頁不再有「待開發者確認」；NNUE 照實寫（作者條款禁止商用、本 App 免費非商業、11/17 已寄信詢問）；兩份正本一樣；關於與開源授權有 iOS 入口", () => {

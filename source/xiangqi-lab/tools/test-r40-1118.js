@@ -38,7 +38,7 @@ function scene(T) { const sc = new T.Scene(); sc.fog = new T.Fog(0, 1, 2); const
 
 test("① shader 暖機（兩份都驗）：每段最多編出一個物件的 program、段與段之間讓出；暖完以後整個場景 compile、render 都不會再多編任何一支（燈光數、投影數、霧都跟正式畫面一樣）", { skip: !HAVE ? NO : !THREE_P ? NO3 : false }, () => {
   for (const [name, S] of T_SRC) {
-    const P = rd(S("park3d.js")), code = between(P, "    const WS=new T.Scene(),WSL=[]", "\n    let warmed=false;");
+    const P = rd(S("park3d.js")), code = between(P, P.includes("    const WS=new T.Scene(),WSL=[]") ? "    const WS=new T.Scene(),WSL=[]" : "    const WS=new T.Scene(),WM=", "\n    let warmed=false;");   /* 11/18 第 36 輪工作區改寫暖機（新規則見 test-n33-warm-1118.js），這裡照樣驗基本規則 */
     const T = three(), sc = scene(T), { R, progs } = fakeRd(), cam = new T.PerspectiveCamera(), nTop = sc.children.length; let now = 0; const Q = [];
     const ctx = { T, sc, cam, rd: R, stopped: false, performance: { now: () => now }, setTimeout: f => Q.push(f) };
     vm.createContext(ctx); vm.runInContext(code + ";this.run=warmRun", ctx);
@@ -90,8 +90,8 @@ test("⑤ N35-1「星盤展開中…」1.6 秒開始淡入（0.4 秒淡完，2.0
   for (const [name, , Mm] of T_SRC) assert.ok(rd(Mm("07bh-blackhole.js")).includes('h.style.animation="bhxLd .4s ease-out 1.6s forwards"'), name);
 });
 
-test("快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡）", { skip: T_SRC.length === 2 ? false : "沒有 1010 快照（只在這台電腦的暫存區）" }, () => {
-  const [[, W, WM], [, K, KM]] = T_SRC, segs = [["  let CVQ=null;", "\n  const noise="], ["    const WS=new T.Scene(),WSL=[]", "\n    let warmed=false;"], ["    let warmed=false;", "\n"], ["    {const Q=CVQ;CVQ=null;", "\n"], ["        const putD=", "\n"]];
+test("快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡；暖機 WS 那段 11/18 第 36 輪又改過，不比）", { skip: T_SRC.length === 2 ? false : "沒有 1010 快照（只在這台電腦的暫存區）" }, () => {
+  const [[, W, WM], [, K, KM]] = T_SRC, segs = [["  let CVQ=null;", "\n  const noise="], ["    let warmed=false;", "\n"], ["    {const Q=CVQ;CVQ=null;", "\n"], ["        const putD=", "\n"]];
   for (const [a, b] of segs) assert.equal(between(rd(W("park3d.js")), a, b), between(rd(K("park3d.js")), a, b), a);
   assert.equal(rd(W("bot3d.js")), rd(K("bot3d.js")), "bot3d.js"); assert.equal(rd(WM("06-cpu.js")), rd(KM("06-cpu.js")), "06-cpu.js");
 });

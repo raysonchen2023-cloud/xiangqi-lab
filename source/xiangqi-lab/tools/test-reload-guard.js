@@ -149,8 +149,9 @@ test("〔混合〕新版 pending：換頁時剛下完（60 秒內）不套用；
   go("/cpuroom", "/stats"); assert.deepEqual([reloads.length, marks.length, preps.join()], [1, 1, "upd"]);
   const bn = SHELL.split("\n").find(l => l.includes("const busyNow=()=>")); assert.ok(bn.includes('||(typeof rlgHold==="function"&&rlgHold())'), "busyNow 要含 rlgHold");
   assert.ok(SHELL.includes('markDone();setTimeout(()=>{if(typeof rlgPrep==="function")rlgPrep("upd");location.reload()},900);return}'), "馬上套用那條重整前也改寫網址");
-  assert.equal((SHELL.match(/location\.reload\(\)/g) || []).length, 3, "02-shell.js 只有這三處重整，全都經過 rlgPrep");
-  assert.equal((SHELL.match(/rlgPrep\("(upd|coi)"\);location\.reload\(\)/g) || []).length, 3);
+  assert.equal((SHELL.match(/location\.reload\(\)/g) || []).length, 4, "02-shell.js 只有這四處重整，全都經過 rlgPrep（11/18 第 33 輪多了 coiWarn「重新整理」）");
+  assert.ok(SHELL.includes('if(typeof rlgPrep==="function")rlgPrep("coi");location.reload()}],["先不用",null,true]]'), "coiWarn 的重新整理也先 rlgPrep");
+  assert.equal((SHELL.match(/rlgPrep\("(upd|coi)"\);location\.reload\(\)/g) || []).length, 4);
 });
 test("〔原始碼〕02r-reloadguard.js 在 02-shell.js 後面、第一次 route()（11-watch.js）前面組進 m.html；一行程式裡沒有 // 註解", () => {
   const a = MHTML.indexOf("//#include m/02-shell.js\n//#include m/02r-reloadguard.js"), b = MHTML.indexOf("//#include m/11-watch.js");

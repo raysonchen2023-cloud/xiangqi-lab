@@ -139,6 +139,7 @@ function route(){
   if(p[0]==="cpuroom"&&typeof CpuRoom==="function")return screen=CpuRoom(v);   /* 11/10 開發者：挑戰電腦的雅間（07z5-cpuroom.js） */
   if(p[0]==="simul"&&typeof SimulPage==="function")return screen=SimulPage(v);   /* 開發者 11/11 hspx：車輪戰（m/08s-simul.js） */
   if(p[0]==="lesson"&&typeof LsnPage==="function")return screen=LsnPage(v,p[1]||"");   /* ChatGPT 改善單 I01（開發者 11/11）：棋理體驗 #/lesson/<站>（m/07z7-lesson.js） */
+  if(p[0]==="school"&&typeof OscPage==="function")return screen=OscPage(v,p[1]||"",p[2]||"");   /* 開局門派（開發者 11/18，m/07z9-school.js）：#/school 總覽、#/school/<角色> 修行頁、#/school/<角色>/<課> 上課 */
   if(p[0]==="lab"&&p[1]==="grab"&&typeof GrbLab==="function")return screen=GrbLab(v);   /* ChatGPT 改善單 I02：先吃子還是先解圍小實驗（m/07z8-grablab.js） */
   if(p[0]==="cup")return screen=CupPage(v);   /* 意見回饋 635：千秋盃 */
   if(p[0]==="watch"){if(p[1]==="ai"){let dv=false;try{dv=!!(DEVREMOTE()||DEVTOOLS())}catch(e){}if(OFF&&!dv){navReplace("#/");return}return screen=Watch(v)}navReplace("#/lobby");return}   /* 意見回饋 290：觀戰併進線上大廳 */   /* 11/17 E 第 29 輪 R29-5：離線版（App、網站）一般玩家直接打 #/watch/ai 會看到「電腦上的 GPT 和 Claude」和裁判程式 --tunnel 說明 → 導回首頁（比照 #/fbadmin）；開發者（DEVTOOLS 或已連上電腦）照舊 */
@@ -264,6 +265,18 @@ if(OFF&&"serviceWorker" in navigator){
   if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(updating)return;if(+(sessionStorage.getItem("xqReload")||0)>0&&!self.crossOriginIsolated)return;notifyNew()})}
 /* 11/13 Android 舊 WebView 降級提示：原生 App 沒有跨來源隔離或 SharedArrayBuffer＝手機的 Android System WebView 太舊（模擬器的 WebView 133 就是），電腦棋手（多執行緒 Pikafish）一定載不起來。
    不重整、跳一次說明：要更新哪個 App、哪些功能照樣能用；引擎的下載、載入、搜尋都直接回這句（不再說「關掉重開」，也不白抓 48 MB 引擎檔）。只在原生 App 判斷，網頁版不受影響 */
+/* 11/18 第 33 輪觀察（測試員：Service Worker 沒裝好、沒有跨來源隔離時，跟電腦下棋電腦一直不走，只在 console 寫「[engine] 瀏覽器還沒開啟多執行緒模式」）：
+   網頁版（不是原生 App；原生在下面 NATIVE_OLDWV 另外講）輪到電腦走、卻沒有多執行緒模式 → 跳一次清楚的說明，給「重新整理」。
+   第一次打開會自己重整一兩次（上面 xqReload）：還沒試完、開 App 不到 15 秒先不說（每 3 秒再看一次）；不支援 Service Worker 的瀏覽器直接說。一次打開只說一次（sessionStorage xqCoiWarn） */
+let COI_ST=null,COI_T=0;
+const COI_TXT="電腦棋手需要瀏覽器的「多執行緒模式」才能下棋，這次沒有開成功（背景的 Service Worker 沒有裝好）。請重新整理這一頁；還是不行，請換用最新版的 Chrome、Safari 或 Edge 再打開";
+function coiNeed(o){return!!(o&&o.web&&!o.coi&&o.st&&o.st.engine&&!o.st.result&&o.st.turn&&o.st.turn!==o.st.human&&!o.said)}   /* 純判斷：這時候要不要說（測試用） */
+function coiWarn(st){try{COI_ST=st||COI_ST;if(!OFF)return;const o={web:!/XQQianqiuApp\//.test(navigator.userAgent),coi:!!self.crossOriginIsolated&&typeof SharedArrayBuffer!=="undefined",st:COI_ST,said:!!sessionStorage.getItem("xqCoiWarn")};if(!coiNeed(o))return;
+  const n=+(sessionStorage.getItem("xqReload")||0),sw="serviceWorker" in navigator;
+  if(sw&&n<2&&performance.now()<15000){if(!COI_T)COI_T=setTimeout(()=>{COI_T=0;coiWarn()},3000);return}
+  if(document.querySelector(".modal,#sheet.show,#preov")){if(!COI_T)COI_T=setTimeout(()=>{COI_T=0;coiWarn()},3000);return}
+  sessionStorage.setItem("xqCoiWarn","1");try{console.warn("[engine] 沒有多執行緒模式（crossOriginIsolated＝false），電腦棋手不能下")}catch(e){}
+  modal(`<div class="em">⚙️</div><h2>電腦棋手還不能下</h2><p style="text-align:left">${esc(COI_TXT)}。</p><p class="muted" style="text-align:left">現在照樣能用：同桌對弈、殘局、古譜與大師對局、測驗、線上對弈。</p>`,[["🔄 重新整理",()=>{try{sessionStorage.removeItem("xqReload")}catch(e){}if(typeof rlgPrep==="function")rlgPrep("coi");location.reload()}],["先不用",null,true]])}catch(e){}}
 const NATIVE_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
 /* 11/17 第 18 輪複驗（測試員 E E-7）：iOS 上真正會失敗的多半是 App 內建的本機伺服器沒把跨來源隔離的標頭送出來（不是 iOS 太舊），原本「iOS 太舊，請更新 iOS」＋「目前的 WebView 版本」會誤導 → iOS 改說「沒有啟動成功，請重新開啟；一直失敗再更新 iOS 或聯絡我們」，不顯示 WebView 版本；Android 照舊 */
 const NATIVE_OLDWV=NATIVE_IOS?"電腦棋手沒有啟動成功，請把 App 完全關掉再重新開啟；若一直失敗，請更新 iOS 或聯絡我們":"這支手機的 Android System WebView 版本太舊，電腦棋手無法運作；請到 Play 商店更新「Android System WebView」或「Chrome」";   /* 11/17 App Store 審查（指南 2.3.10）：iOS 原生 App 萬一沒有跨來源隔離，說 iOS 的話，不提 Android、Play 商店 */

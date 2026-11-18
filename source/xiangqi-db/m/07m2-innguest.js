@@ -79,7 +79,7 @@ function igRow(g){const R=igRec(g);return`<button class="item" data-inn="${g.gid
 function igRows(k){try{return igToday(k).map(id=>igMake(id,k)).filter(Boolean).map(igRow).join("")}catch(e){return""}}
 /* 對局頁用：驛站的對手（原本的旅人、秘境棋友，或今天路過的客人） */
 function igAct(j){const s=String(j||"");if(!s.startsWith("inn:g."))return null;return igMake(s.slice(4))}
-function innAnyAct(j){return innActor(j)||igAct(j)}
+function innAnyAct(j){return innActor(j)||igAct(j)||(typeof zmAct==="function"?zmAct(j):null)}   /* 十派掌門（07z9-school.js，開發者 11/18）：journey inn:zm_<派> */
 const innLook=(a,side)=>a.look?a.look(side):ACTOR_LOOK(a.id,side);
 function igStart(g){const rl=igRlv(g);store.set("innCur",{id:g.gid,rl});
   jStart("inn:"+g.gid,{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:"inn:"+g.gid},()=>{location.hash="#/journey/play";setTimeout(()=>toast(`${g.ic} ${g.name}：${g.say}`),500)})}
@@ -87,9 +87,9 @@ function igBind(v,k){v.querySelectorAll('[data-inn^="g."]').forEach(b=>b.onclick
   sheet(`${g.ic} ${g.name}`,c=>{c.innerHTML=`<div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:6px"><img src="${g.img}" alt="" style="width:64px;height:84px;object-fit:contain;flex:none" onerror="this.remove()"><div><p class="muted" style="margin:0 0 2px;font-size:13px">🧳 ${esc(g.from)}</p><p style="font-size:16px;line-height:1.8;margin:0">${esc(g.why)}</p></div></div>${g.wx?"":`<p class="muted" style="margin:0 0 2px">${esc(innCall(g))}</p>`}<p style="font-size:16px;line-height:1.8;margin:0 0 4px">${esc(g.say)}</p>${ageLine(g.age)}<p class="muted">第 ${igLvN(g)} 級${R&&R.n?`・下過 ${R.n} 盤，贏 ${R.w||0} 盤、輸 ${R.l||0} 盤`:""}・今天路過，明天就不一定在了</p><button class="btn" id="igGo" style="width:100%">⚔ 下一盤</button>`;
     c.querySelector("#igGo").onclick=()=>{closeSheet();igStart(g)}})})}
 /* 再下一盤（jAgain）：同一位客人、調整後的強度 */
-function igAgainArgs(j,dx){const g=igAct(j);if(!g)return null;const rl=igRlv(g);store.set("innCur",{id:g.gid,rl});return{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:j,dx}}
+function igAgainArgs(j,dx){if(typeof zmAgainArgs==="function"){const z=zmAgainArgs(j,dx);if(z)return z}   /* 十派掌門再下一盤（07z9-school.js） */const g=igAct(j);if(!g)return null;const rl=igRlv(g);store.set("innCur",{id:g.gid,rl});return{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:j,dx}}
 /* 下完（journeyGameEnd 的驛站分支找不到旅人時轉來這裡）：輸贏調強度、記戰績、贏了給修為 */
-function igGameEnd(st,P){const g=igAct(P.id);if(!g)return;const C=store.get("innCur",null),rl=C&&C.id===g.gid&&Number.isInteger(C.rl)?C.rl:igRlv(g),B=g.band,A=store.get("innAdj",{}),won=st.result.w===st.human,lost=!!st.result.w&&!won;
+function igGameEnd(st,P){if(typeof zmGameEnd==="function"&&zmGameEnd(st,P))return;   /* 十派掌門下完（07z9-school.js）：戰績照角色、強度、帳號第一次贏給修為 */const g=igAct(P.id);if(!g)return;const C=store.get("innCur",null),rl=C&&C.id===g.gid&&Number.isInteger(C.rl)?C.rl:igRlv(g),B=g.band,A=store.get("innAdj",{}),won=st.result.w===st.human,lost=!!st.result.w&&!won;
   if(won)A[g.gid]=Math.min(B[1],rl+1);else if(lost)A[g.gid]=Math.max(B[0],rl-1);store.set("innAdj",A);
   const D=igData(),R=D.r||{},o=R[g.gid]||{n:0,w:0,l:0};o.n++;if(won)o.w++;if(lost)o.l++;R[g.gid]=o;store.set("innGuest",{...D,r:R});
   if(won){addXP(innXP(rl),"驛站","inn:"+st.id);setTimeout(()=>toast(`${g.ic} ${g.name}：「${g.lose}」`),1500)}

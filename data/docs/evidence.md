@@ -1,11 +1,11 @@
-# 驗證紀錄（版本 20261118-1532）
+# 驗證紀錄（版本 20261118-1657）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/18 15:39:32（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 2479 項＝**通過 2340**、**失敗 0**、**略過 139**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `a11d9b81a661`），對應的發布版：`20261118-1532`。開發者電腦上還沒發布的修改不在這份測試裡。
-- `source/` 沒放的測試檔（和少數只給它們用的工具）有43 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
+- 產生時間：2026/11/18 17:12:32（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 2500 項＝**通過 2359**、**失敗 0**、**略過 141**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（切自 commit `11cb8aa0f73d`），對應的發布版：`20261118-1657`。開發者電腦上還沒發布的修改不在這份測試裡。
+- `source/` 沒放的測試檔（和少數只給它們用的工具）有46 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
 
@@ -68,6 +68,8 @@
 - ﹣ I P2：英文誤譯（家長設定「分」→ min、存好 → Save）、音效圖鑑與換手機說明、3D 泡泡、驛路文牒字太小、官印英文直排、首頁頂欄英文換行、狀態列跟著畫面亮暗（test-imac-i1757.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ P2：商店描述照實寫「錯棋重練」只收跟電腦對局裡走錯的步（中英）（test-imac-j1757.js；沒有 xiangqi-ios）
 - ﹣ P2-1：術語碑介面英文——分類鈕（含「棋形」「俗語」）、搜尋提示；「目前選哪個」看 data-c 不看鈕上的字；示範鈕（test-imac-v1514.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ 先 install-native、再模擬 cap sync 重寫 capacitor.config.json：XQSpeech 的註冊仍然在（在 App 的 XQBridgeViewController.swift 裡，不靠 packageClassList）（test-ios-capsync-1118.js；沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
+- ﹣ Game Center、小工具（--gc-widget）也一樣：檔案裝進去、packageClassList 不列；BridgeVC 有編進 App 才用 NSClassFromString 註冊（test-ios-capsync-1118.js；沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
 - ﹣ 審查備註：改成「照手機系統語言、要看中文到設定切換」，中英都有；CRLF 也在 4000 字內（test-lang-default-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ iOS 包排除 data/docs/android.md（網頁版照舊）；其他說明文件照包（test-lang-default-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 原生：回前景重驗通過在 console 印一行；check-native.js 全部通過（test-lang-default-1117.js；沒有 xiangqi-ios（公開副本不含））
@@ -158,7 +160,7 @@
 | 行為 | 1213 項（通過 1208、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 989 項（通過 861、略過 128） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-native-1116.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r37-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 1010 項（通過 880、略過 130） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -790,6 +792,7 @@
 | test-imac-j1757.js | — | 0 | 0 | 0 | 6 | 5／6（略過 1） |
 | test-imac-v1514.js | — | 0 | 0 | 0 | 8 | 7／8（略過 1） |
 | test-inst-stq-1117.js | — | 0 | 0 | 0 | 5 | 5／5 |
+| test-ios-capsync-1118.js | — | 0 | 0 | 0 | 2 | 0／2（略過 2） |
 | test-ios-native-1116.js | — | 0 | 0 | 0 | 6 | 6／6 |
 | test-ipad-fill.js | — | 9 | 0 | 1 |  | 10／10 |
 | test-land3d.js | — | 2 | 0 | 1 |  | 3／3 |
@@ -805,6 +808,7 @@
 | test-mnq-skipall-1117.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-mp-p2.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-mvt-hold.js | — | 0 | 6 | 1 |  | 7／7 |
+| test-n33-warm-1118.js | — | 0 | 0 | 0 | 3 | 3／3 |
 | test-name-safe.js | — | 12 | 0 | 4 |  | 16／16 |
 | test-net-chaos.js | — | 5 | 0 | 0 |  | 5／5 |
 | test-net-guard.js | — | 4 | 0 | 0 |  | 4／4 |
@@ -814,6 +818,7 @@
 | test-newjourney-entry-1116.js | — | 4 | 0 | 2 |  | 6／6 |
 | test-noscore.js | — | 0 | 0 | 0 | 14 | 10／14（略過 4） |
 | test-opening-order-1117.js | — | 0 | 0 | 0 | 21 | 21／21 |
+| test-osc-en-1118.js | — | 0 | 0 | 0 | 1 | 1／1 |
 | test-oss-scan.js | — | 7 | 0 | 0 |  | 7／7 |
 | test-p0-regress.js | — | 12 | 0 | 1 |  | 13／13 |
 | test-park-firstflat.js | — | 8 | 0 | 1 |  | 9／9 |
@@ -869,7 +874,10 @@
 | test-r33-1118.js | — | 0 | 0 | 0 | 4 | 3／4（略過 1） |
 | test-r34-1118.js | — | 0 | 0 | 0 | 16 | 16／16 |
 | test-r35-1118.js | — | 0 | 0 | 0 | 7 | 6／7（略過 1） |
+| test-r36-1118.js | — | 0 | 0 | 0 | 5 | 5／5 |
 | test-r37-1118.js | — | 0 | 0 | 0 | 5 | 3／5（略過 2） |
+| test-r38-1118.js | — | 0 | 0 | 0 | 4 | 4／4 |
+| test-r39-1118.js | — | 0 | 0 | 0 | 6 | 6／6 |
 | test-r4-1117.js | — | 0 | 0 | 0 | 49 | 49／49 |
 | test-r40-1118.js | — | 0 | 0 | 0 | 5 | 5／5 |
 | test-raid-label-1116.js | — | 1 | 0 | 0 |  | 1／1 |
@@ -2232,6 +2240,11 @@
 - ✔ 〔待分類〕〔照舊〕別的視窗一直開著：最多等 3 分鐘（45 次）就不問了；說過不用就不問
 - ✔ 〔待分類〕〔原始碼〕stqHold 先問、再看視窗；07stq 的 stqHold 就是練習中（st:run）
 
+### test-ios-capsync-1118.js
+
+- ﹣ 略過 〔待分類〕先 install-native、再模擬 cap sync 重寫 capacitor.config.json：XQSpeech 的註冊仍然在（在 App 的 XQBridgeViewController.swift 裡，不靠 packageClassList）（略過原因：沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
+- ﹣ 略過 〔待分類〕Game Center、小工具（--gc-widget）也一樣：檔案裝進去、packageClassList 不列；BridgeVC 有編進 App 才用 NSClassFromString 註冊（略過原因：沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
+
 ### test-ios-native-1116.js
 
 - ✔ 〔待分類〕N3 fnTest：App 裡（XQ_NATIVE）127.0.0.1 不是測試機
@@ -2444,6 +2457,12 @@
 - ✔ 〔混合〕畫記譜箭頭那一次（_mvt）不碰保留紀錄，也不覆蓋記住的盤面
 - ✔ 〔原始碼〕mvtShow 畫箭頭時設定 15 秒的保留紀錄
 
+### test-n33-warm-1118.js
+
+- ✔ 〔待分類〕① 兩次暖機重疊（巨盤第一格前＋淡入前 warmShaders）＋② 暖機途中魔王加兩盞點光源＋③ 模型在暖機後才接上：暖機每段最多一支、兩個 done 各叫一次；淡入前、淡入後的每一格都不再新編任何 program（換順序畫也一樣）
+- ✔ 〔待分類〕④ 正式場景第一格：先用只有燈的場景 compile 設好燈光狀態（primeL），陰影的深度 shader 不會用 0 盞燈編；淡入後燈變了也一樣
+- ✔ 〔待分類〕暖機的保險：一直換版本的材質（換圖的精靈）暖過 4 次就不再攔、warmShaders 照樣會結束；超過預算就不再藏（照舊在畫面裡編）；不是巨盤不藏
+
 ### test-name-safe.js
 
 - ✔ 〔行為〕大廳角色名字：fixtures/lobby-bot-names.json 跟 lobby-bots.js 的 NAMES 一樣（公開副本沒有 lobby-bots.js，只檢查名單不是空的）
@@ -2566,6 +2585,10 @@
 - ✔ 〔待分類〕十三星系（K P1-5，開發者選 B）：打贏星門圍城就開，跟觀星臺同一個條件；bhCount 與偏航設計都不動
 - ✔ 〔待分類〕補播只播電影和黑洞對戰（開發者 11/17 晚選單）：舊玩家模式按「循著茶香」不播第 2 段電影、不接第 3 首，收底幕、淡出、回首頁；新的旅程照舊播
 - ✔ 〔待分類〕統一齊轍：破關卡、旅程鎖定、一步殺頁的文字不再暗示可以選主角；英文用內建字典
+
+### test-osc-en-1118.js
+
+- ✔ 〔待分類〕外掛字典只放 CDN，公開副本沒有：這支檢查略過
 
 ### test-oss-scan.js
 
@@ -3211,6 +3234,14 @@
 - ✔ 〔待分類〕N33-2 七星流星（電影版）：逐格看，從流星開始到最後一顆落地前，紅點只出現在已經落地的那幾顆；減少動態版照舊一起淡入
 - ✔ 〔待分類〕N33-3「研墨鋪紙…」：電影（#bhxPg、#mnfPg、#mnvPg）在畫面上時等待畫面藏起來、不擋點擊（照樣在背後下載、擋住還沒好的頁）；電影收掉還沒好才露出來；電影開始時馬上藏
 
+### test-r36-1118.js
+
+- ✔ 〔待分類〕N33-4：螢幕報讀詢問框等開場跑完——stqHold 還在（開場、序局、新手練習）就不跳、5 秒後再看，而且不算進 60 次；放手了才問
+- ✔ 〔待分類〕N33-5：素材與授權（中文）沒有刪字殘留——qrcodejs 那行留下 qrcode.min.js、自己寫的程式那行四個檔名都在；正本不再用 `檔名.js` 寫法（App 會拿掉）
+- ✔ 〔待分類〕N33-5：xqDocTidy 把拿掉檔名後的殘字整理通順（只動被拿過字的行）；全部說明文件掃過一次都沒有殘字
+- ✔ 〔待分類〕N33-6：英文介面不逐段翻說明文件（<article class="xqdoc"> 整篇跳過、照中文；最上面那句英文說明照舊）；「來源：」不會再變 Earn:
+- ✔ 〔待分類〕觀察：網頁版沒有多執行緒模式、輪到電腦卻不能下 → 跳一次說明（給重新整理）；自動重整還沒試完先等；原生 App、有多執行緒、輪到自己、已說過都不跳；英文內建
+
 ### test-r37-1118.js
 
 - ✔ 〔待分類〕墨線外殼（toonHull）掛上去以後快路徑照樣用得到：外殼標 xqNoRay、glySurf 跳過它；外殼的 raycast 本來就是空函式（打不到）
@@ -3218,6 +3249,22 @@
 - ﹣ 略過 〔待分類〕先算好的深度 glydepth.json：跟現在的模型檔（SHA-1）、bot3d 程式、牌子參數重算出來的一模一樣（tools/gly-depth.js --check）；黑洞巨盤 15 種兩面都在（略過原因：沒有模型原檔或 src（只在開發者電腦上；公開副本不含））
 - ✔ 〔待分類〕App 先查 glydepth.json、查不到才算；鍵的包圍盒取 6 位（不同瀏覽器 sin／cos 尾數不同也對得上）
 - ✔ 〔待分類〕序局入局到淡出：「研墨鋪紙…」等待畫面不蓋在黑洞底幕（#bhxBk，上面有「星盤展開中…」）上面
+
+### test-r38-1118.js
+
+- ✔ 〔待分類〕N34-1：星渦（#bhxVx）只是畫面，不攔點擊——第 1 段電影開頭它還在淡出時，「略過」照樣按得到
+- ✔ 〔待分類〕沒有多執行緒：engine.js 一啟動就丟 noCoi 錯（訊息跟 02-shell coiWarn 同一句）
+- ✔ 〔待分類〕沒有多執行緒：local.js 的 playEngine 說清楚、重整前不再每隔幾秒空轉重試（原生 App 用原生那句）；其他失敗照舊退避重試
+- ✔ 〔待分類〕英文：local.js 的「⚠ …多執行緒模式…」內建翻得出
+
+### test-r39-1118.js
+
+- ✔ 〔待分類〕只套在黑洞第一戰（序局 bh:xu）而且在對局頁：星門圍城、十三星系、今日異象、練功房、別頁都不套
+- ✔ 〔待分類〕滿版：掛 body.bhx-full、左上「⋯」、下緣「輪到你」＋四邊微光；輪到星樞＝「星樞思考中…」；打完標籤收起；開局淡入「星樞・黑洞星盤」2 秒後淡出（一盤只一次）
+- ✔ 〔待分類〕離開就恢復：換成別的對局、換頁（hashchange）、回開頭畫面——拿掉 bhx-full、⋯、標籤；頂欄和底部列回來
+- ✔ 〔待分類〕「⋯」：序局還沒打完＝🚪 回開頭畫面（stqXuLeave，不算略過）、📜 本關棋規、🔊／🔇 聲音、🎒 寶物；沒有悔棋；打完換成 ↩ 返回
+- ✔ 〔待分類〕接點：08b 每次畫好棋盤叫 bhxFullSync；序局不再掛橫向的 bh-full；park3d 滿版直式撐滿高度、多出來的上下平分
+- ✔ 〔待分類〕版面數字（375×812、430×932，直式）：「⋯」、標籤、平面棋盤都在安全區裡、不互相蓋；3D 畫布滿版，左右視野跟原本一樣
 
 ### test-r4-1117.js
 
@@ -3277,7 +3324,7 @@
 - ✔ 〔待分類〕② 巨盤 create 的程式貼圖延後分段畫：create 時只排隊；有人先要用畫布（getContext）就先畫好那張；create 最後每段 30ms 畫完；淡入前等畫完、等全景圖解碼完
 - ✔ 〔待分類〕② 第一次擺棋子人放到下一段（parkDraw）；接模型整段排進 glyLater；④ 走路小人縮小只改 CSS 大小
 - ✔ 〔待分類〕⑤ N35-1「星盤展開中…」1.6 秒開始淡入（0.4 秒淡完，2.0 秒那一格看得到）
-- ✔ 〔待分類〕快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡）
+- ✔ 〔待分類〕快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡；暖機 WS 那段 11/18 第 36 輪又改過，不比）
 
 ### test-raid-label-1116.js
 
