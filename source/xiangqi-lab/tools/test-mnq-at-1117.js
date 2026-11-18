@@ -44,9 +44,8 @@ test("〔照舊〕存檔有 shipAt 就照它；領過那一朝的補給、或還
   const R = player({ journey: null, era: "tang" }); assert.equal(JSON.parse(JSON.stringify(R.o.mnqEnv())).at, "", "沒有旅程：hbDockEra 回空字串，跟以前一樣");
 });
 
-test("〔原始碼〕看完與略過都走 mnqNextOf(mnqSt(),mnqEnv())；E.at 先讀存檔、沒有才問 hbDockEra", () => {
-  assert.ok(MNQ.includes('if(!lastSeg)return play(j+1);if(all)return fin();mnfMusicStop(1);const n=mnqNextOf(mnqSt(),mnqEnv());'), "看完：mnqTaskCard(n)；略過：mnqGo(n)，同一個 n（11/17 整章略過 fin() 也是 mnqTaskCard(mnqNextOf(mnqSt(),mnqEnv()))）");
-  assert.ok(MNQ.includes('fin=()=>{mnfMusicStop(1);mnqTaskCard(mnqNextOf(mnqSt(),mnqEnv()))}'));
-  assert.ok(MNQ.includes('if(res.skipped){if(res.card===1)mnqGo(n);'));
+test("〔原始碼〕楔子看完、略過都走同一個結尾（11/18 起回首頁 mnqC1Done，不再出「下一步」卡）；E.at 先讀存檔、沒有才問 hbDockEra", () => {
+  assert.ok(MNQ.includes("if(!lastSeg)return play(j+1);fin()}})};"), "看完、略過都 fin()");
+  assert.ok(MNQ.includes("fin=()=>{mnfMusicStop(1);mnqC1Done()}"));
   assert.ok(MNQ.includes('E.at=store.get("shipAt",null)||(typeof hbDockEra==="function"?hbDockEra():"")||""'));
 });

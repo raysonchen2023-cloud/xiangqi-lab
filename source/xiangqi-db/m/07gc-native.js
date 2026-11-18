@@ -208,7 +208,7 @@ function gcnDocFeat(t,keep){keep=keep||{gc:gcnHasPlug("XQGameCenter"),widget:gcn
 /* 11/17 iMac 測試員 I P1-3（準則 2.1、2.3）：App 裡顯示的說明文件（棋規與裁決、已知限制、畫面證據、素材與授權…，網頁版、原生版都一樣）藏起開發用內容——
    測試檔名（test-*.js）和「主要自動測試／相關測試／測試：」那幾行、跑測試的紀錄行、原始碼檔名與行號（m/07xx.js、xxx.js:123）、「沒有真人試玩」這類驗證狀態。
    正本 md 不動（GitHub 上的原文照舊給要查的人看）；App 內顯示前經過 xqDocClean */
-const XQDOC_DROP=[/^\s*(?:[-*]\s+)?(?:\*\*)?(?:主要自動測試|相關測試|裁判測試局例|純函式的測試|自動測試|測試)(?:（[^）]*）)?(?:\*\*)?\s*[:：]/,/^\s*[-*]\s+\d{1,2}\/\d{1,2}\s*跑[:：]/,/^\s*[-*]\s+\*\*沒有真人試玩\*\*/,/^\s*[-*]\s+\*\*程式[:：]\*\*/,/〔原始碼〕/,/^\s*[-*]\s+規則核心[:：]\s*`/,/^\s*`?(?:node\s+--test\s+)?xiangqi-lab\/tools\/test-[\w-]+\.js`?\s*逐一驗證[:：]?\s*$/];
+const XQDOC_DROP=[/^\s*(?:[-*]\s+)?(?:\*\*)?(?:主要自動測試|相關測試|裁判測試局例|純函式的測試|自動測試|測試)(?:（[^）]*）)?(?:\*\*)?\s*[:：]/,/^\s*[-*]\s+\d{1,2}\/\d{1,2}\s*跑[:：]/,/^\s*[-*]\s+\*\*沒有真人試玩\*\*/,/^\s*[-*]\s+\*\*程式[:：]\*\*/,/〔原始碼〕/,/^\s*[-*]\s+規則核心[:：]\s*`/,/^\s*`?(?:node\s+--test\s+)?xiangqi-lab\/tools\/test-[\w-]+\.js`?\s*逐一驗證[:：]?\s*$/,/~~[^~\n]+~~/];   /* 11/18 iMac R P1：~~刪除線~~（做完、劃掉的待辦）App 的說明文件不會畫刪除線，原樣露出兩個波浪號 → 整行不顯示 */
 /* 11/17 測試員 D Y7：說明文件只有中文正本（設計如此）。英文介面打開時，標題下面先一句英文說明，不讓人以為翻譯壞了 */
 function xqDocEnNote(t){try{if(!(typeof i18nLang==="function"&&i18nLang()==="en"))return t;const N="> This document is available in Chinese only. The rest of the app is in English; questions are welcome via Feedback.\n\n";
   t=String(t||"");if(/^\s*#/.test(t)){const i=t.indexOf("\n");return i<0?t+"\n\n"+N:t.slice(0,i+1)+"\n"+N+t.slice(i+1)}return N+t}catch(e){return t}}

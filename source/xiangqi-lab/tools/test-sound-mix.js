@@ -220,7 +220,7 @@ test("〔原始碼〕01-board：將軍「鏘」淡入、過低通、接棋子音
   assert.ok(!/AC\.destination/.test(ck), "不再直接進喇叭");
   for (const f of ["drumHit", "gongHit", "cymHit", "bellHit"]) { const s = B.slice(B.indexOf("function " + f + "("), B.indexOf("\nfunction", B.indexOf("function " + f + "(") + 5)); assert.match(s, /sxmDst\("bgm"\)/, f); assert.ok(!/AC\.destination/.test(s), f) }
   for (const f of ["matSound", "playSfx", "moveSound0", "kaijuFx"]) { const i = B.indexOf("function " + f + "("), s = B.slice(i, B.indexOf("\nfunction", i + 5)); assert.match(s, /sxmDst\("piece"\)/, f); assert.ok(!/AC\.destination/.test(s), f) }
-  assert.match(B, /s\.connect\(sxmDst\("voice"\)\)/); assert.match(B, /u\.volume=Math\.min\(1,vg\)/);
+  assert.match(B, /u\.volume=Math\.min\(1,vg\)/); assert.ok(B.includes("volume:Math.min(1,vg)"), "11/18 語音檔拿掉、改系統語音：音量照語音那類（網頁版 u.volume、原生 XQSpeech 的 volume）");
   assert.match(B, /BGM\.a\.volume=sxmBgmVol\(sxmMix\(\)\)/); assert.match(B, /const on=!!store\.get\("bgm",true\)&&!document\.hidden&&sxmGain\("bgm"\)>0/);
 });
 

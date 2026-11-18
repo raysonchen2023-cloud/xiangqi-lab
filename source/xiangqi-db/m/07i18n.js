@@ -28,6 +28,11 @@ const I18N_EN={
   "還沒有可以悔的棋：走過一步以後才能悔棋":"Nothing to undo yet: you can undo after you've made a move",
   /* 11/18 第 30 輪 R30-2：英文序局走對那一步的提示（07bh BHX_TXT.good）、小帥（src/bot3d.js）勝負和的泡泡、齊轍（新玩家一律是他，05b XQ_MELINE）的開局、吃子、勝負和台詞 */
   "俥有路了，直取星心":"The chariot's road is open — straight for the star's heart","齊轍：俥有路了，直取星心":"Qi Zhe: The chariot's road is open — straight for the star's heart",
+  "「吃！」「將軍！」，用手機系統語音即時朗讀（不附語音檔），可選男聲、女聲":"\"Capture!\" and \"Check!\" are read aloud live by your phone's system voice (no voice files included); male or female voice",   /* 11/18 音效圖鑑：拿掉語音檔、改系統語音 */
+  /* 11/18 開發者：第一章改名「楔子」（英文 Prelude）；第一章看完回首頁的那一句；首頁「更多玩法 ›」小鈕 */
+  "星盤展開中":"Unfolding the star board","星盤展開中…":"Unfolding the star board…",   /* 11/18 序局入局等 3D 好了才淡出時的提示（07bh bhxHint） */
+  "楔子":"Prelude","📖 楔子":"📖 Prelude","📖 接著看楔子":"📖 Continue the Prelude","開始楔子":"Start the Prelude","再看楔子":"Rewatch the Prelude","看楔子":"Watch the Prelude",
+  "楔子看完了。想再看一次：設定 → 聲音 → 氛圍":"Prelude complete. To watch it again: Settings → Sound → Ambience","更多玩法 ›":"More ways to play ›",
   "我們贏了":"We won","太厲害了":"Amazing","勝利！耶～":"Victory! Yay~","你是冠軍":"You're the champion","贏啦贏啦":"We won, we won",
   "嗚嗚…輸了":"Boo-hoo… we lost","好可惜…":"So close…","沒關係，再來一盤":"It's okay, let's play another","下次一定贏":"We'll win next time","我陪你複盤吧":"Let's review the game together",
   "和棋～勢均力敵":"A draw~ evenly matched","握手言和":"Let's shake hands on a draw","平分秋色":"Honors even",
@@ -1106,6 +1111,8 @@ const I18N_PAT=[
   [/^第([一二三四五六七八九十]{1,3})章即將開放$/,m=>{const n=i18nCnNum(m[1]);return n?"Chapter "+n+" coming soon":null}],
   [/^開往(.+)$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Heading to "+r}],
   [/^(.+?)陪你走了$/,(m,T)=>{const r=T(m[1]);return r==null?null:r+" is traveling with you now"}],   /* 11/17 07pty 加入卡按「帶她出門」的提示（駱躍梅陪你走了） */
+  [/^(.+?)現在跟著你$/,(m,T)=>{const r=T(m[1]);return r==null?null:r+" is with you now"}],   /* 11/18「帶誰出門」改叫「隨行」：卡冊、加入卡按「設為隨行」的提示（駱躍梅現在跟著你） */
+  [/^本命棋子「(.)」跟著首頁的隨行夥伴（現在是(.{1,8})）。$/,(m,T)=>{const L=I18N_PL[m[1]],r=T(m[2]);return L&&r!=null?"Your signature piece, the "+I18N_PN[L]+", goes with your companion on the home screen (now "+r+").":null}],   /* 11/18 05-settings 那句改「隨行」 */
   [/^停靠(.+?)後開放$/,(m,T)=>{const r=T(m[1]);return r==null?null:"Opens after docking at "+r}],
   [/^星槎停靠(.+?)，這一章就開放$/,(m,T)=>{const r=T(m[1]);return r==null?null:"This chapter opens once the Star Raft docks at "+r}],
   [/^星槎停到(.+?)，收下遠征補給$/,(m,T)=>{const r=T(m[1]);return r==null?null:"The Star Raft reached "+r+"; received expedition supplies"}],
@@ -1419,6 +1426,73 @@ function i18nExtMerge(o){if(!o||typeof o!=="object")return 0;let n=0;
   if(o.en)for(const k of Object.keys(o.en))if(!I18N_GUARD.includes(k)&&!Object.prototype.hasOwnProperty.call(I18N_EN,k)&&typeof o.en[k]==="string"){I18N_EX[k]=o.en[k];n++}
   if(Array.isArray(o.pat))for(const p of o.pat){try{I18N_PATX.push(i18nExtPat(p[0],p[1],p[2]));n++}catch(e){}}
   I18N_EXN+=n;I18N_CACHE.clear();return n}
+/* 11/18 七星串門子改版（07j-visit.js「你去下一盤，我在旁邊看」：hi 問候、ask 邀約、yes 答應、no 婉拒、wait、thx 完成；h 本命子提示）：
+   {名}＝來訪者叫隨行那位的叫法（人名照字典翻）、{你}＝你／妳；內建，不靠外掛字典 */
+const I18N_V7=[
+  ["{名}，我來了。今天不趕路，看{你}下棋。","$1, I'm here. No traveling today. I'll watch you play."],
+  ["去下一盤吧。我站在{你}旁邊看——俥有直路的時候，我提一句。","Go play a game. I'll stand beside you and watch. When the Chariot has a straight road, I'll say so."],
+  ["好。我站這裡，看得清楚。","Good. I'll stand here. I can see clearly."],
+  ["嗯，那下次。路還在。","Mm, next time then. The road will still be there."],
+  ["還沒下完？不急，我在旁邊看。","Not finished yet? No rush. I'm watching beside you."],
+  ["下完了。{你}的路走得直，好。","Done. You walked a straight road. Good."],
+  ["{名}，這一步，讓俥直直走出去。","$1, this move: send the Chariot straight out."],
+  ["路通了。俥，可以走。","The road is open. The Chariot can go."],
+  ["{名}，茶沏好了。今天我不忙，陪{你}坐一會兒。","$1, the tea is ready. I'm not busy today, so I'll sit with you a while."],
+  ["去下一盤吧，我在旁邊替{你}看著家。相該動的時候，我小聲說一句。","Go play a game. I'll sit beside you and keep an eye on home. When the Elephant should move, I'll say so quietly."],
+  ["好，我搬張小凳子，坐{你}旁邊。","All right, I'll bring a little stool and sit beside you."],
+  ["沒關係，累了就先歇著。茶我給{你}溫著。","That's fine. Rest if you're tired. I'll keep your tea warm."],
+  ["慢慢下，我還在旁邊看著。","Take your time. I'm still watching beside you."],
+  ["下完了呀。家顧得好，棋就穩。謝謝{你}讓我看。","All done. Look after home, and the game stays steady. Thank you for letting me watch."],
+  ["{名}，相動一動，先把家顧好。","$1, move the Elephant. Look after home first."],
+  ["這步讓相走，家顧穩了，再往前。","Let the Elephant move this time. Keep home steady, then go forward."],
+  ["{名}！我來了！今天不放煙火，來看{你}下棋！","$1! I'm here! No fireworks today. I came to watch you play!"],
+  ["去下一盤！我在旁邊看，炮該響的時候，我喊{你}！","Go play a game! I'll watch beside you, and when the Cannon should fire, I'll shout!"],
+  ["好！我站{你}後面，不吵——盡量不吵！","Yes! I'll stand behind you and keep quiet. I'll try to, anyway!"],
+  ["下次！下次一定要讓我看！","Next time! Next time you have to let me watch!"],
+  ["還沒下完？快去快去，我等著看！","Not done yet? Go on, go on, I'm waiting to watch!"],
+  ["下完啦？好！這一盤我看得過癮，這一聲是{你}的！","Done? Great! That game was a blast to watch. This bang is for you!"],
+  ["{名}，炮！這一步，看準了再放！","$1, the Cannon! This move. Aim well, then fire!"],
+  ["炮架好了——這一下響得了！","The Cannon is set. This one will go off!"],
+  ["{名}！我跑來的！今天想看{你}下棋！","$1! I ran all the way here! I want to watch you play today!"],
+  ["去下一盤嘛！我在旁邊看，馬該拐彎的時候，我跟{你}說！","Go play a game! I'll watch beside you, and when the Horse should turn, I'll tell you!"],
+  ["好耶！我坐旁邊，不亂動！","Yay! I'll sit beside you and keep still!"],
+  ["唔……那下次要叫我喔。","Mm... then call me next time, okay?"],
+  ["還沒下完呀？我還在旁邊等{你}！","Not done yet? I'm still waiting beside you!"],
+  ["下完啦！我看到馬跳得好漂亮！我就說繞路也到得了！","Done! I saw the Horse jump so nicely! I told you the long way gets there too!"],
+  ["{名}，馬可以拐個彎，跳這一步看看！","$1, the Horse can turn the corner. Try this jump!"],
+  ["嘿嘿，這步讓馬跳出去，繞路也到得了！","Hehe, let the Horse jump out this time. The long way gets there too!"],
+  ["{名}，勞{你}停一停。今天我不問棋，只想在旁邊看{你}下。","$1, may I trouble you to pause a moment? I won't ask about chess today. I'd just like to watch you play."],
+  ["去下一盤吧。我在旁邊看，帥該挪一步的時候，我提一句。","Go play a game. I'll watch beside you, and when the General should shift a step, I'll mention it."],
+  ["好。我坐{你}旁邊，不搶{你}的棋。","Good. I'll sit beside you and won't take over your game."],
+  ["也好，改天再看。","That's fine. I'll watch another day."],
+  ["還在下？不必急，我看著。","Still playing? No need to hurry. I'm watching."],
+  ["下完了。坐得穩，看得遠……多謝{你}讓我看這一盤。","It's over. Sit steady, see far... Thank you for letting me watch this game."],
+  ["{名}，帥也能挪一步，換個位置看看。","$1, the General can move a step too. See it from another square."],
+  ["勞{你}看看帥——這時候，它自己走一步最好。","Please look at the General. Right now, its own step is best."],
+  ["{名}。……我來看{你}下棋。","$1. ...I came to watch you play."],
+  ["去下一盤。我在旁邊看。仕該動，我說。","Go play a game. I'll watch beside you. When the Advisor should move, I'll say."],
+  ["嗯。我站旁邊。","Mm. I'll stand beside you."],
+  ["那下次。","Next time, then."],
+  ["下完再說。","Finish the game first."],
+  ["嗯。守得住。{你}下得好。","Mm. You held. You played well."],
+  ["這步該讓仕動一動，守住了再說。","This move, let the Advisor shift. Hold first, then see."],
+  ["{名}，仕。……就這步。","$1. The Advisor. ...This move."],
+  ["{名}！我一溜就到啦！今天不跑腿，來看{你}下棋！","$1! I zipped right over! No errands today. I came to watch you play!"],
+  ["去下一盤吧！我在旁邊看，兵該走的時候，我就喊一聲！","Go play a game! I'll watch beside you, and when the Soldier should move, I'll give a shout!"],
+  ["好！我蹲{你}旁邊看！","Okay! I'll crouch beside you and watch!"],
+  ["好啦，那我先去跑腿，下回再看！","Okay, I'll go run errands then. I'll watch next time!"],
+  ["還沒下完？我先在旁邊等著！","Not done yet? I'll wait right here beside you!"],
+  ["下完啦？兵一步一步，也走到了！這個我記著！","Done? Step by step, the Soldier got there too! I'll remember this one!"],
+  ["{名}，兵——就是這一顆！","$1, the Soldier. This one!"],
+  ["這步讓兵走！一步一步，也走得到！","Move the Soldier this time! Step by step, it gets there!"]];
+function i18nV7Pat(z,e){const src="^"+z.replace(/[.*+?^$()|[\]\\]/g,"\\$&").replace("{名}","([^\\s，。！？「」・：（）]{1,6})").replace(/\{你\}/g,"(?:你|妳)")+"$";return i18nExtPat(src,e,z.includes("{名}")?"n":"")}
+for(const[z,e]of I18N_V7)I18N_PAT.push(i18nV7Pat(z,e));
+/* 本命子提示泡泡、答應／婉拒的小提示：「城子：「嗯。我站旁邊。」」、讀螢幕「城子：這步…」 */
+I18N_PAT.push([/^([^\s，。！？「」・：（）]{1,6})：「(.+)」$/,(m,T)=>{const a=T(m[1]),b=T(m[2]);return a==null||b==null?null:a+": \""+b+"\""}],
+  [/^「([^「」]+)」$/,(m,T)=>{const b=T(m[1]);return b==null?null:"\""+b+"\""}],   /* 串門子視窗整句包在「」裡 */
+  [/^(他們|他|她)的招式黑洞裡就能帶；在「雲河七星」卡冊可以換隨行的人，也可以分星輝給(他們|他|她)。$/,m=>({"他":"His","她":"Her","他們":"Their"})[m[1]]+" skills come along in the Black Hole. In the Cloud River Seven Stars album you can change your companion, or give Starshine to "+({"他":"him","她":"her","他們":"them"})[m[2]]+"."]);   /* 07pty 加入卡下面那行 */
+Object.assign(I18N_EN,{"設為隨行":"Set as companion","隨行中":"Your companion","隨行":"Companion",
+  "下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。黑洞裡全隊已學會的招都會帶上場；「隨行」是首頁上跟著你的那一位；來串門子的人也會找他說話。":"Half of the XP you earn from games, puzzles and Black Hole stages goes to everyone on the team automatically; the other half becomes Starshine for you to give to whoever you want to train. In the Black Hole, every skill your team has learned comes along. Your \"companion\" is the one who follows you on the home screen; visitors talk to them too."});
 /* #I18N-PURE-END */
 /* 目前語言：store "lang" 只有 "en" 才是英文；其他（沒設定）＝中文，繁簡照 zh.js。函式宣告會提前，設定頁比這個檔先畫也叫得到（只用 store，不碰這個檔的 const） */
 function i18nLang(){try{return store.get("lang",null)==="en"?"en":"zh"}catch(e){return"zh"}}
@@ -1441,9 +1515,9 @@ function i18nPick(k){const cur=i18nCur();if(k===cur)return;const re=()=>setTimeo
 function i18nSheet(){const cur=i18nCur(),L=[["tw","繁體中文","zh-Hant"],["cn","简体中文","zh-Hans"],["en","English","en"]];   /* zh-lint-ok：簡體選項本來就用簡體字顯示 */
   sheet("🌐 語言 Language",b=>{
     b.innerHTML=`<div class="opt" data-nocc style="flex-wrap:wrap">${L.map(([k,l,h])=>`<button type="button" data-lang="${k}" lang="${h}"${cur===k?' class="on" aria-pressed="true"':' aria-pressed="false"'}>${l}</button>`).join("")}</div>
-      <p class="muted" id="i18nScopeEn" style="font-size:12.5px;line-height:1.6;margin:10px 2px 0" lang="en"><b>In English:</b> the tab bar and menus, games against the computer, the game page and results, settings, the online lobby, Teatime endgames, the Daily Puzzle, the game library, the Qianqiu Cup, and the main quest, Chapter 1 “Classic · First Crossing of the River Chart”: its task cards, chapter name and puzzle hints. Chapter 1 also has English film captions and dialogue, as do the Starry Night Tea Party greetings and farewells.</p>
+      <p class="muted" id="i18nScopeEn" style="font-size:12.5px;line-height:1.6;margin:10px 2px 0" lang="en"><b>In English:</b> the tab bar and menus, games against the computer, the game page and results, settings, the online lobby, Teatime endgames, the Daily Puzzle, the game library, the Qianqiu Cup, and the main quest Prelude “Classic · First Crossing of the River Chart”: its task cards, chapter name and puzzle hints. The Prelude also has English film captions and dialogue, as do the Starry Night Tea Party greetings and farewells.</p>
       <p class="muted" style="font-size:12.5px;line-height:1.6;margin:4px 2px 0" lang="en"><b>Chinese only for now:</b> other story scenes (Stone Table Tales and the novel), other character lines, scene history notes, the full privacy statement and the guides.</p>
-      <p class="muted" data-noi18n style="font-size:12.5px;line-height:1.6;margin:6px 2px 0">英文介面目前涵蓋：底欄與選單、跟電腦對局、對局頁與結果、設定、線上大廳、一盞茶殘局、每日同題、棋譜庫、千秋盃，以及主線第一章「古典・河圖初渡」的任務卡、章名和解題提示；第一章電影與對話、七星星夜茶話會開場與收尾也已翻譯。其他劇情仍只有中文：石桌往事、長篇、其他角色台詞、場景史料、隱私說明全文和說明文件。</p>
+      <p class="muted" data-noi18n style="font-size:12.5px;line-height:1.6;margin:6px 2px 0">英文介面目前涵蓋：底欄與選單、跟電腦對局、對局頁與結果、設定、線上大廳、一盞茶殘局、每日同題、棋譜庫、千秋盃，以及主線楔子「古典・河圖初渡」的任務卡、章名和解題提示；楔子電影與對話、七星星夜茶話會開場與收尾也已翻譯。其他劇情仍只有中文：石桌往事、長篇、其他角色台詞、場景史料、隱私說明全文和說明文件。</p>
       ${(()=>{try{return typeof xqDocShow==="function"&&!xqDocShow("i18n")}catch(e){return false}})()?"":`<button type="button" class="lk" data-xqdoc="i18n" style="margin-top:8px">🌐 About the English UI / 英文介面說明</button>`}`;   /* 11/17 第 19 輪 E19-1：原生版白名單沒有 i18n，按了打不開 → 不畫 */
     b.querySelectorAll("[data-lang]").forEach(x=>x.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();i18nPick(x.dataset.lang)})})}
 /* ================= 畫面：掃描文字節點、屬性，換成英文；原文記起來可以還原 ================= */
@@ -1633,6 +1707,14 @@ function zhCnWords(s){s=String(s==null?"":s);for(const[a,b]of ZH_CN_WORDS)if(s.i
 /* 11/18 第 30 輪 R30-2、R30-3（測試員）：英文介面小帥（src/bot3d.js）的閒聊有上千句中文（棋諺、公園故事、特級大師資料自動組的「單霞麗：上海／上海隊」…），字典翻不完，
    走路角色頭上（07w 收 xq-bot-said）、小帥自己的泡泡都冒中文。src 不動：英文介面時 ① xq-bot-said 這句翻不成整句英文就攔下（capture、比 07w 早），角色頭上不冒；
    ② 小帥自己的泡泡（.xqbot 底下沒有子元素、有字的那一層）翻譯器翻完還有中文就藏起來（下一句照常）。翻得出的照翻（勝負和、齊轍的台詞已補進字典） */
+/* 11/18 第 32 輪 N32-2：英文內文的彎引號 “ ” ‘ ’ 落在中文字型（Noto Sans TC、朝代字型），畫成全形、前面空一大格（例：序幕卡 called the  “Cloud River”）。
+   英文介面時，沒有中文字的文字節點，彎引號一律換成直引號 " '（翻譯器的輸出、程式裡直接寫的英文都算；有中文字的節點不動，中文介面完全不動；輸入框不動）。i18nQuote 是純函式 */
+function i18nQuote(s){s=String(s==null?"":s);if(I18N_CJK.test(s)||!/[‘’“”]/.test(s))return s;return s.replace(/[“”]/g,'"').replace(/[‘’]/g,"'")}
+(function(){try{if(typeof window==="undefined"||typeof document==="undefined"||i18nLang()!=="en")return;
+  const fix=n=>{const p=n.parentNode;if(p&&p.nodeType===1&&/^(TEXTAREA|INPUT|SCRIPT|STYLE)$/.test(p.tagName))return;const v=n.nodeValue,u=i18nQuote(v);if(u!==v)n.nodeValue=u};
+  const walk=r=>{if(!r)return;if(r.nodeType===3){fix(r);return}if(r.nodeType!==1||/^(SCRIPT|STYLE|TEXTAREA)$/.test(r.tagName))return;const w=document.createTreeWalker(r,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode()))fix(n)};
+  const go=()=>{walk(document.body);new MutationObserver(ms=>{for(const m of ms){if(m.type==="characterData")fix(m.target);else m.addedNodes.forEach(walk)}}).observe(document.body,{subtree:true,childList:true,characterData:true})};
+  if(document.body)go();else addEventListener("DOMContentLoaded",go)}catch(e){}})();
 function i18nBotOk(s){s=String(s||"").trim();if(!s||!I18N_CJK.test(s))return true;const t=i18nText(s);return t!=null&&!I18N_CJK.test(t)}
 (function(){try{if(typeof window==="undefined"||typeof document==="undefined"||i18nLang()!=="en")return;
   addEventListener("xq-bot-said",e=>{try{if(!i18nBotOk(e.detail))e.stopImmediatePropagation()}catch(x){}},true);

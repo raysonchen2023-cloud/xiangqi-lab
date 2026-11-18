@@ -224,12 +224,12 @@ test("配樂收藏搬到設定 → 聲音 → 氛圍（mnqSndRow）：有收藏�
   assert.equal(box.children.length, 1, "設定頁重畫不重複");
   const d = box.children[0]; assert.equal(d.id, "mnqSnd");
   assert.match(d.innerHTML, /data-k="mu"><span><b>♪ 配樂收藏<\/b><small>配樂 2 首<\/small>/);
-  assert.match(d.innerHTML, /data-k="c1"><span><b>🎬 再看第一章<\/b><small>河圖初渡<\/small>/);
+  assert.match(d.innerHTML, /data-k="c1"><span><b>🎬 再看楔子<\/b><small>河圖初渡<\/small>/);   /* 11/18 第一章改名楔子 */
   d.btn.mu.onclick(); assert.equal(T.SH[0].t, "♪ 配樂收藏");
   d.btn.c1.onclick(); assert.deepEqual(T.CALL, ["chapter:classic"]);
   /* 領過授印禮、還沒看完第一章（07stq 畢業的人）：寫「看第一章」；沒有收藏就不放配樂收藏那列 */
   const U = mnq({ gift: { a1: 1, a6: {} } }), b2 = new El("div"); U.ctx.mnqSndRow(b2);
-  assert.match(b2.children[0].innerHTML, /🎬 看第一章/); assert.ok(!/配樂收藏/.test(b2.children[0].innerHTML));
+  assert.match(b2.children[0].innerHTML, /🎬 看楔子/); assert.ok(!/配樂收藏/.test(b2.children[0].innerHTML));
   const V = mnq({}), b3 = new El("div"); V.ctx.mnqSndRow(b3); assert.equal(b3.children.length, 0, "全新玩家什麼都不放");
 });
 

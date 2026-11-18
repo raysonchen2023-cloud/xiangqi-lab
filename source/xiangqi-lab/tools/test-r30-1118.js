@@ -30,7 +30,7 @@ test("R30-1（P1）：所有視窗放不下時都能捲（不再只限高度 ≤
   assert.ok(!/@media \(max-height/.test(css), "不限高度");
   assert.ok(css.includes(".modal{overflow-y:auto;align-items:flex-start;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.modal>.box{margin:auto 0;flex:none}"), "放得下照舊置中（margin:auto 0），放不下從上面排起、可以捲");
   assert.ok(css.includes("@supports (height:100dvh){.modal{bottom:auto;height:100dvh}}"), "Safari 網址列、工具列佔掉的那段不算");
-  assert.ok(css.includes(".modal.prolog>.box>.mb{position:sticky;bottom:env(safe-area-inset-bottom,0px);z-index:1;background:inherit;"), "按鈕列黏在底部、讓開 Home 條");
+  assert.ok(css.includes(".modal.prolog>.box>.mb{position:sticky;bottom:calc(0px - max(24px,calc(env(safe-area-inset-bottom,0px) + 12px)));z-index:1;background:var(--card,#FFF8EC);"), "按鈕列黏在底部（11/18 N31-4：貼到畫面最底、不透明底色）");
   assert.ok(U.includes('s.id="mdLowCss";s.textContent=MDLOW_CSS;'));
   /* 用到 .prolog 的卡：邀局（序局）、星盤暫合、序幕、回家任務 */
   const B = M("07bh-blackhole.js"), S5 = M("05b-save.js");

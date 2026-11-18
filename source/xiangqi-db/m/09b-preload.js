@@ -111,7 +111,7 @@ function preLine(){let el=document.getElementById("preline");const done=Math.max
   el.firstChild.style.width=Math.max(2,Math.min(100,done*100/(done+rest))).toFixed(1)+"%"}
 function preCss(){if(document.getElementById("precss"))return;const s=document.createElement("style");s.id="precss";
   s.textContent=`#preline{position:fixed;left:0;right:0;top:var(--safeT,0px);height:2px;z-index:9000;pointer-events:none;background:rgba(255,240,210,.08)}#preline i{display:block;height:100%;width:0;background:rgba(222,186,120,.75);transition:width .6s}
-#pgate{position:fixed;inset:0;z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#F3ECDD;transition:opacity .35s;overflow:hidden}#pgate.out{opacity:0;pointer-events:none}
+#pgate{position:fixed;inset:0;z-index:9998;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#F3ECDD;transition:opacity .35s;overflow:hidden}#pgate.out{opacity:0;pointer-events:none}#pgate.pg-film{visibility:hidden;opacity:0;pointer-events:none}
 #pgate .pg-ink{position:relative;width:150px;height:150px;opacity:0;animation:pgIn .4s .25s forwards}
 #pgate .pg-ink i{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(42,31,21,.78) 0,rgba(42,31,21,.45) 32%,rgba(42,31,21,.12) 58%,rgba(42,31,21,0) 72%);filter:blur(5px);transform:scale(.15);animation:pgInk 2.6s ease-out infinite}
 #pgate .pg-ink i:nth-child(2){animation-delay:.85s}#pgate .pg-ink i:nth-child(3){animation-delay:1.7s}
@@ -124,6 +124,12 @@ function preNeed(p){if(!PRE.M||!PRE.pend.size)return[];const P=PRE.M.pages||{},e
   const Z=PRE.M.zones||{},zs=Object.keys(Z).filter(z=>Array.isArray(Z[z]&&Z[z].pages)&&Z[z].pages.some(k=>k===k1||k===k2));
   if(zs.length){const o=preZOpen();let ch=false;for(const z of zs)if(!o.has(z)){o.add(z);ch=true}if(ch)try{store.set("preZ",[...o])}catch(x){}}
   const out=[];for(const x of PRE.pend.values()){if((x.tries||0)>=3||x.wait>now)continue;if(preIsFirst(x,e)||pats.some(r=>r.test(x.u))||zs.length&&zs.includes(preZoneOf(x)))out.push(x)}return out}
+/* 11/18 第 33 輪 N33-3（P2）：新玩家略過第 1 段電影後，「循著茶香」換到星槎頁（#/adventure）觸發這頁的等待畫面（z 9998），星槎頁 47 MB 還沒下載完，
+   就整片蓋在第 2 段電影（#bhxPg z 9000）上 6.4 秒：看不到字幕、「略過」按不到。改成：電影（#bhxPg 序章電影、#mnfPg／#mnvPg 主線電影）在畫面上時，
+   等待畫面照樣在背後下載、擋住還沒好的頁，但不顯示、不擋點擊（.pg-film）；電影收掉還沒下載完，才露出來。每 0.25 秒看一次，07bh bhxFilm 開始時也會馬上叫一次 */
+const PRE_FILM="#bhxPg,#mnfPg,#mnvPg,#bhxBk";   /* 11/18 第 34 輪 N33-1：序局入局到淡出這段，黑洞底幕（#bhxBk，上面有「星盤展開中…」）也算：等待畫面不蓋在底幕上面 */
+function preFilmOn(){try{return!!document.querySelector(PRE_FILM)}catch(e){return false}}
+function preFilmHide(g){g=g||document.getElementById("pgate");if(!g)return false;const on=preFilmOn();g.classList.toggle("pg-film",on);if(!g._pfT)g._pfT=setInterval(()=>{if(!g.isConnected){clearInterval(g._pfT);g._pfT=0;return}g.classList.toggle("pg-film",preFilmOn())},250);return on}
 function preGateOff(){PRE.gate=null;const g=document.getElementById("pgate");if(g&&!g.classList.contains("out")){g.classList.add("out");setTimeout(()=>{if(g.classList.contains("out"))g.remove()},400)}if(PRE.bgKick)PRE.bgKick(300)}
 /* 02-shell.js route() 一開始呼叫：這頁的圖都在了就回 false（照常畫）；還缺就蓋等待畫面、優先下載，好了再 route() 一次，回 true */
 function preGate(p){try{const h0=location.hash;
@@ -132,7 +138,7 @@ function preGate(p){try{const h0=location.hash;
   const need=preNeed(p);if(!need.length){preGateOff();return false}
   if(PRE.gate&&PRE.gate.h===h0)return true;
   preCss();let g=document.getElementById("pgate");if(g&&g.classList.contains("out")){g.remove();g=null}
-  if(!g){g=document.createElement("div");g.id="pgate";g.innerHTML=`<div class="pg-ink"><i></i><i></i><i></i></div><div class="pg-t">研墨鋪紙…</div><div class="pg-n"></div>`;document.body.append(g);keepAwake("pgate",()=>!!document.getElementById("pgate"))}
+  if(!g){g=document.createElement("div");g.id="pgate";g.innerHTML=`<div class="pg-ink"><i></i><i></i><i></i></div><div class="pg-t">研墨鋪紙…</div><div class="pg-n"></div>`;document.body.append(g);keepAwake("pgate",()=>!!document.getElementById("pgate"))}preFilmHide(g);   /* N33-3：電影播放中不蓋上去 */
   const G=PRE.gate={h:h0},n=g.querySelector(".pg-n"),total=need.reduce((t,x)=>t+x.sz,0);let got=0;preLine();
   const fin=()=>{if(PRE.gate!==G)return;clearTimeout(G.to);PRE.pass=h0;if(location.hash===h0)route();else preGateOff()};
   G.to=setTimeout(fin,25000+total/1048576*4000);   /* 網路太慢也不要把人關在門外：時間到就先進去 */

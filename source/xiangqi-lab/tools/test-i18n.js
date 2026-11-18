@@ -151,7 +151,7 @@ function appFns(doc) {
 }
 /* 照 App 的樣子畫一頁跟電腦的快速對局（頂欄、底欄、對手列、狀態列、著法條、工具列、結果視窗、認輸確認） */
 function gamePage(doc) {
-  const app = HTML.slice(HTML.indexOf("<div class=\"app\">"), HTML.indexOf("<script>"));
+  const a0 = HTML.indexOf("<div class=\"app\">"), app = HTML.slice(a0, HTML.indexOf("<script>", a0));   /* 11/18 N31-3：.app 前面多了一段底幕 <script>，從 .app 之後找 */
   doc.body.innerHTML = app; const F = appFns(doc), v = doc.body.querySelector("#view");
   doc.body.querySelector("#title").textContent = "♟ 快速對局";
   F.gameLayout(v);

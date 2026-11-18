@@ -1,10 +1,10 @@
-# 驗證紀錄（版本 20261118-0319）
+# 驗證紀錄（版本 20261118-1041）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/18 04:29:07（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 2419 項＝**通過 2286**、**失敗 0**、**略過 133**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `4ac465626cab`），對應的發布版：`20261118-0319`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 產生時間：2026/11/18 12:10:05（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 2479 項＝**通過 2340**、**失敗 0**、**略過 139**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（切自 commit `0b4d0fc2794d`），對應的發布版：`20261118-1041`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔（和少數只給它們用的工具）有43 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -128,6 +128,12 @@
 - ﹣ Y9：練功房英文——說明、分組小字（不再 No. 1-Lv 4）、練習卡片、名牌和開始鈕的讀螢幕名稱（test-r29d-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ R30-2：英文序局走對那一步的提示、小帥勝負和泡泡、齊轍台詞都翻得出（內建字典，外掛字典還沒到也有）（test-r30-1118.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ R30-2、R30-3：英文介面小帥閒聊翻不成整句英文就不冒（xq-bot-said 攔下、小帥自己的泡泡藏起來），翻得出的照常（test-r30-1118.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
+- ﹣ iMac P3：preload.json 四個七星模型（x_bing、x_martialgirl、x_spiritgirl、x_swordboy.glb）的大小、指紋照 site 實際的檔；v 照全部項目重算（test-r31-1118.js；沒有 xiangqi-lab/site/data/tripo_app/x_bing.glb（公開副本不含））
+- ﹣ 語音（原生）：XQSpeech 外掛的靜態檢查（check-native.js 第 8 節）——背景佇列、先回傳、啟動後先初始化、zh-TW→zh-Hant→zh-HK、.ambient＋usesApplicationAudioSession、進背景 stopSpeaking；install-native 預設裝（test-r32-1118.js；沒有 xiangqi-ios（公開副本不含））
+- ﹣ 同步：語音 12 檔三處都刪了；preload.json 沒有 data/voice、四張經典圖示是新指紋、v／bytes 照算法；sw.js 不再列 voice（test-r33-1118.js；沒有 xiangqi-lab/site/data/icons/classic/e_save.webp（公開副本不含））
+- ﹣ N33-1 射線：真的棋子人模型（x_bing、x_shuai 有骨架、擺過姿勢；xs_zu 黑卒沒骨架）每條射線結果相同，而且快很多（沒有模型檔＝略過）（test-r35-1118.js；沒有模型檔（只在 CDN））
+- ﹣ 真實模型＋墨線開著：每條射線新舊結果相同；每一面牌子 glyPzCalc＝改之前 mk 的算法（x_bing、x_shuai、xs_zu、x_wood 全格掃；黑洞巨盤 15 種棋子人兩面都比）（test-r37-1118.js；沒有模型原檔或 src（只在開發者電腦上；公開副本不含））
+- ﹣ 先算好的深度 glydepth.json：跟現在的模型檔（SHA-1）、bot3d 程式、牌子參數重算出來的一模一樣（tools/gly-depth.js --check）；黑洞巨盤 15 種兩面都在（test-r37-1118.js；沒有模型原檔或 src（只在開發者電腦上；公開副本不含））
 - ﹣ 8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 10 原生設定：loggingBehavior＝none、CFBundleLocalizations 有 en、CAPACITOR_DEBUG 只在 Debug 設定檔（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
@@ -152,7 +158,7 @@
 | 行為 | 1213 項（通過 1208、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 929 項（通過 807、略過 122） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-native-1116.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r4-1117.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 989 項（通過 861、略過 128） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-native-1116.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r37-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -500,7 +506,7 @@
 ### E19 續局與分頁衝突：Web Locks 讓會改盤面的動作排隊、版本號防覆蓋、換盤備份可救回、存檔壞掉改讀上一份、看得到的對局保存紀錄
 
 - 從哪一版：2400（下一版）
-- 自動測試：45 項（行為 19、混合 3、原始碼比對 3、待分類 20）
+- 自動測試：46 項（行為 19、混合 3、原始碼比對 3、待分類 21）
   - ✔ 〔待分類〕〔原始碼〕接線：設定頁角色分頁呼叫 dglSetRow；觀星臺 gxtSky 開 dglXiuSheet；包一層 setTop 放兩條；角色卡寫到星圖；新字有英文
   - ✔ 〔原始碼〕只開一個瀏覽器、finally 一定關、每個分頁都設測試房 xq_test、檔名不是 test- 開頭
   - ✔ 〔混合〕選關分章：分頁兩顆（章名照提案二）、每章只列自己的六關、每關只有「第 n 關・關名」加一排星；開打前一行寫這一關的三個目標；新關的獎勵照舊（journey 開頭 bh:gs＝不給修為、不回定軌力）
@@ -521,6 +527,7 @@
   - ✔ 〔待分類〕N27-1：標題裡有按鈕／分頁鈕（挑戰電腦 .cpu-seg）不限高——照 CSS 算鈕實際露出的高度：320／375／393／430 寬、中英都是完整 44px（斷網只影響寬度、不影響高度；畫面上實際能點的高度仍請瀏覽器複驗）
   - ✔ 〔待分類〕N27-2：挑戰電腦的兩顆分頁鈕放不下就拿掉小圖示、縮字（12px，再不行 11px 換行）；標題字和返回鈕不動；放得下不縮
   - ✔ 〔待分類〕R28-2：360 寬以下標題是分頁鈕的頁（挑戰電腦）不放離線牌，分頁鈕拿回寬度；其他頁照常有牌子
+  - ✔ 〔待分類〕N31-3：冷開會出開頭畫面時，m.html 在畫頂欄、分頁鈕之前就蓋上底幕（跟 05b 同一套判斷）；05b 跑完拿掉，保險 6 秒
   - ✔ 〔待分類〕第 10 批 N10-4／D-6：英文標籤每個候選位置先往框內收再挑（不壓到別的標籤）；上緣讓開的高度照頁名條＋卷分頁實際量到的（op.top）
   - ✔ 〔待分類〕第 11 批 N10-2 古戰場橫式：取景框往上多留被頁名條＋卷分頁蓋住的那一條，戰役點都在它下面（中英文一樣）；沒量到上緣（op.top）照舊
   - ✔ 〔待分類〕第 11 批 N10-2 古戰場寬螢幕（橫式手機 844 寬也算）：抽屜沒開時地圖、ⓘ、卷分頁撐到右邊；抽屜打開時重排；寬螢幕一開始就先當抽屜開著排（不排兩次）
@@ -584,7 +591,7 @@
 ### E21 無障礙：螢幕報讀與鍵盤模式、高對比主題（對比 ≥7:1）、字級最大 2 倍與跟著系統字級、靜態稽核
 
 - 從哪一版：0100（下一版）
-- 自動測試：48 項（行為 21、混合 4、原始碼比對 7、待分類 16）
+- 自動測試：50 項（行為 21、混合 4、原始碼比對 7、待分類 18）
   - ✔ 〔行為〕axsPan：翻轉棋盤（執黑）左右對調；路數跟 11b axmPos 念的一樣（一路在右）
   - ✔ 〔行為〕axsLoadStep：超過 0.8 秒才念「載入中…」，好了念「載入完成」；很快就好不念；標籤跟著工作
   - ✔ 〔原始碼〕空間導覽：XQDOC 有 tour；a11y-tour.md 兩邊一樣、寫到首頁、茶肆、大廳、棋譜庫、園子和園子地點清單；不含會被當成載入提示的字
@@ -625,6 +632,8 @@
   - ✔ 〔待分類〕D P2-2：英文字幕可以換行（字級照中文字數算、原本不換行）；只在 html[lang=en]
   - ✔ 〔待分類〕T3：棋盤格讀螢幕名稱的後綴（已選取、預定落點、可以吃、可以走到這裡、被將軍、剛走到這裡）英文介面直接英文；11b 找選中格子兩種都認
   - ﹣ 略過 〔待分類〕U4：讀螢幕播報區的固定句（載入中／完成、象棋引擎、靜音切換、棋鐘提醒）英文（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+  - ✔ 〔待分類〕語音：程式不再讀 data/voice，組版不再複製、預存清單不列；設定頁試聽直接念；音效圖鑑、關於頁照實寫
+  - ✔ 〔待分類〕語音：原生 App 有 XQSpeech 外掛就用它（不碰 speechSynthesis）；網頁版第一次排到空檔、挑不到語音不念、3 秒沒開始就記住這支手機的系統語音不可靠
   - ✔ 〔待分類〕N6-6 讀螢幕播報區：視窗的字在第 160 字是空白時也對得上，念英文；英文時 modal 先翻再念
   - ✔ 〔待分類〕N7-1 英文 480px 以下返回鈕最多佔頂欄 40%、放不下刪節號（字留在按鈕裡，讀螢幕念全文）；星門圍城只留「‹」的規則比它具體；中文不套用
   - ✔ 〔待分類〕P3-3 讀螢幕播報區：同一句 3 秒內只寫一次；視窗按鈕關掉時把那個視窗念過的那一行拿掉；英文包一層也回傳實際寫進去的那句
@@ -855,7 +864,14 @@
 | test-r29d-1117.js | — | 0 | 0 | 0 | 12 | 8／12（略過 4） |
 | test-r29e-1117.js | — | 0 | 0 | 0 | 7 | 7／7 |
 | test-r30-1118.js | — | 0 | 0 | 0 | 4 | 2／4（略過 2） |
+| test-r31-1118.js | — | 0 | 0 | 0 | 5 | 4／5（略過 1） |
+| test-r32-1118.js | — | 0 | 0 | 0 | 18 | 17／18（略過 1） |
+| test-r33-1118.js | — | 0 | 0 | 0 | 4 | 3／4（略過 1） |
+| test-r34-1118.js | — | 0 | 0 | 0 | 16 | 16／16 |
+| test-r35-1118.js | — | 0 | 0 | 0 | 7 | 6／7（略過 1） |
+| test-r37-1118.js | — | 0 | 0 | 0 | 5 | 3／5（略過 2） |
 | test-r4-1117.js | — | 0 | 0 | 0 | 49 | 49／49 |
+| test-r40-1118.js | — | 0 | 0 | 0 | 5 | 5／5 |
 | test-raid-label-1116.js | — | 1 | 0 | 0 |  | 1／1 |
 | test-redblue-public.js | — | 29 | 0 | 1 |  | 30／30 |
 | test-release-sync.js | — | 9 | 0 | 0 |  | 9／9 |
@@ -2398,13 +2414,13 @@
 - ✔ 〔待分類〕〔行為〕shipAt 還沒寫（剛畢業、電影略過得快、沒逛過星槎）：下一步一樣是家鄉那一朝的遠征補給
 - ✔ 〔待分類〕〔行為〕看完（中途 shipHere 把 shipAt 寫成家鄉）和略過（沒寫）＝同一個下一步
 - ✔ 〔待分類〕〔照舊〕存檔有 shipAt 就照它；領過那一朝的補給、或還沒贏過才是贏第一盤；沒有旅程的人不受影響
-- ✔ 〔待分類〕〔原始碼〕看完與略過都走 mnqNextOf(mnqSt(),mnqEnv())；E.at 先讀存檔、沒有才問 hbDockEra
+- ✔ 〔待分類〕〔原始碼〕楔子看完、略過都走同一個結尾（11/18 起回首頁 mnqC1Done，不再出「下一步」卡）；E.at 先讀存檔、沒有才問 hbDockEra
 
 ### test-mnq-skipall-1117.js
 
-- ✔ 〔待分類〕〔修〕第一段就按略過：破局題照樣出來（直接從題目開始），解完不再播 c1m 後半、c1e，直接出「下一步」任務卡
-- ✔ 〔待分類〕〔修〕破局題解完才按略過（在 c1m）：c1e 不播，直接出「下一步」任務卡
-- ✔ 〔待分類〕〔照舊〕全部看完：三段都播，最後出「下一步」任務卡；只在最後一段按略過：那一段的任務卡照舊（出發＝mnqGo）
+- ✔ 〔待分類〕〔修〕第一段就按略過：破局題照樣出來（直接從題目開始），解完不再播 c1m 後半、c1e，直接回首頁（不出「下一步」卡）
+- ✔ 〔待分類〕〔修〕破局題解完才按略過（在 c1m）：c1e 不播，直接回首頁
+- ✔ 〔待分類〕〔改〕全部看完：三段都播，最後一段照電影自己的章末卡（不換成「下一步」卡），然後回首頁；最後一段按略過也一樣回首頁、不帶去下一步
 - ✔ 〔待分類〕〔原始碼〕mnfPlay：jump 一開始就跳到危機題那一格；按過略過或 jump，危機題解完就結束這一段
 
 ### test-mp-p2.js
@@ -2856,7 +2872,7 @@
 - ✔ 〔待分類〕〔第 12 項〕殘局「完美解開」結算卡開著：過場不播、加入卡不出，等多久都一樣；玩家關掉卡片才播
 - ✔ 〔待分類〕〔第 12 項〕沒有過場的站：加入卡也等結算卡關掉；沒有卡片時照舊 2.5 秒出
 - ✔ 〔待分類〕〔第 13 項〕每張至少 3.5 秒（字幕淡入後還留 3 秒以上）；點畫面提前換下一張；「略過」整段跳過
-- ✔ 〔待分類〕〔第 15 項〕加入卡按「帶她出門」：換成她陪你走，並且 toast「🚶 駱躍梅陪你走了」；按「好」不換、不說
+- ✔ 〔待分類〕〔第 15 項〕加入卡按「設為隨行」（11/18 由「帶她出門」改名）：換成她隨行，並且 toast「🚶 駱躍梅現在跟著你」；按「好」不換、不說
 - ✔ 〔待分類〕〔第 15 項〕英文：07i18n 句型把「（名字）陪你走了」翻成「… is traveling with you now」，七位都翻得出名字
 
 ### test-pty-statbar-1116.js
@@ -2909,7 +2925,7 @@
 - ✔ 〔待分類〕〔模擬器 A〕全新玩家（沒旅程、沒練習紀錄）重新載入、xqTitleShown 還在：照樣出開頭畫面（stqBoot 接手進新手練習）
 - ✔ 〔待分類〕〔模擬器 A〕不是全新玩家：照舊略過（有旅程、練習做過、看得出玩過、網址帶頁面）
 - ✔ 〔待分類〕〔模擬器 A〕接線：stqFresh 跟 stqBoot 判斷同一套（沒旅程、沒 stq、stqOldOf 為假）；02-shell 的 go() 沒動
-- ✔ 〔待分類〕〔模擬器 B〕網頁版：第一次點擊照舊靜音暖機一次
+- ✔ 〔待分類〕〔模擬器 B，11/18 改〕網頁版也不在點擊當下 speak 暖機了（只取語音清單；第一次朗讀排到空檔，見 test-r32-1118.js）
 - ✔ 〔待分類〕〔模擬器 B〕原生 App（XQ_NATIVE 或 UA 帶 XQQianqiuApp/）：點擊時不呼叫 speechSynthesis.speak
 - ✔ 〔待分類〕〔模擬器 B〕原始碼：點擊解鎖照舊叫 primeVoice（網頁版不變）；真的要報「吃」「將軍」才 speak（sayCall 沒加原生限制）
 
@@ -3130,6 +3146,79 @@
 - ﹣ 略過 〔待分類〕R30-2、R30-3：英文介面小帥閒聊翻不成整句英文就不冒（xq-bot-said 攔下、小帥自己的泡泡藏起來），翻得出的照常（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ✔ 〔待分類〕R30-3：英文文牒字變長（外掛字典晚到）時重量一次縮字，「Hung-Sheng Chen」不再跟驛券黏在一起
 
+### test-r31-1118.js
+
+- ✔ 〔待分類〕N31-1：錯棋重練（KIND＝practice）的悔棋也不設 disabled——沒走棋是灰色＋aria-disabled、點了說明；走過一步照常；挑戰電腦一律灰；擂台、石桌往事照舊
+- ✔ 〔待分類〕N31-2：文牒改過視窗大小（resize、轉向）以後重排框、文牒和驛券兩格都重量；「換手機」小標最寬＝券寬，不再壓到「Check for updates」
+- ✔ 〔待分類〕N31-3：冷開會出開頭畫面時，m.html 在畫頂欄、分頁鈕之前就蓋上底幕（跟 05b 同一套判斷）；05b 跑完拿掉，保險 6 秒
+- ✔ 〔待分類〕N31-4：黏底按鈕列貼到畫面最底、不透明底色——下面不再露出一行內文；按鈕照樣在 Home 條上面
+- ﹣ 略過 〔待分類〕iMac P3：preload.json 四個七星模型（x_bing、x_martialgirl、x_spiritgirl、x_swordboy.glb）的大小、指紋照 site 實際的檔；v 照全部項目重算（略過原因：沒有 xiangqi-lab/site/data/tripo_app/x_bing.glb（公開副本不含））
+
+### test-r32-1118.js
+
+- ✔ 〔待分類〕P1：素材與授權（App、網站顯示的 credits.md）只有素材、來源、授權、致謝——沒有腳本路徑、開發紀錄、內部判斷、刪除線；語音那項改成系統語音
+- ✔ 〔待分類〕P1：內部台帳另放 xiangqi-db/docs-internal/credits-internal.md，不在 art/docs（不會同步到網站）；App、網站、組版工具都沒有引用它
+- ✔ 〔待分類〕P1：App 內顯示的每份文件（原生版白名單＋網頁版的素材與授權）經過 xqDocClean／xqDocVar 後沒有內部用字；~~刪除線~~ 整行不顯示
+- ✔ 〔待分類〕語音：程式不再讀 data/voice，組版不再複製、預存清單不列；設定頁試聽直接念；音效圖鑑、關於頁照實寫
+- ✔ 〔待分類〕語音：挑語音只用 getVoices——中文介面 zh-TW／zh-Hant 優先、英文介面挑 en（en-US 優先），挑不到這個語言就是 null（不出聲）
+- ✔ 〔待分類〕語音：原生 App 有 XQSpeech 外掛就用它（不碰 speechSynthesis）；網頁版第一次排到空檔、挑不到語音不念、3 秒沒開始就記住這支手機的系統語音不可靠
+- ﹣ 略過 〔待分類〕語音（原生）：XQSpeech 外掛的靜態檢查（check-native.js 第 8 節）——背景佇列、先回傳、啟動後先初始化、zh-TW→zh-Hant→zh-HK、.ambient＋usesApplicationAudioSession、進背景 stopSpeaking；install-native 預設裝（略過原因：沒有 xiangqi-ios（公開副本不含））
+- ✔ 〔待分類〕P3 序局將死：當下蓋透明鎖（點一下＝馬上出結果卡）、4.5 秒內一定出「星盤暫合」；結果卡出來時拿掉鎖；一般黑洞局照舊
+- ✔ 〔待分類〕P3 練習頁：回開頭畫面再繼續，同一課接回做到的那一小題（walk／eat 照前面幾格走過、check／mate 換到那一題）；這課做完就清掉
+- ✔ 〔待分類〕P3「更多玩法」不綁第一章：看過開場、楔子還沒看完時，首頁主按鈕下面多一顆「更多玩法 ›」（裡面有重看開場）；設定的入口照舊
+- ✔ 〔待分類〕拿掉第二章：開發者試玩也不開；楔子看完不跳「下一步」卡、直接回首頁說一句；第二章資料留著（舊存檔不壞）
+- ✔ 〔待分類〕第一章改名「楔子」（英文 Prelude）：首頁按鈕、更多玩法、設定的重看、授印禮、電影標題（標籤）；畫面上的字不再寫第一章
+- ✔ 〔待分類〕新安裝判斷：只看手機裡有沒有存檔（m_／xq_ 開頭的鍵），測試房、測試開關（xq_netRoot 等）不算——測試房也驗得到全新安裝的預設（語言照系統、原生版三個匿名開關預設關）
+- ✔ 〔待分類〕P1 序局：要用的九顆棋子人＝盤面上的棋子（跟 park3d GNT_X／GNT_XS 同一份對照），加魔王；電影一開始就排下載（15 秒後、空閒時），邀局卡時一顆一顆解析
+- ✔ 〔待分類〕P1 序局：入局後黑洞底幕蓋著，等 3D 畫面出現＋九顆棋子人＋魔王都好了才淡出；2 秒還沒好寫「星盤展開中…」；最多 15 秒；序局照樣不能略過
+- ✔ 〔待分類〕P1 序局：狀態列判斷看整疊（elementsFromPoint）第一個自己有不透明底色的層，透明的全螢幕層不會讓淺色頂欄判成暗底
+- ✔ 〔待分類〕P1 七星紅光：原圖（畫好七個紅光）等最後一顆星落地才淡入；減少動態 1.2 秒；星雨的時間跟這裡用同一組常數
+- ✔ 〔待分類〕電影字幕：兩段電影每一個換圖點（下一鏡、鏡頭內疊圖、星雨、片尾）之前的最後一行字，都已經淡入完（0.9 秒）＋讀完（每行至少 1.2 秒、每字 0.2 秒）
+
+### test-r33-1118.js
+
+- ✔ 〔待分類〕N32-1：文牒打開幾次都會重量——重寫內容（_paint）後下一格、再下一格、0.35 秒各量一次；量到 0 延到下一格再量（最多 30 格）；第一次打開就包上
+- ✔ 〔待分類〕N32-2：英文介面沒有中文字的文字，彎引號換成直引號（不讓中文字型畫成全形、前面空一大格）；有中文字的不動；中文介面不裝
+- ﹣ 略過 〔待分類〕同步：語音 12 檔三處都刪了；preload.json 沒有 data/voice、四張經典圖示是新指紋、v／bytes 照算法；sw.js 不再列 voice（略過原因：沒有 xiangqi-lab/site/data/icons/classic/e_save.webp（公開副本不含））
+- ✔ 〔待分類〕park3d：淡入前也等這座園子要用的棋子人模型（GLBW，照舊最多 6 秒）、淡入前 rd.compile 先編 shader；網址跟建棋子人用的同一個
+
+### test-r34-1118.js
+
+- ✔ 〔待分類〕稱呼照「隨行」那位（ptyLook）：小梅隨行＝「小梅」／妳；齊轍隨行＝「阿轍」／你；換隨行後馬上跟著換；小梅叫燕子「燕子姊姊」、大家叫方庭「方庭」
+- ✔ 〔待分類〕台詞不寫死稱呼：V7 每一句（閒聊、請託各欄、本命子提示）沒有「妳」、沒有直接叫小名（要叫人一律 {名}）
+- ✔ 〔待分類〕「去下一盤，我在旁邊看」：七位都有 play 請託（問候 hi、邀約 ask、答應 yes、婉拒 no、wait、thx 齊全）、邀約都說「在旁邊看」；本命子提示每位至少 2 句；問候、邀約有叫人
+- ✔ 〔待分類〕來串門子的人永遠不是隨行那位（換誰隨行都一樣）；myChar 跟 ptyLook 不同時照 ptyLook
+- ✔ 〔待分類〕答應、婉拒那一句：toast「城子：「嗯。我站旁邊。」」，稱呼照隨行；沒寫就不說
+- ✔ 〔待分類〕本命子提示・判斷（純函式）：評等、本命子、40% 機率、一盤 3 次、隔 4 步、開局先 3 步
+- ✔ 〔待分類〕本命子提示・對局中：接了請託的那盤、輪到你、評為正著而且動的是本命子 → 只亮那顆子（不給落點）＋小頭像泡泡＋讀螢幕；4 秒淡出、點一下關
+- ✔ 〔待分類〕本命子提示・不出聲的情況：不是本命子、沒抽中、晉級賽、沒接請託、請託做完了、請託人就是隨行、輪到電腦、分析失敗、同一局面不重問；一盤最多 3 次、隔 4 步
+- ✔ 〔待分類〕08b 接點：畫好棋盤後叫 v7Watch；亮子只給 f（t:null）、局面不對回 false；完成條件、修為不動
+- ✔ 〔待分類〕英文同步（內建）：七位每一句新台詞（問候、邀約、答應、婉拒、wait、thx、提示）× 隨行的七種叫法 × 你／妳 都翻得出；toast、讀螢幕「名字：「…」」、包在「」裡也翻得出
+- ✔ 〔待分類〕「帶誰出門」全站改叫「隨行」：卡冊按鈕、標籤、toast、說明、加入卡、設定頁那句；英文內建；畫面上的字不再有「陪你走」「帶他／她出門」
+- ✔ 〔待分類〕轉場：加入卡兩顆按鈕關掉都會叫 ptyJoinTrans（設為隨行帶 look）；07mnq 自動跳授印禮會等 #ptyTr
+- ✔ 〔待分類〕轉場・完整播：0.4 秒蓋上（開頭畫面同色、蓋著時 xqt-on）→ 換到星槎頁 → 0.6 秒淡開 → 星光＋加入那句泡泡（2.5 秒淡出）→ 約 1.5 秒結束、確實在星槎頁；播放中 modal 排隊
+- ✔ 〔待分類〕轉場・設為隨行：星光和泡泡在首頁小人（.xqbot）那裡
+- ✔ 〔待分類〕轉場・點一下跳過：馬上結束、到星槎頁、不放特效
+- ✔ 〔待分類〕轉場・減少動態：只淡入淡出，沒有星光和泡泡；照樣到星槎頁（系統設定 matchMedia 或 o.rm）
+
+### test-r35-1118.js
+
+- ✔ 〔待分類〕N33-1 射線：合成模型（有骨架、擺過姿勢、多材質群組、正面／背面／雙面剔除、沒有 index 的網格、巢狀群組）——新算法每一條射線的交點深度跟 three Raycaster 完全相同
+- ﹣ 略過 〔待分類〕N33-1 射線：真的棋子人模型（x_bing、x_shuai 有骨架、擺過姿勢；xs_zu 黑卒沒骨架）每條射線結果相同，而且快很多（沒有模型檔＝略過）（略過原因：沒有模型檔（只在 CDN））
+- ✔ 〔待分類〕N33-1 貼牌子：同一種模型、同一面牌子的深度記起來（記憶體＋本機 xqGly1）；還沒算過的排隊、一次一顆、每顆前讓出主執行緒；park3d 淡入前等排隊做完
+- ✔ 〔待分類〕N33-1 shader 分段暖機：場景拆成小單位（含燈光的不藏、往下拆）、每批只留一小批看得見、編完讓出主執行緒；reveal 仍會補編
+- ✔ 〔待分類〕N33-1「星盤展開中…」：入局當下就放好、透明，CSS 動畫 2 秒後淡入（主執行緒卡住也照樣出現）；都好了照舊拿掉
+- ✔ 〔待分類〕N33-2 七星流星（電影版）：逐格看，從流星開始到最後一顆落地前，紅點只出現在已經落地的那幾顆；減少動態版照舊一起淡入
+- ✔ 〔待分類〕N33-3「研墨鋪紙…」：電影（#bhxPg、#mnfPg、#mnvPg）在畫面上時等待畫面藏起來、不擋點擊（照樣在背後下載、擋住還沒好的頁）；電影收掉還沒好才露出來；電影開始時馬上藏
+
+### test-r37-1118.js
+
+- ✔ 〔待分類〕墨線外殼（toonHull）掛上去以後快路徑照樣用得到：外殼標 xqNoRay、glySurf 跳過它；外殼的 raycast 本來就是空函式（打不到）
+- ﹣ 略過 〔待分類〕真實模型＋墨線開著：每條射線新舊結果相同；每一面牌子 glyPzCalc＝改之前 mk 的算法（x_bing、x_shuai、xs_zu、x_wood 全格掃；黑洞巨盤 15 種棋子人兩面都比）（略過原因：沒有模型原檔或 src（只在開發者電腦上；公開副本不含））
+- ﹣ 略過 〔待分類〕先算好的深度 glydepth.json：跟現在的模型檔（SHA-1）、bot3d 程式、牌子參數重算出來的一模一樣（tools/gly-depth.js --check）；黑洞巨盤 15 種兩面都在（略過原因：沒有模型原檔或 src（只在開發者電腦上；公開副本不含））
+- ✔ 〔待分類〕App 先查 glydepth.json、查不到才算；鍵的包圍盒取 6 位（不同瀏覽器 sin／cos 尾數不同也對得上）
+- ✔ 〔待分類〕序局入局到淡出：「研墨鋪紙…」等待畫面不蓋在黑洞底幕（#bhxBk，上面有「星盤展開中…」）上面
+
 ### test-r4-1117.js
 
 - ✔ 〔待分類〕西市回首頁、書架與行囊回星槎（寫死去處）
@@ -3181,6 +3270,14 @@
 - ✔ 〔待分類〕第 14 批 btFix 實測：戰役名先調（只讓戰役點、按鈕、分頁、別的戰役名，挪動最多 2.5 個字高，再遠就縮字）；地名最後調，讓所有東西，挪一次還壓到就不畫；戰役名不為地名移動
 - ✔ 〔待分類〕第 15 批 古戰場橫式只標編號：fit 照橫式／寬螢幕傳 land；地圖上不畫戰役名、引線；打下的點也標編號；編號至少 11.5px；直式照舊
 - ✔ 〔待分類〕第 15 批 排版穩定：上緣、底部量到的高度以 8px 為一格（差幾 px 排出來一樣）；字型還沒載完時，載完再排一次
+
+### test-r40-1118.js
+
+- ✔ 〔待分類〕① shader 暖機（兩份都驗）：每段最多編出一個物件的 program、段與段之間讓出；暖完以後整個場景 compile、render 都不會再多編任何一支（燈光數、投影數、霧都跟正式畫面一樣）
+- ✔ 〔待分類〕② 巨盤 create 的程式貼圖延後分段畫：create 時只排隊；有人先要用畫布（getContext）就先畫好那張；create 最後每段 30ms 畫完；淡入前等畫完、等全景圖解碼完
+- ✔ 〔待分類〕② 第一次擺棋子人放到下一段（parkDraw）；接模型整段排進 glyLater；④ 走路小人縮小只改 CSS 大小
+- ✔ 〔待分類〕⑤ N35-1「星盤展開中…」1.6 秒開始淡入（0.4 秒淡完，2.0 秒那一格看得到）
+- ✔ 〔待分類〕快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡）
 
 ### test-raid-label-1116.js
 

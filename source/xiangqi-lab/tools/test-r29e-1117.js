@@ -65,7 +65,7 @@ test("R29-5：離線版一般玩家打 #/watch/ai 導回首頁（不露 GPT／Cl
 
 test("R29-6：說明文件不再寫「裁判程式」（棋規文件改「App 實際就是這樣判」，正本直接改，不靠 xqDocClean 刪）", () => {
   const D = path.join(ROOT, "xiangqi-db/art/docs"), hit = [];
-  for (const f of fs.readdirSync(D).filter(f => f.endsWith(".md"))) rd("xiangqi-db/art/docs/" + f).split("\n").forEach((l, i) => { if (l.includes("裁判程式")) hit.push(f + ":" + (i + 1)) });
+  for (const f of fs.readdirSync(D).filter(f => f.endsWith(".md") && f !== "evidence.md")) rd(   /* evidence.md 是證據腳本照測試名稱產生的清單（裡面會列這支測試自己的名字），不是寫給玩家看的說明 */"xiangqi-db/art/docs/" + f).split("\n").forEach((l, i) => { if (l.includes("裁判程式")) hit.push(f + ":" + (i + 1)) });
   assert.deepEqual(hit, []);
   assert.ok(rd("xiangqi-db/art/docs/rules.md").includes("**【程式已實作】** App 實際就是這樣判；"));
   assert.ok(!M("07gc-native.js").includes("裁判程式"), "xqDocClean 沒有另外刪這個詞");

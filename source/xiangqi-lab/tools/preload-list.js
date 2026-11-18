@@ -9,13 +9,13 @@
    pages：哪一頁要先有哪些檔（資料夾規則，{e}＝玩家目前的朝代，{1}＝網址第二段）；玩家走進一頁而那些檔還沒下載到，App 只為那一頁蓋等待畫面、優先下載。 */
 const fs=require("fs"),path=require("path"),crypto=require("crypto");
 /* 只列「外觀快取」那些資料夾（跟 sw.js 的 xqlab-look 規則一樣）；特級大師對局、全國比賽、神經網路這些大型選購資料不在裡面 */
-const DIRS=["qianqiu","shipmap","battles","canju","fonts","lines","boards","pieces","glyphs","sfx","voice","qa","park","park3d","pika2","path","inn","map","stonetable","treasure","legend","champ","stones","seat","pano","journey","xs","people","icons","arenagate","parkgate","pset","map3d","levels","npc","loading","pika","blind","actors","tripo_app","eramap","relics","inkfx","yizhan","hubmap","homemap","lobbymap","setmap","libmap","tabink","feedback","campmap","canjumap","thememap","termsmap","todaymap","gmmap","cupmap","redomap","exammap","statmap","studymap","openmap","deskmap","rostermap","passmap","seasonbox","tabtube","ximarket","gxground","guanxing"];   /* 開發者 11/4：開 App 時全部載好；真實 3D 和地圖由 App 照設定挑 */
+const DIRS=["qianqiu","shipmap","battles","canju","fonts","lines","boards","pieces","glyphs","sfx","qa","park","park3d","pika2","path","inn","map","stonetable","treasure","legend","champ","stones","seat","pano","journey","xs","people","icons","arenagate","parkgate","pset","map3d","levels","npc","loading","pika","blind","actors","tripo_app","eramap","relics","inkfx","yizhan","hubmap","homemap","lobbymap","setmap","libmap","tabink","feedback","campmap","canjumap","thememap","termsmap","todaymap","gmmap","cupmap","redomap","exammap","statmap","studymap","openmap","deskmap","rostermap","passmap","seasonbox","tabtube","ximarket","gxground","guanxing"];   /* 開發者 11/4：開 App 時全部載好；真實 3D 和地圖由 App 照設定挑 */
 const ERAS=["classic","qin","han","sanguo","weijin","nanbei","sui","tang","wudai","song","yuan","ming","qing"];
 const ERA_RE=new RegExp("[/_.](" + ERAS.join("|") + ")([/_.-]|$)");
 const eraOf=u=>{const m=ERA_RE.exec(u);return m?m[1]:null};
 /* 首批＝進首頁和第一盤棋需要的：介面圖示、字型、首頁和底欄、目前朝代的渡口和驛站、棋盤、棋子、走棋音效、3D 小人（對手立繪、小帥、棋童）、載入畫面的水墨畫，以及小的清單檔 */
 const FIRST=[
-  /^data\/(icons|fonts|homemap|tabink|hubmap|loading|sfx|voice|glyphs|boards|pieces|pset|champ|npc|actors|journey|pika|pika2|xs|seat|stones|pano|park3d|parkgate|arenagate|inn|yizhan|seasonbox|lines)\//,
+  /^data\/(icons|fonts|homemap|tabink|hubmap|loading|sfx|glyphs|boards|pieces|pset|champ|npc|actors|journey|pika|pika2|xs|seat|stones|pano|park3d|parkgate|arenagate|inn|yizhan|seasonbox|lines)\//,
   /^data\/(lobbymap|setmap|libmap|feedback|campmap|canjumap|thememap|termsmap|todaymap|gmmap|cupmap|redomap|exammap|statmap|studymap|openmap|deskmap|rostermap|passmap|tabtube)\//,   /* 各頁的滿版圖（日、夜版，每頁約 250 KB）：底欄、學習／對戰各頁一點就到，放首批免得一直等 */
   /^data\/park\/(?!j)/,                         /* 目前朝代的園子（j 開頭是石桌往事各章的園子，背景） */
   /^data\/eramap\//,                            /* 朝代地圖（App 只挑手機版或電腦版） */

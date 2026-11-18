@@ -189,7 +189,7 @@ test("〔原始碼〕08b、01-board、local.js、m.html 的掛勾都在，而且
   assert.ok(B8.includes('const pmFire=()=>{if(typeof pmvFire==="function"&&st)pmvFire(st,st.human,(f,t)=>{if(busy)return false;sel=f;tap(t);return true},pmFire)};'));
   assert.ok(B8.includes('if(typeof pmvOpts==="function")pmvOpts(st,st.human,o);'));
   assert.ok(!B8.includes("flat:!parkOn()"), "3D 不再擋預走");
-  assert.ok(B8.includes("draw();try{lvWatch(st,v)}catch(e){}pmFire();"));
+  assert.ok(B8.includes("draw();try{lvWatch(st,v)}catch(e){}") && /draw\(\);try\{lvWatch\(st,v\)\}catch\(e\)\{\}try\{if\(typeof v7Watch==="function"\)[^\n]*?\*\/pmFire\(\);/.test(B8), "畫好棋盤後照舊預走（11/18 中間多了 07j 本命子提示 v7Watch）");
   assert.ok(B8.includes('cgT("game.thinking","🤔 思考中…")+(typeof pmvLabel==="function"?pmvLabel(st):"")'), "第 15 輪 X3：思考中改用鍵值（cgT），預走標籤照接");
   assert.ok(B8.includes('if(st.result.w&&/將死|困斃/.test(st.result.why||"")&&!(typeof blzSkip==="function"&&blzSkip("killFx"))){'), "快棋略過將死動畫（含黑洞局）");
   for (const k of ["openFx", "checkFx", "kaiju", "capFx", "killFx"]) assert.ok(B.includes(`typeof blzSkip==="function"&&blzSkip("${k}")`), k);

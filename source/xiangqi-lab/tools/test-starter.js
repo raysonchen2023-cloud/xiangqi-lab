@@ -235,7 +235,7 @@ test("〔原始碼〕接點：m.html 在 07mnq 前面 include；05b titleScreen 
   assert.ok(MNQ.includes('if(typeof stqHomeGo==="function"&&stqHomeGo())return;mnqGo()'));
   assert.ok(MNQ.includes('const sh=typeof stqHome==="function"?stqHome():null;'));
   assert.ok(MNQ.includes('if(typeof stqHold==="function"&&stqHold()){'));
-  assert.ok(MNQ.includes(".rfx,.qp-ov,#stqPg\")"));
+  assert.ok(MNQ.includes(".rfx,.qp-ov,#stqPg,") || MNQ.includes(".rfx,.qp-ov,#stqPg\")"), "mnqIdle 認得 #stqPg（11/18 後面多了 07pty 轉場 #ptyTr）");
   const G = SRC.slice(SRC.indexOf("function stqGrad("), SRC.indexOf("function stqPickView("));
   assert.ok(G.includes('mnqGrant("a1")'), "一次領授印禮的入門物品");
   /* 11/15 更多玩法清單（stqMore）多了一顆玩家自己按才開的「第一章」入口；練習流程本身（清單以外的程式）照樣不演、不播 */
@@ -254,7 +254,7 @@ test("〔原始碼〕接點：m.html 在 07mnq 前面 include；05b titleScreen 
   for (const s of ["對弈電腦", "一盞茶殘局", "棋力測驗", "新手訓練營"]) assert.ok(MORE.includes(s), s);
   assert.ok(!/黑洞|塔防|guanxing|bhtd/.test(MORE), "更多玩法先不放黑洞塔防");
   /* 11/15 第一章入口：首頁「下一步」打開的更多玩法清單也有一顆（原本只在設定 → 氛圍）；有角色或看過才放，看完叫「再看第一章」，按了關清單再開第一章 */
-  assert.ok(MORE.includes('if(lit||M.gift.a1||MNQ_SEGS.classic.some(id=>M.seg[id])||mnqEnv().hasChar)c1=lit?"再看第一章":"看第一章"'), "第一章入口的條件與文字");
+  assert.ok(MORE.includes('if(lit||M.gift.a1||MNQ_SEGS.classic.some(id=>M.seg[id])||mnqEnv().hasChar)c1=lit?"再看楔子":"看楔子"'), "楔子（原本第一章，11/18 改名）入口的條件與文字");
   assert.ok(MORE.includes('data-k="c1"') && MORE.includes("河圖初渡") && MORE.includes('closeSheet();setTimeout(()=>{try{mnqChapter("classic")}catch(e){}},250)'), "按了開第一章");
   /* 07mnf 第一章電影、授印禮儀式的程式還在（只是不再是必經路線） */
   assert.ok(MNQ.includes("function mnqGift(") && MNQ.includes('classic:{segs:["c1o","c1m","c1e"]'));
@@ -276,8 +276,8 @@ test("〔原始碼〕模組規矩：前綴 stq／STQ 只在這支宣告；長行
 test("〔行為〕11/16 開發者「如果一開始沒選第一章 這邊要顯示第一章讓玩家知道」：首頁那顆在第一章還沒看完時寫「📖 第一章」、看過一部分寫「接著看」、看完回「更多玩法」，按了開第一章", () => {
   const a = SRC.indexOf("function stqC1("), b = SRC.indexOf("function stqMore(");
   const mk = M => { const log = []; const o = new Function("STQ_ON", "stqSt0", "mnqSt", "MNQ_SEGS", "mnqChapter", "stqCan", "stqOpen", "stqMore", SRC.slice(a, b) + ";return{stqHome,stqHomeGo}")(true, () => ({ st: "done" }), () => M, { classic: ["s1", "s2"] }, e => log.push(e), () => true, () => { }, () => log.push("more")); return { o, log } };
-  let K = mk({ seg: {}, lamp: {} }); assert.deepEqual(K.o.stqHome(), { k: "c1", t: "📖 第一章" }); K.o.stqHomeGo(); assert.deepEqual(K.log, ["classic"]);
-  K = mk({ seg: { s1: 1 }, lamp: {} }); assert.equal(K.o.stqHome().t, "📖 接著看第一章");
+  let K = mk({ seg: {}, lamp: {} }); assert.deepEqual(K.o.stqHome(), { k: "c1", t: "📖 楔子" }); K.o.stqHomeGo(); assert.deepEqual(K.log, ["classic"]);   /* 11/18 第一章改名楔子 */
+  K = mk({ seg: { s1: 1 }, lamp: {} }); assert.equal(K.o.stqHome().t, "📖 接著看楔子");
   K = mk({ seg: { s1: 1, s2: 1 }, lamp: {} }); assert.deepEqual(K.o.stqHome(), { k: "more", t: "更多玩法" }); K.o.stqHomeGo(); assert.deepEqual(K.log, ["more"]);
   K = mk({ seg: {}, lamp: { classic: 1 } }); assert.equal(K.o.stqHome().k, "more", "看完（點過燈）");
 });

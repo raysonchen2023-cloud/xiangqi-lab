@@ -34,7 +34,10 @@ for(const c of Object.values(MNQ_CHAP_ALL))if(c.vn&&typeof MNV_CH!=="undefined"&
    一般玩家：沒有開發者模式，就算有人手動設了 xq_mnqPeek 也不生效，照樣看到「即將開放」 */
 function mnqPeekOk(){try{return!!(typeof DEVUNLOCK==="function"&&DEVUNLOCK())}catch(e){return false}}   /* 11/16 開發者視角跟玩家一樣：本機不再自動生效，要開發者測試台「🔓 全部解鎖試玩」開著 */
 const MNQ_PEEK=(()=>{try{return mnqPeekOk()&&localStorage.getItem("xq_mnqPeek")==="1"}catch(e){return false}})();
-const MNQ_CHAP=Object.fromEntries(Object.entries(MNQ_CHAP_ALL).filter(([,c])=>!c.off||MNQ_PEEK));   /* 上線中的章；下架的章在各處都當成「即將開放」（開發者試玩開著時例外） */
+const MNQ_CHAP=Object.fromEntries(Object.entries(MNQ_CHAP_ALL).filter(([,c])=>!c.off));   /* 上線中的章；下架的章在各處都當成「即將開放」。11/18 開發者「拿掉第二章」：開發者試玩（MNQ_PEEK）也不再打開第二章，第一章看完不再推下一章；第二章的資料、圖、舊存檔裡的進度都留著不刪，只是沒有入口 */
+/* 11/18 開發者：第一章改名「楔子」（英文 Prelude）。主線只剩這一段，畫面上一律寫「楔子」，不再寫「第一章」 */
+const MNQ_C1="楔子";
+const mnqChLabel=era=>era==="classic"?MNQ_C1:"第"+MNQ_CN[mnqChN(era)-1]+"章";
 const MNQ_SEGS=Object.fromEntries(Object.entries(MNQ_CHAP).map(([e,c])=>[e,c.segs]));
 const MNQ_SEG_NM=Object.assign({},...Object.values(MNQ_CHAP).map(c=>c.nm));
 const MNQ_CN=["一","二","三","四","五","六","七","八","九","十","十一","十二","十三"];
@@ -90,6 +93,7 @@ async function mnqA2Pick(){const S=mnqSt();if(S.a2cj)return S.a2cj;try{const D=a
   const L=D.items.filter(x=>x.t==="一步定勝負"&&!sv[x.id]&&!res.has(x.id)).sort((a,b)=>(+a.d||0)-(+b.d||0)),id=L.length?L[0].id:"";if(id){const S2=mnqSt();S2.a2cj=id;mnqSave(S2)}return id}catch(e){return""}}
 /* ---------- 樣式 ---------- */
 function mnqCss(){if(document.getElementById("mnqCss"))return;const s=document.createElement("style");s.id="mnqCss";s.textContent=`
+.mnq-more{display:block;margin:6px auto 0;min-height:44px;padding:6px 16px;border:1.5px solid #8a5a2b;border-radius:12px;background:rgba(248,240,220,.92);color:#3b2a1a;font:800 15px/1.2 var(--serif,serif);cursor:pointer}
 .mnq-next{display:flex;align-items:center;justify-content:center;gap:6px;min-width:220px;max-width:100%;min-height:50px;padding:8px 22px;border:2px solid #8a5a2b;border-radius:14px;background:linear-gradient(#f8f0dc,#e6d3a6);color:#3b2a1a;font:900 19px/1.2 var(--serif,serif);letter-spacing:.06em;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:pointer;-webkit-tap-highlight-color:transparent;animation:mnqGlow 2.4s ease-in-out infinite}
 .mnq-next:active{transform:translateY(1px)}.mnq-next:focus-visible{outline:3px solid #f2c94c;outline-offset:3px}
 @keyframes mnqGlow{50%{box-shadow:0 4px 14px rgba(0,0,0,.35),0 0 0 4px rgba(242,201,76,.45)}}
@@ -131,7 +135,7 @@ function mnqCss(){if(document.getElementById("mnqCss"))return;const s=document.c
 /* ---------- 大禮包儀式 ---------- */
 function mnqGift(k,era,after){mnqCss();const G=MNQ_GIFT[k];if(!G)return;const got=mnqGrant(k,era),E=mnqEnv(),S=mnqSt();
   const el=era&&typeof eraLabel==="function"?eraLabel(era):"";let items=[],btn=null;
-  if(k==="a1"){items=[["🏠","家鄉棋盤・"+(E.homeLabel||"經典")],["🏅","稱號「雲河新使」"],["💡","提示棋 ×"+MNQ_HINT_A1],["📜","圖鑑入門卷"],["⛵","第一章・河圖初渡"]];btn=["⛵ 開始第一章",()=>mnqChapter("classic")]}
+  if(k==="a1"){items=[["🏠","家鄉棋盤・"+(E.homeLabel||"經典")],["🏅","稱號「雲河新使」"],["💡","提示棋 ×"+MNQ_HINT_A1],["📜","圖鑑入門卷"],["⛵","楔子・河圖初渡"]];btn=["⛵ 開始楔子",()=>mnqChapter("classic")]}
   if(k==="a2"){items=[["🏅","稱號「初勝」"],["🍵","一盞茶額外題"]];btn=["🍵 去解額外題",async()=>{const id=await mnqA2Pick();location.hash=id?"#/canju/"+encodeURIComponent(id):"#/canju"}]}
   if(k==="a6"){items=[["♪",el+"的配樂"],["🌲","景點線索"],["📜","札記一頁・"+el]];btn=MNQ_PANEL_ON?["♪ 打開遠征令",()=>mnqPanel()]:["♪ 配樂收藏",()=>mnqMusic()];if(got)mnqMusicAdd(era)}
   if(k==="a2"&&got)mnqA2Pick();
@@ -174,18 +178,21 @@ function mnqSolved(era,P,r,go){const C=MNQ_CHAP[era]||MNQ_CHAP.classic,S=mnqSt()
 function mnqChapter(era){era=era||"classic";const C=MNQ_CHAP[era],segs=C&&C.segs;if(!segs)return mnqSoon();if(C.vn)return mnqVn(era);const S=mnqSt();
   let i=segs.findIndex(id=>!S.seg[id]);if(i<0)i=0;try{mnfMusic(MNF_FILMS[segs[i]].mus)}catch(e){}   /* 點選當下先開配樂（iPhone） */
   const P=Object.assign({},MNF_QTE[C.qte]);mnqQteFor(era).then(x=>Object.assign(P,x)).catch(()=>{});segs.forEach(id=>mnfPre(id,C.set));
-  const N="第"+MNQ_CN[mnqChN(era)-1]+"章・";let rite=null,all=false;
+  const N=mnqChLabel(era)+"・";let rite=null,all=false;
   /* 11/17 iMac 模擬器第 14 項：「略過」以前只跳當前一段（第一章三段要按 3 次略過、2 次出發）。現在任何一段按了略過（那段的任務卡按下去）＝整章略過（all）：
      後面沒有危機題的段落不播、直接記看過；有危機題的段落（第一章的破局題在 c1m 開頭）用 jump 直接從題目開始，解完（含儀式）就結束；整章最後出「下一步」任務卡（跟看完一樣）。破局題照樣要解 */
-  const hasQ=id=>{try{return mnfQteIn(MNF_FILMS[id]).length>0}catch(e){return false}},fin=()=>{mnfMusicStop(1);mnqTaskCard(mnqNextOf(mnqSt(),mnqEnv()))};
+  /* 11/18 開發者「拿掉第二章」：楔子看完（或略過到底）不再跳「下一步：○○ 出發／回首頁」卡（mnqTaskCard），直接回首頁、說一句看完了（mnqC1Done） */
+  const hasQ=id=>{try{return mnfQteIn(MNF_FILMS[id]).length>0}catch(e){return false}},fin=()=>{mnfMusicStop(1);mnqC1Done()};
   const play=j=>{const id=segs[j],lastSeg=j===segs.length-1;
     if(all&&!hasQ(id)){mnqMark(id,era);return lastSeg?fin():play(j+1)}
-    mnfPlay(id,{label:N+MNQ_SEG_NM[id],keepMusic:all?segs.slice(j+1).some(hasQ):!lastSeg,jump:all,qte:{[C.qte]:P},onQte:(q,r,go)=>{const R=mnqSolved(era,P,r,go);if(C.rite==="end")rite=R},card:lastSeg&&!all?()=>{mnqMark(id,era);return mnqNextCard()}:null,
+    mnfPlay(id,{label:N+MNQ_SEG_NM[id],keepMusic:all?segs.slice(j+1).some(hasQ):!lastSeg,jump:all,qte:{[C.qte]:P},onQte:(q,r,go)=>{const R=mnqSolved(era,P,r,go);if(C.rite==="end")rite=R},card:null,   /* 11/18：最後一段照電影自己的章末卡（收下古典之印），不換成「下一步」卡 */
       onDone:res=>{mnqMark(id,era);if(res.skipped&&!lastSeg)all=true;
         if(rite&&!lastSeg){const R=rite;rite=null;try{mnfVol(.45,1)}catch(e){}mnfSolveRite(Object.assign(R,{onDone:()=>play(j+1)}));return}   /* rite:"end"：危機那段播完才演儀式，儀式淡出時章末在底下溶進來 */
-        if(!lastSeg)return play(j+1);if(all)return fin();mnfMusicStop(1);const n=mnqNextOf(mnqSt(),mnqEnv());
-        if(res.skipped){if(res.card===1)mnqGo(n);else if(!/^#?\/?$/.test(location.hash||""))location.hash="#/";mnqHomeSync();return}mnqTaskCard(n)}})};
+        if(!lastSeg)return play(j+1);fin()}})};
   play(i)}
+/* 楔子看完：回首頁（已經在首頁就不動），首頁按鈕重算，說一句看完了；不推下一章 */
+function mnqC1Done(){try{if(!/^#?\/?$/.test(location.hash||""))location.hash="#/"}catch(e){}try{mnqHomeSync()}catch(e){}
+  setTimeout(()=>{try{toast("📖 楔子看完了。想再看一次：設定 → 聲音 → 氛圍")}catch(e){}},600)}
 /* 對話場景的章（07mnv）：從第一場還沒看完的接著看；每看完一場記一次（S.seg）、每場花幾秒（S.vn[朝代].tm，開發者看節奏用）、選了哪個選項（S.vn[朝代].ch） */
 function mnqVn(era){const C=MNQ_CHAP[era],S=mnqSt(),CH=typeof MNV_CH!=="undefined"&&MNV_CH[C.vn];if(!CH||typeof mnvPlay!=="function")return mnqSoon();
   let i=C.segs.findIndex(id=>!S.seg[id]);if(i<0)i=0;const sc=CH.sc[i];if(sc&&sc.mus)try{mnfMusic(sc.mus[0],sc.mus[1])}catch(e){}   /* 點選當下先開配樂（iPhone） */
@@ -218,7 +225,13 @@ function mnqDodge(P,bar){const R=bar.getBoundingClientRect();if(!R.height)return
   P.querySelectorAll(".shp-spot").forEach(s=>{if(bar.contains(s))return;const was=s.classList.contains("mnq-dg");if(was){s.style.marginTop="";s.classList.remove("mnq-dg")}const q=s.getBoundingClientRect();if(!q.width)return;
     if(q.bottom>R.top-6&&q.top<R.bottom&&q.right>R.left-4&&q.left<R.right+4){s.style.marginTop=-Math.ceil(q.bottom-R.top+6)+"px";s.classList.add("mnq-dg");mv++}});   /* 11/14 r17 B1：mnq-dg＝這裡推的，05 fzPull 看到就不清（以前 0.4 秒後被它清掉又疊回去）；沒推過的不動別人的 marginTop */
   if(mv&&typeof r07HitSoon==="function")try{r07HitSoon()}catch(e){}}
-function mnqHomeSync(){const b=document.getElementById("mnqNext");if(!b)return;const sh=typeof stqHome==="function"?stqHome():null;if(sh){if(b.dataset.t!==sh.t){b.dataset.t=sh.t;b.textContent=sh.t;b.setAttribute("aria-label",sh.t)}return}   /* 11/15 新手練習（07stq）：字由 stqHome 決定（「更多玩法」或接著練），舊的「下一步」只在 STQ_ON 關掉時才出現 */
+/* 11/18 iMac R P3：「更多玩法」（裡面有「🎬 重看開場」）原本要第一章看完才會出現（首頁這顆在那之前一直是「📖 第一章」）→ 看過開場、第一章還沒看完時，
+   主按鈕下面多一顆小的「更多玩法 ›」（跟主按鈕同一個直排容器，mnqDodge 照整條高度讓位）；設定裡的入口照舊。mnqMoreShow 是純函式 */
+function mnqMoreShow(sh,opSeen,ok){return!!(sh&&sh.k==="c1"&&opSeen&&ok)}
+function mnqMoreSync(b,sh){try{let m=document.getElementById("mnqMore");let seen=false,ok=false;try{seen=!!store.get("opSeen",0)}catch(e){}try{ok=typeof stqXuReplayOk==="function"&&stqXuReplayOk()&&typeof stqMore==="function"}catch(e){}
+  if(!mnqMoreShow(sh,seen,ok)){if(m)m.remove();return}if(m&&m.parentNode===b.parentNode)return;if(m)m.remove();
+  m=document.createElement("button");m.type="button";m.id="mnqMore";m.className="mnq-more";m.textContent="更多玩法 ›";m.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}stqMore()};b.after(m)}catch(e){}}
+function mnqHomeSync(){const b=document.getElementById("mnqNext");if(!b)return;const sh=typeof stqHome==="function"?stqHome():null;mnqMoreSync(b,sh);if(sh){if(b.dataset.t!==sh.t){b.dataset.t=sh.t;b.textContent=sh.t;b.setAttribute("aria-label",sh.t)}return}   /* 11/15 新手練習（07stq）：字由 stqHome 決定（「更多玩法」或接著練），舊的「下一步」只在 STQ_ON 關掉時才出現 */
   const n=mnqNextOf(mnqSt(),mnqEnv()),t="⛵ 下一步・"+mnqNextTxt(n);
   if(b.dataset.t!==t){b.dataset.t=t;b.textContent=t;b.setAttribute("aria-label","下一步："+mnqNextTxt(n))}if(n.k==="film")try{const C=MNQ_CHAP[n.era]||{};if(C.vn)mnvPre(C.vn);else mnfPre(n.id,C.set)}catch(e){}}
 if(typeof homeMap==="function"){const f0=homeMap;homeMap=function(v){const r=f0.apply(this,arguments);try{mnqHomeBtn(v)}catch(e){}return r}}
@@ -250,7 +263,7 @@ function mnqSndRow(box){if(!box||!box.querySelector)return;mnqCss();const old=bo
   const S=mnqSt(),lit=!!S.lamp.classic,ch=!!(S.gift.a1||lit||(MNQ_SEGS.classic||[]).some(id=>S.seg[id]));let op=false;try{op=typeof stqXuReplayOk==="function"&&stqXuReplayOk()}catch(e){}if(!S.music.length&&!ch&&!op)return;   /* 11/17 晚：「🎬 重看開場」（07stq stqXuReplay，只重播開場電影、不動進度）所有人都有 */
   const d=document.createElement("div");d.id="mnqSnd";
   d.innerHTML=(S.music.length?`<button type="button" class="mnq-sr" data-k="mu"><span><b>♪ 配樂收藏</b><small>配樂 ${S.music.length} 首</small></span><i aria-hidden="true">›</i></button>`:"")+
-    (ch?`<button type="button" class="mnq-sr" data-k="c1"><span><b>${lit?"🎬 再看第一章":"🎬 看第一章"}</b><small>河圖初渡</small></span><i aria-hidden="true">›</i></button>`:"")+
+    (ch?`<button type="button" class="mnq-sr" data-k="c1"><span><b>${lit?"🎬 再看楔子":"🎬 看楔子"}</b><small>河圖初渡</small></span><i aria-hidden="true">›</i></button>`:"")+
     (op?`<button type="button" class="mnq-sr" data-k="op"><span><b>🎬 重看開場</b><small>天河初裂</small></span><i aria-hidden="true">›</i></button>`:"");
   box.append(d);
   const mu=d.querySelector("[data-k=mu]");if(mu)mu.onclick=()=>{try{vibrate(5)}catch(e){}mnqMusic()};
@@ -287,7 +300,7 @@ if(typeof window!=="undefined"&&typeof window.XQ_TITLE==="function"){const f2=wi
 /* ---------- 自動跳禮包：首頁、星槎頁，沒有別的視窗時 ---------- */
 function mnqIdle(){try{if(typeof TITLE!=="undefined"&&TITLE)return false;if(document.hidden)return false;if(!/^(#\/?|#\/adventure\/?)?$/.test(location.hash||""))return false;
   const pv=document.getElementById("preov");if(pv&&getComputedStyle(pv).display!=="none"&&pv.getBoundingClientRect().height>0)return false;   /* 開 App 的下載畫面還在 */
-  return!document.querySelector(".modal,#sheet,#mnfPg,#mnvPg,#mnfRite,#mnqGf,#mnqCard,#bhxPg,#bhxVx,.rfx,.qp-ov,#stqPg")}catch(e){return false}}
+  return!document.querySelector(".modal,#sheet,#mnfPg,#mnvPg,#mnfRite,#mnqGf,#mnqCard,#bhxPg,#bhxVx,.rfx,.qp-ov,#stqPg,#ptyTr,.ptr-say")}catch(e){return false}}   /* 11/18：夥伴加入的小轉場（07pty ptyJoinTrans）播放中不跳授印禮 */
 function mnqReach(){try{const E=mnqEnv();if(!E.at||!MNQ_CHAP[E.at])return;const S=mnqSt();if(S.reach[E.at])return;S.reach[E.at]=Date.now();mnqSave(S)}catch(e){}}   /* 星槎第一次停到有主線資料的那一朝：記下來，那一章就開放（之後開走也不會再關） */
 function mnqTick(auto){try{mnqReach();if(typeof stqHold==="function"&&stqHold()){const v0=document.getElementById("view");if(v0&&!document.getElementById("mnqNext"))mnqHomeBtn(v0);mnqHomeSync();return}   /* 11/15 新手練習還沒做完（07stq 先給了預設角色）：不自動跳授印禮，畢業時才一次領 */
   const v=document.getElementById("view");if(v&&!document.getElementById("mnqNext"))mnqHomeBtn(v);mnqHomeSync();if(!auto||!mnqIdle())return;const n=mnqNextOf(mnqSt(),mnqEnv());if(n.k==="gift")mnqGift(n.g,n.era)}catch(e){}}

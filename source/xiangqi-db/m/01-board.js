@@ -148,30 +148,42 @@ window.addEventListener("pagehide",()=>{if(AC){try{AC.close()}catch(e){}AC=null}
 // iPhone 要在點選裡先唸過一次（音量 0）才允許之後自動唸
 // 男聲／女聲（意見回饋 151）：依語音名稱判斷性別；手機沒有該性別的中文語音，就用音高模擬（男低、女高）
 const V_MALE=/zhiwei|yunjhe|yun-?jhe|li-?mu|yunxi|yunyang|yunjian|kangkang|wanlung|danny|male(?!.*female)|男/i,V_FEMALE=/meijia|mei-jia|ting-?ting|sin-?ji|yu-?shu|hanhan|yating|hsiao|xiaoxiao|huihui|yaoyao|tracy|hiugaai|hiumaan|female|女/i;
-let VOICE=null,VOICE_FIT=false;const pickVoice=()=>{try{const sex=store.get("voiceSex","m"),re=sex==="f"?V_FEMALE:V_MALE;
-  const zh=speechSynthesis.getVoices().filter(v=>/^(zh|cmn|yue)/i.test(v.lang)),rank=v=>/zh[-_]TW/i.test(v.lang)?0:/zh[-_]HK/i.test(v.lang)?2:1;zh.sort((a,b)=>rank(a)-rank(b));
-  const fit=zh.find(v=>re.test(v.name)&&!(sex==="m"&&V_FEMALE.test(v.name)));VOICE=fit||zh[0]||null;VOICE_FIT=!!fit}catch(e){}};
+/* 11/18 語音報棋改用系統語音（開發者決定拿掉 12 個 Windows 語音音檔）：中文介面挑 zh-TW → zh-Hant → 其他中文，英文介面挑 en（en-US 優先）；只用 getVoices 取清單，不用 speak 暖機；
+   挑不到這個語言的語音＝VOICE 是 null＝不出聲（ttsPickVoice 是純函式，測試用 vm 跑） */
+function ttsPickVoice(list,en,sex){const re=sex==="f"?V_FEMALE:V_MALE,L=(list||[]).filter(v=>v&&(en?/^en/i:/^(zh|cmn|yue)/i).test(v.lang||""));
+  const rank=v=>en?(/en[-_]US/i.test(v.lang)?0:1):(/zh[-_](TW|Hant)/i.test(v.lang)?0:/zh[-_]HK/i.test(v.lang)?2:1);L.sort((a,b)=>rank(a)-rank(b));
+  const fit=en?null:L.find(v=>re.test(v.name||"")&&!(sex==="m"&&V_FEMALE.test(v.name||"")));return{v:fit||L[0]||null,fit:!!fit}}
+const ttsEn=()=>{try{return typeof i18nLang==="function"&&i18nLang()==="en"}catch(e){return false}};
+let VOICE=null,VOICE_FIT=false;const pickVoice=()=>{try{const r=ttsPickVoice(speechSynthesis.getVoices(),ttsEn(),store.get("voiceSex","m"));VOICE=r.v;VOICE_FIT=r.fit}catch(e){}};
 if(window.speechSynthesis){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
 /* 11/17 iMac 模擬器 B：iOS 原生 App 在開頭畫面點一下，整個 App 卡住約 60 秒——點擊（unlockAudio）第一次呼叫 speechSynthesis.speak（下面的靜音暖機），
    系統語音服務在主執行緒等語言設定（TTSPreferencesCopyDefaultOutputLanguageIdentifierForUserPreferences → semaphore_wait）。
    原生 App（native-bridge.js 設 window.XQ_NATIVE，或 UA 帶 XQQianqiuApp/）不做暖機：WKWebView 本來就允許之後直接朗讀，真的要報「吃」「將軍」時（sayCall）才第一次呼叫 speak。網頁版照舊 */
 function voiceNoPrime(){try{return!!window.XQ_NATIVE||/XQQianqiuApp\//.test(String(navigator.userAgent||""))}catch(e){return false}}
-let voicePrimed=false;const primeVoice=()=>{if(voicePrimed||!window.speechSynthesis)return;voicePrimed=true;if(voiceNoPrime())return;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;speechSynthesis.speak(u)}catch(e){}};
-// 「吃！」「將軍！」改用錄好的音檔（意見回饋 155：iPhone 內建中文語音只有女聲，壓低音高還是女聲）
-// data/voice/<m|f>-<chi|jj>-<s|n|f>.wav：男聲＝志偉、女聲＝雅婷（Windows 語音合成），慢／中／快三種速度；檔案還沒到就先用手機內建語音
-const VC_RAW={},VC_P={};let VC_DEC={ctx:null};
-const vcKey=w=>`${store.get("voiceSex","m")==="f"?"f":"m"}-${w}-${{s:"s",f:"f"}[store.get("voiceRate","n")]||"n"}`;
-function loadVc(){return Promise.all(["chi","jj"].map(w=>{const k=vcKey(w);if(VC_RAW[k])return;
-  return VC_P[k]||(VC_P[k]=fetch(`data/voice/${k}.wav`).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>{VC_RAW[k]=b}).catch(()=>{VC_P[k]=null}))}))}
-function playVc(k){if(!AC||!VC_RAW[k])return false;if(VC_DEC.ctx!==AC)VC_DEC={ctx:AC};const ctx=AC;
-  const p=VC_DEC[k]||(VC_DEC[k]=new Promise((ok,no)=>ctx.decodeAudioData(VC_RAW[k].slice(0),ok,no)).catch(()=>null));
-  p.then(b=>{if(!b||!AC)return;const s=AC.createBufferSource();s.buffer=b;s.connect(sxmDst("voice"));s.start(AC.currentTime+.005)});return true}
-function sayCall(text){try{window.dispatchEvent(new CustomEvent("xq-call",{detail:text}))}catch(e){}if(!store.get("voiceCall",true))return;const vg=sxmGain("voice");if(!vg||sxmAllOff())return;const jj=text==="將軍",k=vcKey(jj?"jj":"chi");
-  if(AC&&VC_RAW[k]){withAudio(()=>playVc(k));return}loadVc();
-  if(!window.speechSynthesis)return;try{speechSynthesis.cancel();const sex=store.get("voiceSex","m"),rt={s:1,n:1.2,f:1.5}[store.get("voiceRate","n")]||1.2;
-  const u=new SpeechSynthesisUtterance(text+"！");u.lang=VOICE?VOICE.lang:"zh-TW";if(VOICE)u.voice=VOICE;u.rate=rt;
-  u.pitch=sex==="f"?(VOICE_FIT?1.15:1.5):(VOICE_FIT?.8:.45);u.volume=Math.min(1,vg);speechSynthesis.speak(u)}catch(e){}}
-setTimeout(()=>{if(store.get("voiceCall",true))loadVc()},1500);
+/* 11/18：網頁版也不在點擊當下用 speak 暖機了（第一次朗讀改排到空檔，見 sayCall），這裡只取語音清單；名字照舊，給其他模組叫 */
+let voicePrimed=false;const primeVoice=()=>{if(voicePrimed||!window.speechSynthesis)return;voicePrimed=true;try{pickVoice()}catch(e){}};
+/* 11/18 語音報棋「吃！」「將軍！」一律用系統語音即時朗讀（拿掉 data/voice 的 12 個 Windows 語音音檔，App 不再附語音檔）：
+   ① 原生 App 有 XQSpeech 外掛（xiangqi-ios/native/ios/XQSpeechPlugin.swift：AVSpeechSynthesizer 在自己的佇列朗讀，不碰主執行緒）就用它，呼叫後立刻回來；
+   ② 沒有外掛（網頁版、或還沒重建的舊 App）才用瀏覽器的 speechSynthesis：
+      第一次朗讀不在落子／點擊那一刻同步呼叫，排到下一個空檔（requestIdleCallback，沒有就 setTimeout）；先用 getVoices 挑語音，挑不到就不出聲；
+      speak 之後 3 秒還沒開始（沒有 onstart）＝放棄這次，記住這支手機的系統語音不可靠（只記在本機 localStorage xqTtsBad，不跟存檔、轉移碼走），之後都不朗讀。
+      ※ 3 秒保護只防「呼叫了卻一直沒出聲」，防不了 iOS 主執行緒整個卡住（11/17 那次網頁計時器也動不了）——原生 App 靠 ① 避開
+   ③ B 修過的保護照留：原生 App 不做 speak 暖機（voiceNoPrime）；全部靜音、語音報棋關掉時不念。英文介面念 Capture!／Check! */
+const TTS_KEY="xqTtsBad",TTS={first:true,t:0};
+function ttsBad(){try{return localStorage.getItem(TTS_KEY)==="1"}catch(e){return false}}
+function ttsNat(){try{const N=window.XQNative;return!!(N&&typeof N.has==="function"&&N.has("XQSpeech")&&typeof N.plug==="function"&&N.plug("XQSpeech"))}catch(e){return false}}
+/* 這一句怎麼念（純函式）：{say 念的字, lang, rate, pitch} */
+function ttsLine(text,en,sex,rate,fit){const jj=text==="將軍";return{say:en?(jj?"Check!":"Capture!"):text+"！",lang:en?"en-US":"zh-TW",rate:{s:1,n:1.2,f:1.5}[rate]||1.2,pitch:sex==="f"?(fit?1.15:1.5):(fit?.8:.45)}}
+function ttsLater(f){try{if(typeof requestIdleCallback==="function"){requestIdleCallback(()=>f(),{timeout:800});return}}catch(e){}setTimeout(f,60)}
+function sayCall(text){try{window.dispatchEvent(new CustomEvent("xq-call",{detail:text}))}catch(e){}if(!store.get("voiceCall",true))return;const vg=sxmGain("voice");if(!vg||sxmAllOff())return;
+  const en=ttsEn(),sex=store.get("voiceSex","m");
+  if(ttsNat()){try{const L=ttsLine(text,en,sex,store.get("voiceRate","n"),false),N=window.XQNative;N.plug("XQSpeech").speak({text:L.say,lang:L.lang,rate:L.rate,pitch:sex==="f"?1.15:.85,volume:Math.min(1,vg)}).catch(()=>{})}catch(e){}return}
+  if(!window.speechSynthesis||ttsBad())return;
+  const go=()=>{try{pickVoice();if(!VOICE)return;const L=ttsLine(text,en,sex,store.get("voiceRate","n"),VOICE_FIT);speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(L.say);u.lang=VOICE.lang;u.voice=VOICE;u.rate=L.rate;u.pitch=L.pitch;u.volume=Math.min(1,vg);
+    let started=false;u.onstart=()=>{started=true;clearTimeout(TTS.t)};clearTimeout(TTS.t);
+    speechSynthesis.speak(u);TTS.t=setTimeout(()=>{if(started)return;try{speechSynthesis.cancel()}catch(e){}try{localStorage.setItem(TTS_KEY,"1")}catch(e){}},3000)}catch(e){}};
+  if(TTS.first){TTS.first=false;ttsLater(go)}else go()}
 function withAudio(play){if(!AC||sxmAllOff())return;if(AC.state==="running"){try{play()}catch(e){}return}try{AC.resume().then(()=>{if(AC&&AC.state==="running")try{play()}catch(e){}}).catch(()=>{})}catch(e){}}
 /* #SXM-BUS-BEGIN：第 6 輪 F3（評比 P24.4、ChatGPT 第 5 輪第 8 項）音量分類的接線；純函式在 11c 的 SXM-PURE 段，test-sound-mix.js 用假的 AudioContext 跑這一段。
    每個 AudioContext 建四條匯流排（GainNode）：bgm 背景音樂與鼓聲、piece 棋子音效、cue 提示音、voice 語音報棋；各類聲音接到自己那條再接喇叭。

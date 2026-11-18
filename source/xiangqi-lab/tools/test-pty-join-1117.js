@@ -115,11 +115,11 @@ test("〔第 13 項〕每張至少 3.5 秒（字幕淡入後還留 3 秒以上�
   assert.equal(E.pg(), null, "略過：整段結束"); assert.equal(n, 1);
 });
 
-test("〔第 15 項〕加入卡按「帶她出門」：換成她陪你走，並且 toast「🚶 駱躍梅陪你走了」；按「好」不換、不說", async () => {
+test("〔第 15 項〕加入卡按「設為隨行」（11/18 由「帶她出門」改名）：換成她隨行，並且 toast「🚶 駱躍梅現在跟著你」；按「好」不換、不說", async () => {
   const E = env({ noPjc: true }); E.X.ptyOnSolve("han", "xs-han-0"); E.clk.tick(2600); await flush();
-  const M = E.modals[0]; assert.equal(M.btns[0][0], "帶她出門");
-  M.btns[1][1] && M.btns[1][1](); assert.deepEqual(E.toasts, [], "按「好」：不提示");
-  M.btns[0][1](); assert.equal(E.db.party.look, "x_miaogirl", "陪你走的換成駱躍梅"); assert.deepEqual(E.toasts, ["🚶 駱躍梅陪你走了"]);
+  const M = E.modals[0]; assert.equal(M.btns[0][0], "設為隨行");
+  const look0 = E.db.party.look; try { M.btns[1][1] && M.btns[1][1]() } catch (e) {} assert.deepEqual(E.toasts, [], "按「好」：不提示"); assert.equal(E.db.party.look, look0, "按「好」不換");
+  try { E.X.PTY_TR_ON = null } catch (e) {} try { M.btns[0][1]() } catch (e) {} assert.equal(E.db.party.look, "x_miaogirl", "隨行換成駱躍梅"); assert.deepEqual(E.toasts, ["🚶 駱躍梅現在跟著你"]);
   assert.ok(!E.toasts.some(t => /上限/.test(t)));
 });
 

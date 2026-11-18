@@ -90,7 +90,8 @@ test("雲河七星卡冊：最上面兩行（換數字）、每張卡的副標�
   ok(X, how[1]); ok(X, "下一盤電腦（贏 +50、輸 +20）、解千秋殘局（+10）、打星門圍城，都會加修為。");
   /* 卡片副標：樣板 C.pc・era・Lv n（練滿了…）還在原始碼裡 */
   assert.ok(P.includes("${esc(C.pc||\"\")}・${esc(era)}・Lv ${lv}") && P.includes("\"（練滿了）\":\"（練滿了，等你升級）\""), "07pty-party.js 卡片副標的樣板改了，字典 pat 要跟著改");
-  assert.ok(P.includes("data-a=\"look\">帶${ptyTa(c)}出門"), "07pty-party.js「帶他出門」按鈕改了");
+  assert.ok(P.includes("data-a=\"look\">設為隨行</button>"), "07pty-party.js「設為隨行」按鈕改了（11/18「帶他出門」改叫「隨行」，內建翻 Set as companion）");
+  assert.equal(load(false).i18nText("設為隨行"), "Set as companion"); assert.equal(load(false).i18nText("隨行中"), "Your companion");
   for (const pc of PCS) for (const era of ERAS) for (const [lv, tail, en] of [[4, "", ""], [12, "（練滿了，等你升級）", " (maxed out; level up to continue)"], [100, "（練滿了）", " (maxed out)"]]) {
     const e = ok(X, pc + "・" + era + "・Lv " + lv + tail);
     assert.ok(e.endsWith(" · Lv " + lv + en), e);
@@ -215,7 +216,9 @@ test("七星來訪：七位每一句台詞、請託的三句（{名} 換七位�
 test("設定頁：本命棋子那一句（七種棋子 × 夥伴名字）、旅途插曲說明（換次數）；官階是保留字不翻", t => {
   if (!fs.existsSync(EXT)) return t.skip(SKIP);
   const X = load(true), S = M("m/05-settings.js"), E = M("m/07t-episodes.js");
-  assert.ok(S.includes("本命棋子「${esc(botPc())}」跟著首頁陪你走的夥伴（現在是${esc(meName())}）。"), "05-settings.js 本命棋子那句改了");
+  assert.ok(S.includes("本命棋子「${esc(botPc())}」跟著首頁的隨行夥伴（現在是${esc(meName())}）。"), "05-settings.js 本命棋子那句改了（11/18 改「隨行」）");
+  assert.equal(ok(load(false), "本命棋子「俥」跟著首頁的隨行夥伴（現在是齊轍）。"), "Your signature piece, the Chariot, goes with your companion on the home screen (now Qi Zhe).");
+  for (const pc of PCS) for (const nm of NAMES) ok(load(false), "本命棋子「" + pc + "」跟著首頁的隨行夥伴（現在是" + nm + "）。");
   assert.ok(E.includes("七星吵架、漏字信、不速之客、星夜茶話、大掃除；一天最多 "), "07t-episodes.js 旅途插曲說明改了");
   assert.equal(ok(X, "本命棋子「俥」跟著首頁陪你走的夥伴（現在是齊轍）。"), "Your signature piece, the Chariot, goes with the companion walking with you on the home screen (now Qi Zhe).");
   for (const pc of PCS) for (const nm of NAMES) ok(X, "本命棋子「" + pc + "」跟著首頁陪你走的夥伴（現在是" + nm + "）。");

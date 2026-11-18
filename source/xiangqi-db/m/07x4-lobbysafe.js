@@ -456,7 +456,7 @@ function xqPrivSum(){const en=typeof i18nLang==="function"&&i18nLang()==="en";
 if(typeof aboutLicSheet==="function"&&!aboutLicSheet.__xq){const lic0=aboutLicSheet;aboutLicSheet=function(){try{const en=typeof i18nLang==="function"&&i18nLang()==="en",nat=typeof setNat==="function"&&setNat(),RP=typeof ABOUT_REPO!=="undefined"?ABOUT_REPO:"https://github.com/raysonchen2023-cloud/xiangqi-lab",R=RP+"/blob/main/",L=(u,t)=>`<a href="${u}" target="_blank" rel="noopener">${t}</a>`;
   sheet(en?"📜 About and open-source licenses":"📜 關於與開源授權",b=>{b.innerHTML=`<div data-noi18n style="line-height:1.85;font-size:15px">`+(en?
     `<p style="margin:0 0 10px">Xiangqi Qianqiu is a <b>free, non-commercial</b> project to promote xiangqi (Chinese chess): no fees, no in-app purchases, no ads.</p>
-    <p style="margin:0 0 10px">Xiangqi Qianqiu © 2026 Hung-Sheng Chen. The code (including interface text, scene stories and dialogue written in the code) is licensed under the GNU GPL version 3 or later (GPL-3.0-or-later). Source code: ${L(RP+"/tree/main/source","source/")}, full license: ${L(R+"LICENSE","LICENSE")}. Original images, music, 3D models and long-form story are licensed under CC BY-NC-SA 4.0 (${L(R+"LICENSE-ASSETS.md","details")}); grandmaster biographies and voice clips follow their original sources. The third-party components below are used under their own licenses.</p>
+    <p style="margin:0 0 10px">Xiangqi Qianqiu © 2026 Hung-Sheng Chen. The code (including interface text, scene stories and dialogue written in the code) is licensed under the GNU GPL version 3 or later (GPL-3.0-or-later). Source code: ${L(RP+"/tree/main/source","source/")}, full license: ${L(R+"LICENSE","LICENSE")}. Original images, music, 3D models and long-form story are licensed under CC BY-NC-SA 4.0 (${L(R+"LICENSE-ASSETS.md","details")}); grandmaster biographies follow their original sources. The third-party components below are used under their own licenses.</p>
     <div class="sec-t" style="margin-top:6px">The Pikafish chess engine</div>
     <p style="margin:0 0 6px">Computer play and game analysis use the open-source engine Pikafish (version Pikafish-2026-09-06), compiled to WebAssembly and run on your device. It is licensed under the GNU GPL version 3.</p>
     <p style="margin:0 0 6px">As the GPL requires, our modified engine source and build method are public: ${L(RP+"/tree/main/pikafish-src","pikafish-src (modified file + build script)")}; original source: ${L("https://github.com/official-pikafish/Pikafish","official-pikafish/Pikafish")}; full license: ${L(R+"LICENSE-Pikafish-GPL3.txt","GPL-3.0")}.</p>
@@ -471,7 +471,7 @@ if(typeof aboutLicSheet==="function"&&!aboutLicSheet.__xq){const lic0=aboutLicSh
     <button class="btn ghost" id="alWipe" style="width:100%;color:var(--red);border-color:var(--red)">🗑 Delete all data on this phone</button></div>
     <button class="btn" id="alOk" style="width:100%;margin-top:14px">OK</button>`
     :`<p style="margin:0 0 10px">《象棋千秋》是一個推廣中國象棋的<b>免費、非商業</b>學習計畫：不收費、沒有內購、沒有廣告。</p>
-    <p style="margin:0 0 10px">《象棋千秋》© 2026 陳泓昇（Hung-Sheng Chen）。程式碼（包括寫在程式裡的介面文字、場景小故事和對白）依 GNU GPL 第 3 版或更新版（GPL-3.0-or-later）授權，原始碼公開：${L(RP+"/tree/main/source","source/")}、${L(R+"LICENSE","授權全文")}。自製的圖片、音樂、3D 模型和長篇劇情依 CC BY-NC-SA 4.0 授權（${L(R+"LICENSE-ASSETS.md","說明")}）；特級大師小傳和語音檔照原來源的條件。下面這些別人做的元件，照它們各自的授權使用。</p>
+    <p style="margin:0 0 10px">《象棋千秋》© 2026 陳泓昇（Hung-Sheng Chen）。程式碼（包括寫在程式裡的介面文字、場景小故事和對白）依 GNU GPL 第 3 版或更新版（GPL-3.0-or-later）授權，原始碼公開：${L(RP+"/tree/main/source","source/")}、${L(R+"LICENSE","授權全文")}。自製的圖片、音樂、3D 模型和長篇劇情依 CC BY-NC-SA 4.0 授權（${L(R+"LICENSE-ASSETS.md","說明")}）；特級大師小傳照原來源的條件。下面這些別人做的元件，照它們各自的授權使用。</p>
     <div class="sec-t" style="margin-top:6px">象棋引擎 Pikafish</div>
     <p style="margin:0 0 6px">電腦下棋和複盤分析用的是開源引擎 Pikafish（版本 Pikafish-2026-09-06），編成 WebAssembly 在手機裡跑，授權是 GNU GPL 第 3 版。</p>
     <p style="margin:0 0 6px">照 GPL 的規定，我們改過的引擎原始碼和建置方法都公開：${L(RP+"/tree/main/pikafish-src","pikafish-src（改過的檔案＋建置腳本）")}；原版原始碼：${L("https://github.com/official-pikafish/Pikafish","official-pikafish/Pikafish")}；授權全文：${L(R+"LICENSE-Pikafish-GPL3.txt","GPL-3.0")}。</p>
@@ -500,6 +500,20 @@ try{setInterval(()=>{try{if(!/^#\/settings/.test(location.hash||""))return;docum
     b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}xqPrivSum()};const x=h.querySelector("button[aria-label]");if(x){x.style.marginLeft="6px";h.insertBefore(b,x)}else h.append(b)})}catch(e){}},700)}catch(e){}
 /* 11/18 第 30 輪 R30-3：英文文牒的「Developer Hung-Sheng Chen」跟右邊驛券的「Generate code」黏在一起——07s4 的縮字（pn._tf → hqFitAll）是在中文時量的，
    翻譯器（外掛字典晚到）把字換成比較長的英文以後沒有重量，字超出文牒那一格。07s4 不改（reps 管）：文牒開著時文牒、驛券的字變了就叫 pn._tf() 重量一次 */
-try{setInterval(()=>{try{if(!/^#\/settings/.test(location.hash||""))return;document.querySelectorAll(".hq-pn.open").forEach(pn=>{if(typeof pn._tf!=="function")return;const di=pn.querySelector(".hq-di"),q=pn.querySelector(".hq-q"),sig=(di?di.textContent:"")+"|"+(q?q.textContent:"")+"|"+innerWidth;
+/* 11/18 第 32 輪 N32-1：英文文牒「關掉再打開第二次」驛券、版本那格又變回大字——07s4 hqOpen 是先 pn._fit()（量、縮）再 pn._paint()（重寫文牒內容），
+   第二次打開時新寫的字沒有被量；字跟上次一樣，上面的簽名也就不再叫重量。另外面板還沒排好、量到 0 時 hqFitAll 會先拿掉縮放再直接 return。
+   改：① 包住 pn._paint，每次重寫完下一格、再下一格、0.35 秒（英文翻譯換好字）各重量一次；② 包住 pn._tf，文牒或驛券那格量到 0 就延到下一格再量（最多 30 格）。打開第幾次都一樣（xqHqWrap 是給測試用的純包裝） */
+function xqHqWrap(pn,raf,later){if(!pn||pn._xqWrap)return;pn._xqWrap=1;raf=raf||(f=>requestAnimationFrame(f));later=later||((f,ms)=>setTimeout(f,ms));
+  if(typeof pn._tf==="function"){const t0=pn._tf;pn._tf=function(){const d=pn.querySelector(".hq-doc"),q=pn.querySelector(".hq-q"),ok=!!(d&&d.clientWidth>0&&d.clientHeight>0&&(!q||q.clientWidth>0&&q.clientHeight>0));
+    if(!ok){pn._xqTfN=(pn._xqTfN|0)+1;if(pn._xqTfN<=30)raf(()=>pn._tf());return}pn._xqTfN=0;return t0.apply(this,arguments)}}
+  if(typeof pn._paint==="function"){const p0=pn._paint;pn._paint=function(){const r=p0.apply(this,arguments);pn._xqSig=null;raf(()=>raf(()=>{try{pn._tf()}catch(e){}}));later(()=>{try{pn._tf()}catch(e){}},350);return r}}}
+try{if(typeof hqOpen==="function"&&!hqOpen.__xq){const o0=hqOpen;hqOpen=function(v){const r=o0.apply(this,arguments);try{const pn=v&&v.querySelector&&v.querySelector(".hq-pn");if(pn){const first=!pn._xqWrap;xqHqWrap(pn);if(first)requestAnimationFrame(()=>requestAnimationFrame(()=>{try{pn._tf()}catch(e){}}))}}catch(e){}return r};hqOpen.__xq=1}}catch(e){}   /* 第一次打開就包上（不等下面每 0.5 秒的檢查） */
+try{setInterval(()=>{try{if(!/^#\/settings/.test(location.hash||""))return;document.querySelectorAll(".hq-pn").forEach(pn=>{try{xqHqWrap(pn)}catch(e){}});document.querySelectorAll(".hq-pn.open").forEach(pn=>{if(typeof pn._tf!=="function")return;const di=pn.querySelector(".hq-di"),q=pn.querySelector(".hq-q"),sig=(di?di.textContent:"")+"|"+(q?q.textContent:"")+"|"+innerWidth;
     if(pn._xqSig===sig)return;pn._xqSig=sig;pn._tf()})}catch(e){}},500)}catch(e){}
+/* 11/18 第 31 輪 N31-2：改過視窗大小（轉向、分割畫面）以後文牒又疊字——07s4 沒接 resize，框（.hq-fr）照舊、縮字也照舊；上面那個每 0.5 秒的檢查又可能在版面還沒排好時就量完記下來 →
+   resize、orientationchange 時先照新尺寸排框（pn._fit，裡面會再叫 pn._tf：文牒和驛券兩格都重量），0.3 秒、0.9 秒後各再量一次；
+   驛券下面的「換手機」小標（英文 Move to a new phone）原本不換行、置中在券下，比券寬就往左壓到「Check for updates」→ 最寬＝券的寬度（31%），放不下換兩行 */
+try{const hqRe=()=>{try{document.querySelectorAll(".hq-pn.open").forEach(pn=>{pn._xqSig=null;try{if(typeof pn._fit==="function")pn._fit();else if(typeof pn._tf==="function")pn._tf()}catch(e){}})}catch(e){}};let hqT=[];
+  const onRs=()=>{hqT.forEach(clearTimeout);hqT=[setTimeout(hqRe,300),setTimeout(hqRe,900)]};addEventListener("resize",onRs);addEventListener("orientationchange",onRs)}catch(e){}
+try{const s=document.createElement("style");s.id="xqHqLbCss";s.textContent=".hq-pn .hq-lb{max-width:31%;white-space:normal;text-align:center;line-height:1.15}";document.head.append(s)}catch(e){}
 try{document.addEventListener("click",e=>{const t=e.target&&e.target.closest&&e.target.closest(".hq-pv");if(!t)return;e.preventDefault();e.stopImmediatePropagation();try{vibrate(5)}catch(x){}xqPrivSum()},true)}catch(e){}

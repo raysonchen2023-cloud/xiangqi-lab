@@ -243,7 +243,7 @@ test("英文主線已翻譯，進場不再出現過時的中文範圍提示", ()
 test("〔混合〕英文模式：語言選單（設定頁頂欄 🌐）分兩段寫英文可用範圍與只有中文的範圍，提到主線；朱印標 data-noi18n 不翻（「勝」不會變成 W）", () => {
   const sh = cut(I18N, "function i18nSheet(", "\n/* ================= 畫面");
   assert.match(sh, /In English:<\/b>[^<]*main quest/); assert.match(sh, /Chinese only for now:<\/b>[^<]*story scenes/);
-  assert.match(sh, /data-noi18n[^>]*>英文介面目前涵蓋：[^<]*主線第一章「古典・河圖初渡」[^<]*仍只有中文/);   /* 11/15 星槎遠征令拿掉、第二章下架：說明改成只講第一章 */
+  assert.match(sh, /data-noi18n[^>]*>英文介面目前涵蓋：[^<]*主線楔子「古典・河圖初渡」[^<]*仍只有中文/);   /* 11/18 第一章改名楔子 */   /* 11/15 星槎遠征令拿掉、第二章下架：說明改成只講第一章 */
   assert.doesNotMatch(sh, /星槎遠征令|第一、二章|Chapters 1 and 2|Star Raft Expedition Orders\)/);
   assert.match(MNQ, /<div class="gf-seal" data-noi18n>/); assert.match(MNF, /d\.className="mnf-seal";d\.setAttribute\("data-noi18n",""\)/); assert.match(MNV, /<div class="seal" aria-hidden="true" data-noi18n>/);
   assert.equal(T("勝"), "W", "（字典裡的「勝」是戰績的 W，所以朱印一定要標 data-noi18n）");

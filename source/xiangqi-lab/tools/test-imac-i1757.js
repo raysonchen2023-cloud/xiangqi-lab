@@ -96,7 +96,8 @@ test("P1-4：素材與授權頁不再有「待開發者確認」；NNUE 照實�
   assert.ok(!C.includes("待開發者確認"));
   assert.ok(C.includes("- 狀態：權重的作者條款**禁止商用**。本 App 免費、不收費、沒有廣告、沒有內購，屬於非商業使用，照條款使用。2026-11-17 已寄信向 Pikafish 團隊說明這個用法並詢問，等回覆。"));
   assert.ok(!C.includes("沒有寫信問過、沒有書面許可") && !C.includes("目前沒有書面許可"), "不再同時寫「不得商用」和「沒有書面許可」");
-  assert.ok(C.includes("開發者 11/17 決定照樣打包；2026-11-17 已向資料庫作者寄信詢問授權") && C.includes("- 狀態：**先保留**（開發者 11/12 決定") && C.includes("## 還在處理的事（依重要程度）"));
+  /* 11/18 iMac R P1：App 內只放對外版（內部判斷、開發者決定、待辦移到 xiangqi-db/docs-internal/credits-internal.md）；語音 12 檔拿掉、改系統語音 */
+  assert.ok(C.includes("2026-11-17 已向資料庫作者說明本 App 的用法並詢問授權") && C.includes("## 詢問中的事項") && !C.includes("先保留") && !C.includes("開發者 11/17 決定"));
   assert.ok(M("07s2-setmap.js").includes('smLock:["sec:#axmSw","btn:#sh","btn:#a2h","sec:#fmSet","title:隱私","btn:#aLic","title:進階"]'), "小鎖匣有「📜 關於與開源授權」");
   assert.ok(M("05-settings.js").includes('<button class="btn ghost" id="aLic" style="width:100%;margin-top:8px">📜 關於與開源授權</button>'));
 });

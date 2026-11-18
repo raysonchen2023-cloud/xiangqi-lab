@@ -9,8 +9,9 @@ const between = (s, a, b, incl) => { const i = s.indexOf(a), j = s.indexOf(b, i 
 
 test("N29-1：挑戰電腦的灰色悔棋不用 disabled（點得到），灰色＋aria-disabled；晉級賽、練功房點了一律說明不能悔棋（走沒走過都一樣）；錯棋重練沒走棋說明還沒有可以悔的、走過一步照原本悔棋", () => {
   const C = M("08b-cpugame.js");
-  assert.ok(C.includes('acts.undo.disabled=KIND(st)!=="cpu"&&(st.ranked||noMv);'), "挑戰電腦不設 disabled（其他對局照舊）");
-  assert.ok(C.includes('noU=cpuK&&(!st.practice||noMv);') && C.includes('acts.undo.classList.toggle("xq-off",noU);acts.undo.setAttribute("aria-disabled",noU?"true":"false");'));
+  /* 11/18 第 31 輪 N31-1：錯棋重練的 KIND 是 "practice"，也不設 disabled（test-r31-1118.js 跑各種對局的狀態） */
+  assert.ok(C.includes('acts.undo.disabled=!undoK&&(st.ranked||noMv);'), "挑戰電腦、錯棋重練不設 disabled（其他對局照舊）");
+  assert.ok(C.includes('noU=(cpuK&&!st.practice)||(!!st.practice&&noMv);') && C.includes('acts.undo.classList.toggle("xq-off",noU);acts.undo.setAttribute("aria-disabled",noU?"true":"false");'));
   assert.ok(C.includes("if(!st.practice&&!acts.undo.disabled&&!noU)acts.undo.innerHTML="), "晉級賽不顯示悔棋符張數");
   /* 跑 undoAsk */
   const fn = between(C, "  function undoAsk(){", "const n=undoLeft();");

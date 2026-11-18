@@ -212,7 +212,7 @@ const xf2Hm=t=>{const d=new Date(+t);return String(d.getHours()).padStart(2,"0")
 async function xf2Put(t,s){for(let k=0;k<XF2_TRY;k++){if(await XQNet.putRetained(t,s))return true;if(k<XF2_TRY-1)await xf2Wait(800*(k+1))}return false}
 /* 舊手機：同 xfUpload（回 {K,exp,n,kb,games}），另外記 xq_xfOut 等回條 */
 async function xf2Upload(code){const K=await xfKeys(code);let games={};try{games=await xfGamesAll()}catch(e){}
-  const dump=XQSave.dump();delete dump.xq_xfOut;delete dump.xq_xfMoved;
+  const dump=XQSave.dump();delete dump.xq_xfOut;delete dump.xq_xfMoved;delete dump.xqTtsBad;   /* 11/18：「這支手機的系統語音不可靠」只記本機，不跟存檔走 */
   const raw=new TextEncoder().encode(JSON.stringify({v:2,at:Date.now(),data:dump,slots:await slotAll(),games})),zip=await xfZip(raw),iv=crypto.getRandomValues(new Uint8Array(12));
   const enc=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},K.key,zip)),b64=xfB64(enc),parts=[];for(let i=0;i<b64.length;i+=XF_CH)parts.push(b64.slice(i,i+XF_CH));
   const h=[];for(const p of parts)h.push((await xf2Hex(p)).slice(0,24));const ha=await xf2Hex(b64),ah=await xf2Ah(code);
@@ -280,7 +280,7 @@ async function xf4Open(K,s,aad){const u=xfUnB64(String(s));if(u.length<28)throw 
 function xf4UsedAll(){let o=null;try{o=JSON.parse(localStorage.getItem(XF4_USED)||"null")}catch(e){}const t=Date.now(),r={};if(o&&typeof o==="object")for(const k in o)if(/^[0-9a-f]{32}$/.test(k)&&+o[k]>t)r[k]=+o[k];return r}
 /* 舊手機：同 xfUpload（回 {K,exp,n,kb,games}），另外記 xq_xfOut 等回條。code 要是 10 碼（xf4Code 產生） */
 async function xf4Upload(code){const c=xfNorm(code);if(c.length!==XF4_LEN)throw new Error("轉移碼要 10 碼");const K=await xf4Keys(c);let games={};try{games=await xfGamesAll()}catch(e){}
-  const dump=XQSave.dump();delete dump.xq_xfOut;delete dump.xq_xfMoved;delete dump[XF4_USED];
+  const dump=XQSave.dump();delete dump.xq_xfOut;delete dump.xq_xfMoved;delete dump[XF4_USED];delete dump.xqTtsBad;
   const te=new TextEncoder(),zip=await xfZip(te.encode(JSON.stringify({v:2,at:Date.now(),data:dump,slots:await slotAll(),games}))),n=Math.max(1,Math.ceil(zip.length/XF4_PB));
   if(n>500)throw new Error("資料太大，轉移碼帶不動：請改用「匯出成檔案」");
   const exp=Date.now()+XF_TTL,sid=xf4Hx(crypto.getRandomValues(new Uint8Array(16))),parts=[];
@@ -548,7 +548,7 @@ function saveBoot(){if(SAVE_OLD!==null){store.set("saveMig1",Date.now());if(SAVE
 /* 11/17 測試員 B 第 29 輪 N29-6：冷開時 saveBoot 在 setTimeout 0 才出開頭畫面，首頁先畫出來閃 9～70ms。
    這支跟 route() 在同一段 script 裡同步跑完、瀏覽器還沒畫第一格：這次還沒出過開頭畫面（跟 saveBoot 同一套判斷：不是自動化、沒有 xqTitleShown／xqPrologue／更新重載、網址是首頁）
    就先蓋一層跟開頭畫面同色的底幕（#xqBootCov，比開頭畫面低一層）；saveBoot 跑完（開頭畫面已經蓋上，或決定不出）下一格拿掉；保險 4 秒一定拿掉。不改 m.html */
-function xqBootCovOff(){try{const d=document.getElementById("xqBootCov");if(d)d.remove()}catch(e){}}
+function xqBootCovOff(){try{const d=document.getElementById("xqBootCov");if(d)d.remove()}catch(e){}try{document.documentElement.classList.remove("xq-bootcov")}catch(e){}}   /* 11/18 N31-3：m.html 一開始就蓋的那層（html.xq-bootcov）也一起拿掉 */
 function xqBootCovNeed(o){return!o.wd&&!o.shown&&!o.pro&&!o.upd&&/^(#\/?)?$/.test(o.hash||"")}
 try{if(xqBootCovNeed({wd:!!navigator.webdriver,shown:!!sessionStorage.getItem("xqTitleShown"),pro:!!sessionStorage.getItem("xqPrologue"),upd:!!localStorage.getItem("xqUpdBack"),hash:location.hash})&&document.body){
   const d=document.createElement("div");d.id="xqBootCov";d.setAttribute("aria-hidden","true");d.style.cssText="position:fixed;inset:0;z-index:9997;background:#F3ECDD";document.body.append(d);setTimeout(xqBootCovOff,4000)}}catch(e){}

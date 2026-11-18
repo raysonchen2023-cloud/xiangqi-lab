@@ -227,7 +227,7 @@ test("⑤ 接線：序局開場鏡頭讓位給示威、邀局時先下載魔王�
   assert.ok(BH.includes('const BHX_CAM={y:.6,p:.45,z:.65,foc:"a"};'));
   assert.ok(BH.includes('if(typeof bhfxXuBusy==="function"&&bhfxXuBusy())return;'), "示威在播時 bhxGo 的鏡頭先不轉");
   assert.ok(BH.includes("PARK.v.setView(BHX_CAM)"));
-  assert.ok(BH.includes('try{if(typeof bhfxPre==="function")bhfxPre()}catch(e){}'), "邀局視窗就先下載");
+  assert.ok(BH.includes('try{if(typeof bhfxPre==="function")await bhfxPre()}catch(e){}') && BH.includes("try{bhxPreFetch(0)}catch(e){}try{bhxPreParse()}catch(e){}"), "邀局視窗就先下載（11/18 起電影開始 15 秒後就排下載 bhxPreFetch，邀局卡接著下載並解析）");
   assert.ok(SRC.includes('me.fx.play(k,o,{cao:mode!=="simple"})'), "簡化＝跳過草書");
   assert.ok(SRC.includes('if(r==="tap"||r==="late"||r==="abort"){if(r!=="abort")try{me.fx.reset()}catch(e){}return"skip"}'), "點盤面＝特效收掉、直接結算");
   assert.ok(SRC.includes('if(mode==="off"){try{toast("✦ 太虛星尊："+BHFX_K[k])}'), "關閉＝只閃招名");

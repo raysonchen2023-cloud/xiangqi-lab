@@ -4,7 +4,7 @@
 
 ## 這一頁對應哪一版（發布前自動核對）
 
-**這一頁和 `source/` 對應的發布版：`20261118-0319`**
+**這一頁和 `source/` 對應的發布版：`20261118-1041`**
 
 （每次發布時用 `release-sync-check.js --stamp <版本> foss.md` 改成那一版；跟發布版不一致就不准發布，見下面。）
 
@@ -69,7 +69,7 @@ APK 用的是公開倉庫裡**已經組好的網站成品**，不是從原始碼
 | 不含閉源相依（Google Play 服務、Firebase、廣告 SDK 等） | `foss-audit.js` 查 10 類，一個都沒有 | **符合** | — |
 | 第三方元件授權相容、全文齊全 | 程式庫、引擎、字型的授權全文都在 `licenses/` 和根目錄 | **符合** | 版本沒記錄的幾項（opencc-js、字型）補上版本 |
 | GPL 元件提供對應原始碼 | 上游標籤＋改過的 `uci.cpp`＋建置腳本都公開；第 13 輪用 Emscripten 6.0.13 重編，跟發布的 `pikafish.wasm`、`pikafish.js` 逐位元相同 | **大致符合** | 公開的 `build-wsl.sh` 還是裝 latest、釘版本的腳本和建置紀錄還沒放上倉庫；沒有完整原始碼包（見下面〈Pikafish〉） |
-| 非自由素材（NonFreeAssets） | 開發者素材 CC BY-NC-SA 4.0（限非商業）；神經網路權重不得商用；Windows 語音輸出；chasoft 棋譜資料庫沒有授權檔 | 會被標「NonFreeAssets」；語音和 chasoft 棋譜要先釐清能不能散布 | 見下面〈素材〉 |
+| 非自由素材（NonFreeAssets） | 開發者素材 CC BY-NC-SA 4.0（限非商業）；神經網路權重不得商用；chasoft 棋譜資料庫沒有授權檔 | 會被標「NonFreeAssets」；chasoft 棋譜要先釐清能不能散布 | 見下面〈素材〉 |
 | 非自由網路服務（NonFreeNet） | 線上大廳用 EMQX Cloud；意見回饋用 Google 表單；Google／Gemini 外連按鈕 | 會被標「NonFreeNet」 | 改用自由軟體架的伺服器，或接受這個標記 |
 | 追蹤（Tracking） | 匿名卡關訊號、對局評分、學習進度**預設開**（可以關）；第 10 項匿名健康摘要**預設關** | 預設開的三項很可能被標「Tracking」 | 改成預設關，或第一次打開時先問。這是產品決定，本輪不改 |
 | 可重現建置 | 引擎（Pikafish）能逐位元重建；`index.html`、`core.js` 能從 `source/` 重組、跟發布的比對；release.json 的模組指紋外部可以重算；第 14 輪起 `verify-all.js` 一個指令重跑全部核對、留純文字紀錄 | **部分** | 整個網站（資料檔、素材、`preload.json`、版本號）還要開發者電腦上的檔案才能重建一次 |
@@ -174,7 +174,7 @@ node xiangqi-lab/tools/pikafish-verify.js --rebuilt xiangqi-wasm/rebuild-2026111
 | 背景音樂 | Gemini Lyria 生成 | 待開發者確認 | 11/13 起 CC BY-NC-SA 4.0（非商業，不算自由） |
 | 走棋音效 | 程式合成，腳本在 `xiangqi-db/tools/audio_src/` | 已確認自有 | 11/13 起 CC BY-NC-SA 4.0（非商業，不算自由） |
 | 劇情、對白、題目講解等資料檔裡的文字 | 開發者構思，AI 協助撰寫 | 自有 | 11/13 起 CC BY-NC-SA 4.0（非商業，不算自由）；寫在程式檔（`.js`）裡的介面文字、場景小故事和對白跟著程式是 GPL-3.0-or-later |
-| 語音（12 檔） | Windows 內建語音合成的輸出 | 灰色、偏不允許再散布 | 要先換掉或改用手機即時朗讀 |
+| 語音報棋 | 手機系統語音即時朗讀（11/18 起不附語音檔） | 不隨 App 散布 | 不用處理 |
 | 比賽與大師棋譜 | chasoft 社群資料庫，**沒有授權檔** | 待開發者確認 | 授權不明 |
 | 字型 | SIL OFL 1.1 | 已確認 | 自由 |
 

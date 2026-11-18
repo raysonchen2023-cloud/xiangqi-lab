@@ -311,7 +311,7 @@
   function toonHull(m,mode,O){O=O||{};const gh=toonGeo(m.geometry);if(!gh)return null;
     const mat=new T.ShaderMaterial({uniforms:{uW:{value:0},uMax:{value:0},uBias:{value:0},uGH:{value:gh},uVar:{value:mode==="b"?.45:0},uInk:{value:mode==="b"?new T.Vector3(.2,.16,.13):new T.Vector3(.13,.09,.07)}},vertexShader:HULL_V,fragmentShader:HULL_FR,side:T.BackSide});mat.name="xqHull";
     const h=m.isSkinnedMesh?new T.SkinnedMesh(m.geometry,mat):new T.Mesh(m.geometry,mat);if(m.isSkinnedMesh){h.bindMode=m.bindMode;h.bind(m.skeleton,m.bindMatrix)}
-    h.name="xqHull";TOON_H.add(h);h.raycast=()=>{};h.castShadow=false;h.receiveShadow=false;h.frustumCulled=m.frustumCulled;const PX=mode==="b"?2.3:1.7;
+    h.name="xqHull";TOON_H.add(h);h.raycast=()=>{};h.userData.xqNoRay=1;h.castShadow=false;h.receiveShadow=false;h.frustumCulled=m.frustumCulled;const PX=mode==="b"?2.3:1.7;
     h.onBeforeRender=(r,s,cam)=>{try{const el=r.domElement,ch=el.clientHeight||el.height||1,u=mat.uniforms;
       u.uW.value=cam.isPerspectiveCamera?PX*2*Math.tan(cam.fov*Math.PI/360)/(cam.zoom||1)/ch:PX*(cam.top-cam.bottom)/(cam.zoom||1)/ch;const S=h.matrixWorld.getMaxScaleOnAxis(),H=gh*S;u.uMax.value=O.max!=null?O.max*S:H*.011;u.uBias.value=O.bias!=null?O.bias*S:H*.03}catch(e){}};
     return h}
@@ -336,11 +336,60 @@
       for(let i=0;i<n-1;i++){if(Math.abs(tm[i]-IDLE_T0)<1e-4)continue;K.push([(tm[i]-IDLE_T0+P)%P,Array.from(vs.subarray(i*k,i*k+k))])}
       K.sort((x,y)=>x[0]-y[0]);K.push([P,vS]);const T3=new Float32Array(K.length),V3=new vs.constructor(K.length*k);K.forEach(([t,v],i)=>{T3[i]=t;V3.set(v,i*k)});tr.times=T3;tr.values=V3}
     cl.duration=P;cl.xqT0=IDLE_T0}
+  /* 11/18 第 33 輪 N33-1（P1）：序局按「入局」後主執行緒卡 6.7～7.6 秒，CPU 剖析 7.5 秒都在下面 mk（貼背牌、胸牌）——每顆棋子人打約 50 條射線到「有骨架」的模型上，
+     three r149 的 Mesh.raycast 每條射線、每個三角形都重算三個頂點的骨架變形（boneTransform，4 個骨頭矩陣相乘），2～3 萬個三角形 × 50 條 × 20 多面牌子。
+     改法（牌子的位置、外觀一模一樣）：
+       ① glySurf：每個模型實例先把每個頂點的骨架變形算一次（同一支 getVertexPosition），存成 Float64Array；
+       ② glyCast：照 r149 Mesh.raycast＋Raycaster.intersectObject(g,true)[0] 的同一套判斷（圖層、包圍球、包圍盒、drawRange／groups、材質正反面剔除、near／far、照距離取最近）
+          逐一試三角形，只是頂點直接讀 ①；先用三角形在畫面 XY 的範圍篩掉碰不到的（射線都是沿 z 軸），同一個數學、同一個結果；
+          模型裡有線、點、精靈或自訂 raycast 的物件就照舊走 three 的 Raycaster；
+       ③ GLY_PZ：同一種模型、同一面牌子（glb＋有沒有動作＋牌子參數＋包圍盒）的深度記起來，同一盤 32 顆只算 14 種，記憶體＋本機（localStorage xqGly1）都存，第二次進來不用算。
+     tools/test-r35-1118.js 用 vm 跑 three.min.js 比對：新舊兩種算法的深度完全相同。 */
+  const GLY_V="2",GLY_PZ=new Map();let GLY_LS=null,GLY_DATA=null;
+  /* 11/18 第 34 輪 N33-1：第一次進場也不用算——電腦上先算好的深度（xiangqi-lab/tools/gly-depth.js 產生 data/tripo_app/glydepth.json，跟 App 一起發布、上 CDN）；查不到才算。
+     鍵＝glyKey（包圍盒取到小數 6 位：不同瀏覽器的 sin／cos 最後一位可能不同，鍵還是對得上）；模型或牌子參數改了要重跑工具（test-r37-1118.js 核對模型指紋） */
+  try{fetch("data/tripo_app/glydepth.json").then(r=>r.ok?r.json():null).then(j=>{if(j&&j.v===GLY_V&&j.keys&&typeof j.keys==="object")GLY_DATA=j.keys}).catch(()=>{})}catch(e){}
+  const glyN=x=>{const s=(+x).toFixed(6);return s==="-0.000000"?"0.000000":s},glyKey=(glb,mix,R,bb)=>[GLY_V,glb,mix?1:0,R.u,R.v,R.r,R.back?1:0,R.g?1:0,glyN(bb.min.x),glyN(bb.min.y),glyN(bb.min.z),glyN(bb.max.x),glyN(bb.max.y),glyN(bb.max.z)].join("|");
+  function glyLs(){if(GLY_LS)return GLY_LS;try{GLY_LS=JSON.parse(localStorage.getItem("xqGly1")||"{}")||{}}catch(e){GLY_LS={}}if(!GLY_LS||typeof GLY_LS!=="object")GLY_LS={};return GLY_LS}
+  function glyPzGet(k){if(GLY_PZ.has(k))return GLY_PZ.get(k);if(GLY_DATA&&Object.prototype.hasOwnProperty.call(GLY_DATA,k)&&typeof GLY_DATA[k]==="number"){GLY_PZ.set(k,GLY_DATA[k]);return GLY_DATA[k]}const L=glyLs();if(Object.prototype.hasOwnProperty.call(L,k)&&typeof L[k]==="number"){GLY_PZ.set(k,L[k]);return L[k]}return null}
+  function glyPzPut(k,v){GLY_PZ.set(k,v);const L=glyLs();L[k]=v;const ks=Object.keys(L);if(ks.length>300)for(const x of ks.slice(0,ks.length-300))delete L[x];try{localStorage.setItem("xqGly1",JSON.stringify(L))}catch(e){}}
+  function glySurf(g){if(g.__glyS!==undefined)return g.__glyS;const O3=T.Object3D.prototype.raycast,MR=T.Mesh.prototype.raycast,M=[];let ok=true;
+    g.traverse(x=>{if(!ok)return;if(x.isMesh){if(x.userData&&x.userData.xqNoRay)return;if(x.raycast!==MR||x.isInstancedMesh)ok=false;else M.push(x)}else if(x.raycast!==O3)ok=false});   /* 11/18 第 34 輪：墨線外殼（toonHull，raycast 是空函式、標 xqNoRay）本來就打不到，跳過它，不再整個退回慢路徑 */
+    if(!ok)return g.__glyS=null;const v=new T.Vector3(),S=[];
+    for(const m of M){const geo=m.geometry,pos=geo&&geo.attributes&&geo.attributes.position,mat=m.material;if(!pos||mat===undefined)continue;
+      const n=pos.count,L=new Float64Array(n*3),W=new Float64Array(n*2),e=m.matrixWorld.elements;
+      for(let i=0;i<n;i++){m.getVertexPosition(i,v);L[i*3]=v.x;L[i*3+1]=v.y;L[i*3+2]=v.z;W[i*2]=e[0]*v.x+e[4]*v.y+e[8]*v.z+e[12];W[i*2+1]=e[1]*v.x+e[5]*v.y+e[9]*v.z+e[13]}
+      const I=[],Mt=[],idx=geo.index,dr=geo.drawRange,cnt=idx?idx.count:pos.count,at=k=>idx?idx.getX(k):k;
+      const run=(s,e2,mt)=>{for(let i=s;i<e2;i+=3){I.push(at(i),at(i+1),at(i+2));Mt.push(mt)}};
+      if(Array.isArray(mat)){for(const r of geo.groups){const mt=mat[r.materialIndex];if(!mt)return g.__glyS=null;run(Math.max(r.start,dr.start),Math.min(cnt,Math.min(r.start+r.count,dr.start+dr.count)),mt)}}
+      else run(Math.max(0,dr.start),Math.min(cnt,dr.start+dr.count),mat);
+      const nt=Mt.length,BX=new Float64Array(nt*4);
+      for(let t=0;t<nt;t++){const a=I[t*3]*2,b=I[t*3+1]*2,c=I[t*3+2]*2;BX[t*4]=Math.min(W[a],W[b],W[c]);BX[t*4+1]=Math.max(W[a],W[b],W[c]);BX[t*4+2]=Math.min(W[a+1],W[b+1],W[c+1]);BX[t*4+3]=Math.max(W[a+1],W[b+1],W[c+1])}
+      S.push({m,L,I:Int32Array.from(I),Mt,BX,nt})}
+    return g.__glyS=S}
+  /* 排隊：一次做一件、每件之前先讓出主執行緒；XQGLY_PEND()＝還有幾件沒做完（park3d 淡入前也等它） */
+  let GLY_Q=Promise.resolve(),GLY_N=0;window.XQGLY_PEND=()=>GLY_N;
+  function glyLater(f){GLY_N++;const p=GLY_Q.then(()=>new Promise(r=>setTimeout(r,0))).then(f);GLY_Q=p.then(()=>{GLY_N--},()=>{GLY_N--});return p}
+  const _gS=new T.Sphere(),_gM=new T.Matrix4(),_gR=new T.Ray(),_gA=new T.Vector3(),_gB=new T.Vector3(),_gC=new T.Vector3(),_gP=new T.Vector3(),_gW=new T.Vector3();
+  /* 回傳最近那個交點的世界座標 z（沒碰到＝null）；rc 已經 set 好原點、方向（方向一定是 ±z） */
+  function glyCast(S,rc){const ray=rc.ray,ox=ray.origin.x,oy=ray.origin.y,ep=1e-7*(1+Math.abs(ox)+Math.abs(oy));let best=Infinity,bz=null;
+    for(const s of S){const m=s.m,geo=m.geometry;if(!m.layers.test(rc.layers))continue;if(geo.boundingSphere===null)geo.computeBoundingSphere();_gS.copy(geo.boundingSphere).applyMatrix4(m.matrixWorld);if(ray.intersectsSphere(_gS)===false)continue;
+      _gM.copy(m.matrixWorld).invert();_gR.copy(ray).applyMatrix4(_gM);if(geo.boundingBox!==null&&_gR.intersectsBox(geo.boundingBox)===false)continue;
+      const L=s.L,I=s.I,BX=s.BX;
+      for(let t=0;t<s.nt;t++){if(ox<BX[t*4]-ep||ox>BX[t*4+1]+ep||oy<BX[t*4+2]-ep||oy>BX[t*4+3]+ep)continue;
+        const a=I[t*3]*3,b=I[t*3+1]*3,c=I[t*3+2]*3;_gA.set(L[a],L[a+1],L[a+2]);_gB.set(L[b],L[b+1],L[b+2]);_gC.set(L[c],L[c+1],L[c+2]);const sd=s.Mt[t].side;
+        const r=sd===1?_gR.intersectTriangle(_gC,_gB,_gA,true,_gP):_gR.intersectTriangle(_gA,_gB,_gC,sd===0,_gP);if(r===null)continue;
+        _gW.copy(_gP).applyMatrix4(m.matrixWorld);const d=ray.origin.distanceTo(_gW);if(d<rc.near||d>rc.far)continue;if(d<best){best=d;bz=_gW.z}}}
+    return bz}
+  /* 一面牌子的深度（mk 用；tools/gly-depth.js 也抽這一段在電腦上先算好）：R.g＝黑洞巨盤整面約 50 點，其他 9 點；取最靠前的那個 */
+  const GLY_PTS=[];for(let i=-4;i<=4;i++)for(let j=-4;j<=4;j++){const a=i/4,b=j/4;if(a*a+b*b<=1.0001)GLY_PTS.push([a,b])}
+  const GLY_P9=[[0,0],[.75,0],[-.75,0],[0,.75],[0,-.75],[.53,.53],[-.53,.53],[.53,-.53],[-.53,-.53]];
+  function glyPzCalc(g,R,rad,px,py,bb,sz){let pz=-1e9;const rc=new T.Raycaster(),SF=glySurf(g);for(const[dx,dy]of(R.g?GLY_PTS:GLY_P9)){rc.set(new T.Vector3(px+dx*rad,py+dy*rad,R.back?bb.min.z-sz.z-1:bb.max.z+sz.z+1),new T.Vector3(0,0,R.back?1:-1));let hz;if(SF){const z=glyCast(SF,rc);hz=z===null?-1e9:(R.back?-z:z)}else{const hit=rc.intersectObject(g,true)[0];hz=hit?(R.back?-hit.point.z:hit.point.z):-1e9}if(hz>pz)pz=hz}if(pz<-1e8)pz=R.back?-bb.min.z:bb.max.z;if(R.back)pz=-pz;return pz}
   function attachGLB(B,o){if(!window.XQGLB)return;const meId=(String(o.glb||"").match(/\/(\w+)\.glb/)||[])[1],meCh=PC(),meK=eraK();const box0=new T.Box3().setFromObject(B.bot),h0=box0.max.y-box0.min.y,y0=box0.min.y;
     const face=B.torso.children.find(m=>m.isMesh&&m.geometry&&m.geometry.type==="CircleGeometry");
     /* hspx（開發者 11/12「車輪戰一開始切換棋客時，會先閃爍小帥的舊圖才變成 3D 角」）：要換真實模型時，Q 版先藏起來，模型載不到才放回來（原本 Q 版先露面、模型到了才藏） */
     const q0=[...B.bot.children];q0.forEach(ch=>{ch.visible=false});
-    B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>{if(!sc)throw new Error("empty");   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);B.glbRoot=g;try{const rb=new T.Box3().setFromObject(g);B.glbRaw={min:rb.min.clone(),max:rb.max.clone()}}catch(e){}g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 679：點角色身上的物件，用模型原本的範圍換算位置（glbRoot、glbRaw） */
+    B.glbP=window.XQGLB(o.glb).catch(()=>window.XQGLB(o.glb)).then(sc=>glyLater(()=>{if(!sc)throw new Error("empty");   /* 11/18 第 35 輪 N33-1：整段接模型（clone、骨架、待機動作、墨線外殼、牌子）都排進 glyLater，一次一顆、每顆前讓出主執行緒——模型早就解析好時，10 顆的 then 會在同一個微任務裡一口氣跑完（100ms 以上） */   /* 意見回饋 505：失敗自動重試一次；結果交給畫面顯示「載入中／失敗」 */const g=sc.clone(true);B.glbRoot=g;try{const rb=new T.Box3().setFromObject(g);B.glbRaw={min:rb.min.clone(),max:rb.max.clone()}}catch(e){}g.rotation.y=-Math.PI/2;g.updateMatrixWorld(true);   /* 意見回饋 679：點角色身上的物件，用模型原本的範圍換算位置（glbRoot、glbRaw） */
       /* 開發者 11/5：武俠角色的模型有 Tripo 綁的骨架和動作（待機、走路、揮手、歡呼、鞠躬）。clone 不會把骨架接到複製的骨頭上，照骨頭名字重接；
          先擺成待機的第一格（沒有每格更新動畫的畫面，也不會停在張開手臂的骨架原始姿勢） */
       {const clips=(window.XQGLB_ANIM||{})[o.glb]||[];if(clips.length){try{const bn={};g.traverse(n=>{if(n.isBone)bn[n.name]=n});
@@ -362,16 +411,21 @@
       const GLe=!ME_RING[meId]&&!R3e&&o.gly&&o.gly.r>0?{u:+o.gly.u||.5,v:+o.gly.v||.4,r:+o.gly.r,back:!!o.gly.back,g:1}:null;
       /* 開發者 11/12 hspx 圈起紅兵背牌下緣一條黑金色（模型的腰帶從圓牌後面凸出來）：黑洞巨盤的圓牌（g:1）量整面約 50 個點、取最凸的深度，圓牌整面浮在模型前面；
          原本只量圓心附近 9 點，邊緣有袖子、腰帶、手凸出就會蓋過去（掃描：紅兵背、紅炮背、紅傌胸、黑馬背胸、黑象胸、黑士胸、黑將胸、黑卒胸共 9 面被擋 2～7%） */
-      const GLY_PTS=[];for(let i=-4;i<=4;i++)for(let j=-4;j<=4;j++){const a=i/4,b=j/4;if(a*a+b*b<=1.0001)GLY_PTS.push([a,b])}
+      const glbFin=()=>{for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold;return true};
       if(meId&&(ME_RING[meId]||R3e||GLe)){const mk=R=>{try{const rad=R.r*sz.x*.9,px=R.back?bb.max.x-R.u*sz.x:bb.min.x+R.u*sz.x,py=bb.max.y-R.v*sz.y;
         /* 意見回饋 564：有些圓牌是凹下去的碟形（明朝擂主），只量圓心的深度會被邊緣擋住、字看起來殘缺；在圓牌上量九個點，取最靠前的深度 */
-        let pz=-1e9;const rc=new T.Raycaster();for(const[dx,dy]of(R.g?GLY_PTS:[[0,0],[.75,0],[-.75,0],[0,.75],[0,-.75],[.53,.53],[-.53,.53],[.53,-.53],[-.53,-.53]])){rc.set(new T.Vector3(px+dx*rad,py+dy*rad,R.back?bb.min.z-sz.z-1:bb.max.z+sz.z+1),new T.Vector3(0,0,R.back?1:-1));const hit=rc.intersectObject(g,true)[0];const hz=hit?(R.back?-hit.point.z:hit.point.z):-1e9;if(hz>pz)pz=hz}if(pz<-1e8)pz=R.back?-bb.min.z:bb.max.z;if(R.back)pz=-pz;   /* 開發者 11/6：齊轍的棋子揹在背後，圓牌貼在背面（ring3d.json 第 5 個值＝1） */if(R.z!=null)pz=bb.min.z+R.z*sz.z;   /* 意見回饋 665：少年阿古拉手上捧著棋盤，打點量到的是棋盤表面，圓片浮在胸口前面、一轉就偏到旁邊；ring3d.json 第 4 個值是校正量到的圓面深度 */
+        const gk=glyKey(o.glb,B.mixer,R,bb);let pz=glyPzGet(gk);   /* 11/18 N33-1：同一種模型同一面牌子算過就直接用（見 glySurf） */
+        if(pz==null){pz=glyPzCalc(g,R,rad,px,py,bb,sz);glyPzPut(gk,pz)}   /* 開發者 11/6：齊轍的棋子揹在背後，圓牌貼在背面（ring3d.json 第 5 個值＝1） */if(R.z!=null)pz=bb.min.z+R.z*sz.z;   /* 意見回饋 665：少年阿古拉手上捧著棋盤，打點量到的是棋盤表面，圓片浮在胸口前面、一轉就偏到旁邊；ring3d.json 第 4 個值是校正量到的圓面深度 */
         const d=new T.Mesh(new T.CircleGeometry(rad,48),new T.MeshBasicMaterial({map:glyTex(meCh,meK),color:0xEDE6D8,transparent:true,depthWrite:false,toneMapped:false}));d.name="meGly";{const _p=new T.Vector3(),_n=new T.Vector3(),_v=new T.Vector3();d.onBeforeRender=(rn,s2,cam)=>{try{d.getWorldPosition(_p);_n.set(0,0,1).transformDirection(d.matrixWorld);_v.copy(cam.position).sub(_p).normalize();d.material.opacity=Math.max(0,Math.min(1,(_n.dot(_v)-.3)/.3))}catch(e){}}}   /* 584：轉到側面時字面淡掉，不會看到一片紙浮在身上 */   /* 577：整面棋子、不受燈光影響（背光時不會變成深褐），顏色稍微壓暗一點才不會比身體亮太多 */
         d.position.set(px-c.x,py-bb.min.y,pz-c.z+(R.back?-1:1)*sz.y*(R.g?.016:.006));if(R.back)d.rotation.y=Math.PI;hold.add(d)}catch(e){}};
-        const R0=ME_RING[meId]||R3e||GLe;mk(R0);
+        const R0=ME_RING[meId]||R3e||GLe;
         /* 開發者 11/12 黑洞「雙方正面也要把棋子貼上去，不然會不知道對面是什麼棋」：o.gly.front＝{u,v,r} 時，另一面（胸前）再貼一個 */
-        if(GLe&&o.gly.front&&+o.gly.front.r>0)mk({u:+o.gly.front.u||.5,v:+o.gly.front.v||.45,r:+o.gly.front.r,back:!R0.back,g:1})}
-      for(const ch of B.bot.children)ch.visible=false;B.bot.add(hold);B.glb=hold;return true});B.glbP.catch(()=>{q0.forEach(ch=>{ch.visible=true})})}
+        const FR=GLe&&o.gly.front&&+o.gly.front.r>0?{u:+o.gly.front.u||.5,v:+o.gly.front.v||.45,r:+o.gly.front.r,back:!R0.back,g:1}:null;
+        const run=()=>{mk(R0);if(FR)mk(FR);try{delete g.__glyS}catch(e){}};   /* 頂點快取用完就放掉 */
+        const gkOf=R=>glyKey(o.glb,B.mixer,R,bb);
+        /* 11/18 N33-1：牌子深度先查（記憶體→glydepth.json→本機），查不到才算；第 35 輪起整段已經在 glyLater 裡，這裡直接做（不能再排一次，會自己等自己） */
+        void gkOf;run()}
+      return glbFin()}));B.glbP.catch(()=>{q0.forEach(ch=>{ch.visible=true})})}
 
   // ---------- 招牌動作 ----------
   const lie=(p,B)=>{const L=p<.15?ease(p/.15):p>.85?ease((1-p)/.15):1;B.root.rotation.z=PI/2*L;B.root.position.x=1.2*L;B.root.position.y=.8*L};
@@ -720,7 +774,8 @@
       if(meSex()+meReal()!==curL){curL=meSex()+meReal();XS.cur="";rebuild()}
       if(eraK()!==curK||BP()!==curP){rebuild();if(typeof needGly==="function")needGly(curK,()=>{if(!stopped)rebuild()})}},1500);
     if(typeof needGly==="function"&&!(typeof GLY!=="undefined"&&GLY[curK]))needGly(curK,()=>{if(!stopped)rebuild()});
-    let shrink=1;const applySize=()=>{const k=SC*shrink;W=W0*k;H=H0*k;box.style.width=W+"px";box.style.height=H+"px";rd.setSize(W,H)};
+    /* 11/18 第 35 輪 N33-1：走路小人進對局頁縮小（shrink .6）時 rd.setSize 重配畫布緩衝區，序局進場時剖析 148ms → 縮小只改 CSS 大小（緩衝區沿用原本較大的那個，畫面一樣只是比較清楚），要變大才重配 */
+    let shrink=1,bufW=0,bufH=0;const applySize=()=>{const k=SC*shrink;W=W0*k;H=H0*k;box.style.width=W+"px";box.style.height=H+"px";if(W>bufW+.5||H>bufH+.5||!bufW){bufW=Math.max(bufW,W);bufH=Math.max(bufH,H);rd.setSize(bufW,bufH,false)}rd.domElement.style.width=W+"px";rd.domElement.style.height=H+"px"};
     const setScale=v=>{SC=Math.min(2,Math.max(.6,+v||1));store.set("botSize",SC);applySize();XS.cur=""};
     const onResize=()=>{const b=bounds();x=Math.min(x,b.x1);y=Math.min(y,b.y1);tx=Math.min(tx,b.x1);ty=Math.min(ty,b.y1)};window.addEventListener("resize",onResize);
     return{act:k=>doAct(typeof k==="number"?comboAct(k):k),say:(s,d,o)=>say(s,d,false,o&&o.auto?1:0,true),setScale,   /* 11/11 問題 2：BOT.say(字, 秒, {auto:1})＝這句是對局中的閒話，有說明文字或棋盤時就不冒 */rebuild,count:COMBO.length,lines:LINES.length,

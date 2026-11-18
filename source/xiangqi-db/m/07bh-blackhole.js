@@ -153,8 +153,17 @@ function bhHitSnd(s){try{if(typeof withAudio!=="function"||typeof AC==="undefine
 if(typeof window!=="undefined")window.XQ_BHHIT=bhHitSnd;
 /* hspx 1086（開發者 11/12 選「星盤閉合＋化氣為茶（合體）」，一般黑洞局用同一套簡化版；ChatGPT 140／141 號）：黑洞局將死不放通用水墨「絕殺」，
    改 park3d mateFx（吃子播完 → 九宮星線收束 → 星盤環停正 → 將化茶霧／星砂）；播完才跳結果視窗（MODAL_HOLD＋modalSkip）。3D 沒開就照舊 killFx */
+/* 11/18 iMac R P3：序局將死後 3D 收束動畫約 10 秒才跳「星盤暫合」，這段時間棋盤、按鈕還按得到 → 序局：將死當下蓋一層透明鎖（點一下＝跳過動畫、馬上出結果卡），
+   最多等 4.5 秒就出結果卡（動畫照播，結果卡蓋在上面）；結果卡出來時拿掉鎖，保險 20 秒一定拿掉。一般黑洞局照舊 */
+const BHX_MATE_MS=4500;
+function bhxLock(){if(document.getElementById("bhxLock"))return;const d=document.createElement("div");d.id="bhxLock";d.setAttribute("aria-hidden","true");d.title="點一下繼續";
+  d.style.cssText="position:fixed;inset:0;z-index:8999;background:transparent;cursor:pointer;touch-action:none";
+  for(const t of["click","pointerdown","touchstart"])d.addEventListener(t,e=>{e.preventDefault();e.stopPropagation();if(t==="click")try{modalSkip()}catch(x){}},{capture:true,passive:false});
+  document.body.append(d);setTimeout(bhxUnlock,20000)}
+function bhxUnlock(){const d=document.getElementById("bhxLock");if(d)d.remove()}
 function bhMateFx(st,k){try{if(!bhIs(st)||typeof PARK==="undefined"||!PARK||!PARK.v||typeof PARK.v.mateFx!=="function")return false;const xu=st.journey===BHX_ID,lp=st.board[k];
-  MODAL_HOLD=Date.now()+15000;LAST_KFX=Date.now()+15000;   /* 01-board 的將死動畫看 LAST_KFX，這段期間不放 */
+  const hold=xu?BHX_MATE_MS:15000;MODAL_HOLD=Date.now()+hold;LAST_KFX=Date.now()+hold;   /* 01-board 的將死動畫看 LAST_KFX，這段期間不放 */
+  if(xu){bhxLock();setTimeout(()=>{try{if(MODAL_HOLD>Date.now()||MODAL_Q.length)modalSkip()}catch(e){}},BHX_MATE_MS)}
   const ok=PARK.v.mateFx({sq:k,tea:xu,cam:lp==="k",snd:x=>bhMateSnd(x,xu),done:()=>{LAST_KFX=Date.now();if(typeof modalSkip==="function")modalSkip();else MODAL_HOLD=0}});
   if(ok===false){MODAL_HOLD=0;LAST_KFX=0}return ok!==false}catch(e){return false}}
 /* 絕殺音效：start＝音樂停半拍（序局第 2 首壓到幾乎無聲，0.65 秒後回到 .25）＋低沉編鐘；lock＝星盤停正「叮」；tea＝茶霧風鈴（五聲往上）；dust＝星砂（低一點、輕一點） */
@@ -279,7 +288,7 @@ function bhxBoardSvg(){let s="";const L=(x1,y1,x2,y2,d)=>`<line x1="${x1}" y1="$
   for(const r of[2,7])for(const c of[1,7])mk(c*10,r*10);for(const r of[3,6])for(const c of[0,2,4,6,8])mk(c*10,r*10);
   return`<svg class="bx-bd" viewBox="-1 -1 82 92" aria-hidden="true">${s}${m}</svg>`}
 /* 分鏡播放：每頁大字一句一句淡入；點一下＝先全部顯示，再點＝下一頁；右上「略過」直接結束。圖還沒畫好（404）就退回黑洞遠景 */
-function bhxPages(keys,done,first){bhxCss();let i=0,tm=[],MT=null;const o=document.createElement("div");o.id="bhxPg";o.setAttribute("role","dialog");o.setAttribute("aria-label","第〇章");document.body.append(o);
+function bhxPages(keys,done,first){bhxCss();let i=0,tm=[],MT=null;const o=document.createElement("div");o.id="bhxPg";o.setAttribute("role","dialog");o.setAttribute("aria-label","第〇章");document.body.append(o);try{if(typeof preFilmHide==="function")preFilmHide()}catch(e){}   /* 11/18 N33-3：已經蓋著的「研墨鋪紙…」馬上藏起來，不擋字幕和「略過」 */
   const clr=()=>{tm.forEach(clearTimeout);tm=[]};let fin=false;
   const end=()=>{if(fin)return;fin=true;clr();if(MT)MT.stop();o.classList.remove("on");setTimeout(()=>o.remove(),600);if(done)setTimeout(done,350)};
   const show=()=>{clr();if(MT){MT.stop();MT=null}const P=BHX_PG[keys[i]];if(!P)return end();
@@ -304,15 +313,21 @@ const BHX_SPOT={x_swordboy:[183,203],x_spiritgirl:[604,286],x_martialgirl:[157,5
 /* 11/13 開發者「這邊應該還不能顯示七個星吧，要落下才有」：s0_4 圖上本來就畫了七個紅光，星還沒落就亮著。
    改成先用抹掉紅光的 s0_4n.webp（cv2 inpaint），星雨開始 1.3 秒後原圖淡入，紅光跟著星落地才亮。
    電影版疊在 .fm-st 的 .fm-bg 後面（跟著鏡頭推拉，換鏡頭時跟 .fm-ly 一起清掉）；分頁版背景直接在 #bhxPg 上，疊一層 z-index:-1（在 ::before 暗化層底下） */
+/* 11/18 開發者 iPhone 回報退步（P1）：「七星還沒降落，在圖上就出現 7 顆星」。原因：原圖 1.3 秒後就開始淡入（1.1 秒淡完），
+   可是星雨的時間軸是第 i 顆 0.8＋0.13×i 秒才出發、飛 1.5 秒才落地（第一顆 2.3 秒、最後一顆約 3.1 秒）——原圖上畫好的七個紅光比星早 1～2 秒就亮了。
+   改成等最後一顆落地（bhxStarLand）才淡入（0.6 秒）；減少動態（星不飛，1.2 秒內直接亮）照 1.2 秒。電影、分頁版、補播、重看開場都經過 bhxMeteor → 這裡 */
+const BHX_MET={d0:.8,dk:.13,fl:1.5};
+function bhxStarLand(n,rm){return rm?1.2:BHX_MET.d0+Math.max(0,(n|0)-1)*BHX_MET.dk+BHX_MET.fl}
 function bhxStarRev(o){try{const P=BHX_PG.p4;if(!P||!P.imgN)return;const st=o.querySelector(".fm-st"),bg=st&&st.querySelector(".fm-bg"),cur=String((bg||o).style.backgroundImage||"");if(!cur.includes(P.imgN))return;
-  const d=document.createElement("div");d.className=bg?"fm-bg fm-ly bx-rev":"bx-rev";d.style.cssText=(bg?"":"position:absolute;inset:0;z-index:-1;background-position:center;background-size:cover;background-repeat:no-repeat;")+"pointer-events:none;opacity:0;transition:opacity 1.1s ease;background-image:url("+P.img+")";
-  if(bg)bg.after(d);else o.prepend(d);setTimeout(()=>{d.style.opacity="1"},1300)}catch(e){}}
+  let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}const at=bhxStarLand(Object.keys(BHX_SPOT).length,rm);
+  const d=document.createElement("div");d.className=bg?"fm-bg fm-ly bx-rev":"bx-rev";d.style.cssText=(bg?"":"position:absolute;inset:0;z-index:-1;background-position:center;background-size:cover;background-repeat:no-repeat;")+"pointer-events:none;opacity:0;transition:opacity .6s ease;background-image:url("+P.img+")";
+  if(bg)bg.after(d);else o.prepend(d);setTimeout(()=>{d.style.opacity="1"},Math.round(at*1000)+50)}catch(e){}}
 function bhxMeteor(o,onDone,opt){opt=opt||{};bhxStarRev(o);const ALL=opt.mode==="all",CATCH=opt.mode==="catch";const cv=document.createElement("canvas");cv.className="bx-mt";o.prepend(cv);
   const W=o.clientWidth||innerWidth,H=o.clientHeight||innerHeight,dpr=bhxDpr(W,H,bhxLowDevice());cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);const g=cv.getContext("2d");g.scale(dpr,dpr);
   const s=Math.max(W/768,H/1376),ox=(W-768*s)/2,oy=(H-1376*s)/2,P=([x,y])=>[ox+x*s,oy+y*s],me=ALL?null:opt.key||(typeof myChar==="function"&&myChar())||"x_swordboy";   /* all＝還沒選角：七顆都落下；catch＝選好了：只演茶香接住那一顆 */
   const src=P([384,30]),SH=[W/2,H*.88],lerp=(a,b,u)=>[a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u],ez=u=>u<.5?2*u*u:1-Math.pow(-2*u+2,2)/2;
   const bz=(a,c,b,u)=>[(1-u)*(1-u)*a[0]+2*(1-u)*u*c[0]+u*u*b[0],(1-u)*(1-u)*a[1]+2*(1-u)*u*c[1]+u*u*b[1]];
-  const L=Object.keys(BHX_SPOT).map((k,i)=>{const t=P(BHX_SPOT[k]),mine=k===me,c=[(src[0]+t[0])/2+(t[0]<W/2?-1:1)*W*.2,(src[1]+t[1])/2-H*.06];return{k,t,c,mine,d:.8+i*.13,tr:[],hv:mine?(CATCH?t:bz(src,c,t,.8)):null}});
+  const L=Object.keys(BHX_SPOT).map((k,i)=>{const t=P(BHX_SPOT[k]),mine=k===me,c=[(src[0]+t[0])/2+(t[0]<W/2?-1:1)*W*.2,(src[1]+t[1])/2-H*.06];return{k,t,c,mine,d:BHX_MET.d0+i*BHX_MET.dk,tr:[],hv:mine?(CATCH?t:bz(src,c,t,.8)):null}});
   const M=ALL?null:(L.find(x=>x.mine)||L[0]);if(M)M.mine=true;const HV=M?M.hv:[W/2,H/2];
   const TC1=[HV[0]+(HV[0]<W/2?W*.28:-W*.28),(HV[1]+SH[1])/2],TC2=[W/2+(HV[0]<W/2?-W*.18:W*.18),SH[1]-H*.12];
   const tea=u=>{if(!M)return SH;const a=1-u;return[a*a*a*SH[0]+3*a*a*u*TC2[0]+3*a*u*u*TC1[0]+u*u*u*M.hv[0],a*a*a*SH[1]+3*a*a*u*TC2[1]+3*a*u*u*TC1[1]+u*u*u*M.hv[1]]};
@@ -325,7 +340,7 @@ function bhxMeteor(o,onDone,opt){opt=opt||{};bhxStarRev(o);const ALL=opt.mode===
   const D=rm?1.2:ALL?3.4:6.2,R={done:false,stop(){cancelAnimationFrame(raf);R.done=true},skip(){t0=performance.now()-D*1000}};let t0=performance.now()-(CATCH&&!rm?3400:0),raf=0,called=false;
   const draw=now=>{const u=rm?D:Math.min(D,(now-t0)/1000),fa=rm?Math.min(1,(now-t0)/1000/D):1;g.clearRect(0,0,W,H);
     if(!rm&&u<1.6)glow(src[0],src[1],10+8*Math.sin(Math.min(1,u/1.6)*Math.PI),"200,220,255",Math.sin(Math.min(1,u/1.6)*Math.PI));
-    for(const m of L){const fl=1.5;let p=null,land=0;
+    for(const m of L){const fl=BHX_MET.fl;let p=null,land=-1;   /* 11/18 第 33 輪 N33-2（P1）：原本預設 0，星還沒出發（u<m.d）時 land>=0 就成立，七個落點一開始就先畫了紅點；改成「還沒落地」＝-1，真的落地（u≥m.d+fl）才畫 */
       if(m.mine){if(u>=m.d&&u<4.7){const e=ez(Math.min(1,(u-m.d)/fl))*.8;p=CATCH?[m.hv[0],m.hv[1]-Math.sin(Math.min(1,(u-3.4)/1.3)*Math.PI/2)*H*.02]:bz(src,m.c,m.t,e)}else if(u>=4.7&&u<5.7)p=tea(1-ez((u-4.7)/1));else if(u>=5.7)p=null}
       else if(u>=m.d){const e=Math.min(1,(u-m.d)/fl);p=bz(src,m.c,m.t,ez(e));land=u-m.d-fl}
       if(p&&!rm){m.tr.push(p);if(m.tr.length>16)m.tr.shift();for(let j=1;j<m.tr.length;j++){const q=m.tr[j-1],w=m.tr[j],k=j/m.tr.length;g.strokeStyle=m.mine?`rgba(255,214,120,${k*.8})`:`rgba(255,120,90,${k*.7})`;g.lineWidth=(m.mine?4:3)*k;g.beginPath();g.moveTo(q[0],q[1]);g.lineTo(w[0],w[1]);g.stroke()}}
@@ -349,11 +364,53 @@ function bhXuStart(old){const c=bhxFresh()?null:(typeof myChar==="function"&&myC
   for(const k in BHX_PG){try{const im=new Image();im.decoding="async";im.src=BHX_PG[k].img}catch(e){}}
   /* 開發者 11/12：第 1 首〈天河初裂〉整首（約 90 秒）當開場電影；3D 模型改到星樞邀局時才載（ChatGPT 135 號：不跟開場搶）。減少動態＝原本兩頁分鏡 */
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}opPlay(1,{fade:.3});
+  bhxPreFetch();   /* 11/18 P1：序局要用的模型在電影播放時就先下載（只下載，不解析，不跟電影搶畫面） */
   if(rm){bhxVortex(c,()=>bhxPages(["p1","p5"],bhxIntro,true));return}bhxFilm(OP_FILM1,bhxIntro);bhxVortex(c,null)}
-function bhxIntro(){OP.loop=[75,89];opVol(.5,1.5);const bhxIdle=typeof requestIdleCallback==="function"?requestIdleCallback:f=>setTimeout(f,900);bhxIdle(()=>{try{bhPreload()}catch(e){}try{if(typeof bhfxPre==="function")bhfxPre()}catch(e){}},{timeout:2500});   /* 11/16 OpenAI 審查：邀局視窗淡入時不搶主執行緒 */   /* 11/14：序局的黑將是太虛星尊，魔王模型、魔法圖也趁讀字時先下載 */   /* 邀局時第 1 首小聲在最後一段循環；趁玩家讀字先載 3D */
+/* ---------- 11/18 開發者 iPhone 回報（P1）：序局 3D「會 lag，然後 boss 才會慢慢的跑出來」----------
+   查到的順序（改之前）：按「入局」→ 換到對局頁 → park3d 建黑洞巨盤，背景、棋盤圖載好就淡入（它只等圖片，不等模型）→
+   這時九顆棋子人的模型（紅方七星 x_*.glb 七個約 17 MB、黑將黑士 xs_jiang／xs_shi 約 2.2 MB）才各自解析（GLTFLoader，iPhone 每個幾百毫秒，主執行緒卡住）、一顆一顆冒出來；
+   太虛星尊（data/bhtd/b_taixu.glb 1.09 MB、bossfx3d.js 45 KB、魔法圖約 1 MB）要等對局頁第一次 bhTick 才開始載程式、建模型，排在最後，所以最慢出來。
+   邀局卡時的 bhPreload／bhfxPre 只把檔案抓進快取，沒有解析；邀局卡看不到幾秒就按入局的話，連下載都還沒完。
+   修法（不改 src/park3d.js）：
+     ① 電影開始 15 秒後（避開開頭載分鏡圖），在空閒時間依序下載序局要用的檔：先九顆棋子人、魔王與魔法圖，再其他黑洞模型（bhxPreFetch）；
+     ② 邀局卡出來（畫面靜止）時，一顆一顆解析成 3D 模型（XQGLB 會記住解析好的結果，park3d、bot3d、bossfx3d 都用同一份），每顆之間讓出主執行緒（bhxPreParse）；魔王的程式也先載；
+     ③ 入局後黑洞底幕（bhxBack）一直蓋著，等「park3d 畫面出現＋九顆棋子人＋魔王」都好了，再多等兩格畫面才淡出；超過 2 秒還沒好就在底幕上寫一行「星盤展開中…」；最多等 15 秒（bhxReveal）。
+   序局規則不動（照樣不能略過）。BHX_GNT 要跟 park3d 的 GNT_X／GNT_XS 一樣（test-r32-1118.js 對過） */
+const BHX_GNT={K:"x_shuai",A:"x_shi",B:"x_spiritgirl",N:"x_miaogirl",R:"x_swordboy",C:"x_martialgirl",P:"x_bing",k:"xs_jiang",a:"xs_shi",b:"xs_xiang",n:"xs_ma",r:"xs_che",c:"xs_pao",p:"xs_zu"};
+/* 序局盤面上用到的棋子人模型（純函式） */
+function bhxNeedGlb(fen){const s=new Set();for(const ch of String(fen||"").split(" ")[0])if(BHX_GNT[ch])s.add("data/tripo_app/"+BHX_GNT[ch]+".glb");return[...s]}
+const BHX_BOSS_GLB="data/bhtd/b_taixu.glb";
+let BHX_PF=null,BHX_PP=null;
+const bhxIdle=f=>{try{if(typeof requestIdleCallback==="function"){requestIdleCallback(()=>f(),{timeout:1500});return}}catch(e){}setTimeout(f,120)};
+function bhxPreFetch(delay){if(BHX_PF||typeof fetch!=="function")return BHX_PF;
+  BHX_PF=new Promise(res=>setTimeout(res,delay==null?15000:delay)).then(async()=>{const L=bhxNeedGlb(BHX_FEN).concat([BHX_BOSS_GLB]);
+    for(const u of L){await new Promise(r=>bhxIdle(r));try{await fetch(u,{cache:"force-cache"}).then(r=>r.ok?r.arrayBuffer():null)}catch(e){}}
+    try{if(typeof bhfxPre==="function")await bhfxPre()}catch(e){}try{await bhPreload()}catch(e){}}).catch(()=>{});return BHX_PF}
+/* 解析成 3D 模型（一顆一顆、中間讓出主執行緒）；回傳全部解析完的 Promise */
+function bhxPreParse(){if(BHX_PP)return BHX_PP;if(typeof window==="undefined"||typeof window.XQGLB!=="function")return Promise.resolve(false);
+  try{if(typeof bhfxLoad==="function")bhfxLoad().catch(()=>{})}catch(e){}
+  BHX_PP=(async()=>{const L=bhxNeedGlb(BHX_FEN).concat([BHX_BOSS_GLB]);for(const u of L){await new Promise(r=>bhxIdle(r));try{await window.XQGLB(u)}catch(e){}}return true})().catch(()=>false);return BHX_PP}
+/* 入局後：都好了才拿掉黑洞底幕（純函式：要不要再等）。o＝{shown park3d 畫面出現了, models 九顆棋子人解析完, boss 魔王好了（不用魔王＝true）, ms 等了幾毫秒} */
+function bhxRevealWait(o){if(o.ms>=15000)return false;return!(o.shown&&o.models&&o.boss)}
+function bhxReveal(){const t0=Date.now(),S={shown:false,models:false,boss:false};let hint=false;try{bhxHint("delay")}catch(e){}   /* N33-1：先放好，2 秒時由 CSS 動畫淡入 */
+  try{bhxPreParse().then(()=>{S.models=true})}catch(e){S.models=true}
+  const bossOk=()=>{try{if(typeof BHFX==="undefined"||!BHFX){const st=typeof BHFX_ST!=="undefined"?BHFX_ST:null;return!(typeof bhfxBossOn==="function"&&st&&bhfxBossOn(st))?true:false}if(!BHFX.ready)return false;if(!BHFX._xqOk){BHFX._xqOk=1;BHFX.ready.then(()=>{if(BHFX)BHFX._xqDone=1},()=>{if(BHFX)BHFX._xqDone=1})}return!!BHFX._xqDone}catch(e){return true}};
+  const step=()=>{try{if(typeof PARK!=="undefined"&&PARK&&PARK.v){if(!S.shownHook&&typeof PARK.v.whenShown==="function"){S.shownHook=1;PARK.v.whenShown(()=>{S.shown=true})}else if(typeof PARK.v.whenShown!=="function")S.shown=true}}catch(e){S.shown=true}
+    S.boss=bossOk();const ms=Date.now()-t0;
+    if(!bhxRevealWait(Object.assign({ms},S))){requestAnimationFrame(()=>requestAnimationFrame(()=>{bhxHint(false);bhxBack(false)}));return}
+    if(!hint&&ms>2000){hint=true;bhxHint(true)}setTimeout(step,150)};
+  setTimeout(step,300)}
+/* 11/18 第 33 輪 N33-1：「星盤展開中…」原本靠 setTimeout 在 2 秒時加上去，主執行緒一卡（建棋子人、編 shader）就跟著延到 8～9 秒。
+   改成入局當下就放好（on＝"delay"）：透明、CSS 動畫 2 秒後淡入——opacity 動畫由合成執行緒播，主執行緒卡住也照樣 2 秒出現；都好了照舊拿掉 */
+function bhxHint(on){const d=document.getElementById("bhxBk");if(!d)return;let h=d.querySelector(".bhx-ld");if(!on){if(h)h.remove();return}if(h){if(on===true){h.style.animation="none";h.style.opacity=".85"}return}
+  h=document.createElement("div");h.className="bhx-ld";h.setAttribute("role","status");h.textContent="星盤展開中…";
+  h.style.cssText="position:absolute;left:0;right:0;bottom:calc(18% + env(safe-area-inset-bottom,0px));text-align:center;color:#d9cfb6;font:600 15px/1.4 var(--serif,serif);letter-spacing:.12em;opacity:.85";
+  if(on==="delay"){if(!document.getElementById("bhxLdCss")){const s=document.createElement("style");s.id="bhxLdCss";s.textContent="@keyframes bhxLd{from{opacity:0}to{opacity:.85}}";document.head.append(s)}h.style.opacity="0";h.style.willChange="opacity";h.style.animation="bhxLd .4s ease-out 1.6s forwards"/* 11/18 第 35 輪 N35-1：1.6 秒開始淡入，2.0 秒那一格就看得到 */}
+  d.append(h)}
+function bhxIntro(){OP.loop=[75,89];opVol(.5,1.5);const bhxIdle0=typeof requestIdleCallback==="function"?requestIdleCallback:f=>setTimeout(f,900);bhxIdle0(()=>{try{bhxPreImg()}catch(e){}try{bhxPreFetch(0)}catch(e){}try{bhxPreParse()}catch(e){}},{timeout:2500});   /* 11/18 N33-3：第 2 段電影的圖也在邀局時確定抓好（第 1 段沒看完就按掉的人） */   /* 11/18 P1：還沒下載完的接著下載（電影提早結束、15 秒還沒到時）；邀局卡畫面靜止，趁這時一顆一顆解析九顆棋子人和魔王 */   /* 11/16 OpenAI 審查：邀局視窗淡入時不搶主執行緒 */   /* 11/14：序局的黑將是太虛星尊，魔王模型、魔法圖也趁讀字時先下載 */   /* 邀局時第 1 首小聲在最後一段循環；趁玩家讀字先載 3D */
   modal(`<div class="em">♟</div><h2>星樞棋局・序局</h2><p>星盤展開，棋路成光。七星化作紅方棋子。</p><p class="pl-say">✦ 星樞：「${esc(BHX_TXT.start)}」</p><p class="muted" style="font-size:13px">黑洞殘局，只差最後一手：紅方先走，一步將死黑將。走錯也不算輸。<br>說書人：${esc(BHX_TXT.open)}</p>`,[["入局",bhxGo]],"prolog")}
 function bhxGo(){BHX_W=0;if(!store.get("bhxP3",null))store.set("bhxP3",{v:store.get("park3d",null)});store.set("park3d",true);   /* 11/16 P0：記下原本的 3D 設定，循著茶香時還原 */store.set("bhRet",null);opPlay(2,{fade:.8,loop:[8,84]});   /* 第 2 首〈星樞試局〉：按「入局」那一下開始（iPhone 要在點選裡），玩家一直沒下就 8～84 秒循環 */
-  jStart(BHX_ID,{human:"r",lx:1,journey:BHX_ID,lv:{fen:BHX_FEN,turn:"r",noPerpetual:true}},()=>{location.hash="#/journey/play";setTimeout(()=>{bhBell();toast("✦ 星樞："+BHX_TXT.start)},900);const bhxWaitPark=n=>{try{if(typeof PARK!=="undefined"&&PARK&&PARK.v){bhxBack(false);return}}catch(e){}if(n>0)setTimeout(()=>bhxWaitPark(n-1),300);else bhxBack(false)};setTimeout(()=>bhxWaitPark(10),1500);   /* 11/16 OpenAI 審查：慢的手機 3D 還沒出來就拿掉黑底會閃出別頁；最多再等 3 秒 */
+  jStart(BHX_ID,{human:"r",lx:1,journey:BHX_ID,lv:{fen:BHX_FEN,turn:"r",noPerpetual:true}},()=>{location.hash="#/journey/play";setTimeout(()=>{bhBell();toast("✦ 星樞："+BHX_TXT.start)},900);bhxReveal();   /* 11/16 OpenAI 審查：慢的手機 3D 還沒出來就拿掉黑底會閃出別頁；11/18 P1：改成等 3D 畫面、九顆棋子人、魔王都好了才拿掉（最多 15 秒，見 bhxReveal） */
     /* 從紅方正後方看，同一路的俥、炮、黑士、黑將疊在一起 → 開場轉到右前方斜看、對焦黑士（實測挑的角度） */
     let k=0;const cam=()=>{k++;if(typeof bhfxXuBusy==="function"&&bhfxXuBusy())return;   /* 11/14 太虛星尊開場示威正在播（07bhf-bossfx.js）：播完由它轉到這個角度 */try{if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.setView){PARK.v.setView(BHX_CAM);return}}catch(e){}if(k<30)setTimeout(cam,400)};setTimeout(cam,1200)})}
 const BHX_CAM={y:.6,p:.45,z:.65,foc:"a"};   /* 序局開場的鏡頭角度（上面 bhxGo 用；太虛星尊示威播完也轉回這裡） */
@@ -377,7 +434,7 @@ function bhxGuard(st,f,t){if(!st||st.journey!==BHX_ID||st.result)return null;
   BHX_W++;try{bhBell()}catch(e){}vibrate([10,40,10]);toast("✦ 星樞："+BHX_TXT.wrong);setTimeout(()=>toast("💡 "+(BHX_W>=2?BHX_TXT.hint2:BHX_TXT.hint1)),1700);return{hint:BHX_W>=2?BHX_SOL:null}}
 /* 序局下完（bhGameEnd、bhResultModal 轉過來）：星樞一句 → 第 2～4 頁 → 新旅程接原本的序幕；舊玩家回首頁 */
 function bhxEnd(){store.set("bhXuDone",Date.now())}
-function bhxAfter(){bhxEnd();if(!(MODAL_HOLD>Date.now()))opVol(.25,1.2);   /* 新絕殺動畫在播：音量由 bhMateSnd 處理 */   /* 將死：第 2 首淡下來 */
+function bhxAfter(){bhxEnd();try{if(!(MODAL_HOLD>Date.now()))bhxUnlock();else setTimeout(bhxUnlock,Math.max(0,MODAL_HOLD-Date.now())+60)}catch(e){}if(!(MODAL_HOLD>Date.now()))opVol(.25,1.2);   /* 新絕殺動畫在播：音量由 bhMateSnd 處理 */   /* 將死：第 2 首淡下來 */
   modal(`<div class="em">✨</div><h2>星盤暫合</h2><p class="pl-say">✦ 星樞：「${esc(BHX_TXT.win)}」</p>`,[["循著茶香",()=>{const old=+store.get("bhXuOld",0)===1;store.set("bhXuOld",0);{const p3=store.get("bhxP3",null);if(p3){store.set("park3d",p3.v==null?null:!!p3.v);store.set("bhxP3",null)}}   /* 11/16 P0：序局把 3D 打開，離開時還原（新手預設平面，11/12 決定） */if(!old&&(store.get("bhxFresh",0)||!journey())&&!store.get("bhxPick",null))store.set("bhxPick","x_swordboy");   /* 11/16 P0：略過序章電影（或減少動態）也要建新旅程——bhxPick 原本只在電影流星裡才記 */
     if(old){bhxBack(false);opStop(2);location.hash="#/";toast("序章看完了，旅程照你原本的進度繼續");return}   /* 11/17 晚開發者選單「補播只播電影和黑洞對戰」：舊玩家模式（07stq 補播、只看序章）不播第 2 段電影、不接第 3 首，直接回首頁；新的旅程照舊往下播 */
     opPlay(3,{fade:.8});   /* 第 3 首〈七星歸槎〉：按「循著茶香」那一下開始 */
@@ -485,18 +542,20 @@ function opSfx(k,big){if(typeof withAudio!=="function")return;withAudio(()=>{con
    say＝這個鏡頭的大字 [[秒,字]]；nar＝說書人 [秒,字]；bp＝星線棋盤放在圖上哪裡 [中心 y,寬]（圖上像素）；title＝開場標題 */
 /* 開發者 11/12「這三頁停頓太久、敘述太短」：旁白加長（ChatGPT 139 號，每句 ≤15 字、每個鏡頭 3～4 句，照秒數出現） */
 const OP_FILM1={n:1,end:89.5,shots:[
-  {at:0,img:null,fx:"dark",sfx:[[0,"vortex"]],say:[[1.4,"第〇章"],[2.4,"天裂星盤沉雲河"],[3.4,"黑洞殘局啟千秋"]]},
-  {at:5.4,img:"p10",ly:[[10.4,"p11",.55,"r"],[12.4,"p12",.3,"r"],[17.6,"p1",.7]],rc:[390,545],kb:[[1.0,50,42],[1.1,50,40]],fx:"tear",crack:12.4,shk:[[10.4,.3,4],[12.4,.4,9]],sfx:[[12.4,"crack"]],say:[[5.5,"千秋之前，"],[8.8,"天上有張星盤。"],[12.4,"一聲巨響，天裂了。"],[16.2,"星光從縫中落。"]]},
+  /* 11/18 開發者 iPhone「字幕兩行還沒跑完，畫面就跳到下一張」：每一個換圖點（下一鏡、鏡頭內疊圖 ly 開始、星雨）之前的最後一行字，要淡入完（0.9 秒）＋讀完（每行至少 1.2 秒、每字 0.2 秒）才換。
+     鏡頭的時間（at）跟著配樂不動，只把字往前挪；第 2 段「青石化成石桌」的溶接改在兩行字都出完、讀完才開始，溶接加長到 2 秒（test-r32-1118.js 逐格算） */
+  {at:0,img:null,fx:"dark",sfx:[[0,"vortex"]],say:[[1.0,"第〇章"],[1.8,"天裂星盤沉雲河"],[2.6,"黑洞殘局啟千秋"]]},
+  {at:5.4,img:"p10",ly:[[10.4,"p11",.55,"r"],[12.4,"p12",.3,"r"],[17.6,"p1",.7]],rc:[390,545],kb:[[1.0,50,42],[1.1,50,40]],fx:"tear",crack:12.4,shk:[[10.4,.3,4],[12.4,.4,9]],sfx:[[12.4,"crack"]],say:[[5.5,"千秋之前，"],[7.8,"天上有張星盤。"],[12.4,"一聲巨響，天裂了。"],[15.2,"星光從縫中落。"]]},
   {at:20,img:"p6",kb:[[1.2,50,22],[1.0,50,62]],fx:"fall",say:[[20.5,"裂口灑下星光。"],[24.0,"像細雨入山河。"],[27.8,"大河先被點亮。"],[31.6,"村燈跟著醒來。"]]},
   {at:35,img:"p1",kb:[[1.4,50,68],[1.05,50,62]],fx:"river",board:36,bp:[1000,560],rvy:1000,sfx:[[36,"lines"]],say:[[35.5,"星河橫過天心。"],[39.0,"星線交成棋路。"],[42.8,"那道河，後來叫界。"],[46.5,"兩岸從此相望。"]]},
-  {at:50,img:"p7",kb:[[1.0,50,48],[1.12,50,47]],fx:"stars",board:51,bp:[657,440],sfx:[[51,"lines"]],say:[[50.5,"河畔有塊青石。"],[53.5,"沉睡不知幾年。"],[56.5,"星光落在石面。"],[59.5,"棋盤慢慢醒來。"]],nar:[62.0,"棋路，先於棋名。"]},
+  {at:50,img:"p7",kb:[[1.0,50,48],[1.12,50,47]],fx:"stars",board:51,bp:[657,440],sfx:[[51,"lines"]],say:[[50.5,"河畔有塊青石。"],[53.5,"沉睡不知幾年。"],[56.5,"星光落在石面。"],[59.5,"棋盤慢慢醒來。"]],nar:[61.5,"棋路，先於棋名。"]},
   {at:65,img:"p8",kb:[[1.0,50,45],[1.22,62,56]],fx:"whirl",say:[[65.4,"天上星盤傾斜。"],[67.8,"一角滑入暗彎。"],[70.2,"墨色漩渦初開。"],[72.4,"誰也望不到底。"]]},
-  {at:75,img:"p5",kb:[[1,50,32],[1.4,50,26]],fx:"whirl",sfx:[[76,"suck"]],say:[[75.4,"黑洞張開無聲。"],[78.2,"星槎被河牽去。"],[81.0,"棋聲在深處響。"],[83.8,"一步一步未停。"]],nar:[86.4,"黑非惡，只是深。"]}]};
+  {at:75,img:"p5",kb:[[1,50,32],[1.4,50,26]],fx:"whirl",sfx:[[76,"suck"]],say:[[75.4,"黑洞張開無聲。"],[78.2,"星槎被河牽去。"],[81.0,"棋聲在深處響。"],[83.8,"一步一步未停。"]],nar:[86.0,"黑非惡，只是深。"]}]};
 const OP_FILM2={n:3,end:60,shots:[
-  {at:0,img:"p2",ly:[[8.6,"p15",1.4]],kb:[[1.12,52,40],[1.0,50,52]],fx:"stone",splash:9.4,say:[[0.6,"五色石曾補天。"],[3.2,"另有一角青石。"],[5.8,"一枚界石相隨。"],[8.4,"同落雲河深處。"]],nar:[9.9,"它記住萬年棋聲。"]},
-  {at:12.5,img:"p15",ly:[[12.6,"p16",2.2],[16.6,"p3",1.4]],kb:[[1.0,50,52],[1.22,44,60]],fx:"steam",say:[[12.8,"青石後來成桌。"],[15.4,"桌上仍有星河。"],[18.0,"河邊少了界石。"],[20.6,"七碗茶正等候。"]]},
-  {at:23,img:"p9",kb:[[1.25,50,70],[1.0,50,35]],fx:"steam",say:[[23.3,"茶氣飄出船外。"],[25.4,"在河上織小路。"],[27.4,"七點紅光在前。"]],nar:[28.0,"茶未入口，緣已同船。"]},
-  {at:30,img:"p4",fx:"dark",say:[[30.0,"七段歲月在岸。"],[32.2,"七個孩子將醒。"],[34.2,"本命棋子先亮。"]],meteor:36}]};
+  {at:0,img:"p2",ly:[[8.6,"p15",1.4]],kb:[[1.12,52,40],[1.0,50,52]],fx:"stone",splash:9.4,say:[[0.4,"五色石曾補天。"],[2.3,"另有一角青石。"],[4.2,"一枚界石相隨。"],[6.2,"同落雲河深處。"]],nar:[9.2,"它記住萬年棋聲。"]},
+  {at:12.5,img:"p15",ly:[[12.6,"p16",2.2],[17.0,"p3",2.0]],kb:[[1.0,50,52],[1.22,44,60]],fx:"steam",say:[[12.8,"青石後來成桌。"],[14.6,"桌上仍有星河。"],[19.0,"河邊少了界石。"],[20.6,"七碗茶正等候。"]]},
+  {at:23,img:"p9",kb:[[1.25,50,70],[1.0,50,35]],fx:"steam",say:[[23.2,"茶氣飄出船外。"],[24.5,"在河上織小路。"],[25.8,"七點紅光在前。"]],nar:[26.2,"茶未入口，緣已同船。"]},
+  {at:30,img:"p4",fx:"dark",say:[[30.0,"七段歲月在岸。"],[31.8,"七個孩子將醒。"],[33.6,"本命棋子先亮。"]],meteor:36}]};
 /* hspx 開發者 11/12「想製作從沒有裂縫到破洞的動畫」「要有漸漸裂掉變成棋桌的過程畫面」：
    第 1 首天裂鏡頭＝完整青瓷天（p10，天幕被頂起）→ 10.4 秒裂紋從中心爆開（p11，縫裡透光）→ 12.4 秒「天裂了」崩成破洞（p12）→ 17.6 秒淡到天河全景（p1）；
    第 3 首開頭＝圓青石與界石從破洞墜落（p2）→ 落進雲河（p15），冰裂紋依圓板透視一條條長成棋盤線（9 直 10 橫、楚河漢界、九宮），河帶通到缺口（界石的位置）
@@ -522,7 +581,7 @@ function bhxGrowTick(R,t){const B=BHX_BD3;for(const o of R.L){const k=Math.max(0
   R.svg.style.opacity=Math.max(0,Math.min(1,1-(t-B.f1)/1.0)).toFixed(2)}   /* 線沉回石裡只留河，再淡到星槎 */
 const opImgXY={p1:[396,515],p5:[384,350],p2:[388,700],p3:[300,880],p6:[384,40],p7:[384,657],p8:[545,795],p9:[380,1020]};   /* 各張圖粒子的源頭（圖上像素，768×1376）：天裂口、黑洞心、青石、茶碗 */
 function bhxFilm(F,done){bhxCss();let rm=false;try{rm=matchMedia("(prefers-reduced-motion:reduce)").matches}catch(e){}
-  const o=document.createElement("div");o.id="bhxPg";o.className="fm on";o.setAttribute("role","dialog");o.setAttribute("aria-label","第〇章");document.body.append(o);
+  const o=document.createElement("div");o.id="bhxPg";o.className="fm on";o.setAttribute("role","dialog");o.setAttribute("aria-label","第〇章");document.body.append(o);try{if(typeof preFilmHide==="function")preFilmHide()}catch(e){}   /* 11/18 N33-3：已經蓋著的「研墨鋪紙…」馬上藏起來，不擋字幕和「略過」 */
   o.innerHTML=`<div class="fm-st"><div class="fm-bg"></div></div><canvas class="fm-fx"></canvas><div class="fm-cap"></div><div class="fm-tx"></div><button class="bx-k" type="button">略過</button><button class="fm-nx" type="button" aria-label="下一個鏡頭">▶</button>`;
   try{if(BHX_PG.p4&&BHX_PG.p4.imgN)(new Image).src=BHX_PG.p4.imgN}catch(e){}   /* 11/13：七星那一幕的無紅光底圖先載好 */
   const st=o.querySelector(".fm-st"),bg=o.querySelector(".fm-bg"),cv=o.querySelector(".fm-fx"),tx=o.querySelector(".fm-tx"),capE=o.querySelector(".fm-cap"),g=cv.getContext("2d");
@@ -621,7 +680,7 @@ function bhxNewJourney(slot){if(typeof journey==="function"&&journey()){try{for(
   try{opPre()}catch(e){}bhXuStart(false);if(typeof titleClose==="function")titleClose();location.hash="#/adventure"}
 /* 舊玩家：開 App 後首頁沒有開頭畫面、沒有別的視窗時，跳一次 */
 function bhxOldAsk(){try{if(!journey()||!bhxNeed()||store.get("bhXuAsk",null)||TITLE||!/^(#\/?)?$/.test(location.hash||"")||document.querySelector(".modal,#bhxPg,#bhxVx"))return false}catch(e){return false}store.set("bhXuAsk",Date.now());
-  modal(`<div class="em">🌀</div><h2>大更新：第〇章與黑洞序局</h2><p>故事前面多了一章神話開場——天裂成河、青石落入雲河。現在建好角色後，會先從星渦掉進黑洞，跟星樞下一盤序局，才開始第一章。</p><p class="muted" style="font-size:13px">建議從頭玩一次。開新的旅程會存到另一格，你現在這段旅程不會被蓋掉。</p>`,
+  modal(`<div class="em">🌀</div><h2>大更新：第〇章與黑洞序局</h2><p>故事前面多了一章神話開場——天裂成河、青石落入雲河。現在建好角色後，會先從星渦掉進黑洞，跟星樞下一盤序局，才開始楔子。</p><p class="muted" style="font-size:13px">建議從頭玩一次。開新的旅程會存到另一格，你現在這段旅程不會被蓋掉。</p>`,
     [["🌀 開新的旅程",()=>titleScreen({view:"slots",mode:"new"})],["只看序章、下序局",()=>bhXuStart(true)],["之後再說",null,true]],"prolog");return true}
 /* hspx 開發者 11/12「降落到經典首頁後，玩家在這個場景停頓大約 5 分鐘，出現引導玩家前往主場朝代的任務，這樣玩家才知道有事情可以做」：
    序局下完降落經典星槎（bhxLand；開發者更正：落在星槎頁，不是首頁）之後，停在星槎頁、畫面在前景、沒有別的視窗，累計 5 分鐘（離開首頁就重算）→ 跳任務；按「之後再去」最多再提醒一次；到過主場就不再出現 */

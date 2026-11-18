@@ -31,7 +31,7 @@ test("〔原始碼〕減少動態：不運鏡、不震、不閃", () => {
 test("〔原始碼〕黑洞局將死改走 bhMateFx，3D 沒開才放通用 killFx", () => {
   assert.match(CG, /if\(k>=0&&!\(typeof bhMateFx==="function"&&bhMateFx\(st,k\)\)\)\{MODAL_HOLD=Date\.now\(\)\+2700;killFx\(/);
   assert.match(BH, /function bhMateFx\(st,k\)\{try\{if\(!bhIs\(st\)/);
-  assert.match(BH, /LAST_KFX=Date\.now\(\)\+15000/);
+  assert.match(BH, /const hold=xu\?BHX_MATE_MS:15000;MODAL_HOLD=Date\.now\(\)\+hold;LAST_KFX=Date\.now\(\)\+hold;/);   /* 11/18 iMac R P3：序局 4.5 秒，一般黑洞局照舊 15 秒 */
   assert.match(BH, /done:\(\)=>\{LAST_KFX=Date\.now\(\);if\(typeof modalSkip==="function"\)modalSkip\(\)/);
 });
 test("〔原始碼〕序局化茶、一般黑洞局化星砂", () => {

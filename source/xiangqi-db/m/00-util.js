@@ -315,7 +315,9 @@ function modalSkip(){MODAL_HOLD=0;MODAL_Q.slice().forEach(f=>{try{f()}catch(e){}
    不再只限高度 ≤500：所有視窗放不下時都能上下捲（放得下照舊置中，margin:auto 0）；高度用 100dvh（Safari 網址列、工具列佔掉的那段不算）；
    序幕、邀局、星盤暫合這類卡（.prolog）按鈕列黏在卡片底部（sticky，讓開 Home 條），內文在上面捲，按鈕一直看得到、點得到 */
 const MDLOW_CSS=".modal{overflow-y:auto;align-items:flex-start;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.modal>.box{margin:auto 0;flex:none}@supports (height:100dvh){.modal{bottom:auto;height:100dvh}}"
-  +".modal.prolog>.box>.mb{position:sticky;bottom:env(safe-area-inset-bottom,0px);z-index:1;background:inherit;margin-left:-20px;margin-right:-20px;margin-bottom:-24px;padding:6px 20px 24px;border-radius:0 0 22px 22px}";
+  +".modal.prolog>.box>.mb{position:sticky;bottom:calc(0px - max(24px,calc(env(safe-area-inset-bottom,0px) + 12px)));z-index:1;background:var(--card,#FFF8EC);margin-left:-20px;margin-right:-20px;margin-bottom:-24px;padding:6px 20px max(24px,calc(env(safe-area-inset-bottom,0px) + 12px));border-radius:0 0 22px 22px;box-shadow:0 -8px 10px -6px rgba(0,0,0,.18)}";
+/* 11/18 第 31 輪 N31-4：上面那條黏底按鈕列，下面還看得到一行內文（320×460 邀局卡、375×553 序幕卡）——sticky 是貼在捲動框扣掉內距的地方，.modal 下面那段內距（24px 或 Home 條＋12px）沒有東西擋，
+   後面捲動的字就從那裡露出來 → 按鈕列往下貼到畫面最底（bottom 用負的內距），自己的下內距補回同樣高度（按鈕照樣在 Home 條上面），底色不透明（卡片色），上緣一點陰影分出層次 */
 function mdLowCss(){try{if(typeof document==="undefined"||document.getElementById("mdLowCss"))return;const s=document.createElement("style");s.id="mdLowCss";s.textContent=MDLOW_CSS;(document.head||document.documentElement).append(s)}catch(e){}}
 mdLowCss();
 /* 回饋 835（開發者 11/9 選：過場點兩下跳過）：不擋手的大動畫——蓋印（stampFx、本命星 chdSealFx）、開局大字、將軍、開局名——本來就 pointer-events:none、點得到底下，

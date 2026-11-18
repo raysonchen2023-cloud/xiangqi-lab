@@ -135,7 +135,7 @@ function CpuGame(v,practicePage,mode){
     PARK_LK=!!s.arena;/* 意見回饋 319 原本「擂台的棋一律在公園 3D 裡」：11/17 iMac H P2-3（準則 4.0，Duo 外螢幕棋子 12～15pt 點不到）改成擂台也能切平面——進擂台時的預設由 03-home-quiz arP3On 決定（寬度小於 500 平面），這裡不再硬切回 3D */if(!st.legal.some(([f])=>f===sel))sel=-1;
     const lk=!!(st.arena&&!st.result);PARK_J=st.journey||null;const pr=!!st.practice||(typeof bhtlFlat==="function"&&bhtlFlat(st));if(pr!==PARK_OFF){PARK_OFF=pr;arenaLock=null}   /* 塔防練習賽：這盤一律平面棋盤（手機 3D 全盤遠景格子太小點不到），不改玩家的 park3d 設定（07bhtl-tdlearn.js） */
     try{if(typeof bhxHold==="function")bhxHold(typeof bhxLocked==="function"&&bhxLocked(st))}catch(e){}   /* 11/16 序局沒打完：返回鍵／上一頁不離開、右上頭像沒反應（07bh bhxHold） */
-    const jk=(st.journey||null)+(typeof bhxLocked==="function"&&bhxLocked(st)?"|L":"");if(lk!==arenaLock||jk!==jKey){arenaLock=lk;jKey=jk;topBar()}   /* 序局打完（鎖解開）也要重畫頂欄，返回鈕才回來 */draw();try{lvWatch(st,v)}catch(e){}pmFire();   /* 第 12 輪 F3：輪到你、有排好的預走就走出 */
+    const jk=(st.journey||null)+(typeof bhxLocked==="function"&&bhxLocked(st)?"|L":"");if(lk!==arenaLock||jk!==jKey){arenaLock=lk;jKey=jk;topBar()}   /* 序局打完（鎖解開）也要重畫頂欄，返回鈕才回來 */draw();try{lvWatch(st,v)}catch(e){}try{if(typeof v7Watch==="function")v7Watch(st,()=>bd.svg,h=>{if(!st||st.id!==h.id||st.moves.length!==h.n||st.result||st.turn!==st.human)return false;pHint={f:h.f,t:null,n:h.n};draw();return true})}catch(e){}   /* 11/18 七星串門子：接了「去下一盤」的那盤，來訪者偶爾提醒本命子（07j-visit.js v7Watch；只亮那顆子、不畫落點） */pmFire();   /* 第 12 輪 F3：輪到你、有排好的預走就走出 */
     if(!st.result&&!st.practice&&st.id&&st.moves.length<=(st.human==="b"?1:0)&&(st.board||[]).filter(Boolean).length>=32&&KJ_LAST!==st.id){   /* hspx 開發者 11/13「黑洞因為是殘局了，不應該再出現開頭通用的開局動畫」（序局黑洞 BHX_FEN）：從殘局開始的盤（第 0、1 步就不到 32 子）不播開局特效 */KJ_LAST=st.id;loadKaiju();const kj=()=>kaijuFx(bd.svg,"r");if(parkOn())kjWait(kj);else setTimeout(kj,350)}   /* 意見回饋 416：開局特效 */
     if(n0!=null&&lastN===n0+1&&!st.practice){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
     const lv=st.levels[st.level-1]||{},me=st.human,bot=opp(me);
@@ -171,9 +171,10 @@ function CpuGame(v,practicePage,mode){
     renderStrip(v.querySelector("#strip"),st.moves,st.moves.length-1);
     /* 11/17 測試員 B 第 29 輪 N29-1：挑戰電腦的灰色悔棋原本是 disabled，點了不會觸發，undoAsk 的說明到不了 → 挑戰電腦（晉級賽、練功房）不用 disabled，
        改成 aria-disabled＋灰色（.xq-off），點了 undoAsk 說明：晉級賽、練功房（挑戰電腦）走沒走過都一律「挑戰電腦不能悔棋」；錯棋重練（st.practice）還沒走棋時說「還沒有可以悔的棋」，走過一步以後照原本可以悔棋。擂台、石桌往事照舊 */
-    const noMv=!st.moves.some(m=>m.by===st.human);
-    acts.undo.disabled=KIND(st)!=="cpu"&&(st.ranked||noMv);   /* 意見回饋 597：擂台也能用悔棋符 */
-    {const cpuK=KIND(st)==="cpu",noU=cpuK&&(!st.practice||noMv);acts.bag.hidden=!!st.practice||cpuK;acts.undo.hidden=false;acts.undo.classList.toggle("xq-off",noU);acts.undo.setAttribute("aria-disabled",noU?"true":"false");   /* 11/17 iMac H P3-10：挑戰電腦照舊不能悔棋（設計如此），但留一顆灰色「悔棋」，點了說明，免得以為功能壞了 */   /* 11/10 開發者「跟電腦或線上不能使用寶物」：挑戰電腦（晉級賽、練功房）不放寶物和悔棋（悔棋符也是寶物）；擂台、石桌往事照舊 */
+    /* 11/18 第 31 輪 N31-1：錯棋重練的 KIND 是 "practice"（不是 "cpu"），上一版還是被設成 disabled、點了沒反應 → 錯棋重練也不用 disabled：沒走棋＝灰色＋aria-disabled，點了 undoAsk 說「還沒有可以悔的棋」 */
+    const noMv=!st.moves.some(m=>m.by===st.human),undoK=KIND(st)==="cpu"||KIND(st)==="practice"||!!st.practice;
+    acts.undo.disabled=!undoK&&(st.ranked||noMv);   /* 意見回饋 597：擂台也能用悔棋符 */
+    {const cpuK=KIND(st)==="cpu",noU=(cpuK&&!st.practice)||(!!st.practice&&noMv);acts.bag.hidden=!!st.practice||cpuK;acts.undo.hidden=false;acts.undo.classList.toggle("xq-off",noU);acts.undo.setAttribute("aria-disabled",noU?"true":"false");   /* 11/17 iMac H P3-10：挑戰電腦照舊不能悔棋（設計如此），但留一顆灰色「悔棋」，點了說明，免得以為功能壞了 */   /* 11/10 開發者「跟電腦或線上不能使用寶物」：挑戰電腦（晉級賽、練功房）不放寶物和悔棋（悔棋符也是寶物）；擂台、石桌往事照舊 */
       if(!st.practice&&!acts.undo.disabled&&!noU)acts.undo.innerHTML='<span class="ic">↶</span>'+(undoLeft()?cgT("game.undoN","悔棋（"+undoLeft()+"）",{n:undoLeft()}):cgT("game.undo","悔棋"));else acts.undo.innerHTML='<span class="ic">↶</span>'+cgT("game.undo","悔棋")}   /* 意見回饋 380：電腦還在想也能悔棋；382：朝代擂台不能悔棋 */
     acts.resign.hidden=!!st.result;acts.review.hidden=!st.result;acts.peek.hidden=!(st.blind&&!st.result);acts.setup.hidden=!!(st.blind&&!st.result);if(st.blind)peekLbl();
     {const xl=typeof bhxLocked==="function"&&bhxLocked(st);acts.new.hidden=xl;if(xl){acts.resign.hidden=true;acts.setup.hidden=true}}   /* 11/16 開發者「打完boss才能繼續」：序局還沒打完，不放新局、認輸、擺盤（07bh bhxLocked） */

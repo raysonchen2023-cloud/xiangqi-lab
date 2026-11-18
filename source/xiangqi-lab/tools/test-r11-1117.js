@@ -110,8 +110,8 @@ function voiceKit(o) {
   vm.runInContext(cutLine(BOARD, "function voiceNoPrime(){") + "\n" + cutLine(BOARD, "let voicePrimed=false;") + "\nthis.__p=primeVoice;", ctx);
   ctx.__p(); ctx.__p(); return spoke;
 }
-test("〔模擬器 B〕網頁版：第一次點擊照舊靜音暖機一次", () => {
-  const s = voiceKit({}); assert.equal(s.length, 1); assert.equal(s[0].volume, 0);
+test("〔模擬器 B，11/18 改〕網頁版也不在點擊當下 speak 暖機了（只取語音清單；第一次朗讀排到空檔，見 test-r32-1118.js）", () => {
+  const s = voiceKit({}); assert.equal(s.length, 0);
 });
 test("〔模擬器 B〕原生 App（XQ_NATIVE 或 UA 帶 XQQianqiuApp/）：點擊時不呼叫 speechSynthesis.speak", () => {
   assert.equal(voiceKit({ native: true }).length, 0, "XQ_NATIVE");
@@ -119,8 +119,8 @@ test("〔模擬器 B〕原生 App（XQ_NATIVE 或 UA 帶 XQQianqiuApp/）：點�
 });
 test("〔模擬器 B〕原始碼：點擊解鎖照舊叫 primeVoice（網頁版不變）；真的要報「吃」「將軍」才 speak（sayCall 沒加原生限制）", () => {
   assert.ok(BOARD.includes("const unlockAudio=()=>{primeVoice();"));
-  assert.ok(BOARD.includes("voicePrimed=true;if(voiceNoPrime())return;try{const u=new SpeechSynthesisUtterance(\" \");u.volume=0;speechSynthesis.speak(u)}"));
-  const say = cutLine(BOARD, "function sayCall(text){"); assert.ok(!/voiceNoPrime|XQ_NATIVE/.test(say), "sayCall 不擋");
+  assert.ok(BOARD.includes("const primeVoice=()=>{if(voicePrimed||!window.speechSynthesis)return;voicePrimed=true;try{pickVoice()}catch(e){}};"), "11/18：只取語音清單，不 speak");
+  const say = cutLine(BOARD, "function sayCall(text){"); assert.ok(!/voiceNoPrime|XQ_NATIVE/.test(say), "sayCall 不擋（原生 App 改走 XQSpeech 外掛）");
   /* 其他模組沒有別的暖機 speak（空字串／靜音朗讀） */
   const dir = path.join(__dirname, "..", "..", "xiangqi-db", "m");
   for (const f of fs.readdirSync(dir).filter(x => /\.js$/.test(x) && x !== "01-board.js")) {

@@ -81,8 +81,12 @@ let stmLast=null;
 /* 11/17 iMac I P2：開頭畫面、淺色主題的頁面、高對比主題也一樣是淺底白字 → xqBarAuto：量畫面最上緣（狀態列底下）實際的底色，亮就深色字、暗就白字；
    換頁、開關面板（body 底下的節點、class 變了）、回到前景、每 2 秒各量一次，跟上次一樣就不再叫外掛。網頁版沒有這個外掛，不動 */
 let XQB_LAST=null;
-function xqBarAuto(){try{if(!(typeof xqNat==="function"&&xqNat())||document.hidden)return;const el=document.elementFromPoint(Math.round(innerWidth/2),1);let x=el,c=null;
-  while(x&&x.nodeType===1){const b=getComputedStyle(x).backgroundColor,m=b&&b.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);if(m&&(m[4]==null||+m[4]>.5)){c=[+m[1],+m[2],+m[3]];break}x=x.parentElement}
+/* 11/18 開發者 iPhone（黑洞序局 3D）：頂欄是淺色、狀態列卻是白字——原本只看最上面那一個元素再往外層找底色，黑洞頁頂欄上面蓋著一層透明、全螢幕的東西時，
+   往外層找到的是深色的 body，判成暗底。改成看這一點由上往下疊著的每一層（elementsFromPoint），第一個「自己有不透明底色」的那層才算；都沒有才往外層找（照舊） */
+function xqBarPick(stack){for(const x of stack||[]){if(!x||x.nodeType!==1)continue;const b=getComputedStyle(x).backgroundColor,m=b&&b.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);if(m&&(m[4]==null||+m[4]>.5))return[+m[1],+m[2],+m[3]]}return null}
+function xqBarAuto(){try{if(!(typeof xqNat==="function"&&xqNat())||document.hidden)return;const px=Math.round(innerWidth/2),el=document.elementFromPoint(px,1);let x=el,c=null;
+  try{if(typeof document.elementsFromPoint==="function")c=xqBarPick(document.elementsFromPoint(px,1))}catch(e){c=null}
+  if(!c)while(x&&x.nodeType===1){const b=getComputedStyle(x).backgroundColor,m=b&&b.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)/);if(m&&(m[4]==null||+m[4]>.5)){c=[+m[1],+m[2],+m[3]];break}x=x.parentElement}
   if(!c){const m=getComputedStyle(document.body).backgroundColor.match(/rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)/);if(m)c=[+m[1],+m[2],+m[3]]}if(!c)return;
   const light=xqBarLight(c);if(light===XQB_LAST)return;stmBar(light)}catch(e){}}
 const xqBarLight=c=>(.2126*c[0]+.7152*c[1]+.0722*c[2])/255>.6;

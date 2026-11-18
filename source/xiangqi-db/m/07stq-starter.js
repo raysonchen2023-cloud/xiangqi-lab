@@ -155,8 +155,15 @@ function stqClose(){const U=STQ_UI;STQ_UI=null;if(!U)return;U.gid++;U.pg.classLi
 function stqSay(t,c){const U=STQ_UI;if(!U)return;const e=U.pg.querySelector(".stq-g");if(!e)return;e.textContent=t;e.className="stq-g"+(c?" "+c:"")}
 function stqGoal(){const U=STQ_UI;if(!U)return;const T=STQ_T[U.n];stqSay(T.g);const c=U.pg.querySelector(".stq-c"),N=stqCount(T);if(c)c.textContent=N>1?Math.min(N,(T.k==="game"?U.rounds:U.step)+(T.k==="game"?0:1))+"／"+N:""}
 function stqLamps(){const U=STQ_UI;if(!U)return;const S=U.peek?{done:{}}:stqSt();U.pg.querySelectorAll(".stq-lp span").forEach((x,i)=>{x.className=S.done[i]?"on":i===U.n?"cur":""})}
+/* 11/18 iMac R P3：練習頁「回開頭畫面」再「▶ 繼續」，同一課的小題從頭來（walk、eat 的第幾格，check 的第幾題）→ 每過一小題記 S.sub＝{n 第幾課, step 做到第幾小題}，
+   回來時照記的小題接著做（walk／eat 把俥照前面幾格走過去、吃掉的子拿掉；check／mate 換到那一題）；這一課做完就清掉。對局課（game）照舊從頭下 */
+function stqSubOf(S,n,T){const s=S&&S.sub;if(!s||s.n!==n||!T||T.k==="game")return 0;const k=s.step|0;return k>0&&k<stqCount(T)?k:0}
+function stqSubBoard(C,T,k){if(T.ps)return C.parseFen(T.ps[k]);let B=C.parseFen(T.fen);for(let i=0;i<k;i++){const r=B.indexOf("R");if(r<0)break;B=C.make(B,r,T.tg[i])}return B}
+function stqSubSave(n,k){const U=STQ_UI;if(!U||U.peek)return;const S=stqSt();if(S.st!=="run")return;S.sub={n,step:k};stqSave(S)}
 function stqLoad(n){const U=STQ_UI;if(!U)return;const C=XQCore,T=STQ_T[n];U.n=n;U.step=0;U.miss=0;U.hk=null;U.sel=-1;U.mark=-1;U.busy=false;U.end=false;U.passed=false;U.sealed=[];U.gid++;
-  U.B=C.parseFen(T.k==="game"?C.START:T.fen||T.ps[0]);U.turn="r";U.rounds=0;U.ply=0;U.esc=T.esc?stqEsc(U.B):[];
+  U.B=C.parseFen(T.k==="game"?C.START:T.fen||T.ps[0]);U.turn="r";U.rounds=0;U.ply=0;
+  {const k=U.peek?0:stqSubOf(stqSt(),n,T);if(k){U.step=k;try{U.B=stqSubBoard(C,T,k)}catch(e){U.step=0;U.B=C.parseFen(T.fen||T.ps[0])}}}
+  U.esc=T.esc?stqEsc(U.B):[];
   const nx=U.pg.querySelector(".stq-nx");if(nx)nx.hidden=true;stqLamps();stqGoal();stqDraw()}
 /* 棋盤上加畫的東西（viewBox 560×620，第一格中心 40,40，每格 60）：亮格、綠色逃點、封住後的 ✗（05b fwX） */
 function stqMarkSq(svg,i,kind){const NS="http://www.w3.org/2000/svg",x=40+i%9*60,y=40+(i/9|0)*60;let e;
@@ -181,11 +188,11 @@ function stqMove(f,t){const U=STQ_UI,C=XQCore,T=STQ_T[U.n];U.sel=-1;if(T.k==="ga
   setTimeout(()=>{if(STQ_UI!==U||U.gid!==g)return;U.busy=false;if(U.miss>=2)U.hk=stqHintMv(T,U.B,U.step);stqDraw();if(U.hk&&U.miss>=2)stqSay(STQ_TX.hint);else stqGoal()},1400)}
 /* 一題過了：walk／eat 換下一格（棋盤接著用），check／mate 換下一題；都做完＝任務完成 */
 function stqNext(){const U=STQ_UI;if(!U)return;const C=XQCore,T=STQ_T[U.n];U.step++;
-  if(U.step<stqCount(T)){if(T.ps){U.B=C.parseFen(T.ps[U.step]);U.esc=T.esc?stqEsc(U.B):[];U.sealed=[]}stqGoal();stqDraw();return}
+  if(U.step<stqCount(T)){if(T.ps){U.B=C.parseFen(T.ps[U.step]);U.esc=T.esc?stqEsc(U.B):[];U.sealed=[]}stqSubSave(U.n,U.step);stqGoal();stqDraw();return}
   stqDone(U.n);stqSay(STQ_TX.done,"ok");U.busy=true;const g=U.gid;setTimeout(()=>{if(STQ_UI!==U||U.gid!==g)return;stqLoad(U.n+1)},1000)}
 /* 任務完成：亮燈、發經驗（只發一次） */
 function stqDone(n){const U=STQ_UI;if(U&&U.peek){U.pg.querySelectorAll(".stq-lp span")[n].className="on";return}
-  const S=stqSt();if(S.st!=="run")return;const now=Date.now();if(!S.done[n])S.done[n]=now;const pay=!S.got[n];if(pay)S.got[n]=now;S.n=Math.max(S.n|0,n+1);stqSave(S);
+  const S=stqSt();if(S.st!=="run")return;const now=Date.now();if(!S.done[n])S.done[n]=now;const pay=!S.got[n];if(pay)S.got[n]=now;S.n=Math.max(S.n|0,n+1);if(S.sub&&S.sub.n<=n)delete S.sub;stqSave(S);
   if(pay)try{addXP(STQ_XP[n],"新手練習","stq:"+(n+1))}catch(e){}stqLamps();if(U){const L=U.pg.querySelectorAll(".stq-lp span")[n];if(L)L.className="on"}}
 function stqHint(){const U=STQ_UI;if(!U||U.busy)return;const T=STQ_T[U.n];
   if(T.k==="game"){if(U.turn!=="r"||U.end)return;stqGameHint();return}
@@ -237,13 +244,13 @@ function stqPick(c){const U=STQ_UI;
   stqClose();try{if(/^(#\/?)?$/.test(location.hash||""))route();else goHome()}catch(e){}}
 /* ---------- 首頁按鈕（07mnq mnqHomeSync／按鈕先問這裡）：{t:字}；null＝照 07mnq 原本的「下一步」 ---------- */
 /* 11/16 開發者「如果一開始沒選第一章 這邊要顯示第一章讓玩家知道」：第一章還沒看完（07mnq lamp.classic＝看完）首頁這顆寫「📖 第一章」（看過一部分寫「接著看」），按了直接開；看完才回「更多玩法」 */
-function stqC1(){try{if(typeof mnqChapter!=="function"||typeof mnqSt!=="function"||typeof MNQ_SEGS==="undefined"||!MNQ_SEGS.classic)return null;const S=mnqSt(),seg=S.seg||{};if((S.lamp||{}).classic||MNQ_SEGS.classic.every(id=>seg[id]))return null;return MNQ_SEGS.classic.some(id=>seg[id])?"📖 接著看第一章":"📖 第一章"}catch(e){return null}}
+function stqC1(){try{if(typeof mnqChapter!=="function"||typeof mnqSt!=="function"||typeof MNQ_SEGS==="undefined"||!MNQ_SEGS.classic)return null;const S=mnqSt(),seg=S.seg||{};if((S.lamp||{}).classic||MNQ_SEGS.classic.every(id=>seg[id]))return null;return MNQ_SEGS.classic.some(id=>seg[id])?"📖 接著看楔子":"📖 楔子"}catch(e){return null}}   /* 11/18 開發者：第一章改名「楔子」 */
 function stqHome(){if(!STQ_ON)return null;const S=stqSt0();if(S&&S.st==="run")return{k:"run",t:"🔰 繼續新手練習"};const c1=stqC1();if(c1)return{k:"c1",t:c1};return{k:"more",t:"更多玩法"}}
 function stqHomeGo(){const h=stqHome();if(!h)return false;if(h.k==="run"){if(stqCan())stqOpen();return true}if(h.k==="c1"){try{mnqChapter("classic")}catch(e){}return true}stqMore();return true}
 function stqMore(){stqCss();let mq=false;if(typeof MNQ_PANEL_ON!=="undefined"&&MNQ_PANEL_ON)try{const M=mnqSt();mq=!!(M.gift.a1||Object.keys(M.seg).length)}catch(e){}   /* 11/15 遠征令拿掉（07mnq MNQ_PANEL_ON＝false）：不放「⛵ 星槎遠征令」那顆 */
   const L=[["🤖","對弈電腦",typeof CpuRoom==="function"?"#/cpuroom":"#/cpu"],["🍵","一盞茶殘局","#/canju"],["📝","棋力測驗","#/quiz"],["🔰","新手訓練營","#/camp"]];
   /* 11/15 第一章入口原本只在「設定 → 氛圍」（07mnq mnqSndRow）：首頁「下一步」打開的這張清單也放一顆（有角色或看過任何一段才放；看完＝「再看第一章」） */
-  let c1="";try{if(typeof mnqChapter==="function"&&typeof MNQ_SEGS!=="undefined"&&MNQ_SEGS.classic){const M=mnqSt(),lit=!!M.lamp.classic;if(lit||M.gift.a1||MNQ_SEGS.classic.some(id=>M.seg[id])||mnqEnv().hasChar)c1=lit?"再看第一章":"看第一章"}}catch(e){c1=""}
+  let c1="";try{if(typeof mnqChapter==="function"&&typeof MNQ_SEGS!=="undefined"&&MNQ_SEGS.classic){const M=mnqSt(),lit=!!M.lamp.classic;if(lit||M.gift.a1||MNQ_SEGS.classic.some(id=>M.seg[id])||mnqEnv().hasChar)c1=lit?"再看楔子":"看楔子"}}catch(e){c1=""}
   sheet("更多玩法",b=>{b.innerHTML=`<div class="stq-more">${L.map(([i,t,h])=>`<button type="button" class="item" data-h="${h}"><span class="lb" style="font-size:22px">${i}</span><span class="tx"><b>${esc(t)}</b></span></button>`).join("")}${c1?`<button type="button" class="item" data-k="c1"><span class="lb" style="font-size:22px">🎬</span><span class="tx"><b>${c1}</b><small class="muted" style="display:block">河圖初渡</small></span></button>`:""}${stqXuReplayOk()?`<button type="button" class="item" data-k="op"><span class="lb" style="font-size:22px">🎬</span><span class="tx"><b>重看開場</b><small class="muted" style="display:block">天河初裂</small></span></button>`:""}${mq?`<button type="button" class="btn ghost" data-k="mnq" style="width:100%">⛵ 星槎遠征令</button>`:""}</div>`;
     b.querySelectorAll("[data-h]").forEach(x=>x.onclick=()=>{try{vibrate(6)}catch(e){}closeSheet();location.hash=x.dataset.h});
     const k1=b.querySelector("[data-k=c1]");if(k1)k1.onclick=()=>{try{vibrate(6)}catch(e){}closeSheet();setTimeout(()=>{try{mnqChapter("classic")}catch(e){}},250)};

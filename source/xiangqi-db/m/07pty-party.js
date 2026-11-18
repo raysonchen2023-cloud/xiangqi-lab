@@ -178,15 +178,15 @@ function ptyCardHTML(P,c,L){const C=(typeof WX_CHARS!=="undefined"&&WX_CHARS[c])
   const lv=PTY.lv(P,c,L),x=P.m[c].xp,b0=PTY.base(lv),nd=PTY.need(lv),top=lv>=L,dn=lv>=100?1:top?Math.max(1,PTY.cap(L)-b0):nd,got=Math.max(0,Math.min(dn,x-b0)),pct=lv>=100?100:Math.max(0,Math.min(100,100*got/dn));   /* 練滿時分母＝這一級加得到的上限（PTY.cap，比升級要的少 1），條上的數字跟「滿了」「還能加」對得起來 */
   const room=Math.max(0,PTY.cap(L)-x),gsay=lv>=100?"已到最高級":!top?`還差 ${nd-got} 升 Lv ${lv+1}`:room>0?`還能加 ${room}（升 Lv ${lv+1} 要等你修為升級）`:`滿了，等你修為升 Lv ${L+1}`;   /* 11/17 開發者：金色條改成星輝條（這一級加了多少、還差多少升級） */
   const skP=ptySkPool(c),skN=skP.filter(s=>s.lv<=lv).length;   /* 11/16：招式從那一行小字搬成一列可以點的「招式 n／N ›」 */
-  const tg=P.look===c?`<span class="pty-tag look">陪你走</span>`:"";
+  const tg=P.look===c?`<span class="pty-tag look">隨行中</span>`:"";
   return`<div class="pty-c" data-c="${c}">${img}<div><div class="pty-n">${esc(C.n)}<small>${esc(C.nk||"")}</small>${tg}</div>
     <div class="pty-m">${esc(C.pc||"")}・${esc(era)}・Lv ${lv}${top?(L>=100?"（練滿了）":"（練滿了，等你升級）"):""}</div><div class="pty-xpt"><span>${lv>=100?"✨ 星輝・已滿級":`✨ 星輝 ${got}／${dn}`}</span><span>${gsay}</span></div><div class="pty-xp" aria-hidden="true"><b style="width:${pct.toFixed(1)}%"></b></div></div>
     ${ptyStatHTML(c,lv)}${skP.length?`<button type="button" class="pty-row" data-a="sk"><span>招式</span><b>${skN}／${skP.length}</b><i aria-hidden="true">›</i></button>`:""}${typeof SG2G!=="undefined"&&typeof sg2TalSheet==="function"&&typeof sg2TalGet==="function"?`<button type="button" class="pty-row" data-a="tal"><span>天賦</span><b>${(sg2TalGet()[c]||[]).length}／${SG2G.TAL_MAX}</b><i aria-hidden="true">›</i></button>`:""}
-    ${(a=>a?`<div class="pty-a">${a}</div>`:"")(`${top&&!room?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">帶${ptyTa(c)}出門</button>`}`)}</div>`}   /* 兩顆都不用出現時（練滿了又正陪你走）不留一條空白 */
+    ${(a=>a?`<div class="pty-a">${a}</div>`:"")(`${top&&!room?"":`<button type="button" class="btn" data-a="give"${P.pool>0?"":" disabled"}>＋星輝</button>`}${P.look===c?"":`<button type="button" class="btn ghost" data-a="look">設為隨行</button>`}`)}</div>`}   /* 兩顆都不用出現時（練滿了又正陪你走）不留一條空白 */
 function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0){try{toast("還沒有開始旅程")}catch(e){}return}ptyCss();
   sheet("🌟 雲河七星",b=>{const draw=()=>{const P=ptyGet(),L=ptyL(),sy=b.scrollTop;
     b.innerHTML=`<div class="pty-top"><span><span>你的修為</span> <b>Lv ${L}</b></span><span class="pty-pool">✨ <span>星輝</span> <b>${P.pool|0}</b></span></div><p class="pty-m pty-cap">${ptyCapSay(L,ptyXpNd())}</p>`+ptyXpHow(P,L)+ptyTeamHTML()+ptyTalHTML()+PTY.ORDER.map(c=>ptyCardHTML(P,c,L)).join("")+
-      `<p class="pty-m">下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。黑洞裡全隊已學會的招都會帶上場；「陪你走」是首頁上跟著你的那一位。</p>`;
+      `<p class="pty-m">下棋、解題、黑洞過關得到的修為，一半自動分給隊上每一位，另一半變成星輝，由你分給想練的人。黑洞裡全隊已學會的招都會帶上場；「隨行」是首頁上跟著你的那一位；來串門子的人也會找他說話。</p>`;
     {const g=b.querySelector("#ptyXpGo");if(g)g.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();location.hash="#/cpu"}}
     {const t=b.querySelector('[data-top="tal"]');if(t)t.onclick=()=>{try{vibrate(5)}catch(e){}closeSheet();setTimeout(()=>{if(typeof sg2TalSheet==="function"&&typeof SG2G!=="undefined")sg2TalSheet(()=>ptySheet(),"‹ 回雲河七星");else bhtdTal(()=>ptySheet(),"‹ 回雲河七星")},60)}}   /* 07bht bhtdTal 第二個參數＝返回鈕的字（沒給照舊「回選關」） */
     b.querySelectorAll(".pty-c[data-c]").forEach(el=>{const c=el.dataset.c;el.querySelectorAll("[data-a]").forEach(btn=>btn.onclick=()=>{try{vibrate(5)}catch(e){}const a=btn.dataset.a;
@@ -194,7 +194,7 @@ function ptySheet(){if(typeof sheet!=="function")return;const P0=ptyGet();if(!P0
       if(a==="tal"){closeSheet();setTimeout(()=>sg2TalSheet(()=>ptySheet(),"‹ 回雲河七星",c),60);return}   /* 11/16 開發者「點某個角色的天賦 只會出現那個角色的天賦描述」：每張卡的天賦只看這一位 */
       if(a==="give"){const P2=ptyGet(),L2=ptyL(),lv=PTY.lv(P2,c,L2),want=PTY.base(Math.min(L2,lv+1))-P2.m[c].xp;const g=ptyGive(c,want>0?want:P2.pool);try{toast(g?`✨ 給了 ${g} 星輝`:"已經跟你一樣高了，等你升級再練")}catch(e){}}
 
-      else if(a==="look"){if(ptySetLook(c)){try{toast(WX_CHARS[c].n+"陪你走")}catch(e){}try{closeSheet()}catch(e){}setTimeout(()=>{try{if(typeof route==="function")route()}catch(e){}},260);return}}   /* 換人後關卡冊、重畫首頁，右上頭像和小人馬上換 */
+      else if(a==="look"){if(ptySetLook(c)){try{toast(WX_CHARS[c].n+"現在跟著你")}catch(e){}try{closeSheet()}catch(e){}setTimeout(()=>{try{if(typeof route==="function")route()}catch(e){}},260);return}}   /* 換人後關卡冊、重畫首頁，右上頭像和小人馬上換 */
       draw()})});b.scrollTop=sy};draw()})}
 
 /* ===== 星槎上的加入劇情（設計書第三節；台詞暫定，照小說前九章改寫稿 story/chatgpt_app/86_*定稿合集.md，之後交 Gemini 潤稿） =====
@@ -234,9 +234,51 @@ function ptyJoinCutLater(k,L,n){setTimeout(()=>{if(ptyResOpen())return ptyJoinCu
 function ptyJoinCardLater(L,n){setTimeout(()=>{if(ptyResOpen())return ptyJoinCardLater(L,Math.max(1,n));if(document.querySelector(".modal")&&n<20)return ptyJoinCardLater(L,n+1);ptyJoinCard(L)},n?1500:2500)}
 function ptyJoinCard(L){if(typeof modal!=="function"||!L||!L.length)return;const P=ptyGet();if(!P)return;
   const nm=L.map(ptyNm).join("、"),c=L[0];
-  modal(`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><h2>${esc(nm)}加入了！</h2>${L.map(x=>PTY_SAY[x]?`<p class="pl-say">${esc(ptyNm(x))}：「${esc(PTY_SAY[x])}」</p>`:"").join("")}<p class="muted">${ptyTa(L)}的招式黑洞裡就能帶；在「雲河七星」卡冊可以換陪你走的人，也可以分星輝給${ptyTa(L)}。</p>`,
-    [["帶"+ptyTa(L)+"出門",()=>{if(ptySetLook(c))try{toast("🚶 "+ptyNm(c)+"陪你走了")}catch(e){}}],["好",null,true]],"prolog");   /* 11/17 iMac 模擬器第 15 項：按了沒有任何提示（要到「我的角色」才看得到換人）→ 換好就說一聲；英文在 07i18n I18N_PAT */
+  modal(`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><h2>${esc(nm)}加入了！</h2>${L.map(x=>PTY_SAY[x]?`<p class="pl-say">${esc(ptyNm(x))}：「${esc(PTY_SAY[x])}」</p>`:"").join("")}<p class="muted">${ptyTa(L)}的招式黑洞裡就能帶；在「雲河七星」卡冊可以換隨行的人，也可以分星輝給${ptyTa(L)}。</p>`,
+    [["設為隨行",()=>{const ok=ptySetLook(c);if(ok)try{toast("🚶 "+ptyNm(c)+"現在跟著你")}catch(e){}ptyJoinTrans(c,{look:ok})}],["好",()=>ptyJoinTrans(c,{look:false}),true]],"prolog");   /* 11/18 開發者：關掉加入卡不再直接跳回星槎，先播小轉場（ptyJoinTrans） */   /* 11/17 iMac 模擬器第 15 項：按了沒有任何提示（要到「我的角色」才看得到換人）→ 換好就說一聲；英文在 07i18n I18N_PAT */
   const P2=ptyGet();for(const x of L)P2.seen[x]=1;ptySave(P2)}
+/* 11/18 開發者「夥伴加入後，畫面直接跳回星槎，太突兀」：加入卡（按「設為隨行」或「好」）關掉以後到回到星槎頁之間的小轉場，不新增圖：
+   ① 開頭畫面同色的底（#F3ECDD，中間一圈淡淡的墨暈）0.4 秒蓋上，蓋滿時換到星槎頁（#/adventure；已經在就不換）；② 0.6 秒淡開；
+   ③ 新夥伴的位置閃一下星光（✦），頭上冒他加入時那句（PTY_SAY）2.5 秒淡出——設為隨行＝首頁小人（.xqbot）那裡，不然在星槎圖中間；全程約 1.5 秒。
+   點一下＝跳過（直接到星槎頁、不放特效）；系統開了「減少動態」＝只淡入淡出，沒有星光和泡泡；兒童模式照常。
+   播放中不跳別的視窗：蓋著的時候 body.xqt-on（加到主畫面、授印禮、印章、季節小籤…都會等開頭畫面這個記號）、整段 MODAL_HOLD（modal 排隊）、07mnq mnqIdle 看 #ptyTr。
+   ptyJoinTrans 回傳這一場的狀態 R（c、rm、fx 有沒有放特效、skip、end）；o.done(R) 結束時叫（測試用）。 */
+const PTY_TR={OUT:400,GAP:120,IN:600,ALL:1500,SAY:2500,SHIP:"#/adventure"};
+let PTY_TR_ON=null;
+function ptyTrBusy(){return!!PTY_TR_ON}
+function ptyTrRM(){try{return typeof matchMedia==="function"&&!!matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}}
+const ptyTrOnShip=()=>{try{return/^#\/adventure\/?$/.test(location.hash||"")}catch(e){return false}};
+function ptyTrCss(){if(document.getElementById("ptyTrCss"))return;const s=document.createElement("style");s.id="ptyTrCss";
+  s.textContent=`#ptyTr{position:fixed;inset:0;z-index:9997;background:radial-gradient(ellipse at 50% 52%,rgba(42,31,21,.24),rgba(42,31,21,.08) 38%,rgba(42,31,21,0) 66%),#F3ECDD;opacity:0;transition:opacity .4s ease-in;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#ptyTr.on{opacity:1}#ptyTr.in{opacity:0;transition:opacity .6s ease-out}
+.ptr-star{position:fixed;z-index:9996;pointer-events:none;color:#F2C14E;font-size:46px;line-height:1;text-shadow:0 0 12px rgba(242,193,78,.95),0 0 30px rgba(255,230,160,.75);transform:translate(-50%,-50%);animation:ptrStar 1.1s ease-out both}
+@keyframes ptrStar{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(0)}35%{opacity:1;transform:translate(-50%,-50%) scale(1.25) rotate(30deg)}100%{opacity:0;transform:translate(-50%,-50%) scale(.8) rotate(60deg)}}
+.ptr-say{position:fixed;z-index:9996;display:flex;align-items:flex-end;gap:4px;max-width:min(78vw,280px);pointer-events:none;transition:opacity .45s;animation:ptrIn .45s ease-out both}
+.ptr-say img{width:40px;height:54px;object-fit:contain;flex:none;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
+.ptr-say span{background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:14px 14px 14px 4px;padding:6px 10px 7px;font:14px/1.55 var(--serif);box-shadow:0 3px 12px rgba(0,0,0,.2);margin-bottom:10px}
+.ptr-say b{display:block;font:700 12px var(--sans);color:var(--accent)}.ptr-say.out{opacity:0}
+@keyframes ptrIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){#ptyTr,#ptyTr.in{transition-duration:.2s}.ptr-star,.ptr-say{display:none}}`;document.head.append(s)}
+function ptyTrAnchor(look){try{if(look){const b=document.querySelector(".xqbot");if(b&&b.getBoundingClientRect().width)return b}return document.querySelector("#view .shp-page")||document.getElementById("view")}catch(e){return null}}
+function ptyTrFx(c,look){const a=ptyTrAnchor(look),r=a&&a.getBoundingClientRect?a.getBoundingClientRect():null,W=innerWidth||360,H=innerHeight||640;
+  const x=r&&r.width?r.left+r.width/2:W/2,y=r&&r.height?r.top+r.height*(look?.3:.45):H*.45,out=[];
+  const st=document.createElement("div");st.className="ptr-star";st.textContent="✦";st.style.left=Math.round(x)+"px";st.style.top=Math.round(y)+"px";document.body.append(st);out.push(st);setTimeout(()=>st.remove(),1200);
+  const s=PTY_SAY[c];if(s){const b=document.createElement("div");b.className="ptr-say";b.setAttribute("aria-hidden","true");
+    b.innerHTML=`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><span><b>${esc(ptyNm(c))}</b>「${esc(s)}」</span>`;
+    b.style.left=Math.round(Math.max(8,Math.min(W-288,x-60)))+"px";b.style.top=Math.round(Math.max(8,y-96))+"px";document.body.append(b);out.push(b);
+    setTimeout(()=>b.classList.add("out"),PTY_TR.SAY);setTimeout(()=>b.remove(),PTY_TR.SAY+450);try{axSay(ptyNm(c)+"：「"+s+"」")}catch(e){}}
+  return out}
+function ptyJoinTrans(c,o){o=o||{};if(PTY_TR_ON)return PTY_TR_ON;const rm=o.rm!=null?!!o.rm:ptyTrRM(),T=[],at=(f,ms)=>T.push(setTimeout(f,ms)),R={c,rm,look:!!o.look,fx:false,skip:false,end:false};PTY_TR_ON=R;
+  let fx=[];const ship=()=>{if(!ptyTrOnShip())location.hash=PTY_TR.SHIP},bd=document.body;
+  try{if(typeof MODAL_HOLD!=="undefined")MODAL_HOLD=Math.max(MODAL_HOLD,Date.now()+PTY_TR.ALL+100)}catch(e){}
+  ptyTrCss();const ov=document.createElement("div");ov.id="ptyTr";ov.setAttribute("aria-hidden","true");bd.append(ov);bd.classList.add("xqt-on");
+  const fin=()=>{if(R.end)return;R.end=true;T.forEach(clearTimeout);ship();bd.classList.remove("xqt-on");ov.remove();if(R.skip)for(const e of fx)try{e.remove()}catch(x){}PTY_TR_ON=null;if(o.done)try{o.done(R)}catch(e){}};
+  ov.onclick=()=>{R.skip=true;fin()};
+  at(()=>ov.classList.add("on"),20);
+  at(()=>{ship();bd.classList.remove("xqt-on")},PTY_TR.OUT);
+  at(()=>{ov.classList.add("in");if(!rm){R.fx=true;try{fx=ptyTrFx(c,R.look)}catch(e){}}},PTY_TR.OUT+PTY_TR.GAP);
+  at(()=>{ov.style.pointerEvents="none"},PTY_TR.OUT+PTY_TR.GAP+PTY_TR.IN);   /* 淡開了就不擋星槎頁的點擊 */
+  at(fin,PTY_TR.ALL);return R}
 /* ③ 起航閘門：回 null＝不擋 */
 function ptySailBlock(){let P=null;try{P=ptyGet()}catch(e){}if(!P||typeof shipFront!=="function")return null;const k=shipFront();if(!k)return null;const L=PTY.pendingAt(P,k);if(!L.length)return null;
   const c=L[0],id=PTY.JOIN[c].help;if(typeof shipRec==="function"&&shipRec(k,id)){for(const x of L)ptyJoin(x,"ship");return null}   /* 題目先解過了（例如在聽書裡解的）：補加入，不擋 */
