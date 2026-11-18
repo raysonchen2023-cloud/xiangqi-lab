@@ -1630,7 +1630,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261118-2016";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261118-2027";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -28293,7 +28293,7 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
   v.innerHTML="";v.append(wrap);
   const ready=()=>{if(!wrap.isConnected)return;center(JH_SITE[at].s[0],false);jhFadeOut();setTimeout(()=>jhIntro(),JH_FADE+80)};
   if(img.complete&&img.naturalWidth)setTimeout(ready,0);else{img.onload=ready;img.onerror=ready}
-  setTimeout(()=>{if(f.classList.contains("on")&&wrap.isConnected)ready()},6000);   /* 圖很慢也不要一直蓋著 */
+  setTimeout(()=>{if(!f.classList.contains("on"))return;if(wrap.isConnected)ready();else f.classList.remove("on")},6000);   /* 圖很慢也不要一直蓋著；11/18 iMac 驗 1909（P1）：長卷頁在圖好之前就被換掉時，ready() 不會跑，遮罩一直蓋在別頁上、點什麼都沒反應——頁面不在了也要拿掉 */
   /* 英文模式直接開在這一頁：外掛字典（派名、人名）比畫面晚到，到了（07i18n 發 xq-i18n-ext）就照英文重畫一次（讀螢幕標籤才會是英文） */
   try{if(typeof oscEn==="function"&&oscEn()&&!(typeof I18N_EXN!=="undefined"&&I18N_EXN>0)){const H0=location.hash,re=()=>{document.removeEventListener("xq-i18n-ext",re);if(wrap.isConnected&&location.hash===H0)Jianghu(v)};document.addEventListener("xq-i18n-ext",re)}}catch(e){}
   return{}}
@@ -28325,7 +28325,8 @@ function jhIntro(force){let seen=0;try{seen=store.get("jhIntro",0)}catch(e){}if(
   d.querySelector("#jhIntroGo").onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}close()};d.onclick=e=>{if(e.target===d)close()};
   setTimeout(()=>{try{d.querySelector("#jhIntroGo").focus()}catch(e){}},400)}
 /* 離開長卷頁：歡迎文字還開著就收掉（不記看過） */
-if(typeof addEventListener==="function")addEventListener("hashchange",()=>{if(/^#\/jianghu/.test(location.hash))return;document.body.classList.remove("jh-on");const d=document.getElementById("jhIntro");if(d)d.remove()});
+if(typeof addEventListener==="function")addEventListener("hashchange",()=>{if(/^#\/jianghu/.test(location.hash))return;document.body.classList.remove("jh-on");const d=document.getElementById("jhIntro");if(d)d.remove();
+  const f=document.getElementById("jhFade");if(f)f.classList.remove("on")});   /* 11/18 iMac 驗 1909（P1）：離開長卷頁就把宣紙色遮罩拿掉（原本只靠長卷頁的 ready／6 秒保險，頁面先被換掉就永遠蓋著） */
 /* ---------- 首頁遠山「🗺 十州棋館」（照 07xsm 西市入口的掛法；各朝首頁都有） ---------- */
 function jhHomePos(P){const b=P&&P.querySelector("#hmJh");if(!b)return;const c=JH_HOME[P.dataset.hmw||""]||JH_HOME[""];b.style.left=c[0]+"%";b.style.top=c[1]+"%";delete b.dataset.ttL;b.style.marginLeft=""}
 function jhHomeSpot(v){if(!JH_ON)return;const P=v.querySelector(".home-page");if(!P||P.querySelector("#hmJh"))return;jhCss();
