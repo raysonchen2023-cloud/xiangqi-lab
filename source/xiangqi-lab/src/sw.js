@@ -65,6 +65,11 @@ self.addEventListener("install",e=>{let got=0;const total=APP_FILES.length;updTe
     return viaCdn(null,u,null,"reload",()=>fetch(q)).then(r=>{if(!r.ok)throw new Error(u+" "+r.status);return c.put(q,r)}).then(()=>updTell({xqUpd:[++got,total,VERSION]}))}))).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("xqlab-app-")&&k!==APP_CACHE).map(k=>caches.delete(k))))
   .then(()=>self.clients.claim()))});
+// 回報實際接管頁面的版本，並允許網頁要求已等候的新版接管。
+self.addEventListener("message",e=>{
+  if(e.data?.xqActivate===true)e.waitUntil(self.skipWaiting());
+  if(e.data?.xqGetVersion===true&&e.ports[0])e.ports[0].postMessage({xqVersion:VERSION});
+});
 // 加上跨來源隔離標頭
 function isolate(res){
   if(!res||res.status===0||res.type==="opaque")return res;

@@ -135,24 +135,38 @@ test("〔混合〕跨來源隔離自動重整（02-shell.js 第 176 行）：在
   assert.deepEqual([r.reloads.length, r.ss.xqReload, r.preps.join()], [1, "1", "coi"]);
   assert.match(SHELL, /const go=\(\)=>\{if\(typeof rlgHold==="function"&&rlgHold\(\)\)return setTimeout\(go,3000\);/);
 });
-test("〔混合〕新版 pending：換頁時剛下完（60 秒內）不套用；過了才 reload，重整前 rlgPrep(\"upd\")；馬上套用那條的 busyNow 也看 rlgHold", () => {
-  const line = SHELL.split("\n").find(l => l.startsWith('  addEventListener("hashchange",e=>{if(pending&&'));
-  const segL = SHELL.split("\n").find(l => l.includes("let pending=false;const seg="));
-  const inG = SHELL.split("\n").find(l => l.includes("const inGame=(h)=>"));
-  assert.ok(line && segL && inG);
-  const L = [], reloads = [], preps = [], marks = [], hold = { v: true };
-  const ctx = { location: { hash: "#/", reload: () => reloads.push(1) }, addEventListener: (t, f) => L.push(f), String, markDone: () => marks.push(1), rlgHold: () => hold.v, rlgPrep: w => preps.push(w) };
-  vm.createContext(ctx); vm.runInContext(inG + "\n" + segL.trim() + "\n" + line + "\npending=true;", ctx);
-  const go = (o, n) => L[0]({ oldURL: "http://x/#" + o, newURL: "http://x/#" + n });
-  go("/cpuroom", "/"); assert.equal(reloads.length, 0, "剛下完回首頁不套用");
-  hold.v = false; go("/", "/cpu"); assert.equal(reloads.length, 0, "換到對局頁不套用（原本的規矩）");
-  go("/cpuroom", "/stats"); assert.deepEqual([reloads.length, marks.length, preps.join()], [1, 1, "upd"]);
-  const bn = SHELL.split("\n").find(l => l.includes("const busyNow=()=>")); assert.ok(bn.includes('||(typeof rlgHold==="function"&&rlgHold())'), "busyNow 要含 rlgHold");
-  assert.ok(SHELL.includes('markDone();setTimeout(()=>{if(typeof rlgPrep==="function")rlgPrep("upd");location.reload()},900);return}'), "馬上套用那條重整前也改寫網址");
-  assert.equal((SHELL.match(/location\.reload\(\)/g) || []).length, 4, "02-shell.js 只有這四處重整，全都經過 rlgPrep（11/18 第 33 輪多了 coiWarn「重新整理」）");
-  assert.ok(SHELL.includes('if(typeof rlgPrep==="function")rlgPrep("coi");location.reload()}],["先不用",null,true]]'), "coiWarn 的重新整理也先 rlgPrep");
-  assert.equal((SHELL.match(/rlgPrep\("(upd|coi)"\);location\.reload\(\)/g) || []).length, 4);
+test("〔混合〕更新只在安全頁面重新載入，排程後進入對局也不打斷", () => {
+  const start = SHELL.indexOf("  function applyUpdate(){");
+  const end = SHELL.indexOf("  async function doUpdate(", start);
+  assert.ok(start >= 0 && end > start);
+  const calls = [], timers = [];
+  let busy = true;
+  const ctx = { document: { hidden: false, querySelector: () => null }, busyNow: () => busy,
+    setTimeout: (fn, ms) => (timers.push({fn, ms}), timers.length),
+    markDone: () => calls.push("save"),
+    rlgPrep: kind => calls.push(kind),
+    location: { reload: () => calls.push("reload") } };
+  vm.createContext(ctx);
+  vm.runInContext("let pending=true,reloadTimer=0;"+SHELL.slice(start,end),ctx);
+  ctx.applyUpdate();
+  assert.equal(timers.length,0,"對局中不排重載");
+  busy=false;
+  ctx.applyUpdate();
+  assert.equal(timers[0].ms,900);
+  busy=true;
+  timers.shift().fn();
+  assert.deepEqual(calls,[],"等候期間進入對局也不重載");
+  busy=false;
+  ctx.applyUpdate();
+  timers.shift().fn();
+  assert.deepEqual(calls,["save","upd","reload"]);
+  ctx.applyUpdate();
+  assert.equal(timers.length,0,"同意套用一次只重載一次");
+  const guard = SHELL.split("\n").find(line => line.includes("const busyNow=()=>"));
+  assert.match(guard,/rlgHold/,"保留賽後和結果視窗保護");
+  assert.match(SHELL,/rlgPrep\("coi"\);location.reload/,"保留跨來源隔離重載保護");
 });
+
 test("〔原始碼〕02r-reloadguard.js 在 02-shell.js 後面、第一次 route()（11-watch.js）前面組進 m.html；一行程式裡沒有 // 註解", () => {
   const a = MHTML.indexOf("//#include m/02-shell.js\n//#include m/02r-reloadguard.js"), b = MHTML.indexOf("//#include m/11-watch.js");
   assert.ok(a > 0 && b > a);

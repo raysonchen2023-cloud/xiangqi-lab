@@ -189,7 +189,14 @@ function poller(fn,ms){let on=true,t=null;const tick=async()=>{if(!on)return;try
 
 // ================= 離線版專用：連線、引擎下載 =================
 async function appVer(){try{const k=(await caches.keys()).filter(x=>x.startsWith("xqlab-app-")).pop();return k?k.slice(10):null}catch(e){return null}}
-async function netVer(){try{const t=await(await fetch("sw.js",{cache:"no-store"})).text();return(t.match(/VERSION="([\w-]+)"/)||[])[1]||null}catch(e){return null}}
+async function netVer(){
+  const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),8000);
+  try{
+    const response=await fetch("sw.js",{cache:"no-store",signal:abort.signal});
+    if(!response.ok)return null;
+    return ((await response.text()).match(/VERSION="([\w-]+)"/)||[])[1]||null;
+  }catch(e){return null}finally{clearTimeout(timer)}
+}
 const OFF=!!window.XQ_OFFLINE;
 // 獎勵模式（贏棋換車）：意見回饋 144 關掉，開發者 11/11「刪除我的車庫」整個拿掉
 try{store.del?store.del("cpuCar"):localStorage.removeItem("xq_cpuCar")}catch(e){}
@@ -210,7 +217,7 @@ try{store.del?store.del("cpuCar"):localStorage.removeItem("xq_cpuCar")}catch(e){
 addEventListener("orientationchange",()=>[150,400,800,1500].forEach(t=>setTimeout(()=>{try{dispatchEvent(new Event("resize"))}catch(e){}},t)));
 /* hspx 第 1035 列：轉回直向時把橫向留下的左右捲動歸零 */
 addEventListener("orientationchange",()=>[150,500,1000].forEach(t=>setTimeout(()=>{try{if(innerHeight>innerWidth){const se=document.scrollingElement||document.documentElement;if(se.scrollLeft)se.scrollLeft=0;if(window.scrollX)window.scrollTo(0,window.scrollY)}}catch(e){}},t)));
-if(OFF&&"serviceWorker" in navigator){
+if(OFF&&!xqNat()&&"serviceWorker" in navigator){
   // 註冊 service worker；第一次要重新整理一次，多執行緒（跨來源隔離）才會生效
   /* 開發者決定（Gemini 效能審閱 P0-2）：等 service worker 真的就緒、接管這一頁再看；還沒有跨來源隔離（多執行緒引擎開不起來）就自動重整，同一次打開最多兩次 */
   /* 11/13 Android 舊 WebView：原生 App（UA 帶 XQQianqiuApp/）的隔離靠 App 原生碼、不靠 sw.js，重整不會好，所以不自動重整（改跳下面的降級提示） */
@@ -219,11 +226,24 @@ if(OFF&&"serviceWorker" in navigator){
     const go=()=>{if(typeof rlgHold==="function"&&rlgHold())return setTimeout(go,3000);sessionStorage.setItem("xqReload",String(n+1));try{if((typeof TITLE!=="undefined"&&TITLE)||(typeof journey==="function"&&!journey()))sessionStorage.removeItem("xqTitleShown")}catch(e){}   /* 11/17 第 8 輪 B N8-1：新玩家第一次開網頁，隔離重整前開頭畫面已記 xqTitleShown，重整後就略過開頭畫面和新手練習；開頭畫面還開著或還沒有旅程就拿掉記號 */
     if(typeof rlgPrep==="function")rlgPrep("coi");location.reload()};   /* 11/13 開發者 P1：對局剛結束、結果視窗開著、殺棋特效中不重整（02r-reloadguard.js） */
     if(navigator.serviceWorker.controller)setTimeout(go,n?800:0);else navigator.serviceWorker.addEventListener("controllerchange",go,{once:true})}).catch(()=>{});
-  // 自動更新：打開 App、切回 App、以及開著的時候每 5 分鐘，都去問一次有沒有新版。
-  // 新版下載好就跳出視窗「有新版本」；下棋或測驗中只在上方顯示一條提示，不打斷。
-  const hadCtl=!!navigator.serviceWorker.controller;let lastChk=0,shown=false,updating=false;
-  const chk=force=>{if(!force&&Date.now()-lastChk<30000)return;lastChk=Date.now();navigator.serviceWorker.getRegistration().then(r=>r&&r.update()).catch(()=>{})};
-  document.addEventListener("visibilitychange",()=>{if(!document.hidden)chk()});setTimeout(()=>chk(true),3000);
+  // 先用網路版號判斷有無新版。下載完成與 Worker 接管是不同階段。
+  const hadCtl=!!navigator.serviceWorker.controller;
+  const build=String(window.XQ_BUILD||"");
+  const newer=v=>/^\d{8}-\d{4}$/.test(v)&&/^\d{8}-\d{4}$/.test(build)&&v>build;
+  let lastChk=0,checking=false,updating=false,available="",shownV="",deferredTimer=0,pending=false,reloadTimer=0,accepted="";
+  async function chk(force){
+    if(checking||(!force&&Date.now()-lastChk<30000))return;
+    checking=true;lastChk=Date.now();
+    try{
+      const reg=await navigator.serviceWorker.getRegistration();
+      // 先看到新版就能通知。Worker 更新在背景進行，不阻塞通知。
+      if(reg&&navigator.serviceWorker.controller)reg.update().catch(()=>{});
+      const latest=await netVer();
+      if(newer(latest)&&navigator.serviceWorker.controller)notifyNew(latest);
+    }catch(e){}finally{checking=false}
+  }
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden){chk();showUpdate()}});
+  setTimeout(()=>chk(true),3000);
   setInterval(()=>{if(!document.hidden)chk(true)},5*60000);
   const inGame=(h)=>/^#\/(cpu|arena|pvp|quiz|watch|journey\/play|redo\/play)(\/|$)|^#\/battle\/[a-z]+\/\d+|^#\/canju\/.+|^#\/theme\/.+/.test(h==null?location.hash:h);   /* 11/9 開發者：古戰場「攔截」守城局下到一半跳更新、按了就結束；古戰場、殘局、主題訓練的對局頁也算在下棋，更新視窗等離開再跳 */
   const fmtV=x=>!x?"":/^\d{8}-\d{4}$/.test(x)?`${x.slice(0,4)}/${x.slice(4,6)}/${x.slice(6,8)} ${x.slice(9,11)}:${x.slice(11,13)}`:x.slice(0,8);
@@ -235,35 +255,102 @@ if(OFF&&"serviceWorker" in navigator){
   const markDone=()=>{try{localStorage.setItem("xqUpdDone",String(Date.now()))}catch(e){}try{localStorage.setItem("xqUpdBack",JSON.stringify({t:Date.now(),h:location.hash||""}));sessionStorage.setItem("xqTitleShown","1")}catch(e){}};   /* 11/16 開發者「App 更新的時候，不要跳到 App 關掉後開啟的第一個畫面」（選單「只管更新」）：記下這是更新重載＋當下頁面，05b saveBoot 看到就不出開頭畫面、回原頁（iPhone 主畫面 App 重載時 sessionStorage 有時會被清，所以另存 localStorage） */
   try{const d=+(localStorage.getItem("xqUpdDone")||0);if(d){localStorage.removeItem("xqUpdDone");if(Date.now()-d<120000){let w=0;const sh=async()=>{if(document.querySelector("#preov")&&++w<200)return setTimeout(sh,300);const v=fmtV(await appVer());
     const t=document.createElement("div");t.className="toast";t.style.zIndex="310";t.textContent="✓ 已更新到新版"+(v?"（"+v+"）":"")+"，可以繼續用了";document.body.append(t);setTimeout(()=>t.remove(),5000)};setTimeout(sh,600)}}}catch(e){}
-  async function doUpdate(){updating=true;updSay("⬇ 正在檢查新版…",3);const tt=updT;let slow=null;
-    try{const r=await navigator.serviceWorker.getRegistration();if(r){await r.update().catch(()=>{});
-      if(r.installing||r.waiting){slow=setTimeout(()=>updSay("⬇ 網路比較慢，還在下載…下載好會自動套用"),15000);
-        await new Promise(ok=>{navigator.serviceWorker.addEventListener("controllerchange",ok,{once:true});setTimeout(ok,90000)})}}}catch(e){}
-    clearTimeout(slow);updSay(tt.querySelector(".ut").textContent,100);
-    // 不馬上重新整理：新版已經在背景下載好，留在原本的畫面（意見回饋寫到一半也不會不見），等換到別的頁面時才套用
-    pending=true;
-    /* 意見回饋 320：沒在下棋、測驗、打字、開卡片時，下載好就馬上套用；不然才等換頁 */
-    /* 意見回饋 817：按「背景更新」時輸入框已經失焦，所以也看有沒有寫了字的輸入框；意見回饋頁、殘局、古戰場、擂台、主題訓練這些棋局頁也算在忙 */
-    const typed=()=>[...document.querySelectorAll("textarea,input[type=text],input:not([type])")].some(x=>x.offsetParent&&String(x.value||"").trim());
-    const busyNow=()=>inGame()||/^#\/(feedback|canju|battle|theme|cup|legend|lobby|adventure|redo|exam|today)(\/|$)/.test(location.hash)||typed()||!!document.querySelector("#sheet.show,.travel,.walkc")||/^(INPUT|TEXTAREA)$/.test((document.activeElement||{}).tagName||"")||(typeof rlgHold==="function"&&rlgHold());   /* 11/13 開發者 P1：對局結束 60 秒內、結果視窗、殺棋特效中也算在忙 */
-    if(!busyNow()){updSay("✓ 新版下載好了，馬上套用…",100);markDone();setTimeout(()=>{if(typeof rlgPrep==="function")rlgPrep("upd");location.reload()},900);return}
-    updSay("✓ 新版下載好了，換到別的頁面時自動套用",100);setTimeout(()=>tt.remove(),3500);
-    document.querySelectorAll(".toast.upd").forEach(x=>x.remove())}
-  let pending=false;const seg=h=>(String(h||"").split("#")[1]||"/").split("/")[1]||"";
-  addEventListener("hashchange",e=>{if(pending&&seg(e.newURL)!==seg(e.oldURL)&&!inGame("#"+(String(e.newURL).split("#")[1]||"/"))&&!(typeof rlgHold==="function"&&rlgHold())){markDone();if(typeof rlgPrep==="function")rlgPrep("upd");location.reload()}});   /* 換到對局頁時不套用，等下完離開再套用 */
-  let shownV="";
-  async function notifyNew(nv,note){if(shown&&(!nv||nv<=shownV))return;shown=true;shownV=nv||shownV;
-    if(pending||updating){updating=false;return doUpdate()}const v=fmtV(nv||await appVer());vibrate([20,40,20]);
-    /* QA P2-6：下棋時不在對手資訊上面蓋「有新版本」，等離開對局畫面再跳 */
-    if(inGame()){shown=false;const w=()=>{if(inGame())return setTimeout(w,4000);notifyNew(nv,note)};setTimeout(w,4000);return}
-    if(0){const t=document.createElement("button");t.className="toast upd";t.style.cssText="bottom:auto;top:calc(64px + var(--safeT));pointer-events:auto;z-index:300";
-      t.textContent="🆕 有新版本"+(v?"（"+v+"）":"")+"，點這裡在背景更新，下完這盤換頁時套用";t.onclick=doUpdate;document.body.append(t);return}
-    /* 意見回饋 622（開發者）：更新內容只有開發者看得到；一般玩家只在「你回報的問題修好了」（checkFixes）看到自己回報的那幾則 */
+  const typed=()=>[...document.querySelectorAll("textarea,input[type=text],input:not([type])")].some(x=>x.offsetParent&&String(x.value||"").trim());
+  const busyNow=()=>inGame()||/^#\/(feedback|canju|battle|theme|cup|legend|lobby|adventure|redo|exam|today)(\/|$)/.test(location.hash)||typed()||!!document.querySelector("#sheet.show,.travel,.walkc")||/^(INPUT|TEXTAREA)$/.test((document.activeElement||{}).tagName||"")||(typeof rlgHold==="function"&&rlgHold());
+  const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  // 核對目前接管頁面的 Worker 版號。等候中的快取不可當成已套用。
+  function controllerVersion(){
+    const worker=navigator.serviceWorker.controller;
+    if(!worker)return Promise.resolve("");
+    return new Promise(resolve=>{
+      const channel=new MessageChannel();
+      const finish=value=>{clearTimeout(timer);channel.port1.close();resolve(value)};
+      const timer=setTimeout(()=>finish(""),2000);
+      channel.port1.onmessage=e=>finish(worker===navigator.serviceWorker.controller?String(e.data?.xqVersion||""):"");
+      try{worker.postMessage({xqGetVersion:true},[channel.port2])}catch(e){finish("")}
+    });
+  }
+  function applyUpdate(){
+    if(!pending||reloadTimer||busyNow()||document.hidden||document.querySelector(".modal"))return;
+    reloadTimer=setTimeout(()=>{
+      reloadTimer=0;
+      if(!pending||busyNow()||document.hidden||document.querySelector(".modal"))return;
+      pending=false;markDone();
+      if(typeof rlgPrep==="function")rlgPrep("upd");
+      location.reload();
+    },900);
+  }
+  async function doUpdate(target){
+    if(updating||pending)return;
+    accepted=target;updating=true;updSay("⬇ 正在準備新版…",3);
+    const tt=updT,deadline=Date.now()+90000;
+    let ready=false,lastWaiting=null;
+    try{
+      const reg=await navigator.serviceWorker.getRegistration();
+      if(reg){
+        if(!reg.installing&&!reg.waiting)reg.update().catch(()=>{});
+        while(Date.now()<deadline){
+          if(reg.waiting&&reg.waiting!==lastWaiting){
+            lastWaiting=reg.waiting;lastWaiting.postMessage({xqActivate:true});
+          }
+          const active=await controllerVersion();
+          if(newer(active)&&active>=target){ready=true;break}
+          await pause(600);
+        }
+      }
+    }catch(e){}
+    updating=false;
+    if(!ready){
+      updSay("還在等新版接管，準備完成後會套用。");
+      setTimeout(()=>tt.remove(),5000);
+      return;
+    }
+    markReady();
+  }
+  function markReady(){
+    if(pending)return;
+    accepted="";pending=true;
+    const tt=updBox();
+    updSay(busyNow()?"✓ 新版下載好了，離開目前操作後會套用":"✓ 新版下載好了，正在套用…",100);
+    applyUpdate();setTimeout(()=>tt.remove(),5000);
+  }
+  function showUpdate(){
+    if(updating||pending||accepted||!newer(available)||available<=shownV)return;
+    if(document.hidden||busyNow()||document.querySelector(".modal,#preov")||Date.now()<MODAL_HOLD){
+      if(!deferredTimer)deferredTimer=setTimeout(()=>{deferredTimer=0;showUpdate()},4000);
+      return;
+    }
+    const target=available, v=fmtV(target);
+    shownV=target;vibrate([20,40,20]);
+    let note=updateNote;
     try{if(!(typeof DEVTOOLS==="function"&&DEVTOOLS()))note=""}catch(e){note=""}
-    modal(`<div class="em">🆕</div><h2>有新版本</h2>${note?`<p style="text-align:left;white-space:pre-wrap">${esc(note)}</p>`:""}<p class="muted">${v?"版本 "+esc(v)+"<br>":""}在背景更新，你可以留在這個畫面繼續做事，換到別的頁面時才套用新版。你的戰績、棋譜和設定都會保留。</p>`,[["背景更新",doUpdate],["稍後",()=>{shown=false},true]],"keep")}   /* 意見回饋 607：keep＝換頁也不關 */
+    modal(`<div class="em">🆕</div><h2>有新版本</h2>${note?`<p style="text-align:left;white-space:pre-wrap">${esc(note)}</p>`:""}<p class="muted">版本 ${esc(v)}<br>可以先在背景準備新版，等你離開目前操作再套用。戰績、棋譜和設定會保留。</p>`,[["背景更新",()=>doUpdate(target)],["稍後",()=>{},true]],"keep");
+  }
+  let updateNote="";
+  function notifyNew(nv,note){
+    if(!newer(nv)||nv<available)return;
+    if(nv>available){available=nv;updateNote=note||""}
+    else if(note)updateNote=note;
+    showUpdate();
+  }
+  addEventListener("hashchange",()=>{showUpdate();applyUpdate()});
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden)applyUpdate()});
   window.XQ_notifyNew=notifyNew;
-  window.XQ_checkUpdate=async()=>{chk(true);const[a,n]=await Promise.all([appVer(),netVer()]);return{a,n}};
-  if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",()=>{if(updating)return;if(+(sessionStorage.getItem("xqReload")||0)>0&&!self.crossOriginIsolated)return;notifyNew()})}
+  window.XQ_checkUpdate=async()=>{
+    chk(true);
+    const n=await netVer(),a=build||await appVer();
+    if(newer(n)){if(!updating&&!pending)accepted="";shownV="";notifyNew(n)}
+    return {a,n};
+  };
+  if(hadCtl)navigator.serviceWorker.addEventListener("controllerchange",async()=>{
+    if(updating)return;
+    if(accepted){
+      const active=await controllerVersion();
+      if(newer(active)&&active>=accepted){markReady();return}
+    }
+    chk(true);
+  });
+}
 /* 11/13 Android 舊 WebView 降級提示：原生 App 沒有跨來源隔離或 SharedArrayBuffer＝手機的 Android System WebView 太舊（模擬器的 WebView 133 就是），電腦棋手（多執行緒 Pikafish）一定載不起來。
    不重整、跳一次說明：要更新哪個 App、哪些功能照樣能用；引擎的下載、載入、搜尋都直接回這句（不再說「關掉重開」，也不白抓 48 MB 引擎檔）。只在原生 App 判斷，網頁版不受影響 */
 /* 11/18 第 33 輪觀察（測試員：Service Worker 沒裝好、沒有跨來源隔離時，跟電腦下棋電腦一直不走，只在 console 寫「[engine] 瀏覽器還沒開啟多執行緒模式」）：

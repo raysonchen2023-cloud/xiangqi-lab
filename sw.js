@@ -1,7 +1,7 @@
 // Service worker：
 // 1) 離線快取：App、古譜、引擎存在手機裡；神經網路檔（48 MB）放在另一個快取，更新 App 時不用重新下載
 // 2) 多執行緒：幫每個回應加上 COOP/COEP 標頭（WebAssembly 多執行緒需要「跨來源隔離」，GitHub Pages 自己不能設）
-const VERSION="20261120-1557";
+const VERSION="20261120-1902";
 const APP_CACHE="xqlab-app-"+VERSION,ENGINE_CACHE="xqlab-engine";
 const APP_FILES=["./","index.html","core.js","engine.js","local.js","varengine.js","varengine-worker.js","manifest.json","icon.svg","icon-180.png","icon-512.png","icon-512-mask.png","qrcode.min.js","jsQR.min.js","net.js","zh.js","opencc-cn2t.js","opencc-t2cn.js","bot3d.js","park3d.js","engine/pikafish.js","engine/pikafish.wasm",
   "data/books.json","data/shiqingyaqu.json","data/juzhongmi.json","data/meihuapu.json","data/kaiju.json","data/canju.json","data/xuyinchuan.json","data/big-books.json","data/quiz.json","data/terms.json","data/gmbios.json","three.min.js","map3d.js","GLTFLoader.mjs","three-shim.mjs","BufferGeometryUtils.mjs","data/park-legend.json","data/park-novel.json","data/preload.json"];   /* 意見回饋 422：3D 程式和故事也一起先存 */
@@ -65,6 +65,11 @@ self.addEventListener("install",e=>{let got=0;const total=APP_FILES.length;updTe
     return viaCdn(null,u,null,"reload",()=>fetch(q)).then(r=>{if(!r.ok)throw new Error(u+" "+r.status);return c.put(q,r)}).then(()=>updTell({xqUpd:[++got,total,VERSION]}))}))).then(()=>self.skipWaiting()))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("xqlab-app-")&&k!==APP_CACHE).map(k=>caches.delete(k))))
   .then(()=>self.clients.claim()))});
+// 回報實際接管頁面的版本，並允許網頁要求已等候的新版接管。
+self.addEventListener("message",e=>{
+  if(e.data?.xqActivate===true)e.waitUntil(self.skipWaiting());
+  if(e.data?.xqGetVersion===true&&e.ports[0])e.ports[0].postMessage({xqVersion:VERSION});
+});
 // 加上跨來源隔離標頭
 function isolate(res){
   if(!res||res.status===0||res.type==="opaque")return res;

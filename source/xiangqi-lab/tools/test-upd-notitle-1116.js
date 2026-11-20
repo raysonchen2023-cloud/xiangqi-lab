@@ -39,8 +39,10 @@ test("〔行為〕沒有記號（真的關掉 App 再開）或記號過期（超
   assert.deepEqual(boot({ upd: { t: Date.now(), h: "#/adventure" }, hash: "", ss: { xqTitleShown: "1" } }).L, [], "原本的 sessionStorage 記號照舊有效");
 });
 
-test("〔原始碼〕02-shell 套用新版前（markDone）記下 xqUpdBack＝{t,h}，兩條套用路（馬上套用、換頁套用）都先 markDone 再重新載入", () => {
-  assert.ok(SH.includes('localStorage.setItem("xqUpdBack",JSON.stringify({t:Date.now(),h:location.hash||""}))'), "markDone 記 xqUpdBack");
-  assert.ok(SH.includes('markDone();setTimeout(()=>{if(typeof rlgPrep==="function")rlgPrep("upd");location.reload()},900)'), "馬上套用");
-  assert.ok(SH.includes('{markDone();if(typeof rlgPrep==="function")rlgPrep("upd");location.reload()}'), "換頁時套用");
+test("〔原始碼〕套用新版的共同路徑先保留網址，再安全重載", () => {
+  assert.ok(SH.includes('localStorage.setItem("xqUpdBack",JSON.stringify({t:Date.now(),h:location.hash||""}))'), "記錄原頁");
+  const apply=SH.slice(SH.indexOf("  function applyUpdate(){"),SH.indexOf("  async function doUpdate("));
+  assert.match(apply,/markDone\(\);[\s\S]*rlgPrep\("upd"\);[\s\S]*location.reload\(\)/);
+  assert.match(SH,/addEventListener\("hashchange",\(\)=>\{showUpdate\(\);applyUpdate\(\)\}\)/);
+  assert.match(SH,/if\(newer\(active\)&&active>=target\)\{ready=true;break\}/,"按鈕須等新版接管");
 });

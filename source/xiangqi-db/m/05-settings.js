@@ -233,7 +233,7 @@ async function wipeAllData(){toast("正在刪除這支手機的資料…");
   try{history.replaceState(null,"",location.pathname+"#/")}catch(e){}location.reload()}
 /* 意見回饋 531：檢查更新（設定 → 系統 → 關於） */
 async function updCheck(b){if(window.XQ_NATIVE){b.disabled=true;b.textContent="新版由 App Store 更新";return}b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
-  if(!r.n){b.textContent="沒有網路";b.disabled=false;return}if(r.a===r.n){b.textContent="✓ 已是最新版";return}b.textContent="下載新版中…";setTimeout(()=>location.reload(),6000)}
+  if(!r.n){b.textContent="沒有網路";b.disabled=false;return}if(r.a&&r.n<=r.a){b.textContent="✓ 已是最新版";b.disabled=false;return}b.textContent="有新版";b.disabled=false}
 /* 回饋 846（開發者 11/9 選：字級放大）：App 內字級 小／標準／大／特大＝0.9／1／1.15／1.3 倍。
    html 上掛 data-fz 和 --fz（標準就拿掉 data-fz，畫面跟以前一模一樣）；m.css 照 --fz 放大面板、卡片、對局文字、小說、設定頁、頂欄標題，
    滿版圖上的金框標籤只跟著放大一半（--fzL：0.95／1／1.075／1.15），免得壓到別的標籤；棋盤上的棋子字不跟著變 */
