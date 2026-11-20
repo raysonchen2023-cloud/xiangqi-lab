@@ -65,11 +65,13 @@ test("〔N3-1〕接線：07bhg gsvFrame 平面、3D 的預覽都走 sg2PvXY；�
 test("〔D 頂欄〕對局中標題可以換兩行、字小一點；英文窄螢幕兩側鈕只留圖示（中文不受影響）", () => {
   assert.ok(SCSS.includes("html body.gsv-on #title{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;"), "蓋過 07i18n 的 html[lang=en] #title nowrap");
   assert.ok(SCSS.includes("font-size:calc(16px * min(var(--fz,1),1.3));line-height:1.15"));
-  const m = SCSS.match(/@media \(max-width:480px\)\{([^@]*)\}\s*$/m) || SCSS.match(/@media \(max-width:480px\)\{(.*)\}/); assert.ok(m, "窄螢幕那條");
+  const m = SCSS.match(/@media \(max-width:480px\)\{(html\[lang=en\][^\n]*)\}/); assert.ok(m, "舊版英文窄螢幕規則");
   assert.ok(m[1].includes("html[lang=en] body.gsv-on #back{font-size:0;padding:0 6px}html[lang=en] body.gsv-on #back b{font-size:28px}"));
   assert.ok(m[1].includes("html[lang=en] body.gsv-on #gsvView small{display:none}"));
   const sels = m[1].split("}").map(x => x.split("{")[0].trim()).filter(Boolean);
   assert.ok(sels.length >= 4 && sels.every(x => x.startsWith("html[lang=en] ")), "只限英文：" + sels.join(" | "));
+  assert.match(SCSS, /@media \(max-width:480px\)\{\s+html body\.gsv-v2 #back\{font-size:0/);
+  assert.match(SCSS, /html body\.gsv-v2 #gsvView small\{display:none/);
   /* 第 7 輪 P3-2 起 aria-label 由 gsvVwLb 算（中文照舊、英文直接給英文），每次都對一次（test-r4-1117 P3-2） */
   assert.ok(GSVSRC.includes('const a="視角："+BHTD_VW[v]+"（點一下換下一種）"') && GSVSRC.includes('const L=gsvVwLb(v);if(b.getAttribute("aria-label")!==L[0])b.setAttribute("aria-label",L[0])'), "視角鈕的字留在 aria-label");
 });

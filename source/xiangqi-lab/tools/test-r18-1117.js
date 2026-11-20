@@ -168,7 +168,7 @@ test("點擊區 CSS：設定分頁、開關、開關列、說明文件鈕、怎�
   assert.match(M("05b-save.js"), /\.sv-a button::before\{content:\\"\\";position:absolute;/);
   /* .sv-a：40 高、換行間隔 6 → 上下各撐 2，相鄰兩排不疊 */
   assert.ok((44 - 40) <= 6);
-  assert.match(M("07sg2-siege2.js"), /#gsvMe \.gsv-fx\[data-x="rules"\]::before\{content:"";position:absolute;left:0;right:0;top:min\(0px,calc\(100% - 44px\)\);bottom:0\}/);
+  assert.match(M("07sg2-siege2.js"), /#gsvMe \.gsv-fx\[data-x="rules"\]\{min-width:44px;min-height:44px/);
   assert.match(M("07pty-party.js"), /\.pty-a \.btn::before\{content:"";position:absolute;/);
   const C = M("06-cpu.js");
   assert.match(C, /\.pzoom,\.fvz\{gap:12px!important\}/); assert.match(C, /\.pzoom>button::before,\.fvz>button::before\{content:"";position:absolute;left:-6px;right:-6px;top:-6px;bottom:-6px\}/);

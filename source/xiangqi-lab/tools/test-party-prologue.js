@@ -44,7 +44,9 @@ test("解鎖：A1 一開始就開；B1 要駱躍梅加入、C1 要沈方庭和�
 
 test("開戰：序章不判長將（noPerpetual）、關名照 lvName；11/16 取消隊長、全隊招式：gsvCapt（換隊長）拿掉，B1 只有傌也照樣帶全隊已學會的招", ()=>{
   assert.match(SRC,/lv:\{fen:GSV\.startFen\(n,C\),turn:"r",noPerpetual:true\}/,"11/16 黑洞新規則：每一關都不判長將長捉");
-  assert.match(SRC,/toast\(`🌠 星門圍城・\$\{typeof SG2G!=="undefined"\?SG2G\.nameOf\(n\):GSV\.lvName\(n\)\}・/,"11/16：v2 的關名照分組（易 1…）");
+  const siege=fs.readFileSync(path.join(ROOT,"xiangqi-db/m/07sg2-siege2.js"),"utf8");
+  assert.match(siege,/function sg2Title\(st\)[^\n]+const s="星門圍城・"\+SG2G\.nameOf\(st\.td\.lv\)/,"新版關名照分組，顯示在頂欄");
+  assert.match(SRC,/if\(typeof SG2G==="undefined"\)setTimeout\(\(\)=>toast\(`🌠 星門圍城/,"只有舊模式需要額外的開局關名提示");
   assert.equal(ctx.gsvCapt,undefined,"gsvCapt 整段拿掉");assert.ok(!SRC.includes("gsvCapt")&&!SRC.includes("當隊長"),"不再換隊長、不再講誰當隊長");
   assert.ok(SRC.includes('P.sk["*"]=typeof ptyPick==="function"?ptyPick(GSV.SK,sk):GSV.skPick(ck,L,sk);'),"gsvStart 存全隊那一份 P.sk[\"*\"]");
   assert.ok(SRC.includes('td:{mode:typeof SG2G!=="undefined"?SG2G.MODE:GSV.MODE,lv:n,diff,sk:P.sk["*"]}}'),"開局帶 P.sk[\"*\"]（11/16 黑洞新規則：開 v2、帶難度）");

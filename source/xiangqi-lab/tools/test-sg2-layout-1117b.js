@@ -53,18 +53,17 @@ test("〔N-4〕開局名稱橫幅（.opfx 行內定位）在星門圍城對局�
   const B = rd("xiangqi-db/m/01-board.js"); assert.ok(/d\.className="opfx";d\.style\.cssText=`left:/.test(B), "01-board 照舊寫行內 left／top（所以要 !important）");
 });
 
-test("〔N-5〕直式平面選目標的提示條放進下方面板第一行（不浮在面板上緣外蓋底排），招式框讓位；3D 直式照舊在上面", () => {
+test("〔N-5〕平面和 3D 選目標提示都在下方 HUD 裡，棋盤跟著讓位", () => {
   const c = noCm(SCSS);
-  assert.ok(c.includes("@media (orientation:portrait){body.gsv-on:not(.gsv-3d) #gsvMe .gsv-tip{position:static;margin:0 0 3px;border-radius:10px}"));
-  assert.ok(c.includes("body.gsv-on:not(.gsv-3d) #gsvMe .gsv-tip~.sg2-skw{max-height:calc(var(--gsvMeH,190px) - 140px)}"));
-  assert.ok(/\.gsv-tip\{position:absolute;left:8px;right:8px;top:-34px/.test(GCSS), "原本的浮動規則（被上面那條蓋過）");
-  assert.ok(S2.includes("me.innerHTML=`${tip}<div class=\"gsv-r\">"), "提示條是下方面板第一個子元素，.sg2-skw 在它後面");
+  assert.match(c, /body\.gsv-v2 #gsvMe \.gsv-tip\{position:static/);
+  assert.match(c, />#bbox\{bottom:var\(--sg2DockH,120px\)!important/);
+  assert.ok(S2.includes('me.innerHTML=`${tip}<div class="gsv-r">'), "提示條在招式清單前面");
 });
 
-test("〔N-6〕「規則」鈕點擊區至少 44×32，上下負邊界抵掉", () => {
-  const r = rule(SCSS, '#gsvMe .gsv-fx[data-x="rules"]');
-  assert.ok(r.includes("min-width:44px") && r.includes("min-height:32px") && r.includes("margin:-5px 0") && r.includes("box-sizing:border-box"), r);
-  assert.ok(S2.includes('<button type="button" class="gsv-fx" data-x="rules"'), "按鈕還在 #gsvMe 裡");
+test("〔N-6〕規則按鈕有實際 44×44 的操作區", () => {
+  const r = rule(SCSS, 'body.gsv-v2 #gsvMe .gsv-fx[data-x="rules"]');
+  assert.ok(r.includes("min-width:44px") && r.includes("min-height:44px"), r);
+  assert.ok(S2.includes('<button type="button" class="gsv-fx" data-x="rules"'));
 });
 
 test("〔iMac 18〕打不動的跳字樣式（大一號）", () => {

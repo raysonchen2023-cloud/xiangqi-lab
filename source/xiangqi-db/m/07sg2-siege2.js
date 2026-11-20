@@ -477,7 +477,7 @@ html[lang^=en] .gsv-ln button[data-x="fore"]{white-space:normal;line-height:1.25
 .gsv-mk.hp.lo i{background:#ffb000}
 .gsv-mk.pv{font-size:11px;line-height:1.3;padding:0 4px;border-radius:6px;color:#fff;margin:0;white-space:nowrap;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.6)}
 .sg2-inf{font-size:12px;line-height:1.35;margin:2px 0 1px;color:#f1e7cf;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:1.35em}.sg2-inf b{color:#FFE08A}
-.sg2-skw{overflow-y:auto;max-height:calc(var(--gsvMeH,190px) - 100px);margin-top:3px;-webkit-overflow-scrolling:touch}
+.sg2-skw{overflow-y:auto;margin-top:3px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 .sg2-skr{display:flex;align-items:stretch;gap:4px;margin-top:3px}.sg2-skr>span{flex:0 0 2.7em;font-size:11px;display:flex;align-items:center;color:#cfc4ee;line-height:1.1}
 .sg2-skr .gsv-sk{flex:1 1 0;min-width:0;min-height:38px}.sg2-skr>span{flex-direction:column;align-items:flex-start;justify-content:center}.sg2-sp{display:block;font-size:10px;color:#9fd0ff;margin-top:1px}
 @media (orientation:landscape){.sg2-skw{max-height:none}}
@@ -485,11 +485,7 @@ html[lang^=en] .gsv-ln button[data-x="fore"]{white-space:normal;line-height:1.25
 .sg2-tal b{font-size:13.5px}.sg2-tal small{float:right;color:#9fd0ff;font-size:11.5px}.sg2-tal span{display:block;font-size:12px;color:#d9d0ef;margin-top:2px}.sg2-tal.on{border-color:#FFE08A;box-shadow:0 0 0 2px #FFE08A}.sg2-tal.off{opacity:.5}
 .sg2-talr{float:right;font:inherit;font-size:11.5px;color:#f1e7cf;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.3);border-radius:99px;padding:1px 9px;cursor:pointer}
 .gsv-mk.pv.ok{background:#c0281e}.gsv-mk.pv.kill{background:#ff3b30;box-shadow:0 0 8px #ff3b30}.gsv-mk.pv.no{background:#45506a}
-/* 11/17 測試員 B（B-6）：直式招式區只露兩列（約 80px），四位夥伴要在小框裡捲 → 下方面板照招式列數長高（sg2MeSync 寫 --sg2MeH，最多畫面的四成） */
-@media (orientation:portrait){html body.gsv-on{--gsvMeH:var(--sg2MeH,190px)}}
-/* B-12：「下一波：…」星門預告的點擊區原本只有 18px 高 → 整行 40px（上面那條面板跟著加高） */
-.gsv-ln button[data-x="fore"]{display:block;width:100%;min-height:40px;line-height:36px;box-sizing:border-box;padding:2px 4px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;touch-action:manipulation}
-@media (orientation:portrait){html body.gsv-on{--gsvEnH:80px}}
+.gsv-ln button[data-x="fore"]{display:block;width:100%;min-height:44px;box-sizing:border-box;padding:2px 4px;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;touch-action:manipulation}
 /* B-7：開局「✦ 星樞：…」、放招的提示（toast）原本在畫面下方，壓住帥的體力、回合數、「規則」和招式 → 對局中不接點選。
    11/17 第二批 N-4：上一批放在棋盤上緣，會疊在敵方底排（象、士、將）→ 改到棋盤外：直式疊在頂欄下方那條敵方資訊（星樞體力、下一波）上，不碰棋盤；
    橫式放在左邊敵方欄下半的空白（左欄只有上面兩三行字）。開局名稱橫幅（01-board openFx 的 .opfx，位置寫在行內）也搬到同樣的地方 */
@@ -497,26 +493,65 @@ body.gsv-on .toast{bottom:auto;top:calc(var(--gsvTop,var(--bhTop,44px)) + 4px);l
 @media (orientation:landscape){body.gsv-on .toast{top:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px));left:calc(6px + env(safe-area-inset-left,0px));right:auto;max-width:188px;margin:0;border-radius:12px}}
 body.gsv-on .opfx{top:calc(var(--gsvTop,var(--bhTop,44px)) + var(--gsvEnH,62px) / 2)!important;left:50%!important;font-size:24px!important}
 @media (orientation:landscape){body.gsv-on .opfx{top:calc(var(--gsvTop,var(--bhTop,44px)) + (100dvh - var(--gsvTop,var(--bhTop,44px))) * .55)!important;left:calc(100px + env(safe-area-inset-left,0px))!important;font-size:16px!important}}
-/* N-5：選放招目標時「點盤上發光的目標／取消」原本浮在下方面板上緣外（top:-34px），正好蓋住我方底排（鐵壁銅牆的目標常是相仕帥仕相）→ 直式平面改成下方面板裡的第一行（不蓋棋盤），招式框跟著讓出位置；橫式本來就在右欄裡、直式 3D 照舊在上方 */
-@media (orientation:portrait){body.gsv-on:not(.gsv-3d) #gsvMe .gsv-tip{position:static;margin:0 0 3px;border-radius:10px}body.gsv-on:not(.gsv-3d) #gsvMe .gsv-tip~.sg2-skw{max-height:calc(var(--gsvMeH,190px) - 140px)}}
-/* N-6：「規則」鈕原本約 40×20 → 點擊區至少 44×32；上下用負邊界抵掉，那一行不會變高（下方面板的高度照舊） */
-#gsvMe .gsv-fx[data-x="rules"]{min-width:44px;min-height:32px;margin:-5px 0;padding:0 9px;box-sizing:border-box;touch-action:manipulation}
-/* 11/17 第 18 輪（測試員 D P2-4）：「規則」鈕 44×32 → 透明的 ::before 往上撐 12px（上面是 .sg2-inf 說明文字，不是按鈕），點選範圍 44×44；不往下撐（下面緊接招式鈕，不能疊到） */
-#gsvMe .gsv-fx[data-x="rules"]{position:relative}#gsvMe .gsv-fx[data-x="rules"]::before{content:"";position:absolute;left:0;right:0;top:min(0px,calc(100% - 44px));bottom:0}
 /* iMac 18：打不動的跳字大一號、淡藍（原本 14px 淡紫一閃就過） */
 .bt-fl.sg2no{font-size:17px;color:#bfe0ff}
 /* 第 3 輪 P3（測試員 D，English 375×812）：頂欄標題「Star Gate Siege · Prologue A1」被左邊「‹ Back to Star Terrace」、右邊「👁 Flat board」擠到只剩「Star」。
    對局中標題可以換兩行、字小一點（中文一行放得下時照舊一行）；英文窄螢幕（480px 以下）返回鈕只留「‹」、視角鈕只留 👁（文字還在 aria-label／title），讓出位置給關名 */
 html body.gsv-on #title{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-overflow:clip;min-width:0;font-size:calc(16px * min(var(--fz,1),1.3));line-height:1.15;letter-spacing:.02em;overflow-wrap:break-word}
-@media (max-width:480px){html[lang=en] body.gsv-on #back{font-size:0;padding:0 6px}html[lang=en] body.gsv-on #back b{font-size:28px}html[lang=en] body.gsv-on #gsvView small{display:none}html[lang=en] body.gsv-on #gsvView{min-width:44px;padding:0!important;justify-content:center}}`;document.head.append(s)}
+@media (max-width:480px){html[lang=en] body.gsv-on #back{font-size:0;padding:0 6px}html[lang=en] body.gsv-on #back b{font-size:28px}html[lang=en] body.gsv-on #gsvView small{display:none}html[lang=en] body.gsv-on #gsvView{min-width:44px;padding:0!important;justify-content:center}}
+html:has(body.gsv-v2),html body.gsv-v2,html body.gsv-v2 .app{background:#080914}
+html body.gsv-v2 #topbar{background:#101120;color:#fff0cf;border:0;box-shadow:none;min-height:0;
+  padding:var(--safeT,0px) calc(6px + env(safe-area-inset-right,0px)) 0 calc(6px + env(safe-area-inset-left,0px))}
+html body.gsv-v2 #topbar :is(#back,#gsvView,button){color:inherit;min-height:44px}
+html body.gsv-v2 #back{min-width:44px}
+body.gsv-v2 :is(#gsvEn,#gsvMe){background:#101120}
+body.gsv-v2 #gsvMe .gsv-tip{position:static;margin:0 0 3px;border-radius:8px}
+body.gsv-v2 #gsvMe .gsv-tip button{min-width:44px;min-height:44px}
+body.gsv-v2 .sg2-guide{font-size:11px;color:#d9cee6;min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis}
+body.gsv-v2 #gsvMe .gsv-fx[data-x="rules"]{min-width:44px;min-height:44px;margin-inline-start:auto;padding:0 9px;touch-action:manipulation}
+body.gsv-v2 .sg2-skr .gsv-sk{min-height:44px}
+body.gsv-v2 .sg2-skr .gsv-sk.off{opacity:1;filter:none;background:#202033;color:#cec4d5;border-color:#55506a}
+body.gsv-v2 #gsvMe .sg2-inf{min-height:0}
+body.gsv-v2 #gsvMe .sg2-inf:empty{display:none}
+body.gsv-v2 #gsvMe .sg2-inf:not(:empty) + .sg2-round .sg2-guide{visibility:hidden}
+@media (orientation:portrait){
+  html body.gsv-v2{--gsvEnH:var(--sg2EnH,52px)}
+  html body.gsv-v2 #gsvEn{height:auto;border-block:1px solid #302942}
+  html body.gsv-v2 #gsvMe{height:auto;max-height:38dvh;display:flex;flex-direction:column;border-top:1px solid #302942}
+  body.gsv-v2 #gsvMe .sg2-skw{flex:0 1 auto;min-height:0}
+  body.gsv-v2 #gsvMe > :not(.sg2-skw){flex:none}
+  body.gsv-v2 #gsvMe .sg2-round{margin-top:0;min-height:44px}
+  html body.gsv-v2 #view.view.fixed>#bbox{bottom:var(--sg2DockH,120px)!important}
+}
+@media (orientation:landscape){body.gsv-v2 #gsvMe{overflow-y:auto}}
+@media (max-width:480px){
+  html body.gsv-v2 #back{font-size:0;padding:0 6px;justify-content:center}
+  html body.gsv-v2 #gsvView{min-width:44px;padding:0!important;justify-content:center}
+  html body.gsv-v2 #gsvView small{display:none}
+}`;document.head.append(s)}
 /* 11/17 B-5：棋盤、兩側欄的上緣＝頂欄真正的下緣（頂欄長高、轉向都跟著；07bhg gsvCss 用 --gsvTop） */
 let SG2_TOPRO=null;
 function sg2TopSync(){if(typeof document==="undefined")return;try{const tb=document.getElementById("topbar");if(!tb)return;const b=Math.round(tb.getBoundingClientRect().bottom),R=document.documentElement;
   if(b>0&&R.style.getPropertyValue("--gsvTop")!==b+"px")R.style.setProperty("--gsvTop",b+"px");if(!SG2_TOPRO&&typeof ResizeObserver==="function"){SG2_TOPRO=new ResizeObserver(()=>sg2TopSync());SG2_TOPRO.observe(tb)}}catch(e){}}
-/* B-6：直式下方面板要多高＝上面三行約 104px＋每一列招式 42px；至少原本的 190（矮螢幕 176），最多畫面的四成 */
-const sg2MeH=(rows,H)=>{const base=H<=700?176:190;return Math.max(base,Math.min(Math.round(H*.4),104+rows*42))};
-function sg2MeSync(me){try{const n=me.querySelectorAll(".sg2-skr").length,v=sg2MeH(n,innerHeight)+"px",B=document.body;if(B.style.getPropertyValue("--sg2MeH")!==v)B.style.setProperty("--sg2MeH",v)}catch(e){}}
-if(typeof window!=="undefined"&&typeof addEventListener==="function")addEventListener("resize",()=>{try{if(document.body&&document.body.classList.contains("gsv-on")){sg2TopSync();const me=document.getElementById("gsvMe");if(me)sg2MeSync(me)}}catch(e){}});
+let SG2_DOCKRO=null;
+function sg2DockSync(en,me){
+  for(const [el,prop] of [[en,"--sg2EnH"],[me,"--sg2DockH"]]){
+    const value=Math.ceil(el.getBoundingClientRect().height)+"px",style=document.body.style;
+    if(style.getPropertyValue(prop)!==value)style.setProperty(prop,value);
+  }
+}
+function sg2DockObserve(en,me){
+  sg2DockSync(en,me);
+  if(SG2_DOCKRO||typeof ResizeObserver!=="function")return;
+  SG2_DOCKRO=new ResizeObserver(()=>sg2DockSync(en,me));
+  SG2_DOCKRO.observe(en);SG2_DOCKRO.observe(me);
+}
+function sg2DockClear(){
+  if(SG2_DOCKRO){SG2_DOCKRO.disconnect();SG2_DOCKRO=null}
+  document.body.style.removeProperty("--sg2EnH");
+  document.body.style.removeProperty("--sg2DockH");
+}
+if(typeof window!=="undefined"&&typeof addEventListener==="function")addEventListener("resize",()=>{if(document.body&&document.body.classList.contains("gsv-v2"))sg2TopSync()});
 const sg2On=st=>!!(st&&st.td&&typeof SG2G!=="undefined"&&st.td.mode===SG2G.MODE);
 /* 08b-cpugame.js 的 tap(i) 一開頭叫（不攔截，只記選了哪顆、點了哪顆） */
 function sg2Tap(st,i,sel){if(!sg2On(st))return;if(st.td.s.b[i])SG2_PICK=i;
@@ -546,7 +581,7 @@ function sg2Info(st){const td=st.td,S=td.s;
       return`<b>部署 ${esc(W.nm)}・${esc(GSV.PCN[GSV_TG.p])}</b> <span>體力</span> <b>${u.hp}</b>・<span>攻</span> <b>${u.atk}</b>・<span>防</span> <b>${u.def}</b>${W.ck?`・<span>靈</span> <b>${td.sp[W.ck]}</b>／${td.spMax[W.ck]}`:""}`}
     if(s){const pc=SG2G.PC_OF[s.ch],qs=[];for(let q=0;q<90;q++)if(S.b[q]===pc)qs.push(q);const nm=sg2Who(td,pc).nm;
       return`<b>${esc(s.nm)}</b>（${esc(nm)}，${SG2G.costOf(td,s.id)} 靈）：`+(qs.length?qs.map(q=>sg2PieceInfo(td,q)).join("；"):`<span>${esc(GSV.PCN[pc])}都倒了</span>`)}}
-  const q=SG2_SEL>=0&&S.b[SG2_SEL]?SG2_SEL:SG2_PICK;if(q<0||!S.b[q])return`<span>點棋子看攻防；選了己子，打得到的敵子會標出這一下扣多少</span>`;return sg2PieceInfo(td,q)}
+  const q=SG2_SEL>=0&&S.b[SG2_SEL]?SG2_SEL:SG2_PICK;if(q<0||!S.b[q])return"";return sg2PieceInfo(td,q)}
 /* 11/17 測試員 D（P3-C）：選關、開局提示、結算都寫「星門圍城・序章 A1」，對局頁頂端卻是 08b 照 07-legend jName 寫的「黑洞・星樞棋局」（bh: 開頭一律這樣）。
    星門圍城 v2 的盤（含偏航來的那盤）頂端改寫「星門圍城・關名」（SG2G.nameOf：序章 A1、易 3…）；08b 每次重畫 setTop 會蓋回去，這裡每次畫都補（同 07bht bhtdTitle 的做法），內容一樣就不動 */
 function sg2Title(st){if(typeof document==="undefined"||!sg2On(st))return;const t=document.getElementById("title");if(!t)return;const s="星門圍城・"+SG2G.nameOf(st.td.lv);let sp=t.querySelector(".sg2-tt");
@@ -562,9 +597,9 @@ function sg2Paint(){sg2Css();const st=GSV_ST,en=document.getElementById("gsvEn")
   const tip=GSV_TG?`<div class="gsv-tip"><span>${GSV_TG.arm?"再點一次同一顆招就放出":GSV_TG.id==="dep"?"點盤上發光的補給點":"點盤上發光的目標"}</span><button type="button" data-x="cancel">取消</button></div>`:"";
   me.innerHTML=`${tip}<div class="gsv-r"><span class="gsv-nm">我方</span>${bar(kr,"","帥")}</div>
     <div class="sg2-inf" aria-live="polite">${sg2Info(st)}</div>
-    <div class="gsv-r"><span class="gsv-st"><b>第 ${td.rnd+1}／${td.rlim} 回合</b></span>
+    <div class="gsv-r sg2-round"><span class="gsv-st"><b>第 ${td.rnd+1}／${td.rlim} 回合</b></span><span class="sg2-guide">點棋子看攻防</span>
       <button type="button" class="gsv-fx" data-x="rules" style="background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.3);color:#f1e7cf">規則</button></div>
-    <div class="sg2-skw">${sg2SkRows(td.sk,sk,td)}${td.res.length?`<div class="sg2-skr"><span>後備</span>${sk("dep")}</div>`:""}</div>`;sg2MeSync(me)}
+    <div class="sg2-skw">${sg2SkRows(td.sk,sk,td)}${td.res.length?`<div class="sg2-skr"><span>後備</span>${sk("dep")}</div>`:""}</div>`;sg2DockObserve(en,me)}
 /* 招式按角色分行（07pty 的名字；沒有就用 GSV.CH） */
 function sg2SkRows(ids,btn,td){const by={};for(const id of ids){const s=SG2G.SKM[id];if(s)(by[s.ch]=by[s.ch]||[]).push(id)}
   const nm=c=>{try{if(typeof ptyNm==="function")return ptyNm(c)}catch(e){}return GSV.CH[c]?GSV.CH[c].n:""};
