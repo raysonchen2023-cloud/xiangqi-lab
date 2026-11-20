@@ -124,12 +124,12 @@ function shwEdges(C){if(!C._e)C._e=C.E.split(" ").map(s=>s.split("-"));return C.
 function shwPath(C,a,b){if(a===b)return[a];const N=C.N,D={},P={},Q=new Set(Object.keys(N));for(const k of Q)D[k]=1e9;D[a]=0;
   while(Q.size){let u=null;for(const k of Q)if(u===null||D[k]<D[u])u=k;Q.delete(u);if(u===b||D[u]>=1e9)break;
     for(const[x,y]of shwEdges(C)){const w=x===u?y:y===u?x:null;if(w&&Q.has(w)){const d=D[u]+shwPx(C,N[u],N[w]);if(d<D[w]){D[w]=d;P[w]=u}}}}
-  if(D[b]>=1e9)return[a,b];const o=[b];while(o[0]!==a)o.unshift(P[o[0]]);return o}
+  if(D[b]>=1e9)return C.strictRoad?[]:[a,b];const o=[b];while(o[0]!==a)o.unshift(P[o[0]]);return o}
 /* 意見回饋 782：位置可以是節點名字，或 {p:[左%,上%], e:[節點a,節點b]}（路網某一段上的一點）；暫時把起點、終點接進路網再找最短路 */
 function shwRoute(C,from,to){const N=Object.assign({},C.N),E=shwEdges(C).slice(),TE={},k=e=>e.slice().sort().join("|");
   const add=(id,q)=>{if(typeof q==="string")return q;N[id]=q.p;TE[id]=q.e;E.push([id,q.e[0]],[id,q.e[1]]);return id};
   const a=add("_a",from),b=add("_b",to);if(TE._a&&TE._b&&k(TE._a)===k(TE._b))E.push(["_a","_b"]);
-  const ids=shwPath({W:C.W,H:C.H,N,_e:E},a,b),segE=[];for(let i=1;i<ids.length;i++)segE.push(TE[ids[i-1]]||TE[ids[i]]||[ids[i-1],ids[i]]);
+  const ids=shwPath({W:C.W,H:C.H,N,_e:E,strictRoad:C.strictRoad},a,b),segE=[];for(let i=1;i<ids.length;i++)segE.push(TE[ids[i-1]]||TE[ids[i]]||[ids[i-1],ids[i]]);
   return{pts:ids.map(n=>N[n]),segE}}
 function shwNear(C,p){let best=null;const W=C.W/100,H=C.H/100;for(const[a,b]of shwEdges(C)){const A=C.N[a],B=C.N[b];if(!A||!B)continue;if(C.T&&(C.T[a]||C.T[b]))continue;   /* 808：點空地不會停在跳上桌的那一段半空中 */
   const dx=(B[0]-A[0])*W,dy=(B[1]-A[1])*H,t=Math.max(0,Math.min(1,((p[0]-A[0])*W*dx+(p[1]-A[1])*H*dy)/(dx*dx+dy*dy||1))),d=Math.hypot((p[0]-A[0])*W-t*dx,(p[1]-A[1])*H-t*dy);
@@ -195,10 +195,10 @@ function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.
 function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.go;let b=e.target.closest&&e.target.closest(S.o.sel),tk=null;
   /* 回饋 816：桌上的東西本身（例如信房的信箋）也算入口：座標表 TS:{選擇器:入口代號}，先跳上桌再打開 */
   if(!b&&WALK_HOP_ON&&S.C.TS&&e.target.closest)for(const k in S.C.TS){const x=e.target.closest(k);if(x&&S.M.contains(x)){b=x;tk=S.C.TS[k];x.dataset.shwnf="1";break}}
-  if(g&&!g.free&&(g.act>=0||(b&&b===g.btn))){e.stopPropagation();e.preventDefault();if(e.isTrusted)shwOpen(S);else setTimeout(()=>{if(S.go===g)shwOpen(S)},0);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
+  if(g&&!g.free&&(g.act>=0||(b&&b===g.btn&&!S.C.strictRoad))){e.stopPropagation();e.preventDefault();if(e.isTrusted)shwOpen(S);else setTimeout(()=>{if(S.go===g)shwOpen(S)},0);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
   /* 回饋 834（開發者 11/9：棋史卡沒反應、盤查入口點選）：別的東西用 入口.click() 轉過來的點選（一盞茶的茶碗 .cjm-hit、渡口碼頭 .ph4-pz）不是使用者真的點，
      這時入口自己的 click 還在進行中，shwOpen 裡再呼叫同一顆的 click() 會被瀏覽器直接略過（HTML 規定），結果走路被取消、什麼都沒開；所以這種點選延到下一輪再開 */
-  if(b){const h=tk||S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;e.stopPropagation();e.preventDefault();vibrate(5);
+  if(b){const h=tk||S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;e.stopPropagation();e.preventDefault();if(S.o.canVisit&&!S.o.canVisit(S,b,H))return;vibrate(5);
     if(tk&&S.C.TB){const p=shwPt(S,e),tn=shwTblAt(S.C,p);if(tn){shwGo(S,{hs:h,btn:b,H,tbl:tn,tap:p});return}}   /* 820：點桌上的東西本身＝走到它旁邊最近的可站處再打開 */
     shwGo(S,{hs:h,btn:b,H});return}
   /* 開發者 11/12 hspx「在圖上快速點兩下角色，3D 角色會快速移動」：點到小人自己的 3D 畫布（「我的角色」按鈕沒蓋到的邊緣）被當成點空地，
@@ -208,7 +208,7 @@ function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.
   if(!shwFreeOk(S,e))return;const p=shwPt(S,e),xr=S.C.xr||[0,100];if(!(p[0]>=xr[0]&&p[0]<=xr[1]&&p[1]>=0&&p[1]<=100))return;
   {const now=Date.now(),L=S.lastTap;S.lastTap={t:now,p};if(L&&now-L.t<400&&Math.hypot(p[0]-L.p[0],p[1]-L.p[1])<6){e.stopPropagation();e.preventDefault();return}}
   /* 回饋 816／820：點到桌面＝走到最近的桌邊跳上去、再在桌面上繞過障礙走到點的地方（點在障礙上＝走到旁邊最近的可站處）；人已經在桌上＝直接在桌面上走過去；不觸發別的 */
-  if(WALK_HOP_ON&&S.C.TB){const tn=shwTblAt(S.C,p);if(tn){e.stopPropagation();e.preventDefault();shwInk(S,p);vibrate(5);shwGo(S,{free:1,tbl:tn,tap:p});return}}const q=shwNear(S.C,p);if(!q)return;shwInk(S,p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
+  if(WALK_HOP_ON&&S.C.TB){const tn=shwTblAt(S.C,p);if(tn){e.stopPropagation();e.preventDefault();shwInk(S,p);vibrate(5);shwGo(S,{free:1,tbl:tn,tap:p});return}}const q=S.o.ground?S.o.ground(S,p):shwNear(S.C,p);if(!q)return;shwInk(S,S.C.strictRoad?q.p:p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
 function shwGo(S,o){shwDrop();const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)g0.btn.classList.remove("shw-fade");
   if(S.stay&&S.stay!==o.btn){S.stay.classList.remove("shw-fade");S.stay=null;SHW_MEMH[S.o.mem]=null}
   /* 825：位置記錄不一致（記的是桌上的點、卻不在桌上；或桌上的點卡在障礙裡）時先修正，免得找路出錯、點哪裡都不動 */
@@ -229,6 +229,7 @@ function shwGo(S,o){shwDrop();const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)
     if(S.onT&&C.TB&&C.TB[S.onT]){const tb=C.TB[S.onT];let best=null;for(const[fn,tp]of tb.hops){const w=flo(fn,to),P=shwTPath(C,tb,[S.x,S.y],tp),c=(P?shwLen(C,P):5000+shwPx(C,[S.x,S.y],tp))+shwLen(C,w.pts);if(!best||c<best.c)best={c,fn,tp,w,P}}
       seq.push({k:"w",pts:best.P||[[S.x,S.y],best.tp],onT:S.onT},{k:"h",a:best.tp,b:C.N[best.fn],up:0,tb:S.onT,fn:best.fn},best.w)}
     else seq.push(flo(fromF(),to))}
+  if(C.strictRoad&&seq.some(step=>step.k==="w"&&!step.pts.length))return;
   const last=seq[seq.length-1],end=last.k==="w"?last.pts[last.pts.length-1]:last.b;
   if(o.btn)o.btn.classList.add("shw-fade");
   S.go={free:!!o.free,hs:o.hs,btn:o.btn,to,seq,pts:[end],segE:[],L:0,dur:0,t:0,act:-1,
@@ -522,7 +523,8 @@ async function shwLoad(S){
     Object.assign(cv.style,{left:-cw/2+"px",top:-Math.round(ftF*ch)+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:-Math.round(ch*.17)+"px",top:-Math.round(ch*.05)+"px"})}S.place()};
   const P0=typeof S.at==="string"?C.N[S.at]:S.at.p,HS0=typeof S.at==="string"&&Object.values(C.HS).find(h=>h[0]===S.at);S.x=P0[0];S.y=P0[1];S.onT=S.at&&S.at.t&&C.TB&&C.TB[S.at.t]?S.at.t:null;S.hy=S.onT?shwTHy(C.TB[S.onT],P0):null;S.sq=null;   /* 825：換造型重載角色時，站在桌上的照舊算在桌上 */S.yaw=S.at===C.home||!HS0?shwYaw(C,P0,typeof S.at==="string"?C.look0:[P0[0],P0[1]+5]):shwYaw(C,P0,[HS0[1],HS0[2]]);
   S.place=()=>{if(!Ih)return;const k=shwHt(C,S.hy!=null?S.hy:S.y)/shwHt(C,YMAX);S.box.style.transform=`translate(${(S.x*Iw/100).toFixed(1)}px,${(S.y*Ih/100).toFixed(1)}px) scale(${k.toFixed(4)})`;
-    cv.style.transformOrigin=`50% ${(ftF*100).toFixed(1)}%`;cv.style.transform=S.sq?`scale(${S.sq[0].toFixed(3)},${S.sq[1].toFixed(3)})`:""};   /* 808：站在桌上照桌下地板的透視（hy）；跳的時候蹲、拉長（sq） */
+    cv.style.transformOrigin=`50% ${(ftF*100).toFixed(1)}%`;cv.style.transform=S.sq?`scale(${S.sq[0].toFixed(3)},${S.sq[1].toFixed(3)})`:"";
+    if(S.o.onPlace)S.o.onPlace(S)};   /* 808：站在桌上照桌下地板的透視（hy）；跳的時候蹲、拉長（sq） */
   const clips=B.mixer&&B.clips||null;let cur=null,yawR=S.yaw;
   S.anim=(n,ts)=>{if(!clips){S.pn=n;return}const a=clips[n]||clips.idle;if(!a)return;a.timeScale=ts||1;if(a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};
   S.anim("idle",1);try{if(typeof dglWalkHook==="function")dglWalkHook(S)}catch(e){}   /* 開發者 11/13 平日體力：定軌力低時頭上冒小條、走慢、打哈欠（m/07dgl-stamina.js） */
