@@ -6,7 +6,7 @@ const assert=require("node:assert/strict"),test=require("node:test"),fs=require(
 const ROOT=path.join(__dirname,"../..");const rd=p=>fs.readFileSync(path.join(ROOT,p),"utf8");
 const JH=rd("xiangqi-db/m/07z9b-jianghu.js"),OS=rd("xiangqi-db/m/07z9-school.js"),SHW=rd("xiangqi-db/m/07w-shipwalk.js");
 const load=()=>{const c={};vm.createContext(c);const a=JH.indexOf("const JH_ON"),b=JH.indexOf("/* ---------- 文字");
-  vm.runInContext(SHW.slice(SHW.indexOf("const shwPx"),SHW.indexOf("function shwPt"))+SHW.split("\n").find(line=>line.startsWith("function shwInPoly"))+"\n"+JH.slice(a,b)+";this.R={JH_W,JH_H,JH_HOME,JH_SITE,JH_START,jhWalkCfg,jhGround,jhPct,jhArea,shwPath,shwNear,shwRoute,shwPx}",c);
+  vm.runInContext(SHW.slice(SHW.indexOf("const shwPx"),SHW.indexOf("function shwPt"))+SHW.split("\n").find(line=>line.startsWith("function shwInPoly"))+"\n"+JH.slice(a,b)+";this.R={JH_W,JH_H,JH_HOME,JH_SITE,JH_START,JH_PLAZAS,jhWalkCfg,jhGround,jhPct,jhArea,shwPath,shwNear,shwRoute,shwPx,shwInPoly}",c);
   return c.R};
 const osc=()=>{const c={};vm.createContext(c);vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"),OS.indexOf("/* ===== END osc-core"))+";this.OSC=OSC",c);return c.OSC};
 test("十派每一派都有駐地，座標都在長卷圖裡；牌旗在站點上方",()=>{const R=load(),O=osc();
@@ -56,10 +56,9 @@ test("各區的道路、石階和橋可點；山壁、河面、屋頂與未連�
 });
 test("仕角炮門石坪容易點選，隔壁山壁與另一區的石坪保持禁行",()=>{
   const R=load(),C=R.jhWalkCfg(R.JH_START),p=R.jhPct([2458,325]);
-  assert.ok(R.shwNear(C,p).d>18,"石坪測點要在原路段的點選範圍外");
   const q=R.jhGround(C,"advisor_corner",p);
   assert.ok(q);
-  assert.ok(R.shwNear(C,q.p).d<1);
+  assert.deepEqual(q.p,p,"廣場落點保留玩家點到的確切位置");
   assert.equal(R.jhGround(C,"advisor_corner",R.jhPct([2390,390])),null);
   assert.equal(R.jhGround(C,"elephant",p),null);
 });
@@ -97,20 +96,53 @@ test("長卷點路面能下山、繞過水榭走到對岸，連續點相鄰路�
   assert.match(JH,/characterActions:false/);
   assert.match(JH,/\.jh-spot\{pointer-events:none\}\.jh-spot \.bn\{pointer-events:auto\}/);
 });
-test("照片東岸、山腳與門前小路可選為跨區目的地，河面不當成路",()=>{
+test("照片東岸、山腳與門前小路可點，連通岸路步行、隔水時可選跨區目的地",()=>{
   const R=load(),C=R.jhWalkCfg(R.JH_START);
-  for(const [group,point] of [["advisor_corner",[2457,421]],["palace_horse",[2719,1143]],["same_cannon",[1049,455]],["same_cannon",[1091,476]]]){
+  for(const [group,point] of [["advisor_corner",[2457,421]],["palace_horse",[2719,1143]],["west",[1049,455]],["west",[1091,476]]]){
     const p=R.jhPct(point),dest=R.jhGround(C,null,p);
-    assert.equal(R.jhGround(C,"elephant",p),null);
+    assert.equal(!!R.jhGround(C,"elephant",p),group==="west");
     assert.equal(R.jhArea(C,dest),group,point.join(","));
-    assert.equal(R.shwRoute(C,"elephant",dest).pts.length,0,"以現有跨區交通抵達，步行不能跨水");
+    assert.equal(R.shwRoute(C,"elephant",dest).pts.length>0,group==="west");
   }
+  const longRoad=R.shwPath(C,"same_cannon","opposite_cannon");
+  assert.ok(longRoad.length>20,"兩岸經橋面與沿岸道路連通");
   for(const p of [[1010,472],[1047,395],[2250,520],[2580,455],[2732,874]]){
     assert.equal(R.jhGround(C,null,R.jhPct(p)),null,"河面或山體 "+p);
   }
   assert.match(JH,/if\(other&&jhArea\(cfg,other\)!==jhArea\(cfg,from\)\)sail\(other\)/);
   assert.match(JH,/quickEntry:true/);
   assert.match(JH,/if\(sid===ferry\.sid\)ferry\.finish\(true\)/);
+});
+test("十派廣場走到點下的位置，進出與改道都不切出邊界",()=>{
+  const R=load(),C=R.jhWalkCfg(R.JH_START);
+  assert.equal(C.plazas.length,R.JH_PLAZAS.length);
+  assert.equal(new Set(R.JH_PLAZAS.map(([site])=>site)).size,10);
+  for(const [i,[site,outline]] of R.JH_PLAZAS.entries()){
+    const {poly,port}=C.plazas[i];
+    const convex=outline.map(([x,y],j)=>{
+      const [a,b]=outline[(j+1)%outline.length],[c,d]=outline[(j+2)%outline.length];
+      return Math.sign((a-x)*(d-b)-(b-y)*(c-a));
+    });
+    assert.equal(new Set(convex).size,1,site+" 必須是凸區");
+    assert.ok(R.shwInPoly(poly,C.N[port]),site+" 入口在坪內");
+    const center=poly.reduce((p,q)=>[p[0]+q[0]/poly.length,p[1]+q[1]/poly.length],[0,0]);
+    const targets=[0,2].map(n=>center.map((v,j)=>(v+poly[n][j])/2));
+    const [a,b]=targets.map(p=>{
+      const q=R.jhGround(C,site,p);
+      assert.deepEqual(q.p,p,site);
+      assert.ok(R.shwRoute(C,site,q).pts.length>=2,site+" 接得回路網");
+      return q;
+    });
+    const route=R.shwRoute(C,a,b);
+    assert.equal(route.pts.length,2,site+" 直接在坪內改道");
+    assert.deepEqual(route.pts.at(-1),b.p);
+  }
+  for(const p of [[174,362],[2651,883],[2800,709],[1986,1193],[2548,367],[1492,368],[1448,632],[1511,830]]){
+    assert.ok(R.jhGround(C,null,R.jhPct(p)),"樓梯、橋或沿岸 "+p);
+  }
+  for(const p of [[80,170],[210,205],[730,736],[1335,386],[1930,1180],[2640,787],[2770,671],[2850,330]]){
+    assert.equal(R.jhGround(C,null,R.jhPct(p)),null,"山／水／屋頂 "+p);
+  }
 });
 test("頁面：路由、組版 include、淡出淡入、第一次歡迎文字、入口（首頁遠山、找地方、開局棋路頁）",()=>{
   assert.match(rd("xiangqi-db/m/02-shell.js"),/p\[0\]==="jianghu"&&typeof Jianghu==="function"\)return screen=Jianghu\(v\)/);

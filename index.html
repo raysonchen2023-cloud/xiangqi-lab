@@ -1703,7 +1703,7 @@ body.bh-field #cgStuck button{pointer-events:auto}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261120-1330";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261120-1345";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -28429,7 +28429,7 @@ const JH_SITE={central:{s:[866,478],f:[857,290]},screen:{s:[179,1172],f:[178,103
 const JH_ROADS={
   west:[
     ["horse",[188,650],[221,650],"westFork",[236,681],[262,696],[311,702],[367,702],[410,696],[450,677],[490,661],"elephantFork",[550,636],[545,616,12],[535,600,12],"elephant"],
-    ["horse",[129,651],[104,646],[88,633],[73,635,11],[56,647,10],[39,666,10],[26,686,8],[18,699,8]],
+    ["horse",[129,651],[104,646],[88,633],[75,651,11],[60,668,10],[45,681,9],[32,695,8],[23,705,8]],
     ["westFork",[215,626],[231,605],[266,592],[292,573],[299,544],[304,522],[320,502],[339,482],[346,464]],
     ["elephantFork",[573,630],[602,624],[638,614],[672,603],"westBridge",[699,586],[712,570],[720,546],[724,523],[720,499],[709,480]],
     ["elephant",[521,559,9],[515,539,8],[515,522,8]],
@@ -28444,7 +28444,31 @@ const JH_ROADS={
     ["central",[867,449,23],[865,412,24],[864,378,22],[866,343,20],[865,314,20],[866,277,19],[869,242,17],[869,210,16],[870,183,14]],
     [[866,496],[891,488],[910,468,8],[934,442,8],[950,440,7],[971,447,7],[988,455,7]],
     ["pawn",[1230,775,9],[1220,757,9],[1205,749,9],[1186,741,10],"pawnFork",[1118,758],[1095,778],[1076,803],[1064,825],[1077,849],[1067,874],[1042,901],[1018,921],[1018,938],[1039,952],[1064,970],[1087,995],[1111,1025],[1145,1060],[1175,1081],[1204,1105],[1229,1130],[1251,1157],[1282,1183],[1320,1206],[1352,1216],[1382,1227],[1419,1235],[1468,1238],[1506,1226]],
-    ["pawnFork",[1158,734],[1171,718],[1179,695],[1180,676]]
+    ["pawnFork",[1158,734],[1171,718],[1179,695],[1180,676]],
+    [[1506,1226],[1535,1205],[1548,1176],[1539,1143],[1520,1110],[1521,1084],[1528,1062],[1554,1051]],
+    [[388,702],[367,702],[372,715],[402,707],[427,693],[450,677]],
+    [[490,661],[477,676],[458,689,10],[443,707,8]],
+    /* 順炮門雙塔與東岸 */
+    ["same_cannon",[1338,316],[1375,314],[1412,317],[1451,326],[1470,329]],
+    ["same_cannon",[1264,315],[1222,315],[1184,318],[1156,319],[1128,308],[1111,292],[1105,275],[1110,254],[1125,230]],
+    [[1105,275],[1113,300],[1102,322],[1089,346,16],[1080,370,15],[1082,394,16],[1074,412,16],[1077,435,15],[1088,454],[1099,476],[1101,502],[1095,526],[1078,548],[1059,570],[1065,590],[1088,609]],
+    [[1077,435],[1065,438,10],[1053,445,9],[1049,456,8]],
+    ["same_cannon",[1302,285],[1300,265,13],[1300,246,12]],
+    [[1264,315],[1255,293],[1253,269,13],[1254,248,11]],
+    [[1375,314],[1363,295],[1358,270,12],[1352,249,11]],
+    [[1451,326],[1477,344],[1492,368],[1504,392],[1494,418],[1492,442]],
+    /* 對面炮門前埕與山腳路 */
+    ["opposite_cannon",[1900,980],[1901,998,9],[1903,1020,9],[1906,1045],[1911,1067],[1938,1084],[1969,1098],[2000,1104],[2030,1102]],
+    ["opposite_cannon",[1876,950],[1858,945],[1853,935]],
+    ["opposite_cannon",[1924,947],[1953,939],[1961,931]],
+    [[1911,1067],[1883,1067],[1854,1073],[1827,1087],[1802,1096],[1775,1099],[1749,1088],[1722,1074],[1694,1059],[1671,1054],[1637,1050]],
+    /* 沿岸道路連到村邊與對面炮門。 */
+    [[1492,442],[1489,468],[1498,493],[1524,515],[1538,538],[1548,552,14],[1530,577,13],
+      [1505,598,14],[1475,613,14],[1448,632,14],[1436,656,14],[1446,680,14],[1472,702,14],
+    [1489,725,13],[1484,750,12],[1479,774,11],[1498,805,12],[1511,830,12],
+    [1524,852,13],[1518,875,13],[1520,902,13],[1546,925,13],[1536,950,14],
+      [1536,978,14],[1543,1007,15],[1552,1031,16],[1554,1051]],
+    [[1554,1051],[1580,1044],[1608,1047],[1637,1050]]
   ],
   screen:[
     ["screen",[223,1171],[251,1168],[282,1156],[301,1138],[320,1110],[339,1092],[368,1076],[380,1054],[391,1023],[381,1004],[383,982],[393,958],[407,934],[416,915],[414,904]],
@@ -28452,21 +28476,14 @@ const JH_ROADS={
     ["screen",[178,1195],[175,1222],[174,1244]],
     [[178,1195],[149,1196],[122,1200]],
     [[175,1222],[146,1222],[121,1225]],
-    [[175,1222],[213,1222],[231,1216]]
-  ],
-  same_cannon:[
-    ["same_cannon",[1338,316],[1375,314],[1412,317],[1451,326],[1470,329]],
-    ["same_cannon",[1264,315],[1222,315],[1184,318],[1156,319],[1128,308],[1111,292],[1105,275],[1110,254],[1125,230]],
-    [[1105,275],[1113,300],[1102,322],[1089,346,16],[1080,370,15],[1082,394,16],[1074,412,16],[1077,435,15],[1088,454],[1099,476],[1101,502],[1095,526],[1078,548],[1059,570],[1065,590],[1088,609]],
-    [[1077,435],[1065,438,10],[1053,445,9],[1049,456,8]]
-  ],
-  opposite_cannon:[
-    ["opposite_cannon",[1900,980],[1901,998,9],[1903,1020,9],[1906,1045],[1911,1067],[1938,1084],[1969,1098],[2000,1104],[2030,1102]],
-    ["opposite_cannon",[1876,950],[1858,945],[1853,935]]
+    [[175,1222],[213,1222],[231,1216]],
+    [[414,904],[398,887],[376,874],[350,855],[337,849]]
   ],
   cross_palace:[
     ["cross_palace",[2152,1147],[2147,1132,9],[2153,1118,9]],
-    ["cross_palace",[2176,1166,9],[2195,1170],[2214,1160]]
+    ["cross_palace",[2176,1166,9],[2195,1170],[2214,1160]],
+    ["cross_palace",[2157,1170,10],[2135,1189,8],[2106,1192,8],[2066,1193,8],[2026,1193,8],[1986,1193,8],
+      [1946,1193,8],[1906,1193,8],[1866,1193,8],[1826,1194,8],[1786,1194,8],[1750,1196,8],[1721,1184,9]]
   ],
   palace_horse:[
     ["palace_horse",[2676,1092],[2695,1111],[2706,1129],[2692,1150],[2668,1152],[2642,1148],[2608,1137],[2579,1125],[2566,1109],[2557,1089],[2537,1074],[2544,1060],[2518,1051],[2494,1036],[2470,1021]],
@@ -28477,22 +28494,41 @@ const JH_ROADS={
   advisor_corner:[
     ["advisor_corner",[2441,349],[2455,365],[2452,383],[2440,399],[2447,420],[2463,434],[2487,435],[2510,442]],
     ["advisor_corner",[2404,348],[2387,341],[2375,324]],
-    [[2463,434],[2470,449],[2492,456]]
+    [[2463,434],[2470,449],[2492,456]],
+    ["advisor_corner",[2446,328],[2471,338],[2494,352],[2510,366],[2530,366,12],[2548,367,9],[2570,373,9],[2590,386,8],[2606,399,9]]
+  ],
+  horse_steps:[
+    [[203,478,11],[185,460,11],[163,442,11],[180,428,11],[196,412,11],[179,397,11],
+      [156,377,10],[174,362,10],[198,345,11],[199,332,11],[169,312,10],[172,300,11],
+      [193,278,11],[206,261,10],[194,246,10],[187,229,9]]
+  ],
+  palace_steps:[
+    [[2623,818,10],[2631,839,11],[2640,861,11],[2651,883,11],[2661,905,11],[2672,927,10]]
+  ],
+  palace_upper:[
+    [[2791,685,11],[2800,705,11],[2810,725,10],[2820,745,9]]
+  ],
+  east_village:[
+    [[2823,504],[2850,511],[2880,527],[2907,536],[2939,542],[2972,543],[3001,544]]
   ]
 };
 const JH_JUNCTIONS={westFork:[218,653],elephantFork:[512,650],westBridge:[691,607],southBank:[742,894],southFork:[769,1007],pawnFork:[1144,744]};
-/* 寬石坪可整塊點選，落點仍貼在連通的步行路線上。 */
-const JH_PLAZAS={
-  central:[[849,195],[889,195],[890,239],[847,239]],
-  elephant:[[528,631],[565,625],[579,645],[538,663],[513,663],[509,645]],
-  horse:[[76,621],[107,624],[129,632],[189,637],[212,646],[211,662],[133,661],[93,650],[76,636]],
-  screen:[[110,1159],[227,1159],[244,1261],[110,1261]],
-  advisor_corner:[[2385,311],[2460,310],[2480,342],[2399,344]],
-  opposite_cannon:[[1864,928],[1937,928],[1953,967],[1849,967]],
-  palace_horse:[[2629,1054],[2768,1054],[2779,1077],[2735,1095],[2645,1095]]
-};
+/* 開闊地形用凸多邊形，區內可直接走到點下的位置。每塊用獨立入口接到步行路網。 */
+const JH_PLAZAS=[
+  ["central",[[849,195],[889,195],[890,239],[847,239]]],
+  ["central",[[846,343],[884,343],[885,462],[846,462]]],
+  ["elephant",[[519,636],[560,629],[579,645],[539,663],[513,656]]],
+  ["horse",[[79,627],[201,640],[213,655],[136,662],[91,650]]],
+  ["screen",[[110,1159],[227,1159],[244,1261],[110,1261]]],
+  ["advisor_corner",[[2374,302],[2463,312],[2493,348],[2404,356],[2374,334]]],
+  ["opposite_cannon",[[1830,924],[1947,924],[1980,969],[1810,969]]],
+  ["palace_horse",[[2623,1048],[2759,1048],[2774,1080],[2735,1100],[2642,1097]]],
+  ["same_cannon",[[1284,246],[1320,246],[1331,282],[1274,282]]],
+  ["pawn",[[1282,1182],[1315,1191],[1359,1211],[1345,1227],[1300,1207]]],
+  ["cross_palace",[[2148,1159],[2169,1155],[2203,1167],[2209,1181],[2168,1180],[2148,1172]]]
+];
 const JH_START="elephant";
-const JH_MEM="jianghu:roads-v3";   /* 路段重新編號，舊暫存點回到最近一次到訪的門派。 */
+const JH_MEM="jianghu:terrain-v1";   /* 路段重新編號，舊暫存點回到最近一次到訪的門派。 */
 const jhPct=([x,y])=>[x/JH_W*100,y/JH_H*100];
 function jhWalkCfg(home){
   const N={},HS={},area={},width={},edges=[];
@@ -28516,20 +28552,31 @@ function jhWalkCfg(home){
       }
     }
   }
-  return {W:JH_W,H:JH_H,el:40,h:[.076,0,0],dmax:4,home,look0:[N[home][0],100],N,E:edges.join(" "),HS,area,width,strictRoad:true,walkRetarget:true};
+  const plazas=[];
+  for(const [site,outline] of JH_PLAZAS){
+    const poly=outline.map(jhPct),zone=area[site],ports=Object.keys(N).filter(n=>area[n]===zone&&shwInPoly(poly,N[n]));
+    if(!ports.length)continue;
+    const port="court_"+plazas.length;
+    N[port]=N[ports[0]];
+    area[port]=zone;
+    const edge=ports[0]+"-"+port;
+    edges.push(edge);width[edge]=0;
+    plazas.push({poly,port,zone});
+  }
+  return {W:JH_W,H:JH_H,el:40,h:[.076,0,0],dmax:4,home,look0:[N[home][0],100],N,E:edges.join(" "),HS,area,width,plazas,strictRoad:true,walkRetarget:true};
 }
 function jhArea(cfg,at){return cfg.area[typeof at==="string"?at:at?.e?.[0]]}
 function jhGround(cfg,at,p){
   const zone=at?jhArea(cfg,at):null;
   if(at&&!zone)return null;
-  const pixel=[p[0]*JH_W/100,p[1]*JH_H/100];
-  const plazas=new Set(Object.entries(JH_PLAZAS).filter(([gate,poly])=>(!zone||cfg.area[gate]===zone)&&shwInPoly(poly,pixel)).map(([gate])=>cfg.area[gate]));
+  const plaza=cfg.plazas.find(a=>(!zone||a.zone===zone)&&shwInPoly(a.poly,p));
+  if(plaza)return {d:0,p,e:[plaza.port,plaza.port]};
   let best=null;
   for(const edge of shwEdges(cfg)){
     const [a,b]=edge;
     if(zone&&cfg.area[a]!==zone)continue;
     const q=shwNear({W:cfg.W,H:cfg.H,N:cfg.N,_e:[edge]},p);
-    if((plazas.has(cfg.area[a])||q.d<=cfg.width[a+"-"+b])&&(!best||q.d<best.d))best=q;
+    if(q.d<=cfg.width[a+"-"+b]&&(!best||q.d<best.d))best=q;
   }
   return best;
 }
@@ -28669,7 +28716,7 @@ function Jianghu(v,arrival,quick=false){jhCss();setTop(jhL("🗺 十州棋館","
   /* 牌旗避讓（測試員 1821 P3-1、P3-2）：英文派名長，貼長卷左右邊的會被切掉、捲不到 → 牌子橫推回圖內（旗竿不動）；
      兩面牌旗疊到或只隔 1px、牌旗蓋到山門前隨行角色站的地方 → 能左右讓就左右讓，不行就把上面那面的旗竿拉長往上讓。由下往上排，下面的先定位 */
   function fit(){if(!wrap.isConnected)return;const k=scale(),W=map.clientWidth;if(!k||!W)return;const ar=me.naturalWidth&&me.naturalHeight?me.naturalWidth/me.naturalHeight:.6,th=JH_H*k*.09,R=[];
-    for(const b of map.querySelectorAll(".jh-spot")){const P=JH_SITE[b.dataset.sid],bn=b.querySelector(".bn"),po=b.querySelector(".pole");if(!P||!bn||!po)continue;bn.style.transform="";po.style.height="";
+    for(const b of map.querySelectorAll(".jh-spot")){const P=JH_SITE[b.dataset.sid],bn=b.querySelector(".bn"),po=b.querySelector(".pole");if(!P||!bn||!po)continue;bn.style.transform="";po.style.height="";po.style.visibility="";
       const w=bn.offsetWidth,h=bn.offsetHeight,ax=P.f[0]*k,l=ax-w/2;R.push({bn,po,w,h,ax,ay:P.f[1]*k,ph:22,dx:l<6?6-l:l+w>W-6?W-6-l-w:0})}
     const box=r=>{const x=r.ax-r.w/2+r.dx,y=r.ay-r.ph-2;return[x,y-r.h,x+r.w,y]},hit=(a,c,m)=>a[0]<c[2]+m&&c[0]<a[2]+m&&a[1]<c[3]+m&&c[1]<a[3]+m;
     const tok=Object.values(JH_SITE).map(P=>{const x=P.s[0]*k,y=P.s[1]*k,hw=th*ar/2;return[x-hw,y-th,x+hw,y]});
@@ -28679,7 +28726,24 @@ function Jianghu(v,arrival,quick=false){jhCss();setTop(jhL("🗺 十州棋館","
         if(Math.abs(nd)<=r.w/2-20&&a[0]+d>=6&&a[2]+d<=W-6)r.dx=nd;else up=Math.max(up,a[3]-t[1]+6)}
       if(!up)for(let j=0;j<i;j++){const a=box(r),c=box(R[j]);if(hit(a,c,8))up=Math.max(up,a[3]-c[1]+8)}
       if(!up)break;r.ph+=up}});
-    for(const r of R){r.bn.style.transform=r.dx?`translateX(${Math.round(r.dx)}px)`:"";r.po.style.height=Math.round(r.ph)+"px"}}
+    const grounds=cfg.plazas.map(({poly})=>{
+      const xs=poly.map(p=>p[0]*W/100),ys=poly.map(p=>p[1]*map.clientHeight/100);
+      return [Math.min(...xs),Math.min(...ys),Math.max(...xs),Math.max(...ys)];
+    });
+    for(const r of R){
+      const a=box(r),overlap=grounds.filter(g=>hit(a,g,9));
+      if(overlap.length){
+        const clear=[Math.min(...overlap.map(g=>g[0]))-r.w-12,Math.max(...overlap.map(g=>g[2]))+12]
+          .sort((x,y)=>Math.abs(x-a[0])-Math.abs(y-a[0]));
+        for(const x of clear){
+          const moved=[x,a[1],x+r.w,a[3]];
+          if(x<6||x+r.w>W-6||grounds.some(g=>hit(moved,g,9))||tok.some(t=>hit(moved,t,4))||R.some(t=>t!==r&&hit(moved,box(t),8)))continue;
+          r.dx+=x-a[0];r.po.style.visibility="hidden";break;
+        }
+      }
+      r.bn.style.transform=r.dx?`translateX(${Math.round(r.dx)}px)`:"";
+      r.po.style.height=Math.round(r.ph)+"px";
+    }}
   me.onload=()=>fit();
   const onRs=()=>{if(!wrap.isConnected){removeEventListener("resize",onRs);return}fit()};addEventListener("resize",onRs);
   v.innerHTML="";v.append(wrap);
