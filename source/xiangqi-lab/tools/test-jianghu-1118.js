@@ -68,7 +68,7 @@ test("途中改道仍走路網；路線選擇、門派名帖和跨區移動分�
   assert.deepEqual(route.pts[0],start.p);assert.deepEqual(route.pts.at(-1),goal.p);
   assert.equal(route.pts.length-1,route.segE.length);
   assert.match(JH,/shwMount\(\{v,cfg,root:map,frame:map,layer:map,sel:".jh-spot"/);
-  assert.match(JH,/ground:\(_,p\)=>jhGround\(cfg,p\)/);
+  assert.match(JH,/ground:\(_,p\)=>pickGround\(p\)/);
   assert.doesNotMatch(JH,/搭星槎前往|jh-sailing|canVisit:/);
   assert.doesNotMatch(JH,/jhSail|class="osc-row"/);
   assert.doesNotMatch(JH,/mem="jianghu"/);
@@ -145,6 +145,20 @@ test("十派廣場走到點下的位置，進出與改道都不切出邊界",()=
   for(const p of [[80,170],[210,205],[730,736],[1335,386],[1930,1180],[2640,787],[2770,671],[2850,330]]){
     assert.equal(R.jhGround(C,R.jhPct(p)),null,"山／水／屋頂 "+p);
   }
+});
+test("照片岸路和路肩都可由長卷的左右兩端走到，岸邊水面仍擋路",()=>{
+  const R=load(),C=R.jhWalkCfg(R.JH_START);
+  for(const p of [[1473,771],[1452,765],[1490,760],[1484,793],[1448,685]]){
+    const q=R.jhGround(C,R.jhPct(p));
+    assert.ok(q,"岸路落點 "+p);
+    assert.ok(R.shwPx(C,q.p,R.jhPct(p))<=32);
+    for(const start of ["screen","palace_horse"]){
+      const walk=R.shwRoute(C,start,q);
+      assert.deepEqual(walk.pts[0],C.N[start]);
+      assert.deepEqual(walk.pts.at(-1),q.p);
+    }
+  }
+  for(const p of [[1440,754],[1510,765],[1513,743]])assert.equal(R.jhGround(C,R.jhPct(p)),null,"水面 "+p);
 });
 test("頁面：路由、組版 include、淡出淡入、第一次歡迎文字、入口（首頁遠山、找地方、開局棋路頁）",()=>{
   assert.match(rd("xiangqi-db/m/02-shell.js"),/p\[0\]==="jianghu"&&typeof Jianghu==="function"\)return screen=Jianghu\(v\)/);

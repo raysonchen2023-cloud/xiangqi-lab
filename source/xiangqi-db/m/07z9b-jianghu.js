@@ -150,6 +150,8 @@ const JH_PLAZAS=[
 const JH_START="elephant";
 const JH_MEM="jianghu:walking";   /* 路段重新編號，舊暫存點回到最近一次到訪的門派。 */
 const jhPct=([x,y])=>[x/JH_W*100,y/JH_H*100];
+/* 仙人指路門東側的岸路有一片淡色的路肩。點路肩時落在相鄰步道，水面不算。 */
+const JH_COAST_SHOULDER=[[1459,746],[1479,756],[1493,776],[1487,790],[1462,782],[1448,765]].map(jhPct);
 function jhWalkCfg(home){
   const N={},HS={},width={},edges=[],used=new Map();
   const add=(id,p)=>{N[id]=jhPct(p);used.set(p.slice(0,2).join(","),id);return id};
@@ -183,11 +185,12 @@ function jhWalkCfg(home){
 function jhGround(cfg,p){
   const plaza=cfg.plazas.find(a=>shwInPoly(a.poly,p));
   if(plaza)return {d:0,p,e:[plaza.port,plaza.port]};
+  const shoulder=shwInPoly(JH_COAST_SHOULDER,p);
   let best=null;
   for(const edge of shwEdges(cfg)){
     const [a,b]=edge;
     const q=shwNear({W:cfg.W,H:cfg.H,N:cfg.N,_e:[edge]},p);
-    if(q.d<=cfg.width[a+"-"+b]&&(!best||q.d<best.d))best=q;
+    if(q.d<=(shoulder?32:cfg.width[a+"-"+b])&&(!best||q.d<best.d))best=q;
   }
   return best;
 }
@@ -244,6 +247,8 @@ body.jh-on .xqbot{display:none!important}
 .jh-spot.mine .bn{background:#fff6e0;border-width:3px}
 .jh-me{position:absolute;width:auto;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 3px 2px rgba(30,20,10,.35));transition:none}
 .jh-map:has(>.shw.on)>.jh-me{visibility:hidden}
+.jh-destination{position:absolute;z-index:6;width:16px;height:16px;box-sizing:border-box;border:2px solid #74542d;
+  border-radius:50%;background:#fff2cb80;box-shadow:0 0 0 1px #fff6df;transform:translate(-50%,-50%);pointer-events:none}
 #jhFade{position:fixed;inset:0;z-index:9400;background:#EFE6D2;opacity:0;pointer-events:none;transition:opacity ${JH_FADE}ms ease}
 #jhFade.on{opacity:1;pointer-events:auto}
 .home-page.jh-zoom{transition:transform ${JH_FADE+120}ms ease-in;transform:scale(1.12)}
@@ -292,10 +297,12 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
     b.onclick=()=>{if(c&&!map.querySelector(".shw.on"))walkFlat(sid,()=>jhSheet(sid));
       else jhSheet(sid)};map.append(b)}
   const me=document.createElement("img");me.className="jh-me";me.alt="";me.src=c?`data/xs/prev_${c}.webp`:"";if(!c)me.style.display="none";me.onerror=()=>{me.style.display="none"};map.append(me);
+  const destination=document.createElement("i");destination.className="jh-destination";destination.hidden=true;destination.setAttribute("aria-hidden","true");map.append(destination);
   const place=([x,y])=>{me.style.cssText=pc(x,y)+";height:9%"};place(JH_SITE[at].s);
   const scale=()=>map.clientHeight/JH_H,center=x=>{wrap.scrollLeft=x*map.clientWidth/100-wrap.clientWidth/2};
   function follow(x){
     const px=x*map.clientWidth/100,left=wrap.scrollLeft,w=wrap.clientWidth,margin=Math.min(72,w*.20);
+    if(px<left||px>left+w)return;
     if(px<left+margin)wrap.scrollLeft=px-margin;
     else if(px>left+w-margin)wrap.scrollLeft=px-w+margin;
   }
@@ -308,6 +315,14 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
     place(point);
   }
   let flatWalk=null,flatHandoff=false,followAfter=0;
+  function pickGround(p){
+    const q=jhGround(cfg,p);
+    if(q){
+      destination.style.cssText=pc(q.p[0]*JH_W/100,q.p[1]*JH_H/100);
+      destination.hidden=false;
+    }
+    return q;
+  }
   function walkFlat(next,arrive){
     if(flatWalk?.next===next&&typeof next==="string"){flatWalk=null;stay(next);arrive();return}
     const route=shwRoute(cfg,walkAt(),next),pts=route.pts;
@@ -317,25 +332,25 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
     const duration=shwRM()?0:Math.min(8000,Math.max(220,total*3.2)),start=performance.now();
     function step(now){
       if(flatWalk!==walk||!wrap.isConnected)return;
-      if(now-start>=duration||pts.length===1){flatWalk=null;stay(next);if(arrive)arrive();else follow(pts.at(-1)[0]);return}
+      if(now-start>=duration||pts.length===1){flatWalk=null;stay(next);destination.hidden=true;if(arrive)arrive();return}
       let left=total*(now-start)/duration,i=0;
       while(i<lengths.length-1&&left>=lengths[i]){left-=lengths[i];i++}
       const a=pts[i],b=pts[i+1],u=lengths[i]?Math.min(1,left/lengths[i]):0;
       const p=a.map((x,k)=>x+(b[k]-x)*u);
       stay({p,e:route.segE[i]});
-      if(!touching&&now>=followAfter)follow(p[0]);
+      if(arrive&&!touching&&now>=followAfter)follow(p[0]);
       requestAnimationFrame(step);
     }
     step(start);
   }
   map.addEventListener("click",e=>{
-    if(e.target.closest?.(".jh-spot"))followAfter=performance.now()+450;
+    if(e.target.closest?.(".jh-spot")){followAfter=performance.now()+450;destination.hidden=true}
   },true);
   function walkFallback(e){
     if(!c||!img.naturalWidth||map.querySelector(".shw.on")||e.target!==img)return;
     const r=img.getBoundingClientRect();
     if(!r.width||!r.height)return;
-    const q=jhGround(cfg,[(e.clientX-r.left)*100/r.width,(e.clientY-r.top)*100/r.height]);
+    const q=pickGround([(e.clientX-r.left)*100/r.width,(e.clientY-r.top)*100/r.height]);
     if(q)walkFlat({p:q.p,e:q.e});
   }
   map.addEventListener("click",walkFallback);
@@ -383,7 +398,7 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
     if(point)place([point[0]*JH_W/100,point[1]*JH_H/100]);
     center(point?.[0]??cfg.N[at][0]);
     if(c&&img.naturalWidth&&typeof shwMount==="function")shwMount({v,cfg,root:map,frame:map,layer:map,sel:".jh-spot",keyOf:b=>b.dataset.sid,find,mem,characterActions:false,quickEntry:true,
-      ground:(_,p)=>jhGround(cfg,p),
+      ground:(_,p)=>pickGround(p),
       gate:()=>!flatWalk,
       onPlace:S=>{
         if(!S.ready){flatHandoff=true;return}
@@ -392,7 +407,9 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
           [S.x,S.y]=typeof S.at==="string"?cfg.N[S.at]:S.at.p;
           S.place();return;
         }
-        if(S.go&&!touching&&performance.now()>=followAfter)follow(S.x);
+        /* 點地時保留玩家正看的目的地，角色從畫面外走進來。 */
+        if(!S.go)destination.hidden=true;
+        if(S.go&&!S.go.free&&!touching&&performance.now()>=followAfter)follow(S.x);
         if(!S.go&&typeof S.at==="string"&&S.at!==at)stay(S.at);
       }});
     jhFadeOut();setTimeout(()=>{
