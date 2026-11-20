@@ -1,6 +1,6 @@
 {
  "ref": "origin/main",
- "madeAt": "2026-11-20T05:15:41.188Z",
+ "madeAt": "2026-11-20T05:30:50.989Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -53,7 +53,7 @@
   "xiangqi-db/m/07t-episodes.js": "local=live",
   "xiangqi-db/m/07u-women.js": "local=live",
   "xiangqi-db/m/07v-relicdrop.js": "local=live",
-  "xiangqi-db/m/07w-shipwalk.js": "web-jianghu-walk",
+  "xiangqi-db/m/07w-shipwalk.js": "web-jianghu-roam",
   "xiangqi-db/m/07w4-porthost.js": "local=live",
   "xiangqi-db/m/07q-buddy.js": "local=live",
   "xiangqi-db/m/07w5-ouyu.js": "local=live",
@@ -92,7 +92,7 @@
   "xiangqi-db/m/07z7-lesson.js": "local=live",
   "xiangqi-db/m/07z8-grablab.js": "local=live",
   "xiangqi-db/m/07z9-school.js": "local=live",
-  "xiangqi-db/m/07z9b-jianghu.js": "web-jianghu-walk",
+  "xiangqi-db/m/07z9b-jianghu.js": "web-jianghu-roam",
   "xiangqi-db/m/07w6-sceneinfo.js": "local=live",
   "xiangqi-db/m/07w6b-scenedata.js": "local=live",
   "xiangqi-db/m/07w6c-scenepoem.js": "local=live",
@@ -299,7 +299,7 @@
   "xiangqi-lab/tools/test-ios-native-1116.js": "local",
   "xiangqi-lab/tools/test-ipad-fill.js": "local",
   "xiangqi-lab/tools/test-jh-fade-1118.js": "local",
-  "xiangqi-lab/tools/test-jianghu-1118.js": "web-jianghu-walk",
+  "xiangqi-lab/tools/test-jianghu-1118.js": "web-jianghu-roam",
   "xiangqi-lab/tools/test-land3d.js": "local",
   "xiangqi-lab/tools/test-lang-default-1117.js": "local",
   "xiangqi-lab/tools/test-layout-r16.js": "local",
@@ -625,8 +625,8 @@
   "test-osc-school-1118.js": "指令排除：要讀十派課程 opening-school/*.json（只放 CDN 與倉庫 data/，公開副本 source/ 沒有）",
   "test-zm-masters-1118.js": "指令排除：要讀掌門立繪 npc/zm_*.webp 與棋友開局表（只在開發者電腦與 CDN）"
  },
- "version": "20261120-1315",
- "indexSha1": "68386a0e1af6",
+ "version": "20261120-1330",
+ "indexSha1": "079e9b6d9f2b",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",
@@ -654,5 +654,5 @@
    }
   ]
  },
- "baseCommit": "e1207fc8d8bbb4fbf0fe70d0cc347c4d876e02c3"
+ "baseCommit": "b8f9993f2b16a39d9e3be555fd0e131a9982787d"
 }

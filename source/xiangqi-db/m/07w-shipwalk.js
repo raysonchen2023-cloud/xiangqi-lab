@@ -200,7 +200,12 @@ function shwSavedAt(C,mem){
 function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.go;let b=e.target.closest&&e.target.closest(S.o.sel),tk=null;
   /* 回饋 816：桌上的東西本身（例如信房的信箋）也算入口：座標表 TS:{選擇器:入口代號}，先跳上桌再打開 */
   if(!b&&WALK_HOP_ON&&S.C.TS&&e.target.closest)for(const k in S.C.TS){const x=e.target.closest(k);if(x&&S.M.contains(x)){b=x;tk=S.C.TS[k];x.dataset.shwnf="1";break}}
-  if(g&&!g.free&&(S.C.strictRoad?g.act>=0&&b===g.btn:g.act>=0||(b&&b===g.btn))){e.stopPropagation();e.preventDefault();if(e.isTrusted)shwOpen(S);else setTimeout(()=>{if(S.go===g)shwOpen(S)},0);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
+  const sameGate=!!b&&b===g?.btn;
+  if(g&&!g.free&&((sameGate&&(!S.C.strictRoad||S.o.quickEntry||g.act>=0))||(!S.C.strictRoad&&g.act>=0))){
+    e.stopPropagation();e.preventDefault();
+    if(e.isTrusted)shwOpen(S);else setTimeout(()=>{if(S.go===g)shwOpen(S)},0);
+    return;
+  }   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
   /* 回饋 834（開發者 11/9：棋史卡沒反應、盤查入口點選）：別的東西用 入口.click() 轉過來的點選（一盞茶的茶碗 .cjm-hit、渡口碼頭 .ph4-pz）不是使用者真的點，
      這時入口自己的 click 還在進行中，shwOpen 裡再呼叫同一顆的 click() 會被瀏覽器直接略過（HTML 規定），結果走路被取消、什麼都沒開；所以這種點選延到下一輪再開 */
   if(b){const h=tk||S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;e.stopPropagation();e.preventDefault();if(S.o.canVisit&&!S.o.canVisit(S,b,H))return;vibrate(5);

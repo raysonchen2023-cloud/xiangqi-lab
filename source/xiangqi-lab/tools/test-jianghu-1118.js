@@ -97,6 +97,21 @@ test("長卷點路面能下山、繞過水榭走到對岸，連續點相鄰路�
   assert.match(JH,/characterActions:false/);
   assert.match(JH,/\.jh-spot\{pointer-events:none\}\.jh-spot \.bn\{pointer-events:auto\}/);
 });
+test("照片東岸、山腳與門前小路可選為跨區目的地，河面不當成路",()=>{
+  const R=load(),C=R.jhWalkCfg(R.JH_START);
+  for(const [group,point] of [["advisor_corner",[2457,421]],["palace_horse",[2719,1143]],["same_cannon",[1049,455]],["same_cannon",[1091,476]]]){
+    const p=R.jhPct(point),dest=R.jhGround(C,null,p);
+    assert.equal(R.jhGround(C,"elephant",p),null);
+    assert.equal(R.jhArea(C,dest),group,point.join(","));
+    assert.equal(R.shwRoute(C,"elephant",dest).pts.length,0,"以現有跨區交通抵達，步行不能跨水");
+  }
+  for(const p of [[1010,472],[1047,395],[2250,520],[2580,455],[2732,874]]){
+    assert.equal(R.jhGround(C,null,R.jhPct(p)),null,"河面或山體 "+p);
+  }
+  assert.match(JH,/if\(other&&jhArea\(cfg,other\)!==jhArea\(cfg,from\)\)sail\(other\)/);
+  assert.match(JH,/quickEntry:true/);
+  assert.match(JH,/if\(sid===ferry\.sid\)ferry\.finish\(true\)/);
+});
 test("頁面：路由、組版 include、淡出淡入、第一次歡迎文字、入口（首頁遠山、找地方、開局棋路頁）",()=>{
   assert.match(rd("xiangqi-db/m/02-shell.js"),/p\[0\]==="jianghu"&&typeof Jianghu==="function"\)return screen=Jianghu\(v\)/);
   assert.match(rd("xiangqi-db/m.html"),/\/\/#include m\/07z9-school\.js\n\/\/#include m\/07z9b-jianghu\.js/);
