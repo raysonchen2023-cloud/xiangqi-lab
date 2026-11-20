@@ -636,13 +636,13 @@ function gameLayout(v){
    改成左右兩欄：左邊整個高度給棋盤（寬＝高×560/615，最多佔畫面 62%），右邊依序放玩家、狀態、棋譜、工具列，右欄自己可以捲。
    只認 gameLayout 畫出來的對局頁（裡面有 #bbox 和 #acts）；直式、平板、電腦都不受影響 */
 (()=>{try{const s=document.createElement("style");s.id="glLand";s.textContent=`@media (orientation:landscape) and (max-height:600px){
-.view.fixed:has(>#bbox):has(>#acts){display:grid;grid-template-columns:min(62vw,calc((100dvh - 64px) * 560 / 615)) minmax(0,1fr);grid-template-rows:repeat(12,min-content) 1fr;grid-auto-rows:min-content;column-gap:4px;overflow-y:auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
-.view.fixed:has(>#bbox):has(>#acts)>*{grid-column:2;min-width:0}
-.view.fixed:has(>#bbox):has(>#acts)>#bbox{grid-column:1;grid-row:1/-1;position:sticky!important;top:0;align-self:start;height:calc(100dvh - 64px - env(safe-area-inset-bottom,0px));max-height:100%;min-height:0;padding:2px 2px 2px 6px;box-sizing:border-box}
-.view.fixed:has(>#bbox):has(>#acts)>#bbox svg{height:100%;width:auto;max-width:100%;max-height:100%}
-.view.fixed:has(>#bbox):has(>#acts)>#bbox canvas{max-width:100%;max-height:100%}
-.view.fixed:has(>#bbox):has(>#acts)>.evline{margin:4px 8px}
-.view.fixed:has(>#bbox):has(>#acts)>.actions{position:sticky;bottom:0;flex-wrap:wrap;background:var(--bg)}}`;document.head.append(s)}catch(e){}})();
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts){display:grid;grid-template-columns:min(62vw,calc((100dvh - 64px) * 560 / 615)) minmax(0,1fr);grid-template-rows:repeat(12,min-content) 1fr;grid-auto-rows:min-content;column-gap:4px;overflow-y:auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>*{grid-column:2;min-width:0}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>#bbox{grid-column:1;grid-row:1/-1;position:sticky!important;top:0;align-self:start;height:calc(100dvh - 64px - env(safe-area-inset-bottom,0px));max-height:100%;min-height:0;padding:2px 2px 2px 6px;box-sizing:border-box}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>#bbox svg{height:100%;width:auto;max-width:100%;max-height:100%}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>#bbox canvas{max-width:100%;max-height:100%}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>.evline{margin:4px 8px}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>.actions{position:sticky;bottom:0;flex-wrap:wrap;background:var(--bg)}}`;document.head.append(s)}catch(e){}})();
 /* 開發者 11/6：選了雲河七星的玩家，對局下方的頭像寫自己的本命子、放自己的角色（原本一律寫帥／將） */
 function playerHTML(side,name,sub,clock){let pc=side==="r"?"帥":"將",im="";try{const c=myChar(),C=c&&WX_CHARS[c];if(C&&name===meName()){const R2B={帥:"將",仕:"士",相:"象",俥:"車",傌:"馬",炮:"砲",兵:"卒"},B2R={};for(const k in R2B)B2R[R2B[k]]=k;pc=side==="r"?(B2R[C.pc]||C.pc):(R2B[C.pc]||C.pc);im=`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()">`}}catch(e){}return`<div class="av ${side}${im?" npc":""}">${esc(pc)}${im}</div><div class="nm"><b>${esc(name)}</b><span>${esc(sub||"")}</span></div>${clock!=null?`<div class="clk">${clock}</div>`:""}`}
 function renderStrip(box,moves,curIdx,onPick){

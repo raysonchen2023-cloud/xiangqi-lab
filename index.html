@@ -1566,6 +1566,79 @@ html[data-lefty] .tskip{right:auto;left:14px}
    ① 經典世界首頁、觀星閣、藏譜石窟、棋譜庫天上的朝代殘影（07y .cy，例「秦長城與烽火台」41×35、「赤壁樓船」38×29）：同一頁殘影的中心最少隔圖寬 12%（375 寬約 45px），擴到 44 不會互相蓋到；
       殘影層 z-index 1，入口標籤、出口都在上面，蓋到的地方照樣點到它們 */
 .cy::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+
+/* 黑洞星樞棋局：棋盤、回合與控制分區，按鈕的透明熱區也不進棋盤。 */
+body.bh-field{
+  --bf-top:calc(52px + env(safe-area-inset-top,0px));
+  --bf-bottom:calc(88px + env(safe-area-inset-bottom,0px));
+  --bf-left:env(safe-area-inset-left,0px);
+  --bf-right:env(safe-area-inset-right,0px);
+  --bf-pad:0px;
+  --bf-side:0px;
+  background:#080914!important;
+}
+body.bh-field.bh-field-pad{--bf-pad:148px}
+html body.bh-field #topbar{
+  position:fixed!important;inset:0 0 auto!important;z-index:42;
+  box-sizing:border-box;height:var(--bf-top);min-height:0;
+  padding:env(safe-area-inset-top,0px) calc(8px + var(--bf-right)) 0 calc(8px + var(--bf-left));
+  background:#101120;color:#fff0cf;border-bottom:1px solid #383349;box-shadow:none;
+}
+body.bh-field #title{font-size:16px;letter-spacing:.02em}
+body.bh-field #back:not([hidden]){display:flex;min-width:44px;min-height:44px;width:auto;padding-inline:6px 10px}
+body.bh-field #topRight,
+body.bh-field .view.fixed>:is(#pTop,#pBot,#stat,#acts,#strip,.rule-note,.evline,.pk3d-back),
+body.bh-field .view.fixed>#bbox :is(.pkname,.pkview,.pk2d,.pk2d-tip,.pzoom),
+body.bh-field:not(.bh-field-pad) .view.fixed>#bbox .gpad,
+body.bh-field .xqbot{display:none!important}
+html body.bh-field #view.view.fixed>#bbox{
+  position:fixed!important;inset:var(--bf-top) calc(var(--bf-right) + var(--bf-side)) calc(var(--bf-bottom) + var(--bf-pad)) var(--bf-left)!important;
+  width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;
+  max-width:none!important;margin:0!important;padding:0!important;
+  display:grid;grid-template: minmax(0,1fr) / minmax(0,1fr);place-items:center;align-self:stretch!important;justify-self:stretch!important;
+  border-radius:0!important;background:#080914;z-index:40;overflow:visible!important;
+}
+body.bh-field #bbox>.park3d{grid-area:1/1;border-radius:0!important;overflow:visible!important}
+body.bh-field #bbox>.park3d>canvas{display:block;border-radius:0}
+html body.bh-field .view.fixed>#bbox>svg{
+  grid-area:1/1;width:100%!important;height:100%!important;max-width:none!important;
+  max-height:none!important;margin:0!important;box-sizing:border-box;padding:6px;
+}
+body.bh-field .view.fixed>#bbox .gpad{
+  position:fixed!important;bottom:calc(var(--bf-bottom) + 4px)!important;
+}
+body.bh-field .view.fixed>#bbox .gs-pop{top:12px!important;bottom:auto!important;right:8px!important}
+body.bh-field #bhFieldDock{
+  position:fixed;inset:auto 0 0;z-index:43;height:var(--bf-bottom);box-sizing:border-box;
+  padding:4px calc(8px + var(--bf-right)) calc(6px + env(safe-area-inset-bottom,0px)) calc(8px + var(--bf-left));
+  background:#101120;color:#fff0cf;border-top:1px solid #383349;
+  display:grid;grid-template-rows:minmax(0,1fr) 44px;gap:3px;
+}
+#bhFieldDock .bf-status{
+  align-self:center;text-align:center;font:700 13px/1.25 var(--sans,system-ui);
+  overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+}
+#bhFieldDock .bf-yours{color:#ffe29a}
+#bhFieldDock .bf-check{color:#ffbbb0}
+#bhFieldDock .bf-keys{display:flex;gap:6px;max-width:400px;width:100%;margin-inline:auto}
+#bhFieldDock button{
+  flex:1;min-width:44px;min-height:44px;border:1px solid #5a536c;border-radius:10px;
+  background:#252439;color:#fff0cf;font:700 14px/1.1 var(--sans,system-ui);
+  cursor:pointer;touch-action:manipulation;
+}
+#bhFieldDock button[hidden]{display:none}
+#bhFieldDock button:focus-visible{outline:2px solid #ffe29a;outline-offset:-4px}
+.bh-field-menu{display:grid;gap:7px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.bh-field-menu button{min-height:44px;overflow-wrap:anywhere}
+body.bh-field #cgStuck{position:fixed;z-index:43;top:var(--bf-top);left:8px;right:8px;color:#fff0cf;pointer-events:none}
+body.bh-field #cgStuck button{pointer-events:auto}
+@media (orientation:landscape) and (min-width:600px){
+  body.bh-field{--bf-bottom:calc(58px + env(safe-area-inset-bottom,0px))}
+  body.bh-field.bh-field-pad{--bf-pad:0px;--bf-side:164px}
+  body.bh-field #bhFieldDock{grid-template-columns:minmax(0,1fr) minmax(230px,360px) minmax(0,1fr);grid-template-rows:44px;align-content:center}
+  body.bh-field #bhFieldDock .bf-keys{grid-column:2}
+  body.bh-field.bh-field-pad .view.fixed>#bbox .gpad{left:auto!important;right:calc(6px + env(safe-area-inset-right,0px));transform:none!important}
+}
 </style></head><body>
 <script>/* 11/18 第 31 輪 N31-3：冷開時頂欄「象棋千秋」和底下四顆分頁鈕的空殼，在程式跑完以前（約 0.4 秒）就先畫出來了。這次會出開頭畫面時（跟 05b xqBootCovNeed 同一套判斷），先在 html 標上 xq-bootcov，蓋一層跟開頭畫面同色的底；05b saveBoot 跑完就拿掉（xqBootCovOff），保險 6 秒一定拿掉 */(function(){try{var d=document.documentElement;if(navigator.webdriver||sessionStorage.getItem("xqTitleShown")||sessionStorage.getItem("xqPrologue")||localStorage.getItem("xqUpdBack")||!/^(#\/?)?$/.test(location.hash||""))return;var s=document.createElement("style");s.textContent="html.xq-bootcov::after{content:'';position:fixed;inset:0;z-index:9997;background:#F3ECDD}";document.head.appendChild(s);d.classList.add("xq-bootcov");setTimeout(function(){d.classList.remove("xq-bootcov")},6000)}catch(e){}})();</script>
 <div class="app">
@@ -1630,7 +1703,7 @@ html[data-lefty] .tskip{right:auto;left:14px}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261118-2027";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261120-1208";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -5920,13 +5993,13 @@ function gameLayout(v){
    改成左右兩欄：左邊整個高度給棋盤（寬＝高×560/615，最多佔畫面 62%），右邊依序放玩家、狀態、棋譜、工具列，右欄自己可以捲。
    只認 gameLayout 畫出來的對局頁（裡面有 #bbox 和 #acts）；直式、平板、電腦都不受影響 */
 (()=>{try{const s=document.createElement("style");s.id="glLand";s.textContent=`@media (orientation:landscape) and (max-height:600px){
-.view.fixed:has(>#bbox):has(>#acts){display:grid;grid-template-columns:min(62vw,calc((100dvh - 64px) * 560 / 615)) minmax(0,1fr);grid-template-rows:repeat(12,min-content) 1fr;grid-auto-rows:min-content;column-gap:4px;overflow-y:auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
-.view.fixed:has(>#bbox):has(>#acts)>*{grid-column:2;min-width:0}
-.view.fixed:has(>#bbox):has(>#acts)>#bbox{grid-column:1;grid-row:1/-1;position:sticky!important;top:0;align-self:start;height:calc(100dvh - 64px - env(safe-area-inset-bottom,0px));max-height:100%;min-height:0;padding:2px 2px 2px 6px;box-sizing:border-box}
-.view.fixed:has(>#bbox):has(>#acts)>#bbox svg{height:100%;width:auto;max-width:100%;max-height:100%}
-.view.fixed:has(>#bbox):has(>#acts)>#bbox canvas{max-width:100%;max-height:100%}
-.view.fixed:has(>#bbox):has(>#acts)>.evline{margin:4px 8px}
-.view.fixed:has(>#bbox):has(>#acts)>.actions{position:sticky;bottom:0;flex-wrap:wrap;background:var(--bg)}}`;document.head.append(s)}catch(e){}})();
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts){display:grid;grid-template-columns:min(62vw,calc((100dvh - 64px) * 560 / 615)) minmax(0,1fr);grid-template-rows:repeat(12,min-content) 1fr;grid-auto-rows:min-content;column-gap:4px;overflow-y:auto;padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right)}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>*{grid-column:2;min-width:0}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>#bbox{grid-column:1;grid-row:1/-1;position:sticky!important;top:0;align-self:start;height:calc(100dvh - 64px - env(safe-area-inset-bottom,0px));max-height:100%;min-height:0;padding:2px 2px 2px 6px;box-sizing:border-box}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>#bbox svg{height:100%;width:auto;max-width:100%;max-height:100%}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>#bbox canvas{max-width:100%;max-height:100%}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>.evline{margin:4px 8px}
+body:not(.bh-field) .view.fixed:has(>#bbox):has(>#acts)>.actions{position:sticky;bottom:0;flex-wrap:wrap;background:var(--bg)}}`;document.head.append(s)}catch(e){}})();
 /* 開發者 11/6：選了雲河七星的玩家，對局下方的頭像寫自己的本命子、放自己的角色（原本一律寫帥／將） */
 function playerHTML(side,name,sub,clock){let pc=side==="r"?"帥":"將",im="";try{const c=myChar(),C=c&&WX_CHARS[c];if(C&&name===meName()){const R2B={帥:"將",仕:"士",相:"象",俥:"車",傌:"馬",炮:"砲",兵:"卒"},B2R={};for(const k in R2B)B2R[R2B[k]]=k;pc=side==="r"?(B2R[C.pc]||C.pc):(R2B[C.pc]||C.pc);im=`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()">`}}catch(e){}return`<div class="av ${side}${im?" npc":""}">${esc(pc)}${im}</div><div class="nm"><b>${esc(name)}</b><span>${esc(sub||"")}</span></div>${clock!=null?`<div class="clk">${clock}</div>`:""}`}
 function renderStrip(box,moves,curIdx,onPick){
@@ -11281,12 +11354,110 @@ body.bh-full .pk2d{top:auto!important;bottom:56px!important;left:10px!important}
 body.bh-full .pzoom{right:calc(84px + env(safe-area-inset-right,0px))!important}
 body.bh-full .gs-pop{right:calc(128px + env(safe-area-inset-right,0px))!important}
 body.bh-full .gpad{left:auto!important;right:calc(130px + env(safe-area-inset-right,0px))!important;bottom:8px!important;transform:none!important}}`;document.head.append(s)}
-function bhFull(on,st){if(typeof document==="undefined")return;const b=document.body;if(!b)return;if(!on){if(b.classList.contains("bh-full"))b.classList.remove("bh-full");return}bhFullCss();b.classList.add("bh-full");
-  try{const tb=document.getElementById("topbar"),h=tb?Math.round(tb.getBoundingClientRect().bottom):56;document.documentElement.style.setProperty("--bhTop",Math.max(0,h)+"px")}catch(e){}
-  try{const port=matchMedia("(orientation:portrait)").matches,k="bhRot:"+(st&&st.id||"");if(port&&st&&!st.td&&!(typeof xqNat==="function"&&xqNat())&&!sessionStorage.getItem(k)){   /* 11/17 App Store 審查（測試員 E，指南 4.0）：iPhone 原生 App 鎖直式，不提示轉橫向；網頁版照舊 */   /* 11/14 塔防局直拿已經滿版：不再跳「轉橫向」，改在視角選單放一行靜態提示（07bht-td.js bhtdViewMenu）；轉向時（resize 沒帶 st）也不跳 */sessionStorage.setItem(k,"1");setTimeout(()=>{try{toast("📱 手機轉成橫向，黑洞星盤會滿版")}catch(e){}},1800)}}catch(e){}}
-if(typeof window!=="undefined"){addEventListener("hashchange",()=>{if(!/^#\/journey\/play/.test(location.hash))bhFull(false)});addEventListener("resize",()=>{if(document.body&&document.body.classList.contains("bh-full"))bhFull(true,null)})}
-function bhParkEx(st){bhFull(bhIs(st)&&!(st&&st.journey===BHX_ID),st);   /* 11/18：黑洞第一戰（序局）改用自己的直式也滿版的版面（bhxFullSync），不掛 bh-full、也不提示轉橫向 */if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,allStars:st.journey===BHX_ID   /* 11/16 開發者：序局紅方七種子都用七星 3D，不用木棋靈（park3d gntWood 看 ex.allStars） */,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",bhStars:bhStarsEx(),era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,...(typeof bhtdParkEx==="function"?bhtdParkEx(st):null),...(typeof bhfxParkEx==="function"?bhfxParkEx(st):null)   /* 11/14 太虛星尊上場：黑將外觀換成魔王（07bhf-bossfx.js；現在只有開發者測試台會開） */,
+function bhFull(on){if(typeof document==="undefined")return;const b=document.body;if(!b)return;if(!on){b.classList.remove("bh-full");return}bhFullCss();b.classList.add("bh-full");
+  const tb=document.getElementById("topbar"),h=tb?Math.round(tb.getBoundingClientRect().bottom):56;document.documentElement.style.setProperty("--bhTop",Math.max(0,h)+"px")}
+if(typeof window!=="undefined"){addEventListener("hashchange",()=>{if(!/^#\/journey\/play(?:\/|$|\?)/.test(location.hash)){bhFull(false);bhFieldOff()}});addEventListener("resize",()=>{if(document.body&&document.body.classList.contains("bh-full"))bhFull(true)})}
+function bhParkEx(st){bhFull(bhIs(st)&&st.journey!==BHX_ID&&!!st.td);if(typeof document!=="undefined"&&document.body&&typeof location!=="undefined")document.body.classList.toggle("bh-field",bhFieldOn(st,location.hash));if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,allStars:st.journey===BHX_ID   /* 11/16 開發者：序局紅方七種子都用七星 3D，不用木棋靈（park3d gntWood 看 ex.allStars） */,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",bhStars:bhStarsEx(),era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,...(typeof bhtdParkEx==="function"?bhtdParkEx(st):null),...(typeof bhfxParkEx==="function"?bhfxParkEx(st):null)   /* 11/14 太虛星尊上場：黑將外觀換成魔王（07bhf-bossfx.js；現在只有開發者測試台會開） */,
   gate:{img:["data/park/blackhole_360.webp"],icon:"🌀",title:"星樞棋局",sub:"墨色星渦的中心，有一張巨大的星盤",bg:"#05060d",quiet:true}}}
+/* 一般黑洞場把棋盤和操作列分開，塔防與星門沿用各自的招式、元氣和部署介面。 */
+function bhFieldOn(st,hash){
+  return bhIs(st)&&st.journey!==BHX_ID&&!st.td&&/^#\/journey\/play(?:\/|$|\?)/.test(hash);
+}
+const bhFieldText=(zh,en)=>typeof i18nLang==="function"&&i18nLang()==="en"?en:zh;
+function bhFieldOff(){
+  document.body.classList.remove("bh-field","bh-field-pad");
+  document.getElementById("bhFieldDock")?.remove();
+}
+function bhFieldResize(){requestAnimationFrame(()=>dispatchEvent(new Event("resize")))}
+function bhFieldRule(host){
+  const title=bhFieldText("本關棋規","Game rules");
+  const note=host.querySelector(".rule-note")?.textContent.trim().replace(/^📜\s*/,"")||bhFieldText("本關棋規：不判長將長捉","Perpetual checks and chases are not adjudicated in this battle.");
+  modal(`<h2>${esc(title)}</h2><p>${esc(note)}</p>`,[[bhFieldText("關閉","Close"),null,true]]);
+}
+function bhFieldMore(host){
+  const text=bhFieldText, close=text("關閉","Close");
+  const controls=[
+    [text("放大","Zoom in"),".pzoom button:nth-last-child(2)"],
+    [text("縮小","Zoom out"),".pzoom button:last-child"],
+    [text("翻到棋盤背面","Flip board"),".un-ui"],
+    [text("望遠鏡","Telescope"),".tele-ui"],
+    [text("調整棋距","Piece spacing"),".gs-ui"]
+  ];
+  const items=controls.flatMap(([label,selector])=>{
+    const button=host.querySelector(selector);
+    return button?[[label,()=>button.click()]]:[];
+  });
+  if(host.querySelector(".park3d")){
+    const pad=document.body.classList.contains("bh-field-pad");
+    items.push([pad?text("收起方向鍵","Hide arrow controls"):text("顯示方向鍵","Show arrow controls"),()=>{
+      document.body.classList.toggle("bh-field-pad");
+      bhFieldResize();
+    }]);
+  }
+  items.push([text("本關棋規","Game rules"),()=>bhFieldRule(host)]);
+  const voice=document.querySelector('#topRight [data-lb="聲控走棋"]');
+  if(voice)items.push([text("聲控走棋","Voice moves"),()=>voice.click()]);
+  if(typeof sxmAllOff==="function"){
+    items.push([sxmAllOff()?text("打開聲音","Unmute"):text("靜音","Mute"),()=>{
+      const mix=sxmMute(sxmMix(),"all");
+      store.set("sndMix",mix);
+      unlockAudio();sxmApply();sxmSync();
+    }]);
+  }
+  for(const button of host.querySelectorAll("#acts button:not([hidden]):not(:disabled)")){
+    items.push([button.textContent.trim(),()=>button.click()]);
+  }
+  sheet(text("對局工具","Battle tools"),body=>{
+    body.classList.add("bh-field-menu");
+    for(const [label,fn] of items){
+      const b=document.createElement("button");
+      b.type="button";b.className="btn ghost";b.textContent=label;
+      b.onclick=()=>topMoreItem(body,fn);
+      body.append(b);
+    }
+    const done=document.createElement("button");
+    done.type="button";done.className="btn ghost";done.textContent=close;done.onclick=()=>closeSheet();
+    body.append(done);
+  });
+}
+function bhFieldSync(st,host){
+  if(!bhFieldOn(st,location.hash)){bhFieldOff();return}
+  const body=document.body,text=bhFieldText;
+  const field=host.querySelector("#bbox");
+  body.classList.add("bh-field");
+  let dock=document.getElementById("bhFieldDock");
+  if(!dock){
+    dock=document.createElement("div");
+    dock.id="bhFieldDock";
+    dock.innerHTML='<div class="bf-status" role="status"></div><div class="bf-keys"><button type="button" data-bf="board"></button><button type="button" data-bf="view"></button><button type="button" data-bf="more"></button></div>';
+    body.append(dock);
+    bhFieldResize();
+  }
+  const camera=field.querySelector(".pkview:not([hidden])");
+  if(!camera&&body.classList.contains("bh-field-pad")){
+    body.classList.remove("bh-field-pad");
+    bhFieldResize();
+  }
+  const board=dock.querySelector('[data-bf="board"]');
+  const view=dock.querySelector('[data-bf="view"]');
+  const more=dock.querySelector('[data-bf="more"]');
+  const switchBoard=pkSwTb();
+  board.hidden=!switchBoard;
+  board.textContent=camera?text("平面棋盤","2D board"):text("3D 星盤","3D board");
+  board.onclick=()=>pkSwTb()?.click();
+  view.hidden=!camera;
+  view.textContent=text("視角","Camera");
+  view.onclick=()=>camera?.click();
+  more.textContent=text("更多","More");
+  more.onclick=()=>bhFieldMore(host);
+  const mine=!st.result&&st.turn===st.human&&!st.thinking;
+  const status=dock.querySelector(".bf-status");
+  const check=mine&&st.check>=0;
+  const label=st.msg|| (st.result?text("對局結束","Game over"):check?text("被將軍","In check"):mine?text("輪到你","Your move"):text("星樞思考中…","Star Pivot thinking…"));
+  if(status.dataset.label!==label){status.dataset.label=label;status.textContent=label}
+  status.classList.toggle("bf-yours",mine);
+  status.classList.toggle("bf-check",check);
+}
 /* 對局中：領先、落後各提醒一次；下到中盤星樞說一句伏筆（不說破幻影棋客是什麼） */
 let BH_T={id:null,s:{}};
 function bhTick(st){try{if(typeof bhtdTick==="function")bhtdTick(st)}catch(e){console.warn("[bhtd]",e)}try{if(typeof bhfxSync==="function")bhfxSync(st)}catch(e){console.warn("[bhfx]",e)}try{if(typeof gsvTick==="function")gsvTick(st)}catch(e){console.warn("[gsv]",e)}   /* 11/15 星門圍城・試玩（07bhg-gatesiege.js）：不是那一盤就收起來 */   /* 11/14 太虛星尊魔法 3D：魔王該上場就延遲載入、建特效，不該就收掉（07bhf-bossfx.js） */   /* 陣地塔防：元氣、靈力條、招式鈕、盤上標記（07bht-td.js；不是陣地局就收起來） */
@@ -30700,7 +30871,7 @@ function CpuGame(v,practicePage,mode){
     const OT=oppTalk(st,JOPP,N);   /* 意見回饋 826 追加：對面的人開口、贏、輸、和棋各說自己的話（07m3-opptalk.js） */
     parkDraw(v.querySelector("#bbox"),bd,st.board,o,{tap,gid:st.id?"cpu:"+st.id:null,start:st.start||null,   /* 11/13：被吃的子照這盤的開局算（park3d CAPBASE；十三星系、黑洞塔防、石桌往事自訂局面） */...(BRG?{bridge:true,ground:BRG.ground}:{}),bg:JS0?`data/park/j${JR[JS0.r].k}_360.webp`:BRG?BRG.bg:null,bgName:JS0?"雲河鎮・"+JR[JS0.r].name:innAnyAct(st.journey)?"🏮 "+innName(store.get("era","classic")):!st.journey&&!st.arena&&!st.practice&&typeof hbYardName==="function"?hbYardName():null,   /* 11/10：挑戰電腦在茶坊後園下 */   /* 意見回饋 530：在驛站下棋，標籤寫驛站，不是朝代園林 */arena:st.arena||null,gate:st.journey&&!st.arena?(k=>innAnyAct(st.journey)?{img:["data/inn/"+k+"_ink.webp","data/parkgate/"+k+"_ink.webp","data/inn/"+k+".webp"],icon:"🏮",title:"走進"+innName(k),sub:"旅人在燈下擺好棋盤了",bg:"#2b2a22",qk:k}:{img:["data/parkgate/"+k+"_ink.webp","data/parkgate/"+k+".webp","data/park/"+k+"_360.webp"],icon:"🍃",title:"走進"+parkName(k),sub:"石桌就在前面",bg:"#2b2a22",qk:k})(store.get("era","classic"))   /* 意見回饋 697：驛站旅人的對局，載入畫面和標籤都寫「〇〇的驛站」 */:(!st.journey&&!st.arena&&!st.practice&&!st.net?(typeof hbYardGate==="function"?hbYardGate("cpu"):typeof hbGate==="function"?hbGate("🤖","挑戰電腦","對手擺好棋盤了"):null):null),watchers:legendVisit(st),thinking:!!st.thinking||(!st.result&&st.turn!==st.human),botSide:st.human==="r"?"b":"r",result:st.result?(st.result.w||"draw"):null,hint:o.hint&&o.hint.length===1?[o.hint[0],o.hint[0]]:o.hint,   /* 意見回饋 607：只提示一顆子（錯棋重練提示一、二、提示棋）時傳同一格兩次，園子 3D 才畫得出黃圈（park3d 只畫兩格的提示） */
       opp:(JOPP&&JCHAR_LOOK(JOPP,st.human==="r"?"b":"r"))||(innAnyAct(st.journey)?innLook(innAnyAct(st.journey),st.human==="r"?"b":"r"):null)||(st.arena&&CHAMP_LOOK(st.arena,st.human==="r"?"b":"r"))||(N?NPC_LOOK(N,st.human==="r"?"b":"r"):zgIs(st)?ZG_LOOK(st.human==="r"?"b":"r"):PIKA_LOOK(st.human==="r"?"b":"r")),oppHello:OT.hi,oppWin:OT.win,oppLose:OT.lose,...(typeof bhParkEx==="function"?bhParkEx(st):null),...(typeof bhOrbEx==="function"&&!(typeof bhIs==="function"&&bhIs(st))?bhOrbEx(st):null),...(typeof gxParkEx==="function"?gxParkEx(st):null)});   /* hspx（開發者 11/12）：黑洞星樞棋局換成巨盤模式、黑洞環景（07bh-blackhole.js） */
-    if(typeof bhTick==="function")bhTick(st);if(typeof gxTick==="function")gxTick(st);if(typeof gxdTick==="function")gxdTick(st);
+    if(typeof bhTick==="function")bhTick(st);if(typeof bhFieldSync==="function")bhFieldSync(st,v);if(typeof gxTick==="function")gxTick(st);if(typeof gxdTick==="function")gxdTick(st);
     if(typeof meGameTalk==="function")meGameTalk(st);   /* 意見回饋 668：你扮演的雲河七星開局、吃子時說一句 */
     if(NPC_HI!==st.id){NPC_HI=st.id;if(pk0&&!st.moves.length&&!st.result)setTimeout(()=>{try{if(PARK&&PARK.host===hb)PARK.v.oppSay(meHi((N&&typeof npcHello==="function"&&npcHello(N))||OT.hi),2.6)}catch(e){}},900);if(N&&typeof npcAskMaybe==="function")npcAskMaybe(N,st,hb)}}   /* 826 追加：園子 3D 已經開著、換一盤新棋時，不只園子路人，每一位對手都開口打招呼 */   /* 意見回饋 658：有羈絆的女棋手打招呼換成新台詞；開局偶爾來委託（小卡，不打斷對局） */
   let lastN=null;   // 上一次畫的步數：步數剛好多一步才秀開局名（重新整理、開新局不秀）

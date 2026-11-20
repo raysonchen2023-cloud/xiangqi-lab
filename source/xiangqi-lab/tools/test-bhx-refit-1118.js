@@ -10,5 +10,5 @@ test("park3d：每 60 格的版面檢查在黑洞滿版時以可用高度為準�
   assert.match(SRC, /const pkFullV=\(\)=>/, "pkFullV 要在 fit 之前定義");
   const fitAt = SRC.indexOf("const fit=()=>"), fullAt = SRC.indexOf("const pkFullV=()=>");
   assert.ok(fullAt > 0 && fullAt < fitAt, "pkFullV 定義在 fit 前面");
-  assert.match(SRC.slice(fitAt, fitAt + 1200), /if\(FULLV&&rm>0&&rm<1e8\)CAMV\.hr=Math\.max\(\.3,rm\/W\)/, "fit 在滿版時高度撐到 room()");
+  assert.match(SRC.slice(fitAt, fitAt + 1200), /if\(FULLV&&rm>0&&rm<1e8\)CAMV\.hr=rm\/W/, "fit 在滿版時高度等於 room()");
 });

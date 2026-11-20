@@ -100,12 +100,110 @@ body.bh-full .pk2d{top:auto!important;bottom:56px!important;left:10px!important}
 body.bh-full .pzoom{right:calc(84px + env(safe-area-inset-right,0px))!important}
 body.bh-full .gs-pop{right:calc(128px + env(safe-area-inset-right,0px))!important}
 body.bh-full .gpad{left:auto!important;right:calc(130px + env(safe-area-inset-right,0px))!important;bottom:8px!important;transform:none!important}}`;document.head.append(s)}
-function bhFull(on,st){if(typeof document==="undefined")return;const b=document.body;if(!b)return;if(!on){if(b.classList.contains("bh-full"))b.classList.remove("bh-full");return}bhFullCss();b.classList.add("bh-full");
-  try{const tb=document.getElementById("topbar"),h=tb?Math.round(tb.getBoundingClientRect().bottom):56;document.documentElement.style.setProperty("--bhTop",Math.max(0,h)+"px")}catch(e){}
-  try{const port=matchMedia("(orientation:portrait)").matches,k="bhRot:"+(st&&st.id||"");if(port&&st&&!st.td&&!(typeof xqNat==="function"&&xqNat())&&!sessionStorage.getItem(k)){   /* 11/17 App Store 審查（測試員 E，指南 4.0）：iPhone 原生 App 鎖直式，不提示轉橫向；網頁版照舊 */   /* 11/14 塔防局直拿已經滿版：不再跳「轉橫向」，改在視角選單放一行靜態提示（07bht-td.js bhtdViewMenu）；轉向時（resize 沒帶 st）也不跳 */sessionStorage.setItem(k,"1");setTimeout(()=>{try{toast("📱 手機轉成橫向，黑洞星盤會滿版")}catch(e){}},1800)}}catch(e){}}
-if(typeof window!=="undefined"){addEventListener("hashchange",()=>{if(!/^#\/journey\/play/.test(location.hash))bhFull(false)});addEventListener("resize",()=>{if(document.body&&document.body.classList.contains("bh-full"))bhFull(true,null)})}
-function bhParkEx(st){bhFull(bhIs(st)&&!(st&&st.journey===BHX_ID),st);   /* 11/18：黑洞第一戰（序局）改用自己的直式也滿版的版面（bhxFullSync），不掛 bh-full、也不提示轉橫向 */if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,allStars:st.journey===BHX_ID   /* 11/16 開發者：序局紅方七種子都用七星 3D，不用木棋靈（park3d gntWood 看 ex.allStars） */,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",bhStars:bhStarsEx(),era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,...(typeof bhtdParkEx==="function"?bhtdParkEx(st):null),...(typeof bhfxParkEx==="function"?bhfxParkEx(st):null)   /* 11/14 太虛星尊上場：黑將外觀換成魔王（07bhf-bossfx.js；現在只有開發者測試台會開） */,
+function bhFull(on){if(typeof document==="undefined")return;const b=document.body;if(!b)return;if(!on){b.classList.remove("bh-full");return}bhFullCss();b.classList.add("bh-full");
+  const tb=document.getElementById("topbar"),h=tb?Math.round(tb.getBoundingClientRect().bottom):56;document.documentElement.style.setProperty("--bhTop",Math.max(0,h)+"px")}
+if(typeof window!=="undefined"){addEventListener("hashchange",()=>{if(!/^#\/journey\/play(?:\/|$|\?)/.test(location.hash)){bhFull(false);bhFieldOff()}});addEventListener("resize",()=>{if(document.body&&document.body.classList.contains("bh-full"))bhFull(true)})}
+function bhParkEx(st){bhFull(bhIs(st)&&st.journey!==BHX_ID&&!!st.td);if(typeof document!=="undefined"&&document.body&&typeof location!=="undefined")document.body.classList.toggle("bh-field",bhFieldOn(st,location.hash));if(!bhIs(st)){if(typeof BGM!=="undefined"&&BGM.force&&/^bh_/.test(BGM.force))bhMus(null);return null}return{giant:true,allStars:st.journey===BHX_ID   /* 11/16 開發者：序局紅方七種子都用七星 3D，不用木棋靈（park3d gntWood 看 ex.allStars） */,bg:"data/park/bh_far2.webp"   /* 11/12 ChatGPT 細修報告＋Gemini 回應：遠景改用 Gemini 重畫、左右無縫的版本 */,bgName:"🌀 黑洞・星樞棋局",bhStars:bhStarsEx(),era:"classic",quietMate:true,watchers:[],oppHello:null,opp:null,mateLook:null,crowd:null,...(typeof bhtdParkEx==="function"?bhtdParkEx(st):null),...(typeof bhfxParkEx==="function"?bhfxParkEx(st):null)   /* 11/14 太虛星尊上場：黑將外觀換成魔王（07bhf-bossfx.js；現在只有開發者測試台會開） */,
   gate:{img:["data/park/blackhole_360.webp"],icon:"🌀",title:"星樞棋局",sub:"墨色星渦的中心，有一張巨大的星盤",bg:"#05060d",quiet:true}}}
+/* 一般黑洞場把棋盤和操作列分開，塔防與星門沿用各自的招式、元氣和部署介面。 */
+function bhFieldOn(st,hash){
+  return bhIs(st)&&st.journey!==BHX_ID&&!st.td&&/^#\/journey\/play(?:\/|$|\?)/.test(hash);
+}
+const bhFieldText=(zh,en)=>typeof i18nLang==="function"&&i18nLang()==="en"?en:zh;
+function bhFieldOff(){
+  document.body.classList.remove("bh-field","bh-field-pad");
+  document.getElementById("bhFieldDock")?.remove();
+}
+function bhFieldResize(){requestAnimationFrame(()=>dispatchEvent(new Event("resize")))}
+function bhFieldRule(host){
+  const title=bhFieldText("本關棋規","Game rules");
+  const note=host.querySelector(".rule-note")?.textContent.trim().replace(/^📜\s*/,"")||bhFieldText("本關棋規：不判長將長捉","Perpetual checks and chases are not adjudicated in this battle.");
+  modal(`<h2>${esc(title)}</h2><p>${esc(note)}</p>`,[[bhFieldText("關閉","Close"),null,true]]);
+}
+function bhFieldMore(host){
+  const text=bhFieldText, close=text("關閉","Close");
+  const controls=[
+    [text("放大","Zoom in"),".pzoom button:nth-last-child(2)"],
+    [text("縮小","Zoom out"),".pzoom button:last-child"],
+    [text("翻到棋盤背面","Flip board"),".un-ui"],
+    [text("望遠鏡","Telescope"),".tele-ui"],
+    [text("調整棋距","Piece spacing"),".gs-ui"]
+  ];
+  const items=controls.flatMap(([label,selector])=>{
+    const button=host.querySelector(selector);
+    return button?[[label,()=>button.click()]]:[];
+  });
+  if(host.querySelector(".park3d")){
+    const pad=document.body.classList.contains("bh-field-pad");
+    items.push([pad?text("收起方向鍵","Hide arrow controls"):text("顯示方向鍵","Show arrow controls"),()=>{
+      document.body.classList.toggle("bh-field-pad");
+      bhFieldResize();
+    }]);
+  }
+  items.push([text("本關棋規","Game rules"),()=>bhFieldRule(host)]);
+  const voice=document.querySelector('#topRight [data-lb="聲控走棋"]');
+  if(voice)items.push([text("聲控走棋","Voice moves"),()=>voice.click()]);
+  if(typeof sxmAllOff==="function"){
+    items.push([sxmAllOff()?text("打開聲音","Unmute"):text("靜音","Mute"),()=>{
+      const mix=sxmMute(sxmMix(),"all");
+      store.set("sndMix",mix);
+      unlockAudio();sxmApply();sxmSync();
+    }]);
+  }
+  for(const button of host.querySelectorAll("#acts button:not([hidden]):not(:disabled)")){
+    items.push([button.textContent.trim(),()=>button.click()]);
+  }
+  sheet(text("對局工具","Battle tools"),body=>{
+    body.classList.add("bh-field-menu");
+    for(const [label,fn] of items){
+      const b=document.createElement("button");
+      b.type="button";b.className="btn ghost";b.textContent=label;
+      b.onclick=()=>topMoreItem(body,fn);
+      body.append(b);
+    }
+    const done=document.createElement("button");
+    done.type="button";done.className="btn ghost";done.textContent=close;done.onclick=()=>closeSheet();
+    body.append(done);
+  });
+}
+function bhFieldSync(st,host){
+  if(!bhFieldOn(st,location.hash)){bhFieldOff();return}
+  const body=document.body,text=bhFieldText;
+  const field=host.querySelector("#bbox");
+  body.classList.add("bh-field");
+  let dock=document.getElementById("bhFieldDock");
+  if(!dock){
+    dock=document.createElement("div");
+    dock.id="bhFieldDock";
+    dock.innerHTML='<div class="bf-status" role="status"></div><div class="bf-keys"><button type="button" data-bf="board"></button><button type="button" data-bf="view"></button><button type="button" data-bf="more"></button></div>';
+    body.append(dock);
+    bhFieldResize();
+  }
+  const camera=field.querySelector(".pkview:not([hidden])");
+  if(!camera&&body.classList.contains("bh-field-pad")){
+    body.classList.remove("bh-field-pad");
+    bhFieldResize();
+  }
+  const board=dock.querySelector('[data-bf="board"]');
+  const view=dock.querySelector('[data-bf="view"]');
+  const more=dock.querySelector('[data-bf="more"]');
+  const switchBoard=pkSwTb();
+  board.hidden=!switchBoard;
+  board.textContent=camera?text("平面棋盤","2D board"):text("3D 星盤","3D board");
+  board.onclick=()=>pkSwTb()?.click();
+  view.hidden=!camera;
+  view.textContent=text("視角","Camera");
+  view.onclick=()=>camera?.click();
+  more.textContent=text("更多","More");
+  more.onclick=()=>bhFieldMore(host);
+  const mine=!st.result&&st.turn===st.human&&!st.thinking;
+  const status=dock.querySelector(".bf-status");
+  const check=mine&&st.check>=0;
+  const label=st.msg|| (st.result?text("對局結束","Game over"):check?text("被將軍","In check"):mine?text("輪到你","Your move"):text("星樞思考中…","Star Pivot thinking…"));
+  if(status.dataset.label!==label){status.dataset.label=label;status.textContent=label}
+  status.classList.toggle("bf-yours",mine);
+  status.classList.toggle("bf-check",check);
+}
 /* 對局中：領先、落後各提醒一次；下到中盤星樞說一句伏筆（不說破幻影棋客是什麼） */
 let BH_T={id:null,s:{}};
 function bhTick(st){try{if(typeof bhtdTick==="function")bhtdTick(st)}catch(e){console.warn("[bhtd]",e)}try{if(typeof bhfxSync==="function")bhfxSync(st)}catch(e){console.warn("[bhfx]",e)}try{if(typeof gsvTick==="function")gsvTick(st)}catch(e){console.warn("[gsv]",e)}   /* 11/15 星門圍城・試玩（07bhg-gatesiege.js）：不是那一盤就收起來 */   /* 11/14 太虛星尊魔法 3D：魔王該上場就延遲載入、建特效，不該就收掉（07bhf-bossfx.js） */   /* 陣地塔防：元氣、靈力條、招式鈕、盤上標記（07bht-td.js；不是陣地局就收起來） */

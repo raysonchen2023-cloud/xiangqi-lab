@@ -1,22 +1,23 @@
 《象棋千秋》可重現驗證紀錄（verify-all.js）
 ========================================
-執行時間：2026-11-18T12:29:21.944Z（UTC）＝ 2026-11-18 20:29:21（臺灣時間）
+執行時間：2026-11-20T04:14:01.035Z（UTC）＝ 2026-11-20 12:14:01（臺灣時間）
 Node.js：v24.20.0；作業系統：win32 10.0.26300 x64
 倉庫資料夾：<倉庫資料夾>
-倉庫 commit：（不是 git 檢出；用下面的雜湊對照）
-release.json：版本 20261118-2027、html c0e7116cd15f、sw 4d9e3cf7c2d8
+倉庫 commit：ffe1f5d9c0867f7f79cda0e4f4bea0b644309ad9
+說明：手機網頁黑洞滿版；由公開 20261118-2027 建置
+release.json：版本 20261120-1208、html 3c9fe49d8a06、sw a1edc491db21
 verify-all.js SHA-256：4204127ad2dd75bb8f95ed79039156af8cc4e52bfabd0ff04890588e4414af2b
 
 成品 SHA-256（SHA-1 前 12 碼）：
-  index.html  656caee19e6f6f3ae3d61d840555613fd4ed64c30058088302f825c99adb15f3  (c0e7116cd15f)
-  sw.js  13e307cde825dd88669e166322a4cd40770852e291cef266a329acd2c0d45ee1  (4d9e3cf7c2d8)
-  release.json  2680016f9abaccf712f942d1d55b4de5ee0b8860091d287cff4788388cc322b5  (025cb3486bda)
+  index.html  98707ce1a0e6a015b2f27c23a2e63e3cf743d634c11c42a4efeb8a57fb0d2c65  (3c9fe49d8a06)
+  sw.js  c16e98824252289780e2232da2a0320cf07bf975b5460c7e9132458c12ab600a  (a1edc491db21)
+  release.json  77b74fd740a4e1bd6e75747960de26a434f3ff58ce2210192bf8d0af481d3d96  (4ffaecd785e9)
   core.js  fdaea59621ff94d664218f14c1a11b9abe0d4566da7d3e45733caf34fa7a50d3  (972b7ec035c7)
   engine.js  689fc0dbed0381923ebcba7c8556e887cc8ae7849e550ff1c89a0bcd87fbf135  (5e3dfe849644)
   engine/pikafish.wasm  7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331  (d568cded4f5b)
   engine/pikafish.js  dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7  (77eca54d3204)
   engine/pikafish.nnue  7d13d73569a9b571ba0eb20cf1596247bc2a42738967e61afef6482b231e900e  (3a043e259a72)
-source/ 資料夾：565 個檔，樹雜湊 SHA-256 875ac9a92320cd52db76edfb01ba1d98a4a3e674e96357045152e37b60686d38
+source/ 資料夾：567 個檔，樹雜湊 SHA-256 b10c7bd8833046ce9299847240325c906918f5c4fc636939b049fb806d78709a
 Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-256 489173747f8de4abec4f9dda704538fecb24af4c02f294e57b8f7ead857ad738
 （樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256＋換行」照路徑排序後再算 SHA-256）
 
@@ -32,15 +33,15 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
 工具 SHA-256：4874be00c4f2fce8b777204299e23339abf56c472ee57bc2e603a5edaaf00e78
 輸出：
   成品核對：<倉庫資料夾>
-    ✔ release.json：版本 20261118-2027、html c0e7116cd15f、sw 4d9e3cf7c2d8（檢查時間 2026-11-18T12:27:58.929Z）
-    ✔ index.html SHA-1 前 12 碼 c0e7116cd15f，跟 release.json 一致
-    ✔ sw.js SHA-1 前 12 碼 4d9e3cf7c2d8，跟 release.json 一致
-    ✔ 版本號：index.html 20261118-2027、sw.js 20261118-2027、release.json 20261118-2027，三個一樣
+    ✔ release.json：版本 20261120-1208、html 3c9fe49d8a06、sw a1edc491db21（檢查時間 2026-11-20T04:08:39.286Z）
+    ✔ index.html SHA-1 前 12 碼 3c9fe49d8a06，跟 release.json 一致
+    ✔ sw.js SHA-1 前 12 碼 a1edc491db21，跟 release.json 一致
+    ✔ 版本號：index.html 20261120-1208、sw.js 20261120-1208、release.json 20261120-1208，三個一樣
     ✔ release.json 自己註明有 3 支模組跟當時的原始碼不同（05-settings.js、07y-hubmap.js、07s4-passmap.js）；原始模組不公開，外部核對不了這一欄
   
   ✔ index.html、sw.js 跟 release.json 一致
 ----------------------------------------
-第 3 步 pikafish-verify：通過（結束代碼 0，0.0 秒）
+第 3 步 pikafish-verify：通過（結束代碼 0，0.1 秒）
 指令（在倉庫資料夾執行）：node source/xiangqi-lab/tools/pikafish-verify.js --dir . --record pikafish-src/build-record.json
 工具 SHA-256：da3a10677bdf0be32998e22fa6010bdc29055893678bd6553b224cb681fedc7c
 輸出：
@@ -64,7 +65,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   
   ✔ 全部符合（△ 是照實列出的缺口，不算失敗）
 ----------------------------------------
-第 4 步 run-tests：通過（結束代碼 0，176.1 秒）
+第 4 步 run-tests：通過（結束代碼 0，284.6 秒）
 指令（在倉庫資料夾執行）：node source/run-tests.js
 工具 SHA-256：8bb3d8506adec7c119e694a0620858ecf79d366ccc43368454192fce41f824b9
 輸出：
@@ -119,7 +120,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-fb871.js	8/8	2/2	2/2	0/0
   test-fb888.js	11/11	0/0	3/3	0/0
   test-fb897-1115.js	8/8	0/0	3/3	0/0
-  test-fdroid-evidence.js	7/8（略過 1）	0/0	1/1	0/0
+  test-fdroid-evidence.js	8/8	0/0	1/1	0/0
   test-figview-ghost-1115.js	5/5	0/0	2/2	0/0
   test-film-tap-1118.js	0/0	0/0	0/0	3/3
   test-gate-siege-3d.js	19/19	3/3	3/3	0/0
@@ -310,18 +311,17 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-xsm-dark.js	0/0	0/0	0/0	15/15
   test-xsm-stalls-1116.js	0/0	0/0	0/0	11/12（略過 1）
   test-zm-medallion-1118.js	0/0	0/0	0/0	4/4
-  合計	1208/1213（略過 5）	74/75（略過 1）	197/202（略過 5）	895/1025（略過 130）
+  合計	1209/1213（略過 4）	74/75（略過 1）	197/202（略過 5）	895/1025（略過 130）
   
-  交接單引用：行為 1208/1213（略過 5）、混合 74/75（略過 1）、原始碼比對 197/202（略過 5）、待分類 895/1025（略過 130），共 2515 項。
+  交接單引用：行為 1209/1213（略過 4）、混合 74/75（略過 1）、原始碼比對 197/202（略過 5）、待分類 895/1025（略過 130），共 2515 項。
   待分類的檔：test-bh-loading-1117.js、test-bh-sg-bgm-1116.js、test-bh-sg-bgm-1117b.js、test-bhfx.js、test-bhtd-combo.js、test-bhtd-r2.js、test-bhtd-rules.js、test-bhtl.js、test-bhx-allstars-1116.js、test-bhx-hold-1116.js、test-bhx-refit-1118.js、test-bhx-resume-1116.js、test-bhx-skip-1116.js、test-cap-crop-1117.js、test-cdn-svg-1117.js、test-daynight-1117.js、test-dgl.js、test-eng-over-1116.js、test-extra-bgm-1116.js、test-film-tap-1118.js、test-gc-native-1117.js、test-ghost-game-1116.js、test-grw-lv-1117.js、test-gsv-rules-1117.js、test-gxd-daily-1116.js、test-gxt-exit-1117.js、test-gxt-where-1117.js、test-home-c1-tap-1117.js、test-home-pano.js、test-i18n-ext-1117.js、test-i18n-select-1117.js、test-i18n-story.js、test-icon-gap-1117.js、test-imac-g1514.js、test-imac-h1514.js、test-imac-hfk-1117.js、test-imac-i1757.js、test-imac-j1757.js、test-imac-v1514.js、test-inst-stq-1117.js、test-ios-capsync-1118.js、test-ios-native-1116.js、test-jh-fade-1118.js、test-jianghu-1118.js、test-lang-default-1117.js、test-mnq-at-1117.js、test-mnq-skipall-1117.js、test-n33-warm-1118.js、test-netfetch-1117.js、test-noscore.js、test-opening-order-1117.js、test-osc-en-1118.js、test-park3d-capbase.js、test-park3d-ghostptr-1116.js、test-pjc-joincut-1116.js、test-port-yz-color-1116.js、test-pty-events-1116.js、test-pty-hint-wait-1117.js、test-pty-join-1117.js、test-r11-1117.js、test-r17-qa.js、test-r18-1117.js、test-r19-1117.js、test-r20-1117.js、test-r20-dbe-1117.js、test-r21-1117.js、test-r22-1117.js、test-r23-1117.js、test-r24-1117.js、test-r25-1117.js、test-r26-1117.js、test-r27-1117.js、test-r28-1117.js、test-r29b-1117.js、test-r29d-1117.js、test-r29e-1117.js、test-r30-1118.js、test-r31-1118.js、test-r32-1118.js、test-r33-1118.js、test-r34-1118.js、test-r35-1118.js、test-r36-1118.js、test-r37-1118.js、test-r38-1118.js、test-r39-1118.js、test-r4-1117.js、test-r40-1118.js、test-review-e-1117.js、test-season-card-1117.js、test-season-queue-1117.js、test-season-say-1117.js、test-sg2-def-1117b.js、test-sg2-drift-result-1117.js、test-sg2-edge-1117b.js、test-sg2-hud-1117.js、test-sg2-layout-1117b.js、test-sg2-premove-1117.js、test-sg2-select-1117.js、test-sg2-title-1117b.js、test-siege2-local.js、test-siege2.js、test-sitemap-places-1116.js、test-slot-msg-1117.js、test-support-pages-1117.js、test-toast-pass-1117.js、test-upd-notitle-1116.js、test-visit-place-1117.js、test-winter-scenes-1117.js、test-xsm-counter-1116.js、test-xsm-dark.js、test-xsm-stalls-1116.js、test-zm-medallion-1118.js
-  四欄合計：通過 2374、失敗 0、略過 141、預期失敗 0（其中預期失敗卻通過 0）；三類項數合計 2515（含略過），預期失敗另計。
+  四欄合計：通過 2375、失敗 0、略過 140、預期失敗 0（其中預期失敗卻通過 0）；三類項數合計 2515（含略過），預期失敗另計。
   略過的項目（這個環境跑不了、沒有執行，不算通過）：
     ﹣ test-bh-sg-bgm-1116.js：配樂檔 bh_6～10 與新曲名都在（配樂只放 CDN）（沒有 data/bgm/blackhole 配樂與新曲名（只放 CDN，公開副本沒有））
     ﹣ test-bhfx.js：④ 載入量：一般首頁不載 bossfx3d.js、不預載 data/bhtd；素材都放在 art/bhtd（build-site 複製到 data/bhtd）（要讀只在開發者電腦的素材 art/bhtd（魔王模型、特效圖只放 CDN；公開副本沒有，開發者電腦上照跑））
     ﹣ test-daynight-1117.js：冬季圖、長卷都在（換季只是換哪一張，沒有新圖要畫）；載不到有退路（沒有季節首頁圖（只放 CDN，公開副本沒有））
     ﹣ test-daynight-1117.js：07s4-passmap（禁改檔）的改動寫在 reps-next.json，以線上 pub.html 為底每組只命中 1 次（公開副本：這項檢查開發者電腦上的發版暫存檔，不在公開副本跑（11/17 1757 證據補））
     ﹣ test-extra-bgm-1116.js：配樂檔與新曲名都在（配樂只放 CDN）（沒有 data/bgm 配樂與新曲名（只放 CDN，公開副本沒有））
-    ﹣ test-fdroid-evidence.js：真的公開倉庫（本機 git origin/main，不連網）：成品跟 release.json 一致、Pikafish 跟建置紀錄一致（沒有 site/.git）
     ﹣ test-gx-gatepano.js：〔混合〕去背圖的尺寸跟出圖工具記的一樣（位置表是照這些尺寸排的）（去背圖只在開發者電腦與 CDN，公開副本沒有 art/gxgate）
     ﹣ test-handoff-facts.js：評比循環工具不在這個副本，跳過（沒有 handoff-facts.js）
     ﹣ test-home-pano.js：登記的每個變體都有左右兩屏的圖（864×1376＝一屏 768＋多蓋中間那屏 96），中間那屏也在；而且工具的 BAND 跟樣式的 112.5% 對得上（要讀只在開發者電腦的出圖工具 tools/homemap_pano.py 和 art/homemap 原圖（公開副本沒有；開發者電腦上照跑））

@@ -154,9 +154,9 @@ test("6 已知限制、隱私：原生版顯示原生版的寫法；網頁版照
 });
 
 // ---------- 7. 轉橫向提示 ----------
-test("7 轉橫向提示：原生版不顯示；網頁版照舊", () => {
+test("7 星樞棋局直橫皆滿版；塔防原生版不顯示轉向提示", () => {
   const BH = M("07bh-blackhole.js"), TD = M("07bht-td.js");
-  assert.match(BH, /if\(port&&st&&!st\.td&&!\(typeof xqNat==="function"&&xqNat\(\)\)&&!sessionStorage\.getItem\(k\)\)\{[^\n]*toast\("📱 手機轉成橫向，黑洞星盤會滿版"\)/);
+  assert.doesNotMatch(BH, /手機轉成橫向，黑洞星盤會滿版/, "一般黑洞星樞棋局直橫向均滿版");
   assert.match(TD, /\+\(port&&!\(typeof xqNat==="function"&&xqNat\(\)\)\?"<p>📱 手機轉成橫向，星盤會更大<\/p>":""\)/);
   const tail = (port, nat) => new Function("port", "xqNat", "return \"\"" + TD.match(/\+\(port&&!\(typeof xqNat==="function"&&xqNat\(\)\)\?"<p>📱 手機轉成橫向，星盤會更大<\/p>":""\)/)[0])(port, () => nat);
   assert.equal(tail(true, true), ""); assert.match(tail(true, false), /轉成橫向/); assert.equal(tail(false, false), "");

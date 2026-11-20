@@ -2345,11 +2345,11 @@
       if(box&&/^(sticky|fixed)$/.test(getComputedStyle(box).position)){   /* fixed＝黑洞橫向滿版（07bh bhFull） */const bs=getComputedStyle(box);return box.clientHeight-parseFloat(bs.paddingTop)-parseFloat(bs.paddingBottom)}   /* 11/12 iPhone 橫向（第 6 輪截圖 18）：對局頁變兩欄、左欄固定高度，3D 照左欄高度算，不再比螢幕高 */
       if(!view||getComputedStyle(view).overflow!=="hidden")return 1e9;
       let used=0;for(const c of view.children)if(c!==box&&!(parseFloat(getComputedStyle(c).flexGrow)>0))used+=c.offsetHeight;const cs=getComputedStyle(box);   /* 撐開空白的那格（flex:1）不算 */return view.clientHeight-used-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom)};
-    const pkFullV=()=>{try{const b=el.parentElement;return!!b&&!!document.body&&document.body.classList.contains("bhx-full")&&getComputedStyle(b).position==="fixed"}catch(e){return false}};
-    const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);const rm=room();if(W*CAMV.hr>rm)CAMV.hr=Math.max(.3,rm/W);if(TDC&&rm>0&&rm<1e8)CAMV.hr=Math.max(.3,rm/W);   /* 11/14 塔防固定鏡頭：畫面高度直接撐滿版面給的格子（直拿滿版） */const FULLV=pkFullV();if(FULLV&&rm>0&&rm<1e8)CAMV.hr=Math.max(.3,rm/W);   /* 11/18 黑洞第一戰滿版（07bh bhxFullSync 掛 body.bhx-full、#bbox 蓋滿螢幕）：直式也撐滿整個高度 */   /* 意見回饋 295：電腦的寬螢幕也照可用高度滿版（上下視角不變、左右看更廣），不再撐得比螢幕還高 */
+    const pkFullV=()=>{try{const b=el.parentElement;return!!b&&!!document.body&&["bhx-full","bh-field"].some(k=>document.body.classList.contains(k))&&getComputedStyle(b).position==="fixed"}catch(e){return false}};
+    const fit=()=>{W=el.clientWidth||300;CAMV.hr=clamp((VH0-300)/W,1.14,1.32);const rm=room();if(W*CAMV.hr>rm)CAMV.hr=Math.max(.3,rm/W);if(TDC&&rm>0&&rm<1e8)CAMV.hr=Math.max(.3,rm/W);   /* 11/14 塔防固定鏡頭：畫面高度直接撐滿版面給的格子（直拿滿版） */const FULLV=pkFullV();if(FULLV&&rm>0&&rm<1e8)CAMV.hr=rm/W;   /* 黑洞直橫滿版：實際畫布和棋盤框等高，棋子投影和觸控使用同一大小。 */
       // 畫面被壓矮（比 1.14 扁）時：上下視角維持 1.14 的範圍、左右看得更廣，不會把對面和近端的小帥切掉（意見回饋：5:49 截圖）
       const vr=Math.max(CAMV.hr,1.14);CAMV.dp=FULLV?0:Math.atan(CAMV.ht*1.14)-Math.atan(CAMV.ht*vr);H=   /* 滿版：多出來的高度上下平分（棋盤在畫面中間，讓得開瀏海和 Home 條），不是全給下方 */Math.round(W*CAMV.hr);el.style.height=H+"px";rd.setSize(W,H,false);cam.aspect=W/H;
-      cam.fov=clamp(2*Math.atan(CAMV.ht*vr)*180/PI,38,FULLV?95:62);CAMV.fov=cam.fov;   /* 滿版直式：上下視角放寬（左右看到的寬度跟原本一樣，棋盤不會被左右切掉；多出來的上下是星空和盤底） */cam.updateProjectionMatrix();   /* CAMV.fov：望遠鏡（GIANT TELE）拿來當 1 倍的視角 */
+      const fieldMargin=GIANT&&document.body.classList.contains("bh-field")&&H>W?1.22:1; cam.fov=clamp(2*Math.atan(CAMV.ht*vr*fieldMargin)*180/PI,38,FULLV?95:62);CAMV.fov=cam.fov;   /* 滿版直式：上下視角放寬（左右看到的寬度跟原本一樣，棋盤不會被左右切掉；多出來的上下是星空和盤底） */cam.updateProjectionMatrix();   /* CAMV.fov：望遠鏡（GIANT TELE）拿來當 1 倍的視角 */
       {const nn=CAMV.hr>=1.24;if(nn!==capNear){capNear=nn;if(lastCapB)layoutCaptured(lastCapB)}}if(HOME.fit)zfit();pwPoke(400)};
     const CO=window.__CAM||{},camBase=new T.Vector3(...(CO.b||[0,27,26])),look=new T.Vector3(...(CO.l||[0,-.3,-.4])),PIV=new T.Vector3(0,-.3,0);   /* 意見回饋 374：小帥坐到正對面，鏡頭往後、往上一點，從他背後看過去；406：座位抬高後鏡頭再拉高，小帥才不會擋到最下排 */
     // 拉近拉遠＝鏡頭沿著「棋盤中心→座位」這條線前後移動，看的方向不變
@@ -2795,7 +2795,7 @@
       tyaw=k==="flat"?.56:0;tpitch=typeof k==="number"?k:k==="top"?.5:k==="flat"?-.22:0;tzoom=1;flatV=false;mate.g.visible=true;HOME={p:0,z:1,fit:false};userZ=false};
     fit();placeCam();
     if(GIANT){HOME={p:.5,z:1,fit:false};tpitch=pitch=.5}   /* 開發者 11/13：黑洞局在電腦、手機橫向（非直式）預設仰角原本是 0、鏡頭貼平棋盤；改成跟直式一樣 .5 */
-    try{if(opt.view)setViewF(opt.view);else if(HFIT()&&!inStart(typeof opt.intro==="string"?opt.intro:null,false)){if(typeof opt.intro==="string")INTRO_SEEN.add(opt.intro);goTopFit(true)}}catch(e){}   /* opt.view＝玩家存過的視角（06-cpu 傳 store parkView）；沒存過的手機直式＝topfit */
+    try{if(opt.view)setViewF(opt.view);else if(!(GIANT&&document.body.classList.contains("bh-field"))&&HFIT()&&!inStart(typeof opt.intro==="string"?opt.intro:null,false)){if(typeof opt.intro==="string")INTRO_SEEN.add(opt.intro);goTopFit(true)}}catch(e){}   /* opt.view＝玩家存過的視角（06-cpu 傳 store parkView）；沒存過的手機直式＝topfit */
     {const Q=CVQ;CVQ=null;if(Q&&Q.length){cvLeft=Q.length;const run=()=>{const t=performance.now();while(Q.length&&performance.now()-t<30){try{Q.shift()()}catch(e){}}cvLeft=Q.length;if(Q.length&&!stopped)setTimeout(run,0)};setTimeout(run,0)}}   /* 11/18 第 35 輪：巨盤 create 時排隊的程式貼圖，分段畫完（每段 30ms） */
     if(GIANT)warmRun(()=>{if(!stopped)requestAnimationFrame(frame)},4000);else requestAnimationFrame(frame);setTimeout(waitShow,80);   /* 第 35 輪：一段一支 shader，給到 4 秒 */   /* 11/18 第 34 輪：巨盤第一格畫面前先分段暖 shader（最多 1.5 秒） */
     const onRs=()=>{if(el.style.display!=="none")fit()};window.addEventListener("resize",onRs);

@@ -1542,3 +1542,76 @@ html[data-lefty] .tskip{right:auto;left:14px}
    ① 經典世界首頁、觀星閣、藏譜石窟、棋譜庫天上的朝代殘影（07y .cy，例「秦長城與烽火台」41×35、「赤壁樓船」38×29）：同一頁殘影的中心最少隔圖寬 12%（375 寬約 45px），擴到 44 不會互相蓋到；
       殘影層 z-index 1，入口標籤、出口都在上面，蓋到的地方照樣點到它們 */
 .cy::after{content:"";position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}
+
+/* 黑洞星樞棋局：棋盤、回合與控制分區，按鈕的透明熱區也不進棋盤。 */
+body.bh-field{
+  --bf-top:calc(52px + env(safe-area-inset-top,0px));
+  --bf-bottom:calc(88px + env(safe-area-inset-bottom,0px));
+  --bf-left:env(safe-area-inset-left,0px);
+  --bf-right:env(safe-area-inset-right,0px);
+  --bf-pad:0px;
+  --bf-side:0px;
+  background:#080914!important;
+}
+body.bh-field.bh-field-pad{--bf-pad:148px}
+html body.bh-field #topbar{
+  position:fixed!important;inset:0 0 auto!important;z-index:42;
+  box-sizing:border-box;height:var(--bf-top);min-height:0;
+  padding:env(safe-area-inset-top,0px) calc(8px + var(--bf-right)) 0 calc(8px + var(--bf-left));
+  background:#101120;color:#fff0cf;border-bottom:1px solid #383349;box-shadow:none;
+}
+body.bh-field #title{font-size:16px;letter-spacing:.02em}
+body.bh-field #back:not([hidden]){display:flex;min-width:44px;min-height:44px;width:auto;padding-inline:6px 10px}
+body.bh-field #topRight,
+body.bh-field .view.fixed>:is(#pTop,#pBot,#stat,#acts,#strip,.rule-note,.evline,.pk3d-back),
+body.bh-field .view.fixed>#bbox :is(.pkname,.pkview,.pk2d,.pk2d-tip,.pzoom),
+body.bh-field:not(.bh-field-pad) .view.fixed>#bbox .gpad,
+body.bh-field .xqbot{display:none!important}
+html body.bh-field #view.view.fixed>#bbox{
+  position:fixed!important;inset:var(--bf-top) calc(var(--bf-right) + var(--bf-side)) calc(var(--bf-bottom) + var(--bf-pad)) var(--bf-left)!important;
+  width:auto!important;height:auto!important;min-height:0!important;max-height:none!important;
+  max-width:none!important;margin:0!important;padding:0!important;
+  display:grid;grid-template: minmax(0,1fr) / minmax(0,1fr);place-items:center;align-self:stretch!important;justify-self:stretch!important;
+  border-radius:0!important;background:#080914;z-index:40;overflow:visible!important;
+}
+body.bh-field #bbox>.park3d{grid-area:1/1;border-radius:0!important;overflow:visible!important}
+body.bh-field #bbox>.park3d>canvas{display:block;border-radius:0}
+html body.bh-field .view.fixed>#bbox>svg{
+  grid-area:1/1;width:100%!important;height:100%!important;max-width:none!important;
+  max-height:none!important;margin:0!important;box-sizing:border-box;padding:6px;
+}
+body.bh-field .view.fixed>#bbox .gpad{
+  position:fixed!important;bottom:calc(var(--bf-bottom) + 4px)!important;
+}
+body.bh-field .view.fixed>#bbox .gs-pop{top:12px!important;bottom:auto!important;right:8px!important}
+body.bh-field #bhFieldDock{
+  position:fixed;inset:auto 0 0;z-index:43;height:var(--bf-bottom);box-sizing:border-box;
+  padding:4px calc(8px + var(--bf-right)) calc(6px + env(safe-area-inset-bottom,0px)) calc(8px + var(--bf-left));
+  background:#101120;color:#fff0cf;border-top:1px solid #383349;
+  display:grid;grid-template-rows:minmax(0,1fr) 44px;gap:3px;
+}
+#bhFieldDock .bf-status{
+  align-self:center;text-align:center;font:700 13px/1.25 var(--sans,system-ui);
+  overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;
+}
+#bhFieldDock .bf-yours{color:#ffe29a}
+#bhFieldDock .bf-check{color:#ffbbb0}
+#bhFieldDock .bf-keys{display:flex;gap:6px;max-width:400px;width:100%;margin-inline:auto}
+#bhFieldDock button{
+  flex:1;min-width:44px;min-height:44px;border:1px solid #5a536c;border-radius:10px;
+  background:#252439;color:#fff0cf;font:700 14px/1.1 var(--sans,system-ui);
+  cursor:pointer;touch-action:manipulation;
+}
+#bhFieldDock button[hidden]{display:none}
+#bhFieldDock button:focus-visible{outline:2px solid #ffe29a;outline-offset:-4px}
+.bh-field-menu{display:grid;gap:7px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.bh-field-menu button{min-height:44px;overflow-wrap:anywhere}
+body.bh-field #cgStuck{position:fixed;z-index:43;top:var(--bf-top);left:8px;right:8px;color:#fff0cf;pointer-events:none}
+body.bh-field #cgStuck button{pointer-events:auto}
+@media (orientation:landscape) and (min-width:600px){
+  body.bh-field{--bf-bottom:calc(58px + env(safe-area-inset-bottom,0px))}
+  body.bh-field.bh-field-pad{--bf-pad:0px;--bf-side:164px}
+  body.bh-field #bhFieldDock{grid-template-columns:minmax(0,1fr) minmax(230px,360px) minmax(0,1fr);grid-template-rows:44px;align-content:center}
+  body.bh-field #bhFieldDock .bf-keys{grid-column:2}
+  body.bh-field.bh-field-pad .view.fixed>#bbox .gpad{left:auto!important;right:calc(6px + env(safe-area-inset-right,0px));transform:none!important}
+}

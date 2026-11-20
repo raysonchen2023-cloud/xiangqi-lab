@@ -70,10 +70,10 @@ test("「⋯」：序局還沒打完＝🚪 回開頭畫面（stqXuLeave，不�
 
 test("接點：08b 每次畫好棋盤叫 bhxFullSync；序局不再掛橫向的 bh-full；park3d 滿版直式撐滿高度、多出來的上下平分", () => {
   assert.ok(rd("xiangqi-db/m/08b-cpugame.js").includes('try{if(typeof bhxFullSync==="function")bhxFullSync(st)}catch(e){}'));
-  assert.ok(BH.includes("function bhParkEx(st){bhFull(bhIs(st)&&!(st&&st.journey===BHX_ID),st);"));
+  assert.ok(BH.includes("function bhParkEx(st){bhFull(bhIs(st)&&st.journey!==BHX_ID&&!!st.td);"));
   const P = rd("xiangqi-lab/src/park3d.js");
-  assert.ok(P.includes('const FULLV=pkFullV();if(FULLV&&rm>0&&rm<1e8)CAMV.hr=Math.max(.3,rm/W);') && P.includes("CAMV.dp=FULLV?0:") && P.includes("clamp(2*Math.atan(CAMV.ht*vr)*180/PI,38,FULLV?95:62)"));
-  assert.ok(P.includes('document.body.classList.contains("bhx-full")&&getComputedStyle(b).position==="fixed"'), "只有序局滿版（body.bhx-full＋#bbox fixed）才這樣算");
+  assert.ok(P.includes('const FULLV=pkFullV();if(FULLV&&rm>0&&rm<1e8)CAMV.hr=rm/W;') && P.includes("CAMV.dp=FULLV?0:") && P.includes("clamp(2*Math.atan(CAMV.ht*vr*fieldMargin)*180/PI,38,FULLV?95:62)"));
+  assert.ok(P.includes('["bhx-full","bh-field"].some(k=>document.body.classList.contains(k))&&getComputedStyle(b).position==="fixed"'), "序局和一般黑洞都按固定棋盤框調整");
 });
 
 /* 版面數字：照 CSS 的常數算（安全區：iPhone 13 mini／X 系列 375×812＝上 47／下 34；Pro Max 430×932＝上 59／下 34） */

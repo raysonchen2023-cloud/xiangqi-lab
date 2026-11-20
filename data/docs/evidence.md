@@ -1,10 +1,10 @@
-# 驗證紀錄（版本 20261118-2027）
+# 驗證紀錄（版本 20261120-1208）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/18 20:35:15（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 2515 項＝**通過 2374**、**失敗 0**、**略過 141**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（切自 commit `e7f90cddccc0`），對應的發布版：`20261118-2027`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 產生時間：2026/11/20 12:18:44（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 2515 項＝**通過 2375**、**失敗 0**、**略過 140**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（STAGE-MANIFEST.json 沒寫 commit），對應的發布版：`20261120-1208`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔（和少數只給它們用的工具）有46 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -16,7 +16,6 @@
 - ﹣ 冬季圖、長卷都在（換季只是換哪一張，沒有新圖要畫）；載不到有退路（test-daynight-1117.js；沒有季節首頁圖（只放 CDN，公開副本沒有））
 - ﹣ 07s4-passmap（禁改檔）的改動寫在 reps-next.json，以線上 pub.html 為底每組只命中 1 次（test-daynight-1117.js；公開副本：這項檢查開發者電腦上的發版暫存檔，不在公開副本跑（11/17 1757 證據補））
 - ﹣ 配樂檔與新曲名都在（配樂只放 CDN）（test-extra-bgm-1116.js；沒有 data/bgm 配樂與新曲名（只放 CDN，公開副本沒有））
-- ﹣ 真的公開倉庫（本機 git origin/main，不連網）：成品跟 release.json 一致、Pikafish 跟建置紀錄一致（test-fdroid-evidence.js；沒有 site/.git）
 - ﹣ 〔混合〕去背圖的尺寸跟出圖工具記的一樣（位置表是照這些尺寸排的）（test-gx-gatepano.js；去背圖只在開發者電腦與 CDN，公開副本沒有 art/gxgate）
 - ﹣ 評比循環工具不在這個副本，跳過（test-handoff-facts.js；沒有 handoff-facts.js）
 - ﹣ 登記的每個變體都有左右兩屏的圖（864×1376＝一屏 768＋多蓋中間那屏 96），中間那屏也在；而且工具的 BAND 跟樣式的 112.5% 對得上（test-home-pano.js；要讀只在開發者電腦的出圖工具 tools/homemap_pano.py 和 art/homemap 原圖（公開副本沒有；開發者電腦上照跑））
@@ -157,7 +156,7 @@
 
 | 類別 | 項數 | 這類測試證明了什麼 |
 |---|---:|---|
-| 行為 | 1213 項（通過 1208、略過 5） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
+| 行為 | 1213 項（通過 1209、略過 4） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
 | 待分類 | 1025 項（通過 895、略過 130） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-refit-1118.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-film-tap-1118.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-jh-fade-1118.js`、`test-jianghu-1118.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js`、`test-zm-medallion-1118.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
@@ -754,7 +753,7 @@
 | test-fb871.js | — | 8 | 2 | 2 |  | 12／12 |
 | test-fb888.js | — | 11 | 0 | 3 |  | 14／14 |
 | test-fb897-1115.js | — | 8 | 0 | 3 |  | 11／11 |
-| test-fdroid-evidence.js | — | 8 | 0 | 1 |  | 8／9（略過 1） |
+| test-fdroid-evidence.js | — | 8 | 0 | 1 |  | 9／9 |
 | test-figview-ghost-1115.js | — | 5 | 0 | 2 |  | 7／7 |
 | test-film-tap-1118.js | — | 0 | 0 | 0 | 3 | 3／3 |
 | test-gate-siege-3d.js | — | 19 | 3 | 3 |  | 25／25 |
@@ -1713,7 +1712,7 @@
 - ✔ 〔行為〕成品：雜湊和版本號都一致 → 代碼 0；index.html 改一個位元 → 代碼 1、指出 html 不一致
 - ✔ 〔行為〕成品：release.json 的 sw 雜湊不符、版本號不一樣、不是 JSON、缺檔 → 各回報正確（缺檔代碼 2）
 - ✔ 〔行為〕成品：--url 模式從網站下載三個檔（用本機 127.0.0.1 假網站，不連外網）
-- ﹣ 略過 〔行為〕真的公開倉庫（本機 git origin/main，不連網）：成品跟 release.json 一致、Pikafish 跟建置紀錄一致（略過原因：沒有 site/.git）
+- ✔ 〔行為〕真的公開倉庫（本機 git origin/main，不連網）：成品跟 release.json 一致、Pikafish 跟建置紀錄一致
 - ✔ 〔原始碼〕foss.md 兩份逐字相同、LF；缺口分「做不到／可以補但還沒做／這輪補了」三類並附重跑指令
 
 ### test-figview-ghost-1115.js
@@ -3533,7 +3532,7 @@
 - ✔ 〔待分類〕5c 原生 App 開得到的說明文件都沒有 Android、Google Play、F-Droid、安卓；網頁版 foss.md 照舊
 - ✔ 〔待分類〕5d m/*.js 的字串常值裡，Android 只剩下：裝置判斷、Android 原生 App 的舊 WebView 提示、網頁版的震動說明、網頁版的 Android 文件按鈕
 - ✔ 〔待分類〕6 已知限制、隱私：原生版顯示原生版的寫法；網頁版照舊
-- ✔ 〔待分類〕7 轉橫向提示：原生版不顯示；網頁版照舊
+- ✔ 〔待分類〕7 星樞棋局直橫皆滿版；塔防原生版不顯示轉向提示
 - ✔ 〔待分類〕8a 00-util：原生版只替 data/ 向 CDN 補抓，engine/ 不補；網頁版 data/、engine/ 都補
 - ﹣ 略過 〔待分類〕8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（略過原因：沒有 xiangqi-ios（公開副本不含））
 - ✔ 〔待分類〕9 開場畫面「⚔ 新的旅程」切英文有翻譯（內建字典，原生、網頁都一樣）
