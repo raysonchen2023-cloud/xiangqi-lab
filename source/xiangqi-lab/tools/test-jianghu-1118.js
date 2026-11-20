@@ -52,6 +52,24 @@ test("各區的道路、石階和橋可點；山壁、河面與屋頂不吸附",
     for(const p of blocked)assert.equal(R.jhGround(C,R.jhPct(p)),null,id+" 障礙 "+p);
   }
 });
+test("W23 手機點擊：一個指尖內吸到最近的路，太遠的地方不走並原地提示",()=>{
+  const R=load(),C=R.jhWalkCfg(R.JH_START);
+  assert.match(JH,/const JH_TAP_PX=44;/);
+  assert.match(JH,/const q=jhGround\(cfg,p,JH_TAP_PX\*JH_W\/Math\.max\(1,map\.clientWidth\)\);/);
+  const tol=44*R.JH_W/1699;   /* 375×812 手機：長卷顯示寬 1699px */
+  for(const p of [[445,755],[425,1000],[1360,202],[1100,655],[2650,819],[2415,393]]){
+    assert.equal(R.jhGround(C,R.jhPct(p)),null,"沒放寬時不吸附 "+p);
+    const q=R.jhGround(C,R.jhPct(p),tol);
+    assert.ok(q&&q.d<=tol,"指尖範圍內吸附 "+p);
+    assert.ok(R.shwRoute(C,"elephant",q).pts.length>=1,"吸附點在路網上 "+p);
+  }
+  for(const p of [[513,443],[1590,350],[1000,755],[1308,1090],[1760,920],[2450,60]])
+    assert.equal(R.jhGround(C,R.jhPct(p),tol),null,"離路太遠不吸附 "+p);
+  assert.match(JH,/e\.target\.closest\?\.\("\.jh-spot,button,a"\)\)return;/);
+  assert.match(JH,/if\(q\)\{walkFlat\(\{p:q\.p,e:q\.e\}\);return\}\n    missAt\(p\);/);
+  assert.match(JH,/function missAt\(p\)\{[\s\S]*?className="jh-miss"[\s\S]*?setTimeout\(\(\)=>m\.remove\(\),700\)[\s\S]*?vibrate\(8\)/);
+  assert.match(JH,/\.jh-miss\{position:absolute;[\s\S]*?pointer-events:none;animation:jhMiss/);
+});
 test("仕角炮門石坪容易點選，隔壁山壁保持禁行",()=>{
   const R=load(),C=R.jhWalkCfg(R.JH_START),p=R.jhPct([2458,325]);
   const q=R.jhGround(C,p);

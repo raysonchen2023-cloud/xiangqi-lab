@@ -1703,7 +1703,7 @@ body.bh-field #cgStuck button{pointer-events:auto}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261120-1902";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261121-0033";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -28644,6 +28644,7 @@ const JH_PLAZAS=[
 ];
 const JH_START="elephant";
 const JH_MEM="jianghu:walking";   /* 路段重新編號，舊暫存點回到最近一次到訪的門派。 */
+const JH_TAP_PX=44;   /* W23：點在路旁一個指尖（約 44px）內就吸到最近的路，手機上不必剛好點中路面 */
 const jhPct=([x,y])=>[x/JH_W*100,y/JH_H*100];
 /* 仙人指路門東側的岸路有一片淡色的路肩。點路肩時落在相鄰步道，水面不算。 */
 const JH_COAST_SHOULDER=[[1459,746],[1479,756],[1493,776],[1487,790],[1462,782],[1448,765]].map(jhPct);
@@ -28677,7 +28678,7 @@ function jhWalkCfg(home){
   }
   return {W:JH_W,H:JH_H,el:40,h:[.076,0,0],dmax:8,home,look0:[N[home][0],100],N,E:edges.join(" "),HS,width,plazas,strictRoad:true,walkRetarget:true};
 }
-function jhGround(cfg,p){
+function jhGround(cfg,p,tol){
   const plaza=cfg.plazas.find(a=>shwInPoly(a.poly,p));
   if(plaza)return {d:0,p,e:[plaza.port,plaza.port]};
   const shoulder=shwInPoly(JH_COAST_SHOULDER,p);
@@ -28685,7 +28686,7 @@ function jhGround(cfg,p){
   for(const edge of shwEdges(cfg)){
     const [a,b]=edge;
     const q=shwNear({W:cfg.W,H:cfg.H,N:cfg.N,_e:[edge]},p);
-    if(q.d<=(shoulder?32:cfg.width[a+"-"+b])&&(!best||q.d<best.d))best=q;
+    if(q.d<=Math.max(shoulder?32:cfg.width[a+"-"+b],tol||0)&&(!best||q.d<best.d))best=q;
   }
   return best;
 }
@@ -28744,6 +28745,11 @@ body.jh-on .xqbot{display:none!important}
 .jh-map:has(>.shw.on)>.jh-me{visibility:hidden}
 .jh-destination{position:absolute;z-index:6;width:16px;height:16px;box-sizing:border-box;border:2px solid #74542d;
   border-radius:50%;background:#fff2cb80;box-shadow:0 0 0 1px #fff6df;transform:translate(-50%,-50%);pointer-events:none}
+.jh-miss{position:absolute;z-index:6;width:30px;height:30px;box-sizing:border-box;border:2px dashed #74542dcc;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;color:#74542d;font:700 14px/1 system-ui,sans-serif;
+  transform:translate(-50%,-50%);pointer-events:none;animation:jhMiss .65s ease-out forwards}
+@keyframes jhMiss{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}25%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.2)}}
+@media (prefers-reduced-motion:reduce){.jh-miss{animation:none}}
 #jhFade{position:fixed;inset:0;z-index:9400;background:#EFE6D2;opacity:0;pointer-events:none;transition:opacity ${JH_FADE}ms ease}
 #jhFade.on{opacity:1;pointer-events:auto}
 .home-page.jh-zoom{transition:transform ${JH_FADE+120}ms ease-in;transform:scale(1.12)}
@@ -28811,7 +28817,7 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
   }
   let flatWalk=null,flatHandoff=false,followAfter=0;
   function pickGround(p){
-    const q=jhGround(cfg,p);
+    const q=jhGround(cfg,p,JH_TAP_PX*JH_W/Math.max(1,map.clientWidth));
     if(q){
       destination.style.cssText=pc(q.p[0]*JH_W/100,q.p[1]*JH_H/100);
       destination.hidden=false;
@@ -28842,11 +28848,21 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
     if(e.target.closest?.(".jh-spot")){followAfter=performance.now()+450;destination.hidden=true}
   },true);
   function walkFallback(e){
-    if(!c||!img.naturalWidth||map.querySelector(".shw.on")||e.target!==img)return;
+    /* W23：點到長卷上的台階、橋、角色等裝飾也算點地面；門派牌旗與按鈕另外處理 */
+    if(!c||!img.naturalWidth||map.querySelector(".shw.on")||!map.contains(e.target)||e.target.closest?.(".jh-spot,button,a"))return;
     const r=img.getBoundingClientRect();
     if(!r.width||!r.height)return;
-    const q=pickGround([(e.clientX-r.left)*100/r.width,(e.clientY-r.top)*100/r.height]);
-    if(q)walkFlat({p:q.p,e:q.e});
+    const p=[(e.clientX-r.left)*100/r.width,(e.clientY-r.top)*100/r.height];
+    const q=pickGround(p);
+    if(q){walkFlat({p:q.p,e:q.e});return}
+    missAt(p);
+  }
+  /* W23：點到離路太遠的地方（山、屋頂、水面）原地閃一下「這裡沒有路」並輕震，不再毫無反應 */
+  function missAt(p){
+    map.querySelectorAll(".jh-miss").forEach(x=>x.remove());
+    const m=document.createElement("i");m.className="jh-miss";m.textContent="✕";m.setAttribute("aria-hidden","true");
+    m.style.left=p[0]+"%";m.style.top=p[1]+"%";map.append(m);setTimeout(()=>m.remove(),700);
+    try{vibrate(8)}catch(e){}
   }
   map.addEventListener("click",walkFallback);
   let touching=false;

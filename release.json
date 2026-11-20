@@ -1,8 +1,8 @@
 {
- "version": "20261120-1902",
- "checkedAt": "2026-11-20T11:02:35.726Z",
- "html": "bea4a8895f92",
- "sw": "314dae3f89e9",
+ "version": "20261121-0033",
+ "checkedAt": "2026-11-20T16:33:31.849Z",
+ "html": "ea1b83167cd6",
+ "sw": "1f21099a215c",
  "scripts": 6,
  "modules": {
   "00-util.js": "10252b867aec",
@@ -95,7 +95,7 @@
   "07z7-lesson.js": "b8189f953a67",
   "07z8-grablab.js": "97182be22c4c",
   "07z9-school.js": "c1402b55f1fa",
-  "07z9b-jianghu.js": "6c7441247a7f",
+  "07z9b-jianghu.js": "d74703282c21",
   "07w6-sceneinfo.js": "b699c5fc5c9f",
   "07w6b-scenedata.js": "e1a6f1d31da0",
   "07w6c-scenepoem.js": "7ab9513f7fa7",

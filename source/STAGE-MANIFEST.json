@@ -1,6 +1,6 @@
 {
  "ref": "origin/main",
- "madeAt": "2026-11-20T11:02:35.726Z",
+ "madeAt": "2026-11-20T16:33:31.849Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -92,7 +92,7 @@
   "xiangqi-db/m/07z7-lesson.js": "local=live",
   "xiangqi-db/m/07z8-grablab.js": "local=live",
   "xiangqi-db/m/07z9-school.js": "local=live",
-  "xiangqi-db/m/07z9b-jianghu.js": "web-jianghu-await",
+  "xiangqi-db/m/07z9b-jianghu.js": "web-w23",
   "xiangqi-db/m/07w6-sceneinfo.js": "local=live",
   "xiangqi-db/m/07w6b-scenedata.js": "local=live",
   "xiangqi-db/m/07w6c-scenepoem.js": "local=live",
@@ -299,7 +299,7 @@
   "xiangqi-lab/tools/test-ios-native-1116.js": "local",
   "xiangqi-lab/tools/test-ipad-fill.js": "local",
   "xiangqi-lab/tools/test-jh-fade-1118.js": "web-jianghu-walking",
-  "xiangqi-lab/tools/test-jianghu-1118.js": "web-jianghu-await",
+  "xiangqi-lab/tools/test-jianghu-1118.js": "web-w23",
   "xiangqi-lab/tools/test-land3d.js": "local",
   "xiangqi-lab/tools/test-lang-default-1117.js": "local",
   "xiangqi-lab/tools/test-layout-r16.js": "local",
@@ -625,8 +625,8 @@
   "test-osc-school-1118.js": "指令排除：要讀十派課程 opening-school/*.json（只放 CDN 與倉庫 data/，公開副本 source/ 沒有）",
   "test-zm-masters-1118.js": "指令排除：要讀掌門立繪 npc/zm_*.webp 與棋友開局表（只在開發者電腦與 CDN）"
  },
- "version": "20261120-1902",
- "indexSha1": "bea4a8895f92",
+ "version": "20261121-0033",
+ "indexSha1": "ea1b83167cd6",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",
@@ -654,5 +654,5 @@
    }
   ]
  },
- "baseCommit": "7457bd6160029848a1900bb7bf69af8b6f276d07"
+ "baseCommit": "dc04ae4f915bf406254bfa6504570faf3835091b"
 }
