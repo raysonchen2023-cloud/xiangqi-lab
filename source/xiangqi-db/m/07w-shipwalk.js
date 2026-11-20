@@ -195,7 +195,7 @@ function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.
 function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.go;let b=e.target.closest&&e.target.closest(S.o.sel),tk=null;
   /* 回饋 816：桌上的東西本身（例如信房的信箋）也算入口：座標表 TS:{選擇器:入口代號}，先跳上桌再打開 */
   if(!b&&WALK_HOP_ON&&S.C.TS&&e.target.closest)for(const k in S.C.TS){const x=e.target.closest(k);if(x&&S.M.contains(x)){b=x;tk=S.C.TS[k];x.dataset.shwnf="1";break}}
-  if(g&&!g.free&&(g.act>=0||(b&&b===g.btn&&!S.C.strictRoad))){e.stopPropagation();e.preventDefault();if(e.isTrusted)shwOpen(S);else setTimeout(()=>{if(S.go===g)shwOpen(S)},0);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
+  if(g&&!g.free&&(S.C.strictRoad?g.act>=0&&b===g.btn:g.act>=0||(b&&b===g.btn))){e.stopPropagation();e.preventDefault();if(e.isTrusted)shwOpen(S);else setTimeout(()=>{if(S.go===g)shwOpen(S)},0);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
   /* 回饋 834（開發者 11/9：棋史卡沒反應、盤查入口點選）：別的東西用 入口.click() 轉過來的點選（一盞茶的茶碗 .cjm-hit、渡口碼頭 .ph4-pz）不是使用者真的點，
      這時入口自己的 click 還在進行中，shwOpen 裡再呼叫同一顆的 click() 會被瀏覽器直接略過（HTML 規定），結果走路被取消、什麼都沒開；所以這種點選延到下一輪再開 */
   if(b){const h=tk||S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;e.stopPropagation();e.preventDefault();if(S.o.canVisit&&!S.o.canVisit(S,b,H))return;vibrate(5);
@@ -204,7 +204,7 @@ function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.
   /* 開發者 11/12 hspx「在圖上快速點兩下角色，3D 角色會快速移動」：點到小人自己的 3D 畫布（「我的角色」按鈕沒蓋到的邊緣）被當成點空地，
      往旁邊最近的路點衝一小段（短路程最少 0.35 秒）；連點兩下就衝兩次。點到小人身上＝點角色（開選單），不走路；0.4 秒內在同一處再點一下也不重走 */
   {const cv=S.box.querySelector("canvas"),r=cv&&cv.getBoundingClientRect();   /* 小人是 pointer-events:none，點選會穿到底圖：用位置判斷是不是點在小人身上（畫布中間 70% 寬、85% 高） */
-    if(r&&r.width>0&&!(e.target.closest&&e.target.closest(".shw-me,.shw-hint,.shw-menu"))&&e.clientX>=r.left+r.width*.15&&e.clientX<=r.right-r.width*.15&&e.clientY>=r.top+r.height*.1&&e.clientY<=r.bottom-r.height*.05){e.stopPropagation();e.preventDefault();const h=S.o.layer.querySelector(".shw-me");if(h&&h.style.display!=="none"&&e.isTrusted)h.click();return}}
+    if(!S.C.strictRoad&&r&&r.width>0&&!(e.target.closest&&e.target.closest(".shw-me,.shw-hint,.shw-menu"))&&e.clientX>=r.left+r.width*.15&&e.clientX<=r.right-r.width*.15&&e.clientY>=r.top+r.height*.1&&e.clientY<=r.bottom-r.height*.05){e.stopPropagation();e.preventDefault();const h=S.o.layer.querySelector(".shw-me");if(h&&h.style.display!=="none"&&e.isTrusted)h.click();return}}
   if(!shwFreeOk(S,e))return;const p=shwPt(S,e),xr=S.C.xr||[0,100];if(!(p[0]>=xr[0]&&p[0]<=xr[1]&&p[1]>=0&&p[1]<=100))return;
   {const now=Date.now(),L=S.lastTap;S.lastTap={t:now,p};if(L&&now-L.t<400&&Math.hypot(p[0]-L.p[0],p[1]-L.p[1])<6){e.stopPropagation();e.preventDefault();return}}
   /* 回饋 816／820：點到桌面＝走到最近的桌邊跳上去、再在桌面上繞過障礙走到點的地方（點在障礙上＝走到旁邊最近的可站處）；人已經在桌上＝直接在桌面上走過去；不觸發別的 */

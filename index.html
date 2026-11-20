@@ -1703,7 +1703,7 @@ body.bh-field #cgStuck button{pointer-events:auto}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261120-1226";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261120-1239";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -20371,7 +20371,7 @@ function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.
 function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.go;let b=e.target.closest&&e.target.closest(S.o.sel),tk=null;
   /* 回饋 816：桌上的東西本身（例如信房的信箋）也算入口：座標表 TS:{選擇器:入口代號}，先跳上桌再打開 */
   if(!b&&WALK_HOP_ON&&S.C.TS&&e.target.closest)for(const k in S.C.TS){const x=e.target.closest(k);if(x&&S.M.contains(x)){b=x;tk=S.C.TS[k];x.dataset.shwnf="1";break}}
-  if(g&&!g.free&&(g.act>=0||(b&&b===g.btn&&!S.C.strictRoad))){e.stopPropagation();e.preventDefault();if(e.isTrusted)shwOpen(S);else setTimeout(()=>{if(S.go===g)shwOpen(S)},0);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
+  if(g&&!g.free&&(S.C.strictRoad?g.act>=0&&b===g.btn:g.act>=0||(b&&b===g.btn))){e.stopPropagation();e.preventDefault();if(e.isTrusted)shwOpen(S);else setTimeout(()=>{if(S.go===g)shwOpen(S)},0);return}   /* 走向入口時再點同一個入口、或已經在做小動作：直接開 */
   /* 回饋 834（開發者 11/9：棋史卡沒反應、盤查入口點選）：別的東西用 入口.click() 轉過來的點選（一盞茶的茶碗 .cjm-hit、渡口碼頭 .ph4-pz）不是使用者真的點，
      這時入口自己的 click 還在進行中，shwOpen 裡再呼叫同一顆的 click() 會被瀏覽器直接略過（HTML 規定），結果走路被取消、什麼都沒開；所以這種點選延到下一輪再開 */
   if(b){const h=tk||S.o.keyOf(b),H=S.C.HS[h];if(!H||!S.C.N[H[0]])return;e.stopPropagation();e.preventDefault();if(S.o.canVisit&&!S.o.canVisit(S,b,H))return;vibrate(5);
@@ -20380,7 +20380,7 @@ function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.
   /* 開發者 11/12 hspx「在圖上快速點兩下角色，3D 角色會快速移動」：點到小人自己的 3D 畫布（「我的角色」按鈕沒蓋到的邊緣）被當成點空地，
      往旁邊最近的路點衝一小段（短路程最少 0.35 秒）；連點兩下就衝兩次。點到小人身上＝點角色（開選單），不走路；0.4 秒內在同一處再點一下也不重走 */
   {const cv=S.box.querySelector("canvas"),r=cv&&cv.getBoundingClientRect();   /* 小人是 pointer-events:none，點選會穿到底圖：用位置判斷是不是點在小人身上（畫布中間 70% 寬、85% 高） */
-    if(r&&r.width>0&&!(e.target.closest&&e.target.closest(".shw-me,.shw-hint,.shw-menu"))&&e.clientX>=r.left+r.width*.15&&e.clientX<=r.right-r.width*.15&&e.clientY>=r.top+r.height*.1&&e.clientY<=r.bottom-r.height*.05){e.stopPropagation();e.preventDefault();const h=S.o.layer.querySelector(".shw-me");if(h&&h.style.display!=="none"&&e.isTrusted)h.click();return}}
+    if(!S.C.strictRoad&&r&&r.width>0&&!(e.target.closest&&e.target.closest(".shw-me,.shw-hint,.shw-menu"))&&e.clientX>=r.left+r.width*.15&&e.clientX<=r.right-r.width*.15&&e.clientY>=r.top+r.height*.1&&e.clientY<=r.bottom-r.height*.05){e.stopPropagation();e.preventDefault();const h=S.o.layer.querySelector(".shw-me");if(h&&h.style.display!=="none"&&e.isTrusted)h.click();return}}
   if(!shwFreeOk(S,e))return;const p=shwPt(S,e),xr=S.C.xr||[0,100];if(!(p[0]>=xr[0]&&p[0]<=xr[1]&&p[1]>=0&&p[1]<=100))return;
   {const now=Date.now(),L=S.lastTap;S.lastTap={t:now,p};if(L&&now-L.t<400&&Math.hypot(p[0]-L.p[0],p[1]-L.p[1])<6){e.stopPropagation();e.preventDefault();return}}
   /* 回饋 816／820：點到桌面＝走到最近的桌邊跳上去、再在桌面上繞過障礙走到點的地方（點在障礙上＝走到旁邊最近的可站處）；人已經在桌上＝直接在桌面上走過去；不觸發別的 */
@@ -28367,7 +28367,7 @@ try{if(typeof CODEX!=="undefined"&&Array.isArray(CODEX)&&!CODEX.some(x=>x.id==="
    「現在就做，畫面切到這個長卷也要有淡入淡出的視覺效果，然後第一次進來要有文字描述歡迎光臨來到什麼地方之類的」。
    規劃與考究：story/十州棋館圖_規劃_1118.md；圖：park/yunhe/pano_final.png（3024×1340，史學顧問 184～187 審過）→ art/yunhe/pano.webp → data/yunhe/。
    地圖固定晚明江淮十州（各朝都有入口）；十派各一座山門駐地，門派旗號、掌門頭像、隨行角色都由程式疊在圖上（圖本身無字）。
-   移動沿用首頁的 3D 走路：點路面沿路走，同片區域走到山門再開名帖，隔水或山的駐地用星槎前往。
+   移動沿用首頁的 3D 走路：點路面沿路走，點山門直接出發：同區沿路走，隔山或隔水就搭星槎；到達後才開名帖。
    進出：首頁遠山「🗺 十州棋館」、找地方（雲河渡口）、開局棋路總覽與十派掌門頁頂上一顆按鈕；換頁時宣紙色淡出淡入（jhGo）；第一次進來有一段歡迎文字（store jhIntro）。
    不改開局門派與掌門的規則、不加體力與貨幣、不新增匿名資料。不動 07z9-school.js（那一版在組候選版），用它的全域函式（OSC、oscL、oscT、oscSchE、oscNmE、oscJoinAsk、zmStart、zmImg）。
    jhWalkCfg 把長卷道路換成 07w 走路用的百分比座標。 */
@@ -28419,6 +28419,13 @@ const JH_ROADS={
   ]
 };
 const JH_JUNCTIONS={westFork:[218,653],elephantFork:[512,650],westBridge:[691,607],pawnFork:[1144,744]};
+/* 寬石坪可整塊點選，落點仍貼在連通的步行路線上。 */
+const JH_PLAZAS={
+  screen:[[114,1171],[227,1171],[236,1221],[108,1221]],
+  advisor_corner:[[2385,311],[2460,310],[2480,342],[2399,344]],
+  opposite_cannon:[[1864,928],[1937,928],[1953,967],[1849,967]],
+  palace_horse:[[2629,1054],[2768,1054],[2779,1077],[2735,1095],[2645,1095]]
+};
 const JH_START="elephant";
 const JH_MEM="jianghu:roads-v1";   /* 舊版自由落點與路段已撤除，避免復原到山壁或水上。 */
 const jhPct=([x,y])=>[x/JH_W*100,y/JH_H*100];
@@ -28450,12 +28457,13 @@ function jhArea(cfg,at){return cfg.area[typeof at==="string"?at:at?.e?.[0]]}
 function jhGround(cfg,at,p){
   const zone=jhArea(cfg,at);
   if(!zone)return null;
+  const plaza=Object.entries(JH_PLAZAS).some(([gate,poly])=>cfg.area[gate]===zone&&shwInPoly(poly,[p[0]*JH_W/100,p[1]*JH_H/100]));
   let best=null;
   for(const edge of shwEdges(cfg)){
     const [a,b]=edge;
     if(cfg.area[a]!==zone)continue;
     const q=shwNear({W:cfg.W,H:cfg.H,N:cfg.N,_e:[edge]},p);
-    if(q.d<=cfg.width[a+"-"+b]&&(!best||q.d<best.d))best=q;
+    if((plaza||q.d<=cfg.width[a+"-"+b])&&(!best||q.d<best.d))best=q;
   }
   return best;
 }
@@ -28485,6 +28493,7 @@ body.jh-on .xqbot{display:none!important}
 .jh-map:has(>.shw.on)>.jh-me{visibility:hidden}
 #jhFade{position:fixed;inset:0;z-index:9400;background:#EFE6D2;opacity:0;pointer-events:none;transition:opacity ${JH_FADE}ms ease}
 #jhFade.on{opacity:1;pointer-events:auto}
+#jhFade .jh-sailing{position:absolute;inset:0;display:grid;place-items:center;color:#4e3927;font:800 16px var(--serif,serif);padding:24px;text-align:center}
 .home-page.jh-zoom{transition:transform ${JH_FADE+120}ms ease-in;transform:scale(1.12)}
 #jhIntro{position:fixed;inset:0;z-index:9300;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(20,14,8,.42);opacity:0;transition:opacity .9s ease}
 #jhIntro.on{opacity:1}
@@ -28497,6 +28506,9 @@ body.jh-on .xqbot{display:none!important}
 #jhIntro .btn{margin-top:8px;min-width:10em}
 .jh-card{display:flex;gap:12px;align-items:flex-start}.jh-card img{width:72px;height:96px;object-fit:contain;flex:none}
 .jh-card .tx{flex:1;min-width:0}.jh-card b{font:800 17px var(--serif,serif)}.jh-card p{margin:4px 0;line-height:1.6;font-size:14px}
+.jh-actions{display:flex;flex-wrap:wrap;gap:6px 8px;margin-top:12px}
+.jh-actions .btn{flex:0 1 auto;width:auto;max-width:100%;min-height:44px;padding:8px 13px;margin:0;font-size:14px;line-height:1.25;text-wrap:balance}
+.jh-actions .jh-link{min-height:44px;padding:6px 10px;border:0;background:transparent;color:var(--ink);font-size:14px;text-decoration:underline;text-underline-offset:3px}
 @media (prefers-reduced-motion:reduce){#jhFade,#jhIntro,#jhIntro .cd,#jhIntro p,.home-page.jh-zoom{transition:opacity .2s!important;transform:none!important}}`;document.head.append(s)}
 /* ---------- 換頁的淡出淡入：先蓋一層宣紙色淡入，再換網址；長卷那頁圖載好後把這層淡出 ---------- */
 function jhFadeEl(){let f=document.getElementById("jhFade");if(!f){jhCss();f=document.createElement("div");f.id="jhFade";f.setAttribute("aria-hidden","true");document.body.append(f)}return f}
@@ -28506,7 +28518,7 @@ function jhGo(hash,from){hash=hash||"#/jianghu";jhCss();const f=jhFadeEl();
   setTimeout(()=>f.classList.add("on"),20);setTimeout(()=>{location.hash=hash;if(from){from.classList.remove("jh-zoom");from.style.transformOrigin=""}},JH_FADE+40)}
 function jhFadeOut(){const f=document.getElementById("jhFade");if(!f)return;f.classList.add("on");setTimeout(()=>f.classList.remove("on"),40)}
 /* ---------- 長卷頁 #/jianghu ---------- */
-function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures"),"#/");if(typeof setTabs==="function")setTabs(false);v.className="view fixed jh-v";
+function Jianghu(v,arrival){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures"),"#/");if(typeof setTabs==="function")setTabs(false);v.className="view fixed jh-v";
   document.body.classList.add("jh-on");   /* 小帥吉祥物在長卷上看起來像第二個隨行角色，這一頁藏起來（離開時拿掉） */
   const f=jhFadeEl();f.classList.add("on");   /* 沒經過 jhGo（例如直接開網址）也先蓋著，圖好了再淡出 */
   const c=jhLook(),o=typeof oscGet==="function"?oscGet():null,my=c&&o&&typeof OSC!=="undefined"?OSC.act(o,c):"",z=typeof zmGet==="function"?zmGet():null,beat=z&&typeof OSC!=="undefined"?OSC.zmBeaten(z):[];
@@ -28520,7 +28532,7 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
     b.setAttribute("aria-label",S.nm+(m?jhL("，掌門"+m.nm,", master "+m.en):""));
     b.innerHTML=`<span class="bn">${m?`<img src="data/npc/${m.id}.webp" alt="" onerror="this.remove()">`:""}${typeof oscSym==="function"?oscSym(sid):""}<b>${esc(S.nm)}</b></span><span class="pole" aria-hidden="true"></span>`;
     b.onclick=()=>{const live=map.querySelector(".shw.on");
-      if(!live&&c){if(jhArea(cfg,walkAt())!==jhArea(cfg,sid)){jhSheet(sid,()=>sail(sid));return}stay(sid);center(cfg.N[sid][0])}
+      if(!live&&c){if(jhArea(cfg,walkAt())!==jhArea(cfg,sid)){sail(sid);return}stay(sid);center(cfg.N[sid][0])}
       jhSheet(sid)};map.append(b)}
   const me=document.createElement("img");me.className="jh-me";me.alt="";me.src=c?`data/xs/prev_${c}.webp`:"";if(!c)me.style.display="none";me.onerror=()=>{me.style.display="none"};map.append(me);
   const place=([x,y])=>{me.style.cssText=pc(x,y)+";height:9%"};place(JH_SITE[at].s);
@@ -28535,14 +28547,27 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
   }
   function sail(sid){
     if(!wrap.isConnected||f.classList.contains("on"))return;
-    closeSheet();f.classList.add("on");
-    setTimeout(()=>{if(!wrap.isConnected)return;stay(sid);Jianghu(v)},JH_FADE);
+    const label=document.createElement("span");label.className="jh-sailing";
+    const name=jhSch(sid)?.nm||"";
+    label.textContent=jhL(`搭星槎前往${name}`,`Sailing to ${name}`);
+    f.replaceChildren(label);f.classList.add("on");
+    closeSheet();
+    setTimeout(()=>{if(wrap.isConnected){stay(sid);Jianghu(v,sid)}else label.remove()},JH_FADE);
+  }
+  let lastHint=0;
+  function ground(from,p){
+    const q=jhGround(cfg,from,p);
+    if(!q&&Date.now()-lastHint>1800){
+      lastHint=Date.now();
+      toast(jhL("點這一帶的路面，或點山門前往","Tap a path nearby, or tap a school gate to travel"));
+    }
+    return q;
   }
   function walkFallback(e){
     if(!c||!img.naturalWidth||map.querySelector(".shw.on")||e.target!==img)return;
     const r=img.getBoundingClientRect();
     if(!r.width||!r.height)return;
-    const q=jhGround(cfg,walkAt(),[(e.clientX-r.left)*100/r.width,(e.clientY-r.top)*100/r.height]);
+    const q=ground(walkAt(),[(e.clientX-r.left)*100/r.width,(e.clientY-r.top)*100/r.height]);
     if(q){stay({p:q.p,e:q.e});center(q.p[0])}
   }
   map.addEventListener("click",walkFallback);
@@ -28573,36 +28598,39 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
     if(point)place([point[0]*JH_W/100,point[1]*JH_H/100]);
     center(point?.[0]??cfg.N[at][0]);
     if(c&&img.naturalWidth&&typeof shwMount==="function")shwMount({v,cfg,root:map,frame:map,layer:map,sel:".jh-spot",keyOf:b=>b.dataset.sid,find,mem,
-      ground:(state,p)=>jhGround(cfg,state.at,p),
+      ground:(state,p)=>ground(state.at,p),
       canVisit:(state,b,H)=>{
         if(jhArea(cfg,state.at)===jhArea(cfg,H[0]))return true;
-        jhSheet(b.dataset.sid,()=>sail(b.dataset.sid));
+        sail(b.dataset.sid);
         return false;
       },
       onPlace:S=>{
         if(S.go&&!touching)center(S.x);
         if(!S.go&&typeof S.at==="string"&&S.at!==at)stay(S.at);
       }});
-    jhFadeOut();setTimeout(()=>{if(wrap.isConnected)jhIntro()},JH_FADE+80);try{document.fonts.ready.then(fit)}catch(e){}};
+    jhFadeOut();setTimeout(()=>{
+      if(!wrap.isConnected)return;
+      f.querySelector(".jh-sailing")?.remove();
+      if(arrival)jhSheet(arrival);
+      else jhIntro();
+    },JH_FADE+80);try{document.fonts.ready.then(fit)}catch(e){}};
   if(img.complete&&img.naturalWidth)setTimeout(ready,0);else{img.onload=ready;img.onerror=ready}
   setTimeout(()=>{if(!f.classList.contains("on"))return;if(wrap.isConnected)ready();else f.classList.remove("on")},6000);   /* 圖很慢也不要一直蓋著；11/18 iMac 驗 1909（P1）：長卷頁在圖好之前就被換掉時，ready() 不會跑，遮罩一直蓋在別頁上、點什麼都沒反應——頁面不在了也要拿掉 */
   /* 英文模式直接開在這一頁：外掛字典（派名、人名）比畫面晚到，到了（07i18n 發 xq-i18n-ext）就照英文重畫一次（讀螢幕標籤才會是英文） */
   try{if(typeof oscEn==="function"&&oscEn()&&!(typeof I18N_EXN!=="undefined"&&I18N_EXN>0)){const H0=location.hash,re=()=>{document.removeEventListener("xq-i18n-ext",re);if(wrap.isConnected&&location.hash===H0)Jianghu(v)};document.addEventListener("xq-i18n-ext",re)}}catch(e){}
   return{}}
 /* ---------- 駐地小卡：拜師／繼續修行、挑戰掌門、這一派的棋友 ---------- */
-function jhSheet(sid,travel){if(typeof sheet!=="function"||typeof OSC==="undefined")return;const S=jhSch(sid),m=OSC.MST.find(x=>x.sid===sid),c=jhLook(),o=typeof oscGet==="function"?oscGet():null,act=c&&o?OSC.act(o,c):"";
+function jhSheet(sid){if(typeof sheet!=="function"||typeof OSC==="undefined")return;const S=jhSch(sid),m=OSC.MST.find(x=>x.sid===sid),c=jhLook(),o=typeof oscGet==="function"?oscGet():null,act=c&&o?OSC.act(o,c):"";
   const mates=Object.values(OSC.NPC).filter(x=>x[0]===sid).map(x=>jhT(x[2])).slice(0,5);
   sheet(`${S.nm}`,b=>{b.innerHTML=`<div class="jh-card">${m?`<img src="data/npc/${m.id}.webp" alt="" onerror="this.remove()">`:""}<div class="tx">
       ${m?`<b>${esc(jhL(m.nm,m.en))}</b><p class="muted">${esc(jhL(S.nm+"掌門","Master of the "+S.nm))}</p><p>${esc(jhL("「"+m.say+"」",'"'+jhT(m.say)+'"'))}</p>`:""}
       <p class="muted">${esc(jhL(`慣用${S.op}：${S.say}`,`Plays ${S.op}: ${S.say}`))}</p>${mates.length?`<p class="muted">${esc(jhL("門下棋友：","Players of this school: ")+mates.join(jhL("、",", ")))}</p>`:""}</div></div>
     ${c?"":`<p class="muted">${esc(jhL("開始旅程、有了隊伍以後才能拜師和挑戰。","Start a journey and form a party to learn or challenge."))}</p>`}
-    <div class="osc-row" style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
-      ${travel?`<button class="btn" id="jhSail">${esc(jhL("搭星槎前往","Travel by star ferry"))}</button>`:""}
-      ${c&&!travel?`<button class="btn" id="jhLearn">${esc(act===sid?jhL(`繼續${jhNm(c)}的修行`,`Continue ${jhNm(c)}'s training`):jhL(`${jhNm(c)}拜入${S.nm}`,`${jhNm(c)} joins the ${S.nm}`))}</button>`:""}
-      ${c&&m&&!travel?`<button class="btn ghost" id="jhZm">${esc(jhL(`🏯 挑戰${m.nm}`,`🏯 Challenge ${m.en}`))}</button>`:""}
-      <button class="btn ghost" id="jhAll">${esc(jhL("看十派總覽","See all ten schools"))}</button></div>`;
+    <div class="jh-actions">
+      ${c?`<button class="btn" id="jhLearn">${esc(act===sid?jhL(`繼續${jhNm(c)}的修行`,`Continue ${jhNm(c)}'s training`):jhL(`${jhNm(c)}拜入${S.nm}`,`${jhNm(c)} joins the ${S.nm}`))}</button>`:""}
+      ${c&&m?`<button class="btn ghost" id="jhZm">${esc(jhL(`🏯 挑戰${m.nm}`,`🏯 Challenge ${m.en}`))}</button>`:""}
+      <button class="jh-link" id="jhAll">${esc(jhL("看十派總覽","See all ten schools"))}</button></div>`;
     const q=s=>b.querySelector(s);
-    if(travel)q("#jhSail").onclick=travel;
     if(q("#jhLearn"))q("#jhLearn").onclick=()=>{try{closeSheet()}catch(e){}if(act===sid){location.hash="#/school/"+c;return}if(typeof oscJoinAsk==="function")setTimeout(()=>oscJoinAsk(c,sid,()=>{location.hash="#/school/"+c}),80)};
     if(q("#jhZm"))q("#jhZm").onclick=()=>{try{closeSheet()}catch(e){}if(typeof zmStart==="function")zmStart(m,c)};
     q("#jhAll").onclick=()=>{try{closeSheet()}catch(e){}location.hash="#/school"}})}
@@ -28612,7 +28640,7 @@ function jhIntro(force){let seen=0;try{seen=store.get("jhIntro",0)}catch(e){}if(
   d.innerHTML=`<div class="cd"><small>${esc(jhL("初入江湖","INTO THE JIANGHU"))}</small><h2 id="jhIntroT">${esc(jhL("歡迎來到江淮十州","Welcome to the Ten Prefectures"))}</h2>
     <p>${esc(jhL("萬曆年間，淮水、運河與長江，把江淮十州串成一條棋路。","In the Wanli years, the Huai River, the Grand Canal and the Yangtze linked ten prefectures into one road of chess."))}</p>
     <p>${esc(jhL("雲河棋會的十個門派各據一方山水、開館授棋；每一派有自己的棋路，也有一位等你登門挑戰的掌門。","The ten schools of the Cloud River Chess Club each hold their own hills and waters. Every school has its own way of playing, and a master waiting for your challenge."))}</p>
-    <p>${esc(nm?jhL("點路面走路，點山門拜訪；隔水的門派可搭星槎前往。","Tap a path to walk or a gate to visit. Take the star ferry to separate areas."):jhL("點一座山門，看看那一派的掌門和棋路。","Tap a gate to meet that school's master."))}</p>
+    <p>${esc(nm?jhL("點路面走路；點遠處的山門，就搭星槎前往。","Tap the path to walk. Tap a distant gate to travel by star ferry."):jhL("點一座山門，看看那一派的掌門和棋路。","Tap a gate to meet that school's master."))}</p>
     <button class="btn" id="jhIntroGo">${esc(jhL("開始遊歷","Start the journey"))}</button></div>`;
   document.body.append(d);setTimeout(()=>d.classList.add("on"),40);
   const close=()=>{try{store.set("jhIntro",1)}catch(e){}d.classList.remove("on");setTimeout(()=>d.remove(),500)};
@@ -28620,7 +28648,7 @@ function jhIntro(force){let seen=0;try{seen=store.get("jhIntro",0)}catch(e){}if(
   setTimeout(()=>{try{d.querySelector("#jhIntroGo").focus()}catch(e){}},400)}
 /* 離開長卷頁：歡迎文字還開著就收掉（不記看過） */
 if(typeof addEventListener==="function")addEventListener("hashchange",()=>{if(/^#\/jianghu/.test(location.hash))return;document.body.classList.remove("jh-on");const d=document.getElementById("jhIntro");if(d)d.remove();
-  const f=document.getElementById("jhFade");if(f)f.classList.remove("on")});   /* 11/18 iMac 驗 1909（P1）：離開長卷頁就把宣紙色遮罩拿掉（原本只靠長卷頁的 ready／6 秒保險，頁面先被換掉就永遠蓋著） */
+  const f=document.getElementById("jhFade");if(f){f.classList.remove("on");f.querySelector(".jh-sailing")?.remove()}});   /* 11/18 iMac 驗 1909（P1）：離開長卷頁就把宣紙色遮罩拿掉（原本只靠長卷頁的 ready／6 秒保險，頁面先被換掉就永遠蓋著） */
 /* ---------- 首頁遠山「🗺 十州棋館」（照 07xsm 西市入口的掛法；各朝首頁都有） ---------- */
 function jhHomePos(P){const b=P&&P.querySelector("#hmJh");if(!b)return;const c=JH_HOME[P.dataset.hmw||""]||JH_HOME[""];b.style.left=c[0]+"%";b.style.top=c[1]+"%";delete b.dataset.ttL;b.style.marginLeft=""}
 function jhHomeSpot(v){if(!JH_ON)return;const P=v.querySelector(".home-page");if(!P||P.querySelector("#hmJh"))return;jhCss();

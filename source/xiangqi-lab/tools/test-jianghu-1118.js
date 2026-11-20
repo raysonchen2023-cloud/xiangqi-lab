@@ -6,7 +6,7 @@ const assert=require("node:assert/strict"),test=require("node:test"),fs=require(
 const ROOT=path.join(__dirname,"../..");const rd=p=>fs.readFileSync(path.join(ROOT,p),"utf8");
 const JH=rd("xiangqi-db/m/07z9b-jianghu.js"),OS=rd("xiangqi-db/m/07z9-school.js"),SHW=rd("xiangqi-db/m/07w-shipwalk.js");
 const load=()=>{const c={};vm.createContext(c);const a=JH.indexOf("const JH_ON"),b=JH.indexOf("/* ---------- 文字");
-  vm.runInContext(SHW.slice(SHW.indexOf("const shwPx"),SHW.indexOf("function shwPt"))+JH.slice(a,b)+";this.R={JH_W,JH_H,JH_HOME,JH_SITE,JH_START,jhWalkCfg,jhGround,jhPct,jhArea,shwPath,shwNear,shwRoute,shwPx}",c);
+  vm.runInContext(SHW.slice(SHW.indexOf("const shwPx"),SHW.indexOf("function shwPt"))+SHW.split("\n").find(line=>line.startsWith("function shwInPoly"))+"\n"+JH.slice(a,b)+";this.R={JH_W,JH_H,JH_HOME,JH_SITE,JH_START,jhWalkCfg,jhGround,jhPct,jhArea,shwPath,shwNear,shwRoute,shwPx}",c);
   return c.R};
 const osc=()=>{const c={};vm.createContext(c);vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"),OS.indexOf("/* ===== END osc-core"))+";this.OSC=OSC",c);return c.OSC};
 test("十派每一派都有駐地，座標都在長卷圖裡；牌旗在站點上方",()=>{const R=load(),O=osc();
@@ -52,6 +52,15 @@ test("各區的道路、石階和橋可點；山壁、河面、屋頂與未連�
     assert.equal(R.jhGround(C,id,R.jhPct(R.JH_SITE[id==="elephant"?"screen":"horse"].s)),null,id+" 隔區");
   }
 });
+test("仕角炮門石坪容易點選，隔壁山壁與另一區的石坪保持禁行",()=>{
+  const R=load(),C=R.jhWalkCfg(R.JH_START),p=R.jhPct([2458,325]);
+  assert.ok(R.shwNear(C,p).d>18,"石坪測點要在原路段的點選範圍外");
+  const q=R.jhGround(C,"advisor_corner",p);
+  assert.ok(q);
+  assert.ok(R.shwNear(C,q.p).d<1);
+  assert.equal(R.jhGround(C,"advisor_corner",R.jhPct([2390,390])),null);
+  assert.equal(R.jhGround(C,"elephant",p),null);
+});
 test("途中改道仍走路網；路線選擇、門派名帖和跨區移動分開",()=>{
   const R=load(),C=R.jhWalkCfg(R.JH_START);
   const start=R.jhGround(C,"elephant",R.jhPct([550,636]));
@@ -60,8 +69,10 @@ test("途中改道仍走路網；路線選擇、門派名帖和跨區移動分�
   assert.deepEqual(route.pts[0],start.p);assert.deepEqual(route.pts.at(-1),goal.p);
   assert.equal(route.pts.length-1,route.segE.length);
   assert.match(JH,/shwMount\(\{v,cfg,root:map,frame:map,layer:map,sel:".jh-spot"/);
-  assert.match(JH,/ground:\(state,p\)=>jhGround\(cfg,state.at,p\)/);
-  assert.match(JH,/jhSheet\(b.dataset.sid,\(\)=>sail\(b.dataset.sid\)\)/);
+  assert.match(JH,/ground:\(state,p\)=>ground\(state.at,p\)/);
+  assert.match(JH,/sail\(b.dataset.sid\)/);
+  assert.match(JH,/if\(arrival\)jhSheet\(arrival\)/);
+  assert.doesNotMatch(JH,/jhSail|class="osc-row"/);
   assert.doesNotMatch(JH,/mem="jianghu"/);
 });
 test("頁面：路由、組版 include、淡出淡入、第一次歡迎文字、入口（首頁遠山、找地方、開局棋路頁）",()=>{
