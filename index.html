@@ -1703,7 +1703,7 @@ body.bh-field #cgStuck button{pointer-events:auto}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261121-0102";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261121-0133";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -32452,7 +32452,7 @@ async function joinLink(other){
   return u?u+"#/join/"+other:null}
 function PvpGame(v){
   setTabs(false);gameLayout(v);
-  let st=null,askD=false,sel=-1,flipMan=null,shownResult=null,busy=false,autoFlip=store.get("autoFlip",true),clockBase=null,drawAsked=null;
+  let st=null,askD=false,sel=-1,flipMan=null,shownResult=null,busy=false,autoFlip=store.get("autoFlip",false),clockBase=null,drawAsked=null;   /* W24（開發者 11/21）：同桌對弈雙方面對面，預設不自動轉向輪到的一方（設定裡仍可打開、⇅ 仍可手動翻） */
   // seat：連線對戰時這支手機坐哪一方（"r"／"b"）；null＝同一支手機輪流下
   // NET：線上大廳的網路對局（不用電腦）；seat="w" 表示在觀戰
   const NET=OFF&&!!window.XQNet&&XQNet.active();let PVP_GHOST=null;

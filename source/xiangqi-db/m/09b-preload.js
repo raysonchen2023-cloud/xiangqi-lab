@@ -200,7 +200,7 @@ async function joinLink(other){
   return u?u+"#/join/"+other:null}
 function PvpGame(v){
   setTabs(false);gameLayout(v);
-  let st=null,askD=false,sel=-1,flipMan=null,shownResult=null,busy=false,autoFlip=store.get("autoFlip",true),clockBase=null,drawAsked=null;
+  let st=null,askD=false,sel=-1,flipMan=null,shownResult=null,busy=false,autoFlip=store.get("autoFlip",false),clockBase=null,drawAsked=null;   /* W24（開發者 11/21）：同桌對弈雙方面對面，預設不自動轉向輪到的一方（設定裡仍可打開、⇅ 仍可手動翻） */
   // seat：連線對戰時這支手機坐哪一方（"r"／"b"）；null＝同一支手機輪流下
   // NET：線上大廳的網路對局（不用電腦）；seat="w" 表示在觀戰
   const NET=OFF&&!!window.XQNet&&XQNet.active();let PVP_GHOST=null;

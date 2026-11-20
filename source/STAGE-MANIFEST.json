@@ -1,6 +1,6 @@
 {
  "ref": "origin/main",
- "madeAt": "2026-11-20T17:02:16.068Z",
+ "madeAt": "2026-11-20T17:33:19.505Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -103,7 +103,7 @@
   "xiangqi-db/m/08b-cpugame.js": "web-full-board",
   "xiangqi-db/m/08s-simul.js": "local=live",
   "xiangqi-db/m/09-askbot.js": "local=live",
-  "xiangqi-db/m/09b-preload.js": "local=live",
+  "xiangqi-db/m/09b-preload.js": "web-w24",
   "xiangqi-db/m/10-db.js": "local=live",
   "xiangqi-db/m/10b-libmap.js": "local=live",
   "xiangqi-db/m/10c-deskmap.js": "local=live",
@@ -568,7 +568,8 @@
   "xiangqi-android/verify/34-swfix-cpu-start.png": "local（Android 建置鏈，逐位元照抄）",
   "xiangqi-android/verify/35-swfix-cpu-reply.png": "local（Android 建置鏈，逐位元照抄）",
   "xiangqi-android/verify/sw-client-isolation.patch": "local（Android 建置鏈，逐位元照抄）",
-  "xiangqi-android/EXPORT-MANIFEST.json": "產生（每個檔的 SHA-256、樹雜湊、排除了什麼）"
+  "xiangqi-android/EXPORT-MANIFEST.json": "產生（每個檔的 SHA-256、樹雜湊、排除了什麼）",
+  "xiangqi-lab/tools/test-pvp-faceoff-1121.js": "web-w24"
  },
  "liveDiffers": [
   "m/05-settings.js",
@@ -625,8 +626,8 @@
   "test-osc-school-1118.js": "指令排除：要讀十派課程 opening-school/*.json（只放 CDN 與倉庫 data/，公開副本 source/ 沒有）",
   "test-zm-masters-1118.js": "指令排除：要讀掌門立繪 npc/zm_*.webp 與棋友開局表（只在開發者電腦與 CDN）"
  },
- "version": "20261121-0102",
- "indexSha1": "d0b2537c0f79",
+ "version": "20261121-0133",
+ "indexSha1": "009f07612944",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",
@@ -654,5 +655,5 @@
    }
   ]
  },
- "baseCommit": "11c73d1636757006019c52962412071e8992c533"
+ "baseCommit": "ecc26e3cfb04a9fd871440b10a49daca0ba8b2ad"
 }
