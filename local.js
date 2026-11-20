@@ -716,7 +716,14 @@ var XQ=(function(){
     else{const s=await idb.get("col:"+key);if(s)d=JSON.parse(s)}
     if(!d)return null;d.byId=new Map(d.items.map(x=>[x.id,x]));return bookCache[key]=d}
   async function gameItems(kind){const list=(await idb.get("games:"+kind))||[];
-    return list.slice().reverse().map(g=>{if(Array.isArray(g.moves)&&g.moves.some(m=>m&&m.q&&qName(m.q)!==m.q))g={...g,moves:g.moves.map(m=>m&&m.q?{...m,q:qName(m.q)}:m)};if(kind==="play"){const lv=LEVELS[g.level-1]||{name:"?"},bot=g.ranked?"Pikafish 積分挑戰（"+(RANKS[g.rk]||["?"])[0]+"）":(g.journey?"石桌往事・":zgOn(g)?"笑面掌櫃・":"")+"Pikafish 第"+g.level+"級「"+lv.name+"」"+(g.reward?"・🚗獎勵":"");g={...g,red:g.human==="r"?"你":bot,black:g.human==="b"?"你":bot}}
+    return list.slice().reverse().map(g=>{if(Array.isArray(g.moves)&&g.moves.some(m=>m&&m.q&&qName(m.q)!==m.q))g={...g,moves:g.moves.map(m=>m&&m.q?{...m,q:qName(m.q)}:m)};
+      if(kind==="play"){
+        const lv=LEVELS[g.level-1]||{name:"?"};
+        // 驛站對局與舊棋譜都有旅程代號，用對局名牌同一套角色資料還原對手。
+        const inn=/^inn:/.test(g.journey||"")&&typeof innAnyAct==="function"?innAnyAct(g.journey):null;
+        const bot=inn&&inn.name?inn.name:g.ranked?"Pikafish 積分挑戰（"+(RANKS[g.rk]||["?"])[0]+"）":(g.journey?"石桌往事・":zgOn(g)?"笑面掌櫃・":"")+"Pikafish 第"+g.level+"級「"+lv.name+"」"+(g.reward?"・🚗獎勵":"");
+        g={...g,red:g.human==="r"?"你":bot,black:g.human==="b"?"你":bot};
+      }
       return{...gameItem(g,false),...assist(g),...(g.mine==="r"||g.mine==="b"?{mine:g.mine}:{}),...(Array.isArray(g.nnote)&&g.nnote.length?{nnote:g.nnote}:{})}})}   /* 意見回饋（開發者 11/6 分數審查）：線上對局帶出 mine */
   async function dbBooks(){const out=[];for(const b of await publicBooks())out.push({key:b.key,name:b.name,count:b.count});
     for(const b of await syncedBooks())if(out.some(x=>x.key===b.key))unsync(b.key);else out.push({key:b.key,name:b.name,count:b.count,synced:b.at});   // 以前從電腦同步過、現在已內建的，不要出現兩份

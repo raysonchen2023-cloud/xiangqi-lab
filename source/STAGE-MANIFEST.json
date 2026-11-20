@@ -1,6 +1,6 @@
 {
  "ref": "origin/main",
- "madeAt": "2026-11-20T06:06:35.113Z",
+ "madeAt": "2026-11-20T07:57:01.228Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -135,7 +135,7 @@
   "xiangqi-db/fonts/charset.txt": "local",
   "xiangqi-lab/src/bot3d.js": "live",
   "xiangqi-lab/src/engine.js": "live",
-  "xiangqi-lab/src/local.js": "live",
+  "xiangqi-lab/src/local.js": "W17 inn archive opponent",
   "xiangqi-lab/src/map3d.js": "live",
   "xiangqi-lab/src/net.js": "live",
   "xiangqi-lab/src/park3d.js": "web-full-board",
@@ -625,8 +625,8 @@
   "test-osc-school-1118.js": "指令排除：要讀十派課程 opening-school/*.json（只放 CDN 與倉庫 data/，公開副本 source/ 沒有）",
   "test-zm-masters-1118.js": "指令排除：要讀掌門立繪 npc/zm_*.webp 與棋友開局表（只在開發者電腦與 CDN）"
  },
- "version": "20261120-1406",
- "indexSha1": "43b480094f0e",
+ "version": "20261120-1557",
+ "indexSha1": "9e7e095adf77",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",
@@ -654,5 +654,5 @@
    }
   ]
  },
- "baseCommit": "a452d7e1c2835bc5c66c95e355016befc81b2aaf"
+ "baseCommit": "3355041c6b6dd560a99cb51c36d90824b18bb11f"
 }
