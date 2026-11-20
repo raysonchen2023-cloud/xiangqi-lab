@@ -69,6 +69,9 @@ test("W23 手機點擊：一個指尖內吸到最近的路，太遠的地方不�
   assert.match(JH,/if\(q\)\{walkFlat\(\{p:q\.p,e:q\.e\}\);return\}\n    missAt\(p\);/);
   assert.match(JH,/function missAt\(p\)\{[\s\S]*?className="jh-miss"[\s\S]*?setTimeout\(\(\)=>m\.remove\(\),700\)[\s\S]*?vibrate\(8\)/);
   assert.match(JH,/\.jh-miss\{position:absolute;[\s\S]*?pointer-events:none;animation:jhMiss/);
+  /* iMac 回報：立體走路模式（.shw.on）由 07w 處理點擊，找不到路也要交回十州原地提示 */
+  assert.ok(SHW.includes("const q=S.o.ground?S.o.ground(S,p):shwNear(S.C,p);if(!q){if(S.o.miss)S.o.miss(p);return}"));
+  assert.match(JH,/ground:\(_,p\)=>pickGround\(p\),\n      miss:p=>missAt\(p\),/);
 });
 test("仕角炮門石坪容易點選，隔壁山壁保持禁行",()=>{
   const R=load(),C=R.jhWalkCfg(R.JH_START),p=R.jhPct([2458,325]);

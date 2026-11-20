@@ -415,6 +415,7 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
     center(point?.[0]??cfg.N[at][0]);
     if(c&&img.naturalWidth&&typeof shwMount==="function")shwMount({v,cfg,root:map,frame:map,layer:map,sel:".jh-spot",keyOf:b=>b.dataset.sid,find,mem,characterActions:false,quickEntry:true,
       ground:(_,p)=>pickGround(p),
+      miss:p=>missAt(p),   /* W23：立體走路模式點到離路太遠也原地提示（iMac 回報） */
       gate:()=>!flatWalk,
       onPlace:S=>{
         if(!S.ready){flatHandoff=true;return}

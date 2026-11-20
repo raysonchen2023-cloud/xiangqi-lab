@@ -218,7 +218,7 @@ function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.
   if(!shwFreeOk(S,e))return;const p=shwPt(S,e),xr=S.C.xr||[0,100];if(!(p[0]>=xr[0]&&p[0]<=xr[1]&&p[1]>=0&&p[1]<=100))return;
   {const now=Date.now(),L=S.lastTap;S.lastTap={t:now,p};if(L&&now-L.t<400&&(S.C.walkRetarget?shwPx(S.C,p,L.p)<3:Math.hypot(p[0]-L.p[0],p[1]-L.p[1])<6)){e.stopPropagation();e.preventDefault();return}}
   /* 回饋 816／820：點到桌面＝走到最近的桌邊跳上去、再在桌面上繞過障礙走到點的地方（點在障礙上＝走到旁邊最近的可站處）；人已經在桌上＝直接在桌面上走過去；不觸發別的 */
-  if(WALK_HOP_ON&&S.C.TB){const tn=shwTblAt(S.C,p);if(tn){e.stopPropagation();e.preventDefault();shwInk(S,p);vibrate(5);shwGo(S,{free:1,tbl:tn,tap:p});return}}const q=S.o.ground?S.o.ground(S,p):shwNear(S.C,p);if(!q)return;shwInk(S,S.C.strictRoad?q.p:p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
+  if(WALK_HOP_ON&&S.C.TB){const tn=shwTblAt(S.C,p);if(tn){e.stopPropagation();e.preventDefault();shwInk(S,p);vibrate(5);shwGo(S,{free:1,tbl:tn,tap:p});return}}const q=S.o.ground?S.o.ground(S,p):shwNear(S.C,p);if(!q){if(S.o.miss)S.o.miss(p);return}shwInk(S,S.C.strictRoad?q.p:p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
 function shwGo(S,o){shwDrop();const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)g0.btn.classList.remove("shw-fade");
   if(S.stay&&S.stay!==o.btn){S.stay.classList.remove("shw-fade");S.stay=null;SHW_MEMH[S.o.mem]=null}
   /* 825：位置記錄不一致（記的是桌上的點、卻不在桌上；或桌上的點卡在障礙裡）時先修正，免得找路出錯、點哪裡都不動 */
