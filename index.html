@@ -1703,7 +1703,7 @@ body.bh-field #cgStuck button{pointer-events:auto}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261120-1345";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261120-1358";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -28421,7 +28421,7 @@ const JH_ON=true,JH_IMGV="1118",JH_W=3024,JH_H=1340,JH_FADE=480;
 /* 首頁遠山的入口位置（左%、上%）：原圖、iPad 直版、橫版各量一次（左上方的遠山，避開星槎、西市、觀星臺）。
    測試員 1821（iPad 經典首頁）：原圖原本 [22,11] 正好壓在經典世界天上的秦殘影（07y CY_SPOT home qin [21,10.5]，寬 11%）上，往下挪到遠山腰、星槎與雲弈閣之間（375 寬手機：經典首頁上下各隔 8／14px、秦朝首頁約 13／9px；秦殘影下緣約在圖高 13.7%，碰不到） */
 const JH_HOME={"":[24,19.5],p34:[26,11],l1610:[32,10]};
-/* 以 pano.webp 原圖像素描路。只標可見的路面、石階和橋面；被山、屋頂或水隔開的區域不相連。 */
+/* 以 pano.webp 原圖像素描路。十派共用同一張路網，河道只經橋面通行。 */
 const JH_SITE={central:{s:[866,478],f:[857,290]},screen:{s:[179,1172],f:[178,1030]},palace_horse:{s:[2690,1067],f:[2693,760]},
   same_cannon:{s:[1301,316],f:[1300,130]},opposite_cannon:{s:[1900,954],f:[1890,640]},pawn:{s:[1242,800],f:[1240,770]},
   elephant:{s:[530,585],f:[514,430]},horse:{s:[148,643],f:[200,360]},cross_palace:{s:[2163,1153],f:[1950,1100]},advisor_corner:{s:[2420,331],f:[2421,150]}};
@@ -28445,7 +28445,7 @@ const JH_ROADS={
     [[866,496],[891,488],[910,468,8],[934,442,8],[950,440,7],[971,447,7],[988,455,7]],
     ["pawn",[1230,775,9],[1220,757,9],[1205,749,9],[1186,741,10],"pawnFork",[1118,758],[1095,778],[1076,803],[1064,825],[1077,849],[1067,874],[1042,901],[1018,921],[1018,938],[1039,952],[1064,970],[1087,995],[1111,1025],[1145,1060],[1175,1081],[1204,1105],[1229,1130],[1251,1157],[1282,1183],[1320,1206],[1352,1216],[1382,1227],[1419,1235],[1468,1238],[1506,1226]],
     ["pawnFork",[1158,734],[1171,718],[1179,695],[1180,676]],
-    [[1506,1226],[1535,1205],[1548,1176],[1539,1143],[1520,1110],[1521,1084],[1528,1062],[1554,1051]],
+    [[1506,1226],[1535,1205],[1546,1176],[1542,1156],[1532,1136],[1522,1110],[1524,1086],[1531,1066],[1554,1051]],
     [[388,702],[367,702],[372,715],[402,707],[427,693],[450,677]],
     [[490,661],[477,676],[458,689,10],[443,707,8]],
     /* 順炮門雙塔與東岸 */
@@ -28466,8 +28466,8 @@ const JH_ROADS={
     [[1492,442],[1489,468],[1498,493],[1524,515],[1538,538],[1548,552,14],[1530,577,13],
       [1505,598,14],[1475,613,14],[1448,632,14],[1436,656,14],[1446,680,14],[1472,702,14],
     [1489,725,13],[1484,750,12],[1479,774,11],[1498,805,12],[1511,830,12],
-    [1524,852,13],[1518,875,13],[1520,902,13],[1546,925,13],[1536,950,14],
-      [1536,978,14],[1543,1007,15],[1552,1031,16],[1554,1051]],
+    [1524,852,13],[1518,875,13],[1520,902,13],[1546,925,16],[1543,948,17],
+      [1536,972,18],[1539,994,18],[1551,1016,19],[1555,1036,16],[1554,1051]],
     [[1554,1051],[1580,1044],[1608,1047],[1637,1050]]
   ],
   screen:[
@@ -28512,6 +28512,27 @@ const JH_ROADS={
     [[2823,504],[2850,511],[2880,527],[2907,536],[2939,542],[2972,543],[3001,544]]
   ]
 };
+/* 跨區接點。新木橋直接畫在岸與岸之間，河面其餘部分維持阻隔。 */
+const JH_FOOTBRIDGE=[[385,729,9],[355,831,9]];
+/* 原圖路面中斷的山坡加可見的石階，路徑與畫在圖上的階梯共用座標。 */
+const JH_STEPS=[
+  [[203,478],[216,469],[239,474],[262,474],[287,462],[316,452],[333,453],[346,464]],
+  [[2672,927],[2661,936,9],[2633,934,9],[2607,945,9],[2576,955,9],[2554,976,10],
+    [2561,994,10],[2567,1015,10],[2549,1034,10],[2534,1048],[2518,1051]],
+  [[2820,745,9],[2835,769,9],[2844,797,9],[2849,824,9],[2857,850,9],[2856,879,9],[2843,908,10],
+    [2831,941,10],[2819,971,10],[2805,998,10],[2784,1026,12],[2759,1048],[2727,1050],[2690,1067]],
+  [[2791,685,11],[2803,661,10],[2815,633,10],[2823,603,9],[2821,574,9],
+    [2811,547,9],[2805,525,10],[2823,504]]
+];
+const JH_LINKS=[
+  [[388,702],[386,715],...JH_FOOTBRIDGE,[344,844],[337,849]],
+  [[2030,1102],[2054,1088],[2082,1070],[2110,1057],[2141,1041],[2167,1021],[2194,1008],[2221,999],
+    [2253,993],[2286,990],[2312,990,10],[2334,983,9],[2355,986,9],[2379,997,10],[2405,1003],[2434,1009],[2454,1016],[2470,1021]],
+  [[2167,1021],[2186,1029],[2205,1044],[2230,1058],[2250,1078],[2264,1102],[2260,1129],[2238,1147],[2214,1160]],
+  [[2606,399,9],[2632,409],[2657,419],[2686,427],[2716,439],[2743,448],[2770,465,11],
+    [2784,478,9],[2800,491,9],[2823,504]],
+  ...JH_STEPS
+];
 const JH_JUNCTIONS={westFork:[218,653],elephantFork:[512,650],westBridge:[691,607],southBank:[742,894],southFork:[769,1007],pawnFork:[1144,744]};
 /* 開闊地形用凸多邊形，區內可直接走到點下的位置。每塊用獨立入口接到步行路網。 */
 const JH_PLAZAS=[
@@ -28525,60 +28546,82 @@ const JH_PLAZAS=[
   ["palace_horse",[[2623,1048],[2759,1048],[2774,1080],[2735,1100],[2642,1097]]],
   ["same_cannon",[[1284,246],[1320,246],[1331,282],[1274,282]]],
   ["pawn",[[1282,1182],[1315,1191],[1359,1211],[1345,1227],[1300,1207]]],
-  ["cross_palace",[[2148,1159],[2169,1155],[2203,1167],[2209,1181],[2168,1180],[2148,1172]]]
+  ["cross_palace",[[2148,1159],[2169,1155],[2203,1167],[2209,1181],[2168,1180],[2148,1172]]],
+  ["pawn",[[1239,1141],[1306,1204],[1290,1210],[1227,1156]]],
+  ["pawn",[[1338,1208],[1424,1228],[1423,1244],[1342,1231]]],
+  ["pawn",[[1420,1227],[1515,1215],[1527,1227],[1486,1246],[1416,1245]]],
+  ["pawn",[[1539,922],[1558,926],[1551,953],[1530,952]]],
+  ["pawn",[[1530,949],[1551,949],[1548,978],[1527,980]]],
+  ["pawn",[[1528,975],[1554,974],[1571,1018],[1542,1020]]],
+  ["pawn",[[1543,1014],[1567,1014],[1567,1050],[1541,1054]]]
 ];
 const JH_START="elephant";
-const JH_MEM="jianghu:terrain-v1";   /* 路段重新編號，舊暫存點回到最近一次到訪的門派。 */
+const JH_MEM="jianghu:walking";   /* 路段重新編號，舊暫存點回到最近一次到訪的門派。 */
 const jhPct=([x,y])=>[x/JH_W*100,y/JH_H*100];
 function jhWalkCfg(home){
-  const N={},HS={},area={},width={},edges=[];
-  for(const [id,p] of Object.entries(JH_SITE)){N[id]=jhPct(p.s);HS[id]=[id,...jhPct(p.f)]}
-  for(const [id,p] of Object.entries(JH_JUNCTIONS))N[id]=jhPct(p);
-  for(const [zone,paths] of Object.entries(JH_ROADS)){
-    const used=new Map();
-    for(const path of paths){
+  const N={},HS={},width={},edges=[],used=new Map();
+  const add=(id,p)=>{N[id]=jhPct(p);used.set(p.slice(0,2).join(","),id);return id};
+  for(const [id,p] of Object.entries(JH_SITE)){add(id,p.s);HS[id]=[id,...jhPct(p.f)]}
+  for(const [id,p] of Object.entries(JH_JUNCTIONS))add(id,p);
+  for(const path of [...Object.values(JH_ROADS).flat(),...JH_LINKS]){
       let prev=null;
       for(const p of path){
         let id=p;
         if(Array.isArray(p)){
           const key=p.slice(0,2).join(",");
-          if(!used.has(key)){const node=zone+"_"+used.size;used.set(key,node);N[node]=jhPct(p)}
-          id=used.get(key);
+          id=used.get(key)||add("r"+used.size,p);
         }
-        area[id]=zone;
         const radius=Array.isArray(p)&&p[2]||24;
-        if(prev){const edge=prev.id+"-"+id;edges.push(edge);width[edge]=Math.min(prev.radius,radius)}
+        if(prev&&prev.id!==id){const edge=prev.id+"-"+id;edges.push(edge);width[edge]=Math.min(prev.radius,radius)}
         prev={id,radius};
       }
-    }
   }
   const plazas=[];
-  for(const [site,outline] of JH_PLAZAS){
-    const poly=outline.map(jhPct),zone=area[site],ports=Object.keys(N).filter(n=>area[n]===zone&&shwInPoly(poly,N[n]));
-    if(!ports.length)continue;
+  for(const [,outline] of JH_PLAZAS){
+    const poly=outline.map(jhPct),entry=Object.keys(N).find(n=>!n.startsWith("court_")&&shwInPoly(poly,N[n]));
+    if(!entry)continue;
     const port="court_"+plazas.length;
-    N[port]=N[ports[0]];
-    area[port]=zone;
-    const edge=ports[0]+"-"+port;
+    N[port]=N[entry];
+    const edge=entry+"-"+port;
     edges.push(edge);width[edge]=0;
-    plazas.push({poly,port,zone});
+    plazas.push({poly,port});
   }
-  return {W:JH_W,H:JH_H,el:40,h:[.076,0,0],dmax:4,home,look0:[N[home][0],100],N,E:edges.join(" "),HS,area,width,plazas,strictRoad:true,walkRetarget:true};
+  return {W:JH_W,H:JH_H,el:40,h:[.076,0,0],dmax:8,home,look0:[N[home][0],100],N,E:edges.join(" "),HS,width,plazas,strictRoad:true,walkRetarget:true};
 }
-function jhArea(cfg,at){return cfg.area[typeof at==="string"?at:at?.e?.[0]]}
-function jhGround(cfg,at,p){
-  const zone=at?jhArea(cfg,at):null;
-  if(at&&!zone)return null;
-  const plaza=cfg.plazas.find(a=>(!zone||a.zone===zone)&&shwInPoly(a.poly,p));
+function jhGround(cfg,p){
+  const plaza=cfg.plazas.find(a=>shwInPoly(a.poly,p));
   if(plaza)return {d:0,p,e:[plaza.port,plaza.port]};
   let best=null;
   for(const edge of shwEdges(cfg)){
     const [a,b]=edge;
-    if(zone&&cfg.area[a]!==zone)continue;
     const q=shwNear({W:cfg.W,H:cfg.H,N:cfg.N,_e:[edge]},p);
     if(q.d<=cfg.width[a+"-"+b]&&(!best||q.d<best.d))best=q;
   }
   return best;
+}
+function jhDrawSteps(map,pc,points){
+  const xs=points.map(p=>p[0]),ys=points.map(p=>p[1]);
+  const x=Math.min(...xs)-12,y=Math.min(...ys)-12;
+  const c=document.createElement("canvas");
+  c.width=Math.max(...xs)-x+12;c.height=Math.max(...ys)-y+12;
+  c.className="jh-stairs";c.setAttribute("aria-hidden","true");
+  c.style.cssText=pc(x,y)+`;width:${c.width/JH_W*100}%;height:${c.height/JH_H*100}%`;
+  const ctx=c.getContext("2d");
+  if(!ctx)return;
+  ctx.lineJoin="round";ctx.translate(-x,-y);
+  ctx.beginPath();
+  points.forEach(([a,b],i)=>i?ctx.lineTo(a,b):ctx.moveTo(a,b));
+  ctx.lineWidth=15;ctx.strokeStyle="#746b56";ctx.stroke();
+  ctx.lineWidth=12;ctx.strokeStyle="#cdbf9f";ctx.stroke();
+  ctx.beginPath();
+  for(let i=1;i<points.length;i++){
+    const [a,b]=points[i-1],[u,v]=points[i],dx=u-a,dy=v-b,len=Math.hypot(dx,dy);
+    for(let t=3;t<len-2;t+=6){
+      const px=a+dx*t/len,py=b+dy*t/len,sx=dy*5/len,sy=dx*5/len;
+      ctx.moveTo(px+sx,py-sy);ctx.lineTo(px-sx,py+sy);
+    }
+  }
+  ctx.lineWidth=1;ctx.strokeStyle="#786e57";ctx.stroke();map.append(c);
 }
 /* ---------- 文字：中英並列（照 07z9 的 oscL；07z9 沒載到時退回中文） ---------- */
 const jhL=(zh,en)=>typeof oscL==="function"?oscL(zh,en):zh;
@@ -28593,6 +28636,10 @@ body.jh-on .xqbot{display:none!important}
 .jh-wrap{position:relative;flex:1;min-height:0;overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain;background:#EFE6D2;scrollbar-width:thin}
 .jh-map{position:relative;height:100%;width:max-content}
 .jh-map>img{display:block;height:100%;width:auto;max-width:none;user-select:none;-webkit-user-drag:none}
+.jh-stairs{position:absolute;pointer-events:none}
+.jh-footbridge{position:absolute;pointer-events:none;transform-origin:left center;box-sizing:border-box;
+  border-block:2px solid #674b36;background:repeating-linear-gradient(90deg,#a17a52 0 4px,#77563b 4px 5px);
+  box-shadow:0 2px 3px #2b2a283d}
 .jh-spot{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:0;cursor:pointer;color:#2b2118}
 .jh-spot{pointer-events:none}.jh-spot .bn{pointer-events:auto}
 .jh-map.shw-iso>.jh-spot{z-index:200}
@@ -28607,8 +28654,6 @@ body.jh-on .xqbot{display:none!important}
 .jh-map:has(>.shw.on)>.jh-me{visibility:hidden}
 #jhFade{position:fixed;inset:0;z-index:9400;background:#EFE6D2;opacity:0;pointer-events:none;transition:opacity ${JH_FADE}ms ease}
 #jhFade.on{opacity:1;pointer-events:auto}
-#jhFade.on.jh-gate-ferry{pointer-events:none}
-#jhFade .jh-sailing{position:absolute;inset:0;display:grid;place-items:center;color:#4e3927;font:800 16px var(--serif,serif);padding:24px;text-align:center}
 .home-page.jh-zoom{transition:transform ${JH_FADE+120}ms ease-in;transform:scale(1.12)}
 #jhIntro{position:fixed;inset:0;z-index:9300;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(20,14,8,.42);opacity:0;transition:opacity .9s ease}
 #jhIntro.on{opacity:1}
@@ -28633,23 +28678,27 @@ function jhGo(hash,from){hash=hash||"#/jianghu";jhCss();const f=jhFadeEl();
   setTimeout(()=>f.classList.add("on"),20);setTimeout(()=>{location.hash=hash;if(from){from.classList.remove("jh-zoom");from.style.transformOrigin=""}},JH_FADE+40)}
 function jhFadeOut(){const f=document.getElementById("jhFade");if(!f)return;f.classList.add("on");setTimeout(()=>f.classList.remove("on"),40)}
 /* ---------- 長卷頁 #/jianghu ---------- */
-function Jianghu(v,arrival,quick=false){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures"),"#/");if(typeof setTabs==="function")setTabs(false);v.className="view fixed jh-v";
+function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures"),"#/");if(typeof setTabs==="function")setTabs(false);v.className="view fixed jh-v";
   document.body.classList.add("jh-on");   /* 小帥吉祥物在長卷上看起來像第二個隨行角色，這一頁藏起來（離開時拿掉） */
   const f=jhFadeEl();
-  if(!quick)f.classList.add("on");   /* 沒經過 jhGo（例如直接開網址）也先蓋著，圖好了再淡出 */
+  f.classList.add("on");   /* 沒經過 jhGo（例如直接開網址）也先蓋著，圖好了再淡出 */
   const c=jhLook(),o=typeof oscGet==="function"?oscGet():null,my=c&&o&&typeof OSC!=="undefined"?OSC.act(o,c):"",z=typeof zmGet==="function"?zmGet():null,beat=z&&typeof OSC!=="undefined"?OSC.zmBeaten(z):[];
   let at=JH_START;try{const a=store.get("jhAt",null);if(a&&JH_SITE[a])at=a}catch(e){}
   const wrap=document.createElement("div");wrap.className="jh-wrap";const map=document.createElement("div");map.className="jh-map";wrap.append(map);
   const img=document.createElement("img");img.src=`data/yunhe/pano.webp?v=${JH_IMGV}`;img.alt=jhL("十州棋館圖：晚明江淮十州的十派山門","Map of the ten schools across the Jiang-Huai prefectures");img.draggable=false;map.append(img);
   const pc=(x,y)=>`left:${(x/JH_W*100).toFixed(3)}%;top:${(y/JH_H*100).toFixed(3)}%`;
+  const [[bx,by],[ex,ey]]=JH_FOOTBRIDGE,bridge=document.createElement("i");
+  bridge.className="jh-footbridge";bridge.setAttribute("aria-hidden","true");
+  bridge.style.cssText=pc(bx,by)+`;width:${Math.hypot(ex-bx,ey-by)/JH_W*100}%;height:${15/JH_H*100}%;transform:translateY(-50%) rotate(${Math.atan2(ey-by,ex-bx)}rad)`;
+  map.append(bridge);
+  for(const points of JH_STEPS)jhDrawSteps(map,pc,points);
   const sch=typeof OSC!=="undefined"?OSC.SCH:[];
   for(const S0 of sch){const sid=S0.id,P=JH_SITE[sid];if(!P)continue;const S=jhSch(sid)||S0,m=typeof OSC!=="undefined"?OSC.MST.find(x=>x.sid===sid):null;
     const b=document.createElement("button");b.type="button";b.className="jh-spot"+(beat.includes(m&&m.id)?" won":"")+(my===sid?" mine":"");b.dataset.sid=sid;b.style.cssText=pc(P.f[0],P.f[1])+`;--jc:${jhCol[sid]||"#8a6a3a"}`;
     b.setAttribute("aria-label",S.nm+(m?jhL("，掌門"+m.nm,", master "+m.en):""));
     b.innerHTML=`<span class="bn">${m?`<img src="data/npc/${m.id}.webp" alt="" onerror="this.remove()">`:""}${typeof oscSym==="function"?oscSym(sid):""}<b>${esc(S.nm)}</b></span><span class="pole" aria-hidden="true"></span>`;
-    b.onclick=()=>{const live=map.querySelector(".shw.on");
-      if(!live&&c){if(jhArea(cfg,walkAt())!==jhArea(cfg,sid)){sail(sid);return}stay(sid);center(cfg.N[sid][0])}
-      jhSheet(sid)};map.append(b)}
+    b.onclick=()=>{if(c&&!map.querySelector(".shw.on"))walkFlat(sid,()=>jhSheet(sid));
+      else jhSheet(sid)};map.append(b)}
   const me=document.createElement("img");me.className="jh-me";me.alt="";me.src=c?`data/xs/prev_${c}.webp`:"";if(!c)me.style.display="none";me.onerror=()=>{me.style.display="none"};map.append(me);
   const place=([x,y])=>{me.style.cssText=pc(x,y)+";height:9%"};place(JH_SITE[at].s);
   const scale=()=>map.clientHeight/JH_H,center=x=>{wrap.scrollLeft=x*map.clientWidth/100-wrap.clientWidth/2};
@@ -28666,48 +28715,36 @@ function Jianghu(v,arrival,quick=false){jhCss();setTop(jhL("🗺 十州棋館","
     const point=typeof next==="string"?JH_SITE[next].s:[next.p[0]*JH_W/100,next.p[1]*JH_H/100];
     place(point);
   }
-  let ferry=null,followAfter=0;
-  function sail(next){
-    if(!wrap.isConnected||f.classList.contains("on"))return;
-    const sid=typeof next==="string"?next:"";
-    const label=document.createElement("span");label.className="jh-sailing";
-    const name=sid&&jhSch(sid)?.nm;
-    label.textContent=name?jhL(`搭星槎前往${name}`,`Sailing to ${name}`):jhL("搭星槎前往","Travelling by star ferry");
-    f.replaceChildren(label);f.classList.add("on");
-    f.classList.toggle("jh-gate-ferry",!!sid);
-    closeSheet();
-    const finish=(quick=false)=>{
-      clearTimeout(timer);ferry=null;f.classList.remove("jh-gate-ferry");
-      if(!wrap.isConnected){label.remove();return}
-      stay(next);
-      if(quick){
-        f.style.transition="none";f.classList.remove("on");f.replaceChildren();void f.offsetWidth;f.style.transition="";
-      }
-      Jianghu(v,sid,quick);
-    };
-    const timer=setTimeout(finish,JH_FADE);
-    if(sid)ferry={sid,finish};
+  let flatWalk=null,flatHandoff=false,followAfter=0;
+  function walkFlat(next,arrive){
+    if(flatWalk?.next===next&&typeof next==="string"){flatWalk=null;stay(next);arrive();return}
+    const route=shwRoute(cfg,walkAt(),next),pts=route.pts;
+    if(!pts.length)return;
+    const walk=flatWalk={next};
+    const lengths=pts.slice(1).map((p,i)=>shwPx(cfg,pts[i],p)),total=lengths.reduce((a,b)=>a+b,0);
+    const duration=shwRM()?0:Math.min(8000,Math.max(220,total*3.2)),start=performance.now();
+    function step(now){
+      if(flatWalk!==walk||!wrap.isConnected)return;
+      if(now-start>=duration||pts.length===1){flatWalk=null;stay(next);if(arrive)arrive();else follow(pts.at(-1)[0]);return}
+      let left=total*(now-start)/duration,i=0;
+      while(i<lengths.length-1&&left>=lengths[i]){left-=lengths[i];i++}
+      const a=pts[i],b=pts[i+1],u=lengths[i]?Math.min(1,left/lengths[i]):0;
+      const p=a.map((x,k)=>x+(b[k]-x)*u);
+      stay({p,e:route.segE[i]});
+      if(!touching&&now>=followAfter)follow(p[0]);
+      requestAnimationFrame(step);
+    }
+    step(start);
   }
   map.addEventListener("click",e=>{
-    const sid=e.target.closest?.(".jh-spot")?.dataset.sid;
-    if(sid)followAfter=performance.now()+450;
-    if(!ferry)return;
-    e.preventDefault();e.stopImmediatePropagation();
-    if(sid===ferry.sid)ferry.finish(true);
+    if(e.target.closest?.(".jh-spot"))followAfter=performance.now()+450;
   },true);
-  function ground(from,p){
-    const q=jhGround(cfg,from,p);
-    if(q)return q;
-    const other=jhGround(cfg,null,p);
-    if(other&&jhArea(cfg,other)!==jhArea(cfg,from))sail(other);
-    return null;
-  }
   function walkFallback(e){
     if(!c||!img.naturalWidth||map.querySelector(".shw.on")||e.target!==img)return;
     const r=img.getBoundingClientRect();
     if(!r.width||!r.height)return;
-    const q=ground(walkAt(),[(e.clientX-r.left)*100/r.width,(e.clientY-r.top)*100/r.height]);
-    if(q){stay({p:q.p,e:q.e});follow(q.p[0])}
+    const q=jhGround(cfg,[(e.clientX-r.left)*100/r.width,(e.clientY-r.top)*100/r.height]);
+    if(q)walkFlat({p:q.p,e:q.e});
   }
   map.addEventListener("click",walkFallback);
   let touching=false;
@@ -28754,23 +28791,22 @@ function Jianghu(v,arrival,quick=false){jhCss();setTop(jhL("🗺 十州棋館","
     if(point)place([point[0]*JH_W/100,point[1]*JH_H/100]);
     center(point?.[0]??cfg.N[at][0]);
     if(c&&img.naturalWidth&&typeof shwMount==="function")shwMount({v,cfg,root:map,frame:map,layer:map,sel:".jh-spot",keyOf:b=>b.dataset.sid,find,mem,characterActions:false,quickEntry:true,
-      ground:(state,p)=>ground(state.at,p),
-      canVisit:(state,b,H)=>{
-        if(jhArea(cfg,state.at)===jhArea(cfg,H[0]))return true;
-        sail(b.dataset.sid);
-        return false;
-      },
+      ground:(_,p)=>jhGround(cfg,p),
+      gate:()=>!flatWalk,
       onPlace:S=>{
+        if(!S.ready){flatHandoff=true;return}
+        if(flatHandoff){
+          flatHandoff=false;S.at=walkAt();
+          [S.x,S.y]=typeof S.at==="string"?cfg.N[S.at]:S.at.p;
+          S.place();return;
+        }
         if(S.go&&!touching&&performance.now()>=followAfter)follow(S.x);
         if(!S.go&&typeof S.at==="string"&&S.at!==at)stay(S.at);
       }});
-    if(quick){if(arrival)jhSheet(arrival)}
-    else{jhFadeOut();setTimeout(()=>{
+    jhFadeOut();setTimeout(()=>{
       if(!wrap.isConnected)return;
-      f.querySelector(".jh-sailing")?.remove();
-      if(arrival)jhSheet(arrival);
-      else jhIntro();
-    },JH_FADE+80)}
+      jhIntro();
+    },JH_FADE+80);
     try{document.fonts.ready.then(fit)}catch(e){}};
   if(img.complete&&img.naturalWidth)setTimeout(ready,0);else{img.onload=ready;img.onerror=ready}
   setTimeout(()=>{if(!f.classList.contains("on"))return;if(wrap.isConnected)ready();else f.classList.remove("on")},6000);   /* 圖很慢也不要一直蓋著；11/18 iMac 驗 1909（P1）：長卷頁在圖好之前就被換掉時，ready() 不會跑，遮罩一直蓋在別頁上、點什麼都沒反應——頁面不在了也要拿掉 */
@@ -28806,7 +28842,7 @@ function jhIntro(force){let seen=0;try{seen=store.get("jhIntro",0)}catch(e){}if(
   setTimeout(()=>{try{d.querySelector("#jhIntroGo").focus()}catch(e){}},400)}
 /* 離開長卷頁：歡迎文字還開著就收掉（不記看過） */
 if(typeof addEventListener==="function")addEventListener("hashchange",()=>{if(/^#\/jianghu/.test(location.hash))return;document.body.classList.remove("jh-on");const d=document.getElementById("jhIntro");if(d)d.remove();
-  const f=document.getElementById("jhFade");if(f){f.classList.remove("on");f.querySelector(".jh-sailing")?.remove()}});   /* 11/18 iMac 驗 1909（P1）：離開長卷頁就把宣紙色遮罩拿掉（原本只靠長卷頁的 ready／6 秒保險，頁面先被換掉就永遠蓋著） */
+  const f=document.getElementById("jhFade");if(f)f.classList.remove("on")});   /* 圖載入前先離開，也要收起宣紙色遮罩。 */
 /* ---------- 首頁遠山「🗺 十州棋館」（照 07xsm 西市入口的掛法；各朝首頁都有） ---------- */
 function jhHomePos(P){const b=P&&P.querySelector("#hmJh");if(!b)return;const c=JH_HOME[P.dataset.hmw||""]||JH_HOME[""];b.style.left=c[0]+"%";b.style.top=c[1]+"%";delete b.dataset.ttL;b.style.marginLeft=""}
 function jhHomeSpot(v){if(!JH_ON)return;const P=v.querySelector(".home-page");if(!P||P.querySelector("#hmJh"))return;jhCss();
