@@ -355,7 +355,19 @@ function pkHitCss(){if(typeof document.getElementById!=="function"||document.get
 .pzoom>button::before,.fvz>button::before{content:"";position:absolute;left:-6px;right:-6px;top:-6px;bottom:-6px}
 .pzoom>button:first-child::before,.fvz>button:first-child::before{top:-8px}.pzoom>button:last-child::before,.fvz>button:last-child::before{bottom:-8px}
 .pzoom,.fvz{gap:12px!important}
-.pk2d::before{content:"";position:absolute;left:min(0px,calc((100% - 44px) / 2));right:min(0px,calc((100% - 44px) / 2));top:min(-3px,calc((100% - 44px) / 2));bottom:min(-3px,calc((100% - 44px) / 2))}`;document.head.append(s)}
+.pk2d::before{content:"";position:absolute;left:min(0px,calc((100% - 44px) / 2));right:min(0px,calc((100% - 44px) / 2));top:min(-3px,calc((100% - 44px) / 2));bottom:min(-3px,calc((100% - 44px) / 2))}
+.pk-control-dock:not([hidden]){display:flex;flex:none;align-items:center;justify-content:space-between;gap:8px;margin:0 8px 2px}
+.pk-control-dock .pzoom{position:static!important;flex-direction:row!important;gap:8px!important;margin-inline-start:auto}
+.pk-control-dock .pzoom>button{width:44px!important;height:44px!important}
+.pk-control-dock .pk2d{position:static!important;transform:none!important;min-height:44px}
+.pk-control-dock button::before{content:none!important}`;document.head.append(s)}
+function pkDock(host,create=false){
+  const next=host.nextElementSibling;
+  if(next?.classList.contains("pk-control-dock"))return next;
+  if(!create)return null;
+  const dock=document.createElement("div");dock.className="pk-control-dock";dock.hidden=true;
+  host.after(dock);return dock;
+}
 function parkUi(host,pv){pkHitCss();let b=host.querySelector(".pkview");if(!b){b=document.createElement("button");b.type="button";b.className="pkview";host.append(b)}
   /* 11/11（AI 模擬玩家第二輪問題 5）：手機直式沒存過視角時，park3d 一開始就是「俯視＋拉近」（topfit，格距約 30px），按鈕要當成已經在俯視、下一個是平視；
      從按鈕切回俯視存成 topfit（拉近版）；以前存的 top／flat 照舊不動 */
@@ -432,6 +444,7 @@ function pkI18nWrap(pv){try{if(!pv||pv.__i18n)return;pv.__i18n=1;const T=s=>{try
   for(const k of["say","oppSay"])if(typeof pv[k]==="function"){const f=pv[k];pv[k]=function(t,...a){return f.call(this,T(t),...a)}}}catch(e){}}
 function parkDraw(host,bd,board,o,ex){
   if(typeof whl3dOn==="function"&&whl3dOn())return;   /* 11/15 車輪戰 3D 開著（07bhw-wheel.js，全螢幕蓋在上面、自己有一個 3D 實例）：底下被蓋住的對局頁先不建 3D，全場只留一個實例（iPhone 記憶體）；離開車輪戰時它會叫對局頁重畫 */
+  if(ex.dockControls)pkDock(host,true);
   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
   {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn();const pv0=host.querySelector(".pkview");if(pv0)pv0.hidden=!parkOn();const ap=host.querySelector(".ax-park");if(ap)ap.hidden=!parkOn();pkSwUi(host)}   /* 回饋 847：平面棋盤時收起「改用平面棋盤」 */   /* 11/11 v6 第 3 點：「▦ 平面棋盤」／「🌳 回園子」（pkSwUi 在下面） */
   if(!parkOn()){if(PARK&&PARK.host===host){if(PARK.v.hide)PARK.v.hide();else{PARK.v.destroy();PARK=null}}bd.svg.style.display="";botVis(true);return}
@@ -462,9 +475,18 @@ function parkDraw(host,bd,board,o,ex){
    判斷法：點之前記下 PARK.last；點完畫面有重畫（PARK.last 換了）而且沒有選到子、也不是再點一次同一顆子＝點偏。走成一步的會等伺服器回來才重畫，不會被算成點偏 */
 const pkSwTb=()=>document.querySelector('#topRight button[data-lb="回棋盤模式"],#topRight button[data-lb="去園子下棋（3D）"],#topRight button[aria-label="回棋盤模式"],#topRight button[aria-label="去園子下棋（3D）"]');
 function pkSwUi(host){try{if(!host)return;const tb=pkSwTb(),on=parkOn(),on3=on&&!!(PARK&&PARK.host===host);
-  let b=host.querySelector(".pk2d");
+  const dock=pkDock(host),controls=dock||host;
+  if(dock){
+    dock.hidden=!on3;
+    if(on3){
+      const zoom=PARK.v.el.querySelector(".pzoom");
+      if(zoom){dock.querySelector(".pzoom")?.remove();dock.append(zoom)}
+    }
+  }
+  let b=controls.querySelector(".pk2d");
   if(on3&&tb&&!b){b=document.createElement("button");b.type="button";b.className="pk2d";pkHitCss();b.innerHTML='<span aria-hidden="true">▦</span> 平面棋盤';b.setAttribute("aria-label","換成平面棋盤：棋子比較大、比較好點");
-    b.onclick=e=>{e.stopPropagation();vibrate(5);const t=pkSwTb();if(t)t.click()};if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(b)}
+    b.onclick=e=>{e.stopPropagation();vibrate(5);const t=pkSwTb();if(t)t.click()};if(getComputedStyle(host).position==="static")host.style.position="relative";
+    if(dock)dock.prepend(b);else host.append(b)}
   if(b)b.hidden=!(on3&&tb);if(!(on3&&tb)){const tp=host.querySelector(".pk2d-tip");if(tp)tp.remove()}
   const vw=host.closest(".view"),st=vw&&vw.querySelector("#stat");let r=vw&&vw.querySelector(".pk3d-back");const fl=!on&&!PARK_OFF&&!focusOn()&&!!tb&&!!st;
   /* 11/12 開發者「「回園子」這三個字用其他方式表示」：車輪戰在茶肆棋館、不是園子，改成跟「▦ 平面棋盤」成對的「🧊 3D 場景」 */

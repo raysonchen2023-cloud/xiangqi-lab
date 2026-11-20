@@ -95,5 +95,11 @@ test("快照跟工作區這輪改的段落一字不差（工作區另外多了�
   for (const [a, b] of segs) assert.equal(between(rd(W("park3d.js")), a, b), between(rd(K("park3d.js")), a, b), a);
   /* 11/18 掌門胸前門派字（figure 的 gch／gred、glyTex 第三個參數）之後 bot3d.js 整支不再跟快照一樣：只比緩衝區大小那段；排隊載入那段裡有 glyTex 的呼叫（這次加了參數），結構由上面「整段排隊」那項的關鍵句檢查 */
   assert.equal(between(rd(W("bot3d.js")), "    let shrink=1,bufW=0,bufH=0;const applySize=", "\n    const setScale="), between(rd(K("bot3d.js")), "    let shrink=1,bufW=0,bufH=0;const applySize=", "\n    const setScale="), "bot3d.js applySize");
-  assert.equal(rd(WM("06-cpu.js")), rd(KM("06-cpu.js")), "06-cpu.js");
+  /* W31（11/21）：06-cpu.js 補上原生線已驗過的 3D 控制列停靠（pkDock／.pk-control-dock，Android P0「local-3d-board-controls-docked」）。
+     快照（＝0133 的 06-cpu）之後只准多這一段：快照少掉的只能是被它改寫的 3 行，多出來的行都要屬於停靠這段 */
+  const snapL = rd(KM("06-cpu.js")).split("\n"), curL = rd(WM("06-cpu.js")).split("\n"), curS = new Set(curL), snapS = new Set(snapL);
+  const gone = snapL.filter(l => !curS.has(l)), added = curL.filter(l => !snapS.has(l));
+  assert.ok(gone.length <= 3 && gone.every(l => /\.pk2d::before\{|let b=host\.querySelector\("\.pk2d"\)|host\.append\(b\)\}$/.test(l)), "06-cpu.js 少了快照裡的行：" + gone.join(" ／ ").slice(0, 300));
+  const DOCK = /dock|pkDock|controls\.|\.pk2d::before\{[^`]*\}$|^\s*\}+$|^\s*if\(on3\)\{$|const zoom=PARK|const next=host\.nextElementSibling|if\(!create\)return null|style\.position="relative";$/;
+  assert.ok(added.length > 0 && added.length <= 30 && added.every(l => DOCK.test(l)), "06-cpu.js 多了停靠以外的行：" + added.filter(l => !DOCK.test(l)).join(" ／ ").slice(0, 300));
 });

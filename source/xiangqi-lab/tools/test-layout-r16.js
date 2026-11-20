@@ -137,5 +137,9 @@ test("〔原始碼〕大廳：空桌、暗燈是 span（aria-hidden）；亮燈 
 });
 test("〔原始碼〕小人頭上的 💬 是裝飾 span（aria-hidden），點的是包住它的 .shw-me；320 寬頂欄晉級賽／練功房改兩行", () => {
   assert.match(WALK, /const hint=document\.createElement\("span"\);hint\.className="shw-hint";hint\.textContent="💬";hint\.setAttribute\("aria-hidden","true"\);/);
-  assert.match(CSS, /@media \(max-width:359px\)\{\.cpu-seg button\{white-space:normal;[^}]*font-size:11px/);
+  /* W31（11/21）：原生線把這段改成多行，並讓返回鈕縮成 44px 方鈕（只留 ‹），按鈕仍在同一個 359px 區塊裡改兩行 */
+  const m359 = CSS.match(/@media \(max-width:359px\)\{[^@]*?\.cpu-seg button\{[^}]*\}/);
+  assert.ok(m359, "找不到 359px 區塊裡的 .cpu-seg button");
+  assert.match(m359[0], /\.cpu-seg button\{white-space:normal;[^}]*font-size:11px/);
+  assert.match(m359[0], /#topbar:has\(\.cpu-seg\) #back\{flex:0 0 44px;min-width:44px;max-width:44px;/);
 });

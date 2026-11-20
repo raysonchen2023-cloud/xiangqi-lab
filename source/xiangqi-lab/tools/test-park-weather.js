@@ -22,15 +22,37 @@ test("〔行為〕飄雲：一朵都不會坐在石台或山坡上（雲底高�
     assert.ok(r>TR+15,"雲在石台外");assert.ok(y-sz*.35>hillY(r,TR,FL)+1,"雲底高過山坡 r="+r.toFixed(1))}
   assert.ok(!P3.includes("const r=21+Math.random()*8,y=GY+.5+Math.random()*3"),"舊的（坐在石台邊）拿掉了")});
 
-test("〔行為〕雨雪：範圍蓋到石台外的山坡，篷子底下不生，每滴落到自己那個位置的地面",()=>{
-  assert.ok(line("const BX=MOB?40:48").includes("N=RM?0:"));assert.ok(line("const spot=()=>").includes("hillY(Math.hypot(x,z),TR,FL)"));
-  const CANO={x:12.5*.9,z:18.5*.9},BX=48,spot=()=>{let x=0,z=0;for(let k=0;k<6;k++){x=(Math.random()*2-1)*BX;z=(Math.random()*2-1)*BX;if(Math.abs(x)>=CANO.x||Math.abs(z)>=CANO.z)break}return[x,z,hillY(Math.hypot(x,z),TR,FL)]};
-  let under=0,far=0;const n=20000;for(let i=0;i<n;i++){const[x,z,gy]=spot();if(Math.abs(x)<CANO.x&&Math.abs(z)<CANO.z)under++;if(Math.hypot(x,z)>TR)far++;assert.ok(gy<=FL)}
-  assert.ok(under/n<.001,"篷子底下幾乎不生 "+under);assert.ok(far/n>.6,"大部分雨落在石台外的山坡 "+(far/n).toFixed(2));
-  assert.ok(BX>17*2.5,"比原本的 ±17 大很多")});
+test("〔行為〕雨雪：範圍蓋到山坡；雨能落到篷頂；鏡頭縮小後雨區加寬加高",()=>{
+  const start=P3.indexOf("const BX=snow?");
+  const source=P3.slice(start,P3.indexOf("/* 地面：",start));
+  const CANO={x:12.5*.9,z:18.5*.9,y:16},cam={position:{x:0,y:23,z:40}};
+  const run=new Function("snow","MOB","RM","A","FL","CANO","hillY","TR","EK","cam",
+    source+`const pos=new Float32Array(N*6);
+    function place(){const [x,z,y]=spot();pos[0]=x;pos[2]=z;GYS[0]=y;pos[1]=(y+rainCeiling)/2}
+    return{spot,place,fitRain,rainFloor,get distance(){return rainScale},get ceiling(){return rainCeiling},pos,GYS}`);
+  for(const snow of [true,false]){
+    const {spot,rainFloor}=run(snow,true,false,1,FL,CANO,hillY,TR,"classic",cam);
+    let far=0,roof=0;
+    for(let i=0;i<2000;i++){const[x,z,gy]=spot(),under=Math.abs(x)<CANO.x&&Math.abs(z)<CANO.z;
+      if(under)roof++;assert.equal(rainFloor(x,z,gy),under?CANO.y:gy);
+      const r=Math.hypot(x,z);if(r>TR)far++;assert.equal(gy,hillY(r,TR,FL))}
+    assert.ok(far>1100);assert.ok(snow?roof===0:roof>150);
+  }
+  const rain=run(false,true,false,1,FL,CANO,hillY,TR,"classic",cam);
+  rain.place();
+  const [x,,z]=rain.pos;
+  cam.position={x:0,y:150,z:180};
+  rain.fitRain();
+  assert.ok(rain.ceiling>cam.position.y);
+  assert.ok(rain.distance>4);
+  assert.ok(Math.abs(rain.pos[0]-x*rain.distance)<.001);
+  assert.ok(Math.abs(rain.pos[2]-z*rain.distance)<.001);
+  assert.ok(Math.abs((rain.pos[1]-rain.GYS[0])/(rain.ceiling-rain.GYS[0])-.5)<.001);
+});
 
 test("〔原始碼〕雨雪重生改用每滴自己的地面高度 GYS，舊的固定 Y0 拿掉；山坡模型用同一份剖面",()=>{
-  assert.equal((P3.match(/pos\[j\+1\]<GYS\[i\]/g)||[]).length,2,"雨、雪兩處");
+  assert.match(P3,/pos\[j\+1\]<rainFloor\(pos\[j\],pos\[j\+2\],GYS\[i\]\)/);
+  assert.match(P3,/pos\[j\+1\]<GYS\[i\]/);
   assert.ok(!/\bY0\b/.test(P3));
   assert.ok(P3.includes("HILL_P.map(([a,b])=>[TR+a,FL+b])"));
   assert.ok(P3.includes("buildFurn(EK,E,{sc,M,GY,FL,TR,"))});

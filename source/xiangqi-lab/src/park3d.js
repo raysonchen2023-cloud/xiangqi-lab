@@ -19,6 +19,10 @@
       if(b&&b.p.i!==a.p.i&&b.e<a.e*1.2+2&&b.p.d<=Math.max(R0,.6*b.p.s))return{i:-1,amb:[a.p.i,b.p.i]};
       return{i:a.p.i,d:a.p.d,snap:a.p!==n}}
     return nd<.5*n.s?{i:n.i,raw:true}:{i:-1}};
+  /* ChatGPT 11/19 Android P0：落點畫在盤面，不能被投影到它上面的角色中心搶走。
+     只吸目前合法標記；重疊時仍不猜。一般盤、巨盤與塔防共用。 */
+  const tapMarker=(P,x,y)=>{const C=P.map(p=>({p,d:Math.hypot(p.x-x,p.y-y)})).filter(q=>q.d<=Math.max(8,.24*q.p.s)).sort((a,b)=>a.d-b.d);
+    if(!C.length)return null;const a=C[0],b=C[1];return b&&b.d<a.d*1.2+2?{i:-1,amb:[a.p.i,b.p.i]}:{i:a.p.i}};
   /* inBox：棋盤框四角都在畫面內（pad＝上、右、下、左留白 px：上面讓朝代標籤、下面讓「▦ 平面棋盤」和 ＋／－） */
   const inBox=(pts,W,H,pad)=>pts.every(([x,y])=>x>=pad[3]&&x<=W-pad[1]&&y>=pad[0]&&y<=H-pad[2]);
   /* boardMeas：prj(x,y,z)→[px,py]；回報棋盤框是否放得下、最遠那排（最小）的格距 px（左右、前後取小的） */
@@ -326,8 +330,8 @@
     tang:{src:"data/park/tang_360.webp",pano:true,hz:.58,hor:PANO_HOR,rot:0}};
   // 其他 12 個朝代也換成 Gemini 畫的整圈背景（同一套規格）
   for(const k of["classic","qin","han","sanguo","weijin","nanbei","sui","wudai","song","yuan","ming","qing"])BG_IMG[k]={src:"data/park/"+k+"_360.webp",pano:true,hz:.58,hor:PANO_HOR,rot:0};   // 開發者用 Gemini 畫的 13 朝代長卷全部到齊
-  /* 開發者 11/13（iPhone）：經典環景天空裡斜飄兩支巨大毛筆，Gemini 修圖擦掉後同檔名換圖；帶版本參數，手機的 xqlab-look 快取才會重抓 */
-  BG_IMG.classic.src+="?v=1113nb";
+  /* 藏譜石窟的書冊局部修圖，使用新網址讓既有環景快取不會蓋掉新版。 */
+  BG_IMG.classic.src="data/park/classic_360_bookcliff.webp";
   // 開發者用 Gemini 畫的朝代道具（data/park3d/<朝代>/：tree1、tree2、bench、stool、lantern、cup、tabletop 去背 webp，下緣＝落地／落桌的地方）
   // 有列在這裡的朝代：樹、長椅、凳子、燈籠、茶杯都換成手繪立牌，桌面換成手繪桌面；其他朝代照舊用程式做的 3D 家具。新增朝代＝放圖＋這裡加一行
   // top＝桌面圖上圓桌面的圓心 x、y、半徑（像素，1024 的圖）
@@ -1294,11 +1298,13 @@
         const PX=12.5,PZ=18.5,EY=FL+17.5,CG=new T.Group();CG.name="canopy";
         const C={1:{post:"#4a3324",roof:"#3a2c27",trim:"#7a2418",cloth:"#6e2a20",postR:.42,sq:0},2:{post:"#a63a24",roof:"#2f5c66",trim:"#c9a43a",cloth:"#3c6a72",postR:.45,sq:0},
           3:{post:"#b9a46c",roof:"#d6cdb4",trim:"#9a8a66",cloth:"#cfc5aa",postR:.3,sq:0},4:{post:"#6a4a30",roof:"#e3ddcf",trim:"#2f4f7a",cloth:"#d8d1c1",postR:.55,sq:0},5:{post:"#4a2e1c",roof:"#a8803e",trim:"#6a4a22",cloth:"#b08b4a",postR:.45,sq:1}}[G];
-        const pm=M(new T.Color(C.post),{roughness:.85});
-        for(const sx of[-1,1])for(const sz of[-1,1]){const h=EY-FL,geo=C.sq?new T.BoxGeometry(C.postR*2,h,C.postR*2):new T.CylinderGeometry(C.postR,C.postR*1.08,h,G===3?8:12);const m=new T.Mesh(geo,pm);m.position.set(sx*PX,FL+h/2,sz*PZ);m.castShadow=true;m.receiveShadow=true;CG.add(m);
-          if(G===3)for(let k=1;k<5;k++){const n=new T.Mesh(new T.TorusGeometry(C.postR*1.05,.06,6,12),M(new T.Color("#8a7444")));n.rotation.x=PI/2;n.position.set(sx*PX,FL+k*h/5,sz*PZ);CG.add(n)}}   /* 竹節 */
+        const pm=M(new T.Color(C.post),{roughness:.85}),edges={x:{},z:{}},posts=[];
+        for(const axis of["x","z"])for(const sign of[-1,1]){const g=new T.Group();g.name="canopy-"+axis+sign;CG.add(g);edges[axis][sign]=g}
+        for(const sx of[-1,1])for(const sz of[-1,1]){const h=EY-FL,geo=C.sq?new T.BoxGeometry(C.postR*2,h,C.postR*2):new T.CylinderGeometry(C.postR,C.postR*1.08,h,G===3?8:12);const m=new T.Mesh(geo,pm),post=new T.Group();post.position.set(sx*PX,FL,sz*PZ);m.position.y=h/2;m.castShadow=true;m.receiveShadow=true;post.add(m);CG.add(post);posts.push({sx,sz,post});
+          if(G===3)for(let k=1;k<5;k++){const n=new T.Mesh(new T.TorusGeometry(C.postR*1.05,.06,6,12),M(new T.Color("#8a7444")));n.rotation.x=PI/2;n.position.y=k*h/5;post.add(n)}}   /* 竹節 */
         /* 簷下橫樑 */
-        const bm=M(new T.Color(C.post),{roughness:.85}),fbm=new T.MeshStandardMaterial({color:new T.Color(C.post),roughness:.85,transparent:true,opacity:1});for(const sz of[-1,1]){const b=new T.Mesh(new T.BoxGeometry(PX*2+1,.5,.5),sz>0?fbm:bm);b.position.set(0,EY,sz*PZ);CG.add(b)}   /* 前面（玩家這一側）那根橫樑會橫在畫面上，跟篷頂一起淡 */for(const sx of[-1,1]){const b=new T.Mesh(new T.BoxGeometry(.5,.5,PZ*2+1),bm);b.position.set(sx*PX,EY,0);CG.add(b)}
+        for(const sz of[-1,1]){const b=new T.Mesh(new T.BoxGeometry(PX*2+1,.5,.5),pm);b.position.set(0,EY,sz*PZ);edges.z[sz].add(b)}
+        for(const sx of[-1,1]){const b=new T.Mesh(new T.BoxGeometry(.5,.5,PZ*2+1),pm);b.position.set(sx*PX,EY,0);edges.x[sx].add(b)}
         /* 篷頂（半透明＋墨線） */
         const rm=new T.MeshStandardMaterial({color:new T.Color(C.roof),roughness:.9,transparent:true,opacity:.9,side:T.DoubleSide,depthWrite:false}),ink=new T.LineBasicMaterial({color:0x2a2018,transparent:true,opacity:.85}),RF=[];
         const roof=(geo,pos,rot)=>{const m=new T.Mesh(geo,rm);m.position.set(...pos);if(rot)m.rotation.set(...rot);m.renderOrder=2;CG.add(m);RF.push(m);const e=new T.LineSegments(new T.EdgesGeometry(geo,25),ink);e.position.copy(m.position);e.rotation.copy(m.rotation);e.renderOrder=2;CG.add(e);RF.push(e);return m};
@@ -1312,31 +1318,50 @@
         else if(G===4){const g=new T.SphereGeometry(1,24,8,0,TAU,0,PI/2);g.scale(W2*1.05,3.2,D2*1.05);roof(g,[0,EY+.2,0]);const band=new T.Mesh(new T.CylinderGeometry(1,1,1.1,32,1,true),new T.MeshStandardMaterial({color:new T.Color(C.trim),side:T.DoubleSide,transparent:true,opacity:.9,depthWrite:false}));band.scale.set(W2*1.05,1,D2*1.05);band.position.set(0,EY-.2,0);CG.add(band);RF.push(band)}
         else{const g=new T.CylinderGeometry(W2,W2,D2*2,24,1,true,-PI/2,PI);g.rotateX(PI/2);g.scale(1,.32,1);roof(g,[0,EY+.3,0])}
         /* 垂邊（簷下一圈短布） */
-        const vm=new T.MeshStandardMaterial({color:new T.Color(C.trim),roughness:.9,transparent:true,opacity:.92,side:T.DoubleSide,depthWrite:false});
-        const vs=M(new T.Color(C.trim),{roughness:.9,side:T.DoubleSide});   /* 兩側和後面的垂邊是實的（篷子的輪廓靠它們），只有前面那一圈跟篷頂一起淡 */
-        for(const sz of[-1,1]){const v=new T.Mesh(new T.PlaneGeometry(W2*2,1.2),sz>0?vm:vs);v.position.set(0,EY-.5,sz*D2);CG.add(v);if(sz>0)RF.push(v)}for(const sx of[-1,1]){const v=new T.Mesh(new T.PlaneGeometry(D2*2,1.2),vs);v.rotation.y=PI/2;v.position.set(sx*W2,EY-.5,0);CG.add(v)}
+        const vs=M(new T.Color(C.trim),{roughness:.9,side:T.DoubleSide});
+        for(const sz of[-1,1]){const v=new T.Mesh(new T.PlaneGeometry(W2*2,1.2),vs);v.position.set(0,EY-.5,sz*D2);edges.z[sz].add(v)}
+        for(const sx of[-1,1]){const v=new T.Mesh(new T.PlaneGeometry(D2*2,1.2),vs);v.rotation.y=PI/2;v.position.set(sx*W2,EY-.5,0);edges.x[sx].add(v)}
         /* 布幔：左右、後面三面；晴天捲成一捆，下雨垂下一半 */
         const cm=new T.MeshStandardMaterial({color:new T.Color(C.cloth),roughness:.95,transparent:true,opacity:.88,side:T.DoubleSide,depthWrite:false}),CUR=[],CH=(EY-FL)*.48;
-        const cur=(w,pos,ry)=>{const g=new T.PlaneGeometry(w,CH);g.translate(0,-CH/2,0);const m=new T.Mesh(g,cm);m.position.set(...pos);m.rotation.y=ry;m.scale.y=.04;CG.add(m);
-          const roll=new T.Mesh(new T.CylinderGeometry(.45,.45,w,10),M(new T.Color(C.cloth)));roll.rotation.z=PI/2;roll.rotation.y=ry;roll.position.set(pos[0],pos[1]-.4,pos[2]);CG.add(roll);CUR.push({m,roll})};
-        cur(PX*2,[0,EY-.9,-PZ-.05],0);cur(PZ*2,[-PX-.05,EY-.9,0],PI/2);cur(PZ*2,[PX+.05,EY-.9,0],PI/2);
+        const cur=(side,w,pos,ry)=>{const g=new T.PlaneGeometry(w,CH);g.translate(0,-CH/2,0);const m=new T.Mesh(g,cm);m.position.set(...pos);m.rotation.y=ry;m.scale.y=.04;side.add(m);
+          const roll=new T.Mesh(new T.CylinderGeometry(.45,.45,w,10),M(new T.Color(C.cloth)));roll.rotation.z=PI/2;roll.rotation.y=ry;roll.position.set(pos[0],pos[1]-.4,pos[2]);side.add(roll);CUR.push({m,roll})};
+        cur(edges.z[-1],PX*2,[0,EY-.9,-PZ-.05],0);cur(edges.x[-1],PZ*2,[-PX-.05,EY-.9,0],PI/2);cur(edges.x[1],PZ*2,[PX+.05,EY-.9,0],PI/2);
         sc.add(CG);
-        CANO={x:PX*.9,z:PZ*.9,y:EY,rm,vm,cm,ink,fbm,RF,CUR,down:0,want:0,wet:0,snow:0,c0:new T.Color(C.roof),
-          tick(dt,cy){const above=cy>EY+1.5,op=above?.12:.9;rm.opacity+=(op-rm.opacity)*Math.min(1,dt*4);vm.opacity=Math.min(.92,rm.opacity+.06);ink.opacity=above?0:.85;ink.visible=!above;   /* 11/15 開發者截圖「這邊有一條線」：俯視時人字頂兩片的屋脊墨線疊在一起，剛好落在棋盤正中，看起來像一條直線；鏡頭在篷頂上方時墨線整個收掉（篷面自己還留一層淡影） */cm.opacity=above?.6:.88;fbm.opacity=above?.3:1;fbm.depthWrite=!above;
+        CANO={x:PX*.9,z:PZ*.9,y:EY,rm,cm,ink,RF,CUR,down:0,want:0,wet:0,snow:0,c0:new T.Color(C.roof),
+          tick(dt,cy){const above=cy>EY+1.5,op=above?.12:.9;rm.opacity+=(op-rm.opacity)*Math.min(1,dt*4);ink.opacity=above?0:.85;ink.visible=!above;   /* 俯視收掉屋脊墨線，篷面留一層淡影。 */cm.opacity=above?.6:.88;
+            /* 旋轉到哪一側，就收起鏡頭與石桌之間的簷邊、布幔和角柱。 */
+            const {x,z}=cam.position;
+            for(const sign of[-1,1]){edges.x[sign].visible=sign*x<PX;edges.z[sign].visible=sign*z<PZ}
+            for(const {sx,sz,post} of posts)post.visible=edges.x[sx].visible&&edges.z[sz].visible;
             if(this.want>this.down)this.down=Math.min(this.want,this.down+dt*2.4);else if(this.want<this.down)this.down=Math.max(this.want,this.down-dt*1.2);
             for(const c of CUR){c.m.scale.y=.04+.96*this.down;c.roll.visible=this.down<.15}
             const col=this.c0.clone();if(this.wet)col.multiplyScalar(1-.15*this.wet);if(this.snow)col.lerp(new T.Color(1,1,1),this.snow);rm.color.copy(col)}}}catch(e){console.warn(e)}
       /* 11/10 開發者「如果當時有下雨或下雪，對戰的時候也會出現，甚至讓畫面積雪」：開場問 App（07w7 window.XQ_PARKWX，跟渡口、棋鎮同一份天氣）這一朝現在下不下——
          雨＝斜斜的細雨絲落到石台、地面稍微變暗像濕了；雪＝雪花慢慢飄、左右晃，石台和外圍山坡從一層薄雪開始，下得越久積得越白（約兩分半到最厚）。
-         手機減少動態效果＝只留積雪／濕地，不下粒子。粒子都在石台四周一個大盒子裡循環，不吃霧、不寫深度 */
+         手機減少動態效果＝只留積雪／濕地，不下粒子。雨隨鏡頭拉遠而擴散，近處靠深度遮擋，遠處受霧影響。 */
       try{const WI=typeof window.XQ_PARKWX==="function"&&!opt.indoor?window.XQ_PARKWX(EK):null;if(WI&&(WI.t==="rain"||WI.t==="snow")){
         const snow=WI.t==="snow",A=Math.max(.55,Math.min(1,WI.a||1)),RM=(()=>{try{return matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){return false}})();
         /* 意見回饋 878（開發者 11/12「下雨的範圍太小，不合理」）：原本只在石台中間 ±17 的方塊裡下，扣掉篷子底下只剩一小圈；改成鋪到石台外的山坡（±BX），
-           粒子數跟著加；篷子底下不生雨滴；每一滴落到它那個位置的地面（山坡往外越來越低）才重來，不會停在半空 */
-        const BX=MOB?40:48,Y1=FL+24,N=RM?0:Math.round((snow?(MOB?2600:4200):(MOB?2400:3800))*A),objs=[];
-        const spot=()=>{let x=0,z=0;for(let k=0;k<6;k++){x=(Math.random()*2-1)*BX;z=(Math.random()*2-1)*BX;if(!CANO||Math.abs(x)>=CANO.x||Math.abs(z)>=CANO.z)break}return[x,z,hillY(Math.hypot(x,z),TR,FL)]},GYS=new Float32Array(N);
-        /* 11/10 經典世界（紙墨世界，Gemini 71 作法 2）：雨換成直直落下的短墨滴、雪換成碎宣紙片、積雪是淡紙色 */
-        const CL=EK==="classic",DX=CL?0:.35,LN=CL?.7:1.5,SL=CL?0:.23;
+           雨滴可以在篷頂上方生成，碰到篷頂或山坡才重來，避免從遠處看見篷子上方整片天空留白。 */
+        const BX=snow?(MOB?40:48):66,Y1=FL+(snow?24:82),N=RM?0:Math.round((snow?(MOB?2600:4200):(MOB?2100:3400))*A),objs=[];
+        let rainScale=1,rainCeiling=Y1;
+        const spot=(scale=1)=>{let x,z;const span=BX*scale*(!snow&&Math.random()<.8?.43:1);
+          do{x=(Math.random()*2-1)*span;z=(Math.random()*2-1)*span}
+          while(snow&&CANO&&Math.abs(x)<CANO.x&&Math.abs(z)<CANO.z);
+          return[x,z,hillY(Math.hypot(x,z),TR,FL)]},GYS=new Float32Array(N);
+        const rainFloor=(x,z,ground)=>CANO&&Math.abs(x)<CANO.x&&Math.abs(z)<CANO.z?Math.max(ground,CANO.y):ground;
+        /* 雨絲的尾端沿落下方向延伸；風勢與線段的斜度使用同一組比率。 */
+        const CL=EK==="classic",windX=CL?.09:.19,windZ=.065;
+        const rainLength=new Float32Array(snow?0:N),rainDrift=new Float32Array(snow?0:N);
+        const rainTail=(j,i,y)=>{const l=rainLength[i]*rainScale,w=rainDrift[i];pos[j+3]=pos[j]+l*windX*w;pos[j+4]=y+l;pos[j+5]=pos[j+2]+l*windZ*w};
+        /* 拉遠時把已可見的雨場往外延伸，保持同一批雨滴的相對高度，避開固定生成面。 */
+        const fitRain=()=>{const p=cam.position,next=Math.max(1,Math.hypot(p.x,p.y-FL,p.z)/52);
+          if(Math.abs(next-rainScale)<.005)return;
+          const ratio=next/rainScale,ceiling=FL+82*next;
+          for(let i=0;i<N;i++){const j=i*6,h=GYS[i],u=(pos[j+1]-h)/(rainCeiling-h);
+            pos[j]*=ratio;pos[j+2]*=ratio;
+            const ground=GYS[i]=hillY(Math.hypot(pos[j],pos[j+2]),TR,FL);pos[j+1]=ground+u*(ceiling-ground)}
+          rainScale=next;rainCeiling=ceiling};
         /* 地面：雪＝白色斑駁的積雪片（石台＋山坡各一層，跟著時間變厚）；雨＝一層淡淡的深色（濕地） */
         const blot=cv(512,512,(g,w,h)=>{g.clearRect(0,0,w,h);for(let i=0;i<snow*900+(1-snow)*140;i++){const x=Math.random()*w,y=Math.random()*h,r=snow?10+Math.random()*50:20+Math.random()*70,gr=g.createRadialGradient(x,y,0,x,y,r);
           gr.addColorStop(0,snow?`rgba(255,255,255,${.75+Math.random()*.25})`:`rgba(30,38,46,${.25+Math.random()*.25})`);gr.addColorStop(1,"rgba(255,255,255,0)");g.fillStyle=gr;g.fillRect(x-r,y-r,2*r,2*r)}});
@@ -1350,13 +1375,22 @@
         if(N){if(snow){const g=new T.BufferGeometry();pos=new Float32Array(N*3);vel=new Float32Array(N*2);for(let i=0;i<N;i++){const[x,z,gy]=spot();GYS[i]=gy;pos[i*3]=x;pos[i*3+1]=gy+Math.random()*(Y1-gy);pos[i*3+2]=z;vel[i*2]=1.6+Math.random()*1.4;vel[i*2+1]=Math.random()*TAU}
             g.setAttribute("position",new T.BufferAttribute(pos,3));const dot=CL?cv(64,64,(c,w,h)=>{c.clearRect(0,0,w,h);c.fillStyle="rgba(248,240,214,.95)";c.fillRect(16,22,32,22);c.strokeStyle="rgba(120,100,70,.5)";c.lineWidth=2;c.strokeRect(16,22,32,22)}):cv(64,64,(c,w,h)=>{const gr=c.createRadialGradient(32,32,0,32,32,30);gr.addColorStop(0,"rgba(255,255,255,1)");gr.addColorStop(.5,"rgba(255,255,255,.75)");gr.addColorStop(1,"rgba(255,255,255,0)");c.fillStyle=gr;c.fillRect(0,0,w,h)});
             pts=new T.Points(g,new T.PointsMaterial({map:dot,size:MOB?.62:.5,sizeAttenuation:true,transparent:true,opacity:.95,depthWrite:false,fog:false}))}
-          else{const g=new T.BufferGeometry();pos=new Float32Array(N*6);vel=new Float32Array(N);for(let i=0;i<N;i++){const[x,z,gy]=spot(),y=gy+Math.random()*(Y1-gy);GYS[i]=gy;pos.set([x,y,z,x+DX,y+LN,z],i*6);vel[i]=CL?20+Math.random()*6:30+Math.random()*12}
-            g.setAttribute("position",new T.BufferAttribute(pos,3));pts=new T.LineSegments(g,new T.LineBasicMaterial({color:CL?0x2E333C:0xC9D3DA,transparent:true,opacity:(CL?.5:.42)*A+.1,depthWrite:false,fog:false}))}
+          else{const g=new T.BufferGeometry(),rgba=new Float32Array(N*8);pos=new Float32Array(N*6);vel=new Float32Array(N);
+            const cool=new T.Color(CL?0x454D58:0x748896),light=new T.Color(0xDCE7EB),tone=new T.Color();
+            for(let i=0;i<N;i++){const[x,z,gy]=spot(),lo=rainFloor(x,z,gy),y=lo+Math.random()*(Y1-lo),j=i*6,k=i*8,strength=Math.random();
+              GYS[i]=gy;pos[j]=x;pos[j+1]=y;pos[j+2]=z;vel[i]=16+strength*14;rainLength[i]=.45+strength*strength*1.65;rainDrift[i]=.65+Math.random()*.7;
+              rainTail(j,i,y);tone.copy(cool).lerp(light,Math.random()*.8);
+              const a=(.14+strength*.36)*A;
+              rgba.set([tone.r,tone.g,tone.b,a,tone.r,tone.g,tone.b,a*.045],k)}
+            g.setAttribute("position",new T.BufferAttribute(pos,3).setUsage(T.DynamicDrawUsage));g.setAttribute("color",new T.BufferAttribute(rgba,4));
+            pts=new T.LineSegments(g,new T.LineBasicMaterial({vertexColors:true,transparent:true,depthWrite:false,fog:true,toneMapped:false}));pts.name="park-rain"}
           pts.frustumCulled=false;pts.renderOrder=3;sc.add(pts);objs.push(pts)}
         let wt=0;WX={tick(dt,now){wt+=dt;if(snow){acc=Math.min(.9,acc+dt*.006*A);L1.material.opacity=acc;L2.material.opacity=acc*.92;if(CANO)CANO.snow=Math.min(.85,acc)}else{wet=Math.min(.32,wet+dt*.08);L1.material.opacity=wet;L2.material.opacity=wet*.8;if(CANO){CANO.wet=Math.min(1,wet/.32);if(wt>1)CANO.want=1}}
           if(!pts)return;const p=pts.geometry.attributes.position;
           if(snow){for(let i=0;i<N;i++){const j=i*3;pos[j+1]-=vel[i*2]*dt;pos[j]+=Math.sin(now/900+vel[i*2+1])*dt*.6;if(pos[j+1]<GYS[i]||CANO&&pos[j+1]<CANO.y&&Math.abs(pos[j])<CANO.x&&Math.abs(pos[j+2])<CANO.z){const[x,z,gy]=spot();GYS[i]=gy;pos[j]=x;pos[j+1]=Y1;pos[j+2]=z}}}
-          else{for(let i=0;i<N;i++){const j=i*6,d=vel[i]*dt;pos[j+1]-=d;pos[j+4]-=d;pos[j]-=d*SL;pos[j+3]-=d*SL;if(pos[j+1]<GYS[i]||CANO&&pos[j+1]<CANO.y&&Math.abs(pos[j])<CANO.x&&Math.abs(pos[j+2])<CANO.z){const[x,z,gy]=spot();GYS[i]=gy;pos.set([x,Y1,z,x+DX,Y1+LN,z],j)}}}
+          else{fitRain();for(let i=0;i<N;i++){const j=i*6,d=vel[i]*dt*rainScale,w=rainDrift[i];pos[j+1]-=d;pos[j]-=d*windX*w;pos[j+2]-=d*windZ*w;
+            if(pos[j+1]<rainFloor(pos[j],pos[j+2],GYS[i])){const[x,z,gy]=spot(rainScale);GYS[i]=gy;pos[j]=x;pos[j+1]=rainCeiling;pos[j+2]=z}
+            rainTail(j,i,pos[j+1])}}
           p.needsUpdate=true},
           dispose(){for(const o of objs){try{sc.remove(o);o.geometry!==hg&&o.geometry.dispose();o.material.dispose()}catch(e){}}}}}}catch(e){console.warn(e)}
       /* 開發者 11/4：石台底下鋪一張「當朝代的中國大地圖」（Gemini 水墨古地圖，有疆界和地名），畫面拉遠就看得到；地圖載好就換掉山坡，載不到就留著山坡 */
@@ -2470,6 +2504,9 @@
     const pick=(cx,cy)=>{const r=rd.domElement.getBoundingClientRect();ndc.set((cx-r.left)/r.width*2-1,-((cy-r.top)/r.height)*2+1);ray.setFromCamera(ndc,cam);tapAmb=null;
       const B=SNAP.b;if(!B||!r.width)return pickRay();
       const prj=(x,y,z)=>{myv(SV.set(x,y,z)).project(cam);return[(SV.x+1)/2*r.width,(1-SV.y)/2*r.height]},tg=new Set(SNAP.t),P=[];
+      if(selI>=0){const M=[];for(const i of tg){const[x,z]=pos(i),y=TOP+(TDC?0:.012),q=prj(x,y,z);if(SV.z < -1||SV.z>1)continue;const qx=prj(x+GS,y,z),qz=prj(x,y,z+GS);
+          M.push({i,x:q[0],y:q[1],s:Math.max(4,Math.min(Math.hypot(qx[0]-q[0],qx[1]-q[1]),Math.hypot(qz[0]-q[0],qz[1]-q[1])))})}
+        const m=tapMarker(M,cx-r.left,cy-r.top);if(m){if(m.amb){tapAmb=m.amb;return -2}return m.i}}
       for(let i=0;i<90;i++){const[x,z]=pos(i),g=pieces[i],y=g?(TDC?TOP+(g.userData.th||.27)*FIGK*.75:g.position.y+(g.userData.th||.27)):TOP,q=prj(x,y,z);   /* 塔防固定鏡頭：量角色身體中段（選中浮起也不跟著跑） */if(SV.z>1)continue;const qx=prj(x+1,y,z),qz=prj(x,y,z+1);
         const own=!!B[i]&&sideOf(B[i])===SNAP.me,t=selI>=0&&tg.has(i);
         P.push({i,x:q[0],y:q[1],s:Math.max(4,Math.min(Math.hypot(qx[0]-q[0],qx[1]-q[1]),Math.hypot(qz[0]-q[0],qz[1]-q[1]))),occ:!!B[i],c:own||t,w:t?.9:1})}
@@ -2577,7 +2614,15 @@
       if(!down)return;const d=down;down=null;if(d.moved)return;const inH=IN.ph==="held";   /* 11/11 入座運鏡中點的這一下：用玩家當下看到的畫面照常吸附、選子，處理完才跳到 topfit */
       try{const now=performance.now();
       const i0=pick(e.clientX,e.clientY),onPc=i0>=0||i0===-2;   /* 11/17 iMac H P2-3：按「＋」放大後點棋子，兩下太快（選子、再點落點）會被當成「點兩下回全盤」，鏡頭又縮回去。點到棋盤格（選子、走子）一律照常處理，只有點在棋盤外的兩下才回正 */
-      if(!onPc&&now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=onPc?0:now;let fg=null;if(GIANT)try{fg=gntFocus(e.clientX,e.clientY,70)}catch(_){}const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){if(opt.onTap)opt.onTap(i);return}if(fg)return;   /* 黑洞：點到角色＝鎖定放大中心，不開旁邊物件的介紹 */
+      if(!onPc&&now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=onPc?0:now;let fg=null;if(GIANT)try{fg=gntFocus(e.clientX,e.clientY,70)}catch(_){}const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}
+      if(i>=0){
+        if(opt.onTap)opt.onTap(i);
+        // 選子後保留這一格看到的視角，讓落點留在手指剛看到的位置。
+        if(!GIANT&&selI>=0){inEnd(false);tyaw=yaw;tpitch=pitch;tzoom=zoom}
+        return
+      }
+      if(fg)return;   /* 黑洞：點到角色＝鎖定放大中心，不開旁邊物件的介紹 */
+      if(selI>=0&&opt.onTap){opt.onTap(selI);return}
       if(opt.onInfo){const k=infoPick();if(k)opt.onInfo(k)}}finally{if(inH)inEnd(true)}};
     cvs.addEventListener("pointerup",up);cvs.addEventListener("lostpointercapture",e=>{if(!ptrs.has(e.pointerId)&&!TDPT.has(e.pointerId))return;if(TDC){TDPT.delete(e.pointerId);if(TDPT.size<2&&TDOR.pin){TDOR.pin=null;TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700)}return}ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!ptrs.size)down=null});   /* 11/16 P0：沒送 pointerup 就失去追蹤＝當放開（正常放開時 up 已經刪掉，這裡什麼都不做） */
     cvs.addEventListener("pointercancel",e=>{if(TDC){tdDragEnd(true);TDP=null;TDPT.delete(e.pointerId);TDOR.pin=null;if(TDOR.hold){TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700)}return}ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;down=null;if(IN.ph==="held")inEnd(true)});
@@ -2606,6 +2651,7 @@
 .mh-say{left:50%;bottom:62px;transform:translate(-50%,6px);max-width:80%;padding:8px 12px;background:#fffaf0;border:1.5px solid #3a2618;border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.25);text-align:center}.mh-say.on{transform:translate(-50%,0)}
 .mh-say::after{content:"";position:absolute;left:50%;bottom:-8px;margin-left:-7px;border:7px solid transparent;border-top-color:#3a2618;border-bottom:0}
 .mh-note{right:56px;bottom:14px;transform:translateX(6px);max-width:62%;padding:6px 10px;background:#fbf3df;border:1px solid #c8961e;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.22)}.mh-note.on{transform:none}
+.mh-note,.mh-tip:not(.on){pointer-events:none}
 .mh-glow{animation:mhGlow 1.3s ease-in-out infinite}@keyframes mhGlow{0%,100%{box-shadow:0 0 0 0 rgba(242,180,40,.0)}50%{box-shadow:0 0 0 7px rgba(242,180,40,.55)}}
 .mh-cer{position:absolute;inset:0;z-index:4;pointer-events:none;transition:opacity .8s}.mh-cer svg{position:absolute;inset:0;width:100%;height:100%}
 .mh-seal{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;background:#a3241a;color:#f6e6cc;border:2px solid #f6e6cc;box-shadow:0 0 0 2px #a3241a,0 3px 8px rgba(0,0,0,.35);border-radius:4px;display:flex;align-items:center;justify-content:center;font:900 15px/1.05 var(--kai,var(--serif,serif));text-align:center;animation:mhStamp .45s cubic-bezier(.2,1.6,.4,1) both}
@@ -2632,7 +2678,7 @@
       const busy=selI>=0||!!checkRing||document.querySelector(".modal,#sheet.show");
       /* ③ 剛進園子：－ 鈕發亮＋小紙條（每座園子一次） */
       if(!MH.did.n&&MH_CITY[EK]&&!GIANT){MH.did.n=1;setTimeout(()=>{if(MH.seen||stopped)return;const z=el.querySelector(".pzoom"),bs=z?z.querySelectorAll("button"):[],mi=bs[bs.length-1];if(mi){mi.classList.add("mh-glow");MH.pulse=mi;setTimeout(()=>{if(MH.pulse===mi){mi.classList.remove("mh-glow");MH.pulse=null}},9000)}
-        const C=MH_CITY[EK].map(mhNm);mhShow("mh-note",`${C[0]}到${C[1]}有多遠？往外看就知道！<small>一直按右下角的「－」</small>`,7000)},4000)}
+        if(selI<0){const C=MH_CITY[EK].map(mhNm);mhShow("mh-note",`${C[0]}到${C[1]}有多遠？<small>按「－」看地圖</small>`,7000)}},4000)}
       /* ① 電腦想棋 */
       if(thinking&&!busy){MH.thinkT+=dt;if(MH.thinkT>1.2&&!MH.did.t){if(mhShow("mh-top",GIANT?`星樞：「此步……容我再算一遍。」<small>按右下角「－」，退遠看整盤星盤</small>`:`幻影棋客：「此步容我深思，你先退一步賞景？」<small>按右下角「－」，到天上看看天下大勢</small>`,6000))MH.did.t=1}}else MH.thinkT=0;
       /* ② 一盤下完、結果視窗關掉 */

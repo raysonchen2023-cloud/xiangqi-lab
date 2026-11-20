@@ -130,8 +130,8 @@ function wkRender(c,R,M,H){const W=1080,P=78,ink="#2A1F15",mut="#6F5F4C",red="#9
     if(lim>0){const ly=y+bh-bh*lim/mx;c.save();c.setLineDash([10,8]);c.strokeStyle="rgba(42,31,21,.45)";c.lineWidth=2;c.beginPath();c.moveTo(P,ly);c.lineTo(P+TW,ly);c.stroke();c.restore()}
     y+=bh+44;item("⏱",`這週一共玩了 ${R.use} 分鐘${lim?`；虛線＝家長設定的每天最多 ${lim} 分鐘`:""}（App 畫面開著的時間）`)}
   /* 總結 */
-  y+=56;c.font=`700 38px ${WK_F}`;const SL=wkWrap(c,M.sum,TW-96),bh=SL.length*58+60;c.fillStyle=cardC;wkRR(c,P,y,TW,bh,22);c.fill();c.strokeStyle=lineC;c.lineWidth=2;c.stroke();c.fillStyle=red;wkRR(c,P,y,12,bh,6);c.fill();
-  c.fillStyle=ink;SL.forEach((ln,j)=>c.fillText(ln,P+52,y+72+j*58));y+=bh+64;
+  y+=56;c.font=`700 46px ${WK_S}`;const SL=wkWrap(c,M.sum,TW-104),bh=SL.length*68+68;c.fillStyle="#FFFDF7";wkRR(c,P,y,TW,bh,22);c.fill();c.strokeStyle=lineC;c.lineWidth=2;c.stroke();c.fillStyle=red;wkRR(c,P,y,12,bh,6);c.fill();
+  c.fillStyle="#1D150E";SL.forEach((ln,j)=>c.fillText(ln,P+52,y+80+j*68));y+=bh+64;
   c.font=`500 24px ${WK_S}`;c.fillStyle=mut;c.textAlign="center";c.fillText(`資料來自這支手機的紀錄・${wkMD(Date.now())}整理`,W/2,y);c.textAlign="left";
   return y+70}
 async function wkCanvas(R,M){try{if(document.fonts&&document.fonts.load)await Promise.race([Promise.all([document.fonts.load(`900 66px ${WK_F}`),document.fonts.load(`500 30px ${WK_S}`)]),new Promise(r=>setTimeout(r,1500))])}catch(e){}

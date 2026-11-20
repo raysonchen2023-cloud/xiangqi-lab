@@ -1620,7 +1620,7 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
   "html[lang=en] .mh-note{bottom:56px;font-size:12.5px;line-height:1.35}",
   /* 11/17 測試員 D 第 7 輪：快速對局平面棋盤底部「📜 Rules this game: Asian rules (direct capture)」（00-util 棋規徽章 .rule-note）跟右邊「🧊 3D scene」鈕（06-cpu .pk3d-back，m.css 用負邊界疊在同一行）擠在一起，尾巴被蓋住
      → 英文窄螢幕那顆鈕改放下一行靠右（跟 m.css 橫向手機的做法一樣），棋規徽章整句看得到 */
-  "@media (max-width:600px){html[lang=en] .rule-note+.pk3d-back{margin-top:2px}}",
+  "@media (max-width:600px){html[lang=en] .rule-note+.pk3d-back{margin-top:2px}html[lang=en] .rule-note+.pk3d-back button{margin-top:0}}",
   /* 11/17 測試員 D 第 8 輪 P3-2：我的角色頁書齋牆（07z4-studymap.js .mz-lb，m.css 外的模組樣式一行不換行）英文標籤太長：「35 days until Winter Solstice」右邊被切、「Qianqiu seal album」跟「Garden players」貼在一起
      → 英文時標籤可以換行（寬度照字、最多約螢幕 26%）、字小一點；往上長的標籤（.a）底邊不動，不會往下壓到「回棋鎮」出口 */
   "html[lang=en] .mz-lb{white-space:normal;width:max-content;max-width:min(26vw,124px);text-align:center;padding:2px 4px 3px}html[lang=en] .mz-lb b{font-size:11.5px;line-height:1.15;letter-spacing:0}html[lang=en] .mz-lb small{font-size:11px;line-height:1.15}",
@@ -1671,6 +1671,7 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
   /* 11/17 第 25 輪 V5：375 寬斷網時英文標題被拆成「Xiangqi / Qianq… / u」，u 壓在時辰上 → 窄螢幕英文標題不在字中間斷行，最多兩行、超過就藏掉 */
   /* 11/17 第 26 輪 W1（V5 的退步）：全站 * 是 border-box，頂欄有時辰鐘時 #title 底下留 36px 給鐘的小字（07w8 #topbar.clk-on #title），max-height:2.35em 把這 36px 也算進去 → 標題只剩 40px 高、頂欄壓扁成 52px、鐘被推出畫面上緣、標題疊在時辰字上 → 有鐘時上限改成「兩行 20px＋底下 36px」＝76px（跟 1514 一樣），沒鐘時才用 2.35em */
   "@media (max-width:480px){html[lang=en] #title{overflow-wrap:normal!important;word-break:normal;max-height:2.35em;overflow:hidden!important}html[lang=en] #topbar.clk-on #title{max-height:76px}}",
+  "@media (max-width:480px){html[lang=en] #topbar #title:has(.cpu-seg){display:block;max-height:none;overflow:visible!important}}",
   /* 11/17 第 27 輪 X3（測試員 D）：#/lobby、#/db、#/settings 這種「標題不顯示、只留時辰鐘」的頁（07w8 clk-nt，標題字是透明的），英文兩行規則照樣把看不見的標題撐成兩行、頂欄 83px，上面空一塊 → 這種頁標題只排一行（頂欄跟中文一樣 63px） */
   "html[lang=en] #topbar.clk-nt #title{white-space:nowrap!important;-webkit-line-clamp:1;max-height:56px}",
   /* 11/17 第 28 輪 N28-5（測試員 B，同 N27-3）：320 寬英文首頁（有時辰鐘）標題被截成「Xi…／Qi…」：標題左邊讓給星晷 62px、右邊又有官階牌，兩行都只剩不到 60px →

@@ -270,7 +270,10 @@ test("12c 3D 棋盤鏡頭鈕（34×34、間隔 6）、🎥 視角鈕：透明點
   const C = M("06-cpu.js"), css = C.match(/s\.id="pkHitCss";s\.textContent=`([^`]*)`/)[1];
   assert.match(C, /function parkUi\(host,pv\)\{pkHitCss\(\);/); assert.match(C, /zb\.className="fvz";pkHitCss\(\);/);
   assert.match(css, /\.pkview::before\{content:"";position:absolute;left:min\(-4px,calc\(\(100% - 44px\) \/ 2\)\);right:min\(-4px,calc\(\(100% - 44px\) \/ 2\)\);top:min\(-4px,calc\(\(100% - 44px\) \/ 2\)\);bottom:min\(-4px,calc\(\(100% - 44px\) \/ 2\)\)\}/);
-  assert.ok(!/(width|height|padding|margin|font)\s*:/.test(css.replace(/::before\{[^}]*\}/g, "")), "只加 ::before 和 position:relative，按鈕本身看起來不變");
+  /* W31（11/21）：原生線加了 Android App 專用的 3D 控制列停靠（.pk-control-dock，鏡頭鈕在列裡直接 44×44）；只在 Android App 啟用，網頁照舊 */
+  assert.ok(!/(width|height|padding|margin|font)\s*:/.test(css.replace(/::before\{[^}]*\}/g, "").replace(/\.pk-control-dock[^{]*\{[^}]*\}/g, "")), "只加 ::before 和 position:relative，按鈕本身看起來不變（停靠列除外）");
+  assert.match(css, /\.pk-control-dock \.pzoom>button\{width:44px!important;height:44px!important\}/, "停靠列裡的鏡頭鈕 44×44");
+  assert.match(M("09b-preload.js"), /dockControls:!NET&&!seat&&\/Android\.\*XQQianqiuApp\\\/\/\.test\(navigator\.userAgent\)/, "停靠只在 Android App（同一支手機對弈）啟用，網頁不變");
   const px = re => +css.match(re)[1];
   const side = px(/\.pzoom>button::before,\.fvz>button::before\{[^}]*left:(-?\d+)px/), tb = px(/\.pzoom>button::before,\.fvz>button::before\{[^}]*top:(-?\d+)px/);
   const first = px(/:first-child::before\{top:(-?\d+)px/), last = px(/:last-child::before\{bottom:(-?\d+)px/);

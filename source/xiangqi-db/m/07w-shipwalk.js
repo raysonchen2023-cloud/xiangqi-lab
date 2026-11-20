@@ -531,7 +531,7 @@ async function shwLoad(S){
   const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,YMAX=Math.max(...Object.values(C.N).map(p=>p[1]));let cw=0,ch=0,Iw=0,Ih=0;
   const fit=()=>{Iw=S.I.clientWidth;Ih=S.I.clientHeight;if(!Ih)return;const h=Math.round(shwHt(C,YMAX)*Ih/(Math.cos(EL)/1.45)),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch);
     Object.assign(cv.style,{left:-cw/2+"px",top:-Math.round(ftF*ch)+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:-Math.round(ch*.17)+"px",top:-Math.round(ch*.05)+"px"})}S.place()};
-  if(G===1&&C.walkRetarget)S.at=shwSavedAt(C,S.o.mem);   /* 地圖預覽在模型載入期間也可先點路面。 */
+  if(G===1&&C.walkRetarget)S.at=shwSavedAt(C,S.o.mem);
   const P0=typeof S.at==="string"?C.N[S.at]:S.at.p,HS0=typeof S.at==="string"&&Object.values(C.HS).find(h=>h[0]===S.at);S.x=P0[0];S.y=P0[1];S.onT=S.at&&S.at.t&&C.TB&&C.TB[S.at.t]?S.at.t:null;S.hy=S.onT?shwTHy(C.TB[S.onT],P0):null;S.sq=null;   /* 825：換造型重載角色時，站在桌上的照舊算在桌上 */S.yaw=S.at===C.home||!HS0?shwYaw(C,P0,typeof S.at==="string"?C.look0:[P0[0],P0[1]+5]):shwYaw(C,P0,[HS0[1],HS0[2]]);
   S.place=()=>{if(!Ih)return;const k=shwHt(C,S.hy!=null?S.hy:S.y)/shwHt(C,YMAX);S.box.style.transform=`translate(${(S.x*Iw/100).toFixed(1)}px,${(S.y*Ih/100).toFixed(1)}px) scale(${k.toFixed(4)})`;
     cv.style.transformOrigin=`50% ${(ftF*100).toFixed(1)}%`;cv.style.transform=S.sq?`scale(${S.sq[0].toFixed(3)},${S.sq[1].toFixed(3)})`:"";

@@ -220,8 +220,8 @@ const xsmLetter=(s,c,look)=>xsmYou(c&&c===look?String(s||"").replace(/\{名\}[�
 function xsmCss(){if(document.getElementById("xsmCss"))return;const s=document.createElement("style");s.id="xsmCss";s.textContent=`
 .xsm-page{margin:0 0 6px}.xsm-page .shp-spot{max-width:46%;padding:4px 11px;z-index:3}.xsm-page .shp-spot b{white-space:nowrap;font-size:15px;letter-spacing:.06em}
 .xsm-page .shp-spot.lock{border-color:#8a8476;background:rgba(28,26,30,.68);box-shadow:none}.xsm-page .shp-spot.lock b{color:#c9c2b2;font-size:14px}
-.xsm-tea .xsm-rain{position:absolute;z-index:1;pointer-events:none;overflow:hidden;opacity:.6;background-image:repeating-linear-gradient(100deg,rgba(255,255,255,0) 0 9px,rgba(232,240,250,.6) 9px 10px,rgba(255,255,255,0) 10px 23px);background-size:46px 58px;animation:xsmRain .55s linear infinite}
-@keyframes xsmRain{to{background-position:-10px 58px}}
+.xsm-tea .xsm-rain{position:absolute;z-index:1;pointer-events:none;overflow:hidden}
+.xsm-tea[data-win="1"] .xsm-rain>.sw7-cv{display:none}
 .xsm-tea[data-win="1"] .xsm-rain{opacity:.85;background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 1.1px,rgba(255,255,255,0) 1.7px),radial-gradient(circle,rgba(246,250,255,.75) 0 .8px,rgba(255,255,255,0) 1.4px);background-size:23px 29px,37px 41px;background-position:0 0,11px 17px;animation:xsmSnow 8s linear infinite}
 @keyframes xsmSnow{to{background-position:-23px 58px,-26px 99px}}
 .xsm-tea::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(16,24,58,.4);mix-blend-mode:multiply;opacity:0;transition:opacity .6s}.xsm-tea[data-day=""]::after{opacity:1}
@@ -308,10 +308,12 @@ function xsmTea(v){setTop("🍵 聽雨茶坊","#/ximarket");setTabs(true,"#/");v
   P.innerHTML=`<img src="${s0}" alt="聽雨茶坊：方桌、條凳、靠背椅，窗外${isW(s0)?"飄著雪":"下著雨"}，中間一張暗棋桌">`+
     XSM_RAIN.map(r=>`<i class="xsm-rain" style="left:${r[0]}%;top:${r[1]}%;width:${r[2]-r[0]}%;height:${r[3]-r[1]}%"></i>`).join("")+xsmTeaNoBot()+xsmBtns(XSM_TEA_SPOTS);
   v.append(P);xsmBind(P,XSM_TEA_SPOTS);
+  const rain=()=>P.dataset.win!=="1";
+  if(typeof sw7RainWindow==="function")P.querySelectorAll(".xsm-rain").forEach(box=>sw7RainWindow(box,rain));
   const im=P.querySelector(":scope>img");
-  im.onerror=()=>{if(isW(im.getAttribute("src"))){XSM_BAD.wt=1;P.dataset.win="";im.src=xsmSrc(false,1)}};   /* 冬景載不到＝原圖＋雨 */
+  im.onerror=()=>{if(isW(im.getAttribute("src"))){XSM_BAD.wt=1;P.dataset.win="";im.src=xsmSrc(false,1);if(typeof sw7Kick==="function")sw7Kick()}};   /* 冬景載不到＝原圖＋雨 */
   {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmDay()?"1":"";if(d!==P.dataset.day)P.dataset.day=d;
-    const s=xsmSrc(false,1);if(im.getAttribute("src")!==s){P.dataset.win=isW(s)?"1":"";im.src=s}},60000)}   /* 11/17 跨過立冬也換季 */
+    const s=xsmSrc(false,1);if(im.getAttribute("src")!==s){P.dataset.win=isW(s)?"1":"";im.src=s;if(typeof sw7Kick==="function")sw7Kick()}},60000)}   /* 11/17 跨過立冬也換季 */
   xsmAfter(v,P);
   return{}}
 /* ---------- 11/16 四攤：存檔 ---------- */

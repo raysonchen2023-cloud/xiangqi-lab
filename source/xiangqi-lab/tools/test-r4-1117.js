@@ -73,7 +73,8 @@ const fnSrc = (S, head, tail) => { const i = S.indexOf(head), j = S.indexOf(tail
 
 test("N6-2 快速對局 3D 園子縮放提示：樣板照舊（外掛字典翻整句）、朱印的城名單字不翻（「大」不會變 Large）", () => {
   const P = LAB6("park3d.js");
-  assert.ok(P.includes("mhShow(\"mh-note\",`${C[0]}到${C[1]}有多遠？往外看就知道！<small>一直按右下角的「－」</small>`,7000)"), "提示樣板改了，i18n-en.json 的 pat 要跟著改");
+  /* W31（11/21）：原生線把提示縮短成「按「－」看地圖」，而且已選子時不跳（selI<0）；外掛字典 data/i18n-en.json 已有「按「－」看地圖」 */
+  assert.ok(P.includes("if(selI<0){const C=MH_CITY[EK].map(mhNm);mhShow(\"mh-note\",`${C[0]}到${C[1]}有多遠？<small>按「－」看地圖</small>`,7000)}"), "提示樣板改了，i18n-en.json 的 pat 要跟著改");
   assert.ok(P.includes("<div class=\"mh-seal\" data-noi18n>${C[0].length<=2?C[0].split(\"\").join(\"<br>\"):\"印\"}</div>"), "朱印標 data-noi18n");
   assert.ok(P.includes("<div class=\"mh-lab\">原來我們在這裡・${C[0]}</div>"), "第一次拉遠的標籤樣板改了");
 });
@@ -211,7 +212,8 @@ test("P3-3 讀螢幕播報區：同一句 3 秒內只寫一次；視窗按鈕關
 });
 test("快速對局平面棋盤：英文窄螢幕「🧊 3D scene」鈕放到棋規徽章下一行（「📜 Rules this game: …」整句看得到）；中文照舊同一行", () => {
   const css = I18N_CSS7(), MC = fs.readFileSync(path.join(__dirname, "..", "..", "xiangqi-db", "m.css"), "utf8");
-  assert.ok(css.includes("\"@media (max-width:600px){html[lang=en] .rule-note+.pk3d-back{margin-top:2px}}\""));
+  /* W31（11/21）：原生線同一條規則再把裡面的按鈕上方間距歸零（跟 m.css 359px 那段一致） */
+  assert.ok(css.includes("\"@media (max-width:600px){html[lang=en] .rule-note+.pk3d-back{margin-top:2px}html[lang=en] .rule-note+.pk3d-back button{margin-top:0}}\""));
   assert.ok(MC.includes(".rule-note+.pk3d-back{margin-top:-30px;"), "m.css 中文照舊疊在同一行");
 });
 test("N8-1 新玩家第一次開網頁：隔離自動重整前，開頭畫面開著或還沒有旅程就拿掉 xqTitleShown（重整後照常出開頭畫面）", () => {

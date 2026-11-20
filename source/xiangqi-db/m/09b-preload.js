@@ -290,7 +290,8 @@ function PvpGame(v){
     const far=isFlip()?"r":"b",near=far==="r"?"b":"r",G=NET&&window.XQNet?XQNet.game():null,idOf=s=>G?(s==="r"?G.red.id:G.black.id):null,
       watchOpp=NET&&seat==="w"?(window.XQNet&&XQNet.playerBot&&XQNet.playerBot(far)||{p:far==="r"?"帥":"將"}):null,
       watchMe=NET&&seat==="w"?(window.XQNet&&XQNet.playerBot&&XQNet.playerBot(near)||{p:near==="r"?"帥":"將"}):null;
-    return{gid:G&&G.gid?"net:"+G.gid:null,tap:past?()=>{}:tap,botSide:NET&&seat&&seat!=="w"?(seat==="r"?"b":"r"):NET&&seat==="w"?far:null,result:!past&&st.result?(st.result.w||"draw"):null,
+    return{dockControls:!NET&&!seat&&/Android.*XQQianqiuApp\//.test(navigator.userAgent),
+      gid:G&&G.gid?"net:"+G.gid:null,tap:past?()=>{}:tap,botSide:NET&&seat&&seat!=="w"?(seat==="r"?"b":"r"):NET&&seat==="w"?far:null,result:!past&&st.result?(st.result.w||"draw"):null,
       opp:NET&&seat&&seat!=="w"?(window.XQNet&&XQNet.oppBot&&XQNet.oppBot()||{p:seat==="r"?"將":"帥"}):watchOpp,mateLook:watchMe,oppWin:"我贏了！再來一盤？",oppLose:"你好厲害…",
       // 點公園裡的人看棋友資料（意見回饋 261）：對面、近端（觀戰時）、觀戰者各是誰
       oppId:NET?(seat==="w"?idOf(far):seat?idOf(seat==="r"?"b":"r"):null):null,mateId:NET&&seat==="w"?idOf(near):null,

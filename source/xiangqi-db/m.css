@@ -629,7 +629,12 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
 .cpu-seg button:not(.on):active{background:#ffffff14}
 /* 第 16 輪版面缺陷清零（r15 device-fit：iPad 最窄側欄 320 寬，頂欄標題只剩 87px，「🥇 晉級賽」「📚 練功房」各 37px 寬、字被截成「🥇 ⋯」還壓到右邊的 ⋯）：
    窄到 359px 以下改成圖示一行、字一行（字 11px，keep-all 只在空格換行，三個字放得下），按鈕照樣 44px 高 */
-@media (max-width:359px){.cpu-seg button{white-space:normal;word-break:keep-all;text-overflow:clip;font-size:11px;line-height:1.15;padding:0 1px}}
+@media (max-width:359px){
+  #topbar:has(.cpu-seg) #back{flex:0 0 44px;min-width:44px;max-width:44px;font-size:0;padding:0}
+  #topbar:has(.cpu-seg) #back b{font-size:28px}
+  #topbar #title:has(.cpu-seg){padding-inline:2px;max-height:none;overflow:visible}
+  .cpu-seg button{white-space:normal;word-break:keep-all;text-overflow:clip;font-size:11px;line-height:1.15;padding:0 1px}
+}
 .cpu-chip{--c:var(--accent2);flex:none;display:flex;align-items:center;gap:6px;max-width:52%;padding:5px 8px 5px 12px;border-radius:12px;text-align:right;
   border:1px solid var(--line);border-color:color-mix(in srgb,var(--c) 45%,var(--line));background:var(--card);background:color-mix(in srgb,var(--c) 10%,var(--card));transition:transform .1s}
 .cpu-chip.rk{--c:var(--warn)}
@@ -1384,6 +1389,10 @@ body:has(> .modal) > .toast{z-index:9995}
 .rule-note+.pk3d-back{margin-top:-30px;position:relative;z-index:1;pointer-events:none}   /* 跟「📜 本局棋規」同一行、靠右 */
 .pk3d-back button{pointer-events:auto;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--ink);font:inherit;font-size:13px;font-weight:700;padding:3px 12px;min-height:30px;cursor:pointer}
 @media (orientation:landscape) and (max-height:600px){.rule-note+.pk3d-back{margin-top:2px}}
+@media (max-width:359px){
+  .rule-note+.pk3d-back{margin-top:2px}
+  .rule-note+.pk3d-back button{margin-top:0}
+}
 @media (prefers-reduced-motion:reduce){.pk2d.pulse{animation:none}}
 /* ===== 11/11 規格表 87（story/87_名稱與按鈕規格表.md）：主按鈕（L2）收斂 =====
    底色一律 var(--btn-main)（全站朱 #A8321F；秦、五代＝該朝 accent）、圓角一律 var(--btn-r,10px)（秦、五代 14px）；字級、內距、寬高都維持原樣，

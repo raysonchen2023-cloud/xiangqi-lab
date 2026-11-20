@@ -271,14 +271,20 @@ const sw7PolyCss=(q,IW,IH)=>`polygon(${q.map(([x,y])=>(x/IW*100).toFixed(2)+"% "
 
 /* ---------- ① 雨雪本體：每種效果一組 mk（生一顆）＋ draw（畫一格），要換畫法整組換掉 ----------
    座標是頁面（未縮放）的像素；R.z＝兩指縮放的倍數，大小、速度都除以 R.z，放大時雨絲、雪點在螢幕上一樣大（範圍跟著圖走）。 */
-/* 雨：淡墨斜線，三種粗細濃淡；夜景改極淡紙白；不閃、不發光 */
-const SW7_RAIN_G=[[.6,.13],[.9,.2],[1.4,.27]];
-function sw7RainMk(p){const r=Math.random;p.l=14+r()*16;p.v=560+r()*320;p.g=r()<.45?0:r()<.8?1:2}
+/* 三層雨絲由遠到近，速度、長度和可見度一起增加，尾端淡入。 */
+const SW7_RAIN_G=[[.45,.12,195,6],[.7,.22,340,11],[1.1,.34,540,19]];
+const SW7_RAIN_TAIL=[[1,.42,.35],[.42,0,1]];
+function sw7RainMk(p){
+  const r=Math.random,d=r();p.g=d<.46?0:d<.85?1:2;
+  const[, ,speed,length]=SW7_RAIN_G[p.g];
+  p.l=length*(.65+r()*.75);p.v=speed*(.76+r()*.48);p.sl=.09+r()*.11;
+}
 function sw7RainDraw(c,R,dt){const z=R.z||1,k=dt/z;
-  for(const p of R.A){p.y+=p.v*k;p.x-=p.v*.2*k;if(p.y>R.H+40||p.x<-40)sw7Re(R,p)}
-  const ink=R.night?"232,226,210":"38,38,46",m=(.65+.35*(R.amt||1))*(R.run?1:.6);
-  SW7_RAIN_G.forEach(([w,a],g)=>{c.lineWidth=w/z;c.strokeStyle=`rgba(${ink},${(a*m*(R.night?1.1:1)).toFixed(3)})`;c.beginPath();
-    for(const p of R.A)if(p.g===g){c.moveTo(p.x,p.y);c.lineTo(p.x+p.l*.2/z,p.y-p.l/z)}c.stroke()})}
+  for(const p of R.A){p.y+=p.v*k;p.x-=p.v*p.sl*k;if(p.y>R.H+48/z||p.x<-48/z)sw7Re(R,p)}
+  const ink=R.night?"218,228,235":"56,64,76",m=(R.amt||1)*(R.run?1:.56);
+  SW7_RAIN_G.forEach(([w,a],g)=>{c.lineWidth=w/z;
+    for(const [start,end,fade] of SW7_RAIN_TAIL){c.strokeStyle=`rgba(${ink},${a*m*fade})`;c.beginPath();
+      for(const p of R.A)if(p.g===g){const l=p.l/z;c.moveTo(p.x+l*p.sl*start,p.y-l*start);c.lineTo(p.x+l*p.sl*end,p.y-l*end)}c.stroke()}})}
 /* 雪：水墨「彈白」——大小不一的小白點，慢慢落、輕輕橫飄；白天加一圈極淡的墨邊，免得在宣紙上看不見 */
 function sw7SnowMk(p){const r=Math.random;p.r=.8+r()*r()*2.4;p.v=22+r()*34;p.d=(r()-.5)*10}
 function sw7SnowDraw(c,R,dt,t){const z=R.z||1,k=dt/z;c.beginPath();
@@ -296,7 +302,7 @@ function sw7FlyMk(p,W,H){p.x=Math.random()*W;p.y=H*(.4+Math.random()*.55);p.vx=(
 function sw7FlyDraw(c,R,dt,t){for(const p of R.A){p.vx=Math.max(-12,Math.min(12,p.vx+(Math.random()-.5)*24*dt));p.vy=Math.max(-8,Math.min(8,p.vy+(Math.random()-.5)*16*dt));p.x+=p.vx*dt;p.y+=p.vy*dt;
     if(p.x<0||p.x>R.W)p.vx*=-1;if(p.y<R.H*.35||p.y>R.H)p.vy*=-1;const a=Math.sin(t*1.3+p.ph);if(a<.06)continue;
     const g=c.createRadialGradient(p.x,p.y,0,p.x,p.y,6);g.addColorStop(0,`rgba(232,255,150,${(.85*a).toFixed(2)})`);g.addColorStop(1,"rgba(200,255,120,0)");c.fillStyle=g;c.fillRect(p.x-6,p.y-6,12,12)}}
-/* 11/10 Gemini 71 作法 2（開發者選）：經典世界（千秋時光之苑，紙墨世界）的雨雪換樣子——雨是淡墨滴、落地暈開一圈；雪是飄落的碎宣紙片，夾著幾點淡金星光。
+/* 經典世界（千秋時光之苑，紙墨世界）的雨雪換樣子：雨是淡墨細絲，雪是飄落的碎宣紙片，夾著幾點淡金星光。
    哪一天、哪個時段下雨下雪照全 App 共用的天氣（sw7Precip），只換畫法 */
 /* 經典世界的頁才換（各朝的港口、驛站圖照舊下真的雨雪） */
 function sw7ClWx(o){try{return typeof hbIsCl==="function"&&hbIsCl()&&!(o&&/^(port_|yz_)/.test(o.k))}catch(e){return false}}
@@ -309,15 +315,8 @@ function sw7ClCloud(o,src){if(!o||!/^(home|homeAlt|learn|battle|lobby)$/.test(o.
         g.save();g.translate(x+dx,y);g.scale(1,ry/rx);g.translate(-(x+dx),-y);g.fillStyle=gr;g.beginPath();g.arc(x+dx,y,rx,0,6.283);g.fill();g.restore()}}
     SW7.clT=1;document.documentElement.style.setProperty("--sw7cl",`url(${c.toDataURL("image/png")})`)}catch(e){return false}}
   return true}
-function sw7InkMk(p,W,H){const r=Math.random;p.v=240+r()*150;p.l=5+r()*5;p.gy=H*(.45+r()*.55);p.sp=0}
-function sw7InkDraw(c,R,dt){const z=R.z||1,k=dt/z,ink=R.night?"236,230,214":"34,36,44";
-  c.fillStyle=`rgba(${ink},${R.night?.5:.5})`;c.beginPath();
-  for(const p of R.A){if(p.sp){p.sp+=dt;if(p.sp>.7)sw7Re(R,p);continue}p.y+=p.v*k;if(p.y>=p.gy){p.sp=1e-4;continue}
-    c.moveTo(p.x,p.y);c.ellipse(p.x,p.y,1.4/z,p.l*.5/z,0,0,6.283)}
-  c.fill();
-  for(const p of R.A){if(!p.sp)continue;const u=p.sp/.7,rr=(2+u*15)/z,a=(1-u);
-    c.fillStyle=`rgba(${ink},${(.12*a).toFixed(3)})`;c.beginPath();c.ellipse(p.x,p.y,rr*.8,rr*.3,0,0,6.283);c.fill();
-    c.lineWidth=1/z;c.strokeStyle=`rgba(${ink},${(.45*a).toFixed(3)})`;c.beginPath();c.ellipse(p.x,p.y,rr,rr*.36,0,0,6.283);c.stroke()}}
+/* 紙墨世界保留較細、較直的淡墨雨。 */
+function sw7InkMk(p){sw7RainMk(p);p.sl*=.48;p.l*=.8}
 function sw7PaperMk(p){const r=Math.random;p.w=3.6+r()*3.4;p.h=p.w*(.55+r()*.5);p.v=16+r()*24;p.d=(r()-.5)*12;p.rot=r()*6.283;p.vr=(r()-.5)*2.4;p.g=r()<.22}
 function sw7PaperDraw(c,R,dt,t){const z=R.z||1,k=dt/z;
   for(const p of R.A){p.y+=p.v*k;p.x+=(p.d+Math.sin(t*.9+p.ph)*9)*k;p.rot+=p.vr*dt;if(p.y>R.H+10||p.x<-10||p.x>R.W+10){sw7Re(R,p);continue}
@@ -326,16 +325,18 @@ function sw7PaperDraw(c,R,dt,t){const z=R.z||1,k=dt/z;
     c.fillStyle=R.night?"rgba(238,230,206,.78)":"rgba(246,232,190,.97)";c.fillRect(-p.w/2,-p.h/2,p.w,p.h);
     if(!R.night){c.lineWidth=.8;c.strokeStyle="rgba(110,88,56,.5)";c.strokeRect(-p.w/2,-p.h/2,p.w,p.h)}c.restore()}}
 /* n＝基準粒子數；still＝prefers-reduced-motion 時能不能畫成一張靜止的（螢火不行，就不顯示） */
-const SW7_KIND={rain:{mk:sw7RainMk,draw:sw7RainDraw,n:120,still:true},snow:{mk:sw7SnowMk,draw:sw7SnowDraw,n:100,still:true},inkr:{mk:sw7InkMk,draw:sw7InkDraw,n:70,still:true},paper:{mk:sw7PaperMk,draw:sw7PaperDraw,n:80,still:true},fluff:{mk:sw7FluffMk,draw:sw7FluffDraw,still:true},
+const SW7_KIND={rain:{mk:sw7RainMk,draw:sw7RainDraw,n:95,still:true},snow:{mk:sw7SnowMk,draw:sw7SnowDraw,n:100,still:true},inkr:{mk:sw7InkMk,draw:sw7RainDraw,n:90,still:true},paper:{mk:sw7PaperMk,draw:sw7PaperDraw,n:80,still:true},fluff:{mk:sw7FluffMk,draw:sw7FluffDraw,still:true},
   petal:{mk:sw7FallMk,draw:sw7FallDraw,still:true},leaf:{mk:sw7FallMk,draw:sw7FallDraw,still:true},fly:{mk:sw7FlyMk,draw:sw7FlyDraw,still:false}};
-function sw7P(k,W,H,init){const r=Math.random,p={k,x:r()*W*(k==="fluff"?1:1.25),y:init?r()*H:-8-r()*60,ph:r()*6.283},K=SW7_KIND[k];if(K)K.mk(p,W,H,H/700,init);return p}
+function sw7P(k,W,H,init){const r=Math.random,rain=k==="rain"||k==="inkr",p={k,x:r()*(rain?W+H*.22+48:W*(k==="fluff"?1:1.25)),y:init?r()*H:-8-r()*60,ph:r()*6.283},K=SW7_KIND[k];
+  if(K)K.mk(p,W,H,H/700,init);if(rain&&!init)p.y-=p.l;return p}
 function sw7Re(R,p){Object.assign(p,sw7P(R.k,R.W,R.H,false))}
 function sw7Draw(R,dt,t){const c=R.cx,W=R.W,H=R.H,K=SW7_KIND[R.k];if(!c||!W||!H||!K)return;c.clearRect(0,0,W,H);c.save();
   if(R.sky){const sx=W/R.IW,sy=H/R.IH;c.beginPath();for(const q of R.sky)q.forEach(([x,y],i)=>c[i?"lineTo":"moveTo"](x*sx,y*sy));c.clip()}
   K.draw(c,R,dt,t);c.restore()}
-function sw7Loop(t){SW7.raf=0;if(document.hidden)return;let n=0;for(const R of SW7.L)if(R.run&&R.vis&&R.P.isConnected)n++;if(!n)return;
+const sw7Live=R=>R.run&&R.vis&&R.P.isConnected&&(!R.active||R.active());
+function sw7Loop(t){SW7.raf=0;if(document.hidden)return;let n=0;for(const R of SW7.L)if(sw7Live(R))n++;if(!n)return;
   SW7.raf=requestAnimationFrame(sw7Loop);if(SW7.last&&t-SW7.last<31)return;const dt=SW7.last?Math.min(.1,(t-SW7.last)/1000):0;SW7.last=t;
-  for(const R of SW7.L)if(R.run&&R.vis&&R.P.isConnected){sw7Zoom(R);sw7Draw(R,dt,t/1000)}}
+  for(const R of SW7.L)if(sw7Live(R)){sw7Zoom(R);sw7Draw(R,dt,t/1000)}}
 function sw7Kick(){if(!SW7.raf&&!document.hidden){SW7.last=0;SW7.raf=requestAnimationFrame(sw7Loop)}}
 /* 兩指縮放（07x 用 transform 放大整頁）：照圖在螢幕上的大小（getBoundingClientRect）重算縮放倍數，畫布解析度跟著提高 */
 function sw7Zoom(R){const w=R.img.offsetWidth;if(!w)return;const z=Math.max(1,R.img.getBoundingClientRect().width/w);if(Math.abs(z-(R.z||1))>.03){R.z=z;sw7Size(R,true)}}
@@ -344,16 +345,31 @@ function sw7FxSpan(img){const W=img.offsetWidth;let L=img.offsetLeft,Rr=L+W;cons
   if(P&&P.classList&&P.classList.contains("hmp-on")){const ir=img.getBoundingClientRect(),k=ir.width?W/ir.width:1;   /* 左右兩屏包在長卷那層裡，用畫面上的位置換算回中間那張的座標；只算跟中間那張差不多高的（不算小人、按鈕） */
     for(const o of P.querySelectorAll("img"))if(o!==img){const r=o.getBoundingClientRect();if(r.width>ir.width*.5&&Math.abs(r.height-ir.height)<ir.height*.2){L=Math.min(L,img.offsetLeft+(r.left-ir.left)*k);Rr=Math.max(Rr,img.offsetLeft+(r.right-ir.left)*k)}}}
   return{L,W:Rr-L}}
-function sw7Size(R,force){const img=R.img,H=img.offsetHeight,sp=sw7FxSpan(img),W=sp.W;if(!W||!H)return;
+function sw7Size(R,force){const img=R.img,H=img.offsetHeight,sp=R.active?{W:img.offsetWidth}:sw7FxSpan(img),W=sp.W;if(!W||!H)return;
+  if(!R.active){
   R.box.style.width=W+"px";R.box.style.height=H+"px";R.box.style.left=sp.L+"px";R.box.style.top=img.offsetTop+"px";
   /* 11/15 開發者「西市和觀星臺交界處的背景顏色深淺不一致」：上面那次把整層效果拉寬到三屏後，飄雲、霧、晨昏色、夜色在左右兩屏疊了兩份（這一層＋07hmp 抄到兩側的 .hmp-fx），兩側比中間暗一截、接縫是一條直線；
      飄雲的花紋也被拉成三屏寬。這一層蓋滿三屏時（sw7-span）：兩側抄的那份藏起來（.sw7-span3>.hmp-w>.hmp-fx），飄雲改回每一屏寬重複一次、每圈走一屏（--sw7n＝這一層是幾屏寬） */
   {const n=img.offsetWidth?Math.round(W/img.offsetWidth*100)/100:1,on=n>1.5;R.box.classList.toggle("sw7-span",on);if(on)R.box.style.setProperty("--sw7n",String(n));else R.box.style.removeProperty("--sw7n");try{if(R.P&&R.P.classList)R.P.classList.toggle("sw7-span3",on)}catch(e){}}
-  if(!R.cv||(!force&&W===R.W&&H===R.H))return;const z=R.z||1,dpr=Math.min(1.5,window.devicePixelRatio||1),bs=Math.min(dpr*Math.min(z,2),2048/W);
+  }if(!R.cv||(!force&&W===R.W&&H===R.H))return;const z=R.z||1,dpr=Math.min(1.5,window.devicePixelRatio||1),bs=Math.min(dpr*Math.min(z,2),2048/W);
   if(R.W&&R.H)for(const p of R.A){p.x*=W/R.W;p.y*=H/R.H}
   const first=!R.W;R.W=W;R.H=H;R.cv.width=Math.round(W*bs);R.cv.height=Math.round(H*bs);R.cx.setTransform(bs,0,0,bs,0,0);
-  if(first||!R.A.length){const K=SW7_KIND[R.k],n=Math.min(150,Math.round((K&&K.n?K.n*(R.amt||1):R.n)*Math.max(.7,Math.min(1.4,W/420))));   /* 半戶外頁的粒子也撒滿整頁再裁，密度跟全戶外一樣 */R.A=[];for(let i=0;i<n;i++)R.A.push(sw7P(R.k,W,H,true))}
+  if(R.k==="rain"||R.k==="inkr"){
+    const n=Math.max(R.active?10:4,Math.min(300,Math.round(SW7_KIND[R.k].n*(R.amt||1)*W*H/(420*700))));
+    if(R.A.length>n)R.A.length=n;
+    while(R.A.length<n)R.A.push(sw7P(R.k,W,H,true));
+  }else if(first||!R.A.length){const K=SW7_KIND[R.k],n=Math.min(150,Math.round((K&&K.n?K.n*(R.amt||1):R.n)*Math.max(.7,Math.min(1.4,W/420))));
+    R.A=[];for(let i=0;i<n;i++)R.A.push(sw7P(R.k,W,H,true))}
   if(!R.run)sw7Draw(R,0,0)}
+/* 茶坊兩扇窗沿用同一個雨場迴圈，裁切到窗框內。 */
+function sw7RainWindow(box,active){
+  sw7Css();
+  const cv=document.createElement("canvas"),cx=cv.getContext("2d");if(!cx)return;
+  cv.className="sw7-cv";cv.setAttribute("aria-hidden","true");box.append(cv);
+  const R={P:box,img:box,box,cv,cx,k:"rain",A:[],W:0,H:0,z:1,amt:.76,night:true,run:!sw7RM(),vis:true,active};
+  cv._sw7=R;SW7.L.add(R);if(SW7.ro)SW7.ro.observe(box);if(SW7.io)SW7.io.observe(cv);
+  sw7Size(R);sw7Kick();
+}
 
 /* ---------- ⑤ 落葉樹四季變色（開發者 11/9：「會有春夏秋冬嗎？葉子也會枯黃」）----------
    開頁時讀底圖，在 tr 多邊形裡把偏綠的像素（色相 55～175°、夠飽和、不是墨線）換色相與飽和度，明暗照舊（墨線、明暗都留著）；結果畫成一張疊在底圖上的 canvas。
@@ -390,7 +406,7 @@ function sw7Fill(R){const P=R.P,box=R.box,on=sw7On()&&!(sw7Page(R.img.getAttribu
     td=P.classList.contains("td-page"),ov=P.dataset.sw7Term||"",out=on&&o&&o.m!=="in",term=sw7TermFor(P,o),rm=sw7RM(),
     pw=out?(ov?(term==="冬至"?{t:"snow",a:.8}:null):sw7WxFor(P,o)):null,A0=out&&!pw?SW7_AMB[term]||null:null,tone=ov?sw7SeaOf(term):"";
   let k=pw?pw.t:A0?A0[0]:"";if(td&&!pw&&sw7TdHas(term))k="";
-  if((k==="rain"||k==="snow")&&sw7ClWx(o))k=k==="rain"?"inkr":"paper";   /* 經典世界：墨滴雨、碎紙雪 */
+  if((k==="rain"||k==="snow")&&sw7ClWx(o))k=k==="rain"?"inkr":"paper";   /* 經典世界：淡墨雨、碎紙雪 */
   if(k==="fly"&&!night)k="";if(rm&&k&&k!=="fog"&&!(SW7_KIND[k]&&SW7_KIND[k].still))k="";
   const tn=on&&!night&&!td&&!/_(dawn|dusk)\./.test(src)?sw7Tint():null,sky=o&&o.m==="semi"?o.sky||null:null,IW=o&&o.W||768,IH=o&&o.H||1376,
     cl=sw7ClCloud(o,src),sig=[k,night,rm,tn?tn.c:"",term,src,pw?pw.a.toFixed(2):"",on,ov,hn.toFixed(1),cl].join("|");
@@ -414,7 +430,7 @@ function sw7Scan(){SW7.q=0;if(!SW7_ON)return;
   document.querySelectorAll(".shp-page.cq,.shp-map.full>.shp-in").forEach(P=>{if(P.querySelector(":scope>.sw7-fx"))return;const img=P.querySelector(":scope>img");if(img)sw7Attach(P,img)});
   if(SW7.L.size&&!SW7.tm)SW7.tm=setInterval(sw7Tick,60000);if(!SW7.L.size&&SW7.tm){clearInterval(SW7.tm);SW7.tm=0}
   sw7Kick()}
-function sw7Tick(){for(const R of SW7.L)if(R.box.isConnected)sw7Fill(R);sw7Kick()}
+function sw7Tick(){for(const R of SW7.L)if(R.box.isConnected&&!R.active)sw7Fill(R);sw7Kick()}
 /* 設定的開關：sw7Set(true/false)，馬上套到畫面上的每一頁（首頁的雪景、雨景底圖下次進首頁才換回） */
 function sw7Set(on){store.set("sw7Wx",!!on);sw7Tick()}
 function sw7SetRow(){if(!SW7_ON)return"";return`<label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>場景節氣天氣</b><br><span class="muted" style="font-size:12.5px">戶外場景照節氣下雨、下雪、樹葉變色，清晨偏青、黃昏偏暖（很淡，不擋點選）</span></span><input type="checkbox" class="sw" id="sw7Wx" ${sw7On()?"checked":""} onchange="sw7Set(this.checked)"></label>`}

@@ -125,7 +125,7 @@ test("三處同時入夜：冬天逐分鐘掃日落、日出，首頁 _night、�
 test("頁面開著也會換季：西市外景每分鐘交給 xsmSwap（網址一樣就不動）、茶坊比對網址、觀星臺比對 gxtSrc 網址", () => {
   assert.match(XSM, /const d=xsmPickDay\(xsmDay\(\)\);xsmSwap\(P,d\);/, "外景不再只看日夜有沒有變");
   assert.match(XSM, /function xsmSwap\(P,day\)\{[^\n]*if\(im\.getAttribute\("src"\)===src\)return;/, "xsmSwap 網址一樣就不動");
-  assert.match(XSM, /const s=xsmSrc\(false,1\);if\(im\.getAttribute\("src"\)!==s\)\{P\.dataset\.win=isW\(s\)\?"1":"";im\.src=s\}/, "茶坊");
+  assert.match(XSM, /const s=xsmSrc\(false,1\);if\(im\.getAttribute\("src"\)!==s\)\{P\.dataset\.win=isW\(s\)\?"1":"";im\.src=s;/, "茶坊");
   assert.match(GXT, /if\(gxtSrc\(kk,d\)!==\(im\.getAttribute\("src"\)\|\|""\)\)gxtSet\(P,kk,d\)/, "觀星臺");
   assert.match(GXT, /pre\.onerror=\(\)=>\{if\(\/_winter\[\._\]\/\.test\(src\)\)/, "觀星臺換圖時冬景載不到退回原圖");
 });
@@ -134,8 +134,11 @@ test("茶坊冬天：XSM_RAIN 窗格的雨改成雪（細小、慢）；減少�
   assert.match(XSM, /P\.dataset\.win=isW\(s0\)\?"1":""/);
   const css = /\.xsm-tea\[data-win="1"\] \.xsm-rain\{([^}]*)\}/.exec(XSM); assert.ok(css, "有冬天的 CSS");
   assert.match(css[1], /radial-gradient/, "畫的是雪點，不是雨絲"); assert.doesNotMatch(css[1], /repeating-linear-gradient/);
-  const dur = +/animation:xsmSnow (\d+(?:\.\d+)?)s/.exec(css[1])[1], rain = +/animation:xsmRain ([\d.]+)s/.exec(XSM)[1];
-  assert.ok(dur >= 6 && dur > rain * 8, `雪 ${dur}s 比雨 ${rain}s 慢很多`);
+  const dur = +/animation:xsmSnow (\d+(?:\.\d+)?)s/.exec(css[1])[1];
+  assert.ok(dur >= 6);
+  assert.match(XSM, /querySelectorAll\("\.xsm-rain"\)\.forEach\(box=>sw7RainWindow\(box,rain\)\)/);
+  assert.match(XSM, /\.xsm-tea\[data-win="1"\] \.xsm-rain>\.sw7-cv\{display:none\}/);
+  assert.doesNotMatch(XSM, /@keyframes xsmRain/);
   const kf = /@keyframes xsmSnow\{to\{background-position:(-?\d+)px (\d+)px,(-?\d+)px (\d+)px\}\}/.exec(XSM); assert.ok(kf);
   const sz = /background-size:(\d+)px (\d+)px,(\d+)px (\d+)px/.exec(css[1]), pos = /background-position:(-?\d+)(?:px)? (-?\d+)(?:px)?,(-?\d+)px (-?\d+)px/.exec(css[1]);
   /* 一圈走完剛好整數個圖塊，接得上不跳 */

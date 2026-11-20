@@ -269,7 +269,7 @@
     const fade = (S, a) => { for (const m of S.mats) { m.transparent = true; m.opacity = (m.userData.o0 == null ? 1 : m.userData.o0) * a; } };
 
     /* ---------- 魔王：b_taixu.glb（靜態、沒骨架），站在黑方將位，約七星的 2.5 倍高 ---------- */
-    let boss = null, pivot = null, gem = null, gemCore = null, aura = null, bossH = api.bossH || 3.9;
+    let boss = null, pivot = null, gem = null, gemCore = null, aura = null, bossGly = null, bossH = api.bossH || 3.9;
     async function loadBoss(){
       if (!api.bossGlb || !api.glb) return;
       const s = await api.glb(api.bossGlb).catch(() => null);
@@ -305,8 +305,8 @@
         }
       });
       const cx = fn ? fx / fn : ctr.x, cz = fn ? fz / fn : ctr.z;
-      let gx = ctr.x, gy = bx.min.y + sz.y * .37, gz = bx.max.z, n = 0, sx = 0, sy = 0;
-      for (let i = 0; i < cand.length; i += 3) if (cand[i + 2] > zmax - sz.z * .04) { sx += cand[i]; sy += cand[i + 1]; n++; }
+      let gx = ctr.x, gy = bx.min.y + sz.y * .37, gz = bx.max.z, n = 0, sx = 0, sy = 0, x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+      for (let i = 0; i < cand.length; i += 3) if (cand[i + 2] > zmax - sz.z * .04) { sx += cand[i]; sy += cand[i + 1]; n++; x0 = Math.min(x0, cand[i]); x1 = Math.max(x1, cand[i]); y0 = Math.min(y0, cand[i + 1]); y1 = Math.max(y1, cand[i + 1]); }
       if (n) { gx = sx / n; gy = sy / n; gz = zmax; }
       const k = bossH / sz.y;
       m.position.set(-cx, -bx.min.y, -cz);
@@ -319,6 +319,20 @@
       root.add(boss);
       place();
       GP.set((gx - cx) * k, (gy - bx.min.y) * k, (gz - cz) * k + .08);
+      /* 11/18 開發者（截圖圈魔王胸前）「將寫相反了」：b_taixu.glb 的貼圖上，胸前紫玉牌的「將」本來就是左右反的（模型生成時就反了）。
+         在玉牌上蓋一面寫正的圓牌；大小照玉牌那一層頂點量，量不到就用魔王高的 6%。 */
+      try {
+        const rr = n ? Math.max(.03, Math.min(bossH * .09, Math.max(x1 - x0, y1 - y0) * k * .5)) : bossH * .06;
+        const cv = document.createElement("canvas"); cv.width = cv.height = 256; const g = cv.getContext("2d"), h = 128;
+        let gr = g.createRadialGradient(h * .8, h * .7, 8, h, h, h); gr.addColorStop(0, "#8A55C2"); gr.addColorStop(.7, "#5A2C8C"); gr.addColorStop(1, "#3A1760");
+        g.fillStyle = gr; g.beginPath(); g.arc(h, h, h * .98, 0, PI * 2); g.fill();
+        g.strokeStyle = "#D8B25A"; g.lineWidth = 10; g.beginPath(); g.arc(h, h, h * .92, 0, PI * 2); g.stroke();
+        g.font = '900 150px "Noto Serif TC","Songti TC","PMingLiU","SimSun",serif'; g.textAlign = "center"; g.textBaseline = "middle";
+        g.fillStyle = "rgba(20,0,40,.45)"; g.fillText("將", h + 3, h + 12); g.fillStyle = "#F4ECFF"; g.fillText("將", h, h + 8);
+        const tx = new T.CanvasTexture(cv); if (T.sRGBEncoding != null) tx.encoding = T.sRGBEncoding;
+        bossGly = new T.Mesh(new T.CircleGeometry(rr, 48), new T.MeshBasicMaterial({map: tx, transparent: true, color: 0xD8D2E2, toneMapped: false}));
+        bossGly.name = "bossGly"; bossGly.position.set(GP.x, GP.y, GP.z - .08 + .012); pivot.add(bossGly);
+      } catch (e) { bossGly = null; }
       /* 玉牌光暈放在特效層（星盤那一次才畫，不會被半透明星盤蓋暗），每一格照魔王身上那一點的世界座標擺 */
       gem = spr("glow", 1.25, {add: true, col: 0xB77DFF, op: 0, ro: 14, raw: true});
       gemCore = spr("glow", .42, {add: true, col: 0xF3DCFF, op: 0, ro: 15, raw: true});
@@ -358,6 +372,14 @@
     function pass(kind){
       if (kind !== "mirror") place();
       if (!MG) return;
+      // 盤底視角連相機也轉了半圈。比照其他棋子的字牌，只在倒影那一次反轉 UV。
+      const glyph = bossGly?.material.map;
+      if (glyph) {
+        const mirror = kind === "mirror";
+        glyph.repeat.x = mirror ? -1 : 1;
+        glyph.offset.x = mirror ? 1 : 0;
+        glyph.updateMatrix();
+      }
       if (kind === "mirror") {
         if (boss && fxRoot !== root && boss.parent !== MG) MG.add(boss);
         if (fxRoot.parent !== MG) MG.add(fxRoot);
