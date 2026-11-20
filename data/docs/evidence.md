@@ -1,10 +1,10 @@
-# 驗證紀錄（版本 20261120-1252）
+# 驗證紀錄（版本 20261120-1315）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/20 13:02:01（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 2517 項＝**通過 2377**、**失敗 0**、**略過 140**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（STAGE-MANIFEST.json 沒寫 commit），對應的發布版：`20261120-1252`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 產生時間：2026/11/20 13:20:48（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 2518 項＝**通過 2378**、**失敗 0**、**略過 140**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（STAGE-MANIFEST.json 沒寫 commit），對應的發布版：`20261120-1315`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔（和少數只給它們用的工具）有46 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -159,7 +159,7 @@
 | 行為 | 1213 項（通過 1209、略過 4） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
 | 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 1027 項（通過 897、略過 130） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-refit-1118.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-film-tap-1118.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-jh-fade-1118.js`、`test-jianghu-1118.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js`、`test-zm-medallion-1118.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 待分類 | 1028 項（通過 898、略過 130） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-refit-1118.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-film-tap-1118.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-jh-fade-1118.js`、`test-jianghu-1118.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js`、`test-zm-medallion-1118.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -798,7 +798,7 @@
 | test-ios-native-1116.js | — | 0 | 0 | 0 | 6 | 6／6 |
 | test-ipad-fill.js | — | 9 | 0 | 1 |  | 10／10 |
 | test-jh-fade-1118.js | — | 0 | 0 | 0 | 2 | 2／2 |
-| test-jianghu-1118.js | — | 0 | 0 | 0 | 7 | 7／7 |
+| test-jianghu-1118.js | — | 0 | 0 | 0 | 8 | 8／8 |
 | test-land3d.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-lang-default-1117.js | — | 0 | 0 | 0 | 7 | 4／7（略過 3） |
 | test-layout-r16.js | — | 5 | 1 | 5 |  | 11／11 |
@@ -2294,6 +2294,7 @@
 - ✔ 〔待分類〕各區的道路、石階和橋可點；山壁、河面、屋頂與未連通的路不吸附
 - ✔ 〔待分類〕仕角炮門石坪容易點選，隔壁山壁與另一區的石坪保持禁行
 - ✔ 〔待分類〕途中改道仍走路網；路線選擇、門派名帖和跨區移動分開
+- ✔ 〔待分類〕長卷點路面能下山、繞過水榭走到對岸，連續點相鄰路段可改道
 - ✔ 〔待分類〕頁面：路由、組版 include、淡出淡入、第一次歡迎文字、入口（首頁遠山、找地方、開局棋路頁）
 - ✔ 〔待分類〕圖：art/yunhe/pano.webp 在、大小合理；文字中英並列（不靠外掛字典）
 

@@ -189,9 +189,14 @@ if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const 
 if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.apply(this,arguments);try{shwYz(v,k)}catch(e){}return r}}
 function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.root.dataset.shw="1";shwCss();o.root.classList.add("shw-iso");
   const C=o.cfg,box=document.createElement("div");box.className="shw";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="shw-sh"></i>';o.layer.insertBefore(box,o.before&&o.before.parentNode===o.layer?o.before:o.layer.firstChild);
-  const at=SHW_MEM[o.mem],okAt=typeof at==="string"?!!C.N[at]:!!(at&&at.p&&at.e&&C.N[at.e[0]]&&C.N[at.e[1]]),S={o,C,v:o.v,M:o.root,I:o.frame,box,ready:false,pass:false,go:null,at:okAt?at:C.home};
+  const S={o,C,v:o.v,M:o.root,I:o.frame,box,ready:false,pass:false,go:null,at:shwSavedAt(C,o.mem)};
   o.root.addEventListener("click",e=>shwClick(S,e),true);
-  shwLoad(S).then(()=>{try{if(WALK_BOT_MERGE)shwBotHook(S)}catch(e){}}).catch(()=>{box.remove();S.ready=false;document.body.classList.remove("shw-on")})}
+  shwLoad(S).then(()=>{try{if(WALK_BOT_MERGE&&o.characterActions!==false)shwBotHook(S)}catch(e){}}).catch(()=>{box.remove();S.ready=false;document.body.classList.remove("shw-on")})}
+function shwSavedAt(C,mem){
+  const at=SHW_MEM[mem];
+  const valid=typeof at==="string"?!!C.N[at]:!!(at&&at.p&&at.e&&C.N[at.e[0]]&&C.N[at.e[1]]);
+  return valid?at:C.home;
+}
 function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.go;let b=e.target.closest&&e.target.closest(S.o.sel),tk=null;
   /* 回饋 816：桌上的東西本身（例如信房的信箋）也算入口：座標表 TS:{選擇器:入口代號}，先跳上桌再打開 */
   if(!b&&WALK_HOP_ON&&S.C.TS&&e.target.closest)for(const k in S.C.TS){const x=e.target.closest(k);if(x&&S.M.contains(x)){b=x;tk=S.C.TS[k];x.dataset.shwnf="1";break}}
@@ -206,7 +211,7 @@ function shwClick(S,e){if(S.pass||!S.ready||!S.box.isConnected)return;const g=S.
   {const cv=S.box.querySelector("canvas"),r=cv&&cv.getBoundingClientRect();   /* 小人是 pointer-events:none，點選會穿到底圖：用位置判斷是不是點在小人身上（畫布中間 70% 寬、85% 高） */
     if(!S.C.strictRoad&&r&&r.width>0&&!(e.target.closest&&e.target.closest(".shw-me,.shw-hint,.shw-menu"))&&e.clientX>=r.left+r.width*.15&&e.clientX<=r.right-r.width*.15&&e.clientY>=r.top+r.height*.1&&e.clientY<=r.bottom-r.height*.05){e.stopPropagation();e.preventDefault();const h=S.o.layer.querySelector(".shw-me");if(h&&h.style.display!=="none"&&e.isTrusted)h.click();return}}
   if(!shwFreeOk(S,e))return;const p=shwPt(S,e),xr=S.C.xr||[0,100];if(!(p[0]>=xr[0]&&p[0]<=xr[1]&&p[1]>=0&&p[1]<=100))return;
-  {const now=Date.now(),L=S.lastTap;S.lastTap={t:now,p};if(L&&now-L.t<400&&Math.hypot(p[0]-L.p[0],p[1]-L.p[1])<6){e.stopPropagation();e.preventDefault();return}}
+  {const now=Date.now(),L=S.lastTap;S.lastTap={t:now,p};if(L&&now-L.t<400&&(S.C.walkRetarget?shwPx(S.C,p,L.p)<3:Math.hypot(p[0]-L.p[0],p[1]-L.p[1])<6)){e.stopPropagation();e.preventDefault();return}}
   /* 回饋 816／820：點到桌面＝走到最近的桌邊跳上去、再在桌面上繞過障礙走到點的地方（點在障礙上＝走到旁邊最近的可站處）；人已經在桌上＝直接在桌面上走過去；不觸發別的 */
   if(WALK_HOP_ON&&S.C.TB){const tn=shwTblAt(S.C,p);if(tn){e.stopPropagation();e.preventDefault();shwInk(S,p);vibrate(5);shwGo(S,{free:1,tbl:tn,tap:p});return}}const q=S.o.ground?S.o.ground(S,p):shwNear(S.C,p);if(!q)return;shwInk(S,S.C.strictRoad?q.p:p);shwGo(S,{free:1,q,tap:p})}   /* 意見回饋 782：點空地＝走到路網上離那裡最近的點，走到只換待機 */
 function shwGo(S,o){shwDrop();const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)g0.btn.classList.remove("shw-fade");
@@ -243,7 +248,7 @@ function shwGo(S,o){shwDrop();const C=S.C,g0=S.go;if(g0&&g0.btn&&g0.btn!==o.btn)
    沒寫的頁：起點在圖下緣（上% ≥ 85）＝從起點往下走出畫面，r＝起點左右各 10%、從腳下 1% 到圖底；起點在中間又沒寫＝不做。false＝不做（疊在頁上的面板 sj／mf／hq、星槎分頁）。
    頂欄沒有返回鍵（分頁首頁）時整個不出現：不走進來、不攔點選。座標表只加在這裡，各頁自己的座標表（07w6、07y5～07y7 等）不動。開關 SHW_EXIT_ON。 */
 const SHW_EXIT_ON=true;
-const SHW_EXITS={ship:false,sj:false,mf:false,hq:false,
+const SHW_EXITS={ship:false,sj:false,mf:false,hq:false,"jianghu:*":false,
   fbp:{at:[10,86],ln:"mid lft",out:[-8,88],r:[0,79,18,95]},   /* 信房：左下角跨過門檻往左出去 */
   gm2:{out:[53,82],r:[28,80,68,100]},   /* 特級大師畫廊：廊道盡頭是直欞窗不是門，往鏡頭這邊（來時的樓梯方向）走出去 */
   lib:{at:[88,75],ln:"stack",out:[106,75.5],r:[86,72.5,100,79]},   /* 書閣：書案後、書櫃下的走道往右走出去 */
@@ -521,6 +526,7 @@ async function shwLoad(S){
   const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,YMAX=Math.max(...Object.values(C.N).map(p=>p[1]));let cw=0,ch=0,Iw=0,Ih=0;
   const fit=()=>{Iw=S.I.clientWidth;Ih=S.I.clientHeight;if(!Ih)return;const h=Math.round(shwHt(C,YMAX)*Ih/(Math.cos(EL)/1.45)),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch);
     Object.assign(cv.style,{left:-cw/2+"px",top:-Math.round(ftF*ch)+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:-Math.round(ch*.17)+"px",top:-Math.round(ch*.05)+"px"})}S.place()};
+  if(G===1&&C.walkRetarget)S.at=shwSavedAt(C,S.o.mem);   /* 地圖預覽在模型載入期間也可先點路面。 */
   const P0=typeof S.at==="string"?C.N[S.at]:S.at.p,HS0=typeof S.at==="string"&&Object.values(C.HS).find(h=>h[0]===S.at);S.x=P0[0];S.y=P0[1];S.onT=S.at&&S.at.t&&C.TB&&C.TB[S.at.t]?S.at.t:null;S.hy=S.onT?shwTHy(C.TB[S.onT],P0):null;S.sq=null;   /* 825：換造型重載角色時，站在桌上的照舊算在桌上 */S.yaw=S.at===C.home||!HS0?shwYaw(C,P0,typeof S.at==="string"?C.look0:[P0[0],P0[1]+5]):shwYaw(C,P0,[HS0[1],HS0[2]]);
   S.place=()=>{if(!Ih)return;const k=shwHt(C,S.hy!=null?S.hy:S.y)/shwHt(C,YMAX);S.box.style.transform=`translate(${(S.x*Iw/100).toFixed(1)}px,${(S.y*Ih/100).toFixed(1)}px) scale(${k.toFixed(4)})`;
     cv.style.transformOrigin=`50% ${(ftF*100).toFixed(1)}%`;cv.style.transform=S.sq?`scale(${S.sq[0].toFixed(3)},${S.sq[1].toFixed(3)})`:"";

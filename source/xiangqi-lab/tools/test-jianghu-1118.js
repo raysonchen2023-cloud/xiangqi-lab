@@ -32,6 +32,8 @@ test("同一走路區域只沿標定路段走；隔山隔水沒有直線退路",
   }
   const acrossBridge=R.shwPath(C,"elephant","central");
   assert.ok(acrossBridge.includes("westBridge"));
+  const acrossPavilion=R.shwPath(C,"elephant","pawn");
+  assert.ok(acrossPavilion.includes("southBank")&&acrossPavilion.includes("southFork"));
   assert.equal(R.shwRoute(C,"elephant","palace_horse").pts.length,0);
 });
 test("各區的道路、石階和橋可點；山壁、河面、屋頂與未連通的路不吸附",()=>{
@@ -49,7 +51,7 @@ test("各區的道路、石階和橋可點；山壁、河面、屋頂與未連�
     const q=R.jhGround(C,id,R.jhPct(road));
     assert.ok(q,id+" 道路");
     for(const p of blocked)assert.equal(R.jhGround(C,id,R.jhPct(p)),null,id+" 障礙 "+p);
-    assert.equal(R.jhGround(C,id,R.jhPct(R.JH_SITE[id==="elephant"?"screen":"horse"].s)),null,id+" 隔區");
+    assert.equal(R.jhGround(C,id,R.jhPct(R.JH_SITE[C.area[id]==="west"?"screen":"horse"].s)),null,id+" 隔區");
   }
 });
 test("仕角炮門石坪容易點選，隔壁山壁與另一區的石坪保持禁行",()=>{
@@ -74,6 +76,26 @@ test("途中改道仍走路網；路線選擇、門派名帖和跨區移動分�
   assert.match(JH,/if\(arrival\)jhSheet\(arrival\)/);
   assert.doesNotMatch(JH,/jhSail|class="osc-row"/);
   assert.doesNotMatch(JH,/mem="jianghu"/);
+});
+test("長卷點路面能下山、繞過水榭走到對岸，連續點相鄰路段可改道",()=>{
+  const R=load(),C=R.jhWalkCfg(R.JH_START);
+  let from="elephant";
+  for(const p of [[522,552],[565,632],[703,608],[808,542],[869,290],[559,676],[603,705],[581,817],[718,838],[751,894],[860,981],[1021,956],[1145,742]]){
+    const q=R.jhGround(C,from,R.jhPct(p));
+    assert.ok(q,"可以點 "+p);
+    assert.ok(R.shwRoute(C,from,q).pts.length>=2,"有走路路線 "+p);
+    from=q;
+  }
+  for(const p of [[650,740],[590,783],[765,714],[445,755],[480,564],[400,525]]){
+    assert.equal(R.jhGround(C,from,R.jhPct(p)),null,"水面或屋頂 "+p);
+  }
+  const court=R.jhGround(C,"screen",R.jhPct([117,1240]));
+  assert.ok(court&&R.shwPx(C,C.N.screen,court.p)>40,"屏風馬門可從門前走到石坪一角");
+  assert.equal(C.walkRetarget,true);
+  assert.match(SHW,/S\.C\.walkRetarget\?shwPx\(S\.C,p,L\.p\)<3:/);
+  assert.match(SHW,/["]jianghu:\*["]:false/,"長卷下緣的路面不能被共用隱藏出口攔截");
+  assert.match(JH,/characterActions:false/);
+  assert.match(JH,/\.jh-spot\{pointer-events:none\}\.jh-spot \.bn\{pointer-events:auto\}/);
 });
 test("頁面：路由、組版 include、淡出淡入、第一次歡迎文字、入口（首頁遠山、找地方、開局棋路頁）",()=>{
   assert.match(rd("xiangqi-db/m/02-shell.js"),/p\[0\]==="jianghu"&&typeof Jianghu==="function"\)return screen=Jianghu\(v\)/);
