@@ -207,6 +207,26 @@ test("PR #22 審查：前院站滿時，門人名牌兩兩不重疊（375 寬手
   }
 });
 
+/* PR #22 審查後開發者決定（iMac 轉達）：前院最多只站 2 位，超過 2 位就每天換一批。測試資料讓 3 位都能切磋，免得「能切磋的優先」把人固定住。 */
+test("PR #22 審查：門人 3 位以上時前院只畫 2 位；同一天固定，換日期會換到別人", () => {
+  const { c } = loadMates({ PARK_NPC: [{ id: "w15_yuan_archer", say: "百步穿楊。" }, { id: "fake_a", say: "甲。" }, { id: "fake_b", say: "乙。" }] }), R = c.R;
+  c.OSC.NPC["npc:fake_a"] = ["central", "horse", "假門人甲"]; c.OSC.NPC["npc:fake_b"] = ["central", "pawn", "假門人乙"];
+  const n = R.JH_HALL.central.mates.length;
+  assert.equal(n, 2, "站位只留兩格");
+  assert.match(JH, /jhMatesShown\(sid,H\.mates\.length\)/, "畫幾位照站位格數");
+  assert.equal(R.jhMatesOf("central").filter((m) => m.can).length, 3, "測試資料：3 位都能切磋");
+  const seen = new Set(), combos = new Set();
+  for (let i = 0; i < 30; i++) {
+    const L = R.jhMatesShown("central", n, new Date(2026, 10, 1 + i, 9)), k = L.map((m) => m.k);
+    assert.equal(L.length, 2, "只站 2 位");
+    assert.ok(L.every((m) => m.can), "能切磋的優先，秘境沒遇過的劉伯溫不會擠進來");
+    assert.deepEqual(k, R.jhMatesShown("central", n, new Date(2026, 10, 1 + i, 21)).map((m) => m.k), "同一天早晚一樣");
+    k.forEach((x) => seen.add(x)); combos.add(k.slice().sort().join("|"));
+  }
+  assert.ok(combos.size >= 2, "30 天裡至少換過一批：" + [...combos].join("；"));
+  assert.equal(seen.size, 3, "3 位都輪得到：" + [...seen].join("、"));
+});
+
 test("PR #22 審查：只有兩位時左右對稱站（前兩個站位對中軸 384 對稱、同一高度）", () => {
   const { R } = load();
   const [a, b] = R.JH_HALL.central.mates;
