@@ -1,0 +1,23 @@
+// PR 改到的文字檔檢查（W36）：不能有控制字元（Tab、換行除外）；同一個檔不能 CRLF 與 LF 混用。
+// 過去出過的事：Bash 吃掉反斜線變成控制字元，整個 App 打不開；Python 改檔把換行變成 CRLF，組版比對失敗。
+// 用法：node .github/scripts/check-text.cjs [比較基準，預設 origin/main]
+"use strict";
+const { execFileSync } = require("child_process");
+const fs = require("fs");
+const base = process.argv[2] || "origin/main";
+const files = execFileSync("git", ["diff", "--name-only", "--diff-filter=AM", `${base}...HEAD`]).toString().split("\n").filter(Boolean);
+const TEXT = /\.(js|cjs|mjs|css|html|md|json|yml|yaml|txt|java|kt|swift|gradle|plist|xml|properties)$/i;
+const bad = [];
+let n = 0;
+for (const f of files) {
+  if (!TEXT.test(f) || !fs.existsSync(f)) continue;
+  n++;
+  const s = fs.readFileSync(f, "utf8");
+  const m = s.match(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/);
+  if (m) bad.push(`${f}：有控制字元 0x${m[0].charCodeAt(0).toString(16).padStart(2, "0")}（第 ${s.slice(0, m.index).split("\n").length} 行）`);
+  const crlf = (s.match(/\r\n/g) || []).length, lf = (s.match(/(^|[^\r])\n/g) || []).length;
+  if (crlf && lf) bad.push(`${f}：CRLF ${crlf} 行與 LF ${lf} 行混用`);
+}
+console.log(`檢查了 ${n} 個改到的文字檔（比較基準 ${base}）`);
+if (bad.length) { console.log("✘ " + bad.join("\n✘ ")); process.exit(1); }
+console.log("✔ 沒有控制字元，也沒有換行混用");
