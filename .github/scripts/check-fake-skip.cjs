@@ -10,8 +10,9 @@
 "use strict";
 const fs = require("fs"), path = require("path");
 
-const EMPTY = /\btest\(\s*(["'`])(?:(?!\1).)*\1\s*,\s*(?:async\s*)?\(\s*\w*\s*\)\s*=>\s*\{\s*\}\s*\)/;
-const BARE_RETURN = /!\s*fs\.existsSync\((?:[^()]|\([^()]*\))*\)\s*\)\s*return\b(?!\s*t\.skip)(?!\s*test\.skip)/;
+/* PR #17 審查（iMac）：再補兩種寫法——參數不加括號的 t=>{}、大括號包起來的 { return; } */
+const EMPTY = /\btest\(\s*(["'`])(?:(?!\1).)*\1\s*,\s*(?:async\s*)?(?:\(\s*\w*\s*\)|\w+)\s*=>\s*\{\s*\}\s*\)/;
+const BARE_RETURN = /!\s*fs\.existsSync\((?:[^()]|\([^()]*\))*\)\s*\)\s*\{?\s*return\b(?!\s*t\.skip)(?!\s*test\.skip)/;
 
 function scanText(text) {
   const out = [];
