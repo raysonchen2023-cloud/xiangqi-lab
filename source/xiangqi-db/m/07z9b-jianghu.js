@@ -625,8 +625,8 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
    不加修為、不改強度與棋局；贏了照案 4 規則解鎖情報（journeyGameEnd 包裝本來就會判斷）。 */
 JH_HALL.central.mates=[[168,1052],[298,1080],[606,1070]];   /* 前院左邊兩位、右邊空地一位；前院標籤移到中間偏右，不壓到人 */
 const JH_MATE_W=88;
-let jhMateKeep=null;   /* {id,t}：從前院點「切磋一盤」指定的園子棋友；15 秒內、這次開局才用 */
-const JH_MATE_KEEP_MS=15000;
+let jhMateKeep=null;   /* {id,t}：從前院點「切磋一盤」指定的園子棋友；用掉就清，45 秒內才算數，到期也清 */
+const JH_MATE_KEEP_MS=45000;
 /* 一位門人的資料：k＝OSC.NPC 的鍵（inn:／npc:／secret:）；回傳名字、立繪、在哪、台詞清單、能不能下 */
 function jhMateInfo(k){if(typeof OSC==="undefined")return null;const x=OSC.NPC[k];if(!x)return null;const [kind,id]=k.split(":");
   const at={inn:jhL("驛站","Post Inn"),npc:jhL("園子","the Park"),secret:jhL("秘境","a hidden place")}[kind]||"";
@@ -646,10 +646,11 @@ function jhMateIntel(sid,M){const m=OSC.MST.find(x=>x.sid===sid);if(!m)return"";
   if(typeof jhIntelOn==="function"&&jhIntelOn(sid)){const T=jhSch(jhIntelSch(sid));return jhL(`悄悄告訴你：掌門${m.nm}今天打算走${T.op}。`,`Between us: Master ${m.en} plans to play ${T.op} today.`)}
   return jhL(`掌門今天的打算？贏我一盤，我就告訴你。`,`The master's plan today? Beat me in a game and I'll tell you.`)}
 function jhMatePlay(M){if(!M||!M.can)return;
-  /* PR #21 審查（iMac）：jStart 不一定會呼叫 parkNpcNew（已有沒下完的園子棋直接接續、選單按取消、API 出錯），指定的人會一直留著、
-     蓋掉之後一般園子抽人與攔路棋客。改成：①記下時間，15 秒內才算數；②jStart 這次流程結束（不管有沒有開新局）就清掉 */
-  if(M.kind==="npc"){jhMateKeep={id:M.id,t:Date.now()};const lv=typeof parkNpcLv==="function"?parkNpcLv():3;
-    Promise.resolve(jStart("park",{human:"r",level:lv,journey:"park"},()=>{location.hash="#/journey/play"})).catch(()=>{}).then(()=>{jhMateKeep=null});return}
+  /* PR #21 審查（iMac，兩輪）：jStart 不一定會呼叫 parkNpcNew——已有沒下完的園子棋直接接續、選單按取消、API 出錯時，指定會留著、蓋掉之後的園子抽人與攔路棋客；
+     但別的旅程沒下完時 jStart 只跳選單就 return，玩家之後按「放棄，開新的」才抽人，不能在 jStart 結束時就清。
+     所以：用掉就清（parkNpcNew 包裝裡）＋45 秒內才算數＋到期由計時器清（只清同一次的指定） */
+  if(M.kind==="npc"){const K={id:M.id,t:Date.now()};jhMateKeep=K;setTimeout(()=>{if(jhMateKeep===K)jhMateKeep=null},JH_MATE_KEEP_MS);const lv=typeof parkNpcLv==="function"?parkNpcLv():3;
+    jStart("park",{human:"r",level:lv,journey:"park"},()=>{location.hash="#/journey/play"});return}
   if(M.kind==="inn"){const x=INN.find(z=>z.id===M.id);if(!x)return;const lv=typeof innLvN==="function"?innLvN(x):3,rl=typeof innRlv==="function"?innRlv(x):null;
     if(rl!=null)store.set("innCur",{id:x.id,rl});
     jStart("inn:"+x.id,rl==null?{human:"r",level:lv,journey:"inn:"+x.id}:{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:"inn:"+x.id},()=>{location.hash="#/journey/play"});return}

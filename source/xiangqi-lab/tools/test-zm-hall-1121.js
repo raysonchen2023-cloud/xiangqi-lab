@@ -83,7 +83,7 @@ function loadMates(extra = {}) {
     INN: [{ id: "tea", say: "喝口茶再下。" }], SECRETS: [{ id: "liuji", say: "「運籌帷幄。」", who: "元末明初的謀士" }],
     jSecrets: () => ({}), parkNpcNew: (game, lv, keep) => { calls.park.push(keep); return keep },
     jStart: (id, b, go) => { calls.jstart.push(id); }, store: { set() {}, get: (k, d) => d },
-    JhHall: () => ({}), ...extra,
+    JhHall: () => ({}), setTimeout: () => {}, ...extra,
   };
   vm.createContext(c);
   vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + HALL + ";this.R={JH_HALL,JH_HALL_W,JH_HALL_H,JH_MATE_W,jhMateInfo,jhMatesOf,jhMatesShown,jhMateTip,jhMateIntel,jhMatePlay}", c);
@@ -143,36 +143,48 @@ test("〔原始碼〕前院門人：站位在原圖範圍內、立繪大小合�
   assert.match(JH, /\.jh-mate-say\{[^}]*color:#3b2a14/, "對話框在深色主題也看得清楚（固定深色字）");
 });
 
-test("PR #21 審查：jStart 沒呼叫 parkNpcNew（接續舊盤、選單取消、API 出錯）時，這次流程結束就清掉，下一盤不會被指定", async () => {
-  const { c, calls } = loadMates({ jStart: () => Promise.resolve() });
+test("PR #21 再審（C 路徑）：jStart 先跳選單就 return，玩家之後按「放棄，開新的」才抽人——坐下的仍是指定的門人", async () => {
+  const timers = [];
+  const { c, calls } = loadMates({ jStart: () => undefined, setTimeout: (f, ms) => { timers.push({ f, ms }) } });
   c.R.jhMatePlay(c.R.jhMateInfo("npc:w15_yuan_archer"));
-  await new Promise((r) => setImmediate(r));
+  await new Promise((r) => setImmediate(r));   /* 玩家在選單想一下才按：jStart 那次流程早就結束了 */
+  c.parkNpcNew("g-fresh", 2);
+  assert.equal(calls.park[0], "w15_yuan_archer", "選單之後才開新局，仍坐指定的人");
+  c.parkNpcNew("g-next", 2);
+  assert.ok(!calls.park[1], "用掉就清，下一盤照常隨機");
+});
+
+test("PR #21 審查：沒用掉（接續舊盤、取消、API 出錯）時，到期計時器清掉；下一盤不會被指定", () => {
+  const timers = [];
+  const { c, calls } = loadMates({ jStart: () => Promise.resolve(), setTimeout: (f, ms) => { timers.push({ f, ms }) } });
+  c.R.jhMatePlay(c.R.jhMateInfo("npc:w15_yuan_archer"));
+  assert.equal(timers.length, 1); assert.equal(timers[0].ms, 45000);
+  timers[0].f();
   c.parkNpcNew("g9", 2);
-  assert.ok(!calls.park[0], "流程結束後指定已清空：" + calls.park[0]);
-  const e = loadMates({ jStart: () => Promise.reject(new Error("API 出錯")) });
-  e.c.R.jhMatePlay(e.c.R.jhMateInfo("npc:w15_yuan_archer"));
-  await new Promise((r) => setImmediate(r));
-  e.c.parkNpcNew("g10", 2);
-  assert.ok(!e.calls.park[0], "出錯也要清空");
+  assert.ok(!calls.park[0], "到期清掉後不再指定：" + calls.park[0]);
 });
 
-test("PR #21 審查：指定超過 15 秒就不算數（就算還沒清掉）", () => {
+test("PR #21 審查：指定超過 45 秒就不算數（就算計時器還沒跑）", () => {
   let now = 1_000_000;
-  const RealDate = Date;
-  class FakeDate extends RealDate { static now() { return now } }
-  const { c, calls } = loadMates({ Date: FakeDate });
+  class FakeDate extends Date { static now() { return now } }
+  const { c, calls } = loadMates({ Date: FakeDate, setTimeout: () => {} });
   c.R.jhMatePlay(c.R.jhMateInfo("npc:w15_yuan_archer"));
-  now += 16_000;
+  now += 46_000;
   c.parkNpcNew("g11", 2);
-  assert.ok(!calls.park[0], "16 秒後不用");
+  assert.ok(!calls.park[0], "46 秒後不用");
 });
 
-test("PR #21 審查（反向對照補測）：外部傳進來的指定（例如攔路棋客）優先；前院第一位一定是能下的", () => {
-  const { c, calls } = loadMates();
+test("PR #21 審查（反向對照補測）：外部傳進來的指定（例如攔路棋客）優先", () => {
+  const { c, calls } = loadMates({ setTimeout: () => {} });
   c.R.jhMatePlay(c.R.jhMateInfo("npc:w15_yuan_archer"));
   c.parkNpcNew("g12", 2, "forced");
   assert.equal(calls.park[0], "forced");
+});
+
+test("PR #21 再審（反向對照補測）：前院能下的優先——就算不能下的那位雜湊排在前面", () => {
+  /* 讓秘境人物（不能下）的雜湊比較小：沒有「能下的優先」時他會排第一 */
+  const { c } = loadMates({ jhWindHash: (s) => (s.includes("secret:") ? 0 : 999) });
   const L = c.R.jhMatesShown("central", 3, new Date(2026, 10, 21));
-  assert.equal(L[0].can, true, "中炮門第一位要是能下的：" + L[0].k);
-  assert.ok(L.some((m) => !m.can), "中炮門也有不能下的（劉伯溫），排在後面");
+  assert.equal(L[0].can, true, "第一位要是能下的：" + L[0].k);
+  assert.equal(L[L.length - 1].k, "secret:liuji", "不能下的排最後");
 });
