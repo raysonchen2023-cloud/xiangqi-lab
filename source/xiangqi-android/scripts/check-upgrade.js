@@ -10,7 +10,8 @@
 //   3. 冷啟 N 次（預設 3），每次檢查：版號＝新版、存檔與設定保留、沒有 Service Worker、沒有舊 xqlab-app- 快取、
 //      網頁更新檢查關閉、沒有更新提示視窗、「檢查更新」按鈕說由 Google Play 更新
 // 用法：node scripts/check-upgrade.js --old <舊.apk> --old-build <舊版號> --new <新.apk> --new-build <新版號> [--serial emulator-5580]
-//         [--out <資料夾>] [--cold 3] [--no-old-worker（舊版本身就是原生版、不會有舊 Worker 時）]
+//         [--out <資料夾>] [--cold 3] [--no-old-worker（舊版本身就是原生版、不會有舊 Worker 時）] [--allow-wipe-device（實體手機才要，會刪存檔）]
+//   預設只在模擬器上跑（device-guard.js）：會解除安裝 App。冷啟後看 20 秒，期間跳出過更新視窗就算
 //   需要已開好的模擬器或手機、adb（環境變數 ADB 或 PATH）；兩個 APK 要同一把簽章（測試金鑰），不然不能覆蓋安裝
 // 結束代碼：0＝通過；1＝升級後有任何一項不符；2＝用法錯誤，或舊版沒能建立要重現的狀態（測試本身不成立，不能當通過）
 "use strict";
@@ -19,7 +20,11 @@ const { connect } = require("./cdp.js");
 
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d };
 const O = { old: arg("--old"), oldBuild: arg("--old-build"), neu: arg("--new"), newBuild: arg("--new-build"), serial: arg("--serial", "emulator-5580"),
-  out: path.resolve(arg("--out", "upgrade-check")), cold: Number(arg("--cold", 3)), oldWorker: !process.argv.includes("--no-old-worker") };
+  out: path.resolve(arg("--out", "upgrade-check")), cold: Number(arg("--cold", 3)), oldWorker: !process.argv.includes("--no-old-worker"),
+  allowWipe: process.argv.includes("--allow-wipe-device") };
+const { checkDevice } = require("./device-guard.js");
+const DIALOG_WATCH_SEC = 20;
+const DIALOGS = `[...document.querySelectorAll('.modal')].filter(x=>/有新版本|新版可用|new version|update available/i.test(x.textContent)).length`;
 const PKG = "com.raysonchen.xiangqiqianqiu", ADB = process.env.ADB || "adb", PORT = 9290;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const adb = (...a) => cp.execFileSync(ADB, ["-s", O.serial, ...a], { encoding: "utf8", timeout: 180000 }).trim();
@@ -76,10 +81,11 @@ function verdict(row, newBuild = O.newBuild) {
 
 async function main() {
   if (!O.old || !O.neu || !O.oldBuild || !O.newBuild || !fs.existsSync(O.old) || !fs.existsSync(O.neu) || !(O.cold > 0))
-    { console.error("用法：node scripts/check-upgrade.js --old <舊.apk> --old-build <舊版號> --new <新.apk> --new-build <新版號> [--serial emulator-5580] [--out 資料夾] [--cold 3] [--no-old-worker]"); process.exit(2) }
+    { console.error("用法：node scripts/check-upgrade.js --old <舊.apk> --old-build <舊版號> --new <新.apk> --new-build <新版號> [--serial emulator-5580] [--out 資料夾] [--cold 3] [--no-old-worker] [--allow-wipe-device]"); process.exit(2) }
   fs.mkdirSync(O.out, { recursive: true });
   try { R.device = { model: adb("shell", "getprop", "ro.product.model"), android: adb("shell", "getprop", "ro.build.version.release") } }
   catch (e) { fail(2, `找不到裝置 ${O.serial}（adb devices 看看）`) }
+  { const g = checkDevice(adb, O.allowWipe); R.device.emulator = g.emulator; if (!g.ok) fail(2, g.message); if (g.message) console.log(g.message) }
 
   // 1. 舊版：乾淨安裝、寫存檔、等舊 Worker 與程式快取建立
   try { adb("uninstall", PKG) } catch (e) { /* 本來就沒裝 */ }
@@ -108,8 +114,11 @@ async function main() {
     let c2;
     try { c2 = await launch(O.newBuild) } catch (e) { fail(1, `第 ${i} 次冷啟：${e.message}`) }
     try {
-      await sleep(2000);
+      /* PR #12 審查：更新視窗要等大廳連線送來 version 才會跳，冷啟後持續看 DIALOG_WATCH_SEC 秒，期間出現過就算 */
+      let seen = 0;
+      for (let t = 0; t < DIALOG_WATCH_SEC; t++) { try { seen = Math.max(seen, await c2.ev(DIALOGS)) } catch (e) { } await sleep(1000) }
       const row = await c2.ev(PROBE);
+      row.dialogs = Math.max(row.dialogs, seen);
       row.bad = verdict(row); row.pass = !row.bad.length; row.screenshot = snap("after-cold-" + i);
       R.after.push(row); save();
       console.log(`${row.pass ? "✔" : "✘"} 第 ${i} 次冷啟：${row.pass ? "通過" : row.bad.join("；")}`);
@@ -120,5 +129,5 @@ async function main() {
   console.log(bad.length ? `✘ 不能送審：${bad.length}／${O.cold} 次冷啟不符（P0-UPD）` : `✔ 升級測試通過：${O.oldBuild} → ${O.newBuild}，冷啟 ${O.cold} 次都符合`);
   process.exit(bad.length ? 1 : 0);
 }
-module.exports = { verdict, PROBE };
+module.exports = { verdict, PROBE, DIALOG_WATCH_SEC };
 if (require.main === module) main().catch(e => fail(2, e.stack || String(e)));

@@ -8,6 +8,10 @@
 //   2. journeyStart 開新旅程（新旅程一律齊轍開局）→ 序局標成下過（bhXuDone，玩家都下過）
 //   3. ptyJoin 讓隨行夥伴上船、ptySetLook 設成隨行（預設駱躍梅，跟開發者手機一致）→ 存檔、重新載入
 //   4. 等預載頁收掉，收下新旅程的「七星授印禮」
+// 跟真實封測玩家還有這些差別（PR #12 審查，報告裡要照實寫）：
+//   - 只到「剛開旅程」：修為、星輝、官階、進度都是新的，玩了幾天的玩家畫面會多一些已解鎖的東西
+//   - 連到大廳的測試房（xq_netRoot＝xq_test），不是正式大廳
+//   - App 語言靠 cmd locale set-app-locales 設繁中：要 Android 13 以上；Android 12 設不了，navigator.language 仍是英文，只靠 App 內設定換成中文
 // 用法：const { setupPlayer } = require("./player-state.js"); await setupPlayer({ adb, serial, port, companion })
 "use strict";
 const cp = require("child_process");

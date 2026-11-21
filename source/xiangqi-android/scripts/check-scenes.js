@@ -10,16 +10,18 @@
 //   加 --fresh 才用空白存檔（新安裝第一次打開的情況，當額外一項）。開發者 11/21：「我這邊也要精準看到跟 Android 手機的畫面樣子」。
 // 用法：node scripts/check-scenes.js [--apk <要測的.apk>（全新安裝）] [--serial emulator-5580] [--mode both|online|offline]
 //         [--out <資料夾>] [--wait 5000] [--routes home,lobby,…] [--fresh] [--companion x_miaogirl]
-//   需要已開好的模擬器或手機、adb（環境變數 ADB 或 PATH）
-// 結束代碼：0＝所有畫面都沒有破圖、沒有失敗的 data/ 請求；1＝有；2＝用法或環境錯誤（App 沒起來、玩家狀態沒設成等，不能當通過）
+//   需要已開好的模擬器、adb（環境變數 ADB 或 PATH）。預設只在模擬器上跑（device-guard.js：會解除安裝 App、切飛航模式）；實體手機要加 --allow-wipe-device
+//   讀取失敗檢查要 WebView 能給讀取狀態碼（Chrome 109 以上）；拿不到時整輪當測不成立
+// 結束代碼：0＝所有畫面都沒有破圖、沒有失敗的 data/ 請求；1＝有；2＝用法或環境錯誤（App 沒起來、玩家狀態沒設成、不是模擬器、WebView 太舊等，不能當通過）
 "use strict";
 const fs = require("fs"), path = require("path"), cp = require("child_process");
 const { connect } = require("./cdp.js");
 const { setupPlayer, waitPreload } = require("./player-state.js");
+const { checkDevice } = require("./device-guard.js");
 
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d };
 const O = { apk: arg("--apk"), serial: arg("--serial", "emulator-5580"), mode: arg("--mode", "both"), out: path.resolve(arg("--out", "scene-check")),
-  wait: Number(arg("--wait", 5000)), routes: arg("--routes"), fresh: process.argv.includes("--fresh"), companion: arg("--companion", "x_miaogirl") };
+  wait: Number(arg("--wait", 5000)), routes: arg("--routes"), fresh: process.argv.includes("--fresh"), allowWipe: process.argv.includes("--allow-wipe-device"), companion: arg("--companion", "x_miaogirl") };
 const PKG = "com.raysonchen.xiangqiqianqiu", ADB = process.env.ADB || "adb", PORT = 9253;
 const ROUTES = (O.routes || [
   "home", "journey", "adventure", "ship", "hub", "lobby", "cpu", "cpuroom", "pvp", "canju", "db", "shelf",
@@ -53,7 +55,7 @@ const COLLECT = `(async () => {
   const failed = performance.getEntriesByType("resource")
     .filter(r => /\\/data\\//.test(r.name) && (r.responseStatus >= 400 || (r.responseStatus === 0 && r.transferSize === 0 && r.decodedBodySize === 0 && r.duration > 0 && !r.name.startsWith(location.origin + "/data/"))))
     .map(r => rel(r.name) + "（HTTP " + r.responseStatus + "）");
-  return { hash: location.hash, images: imgs.length, broken, bgBroken: bgRes.filter(b => b.ok !== true).map(b => b.file + (b.ok === "逾時" ? "（逾時）" : "")),
+  return { hash: location.hash, statusOk: typeof PerformanceResourceTiming !== "undefined" && "responseStatus" in PerformanceResourceTiming.prototype, images: imgs.length, broken, bgBroken: bgRes.filter(b => b.ok !== true).map(b => b.file + (b.ok === "逾時" ? "（逾時）" : "")),
     bgCount: bgRes.length, failed: [...new Set(failed)], modal: [...document.querySelectorAll(".modal")].filter(vis).map(m => m.innerText.slice(0, 60)) };
 })()`;
 
@@ -112,6 +114,8 @@ async function sweep(mode) {
   }
   c.close();
   rep.badRoutes = rep.routes.filter(r => r.bad).map(r => r.route);
+  /* PR #12 審查：讀取狀態碼（responseStatus）要 Chrome 109 以上；WebView 91 這類舊版拿不到，讀取失敗會被看成沒事 → 標記出來，最後當成測不成立 */
+  rep.statusOk = rep.routes.filter(r => !r.error).every(r => r.statusOk !== false);
   rep.warnRoutes = rep.routes.filter(r => !r.bad && r.warn).map(r => r.route);
   return rep;
 }
@@ -124,6 +128,7 @@ async function main() {
   const save = () => fs.writeFileSync(path.join(O.out, "scenes.json"), JSON.stringify(R, null, 1) + "\n");
   try {
     R.device = { model: adb("shell", "getprop", "ro.product.model"), android: adb("shell", "getprop", "ro.build.version.release") };
+    { const g = checkDevice(adb, O.allowWipe); R.device.emulator = g.emulator; if (!g.ok) throw new Error(g.message); if (g.message) console.log(g.message) }
     if (O.apk) { net(true); try { adb("uninstall", PKG) } catch (e) { } adb("install", "-r", "-d", O.apk) }
     R.installed = (adb("shell", "dumpsys", "package", PKG).match(/^\s*versionName=(\S+)\s*$/m) || [])[1] || null;
     if (O.fresh) { try { adb("shell", "cmd", "locale", "set-app-locales", PKG, "--locales", "zh-TW") } catch (e) { } }   /* 新安裝也照臺灣玩家：手機語言繁中 */
@@ -134,11 +139,13 @@ async function main() {
   R.finishedAt = new Date().toISOString();
   const bad = R.sweeps.flatMap(s => s.badRoutes.map(r => (s.mode === "online" ? "連線 " : "離線 ") + r));
   const warn = R.sweeps.flatMap(s => (s.warnRoutes || []).map(r => "離線 " + r));
-  R.result = bad.length ? "不通過" : "通過"; R.warnRoutes = warn; save();
+  const noStatus = R.sweeps.some(s => s.mode === "online" && s.statusOk === false);
+  R.result = bad.length ? "不通過" : noStatus ? "測不成立" : "通過"; R.warnRoutes = warn; R.statusOk = !noStatus; save();
+  if (!bad.length && noStatus) { console.log("△ 測不成立：這台的 WebView 太舊，拿不到讀取狀態碼（要 Chrome 109 以上），讀取失敗檢查沒有做。看得到的破圖已檢查、沒有發現；請換新一點的模擬器再跑"); process.exit(2) }
   console.log(bad.length ? `✘ 不能送審：${bad.length} 個畫面有破圖或讀取失敗（${bad.join("、")}）`
     : `✔ 破圖掃描通過：${R.sweeps.map(s => (s.mode === "online" ? "連線" : "離線") + " " + s.routes.length + " 個畫面").join("、")}看得到的圖都沒有破（${R.sweeps[0] && R.sweeps[0].build}）`);
   if (warn.length) console.log(`△ 提醒：離線時 ${warn.length} 個畫面有還沒下載過的檔讀不到（${warn.join("、")}），細節在 scenes.json；不擋送審`);
   process.exit(bad.length ? 1 : 0);
 }
-module.exports = { judge, ROUTES };
+module.exports = { judge, ROUTES, COLLECT };
 if (require.main === module) main();

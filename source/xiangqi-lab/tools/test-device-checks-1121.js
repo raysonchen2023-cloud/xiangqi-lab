@@ -8,8 +8,9 @@
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process");
 const AND = path.join(__dirname, "..", "..", "xiangqi-android", "scripts");
 const UP = path.join(AND, "check-upgrade.js"), SC = path.join(AND, "check-scenes.js"), PS = path.join(AND, "player-state.js");
-const { verdict, PROBE } = require(UP);
-const { judge, ROUTES } = require(SC);
+const { verdict, PROBE, DIALOG_WATCH_SEC } = require(UP);
+const { judge, ROUTES, COLLECT } = require(SC);
+const { isEmulatorProps, checkDevice } = require(path.join(AND, "device-guard.js"));
 const { PRELOAD_BUSY } = require(PS);
 const made = [];
 test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }) });
@@ -58,6 +59,28 @@ test("破圖掃描：預設掃 44 個畫面，包含首頁、雲河星槎、十�
 
 test("〔原始碼〕封測玩家狀態：等預載頁收掉的判斷看的是畫面上的「正在準備棋盤」", () => {
   assert.match(PRELOAD_BUSY, /正在準備棋盤/);
+});
+
+test("PR #12 審查：只准在模擬器上跑——實體手機會被解除安裝、刪掉存檔，要加 --allow-wipe-device 才放行並警告", () => {
+  assert.equal(isEmulatorProps({ "ro.kernel.qemu": "1" }), true);
+  assert.equal(isEmulatorProps({ "ro.boot.qemu": "1" }), true);
+  assert.equal(isEmulatorProps({ "ro.hardware": "ranchu" }), true);
+  assert.equal(isEmulatorProps({ "ro.kernel.qemu": "", "ro.boot.qemu": "", "ro.hardware": "qcom" }), false);
+  const phone = (...a) => (a[2] === "ro.hardware" ? "qcom" : "");
+  const no = checkDevice(phone, false);
+  assert.equal(no.ok, false); assert.match(no.message, /不是模擬器.*--allow-wipe-device/);
+  const yes = checkDevice(phone, true);
+  assert.equal(yes.ok, true); assert.match(yes.message, /⚠ 警告：這是實體手機/);
+  const emu = checkDevice((...a) => (a[2] === "ro.kernel.qemu" ? "1" : ""), false);
+  assert.deepEqual(emu, { ok: true, emulator: true, message: "" });
+});
+
+test("PR #12 審查：更新視窗要等大廳送 version 才跳，冷啟後至少看 15 秒", () => {
+  assert.ok(DIALOG_WATCH_SEC >= 15, String(DIALOG_WATCH_SEC));
+});
+
+test("〔原始碼〕PR #12 審查：掃描會回報 WebView 能不能給讀取狀態碼（舊 WebView 拿不到時整輪當測不成立）", () => {
+  assert.match(COLLECT, /"responseStatus" in PerformanceResourceTiming\.prototype/);
 });
 
 test("測不成立就回 2：沒帶參數、模式寫錯、找不到裝置都不能被當成通過", () => {
