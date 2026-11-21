@@ -246,6 +246,11 @@ body.jh-on .xqbot{display:none!important}
 .jh-spot .pole{width:3px;height:22px;background:linear-gradient(#6b4a2b,#3b2a1a);border-radius:2px}
 .jh-spot.won .bn{box-shadow:0 0 0 3px rgba(255,214,120,.55),0 0 14px rgba(255,190,80,.75)}
 .jh-spot.mine .bn{background:#fff6e0;border-width:3px}
+.jh-spot.wind .bn{border-color:#c9971c;box-shadow:0 0 0 3px rgba(255,214,90,.65),0 0 18px 5px rgba(255,196,60,.8);animation:jhWindGlow 2.6s ease-in-out infinite}
+.jh-spot.wind .wd{font:900 16px/1 var(--serif,serif);font-style:normal;letter-spacing:.08em;color:#fffaf0;background:linear-gradient(#e8b62e,#b07f10);padding:4px 7px;border-radius:7px;white-space:nowrap;text-shadow:0 1px 1px rgba(90,55,0,.5)}
+@keyframes jhWindGlow{0%,100%{box-shadow:0 0 0 3px rgba(255,214,90,.55),0 0 12px 3px rgba(255,196,60,.6)}50%{box-shadow:0 0 0 4px rgba(255,222,110,.85),0 0 24px 8px rgba(255,196,60,.95)}}
+.jh-windnote{margin:10px 0 0;padding:8px 10px;border-radius:10px;background:#fff3cf;border:1px solid #e2b64a;color:#6b4a0c;font-size:14px;line-height:1.55}
+@media (prefers-reduced-motion:reduce){.jh-spot.wind .bn{animation:none}}
 .jh-me{position:absolute;width:auto;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 3px 2px rgba(30,20,10,.35));transition:none}
 .jh-map:has(>.shw.on)>.jh-me{visibility:hidden}
 .jh-destination{position:absolute;z-index:6;width:16px;height:16px;box-sizing:border-box;border:2px solid #74542d;
@@ -296,10 +301,11 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
   map.append(bridge);
   for(const points of JH_STEPS)jhDrawSteps(map,pc,points);
   const sch=typeof OSC!=="undefined"?OSC.SCH:[];
-  for(const S0 of sch){const sid=S0.id,P=JH_SITE[sid];if(!P)continue;const S=jhSch(sid)||S0,m=typeof OSC!=="undefined"?OSC.MST.find(x=>x.sid===sid):null;
-    const b=document.createElement("button");b.type="button";b.className="jh-spot"+(beat.includes(m&&m.id)?" won":"")+(my===sid?" mine":"");b.dataset.sid=sid;b.style.cssText=pc(P.f[0],P.f[1])+`;--jc:${jhCol[sid]||"#8a6a3a"}`;
-    b.setAttribute("aria-label",S.nm+(m?jhL("，掌門"+m.nm,", master "+m.en):""));
-    b.innerHTML=`<span class="bn">${m?`<img src="data/npc/${m.id}.webp" alt="" onerror="this.remove()">`:""}${typeof oscSym==="function"?oscSym(sid):""}<b>${esc(S.nm)}</b></span><span class="pole" aria-hidden="true"></span>`;
+  const wind=jhWindNow().ids;   /* W45 風向標：這個時段順風的 2～3 派，旗號發金光、掛大字「順風」 */
+  for(const S0 of sch){const sid=S0.id,P=JH_SITE[sid];if(!P)continue;const S=jhSch(sid)||S0,m=typeof OSC!=="undefined"?OSC.MST.find(x=>x.sid===sid):null,wd=wind.includes(sid);
+    const b=document.createElement("button");b.type="button";b.className="jh-spot"+(beat.includes(m&&m.id)?" won":"")+(my===sid?" mine":"")+(wd?" wind":"");b.dataset.sid=sid;b.style.cssText=pc(P.f[0],P.f[1])+`;--jc:${jhCol[sid]||"#8a6a3a"}`;
+    b.setAttribute("aria-label",S.nm+(m?jhL("，掌門"+m.nm,", master "+m.en):"")+(wd?jhL("，正順風",", fair wind now"):""));
+    b.innerHTML=`<span class="bn">${m?`<img src="data/npc/${m.id}.webp" alt="" onerror="this.remove()">`:""}${typeof oscSym==="function"?oscSym(sid):""}<b>${esc(S.nm)}</b>${wd?`<em class="wd" aria-hidden="true">${esc(jhL("順風","Fair wind"))}</em>`:""}</span><span class="pole" aria-hidden="true"></span>`;
     b.onclick=()=>{if(c&&!map.querySelector(".shw.on"))walkFlat(sid,()=>jhSheet(sid));
       else jhSheet(sid)};map.append(b)}
   const me=document.createElement("img");me.className="jh-me";me.alt="";me.src=c?`data/xs/prev_${c}.webp`:"";if(!c)me.style.display="none";me.onerror=()=>{me.style.display="none"};map.append(me);
@@ -432,6 +438,7 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
     jhFadeOut();setTimeout(()=>{
       if(!wrap.isConnected)return;
       jhIntro();
+      if(!document.getElementById("jhIntro"))jhWindToast();
     },JH_FADE+80);
     try{document.fonts.ready.then(fit)}catch(e){}};
   if(img.complete&&img.naturalWidth)setTimeout(ready,0);else{img.onload=ready;img.onerror=ready}
@@ -446,6 +453,7 @@ function jhSheet(sid){if(typeof sheet!=="function"||typeof OSC==="undefined")ret
       ${m?`<b>${esc(jhL(m.nm,m.en))}</b><p class="muted">${esc(jhL(S.nm+"掌門","Master of the "+S.nm))}</p><p>${esc(jhL("「"+m.say+"」",'"'+jhT(m.say)+'"'))}</p>`:""}
       <p class="muted">${esc(jhL(`慣用${S.op}：${S.say}`,`Plays ${S.op}: ${S.say}`))}</p>${mates.length?`<p class="muted">${esc(jhL("門下棋友：","Players of this school: ")+mates.join(jhL("、",", ")))}</p>`:""}</div></div>
     ${c?"":`<p class="muted">${esc(jhL("開始旅程、有了隊伍以後才能拜師和挑戰。","Start a journey and form a party to learn or challenge."))}</p>`}
+    ${jhWindOn(sid)?`<p class="jh-windnote">${esc(jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges in this school give extra XP."))}</p>`:""}
     <div class="jh-actions">
       ${c?`<button class="btn" id="jhLearn">${esc(act===sid?jhL(`繼續${jhNm(c)}的修行`,`Continue ${jhNm(c)}'s training`):jhL(`${jhNm(c)}拜入${S.nm}`,`${jhNm(c)} joins the ${S.nm}`))}</button>`:""}
       ${c&&m?`<button class="btn ghost" id="jhZm">${esc(jhL(`🏯 挑戰${m.nm}`,`🏯 Challenge ${m.en}`))}</button>`:""}
@@ -490,3 +498,39 @@ if(typeof document!=="undefined")document.addEventListener("click",()=>{if(!/^#\
 try{if(typeof STM_AREAS!=="undefined"){const A=k=>STM_AREAS.find(a=>a[0]===k);const sh=A("ship"),ac=A("acad");
   if(sh&&!sh[4].some(e=>e[1]==="#/jianghu"))sh[4].push([jhL("十州棋館","Ten Prefectures"),"#/jianghu","十州 門派 江湖 地圖 掌門 長卷 棋館 山門"]);
   if(ac&&!ac[4].some(e=>e[1]==="#/school"))ac[4].push([jhL("開局棋路","Opening Paths"),"#/school","開局 門派 拜師 修行 中炮 屏風馬"])}}catch(e){}
+/* ---------- W45 風向標（開發者 11/21 選 Gemini 188 案 9）----------
+   「門派地圖目前有點太單調，想增加玩家的樂趣」：照全 App 共用的天氣（07w7 sw7Precip，首頁那一區），讓 2～3 派的旗號發金光、掛大字「順風」。
+   晴、雨、雪、夜各有一組候選門派；每 4 小時一段（跟 sw7Precip 下雨下雪的時段同一套）換一次，同一天同一時段大家看到的一樣。
+   在順風的派上課或挑戰掌門：第一次完成的修為照原本的 1.5 倍給；已經拿過的課、再下的掌門盤，每派每天多給一次 10 修為（addXP 的 key 去重）。
+   修為照 addXP 原本的規則分給隊伍、轉星輝。倍率不寫在畫面上（只寫「修為多給」）；不扣修為、不改棋局與掌門強度。
+   Claude 核對時拿掉原案的「花修為切換關注州府」（門派系統不扣修為）與「對局先手優勢」（改棋局、不公平）。 */
+const JH_WIND={sun:["central","same_cannon","opposite_cannon","horse","elephant"],rain:["screen","pawn","cross_palace"],snow:["elephant","advisor_corner","palace_horse"],night:["horse","palace_horse","advisor_corner","screen"]};
+const JH_WIND_NM={sun:["晴","Clear"],rain:["雨","Rain"],snow:["雪","Snow"],night:["夜","Night"]};
+const JH_WIND_MUL=1.5,JH_WIND_GIFT=10;
+function jhWindDay(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function jhWindHash(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return h>>>0}
+/* 這個時段的天氣：雪、雨照共用天氣；沒下雨雪時，日落後到日出前算夜（07w7 sw7HomeNightA），其餘算晴 */
+function jhWindState(d){d=d||new Date();
+  try{if(typeof sw7Precip==="function"&&typeof SW7_PAGES!=="undefined"){const o=SW7_PAGES.find(x=>x.k==="home"),p=sw7Precip(sw7TermFor(null,o),sw7Rg(o),d);if(p&&p.t==="snow")return"snow";if(p&&p.t==="rain")return"rain"}}catch(e){}
+  let night=null;try{if(typeof sw7HomeNightA==="function")night=sw7HomeNightA(d,typeof sw7SeaNow==="function"?sw7SeaNow():"autumn")>0}catch(e){night=null}
+  if(night==null){const h=d.getHours();night=h<6||h>=19}
+  return night?"night":"sun"}
+/* 從那一組候選裡挑 2～3 派（同一天、同一段、同一種天氣，結果固定） */
+function jhWindPick(st,d){const pool=(JH_WIND[st]||JH_WIND.sun).slice();let s=jhWindHash(jhWindDay(d)+"|"+Math.floor(d.getHours()/4)+"|"+st);
+  const n=Math.min(pool.length,2+(s%2));const out=[];
+  while(out.length<n){s=(Math.imul(s,1103515245)+12345)>>>0;out.push(pool.splice(s%pool.length,1)[0])}
+  return out}
+function jhWindNow(d){d=d||new Date();const st=jhWindState(d);return{st,ids:jhWindPick(st,d),key:jhWindDay(d)+"|"+Math.floor(d.getHours()/4)+"|"+st}}
+function jhWindOn(sid,d){return !!sid&&jhWindNow(d).ids.includes(sid)}
+/* 進長卷時提示一次（同一段時間只提示一次，store jhWindSeen） */
+function jhWindToast(){const W=jhWindNow();if(!W.ids.length||typeof toast!=="function")return;let seen="";try{seen=store.get("jhWindSeen","")}catch(e){}if(seen===W.key)return;
+  try{store.set("jhWindSeen",W.key)}catch(e){}const nm=W.ids.map(id=>{const S=jhSch(id);return S?S.nm:id}),w=JH_WIND_NM[W.st]||JH_WIND_NM.sun;
+  toast(jhL(`${w[0]}・順風：${nm.join("、")}`,`${w[1]} · fair wind: ${nm.join(", ")}`))}
+/* 修為加成：xp＝原本要給的修為（第一次完成才有）；done＝這次確實完成了一個例子或下完一盤 */
+function jhWindXp(xp,sid,done,d){d=d||new Date();if(!jhWindOn(sid,d))return xp;if(xp>0)return Math.round(xp*JH_WIND_MUL);
+  if(done&&typeof addXP==="function")try{addXP(JH_WIND_GIFT,jhL("十州順風","Fair wind"),"jhw:"+jhWindDay(d)+":"+sid)}catch(e){}
+  return xp}
+/* 包住 07z9 的兩個發修為函式（不改 07z9）：修行頁 finish、掌門結算 zmGameEnd 都是呼叫 OSC.reward／OSC.zmReward */
+try{if(typeof OSC!=="undefined"&&!OSC.jhWind){const r0=OSC.reward,z0=OSC.zmReward;
+  OSC.reward=function(claim,sid,n,res,now){return jhWindXp(r0.apply(this,arguments),sid,!!(res&&res.ok))};
+  OSC.zmReward=function(claim,m,res,now){return jhWindXp(z0.apply(this,arguments),m&&m.sid,!!res)};OSC.jhWind=1}}catch(e){}
