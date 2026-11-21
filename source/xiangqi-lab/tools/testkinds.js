@@ -40,6 +40,7 @@ const CLASSIFIED = new Set([
   "test-evidence-shots.js",   /* 11/13 第 15 輪 F1／F2／X2 可重現畫面證據包＋英文防爆版檢查（tools/qa/evidence-shots.js 的純函式；行為 16、原始碼 1） */
   "test-android-build.js",   /* 11/13 第 15 輪 F3、F4 Android debug APK 編譯＋可重現檢查 repro-check.js、建置與工具鏈紀錄（行為 9、混合 2、原始碼 1）；11/13 Service Worker 標頭修法正式採用（混合 +1、原始碼 +1） */
   "test-aab-assets-check-1121.js",   /* 11/21 W41① 送審前安裝包內容檢查 xiangqi-android/scripts/check-aab-assets.js（封測 P0-IMG：W21 缺素材、W30 切塊大檔接不回、舊檔；行為 6） */
+  "test-preview-build-1121.js",   /* 11/21 W43 Cloudflare PR 預覽建置 source/preview-build.js（版號跟 sw.js 一致、刪超過 25 MB 的檔、寫 404.html；行為 4） */
   "test-device-checks-1121.js",   /* 11/21 W41②③ 升級測試 check-upgrade.js 與 44 畫面破圖掃描 check-scenes.js 的判斷規則（P0-UPD、P0-IMG；離線只算看得到的破圖；測不成立回 2；只准模擬器；更新視窗看 20 秒；行為 12、原始碼 3） */
   "test-android-roadmap.js",   /* 11/13 第 14 輪 F3 Android 路線圖＋可重現驗證包：verify-all.js、xiangqi-android 骨架檢查、F-Droid 草稿、make-www（行為 8、混合 1）；11/13 骨架檢查 native.swclient（行為 +1） */
   "test-fdroid-evidence.js",   /* 11/13 第 13 輪 F2 F-Droid 可建置證據：pikafish-verify.js、release-verify.js（行為 8、原始碼 1） */
