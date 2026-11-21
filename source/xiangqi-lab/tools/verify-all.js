@@ -17,6 +17,8 @@
 //   node source/xiangqi-lab/tools/verify-all.js --out 紀錄.txt           紀錄另存一份檔案（LF、UTF-8）
 //   node xiangqi-lab/tools/verify-all.js --repo <公開倉庫資料夾>          開發者電腦上指定倉庫（例如 git archive 解開的一份）
 //   其他選項：--record <build-record.json>  --only check-build,run-tests  --skip run-tests  --timeout <秒，每一步，預設 1800>
+//   --tally-out <tally.json>：（W60-A2）「重跑測試」那一步把逐項結果存成 JSON，帶這一次的執行編號；
+//     再用 node source/xiangqi-lab/tools/make-evidence.js 從同一次的紀錄與 tally.json 產生 evidence.md
 //             --note <文字>（寫進紀錄開頭，例如倉庫是怎麼取得的）
 // Windows 注意：git 設了 core.autocrlf=true 時 clone 下來的文字檔是 CRLF，雜湊會對不上；用 git -c core.autocrlf=false clone。
 // 結束代碼：全部通過（可以有「略過」）0；有一步失敗 1；用法錯誤或找不到倉庫 2。
@@ -103,7 +105,7 @@ function runStep(s, repo, timeoutSec) {
   const t0 = Date.now();
   if (s.skip) return { ...s, status: "略過", code: null, ms: 0, out: "" };
   if (s.missing) return { ...s, status: "失敗", code: 2, ms: 0, out: s.missing };
-  const r = cp.spawnSync(process.execPath, s.cmd, { cwd: repo, encoding: "utf8", timeout: timeoutSec * 1000, maxBuffer: 256e6, env: { ...process.env, FORCE_COLOR: "0", NO_COLOR: "1" } });
+  const r = cp.spawnSync(process.execPath, s.cmd, { cwd: repo, encoding: "utf8", timeout: timeoutSec * 1000, maxBuffer: 256e6, env: { ...process.env, FORCE_COLOR: "0", NO_COLOR: "1", ...(s.env || {}) } });
   const out = (r.stdout || "") + (r.stderr ? (r.stdout ? "\n" : "") + r.stderr : "") + (r.error ? "\n[錯誤] " + r.error.message : "");
   const code = r.status == null ? 1 : r.status;
   return { ...s, status: code === 0 ? "通過" : "失敗", code, ms: Date.now() - t0, out, signal: r.signal || null };
@@ -119,6 +121,13 @@ function gitCommit(repo) {
 
 const twTime = d => new Date(d.getTime() + 8 * 3600e3).toISOString().replace("T", " ").slice(0, 19) + "（臺灣時間）";
 
+/* W60-A2：這一次執行的編號。GitHub Actions 上用 gh-<run id>-<第幾次重跑>，本機用 local-<UTC 時間>-<4 碼亂數>；
+   寫進驗證紀錄檔頭，也傳給「重跑測試」那一步（XQ_RUN_ID），逐項結果 tally.json 帶同一個編號 */
+function runIdOf(env = process.env, now = new Date()) {
+  if (env.GITHUB_RUN_ID) return `gh-${env.GITHUB_RUN_ID}-${env.GITHUB_RUN_ATTEMPT || 1}`;
+  return "local-" + now.toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z") + "-" + crypto.randomBytes(2).toString("hex");
+}
+
 /* 跑全部，回傳 { code, text, results, facts } */
 function verifyAll(o = {}) {
   const repo = o.repo, scrub = scrubber(o.home || os.homedir(), [[path.resolve(repo), "<倉庫資料夾>"]]), now = o.now ? new Date(o.now) : new Date();
@@ -126,8 +135,11 @@ function verifyAll(o = {}) {
   let rel = null;
   try { rel = JSON.parse(fs.readFileSync(path.join(repo, "release.json"), "utf8")) } catch (e) { rel = null }
   const { steps, record } = plan(repo, o);
+  const runId = o.runId || runIdOf(process.env, now);
+  for (const s of steps) if (s.id === "run-tests") s.env = Object.assign({ XQ_RUN_ID: runId }, o.tallyOut ? { XQ_TALLY_OUT: path.resolve(o.tallyOut) } : {});
   const H = (rel_) => ({ path: rel_, sha256: fileSha(path.join(repo, rel_)) });
   const facts = {
+    runId,
     version: rel && rel.version || null, releaseHtml: rel && rel.html || null, releaseSw: rel && rel.sw || null,
     commit: gitCommit(repo),
     hashes: ["index.html", "sw.js", "release.json", "core.js", "engine.js", "engine/pikafish.wasm", "engine/pikafish.js", "engine/pikafish.nnue"].map(H).filter(h => h.sha256),
@@ -141,6 +153,7 @@ function verifyAll(o = {}) {
   L.push("《象棋千秋》可重現驗證紀錄（verify-all.js）");
   L.push("=".repeat(40));
   L.push(`執行時間：${now.toISOString()}（UTC）＝ ${twTime(now)}`);
+  L.push(`執行編號：${runId}`);
   L.push(`Node.js：${process.version}；作業系統：${os.platform()} ${os.release()} ${os.arch()}`);
   L.push(`倉庫資料夾：${repo}`);
   L.push(`倉庫 commit：${facts.commit || "（不是 git 檢出；用下面的雜湊對照）"}`);
@@ -175,7 +188,7 @@ function verifyAll(o = {}) {
   return { code: failed.length ? 1 : 0, text, results, facts };
 }
 
-module.exports = { verifyAll, plan, treeHash, scrubber, findRepo, STEPS };
+module.exports = { verifyAll, plan, runStep, treeHash, scrubber, findRepo, runIdOf, STEPS };
 
 if (require.main === module) {
   const a = process.argv.slice(2), opt = k => { const i = a.indexOf(k); return i >= 0 ? a[i + 1] : null };
@@ -187,7 +200,7 @@ if (require.main === module) {
     console.log("找不到公開倉庫（要有 source/ 和 release.json）。在倉庫根目錄跑 node source/xiangqi-lab/tools/verify-all.js，或加 --repo <資料夾>");
     process.exit(2);
   }
-  const r = verifyAll({ repo, record: opt("--record"), note: opt("--note"), only: opt("--only") ? list("--only") : null, skip: list("--skip"), timeout: Number(opt("--timeout")) || 1800 });
+  const r = verifyAll({ repo, record: opt("--record"), note: opt("--note"), only: opt("--only") ? list("--only") : null, skip: list("--skip"), timeout: Number(opt("--timeout")) || 1800, tallyOut: opt("--tally-out") });
   process.stdout.write(r.text);
   const out = opt("--out");
   if (out) { fs.writeFileSync(out, r.text); console.log("紀錄寫到：" + out) }

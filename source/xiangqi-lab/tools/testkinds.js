@@ -44,6 +44,7 @@ const CLASSIFIED = new Set([
   "test-device-checks-1121.js",   /* 11/21 W41②③ 升級測試 check-upgrade.js 與 44 畫面破圖掃描 check-scenes.js 的判斷規則（P0-UPD、P0-IMG；離線只算看得到的破圖；測不成立回 2；只准模擬器；更新視窗看 20 秒；行為 12、原始碼 3） */
   "test-jianghu-wind-1121.js",   /* 11/21 W45 十州棋館風向標（m/07z9b-jianghu.js：照共用天氣挑 2～3 派順風、旗號金光、上課與掌門修為多給、每派每天一次；行為 8、原始碼 1）；PR #15 審查後續：掌門盤照開局時記下的順風算、+30 說明（行為 +1、原始碼 +1）；PR #16 審查：有 zmCur 沒有 jw（下到一半）照現在的天氣算 */
   "test-zm-intel-1121.js",   /* 11/21 W48 門內玩法首發：案 4 掌門暗樁（引擎與 App 同一套主修／副修算法、贏門人才解鎖、一天一次）、案 9 掌門盤接關鍵步重練（行為 5、原始碼 3） */
+  "test-make-evidence.js",   /* 11/22 W60-A2 證據同次重產：讀驗證紀錄、同一次執行才產生、evidence.md 格式與發布標記、跟 check-evidence.cjs 比對、分類報表、verify-all 執行編號傳遞、指令拒絕不同次（行為 7、原始碼 1） */
   "test-zm-hall-1121.js",   /* 11/21 W48 十派門內場景頁 JhHall（先做中炮門：設定範圍、百分比座標、前院門人、路由順序、圖讀不到退回小卡、立繪疊主位；前院門下棋友：資料、站位、請教與打聽、切磋只指定一次；PR #21 審查兩輪：指定用掉就清、45 秒時限與到期計時器、選單之後才開新局仍坐指定的人、外部指定優先、前院能下的優先（雜湊排前也一樣）；行為 13、原始碼 4，其中原圖檢查在公開副本略過） */
   "test-jh-kick-1122.js",   /* 11/22 W45② 十州踢館令（開發者選單：相剋表、印記＋棋譜＋修為 30、程式畫的戰書旗）：相剋表、定式合法且局面對得上、解鎖條件、開局參數、結算只給一次、再下一盤、小卡內容（行為 11、原始碼 1） */
   "test-android-roadmap.js",   /* 11/13 第 14 輪 F3 Android 路線圖＋可重現驗證包：verify-all.js、xiangqi-android 骨架檢查、F-Droid 草稿、make-www（行為 8、混合 1）；11/13 骨架檢查 native.swclient（行為 +1） */
@@ -187,6 +188,12 @@ module.exports = { kindOf, runFile, staticFile, tally, listFiles, CLASSIFIED, PE
 if (require.main === module && !process.env.NODE_TEST_CONTEXT) {
   const mode = process.argv.includes("--static") ? "static" : "run";
   const { files, total } = tally(mode);
+  /* W60-A2 證據同次重產：verify-all.js 給了 XQ_TALLY_OUT 就把這一次的逐項結果存成 JSON（帶同一個執行編號 XQ_RUN_ID），
+     make-evidence.js 只讀這份、不再自己重跑測試，所以 evidence.md、驗證紀錄、分類報表一定是同一次執行的結果 */
+  if (mode === "run" && process.env.XQ_TALLY_OUT) {
+    try { fs.writeFileSync(process.env.XQ_TALLY_OUT, JSON.stringify({ runId: process.env.XQ_RUN_ID || null, node: process.version, kinds: KINDS, files, total }) + "\n") }
+    catch (e) { console.log("✖ 逐項結果寫不出來（XQ_TALLY_OUT）：" + e.message); process.exitCode = 1 }
+  }
   const cell = o => mode === "static" ? String(o.all) : `${o.pass}/${o.all}` + (o.skip ? `（略過 ${o.skip}）` : "");   /* 略過的不算通過，另外標 */
   const head = mode === "static" ? "（只數呼叫處，沒有跑測試；迴圈產生的多項只算一次）" : "（實際跑過；格式＝通過／項數，略過的另外標、不算通過）";
   console.log("測試三類統計" + head);
