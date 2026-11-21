@@ -323,3 +323,19 @@ test("PR #23 審查：第一次進門，出口亮框與「要回去，點這裡�
   assert.deepEqual(bub.map(([b, t]) => [b === gate, t]), [[true, "要回去，點這裡"]], "泡泡指著搭船標籤");
 });
 function R0() { return load().R }
+
+/* 11/22 Windows Claude 2 查 W62 時發現：門內頁頂端順風提示英文折兩行、壓到「掌門大廳」標籤；實測中文一行也會壓到（375 寬：提示 84～124、標籤 103～138）。
+   改成標籤正下方置中的一行小徽章。這裡照實際尺寸算：375 寬手機上圖高＝375×1376/768 CSS px，標籤高約 35px（照實測），徽章頂端要在標籤底下 */
+test("門內頁順風徽章：在掌門大廳標籤正下方、不重疊；中英文都短到一行放得下；樣式比 .jh-windnote 更具體", () => {
+  const { R } = load();
+  const H = R.JH_HALL.central, imgH = 375 * R.JH_HALL_H / R.JH_HALL_W, labelHalf = 35 / 2;
+  const labelBottom = (H.spots.hall[1] / R.JH_HALL_H) * imgH + labelHalf;
+  const css = JH.match(/\.jh-hall \.jh-hall-note\{[^}]*\}/);
+  assert.ok(css, "要用 .jh-hall .jh-hall-note（比之後插入的 .jh-windnote 更具體）");
+  const top = +css[0].match(/top:([\d.]+)%/)[1];
+  assert.ok(top / 100 * imgH > labelBottom + 2, `徽章頂端 ${(top / 100 * imgH).toFixed(1)}px 要在標籤底 ${labelBottom.toFixed(1)}px 下面`);
+  assert.match(css[0], /left:50%/); assert.match(css[0], /translateX\(-50%\)/); assert.match(css[0], /white-space:nowrap/);
+  const m = JH.match(/n\.textContent=jhL\("([^"]+)","([^"]+)"\);n\.title=/);
+  assert.ok(m, "找不到門內頁順風徽章的字");
+  assert.ok([...m[1]].length <= 8 && m[2].length <= 16, "中文 ≤8 字、英文 ≤16 字：" + m[1] + " / " + m[2]);
+});
