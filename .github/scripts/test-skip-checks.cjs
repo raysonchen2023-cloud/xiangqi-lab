@@ -40,6 +40,12 @@ test("略過稽核：解析逐條清單；找不到測試總結回 null（測不
   assert.equal(s.total, 2); assert.deepEqual(s.items, ["test-a.js：甲（沒有檔）", "test-b.js：乙"]);
 });
 
+test("略過稽核：verify-all.js 紀錄裡整段縮排兩格也讀得到（PR #17 第一次 CI）", () => {
+  const ind = OUT(2, ["test-a.js：甲（沒有檔）", "test-b.js：乙（沒有檔）"]).split("\n").map(l => "  " + l).join("\n");
+  const s = parseSkips(ind);
+  assert.equal(s.total, 2); assert.deepEqual(s.items, ["test-a.js：甲（沒有檔）", "test-b.js：乙（沒有檔）"]);
+});
+
 test("略過稽核：新的略過、消失的略過、總數對不上都分得出來", () => {
   const r = compare(parseSkips(OUT(2, ["A", "B"])), ["A", "C"]);
   assert.deepEqual(r.added, ["B"]); assert.deepEqual(r.gone, ["C"]); assert.equal(r.countMismatch, false);

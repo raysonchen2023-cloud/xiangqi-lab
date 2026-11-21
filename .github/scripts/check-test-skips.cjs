@@ -18,7 +18,7 @@ function parseSkips(text) {
   if (!/四欄合計：通過 \d+、失敗 \d+、略過 \d+/.test(text)) return null;
   const m = /四欄合計：通過 \d+、失敗 \d+、略過 (\d+)/.exec(text), n = Number(m[1]);
   const lines = text.split("\n"), out = [];
-  const i = lines.findIndex(l => l.startsWith(HEAD));
+  const i = lines.findIndex(l => l.trimStart().startsWith(HEAD));   /* verify-all.js 的紀錄會把每一步的輸出縮排兩格（PR #17 第一次 CI 就是卡在這裡） */
   if (i >= 0) for (let j = i + 1; j < lines.length; j++) { const s = /^\s*﹣ (.+)$/.exec(lines[j]); if (!s) break; out.push(s[1].trim()) }
   return { total: n, items: out };
 }
