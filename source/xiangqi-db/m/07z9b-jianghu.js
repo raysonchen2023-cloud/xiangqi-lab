@@ -607,7 +607,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   spot("study",jhL("📖 講棋堂","📖 Lecture hall"),()=>jhHallStudy(sid));
   spot("yard",jhL("👥 前院・門下棋友","👥 Front yard"),()=>jhHallYard(sid));
   spot("gate",jhL("‹ 搭船回十州棋館","‹ Take a boat back to the Ten Prefectures"),()=>jhGo("#/jianghu"));
-  if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");P.append(n)}
+  if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("順風・修為多給","Fair wind +XP");n.title=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");P.append(n)}   /* 11/22 Windows Claude 2 查 W62 時發現：英文原句折成兩行壓到「掌門大廳」標籤；實測中文一行也會壓到。門內頁改成掌門大廳標籤正下方置中的一行小徽章（圖比螢幕寬、左右會被裁，不能放角落），完整說明在掌門小卡 */
   const ready=()=>{if(P.isConnected)jhFadeOut()};if(img.complete&&img.naturalWidth)setTimeout(ready,0);else img.onload=ready;
   setTimeout(()=>{if(f.classList.contains("on")&&P.isConnected&&img.naturalWidth)jhFadeOut()},6000);
   return{}}
@@ -615,7 +615,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
 (function(){if(typeof document==="undefined")return;const s=document.createElement("style");s.id="jhHallCss";s.textContent=`
 .jh-hall{position:relative}.jh-hall>img:first-child{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
 .jh-hall-zm{position:absolute;transform:translate(-50%,-100%);height:auto;cursor:pointer;filter:drop-shadow(0 2px 2px rgba(30,20,10,.35))}
-.jh-hall-note{position:absolute;left:4%;right:4%;top:2%;margin:0}
+.jh-hall .jh-hall-note{position:absolute;left:50%;right:auto;top:11.5%;transform:translateX(-50%);margin:0;padding:2px 6px;font-size:11px;line-height:1.35;white-space:nowrap;border-radius:7px}   /* 要比之後才插入的 .jh-windnote（14px、padding 8px 10px）更具體，不然被蓋掉 */
 .jh-mates{list-style:none;padding:0;margin:8px 0}.jh-mates li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)}`;
   if(!document.getElementById("jhHallCss"))document.head.append(s)})();
 /* ---------- W48 前院門下棋友（開發者 11/21：「門下棋友也站在前院給玩家點選和對話，增加一些和門下棋友的互動」）----------
