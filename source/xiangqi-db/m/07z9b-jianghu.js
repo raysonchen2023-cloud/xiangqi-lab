@@ -251,6 +251,8 @@ body.jh-on .xqbot{display:none!important}
 @keyframes jhWindGlow{0%,100%{box-shadow:0 0 0 3px rgba(255,214,90,.55),0 0 12px 3px rgba(255,196,60,.6)}50%{box-shadow:0 0 0 4px rgba(255,222,110,.85),0 0 24px 8px rgba(255,196,60,.95)}}
 .jh-windnote{margin:10px 0 0;padding:8px 10px;border-radius:10px;background:#fff3cf;border:1px solid #e2b64a;color:#6b4a0c;font-size:14px;line-height:1.55}
 @media (prefers-reduced-motion:reduce){.jh-spot.wind .bn{animation:none}}
+.jh-intel{margin:10px 0 0;padding:8px 10px;border-radius:10px;background:#e8f1ec;border:1px solid #7fae95;color:#1f4a35;font-size:14px;line-height:1.55}
+.jh-intel-hint{margin:10px 0 0;font-size:13.5px;line-height:1.55;color:var(--muted,#6b6257)}
 .jh-me{position:absolute;width:auto;transform:translate(-50%,-100%);pointer-events:none;filter:drop-shadow(0 3px 2px rgba(30,20,10,.35));transition:none}
 .jh-map:has(>.shw.on)>.jh-me{visibility:hidden}
 .jh-destination{position:absolute;z-index:6;width:16px;height:16px;box-sizing:border-box;border:2px solid #74542d;
@@ -454,6 +456,7 @@ function jhSheet(sid){if(typeof sheet!=="function"||typeof OSC==="undefined")ret
       <p class="muted">${esc(jhL(`慣用${S.op}：${S.say}`,`Plays ${S.op}: ${S.say}`))}</p>${mates.length?`<p class="muted">${esc(jhL("門下棋友：","Players of this school: ")+mates.join(jhL("、",", ")))}</p>`:""}</div></div>
     ${c?"":`<p class="muted">${esc(jhL("開始旅程、有了隊伍以後才能拜師和挑戰。","Start a journey and form a party to learn or challenge."))}</p>`}
     ${jhWindOn(sid)?`<p class="jh-windnote">${esc(jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges in this school give extra XP."))}</p>`:""}
+    ${m?jhIntelHTML(sid,m,mates):""}
     <div class="jh-actions">
       ${c?`<button class="btn" id="jhLearn">${esc(act===sid?jhL(`繼續${jhNm(c)}的修行`,`Continue ${jhNm(c)}'s training`):jhL(`${jhNm(c)}拜入${S.nm}`,`${jhNm(c)} joins the ${S.nm}`))}</button>`:""}
       ${c&&m?`<button class="btn ghost" id="jhZm">${esc(jhL(`🏯 挑戰${m.nm}`,`🏯 Challenge ${m.en}`))}</button>`:""}
@@ -540,3 +543,25 @@ function jhWindMark(m){try{const C=store.get("zmCur",null);if(m&&C&&C.id===m.id)
 function jhWindAt(m){try{const C=store.get("zmCur",null);if(m&&C&&C.id===m.id&&"jw" in C)return !!C.jw}catch(e){}return undefined}
 try{if(typeof zmStart==="function"&&!zmStart.jhw){const s0=zmStart;zmStart=function(m){const r=s0.apply(this,arguments);jhWindMark(m);return r};zmStart.jhw=1}
   if(typeof zmAgainArgs==="function"&&!zmAgainArgs.jhw){const a0=zmAgainArgs;zmAgainArgs=function(j){const r=a0.apply(this,arguments);if(r)jhWindMark(OSC.mst(j));return r};zmAgainArgs.jhw=1}}catch(e){}
+/* ---------- W48 案 4「掌門暗樁」（開發者 11/21 選 Gemini 189 案 4）----------
+   在驛站、園子、秘境贏了某一派的門下棋友（OSC.NPC 主修是這一派，雙方合計至少 10 步），就打聽到這派掌門「今天」打算走主修還是副修的棋路。
+   情報是真的：引擎端 xiangqi-lab/src/local.js 的 zmLeanOrd 用同一套算法決定掌門盤用主修或副修的開局表（每三天約一天走副修）。
+   只給情報，不改掌門強度、不改棋局、不加修為；同一天打聽過的派記在 store jhIntel＝{d:日期, s:[派]}，隔天要重新打聽。 */
+function jhIntelLean(sid,d){d=d||new Date();const s=jhWindDay(d)+"|inn:zm_"+sid;return jhWindHash(s)%3===0?1:0}
+function jhIntelSch(sid,d){const m=typeof OSC!=="undefined"?OSC.MST.find(x=>x.sid===sid):null;if(!m)return"";return jhIntelLean(sid,d)?m.sec:m.sid}
+function jhIntelGot(d){d=d||new Date();let r=null;try{r=store.get("jhIntel",null)}catch(e){}return r&&r.d===jhWindDay(d)&&Array.isArray(r.s)?r.s:[]}
+function jhIntelOn(sid,d){return jhIntelGot(d).includes(sid)}
+function jhIntelGet(sid,mate){if(!sid||jhIntelOn(sid))return false;const m=OSC.MST.find(x=>x.sid===sid);if(!m)return false;
+  const day=jhWindDay(new Date()),s=jhIntelGot().concat(sid);try{store.set("jhIntel",{d:day,s})}catch(e){return false}
+  const T=jhSch(jhIntelSch(sid));if(typeof toast==="function"&&T)setTimeout(()=>{try{toast(jhL(`${mate}悄悄說：掌門${m.nm}今天打算走${T.op}。`,`${mate} whispers: Master ${m.en} plans to play ${T.op} today.`))}catch(e){}},2600);
+  return true}
+/* 駐地小卡上的一段：打聽到了＝寫出今天的棋路；還沒＝告訴玩家去贏哪幾位門人 */
+function jhIntelHTML(sid,m,mates){if(jhIntelOn(sid)){const T=jhSch(jhIntelSch(sid));if(!T)return"";
+    return`<p class="jh-intel">${esc(jhL(`打聽到了：${m.nm}今天打算走${T.op}（${T.nm}的路子）。`,`Word is out: ${m.en} plans to play ${T.op} today (the ${T.nm} way).`))}</p>`}
+  return mates&&mates.length?`<p class="jh-intel-hint">${esc(jhL(`先贏一位門下棋友（${mates.slice(0,3).join("、")}），就能打聽到掌門今天的棋路。`,`Beat one of this school's players (${mates.slice(0,3).join(", ")}) to learn the master's plan for today.`))}</p>`:""}
+/* 包住 07-legend 的 journeyGameEnd（不改 07-legend）：下完一盤先判斷對手是哪一派的門人，原本的結算照跑，贏了再記情報 */
+try{if(typeof journeyGameEnd==="function"&&!journeyGameEnd.jhIntel){const g0=journeyGameEnd;
+  journeyGameEnd=function(st){let k="";try{k=typeof oscNpcKey==="function"?oscNpcKey(st):""}catch(e){k=""}
+    const r=g0.apply(this,arguments);
+    try{if(k&&!/^zm:/.test(k)&&st&&st.result&&st.result.w===st.human&&(st.moves||[]).length>=10){const x=OSC.NPC[k];if(x)jhIntelGet(x[0],jhT(x[2]))}}catch(e){}
+    return r};journeyGameEnd.jhIntel=1}}catch(e){}
