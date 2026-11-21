@@ -12,7 +12,7 @@ const HALL = JH.slice(JH.indexOf("/* ---------- W48 十派門內場景"));
 function load() {
   const c = { jhL: (zh) => zh, jhT: (s) => s, esc: (s) => String(s), document: undefined };
   vm.createContext(c);
-  vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + HALL + ";this.R={JH_HALL,JH_HALL_W,JH_HALL_H,JH_HALL_BAD,jhHallPc,jhHallMates}", c);
+  vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + HALL + ";this.R={JH_HALL,JH_HALL_W,JH_HALL_H,JH_HALL_BAD,jhHallPc,jhHallMates,JH_HALL_WALK}", c);
   return c;
 }
 
@@ -232,4 +232,44 @@ test("PR #22 審查：只有兩位時左右對稱站（前兩個站位對中軸 
   const [a, b] = R.JH_HALL.central.mates;
   assert.equal(a[0] + b[0], 768, "左右對稱");
   assert.equal(a[1], b[1], "同一高度");
+});
+
+/* ---------- W48 門內 3D 走路（開發者 11/22「3D角色在這一頁也是要能跟在首頁一樣的移動操作方式」）：沿用 07w shwMount ---------- */
+test("門內走路座標表：每個入口都有停靠點；路的兩端都是存在的節點；座標都在圖內；從碼頭起點走得到每個入口", () => {
+  const { R } = load();
+  for (const [sid, W] of Object.entries(R.JH_HALL_WALK)) {
+    const H = R.JH_HALL[sid];
+    assert.ok(H, sid + " 要先有門內圖設定");
+    const inside = (p, s) => assert.ok(p[0] > 0 && p[0] < 100 && p[1] > 0 && p[1] < 100, s + " " + p);
+    for (const [k, p] of Object.entries(W.N)) inside(p, sid + " 節點 " + k);
+    const adj = {};
+    for (const e of W.E.split(" ")) {
+      const [a, b] = e.split("-");
+      assert.ok(W.N[a] && W.N[b], sid + " 路 " + e + " 的兩端要是節點");
+      (adj[a] = adj[a] || []).push(b); (adj[b] = adj[b] || []).push(a);
+    }
+    const want = ["hall", "study", "yard", "gate", "zm", ...H.mates.map((_, i) => "m" + i)].sort();
+    assert.deepEqual(Object.keys(W.HS).sort(), want, sid + " 入口：四個地點、掌門、每一格門人，不多不少");
+    const seen = new Set(["dock"]), q = ["dock"];
+    while (q.length) for (const n of adj[q.shift()] || []) if (!seen.has(n)) { seen.add(n); q.push(n) }
+    for (const [k, [n, x, y]] of Object.entries(W.HS)) {
+      assert.ok(W.N[n], sid + " 入口 " + k + " 的停靠點 " + n + " 要是節點");
+      assert.ok(seen.has(n), sid + " 從碼頭起點走不到入口 " + k);
+      inside([x, y], sid + " 入口 " + k + " 面向");
+    }
+    H.mates.forEach((p, i) => {
+      const [, x, y] = W.HS["m" + i];
+      assert.ok(Math.abs(x - p[0] / 7.68) < 1 && Math.abs(y - p[1] / 13.76) < 4, sid + " 走到門人 m" + i + " 時要面向他：" + [x, y] + " vs " + p);
+    });
+  }
+});
+
+test("〔原始碼〕門內走路：圖載好才掛 shwMount；地點、門人、掌門都是入口（data-k）；立繪不跟標籤淡掉；名牌在角色上面", () => {
+  assert.match(JH, /sel:"\.jh-hall-spot,\.jh-hall-mate,\.jh-hall-zm",keyOf:b=>b\.dataset\.k\|\|""/);
+  assert.match(JH, /z\.className="jh-hall-mate";z\.dataset\.k="m"\+i;/);
+  assert.match(JH, /zm\.dataset\.k="zm"/);
+  assert.match(JH, /if\(!P\.isConnected\|\|!img\.naturalWidth\)return;/, "圖讀不到（退回小卡）時不掛");
+  assert.match(JH, /\.jh-hall-mate\.shw-fade,\.jh-hall \.jh-hall-zm\.shw-fade\{opacity:1!important\}/);
+  assert.match(JH, /\.jh-hall \.jh-hall-mate-tag\{z-index:4\}/);
+  assert.match(JH, /JhHall\.jhWalk=1/, "包一層就好，不重複包");
 });
