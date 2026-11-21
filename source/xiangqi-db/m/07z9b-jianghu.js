@@ -572,9 +572,11 @@ try{if(typeof journeyGameEnd==="function"&&!journeyGameEnd.jhIntel){const g0=jou
    路由 #/jianghu/hall/<派>：一張滿版門內圖（story/gemini_app/189、190；圖上不畫人、不寫字），掌門用已驗收的坐姿立繪疊在大廳主位（開發者選「圖畫空座＋程式疊立繪」）。
    可點：掌門大廳（＝駐地小卡：拜師、挑戰）、講棋堂（＝開局課程）、前院（門下棋友在哪裡找得到）、山門（回長卷）。掌門立繪本身也能點。
    座標都是門內圖原圖像素（768×1376）；圖讀不到（還沒放上 CDN、或史學顧問還沒審完）就退回長卷並打開原本的小卡，不出現壞畫面。
-   JH_HALL 只列有圖的派；其他派沿用原本的小卡。 */
+   JH_HALL 只列有圖的派；其他派沿用原本的小卡。
+   11/22 中炮門換第 7 版圖（史學顧問三回審定，story/gemini_app/190_*）：佈局照長卷改成長石階＋四座方亭＋頂上大殿，最下方是碼頭階埠與漕船；
+   座標依新圖重量——講棋堂＝左上方亭、前院＝碼頭石平台、出口在碼頭邊（搭船回長卷）。v 一併改成 1122，讓舊快取的第 2 版圖失效。 */
 const JH_HALL={
-  central:{v:"1121",seat:[386,336],w:84,spots:{hall:[384,118],study:[384,584],yard:[505,1140],gate:[384,1318]}}
+  central:{v:"1122",seat:[387,297],w:72,spots:{hall:[384,112],study:[226,458],yard:[384,1070],gate:[384,1330]}}
 };
 const JH_HALL_W=768,JH_HALL_H=1376;
 const JH_HALL_BAD=new Set();   /* 這次開 App 讀圖失敗過的派：小卡不再顯示「走進山門」，免得一直繞回來 */
@@ -595,7 +597,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   setTop(jhL(`🚪 ${S.nm}`,`🚪 ${S.nm}`),"#/jianghu");if(typeof setTabs==="function")setTabs(false);v.className="view";document.body.classList.add("jh-on");
   const f=jhFadeEl();f.classList.add("on");
   const P=document.createElement("div");P.className="shp-page cq jh-hall";v.innerHTML="";v.append(P);
-  const img=document.createElement("img");img.src=`data/zmhall/${sid}.webp?v=${H.v}`;img.alt=jhL(`${S.nm}門內：山門、前院、講棋堂，最上面是掌門大廳`,`Inside the ${S.nm}: gate, front yard, lecture hall, and the master's hall at the top`);img.draggable=false;P.append(img);
+  const img=document.createElement("img");img.src=`data/zmhall/${sid}.webp?v=${H.v}`;img.alt=jhL(`${S.nm}門內：碼頭、長石階、四座方亭，最上面是掌門大廳`,`Inside the ${S.nm}: the pier, a long stairway, four pavilions, and the master's hall at the top`);img.draggable=false;P.append(img);
   const back=()=>{f.classList.remove("on");location.hash="#/jianghu";setTimeout(()=>{try{jhSheet(sid)}catch(e){}},700)};
   img.onerror=()=>{JH_HALL_BAD.add(sid);back()};   /* 圖還沒上 CDN、史學顧問還沒審完：退回長卷、開原本的小卡 */
   if(m){const z=document.createElement("img");z.className="jh-hall-zm";z.src=`data/npc/${m.id}.webp`;z.alt=jhL(`掌門${m.nm}坐在大廳主位`,`Master ${m.en} seated in the hall`);
@@ -604,7 +606,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   spot("hall",m?jhL(`🏯 掌門大廳・${m.nm}`,`🏯 Master's hall · ${m.en}`):jhL("🏯 掌門大廳","🏯 Master's hall"),()=>jhSheet(sid));
   spot("study",jhL("📖 講棋堂","📖 Lecture hall"),()=>jhHallStudy(sid));
   spot("yard",jhL("👥 前院・門下棋友","👥 Front yard"),()=>jhHallYard(sid));
-  spot("gate",jhL("‹ 出山門，回十州棋館","‹ Back to the Ten Prefectures"),()=>jhGo("#/jianghu"));
+  spot("gate",jhL("‹ 搭船回十州棋館","‹ Take a boat back to the Ten Prefectures"),()=>jhGo("#/jianghu"));
   if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");P.append(n)}
   const ready=()=>{if(P.isConnected)jhFadeOut()};if(img.complete&&img.naturalWidth)setTimeout(ready,0);else img.onload=ready;
   setTimeout(()=>{if(f.classList.contains("on")&&P.isConnected&&img.naturalWidth)jhFadeOut()},6000);
@@ -623,7 +625,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
      🔍 打聽掌門：今天打聽到了就照實說（案 4 情報）；還沒有就說「贏我一盤就告訴你」
      ⚔ 切磋一盤：園子棋友指定由他坐下（包住 06-cpu parkNpcNew 的 keep），驛站旅人照驛站原本的開法；秘境人物要在秘境遇過才能下
    不加修為、不改強度與棋局；贏了照案 4 規則解鎖情報（journeyGameEnd 包裝本來就會判斷）。 */
-JH_HALL.central.mates=[[168,1052],[298,1080],[606,1070]];   /* 前院左邊兩位、右邊空地一位；前院標籤移到中間偏右，不壓到人 */
+JH_HALL.central.mates=[[270,1205],[498,1205],[384,1212]];   /* 11/22 第 7 版：沿碼頭石平台站；先左右、再中間（只有兩位時左右對稱，名牌不擠在一起）；前院標籤在石階底端，不壓到人頭 */
 const JH_MATE_W=88;
 let jhMateKeep=null;   /* {id,t}：從前院點「切磋一盤」指定的園子棋友；用掉就清，45 秒內才算數，到期也清 */
 const JH_MATE_KEEP_MS=45000;
