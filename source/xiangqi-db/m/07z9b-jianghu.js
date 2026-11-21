@@ -456,13 +456,13 @@ function jhSheet(sid){if(typeof sheet!=="function"||typeof OSC==="undefined")ret
       <p class="muted">${esc(jhL(`慣用${S.op}：${S.say}`,`Plays ${S.op}: ${S.say}`))}</p>${mates.length?`<p class="muted">${esc(jhL("門下棋友：","Players of this school: ")+mates.join(jhL("、",", ")))}</p>`:""}</div></div>
     ${c?"":`<p class="muted">${esc(jhL("開始旅程、有了隊伍以後才能拜師和挑戰。","Start a journey and form a party to learn or challenge."))}</p>`}
     ${jhWindOn(sid)?`<p class="jh-windnote">${esc(jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges in this school give extra XP."))}</p>`:""}
-    ${m?jhIntelHTML(sid,m,mates):""}
+    ${m?jhIntelHTML(sid,m,mates):""}${typeof jhKickHTML==="function"?jhKickHTML(sid,c):""}
     <div class="jh-actions">
       ${JH_HALL[sid]&&!inHall&&!JH_HALL_BAD.has(sid)?`<button class="btn" id="jhHallGo">${esc(jhL("🚪 走進山門","🚪 Enter the gate"))}</button>`:""}
       ${c?`<button class="btn${JH_HALL[sid]&&!inHall&&!JH_HALL_BAD.has(sid)?" ghost":""}" id="jhLearn">${esc(act===sid?jhL(`繼續${jhNm(c)}的修行`,`Continue ${jhNm(c)}'s training`):jhL(`${jhNm(c)}拜入${S.nm}`,`${jhNm(c)} joins the ${S.nm}`))}</button>`:""}
       ${c&&m?`<button class="btn ghost" id="jhZm">${esc(jhL(`🏯 挑戰${m.nm}`,`🏯 Challenge ${m.en}`))}</button>`:""}
       <button class="jh-link" id="jhAll">${esc(jhL("看十派總覽","See all ten schools"))}</button></div>`;
-    const q=s=>b.querySelector(s);
+    const q=s=>b.querySelector(s);if(typeof jhKickBind==="function")jhKickBind(b,c);
     if(q("#jhHallGo"))q("#jhHallGo").onclick=()=>{try{closeSheet()}catch(e){}jhGo("#/jianghu/hall/"+sid)};
     if(q("#jhLearn"))q("#jhLearn").onclick=()=>{try{closeSheet()}catch(e){}if(act===sid){location.hash="#/school/"+c;return}if(typeof oscJoinAsk==="function")setTimeout(()=>oscJoinAsk(c,sid,()=>{location.hash="#/school/"+c}),80)};
     if(q("#jhZm"))q("#jhZm").onclick=()=>{try{closeSheet()}catch(e){}if(typeof zmStart==="function")zmStart(m,c)};
@@ -714,3 +714,82 @@ try{if(typeof JhHall==="function"&&!JhHall.jhWalk){const h0=JhHall;JhHall=functi
 .jh-hall .jh-hall-mate.shw-fade,.jh-hall .jh-hall-zm.shw-fade{opacity:1!important}
 .jh-hall .jh-hall-mate-tag{z-index:4}`;   /* 門人名牌是文字標示，角色走到門人旁邊也不能蓋住 */
   if(!document.getElementById("jhHallWalkCss"))document.head.append(s)})();
+/* ---------- W45② 十州踢館令（Gemini 188 案 4；開發者 11/22 選單：配對照表、贏了給印記＋棋譜＋修為 30、戰書旗先用程式畫）----------
+   打敗 A 派掌門（任何一位角色都算）→ 相剋的 B 派山門插戰書旗；用 A 派的開局挑戰 B 派掌門：雙方前三步照定式擺好（lv.fen＝從定式走完的局面開下），玩家執 A 派那一方。
+   定式 10 組都用 App 網頁版 Pikafish 核驗（Node 裡跑 WASM、深度 18；走完輪紅走，紅方觀點 +14～+61，都是均勢），合法性用 core.js 檢查。
+   走驛站掌門那條路（journey inn:zm_<B>）：頭像、結算、戰績、強度浮動都照舊；有起始局面時掌門開局庫不用（local.js npcKeyOf 遇到 G.start 回空），由引擎照強度下。
+   贏了：B 的山門掛朱紅「已破陣」印；第一次破陣那一盤的局號記下來（#/db/play/<局號> 看棋譜）；每一組帳號第一次贏修為 +30（oscClaim 的 kick:A>B）。
+   存檔 jhKick（跟旅程走，05b-save.js JOURNEY_KEYS 的 m_jhKick）＝{w:{"A>B":{t,g,c}}}；zmCur 多一個 kick＝"A>B"（這一盤是踢館）。 */
+const JH_KICK=[
+  {a:"central",b:"screen",mv:"h2e2 h9g7 h0g2 i9h9 i0h0 b9c7",fen:"r1bakabr1/9/1cn3nc1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKABR1"},   /* 屏風馬破當頭炮：中炮直車對屏風馬 +36 */
+  {a:"screen",b:"central",mv:"h2e2 h9g7 h0g2 i9h9 i0h0 b9c7",fen:"r1bakabr1/9/1cn3nc1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKABR1"},   /* 同一盤定式，玩家改執黑 +36 */
+  {a:"palace_horse",b:"central",mv:"h2e2 b9c7 h0g2 h7f7 i0h0 h9g7",fen:"r1bakab1r/9/1cn2cn2/p1p1p1p1p/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKABR1"},   /* 中炮對反宮馬 +38 */
+  {a:"same_cannon",b:"central",mv:"h2e2 h7e7 h0g2 h9g7 i0h0 i9i8",fen:"rnbakab2/8r/1c2c1n2/p1p1p1p1p/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKABR1"},   /* 順炮直車對橫車 +40 */
+  {a:"opposite_cannon",b:"central",mv:"h2e2 b7e7 h0g2 h9g7 i0h0 i9h9",fen:"rnbakabr1/9/4c1nc1/p1p1p1p1p/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKABR1"},   /* 中炮對列炮 +45 */
+  {a:"cross_palace",b:"central",mv:"h2d2 h7e7 h0g2 h9g7 i0h0 i9h9",fen:"rnbakabr1/9/1c2c1n2/p1p1p1p1p/9/9/P1P1P1P1P/1C1C2N2/9/RNBAKABR1"},   /* 過宮炮對中炮 +54 */
+  {a:"pawn",b:"elephant",mv:"c3c4 c9e7 h0g2 h9g7 b0c2 b9a7",fen:"r2akab1r/9/nc2b1nc1/p1p1p1p1p/9/2P6/P3P1P1P/1CN3NC1/9/R1BAKAB1R"},   /* 仙人指路對飛象 +61 */
+  {a:"elephant",b:"cross_palace",mv:"g0e2 h7d7 h0g2 h9g7 i0h0 i9h9",fen:"rnbakabr1/9/1c1c2n2/p1p1p1p1p/9/9/P1P1P1P1P/1C2B1NC1/9/RNBAKA1R1"},   /* 飛相對過宮炮 +14 */
+  {a:"horse",b:"pawn",mv:"h0g2 g6g5 c3c4 h9g7 b0c2 b9c7",fen:"r1bakab1r/9/1cn3nc1/p1p1p3p/6p2/2P6/P3P1P1P/1CN3NC1/9/R1BAKAB1R"},   /* 起馬對挺卒 +29 */
+  {a:"advisor_corner",b:"horse",mv:"b2d2 h9g7 b0c2 g6g5 h0g2 b9c7",fen:"r1bakab1r/9/1cn3nc1/p1p1p3p/6p2/9/P1P1P1P1P/2NC2NC1/9/R1BAKAB1R"}];   /* 仕角炮對起馬 +32 */
+const jhKickK=k=>k.a+">"+k.b;
+const jhKickOf=key=>JH_KICK.find(k=>jhKickK(k)===key)||null;
+function jhKickGet(){let o=null;try{o=store.get("jhKick",null)}catch(e){}const R={w:{}};if(!o||!o.w||typeof o.w!=="object")return R;
+  for(const k of JH_KICK){const x=o.w[jhKickK(k)];if(x&&typeof x==="object")R.w[jhKickK(k)]={t:Math.max(0,+x.t||0),g:typeof x.g==="string"?x.g.slice(0,60):"",c:typeof x.c==="string"?x.c.slice(0,24):""}}return R}
+function jhKickBeat(){try{return OSC.zmBeaten(zmGet())}catch(e){return[]}}
+/* sid 這一派山門收到的戰書（下帖的是 sid＝B）：A 派掌門被打敗過才出現；won＝破陣紀錄 */
+function jhKickAt(sid,beat,W){beat=beat||jhKickBeat();W=W||jhKickGet().w;return JH_KICK.filter(k=>k.b===sid&&beat.includes("zm_"+k.a)).map(k=>Object.assign({},k,{won:W[jhKickK(k)]||null}))}
+/* 定式寫成記譜：中文用 core.js notate；英文介面轉 WXF（07i18n i18nWxf） */
+function jhKickCn(k){try{const C=window.XQCore;let b=C.parseFen(C.START.split(" ")[0]);const o=[];
+    for(const u of k.mv.split(" ")){const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4)),cn=C.notate(b,f,t);o.push(typeof oscEn==="function"&&oscEn()&&typeof i18nWxf==="function"?(i18nWxf(cn)||cn):cn);b=C.make(b,f,t)}
+    return o.join(" ")}catch(e){return k.mv}}
+const jhKickFlag=()=>`<svg class="jh-kflag" viewBox="0 0 20 22" aria-hidden="true"><rect x="2" y="1" width="2" height="20" rx="1" fill="#5a3a1e"/><path d="M4 2h13l-4 4.5 4 4.5H4z" fill="#c0281e" stroke="#7a1410" stroke-width=".8"/><text x="9.4" y="9.1" font-size="6.2" font-weight="900" text-anchor="middle" fill="#fff6e0" font-family="serif">戰</text></svg>`;
+function jhKickHTML(sid,c){const L=jhKickAt(sid);if(!L.length)return"";const B=jhSch(sid);jhKickCss();
+  return`<div class="jh-kick">${L.map(k=>{const A=jhSch(k.a),key=jhKickK(k);return`<div class="jh-kick-row${k.won?" won":""}">
+    <p class="jh-kick-h">${k.won?`<span class="jh-kseal-s" aria-hidden="true">${esc(jhL("已破陣","Broken"))}</span>`:jhKickFlag()}<b>${esc(jhL(`${B.nm}下帖：敢用你學的${A.op}來破嗎？`,`The ${B.nm} challenges you: break us with the ${A.op}!`))}</b></p>
+    <p class="muted">${esc(jhL(`前三步照定式擺好，你執${OSC.side(k.a)==="r"?"紅":"黑"}：`,`The first three moves are set; you play ${OSC.side(k.a)==="r"?"Red":"Black"}: `))}${esc(jhKickCn(k))}</p>
+    ${k.won?`<p class="muted">${esc(jhL("已經破陣，再下只記戰績。","Already broken; replays only count in your record."))}</p>`:""}
+    <div class="jh-actions">${c?`<button class="btn${k.won?" ghost":""}" data-kick="${esc(key)}">${esc(k.won?jhL("再踢一次館","Challenge again"):jhL(`📜 接下戰書（用${A.op}）`,`📜 Accept (play the ${A.op})`))}</button>`:""}
+      ${k.won&&k.won.g?`<button class="jh-link" data-kickg="${esc(k.won.g)}">${esc(jhL("看破陣那一盤","See the winning game"))}</button>`:""}</div></div>`}).join("")}</div>`}
+function jhKickBind(box,c){if(!box)return;
+  box.querySelectorAll("[data-kick]").forEach(x=>{x.onclick=()=>{try{closeSheet()}catch(e){}jhKickStart(x.dataset.kick,c)}});
+  box.querySelectorAll("[data-kickg]").forEach(x=>{x.onclick=()=>{try{closeSheet()}catch(e){}location.hash="#/db/play/"+encodeURIComponent(x.dataset.kickg)}})}
+/* 開局參數：照掌門那一盤（zmArgs），改成玩家執 A 派那一方、從定式走完的局面開始（輪紅走） */
+function jhKickArgs(k,m,rl,dx){return Object.assign(zmArgs(m,rl,dx),{human:OSC.side(k.a),lv:{fen:k.fen,turn:"r"}})}
+function jhKickStart(key,c0){const k=jhKickOf(key),m=k&&OSC.MST.find(x=>x.sid===k.b);if(!k||!m||typeof zmArgs!=="function"||typeof jStart!=="function")return;
+  const P=typeof ptyGet==="function"?ptyGet():null,c=c0||(P&&P.look);
+  if(!c||!P||!PTY.has(P,c)){toast(jhL("要先有修行角色：已加入隊伍的七星才能踢館","You need a training character first: only Seven Stars in your party can take a challenge"));return}
+  const rl=OSC.zmRlv(zmGet(),m);store.set("zmCur",{id:m.id,rl,c,kick:key});
+  jStart("inn:"+m.id,jhKickArgs(k,m,rl),fresh=>{
+    if(!fresh){try{const C=store.get("zmCur",null);if(C&&C.kick){delete C.kick;store.set("zmCur",C)}}catch(e){}}   /* 接著下原本那一盤（不是踢館的局面）：不算踢館 */
+    location.hash="#/journey/play";
+    if(fresh)setTimeout(()=>{try{toast(jhL(`📜 ${m.nm}：「你學的${jhSch(k.a).op}，就在這裡驗一驗。」`,`📜 ${m.en}: "Let's see your ${jhSch(k.a).op}."`))}catch(e){}},500)})}
+/* 下完：先讓原本的掌門結算跑完（戰績、強度、帳號第一次贏掌門的修為），是踢館而且贏了才記破陣 */
+function jhKickEnd(st,P,C){const m=OSC.mst(P&&P.id);if(!m||!C||!C.kick||C.id!==m.id||!st||!st.result||st.result.w!==st.human)return 0;
+  const k=jhKickOf(C.kick);if(!k||k.b!==m.sid)return 0;
+  const S=jhKickGet();if(!S.w[C.kick])S.w[C.kick]={t:Date.now(),g:String(st.id||"").slice(0,60),c:String(C.c||"").slice(0,24)};store.set("jhKick",S);
+  let xp=0;try{const cl=store.get("oscClaim",{})||{};if(!cl["kick:"+C.kick]){cl["kick:"+C.kick]=Date.now();xp=30;store.set("oscClaim",cl)}}catch(e){}
+  if(xp&&typeof addXP==="function")try{addXP(xp,jhL("十州踢館","Gate challenge"),"kick:"+st.id)}catch(e){}
+  setTimeout(()=>{try{toast(jhL(`🔴 已破陣！${jhSch(k.b).nm}的山門掛上了你的印記`,`🔴 Broken! Your seal now hangs on the ${jhSch(k.b).nm} gate`))}catch(e){}},3400);return xp||1}
+try{if(typeof zmGameEnd==="function"&&!zmGameEnd.jhKick){const g0=zmGameEnd;zmGameEnd=function(st,P){let C=null;try{C=store.get("zmCur",null)}catch(e){}const r=g0.apply(this,arguments);if(r)try{jhKickEnd(st,P,C)}catch(e){}return r};zmGameEnd.jhKick=1}}catch(e){}
+/* 再下一盤：上一盤是踢館就照樣從定式局面開、玩家執同一方（原本的 zmAgainArgs 會重寫 zmCur、拿掉 kick，這裡補回去） */
+try{if(typeof zmAgainArgs==="function"&&!zmAgainArgs.jhKick){const a0=zmAgainArgs;zmAgainArgs=function(j,dx){let C=null;try{C=store.get("zmCur",null)}catch(e){}const r=a0.apply(this,arguments);
+    try{const k=r&&C&&C.kick?jhKickOf(C.kick):null,m=k?OSC.mst(j):null;if(k&&m&&C.id===m.id&&k.b===m.sid){const C2=store.get("zmCur",null);if(C2){C2.kick=C.kick;store.set("zmCur",C2)}return Object.assign(r,{human:OSC.side(k.a),lv:{fen:k.fen,turn:"r"}})}}catch(e){}return r};zmAgainArgs.jhKick=1}}catch(e){}
+/* 長卷：有戰書的山門標籤插一面小紅旗；破陣過的掛朱紅印（Jianghu 本體不動，畫完再補上） */
+function jhKickDeco(v){const map=v&&v.querySelector&&v.querySelector(".jh-map");if(!map)return;jhKickCss();const beat=jhKickBeat(),W=jhKickGet().w;
+  for(const b of map.querySelectorAll(".jh-spot[data-sid]")){const L=jhKickAt(b.dataset.sid,beat,W),bn=b.querySelector(".bn");if(!bn||!L.length)continue;
+    const open=L.some(k=>!k.won),won=L.some(k=>k.won);b.classList.toggle("kick",open);b.classList.toggle("broke",won);
+    if(open&&!bn.querySelector(".jh-kflag"))bn.insertAdjacentHTML("afterbegin",jhKickFlag());if(!open){const f=bn.querySelector(".jh-kflag");if(f)f.remove()}
+    if(won&&!bn.querySelector(".jh-kseal")){const s=document.createElement("i");s.className="jh-kseal";s.setAttribute("aria-hidden","true");s.textContent=jhL("已破陣","Broken");bn.append(s)}   /* 印掛在牌子右上角（.bn 才是看得到的牌子；整個 .jh-spot 比牌子寬） */
+    if(!b.dataset.kickAria){b.dataset.kickAria=1;b.setAttribute("aria-label",(b.getAttribute("aria-label")||"")+(open?jhL("，有戰書",", challenge posted"):"")+(won?jhL("，已破陣",", broken"):""))}}}
+try{if(typeof Jianghu==="function"&&!Jianghu.jhKick){const j0=Jianghu;Jianghu=function(v){const r=j0.apply(this,arguments);try{jhKickDeco(v)}catch(e){}setTimeout(()=>{try{jhKickDeco(v)}catch(e){}},400);return r};Jianghu.jhKick=1}}catch(e){}
+function jhKickCss(){if(typeof document==="undefined"||document.getElementById("jhKickCss"))return;const s=document.createElement("style");s.id="jhKickCss";s.textContent=`
+.jh-spot .bn .jh-kflag{width:20px;height:22px;flex:none;margin-right:-2px;filter:drop-shadow(0 1px 1px rgba(40,20,10,.35))}
+.jh-spot.kick .bn{border-color:#b3261e}
+.jh-spot.broke .bn{position:relative}
+.jh-spot .jh-kseal{position:absolute;right:-12px;top:-15px;font:900 11px/1 var(--serif,serif);font-style:normal;letter-spacing:.06em;color:#b3261e;border:2px solid #b3261e;border-radius:4px;padding:3px 4px;background:rgba(255,248,236,.9);transform:rotate(-12deg);white-space:nowrap;pointer-events:none}
+.jh-kick{margin:10px 0 0;display:flex;flex-direction:column;gap:10px}
+.jh-kick-row{padding:10px 12px;border-radius:12px;background:#fbf3e3;border:1.5px solid #c9a96b;color:#2b2118}
+.jh-kick-row .muted{color:#5c4a32}
+.jh-kick-row.won{border-color:#b3261e}
+.jh-kick-h{display:flex;align-items:center;gap:8px;margin:0 0 4px}.jh-kick-h .jh-kflag{width:20px;height:22px;flex:none}
+.jh-kseal-s{flex:none;font:900 11px/1 var(--serif,serif);color:#b3261e;border:2px solid #b3261e;border-radius:4px;padding:3px 4px;transform:rotate(-8deg)}`;document.head.append(s)}

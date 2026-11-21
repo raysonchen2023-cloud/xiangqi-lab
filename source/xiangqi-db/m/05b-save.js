@@ -52,6 +52,7 @@ JOURNEY_KEYS.push("m_opSeen");   /* 11/17 晚開場順序（07stq 檔尾 stqXu*�
 JOURNEY_KEYS.push("m_xsmStall");   /* 11/16 開發者（西市四攤，07xsm-ximarket.js）：xsmStall＝找棋子（這一副找到第幾顆、湊齊幾副、哪天找過）、老槐樹下今天是誰來、見過了沒、小禮收了沒。另外加一行，不動上面清單的字（好幾支測試比對清單結尾） */
 JOURNEY_KEYS.push("m_zm","m_zmCur");   /* 11/18 開發者（十派掌門，07z9-school.js）：zm＝各掌門目前強度、各角色對各掌門的勝和負；zmCur＝這一盤是哪位掌門、哪位角色（帳號第一次贏的修為去重在 oscClaim） */
 JOURNEY_KEYS.push("m_osc");   /* 11/18 開發者（開局門派，07z9-school.js）：osc＝每位七星的門派、各課進度、看過提示／示範、三階段完成時間（跟旅程走；修為去重的 oscClaim 是帳號層，不在這裡） */
+JOURNEY_KEYS.push("m_jhKick");   /* 11/22 開發者（W45② 十州踢館令，07z9b-jianghu.js）：jhKick＝各組踢館第一次破陣的時間、局號、哪位角色（帳號第一次破陣的修為去重在 oscClaim 的 kick:A>B） */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
 /* 開發者 11/6 修：全新玩家第一次打開，開機時就會寫進 era、jStars、playSec 這些鍵，原本的判斷會把新玩家當成舊玩家，跳出「存檔功能上線了、角色是小帥Q版」。改成只看真的玩過才會有的鍵（新手引導做完、修為、戰績、故事進度） */
