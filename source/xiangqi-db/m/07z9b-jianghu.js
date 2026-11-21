@@ -793,3 +793,77 @@ function jhKickCss(){if(typeof document==="undefined"||document.getElementById("
 .jh-kick-row.won{border-color:#b3261e}
 .jh-kick-h{display:flex;align-items:center;gap:8px;margin:0 0 4px}.jh-kick-h .jh-kflag{width:20px;height:22px;flex:none}
 .jh-kseal-s{flex:none;font:900 11px/1 var(--serif,serif);color:#b3261e;border:2px solid #b3261e;border-radius:4px;padding:3px 4px;transform:rotate(-8deg)}`;document.head.append(s)}
+/* ---------- W46 十州漕運殘局（Gemini 188 案 1；開發者 11/22「門派任務版」範圍）----------
+   長卷的運河上有一艘掛紅燈籠的漕船，每個時辰（兩小時）沿運河往南換一州停靠：徐州（起馬門）→ 泗州（飛相門）→ 淮安（中炮門）→ 揚州（仙人指路門），到揚州再回徐州。
+   點漕船：小卡寫「漕船擱淺，N 步內替船老大解開這盤死棋」→ 登船＝進殘局頁（07c-canju.js 的外掛模式 XM，網址 #/canju/cy/<派>/<日>/<題號>）。
+   題目：殘局題庫 canju-set.json 裡「殺棋」而且一～三步殺（n≤3）、帶這一州門派殺法標籤（th）的題；同一天、同一州固定一題（照日期＋州的雜湊挑，cjDay 早上 4 點換日）。
+     徐州（起馬）＝臥槽馬、掛角馬、馬殺；泗州（飛相：大子要出）＝雙車錯、車殺；淮安（中炮）＝重炮、炮殺、悶宮；揚州（仙人指路）＝小兵擒王。
+   獎勵：殘局頁本來就給的修為 5；另外每天每一州第一次不看答案解開，再加修為 15（跟輿圖遊歷一站一樣）。星輝照 07pty 的規則從修為分出去，不另外給。
+   漕船標記：開發者 11/22「這船太醜了 找gemini畫圖」→ Gemini 出 1 張（xiangqi-db/tools/art_canal.json，參考長卷上原有的帆船；綠幕去背；原檔 xiangqi-db/art/canal/barge.webp，build-site 複製成 data/canal/barge.webp，跟門內圖一樣只放 CDN、不進 GitHub，發布時照 P0-IMG 確認）；讀不到才退回程式畫的 SVG。
+   存檔 jhCanal（跟旅程走，05b-save.js JOURNEY_KEYS 的 m_jhCanal）＝{d:日, s:{派:{t,p}}, pick:{"日/派":題號}}；換日就清掉前一天的。 */
+/* 停靠點＝長卷原圖（data/yunhe/pano.webp，3024×1340）的水面：用顏色找各派附近半徑 30 像素內大多是藍灰水面的點，再畫在圖上逐一看過（11/22） */
+const JH_CANAL=[
+  {sid:"horse",zh:"徐州",en:"Xuzhou",at:[200,720],th:["臥槽馬","掛角馬","馬殺"]},
+  {sid:"elephant",zh:"泗州",en:"Sizhou",at:[528,712],th:["雙車錯","車殺"]},
+  {sid:"central",zh:"淮安",en:"Huai'an",at:[900,552],th:["重炮","炮殺","悶宮"]},
+  {sid:"pawn",zh:"揚州",en:"Yangzhou",at:[1580,650],th:["小兵擒王"]}];
+const JH_CANAL_XP=15;
+/* 時辰：子時 23～1 點＝0、丑時 1～3 點＝1 …；漕船停的州＝時辰 % 4 */
+const jhShichen=d=>Math.floor(((d.getHours()+1)%24)/2);
+function jhCanalStop(d){return JH_CANAL[jhShichen(d||new Date())%JH_CANAL.length]}
+const jhCanalOf=sid=>JH_CANAL.find(x=>x.sid===sid)||null;
+const jhCanalDay=t=>typeof cjDay==="function"?cjDay(t):new Date(t==null?Date.now():t).toISOString().slice(0,10);
+/* 這一州的題庫：殺棋、一～三步殺、帶這一州的殺法標籤；照題號排好（挑題要穩定） */
+function jhCanalPool(items,st){return(items||[]).filter(x=>x&&x.n>=1&&x.n<=3&&Array.isArray(x.th)&&x.th.includes("殺棋")&&x.th.some(t=>st.th.includes(t))).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)}
+function jhCanalPick(items,st,day){const L=jhCanalPool(items,st);if(!L.length)return null;const h=typeof jhWindHash==="function"?jhWindHash("canal:"+day+":"+st.sid):0;return L[h%L.length]}
+function jhCanalGet(day){let o=null;try{o=store.get("jhCanal",null)}catch(e){}const R={d:day,s:{},pick:{}};if(!o||o.d!==day||typeof o!=="object")return R;
+  for(const st of JH_CANAL){const x=o.s&&o.s[st.sid];if(x&&typeof x==="object")R.s[st.sid]={t:Math.max(0,+x.t||0),p:x.p?1:0};const k=day+"/"+st.sid,q=o.pick&&o.pick[k];if(typeof q==="string"&&q.length<40)R.pick[k]=q}
+  return R}
+const jhCanalNm=st=>jhL(st.zh,st.en);
+/* 點漕船：挑好這一班的題（題庫要先載入），記下來，再開小卡 */
+async function jhCanalOpen(){const st=jhCanalStop(),day=jhCanalDay();let D=null;try{D=await cjData()}catch(e){toast(jhL("殘局題庫載入失敗，等一下再試。","Couldn't load the puzzles. Try again shortly."));return}
+  const P=jhCanalPick(D.items,st,day);if(!P){toast(jhL("這一班漕船沒有題目。","No puzzle on this boat."));return}
+  const S=jhCanalGet(day);S.pick[day+"/"+st.sid]=P.id;store.set("jhCanal",S);jhCanalSheet(st,P,day,S)}
+function jhCanalSheet(st,P,day,S){if(typeof sheet!=="function")return;jhCanalCss();const done=S.s[st.sid],sc=jhSch(st.sid),nx=JH_CANAL[(JH_CANAL.indexOf(st)+1)%JH_CANAL.length];
+  sheet(jhL("🏮 漕運殘局","🏮 Canal Puzzle"),b=>{b.innerHTML=`<div class="jh-canal-card"><div class="jh-canal-ic">${jhCanalImg()}</div><div>
+      <p class="jh-canal-h">${esc(jhL(`漕船擱淺在${st.zh}，${P.n}步內替船老大解開這盤死棋`,`The grain barge is stuck at ${st.en}: break this deadlock in ${P.n} move${P.n>1?"s":""}`))}</p>
+      <p class="muted">${esc(jhL(`停在${sc.nm}一帶，題目是${sc.nm}的殺法：${st.th.join("、")}。`,`Docked near the ${sc.nm}; the puzzle uses its mating patterns.`))}</p>
+      ${done?`<p class="jh-windnote">${esc(jhL("這一班今天已經解開了，再解只練手。","Already solved today; replay is practice only."))}</p>`:`<p class="muted">${esc(jhL(`不看答案解開，修為多給 ${JH_CANAL_XP}。`,`Solve it without the answer for +${JH_CANAL_XP} XP.`))}</p>`}
+      <p class="muted">${esc(jhL(`每個時辰漕船沿運河換一州停靠，下一站：${nx.zh}。`,`Every double-hour the barge moves to another prefecture on the canal. Next stop: ${nx.en}.`))}</p></div></div>
+    <div class="jh-actions"><button class="btn" id="jhCanalGo">${esc(jhL("⛵ 登船解題","⛵ Board and solve"))}</button></div>`;
+    const g=b.querySelector("#jhCanalGo");if(g)g.onclick=()=>{try{closeSheet()}catch(e){}location.hash="#/canju/cy/"+st.sid+"/"+day+"/"+encodeURIComponent(P.id)}})}
+/* 殘局頁的外掛模式（照 07e-garden2 cjXMode 的寫法包一層）：網址的題號要跟這一天這一州挑好的那題一樣 */
+function jhCanalXM(sid,day,pid){const st=jhCanalOf(sid),back=()=>"#/jianghu";if(!st)return{err:jhL("找不到這一州的碼頭。","Unknown dock."),back};
+  if(day!==jhCanalDay())return{err:jhL("這一班漕船已經開走了，回十州棋館看看船現在停在哪裡。","That barge has sailed. Go back to see where it is now."),back};
+  const S=jhCanalGet(day);if(S.pick[day+"/"+sid]!==pid)return{err:jhL("這一題跟今天這一班漕船對不上，回十州棋館點漕船再登船。","This puzzle doesn't match today's barge. Tap the barge on the map again."),back};
+  const re=!!S.s[sid];
+  return{id:pid,rk:"cjRunCy",back,top:jhL("🏮 漕運殘局","🏮 Canal Puzzle"),icon:"🏮",
+    ans:re?jhL("這一班今天已經解開了，看答案不影響。確定？","Already solved today; viewing the answer changes nothing. Sure?"):jhL("看答案這一班就不算解開、沒有額外修為，確定？","Viewing the answer means no extra XP for this barge. Sure?"),
+    head:P=>`<b>🏮 ${esc(jhL(`漕船・${st.zh}`,`Barge at ${st.en}`))}</b>・${esc(P.t)}・${typeof cjLv==="function"?cjLv(P.d):""}`,
+    mark:o=>jhCanalMark(sid,day,o),done:(xs)=>xs&&xs.first?`<p class="jh-windnote">${esc(jhL(`漕船脫困！修為 +${JH_CANAL_XP}`,`The barge is free! +${JH_CANAL_XP} XP`))}</p>`:"",
+    next:back,nextL:()=>jhL("回十州棋館","Back to the Ten Prefectures")}}
+function jhCanalMark(sid,day,o){if(day!==jhCanalDay())return{first:false};const S=jhCanalGet(day);if(S.s[sid])return{first:false};
+  S.s[sid]={t:Date.now(),p:o&&o.perfect?1:0};store.set("jhCanal",S);
+  if(typeof addXP==="function")setTimeout(()=>{try{addXP(JH_CANAL_XP,jhL("漕運殘局","Canal puzzle"),"cy:"+day+":"+sid)}catch(e){}},1600);
+  return{first:true}}
+try{if(typeof cjXMode==="function"&&!cjXMode.jhCanal){const x0=cjXMode;cjXMode=function(id){const m=/^cy\/(\w+)\/(\d{4}-\d{2}-\d{2})\/(.+)$/.exec(String(id||""));if(m)return jhCanalXM(m[1],m[2],decodeURIComponent(m[3]));return x0.apply(this,arguments)};cjXMode.jhCanal=1}}catch(e){}
+const JH_CANAL_IMG="data/canal/barge.webp";
+/* 漕船圖：讀不到（還沒上 CDN、離線缺檔）就換成程式畫的 SVG，不留破圖 */
+const jhCanalImg=()=>`<img class="jh-canal-img" src="${JH_CANAL_IMG}" alt="" draggable="false" onerror="this.outerHTML=jhCanalSvg()">`;
+const jhCanalSvg=()=>`<svg class="jh-canal-svg" viewBox="0 0 48 34" aria-hidden="true"><path d="M3 22h42l-6 8H9z" fill="#6b4425" stroke="#3b2414" stroke-width="1.2"/><rect x="22" y="4" width="2" height="18" fill="#4a2f1a"/><path d="M24 5l12 14H24z" fill="#efe3c6" stroke="#8a6a3a" stroke-width=".8"/><line x1="12" y1="10" x2="12" y2="22" stroke="#4a2f1a" stroke-width="1.2"/><ellipse cx="12" cy="13" rx="4.2" ry="5" fill="#d12a1f" stroke="#7a1410" stroke-width=".8"/><rect x="10.6" y="7.6" width="2.8" height="1.2" fill="#3b2414"/><rect x="10.6" y="17.2" width="2.8" height="1.2" fill="#3b2414"/></svg>`;
+/* 長卷：漕船畫在這個時辰停的州的水面上；過了時辰（頁面一直開著）自己移到下一州 */
+function jhCanalDeco(v){const map=v&&v.querySelector&&v.querySelector(".jh-map");if(!map||typeof JH_W==="undefined")return;jhCanalCss();
+  const st=jhCanalStop(),day=jhCanalDay(),done=!!jhCanalGet(day).s[st.sid];let b=map.querySelector(".jh-canal");
+  if(!b){b=document.createElement("button");b.type="button";b.className="jh-canal";b.innerHTML=jhCanalImg();b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}jhCanalOpen()};map.append(b)}
+  b.style.left=(st.at[0]/JH_W*100).toFixed(2)+"%";b.style.top=(st.at[1]/JH_H*100).toFixed(2)+"%";b.classList.toggle("done",done);b.dataset.sid=st.sid;
+  b.setAttribute("aria-label",jhL(`漕運殘局：漕船停在${st.zh}`,`Canal puzzle: barge at ${st.en}`)+(done?jhL("，今天解開了",", solved today"):""));
+  if(!map.dataset.canalT){map.dataset.canalT=1;const t=setInterval(()=>{if(!map.isConnected){clearInterval(t);return}try{jhCanalDeco(v)}catch(e){}},60000)}}
+try{if(typeof Jianghu==="function"&&!Jianghu.jhCanal){const j0=Jianghu;Jianghu=function(v){const r=j0.apply(this,arguments);try{jhCanalDeco(v)}catch(e){}return r};Jianghu.jhCanal=1}}catch(e){}
+function jhCanalCss(){if(typeof document==="undefined"||document.getElementById("jhCanalCss"))return;const s=document.createElement("style");s.id="jhCanalCss";s.textContent=`
+.jh-canal{position:absolute;transform:translate(-50%,-70%);width:66px;height:46px;padding:0;border:0;background:none;cursor:pointer;z-index:3;filter:drop-shadow(0 2px 3px rgba(30,20,10,.45));animation:jhCanalBob 3.2s ease-in-out infinite}
+.jh-canal .jh-canal-svg,.jh-canal .jh-canal-img{width:100%;height:100%;display:block;object-fit:contain;-webkit-user-drag:none;user-select:none}
+.jh-canal.done{opacity:.6}
+@keyframes jhCanalBob{0%,100%{translate:0 0}50%{translate:0 -3px}}
+@media (prefers-reduced-motion:reduce){.jh-canal{animation:none}}
+.jh-canal-card{display:flex;gap:12px;align-items:flex-start}.jh-canal-ic{flex:none;width:64px}.jh-canal-ic svg,.jh-canal-ic img{width:64px;height:46px;object-fit:contain}
+.jh-canal-h{font:800 16px/1.5 var(--serif,serif);margin:0 0 4px}`;document.head.append(s)}
