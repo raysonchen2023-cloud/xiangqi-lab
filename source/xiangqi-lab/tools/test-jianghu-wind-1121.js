@@ -98,7 +98,7 @@ test("掌門修為：順風的派第一次贏照 1.5 倍；再下（輸、和、
 test("包一次就好：包住 07z9 那段再跑一次，也不會把加成疊兩層", () => {
   const { c } = load();
   c.jhWindNow = () => ({ st: "sun", ids: ["central"], key: "k" });
-  vm.runInContext(WIND.slice(WIND.indexOf("/* 包住 07z9")), c);
+  vm.runInContext(WIND.slice(WIND.indexOf("/* 包住 07z9"), WIND.indexOf("/* ---------- W48 案 4")), c);   /* 只重跑包裝那段（後面的案 4、門內場景有 const，重跑會重複宣告） */
   assert.equal(c.OSC.reward({}, "central", 1, { ok: true, pass: true, grad: 0 }, 1), 15);
 });
 

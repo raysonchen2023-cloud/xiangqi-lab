@@ -139,6 +139,7 @@ function route(){
   if(p[0]==="cpuroom"&&typeof CpuRoom==="function")return screen=CpuRoom(v);   /* 11/10 開發者：挑戰電腦的雅間（07z5-cpuroom.js） */
   if(p[0]==="simul"&&typeof SimulPage==="function")return screen=SimulPage(v);   /* 開發者 11/11 hspx：車輪戰（m/08s-simul.js） */
   if(p[0]==="lesson"&&typeof LsnPage==="function")return screen=LsnPage(v,p[1]||"");   /* ChatGPT 改善單 I01（開發者 11/11）：棋理體驗 #/lesson/<站>（m/07z7-lesson.js） */
+  if(p[0]==="jianghu"&&p[1]==="hall"&&typeof JhHall==="function")return screen=JhHall(v,p[2]);   /* W48 十派門內場景（開發者 11/21，m/07z9b-jianghu.js） */
   if(p[0]==="jianghu"&&typeof Jianghu==="function")return screen=Jianghu(v);   /* 十州棋館：門派江湖長卷（開發者 11/18，m/07z9b-jianghu.js） */
   if(p[0]==="school"&&typeof OscPage==="function")return screen=OscPage(v,p[1]||"",p[2]||"");   /* 開局門派（開發者 11/18，m/07z9-school.js）：#/school 總覽、#/school/<角色> 修行頁、#/school/<角色>/<課> 上課 */
   if(p[0]==="lab"&&p[1]==="grab"&&typeof GrbLab==="function")return screen=GrbLab(v);   /* ChatGPT 改善單 I02：先吃子還是先解圍小實驗（m/07z8-grablab.js） */
