@@ -1,0 +1,80 @@
+# 象棋千秋 PR 自動檢查（W36）：每個開到 main 的 PR 都跑；沒過不能合併（分支保護另設）。
+# 照《象棋千秋 PR 協作流程計畫》第 3 節。分兩種模式（判斷規則見 .github/scripts/ci-mode.cjs）：
+#   功能 PR：只准改 source/、.github/、releases/（改到會直接上線的網站檔就擋下，見 guard-release-files.cjs）；
+#            先用原始碼組出 index.html（只在這次檢查暫存、不提交），再跑組版比對、引擎檢查、全部測試；略過版號一致。
+#   發布 PR（來源分支以 release/ 開頭）與手動執行：全套（含版號一致、發布同步檢查）。
+#   兩種模式的私密掃描：source/ 全掃，加掃本 PR 新增或修改的所有檔（scan-changed.cjs）。
+# 使用者可控的 GitHub 欄位（分支名等）一律經環境變數傳入，不直接嵌進指令（test-ci-mode.cjs 會檢查）。
+# 三平台對齊閘門要等原生專案收進倉庫（W32）後再加。
+name: 驗證
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      BASE_REF: ${{ github.base_ref || 'main' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: 自動檢查腳本的自我測試（文字檢查、模式判斷、守門、私密掃描補強、防注入）
+        run: node --test .github/scripts/test-check-text.cjs .github/scripts/test-ci-mode.cjs .github/scripts/test-guard-scan.cjs
+
+      - name: 判斷模式（功能 PR／發布 PR）
+        id: mode
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: node .github/scripts/ci-mode.cjs "$HEAD_REF" "$EVENT_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: 文字檢查（控制字元、換行混用）
+        run: node .github/scripts/check-text.cjs "origin/$BASE_REF"
+
+      - name: 功能 PR：守門（不准改會直接上線的網站檔）
+        if: steps.mode.outputs.mode == 'feature'
+        run: node .github/scripts/guard-release-files.cjs "origin/$BASE_REF"
+
+      - name: 功能 PR：先用原始碼組出 index.html（只在這次檢查暫存，不提交）
+        if: steps.mode.outputs.mode == 'feature'
+        run: node source/check-build.js --out index.html
+
+      - name: 功能 PR：完整驗證（組版比對、引擎、測試；略過版號一致）
+        if: steps.mode.outputs.mode == 'feature'
+        run: node source/xiangqi-lab/tools/verify-all.js --skip release-verify --out verify-ci.txt
+
+      - name: 功能 PR：私密掃描（source/ 全掃）
+        if: steps.mode.outputs.mode == 'feature'
+        run: node source/xiangqi-lab/tools/oss-scan.js source
+
+      - name: 發布 PR：完整驗證（全套）
+        if: steps.mode.outputs.mode == 'release'
+        run: node source/xiangqi-lab/tools/verify-all.js --out verify-ci.txt
+
+      - name: 發布 PR：私密掃描與同步檢查
+        if: steps.mode.outputs.mode == 'release'
+        run: node source/xiangqi-lab/tools/release-sync-check.js --dir .
+
+      - name: 私密掃描補強（本 PR 新增或修改的所有檔）
+        run: node .github/scripts/scan-changed.cjs "origin/$BASE_REF" "$RUNNER_TEMP/changed-files"
+
+      - name: 上傳驗證紀錄
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-ci
+          path: verify-ci.txt
+          if-no-files-found: ignore
