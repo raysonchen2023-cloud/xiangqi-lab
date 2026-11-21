@@ -31,8 +31,8 @@ jobs:
         with:
           node-version: 24
 
-      - name: 自動檢查腳本的自我測試（文字檢查、模式判斷、守門、私密掃描補強、防注入）
-        run: node --test .github/scripts/test-check-text.cjs .github/scripts/test-ci-mode.cjs .github/scripts/test-guard-scan.cjs
+      - name: 自動檢查腳本的自我測試（文字檢查、模式判斷、守門、私密掃描補強、防注入、略過稽核）
+        run: node --test .github/scripts/test-check-text.cjs .github/scripts/test-ci-mode.cjs .github/scripts/test-guard-scan.cjs .github/scripts/test-skip-checks.cjs
 
       - name: 判斷模式（功能 PR／發布 PR）
         id: mode
@@ -67,6 +67,12 @@ jobs:
       - name: 發布 PR：私密掃描與同步檢查
         if: steps.mode.outputs.mode == 'release'
         run: node source/xiangqi-lab/tools/release-sync-check.js --dir .
+
+      - name: 假略過檢查（測試沒跑卻算通過：空測試、缺檔直接 return）
+        run: node .github/scripts/check-fake-skip.cjs
+
+      - name: 略過稽核（這次每一條略過都要在 .github/test-skip-allow.json；找不到測試總結也算失敗）
+        run: node .github/scripts/check-test-skips.cjs verify-ci.txt
 
       - name: 私密掃描補強（本 PR 新增或修改的所有檔）
         run: node .github/scripts/scan-changed.cjs "origin/$BASE_REF" "$RUNNER_TEMP/changed-files"

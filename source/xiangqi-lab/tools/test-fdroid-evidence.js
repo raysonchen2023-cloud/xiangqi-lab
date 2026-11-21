@@ -142,8 +142,10 @@ test("成品：--url 模式從網站下載三個檔（用本機 127.0.0.1 假網
 test("真的公開倉庫（本機 git origin/main，不連網）：成品跟 release.json 一致、Pikafish 跟建置紀錄一致", { skip: !fs.existsSync(path.join(LAB, "site", ".git")) && "沒有 site/.git" }, () => {
   const r = run("release-verify.js", ["--git", path.join(LAB, "site"), "--ref", "origin/main"]);
   assert.equal(r.status, 0, r.stdout);
+});
+test("Pikafish 跟建置紀錄一致（W57：原本寫在上一支裡，沒有紀錄時直接 return 會被算成通過，拆出來明列略過）", { skip: !fs.existsSync(path.join(LAB, "site", ".git")) && "沒有 site/.git" }, t => {
   const rec = path.join(ROOT, "xiangqi-wasm", "build-record.json");
-  if (!fs.existsSync(rec)) return;
+  if (!fs.existsSync(rec)) return t.skip("沒有 xiangqi-wasm/build-record.json（Pikafish 重編紀錄只在開發者電腦）");
   const p = run("pikafish-verify.js", []); assert.equal(p.status, 0, p.stdout); assert.match(p.stdout, /Oct 30 2026（跟紀錄一致）/);
   const R = JSON.parse(fs.readFileSync(rec, "utf8")); assert.ok(R.rebuilds.length >= 1 && /逐位元相同/.test(R.rebuilds[0].result), "紀錄裡有實際重編的結果");
 });

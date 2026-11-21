@@ -4,7 +4,7 @@
 "use strict";
 const assert=require("node:assert/strict"),test=require("node:test"),fs=require("fs"),path=require("path"),vm=require("vm");
 const ROOT=path.join(__dirname,"../..");const rd=p=>fs.readFileSync(path.join(ROOT,p),"utf8");
-if(!fs.existsSync(path.join(ROOT,"xiangqi-db/i18n-en.json"))){test("外掛字典只放 CDN，公開副本沒有：這支檢查略過",()=>{});return}   /* 公開副本 */
+if(!fs.existsSync(path.join(ROOT,"xiangqi-db/i18n-en.json"))){test("外掛字典只放 CDN，公開副本沒有：這支檢查略過",{skip:"沒有 xiangqi-db/i18n-en.json（只放 CDN，公開副本沒有）"},()=>{});return}   /* W57：原本是空測試、會被算成通過；改成真正的略過 */   /* 公開副本 */
 const SRC=rd("xiangqi-db/m/07i18n.js"),EXT=JSON.parse(rd("xiangqi-db/i18n-en.json")),OS=rd("xiangqi-db/m/07z9-school.js");
 const CJK=/[㐀-鿿豈-﫿]/;
 const i18n=()=>{const ctx={};vm.createContext(ctx);const i=SRC.indexOf("#I18N-PURE-BEGIN"),j=SRC.indexOf("/* #I18N-PURE-END */");vm.runInContext(SRC.slice(SRC.indexOf("\n",i)+1,j)+";this.R={i18nText,i18nExtMerge}",ctx);ctx.R.i18nExtMerge(EXT);return ctx.R};
