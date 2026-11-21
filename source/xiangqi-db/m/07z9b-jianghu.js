@@ -526,11 +526,17 @@ function jhWindOn(sid,d){return !!sid&&jhWindNow(d).ids.includes(sid)}
 function jhWindToast(){const W=jhWindNow();if(!W.ids.length||typeof toast!=="function")return;let seen="";try{seen=store.get("jhWindSeen","")}catch(e){}if(seen===W.key)return;
   try{store.set("jhWindSeen",W.key)}catch(e){}const nm=W.ids.map(id=>{const S=jhSch(id);return S?S.nm:id}),w=JH_WIND_NM[W.st]||JH_WIND_NM.sun;
   toast(jhL(`${w[0]}・順風：${nm.join("、")}`,`${w[1]} · fair wind: ${nm.join(", ")}`))}
-/* 修為加成：xp＝原本要給的修為（第一次完成才有）；done＝這次確實完成了一個例子或下完一盤 */
-function jhWindXp(xp,sid,done,d){d=d||new Date();if(!jhWindOn(sid,d))return xp;if(xp>0)return Math.round(xp*JH_WIND_MUL);
+/* 修為加成：xp＝原本要給的修為（第一次完成才有）；done＝這次確實完成了一個例子或下完一盤；on＝開局時記下的順風與否（掌門盤），沒給才照現在的天氣算 */
+function jhWindXp(xp,sid,done,d,on){d=d||new Date();if(!(on===undefined?jhWindOn(sid,d):on))return xp;if(xp>0)return Math.round(xp*JH_WIND_MUL);
   if(done&&typeof addXP==="function")try{addXP(JH_WIND_GIFT,jhL("十州順風","Fair wind"),"jhw:"+jhWindDay(d)+":"+sid)}catch(e){}
   return xp}
 /* 包住 07z9 的兩個發修為函式（不改 07z9）：修行頁 finish、掌門結算 zmGameEnd 都是呼叫 OSC.reward／OSC.zmReward */
 try{if(typeof OSC!=="undefined"&&!OSC.jhWind){const r0=OSC.reward,z0=OSC.zmReward;
   OSC.reward=function(claim,sid,n,res,now){return jhWindXp(r0.apply(this,arguments),sid,!!(res&&res.ok))};
-  OSC.zmReward=function(claim,m,res,now){return jhWindXp(z0.apply(this,arguments),m&&m.sid,!!res)};OSC.jhWind=1}}catch(e){}
+  OSC.zmReward=function(claim,m,res,now){return jhWindXp(z0.apply(this,arguments),m&&m.sid,!!res,null,jhWindAt(m))};OSC.jhWind=1}}catch(e){}
+/* PR #15 審查（iMac Claude 2）：日出、日落落在 4 小時段中間時，順風的派會在段內換掉——開局看到順風、結算時卻沒加成。
+   掌門盤開局（zmStart）與再下一盤（zmAgainArgs）時，把「這一刻順不順風」記進 zmCur.jw，結算照開局那一刻算 */
+function jhWindMark(m){try{const C=store.get("zmCur",null);if(m&&C&&C.id===m.id)store.set("zmCur",{...C,jw:jhWindOn(m.sid)?1:0})}catch(e){}}
+function jhWindAt(m){try{const C=store.get("zmCur",null);if(m&&C&&C.id===m.id&&"jw" in C)return !!C.jw}catch(e){}return undefined}
+try{if(typeof zmStart==="function"&&!zmStart.jhw){const s0=zmStart;zmStart=function(m){const r=s0.apply(this,arguments);jhWindMark(m);return r};zmStart.jhw=1}
+  if(typeof zmAgainArgs==="function"&&!zmAgainArgs.jhw){const a0=zmAgainArgs;zmAgainArgs=function(j){const r=a0.apply(this,arguments);if(r)jhWindMark(OSC.mst(j));return r};zmAgainArgs.jhw=1}}catch(e){}
