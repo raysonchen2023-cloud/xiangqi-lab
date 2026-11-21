@@ -9,7 +9,7 @@
 //   3. 刪掉超過 25 MB 的檔（Pages 單檔上限；目前只有 engine/pikafish.nnue 48.4 MB，網頁改從 CDN 切塊拿）
 //   4. 寫 404.html：Pages 沒有它時，找不到的檔會回首頁（HTTP 200），CDN 失敗時的備援會拿到一頁 HTML
 // 用法（在倉庫根目錄）：node source/preview-build.js            Cloudflare 建置時跑這個
-//                       node source/preview-build.js --root <資料夾> --skip-build   只做 2～4（自我測試用）
+//                       node source/preview-build.js --root <資料夾> --skip-build [--limit <位元組>]   只做 2～4（自我測試用；--limit 換大檔門檻）
 "use strict";
 const fs = require("fs"), path = require("path"), cp = require("child_process");
 const LIMIT = 25 * 1024 * 1024;
@@ -41,7 +41,9 @@ function main() {
   fs.writeFileSync(ix, stampBuild(fs.readFileSync(ix, "utf8"), version));
   const sw = fs.readFileSync(path.join(root, "sw.js"), "utf8"), m = sw.match(/VERSION="([^"]+)"/);
   if (!m || m[1] !== version) throw new Error(`sw.js 的 VERSION（${m && m[1]}）跟 release.json（${version}）不一致`);
-  const big = bigFiles(root);
+  const li = process.argv.indexOf("--limit"), limit = li > 0 ? Number(process.argv[li + 1]) : LIMIT;
+  if (!(limit > 0)) throw new Error("--limit 要是正數");
+  const big = bigFiles(root, limit);
   for (const f of big) fs.rmSync(path.join(root, f));
   fs.writeFileSync(path.join(root, "404.html"), "Not found\n");
   console.log(`預覽建置好了：版號 ${version}；刪掉超過 25 MB 的檔 ${big.length ? big.join("、") : "（沒有）"}；寫了 404.html`);
