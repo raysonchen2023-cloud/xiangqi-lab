@@ -1,0 +1,7 @@
+include ':app'
+include ':capacitor-cordova-android-plugins'
+// W21 全離線包：install-time 素材分件（移植自 193，內容由 scripts/make-offline-packs.js 產生）
+include ':xq_bgm', ':xq_models', ':xq_games', ':xq_art'
+project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
+
+apply from: 'capacitor.settings.gradle'

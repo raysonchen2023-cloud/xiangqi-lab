@@ -3,3 +3,7 @@ include ':capacitor-cordova-android-plugins'
 project(':capacitor-cordova-android-plugins').projectDir = new File('./capacitor-cordova-android-plugins/')
 
 apply from: 'capacitor.settings.gradle'
+// 象棋千秋單機版（原型）：install-time 素材包。只有在 -PxqOffline=true 時才加進來，平常的瘦身版建置不受影響
+if (providers.gradleProperty('xqOffline').getOrElse('false') == 'true') {
+    include ':xq_bgm', ':xq_models', ':xq_games', ':xq_art'
+}

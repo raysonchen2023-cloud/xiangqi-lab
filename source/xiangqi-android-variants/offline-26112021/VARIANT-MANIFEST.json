@@ -1,0 +1,44 @@
+{
+ "schema": "xq-android-variant/1",
+ "name": "offline-26112021",
+ "kind": "全離線（install-time 素材包）",
+ "versionName": "20261120-1406-w21",
+ "versionCode": 26112021,
+ "siteVersion": "20261120-1406",
+ "webCommit": "3355041c6b6dd560a99cb51c36d90824b18bb11f",
+ "base": "source/xiangqi-android",
+ "androidNativeFixes": [
+  "retire-pwa-cache-recheck",
+  "no-cold-start-webview-prompt",
+  "local-3d-board-controls-docked",
+  "home-assets-bundled",
+  "offline-asset-packs"
+ ],
+ "native": {
+  "android/app/build.gradle": "1b8c439d359eb94d0f5e4bc81db47b07abe7ce752615c5f89b0baa1363a15ef5",
+  "android/app/src/main/assets/capacitor.config.json": "d13eedae7e03645771f70893e739c3fba13b5cac95137ed8bab8c0786357e971",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/MainActivity.java": "1a8e14fb46d01b2c264ea4cc7aa044cfa02a0651251d2da84e1a11457137159f",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQWebViewClient.java": "1884a6253d494d017fca83e9ddbbbd3d92093c4bdf6c9cdd68a8b724feaedfa6",
+  "android/settings.gradle": "4b64008903573efc2a2771356fe1243c7cfb551b3aff2873bcdf29c6e8474d64"
+ },
+ "sameAsBase": 64,
+ "notInThisBuild": [],
+ "missing": {},
+ "web": {
+  "index.html.patch": {
+   "sha256": "37a77fe29879a8dc93c0020cf1130c10d36ba68531e576c59b3031e71796077c",
+   "appliesTo": "3355041c6b6dd560a99cb51c36d90824b18bb11f:index.html",
+   "hunks": 29
+  },
+  "swFrom": "source/xiangqi-android/scripts/native-sw.js（make-www.js 產生）",
+  "xq-native-migration.html": "174ac94c307c58005e524acea5aa4e2232da825a3488149f3dad57b2340a1ed9"
+ },
+ "aab": {
+  "base/assets/public/index.html": "10471df38ed874884e762eba01d4419c253d866ad4ea4da8b75013bbb09d8971",
+  "base/assets/public/sw.js": "d2f60ee0f79106deae2de542c38f324a48776dbfba8761e16505468a7ab2a9d0",
+  "base/assets/public/xq-native-migration.html": "174ac94c307c58005e524acea5aa4e2232da825a3488149f3dad57b2340a1ed9",
+  "base/assets/public/native-build.json": "18068f03c46e6ee0cd9e03b0886a1b730d4fe186faccae1625770a0811bbfe77",
+  "file": "xiangqi-26112021-20261120-1406-w21.aab",
+  "sha256": "1d93cd143c1cf40ac9034f16ec33482788cb72f7698e0f438e1324d3eefcfe80"
+ }
+}
