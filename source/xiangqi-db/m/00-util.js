@@ -527,3 +527,5 @@ safeLRCss();
   const w=function(u,o){try{const s=String(u&&u.url||u||"");if(RE.test(s)&&!(o&&o.method&&o.method!=="GET")){const k=s.replace(/\?.*$/,"").replace(/^.*\/data\//,"data/"),now=Date.now(),c=C.get(k);
     if(c)return c.p.then(r=>r.clone());const p=f0.call(window,u,o);C.set(k,{t:now,p});p.then(r=>{if(!r||!r.ok)C.delete(k);else if(/fixes/.test(k))window.XQ_FIXES_GOT=1},()=>C.delete(k));return p.then(r=>r.clone())}}catch(e){}return f0.apply(window,arguments)};
   w.__xqDedupe=1;window.fetch=w}catch(e){}})();
+
+/* W36 測試用，不合併：模擬只改原始碼的 PR */
