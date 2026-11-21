@@ -188,3 +188,28 @@ test("PR #21 再審（反向對照補測）：前院能下的優先——就算�
   assert.equal(L[0].can, true, "第一位要是能下的：" + L[0].k);
   assert.equal(L[L.length - 1].k, "secret:liuji", "不能下的排最後");
 });
+
+/* PR #22 審查（iMac）：第三位的名牌跟左右兩個各疊 12px 高。名牌照 jhMateCss 算大小：字 12px、行高 1.2、上下 padding 2px、邊框 1px、左右 padding 6px；
+   375 寬手機上 1 CSS px＝768/375 原圖像素。名字長度用這一派登記的門人裡最長的（至少 5 字），所有站位一起站滿時名牌兩兩不能重疊。 */
+test("PR #22 審查：前院站滿時，門人名牌兩兩不重疊（375 寬手機、用本派最長的名字算）", () => {
+  const { R, OSC } = load();
+  const px = 768 / 375, H = (12 * 1.2 + 2 * 2 + 2) * px;
+  for (const [sid, hall] of Object.entries(R.JH_HALL)) {
+    if (!hall.mates) continue;
+    const n = Math.max(5, ...Object.values(OSC.NPC).filter((x) => x[0] === sid).map((x) => [...x[2]].length));
+    const W = (n * 12 + 6 * 2 + 2) * px;
+    const box = ([x, y]) => [x - W / 2, y + 14, x + W / 2, y + 14 + H];
+    const B = hall.mates.map(box);
+    for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++) {
+      const a = B[i], b = B[j], hit = a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
+      assert.ok(!hit, `${sid} 第 ${i + 1}、${j + 1} 位的名牌重疊：${hall.mates[i]} ／ ${hall.mates[j]}（名字 ${n} 字）`);
+    }
+  }
+});
+
+test("PR #22 審查：只有兩位時左右對稱站（前兩個站位對中軸 384 對稱、同一高度）", () => {
+  const { R } = load();
+  const [a, b] = R.JH_HALL.central.mates;
+  assert.equal(a[0] + b[0], 768, "左右對稱");
+  assert.equal(a[1], b[1], "同一高度");
+});
