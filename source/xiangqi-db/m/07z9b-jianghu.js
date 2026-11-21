@@ -602,7 +602,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   img.onerror=()=>{JH_HALL_BAD.add(sid);back()};   /* 圖還沒上 CDN、史學顧問還沒審完：退回長卷、開原本的小卡 */
   if(m){const z=document.createElement("img");z.className="jh-hall-zm";z.src=`data/npc/${m.id}.webp`;z.alt=jhL(`掌門${m.nm}坐在大廳主位`,`Master ${m.en} seated in the hall`);
     z.style.cssText=jhHallPc(H.seat)+`;width:${(H.w/JH_HALL_W*100).toFixed(2)}%`;z.onclick=()=>jhSheet(sid);z.onerror=()=>z.remove();P.append(z)}
-  const spot=(k,label,go)=>{const p=H.spots[k];if(!p)return;const b=document.createElement("button");b.type="button";b.className="shp-spot jh-hall-spot";b.dataset.k=k;b.style.cssText=jhHallPc(p);b.innerHTML=`<b>${esc(label)}</b>`;b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}go()};P.append(b)};
+  const spot=(k,label,go)=>{const p=H.spots[k];if(!p)return;const b=document.createElement("button");b.type="button";b.className="shp-spot jh-hall-spot"+(k==="gate"?" ex-spot":"");b.dataset.k=k;b.style.cssText=jhHallPc(p);b.innerHTML=`<b>${esc(label)}</b>`;b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}go()};P.append(b)};
   spot("hall",m?jhL(`🏯 掌門大廳・${m.nm}`,`🏯 Master's hall · ${m.en}`):jhL("🏯 掌門大廳","🏯 Master's hall"),()=>jhSheet(sid));
   spot("study",jhL("📖 講棋堂","📖 Lecture hall"),()=>jhHallStudy(sid));
   spot("yard",jhL("👥 前院・門下棋友","👥 Front yard"),()=>jhHallYard(sid));
@@ -699,6 +699,9 @@ const JH_HALL_WALK={
     HS:{hall:["hall",50.4,21,"bow"],zm:["hall",50.4,21,"bow"],study:["study",29.4,35,"wave"],yard:["s0",50,74,"wave"],gate:["dock",50,96,"wave"],
       m0:["mA",38.5,83,"wave"],m1:["mB",61.5,83,"wave"]}}
 };
+/* PR #23 審查（iMac）：門內頁原本沒寫出口，套到 07w 的預設出口，第一次進門亮的是頂欄返回鍵、「要回去，點這裡」也指著返回鍵。
+   出口就是圖上的「‹ 搭船回十州棋館」：搭船標籤加 ex-spot（07w shwXHi 找它亮框、放泡泡），這裡寫明出口：從碼頭下方走進來、點碼頭下緣空地＝走出去 */
+if(typeof SHW_EXITS!=="undefined"&&SHW_EXITS&&!("jhhall:*" in SHW_EXITS))SHW_EXITS["jhhall:*"]={out:[50,104],r:[38,90,62,100]};
 function jhHallWalk(v,sid){const W=JH_HALL_WALK[sid],P=v&&v.querySelector(".jh-hall"),img=P&&P.querySelector("img");
   if(!W||!P||!img||typeof shwMount!=="function"||typeof SHW_PG0==="undefined")return;
   const zm=P.querySelector(".jh-hall-zm");if(zm)zm.dataset.k="zm";

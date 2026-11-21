@@ -273,3 +273,53 @@ test("〔原始碼〕門內走路：圖載好才掛 shwMount；地點、門人�
   assert.match(JH, /\.jh-hall \.jh-hall-mate-tag\{z-index:4\}/);
   assert.match(JH, /JhHall\.jhWalk=1/, "包一層就好，不重複包");
 });
+
+/* ---------- PR #23 審查（iMac 要改 1 項）：門內頁沒寫出口，第一次進門亮的是頂欄返回鍵，「要回去，點這裡」也指著返回鍵；出口要是圖上的「‹ 搭船回十州棋館」 ---------- */
+const SW = rd("xiangqi-db/m/07w-shipwalk.js");
+function fakeEl(tag) {
+  const cls = new Set();
+  const el = {
+    tag, dataset: {}, style: {}, children: [], isConnected: true, hidden: false,
+    get className() { return [...cls].join(" ") }, set className(v) { cls.clear(); String(v).split(/\s+/).filter(Boolean).forEach((c) => cls.add(c)) },
+    classList: { add: (c) => cls.add(c), remove: (c) => cls.delete(c), contains: (c) => cls.has(c) },
+    append(...a) { el.children.push(...a) }, closest: () => el, getClientRects: () => [1], offsetWidth: 1,
+    querySelector(sel) { const c = sel.replace(/^\./, ""); return el.children.find((x) => x.classList && x.classList.contains(c)) || null },
+  };
+  return el;
+}
+
+test("PR #23 審查：門內頁有自己的出口設定（不套預設出口）；點碼頭下緣算出口、搭船標籤在那一塊裡", () => {
+  const c = { document: undefined };
+  vm.createContext(c);
+  const exits = SW.slice(SW.indexOf("const SHW_EXIT_ON="), SW.indexOf("const SHW_XR="));
+  const line = JH.split("\n").find((l) => l.startsWith('if(typeof SHW_EXITS!=="undefined"&&SHW_EXITS&&!("jhhall:*" in SHW_EXITS))'));
+  assert.ok(line, "07z9b 要寫 jhhall:* 的出口");
+  vm.runInContext(exits + "\n" + line + "\nthis.R={SHW_EXITS,shwExitCfg}", c);
+  const { R } = load(), W = R.JH_HALL_WALK.central;
+  const o = c.R.shwExitCfg({ mem: "jhhall:central", cfg: Object.assign({}, W, { home: "dock" }) });
+  assert.ok(o.X, "門內頁要有出口");
+  assert.deepEqual([...o.X.r], [38, 90, 62, 100], "用寫明的出口，不是預設的起點左右各 10%");
+  assert.deepEqual([...o.X.out], [50, 104]);
+  const g = R.JH_HALL.central.spots.gate, gx = g[0] / R.JH_HALL_W * 100, gy = g[1] / R.JH_HALL_H * 100;
+  assert.ok(gx >= o.X.r[0] && gx <= o.X.r[2] && gy >= o.X.r[1] && gy <= o.X.r[3], "搭船標籤在出口那一塊裡：" + [gx, gy]);
+});
+
+test("PR #23 審查：第一次進門，出口亮框與「要回去，點這裡」都在「搭船」標籤上，不在頂欄返回鍵", () => {
+  const P = fakeEl("div"), back = fakeEl("button"), bub = [];
+  const doc = { createElement: fakeEl, querySelector: (s) => (s === "#topbar #back" ? back : null) };
+  const spotSrc = JH.match(/const spot=\(k,label,go\)=>\{[^\n]*?P\.append\(b\)\};/);
+  assert.ok(spotSrc, "找不到 spot()");
+  const calls = JH.split("\n").filter((l) => /^  spot\("(hall|study|yard|gate)"/.test(l)).join("\n");
+  const c = { document: doc, P, H: R0().JH_HALL.central, m: null, sid: "central", jhL: (z) => z, esc: String, jhHallPc: () => "", jhSheet() {}, jhHallStudy() {}, jhHallYard() {}, jhGo() {}, vibrate() {},
+    setTimeout: () => 0, store: { get: () => 0, set() {} }, tmxBub: (b, t) => { bub.push([b, t]); return true } };
+  vm.createContext(c);
+  const hi = SW.slice(SW.indexOf("function shwXHi(F,n){"), SW.indexOf("function shwWin(S){"));
+  vm.runInContext(spotSrc[0] + "\n" + calls + "\n" + hi + "\nthis.out=shwXHi(P,0)", c);
+  const gate = P.children.find((x) => x.dataset.k === "gate");
+  assert.ok(gate && gate.classList.contains("ex-spot"), "搭船標籤是出口（ex-spot）");
+  assert.equal(P.children.filter((x) => x.classList.contains("ex-spot")).length, 1, "只有搭船一個出口");
+  assert.equal(c.out, gate, "亮框在搭船標籤");
+  assert.ok(gate.classList.contains("ex-hi") && !back.classList.contains("ex-hi"), "返回鍵不亮");
+  assert.deepEqual(bub.map(([b, t]) => [b === gate, t]), [[true, "要回去，點這裡"]], "泡泡指著搭船標籤");
+});
+function R0() { return load().R }
