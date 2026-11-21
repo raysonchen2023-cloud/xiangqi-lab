@@ -1,0 +1,41 @@
+# 象棋千秋：發布合併進 main 後自動打版本標籤 web-<版號>（W60 第 1 期 B1，2026-11-21）
+# 只在 main 的 release.json 有變動時跑；不提交任何檔案（main 有分支保護），只打標籤。
+# 版號先在 tag-release.cjs 裡用 ^\d{8}-\d{4}$ 驗過、核對 sw.js，才拿來當標籤名；這裡沒有把任何外部欄位嵌進指令。
+# 預期會紅燈的情況（PR #19 審查）：版號沒變、只改了 release.json 的其他欄位——同名標籤已指向較早的發布提交，
+#   這支照規則「不覆寫」而報錯。這是刻意的：同一個版號只能對應一個提交；真的要重發請換新版號。
+name: 自動打版本標籤
+
+on:
+  push:
+    branches: [main]
+    paths: [release.json]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tag-release
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: 自我測試
+        run: node --test .github/scripts/test-tag-release.cjs
+
+      - name: 設定提交者（打 annotated tag 需要）
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: 打標籤 web-<版號>
+        run: node .github/scripts/tag-release.cjs

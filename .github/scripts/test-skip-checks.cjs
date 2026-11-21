@@ -14,12 +14,17 @@ test("假略過：空測試、缺檔直接 return 都要抓到", () => {
   assert.equal(scanText('test("x", async () => { });').length, 1);
   assert.equal(scanText('  if (!fs.existsSync(rec)) return;').length, 1);
   assert.equal(scanText('  if(!fs.existsSync(path.join(A,"ring3d.json")))return;   /* 註解 */').length, 1);
+  assert.equal(scanText('test("參數不加括號", t => {});').length, 1, "PR #17 審查：t=>{}");
+  assert.equal(scanText('test("x", async t=>{});').length, 1);
+  assert.equal(scanText('  if (!fs.existsSync(p)) { return; }').length, 1, "PR #17 審查：{ return; }");
 });
 
 test("假略過：正確的略過寫法不能誤抓", () => {
   for (const ok of [
     'test("外掛字典沒有：略過",{skip:"只放 CDN"},()=>{});',
     'if (!fs.existsSync(EXT)) return t.skip(SKIP);',
+    'if (!fs.existsSync(EXT)) { return t.skip(SKIP); }',
+    'test("有選項的略過", { skip: "原因" }, t => {});',
     'if (!fs.existsSync(LF) || !fs.existsSync(BF)) return t.skip("沒有地圖資料");',
     'if(!fs.existsSync(MXC))return t.skip(NO_MXC);const X=require(MXC),K=X.loadMXS(),G=GOOD().map((g,i)=>{if(i%4)return g.cpu;return g})',
     'test("真的有斷言",()=>{assert.ok(true)});',
