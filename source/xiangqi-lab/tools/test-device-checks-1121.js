@@ -8,8 +8,8 @@
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process");
 const AND = path.join(__dirname, "..", "..", "xiangqi-android", "scripts");
 const UP = path.join(AND, "check-upgrade.js"), SC = path.join(AND, "check-scenes.js"), PS = path.join(AND, "player-state.js");
-const { verdict, PROBE, DIALOG_WATCH_SEC } = require(UP);
-const { judge, ROUTES, COLLECT } = require(SC);
+const { verdict, mergeWatch, PROBE, DIALOG_WATCH_SEC } = require(UP);
+const { judge, finalCode, noStatusOf, ROUTES, COLLECT } = require(SC);
 const { isEmulatorProps, checkDevice } = require(path.join(AND, "device-guard.js"));
 const { PRELOAD_BUSY } = require(PS);
 const made = [];
@@ -77,6 +77,26 @@ test("PR #12 審查：只准在模擬器上跑——實體手機會被解除安�
 
 test("PR #12 審查：更新視窗要等大廳送 version 才跳，冷啟後至少看 15 秒", () => {
   assert.ok(DIALOG_WATCH_SEC >= 15, String(DIALOG_WATCH_SEC));
+});
+
+test("PR #12 再審：冷啟後 20 秒內跳出過、後來被關掉的更新視窗也要判紅", () => {
+  const atEnd = { ...GOOD, dialogs: 0 };   /* 最後那次檢查時視窗已經不在 */
+  const merged = mergeWatch(atEnd, 1);
+  assert.equal(merged.dialogs, 1);
+  assert.deepEqual(verdict(merged, "20261121-0643"), ["畫面上有 1 個更新提示視窗"]);
+  assert.deepEqual(verdict(mergeWatch(atEnd, 0), "20261121-0643"), []);
+  assert.equal(mergeWatch({ ...GOOD, dialogs: 2 }, 1).dialogs, 2, "取較大的，不能被觀察期的較小值蓋掉");
+});
+
+test("PR #12 再審：拿不到讀取狀態碼又沒有紅燈 → 結束代碼 2（測不成立）；有紅燈照樣 1；都正常 0", () => {
+  assert.equal(finalCode({ bad: 0, noStatus: true }), 2);
+  assert.equal(finalCode({ bad: 3, noStatus: true }), 1);
+  assert.equal(finalCode({ bad: 2, noStatus: false }), 1);
+  assert.equal(finalCode({ bad: 0, noStatus: false }), 0);
+  /* 從掃描結果算出 noStatus：只看連線那一輪 */
+  assert.equal(noStatusOf([{ mode: "online", statusOk: false }, { mode: "offline", statusOk: true }]), true);
+  assert.equal(noStatusOf([{ mode: "online", statusOk: true }, { mode: "offline", statusOk: false }]), false);
+  assert.equal(finalCode({ bad: 0, noStatus: noStatusOf([{ mode: "online", statusOk: false }]) }), 2);
 });
 
 test("〔原始碼〕PR #12 審查：掃描會回報 WebView 能不能給讀取狀態碼（舊 WebView 拿不到時整輪當測不成立）", () => {

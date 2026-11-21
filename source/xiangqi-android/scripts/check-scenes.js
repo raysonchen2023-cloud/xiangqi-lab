@@ -81,6 +81,11 @@ const net = on => {
   adb("shell", "svc", "data", on ? "enable" : "disable");
 };
 
+/* 整輪的結束代碼：有紅燈＝1；沒紅燈但拿不到讀取狀態碼（讀取失敗檢查沒做）＝2 測不成立；其餘＝0 */
+function finalCode({ bad, noStatus }) { return bad ? 1 : noStatus ? 2 : 0 }
+/* 連線那一輪有沒有拿不到讀取狀態碼（離線那輪本來就不算讀取失敗） */
+function noStatusOf(sweeps) { return sweeps.some(s => s.mode === "online" && s.statusOk === false) }
+
 /* 一個畫面怎麼算（開發者 11/21：離線只算「看得到的破圖」——小包只存連線看過的檔，離線時背景預抓、還沒下載過的檔讀不到是設計限制，列成提醒；連線時讀取失敗照樣算） */
 function judge(row, mode) {
   const fails = (row.failed || []).length;
@@ -139,13 +144,13 @@ async function main() {
   R.finishedAt = new Date().toISOString();
   const bad = R.sweeps.flatMap(s => s.badRoutes.map(r => (s.mode === "online" ? "連線 " : "離線 ") + r));
   const warn = R.sweeps.flatMap(s => (s.warnRoutes || []).map(r => "離線 " + r));
-  const noStatus = R.sweeps.some(s => s.mode === "online" && s.statusOk === false);
+  const noStatus = noStatusOf(R.sweeps);
   R.result = bad.length ? "不通過" : noStatus ? "測不成立" : "通過"; R.warnRoutes = warn; R.statusOk = !noStatus; save();
-  if (!bad.length && noStatus) { console.log("△ 測不成立：這台的 WebView 太舊，拿不到讀取狀態碼（要 Chrome 109 以上），讀取失敗檢查沒有做。看得到的破圖已檢查、沒有發現；請換新一點的模擬器再跑"); process.exit(2) }
+  if (finalCode({ bad: bad.length, noStatus }) === 2) { console.log("△ 測不成立：這台的 WebView 太舊，拿不到讀取狀態碼（要 Chrome 109 以上），讀取失敗檢查沒有做。看得到的破圖已檢查、沒有發現；請換新一點的模擬器再跑"); process.exit(2) }
   console.log(bad.length ? `✘ 不能送審：${bad.length} 個畫面有破圖或讀取失敗（${bad.join("、")}）`
     : `✔ 破圖掃描通過：${R.sweeps.map(s => (s.mode === "online" ? "連線" : "離線") + " " + s.routes.length + " 個畫面").join("、")}看得到的圖都沒有破（${R.sweeps[0] && R.sweeps[0].build}）`);
   if (warn.length) console.log(`△ 提醒：離線時 ${warn.length} 個畫面有還沒下載過的檔讀不到（${warn.join("、")}），細節在 scenes.json；不擋送審`);
-  process.exit(bad.length ? 1 : 0);
+  process.exit(finalCode({ bad: bad.length, noStatus }));
 }
-module.exports = { judge, ROUTES, COLLECT };
+module.exports = { judge, finalCode, noStatusOf, ROUTES, COLLECT };
 if (require.main === module) main();

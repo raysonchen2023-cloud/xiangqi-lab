@@ -65,6 +65,8 @@ const PROBE = `(async()=>{
     webUpdate:typeof xqWebUpdateOn==='function'?xqWebUpdateOn():true,notify:typeof XQ_notifyNew,manual,
     dialogs:[...document.querySelectorAll('.modal')].filter(x=>/有新版本|新版可用|new version|update available/i.test(x.textContent)).length}
 })()`;
+/* 冷啟後 DIALOG_WATCH_SEC 秒內看過的更新視窗數，併進最後那次檢查（取較大的）：視窗跳出後被關掉也算 */
+function mergeWatch(row, seen) { return { ...row, dialogs: Math.max(+row.dialogs || 0, +seen || 0) } }
 function verdict(row, newBuild = O.newBuild) {
   const bad = [];
   if (row.build !== newBuild) bad.push(`載入版號 ${row.build}，應為 ${newBuild}`);
@@ -117,8 +119,7 @@ async function main() {
       /* PR #12 審查：更新視窗要等大廳連線送來 version 才會跳，冷啟後持續看 DIALOG_WATCH_SEC 秒，期間出現過就算 */
       let seen = 0;
       for (let t = 0; t < DIALOG_WATCH_SEC; t++) { try { seen = Math.max(seen, await c2.ev(DIALOGS)) } catch (e) { } await sleep(1000) }
-      const row = await c2.ev(PROBE);
-      row.dialogs = Math.max(row.dialogs, seen);
+      const row = mergeWatch(await c2.ev(PROBE), seen);
       row.bad = verdict(row); row.pass = !row.bad.length; row.screenshot = snap("after-cold-" + i);
       R.after.push(row); save();
       console.log(`${row.pass ? "✔" : "✘"} 第 ${i} 次冷啟：${row.pass ? "通過" : row.bad.join("；")}`);
@@ -129,5 +130,5 @@ async function main() {
   console.log(bad.length ? `✘ 不能送審：${bad.length}／${O.cold} 次冷啟不符（P0-UPD）` : `✔ 升級測試通過：${O.oldBuild} → ${O.newBuild}，冷啟 ${O.cold} 次都符合`);
   process.exit(bad.length ? 1 : 0);
 }
-module.exports = { verdict, PROBE, DIALOG_WATCH_SEC };
+module.exports = { verdict, mergeWatch, PROBE, DIALOG_WATCH_SEC };
 if (require.main === module) main().catch(e => fail(2, e.stack || String(e)));
