@@ -5,8 +5,10 @@
 const { execFileSync } = require("child_process");
 const fs = require("fs");
 const base = process.argv[2] || "origin/main";
-const files = execFileSync("git", ["diff", "--name-only", "--diff-filter=AM", `${base}...HEAD`]).toString().split("\n").filter(Boolean);
-const TEXT = /\.(js|cjs|mjs|css|html|md|json|yml|yaml|txt|java|kt|swift|gradle|plist|xml|properties)$/i;
+// 審查 #2-1（iMac Claude 2）：git 預設會把中文路徑跳脫成 "\344\270\255…"，existsSync 找不到就整個跳過 → 關掉 quotePath、用 NUL 分隔
+const files = execFileSync("git", ["-c", "core.quotePath=false", "diff", "--name-only", "-z", "--diff-filter=AM", `${base}...HEAD`]).toString().split("\0").filter(Boolean);
+// 審查 #2-2：補 iOS 專案檔（pbxproj、storyboard、xib、xcprivacy、entitlements、xcconfig、strings）與腳本檔（sh、py、ps1、bat）
+const TEXT = /\.(js|cjs|mjs|ts|css|html|md|json|yml|yaml|txt|java|kt|swift|gradle|plist|xml|properties|pbxproj|storyboard|xib|xcprivacy|entitlements|xcconfig|strings|sh|py|ps1|bat)$/i;
 const bad = [];
 let n = 0;
 for (const f of files) {
