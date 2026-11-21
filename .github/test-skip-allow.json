@@ -146,6 +146,7 @@
   "test-winter-scenes-1117.js：preload.json：7 張都在、大小和內容指紋對，版本 v 照全部項目重算（手機看到新指紋才會下載）（沒有 xiangqi-lab/site/data/ximarket/xm_day_winter.webp（公開副本不含））",
   "test-xsm-counter-1116.js：英文：櫃坊新字串併進外掛字典後都翻得出（掌櫃、七星的信照 {你}／{名} 換過的樣子）（沒有 xiangqi-db/i18n-en.json 英文外掛字典（只放 CDN，公開副本沒有））",
   "test-xsm-stalls-1116.js：西市借的三首配樂檔都在（mp3 只放 CDN）（沒有 data/bgm 的 mp3（只放 CDN，公開副本沒有））",
+  "test-zm-hall-1121.js：門內圖原檔（只在開發者電腦；發布時才放上 CDN）：尺寸 768×1376、大小合理（沒有 xiangqi-db/art/zmhall/central.webp（美術原檔只在開發者電腦，公開副本沒有））",
   "test-zm-medallion-1118.js：ring3d.json 有十位掌門的圓牌位置（數值合理），兩份一致（沒有 tripo_app/ring3d.json（公開副本的 run-tests 把 source/ 抄到暫存資料夾，倉庫的 data/ 也不在旁邊））",
   "test-zm-medallion-1118.js：深度表 glydepth.json 也算過十位掌門（W57：從上一支拆出）（沒有 tripo_app/glydepth.json（只放 CDN））"
  ]

@@ -450,7 +450,7 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
   return{}}
 /* ---------- 駐地小卡：拜師／繼續修行、挑戰掌門、這一派的棋友 ---------- */
 function jhSheet(sid){if(typeof sheet!=="function"||typeof OSC==="undefined")return;const S=jhSch(sid),m=OSC.MST.find(x=>x.sid===sid),c=jhLook(),o=typeof oscGet==="function"?oscGet():null,act=c&&o?OSC.act(o,c):"";
-  const mates=Object.values(OSC.NPC).filter(x=>x[0]===sid).map(x=>jhT(x[2])).slice(0,5);
+  const mates=Object.values(OSC.NPC).filter(x=>x[0]===sid).map(x=>jhT(x[2])).slice(0,5),inHall=location.hash==="#/jianghu/hall/"+sid;   /* 已經在門內就不再顯示「走進山門」 */
   sheet(`${S.nm}`,b=>{b.innerHTML=`<div class="jh-card">${m?`<img src="data/npc/${m.id}.webp" alt="" onerror="this.remove()">`:""}<div class="tx">
       ${m?`<b>${esc(jhL(m.nm,m.en))}</b><p class="muted">${esc(jhL(S.nm+"掌門","Master of the "+S.nm))}</p><p>${esc(jhL("「"+m.say+"」",'"'+jhT(m.say)+'"'))}</p>`:""}
       <p class="muted">${esc(jhL(`慣用${S.op}：${S.say}`,`Plays ${S.op}: ${S.say}`))}</p>${mates.length?`<p class="muted">${esc(jhL("門下棋友：","Players of this school: ")+mates.join(jhL("、",", ")))}</p>`:""}</div></div>
@@ -458,10 +458,12 @@ function jhSheet(sid){if(typeof sheet!=="function"||typeof OSC==="undefined")ret
     ${jhWindOn(sid)?`<p class="jh-windnote">${esc(jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges in this school give extra XP."))}</p>`:""}
     ${m?jhIntelHTML(sid,m,mates):""}
     <div class="jh-actions">
-      ${c?`<button class="btn" id="jhLearn">${esc(act===sid?jhL(`繼續${jhNm(c)}的修行`,`Continue ${jhNm(c)}'s training`):jhL(`${jhNm(c)}拜入${S.nm}`,`${jhNm(c)} joins the ${S.nm}`))}</button>`:""}
+      ${JH_HALL[sid]&&!inHall&&!JH_HALL_BAD.has(sid)?`<button class="btn" id="jhHallGo">${esc(jhL("🚪 走進山門","🚪 Enter the gate"))}</button>`:""}
+      ${c?`<button class="btn${JH_HALL[sid]&&!inHall&&!JH_HALL_BAD.has(sid)?" ghost":""}" id="jhLearn">${esc(act===sid?jhL(`繼續${jhNm(c)}的修行`,`Continue ${jhNm(c)}'s training`):jhL(`${jhNm(c)}拜入${S.nm}`,`${jhNm(c)} joins the ${S.nm}`))}</button>`:""}
       ${c&&m?`<button class="btn ghost" id="jhZm">${esc(jhL(`🏯 挑戰${m.nm}`,`🏯 Challenge ${m.en}`))}</button>`:""}
       <button class="jh-link" id="jhAll">${esc(jhL("看十派總覽","See all ten schools"))}</button></div>`;
     const q=s=>b.querySelector(s);
+    if(q("#jhHallGo"))q("#jhHallGo").onclick=()=>{try{closeSheet()}catch(e){}jhGo("#/jianghu/hall/"+sid)};
     if(q("#jhLearn"))q("#jhLearn").onclick=()=>{try{closeSheet()}catch(e){}if(act===sid){location.hash="#/school/"+c;return}if(typeof oscJoinAsk==="function")setTimeout(()=>oscJoinAsk(c,sid,()=>{location.hash="#/school/"+c}),80)};
     if(q("#jhZm"))q("#jhZm").onclick=()=>{try{closeSheet()}catch(e){}if(typeof zmStart==="function")zmStart(m,c)};
     q("#jhAll").onclick=()=>{try{closeSheet()}catch(e){}location.hash="#/school"}})}
@@ -565,3 +567,115 @@ try{if(typeof journeyGameEnd==="function"&&!journeyGameEnd.jhIntel){const g0=jou
     const r=g0.apply(this,arguments);
     try{if(k&&!/^zm:/.test(k)&&st&&st.result&&st.result.w===st.human&&(st.moves||[]).length>=10){const x=OSC.NPC[k];if(x)jhIntelGet(x[0],jhT(x[2]))}}catch(e){}
     return r};journeyGameEnd.jhIntel=1}}catch(e){}
+/* ---------- W48 十派門內場景（開發者 11/21 選「先做門內場景頁面，先用中炮門」）----------
+   開發者原話：「十個門派入口進去後，根據該門派的場景繪製放大版的場景，裡面會有掌門人坐在掌門房」。
+   路由 #/jianghu/hall/<派>：一張滿版門內圖（story/gemini_app/189、190；圖上不畫人、不寫字），掌門用已驗收的坐姿立繪疊在大廳主位（開發者選「圖畫空座＋程式疊立繪」）。
+   可點：掌門大廳（＝駐地小卡：拜師、挑戰）、講棋堂（＝開局課程）、前院（門下棋友在哪裡找得到）、山門（回長卷）。掌門立繪本身也能點。
+   座標都是門內圖原圖像素（768×1376）；圖讀不到（還沒放上 CDN、或史學顧問還沒審完）就退回長卷並打開原本的小卡，不出現壞畫面。
+   JH_HALL 只列有圖的派；其他派沿用原本的小卡。 */
+const JH_HALL={
+  central:{v:"1121",seat:[386,336],w:84,spots:{hall:[384,118],study:[384,584],yard:[505,1140],gate:[384,1318]}}
+};
+const JH_HALL_W=768,JH_HALL_H=1376;
+const JH_HALL_BAD=new Set();   /* 這次開 App 讀圖失敗過的派：小卡不再顯示「走進山門」，免得一直繞回來 */
+const jhHallPc=([x,y])=>`left:${(x/JH_HALL_W*100).toFixed(2)}%;top:${(y/JH_HALL_H*100).toFixed(2)}%`;
+/* 門下棋友在哪裡找得到：驛站（inn:）、園子（npc:）、秘境（secret:） */
+function jhHallMates(sid){if(typeof OSC==="undefined")return[];const P={inn:jhL("驛站","Post Inn"),npc:jhL("園子","the Park"),secret:jhL("秘境","a hidden place")};
+  return Object.entries(OSC.NPC).filter(([k,x])=>x[0]===sid).map(([k,x])=>({k,nm:jhT(x[2]),at:P[k.split(":")[0]]||""}))}
+function jhHallYard(sid){const S=jhSch(sid),L=jhHallMates(sid);
+  sheet(jhL(`${S.nm}・前院`,`${S.nm} · Front yard`),b=>{b.innerHTML=`<p class="muted">${esc(jhL("門下棋友平常不在山門裡，分散在各處下棋：","The school's players are usually out playing elsewhere:"))}</p>
+    ${L.length?`<ul class="jh-mates">${L.map(x=>`<li><b>${esc(x.nm)}</b><span class="muted">${esc(x.at)}</span></li>`).join("")}</ul>`:`<p class="muted">${esc(jhL("這一派目前沒有登記的門人。","No players are listed for this school yet."))}</p>`}
+    ${typeof jhIntelHTML==="function"&&OSC.MST.find(x=>x.sid===sid)?jhIntelHTML(sid,OSC.MST.find(x=>x.sid===sid),L.map(x=>x.nm)):""}`})}
+function jhHallStudy(sid){const c=jhLook(),o=typeof oscGet==="function"?oscGet():null,act=c&&o?OSC.act(o,c):"";
+  if(!c){toast(jhL("開始旅程、有了隊伍以後才能拜師。","Start a journey and form a party first."));return}
+  if(act===sid){location.hash="#/school/"+c;return}
+  if(typeof oscJoinAsk==="function")oscJoinAsk(c,sid,()=>{location.hash="#/school/"+c})}
+function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!=="undefined"?OSC.MST.find(x=>x.sid===sid):null;
+  if(!H||!S){location.hash="#/jianghu";return{}}
+  setTop(jhL(`🚪 ${S.nm}`,`🚪 ${S.nm}`),"#/jianghu");if(typeof setTabs==="function")setTabs(false);v.className="view";document.body.classList.add("jh-on");
+  const f=jhFadeEl();f.classList.add("on");
+  const P=document.createElement("div");P.className="shp-page cq jh-hall";v.innerHTML="";v.append(P);
+  const img=document.createElement("img");img.src=`data/zmhall/${sid}.webp?v=${H.v}`;img.alt=jhL(`${S.nm}門內：山門、前院、講棋堂，最上面是掌門大廳`,`Inside the ${S.nm}: gate, front yard, lecture hall, and the master's hall at the top`);img.draggable=false;P.append(img);
+  const back=()=>{f.classList.remove("on");location.hash="#/jianghu";setTimeout(()=>{try{jhSheet(sid)}catch(e){}},700)};
+  img.onerror=()=>{JH_HALL_BAD.add(sid);back()};   /* 圖還沒上 CDN、史學顧問還沒審完：退回長卷、開原本的小卡 */
+  if(m){const z=document.createElement("img");z.className="jh-hall-zm";z.src=`data/npc/${m.id}.webp`;z.alt=jhL(`掌門${m.nm}坐在大廳主位`,`Master ${m.en} seated in the hall`);
+    z.style.cssText=jhHallPc(H.seat)+`;width:${(H.w/JH_HALL_W*100).toFixed(2)}%`;z.onclick=()=>jhSheet(sid);z.onerror=()=>z.remove();P.append(z)}
+  const spot=(k,label,go)=>{const p=H.spots[k];if(!p)return;const b=document.createElement("button");b.type="button";b.className="shp-spot jh-hall-spot";b.dataset.k=k;b.style.cssText=jhHallPc(p);b.innerHTML=`<b>${esc(label)}</b>`;b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}go()};P.append(b)};
+  spot("hall",m?jhL(`🏯 掌門大廳・${m.nm}`,`🏯 Master's hall · ${m.en}`):jhL("🏯 掌門大廳","🏯 Master's hall"),()=>jhSheet(sid));
+  spot("study",jhL("📖 講棋堂","📖 Lecture hall"),()=>jhHallStudy(sid));
+  spot("yard",jhL("👥 前院・門下棋友","👥 Front yard"),()=>jhHallYard(sid));
+  spot("gate",jhL("‹ 出山門，回十州棋館","‹ Back to the Ten Prefectures"),()=>jhGo("#/jianghu"));
+  if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");P.append(n)}
+  const ready=()=>{if(P.isConnected)jhFadeOut()};if(img.complete&&img.naturalWidth)setTimeout(ready,0);else img.onload=ready;
+  setTimeout(()=>{if(f.classList.contains("on")&&P.isConnected&&img.naturalWidth)jhFadeOut()},6000);
+  return{}}
+/* 樣式：掌門立繪＝坐在主位（腳底對齊桌面）；地點標籤沿用 .shp-spot */
+(function(){if(typeof document==="undefined")return;const s=document.createElement("style");s.id="jhHallCss";s.textContent=`
+.jh-hall{position:relative}.jh-hall>img:first-child{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
+.jh-hall-zm{position:absolute;transform:translate(-50%,-100%);height:auto;cursor:pointer;filter:drop-shadow(0 2px 2px rgba(30,20,10,.35))}
+.jh-hall-note{position:absolute;left:4%;right:4%;top:2%;margin:0}
+.jh-mates{list-style:none;padding:0;margin:8px 0}.jh-mates li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)}`;
+  if(!document.getElementById("jhHallCss"))document.head.append(s)})();
+/* ---------- W48 前院門下棋友（開發者 11/21：「門下棋友也站在前院給玩家點選和對話，增加一些和門下棋友的互動」）----------
+   前院站最多 3 位這一派的門人（用現成立繪：園子棋友 data/npc/<id>.webp、驛站與秘境人物 data/actors/<id>.webp），點了開互動卡：
+     💬 聊聊：園子棋友用 07d NPC_BOND 的閒聊與文化小知識，驛站、秘境人物用自己那句話；每點一次換一句
+     📖 請教本門棋路：用門人的口吻講這一派開局的要點（OSC 的 op、say）
+     🔍 打聽掌門：今天打聽到了就照實說（案 4 情報）；還沒有就說「贏我一盤就告訴你」
+     ⚔ 切磋一盤：園子棋友指定由他坐下（包住 06-cpu parkNpcNew 的 keep），驛站旅人照驛站原本的開法；秘境人物要在秘境遇過才能下
+   不加修為、不改強度與棋局；贏了照案 4 規則解鎖情報（journeyGameEnd 包裝本來就會判斷）。 */
+JH_HALL.central.mates=[[168,1052],[298,1080],[606,1070]];   /* 前院左邊兩位、右邊空地一位；前院標籤移到中間偏右，不壓到人 */
+const JH_MATE_W=88;
+let jhMateKeep=null;
+/* 一位門人的資料：k＝OSC.NPC 的鍵（inn:／npc:／secret:）；回傳名字、立繪、在哪、台詞清單、能不能下 */
+function jhMateInfo(k){if(typeof OSC==="undefined")return null;const x=OSC.NPC[k];if(!x)return null;const [kind,id]=k.split(":");
+  const at={inn:jhL("驛站","Post Inn"),npc:jhL("園子","the Park"),secret:jhL("秘境","a hidden place")}[kind]||"";
+  let lines=[],can=false,why="";
+  if(kind==="npc"){const n=typeof PARK_NPC!=="undefined"?PARK_NPC.find(z=>z.id===id):null,B=typeof NPC_BOND!=="undefined"?NPC_BOND[id]:null;
+    if(n&&n.say)lines.push(n.say);if(B){(B.l||[]).forEach(s=>lines.push(s));(B.c||[]).forEach(s=>lines.push(s))}can=!!n}
+  else if(kind==="inn"){const n=typeof INN!=="undefined"?INN.find(z=>z.id===id):null;if(n&&n.say)lines.push(n.say);can=!!n}
+  else if(kind==="secret"){const n=typeof SECRETS!=="undefined"?SECRETS.find(z=>z.id===id):null;if(n){if(n.say)lines.push(String(n.say).replace(/^「|」$/g,""));if(n.who)lines.push(n.who)}
+    let met=false;try{met=typeof jSecrets==="function"&&!!jSecrets()[id]}catch(e){}can=!!n&&met;if(n&&!met)why=jhL("要先在秘境遇到他，才能切磋。","You need to meet them in a hidden place first.")}
+  return{k,kind,id,sid:x[0],nm:jhT(x[2]),at,img:kind==="npc"?`data/npc/${id}.webp`:`data/actors/${id}.webp`,lines:lines.map(s=>jhT(s)),can,why}}
+function jhMatesOf(sid){if(typeof OSC==="undefined")return[];return Object.keys(OSC.NPC).filter(k=>OSC.NPC[k][0]===sid).map(jhMateInfo).filter(Boolean)}
+/* 前院站誰：可以下的優先（園子、驛站），其次秘境；每天換一批（同一天固定） */
+function jhMatesShown(sid,n,d){const L=jhMatesOf(sid);const day=typeof jhWindDay==="function"?jhWindDay(d||new Date()):"";
+  const key=m=>(m.can?0:1)*1e10+(typeof jhWindHash==="function"?jhWindHash(day+"|"+m.k):0);return L.slice().sort((a,b)=>key(a)-key(b)).slice(0,n)}
+function jhMateTip(sid,M){const S=jhSch(sid);return jhL(`我們${S.nm}講究${S.op}：${S.say}`,`In the ${S.nm} we play ${S.op}: ${jhT(S.say)}`)}
+function jhMateIntel(sid,M){const m=OSC.MST.find(x=>x.sid===sid);if(!m)return"";
+  if(typeof jhIntelOn==="function"&&jhIntelOn(sid)){const T=jhSch(jhIntelSch(sid));return jhL(`悄悄告訴你：掌門${m.nm}今天打算走${T.op}。`,`Between us: Master ${m.en} plans to play ${T.op} today.`)}
+  return jhL(`掌門今天的打算？贏我一盤，我就告訴你。`,`The master's plan today? Beat me in a game and I'll tell you.`)}
+function jhMatePlay(M){if(!M||!M.can)return;
+  if(M.kind==="npc"){jhMateKeep=M.id;const lv=typeof parkNpcLv==="function"?parkNpcLv():3;
+    jStart("park",{human:"r",level:lv,journey:"park"},()=>{location.hash="#/journey/play"});return}
+  if(M.kind==="inn"){const x=INN.find(z=>z.id===M.id);if(!x)return;const lv=typeof innLvN==="function"?innLvN(x):3,rl=typeof innRlv==="function"?innRlv(x):null;
+    if(rl!=null)store.set("innCur",{id:x.id,rl});
+    jStart("inn:"+x.id,rl==null?{human:"r",level:lv,journey:"inn:"+x.id}:{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:"inn:"+x.id},()=>{location.hash="#/journey/play"});return}
+  if(M.kind==="secret"){const x=SECRETS.find(z=>z.id===M.id);if(!x)return;const lv=typeof secretLv==="function"?secretLv(x):5;
+    jStart("inn:"+x.id,{human:"r",level:lv,journey:"inn:"+x.id},()=>{location.hash="#/journey/play"})}}
+/* 互動卡 */
+function jhMateCard(sid,k){const M=jhMateInfo(k);if(!M)return;let i=0;
+  sheet(`${M.nm}`,b=>{const say=t=>{const p=b.querySelector("#jhMateSay");if(p)p.textContent=t};
+    b.innerHTML=`<div class="jh-card"><img src="${M.img}" alt="" onerror="this.remove()"><div class="tx"><b>${esc(M.nm)}</b><p class="muted">${esc(jhL(`${jhSch(sid).nm}門下・平常在${M.at}`,`${jhSch(sid).nm} · usually at ${M.at}`))}</p>
+      <p id="jhMateSay" class="jh-mate-say">${esc(M.lines[0]||jhL("……（點點頭）","... (nods)"))}</p></div></div>
+      <div class="jh-actions"><button class="btn ghost" id="jhMTalk">${esc(jhL("💬 聊聊","💬 Chat"))}</button><button class="btn ghost" id="jhMTip">${esc(jhL("📖 請教本門棋路","📖 Ask about the school"))}</button>
+      <button class="btn ghost" id="jhMIntel">${esc(jhL("🔍 打聽掌門","🔍 Ask about the master"))}</button>
+      ${M.can?`<button class="btn" id="jhMPlay">${esc(jhL("⚔ 切磋一盤","⚔ Play a game"))}</button>`:""}</div>${M.why?`<p class="muted">${esc(M.why)}</p>`:""}`;
+    const q=s=>b.querySelector(s);
+    q("#jhMTalk").onclick=()=>{if(!M.lines.length)return;i=(i+1)%M.lines.length;say(M.lines[i])};
+    q("#jhMTip").onclick=()=>say(jhMateTip(sid,M));
+    q("#jhMIntel").onclick=()=>say(jhMateIntel(sid,M));
+    if(q("#jhMPlay"))q("#jhMPlay").onclick=()=>{try{closeSheet()}catch(e){}jhMatePlay(M)}})}
+/* 包住 06-cpu 的 parkNpcNew：從前院點「切磋一盤」時，指定這位園子棋友坐下（只用一次） */
+try{if(typeof parkNpcNew==="function"&&!parkNpcNew.jhMate){const p0=parkNpcNew;parkNpcNew=function(game,lv,keep){const k=jhMateKeep;jhMateKeep=null;return p0.call(this,game,lv,keep||k)};parkNpcNew.jhMate=1}}catch(e){}
+/* 前院站人：在 JhHall 畫完之後補上（JhHall 本身不動） */
+try{if(typeof JhHall==="function"&&!JhHall.jhMate){const h0=JhHall;JhHall=function(v,sid){const r=h0.apply(this,arguments);try{jhHallMatesDraw(v,sid)}catch(e){}return r};JhHall.jhMate=1}}catch(e){}
+function jhHallMatesDraw(v,sid){const H=JH_HALL[sid],P=v&&v.querySelector(".jh-hall");if(!H||!H.mates||!P)return;
+  jhMatesShown(sid,H.mates.length).forEach((M,i)=>{const p=H.mates[i],z=document.createElement("img");z.className="jh-hall-mate";z.src=M.img;z.alt=jhL(`門下棋友${M.nm}`,`${M.nm}, a player of this school`);
+    z.style.cssText=jhHallPc(p)+`;width:${(JH_MATE_W/JH_HALL_W*100).toFixed(2)}%`;z.onerror=()=>z.remove();z.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}jhMateCard(sid,M.k)};
+    const tag=document.createElement("span");tag.className="jh-hall-mate-tag";tag.style.cssText=jhHallPc([p[0],p[1]+14]);tag.textContent=M.nm;
+    P.insertBefore(tag,P.querySelector(".jh-hall-spot"));P.insertBefore(z,tag)})}
+(function(){if(typeof document==="undefined")return;const s=document.createElement("style");s.id="jhMateCss";s.textContent=`
+.jh-hall-mate{position:absolute;transform:translate(-50%,-100%);height:auto;cursor:pointer;filter:drop-shadow(0 2px 2px rgba(30,20,10,.35))}
+.jh-hall-mate-tag{position:absolute;transform:translate(-50%,0);font:700 12px/1.2 var(--serif,serif);color:#2b2118;background:rgba(250,244,230,.88);border:1px solid #c9a96b;border-radius:8px;padding:2px 6px;white-space:nowrap;pointer-events:none}
+.jh-mate-say{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:#f6efe0;border:1px solid #d8c49a;color:#3b2a14;line-height:1.6}`;
+  if(!document.getElementById("jhMateCss"))document.head.append(s)})();
