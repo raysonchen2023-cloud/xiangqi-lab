@@ -188,3 +188,48 @@ test("PR #21 再審（反向對照補測）：前院能下的優先——就算�
   assert.equal(L[0].can, true, "第一位要是能下的：" + L[0].k);
   assert.equal(L[L.length - 1].k, "secret:liuji", "不能下的排最後");
 });
+
+/* PR #22 審查（iMac）：第三位的名牌跟左右兩個各疊 12px 高。名牌照 jhMateCss 算大小：字 12px、行高 1.2、上下 padding 2px、邊框 1px、左右 padding 6px；
+   375 寬手機上 1 CSS px＝768/375 原圖像素。名字長度用這一派登記的門人裡最長的（至少 5 字），所有站位一起站滿時名牌兩兩不能重疊。 */
+test("PR #22 審查：前院站滿時，門人名牌兩兩不重疊（375 寬手機、用本派最長的名字算）", () => {
+  const { R, OSC } = load();
+  const px = 768 / 375, H = (12 * 1.2 + 2 * 2 + 2) * px;
+  for (const [sid, hall] of Object.entries(R.JH_HALL)) {
+    if (!hall.mates) continue;
+    const n = Math.max(5, ...Object.values(OSC.NPC).filter((x) => x[0] === sid).map((x) => [...x[2]].length));
+    const W = (n * 12 + 6 * 2 + 2) * px;
+    const box = ([x, y]) => [x - W / 2, y + 14, x + W / 2, y + 14 + H];
+    const B = hall.mates.map(box);
+    for (let i = 0; i < B.length; i++) for (let j = i + 1; j < B.length; j++) {
+      const a = B[i], b = B[j], hit = a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
+      assert.ok(!hit, `${sid} 第 ${i + 1}、${j + 1} 位的名牌重疊：${hall.mates[i]} ／ ${hall.mates[j]}（名字 ${n} 字）`);
+    }
+  }
+});
+
+/* PR #22 審查後開發者決定（iMac 轉達）：前院最多只站 2 位，超過 2 位就每天換一批。測試資料讓 3 位都能切磋，免得「能切磋的優先」把人固定住。 */
+test("PR #22 審查：門人 3 位以上時前院只畫 2 位；同一天固定，換日期會換到別人", () => {
+  const { c } = loadMates({ PARK_NPC: [{ id: "w15_yuan_archer", say: "百步穿楊。" }, { id: "fake_a", say: "甲。" }, { id: "fake_b", say: "乙。" }] }), R = c.R;
+  c.OSC.NPC["npc:fake_a"] = ["central", "horse", "假門人甲"]; c.OSC.NPC["npc:fake_b"] = ["central", "pawn", "假門人乙"];
+  const n = R.JH_HALL.central.mates.length;
+  assert.equal(n, 2, "站位只留兩格");
+  assert.match(JH, /jhMatesShown\(sid,H\.mates\.length\)/, "畫幾位照站位格數");
+  assert.equal(R.jhMatesOf("central").filter((m) => m.can).length, 3, "測試資料：3 位都能切磋");
+  const seen = new Set(), combos = new Set();
+  for (let i = 0; i < 30; i++) {
+    const L = R.jhMatesShown("central", n, new Date(2026, 10, 1 + i, 9)), k = L.map((m) => m.k);
+    assert.equal(L.length, 2, "只站 2 位");
+    assert.ok(L.every((m) => m.can), "能切磋的優先，秘境沒遇過的劉伯溫不會擠進來");
+    assert.deepEqual(k, R.jhMatesShown("central", n, new Date(2026, 10, 1 + i, 21)).map((m) => m.k), "同一天早晚一樣");
+    k.forEach((x) => seen.add(x)); combos.add(k.slice().sort().join("|"));
+  }
+  assert.ok(combos.size >= 2, "30 天裡至少換過一批：" + [...combos].join("；"));
+  assert.equal(seen.size, 3, "3 位都輪得到：" + [...seen].join("、"));
+});
+
+test("PR #22 審查：只有兩位時左右對稱站（前兩個站位對中軸 384 對稱、同一高度）", () => {
+  const { R } = load();
+  const [a, b] = R.JH_HALL.central.mates;
+  assert.equal(a[0] + b[0], 768, "左右對稱");
+  assert.equal(a[1], b[1], "同一高度");
+});
