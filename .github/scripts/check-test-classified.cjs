@@ -20,7 +20,8 @@ function classifiedSet(src) {
 
 /* 這個 PR 新增的測試檔（只算新加的，改名、修改不算） */
 function addedTests(base, git = (...a) => cp.execFileSync("git", a, { encoding: "utf8" })) {
-  const out = git("diff", "--name-only", "--diff-filter=A", base + "...HEAD", "--", TOOLS.split(path.sep).join("/"));
+  /* --no-renames：PR #19 審查（iMac）——把已分類的檔改名成新名字，原本會被當成「改名」而不算新增，可以繞過分類檢查 */
+  const out = git("diff", "--name-only", "--no-renames", "--diff-filter=A", base + "...HEAD", "--", TOOLS.split(path.sep).join("/"));
   return out.split("\n").map(s => s.trim()).filter(f => /\/test-[^/]+\.js$/.test(f)).map(f => f.split("/").pop());
 }
 

@@ -21,7 +21,12 @@ test("sw.js 的版號對不上、找不到 → 不打", () => {
   assert.match(decide("20261121-0643", "沒有版號", {}, "abc").why, /找不到 VERSION/);
 });
 
-test("版號格式不對、夾帶指令字元 → 不打（防注入）", () => {
-  for (const v of ["", null, "__BUILD__", "20261121-0643; rm -rf /", "20261121-0643\nx", "../20261121-0643", "2026112-0643"])
-    assert.equal(decide(v, SW, {}, "abc").action, "error", String(v));
+test("版號格式不對、夾帶指令字元 → 不打（防注入）；sw.js 帶同一個壞值，擋下的原因要是「格式不對」", () => {
+  /* PR #19 審查（iMac）：原本 sw.js 固定是正確版號，壞版號其實都被「跟 sw.js 不一致」擋下，格式檢查沒被測到（把 VER 改成不錨定也照過）。
+     現在讓 sw.js 帶同一個壞值，只剩格式檢查擋得住 */
+  for (const v of ["__BUILD__", "20261121-0643; rm -rf /", "20261121-0643\nx", "../20261121-0643", "2026112-0643", "x20261121-0643", "20261121-0643x"]) {
+    const r = decide(v, `const VERSION="${v}";`, {}, "abc");
+    assert.equal(r.action, "error", JSON.stringify(v)); assert.match(r.why, /格式不對/, JSON.stringify(v));
+  }
+  for (const v of ["", null]) assert.match(decide(v, SW, {}, "abc").why, /格式不對/);
 });
