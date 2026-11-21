@@ -602,7 +602,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   img.onerror=()=>{JH_HALL_BAD.add(sid);back()};   /* 圖還沒上 CDN、史學顧問還沒審完：退回長卷、開原本的小卡 */
   if(m){const z=document.createElement("img");z.className="jh-hall-zm";z.src=`data/npc/${m.id}.webp`;z.alt=jhL(`掌門${m.nm}坐在大廳主位`,`Master ${m.en} seated in the hall`);
     z.style.cssText=jhHallPc(H.seat)+`;width:${(H.w/JH_HALL_W*100).toFixed(2)}%`;z.onclick=()=>jhSheet(sid);z.onerror=()=>z.remove();P.append(z)}
-  const spot=(k,label,go)=>{const p=H.spots[k];if(!p)return;const b=document.createElement("button");b.type="button";b.className="shp-spot jh-hall-spot";b.dataset.k=k;b.style.cssText=jhHallPc(p);b.innerHTML=`<b>${esc(label)}</b>`;b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}go()};P.append(b)};
+  const spot=(k,label,go)=>{const p=H.spots[k];if(!p)return;const b=document.createElement("button");b.type="button";b.className="shp-spot jh-hall-spot"+(k==="gate"?" ex-spot":"");b.dataset.k=k;b.style.cssText=jhHallPc(p);b.innerHTML=`<b>${esc(label)}</b>`;b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}go()};P.append(b)};
   spot("hall",m?jhL(`🏯 掌門大廳・${m.nm}`,`🏯 Master's hall · ${m.en}`):jhL("🏯 掌門大廳","🏯 Master's hall"),()=>jhSheet(sid));
   spot("study",jhL("📖 講棋堂","📖 Lecture hall"),()=>jhHallStudy(sid));
   spot("yard",jhL("👥 前院・門下棋友","👥 Front yard"),()=>jhHallYard(sid));
@@ -677,7 +677,7 @@ try{if(typeof parkNpcNew==="function"&&!parkNpcNew.jhMate){const p0=parkNpcNew;p
 /* 前院站人：在 JhHall 畫完之後補上（JhHall 本身不動） */
 try{if(typeof JhHall==="function"&&!JhHall.jhMate){const h0=JhHall;JhHall=function(v,sid){const r=h0.apply(this,arguments);try{jhHallMatesDraw(v,sid)}catch(e){}return r};JhHall.jhMate=1}}catch(e){}
 function jhHallMatesDraw(v,sid){const H=JH_HALL[sid],P=v&&v.querySelector(".jh-hall");if(!H||!H.mates||!P)return;
-  jhMatesShown(sid,H.mates.length).forEach((M,i)=>{const p=H.mates[i],z=document.createElement("img");z.className="jh-hall-mate";z.src=M.img;z.alt=jhL(`門下棋友${M.nm}`,`${M.nm}, a player of this school`);
+  jhMatesShown(sid,H.mates.length).forEach((M,i)=>{const p=H.mates[i],z=document.createElement("img");z.className="jh-hall-mate";z.dataset.k="m"+i;z.src=M.img;z.alt=jhL(`門下棋友${M.nm}`,`${M.nm}, a player of this school`);
     z.style.cssText=jhHallPc(p)+`;width:${(JH_MATE_W/JH_HALL_W*100).toFixed(2)}%`;z.onerror=()=>z.remove();z.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}jhMateCard(sid,M.k)};
     const tag=document.createElement("span");tag.className="jh-hall-mate-tag";tag.style.cssText=jhHallPc([p[0],p[1]+14]);tag.textContent=M.nm;
     P.insertBefore(tag,P.querySelector(".jh-hall-spot"));P.insertBefore(z,tag)})}
@@ -686,3 +686,31 @@ function jhHallMatesDraw(v,sid){const H=JH_HALL[sid],P=v&&v.querySelector(".jh-h
 .jh-hall-mate-tag{position:absolute;transform:translate(-50%,0);font:700 12px/1.2 var(--serif,serif);color:#2b2118;background:rgba(250,244,230,.88);border:1px solid #c9a96b;border-radius:8px;padding:2px 6px;white-space:nowrap;pointer-events:none}
 .jh-mate-say{margin:8px 0 0;padding:8px 10px;border-radius:10px;background:#f6efe0;border:1px solid #d8c49a;color:#3b2a14;line-height:1.6}`;
   if(!document.getElementById("jhMateCss"))document.head.append(s)})();
+/* ---------- W48 門內 3D 走路（開發者 11/22：「3D角色在這一頁也是要能跟在首頁一樣的移動操作方式」）----------
+   沿用 07w 的 shwMount（星槎、渡口、驛站同一套）：玩家的 3D 角色站在碼頭；點地面＝沿中軸石階走過去，點離路太遠的地方就走到最近的路；
+   點地點標籤、門下棋友、掌門＝先走到門口做個小動作，再開原本的東西（按鈕原本的 click 照常）。3D 沒載好、載不到、減少動態效果時不攔點選，照舊直接開。
+   座標表的百分比照 768×1376 原圖（JH_HALL 的像素 ÷7.68／÷13.76）；石階中軸 x＝50%。俯角、身高照驛站 SHW_PG0，近大遠小調小一點（大殿比碼頭遠很多，但不能小到看不見）。
+   門人、掌門是立繪，不跟標籤一起淡掉（shw-fade 只給文字標籤用）。JhHall 本體不動：在門人包裝之後再包一層，圖載好才掛上。 */
+const JH_HALL_WALK={
+  central:{h:[.052,84,.00025],look0:[50,70],dmax:4,
+    N:{home:[50,87],dock:[50,90.5],mA:[44.3,86.6],mB:[55.7,86.6],s0:[50,79.5],s1:[50,61],mid:[50,44],hall:[50,27.5],study:[29.4,41.6]},
+    E:"home-dock home-mA home-mB home-s0 s0-s1 s1-mid mid-hall mid-study",
+    /* 入口代號＝data-k：四個地點、掌門 zm、前院門人 m0／m1（PR #22：最多 2 位，站 [296,1150]、[472,1150]；停在門人內側、面向門人） */
+    HS:{hall:["hall",50.4,21,"bow"],zm:["hall",50.4,21,"bow"],study:["study",29.4,35,"wave"],yard:["s0",50,74,"wave"],gate:["dock",50,96,"wave"],
+      m0:["mA",38.5,83,"wave"],m1:["mB",61.5,83,"wave"]}}
+};
+/* PR #23 審查（iMac）：門內頁原本沒寫出口，套到 07w 的預設出口，第一次進門亮的是頂欄返回鍵、「要回去，點這裡」也指著返回鍵。
+   出口就是圖上的「‹ 搭船回十州棋館」：搭船標籤加 ex-spot（07w shwXHi 找它亮框、放泡泡），這裡寫明出口：從碼頭下方走進來、點碼頭下緣空地＝走出去 */
+if(typeof SHW_EXITS!=="undefined"&&SHW_EXITS&&!("jhhall:*" in SHW_EXITS))SHW_EXITS["jhhall:*"]={out:[50,104],r:[38,90,62,100]};
+function jhHallWalk(v,sid){const W=JH_HALL_WALK[sid],P=v&&v.querySelector(".jh-hall"),img=P&&P.querySelector("img");
+  if(!W||!P||!img||typeof shwMount!=="function"||typeof SHW_PG0==="undefined")return;
+  const zm=P.querySelector(".jh-hall-zm");if(zm)zm.dataset.k="zm";
+  const go=()=>{if(!P.isConnected||!img.naturalWidth)return;
+    try{shwMount({v,cfg:Object.assign({},SHW_PG0,W,{home:"dock"}),root:P,frame:P,layer:P,before:P.querySelector(".jh-hall-spot"),
+      sel:".jh-hall-spot,.jh-hall-mate,.jh-hall-zm",keyOf:b=>b.dataset.k||"",find:h=>P.querySelector(`[data-k="${h}"]`),mem:"jhhall:"+sid})}catch(e){}};
+  if(img.complete&&img.naturalWidth)setTimeout(go,0);else img.addEventListener("load",go,{once:true})}
+try{if(typeof JhHall==="function"&&!JhHall.jhWalk){const h0=JhHall;JhHall=function(v,sid){const r=h0.apply(this,arguments);try{jhHallWalk(v,sid)}catch(e){}return r};JhHall.jhWalk=1}}catch(e){}
+(function(){if(typeof document==="undefined")return;const s=document.createElement("style");s.id="jhHallWalkCss";s.textContent=`
+.jh-hall .jh-hall-mate.shw-fade,.jh-hall .jh-hall-zm.shw-fade{opacity:1!important}
+.jh-hall .jh-hall-mate-tag{z-index:4}`;   /* 門人名牌是文字標示，角色走到門人旁邊也不能蓋住 */
+  if(!document.getElementById("jhHallWalkCss"))document.head.append(s)})();
