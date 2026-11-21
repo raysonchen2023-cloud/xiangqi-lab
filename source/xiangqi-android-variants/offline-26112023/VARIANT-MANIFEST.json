@@ -1,0 +1,44 @@
+{
+ "schema": "xq-android-variant/1",
+ "name": "offline-26112023",
+ "kind": "全離線（install-time 素材包）",
+ "versionName": "20261120-1902",
+ "versionCode": 26112023,
+ "siteVersion": "20261120-1902",
+ "webCommit": "dc04ae4f915bf406254bfa6504570faf3835091b",
+ "base": "source/xiangqi-android",
+ "androidNativeFixes": [
+  "retire-pwa-cache-recheck",
+  "no-cold-start-webview-prompt",
+  "local-3d-board-controls-docked",
+  "home-assets-bundled",
+  "offline-asset-packs"
+ ],
+ "native": {
+  "android/app/build.gradle": "1b8c439d359eb94d0f5e4bc81db47b07abe7ce752615c5f89b0baa1363a15ef5",
+  "android/app/src/main/assets/capacitor.config.json": "d13eedae7e03645771f70893e739c3fba13b5cac95137ed8bab8c0786357e971",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/MainActivity.java": "1a8e14fb46d01b2c264ea4cc7aa044cfa02a0651251d2da84e1a11457137159f",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQWebViewClient.java": "1884a6253d494d017fca83e9ddbbbd3d92093c4bdf6c9cdd68a8b724feaedfa6",
+  "android/settings.gradle": "4b64008903573efc2a2771356fe1243c7cfb551b3aff2873bcdf29c6e8474d64"
+ },
+ "sameAsBase": 64,
+ "notInThisBuild": [],
+ "missing": {},
+ "web": {
+  "index.html.patch": {
+   "sha256": "54a5d84041d3789637634bac7be37763b8374b71c2523f217a1aa1ddae9c6dc4",
+   "appliesTo": "dc04ae4f915bf406254bfa6504570faf3835091b:index.html",
+   "hunks": 29
+  },
+  "swFrom": "source/xiangqi-android/scripts/native-sw.js（make-www.js 產生）",
+  "xq-native-migration.html": "174ac94c307c58005e524acea5aa4e2232da825a3488149f3dad57b2340a1ed9"
+ },
+ "aab": {
+  "base/assets/public/index.html": "46c1dc10c00124692b40b051cfff1545905182edca3733f7db9316c7b75b4482",
+  "base/assets/public/sw.js": "d2f60ee0f79106deae2de542c38f324a48776dbfba8761e16505468a7ab2a9d0",
+  "base/assets/public/xq-native-migration.html": "174ac94c307c58005e524acea5aa4e2232da825a3488149f3dad57b2340a1ed9",
+  "base/assets/public/native-build.json": "9f823cf29ba9c0c46932c2da9b9df9962eb4a21c7cb65aafccf22e7f745bf3f5",
+  "file": "xiangqi-26112023-20261120-1902.aab",
+  "sha256": "129d2ac2b07b2f84777b6ee09e3e7eaa52b3031ef4fc3a4bc8dd917b0de60506"
+ }
+}

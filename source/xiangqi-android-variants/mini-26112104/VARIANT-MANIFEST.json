@@ -1,0 +1,52 @@
+{
+ "schema": "xq-android-variant/1",
+ "name": "mini-26112104",
+ "kind": "封測小包（約 100 MB）",
+ "versionName": "20261121-0643-mini",
+ "versionCode": 26112104,
+ "siteVersion": "20261121-0643",
+ "webCommit": "2ca12e10e84b3787dff8492803a8354fceca0944",
+ "base": "source/xiangqi-android",
+ "androidNativeFixes": [
+  "retire-pwa-cache-recheck",
+  "no-cold-start-webview-prompt",
+  "local-3d-board-controls-docked",
+  "home-assets-bundled",
+  "cdn-fallback-cache",
+  "closed-test-mini",
+  "cdn-fallback-split-parts"
+ ],
+ "native": {
+  "android/app/build.gradle": "23f05d0573ed09817991130afcd87ea3af0b3d39087ac7658a170e732186b801",
+  "android/app/src/main/assets/capacitor.config.json": "d13eedae7e03645771f70893e739c3fba13b5cac95137ed8bab8c0786357e971",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/MainActivity.java": "c5bac5d3db417c9a6eee53c9d0678eaa9762f4d28a18e6b72deac399df602c61",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQCdnFallback.java": "65c7b44113f4a17e5c23665754fbf889bbc4ea6fca34b44a29218a9c1c15e476",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQWebViewClient.java": "9d55e25ebbddffbb1211b12e234b89e8214579f16fce28ea625a1d09502a0e31",
+  "android/settings.gradle": "d21530a3cc825c432fb616556ab36a226c4e8ffbc839a5c0f7d3f164e54454fa"
+ },
+ "sameAsBase": 60,
+ "notInThisBuild": [
+  "android/xq_art/build.gradle",
+  "android/xq_bgm/build.gradle",
+  "android/xq_games/build.gradle",
+  "android/xq_models/build.gradle"
+ ],
+ "missing": {},
+ "web": {
+  "index.html.patch": {
+   "sha256": "f97a231d41dd6d863790e0fbbd36682ad576bee5c1ba20171a01dc84d5c11c01",
+   "appliesTo": "2ca12e10e84b3787dff8492803a8354fceca0944:index.html",
+   "hunks": 6
+  },
+  "swFrom": "source/xiangqi-android/scripts/native-sw.js（make-www.js 產生）",
+  "xq-native-migration.html": "174ac94c307c58005e524acea5aa4e2232da825a3488149f3dad57b2340a1ed9"
+ },
+ "aab": {
+  "base/assets/public/index.html": "c3613c94e8af9cb903faf3db377e2e2bbbb4a604810ba44d73c89085a69f5243",
+  "base/assets/public/sw.js": "d2f60ee0f79106deae2de542c38f324a48776dbfba8761e16505468a7ab2a9d0",
+  "base/assets/public/xq-native-migration.html": "174ac94c307c58005e524acea5aa4e2232da825a3488149f3dad57b2340a1ed9",
+  "base/assets/public/native-build.json": "841e2539d877b9c96debccdefc8c67035b923371adbeeaa508cb83209ffa28bd",
+  "file": "xiangqi-26112104-20261121-0643-mini.aab",
+  "sha256": "14ae9c91afa74d96423d48d42fe1b8700ce11c846b939dcf5f54dbb4cb87875e"
+ }
+}

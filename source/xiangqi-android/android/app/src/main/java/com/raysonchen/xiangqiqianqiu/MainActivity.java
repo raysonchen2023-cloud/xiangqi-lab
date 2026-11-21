@@ -86,16 +86,20 @@ public class MainActivity extends BridgeActivity {
         ServiceWorkerController.getInstance().setServiceWorkerClient(new ServiceWorkerClient() {
             @Override
             public WebResourceResponse shouldInterceptRequest(WebResourceRequest request) {
+                // 單機版（原型）：sw.js 先問 CDN 的請求，手機裡有就直接回本機檔（XQOfflineAssets）
+                WebResourceResponse local = XQOfflineAssets.serve(bridge.getContext(), request);
+                if (local != null) return local;
                 return XQWebViewClient.addIsolationHeaders(request, bridge.getLocalServer().shouldInterceptRequest(request));
             }
         });
     }
 
-    /** 文件一開始就注入 NATIVE_BRIDGE_JS（只給 App 自己的來源）；WebView 不支援就靠 XQWebViewClient.onPageFinished 補。 */
+    /** 文件開始便停用舊版的 PWA 註冊，避免等頁面載完才清理而讓舊腳本重新註冊。 */
     static void installNativeBridge(WebView wv) {
         try {
             if (wv != null && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
                 WebViewCompat.addDocumentStartJavaScript(wv, NATIVE_BRIDGE_JS, Collections.singleton(APP_ORIGIN));
+                WebViewCompat.addDocumentStartJavaScript(wv, XQWebViewClient.RETIRE_PWA_JS, Collections.singleton(APP_ORIGIN));
             }
         } catch (RuntimeException e) {
             Logger.error("XQ", "注入 XQNative 橋失敗（改由頁面載完時補）", e);

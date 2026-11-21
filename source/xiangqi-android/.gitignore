@@ -7,3 +7,5 @@ www/
 *.p12
 keystore.properties
 signing.properties
+# 單機版素材包的內容（scripts/make-offline-packs.js 從完整素材資料夾產生，不進倉庫）
+android/xq_*/src/main/assets/

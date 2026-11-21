@@ -43,6 +43,11 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // 象棋千秋單機版（原型 11/18）：-PxqOffline=true 時把四個 install-time 素材包（圖、音樂、3D、棋譜資料）掛上來，
+    //   素材由 scripts/make-offline-packs.js 放進 android/xq_*/src/main/assets/public/；不加這個參數就跟原本的瘦身版一模一樣
+    if (project.findProperty("xqOffline") == "true") {
+        assetPacks = [":xq_bgm", ":xq_models", ":xq_games", ":xq_art"]
+    }
     // F-Droid：不要在 APK／AAB 裡放 Google 加密的相依資訊區塊（DependencyInfoBlock）
     dependenciesInfo {
         includeInApk = false

@@ -60,6 +60,15 @@ test("W38：新補的副檔名（rb、podspec、resolved、svg、webmanifest）�
   assert.match(r.stdout, /檢查了 5 個改到的文字檔/);
 });
 
+test("W32：沒有副檔名的文字檔（Podfile、gradlew、.gitignore…）與 patch、proguard 規則檔也會檢查", () => {
+  const names = ["ios/App/Podfile", "fastlane/Fastfile", "android/gradlew", "android/.gitignore", ".gitattributes", "web-overlay/index.html.patch", "android/app/proguard-rules.pro"];
+  const r = run(repo({ ...Object.fromEntries(names.map(f => [f, "ok\x04\n"])), "圖/二進位檔": "ok\x04\n" }));
+  assert.equal(r.status, 1, r.stdout + r.stderr);
+  for (const f of names) assert.ok(r.stdout.includes(f + "：有控制字元 0x04"), f + "\n" + r.stdout);
+  assert.ok(!r.stdout.includes("二進位檔："), "不認得的無副檔名檔照舊略過（可能是二進位）");
+  assert.match(r.stdout, /檢查了 7 個改到的文字檔/);
+});
+
 test("W38：改名同時改內容的檔也會檢查（git 判為改名 R，不是刪除＋新增）", () => {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-check-text-")); made.push(d);
   const git = (...a) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "core.autocrlf=false", ...a], { cwd: d }).toString();

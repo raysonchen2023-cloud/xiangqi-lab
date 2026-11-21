@@ -10,11 +10,13 @@ const base = process.argv[2] || "origin/main";
 const files = execFileSync("git", ["-c", "core.quotePath=false", "diff", "--name-only", "-z", "--diff-filter=AMR", `${base}...HEAD`]).toString().split("\0").filter(Boolean);
 // 審查 #2-2：補 iOS 專案檔（pbxproj、storyboard、xib、xcprivacy、entitlements、xcconfig、strings）與腳本檔（sh、py、ps1、bat）
 // W38：再補 CocoaPods 與 Swift 套件（rb、podspec、resolved）、圖示與網站設定（svg、webmanifest）
-const TEXT = /\.(js|cjs|mjs|ts|css|html|md|json|yml|yaml|txt|java|kt|swift|gradle|plist|xml|properties|pbxproj|storyboard|xib|xcprivacy|entitlements|xcconfig|strings|sh|py|ps1|bat|rb|podspec|resolved|svg|webmanifest)$/i;
+const TEXT = /\.(js|cjs|mjs|ts|css|html|md|json|yml|yaml|txt|java|kt|swift|gradle|plist|xml|properties|pbxproj|storyboard|xib|xcprivacy|entitlements|xcconfig|strings|sh|py|ps1|bat|rb|podspec|resolved|svg|webmanifest|patch|pro)$/i;
+// W32（iMac 審查不擋建議）：沒有副檔名、但一定是文字的檔，照檔名認（原生專案收進倉庫後會有）
+const TEXT_NAMES = /(^|\/)(Podfile|Gemfile|Fastfile|Appfile|Matchfile|gradlew|\.gitignore|\.gitattributes)$/;
 const bad = [];
 let n = 0;
 for (const f of files) {
-  if (!TEXT.test(f) || !fs.existsSync(f)) continue;
+  if (!(TEXT.test(f) || TEXT_NAMES.test(f)) || !fs.existsSync(f)) continue;
   n++;
   const s = fs.readFileSync(f, "utf8");
   const m = s.match(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/);

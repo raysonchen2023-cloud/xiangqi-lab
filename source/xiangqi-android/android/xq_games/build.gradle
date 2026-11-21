@@ -1,0 +1,9 @@
+// 象棋千秋單機版：install-time 素材包（內容由 scripts/make-offline-packs.js 產生，放在 src/main/assets/public/）
+apply plugin: 'com.android.asset-pack'
+
+assetPack {
+    packName = "xq_games"
+    dynamicDelivery {
+        deliveryType = "install-time"
+    }
+}

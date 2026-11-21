@@ -1,0 +1,383 @@
+--- a/index.html
++++ b/index.html
+@@ -383,6 +383,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
+ /* 結果畫面 */
+ .modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;background:#000a}
+ .modal .box{background:var(--card);border-radius:22px;padding:24px 20px;width:100%;max-width:340px;text-align:center}
++.modal.native-compat .box{max-height:100%;overflow-y:auto;overscroll-behavior:contain}
+ .modal .em{font-size:56px;line-height:1}.modal h2{font-family:var(--serif);font-size:24px;margin:8px 0 4px}
+ .emo{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);z-index:65;background:var(--card,#fff);color:var(--ink,#222);border-radius:22px;padding:14px 20px;box-shadow:0 10px 40px #0006;text-align:center;opacity:0;transition:.25s;pointer-events:none}.emo.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.emo .big{font-size:64px;line-height:1.1}.emo .t{font-weight:700;font-size:18px}.emo.mine{top:auto;bottom:calc(120px + var(--safeB))}.emo.mine .big{font-size:40px}
+ .emo.at{left:var(--x);top:var(--y);bottom:auto;transform:scale(.6);transform-origin:12px 0;text-align:left;padding:0 4px;border-radius:0;background:none;box-shadow:none;text-shadow:0 0 3px var(--card,#fff),0 0 3px var(--card,#fff),0 0 6px var(--card,#fff),0 0 10px var(--card,#fff)}.emo.at::before{display:none}.emo.at.show{transform:scale(1)}.emo.at.up{top:auto;bottom:var(--y);transform-origin:12px 100%}
+@@ -653,7 +654,12 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
+ .cpu-seg button:not(.on):active{background:#ffffff14}
+ /* 第 16 輪版面缺陷清零（r15 device-fit：iPad 最窄側欄 320 寬，頂欄標題只剩 87px，「🥇 晉級賽」「📚 練功房」各 37px 寬、字被截成「🥇 ⋯」還壓到右邊的 ⋯）：
+    窄到 359px 以下改成圖示一行、字一行（字 11px，keep-all 只在空格換行，三個字放得下），按鈕照樣 44px 高 */
+-@media (max-width:359px){.cpu-seg button{white-space:normal;word-break:keep-all;text-overflow:clip;font-size:11px;line-height:1.15;padding:0 1px}}
++@media (max-width:359px){
++  #topbar:has(.cpu-seg) #back{flex:0 0 44px;min-width:44px;max-width:44px;font-size:0;padding:0}
++  #topbar:has(.cpu-seg) #back b{font-size:28px}
++  #topbar #title:has(.cpu-seg){padding-inline:2px;max-height:none;overflow:visible}
++  .cpu-seg button{white-space:normal;word-break:keep-all;text-overflow:clip;font-size:11px;line-height:1.15;padding:0 1px}
++}
+ .cpu-chip{--c:var(--accent2);flex:none;display:flex;align-items:center;gap:6px;max-width:52%;padding:5px 8px 5px 12px;border-radius:12px;text-align:right;
+   border:1px solid var(--line);border-color:color-mix(in srgb,var(--c) 45%,var(--line));background:var(--card);background:color-mix(in srgb,var(--c) 10%,var(--card));transition:transform .1s}
+ .cpu-chip.rk{--c:var(--warn)}
+@@ -1408,6 +1414,10 @@ body:has(> .modal) > .toast{z-index:9995}
+ .rule-note+.pk3d-back{margin-top:-30px;position:relative;z-index:1;pointer-events:none}   /* 跟「📜 本局棋規」同一行、靠右 */
+ .pk3d-back button{pointer-events:auto;border:1px solid var(--line);border-radius:99px;background:var(--card);color:var(--ink);font:inherit;font-size:13px;font-weight:700;padding:3px 12px;min-height:30px;cursor:pointer}
+ @media (orientation:landscape) and (max-height:600px){.rule-note+.pk3d-back{margin-top:2px}}
++@media (max-width:359px){
++  .rule-note+.pk3d-back{margin-top:2px}
++  .rule-note+.pk3d-back button{margin-top:0}
++}
+ @media (prefers-reduced-motion:reduce){.pk2d.pulse{animation:none}}
+ /* ===== 11/11 規格表 87（story/87_名稱與按鈕規格表.md）：主按鈕（L2）收斂 =====
+    底色一律 var(--btn-main)（全站朱 #A8321F；秦、五代＝該朝 accent）、圓角一律 var(--btn-r,10px)（秦、五代 14px）；字級、內距、寬高都維持原樣，
+@@ -3456,7 +3466,7 @@ if(window.XQ_OFFLINE&&!myName()&&!store.get("nameAsked",false)&&store.get("onboa
+ function poller(fn,ms){let on=true,t=null;const tick=async()=>{if(!on)return;try{await fn()}catch(e){}if(on)t=setTimeout(tick,typeof ms==="function"?ms():ms)};tick();return()=>{on=false;clearTimeout(t)}}
+ 
+ // ================= 離線版專用：連線、引擎下載 =================
+-async function appVer(){try{const k=(await caches.keys()).filter(x=>x.startsWith("xqlab-app-")).pop();return k?k.slice(10):null}catch(e){return null}}
++async function appVer(){try{if(typeof xqNat==="function"&&xqNat())return window.XQ_BUILD||null;const k=(await caches.keys()).filter(x=>x.startsWith("xqlab-app-")).pop();return k?k.slice(10):null}catch(e){return null}}
+ async function netVer(){
+   const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),8000);
+   try{
+@@ -3485,7 +3495,8 @@ try{store.del?store.del("cpuCar"):localStorage.removeItem("xq_cpuCar")}catch(e){
+ addEventListener("orientationchange",()=>[150,400,800,1500].forEach(t=>setTimeout(()=>{try{dispatchEvent(new Event("resize"))}catch(e){}},t)));
+ /* hspx 第 1035 列：轉回直向時把橫向留下的左右捲動歸零 */
+ addEventListener("orientationchange",()=>[150,500,1000].forEach(t=>setTimeout(()=>{try{if(innerHeight>innerWidth){const se=document.scrollingElement||document.documentElement;if(se.scrollLeft)se.scrollLeft=0;if(window.scrollX)window.scrollTo(0,window.scrollY)}}catch(e){}},t)));
+-if(OFF&&!xqNat()&&"serviceWorker" in navigator){
++function xqWebUpdateOn(){return !(typeof xqNat==="function"&&xqNat())}
++if(OFF&&xqWebUpdateOn()&&"serviceWorker" in navigator){
+   // 註冊 service worker；第一次要重新整理一次，多執行緒（跨來源隔離）才會生效
+   /* 開發者決定（Gemini 效能審閱 P0-2）：等 service worker 真的就緒、接管這一頁再看；還沒有跨來源隔離（多執行緒引擎開不起來）就自動重整，同一次打開最多兩次 */
+   /* 11/13 Android 舊 WebView：原生 App（UA 帶 XQQianqiuApp/）的隔離靠 App 原生碼、不靠 sw.js，重整不會好，所以不自動重整（改跳下面的降級提示） */
+@@ -3640,8 +3651,8 @@ if(OFF&&/XQQianqiuApp\//.test(navigator.userAgent)&&(!self.crossOriginIsolated||
+   if(window.XQEngine){const no=()=>Promise.reject(new Error(NATIVE_OLDWV));XQEngine.load=no;XQEngine.search=no;XQEngine.prefetch=no}
+   const wv=(navigator.userAgent.match(/Chrome\/([\d.]+)/)||[])[1]||"",mute=store.get("oldWvMute","")===wv;let tries=0;
+   const show=()=>{if(document.querySelector("#preov,.modal,#sheet.show")&&++tries<30)return setTimeout(show,3000);if(mute){toast("⚠ "+NATIVE_OLDWV);return}
+-    modal(`<div class="em">📱</div><h2>${NATIVE_IOS?"電腦棋手沒有啟動成功":"電腦棋手需要更新手機元件"}</h2><p style="text-align:left">${esc(NATIVE_OLDWV)}。</p><p class="muted" style="text-align:left">${NATIVE_IOS?"聯絡方式在設定房間「🔒 系統・隱私・家長」的「📮 聯絡與支援」。":"更新好以後，把 App 完全關掉再打開就能用。"}<br>現在照樣能用：同桌對弈（兩人在這支手機輪流下）、殘局、古譜與大師對局、測驗、線上對弈。<br>${NATIVE_IOS?"要等電腦棋手啟動成功才能用":"要等更新才能用"}：挑戰電腦、擂台、棋局分析與提示。</p>${wv&&!NATIVE_IOS?`<p class="muted">目前的 WebView 版本：${esc(wv)}</p>`:""}`,[["知道了",null],["這個版本不再跳出",()=>store.set("oldWvMute",wv),true]])};
+-  setTimeout(show,2500)}
++    modal(`<div class="em">📱</div><h2>${NATIVE_IOS?"電腦棋手沒有啟動成功":"電腦棋手需要更新手機元件"}</h2><p style="text-align:left">${esc(NATIVE_OLDWV)}。</p><p class="muted" style="text-align:left">${NATIVE_IOS?"聯絡方式在設定房間「🔒 系統・隱私・家長」的「📮 聯絡與支援」。":"更新好以後，把 App 完全關掉再打開就能用。"}<br>現在照樣能用：同桌對弈（兩人在這支手機輪流下）、殘局、古譜與大師對局、測驗、線上對弈。<br>${NATIVE_IOS?"要等電腦棋手啟動成功才能用":"要等更新才能用"}：挑戰電腦、擂台、棋局分析與提示。</p>${wv&&!NATIVE_IOS?`<p class="muted">目前的 WebView 版本：${esc(wv)}</p>`:""}`,[["知道了",null],["這個版本不再跳出",()=>store.set("oldWvMute",wv),true]],"native-compat")};
++  if(NATIVE_IOS)setTimeout(show,2500)}
+ if(OFF&&window.XQEngine){let bar=null;const NAT=typeof xqNat==="function"&&xqNat();
+   XQEngine.onProgress((got,total)=>{if(!bar){keepAwake("engine",()=>!!bar);bar=document.createElement("div");bar.className="toast";if(/^#[/](cpu|arena|pvp|quiz|watch|journey[/]play|redo[/]play|legend)([/]|$)/.test(location.hash))bar.style.display="none";   /* QA P2-6：下棋、讀故事時不蓋引擎下載進度 */
+   bar.style.bottom="auto";bar.style.top="calc(70px + var(--safeT))";document.body.append(bar);setTimeout(()=>{if(bar)bar.style.display="none"},1200)}
+@@ -3811,7 +3822,7 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋
+   return{stop:()=>{offs.forEach(f=>f());clearInterval(t);if(XQNet.seeking()&&!XQNet.active())XQNet.seek(false)}}}
+ // 不管在哪個畫面都能收到邀請
+ if(OFF&&window.XQNet){XQNet.start();
+-  XQNet.on("version",async x=>{if(!x||!x.v)return;const a=await appVer();if(a&&x.v>a&&window.XQ_notifyNew)XQ_notifyNew(x.v,x.note||"")});
++  XQNet.on("version",async x=>{if(!xqWebUpdateOn()||!x||!x.v)return;const a=await appVer();if(a&&x.v>a&&window.XQ_notifyNew)XQ_notifyNew(x.v,x.note||"")});
+   const goGame=()=>{if(location.hash==="#/pvp")route();else location.hash="#/pvp"};
+   XQNet.on("invite",x=>{vibrate([40,60,40]);
+     const acc=()=>{const go=()=>{XQNet.respond(x,true);goGame()};if(XQNet.active()&&XQNet.game()&&!XQNet.game().result&&XQNet.side())XQNet.leave();go()};
+@@ -5414,8 +5425,8 @@ function wkRender(c,R,M,H){const W=1080,P=78,ink="#2A1F15",mut="#6F5F4C",red="#9
+     if(lim>0){const ly=y+bh-bh*lim/mx;c.save();c.setLineDash([10,8]);c.strokeStyle="rgba(42,31,21,.45)";c.lineWidth=2;c.beginPath();c.moveTo(P,ly);c.lineTo(P+TW,ly);c.stroke();c.restore()}
+     y+=bh+44;item("⏱",`這週一共玩了 ${R.use} 分鐘${lim?`；虛線＝家長設定的每天最多 ${lim} 分鐘`:""}（App 畫面開著的時間）`)}
+   /* 總結 */
+-  y+=56;c.font=`700 38px ${WK_F}`;const SL=wkWrap(c,M.sum,TW-96),bh=SL.length*58+60;c.fillStyle=cardC;wkRR(c,P,y,TW,bh,22);c.fill();c.strokeStyle=lineC;c.lineWidth=2;c.stroke();c.fillStyle=red;wkRR(c,P,y,12,bh,6);c.fill();
+-  c.fillStyle=ink;SL.forEach((ln,j)=>c.fillText(ln,P+52,y+72+j*58));y+=bh+64;
++  y+=56;c.font=`700 46px ${WK_S}`;const SL=wkWrap(c,M.sum,TW-104),bh=SL.length*68+68;c.fillStyle="#FFFDF7";wkRR(c,P,y,TW,bh,22);c.fill();c.strokeStyle=lineC;c.lineWidth=2;c.stroke();c.fillStyle=red;wkRR(c,P,y,12,bh,6);c.fill();
++  c.fillStyle="#1D150E";SL.forEach((ln,j)=>c.fillText(ln,P+52,y+80+j*68));y+=bh+64;
+   c.font=`500 24px ${WK_S}`;c.fillStyle=mut;c.textAlign="center";c.fillText(`資料來自這支手機的紀錄・${wkMD(Date.now())}整理`,W/2,y);c.textAlign="left";
+   return y+70}
+ async function wkCanvas(R,M){try{if(document.fonts&&document.fonts.load)await Promise.race([Promise.all([document.fonts.load(`900 66px ${WK_F}`),document.fonts.load(`500 30px ${WK_S}`)]),new Promise(r=>setTimeout(r,1500))])}catch(e){}
+@@ -5676,7 +5687,7 @@ async function wipeAllData(){toast("正在刪除這支手機的資料…");
+   try{IDBObjectStore.prototype.put=IDBObjectStore.prototype.add=function(){throw new Error("資料刪除中")}}catch(e){}
+   try{history.replaceState(null,"",location.pathname+"#/")}catch(e){}location.reload()}
+ /* 意見回饋 531：檢查更新（設定 → 系統 → 關於） */
+-async function updCheck(b){if(window.XQ_NATIVE){b.disabled=true;b.textContent="新版由 App Store 更新";return}b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
++async function updCheck(b){if(setNat()){b.disabled=true;b.textContent=/Android/i.test(navigator.userAgent||"")?"新版由 Google Play 更新":"新版由 App Store 更新";return}b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
+   if(!r.n){b.textContent="沒有網路";b.disabled=false;return}if(r.a&&r.n<=r.a){b.textContent="✓ 已是最新版";b.disabled=false;return}b.textContent="有新版";b.disabled=false}
+ /* 回饋 846（開發者 11/9 選：字級放大）：App 內字級 小／標準／大／特大＝0.9／1／1.15／1.3 倍。
+    html 上掛 data-fz 和 --fz（標準就拿掉 data-fz，畫面跟以前一模一樣）；m.css 照 --fz 放大面板、卡片、對局文字、小說、設定頁、頂欄標題，
+@@ -7503,7 +7514,19 @@ function pkHitCss(){if(typeof document.getElementById!=="function"||document.get
+ .pzoom>button::before,.fvz>button::before{content:"";position:absolute;left:-6px;right:-6px;top:-6px;bottom:-6px}
+ .pzoom>button:first-child::before,.fvz>button:first-child::before{top:-8px}.pzoom>button:last-child::before,.fvz>button:last-child::before{bottom:-8px}
+ .pzoom,.fvz{gap:12px!important}
+-.pk2d::before{content:"";position:absolute;left:min(0px,calc((100% - 44px) / 2));right:min(0px,calc((100% - 44px) / 2));top:min(-3px,calc((100% - 44px) / 2));bottom:min(-3px,calc((100% - 44px) / 2))}`;document.head.append(s)}
++.pk2d::before{content:"";position:absolute;left:min(0px,calc((100% - 44px) / 2));right:min(0px,calc((100% - 44px) / 2));top:min(-3px,calc((100% - 44px) / 2));bottom:min(-3px,calc((100% - 44px) / 2))}
++.pk-control-dock:not([hidden]){display:flex;flex:none;align-items:center;justify-content:space-between;gap:8px;margin:0 8px 2px}
++.pk-control-dock .pzoom{position:static!important;flex-direction:row!important;gap:8px!important;margin-inline-start:auto}
++.pk-control-dock .pzoom>button{width:44px!important;height:44px!important}
++.pk-control-dock .pk2d{position:static!important;transform:none!important;min-height:44px}
++.pk-control-dock button::before{content:none!important}`;document.head.append(s)}
++function pkDock(host,create=false){
++  const next=host.nextElementSibling;
++  if(next?.classList.contains("pk-control-dock"))return next;
++  if(!create)return null;
++  const dock=document.createElement("div");dock.className="pk-control-dock";dock.hidden=true;
++  host.after(dock);return dock;
++}
+ function parkUi(host,pv){pkHitCss();let b=host.querySelector(".pkview");if(!b){b=document.createElement("button");b.type="button";b.className="pkview";host.append(b)}
+   /* 11/11（AI 模擬玩家第二輪問題 5）：手機直式沒存過視角時，park3d 一開始就是「俯視＋拉近」（topfit，格距約 30px），按鈕要當成已經在俯視、下一個是平視；
+      從按鈕切回俯視存成 topfit（拉近版）；以前存的 top／flat 照舊不動 */
+@@ -7580,6 +7603,7 @@ function pkI18nWrap(pv){try{if(!pv||pv.__i18n)return;pv.__i18n=1;const T=s=>{try
+   for(const k of["say","oppSay"])if(typeof pv[k]==="function"){const f=pv[k];pv[k]=function(t,...a){return f.call(this,T(t),...a)}}}catch(e){}}
+ function parkDraw(host,bd,board,o,ex){
+   if(typeof whl3dOn==="function"&&whl3dOn())return;   /* 11/15 車輪戰 3D 開著（07bhw-wheel.js，全螢幕蓋在上面、自己有一個 3D 實例）：底下被蓋住的對局頁先不建 3D，全場只留一個實例（iPhone 記憶體）；離開車輪戰時它會叫對局頁重畫 */
++  if(ex.dockControls)pkDock(host,true);
+   // 關掉公園：同一個棋盤的公園只藏起來（意見回饋 244：來回切換不用每次重建 3D 場景，比較順）
+   {const tg=host.querySelector(".pkname");if(tg)tg.hidden=!parkOn();const pv0=host.querySelector(".pkview");if(pv0)pv0.hidden=!parkOn();const ap=host.querySelector(".ax-park");if(ap)ap.hidden=!parkOn();pkSwUi(host)}   /* 回饋 847：平面棋盤時收起「改用平面棋盤」 */   /* 11/11 v6 第 3 點：「▦ 平面棋盤」／「🌳 回園子」（pkSwUi 在下面） */
+   if(!parkOn()){if(PARK&&PARK.host===host){if(PARK.v.hide)PARK.v.hide();else{PARK.v.destroy();PARK=null}}bd.svg.style.display="";botVis(true);return}
+@@ -7610,9 +7634,18 @@ function parkDraw(host,bd,board,o,ex){
+    判斷法：點之前記下 PARK.last；點完畫面有重畫（PARK.last 換了）而且沒有選到子、也不是再點一次同一顆子＝點偏。走成一步的會等伺服器回來才重畫，不會被算成點偏 */
+ const pkSwTb=()=>document.querySelector('#topRight button[data-lb="回棋盤模式"],#topRight button[data-lb="去園子下棋（3D）"],#topRight button[aria-label="回棋盤模式"],#topRight button[aria-label="去園子下棋（3D）"]');
+ function pkSwUi(host){try{if(!host)return;const tb=pkSwTb(),on=parkOn(),on3=on&&!!(PARK&&PARK.host===host);
+-  let b=host.querySelector(".pk2d");
++  const dock=pkDock(host),controls=dock||host;
++  if(dock){
++    dock.hidden=!on3;
++    if(on3){
++      const zoom=PARK.v.el.querySelector(".pzoom");
++      if(zoom){dock.querySelector(".pzoom")?.remove();dock.append(zoom)}
++    }
++  }
++  let b=controls.querySelector(".pk2d");
+   if(on3&&tb&&!b){b=document.createElement("button");b.type="button";b.className="pk2d";pkHitCss();b.innerHTML='<span aria-hidden="true">▦</span> 平面棋盤';b.setAttribute("aria-label","換成平面棋盤：棋子比較大、比較好點");
+-    b.onclick=e=>{e.stopPropagation();vibrate(5);const t=pkSwTb();if(t)t.click()};if(getComputedStyle(host).position==="static")host.style.position="relative";host.append(b)}
++    b.onclick=e=>{e.stopPropagation();vibrate(5);const t=pkSwTb();if(t)t.click()};if(getComputedStyle(host).position==="static")host.style.position="relative";
++    if(dock)dock.prepend(b);else host.append(b)}
+   if(b)b.hidden=!(on3&&tb);if(!(on3&&tb)){const tp=host.querySelector(".pk2d-tip");if(tp)tp.remove()}
+   const vw=host.closest(".view"),st=vw&&vw.querySelector("#stat");let r=vw&&vw.querySelector(".pk3d-back");const fl=!on&&!PARK_OFF&&!focusOn()&&!!tb&&!!st;
+   /* 11/12 開發者「「回園子」這三個字用其他方式表示」：車輪戰在茶肆棋館、不是園子，改成跟「▦ 平面棋盤」成對的「🧊 3D 場景」 */
+@@ -11898,7 +11931,7 @@ body.bhx-full .pk3d-back{position:fixed!important;left:calc(10px + ${L});bottom:
+ body.bhx-full .pk3d-back button{margin:0!important;padding:6px 14px!important;min-height:44px;border-radius:99px;background:rgba(255,248,232,.94)!important;color:#3a2618!important}
+ body.bhx-full.bhx-me .view.fixed>#bbox{box-shadow:inset 0 0 0 2px rgba(255,214,120,.42),inset 0 0 26px rgba(255,214,120,.22)}
+ #bhxMo{position:fixed;z-index:46;left:calc(8px + ${L});top:calc(8px + ${T});width:44px;height:44px;border-radius:50%;border:1px solid rgba(232,199,122,.45);background:rgba(10,10,30,.55);color:#f1e7cf;font:800 20px/1 system-ui,sans-serif;padding:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+-#bhxTurn{position:fixed;z-index:44;left:50%;bottom:calc(16px + ${B});transform:translateX(-50%);padding:4px 14px;border-radius:99px;background:rgba(10,10,30,.62);color:#f1e7cf;font:700 13px/1.5 var(--sans,system-ui);letter-spacing:.06em;white-space:nowrap;pointer-events:none;transition:opacity .3s}
++#bhxTurn{position:fixed;z-index:44;left:50%;bottom:calc(16px + ${B});transform:translateX(-50%);padding:4px 14px;border-radius:99px;background:rgba(10,10,30,.62);color:#f1e7cf;font:700 13px/1.5 var(--sans,system-ui);letter-spacing:.06em;white-space:nowrap;pointer-events:auto;touch-action:none;user-select:none;transition:opacity .3s}
+ #bhxTurn.me{color:#FFE08A;box-shadow:0 0 0 1px rgba(255,214,120,.5),0 0 14px rgba(255,214,120,.35)}#bhxTurn.up{bottom:calc(150px + ${B})}#bhxTurn[hidden]{display:none}
+ #bhxOpp{position:fixed;z-index:44;left:50%;top:calc(16px + ${T});transform:translateX(-50%);padding:4px 16px;border-radius:99px;background:rgba(10,10,30,.62);color:#e2d6b8;font:700 15px/1.5 var(--serif,serif);letter-spacing:.16em;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .5s}
+ #bhxOpp.on{opacity:1}
+@@ -11909,6 +11942,8 @@ function bhxFullSync(st){try{if(typeof document==="undefined"||!document.body)re
+   const b=document.body,fresh=!b.classList.contains("bhx-full");BHXF_ST=st;bhxFullCss();b.classList.add("bhx-full");BHXF.on=true;if(fresh)setTimeout(()=>{try{dispatchEvent(new Event("resize"))}catch(e){}},0);
+   let mo=document.getElementById("bhxMo");if(!mo){mo=document.createElement("button");mo.type="button";mo.id="bhxMo";mo.textContent="⋯";mo.setAttribute("aria-label","更多：回開頭畫面、本關棋規、聲音、寶物");mo.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}bhxFullMenu()};b.append(mo)}
+   let tn=document.getElementById("bhxTurn");if(!tn){tn=document.createElement("div");tn.id="bhxTurn";tn.setAttribute("aria-hidden","true");b.append(tn)}
++  /* ChatGPT 接手 11/19：狀態標籤不開角色卡，也不能穿透到下面的齊轍模型。只存在於第一戰。 */
++  for(const k of["onpointerdown","onpointerup","onpointermove","onclick","oncontextmenu"])tn[k]=e=>{e.preventDefault();e.stopPropagation()};
+   const me=!st.result&&st.turn===st.human,txt=st.result?"":me?"輪到你":"星樞思考中…";if(tn.dataset.k!==txt){tn.dataset.k=txt;tn.textContent=txt}   /* 英文介面會被換成英文：照原文記在 data-k 比，不要每次重寫 */tn.hidden=!txt;tn.classList.toggle("me",me);b.classList.toggle("bhx-me",me);
+   try{const gp=document.querySelector(".view.fixed>#bbox .gpad");tn.classList.toggle("up",!!gp&&getComputedStyle(gp).display!=="none")}catch(e){}   /* 搖桿出來時標籤往上讓 */
+   if(BHXF.intro!==st.id){BHXF.intro=st.id;let op=document.getElementById("bhxOpp");if(!op){op=document.createElement("div");op.id="bhxOpp";op.setAttribute("aria-hidden","true");b.append(op)}op.textContent="星樞・黑洞星盤";
+@@ -20829,7 +20864,7 @@ async function shwLoad(S){
+   const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,YMAX=Math.max(...Object.values(C.N).map(p=>p[1]));let cw=0,ch=0,Iw=0,Ih=0;
+   const fit=()=>{Iw=S.I.clientWidth;Ih=S.I.clientHeight;if(!Ih)return;const h=Math.round(shwHt(C,YMAX)*Ih/(Math.cos(EL)/1.45)),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch);
+     Object.assign(cv.style,{left:-cw/2+"px",top:-Math.round(ftF*ch)+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:-Math.round(ch*.17)+"px",top:-Math.round(ch*.05)+"px"})}S.place()};
+-  if(G===1&&C.walkRetarget)S.at=shwSavedAt(C,S.o.mem);   /* 地圖預覽在模型載入期間也可先點路面。 */
++  if(G===1&&C.walkRetarget)S.at=shwSavedAt(C,S.o.mem);
+   const P0=typeof S.at==="string"?C.N[S.at]:S.at.p,HS0=typeof S.at==="string"&&Object.values(C.HS).find(h=>h[0]===S.at);S.x=P0[0];S.y=P0[1];S.onT=S.at&&S.at.t&&C.TB&&C.TB[S.at.t]?S.at.t:null;S.hy=S.onT?shwTHy(C.TB[S.onT],P0):null;S.sq=null;   /* 825：換造型重載角色時，站在桌上的照舊算在桌上 */S.yaw=S.at===C.home||!HS0?shwYaw(C,P0,typeof S.at==="string"?C.look0:[P0[0],P0[1]+5]):shwYaw(C,P0,[HS0[1],HS0[2]]);
+   S.place=()=>{if(!Ih)return;const k=shwHt(C,S.hy!=null?S.hy:S.y)/shwHt(C,YMAX);S.box.style.transform=`translate(${(S.x*Iw/100).toFixed(1)}px,${(S.y*Ih/100).toFixed(1)}px) scale(${k.toFixed(4)})`;
+     cv.style.transformOrigin=`50% ${(ftF*100).toFixed(1)}%`;cv.style.transform=S.sq?`scale(${S.sq[0].toFixed(3)},${S.sq[1].toFixed(3)})`:"";
+@@ -23511,8 +23546,8 @@ const xsmLetter=(s,c,look)=>xsmYou(c&&c===look?String(s||"").replace(/\{名\}[
+ function xsmCss(){if(document.getElementById("xsmCss"))return;const s=document.createElement("style");s.id="xsmCss";s.textContent=`
+ .xsm-page{margin:0 0 6px}.xsm-page .shp-spot{max-width:46%;padding:4px 11px;z-index:3}.xsm-page .shp-spot b{white-space:nowrap;font-size:15px;letter-spacing:.06em}
+ .xsm-page .shp-spot.lock{border-color:#8a8476;background:rgba(28,26,30,.68);box-shadow:none}.xsm-page .shp-spot.lock b{color:#c9c2b2;font-size:14px}
+-.xsm-tea .xsm-rain{position:absolute;z-index:1;pointer-events:none;overflow:hidden;opacity:.6;background-image:repeating-linear-gradient(100deg,rgba(255,255,255,0) 0 9px,rgba(232,240,250,.6) 9px 10px,rgba(255,255,255,0) 10px 23px);background-size:46px 58px;animation:xsmRain .55s linear infinite}
+-@keyframes xsmRain{to{background-position:-10px 58px}}
++.xsm-tea .xsm-rain{position:absolute;z-index:1;pointer-events:none;overflow:hidden}
++.xsm-tea[data-win="1"] .xsm-rain>.sw7-cv{display:none}
+ .xsm-tea[data-win="1"] .xsm-rain{opacity:.85;background-image:radial-gradient(circle,rgba(255,255,255,.95) 0 1.1px,rgba(255,255,255,0) 1.7px),radial-gradient(circle,rgba(246,250,255,.75) 0 .8px,rgba(255,255,255,0) 1.4px);background-size:23px 29px,37px 41px;background-position:0 0,11px 17px;animation:xsmSnow 8s linear infinite}
+ @keyframes xsmSnow{to{background-position:-23px 58px,-26px 99px}}
+ .xsm-tea::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;background:rgba(16,24,58,.4);mix-blend-mode:multiply;opacity:0;transition:opacity .6s}.xsm-tea[data-day=""]::after{opacity:1}
+@@ -23599,10 +23634,12 @@ function xsmTea(v){setTop("🍵 聽雨茶坊","#/ximarket");setTabs(true,"#/");v
+   P.innerHTML=`<img src="${s0}" alt="聽雨茶坊：方桌、條凳、靠背椅，窗外${isW(s0)?"飄著雪":"下著雨"}，中間一張暗棋桌">`+
+     XSM_RAIN.map(r=>`<i class="xsm-rain" style="left:${r[0]}%;top:${r[1]}%;width:${r[2]-r[0]}%;height:${r[3]-r[1]}%"></i>`).join("")+xsmTeaNoBot()+xsmBtns(XSM_TEA_SPOTS);
+   v.append(P);xsmBind(P,XSM_TEA_SPOTS);
++  const rain=()=>P.dataset.win!=="1";
++  if(typeof sw7RainWindow==="function")P.querySelectorAll(".xsm-rain").forEach(box=>sw7RainWindow(box,rain));
+   const im=P.querySelector(":scope>img");
+-  im.onerror=()=>{if(isW(im.getAttribute("src"))){XSM_BAD.wt=1;P.dataset.win="";im.src=xsmSrc(false,1)}};   /* 冬景載不到＝原圖＋雨 */
++  im.onerror=()=>{if(isW(im.getAttribute("src"))){XSM_BAD.wt=1;P.dataset.win="";im.src=xsmSrc(false,1);if(typeof sw7Kick==="function")sw7Kick()}};   /* 冬景載不到＝原圖＋雨 */
+   {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmDay()?"1":"";if(d!==P.dataset.day)P.dataset.day=d;
+-    const s=xsmSrc(false,1);if(im.getAttribute("src")!==s){P.dataset.win=isW(s)?"1":"";im.src=s}},60000)}   /* 11/17 跨過立冬也換季 */
++    const s=xsmSrc(false,1);if(im.getAttribute("src")!==s){P.dataset.win=isW(s)?"1":"";im.src=s;if(typeof sw7Kick==="function")sw7Kick()}},60000)}   /* 11/17 跨過立冬也換季 */
+   xsmAfter(v,P);
+   return{}}
+ /* ---------- 11/16 四攤：存檔 ---------- */
+@@ -30507,14 +30544,20 @@ const sw7PolyCss=(q,IW,IH)=>`polygon(${q.map(([x,y])=>(x/IW*100).toFixed(2)+"% "
+ 
+ /* ---------- ① 雨雪本體：每種效果一組 mk（生一顆）＋ draw（畫一格），要換畫法整組換掉 ----------
+    座標是頁面（未縮放）的像素；R.z＝兩指縮放的倍數，大小、速度都除以 R.z，放大時雨絲、雪點在螢幕上一樣大（範圍跟著圖走）。 */
+-/* 雨：淡墨斜線，三種粗細濃淡；夜景改極淡紙白；不閃、不發光 */
+-const SW7_RAIN_G=[[.6,.13],[.9,.2],[1.4,.27]];
+-function sw7RainMk(p){const r=Math.random;p.l=14+r()*16;p.v=560+r()*320;p.g=r()<.45?0:r()<.8?1:2}
++/* 三層雨絲由遠到近，速度、長度和可見度一起增加，尾端淡入。 */
++const SW7_RAIN_G=[[.45,.12,195,6],[.7,.22,340,11],[1.1,.34,540,19]];
++const SW7_RAIN_TAIL=[[1,.42,.35],[.42,0,1]];
++function sw7RainMk(p){
++  const r=Math.random,d=r();p.g=d<.46?0:d<.85?1:2;
++  const[, ,speed,length]=SW7_RAIN_G[p.g];
++  p.l=length*(.65+r()*.75);p.v=speed*(.76+r()*.48);p.sl=.09+r()*.11;
++}
+ function sw7RainDraw(c,R,dt){const z=R.z||1,k=dt/z;
+-  for(const p of R.A){p.y+=p.v*k;p.x-=p.v*.2*k;if(p.y>R.H+40||p.x<-40)sw7Re(R,p)}
+-  const ink=R.night?"232,226,210":"38,38,46",m=(.65+.35*(R.amt||1))*(R.run?1:.6);
+-  SW7_RAIN_G.forEach(([w,a],g)=>{c.lineWidth=w/z;c.strokeStyle=`rgba(${ink},${(a*m*(R.night?1.1:1)).toFixed(3)})`;c.beginPath();
+-    for(const p of R.A)if(p.g===g){c.moveTo(p.x,p.y);c.lineTo(p.x+p.l*.2/z,p.y-p.l/z)}c.stroke()})}
++  for(const p of R.A){p.y+=p.v*k;p.x-=p.v*p.sl*k;if(p.y>R.H+48/z||p.x<-48/z)sw7Re(R,p)}
++  const ink=R.night?"218,228,235":"56,64,76",m=(R.amt||1)*(R.run?1:.56);
++  SW7_RAIN_G.forEach(([w,a],g)=>{c.lineWidth=w/z;
++    for(const [start,end,fade] of SW7_RAIN_TAIL){c.strokeStyle=`rgba(${ink},${a*m*fade})`;c.beginPath();
++      for(const p of R.A)if(p.g===g){const l=p.l/z;c.moveTo(p.x+l*p.sl*start,p.y-l*start);c.lineTo(p.x+l*p.sl*end,p.y-l*end)}c.stroke()}})}
+ /* 雪：水墨「彈白」——大小不一的小白點，慢慢落、輕輕橫飄；白天加一圈極淡的墨邊，免得在宣紙上看不見 */
+ function sw7SnowMk(p){const r=Math.random;p.r=.8+r()*r()*2.4;p.v=22+r()*34;p.d=(r()-.5)*10}
+ function sw7SnowDraw(c,R,dt,t){const z=R.z||1,k=dt/z;c.beginPath();
+@@ -30532,7 +30575,7 @@ function sw7FlyMk(p,W,H){p.x=Math.random()*W;p.y=H*(.4+Math.random()*.55);p.vx=(
+ function sw7FlyDraw(c,R,dt,t){for(const p of R.A){p.vx=Math.max(-12,Math.min(12,p.vx+(Math.random()-.5)*24*dt));p.vy=Math.max(-8,Math.min(8,p.vy+(Math.random()-.5)*16*dt));p.x+=p.vx*dt;p.y+=p.vy*dt;
+     if(p.x<0||p.x>R.W)p.vx*=-1;if(p.y<R.H*.35||p.y>R.H)p.vy*=-1;const a=Math.sin(t*1.3+p.ph);if(a<.06)continue;
+     const g=c.createRadialGradient(p.x,p.y,0,p.x,p.y,6);g.addColorStop(0,`rgba(232,255,150,${(.85*a).toFixed(2)})`);g.addColorStop(1,"rgba(200,255,120,0)");c.fillStyle=g;c.fillRect(p.x-6,p.y-6,12,12)}}
+-/* 11/10 Gemini 71 作法 2（開發者選）：經典世界（千秋時光之苑，紙墨世界）的雨雪換樣子——雨是淡墨滴、落地暈開一圈；雪是飄落的碎宣紙片，夾著幾點淡金星光。
++/* 經典世界（千秋時光之苑，紙墨世界）的雨雪換樣子：雨是淡墨細絲，雪是飄落的碎宣紙片，夾著幾點淡金星光。
+    哪一天、哪個時段下雨下雪照全 App 共用的天氣（sw7Precip），只換畫法 */
+ /* 經典世界的頁才換（各朝的港口、驛站圖照舊下真的雨雪） */
+ function sw7ClWx(o){try{return typeof hbIsCl==="function"&&hbIsCl()&&!(o&&/^(port_|yz_)/.test(o.k))}catch(e){return false}}
+@@ -30545,15 +30588,8 @@ function sw7ClCloud(o,src){if(!o||!/^(home|homeAlt|learn|battle|lobby)$/.test(o.
+         g.save();g.translate(x+dx,y);g.scale(1,ry/rx);g.translate(-(x+dx),-y);g.fillStyle=gr;g.beginPath();g.arc(x+dx,y,rx,0,6.283);g.fill();g.restore()}}
+     SW7.clT=1;document.documentElement.style.setProperty("--sw7cl",`url(${c.toDataURL("image/png")})`)}catch(e){return false}}
+   return true}
+-function sw7InkMk(p,W,H){const r=Math.random;p.v=240+r()*150;p.l=5+r()*5;p.gy=H*(.45+r()*.55);p.sp=0}
+-function sw7InkDraw(c,R,dt){const z=R.z||1,k=dt/z,ink=R.night?"236,230,214":"34,36,44";
+-  c.fillStyle=`rgba(${ink},${R.night?.5:.5})`;c.beginPath();
+-  for(const p of R.A){if(p.sp){p.sp+=dt;if(p.sp>.7)sw7Re(R,p);continue}p.y+=p.v*k;if(p.y>=p.gy){p.sp=1e-4;continue}
+-    c.moveTo(p.x,p.y);c.ellipse(p.x,p.y,1.4/z,p.l*.5/z,0,0,6.283)}
+-  c.fill();
+-  for(const p of R.A){if(!p.sp)continue;const u=p.sp/.7,rr=(2+u*15)/z,a=(1-u);
+-    c.fillStyle=`rgba(${ink},${(.12*a).toFixed(3)})`;c.beginPath();c.ellipse(p.x,p.y,rr*.8,rr*.3,0,0,6.283);c.fill();
+-    c.lineWidth=1/z;c.strokeStyle=`rgba(${ink},${(.45*a).toFixed(3)})`;c.beginPath();c.ellipse(p.x,p.y,rr,rr*.36,0,0,6.283);c.stroke()}}
++/* 紙墨世界保留較細、較直的淡墨雨。 */
++function sw7InkMk(p){sw7RainMk(p);p.sl*=.48;p.l*=.8}
+ function sw7PaperMk(p){const r=Math.random;p.w=3.6+r()*3.4;p.h=p.w*(.55+r()*.5);p.v=16+r()*24;p.d=(r()-.5)*12;p.rot=r()*6.283;p.vr=(r()-.5)*2.4;p.g=r()<.22}
+ function sw7PaperDraw(c,R,dt,t){const z=R.z||1,k=dt/z;
+   for(const p of R.A){p.y+=p.v*k;p.x+=(p.d+Math.sin(t*.9+p.ph)*9)*k;p.rot+=p.vr*dt;if(p.y>R.H+10||p.x<-10||p.x>R.W+10){sw7Re(R,p);continue}
+@@ -30562,16 +30598,18 @@ function sw7PaperDraw(c,R,dt,t){const z=R.z||1,k=dt/z;
+     c.fillStyle=R.night?"rgba(238,230,206,.78)":"rgba(246,232,190,.97)";c.fillRect(-p.w/2,-p.h/2,p.w,p.h);
+     if(!R.night){c.lineWidth=.8;c.strokeStyle="rgba(110,88,56,.5)";c.strokeRect(-p.w/2,-p.h/2,p.w,p.h)}c.restore()}}
+ /* n＝基準粒子數；still＝prefers-reduced-motion 時能不能畫成一張靜止的（螢火不行，就不顯示） */
+-const SW7_KIND={rain:{mk:sw7RainMk,draw:sw7RainDraw,n:120,still:true},snow:{mk:sw7SnowMk,draw:sw7SnowDraw,n:100,still:true},inkr:{mk:sw7InkMk,draw:sw7InkDraw,n:70,still:true},paper:{mk:sw7PaperMk,draw:sw7PaperDraw,n:80,still:true},fluff:{mk:sw7FluffMk,draw:sw7FluffDraw,still:true},
++const SW7_KIND={rain:{mk:sw7RainMk,draw:sw7RainDraw,n:95,still:true},snow:{mk:sw7SnowMk,draw:sw7SnowDraw,n:100,still:true},inkr:{mk:sw7InkMk,draw:sw7RainDraw,n:90,still:true},paper:{mk:sw7PaperMk,draw:sw7PaperDraw,n:80,still:true},fluff:{mk:sw7FluffMk,draw:sw7FluffDraw,still:true},
+   petal:{mk:sw7FallMk,draw:sw7FallDraw,still:true},leaf:{mk:sw7FallMk,draw:sw7FallDraw,still:true},fly:{mk:sw7FlyMk,draw:sw7FlyDraw,still:false}};
+-function sw7P(k,W,H,init){const r=Math.random,p={k,x:r()*W*(k==="fluff"?1:1.25),y:init?r()*H:-8-r()*60,ph:r()*6.283},K=SW7_KIND[k];if(K)K.mk(p,W,H,H/700,init);return p}
++function sw7P(k,W,H,init){const r=Math.random,rain=k==="rain"||k==="inkr",p={k,x:r()*(rain?W+H*.22+48:W*(k==="fluff"?1:1.25)),y:init?r()*H:-8-r()*60,ph:r()*6.283},K=SW7_KIND[k];
++  if(K)K.mk(p,W,H,H/700,init);if(rain&&!init)p.y-=p.l;return p}
+ function sw7Re(R,p){Object.assign(p,sw7P(R.k,R.W,R.H,false))}
+ function sw7Draw(R,dt,t){const c=R.cx,W=R.W,H=R.H,K=SW7_KIND[R.k];if(!c||!W||!H||!K)return;c.clearRect(0,0,W,H);c.save();
+   if(R.sky){const sx=W/R.IW,sy=H/R.IH;c.beginPath();for(const q of R.sky)q.forEach(([x,y],i)=>c[i?"lineTo":"moveTo"](x*sx,y*sy));c.clip()}
+   K.draw(c,R,dt,t);c.restore()}
+-function sw7Loop(t){SW7.raf=0;if(document.hidden)return;let n=0;for(const R of SW7.L)if(R.run&&R.vis&&R.P.isConnected)n++;if(!n)return;
++const sw7Live=R=>R.run&&R.vis&&R.P.isConnected&&(!R.active||R.active());
++function sw7Loop(t){SW7.raf=0;if(document.hidden)return;let n=0;for(const R of SW7.L)if(sw7Live(R))n++;if(!n)return;
+   SW7.raf=requestAnimationFrame(sw7Loop);if(SW7.last&&t-SW7.last<31)return;const dt=SW7.last?Math.min(.1,(t-SW7.last)/1000):0;SW7.last=t;
+-  for(const R of SW7.L)if(R.run&&R.vis&&R.P.isConnected){sw7Zoom(R);sw7Draw(R,dt,t/1000)}}
++  for(const R of SW7.L)if(sw7Live(R)){sw7Zoom(R);sw7Draw(R,dt,t/1000)}}
+ function sw7Kick(){if(!SW7.raf&&!document.hidden){SW7.last=0;SW7.raf=requestAnimationFrame(sw7Loop)}}
+ /* 兩指縮放（07x 用 transform 放大整頁）：照圖在螢幕上的大小（getBoundingClientRect）重算縮放倍數，畫布解析度跟著提高 */
+ function sw7Zoom(R){const w=R.img.offsetWidth;if(!w)return;const z=Math.max(1,R.img.getBoundingClientRect().width/w);if(Math.abs(z-(R.z||1))>.03){R.z=z;sw7Size(R,true)}}
+@@ -30580,16 +30618,31 @@ function sw7FxSpan(img){const W=img.offsetWidth;let L=img.offsetLeft,Rr=L+W;cons
+   if(P&&P.classList&&P.classList.contains("hmp-on")){const ir=img.getBoundingClientRect(),k=ir.width?W/ir.width:1;   /* 左右兩屏包在長卷那層裡，用畫面上的位置換算回中間那張的座標；只算跟中間那張差不多高的（不算小人、按鈕） */
+     for(const o of P.querySelectorAll("img"))if(o!==img){const r=o.getBoundingClientRect();if(r.width>ir.width*.5&&Math.abs(r.height-ir.height)<ir.height*.2){L=Math.min(L,img.offsetLeft+(r.left-ir.left)*k);Rr=Math.max(Rr,img.offsetLeft+(r.right-ir.left)*k)}}}
+   return{L,W:Rr-L}}
+-function sw7Size(R,force){const img=R.img,H=img.offsetHeight,sp=sw7FxSpan(img),W=sp.W;if(!W||!H)return;
++function sw7Size(R,force){const img=R.img,H=img.offsetHeight,sp=R.active?{W:img.offsetWidth}:sw7FxSpan(img),W=sp.W;if(!W||!H)return;
++  if(!R.active){
+   R.box.style.width=W+"px";R.box.style.height=H+"px";R.box.style.left=sp.L+"px";R.box.style.top=img.offsetTop+"px";
+   /* 11/15 開發者「西市和觀星臺交界處的背景顏色深淺不一致」：上面那次把整層效果拉寬到三屏後，飄雲、霧、晨昏色、夜色在左右兩屏疊了兩份（這一層＋07hmp 抄到兩側的 .hmp-fx），兩側比中間暗一截、接縫是一條直線；
+      飄雲的花紋也被拉成三屏寬。這一層蓋滿三屏時（sw7-span）：兩側抄的那份藏起來（.sw7-span3>.hmp-w>.hmp-fx），飄雲改回每一屏寬重複一次、每圈走一屏（--sw7n＝這一層是幾屏寬） */
+   {const n=img.offsetWidth?Math.round(W/img.offsetWidth*100)/100:1,on=n>1.5;R.box.classList.toggle("sw7-span",on);if(on)R.box.style.setProperty("--sw7n",String(n));else R.box.style.removeProperty("--sw7n");try{if(R.P&&R.P.classList)R.P.classList.toggle("sw7-span3",on)}catch(e){}}
+-  if(!R.cv||(!force&&W===R.W&&H===R.H))return;const z=R.z||1,dpr=Math.min(1.5,window.devicePixelRatio||1),bs=Math.min(dpr*Math.min(z,2),2048/W);
++  }if(!R.cv||(!force&&W===R.W&&H===R.H))return;const z=R.z||1,dpr=Math.min(1.5,window.devicePixelRatio||1),bs=Math.min(dpr*Math.min(z,2),2048/W);
+   if(R.W&&R.H)for(const p of R.A){p.x*=W/R.W;p.y*=H/R.H}
+   const first=!R.W;R.W=W;R.H=H;R.cv.width=Math.round(W*bs);R.cv.height=Math.round(H*bs);R.cx.setTransform(bs,0,0,bs,0,0);
+-  if(first||!R.A.length){const K=SW7_KIND[R.k],n=Math.min(150,Math.round((K&&K.n?K.n*(R.amt||1):R.n)*Math.max(.7,Math.min(1.4,W/420))));   /* 半戶外頁的粒子也撒滿整頁再裁，密度跟全戶外一樣 */R.A=[];for(let i=0;i<n;i++)R.A.push(sw7P(R.k,W,H,true))}
++  if(R.k==="rain"||R.k==="inkr"){
++    const n=Math.max(R.active?10:4,Math.min(300,Math.round(SW7_KIND[R.k].n*(R.amt||1)*W*H/(420*700))));
++    if(R.A.length>n)R.A.length=n;
++    while(R.A.length<n)R.A.push(sw7P(R.k,W,H,true));
++  }else if(first||!R.A.length){const K=SW7_KIND[R.k],n=Math.min(150,Math.round((K&&K.n?K.n*(R.amt||1):R.n)*Math.max(.7,Math.min(1.4,W/420))));
++    R.A=[];for(let i=0;i<n;i++)R.A.push(sw7P(R.k,W,H,true))}
+   if(!R.run)sw7Draw(R,0,0)}
++/* 茶坊兩扇窗沿用同一個雨場迴圈，裁切到窗框內。 */
++function sw7RainWindow(box,active){
++  sw7Css();
++  const cv=document.createElement("canvas"),cx=cv.getContext("2d");if(!cx)return;
++  cv.className="sw7-cv";cv.setAttribute("aria-hidden","true");box.append(cv);
++  const R={P:box,img:box,box,cv,cx,k:"rain",A:[],W:0,H:0,z:1,amt:.76,night:true,run:!sw7RM(),vis:true,active};
++  cv._sw7=R;SW7.L.add(R);if(SW7.ro)SW7.ro.observe(box);if(SW7.io)SW7.io.observe(cv);
++  sw7Size(R);sw7Kick();
++}
+ 
+ /* ---------- ⑤ 落葉樹四季變色（開發者 11/9：「會有春夏秋冬嗎？葉子也會枯黃」）----------
+    開頁時讀底圖，在 tr 多邊形裡把偏綠的像素（色相 55～175°、夠飽和、不是墨線）換色相與飽和度，明暗照舊（墨線、明暗都留著）；結果畫成一張疊在底圖上的 canvas。
+@@ -30626,7 +30679,7 @@ function sw7Fill(R){const P=R.P,box=R.box,on=sw7On()&&!(sw7Page(R.img.getAttribu
+     td=P.classList.contains("td-page"),ov=P.dataset.sw7Term||"",out=on&&o&&o.m!=="in",term=sw7TermFor(P,o),rm=sw7RM(),
+     pw=out?(ov?(term==="冬至"?{t:"snow",a:.8}:null):sw7WxFor(P,o)):null,A0=out&&!pw?SW7_AMB[term]||null:null,tone=ov?sw7SeaOf(term):"";
+   let k=pw?pw.t:A0?A0[0]:"";if(td&&!pw&&sw7TdHas(term))k="";
+-  if((k==="rain"||k==="snow")&&sw7ClWx(o))k=k==="rain"?"inkr":"paper";   /* 經典世界：墨滴雨、碎紙雪 */
++  if((k==="rain"||k==="snow")&&sw7ClWx(o))k=k==="rain"?"inkr":"paper";   /* 經典世界：淡墨雨、碎紙雪 */
+   if(k==="fly"&&!night)k="";if(rm&&k&&k!=="fog"&&!(SW7_KIND[k]&&SW7_KIND[k].still))k="";
+   const tn=on&&!night&&!td&&!/_(dawn|dusk)\./.test(src)?sw7Tint():null,sky=o&&o.m==="semi"?o.sky||null:null,IW=o&&o.W||768,IH=o&&o.H||1376,
+     cl=sw7ClCloud(o,src),sig=[k,night,rm,tn?tn.c:"",term,src,pw?pw.a.toFixed(2):"",on,ov,hn.toFixed(1),cl].join("|");
+@@ -30650,7 +30703,7 @@ function sw7Scan(){SW7.q=0;if(!SW7_ON)return;
+   document.querySelectorAll(".shp-page.cq,.shp-map.full>.shp-in").forEach(P=>{if(P.querySelector(":scope>.sw7-fx"))return;const img=P.querySelector(":scope>img");if(img)sw7Attach(P,img)});
+   if(SW7.L.size&&!SW7.tm)SW7.tm=setInterval(sw7Tick,60000);if(!SW7.L.size&&SW7.tm){clearInterval(SW7.tm);SW7.tm=0}
+   sw7Kick()}
+-function sw7Tick(){for(const R of SW7.L)if(R.box.isConnected)sw7Fill(R);sw7Kick()}
++function sw7Tick(){for(const R of SW7.L)if(R.box.isConnected&&!R.active)sw7Fill(R);sw7Kick()}
+ /* 設定的開關：sw7Set(true/false)，馬上套到畫面上的每一頁（首頁的雪景、雨景底圖下次進首頁才換回） */
+ function sw7Set(on){store.set("sw7Wx",!!on);sw7Tick()}
+ function sw7SetRow(){if(!SW7_ON)return"";return`<label class="row" style="justify-content:space-between;padding:8px 2px"><span><b>場景節氣天氣</b><br><span class="muted" style="font-size:12.5px">戶外場景照節氣下雨、下雪、樹葉變色，清晨偏青、黃昏偏暖（很淡，不擋點選）</span></span><input type="checkbox" class="sw" id="sw7Wx" ${sw7On()?"checked":""} onchange="sw7Set(this.checked)"></label>`}
+@@ -32542,7 +32595,8 @@ function PvpGame(v){
+     const far=isFlip()?"r":"b",near=far==="r"?"b":"r",G=NET&&window.XQNet?XQNet.game():null,idOf=s=>G?(s==="r"?G.red.id:G.black.id):null,
+       watchOpp=NET&&seat==="w"?(window.XQNet&&XQNet.playerBot&&XQNet.playerBot(far)||{p:far==="r"?"帥":"將"}):null,
+       watchMe=NET&&seat==="w"?(window.XQNet&&XQNet.playerBot&&XQNet.playerBot(near)||{p:near==="r"?"帥":"將"}):null;
+-    return{gid:G&&G.gid?"net:"+G.gid:null,tap:past?()=>{}:tap,botSide:NET&&seat&&seat!=="w"?(seat==="r"?"b":"r"):NET&&seat==="w"?far:null,result:!past&&st.result?(st.result.w||"draw"):null,
++    return{dockControls:!NET&&!seat&&/Android.*XQQianqiuApp\//.test(navigator.userAgent),
++      gid:G&&G.gid?"net:"+G.gid:null,tap:past?()=>{}:tap,botSide:NET&&seat&&seat!=="w"?(seat==="r"?"b":"r"):NET&&seat==="w"?far:null,result:!past&&st.result?(st.result.w||"draw"):null,
+       opp:NET&&seat&&seat!=="w"?(window.XQNet&&XQNet.oppBot&&XQNet.oppBot()||{p:seat==="r"?"將":"帥"}):watchOpp,mateLook:watchMe,oppWin:"我贏了！再來一盤？",oppLose:"你好厲害…",
+       // 點公園裡的人看棋友資料（意見回饋 261）：對面、近端（觀戰時）、觀戰者各是誰
+       oppId:NET?(seat==="w"?idOf(far):seat?idOf(seat==="r"?"b":"r"):null):null,mateId:NET&&seat==="w"?idOf(near):null,
+@@ -37722,7 +37776,7 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
+   "html[lang=en] .mh-note{bottom:56px;font-size:12.5px;line-height:1.35}",
+   /* 11/17 測試員 D 第 7 輪：快速對局平面棋盤底部「📜 Rules this game: Asian rules (direct capture)」（00-util 棋規徽章 .rule-note）跟右邊「🧊 3D scene」鈕（06-cpu .pk3d-back，m.css 用負邊界疊在同一行）擠在一起，尾巴被蓋住
+      → 英文窄螢幕那顆鈕改放下一行靠右（跟 m.css 橫向手機的做法一樣），棋規徽章整句看得到 */
+-  "@media (max-width:600px){html[lang=en] .rule-note+.pk3d-back{margin-top:2px}}",
++  "@media (max-width:600px){html[lang=en] .rule-note+.pk3d-back{margin-top:2px}html[lang=en] .rule-note+.pk3d-back button{margin-top:0}}",
+   /* 11/17 測試員 D 第 8 輪 P3-2：我的角色頁書齋牆（07z4-studymap.js .mz-lb，m.css 外的模組樣式一行不換行）英文標籤太長：「35 days until Winter Solstice」右邊被切、「Qianqiu seal album」跟「Garden players」貼在一起
+      → 英文時標籤可以換行（寬度照字、最多約螢幕 26%）、字小一點；往上長的標籤（.a）底邊不動，不會往下壓到「回棋鎮」出口 */
+   "html[lang=en] .mz-lb{white-space:normal;width:max-content;max-width:min(26vw,124px);text-align:center;padding:2px 4px 3px}html[lang=en] .mz-lb b{font-size:11.5px;line-height:1.15;letter-spacing:0}html[lang=en] .mz-lb small{font-size:11px;line-height:1.15}",
+@@ -37773,6 +37827,7 @@ const I18N_CSS=["html[lang=en] .tabbar button{font-size:10.5px;letter-spacing:-.
+   /* 11/17 第 25 輪 V5：375 寬斷網時英文標題被拆成「Xiangqi / Qianq… / u」，u 壓在時辰上 → 窄螢幕英文標題不在字中間斷行，最多兩行、超過就藏掉 */
+   /* 11/17 第 26 輪 W1（V5 的退步）：全站 * 是 border-box，頂欄有時辰鐘時 #title 底下留 36px 給鐘的小字（07w8 #topbar.clk-on #title），max-height:2.35em 把這 36px 也算進去 → 標題只剩 40px 高、頂欄壓扁成 52px、鐘被推出畫面上緣、標題疊在時辰字上 → 有鐘時上限改成「兩行 20px＋底下 36px」＝76px（跟 1514 一樣），沒鐘時才用 2.35em */
+   "@media (max-width:480px){html[lang=en] #title{overflow-wrap:normal!important;word-break:normal;max-height:2.35em;overflow:hidden!important}html[lang=en] #topbar.clk-on #title{max-height:76px}}",
++  "@media (max-width:480px){html[lang=en] #topbar #title:has(.cpu-seg){display:block;max-height:none;overflow:visible!important}}",
+   /* 11/17 第 27 輪 X3（測試員 D）：#/lobby、#/db、#/settings 這種「標題不顯示、只留時辰鐘」的頁（07w8 clk-nt，標題字是透明的），英文兩行規則照樣把看不見的標題撐成兩行、頂欄 83px，上面空一塊 → 這種頁標題只排一行（頂欄跟中文一樣 63px） */
+   "html[lang=en] #topbar.clk-nt #title{white-space:nowrap!important;-webkit-line-clamp:1;max-height:56px}",
+   /* 11/17 第 28 輪 N28-5（測試員 B，同 N27-3）：320 寬英文首頁（有時辰鐘）標題被截成「Xi…／Qi…」：標題左邊讓給星晷 62px、右邊又有官階牌，兩行都只剩不到 60px →
+@@ -38384,7 +38439,16 @@ function mnfFx(g,S,t,W,H,P,add,onScr,cover,fired){const src=onScr(cover(S.src||[
+   if(fx==="river"&&R()<.8)add(src[0]+(R()-.5)*W*.5,H+8,(R()-.5)*.4,-1.2-R()*1.6,H/1.6,.6+R()*1.4,"200,232,255");
+   if(fx==="ink"&&R()<.06)add(src[0]+(R()-.5)*W*.6,src[1]+(R()-.5)*H*.18,0,0,110,4,"10,10,16","i");
+   if(fx==="dust"&&R()<.22)add(src[0]+(R()-.5)*W*.55,src[1]+(R()-.5)*30,(R()-.5)*.5,-.12-R()*.3,130+R()*80,16+R()*28,"205,168,112","d");   /* 塵土：貼地騰起、慢慢散 */
+-  if(fx==="rain")for(let k=0;k<3;k++)add(R()*W*1.25-W*.05,-20-R()*40,-2.4,15+R()*6,90,1,"205,218,236","r");   /* 斜雨線 */
++  if(fx==="rain"&&typeof sw7RainDraw==="function"){
++    let rain=P.rain;
++    if(!rain||rain.shot!==S||rain.W!==W||rain.H!==H){
++      const n=Math.max(24,Math.min(240,Math.round(100*W*H/(420*700))));
++      rain=P.rain={shot:S,k:"rain",W,H,run:true,night:true,amt:.9,last:t,A:Array.from({length:n},()=>sw7P("rain",W,H,true))};
++    }
++    g.save();g.globalCompositeOperation="source-over";
++    sw7RainDraw(g,rain,Math.max(0,Math.min(.067,t-rain.last)));
++    g.restore();rain.last=t;
++  }else P.rain=null;
+   if(fx==="burst"&&!fired.bu){fired.bu=1;for(let k=0;k<110;k++){const a=R()*6.283,v=1+R()*6;add(src[0],src[1],Math.cos(a)*v,Math.sin(a)*v,50+R()*50,1+R()*2.4,R()<.5?"255,236,170":"190,240,220")}}
+   g.globalCompositeOperation="lighter";
+   if(fx==="gates"){const n=Math.min(13,Math.floor((t-S.at)/.2)+1);for(let i=0;i<n;i++){const a=Math.PI*(.08+.84*i/12),x=W/2-Math.cos(a)*W*.44,y=H*.3-Math.sin(a)*H*.15,tw=.75+.25*Math.sin(t*3+i),rr=7+2*tw,gr=g.createRadialGradient(x,y,0,x,y,rr*2);
+@@ -38392,8 +38456,7 @@ function mnfFx(g,S,t,W,H,P,add,onScr,cover,fired){const src=onScr(cover(S.src||[
+       g.fillStyle=`rgba(255,252,236,${tw})`;g.beginPath();g.arc(x,y,2.4,0,6.2832);g.fill();g.strokeStyle=`rgba(255,226,150,${.7*tw})`;g.lineWidth=1.2;g.beginPath();g.arc(x,y,rr*.9,Math.PI,0);g.lineTo(x+rr*.9,y+rr*.9);g.moveTo(x-rr*.9,y);g.lineTo(x-rr*.9,y+rr*.9);g.stroke()}}
+   for(let j=P.length-1;j>=0;j--){const q=P[j];q.l++;if(q.o&&--q.o<=0){P.splice(j,1);continue}   /* q.o＝換鏡頭後的淡出倒數（格），不再一刀清空 */
+     if(q.k==="w"&&!q.o){const dx=src[0]-q.x,dy=src[1]-q.y,d=Math.hypot(dx,dy)||1;q.vx=q.vx*.95+(dx/d)*.7+(-dy/d)*1;q.vy=q.vy*.95+(dy/d)*.7+(dx/d)*1;if(d<10)q.l=q.m}
+-    q.x+=q.vx;q.y+=q.vy;const al=q.k==="r"?(q.o?q.o/28:1):Math.max(0,1-q.l/q.m)*Math.min(1,q.l/10)*(q.o?q.o/28:1);if(al<=0||q.x>W+200||q.y<-40&&q.k!=="r"||q.y>H+40||q.l>q.m){P.splice(j,1);continue}
+-    if(q.k==="r"){g.globalCompositeOperation="source-over";g.strokeStyle=`rgba(${q.col},${.42*al})`;g.lineWidth=1.1;g.beginPath();g.moveTo(q.x,q.y);g.lineTo(q.x-q.vx*1.8,q.y-q.vy*1.8);g.stroke();g.globalCompositeOperation="lighter";continue}
++    q.x+=q.vx;q.y+=q.vy;const al=Math.max(0,1-q.l/q.m)*Math.min(1,q.l/10)*(q.o?q.o/28:1);if(al<=0||q.x>W+200||q.y<-40||q.y>H+40||q.l>q.m){P.splice(j,1);continue}
+     if(q.k==="d"){g.globalCompositeOperation="source-over";const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,q.r+q.l*.15);gr.addColorStop(0,`rgba(${q.col},${.2*al})`);gr.addColorStop(1,`rgba(${q.col},0)`);g.fillStyle=gr;g.fillRect(q.x-q.r-q.l*.15,q.y-q.r-q.l*.15,(q.r+q.l*.15)*2,(q.r+q.l*.15)*2);g.globalCompositeOperation="lighter";continue}
+     if(q.k==="m"){g.globalCompositeOperation="source-over";const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,q.r);gr.addColorStop(0,`rgba(${q.col},${.16*Math.min(1,q.l/60)*al})`);gr.addColorStop(1,`rgba(${q.col},0)`);g.fillStyle=gr;g.fillRect(q.x-q.r,q.y-q.r,q.r*2,q.r*2);g.globalCompositeOperation="lighter";continue}
+     if(q.k==="i"){g.globalCompositeOperation="source-over";const rr=q.r+q.l*.5;g.fillStyle=`rgba(${q.col},${.32*al})`;g.beginPath();g.arc(q.x,q.y,rr,0,6.2832);g.fill();g.globalCompositeOperation="lighter";continue}

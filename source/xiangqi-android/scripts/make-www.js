@@ -15,6 +15,7 @@
 //   其他選項：--assets <完整素材資料夾>  --dry（只列出要複製幾個檔，不寫）  --no-check（略過 check-build，不建議）
 "use strict";
 const fs = require("fs"), path = require("path"), cp = require("child_process");
+const { bundleHomeAssets } = require("./bundle-home-assets.js");
 const HERE = path.join(__dirname, "..");
 /* 倉庫根目錄裡不進 App 的東西：版本控制、CI、原始碼（GPL 對應原始碼在倉庫和 F-Droid 原始碼包裡）、只給 GitHub Pages 用的檔 */
 const EXCLUDE = new Set([".git", ".github", ".gitignore", ".gitattributes", ".nojekyll", "source", "node_modules", "android"]);
@@ -35,7 +36,7 @@ function planCopy(repo, assets) {
   return { fromRepo, fromAssets };
 }
 
-function makeWww({ repo, into, assets, dry = false, check = true, log = console.log }) {
+function makeWww({ repo, into, assets, homeArt, dry = false, check = true, log = console.log }) {
   repo = path.resolve(repo);
   for (const f of ["release.json", "index.html", "source/check-build.js"]) if (!fs.existsSync(path.join(repo, f))) throw new Error("倉庫裡找不到 " + f + "：" + repo);
   const rel = JSON.parse(fs.readFileSync(path.join(repo, "release.json"), "utf8"));
@@ -59,6 +60,22 @@ function makeWww({ repo, into, assets, dry = false, check = true, log = console.
       meta.bytes += fs.statSync(d).size;
     }
   }
+  if (homeArt) {
+    const home = bundleHomeAssets(path.resolve(homeArt), into);
+    meta.files += home.addedFiles;
+    meta.fromAssets += home.addedFiles;
+    meta.bytes += home.addedBytes;
+    log(`✔ ${home.required} 個首頁場景素材已驗證，新增 ${home.addedFiles} 個本機檔`);
+  }
+  // 原生包不使用 PWA 背景更新；舊安裝仍有 worker 時，用遷移 worker 釋放舊程式快取。
+  // 保留棋譜、設定（localStorage/IndexedDB）及素材/引擎快取。
+  const swPath = path.join(into, "sw.js"), nativeSw = fs.readFileSync(path.join(__dirname, "native-sw.js"));
+  const hadSw = fs.existsSync(swPath);
+  meta.bytes += nativeSw.length - (hadSw ? fs.statSync(swPath).size : 0);
+  if (!hadSw) meta.files++;
+  fs.writeFileSync(swPath, nativeSw);
+  meta.nativeServiceWorker = "retire-pwa-cache-v1";
+  meta.nativeServiceWorkerSha256 = require("crypto").createHash("sha256").update(nativeSw).digest("hex");
   fs.writeFileSync(path.join(into, "native-build.json"), JSON.stringify(meta, null, 1) + "\n");
   log(`寫好了：${into}（${meta.files} 個檔，${(meta.bytes / 1048576).toFixed(1)} MB，網站版本 ${meta.siteVersion}）`);
   return meta;
@@ -69,8 +86,8 @@ module.exports = { makeWww, planCopy, listFiles, EXCLUDE };
 if (require.main === module) {
   const a = process.argv.slice(2), opt = k => { const i = a.indexOf(k); return i >= 0 ? a[i + 1] : null };
   const repo = opt("--repo");
-  if (!repo) { console.log("用法：node scripts/make-www.js --repo <公開倉庫資料夾> [--into <輸出資料夾>] [--assets <完整素材資料夾>] [--dry]"); process.exit(2) }
+  if (!repo) { console.log("用法：node scripts/make-www.js --repo <公開倉庫資料夾> [--into <輸出資料夾>] [--assets <完整素材資料夾>] [--home-art <共用 art 資料夾>] [--dry]"); process.exit(2) }
   try {
-    makeWww({ repo, into: opt("--into") || path.join(HERE, "www"), assets: opt("--assets"), dry: a.includes("--dry"), check: !a.includes("--no-check") });
+    makeWww({ repo, into: opt("--into") || path.join(HERE, "www"), assets: opt("--assets"), homeArt: opt("--home-art"), dry: a.includes("--dry"), check: !a.includes("--no-check") });
   } catch (e) { console.log("✘ " + e.message); process.exit(1) }
 }
