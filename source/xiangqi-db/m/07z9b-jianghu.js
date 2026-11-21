@@ -576,7 +576,7 @@ try{if(typeof journeyGameEnd==="function"&&!journeyGameEnd.jhIntel){const g0=jou
    11/22 中炮門換第 7 版圖（史學顧問三回審定，story/gemini_app/190_*）：佈局照長卷改成長石階＋四座方亭＋頂上大殿，最下方是碼頭階埠與漕船；
    座標依新圖重量——講棋堂＝左上方亭、前院＝碼頭石平台、出口在碼頭邊（搭船回長卷）。v 一併改成 1122，讓舊快取的第 2 版圖失效。 */
 const JH_HALL={
-  central:{v:"1122",seat:[387,297],w:72,spots:{hall:[384,112],study:[226,458],yard:[384,1070],gate:[384,1330]}}
+  central:{v:"1122",seat:[387,297],w:72,spots:{hall:[384,112],study:[226,458],yard:[384,1008],gate:[384,1330]}}
 };
 const JH_HALL_W=768,JH_HALL_H=1376;
 const JH_HALL_BAD=new Set();   /* 這次開 App 讀圖失敗過的派：小卡不再顯示「走進山門」，免得一直繞回來 */
@@ -625,8 +625,8 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
      🔍 打聽掌門：今天打聽到了就照實說（案 4 情報）；還沒有就說「贏我一盤就告訴你」
      ⚔ 切磋一盤：園子棋友指定由他坐下（包住 06-cpu parkNpcNew 的 keep），驛站旅人照驛站原本的開法；秘境人物要在秘境遇過才能下
    不加修為、不改強度與棋局；贏了照案 4 規則解鎖情報（journeyGameEnd 包裝本來就會判斷）。 */
-JH_HALL.central.mates=[[270,1205],[498,1205],[384,1212]];   /* 11/22 第 7 版：沿碼頭石平台站；先左右、再中間（只有兩位時左右對稱，名牌不擠在一起）；前院標籤在石階底端，不壓到人頭 */
-const JH_MATE_W=88;
+JH_HALL.central.mates=[[318,1150],[452,1150],[384,1166]];   /* 11/22 第 7 版：站在碼頭平台後半、靠石階底端；先左右、再中間（只有兩位時左右對稱）；前院標籤在石階上，不壓到人頭 */
+const JH_MATE_W=54;   /* 11/22 開發者看實機畫面說「放上門下棋友的畫面變得好怪」：88 比遠處的掌門還大、像巨人；對照三案後選「縮小靠石階、有名牌」 */
 let jhMateKeep=null;   /* {id,t}：從前院點「切磋一盤」指定的園子棋友；用掉就清，45 秒內才算數，到期也清 */
 const JH_MATE_KEEP_MS=45000;
 /* 一位門人的資料：k＝OSC.NPC 的鍵（inn:／npc:／secret:）；回傳名字、立繪、在哪、台詞清單、能不能下 */
