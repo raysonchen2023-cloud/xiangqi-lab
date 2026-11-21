@@ -625,7 +625,8 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
    不加修為、不改強度與棋局；贏了照案 4 規則解鎖情報（journeyGameEnd 包裝本來就會判斷）。 */
 JH_HALL.central.mates=[[168,1052],[298,1080],[606,1070]];   /* 前院左邊兩位、右邊空地一位；前院標籤移到中間偏右，不壓到人 */
 const JH_MATE_W=88;
-let jhMateKeep=null;
+let jhMateKeep=null;   /* {id,t}：從前院點「切磋一盤」指定的園子棋友；15 秒內、這次開局才用 */
+const JH_MATE_KEEP_MS=15000;
 /* 一位門人的資料：k＝OSC.NPC 的鍵（inn:／npc:／secret:）；回傳名字、立繪、在哪、台詞清單、能不能下 */
 function jhMateInfo(k){if(typeof OSC==="undefined")return null;const x=OSC.NPC[k];if(!x)return null;const [kind,id]=k.split(":");
   const at={inn:jhL("驛站","Post Inn"),npc:jhL("園子","the Park"),secret:jhL("秘境","a hidden place")}[kind]||"";
@@ -645,8 +646,10 @@ function jhMateIntel(sid,M){const m=OSC.MST.find(x=>x.sid===sid);if(!m)return"";
   if(typeof jhIntelOn==="function"&&jhIntelOn(sid)){const T=jhSch(jhIntelSch(sid));return jhL(`悄悄告訴你：掌門${m.nm}今天打算走${T.op}。`,`Between us: Master ${m.en} plans to play ${T.op} today.`)}
   return jhL(`掌門今天的打算？贏我一盤，我就告訴你。`,`The master's plan today? Beat me in a game and I'll tell you.`)}
 function jhMatePlay(M){if(!M||!M.can)return;
-  if(M.kind==="npc"){jhMateKeep=M.id;const lv=typeof parkNpcLv==="function"?parkNpcLv():3;
-    jStart("park",{human:"r",level:lv,journey:"park"},()=>{location.hash="#/journey/play"});return}
+  /* PR #21 審查（iMac）：jStart 不一定會呼叫 parkNpcNew（已有沒下完的園子棋直接接續、選單按取消、API 出錯），指定的人會一直留著、
+     蓋掉之後一般園子抽人與攔路棋客。改成：①記下時間，15 秒內才算數；②jStart 這次流程結束（不管有沒有開新局）就清掉 */
+  if(M.kind==="npc"){jhMateKeep={id:M.id,t:Date.now()};const lv=typeof parkNpcLv==="function"?parkNpcLv():3;
+    Promise.resolve(jStart("park",{human:"r",level:lv,journey:"park"},()=>{location.hash="#/journey/play"})).catch(()=>{}).then(()=>{jhMateKeep=null});return}
   if(M.kind==="inn"){const x=INN.find(z=>z.id===M.id);if(!x)return;const lv=typeof innLvN==="function"?innLvN(x):3,rl=typeof innRlv==="function"?innRlv(x):null;
     if(rl!=null)store.set("innCur",{id:x.id,rl});
     jStart("inn:"+x.id,rl==null?{human:"r",level:lv,journey:"inn:"+x.id}:{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:"inn:"+x.id},()=>{location.hash="#/journey/play"});return}
@@ -666,7 +669,7 @@ function jhMateCard(sid,k){const M=jhMateInfo(k);if(!M)return;let i=0;
     q("#jhMIntel").onclick=()=>say(jhMateIntel(sid,M));
     if(q("#jhMPlay"))q("#jhMPlay").onclick=()=>{try{closeSheet()}catch(e){}jhMatePlay(M)}})}
 /* 包住 06-cpu 的 parkNpcNew：從前院點「切磋一盤」時，指定這位園子棋友坐下（只用一次） */
-try{if(typeof parkNpcNew==="function"&&!parkNpcNew.jhMate){const p0=parkNpcNew;parkNpcNew=function(game,lv,keep){const k=jhMateKeep;jhMateKeep=null;return p0.call(this,game,lv,keep||k)};parkNpcNew.jhMate=1}}catch(e){}
+try{if(typeof parkNpcNew==="function"&&!parkNpcNew.jhMate){const p0=parkNpcNew;parkNpcNew=function(game,lv,keep){const K=jhMateKeep;jhMateKeep=null;const k=K&&Date.now()-K.t<JH_MATE_KEEP_MS?K.id:null;return p0.call(this,game,lv,keep||k)};parkNpcNew.jhMate=1}}catch(e){}
 /* 前院站人：在 JhHall 畫完之後補上（JhHall 本身不動） */
 try{if(typeof JhHall==="function"&&!JhHall.jhMate){const h0=JhHall;JhHall=function(v,sid){const r=h0.apply(this,arguments);try{jhHallMatesDraw(v,sid)}catch(e){}return r};JhHall.jhMate=1}}catch(e){}
 function jhHallMatesDraw(v,sid){const H=JH_HALL[sid],P=v&&v.querySelector(".jh-hall");if(!H||!H.mates||!P)return;

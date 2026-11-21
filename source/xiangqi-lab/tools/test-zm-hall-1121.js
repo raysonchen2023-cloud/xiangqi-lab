@@ -142,3 +142,37 @@ test("〔原始碼〕前院門人：站位在原圖範圍內、立繪大小合�
   assert.match(JH, /if\(typeof JhHall==="function"&&!JhHall\.jhMate\)/);
   assert.match(JH, /\.jh-mate-say\{[^}]*color:#3b2a14/, "對話框在深色主題也看得清楚（固定深色字）");
 });
+
+test("PR #21 審查：jStart 沒呼叫 parkNpcNew（接續舊盤、選單取消、API 出錯）時，這次流程結束就清掉，下一盤不會被指定", async () => {
+  const { c, calls } = loadMates({ jStart: () => Promise.resolve() });
+  c.R.jhMatePlay(c.R.jhMateInfo("npc:w15_yuan_archer"));
+  await new Promise((r) => setImmediate(r));
+  c.parkNpcNew("g9", 2);
+  assert.ok(!calls.park[0], "流程結束後指定已清空：" + calls.park[0]);
+  const e = loadMates({ jStart: () => Promise.reject(new Error("API 出錯")) });
+  e.c.R.jhMatePlay(e.c.R.jhMateInfo("npc:w15_yuan_archer"));
+  await new Promise((r) => setImmediate(r));
+  e.c.parkNpcNew("g10", 2);
+  assert.ok(!e.calls.park[0], "出錯也要清空");
+});
+
+test("PR #21 審查：指定超過 15 秒就不算數（就算還沒清掉）", () => {
+  let now = 1_000_000;
+  const RealDate = Date;
+  class FakeDate extends RealDate { static now() { return now } }
+  const { c, calls } = loadMates({ Date: FakeDate });
+  c.R.jhMatePlay(c.R.jhMateInfo("npc:w15_yuan_archer"));
+  now += 16_000;
+  c.parkNpcNew("g11", 2);
+  assert.ok(!calls.park[0], "16 秒後不用");
+});
+
+test("PR #21 審查（反向對照補測）：外部傳進來的指定（例如攔路棋客）優先；前院第一位一定是能下的", () => {
+  const { c, calls } = loadMates();
+  c.R.jhMatePlay(c.R.jhMateInfo("npc:w15_yuan_archer"));
+  c.parkNpcNew("g12", 2, "forced");
+  assert.equal(calls.park[0], "forced");
+  const L = c.R.jhMatesShown("central", 3, new Date(2026, 10, 21));
+  assert.equal(L[0].can, true, "中炮門第一位要是能下的：" + L[0].k);
+  assert.ok(L.some((m) => !m.can), "中炮門也有不能下的（劉伯溫），排在後面");
+});
