@@ -1,19 +1,19 @@
 {
- "version": "20261121-0643",
- "checkedAt": "2026-11-20T22:43:21.815Z",
- "html": "54223758e54c",
- "sw": "895861b245d3",
+ "version": "20261122-0704",
+ "checkedAt": "2026-11-21T23:05:45.866Z",
+ "html": "3badbdafd0dd",
+ "sw": "ffd4e241791a",
  "scripts": 6,
  "modules": {
   "00-util.js": "10252b867aec",
   "01-board.js": "9877ff81d682",
-  "02-shell.js": "c878183091ab",
+  "02-shell.js": "6a0891266991",
   "02r-reloadguard.js": "1bf8587b9a55",
   "03-home-quiz.js": "007d96948bf6",
   "04-stats.js": "10ceed08a1bd",
   "04c-weekly.js": "fced70fb7374",
   "05-settings.js": "ce0ff19373ca",
-  "05b-save.js": "3cf90dc8ea0a",
+  "05b-save.js": "eb21ce14d395",
   "05c-health.js": "a1bcf3e541ac",
   "05d-telemetry.js": "98d12b742868",
   "06-cpu.js": "3d844ad9f858",
@@ -94,8 +94,8 @@
   "07z6-sitemap.js": "a12444d4e987",
   "07z7-lesson.js": "b8189f953a67",
   "07z8-grablab.js": "97182be22c4c",
-  "07z9-school.js": "c1402b55f1fa",
-  "07z9b-jianghu.js": "1240f22aeb3d",
+  "07z9-school.js": "3fd904e50c6e",
+  "07z9b-jianghu.js": "b2494e2b74a2",
   "07w6-sceneinfo.js": "b699c5fc5c9f",
   "07w6b-scenedata.js": "e1a6f1d31da0",
   "07w6c-scenepoem.js": "7ab9513f7fa7",
@@ -103,10 +103,10 @@
   "07w8-shichen.js": "11f43e1fae9a",
   "07w9-exits.js": "3e6ed61a3bf7",
   "08-scene.js": "882e5bfc1885",
-  "08b-cpugame.js": "8967d04ac351",
+  "08b-cpugame.js": "339c35f60498",
   "08s-simul.js": "2126db3ab684",
   "09-askbot.js": "aa7f74f8ada8",
-  "09b-preload.js": "f7aef9124953",
+  "09b-preload.js": "73d157fa339b",
   "10-db.js": "575d6e22a904",
   "10b-libmap.js": "3d860dc618ed",
   "10c-deskmap.js": "218b52de6f83",
@@ -122,7 +122,7 @@
   "07lh-lefty.js": "a1e6ad13d30d",
   "07pm-premove.js": "72f63574b807",
   "07dq-daily.js": "c1076bdd0ee8",
-  "07i18n.js": "54b9e84fe57c",
+  "07i18n.js": "516e90dcf5c3",
   "07sp-spotfit.js": "f7f205a79901",
   "07fl-fill.js": "a671f9a96f4f",
   "07mnf-mainfilm.js": "0139ac09eb8b",
@@ -132,24 +132,5 @@
   "07grw-growth.js": "e89b02643c9b",
   "07gc-native.js": "3e0188f61704"
  },
- "differsFromSource": [
-  {
-   "module": "05-settings.js",
-   "lines": 1,
-   "sourceModified": "2026-11-18T00:24:43.074Z",
-   "why": "發布版的下載大小表 XQ_SIZES 由建置填入實際數字（build-site.js、fill-sizes.js）；原始碼裡是佔位 /*__SIZES__*/null"
-  },
-  {
-   "module": "07y-hubmap.js",
-   "lines": 6,
-   "sourceModified": "2026-11-15T12:49:16.045Z",
-   "why": "原始碼裡有一段開發中的首頁地圖程式（hbBridge），刻意不發布"
-  },
-  {
-   "module": "07s4-passmap.js",
-   "lines": 1,
-   "sourceModified": "2026-11-17T09:12:23.357Z",
-   "why": "原始碼裡有一行開發中的修改，刻意不發布"
-  }
- ]
+ "differsFromSource": []
 }
