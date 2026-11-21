@@ -42,7 +42,7 @@ const CLASSIFIED = new Set([
   "test-aab-assets-check-1121.js",   /* 11/21 W41① 送審前安裝包內容檢查 xiangqi-android/scripts/check-aab-assets.js（封測 P0-IMG：W21 缺素材、W30 切塊大檔接不回、舊檔；行為 6） */
   "test-preview-build-1121.js",   /* 11/21 W43 Cloudflare PR 預覽建置 source/preview-build.js（版號跟 sw.js 一致、刪超過 25 MB 的檔、寫 404.html；行為 5） */
   "test-device-checks-1121.js",   /* 11/21 W41②③ 升級測試 check-upgrade.js 與 44 畫面破圖掃描 check-scenes.js 的判斷規則（P0-UPD、P0-IMG；離線只算看得到的破圖；測不成立回 2；只准模擬器；更新視窗看 20 秒；行為 12、原始碼 3） */
-  "test-jianghu-wind-1121.js",   /* 11/21 W45 十州棋館風向標（m/07z9b-jianghu.js：照共用天氣挑 2～3 派順風、旗號金光、上課與掌門修為多給、每派每天一次；行為 8、原始碼 1） */
+  "test-jianghu-wind-1121.js",   /* 11/21 W45 十州棋館風向標（m/07z9b-jianghu.js：照共用天氣挑 2～3 派順風、旗號金光、上課與掌門修為多給、每派每天一次；行為 8、原始碼 1）；PR #15 審查後續：掌門盤照開局時記下的順風算、+30 說明（行為 +1、原始碼 +1）；PR #16 審查：有 zmCur 沒有 jw（下到一半）照現在的天氣算 */
   "test-android-roadmap.js",   /* 11/13 第 14 輪 F3 Android 路線圖＋可重現驗證包：verify-all.js、xiangqi-android 骨架檢查、F-Droid 草稿、make-www（行為 8、混合 1）；11/13 骨架檢查 native.swclient（行為 +1） */
   "test-fdroid-evidence.js",   /* 11/13 第 13 輪 F2 F-Droid 可建置證據：pikafish-verify.js、release-verify.js（行為 8、原始碼 1） */
   "test-daily.js",   /* 11/13 第 13 輪 F1 每日同題＋無雷分享（m/07dq-daily.js；行為 11、原始碼 2）；第 14 輪 X4 題庫改版名冊＋邊界（行為 +13） */

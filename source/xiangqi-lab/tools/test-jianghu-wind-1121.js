@@ -119,3 +119,35 @@ test("〔原始碼〕長卷與駐地小卡：順風的旗號加 wind、掛「順
   assert.doesNotMatch(ui, /1\.5 倍|倍率|雙倍/);
   assert.match(JH, /prefers-reduced-motion:reduce\)\{\.jh-spot\.wind \.bn\{animation:none\}/);
 });
+
+test("PR #15 審查：掌門盤照開局那一刻算順風——開局順風、結算時換段了也照給；開局不順風、結算時才順風也不給", () => {
+  let started = 0;
+  const { c, mem } = load({
+    zmStart: function (m) { started++; mem_set("zmCur", { id: m.id, rl: 3, c: "x_miaogirl" }) },
+    zmAgainArgs: function (j) { mem_set("zmCur", { id: j.replace("inn:", ""), rl: 4, c: "x_miaogirl" }); return { level: 2 } },
+  });
+  function mem_set(k, v) { c.store.set(k, v) }
+  const m = c.OSC.MST.find((x) => x.sid === "screen");
+  c.jhWindNow = () => ({ st: "rain", ids: ["screen"], key: "k" });
+  c.zmStart(m, "x_miaogirl");
+  assert.equal(started, 1, "原本的 zmStart 照樣要跑");
+  assert.equal(mem.zmCur.jw, 1, "開局時順風要記下來");
+  c.jhWindNow = () => ({ st: "night", ids: ["horse"], key: "k" });
+  assert.equal(c.OSC.zmReward({}, m, "w", 1), 45, "結算時已經不順風，仍照開局算");
+  c.zmAgainArgs("inn:" + m.id);
+  assert.equal(mem.zmCur.jw, 0, "再下一盤時重記：這時不順風");
+  c.jhWindNow = () => ({ st: "rain", ids: ["screen"], key: "k" });
+  assert.equal(c.OSC.zmReward({}, m, "w", 1), 30, "開局不順風，結算時才順風也不給");
+  delete mem.zmCur;
+  assert.equal(c.OSC.zmReward({}, m, "w", 1), 45, "沒有開局紀錄（舊存檔）就照現在的天氣算");
+  mem.zmCur = { id: m.id, rl: 3, c: "x_miaogirl" };   /* PR #16 審查：這版上線時玩家剛好下到一半——有 zmCur、沒有 jw */
+  assert.equal(c.OSC.zmReward({}, m, "w", 1), 45, "有開局紀錄但沒有 jw：照現在的天氣算（順風）");
+  c.jhWindNow = () => ({ st: "night", ids: ["horse"], key: "k" });
+  assert.equal(c.OSC.zmReward({}, m, "w", 1), 30, "有開局紀錄但沒有 jw：照現在的天氣算（不順風）");
+});
+
+test("〔原始碼〕PR #15 審查：掌門頁與大百科的「+30」都補上「順風時更多」，中英都有", () => {
+  assert.match(OS, /修為 \+30（整個帳號只給一次；順風時更多）/);
+  assert.match(OS, /XP \+30 \(once per account; more with a fair wind\)/);
+  assert.match(OS, /每位掌門第一次被你贏，修為 \+30（順風時更多）。/);
+});
