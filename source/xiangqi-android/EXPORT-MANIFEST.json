@@ -1,8 +1,8 @@
 {
  "schema": "xq-android-export/1",
- "madeAt": "2026-11-21T05:40:03.113Z",
+ "madeAt": "2026-11-21T05:53:05.840Z",
  "files": 118,
- "treeSha256": "7319ab59541e21263ad4c0df9abad51d7114ce683ceadebb3bc36c0ab21b7ee2",
+ "treeSha256": "322919c6ad7e6561cb4fbb62d3fe3732687441682acf0f236bd230be2e897351",
  "note": "樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256」照路徑排序、換行連起來再算 SHA-256（跟 clean-rebuild.js 的 source.treeSha256 同一種算法）",
  "excluded": [
   {
@@ -125,7 +125,7 @@
   "package-lock.json": "2e51fe3206d3dbd51f1eec4f8e7cb36675210b3367b050d22b8e65749d54ee00",
   "package.json": "c8cf4aac0fa0e5650a74e2c83b0e1c5c88cd448d71ba08610de3359fa344fa01",
   "scripts/bundle-home-assets.js": "4f5821898764a98cc53ec6cb64575dee37d7e01039ec9b461a26b8f83813c18f",
-  "scripts/check-aab-assets.js": "5849f29a9dc75b67d5b53be172696c0204c8056764c0cec66ae345a69acd0af5",
+  "scripts/check-aab-assets.js": "0f5115c913452421c42b1bc4d302fd8e009a808c74041a0c64f001856626129a",
   "scripts/check-skeleton.js": "2d0d76c7ca398e9153de54935edb3e214b6f270ef173ed06f2730a0c987c1ded",
   "scripts/clean-rebuild.js": "e7f35764b1e7d32ea1e39cc65ee0df4866380701fe6cdc2b9a14a22a10e81c01",
   "scripts/export-public.js": "7dfbab27a16ad499f97dde8275bb52cb5ee9e8f6fee6843ca5e76c80c2932b49",

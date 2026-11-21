@@ -45,13 +45,16 @@ function aab({ dex = [], home = true, x = "abc", gm = false }) {
   const file = path.join(d, "t.aab"); fs.writeFileSync(file, zip(f)); return file;
 }
 const run = file => cp.spawnSync(process.execPath, [CHECK, "--aab", file], { encoding: "utf8" });
-const W30 = ["X-XQ-Cdn-Cache", "[A-Za-z0-9._-]+"];
+/* 26112103 起（W30）的 dex 四個字串都有；26112102 只有前兩個（.parts.json 來自一起打包的 XQOfflineAssets），11/21 從真的 AAB 量出來的 */
+const W30 = ["X-XQ-Cdn-Cache", ".parts.json", "[A-Za-z0-9._-]+", "SHA-1"];
+const W29 = ["X-XQ-Cdn-Cache", ".parts.json"];
+const { exitCode, PARTS_MARKER } = require(CHECK);
 
 test("正常的小包（CDN 補抓＋切塊接回、首頁素材隨包、指紋一致）→ 綠燈", () => {
   const r = run(aab({ dex: W30 }));
   assert.equal(r.status, 0, r.stdout + r.stderr);
   assert.match(r.stdout, /CDN 補抓 有｜切塊接回 有/);
-  assert.match(r.stdout, /✔ 安裝包內容沒有發現/);
+  assert.match(r.stdout, /✔ 安裝包本身沒有問題/);
 });
 
 test("W21 型（1406）：原生不會補抓、首頁素材沒隨包、圖片不在包裡 → 紅燈，圖片算破、JSON 只警告", () => {
@@ -63,8 +66,8 @@ test("W21 型（1406）：原生不會補抓、首頁素材沒隨包、圖片不
   assert.match(r.stdout, /△ 1 項｜不在安裝包裡、原生不會補抓；網頁程式會自己改抓 CDN\n    例：data\/a\/y\.json/);
 });
 
-test("W30 型（26112102）：有 CDN 補抓、沒有切塊接回，大檔不在包裡 → 紅燈", () => {
-  const r = run(aab({ dex: ["X-XQ-Cdn-Cache"] }));
+test("W30 型（26112102）：有 CDN 補抓、dex 也有 .parts.json（來自 XQOfflineAssets），但沒有切塊接回 → 大檔不在包裡要紅燈", () => {
+  const r = run(aab({ dex: W29 }));
   assert.equal(r.status, 1, r.stdout + r.stderr);
   assert.match(r.stdout, /CDN 補抓 有｜切塊接回 沒有/);
   assert.match(r.stdout, /✘ 1 項｜CDN 上切塊的大檔不在安裝包裡，原生補抓不會接回切塊（W30）\n    例：data\/gm\.json/);
@@ -80,6 +83,26 @@ test("舊檔：安裝包裡的素材跟清單指紋不符 → 紅燈並列出兩
   const r = run(aab({ dex: W30, x: "abd" }));
   assert.equal(r.status, 1, r.stdout + r.stderr);
   assert.match(r.stdout, new RegExp(`✘ 1 項｜安裝包裡的檔跟清單不符（SHA-1 前 8 碼 ${sha8("abd")}，清單 ${sha8("abc")}）`));
+});
+
+test("PR #11 審查：通用字串只出現一部分不算切塊接回；原生加了專用標記就直接認", () => {
+  for (const dex of [["X-XQ-Cdn-Cache", "[A-Za-z0-9._-]+"], ["X-XQ-Cdn-Cache", ".parts.json", "[A-Za-z0-9._-]+"]]) {
+    const r = run(aab({ dex }));
+    assert.equal(r.status, 1, dex.join("、") + "\n" + r.stdout);
+    assert.match(r.stdout, /切塊接回 沒有/);
+  }
+  const ok = run(aab({ dex: ["X-XQ-Cdn-Cache", PARTS_MARKER] }));
+  assert.equal(ok.status, 0, ok.stdout + ok.stderr);
+  assert.match(ok.stdout, /切塊接回 有/);
+});
+
+test("PR #11 審查：缺驗不能送審——結束代碼 有 ✘＝1、加 --cdn 有沒確認到的＝3、沒加 --cdn 不算缺驗＝0，並提醒要加 --cdn", () => {
+  assert.equal(exitCode({ red: 2, unknown: 5, cdn: true }), 1);
+  assert.equal(exitCode({ red: 0, unknown: 1, cdn: true }), 3);
+  assert.equal(exitCode({ red: 0, unknown: 0, cdn: true }), 0);
+  assert.equal(exitCode({ red: 0, unknown: 0, cdn: false }), 0);
+  const r = run(aab({ dex: W30 }));
+  assert.match(r.stdout, /送審前還要加 --cdn 核對 CDN（P0-IMG 通過條件＝--cdn 且結束代碼 0）/);
 });
 
 test("大檔放進包裡（全離線版）就不需要切塊接回 → 綠燈", () => {

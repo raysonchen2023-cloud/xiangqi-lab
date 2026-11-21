@@ -18,7 +18,8 @@
 //     加 --cdn：再實際問 CDN，靠 CDN 補抓的檔要真的在（切塊檔看 .parts.json）
 // 用法：node scripts/check-aab-assets.js --aab <檔.aab> [--repo <公開倉庫>] [--cdn] [--out 報告.json]
 //   需要 unzip；清單優先用安裝包裡的 data/preload.json，沒有才用 --repo 的 sharedWebCommit 版本
-// 結束代碼：0＝沒有 ✘；1＝有 ✘；2＝用法或環境錯誤
+// 結束代碼：0＝沒有 ✘（加 --cdn 時也全部確認過）；1＝有 ✘；2＝用法或環境錯誤；3＝加 --cdn 但有沒確認到的（缺驗，不能送審）
+// P0-IMG 通過條件＝加 --cdn 且結束代碼 0
 "use strict";
 const fs = require("fs"), path = require("path"), os = require("os"), cp = require("child_process"), crypto = require("crypto");
 
@@ -27,13 +28,14 @@ const AAB = arg("--aab"), REPO = arg("--repo"), OUT = arg("--out"), CDN_CHECK = 
 const CDN = "https://xiangqi-cdn.pages.dev/";
 const MEDIA = /\.(webp|png|jpe?g|gif|svg|mp3|ogg|m4a|wav|glb|gltf|bin|mp4|webm)$/i;
 const SPLIT = 20 * 1024 * 1024;   // tools/cdn-deploy.js：超過 20 MB 的檔在 CDN 上切塊
+const PARTS_MARKER = "XQ-CDN-PARTS-v1";   // 預留：XQCdnFallback 下次改版時加這個字串常數，檢查就不用靠一般字串猜
 const die = (m, c = 2) => { console.error("✘ " + m); process.exit(c) };
-if (!AAB || !fs.existsSync(AAB)) die("用法：node scripts/check-aab-assets.js --aab <檔.aab> [--repo <公開倉庫>] [--cdn] [--out 報告.json]");
 
 const sha1_8 = b => crypto.createHash("sha1").update(b).digest("hex").slice(0, 8);
 const { required: HOME_REQUIRED } = require("./bundle-home-assets.js");
 
 async function main() {
+  if (!AAB || !fs.existsSync(AAB)) die("用法：node scripts/check-aab-assets.js --aab <檔.aab> [--repo <公開倉庫>] [--cdn] [--out 報告.json]");
   // 1. 解出安裝包的 assets/public 與 dex
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "xq-aabchk-"));
   try {
@@ -52,9 +54,11 @@ async function main() {
     }
     const dex = fs.readdirSync(path.join(tmp, "base", "dex")).map(f => fs.readFileSync(path.join(tmp, "base", "dex", f)));
     const dexHas = s => dex.some(b => b.includes(Buffer.from(s, "utf8")));
+    // 切塊接回（W30）的特徵：只看 ".parts.json" 不夠——26112102 小包帶著全離線版的 XQOfflineAssets，也有這個字面值卻接不回切塊（11/21 PR #11 審查後實測）。
+    // W30 才加的是檔名檢查 "[A-Za-z0-9._-]+" 和 "SHA-1"；四個同時出現才算。之後原生加了專用標記 PARTS_MARKER，就直接認標記。
     const native = {
       cdnFallback: dexHas("X-XQ-Cdn-Cache"),
-      partsJoin: dexHas("X-XQ-Cdn-Cache") && dexHas("[A-Za-z0-9._-]+"),
+      partsJoin: dexHas(PARTS_MARKER) || ["X-XQ-Cdn-Cache", ".parts.json", "[A-Za-z0-9._-]+", "SHA-1"].every(dexHas),
       offlineAssets: dexHas("xq-offline.json"),
       assetPacks: modules.filter(m => m !== "base"),
     };
@@ -99,10 +103,11 @@ async function main() {
       async function worker() { while (i < viaCdn.length) { const [f, split] = viaCdn[i++];
         const url = CDN + f + (split ? ".parts.json" : "");
         let st = -1; for (let t = 0; t < 4 && st !== 200; t++) { if (t) await sleep(800 * t); try { st = (await fetch(url, { method: "HEAD" })).status } catch (e) { st = -1 } }
-        if (st === -1) unknown.push({ f, why: "CDN 連不上，沒確認到（請稍後重跑 --cdn）" });
-        else if (st !== 200) miss.push({ f, why: `CDN 上沒有（${split ? ".parts.json " : ""}HTTP ${st}）：靠 CDN 補抓會失敗` }); } }
+        // PR #11 審查：只有 404／410 是確定沒有；連不上、429（限流）、5xx 都只算沒確認到
+        if (st === 404 || st === 410) miss.push({ f, why: `CDN 上沒有（${split ? ".parts.json " : ""}HTTP ${st}）：靠 CDN 補抓會失敗` });
+        else if (st !== 200) unknown.push({ f, why: `CDN 沒確認到（${st === -1 ? "連不上" : "HTTP " + st}，請稍後重跑 --cdn）` }); } }
       await Promise.all(Array.from({ length: 6 }, worker));
-      R.red.push(...miss); R.warn.push(...unknown);
+      R.red.push(...miss); R.warn.push(...unknown); R.unknown = unknown.length;
     }
 
     // 5. 報告
@@ -114,9 +119,16 @@ async function main() {
     const group = list => { const g = new Map(); for (const x of list) g.set(x.why, (g.get(x.why) || []).concat(x.f)); return g };
     for (const [why, fs_] of group(R.red)) console.log(`✘ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
     for (const [why, fs_] of group(R.warn)) console.log(`△ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
-    console.log(R.red.length ? `✘ 不能送審：${R.red.length} 項` : "✔ 安裝包內容沒有發現會破圖或讀不到的問題");
-    if (OUT) fs.writeFileSync(OUT, JSON.stringify({ ...sum, redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
-    process.exitCode = R.red.length ? 1 : 0;
+    const code = exitCode({ red: R.red.length, unknown: R.unknown || 0, cdn: CDN_CHECK });
+    console.log(code === 1 ? `✘ 不能送審：${R.red.length} 項`
+      : code === 3 ? `△ 還不能送審：CDN 有 ${R.unknown} 項沒確認到（缺驗），請稍後重跑 --cdn`
+      : CDN_CHECK ? "✔ 安裝包內容沒有發現會破圖或讀不到的問題（含 CDN 核對）"
+      : "✔ 安裝包本身沒有問題；送審前還要加 --cdn 核對 CDN（P0-IMG 通過條件＝--cdn 且結束代碼 0）");
+    if (OUT) fs.writeFileSync(OUT, JSON.stringify({ ...sum, unknown: R.unknown || 0, exitCode: code, redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
+    process.exitCode = code;
   } finally { fs.rmSync(tmp, { recursive: true, force: true }) }
 }
-main().catch(e => die(e.stack || String(e)));
+/* 結束代碼（PR #11 審查：缺驗不能送審）：有 ✘＝1；加 --cdn 而有沒確認到的＝3；其餘＝0 */
+function exitCode({ red, unknown, cdn }) { return red ? 1 : cdn && unknown ? 3 : 0 }
+module.exports = { exitCode, PARTS_MARKER };
+if (require.main === module) main().catch(e => die(e.stack || String(e)));
