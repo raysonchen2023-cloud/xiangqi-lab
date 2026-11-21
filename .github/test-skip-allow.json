@@ -60,6 +60,7 @@
   "test-imac-v1514.js：P2-1：術語碑介面英文——分類鈕（含「棋形」「俗語」）、搜尋提示；「目前選哪個」看 data-c 不看鈕上的字；示範鈕（沒有 xiangqi-db/i18n-en.json（只放 CDN））",
   "test-ios-capsync-1118.js：Game Center、小工具（--gc-widget）也一樣：檔案裝進去、packageClassList 不列；BridgeVC 有編進 App 才用 NSClassFromString 註冊（沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））",
   "test-ios-capsync-1118.js：先 install-native、再模擬 cap sync 重寫 capacitor.config.json：XQSpeech 的註冊仍然在（在 App 的 XQBridgeViewController.swift 裡，不靠 packageClassList）（沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））",
+  "test-jh-canal-1122.js：〔混合〕漕船圖（開發者 11/22「這船太醜了 找gemini畫圖」）：原檔 webp、大小合理；讀不到退回程式畫的 SVG（沒有 xiangqi-db/art/canal/barge.webp（美術原檔只在開發者電腦，公開副本沒有））",
   "test-jianghu-1118.js：圖：art/yunhe/pano.webp 在、大小合理（沒有 xiangqi-db/art/yunhe/pano.webp（美術原檔只在開發者電腦，公開副本沒有））",
   "test-lang-default-1117.js：iOS 包排除 data/docs/android.md（網頁版照舊）；其他說明文件照包（沒有 xiangqi-ios（公開副本不含））",
   "test-lang-default-1117.js：原生：回前景重驗通過在 console 印一行；check-native.js 全部通過（沒有 xiangqi-ios（公開副本不含））",
