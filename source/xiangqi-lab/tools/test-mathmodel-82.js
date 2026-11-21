@@ -108,5 +108,7 @@ test("預算敏感度：compare——同一個預算比自己，全部相同、�
 test("〔原始碼〕預算敏感度工具只讀 App 的檔、用節點數當預算、不送任何東西；結果文件寫明它只檢查分析可靠性",t=>{
   if(!fs.existsSync(EBC))return t.skip(NO_EBC);const s=rd(EBC);assert.match(s,/const EBC_VER=1,THREADS=1,HASH=16,MIN_PLY=40,MAX_PLY=120,TIERS=\{quarter:\.25,app:1,high:4\}/);assert.match(s,/send\("ucinewgame"\);await ask\("isready"/);assert.match(s,/lim\.nodes\?"go nodes "\+lim\.nodes/);
   assert.doesNotMatch(s,/fetch\(|https?:\/\/|XQNet|shareIRT|writeFileSync\([^)]*(MDIR|"m")/,"不連網、不寫 App 的檔");assert.match(s,/它不回答「分數有沒有量到棋力」/);
-  const f=path.join(DBD,"story/數學模型_引擎預算敏感度_1115.md");if(!fs.existsSync(f))return;const D=rd(f);for(const k of["怎麼重跑","節點","Threads 1","種子 20261115","只檢查分析可靠性","不代替人類效度","大師對局不代表一般玩家","pikafish.nnue","最不穩定"])assert.ok(D.includes(k),"結果文件裡要有「"+k+"」");
+});
+test("預算敏感度的結果文件寫明它只檢查分析可靠性（W57：從上一支拆出，沒有文件時明列略過）",t=>{
+  const f=path.join(DBD,"story/數學模型_引擎預算敏感度_1115.md");if(!fs.existsSync(f))return t.skip("沒有 story/數學模型_引擎預算敏感度_1115.md（故事稿資料夾不公開）");const D=rd(f);for(const k of["怎麼重跑","節點","Threads 1","種子 20261115","只檢查分析可靠性","不代替人類效度","大師對局不代表一般玩家","pikafish.nnue","最不穩定"])assert.ok(D.includes(k),"結果文件裡要有「"+k+"」");
 });

@@ -187,6 +187,7 @@ test("頁面：路由、組版 include、淡出淡入、第一次歡迎文字、
   assert.match(JH,/function jhGo\(hash,from\)/);assert.match(JH,/#jhFade\{position:fixed/);assert.match(JH,/store\.get\("jhIntro",0\)/);assert.match(JH,/歡迎來到江淮十州/);
   assert.match(JH,/b\.id="hmJh"/);assert.match(JH,/sh\[4\]\.push\(\[jhL\("十州棋館"/);assert.match(JH,/OscPage=function\(v,c,lk\)/);
   assert.ok(!/\/\/[^\n]*\n/.test(JH.split("\n").filter(l=>!/^\s*\/\//.test(l)).join("\n").replace(/https?:\/\/[^\s"'`]+/g,"")),"一行程式裡不插 // 註解")});
-test("圖：art/yunhe/pano.webp 在、大小合理；文字中英並列（不靠外掛字典）",()=>{const p=path.join(ROOT,"xiangqi-db/art/yunhe/pano.webp");
-  if(!fs.existsSync(p))return;const n=fs.statSync(p).size;assert.ok(n>300e3&&n<1.6e6,"約 1 MB："+n);
+test("文字中英並列（不靠外掛字典）",()=>{   /* W57：原本跟圖檢查寫在同一支，圖缺檔時連字串都沒檢查卻算通過；拆開後字串一律檢查 */
   for(const s of["十州棋館","開始遊歷","看十派總覽"])assert.ok(JH.includes(s),s);for(const s of["Ten Prefectures","Start the journey","See all ten schools"])assert.ok(JH.includes(s),s)});
+test("圖：art/yunhe/pano.webp 在、大小合理",t=>{const p=path.join(ROOT,"xiangqi-db/art/yunhe/pano.webp");
+  if(!fs.existsSync(p))return t.skip("沒有 xiangqi-db/art/yunhe/pano.webp（美術原檔只在開發者電腦，公開副本沒有）");const n=fs.statSync(p).size;assert.ok(n>300e3&&n<1.6e6,"約 1 MB："+n)});
