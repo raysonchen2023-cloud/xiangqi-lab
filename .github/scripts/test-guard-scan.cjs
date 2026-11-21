@@ -11,7 +11,7 @@ test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: 
 
 function repo(change) {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-guard-")); made.push(d);
-  const git = (...a) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.invalid", "-c", "core.autocrlf=false", ...a], { cwd: d });
+  const git = (...a) => execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.com", "-c", "core.autocrlf=false", ...a], { cwd: d });
   const put = (f, s) => { fs.mkdirSync(path.dirname(path.join(d, f)), { recursive: true }); fs.writeFileSync(path.join(d, f), s); };
   git("init", "-q");
   for (const f of ["index.html", "sw.js", "release.json", "source/a.js", "data/x.json"]) put(f, "base\n");
