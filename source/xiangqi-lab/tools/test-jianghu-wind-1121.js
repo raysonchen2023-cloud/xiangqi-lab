@@ -140,6 +140,10 @@ test("PR #15 審查：掌門盤照開局那一刻算順風——開局順風、�
   assert.equal(c.OSC.zmReward({}, m, "w", 1), 30, "開局不順風，結算時才順風也不給");
   delete mem.zmCur;
   assert.equal(c.OSC.zmReward({}, m, "w", 1), 45, "沒有開局紀錄（舊存檔）就照現在的天氣算");
+  mem.zmCur = { id: m.id, rl: 3, c: "x_miaogirl" };   /* PR #16 審查：這版上線時玩家剛好下到一半——有 zmCur、沒有 jw */
+  assert.equal(c.OSC.zmReward({}, m, "w", 1), 45, "有開局紀錄但沒有 jw：照現在的天氣算（順風）");
+  c.jhWindNow = () => ({ st: "night", ids: ["horse"], key: "k" });
+  assert.equal(c.OSC.zmReward({}, m, "w", 1), 30, "有開局紀錄但沒有 jw：照現在的天氣算（不順風）");
 });
 
 test("〔原始碼〕PR #15 審查：掌門頁與大百科的「+30」都補上「順風時更多」，中英都有", () => {
