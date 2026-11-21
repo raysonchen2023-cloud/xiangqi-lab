@@ -384,7 +384,7 @@ var XQ=(function(){
     "inn:zm_central":["central","same_cannon"],"inn:zm_screen":["screen","elephant"],"inn:zm_palace_horse":["palace_horse","screen"],"inn:zm_same_cannon":["same_cannon","central"],
     "inn:zm_opposite_cannon":["opposite_cannon","cross_palace"],"inn:zm_pawn":["pawn","horse"],"inn:zm_elephant":["elephant","advisor_corner"],"inn:zm_horse":["horse","pawn"],
     "inn:zm_cross_palace":["cross_palace","opposite_cannon"],"inn:zm_advisor_corner":["advisor_corner","palace_horse"]};
-  /* W48 案 4「掌門暗樁」（開發者 11/21）：十派掌門每天固定偏主修或副修（每三天約一天走副修），App 端 07z9b jhZmLean 用同一套算法，玩家打聽到的情報才會是真的；其他棋友照舊 75%／25% 隨機 */
+  /* W48 案 4「掌門暗樁」（開發者 11/21）：十派掌門每天固定偏主修或副修（每三天約一天走副修），App 端 07z9b jhIntelLean 用同一套算法，玩家打聽到的情報才會是真的；其他棋友照舊 75%／25% 隨機 */
   function zmLeanOrd(nk,d){d=d||new Date();const s=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")+"|"+nk;let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return (h>>>0)%3===0?1:0}
   function npcKeyOf(G,ls){if(!G||G.practice||G.ranked||G.arena||G.start||G.ed)return"";if(G.journey==="park"){try{const r=JSON.parse(ls.getItem("m_parkNpc")||"null");return r&&r.game===G.id&&NPC_SCH["npc:"+r.id]?"npc:"+r.id:""}catch(e){return""}}
     const j=String(G.journey||"");if(!j.startsWith("inn:"))return"";const id=j.slice(4);return NPC_SCH["inn:"+id]?"inn:"+id:NPC_SCH["secret:"+id]?"secret:"+id:""}
