@@ -1,0 +1,5 @@
+/* 象棋千秋 iOS 權限說明（繁體中文）。11/17 iMac S8：名稱照介面統一用「聲控走棋」（原本寫「語音走棋」）。 */
+"NSMicrophoneUsageDescription" = "使用「聲控走棋」時，聽你說出要走的棋。App 不錄音、不保存，也不會送給開發者。";
+"NSSpeechRecognitionUsageDescription" = "使用「聲控走棋」時，用 iOS 的語音辨識把你說的著法轉成文字（由 Apple 處理），App 不保存。";
+"NSCameraUsageDescription" = "在「意見回饋」附上圖片時，如果選「拍照」，會用相機拍一張附在回饋裡。照片只在你按下送出時，隨回饋一起傳給開發者。";
+"NSPhotoLibraryAddUsageDescription" = "把每日同題成績圖、學習週報圖存到相簿。App 不會讀取你的相簿。";

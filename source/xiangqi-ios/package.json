@@ -1,0 +1,35 @@
+{
+  "name": "xiangqi-qianqiu-ios",
+  "version": "1.0.0",
+  "private": true,
+  "description": "象棋千秋 iOS 原生殼（Capacitor）。網頁成品來自 ../xiangqi-lab/site/，不要把這個資料夾放進任何 git 倉庫。",
+  "license": "GPL-3.0-or-later",
+  "author": "陳泓昇 (Chen Hung-Sheng)",
+  "scripts": {
+    "www": "node scripts/copy-www.js",
+    "www:dry": "node scripts/copy-www.js --dry",
+    "check": "node scripts/check-www.js",
+    "sync": "node scripts/copy-www.js && npx cap sync ios && node scripts/install-native.js",
+    "native": "node scripts/install-native.js",
+    "check:native": "node scripts/check-native.js",
+    "open": "npx cap open ios"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.2",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/haptics": "8.0.2",
+    "@capacitor/ios": "8.6.2",
+    "@capacitor/local-notifications": "8.3.1",
+    "@capacitor/preferences": "8.0.1",
+    "@capacitor/share": "8.0.3",
+    "@capacitor/splash-screen": "8.0.2",
+    "@capacitor/status-bar": "8.0.4"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2"
+  }
+}

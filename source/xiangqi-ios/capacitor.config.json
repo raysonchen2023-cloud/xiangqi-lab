@@ -1,0 +1,33 @@
+{
+  "appId": "com.raysonchen.xiangqiqianqiu",
+  "appName": "象棋千秋",
+  "webDir": "www",
+  "loggingBehavior": "none",
+  "ios": {
+    "scheme": "App",
+    "contentInset": "never",
+    "backgroundColor": "#F3ECDD",
+    "allowsLinkPreview": false,
+    "scrollEnabled": true,
+    "limitsNavigationsToAppBoundDomains": false,
+    "preferredContentMode": "mobile",
+    "appendUserAgent": "XQQianqiuApp/1"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 0,
+      "backgroundColor": "#F3ECDD",
+      "showSpinner": false,
+      "iosSpinnerStyle": "small"
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "overlaysWebView": true
+    },
+    "LocalNotifications": {
+      "presentationOptions": ["alert", "sound"]
+    }
+  }
+}

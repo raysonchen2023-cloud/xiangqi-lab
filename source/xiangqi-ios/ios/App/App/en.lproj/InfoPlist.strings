@@ -1,0 +1,5 @@
+/* 象棋千秋 iOS 權限說明（英文）。11/17 iMac S8：審查員多半用英文系統，原本只有中文；名稱照介面統一用 Voice moves（中文「聲控走棋」）。 */
+"NSMicrophoneUsageDescription" = "Used by Voice moves to hear the move you say. The app does not record or keep any audio, and nothing is sent to the developer.";
+"NSSpeechRecognitionUsageDescription" = "Used by Voice moves to turn the move you say into text with iOS speech recognition (processed by Apple). The app does not keep it.";
+"NSCameraUsageDescription" = "Used only if you choose “Take Photo” when attaching a picture to Feedback. The photo is sent with your feedback only when you tap Send.";
+"NSPhotoLibraryAddUsageDescription" = "Used to save your Daily Puzzle result images and weekly study report images to Photos. The app never reads your photo library.";
