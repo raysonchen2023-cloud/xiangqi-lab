@@ -3,7 +3,8 @@
 //   不跑 check-build（--skip-build），不連網。用法：node --test xiangqi-lab/tools/test-preview-build-1121.js
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process");
-const PB = path.join(__dirname, "..", "site", "source", "preview-build.js");   /* run-tests 把倉庫根目錄連成 xiangqi-lab/site */
+/* run-tests 把倉庫根目錄連成 xiangqi-lab/site；在公開倉庫直接 node --test 時，這支在 source/xiangqi-lab/tools/，腳本在 source/（PR #13 審查建議） */
+const PB = [path.join(__dirname, "..", "site", "source", "preview-build.js"), path.join(__dirname, "..", "..", "preview-build.js")].find((f) => fs.existsSync(f));
 const { stampBuild, bigFiles, LIMIT } = require(PB);
 const made = [];
 test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }) });
@@ -46,4 +47,19 @@ test("整套（不組版）：換好版號、寫 404.html；sw.js 版號不一�
   const bad = cp.spawnSync(process.execPath, [PB, "--root", e, "--skip-build"], { encoding: "utf8" });
   assert.equal(bad.status, 1, bad.stdout + bad.stderr);
   assert.match(bad.stderr, /sw\.js 的 VERSION（20261121-0133）跟 release\.json（20261121-0643）不一致/);
+});
+
+test("整套（不組版）：超過門檻的檔真的會被刪掉，小檔留著（PR #13 審查：刪大檔那行原本沒測到）", () => {
+  const d = tmp();
+  fs.writeFileSync(path.join(d, "index.html"), HTML);
+  fs.writeFileSync(path.join(d, "release.json"), JSON.stringify({ version: "20261121-0643" }));
+  fs.writeFileSync(path.join(d, "sw.js"), 'const VERSION="20261121-0643";');
+  fs.mkdirSync(path.join(d, "engine"));
+  fs.writeFileSync(path.join(d, "engine", "big.nnue"), "x".repeat(500));
+  fs.writeFileSync(path.join(d, "small.js"), "x");
+  const r = cp.spawnSync(process.execPath, [PB, "--root", d, "--skip-build", "--limit", "100"], { encoding: "utf8" });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(fs.existsSync(path.join(d, "engine", "big.nnue")), false, "大檔要被刪掉");
+  assert.equal(fs.existsSync(path.join(d, "small.js")), true, "小檔要留著");
+  assert.match(r.stdout, /engine\/big\.nnue/);
 });
