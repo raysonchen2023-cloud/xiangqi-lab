@@ -32,7 +32,7 @@ jobs:
           node-version: 24
 
       - name: 自動檢查腳本的自我測試（文字檢查、模式判斷、守門、私密掃描補強、防注入、略過稽核、測試分類、自動標籤）
-        run: node --test .github/scripts/test-check-text.cjs .github/scripts/test-ci-mode.cjs .github/scripts/test-guard-scan.cjs .github/scripts/test-skip-checks.cjs .github/scripts/test-test-classified.cjs .github/scripts/test-tag-release.cjs
+        run: node --test .github/scripts/test-check-text.cjs .github/scripts/test-ci-mode.cjs .github/scripts/test-guard-scan.cjs .github/scripts/test-skip-checks.cjs .github/scripts/test-test-classified.cjs .github/scripts/test-tag-release.cjs .github/scripts/test-check-evidence.cjs
 
       - name: 判斷模式（功能 PR／發布 PR）
         id: mode
@@ -54,7 +54,7 @@ jobs:
 
       - name: 功能 PR：完整驗證（組版比對、引擎、測試；略過版號一致）
         if: steps.mode.outputs.mode == 'feature'
-        run: node source/xiangqi-lab/tools/verify-all.js --skip release-verify --out verify-ci.txt
+        run: node source/xiangqi-lab/tools/verify-all.js --skip release-verify --out verify-ci.txt --tally-out tally-ci.json
 
       - name: 功能 PR：私密掃描（source/ 全掃）
         if: steps.mode.outputs.mode == 'feature'
@@ -62,7 +62,14 @@ jobs:
 
       - name: 發布 PR：完整驗證（全套）
         if: steps.mode.outputs.mode == 'release'
-        run: node source/xiangqi-lab/tools/verify-all.js --out verify-ci.txt
+        run: node source/xiangqi-lab/tools/verify-all.js --out verify-ci.txt --tally-out tally-ci.json
+
+      - name: 產生驗證紀錄頁（W60-A2：跟上面同一次執行的紀錄與逐項結果，不另外跑測試）
+        run: node source/xiangqi-lab/tools/make-evidence.js --verify verify-ci.txt --tally tally-ci.json --out evidence-ci.md --report-out testkinds-ci.json
+
+      - name: 發布 PR：data/docs/evidence.md 要是這一次 CI 重產的（只忽略執行編號、產生時間）
+        if: steps.mode.outputs.mode == 'release'
+        run: node .github/scripts/check-evidence.cjs data/docs/evidence.md evidence-ci.md
 
       - name: 發布 PR：私密掃描與同步檢查
         if: steps.mode.outputs.mode == 'release'
@@ -80,10 +87,14 @@ jobs:
       - name: 私密掃描補強（本 PR 新增或修改的所有檔）
         run: node .github/scripts/scan-changed.cjs "origin/$BASE_REF" "$RUNNER_TEMP/changed-files"
 
-      - name: 上傳驗證紀錄
+      - name: 上傳驗證紀錄（W60-A2：連同同一次執行的 evidence-ci.md、逐項結果、分類報表）
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: verify-ci
-          path: verify-ci.txt
+          path: |
+            verify-ci.txt
+            tally-ci.json
+            evidence-ci.md
+            testkinds-ci.json
           if-no-files-found: ignore
