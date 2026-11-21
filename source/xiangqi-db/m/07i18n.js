@@ -470,7 +470,7 @@ const I18N_EN={
   "你贏了":"You won","和局":"Draw","這盤輸了":"You lost this one","將死":"Checkmate","困斃":"Stalemate (no legal moves)","你認輸":"You resigned","紅方認輸":"Red resigned","黑方認輸":"Black resigned",
   "雙方同意和棋":"Draw by agreement","雙方均無進攻子力":"Neither side has attacking pieces left","中途離開，算輸":"Left mid-game; counted as a loss","循環待核，同意和局":"Repetition under review; draw agreed",
   "遊戲自然限著：60 回合未吃子":"Move limit: 60 moves without a capture","超時":"Time out","看看棋盤":"View board","再來一局":"Play again","挑戰下一級":"Next level",
-  "看懂這盤最關鍵的一步":"Understand the key move of this game","再挑戰一盤":"Play another ranked game","再挑戰一次":"Try again","修為":"XP",
+  "看懂這盤最關鍵的一步":"Understand the key move of this game","復盤：看懂這盤最關鍵的一步":"Review: the key move of this game","再挑戰一盤":"Play another ranked game","再挑戰一次":"Try again","修為":"XP",
   "雙方還沒各走一步，這盤不計分":"Neither side has made a move yet, so this game is unrated","這盤是快速對局，不算段位分。":"This was a quick game; it doesn't count toward your rank.",
   "你在看不見的棋盤上，走出了一盤清清楚楚的勝局。":"You won a crystal-clear game on a board you couldn't see.","看不見棋子也守成和局，記盤功力不錯。":"You held a draw without seeing the pieces. Good board memory.",
   "這盤棋沒守住，但你已經把棋盤放進心裡了一步。":"You didn't hold this one, but the board is one step closer to living in your mind.",
@@ -949,7 +949,7 @@ const I18N_KEY={
   "game.resignAsk":"Resign this game?","game.thinking":"🤔 Thinking…","game.check":"⚠ Check!","game.yourMove":"👉 Your move","game.stuck":"Computer taking too long?","game.stuckNew":"🔄 Start a new game",
   "undo.note":"After an undo, this game no longer counts toward \"My strength\" (the result still counts).","undo.cpuNo":"No undo against the computer (it's a true test of strength); arena and Stone Table Tales games allow undo","undo.noMove":"Nothing to undo yet: you can undo after you've made a move","dlg.ok":"OK","dlg.cancel":"Cancel",
   "res.win":"You won!","res.draw":"Draw","res.lose":"You lost this one","res.review":"📊 Review","res.home":"🏠 Home","res.viewBoard":"View board","res.again":"Play again","res.nextLevel":"Next level ›",
-  "res.keyMove":"🔎 Understand the key move of this game ›","res.rankedAgain":"Play another ranked game ›","res.quickNote":"This was a quick game; it doesn't count toward your rank.",
+  "res.keyMove":"🔎 Understand the key move of this game ›","res.keyMoveZm":"🔎 Review: the key move of this game ›","res.rankedAgain":"Play another ranked game ›","res.quickNote":"This was a quick game; it doesn't count toward your rank.",
   "net.win.r":"Red ({n}) wins","net.win.b":"Black ({n}) wins",
   "mnq.accept":"Accept",   /* 主線禮包的「收下」按鈕（07mnq #mnqGf2；開發者 11/14：別處的「收下」照字典 Received） */
   "vn.next":"Next","vn.log":"Log","vn.skip":"Skip","vn.leave":"Leave","vn.keep":"Keep watching","vn.skipAsk":"Skip this scene?","vn.close":"Back to the story","vn.you":"You",

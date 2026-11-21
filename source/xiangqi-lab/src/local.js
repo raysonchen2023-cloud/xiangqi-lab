@@ -384,6 +384,8 @@ var XQ=(function(){
     "inn:zm_central":["central","same_cannon"],"inn:zm_screen":["screen","elephant"],"inn:zm_palace_horse":["palace_horse","screen"],"inn:zm_same_cannon":["same_cannon","central"],
     "inn:zm_opposite_cannon":["opposite_cannon","cross_palace"],"inn:zm_pawn":["pawn","horse"],"inn:zm_elephant":["elephant","advisor_corner"],"inn:zm_horse":["horse","pawn"],
     "inn:zm_cross_palace":["cross_palace","opposite_cannon"],"inn:zm_advisor_corner":["advisor_corner","palace_horse"]};
+  /* W48 案 4「掌門暗樁」（開發者 11/21）：十派掌門每天固定偏主修或副修（每三天約一天走副修），App 端 07z9b jhZmLean 用同一套算法，玩家打聽到的情報才會是真的；其他棋友照舊 75%／25% 隨機 */
+  function zmLeanOrd(nk,d){d=d||new Date();const s=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")+"|"+nk;let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0}return (h>>>0)%3===0?1:0}
   function npcKeyOf(G,ls){if(!G||G.practice||G.ranked||G.arena||G.start||G.ed)return"";if(G.journey==="park"){try{const r=JSON.parse(ls.getItem("m_parkNpc")||"null");return r&&r.game===G.id&&NPC_SCH["npc:"+r.id]?"npc:"+r.id:""}catch(e){return""}}
     const j=String(G.journey||"");if(!j.startsWith("inn:"))return"";const id=j.slice(4);return NPC_SCH["inn:"+id]?"inn:"+id:NPC_SCH["secret:"+id]?"secret:"+id:""}
   /* 照表挑一步：B＝npc-book.json、sch＝[主修,副修]、ord＝0 先主修／1 先副修、rnd＝亂數；表裡的著法再用規則確認一次合法 */
@@ -536,7 +538,7 @@ var XQ=(function(){
   async function playEngine(){
     if(!P||P.result||P.turn===P.human||playBusy)return;
     {const nk=npcKeyOf(P,localStorage);if(nk&&P.moves.length<NPCB_MAX&&P.npcOut!==1){playBusy=true;const id=P.id,n=P.moves.length;let pk=null;   /* 棋友棋路：照表走（見上面 npcBookPick） */
-      try{const B=await npcBookLoad();if(P&&P.id===id&&P.moves.length===n&&!P.result&&P.turn!==P.human){if(P.npcOrd==null)P.npcOrd=Math.random()<.75?0:1;pk=npcBookPick(B,NPC_SCH[nk],P.board,P.turn,P.npcOrd,Math.random);if(!pk&&B)P.npcOut=1}}catch(e){}
+      try{const B=await npcBookLoad();if(P&&P.id===id&&P.moves.length===n&&!P.result&&P.turn!==P.human){if(P.npcOrd==null)P.npcOrd=/^inn:zm_/.test(nk)?zmLeanOrd(nk):(Math.random()<.75?0:1);pk=npcBookPick(B,NPC_SCH[nk],P.board,P.turn,P.npcOrd,Math.random);if(!pk&&B)P.npcOut=1}}catch(e){}
       if(pk){setTimeout(()=>{try{if(P&&P.id===id&&P.moves.length===n&&!P.result&&P.turn!==P.human){const f=parseSq(pk.u.slice(0,2)),t=parseSq(pk.u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0}}}finally{playBusy=false;setTimeout(playEngine,0)}},900);return}
       playBusy=false;if(!P||P.id!==id||P.moves.length!==n||P.result)return}}
     {const sm=styleMove();if(sm){playBusy=true;setTimeout(()=>{try{if(P&&!P.result&&P.turn!==P.human)playApply(sm[0],sm[1])}finally{playBusy=false;setTimeout(playEngine,0)}},700);return}}
