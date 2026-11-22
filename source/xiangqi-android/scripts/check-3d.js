@@ -17,7 +17,7 @@
 // 自我反測 --self-test：同桌翻面後黑方跑兩次，一次正常（要過），一次在落點上蓋一層透明遮罩（重現 W02「觸控被接走」，要被判失敗）；
 //   兩次都照預期才結束碼 0。改動這支的判斷邏輯後要跑一次，證明它還抓得到 W02。
 // 用法：node scripts/check-3d.js --build <版號> [--serial emulator-5580] [--port 9291] [--out p0-3d] [--only <情境正規式>]
-//         [--self-test] [--allow-real-device] [--aab-sha <送審 AAB 的 SHA-256，寫進報告>] [--known <已知問題清單，預設倉庫 .github/p0-known.json>]
+//         [--self-test] [--allow-real-device] [--aab-apk <aab-to-apk.js 產生的 aab-apk.json：拉回手機實際安裝的 APK 比 SHA-256，對上才寫進報告>] [--known <已知問題清單，預設倉庫 .github/p0-known.json>]
 //   需要：已開好的模擬器（或加 --allow-real-device 的實體手機）、已裝好要驗的候選包、adb（環境變數 ADB 或 PATH）
 //   會關掉重開 App、在測試房 xq_test 開新局；不會解除安裝、不刪存檔
 // 結束代碼：0＝全部通過（或 --self-test 兩次都照預期）；1＝有情境沒過；2＝用法錯誤或環境不成立（版號不對、不在測試房、量不到 WebView），不能當通過
@@ -99,7 +99,7 @@ const { checkDevice } = require("./device-guard.js");
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d };
 const O = { build: arg("--build"), serial: arg("--serial", "emulator-5580"), port: Number(arg("--port", 9291)), out: path.resolve(arg("--out", "p0-3d")),
   only: arg("--only"), selfTest: process.argv.includes("--self-test"), allowReal: process.argv.includes("--allow-real-device"),
-  aabSha: arg("--aab-sha"), known: arg("--known", [path.join(__dirname, "..", "..", "..", ".github", "p0-known.json"), path.join(__dirname, "..", "..", "xiangqi-lab", "site", ".github", "p0-known.json")].find((f) => fs.existsSync(f)) || "") };   /* 公開倉庫：source/ 的上一層；開發者電腦：xiangqi-lab/site */
+  aabApk: arg("--aab-apk"), known: arg("--known", [path.join(__dirname, "..", "..", "..", ".github", "p0-known.json"), path.join(__dirname, "..", "..", "xiangqi-lab", "site", ".github", "p0-known.json")].find((f) => fs.existsSync(f)) || "") };   /* 公開倉庫：source/ 的上一層；開發者電腦：xiangqi-lab/site */
 /* 已知問題清單：讀不到就當沒有（不放行任何已知問題）。報告記下清單路徑與 SHA-256；不是倉庫 .github 那一份時印 ⚠（PR #42 審查①：--known 可指到任何檔，等於繞過逐行審） */
 const REPO_KNOWN = path.join(__dirname, "..", "..", "..", ".github", "p0-known.json");
 const KNOWN_RAW = (() => { try { return fs.readFileSync(O.known) } catch (e) { return null } })();
@@ -292,11 +292,20 @@ async function run(name, inject) {
   const g = checkDevice((...a) => adb(...a), O.allowReal);
   if (!g.ok) throw new Unfit(g.message);
   if (g.message) console.log(g.message);
-  /* 送審閘門 p0-gate.js（Windows Claude 1，W69 第 3 項）讀 tool、aabSha256、pass：雜湊要 64 碼小寫，格式不對就不跑 */
-  if (O.aabSha && !/^[0-9a-f]{64}$/.test(O.aabSha)) throw new Unfit("--aab-sha 要是 64 碼小寫的 SHA-256：" + O.aabSha);
+  /* 送審閘門 p0-gate.js（W69 第 3 項，PR #44 審查後）：--aab-sha 只會照抄雜湊，停用；改帶 aab-to-apk.js 的 aab-apk.json，
+     從手機拉回實際安裝的 base.apk 算 SHA-256 比對，對上才把 AAB 雜湊寫進報告（apkBound） */
+  if (process.argv.includes("--aab-sha")) throw new Unfit("--aab-sha 已停用（只會照抄雜湊、核對不到實際 APK）：改帶 --aab-apk <aab-to-apk.js 產生的 aab-apk.json>");
+  let BIND = { aabSha256: null, apkSha256: null, apkBound: false };
+  if (O.aabApk) {
+    const AB = require("./apk-bind.js"), rb = AB.readBind(O.aabApk); if (!rb.ok) throw new Unfit(rb.msg);
+    const ia = AB.installedApkSha((args) => cp.execFileSync(ADB, ["-s", O.serial, ...args], { encoding: "utf8", timeout: 300000, maxBuffer: 30e6 }), PKG, O.out);
+    if (!ia.ok) throw new Unfit(ia.msg);
+    const bd = AB.bind(rb.rec, ia.sha, "手機上實際安裝的 APK"); if (!bd.ok) throw new Unfit(bd.msg);
+    BIND = bd.fields; console.log(`✔ 手機上的 App 就是從送審 AAB（${BIND.aabSha256.slice(0, 12)}）產生的 APK`);
+  } else console.log("⚠ 沒帶 --aab-apk：這份報告沒綁送審 AAB，p0-gate.js 不收");
   const S = { tool: "P0-3D", build: O.build, serial: O.serial, android: adb("shell", "getprop", "ro.build.version.release"),
     webview: (adb("shell", "dumpsys", "package", "com.google.android.webview").match(/versionName=(\S+)/) || [])[1] || "", at: new Date().toISOString(),
-    aabSha256: O.aabSha || null, known: KNOWN.map((x) => x.id + "≤" + x.until),
+    ...BIND, known: KNOWN.map((x) => x.id + "≤" + x.until),
     knownFile: { path: O.known || "（沒有）", sha256: KNOWN_RAW ? require("crypto").createHash("sha256").update(KNOWN_RAW).digest("hex") : null, fromRepo: KNOWN_FROM_REPO },
     /* PR #42 審查②：只跑部分情境（--only）或自我反測不算完整，送審只認 full＝true */
     full: !O.only && !O.selfTest, results: [] };
