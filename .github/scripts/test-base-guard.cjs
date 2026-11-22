@@ -4,7 +4,7 @@
 // 用法：node --test .github/scripts/test-base-guard.cjs
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process");
-const { GUARD, isGuard, guardChanged, STEPS, restore, modeArgs, modeOf, finalCode, runGuard } = require("./base-guard.cjs");
+const { GUARD, isGuard, guardChanged, STEPS, restore, modeArgs, modeOf, finalCode, runGuard, classifiedOnly, TK_PATH } = require("./base-guard.cjs");
 const NL = String.fromCharCode(10), NUL = String.fromCharCode(0);
 
 test("哪些算判斷紅綠的程式：.github/scripts 全部、run-tests、check-build、testkinds、verify-all、make-evidence、oss-scan、release-sync-check、release-verify、pikafish-verify", () => {
@@ -163,4 +163,52 @@ test("fork 判斷那一步實際執行：fork 結束代碼 1、本倉庫分支 0
   assert.equal(fork.status, 1, "fork 要紅燈：" + fork.stdout + fork.stderr);
   assert.match(fork.stdout, /fork 的 PR 不跑 PR 程式/);
   assert.equal(run("raysonchen2023-cloud/xiangqi-lab").status, 0, "本倉庫分支要放行");
+});
+
+/* testkinds.js 只新增分類登記時當資料（基準版守門誤判修正：#43 上線後新增測試的 PR 都被誤判紅燈） */
+const TK_BASE = ['"use strict";', 'const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);', "const CLASSIFIED = new Set([",
+  '  "test-a-1121.js",   /* 舊的 */', '  "test-b-1121.js",   /* 舊的 */', "]);", "const PENDING = new Set([]);", "const classified = f => CLASSIFIED.has(f) && !PENDING.has(f);"].join(NL);
+const tkAdd = (line, at = 4) => { const L = TK_BASE.split(NL); L.splice(at, 0, line); return L.join(NL) };
+const NEW_LINE = '  "test-new-1122.js",   /* 11/22 新功能（行為 3） */';
+
+test("testkinds 只新增登記：清單裡新增本 PR 的測試檔、格式正確 → 當資料不換回", () => {
+  assert.equal(classifiedOnly(TK_BASE, tkAdd(NEW_LINE), ["test-new-1122.js"]), true);
+  assert.equal(classifiedOnly(TK_BASE, tkAdd(NEW_LINE, 3), ["test-new-1122.js"]), true, "插在清單第一行也可以");
+  assert.equal(classifiedOnly(TK_BASE, TK_BASE, []), false, "沒有新增登記就不算（照一般規則換回）");
+});
+
+test("testkinds 換回：加進 PENDING、改 SKIP、登記既有或不存在的檔、刪改既有登記、清單外改程式、註解後夾帶程式、格式不對，都要換回 main 版", () => {
+  const add = ["test-new-1122.js"];
+  assert.equal(classifiedOnly(TK_BASE, TK_BASE.replace("const PENDING = new Set([]);", 'const PENDING = new Set(["test-a-1121.js"]);'), add), false, "加進 PENDING＝把既有測試降級");
+  assert.equal(classifiedOnly(TK_BASE, TK_BASE.replace('"testkinds.js"]);', '"testkinds.js", "test-a-1121.js"]);'), add), false, "SKIP＝整支不跑");
+  assert.equal(classifiedOnly(TK_BASE, tkAdd('  "test-a-1121.js",   /* 重複登記既有的 */'), add), false, "登記既有的測試檔");
+  assert.equal(classifiedOnly(TK_BASE, tkAdd('  "test-ghost-1122.js",   /* 不存在 */'), add), false, "登記不是本 PR 新增的檔");
+  assert.equal(classifiedOnly(TK_BASE, TK_BASE.replace('/* 舊的 */', '/* 改過 */'), add), false, "修改既有登記行");
+  assert.equal(classifiedOnly(TK_BASE, TK_BASE.replace('  "test-b-1121.js",   /* 舊的 */' + NL, ""), add), false, "刪除既有登記行");
+  assert.equal(classifiedOnly(TK_BASE, tkAdd(NEW_LINE).replace('  "test-b-1121.js",   /* 舊的 */' + NL, ""), add), false, "新增一行同時刪掉既有登記行");
+  assert.equal(classifiedOnly(TK_BASE, tkAdd(NEW_LINE).split(NL).slice(0, -1).join(NL), add), false, "新增登記同時刪掉檔案最後一行（判斷 classified 的那行）");
+  assert.equal(classifiedOnly(TK_BASE, tkAdd(NEW_LINE).replace("CLASSIFIED.has(f) && !PENDING.has(f)", "true"), add), false, "清單外改判斷");
+  assert.equal(classifiedOnly(TK_BASE, tkAdd('  "test-new-1122.js",   /* x */ process.exit(0), /* y */'), add), false, "註解後面夾帶程式");
+  assert.equal(classifiedOnly(TK_BASE, tkAdd('  "test-new-1122.js",'), add), false, "沒有註解（格式不對）");
+  assert.equal(classifiedOnly(TK_BASE, tkAdd(NEW_LINE, 7), add), false, "新增行在 CLASSIFIED 清單外");
+});
+
+test("主流程：PR 只在 testkinds 新增本 PR 測試的登記 → testkinds 不換回；同時改到別的守門照樣換回那一支", () => {
+  const files = [TK_PATH, "source/xiangqi-lab/tools/test-new-1122.js", ".github/scripts/check-text.cjs"];
+  const calls = [], wrote = {};
+  const git = (...a) => {
+    if (a[0] === "diff") return (a.includes("--diff-filter=A") ? ["source/xiangqi-lab/tools/test-new-1122.js"] : files).join(NUL);
+    if (a[0] === "show") return a[1].endsWith("testkinds.js") ? TK_BASE : "main 版";
+    throw new Error("沒預期的 git");
+  };
+  const spawn = (c, a) => { calls.push(a.join(" ")); return a[0] === ".github/scripts/ci-mode.cjs" ? { status: 0, stdout: "mode=feature" + NL } : { status: 0 } };
+  const fsx = { existsSync: () => true, rmSync() {}, mkdirSync() {}, writeFileSync: (f, s) => { wrote[f] = s }, readFileSync: (f) => f === TK_PATH ? tkAdd(NEW_LINE) : "" };
+  assert.equal(runGuard({ git, spawn, fsx, log: () => {}, headRef: "w48/x" }), 0);
+  assert.ok(!(TK_PATH in wrote), "testkinds 不換回");
+  assert.equal(wrote[".github/scripts/check-text.cjs"], "main 版", "別的守門照樣換回");
+  /* 只改 testkinds 而且只是新增登記 → 沒有守門要換、不另跑 */
+  const only = [TK_PATH, "source/xiangqi-lab/tools/test-new-1122.js"], calls2 = [];
+  const git2 = (...a) => a[0] === "diff" ? (a.includes("--diff-filter=A") ? ["source/xiangqi-lab/tools/test-new-1122.js"] : only).join(NUL) : TK_BASE;
+  assert.equal(runGuard({ git: git2, spawn: (c, a) => { calls2.push(a); return { status: 0 } }, fsx, log: () => {} }), 0);
+  assert.equal(calls2.length, 0, "沒有要換回的守門，不另跑基準版");
 });
