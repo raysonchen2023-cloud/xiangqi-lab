@@ -9,7 +9,7 @@
 //     不打在 main 最新提交：建包到觸發之間 main 可能又合併了別的網頁改動，標籤會含安裝包裡沒有的程式（iMac Claude 2 審查）。
 //   - 該版的原生差異（source/xiangqi-android-variants/<變體>/）是建包後才提交進 main 的：輸入 variant_commit（那個提交），
 //     要在 main 的歷史裡、是 web 標籤的後代；Android 另外核對該提交裡 versionCode 等於建置號的 VARIANT-MANIFEST.json，
-//     它的 webCommit 要正好是 web 標籤的提交、siteVersion 要等於網頁版號。標籤說明寫上變體提交與安裝包 SHA-256。
+//     它的 webCommit 要正好是 web 標籤的提交、siteVersion 要等於網頁版號（必填）。標籤說明寫上變體提交與安裝包 SHA-256。
 //   - iOS 目前沒有對應清單：只核對 variant_commit 在 main 上、是 web 標籤的後代（有清單後再補核對）。
 // 其他規則（輸入一律經環境變數，先用嚴格格式驗過才拿來用；git 用參數陣列呼叫，不經過殼層）：
 //   - 平台只准 android、ios；建置號 ^[1-9]\d{0,9}$；網頁版號 ^\d{8}-\d{4}$；變體提交 40 碼小寫十六進位；安裝包 SHA-256 64 碼
@@ -42,7 +42,7 @@ function decide({ platform, build, web, variantCommit, pkgSha256, tags, head, is
     if (hit.length !== 1) return { action: "error", why: `變體提交裡 versionCode ${build} 的 VARIANT-MANIFEST.json 要正好 1 份，找到 ${hit.length} 份` };
     manifest = hit[0];
     if (manifest.json.webCommit !== base) return { action: "error", why: `${manifest.path} 的 webCommit（${str(manifest.json.webCommit).slice(0, 7)}）不是網頁標籤 ${webTag} 的提交（${base.slice(0, 7)}）` };
-    if (manifest.json.siteVersion != null && str(manifest.json.siteVersion) !== web) return { action: "error", why: `${manifest.path} 的 siteVersion（${manifest.json.siteVersion}）跟網頁版號 ${web} 不一樣` };
+    if (str(manifest.json.siteVersion) !== web) return { action: "error", why: `${manifest.path} 的 siteVersion（${manifest.json.siteVersion}）跟網頁版號 ${web} 不一樣` };
   }
   const name = platform + "-" + build;
   if (tags[name]) return tags[name] === base ? { action: "skip", name, why: "標籤已經在網頁標籤的提交" } : { action: "error", name, why: `標籤 ${name} 已經指向別的提交 ${tags[name].slice(0, 7)}，不覆寫（同一個建置號只能對應一個提交）` };
@@ -76,7 +76,9 @@ function run({ env = process.env, git, dry = false, log = console.log, err = con
     `\n安裝包 SHA-256：${pkgSha256}\nP0 閘門通過後由 CI 打（.github/workflows/tag-native.yml）`;
   if (dry) { log(`（試跑）會在 ${d.base.slice(0, 7)} 打 ${d.name}：\n${msg}`); return 0 }
   git("tag", "-a", d.name, "-m", msg, d.base);
-  git("push", "origin", "refs/tags/" + d.name);
+  /* 推送：Actions 裡 checkout 不保存憑證（persist-credentials: false），token 只在這一步用 http.extraheader 帶上，不寫進 .git/config（PR #63 Codex 審查） */
+  const auth = env.XQ_PUSH_TOKEN ? ["-c", "http.https://github.com/.extraheader=AUTHORIZATION: basic " + Buffer.from("x-access-token:" + env.XQ_PUSH_TOKEN).toString("base64")] : [];
+  git(...auth, "push", "origin", "refs/tags/" + d.name);
   log(`已打標籤 ${d.name} → ${d.base.slice(0, 7)}（${d.webTag}；原生原始碼 ${variantCommit.slice(0, 7)}）`);
   return 0;
 }

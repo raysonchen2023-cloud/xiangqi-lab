@@ -3,7 +3,7 @@
 #   gh workflow run tag-native.yml --ref main -f platform=android -f build=<versionCode> -f web=<網頁版號> \n#     -f variant_commit=<放這版原生差異的 main 提交，40 碼> -f pkg_sha256=<AAB／IPA 的 SHA-256>
 # 標籤打在 web-<網頁版號> 的提交（網頁跟安裝包一樣）；原生差異的提交與安裝包雜湊寫進標籤說明（PR #63 審查後，開發者 11/23 選單）。
 # 只在 main 上跑（job 的 if，加上 tag-native.cjs 自己再查一次 GITHUB_REF）；別的分支可以改這支程式，所以不准從別的分支觸發。
-# 五個輸入一律經環境變數傳給 tag-native.cjs，在那裡用嚴格格式驗過才拿來當標籤名；這裡的 run 沒有嵌入任何外部欄位。
+# 五個輸入一律經環境變數；推標籤用的 token 也只在最後一步經環境變數給傳給 tag-native.cjs，在那裡用嚴格格式驗過才拿來當標籤名；這裡的 run 沒有嵌入任何外部欄位。
 # 不提交任何檔案，只打標籤；同名標籤已指向別的提交就報錯、不覆寫。
 name: 打原生版本標籤
 
@@ -47,6 +47,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          persist-credentials: false   # 寫入權限的 token 不留在 .git/config；只交給最後推標籤那一步（PR #63 Codex 審查）
 
       - uses: actions/setup-node@v4
         with:
@@ -67,4 +68,5 @@ jobs:
           XQ_WEB: ${{ inputs.web }}
           XQ_VARIANT_COMMIT: ${{ inputs.variant_commit }}
           XQ_PKG_SHA256: ${{ inputs.pkg_sha256 }}
+          XQ_PUSH_TOKEN: ${{ github.token }}
         run: node .github/scripts/tag-native.cjs

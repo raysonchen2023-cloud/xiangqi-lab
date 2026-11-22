@@ -38,12 +38,31 @@ test("判斷（Android）：變體清單找不到、有兩份、webCommit 或 si
   assert.match(D({ manifests: [{ path: "x", json: null }] }).why, /找到 0 份/, "讀不到或不是 JSON 不算");
   assert.match(D({ manifests: MF({ webCommit: X }) }).why, /webCommit.*不是網頁標籤/);
   assert.match(D({ manifests: MF({ siteVersion: "20261123-0901" }) }).why, /siteVersion/);
-  assert.equal(D({ manifests: MF({ siteVersion: undefined }) }).action, "create", "舊清單沒有 siteVersion 不擋");
+  assert.match(D({ manifests: MF({ siteVersion: undefined }) }).why, /siteVersion/, "siteVersion 必填（iMac Claude 2 審查）");
 });
 
 test("判斷：同名標籤已在網頁標籤的提交 → 不動；指向別的提交（包括 main 最新）→ 不覆寫", () => {
   assert.deepEqual(D({ tags: { "web-20261123-0900": W, "android-26112301": W } }), { action: "skip", name: "android-26112301", why: "標籤已經在網頁標籤的提交" });
   for (const t of [X, H]) { const e = D({ tags: { "web-20261123-0900": W, "android-26112301": t } }); assert.equal(e.action, "error"); assert.match(e.why, /不覆寫/) }
+});
+
+test("主流程：有 XQ_PUSH_TOKEN 時，只有推送那一次帶 http.extraheader（token 不寫進 git 設定、其他 git 呼叫不帶）", () => {
+  const calls = [], W2 = "b".repeat(40), V2 = "d".repeat(40);
+  const git = (...a) => {
+    calls.push(a);
+    if (a[0] === "rev-parse") return "a".repeat(40) + "\n";
+    if (a[0] === "tag" && a[1] === "-l") return "web-20261123-0900 " + "9".repeat(40) + " " + W2 + "\n";
+    if (a[0] === "ls-tree") return "source/xiangqi-android-variants/m/VARIANT-MANIFEST.json\n";
+    if (a[0] === "show") return JSON.stringify({ versionCode: 26112301, webCommit: W2, siteVersion: "20261123-0900" });
+    return "";
+  };
+  const env = { XQ_PLATFORM: "android", XQ_BUILD: "26112301", XQ_WEB: "20261123-0900", XQ_VARIANT_COMMIT: V2, XQ_PKG_SHA256: "e".repeat(64), XQ_PUSH_TOKEN: "假的token" };
+  assert.equal(run({ env, git, log: () => {}, err: () => {} }), 0);
+  const push = calls.filter((a) => a.includes("push")), others = calls.filter((a) => !a.includes("push"));
+  assert.equal(push.length, 1);
+  assert.equal(push[0][push[0].indexOf("-c") + 1], "http.https://github.com/.extraheader=AUTHORIZATION: basic " + Buffer.from("x-access-token:假的token").toString("base64"));
+  assert.ok(others.every((a) => !a.join(" ").includes("extraheader") && !a.join(" ").includes("假的token")), "其他 git 呼叫不帶 token");
+  assert.ok(!calls.some((a) => a[0] === "config"), "不寫 git 設定");
 });
 
 test("主流程：在 GitHub Actions 裡不是 main 就拒絕；讀不到 git → 2", () => {
@@ -93,7 +112,10 @@ test("〔原始碼〕tag-native.yml：只能手動觸發、只在 main 跑、五
   assert.match(Y, /\n    if: github\.ref == 'refs\/heads\/main'\n/, "job 只在 main");
   const runs = Y.split("\n").filter((l) => /^\s+run:/.test(l)); assert.ok(runs.length >= 3);
   for (const line of runs) assert.doesNotMatch(line, /\$\{\{/, "run 裡不准嵌入欄位：" + line);
-  assert.equal((Y.match(/\$\{\{/g) || []).length, 5, "${{ }} 只准出現在最後一步的 5 個環境變數（job 的 if 不用 ${{ }}）");
+  assert.equal((Y.match(/\$\{\{/g) || []).length, 6, "${{ }} 只准出現在最後一步：5 個輸入＋推送用的 token（job 的 if 不用 ${{ }}）");
+  assert.match(Y, /uses: actions\/checkout@v4\n        with:\n          fetch-depth: 0\n          persist-credentials: false/, "checkout 不保存寫入憑證（PR #63 Codex 審查）");
+  assert.equal(Y.indexOf("github.token"), Y.lastIndexOf("github.token"), "token 只出現一次");
+  assert.ok(Y.indexOf("github.token") > Y.lastIndexOf("      - name:"), "token 只給最後推標籤那一步");
   const step = Y.slice(Y.lastIndexOf("      - name:"));
   for (const [e, k] of [["XQ_PLATFORM", "platform"], ["XQ_BUILD", "build"], ["XQ_WEB", "web"], ["XQ_VARIANT_COMMIT", "variant_commit"], ["XQ_PKG_SHA256", "pkg_sha256"]]) assert.match(step, new RegExp(e + ": \\$\\{\\{ inputs\\." + k + " \\}\\}"));
   assert.match(step, /run: node \.github\/scripts\/tag-native\.cjs\n?$/);
