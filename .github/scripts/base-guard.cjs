@@ -53,6 +53,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["完整驗證（全套）", ["node", "source/xiangqi-lab/tools/verify-all.js", "--out", "base-verify.txt", "--tally-out", "base-tally.json"]],
   ["產生驗證紀錄頁", ["node", "source/xiangqi-lab/tools/make-evidence.js", "--verify", "base-verify.txt", "--tally", "base-tally.json", "--out", "base-evidence.md", "--report-out", "base-testkinds.json"]],
   ["證據要是這一次重產的", ["node", ".github/scripts/check-evidence.cjs", "data/docs/evidence.md", "base-evidence.md"]],
+  ["驗證紀錄跟 evidence.md 同一次執行", ["node", ".github/scripts/check-verify-log.cjs", ".", "base-verify.txt"]],   /* W69 流程盤點第 12 項（PR #59 審查：iMac Claude 2） */
   ["發布同步與私密掃描", ["node", "source/xiangqi-lab/tools/release-sync-check.js", "--dir", "."]],
   ["發布產物守門", ["node", ".github/scripts/guard-release-pr.cjs", base]],   /* W69 流程盤點第 2 項（PR #46）：改到的每個檔都要對得到來源 */
   ["假略過檢查", ["node", ".github/scripts/check-fake-skip.cjs"]],

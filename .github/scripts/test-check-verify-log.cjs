@@ -16,6 +16,14 @@ test("同一次 CI（gh- 同號）、版本對、只差時間／編號／commit�
   assert.equal(ok({ logText: log("gh-100-1").replace(/\n/g, "\r\n") + "\r\n\r\n" }).ok, true);
 });
 
+test("#59 審查：每一步耗時秒數、Node.js／作業系統那行每次不同，不算不同；結束代碼不同照擋", () => {
+  const step = (code, sec) => `第 4 步 run-tests：通過（結束代碼 ${code}，${sec} 秒）\n`;
+  const L = (sec, node, code = 0) => log("gh-100-1").replace("Node.js：v24.0.0", node) + step(code, sec);
+  const C = (sec, node, code = 0) => ci.replace("Node.js：v24.0.0", node) + step(code, sec);
+  assert.equal(ok({ logText: L("274.0", "Node.js：v24.22.3；作業系統：linux 7.0.0-1020-azure x64"), ciText: C("220.5", "Node.js：v24.23.0；作業系統：linux 7.0.0-1021-azure x64") }).ok, true, "#57 兩次 CI：274.0 秒對 220.5 秒");
+  assert.match(ok({ logText: L("274.0", "Node.js：v24.0.0", 0), ciText: C("274.0", "Node.js：v24.0.0", 1) }).errors.join(), /第 \d+ 行起/, "結束代碼不同要擋");
+});
+
 test("本機跑的（local-）、手改沒編號的、跟 evidence.md 不同號的：都擋", () => {
   assert.match(ok({ logText: log("local-20261123T040000Z-1"), evidenceText: ev("local-20261123T040000Z-1") }).errors.join(), /要用 GitHub Actions 產生的/);
   assert.match(ok({ logText: log("gh-100-1").replace(/^執行編號：.*\n/m, "") }).errors.join(), /（沒有）/);
