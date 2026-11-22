@@ -1,0 +1,75 @@
+# 象棋千秋：F-Droid 建置設定草稿（要送到 fdroiddata 倉庫的 metadata/com.raysonchen.xiangqiqianqiu.yml）
+# 狀態：2026-11-13 草稿，還不能送。照 https://f-droid.org/docs/Build_Metadata_Reference/ 的欄位寫，
+# 送出前要用 fdroidserver 的 fdroid lint、fdroid rewritemeta、fdroid build -v -l 在自己電腦試建一次。
+# 還缺（詳見 xiangqi-db/art/docs/android.md）：
+#   1. 這個 Android 專案還沒放上公開倉庫（草稿假設放在 xiangqi-lab 倉庫的 android/ 資料夾）。
+#   2. 倉庫裡還沒有 android-20261113-0452 這個 tag；commit 欄要換成真正的 tag。
+#   3. 圖、音樂、3D 模型只在 CDN、不在倉庫：照這份建出來的 APK 只含瘦身版，缺的檔執行時從 CDN 抓。
+#   4. 引擎多執行緒要 Android System WebView 支援跨來源隔離允許清單；沒實機驗證。
+#   5. engine/pikafish.wasm 是預先編好的檔：F-Droid 的掃描會要求在建置時從原始碼編。兩條路：
+#      建置時裝 Emscripten 6.0.13 跑 pikafish-src 的釘版本腳本（emsdk 會下載預編譯的 LLVM，F-Droid 可能不收），
+#      或 Android 版改用 NDK 編原生 Pikafish（建議，F-Droid 有 ndk: 欄位）。到時這份要加 ndk:、build: 或 srclibs:。
+# 以下的版本號、tag 名稱都是建議值，要開發者決定：versionName＝網站版本號、versionCode＝年月日時（yyMMddHH）、tag＝android-<網站版本號>。
+
+Categories:
+  - Games
+License: GPL-3.0-or-later
+AuthorName: Chen Hung-Sheng
+AuthorEmail: xiangqiqianqiu.app@gmail.com
+WebSite: https://raysonchen2023-cloud.github.io/xiangqi-lab/
+SourceCode: https://github.com/raysonchen2023-cloud/xiangqi-lab
+IssueTracker: https://github.com/raysonchen2023-cloud/xiangqi-lab/issues
+Changelog: https://github.com/raysonchen2023-cloud/xiangqi-lab/blob/main/data/docs/release-notes.md
+
+AutoName: 象棋千秋
+
+AntiFeatures:
+  NonFreeAssets:
+    en-US: Artwork, 3D models, music and story texts made for the app are licensed CC BY-NC-SA
+      4.0 (non-commercial). The Pikafish neural network weights (engine/pikafish.nnue) may
+      not be used commercially without permission.
+    zh-TW: App 的美術、3D 模型、音樂和劇情文字用 CC BY-NC-SA 4.0（限非商業）；Pikafish 神經網路權重（engine/pikafish.nnue）未經許可不得商用。
+  NonFreeNet:
+    en-US: The online lobby connects to a hosted EMQX Cloud MQTT broker, and in-app feedback
+      is sent to a Google Form.
+    zh-TW: 線上大廳連到租用的 EMQX Cloud MQTT 伺服器；App 內的意見回饋送到 Google 表單。
+  Tracking:
+    en-US: Anonymous stuck-point signals, game ratings and learning progress are sent by default
+      to improve puzzles; they can be turned off in Settings. Remove this anti-feature if they
+      become opt-in.
+    zh-TW: 匿名卡關訊號、對局評分、學習進度預設會送出（設定裡可以關）；改成預設關或先問以後就拿掉這一項。
+
+RepoType: git
+Repo: https://github.com/raysonchen2023-cloud/xiangqi-lab.git
+
+Builds:
+  - versionName: 20261113-0452
+    versionCode: 26111304
+    commit: android-20261113-0452
+    subdir: android/android/app
+    sudo:
+      - apt-get update
+      - apt-get install -y nodejs npm
+    rm:
+      - android/android/gradle/wrapper/gradle-wrapper.jar
+    prebuild:
+      - cd ../..
+      - npm ci --omit=dev --ignore-scripts
+      - node scripts/make-www.js --repo .. --into android/app/src/main/assets/public
+    gradle:
+      - yes
+
+MaintainerNotes: |-
+  Capacitor 8 app. The web part (index.html) is assembled from source/ in the same repository;
+  scripts/make-www.js runs `node source/check-build.js` first and stops if the published
+  index.html does not match the sources. Capacitor's Java sources come from the npm package
+  @capacitor/android (MIT, no prebuilt binaries); the generated Capacitor files are committed so
+  the Capacitor CLI (Node 22) is not needed on the build server. If npm is not acceptable,
+  @capacitor/android 8.6.2 can be a srclib from https://github.com/ionic-team/capacitor instead.
+  Pikafish (GPL-3.0) is shipped as WebAssembly built from pikafish-src/; see
+  data/docs/foss.md in the repository for the pinned Emscripten 6.0.13 rebuild.
+
+AutoUpdateMode: Version android-%v
+UpdateCheckMode: Tags ^android-
+CurrentVersion: 20261113-0452
+CurrentVersionCode: 26111304
