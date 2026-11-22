@@ -17,8 +17,9 @@ function repo(o = {}) {
   w("source/STAGE-MANIFEST.json", JSON.stringify({ commit: "0".repeat(40), version: o.manifestV || V, indexSha1: sha1_12(html) }));
   w("source/check-build.js", `process.exit(${o.buildFail ? 1 : 0})`);
   const lv = o.logV || V;
-  w(`source/verification-log-${lv}.txt`, `release.json：版本 ${lv}、html x\n  index.html  ${o.logSha || sha256(html)}  (x)\n第 1 步 check-build：通過（結束代碼 0）\n第 2 步 run-tests：${o.stepFail ? "失敗" : "通過"}（結束代碼 0）\n`);
-  if (o.extraLog) w("source/verification-log-20261113-1345.txt", "舊的");
+  w("data/docs/verification-log.txt", `release.json：版本 ${lv}、html x\n  index.html  ${o.logSha || sha256(html)}  (x)\n第 1 步 check-build：通過（結束代碼 0）\n第 2 步 run-tests：${o.stepFail ? "失敗" : "通過"}（結束代碼 0）\n`);
+  if (o.extraLog) w("source/verification-log-20261113-1345.txt", "舊的");   /* W69 第 12 項：source/ 留著舊做法的紀錄要擋 */
+  if (o.noLog) fs.rmSync(path.join(D, "data", "docs", "verification-log.txt"));
   w("data/docs/evidence.md", `# 驗證紀錄（版本 ${o.evTitleV || V}）\n\n- 測試對象：公開倉庫的 \`source/\`，對應的發布版：\`${o.evV || V}\`。\n`);
   w("data/docs/foss.md", o.fossNoMark ? "# 開源\n公開原始碼對應線上發布版。\n" : `# 開源\n**這一頁和 \`source/\` 對應的發布版：\`${o.fossV || V}\`**\n`);
   w("source/xiangqi-db/m/07y-hubmap.js", "const ok = 1;\n" + (o.leak ? "    " + SECRET.replace(/ /g, "  ") + "\n" : ""));
@@ -56,6 +57,7 @@ test("驗證紀錄：別版的、雜湊不對、有一步失敗、多留一份�
   assert.deepEqual(failed(run(repo({ logSha: "f".repeat(64) }))), ["verification-log"]);
   assert.deepEqual(failed(run(repo({ stepFail: true }))), ["verification-log"]);
   assert.deepEqual(failed(run(repo({ extraLog: true }))), ["verification-log"]);
+  assert.deepEqual(failed(run(repo({ noLog: true }))), ["verification-log"], "W69 第 12 項：沒有 data/docs/verification-log.txt 要擋（PR #59，Codex 審查）");
 });
 test("刻意不發布的程式行（縮排、空白改過也一樣）出現在公開的檔：擋，訊息只有檔名行號、沒有內容", () => {
   const r = run(repo({ leak: true })), c = r.checks.find(x => x.id === "private-lines");

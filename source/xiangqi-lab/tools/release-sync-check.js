@@ -6,7 +6,7 @@
 //   release          index.html、sw.js、release.json 三處版本號一樣、雜湊對得上（release-verify.js）→ 這一版的版本號 V
 //   stage-manifest   source/STAGE-MANIFEST.json 記的版本是 V、記的 index.html 指紋跟候選版一樣（舊格式沒寫版本時，git 模式改查它記的 commit 的 index.html）
 //   check-build      node source/check-build.js：source/ 組出來的 index.html 跟候選版逐字相同
-//   verification-log source/ 裡只有一份驗證紀錄，而且是 verification-log-V.txt；紀錄寫的版本是 V、index.html 的 SHA-256 跟候選版一樣、每一步都是「通過」或「略過」
+//   verification-log data/docs/verification-log.txt（CI 版，W69 第 12 項；source/ 底下不能留舊的 verification-log-*.txt）；紀錄寫的版本是 V、index.html 的 SHA-256 跟候選版一樣、每一步都是「通過」或「略過」
 //   evidence         data/docs/evidence.md 標題是（版本 V），而且寫明「對應的發布版：`V`」（＝測試是對發布版的 source/ 跑的，不是開發者電腦上的工作區）
 //   foss             data/docs/foss.md 寫的「對應的發布版：`V`」每一處都是 V
 //   forbidden-files  公開的檔裡不能有：千秋盃裁判台 cup-host.js、金鑰與簽章檔（*.jks、*.keystore、*.p12、*.pfx、keystore.properties、signing.properties）、
@@ -126,13 +126,15 @@ function checkAll(o) {
 
   /* verification-log */
   if (want("verification-log")) {
-    const logs = files.filter(f => /^source\/verification-log-[^/]+\.txt$/.test(f));
-    const mine = "source/verification-log-" + V + ".txt";
+    /* W69 流程盤點第 12 項（PR #59，Codex 審查）：驗證紀錄改放 data/docs/verification-log.txt（CI 版，跟 evidence.md 同一次執行）；
+       source/ 底下的 verification-log-*.txt 是舊做法，會被算進 source/ 樹雜湊，一份都不能留 */
+    const old = files.filter(f => /^source\/verification-log-[^/]+\.txt$/.test(f));
+    const mine = "data/docs/verification-log.txt";
     if (!V) add("verification-log", false, "沒有版本號，無法核對");
-    else if (!logs.includes(mine)) add("verification-log", false, `source/ 裡沒有 ${mine}（現有：${logs.join("、") || "無"}）：驗證紀錄不是這一版的`);
+    else if (!files.includes(mine)) add("verification-log", false, `沒有 ${mine}（CI 附件 verify-ci 的 verify-ci.txt 原封不動放進來）：驗證紀錄不是這一版的`);
     else {
       const s = fs.readFileSync(P(mine), "utf8"), bad = [];
-      if (logs.length > 1) bad.push("source/ 裡還有別版的驗證紀錄：" + logs.filter(x => x !== mine).join("、") + "（只能留這一版的，免得看錯）");
+      if (old.length) bad.push("source/ 裡還有舊做法的驗證紀錄：" + old.join("、") + "（改放 data/docs/verification-log.txt，舊的刪掉）");
       if (!s.includes("release.json：版本 " + V)) bad.push("紀錄裡寫的 release.json 版本不是 " + V);
       const m = s.match(/^\s*index\.html\s+([0-9a-f]{64})/m);
       if (!m) bad.push("紀錄裡找不到 index.html 的 SHA-256");
