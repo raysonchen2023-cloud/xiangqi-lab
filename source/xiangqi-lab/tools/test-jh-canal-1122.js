@@ -130,3 +130,22 @@ test("〔混合〕漕船圖（開發者 11/22「這船太醜了 找gemini畫圖�
   assert.equal(b.toString("ascii", 0, 4), "RIFF"); assert.equal(b.toString("ascii", 8, 12), "WEBP");
   assert.ok(b.length > 5e3 && b.length < 80e3, "約 5～80 KB：" + b.length);
 });
+
+test("〔原始碼〕11/22 開發者實機截圖「這船重疊了，而且很像飄起來」：停靠點避開長卷上原有的船與岸；船貼著水面", () => {
+  const S = JH.slice(JH.indexOf("const JH_CANAL=["), JH.indexOf("const JH_CANAL_XP"));
+  const at = Object.fromEntries([...S.matchAll(/sid:"(\w+)"[^}]*?at:\[(\d+),(\d+)\]/g)].map((m) => [m[1], [+m[2], +m[3]]]));
+  assert.deepEqual(Object.keys(at).sort(), ["central", "elephant", "horse", "pawn"]);
+  /* 舊座標都壓到長卷上的東西（徐州壓在原本畫的小船、淮安壓到碼頭與停著的船、泗州碰到棧橋與石橋、揚州碰到松樹），不能改回去 */
+  const OLD = { horse: [200, 720], elephant: [528, 712], central: [900, 552], pawn: [1580, 650] };
+  for (const k in OLD) assert.notDeepEqual(at[k], OLD[k], k + " 不能回到舊座標");
+  /* 徐州：漕船要整艘蓋住長卷原本那艘小船（原圖約 x165～230、y730～757）；船身＝錨點左右 53、上 19～下 22 像素 */
+  const [hx, hy] = at.horse;
+  assert.ok(hx - 53 <= 165 && hx + 53 >= 230 && hy - 19 <= 730 && hy + 22 >= 757, "徐州漕船要蓋住原本的小船：" + at.horse);
+  /* 不再像浮起來：陰影不往下偏、船底一截淡出（吃水）、船底有水紋、晃動不超過 2px */
+  assert.match(JH, /\.jh-canal\{[^}]*filter:drop-shadow\(0 0 1px /, "陰影不往下偏");
+  assert.doesNotMatch(JH, /\.jh-canal\{[^}]*drop-shadow\(0 [1-9]/);
+  assert.match(JH, /\.jh-canal \.jh-canal-img,\.jh-canal \.jh-canal-svg\{[^}]*mask-image:linear-gradient\(to bottom/, "船底吃水");
+  assert.match(JH, /\.jh-canal::after\{content:""/, "船底水紋");
+  const bob = (JH.match(/@keyframes jhCanalBob\{[^@\n]*?translate:0 -([\d.]+)px/) || [])[1];
+  assert.ok(bob && +bob <= 2, "晃動不超過 2px：" + bob);
+});
