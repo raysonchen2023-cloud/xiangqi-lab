@@ -18,7 +18,7 @@ function load(o = {}) {
     addXP: (n, why, key) => calls.xp.push([n, key]),
   };
   vm.createContext(c);
-  vm.runInContext(SRC + ";this.R={JH_LP_LV,JH_LP_SID,jhLpLines,jhLpWalk,jhLpSegs,jhLpAt,jhLpRound,jhLpJudge,jhLpDayXP,jhLpGet}", c);
+  vm.runInContext(SRC + ";this.R={JH_LP_LV,JH_LP_SID,jhLpLines,jhLpWalk,jhLpSegs,jhLpAt,jhLpRound,jhLpJudge,jhLpReselect,jhLpDayXP,jhLpGet}", c);
   return { R: c.R, mem, calls };
 }
 const { R } = load();
@@ -77,6 +77,14 @@ test("判一步：照主線才對；動錯子回 piece、子對但落點錯回 t
   for (let k = 0; k < a; k++) { const [f, t] = sq(q.seq[k]); b = C.make(b, f, t) }
   assert.deepEqual(J(R.jhLpAt(q.seq, a)), J(b), "第二段要從第 " + (a + 1) + " 步之前的局面開始");
   assert.deepEqual(J(R.jhLpAt(q.seq, 0)), J(b0));
+  /* #54 功能預驗：點到對方的子，主線這步不吃子＝換選、不算走岔；主線這步就是吃那顆子才照常判 */
+  const t1 = sq(q.seq[1])[1], b1 = R.jhLpAt(q.seq, 1);
+  assert.equal(R.jhLpReselect(b1, q, 1, C.parseSq("a9")), false, "點到自己的子不算換選（a9 是黑車，第 2 步輪黑方）");
+  assert.equal(R.jhLpReselect(b1, q, 1, C.parseSq("a0")), !b1[t1], "點到紅俥：主線這步不吃子就算換選");
+  const qc = { seq: ["h2e2", "h7h0"] }, bc = R.jhLpAt(["h2e2"], 1);
+  assert.equal(R.jhLpReselect(bc, qc, 1, C.parseSq("h0")), false, "主線這步就是吃子（砲打傌）時照常判");
+  assert.equal(R.jhLpReselect(bc, qc, 1, C.parseSq("e3")), false, "主線這步是吃子時，點到別的紅子也照常判");
+  assert.equal(R.jhLpReselect(bc, { seq: ["h2e2", "h9g7"] }, 1, C.parseSq("e3")), true, "主線這步不吃子（馬8進7），點到紅兵＝換選");
 });
 
 test("每天修為：一輪全對 +10，同一天不再給、隔天可以再給；存檔壞掉不當掉", () => {
@@ -95,5 +103,8 @@ test("〔原始碼〕入口只有 jhLiepaoOpen；不改 07z9b；開場白用繁�
   assert.ok(!/jhHall|JH_HALL/.test(SRC), "門內頁入口之後由 07z9b 接，這裡不碰");
   assert.ok(SRC.includes("戲台開鑼") && !SRC.includes("戏台"), "審稿第 5 點：戲台用繁體");
   assert.match(SRC, /if\(Q\.length<3\)/, "題目不足 3 題就不開，免得少題也領修為");
+  assert.match(SRC, /#jhLpM\{display:block;min-height:calc\(3\.2em \+ 18px\)\}/, "#54 預驗 P2：說明框固定兩行高，棋盤才不會跳");
+  assert.ok(!/id="jhLpM"[^>]*display:none/.test(SRC) && !/style\.display=t\?/.test(SRC), "說明框不能用 display:none 收起來");
+  assert.ok(SRC.includes("框起來的這顆沒錯，想想它要走到哪"), "#54 預驗 P3：落點記錯時的措辭");
   for (const l of SRC.split("\n")) if (/[;})]\s*\/\/(?!#)/.test(l) && !/https?:\/\//.test(l)) assert.fail("一行程式後面接 // 註解會吃掉後面的程式：" + l.slice(0, 80));
 });

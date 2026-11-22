@@ -43,6 +43,8 @@ function jhLpRound(lines,L,day){const seen=new Set(),pool=[];
   return pool.slice(0,3).map(seq=>({seq,nt:jhLpWalk(seq),segs:jhLpSegs(seq.length)}))}
 /* 判一步：玩家在第 i 步走 f→t。回傳 {ok, kind}：kind＝"piece"（動錯了子）、"to"（子對了、落點記錯） */
 function jhLpJudge(q,i,f,t){const[F,T]=jhLpSq(q.seq[i]);if(f===F&&t===T)return{ok:true,kind:""};return{ok:false,kind:f===F?"to":"piece"}}
+/* 點到對方的子：主線這一步不吃子，就當成換選、不算走岔（#54 功能預驗：連點太快時前一下沒收到，下一下點在對方的子上，會被當成吃子算一次走岔） */
+function jhLpReselect(b,q,i,t){const[,T]=jhLpSq(q.seq[i]);return!!b[t]&&window.XQCore.sideOf(b[t])!==jhLpSide(i)&&!b[T]}
 function jhLpDayXP(){const G=jhLpGet(),d=jhLpDay();if(G.d===d)return 0;G.d=d;jhLpSet(G);if(typeof addXP==="function")try{addXP(10,jhL("擊板記譜局","Clapper score"),"liepao:"+d)}catch(e){}return 10}
 const jhLpSide=i=>i%2?"b":"r";
 
@@ -56,12 +58,13 @@ async function jhLiepaoOpen(lv0){const G=jhLpGet(),L=JH_LP_LV.find(x=>x.k===(lv0
       <div class="jh-gp-lv">${JH_LP_LV.map(x=>`<button class="btn ${x.k===L.k?"":"ghost"}" data-lv="${x.k}">${esc(jhL(x.zh,x.en))}</button>`).join("")}</div>
       <p id="jhLpQ" class="jh-gp-q"></p><div id="jhLpB" class="jh-scr-bd"></div><div id="jhLpT" class="jh-lp-beats"></div>
       <div class="jh-actions"><button class="btn ghost" id="jhLpA">${esc(jhL("🥁 再看一次","🥁 Watch again"))}</button><button class="btn ghost" id="jhLpH">${esc(jhL("💡 提示","💡 Hint"))}</button><button class="btn ghost" id="jhLpR">${esc(jhL("↺ 重來","↺ Retry"))}</button><button class="btn" id="jhLpN" style="display:none"></button></div>
-      <p id="jhLpM" class="jh-mate-say" style="display:none"></p>`;
+      <p id="jhLpM" class="jh-mate-say" style="visibility:hidden"></p>`;
     const $=s=>b.querySelector(s),C=window.XQCore;
     let q=null,si=0,i=0,bd=null,sel=-1,phase="",tok=0,miss=0,peek=0,wrong=0,mark=-1,last=null,shown=-1;
     const brd=Board(x=>tap(x));$("#jhLpB").append(brd.svg);
     b.querySelectorAll("[data-lv]").forEach(x=>x.onclick=()=>{tok++;try{closeSheet()}catch(e){}setTimeout(()=>jhLiepaoOpen(x.dataset.lv),250)});
-    const say=t=>{const s=$("#jhLpM");s.style.display=t?"":"none";s.textContent=t||""};
+    /* 說明框一律佔著兩行高（#54 功能預驗 P2：從兩行變一行時面板捲動被拉回、棋盤往下跳，手機連點會點偏）；沒字時只是看不見，不收起來 */
+    const say=t=>{const s=$("#jhLpM");s.style.visibility=t?"":"hidden";s.textContent=t||""};
     const seg=()=>q.segs[si];
     /* 拍子列：演的時候亮出記法（紅字紅方、黑字黑方）；重走時只標第幾步、輪哪一方 */
     const beats=()=>{const[a,z]=seg();let h="";
@@ -89,9 +92,10 @@ async function jhLiepaoOpen(lv0){const G=jhLpGet(),L=JH_LP_LV.find(x=>x.k===(lv0
       nb.onclick=()=>{if(qi+1<Q.length){qi++;start();return}nb.style.display="none";const xp=right===Q.length?jhLpDayXP():0;
         say(jhL(`這一輪一字不差 ${right}／${Q.length} 題。${xp?`全對，修為 +${xp}`:""}`,`${right}/${Q.length} note-perfect.${xp?` All right: +${xp} XP`:""}`))}};
     const tap=x=>{if(phase!=="play")return;const sd=jhLpSide(i);mark=-1;
+      if(sel>=0&&jhLpReselect(bd,q,i,x))sel=-1;
       if(sel>=0&&C.legal(bd,sd).some(([f,t])=>f===sel&&t===x)){const r=jhLpJudge(q,i,sel,x);
         if(!r.ok){miss++;wrong++;sel=-1;const[F]=jhLpSq(q.seq[i]);if(wrong>=2)mark=F;draw();
-          say((r.kind==="to"?jhL(`這步走岔了：第 ${i+1} 步是這顆子沒錯，落點記錯了。`,`Off the beat: right piece for move ${i+1}, wrong square.`):jhL(`這步走岔了：第 ${i+1} 步動的不是這顆子。`,`Off the beat: move ${i+1} isn't this piece.`))+(wrong>=2?jhL("框起來的那顆才是。"," The boxed piece is the one."):""));return}
+          say((r.kind==="to"?jhL(`這步走岔了：第 ${i+1} 步是這顆子沒錯，落點記錯了。`,`Off the beat: right piece for move ${i+1}, wrong square.`):jhL(`這步走岔了：第 ${i+1} 步動的不是這顆子。`,`Off the beat: move ${i+1} isn't this piece.`))+(wrong>=2?(r.kind==="to"?jhL("框起來的這顆沒錯，想想它要走到哪。"," The boxed piece is right; think about where it goes."):jhL("框起來的那顆才是。"," The boxed piece is the one.")):""));return}
         const[f,t]=jhLpSq(q.seq[i]);bd=C.make(bd,f,t);last={f,t};sel=-1;i++;wrong=0;
         if(i<seg()[1]){draw();say(jhL(`對！接著第 ${i+1} 步（${jhLpSide(i)==="r"?"紅方":"黑方"}）。`,`Yes! Now move ${i+1} (${jhLpSide(i)==="r"?"Red":"Black"}).`));return}
         if(si+1<q.segs.length){phase="gap";draw();say(jhL("這一段記住了！準備聽下一段。","Part done! Get ready for the next."));
@@ -108,5 +112,5 @@ async function jhLiepaoOpen(lv0){const G=jhLpGet(),L=JH_LP_LV.find(x=>x.k===(lv0
     start()})}
 (function(){if(typeof document==="undefined")return;const s=document.createElement("style");s.id="jhLpCss";s.textContent=`
 .jh-lp-beats{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin:6px 0}.jh-lp-beat{min-width:3.2em;padding:4px 8px;border:1px solid currentColor;border-radius:14px;font-size:15px;text-align:center;opacity:.55}
-.jh-lp-beat.r{color:#B3261E}.jh-lp-beat.on{opacity:1}.jh-lp-beat.now{opacity:1;font-weight:700;outline:3px solid #F2B705}`;
+#jhLpM{display:block;min-height:calc(3.2em + 18px)}.jh-lp-beat.r{color:#B3261E}.jh-lp-beat.on{opacity:1}.jh-lp-beat.now{opacity:1;font-weight:700;outline:3px solid #F2B705}`;
   if(!document.getElementById("jhLpCss"))document.head.append(s)})();
