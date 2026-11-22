@@ -56,13 +56,14 @@ test("連將殺步數：一步叫將就將死＝1；要叫兩次將＝2；只靠
   assert.equal(R.jhSpMateIn(b2, "r", n2), true); assert.equal(R.jhSpMateIn(b2, "r", n2 - 1), false);
 });
 
-test("題庫 60 題：盤面合法、雙方都沒被將軍；另一套獨立搜尋重算輪走方最快步數＝答案、少一步殺不了；難度範圍照規格", () => {
+test("題庫 90 題：盤面合法、雙方都沒被將軍；另一套獨立搜尋重算輪走方最快步數＝答案、少一步殺不了；難度範圍照規格", () => {
   const { R } = load();
-  assert.equal(R.JH_SP_Q.length, 60);
-  const seen = new Set(), RANGE = { easy: [1, 2], mid: [2, 3], hard: [3, 4] };
+  assert.equal(R.JH_SP_Q.length, 90);
+  /* W48 順炮 P3（開發者 11/23 選「滑動窗口三選一」）：初級 1～3、中級 2～4、高級 3～5 步 */
+  const seen = new Set(), RANGE = { easy: [1, 2, 3], mid: [2, 3, 4], hard: [3, 4, 5] };
   for (const lv of ["easy", "mid", "hard"]) {
     const P = R.JH_SP_Q.filter((q) => q.lv === lv), cnt = {}, turn = { r: 0, b: 0 };
-    assert.equal(P.length, 20, lv + " 要 20 題");
+    assert.equal(P.length, 30, lv + " 要 30 題");
     for (const q of P) {
       assert.ok(!seen.has(q.fen), "題目重複：" + q.fen); seen.add(q.fen);
       assert.match(q.turn, /^[rb]$/); turn[q.turn]++;
@@ -71,13 +72,37 @@ test("題庫 60 題：盤面合法、雙方都沒被將軍；另一套獨立搜�
       const b = B(q.fen);
       assert.equal(b.filter((p) => p === "K").length, 1); assert.equal(b.filter((p) => p === "k").length, 1);
       assert.ok(!C.inCheck(b, "r") && !C.inCheck(b, "b"), "出題時雙方都不能被將軍：" + q.fen);
-      assert.equal(indepFastest(b, q.turn, 4), q.n, "獨立重算的最快步數：" + q.fen);
+      assert.equal(indepFastest(b, q.turn, 5), q.n, "獨立重算的最快步數：" + q.fen);
       if (q.n > 1) assert.equal(indepMate(b, q.turn, q.n - 1), false, "少一步不能殺：" + q.fen);
       assert.ok(R.JH_SP_LV.find((x) => x.k === lv).opt.includes(q.n), "答案要在選項裡");
     }
-    assert.deepEqual(cnt, { [RANGE[lv][0]]: 10, [RANGE[lv][1]]: 10 }, lv + "：兩種答案各 10 題");
-    assert.deepEqual(turn, { r: 10, b: 10 }, lv + "：輪紅、輪黑各 10 題");
+    assert.deepEqual(cnt, Object.fromEntries(RANGE[lv].map((n) => [n, 10])), lv + "：三種答案各 10 題");
+    assert.deepEqual(turn, { r: 15, b: 15 }, lv + "：輪紅、輪黑各 15 題");
   }
+});
+
+test("選項跟題庫一致（順炮 P3）：每一級畫面上的選項，正好就是題庫裡出現的答案；每個選項至少 10 題，沒有永遠不對的選項", () => {
+  const { R } = load();
+  for (const L of R.JH_SP_LV) {
+    const P = R.JH_SP_Q.filter((q) => q.lv === L.k), ans = [...new Set(P.map((q) => q.n))].sort((a, b) => a - b);
+    assert.deepEqual(J(L.opt), ans, L.k + "：選項要跟題庫答案一模一樣（多一個＝永遠不對的選項；少一個＝答得出卻點不到）");
+    for (const n of L.opt) assert.ok(P.filter((q) => q.n === n).length >= 10, `${L.k} 的「${n} 步」至少 10 題`);
+    assert.equal(L.opt.length, 3, L.k + "：三選一");
+    assert.deepEqual(J(L.opt), [L.opt[0], L.opt[0] + 1, L.opt[0] + 2], L.k + "：三個連續步數（滑動窗口）");
+  }
+  assert.deepEqual(J(R.JH_SP_LV.map((L) => L.opt[0])), [1, 2, 3], "初級從 1 步、中級從 2 步、高級從 3 步起");
+  const q5 = R.JH_SP_Q.find((q) => q.n === 5);
+  assert.equal(R.jhSpFastest(B(q5.fen), q5.turn), 5, "不給上限時也要算得到最長的 5 步殺（JH_SP_MAX 跟著選項）");
+});
+
+test("示範殺法在手機上不會卡：最長的 5 步殺，每題算示範殺法都在 1.5 秒內（電腦上量）", () => {
+  const { R } = load();
+  let worst = 0, wq = null;
+  for (const q of R.JH_SP_Q.filter((x) => x.n === 5)) {
+    const t0 = process.hrtime.bigint(); R.jhSpLine(B(q.fen), q.turn, q.n); const ms = Number(process.hrtime.bigint() - t0) / 1e6;
+    if (ms > worst) { worst = ms; wq = q.fen }
+  }
+  assert.ok(worst < 1500, `最慢的一題算了 ${worst.toFixed(0)} ms：` + wq);
 });
 
 test("示範殺法：每一題都逐步重放——每步合法、攻方每步都叫將、走 n 步、最後將死", () => {
