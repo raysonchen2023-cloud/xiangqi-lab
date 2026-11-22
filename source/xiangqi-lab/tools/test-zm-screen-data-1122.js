@@ -9,7 +9,8 @@ const SITE = path.join(ROOT, "xiangqi-lab", "site");
 const C = require(path.join(SITE, "core.js"));
 /* 公開倉庫（有 .github）一定要有這兩個檔；開發者電腦的 site 還沒同步時才略過 */
 const PUBLIC = fs.existsSync(path.join(SITE, ".github"));
-const rdj = (p) => { const f = path.join(SITE, p); if (!fs.existsSync(f)) return null; return { raw: fs.readFileSync(f, "utf8"), j: JSON.parse(fs.readFileSync(f, "utf8")) } };
+/* 沒有檔案時回 null，由 need() 決定：公開倉庫直接失敗，開發者電腦才 t.skip */
+const rdj = (p) => { const f = path.join(SITE, p); return fs.existsSync(f) ? { raw: fs.readFileSync(f, "utf8"), j: JSON.parse(fs.readFileSync(f, "utf8")) } : null };
 const E = rdj("data/zmhall/screen-errata.json"), A = rdj("data/zmhall/screen-abacus.json");
 const S = JSON.parse(fs.readFileSync(path.join(SITE, "data", "opening-school", "screen.json"), "utf8"));
 const need = (t, x, name) => { if (x) return true; assert.ok(!PUBLIC, "公開倉庫少了 " + name); t.skip("這台的網站資料夾沒有 " + name); return false };
