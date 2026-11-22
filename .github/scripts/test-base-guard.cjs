@@ -30,7 +30,7 @@ test("要跑的檢查：功能模式跟 verify.yml 功能那一組一樣；發�
   const R = STEPS("origin/main", "release").map((x) => x[1].slice(1).join(" "));
   assert.ok(!R.some((x) => x.includes("guard-release-files")), "發布 PR 本來就會改網站檔，不跑功能守門");
   for (const k of [".github/scripts/check-evidence.cjs data/docs/evidence.md base-evidence.md", "source/xiangqi-lab/tools/release-sync-check.js --dir .",
-    ".github/scripts/check-test-skips.cjs base-verify.txt"]) assert.ok(R.some((x) => x.startsWith(k)), "發布模式少了 " + k);
+    ".github/scripts/check-test-skips.cjs base-verify.txt", ".github/scripts/check-verify-log.cjs . base-verify.txt"]) assert.ok(R.some((x) => x.startsWith(k)), "發布模式少了 " + k);
   assert.ok(R.some((x) => x.startsWith("source/xiangqi-lab/tools/verify-all.js") && !x.includes("--skip")), "發布模式要跑全套");
   for (const S of [F, R]) for (const k of ["source/xiangqi-ios/scripts/check-native.js", "--test source/xiangqi-ios/scripts/p03d/test-p03d.cjs"]) assert.ok(S.includes(k), "兩種模式都要跑 iOS 那兩步（PR #45）：" + k);
 });
@@ -136,6 +136,7 @@ test("主流程：release/ 分支照 main 版 ci-mode 走發布那一組（重�
   assert.equal(runGuard({ ...F, headRef: "release/20261123" }), 0);
   const all = F.calls.map((c) => c.join(" "));
   assert.ok(all.some((c) => c.includes("check-evidence.cjs data/docs/evidence.md base-evidence.md")));
+  assert.ok(all.some((c) => c.includes("check-verify-log.cjs . base-verify.txt")), "發布組要跑驗證紀錄同次檢查（#59 審查）");
   assert.ok(!all.some((c) => c.includes("guard-release-files.cjs")));
 });
 

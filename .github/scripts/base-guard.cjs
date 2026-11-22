@@ -50,14 +50,20 @@ function classifiedOnly(baseSrc, prSrc, addedTests) {
   return i === A.length && n > 0;
 }
 
+/* 斷言次數（W69 第 10 項）：每一步都帶這組環境變數，完整驗證時 assert-count.cjs（換回後是 main 版）記下每項測試的斷言次數；
+   資料夾用絕對路徑，跟 verify.yml 一樣放在工作區外的暫存資料夾 */
+const ASSERT_DIR = path.resolve(process.env.RUNNER_TEMP || require("os").tmpdir(), "base-assert-count");
+const assertEnv = () => ({ ...process.env, XQ_ASSERT_DIR: ASSERT_DIR, NODE_OPTIONS: ((process.env.NODE_OPTIONS || "") + " --require " + path.resolve(".github/scripts/assert-count.cjs")).trim() });
 /* 要跑的檢查：跟 verify.yml 同一組（換回 main 版之後）；mode 由 main 版的 ci-mode.cjs 判斷（發布 PR 本來就會改網站檔，要跑發布那一組） */
 const STEPS = (base, mode) => mode === "release" ? [
   ["完整驗證（全套）", ["node", "source/xiangqi-lab/tools/verify-all.js", "--out", "base-verify.txt", "--tally-out", "base-tally.json"]],
   ["產生驗證紀錄頁", ["node", "source/xiangqi-lab/tools/make-evidence.js", "--verify", "base-verify.txt", "--tally", "base-tally.json", "--out", "base-evidence.md", "--report-out", "base-testkinds.json"]],
   ["證據要是這一次重產的", ["node", ".github/scripts/check-evidence.cjs", "data/docs/evidence.md", "base-evidence.md"]],
+  ["驗證紀錄跟 evidence.md 同一次執行", ["node", ".github/scripts/check-verify-log.cjs", ".", "base-verify.txt"]],   /* W69 流程盤點第 12 項（PR #59 審查：iMac Claude 2） */
   ["發布同步與私密掃描", ["node", "source/xiangqi-lab/tools/release-sync-check.js", "--dir", "."]],
   ["發布產物守門", ["node", ".github/scripts/guard-release-pr.cjs", base]],   /* W69 流程盤點第 2 項（PR #46）：改到的每個檔都要對得到來源 */
   ["假略過檢查", ["node", ".github/scripts/check-fake-skip.cjs"]],
+  ["斷言次數檢查", ["node", ".github/scripts/check-zero-assert.cjs", ASSERT_DIR, "base-verify.txt"]],   /* W69 第 10 項 */
   ["略過稽核", ["node", ".github/scripts/check-test-skips.cjs", "base-verify.txt"]],
   ["todo 稽核", ["node", ".github/scripts/check-test-todos.cjs", "base-tally.json", "--base", base]],   /* W69 流程盤點第 9 項：預期失敗也要在白名單、白名單只能減 */
   ["新測試要分類", ["node", ".github/scripts/check-test-classified.cjs", base]],
@@ -68,6 +74,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["功能 PR 守門", ["node", ".github/scripts/guard-release-files.cjs", base]],
   ["組出 index.html", ["node", "source/check-build.js", "--out", "index.html"]],
   ["完整驗證", ["node", "source/xiangqi-lab/tools/verify-all.js", "--skip", "release-verify", "--out", "base-verify.txt", "--tally-out", "base-tally.json"]],
+  ["斷言次數檢查", ["node", ".github/scripts/check-zero-assert.cjs", ASSERT_DIR, "base-verify.txt"]],   /* W69 第 10 項 */
   ["略過稽核", ["node", ".github/scripts/check-test-skips.cjs", "base-verify.txt"]],
   ["todo 稽核", ["node", ".github/scripts/check-test-todos.cjs", "base-tally.json", "--base", base]],   /* W69 流程盤點第 9 項：預期失敗也要在白名單、白名單只能減 */
   ["新測試要分類", ["node", ".github/scripts/check-test-classified.cjs", base]],
@@ -120,8 +127,9 @@ function runGuard({ base = "origin/main", headRef = "", git, spawn, fsx = fs, lo
   const mode = modeOf(spawn("node", modeArgs(headRef)).stdout);
   log("模式（main 版 ci-mode.cjs 判斷）：" + mode);
   const results = [];
+  try { fs.rmSync(ASSERT_DIR, { recursive: true, force: true }) } catch (e) { }   /* 清掉上一次留下的斷言計數（工作區外的暫存資料夾，不是要換回的檔，所以用真的 fs），免得舊資料讓檢查誤判通過 */
   for (const [name, cmd] of STEPS(base, mode)) {
-    const r = spawn(cmd[0], cmd.slice(1), { inherit: true });
+    const r = spawn(cmd[0], cmd.slice(1), { inherit: true, env: assertEnv() });
     results.push({ name, status: r.status });
     log((r.status === 0 ? "✔ " : "✘ ") + "基準版：" + name + (r.status === 0 ? "" : "（結束代碼 " + r.status + "）"));
   }
@@ -130,9 +138,9 @@ function runGuard({ base = "origin/main", headRef = "", git, spawn, fsx = fs, lo
   return code;
 }
 
-module.exports = { GUARD, isGuard, guardChanged, STEPS, restore, modeArgs, modeOf, finalCode, runGuard, classifiedOnly, TK_PATH };
+module.exports = { GUARD, isGuard, guardChanged, STEPS, restore, modeArgs, modeOf, finalCode, runGuard, classifiedOnly, TK_PATH, ASSERT_DIR, assertEnv };
 if (require.main !== module) return;
 
 const git = (...a) => execFileSync("git", ["-c", "core.quotePath=false", ...a], { encoding: "utf8", maxBuffer: 64e6 });
-const spawn = (c, a, o = {}) => spawnSync(c, a, o.inherit ? { stdio: "inherit" } : { encoding: "utf8" });
+const spawn = (c, a, o = {}) => spawnSync(c, a, o.inherit ? { stdio: "inherit", env: o.env || process.env } : { encoding: "utf8" });
 process.exit(runGuard({ base: process.argv[2] || "origin/main", headRef: process.env.HEAD_REF, git, spawn }));
