@@ -15,12 +15,24 @@ permissions:
 
 jobs:
   guard-base:
-    # 只跑本倉庫分支開的 PR（PR #43 審查 A）：pull_request_target 會自動跑 fork 開的 PR 程式，等於繞過 pull_request 對 fork「第一次貢獻要核准」；
-    # 現在雖然只有讀取權、沒有 secrets，以後若加快取或寫入權就會變成漏洞。fork 的 PR 照樣有 verify.yml（pull_request）把關。
-    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
+      # fork 開的 PR 直接紅燈（PR #43 審查 A，複審更正）：pull_request_target 會自動跑 fork 的 PR 程式，等於繞過 pull_request 對 fork
+      # 「第一次貢獻要核准」，所以 fork 不能跑 PR 程式；但也不能用 job 層的 if 跳過——必要檢查遇到「被跳過」會當成通過，
+      # fork 就完全繞過這一層。做法：job 照常跑，第一步（還沒 checkout、沒執行任何 PR 程式）判斷是 fork 就結束代碼 1。
+      # 兩個 repo 名稱經環境變數傳入（防注入），不直接嵌進指令。
+      - name: fork 開的 PR 不跑 PR 程式（直接紅燈）
+        env:
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
+        run: |
+          if [ "$HEAD_REPO" != "$BASE_REPO" ]; then
+            echo "✘ fork 的 PR 不跑 PR 程式，請改從本倉庫的分支開 PR（$HEAD_REPO → $BASE_REPO）"
+            exit 1
+          fi
+          echo "✔ 本倉庫分支開的 PR"
+
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}

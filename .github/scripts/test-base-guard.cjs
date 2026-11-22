@@ -64,7 +64,12 @@ test("換回基準版：在暫存 git 倉庫模擬 PR 改壞守門、新增守�
 test("guard-base.yml：只跑本倉庫的 PR、pull_request_target、只讀權限、checkout 不留憑證、base-guard 從 main 取、分支名經環境變數、不傳事件名稱", () => {
   /* 先去掉整行註解再比對（PR #43 審查 C：註解裡寫了同一串字，改壞設定時照樣比對得到） */
   const y = fs.readFileSync(path.join(__dirname, "..", "workflows", "guard-base.yml"), "utf8").split(NL).filter((l) => !/^\s*#/.test(l)).join(NL);
-  assert.match(y, /^\s+if: github\.event\.pull_request\.head\.repo\.full_name == github\.repository\s*$/m, "fork 開的 PR 不跑（PR #43 審查 A）");
+  /* fork（PR #43 審查 A 複審更正）：不能用 job 層 if 跳過（必要檢查把「跳過」當通過）；要在 checkout 之前的第一步判斷、fork 就結束代碼 1 */
+  assert.ok(!/^\s+if:/m.test(y), "不能用 if 跳過 job 或步驟：必要檢查會把跳過當成通過");
+  const iFork = y.indexOf("fork 開的 PR 不跑 PR 程式"), iCheckout = y.indexOf("actions/checkout@");
+  assert.ok(iFork > 0 && iCheckout > iFork, "fork 判斷要在 checkout 之前（還沒拿到 PR 程式）");
+  assert.match(y, /HEAD_REPO: \$\{\{ github\.event\.pull_request\.head\.repo\.full_name \}\}/);
+  assert.match(y, /BASE_REPO: \$\{\{ github\.repository \}\}/);
   assert.match(y, /^on:\s*\n\s+pull_request_target:/m);
   assert.match(y, /^permissions:\s*\n\s+contents: read\s*$/m);
   assert.ok(!/contents: write|pull-requests: write|secrets\./.test(y), "不能有寫入權限或用 secrets");
@@ -139,4 +144,23 @@ test("小工具：modeArgs 不管環境變數一律帶 pull_request；modeOf 只
   assert.equal(finalCode([{ status: 0 }, { status: 0 }]), 0);
   assert.equal(finalCode([{ status: 0 }, { status: 1 }]), 1);
   assert.equal(finalCode([{ status: 0 }, { status: null }]), 1, "被中斷（null）也不算過");
+});
+
+test("fork 判斷那一步實際執行：fork 結束代碼 1、本倉庫分支 0（用 bash 跑 yml 裡那段 run）", () => {
+  const L = fs.readFileSync(path.join(__dirname, "..", "workflows", "guard-base.yml"), "utf8").split(NL);
+  const s = L.findIndex((l) => l.includes("name: fork 開的 PR 不跑 PR 程式"));
+  assert.ok(s > 0, "找不到 fork 判斷那一步");
+  const r = L.findIndex((l, i) => i > s && /^\s+run: \|\s*$/.test(l));
+  const ind = L[r].match(/^\s*/)[0].length, body = [];
+  for (let j = r + 1; j < L.length && (L[j].trim() === "" || L[j].match(/^\s*/)[0].length > ind); j++) body.push(L[j].trim());
+  const script = body.join(NL);
+  /* Windows 上用 Git 附帶的 bash（避免叫到 WSL）；CI（ubuntu）直接用 bash */
+  const bash = process.platform === "win32"
+    ? path.join(cp.execFileSync("git", ["--exec-path"], { encoding: "utf8" }).trim(), "..", "..", "..", "bin", "bash.exe")
+    : "bash";
+  const run = (head) => cp.spawnSync(bash, ["-c", script], { encoding: "utf8", env: { ...process.env, HEAD_REPO: head, BASE_REPO: "raysonchen2023-cloud/xiangqi-lab" } });
+  const fork = run("someone/xiangqi-lab");
+  assert.equal(fork.status, 1, "fork 要紅燈：" + fork.stdout + fork.stderr);
+  assert.match(fork.stdout, /fork 的 PR 不跑 PR 程式/);
+  assert.equal(run("raysonchen2023-cloud/xiangqi-lab").status, 0, "本倉庫分支要放行");
 });
