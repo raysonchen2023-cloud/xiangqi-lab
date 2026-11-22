@@ -235,3 +235,18 @@ test("主流程：別的 PR 先合併、main 多了別人的登記行，本 PR �
   /* 對照：如果跟 main 最新版比，就會誤判（這正是要避免的） */
   assert.equal(classifiedOnly(TK_MAIN, tkAdd(NEW_LINE), ["test-new-1122.js"]), false);
 });
+
+test("斷言計數資料夾每個程序自己一份：同一台電腦上兩個人同時跑，不會互相清掉（本機撞過：285／2737）", () => {
+  const T = fs.mkdtempSync(path.join(os.tmpdir(), "xq-adir-"));
+  try {
+    const dirOf = () => cp.execFileSync(process.execPath, ["-e", "process.stdout.write(require(" + JSON.stringify(path.join(__dirname, "base-guard.cjs")) + ").ASSERT_DIR)"], { env: { ...process.env, RUNNER_TEMP: T } }).toString();
+    const a = dirOf(), b = dirOf();
+    assert.notEqual(a, b, "兩個程序的資料夾要不一樣");
+    for (const d of [a, b]) assert.equal(path.dirname(d), path.resolve(T), "放在 RUNNER_TEMP（或系統暫存）底下");
+    /* 另一個程序正在用的資料夾：跑一次 runGuard（會清自己那一份）之後還在 */
+    fs.mkdirSync(a, { recursive: true }); fs.writeFileSync(path.join(a, "test-x.js.json"), "[]");
+    const F = fake({ files: ["source/run-tests.js"] });
+    runGuard({ ...F, headRef: "w69/x" });
+    assert.ok(fs.existsSync(path.join(a, "test-x.js.json")), "別的程序的斷言計數不能被清掉");
+  } finally { fs.rmSync(T, { recursive: true, force: true }) }
+});

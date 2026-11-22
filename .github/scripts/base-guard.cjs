@@ -52,7 +52,8 @@ function classifiedOnly(baseSrc, prSrc, addedTests) {
 
 /* 斷言次數（W69 第 10 項）：每一步都帶這組環境變數，完整驗證時 assert-count.cjs（換回後是 main 版）記下每項測試的斷言次數；
    資料夾用絕對路徑，跟 verify.yml 一樣放在工作區外的暫存資料夾 */
-const ASSERT_DIR = path.resolve(process.env.RUNNER_TEMP || require("os").tmpdir(), "base-assert-count");
+/* 每次執行一個自己的資料夾（程序編號＋時間）：同一台電腦上別人同時跑 base-guard 或 .github 自我測試，不會互相清掉計數（本機實際撞過：記到 285／2737）。CI 的 runner 本來就隔離 */
+const ASSERT_DIR = path.resolve(process.env.RUNNER_TEMP || require("os").tmpdir(), "base-assert-count-" + process.pid + "-" + Date.now().toString(36));
 const assertEnv = () => ({ ...process.env, XQ_ASSERT_DIR: ASSERT_DIR, NODE_OPTIONS: ((process.env.NODE_OPTIONS || "") + " --require " + path.resolve(".github/scripts/assert-count.cjs")).trim() });
 /* 要跑的檢查：跟 verify.yml 同一組（換回 main 版之後）；mode 由 main 版的 ci-mode.cjs 判斷（發布 PR 本來就會改網站檔，要跑發布那一組） */
 const STEPS = (base, mode) => mode === "release" ? [
@@ -129,7 +130,7 @@ function runGuard({ base = "origin/main", headRef = "", git, spawn, fsx = fs, lo
   const mode = modeOf(spawn("node", modeArgs(headRef)).stdout);
   log("模式（main 版 ci-mode.cjs 判斷）：" + mode);
   const results = [];
-  try { fs.rmSync(ASSERT_DIR, { recursive: true, force: true }) } catch (e) { }   /* 清掉上一次留下的斷言計數（工作區外的暫存資料夾，不是要換回的檔，所以用真的 fs），免得舊資料讓檢查誤判通過 */
+  try { fs.rmSync(ASSERT_DIR, { recursive: true, force: true }) } catch (e) { }   /* 清掉這次程序自己的斷言計數資料夾（工作區外，不是要換回的檔，所以用真的 fs）；名稱每個程序不同，碰不到別人正在用的 */
   for (const [name, cmd] of STEPS(base, mode)) {
     const r = spawn(cmd[0], cmd.slice(1), { inherit: true, env: assertEnv() });
     results.push({ name, status: r.status });
