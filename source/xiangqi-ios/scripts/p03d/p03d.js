@@ -248,6 +248,15 @@ const LIST = { prep: () => prep(), cpu: () => SC.cpu(), inn: () => SC.inn(), pvp
   const bad = Object.keys(R).filter((k) => !R[k].ok);
   const fb = Object.keys(R).filter((k) => R[k].ok && (R[k].moves || []).some((m) => m.sel && /^cgPlay/.test(m.sel)));
   if (fb.length) log("ⓘ " + fb.length + " 個情境選子用了退路 cgPlay.tap（落點仍是真實觸控）：" + fb.join("、"));
+  if (process.env.P03D_FAULT === "cover") {
+    /* 反測模式（PR #45 審查②）：注入了 W02 故障，期望是「每個情境都判落點被 BUTTON 蓋住」；全部擋到才回 0，有任何情境照常通過或因別的原因失敗都回 1 */
+    const sc = Object.keys(R).filter((k) => k !== "prep"), caught = sc.filter((k) => !R[k].ok && /被 BUTTON 蓋住/.test(R[k].err || ""));
+    const miss = sc.filter((k) => !caught.includes(k)), prepOk = !R.prep || R.prep.ok;
+    fs.writeFileSync(path.join(OUT, "result.json"), JSON.stringify({ app: info, fault: "cover", faultCaught: caught, faultMissed: miss, udid: UDID, at: new Date().toISOString(), results: R }, null, 1));
+    const good = prepOk && sc.length > 0 && miss.length === 0;
+    log(good ? "✔ 反測成立：" + caught.length + " 個情境都判出落點被蓋住（W02）" : "✘ 反測不成立：" + (miss.length ? "沒擋到 " + miss.join("、") : "沒有情境可驗") + (prepOk ? "" : "；玩家狀態沒建好"));
+    process.exit(good ? 0 : 1);
+  }
   log(bad.length ? "✘ 失敗：" + bad.join("、") : "✔ 全部通過（" + Object.keys(R).length + " 個情境）");
   process.exit(bad.length ? 1 : 0);
 })().catch(async (e) => { log("✘ " + e.message); await stopServer(); process.exit(2); });

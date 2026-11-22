@@ -32,6 +32,7 @@ test("p03d.js：防「沒驗到卻算通過」的關卡都在", () => {
   assert.match(S, /P03D_EXPECT_BUILD && info\.b !== process\.env\.P03D_EXPECT_BUILD\) \{[^}]*process\.exit\(2\)/, "App 執行時的 XQ_BUILD 跟包不一樣要結束代碼 2");
   assert.match(S, /if \(cover !== "CANVAS"\) throw new Error\(/, "落點被非 CANVAS 元素蓋住要判失敗（W02）");
   assert.match(S, /P03D_FAULT === "cover"/, "反測注入（模擬 W02）");
+  assert.match(S, /const good = prepOk && sc\.length > 0 && miss\.length === 0;/, "反測模式：每個情境都被擋到才回 0（PR #45 審查②）");
   assert.match(S, /process\.exit\(bad\.length \? 1 : 0\)/, "有失敗結束代碼要非 0");
   assert.match(S, /x\.f === m\.f && x\.t === m\.t/, "棋譜新增那一步的起點、落點都要對");
   assert.match(S, /op: "tap"/, "點擊走 XCUITest 真實觸控");
