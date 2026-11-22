@@ -1,0 +1,59 @@
+# 象棋千秋：原生版送審前打版本標籤 android-<versionCode>／ios-<build>（W69 流程盤點中 14，2026-11-23）
+# 手動觸發：P0 閘門通過、送審前，建包的人在建包電腦上跑（指令見 releases/android.md）：
+#   gh workflow run tag-native.yml --ref main -f platform=android -f build=<versionCode> -f web=<網頁版號>
+# 只在 main 上跑（job 的 if，加上 tag-native.cjs 自己再查一次 GITHUB_REF）；別的分支可以改這支程式，所以不准從別的分支觸發。
+# 三個輸入一律經環境變數傳給 tag-native.cjs，在那裡用嚴格格式驗過才拿來當標籤名；這裡的 run 沒有嵌入任何外部欄位。
+# 不提交任何檔案，只打標籤；同名標籤已指向別的提交就報錯、不覆寫。
+name: 打原生版本標籤
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 平台（android 或 ios）
+        required: true
+        type: choice
+        options: [android, ios]
+      build:
+        description: 建置號（Android versionCode／iOS build，純數字）
+        required: true
+        type: string
+      web:
+        description: 對應的網頁版號（YYYYMMDD-HHMM，web-<版號> 標籤要已存在）
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tag-native
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: 自我測試
+        run: node --test .github/scripts/test-tag-native.cjs
+
+      - name: 設定提交者（打 annotated tag 需要）
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: 打標籤 android-<versionCode>／ios-<build>
+        env:
+          XQ_PLATFORM: ${{ inputs.platform }}
+          XQ_BUILD: ${{ inputs.build }}
+          XQ_WEB: ${{ inputs.web }}
+        run: node .github/scripts/tag-native.cjs
