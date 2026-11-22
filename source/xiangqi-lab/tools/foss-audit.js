@@ -29,7 +29,8 @@ const KNOWN = [
   { name: "仙人掌明體（子集）", ver: "未記錄", license: "OFL-1.1", files: ["data/fonts/xq-cactus.woff2"], lic: ["licenses/font-CactusSerif-license.md"] },
   { name: "源雲明體（子集）", ver: "未記錄", license: "OFL-1.1", files: ["data/fonts/xq-genwan.woff2"], lic: ["licenses/font-GenWanMin-OFL.txt"] }];
 /* 自己寫的程式（© 陳泓昇；11/13 起 GPL-3.0-or-later，倉庫根目錄 LICENSE；原始碼在 source/） */
-const OWN = ["index.html", "core.js", "engine.js", "local.js", "net.js", "bot3d.js", "map3d.js", "park3d.js", "zh.js", "sw.js", "three-shim.mjs"];
+const OWN = ["index.html", "core.js", "engine.js", "local.js", "net.js", "bot3d.js", "map3d.js", "park3d.js", "zh.js", "sw.js", "three-shim.mjs",
+  "bossfx3d.js", "varengine.js", "varengine-worker.js"];   /* W69 第 8 項（11/22）：這三支是自己寫的、原始碼在 source/xiangqi-lab/src/ 且跟根目錄逐位元相同；test-foss-audit 被整支排除，所以一直沒發現沒登記 */
 /* 追蹤、廣告、崩潰回報、閉源 SDK 的特徵（網域或呼叫） */
 const TRACKERS = [
   ["Google Analytics／Tag Manager", /google-analytics\.com|googletagmanager\.com|\bgtag\s*\(|\bga\s*\(\s*['"]create/],
@@ -58,7 +59,9 @@ const HOSTS = [
   [/^www\.w3\.org$/, "XML 命名空間（不是連線）", "ns"],
   [/jsdelivr\.(com|net)$/, "jsQR 檔頭的註解（不是連線）", "ns"],
   [/^www\.cccs\.org\.tw$/, "棋規出處連結（中華民國象棋文化協會）", "link"],
-  [/^(host|x|example\.(org|com))$/, "程式裡的範例或預設字串（不是連線）", "ns"]];
+  [/^(host|x|example\.(org|com))$/, "程式裡的範例或預設字串（不是連線）", "ns"],
+  [/^127\.0\.0\.1$/, "原生版 App 內建的本機伺服器（XQLoopback，不連外）", "own"],
+  [/^(baike\.(baidu|so)\.com|baike\.com|chinanews\.com|gdchess\.com|huxiu\.com|ifeng\.com|jiemian\.com|news\.cn|sina\.cn|sina\.com\.cn|sohu\.com|sport\.gov\.cn|thepaper\.cn|xinmin\.cn|ycwb\.com|zhihu\.com)$/, "棋手小傳的出處網域→網站名稱對照表（10-db.js，只顯示名稱，不是連線）", "ns"]];
 /* 素材分類（狀態照 credits.md；檔數是實際掃到的） */
 const ASSETS = [
   ["字型 data/fonts/*.woff2", p => /^data\/fonts\/.*\.woff2$/.test(p), "OFL-1.1", "已確認（全文在 licenses/）", "自由"],

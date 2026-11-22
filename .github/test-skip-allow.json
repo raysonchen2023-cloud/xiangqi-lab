@@ -1,6 +1,7 @@
 {
  "note": "略過白名單（W57，2026-11-21）：這個公開倉庫的 CI 環境跑不了、確定要略過的測試項。每一行是驗證輸出裡「﹣ 檔名：項目（原因）」那一行的內容。只能經過 .github/ 逐行審的 PR 修改；新增要寫明為什麼這個環境跑不了。",
  "allow": [
+  "test-android-roadmap.js：〔原始碼〕11/13 0452 驗證紀錄：4 步全過、沒有使用者資料夾路徑或 CR（0452 驗證紀錄只在開發者電腦的 opensource-stage/，公開副本沒有）",
   "test-bh-sg-bgm-1116.js：配樂檔 bh_6～10 與新曲名都在（配樂只放 CDN）（沒有 data/bgm/blackhole 配樂與新曲名（只放 CDN，公開副本沒有））",
   "test-bhfx.js：④ 載入量：一般首頁不載 bossfx3d.js、不預載 data/bhtd；素材都放在 art/bhtd（build-site 複製到 data/bhtd）（要讀只在開發者電腦的素材 art/bhtd（魔王模型、特效圖只放 CDN；公開副本沒有，開發者電腦上照跑））",
   "test-daynight-1117.js：07s4-passmap（禁改檔）的改動寫在 reps-next.json，以線上 pub.html 為底每組只命中 1 次（公開副本：這項檢查開發者電腦上的發版暫存檔，不在公開副本跑（11/17 1757 證據補））",
