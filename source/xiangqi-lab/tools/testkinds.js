@@ -65,6 +65,7 @@ const CLASSIFIED = new Set([
   "test-ai-think.js",   /* 11/12 第 11 輪 F4 電腦思考節奏 */
   "test-colorblind.js",   /* 11/12 第 11 輪 F3 色弱模式（m/07cb-colorblind.js；掃描 tools/qa/colorblind-scan.js） */
   "test-park3d-colorblind.js",   /* 11/13 第 12 輪 X1／X6 色弱模式套到 3D 園子（park3d.js PKCB；行為 11、原始碼 2） */
+  "test-park3d-stack-1122.js",   /* 11/22 W68 黑洞背面視角前排擋住後排（開發者選「點重疊處跳選單」）：背面從被點的子往後找正後方的疊子、正面不找、疊住跳只有自己子的按鈕且按了＝點那一顆、沒疊／正面／已選子照舊；PR #38 審查：自己的子只有一顆就直接選、點空白處收選單（行為 5、原始碼 2） */
   "test-touch-fixes.js",   /* 11/12 第 11 輪 F1 小螢幕觸控修正（行為 5、混合 2、原始碼 4） */
   "test-lefty.js",   /* 11/13 第 12 輪 F1 左撇子單手模式＋F2 剩餘小目標（行為 10、原始碼 2） */
   "test-beidou-lines.js",   /* 11/12 hspx 北斗斗柄連線 */
