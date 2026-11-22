@@ -1,0 +1,4 @@
+{
+ "note": "預期失敗（node:test todo）白名單（W69 流程盤點第 9 項，2026-11-22）：每一行是「檔名：項目」。todo 失敗不算失敗，所以只准減不准加——check-test-todos.cjs 會跟 main 那一版比，多出條目就紅燈。上線時公開倉庫的 CI 沒有任何 todo，從空的開始。只能經過 .github/ 逐行審的 PR 修改。",
+ "allow": []
+}
