@@ -346,6 +346,8 @@ test("〔原始碼〕11/22 開發者「怎麼會坐在桌子上」→ 中炮門�
   assert.ok(m, "中炮門要有 cut");
   const y = +m[2], w = +m[3], cut = +m[4], line = y - w * 512 / 380 * cut;   /* 立繪 380×512 */
   assert.ok(cut > 0.2 && cut < 0.45, "裁掉下半截：" + cut);
+  /* 11/22 史學顧問 191「全圖無字」：掌門抱的大棋子字（中）從立繪高 0.58 起，裁切要藏住 */
+  assert.ok(cut >= 0.42, "要藏住棋子上的字：" + cut);
   assert.ok(Math.abs(line - 275) <= 4, "裁切線要對齊桌子後緣：" + line.toFixed(1));
   assert.match(JHs, /\(H\.cut\?`;clip-path:inset\(0 0 \$\{H\.cut\*100\}% 0\);-webkit-clip-path:/, "JhHall 照 cut 裁");
 });

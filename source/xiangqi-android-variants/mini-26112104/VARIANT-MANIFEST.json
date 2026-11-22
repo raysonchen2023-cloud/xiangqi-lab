@@ -32,6 +32,10 @@
   "android/xq_models/build.gradle"
  ],
  "missing": {},
+ "webRemove": [
+  "data/docs/evidence"
+ ],
+ "webRemoveNote": "封測小包：公開證據頁不放進安裝包（26112104、26112201 都這樣建）；scripts/build-variant.js 照這個欄位拿掉",
  "web": {
   "index.html.patch": {
    "sha256": "f97a231d41dd6d863790e0fbbd36682ad576bee5c1ba20171a01dc84d5c11c01",
