@@ -1,0 +1,126 @@
+// 2026-11-23 AGENTS.md「P0 出口驗證要難作假」：P0 工具鎖定（tool-pin.js）＋三項金絲雀（故意弄壞的要被抓到）＋送審閘門收金絲雀。
+//   不連網、不開模擬器：測純函式與報告格式；實機上的金絲雀（3D 遮罩、假更新視窗、CDN 404）在送審前的實跑裡做。
+// 用法：node --test xiangqi-lab/tools/test-p0-canary-1123.js
+"use strict";
+const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path");
+const AND = path.join(__dirname, "..", "..", "xiangqi-android", "scripts");
+const rd = (f) => fs.readFileSync(path.join(AND, f), "utf8");
+const TP = require(path.join(AND, "tool-pin.js"));
+const { gate } = require(path.join(AND, "p0-gate.js"));
+const CA = require(path.join(AND, "check-aab-assets.js"));
+const { verdict, canaryVerdict } = require(path.join(AND, "check-upgrade.js"));
+const { required: HOME_REQUIRED } = require(path.join(AND, "bundle-home-assets.js"));
+
+const A = "a".repeat(64), K = "c".repeat(64), V = "20261123-0900";
+const MAIN = (p) => TP.normSha(fs.readFileSync(path.join(AND, path.basename(p))));
+const G = (reps, w = [], mainSha = MAIN) => gate(A, V, reps, w, { mainSha });
+const d3 = (android, o = {}) => ({ file: "3d-" + android, json: Object.assign({ tool: "P0-3D", aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D", AND) }, o) });
+const c3 = (android, o = {}) => ({ file: "3dc-" + android, json: Object.assign({ tool: "P0-3D", selfTest: true, aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D", AND) }, o) });
+const img = (o = {}) => ({ file: "img", json: Object.assign({ tool: "P0-IMG", aabSha256: A, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, canary: { home: true, stale: true, cdn404: true, ok: true }, toolPins: TP.pinsFor("P0-IMG", AND) }, o) });
+const upd = (o = {}) => ({ file: "upd", json: Object.assign({ tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD", AND) }, o) });
+const all = () => [img(), upd(), d3("12"), d3("16"), c3("12"), c3("16")];
+const has = (r, re) => r.problems.some((p) => re.test(p));
+const W = (code) => [{ code, aabSha256: A, reason: "測試用豁免", decidedBy: "開發者", decidedAt: "2026-11-23" }];
+
+test("工具鎖定：清單跟三支工具實際 require 的共用模組一致（工具改了 require 而清單沒跟上，這項會紅）", () => {
+  for (const [tool, file] of [["P0-IMG", "check-aab-assets.js"], ["P0-UPD", "check-upgrade.js"], ["P0-3D", "check-3d.js"]]) {
+    const reqs = [...rd(file).matchAll(/require\("\.\/([^"]+)"\)/g)].map((m) => m[1]);
+    const want = [...new Set([file, ...reqs])].sort();
+    assert.deepEqual([...TP.TOOL_FILES[tool]].sort(), want, tool);
+    for (const f of want) assert.ok(fs.existsSync(path.join(AND, f)), f + " 存在");
+  }
+});
+
+test("工具鎖定：雜湊去掉 CR 才算（CRLF 工作區沒改過不誤判）；缺雜湊、跟 main 不同、讀不到 main、多記檔 → 都擋", () => {
+  assert.equal(TP.normSha("a\r\nb\r\n"), TP.normSha("a\nb\n"));
+  assert.notEqual(TP.normSha("a\nb\n"), TP.normSha("a\nc\n"));
+  const pins = TP.pinsFor("P0-IMG", AND);
+  assert.deepEqual(TP.checkPins("P0-IMG", pins, MAIN), []);
+  assert.match(TP.checkPins("P0-IMG", null, MAIN)[0], /沒有記工具雜湊/);
+  const p2 = { ...pins, [TP.DIR + "check-aab-assets.js"]: "f".repeat(64) };
+  assert.match(TP.checkPins("P0-IMG", p2, MAIN).join(), /跟 origin\/main 那一版不一樣/);
+  assert.match(TP.checkPins("P0-IMG", pins, () => null).join(), /讀不到 origin\/main/);
+  const p3 = { ...pins }; delete p3[TP.DIR + "bundle-home-assets.js"];
+  assert.match(TP.checkPins("P0-IMG", p3, MAIN).join(), /沒有記 .*bundle-home-assets\.js/);
+  assert.match(TP.checkPins("P0-IMG", { ...pins, [TP.DIR + "x.js"]: "e".repeat(64) }, MAIN).join(), /多記了/);
+});
+
+test("閘門：三項正式報告＋Android 12、16 兩份 3D 金絲雀、工具都跟 main 一樣 → 可以送審", () => {
+  assert.deepEqual(G(all()), { ok: true, problems: [], waived: [], notes: [] });
+});
+
+test("閘門（反測必紅）：用改過的工具跑的報告不收，而且不能豁免；讀不到 origin/main 也不收", () => {
+  const L = all(); L[1].json.toolPins = { ...L[1].json.toolPins, [TP.DIR + "check-upgrade.js"]: "f".repeat(64) };
+  let r = G(L, W("P0-UPD/old-worker")); assert.equal(r.ok, false); assert.ok(has(r, /P0-UPD：.*check-upgrade\.js 跟 origin\/main 那一版不一樣/));
+  r = G(all(), [], () => null); assert.equal(r.ok, false); assert.equal(r.problems.filter((p) => /讀不到 origin\/main/.test(p)).length > 0, true);
+  const M = all(); delete M[2].json.toolPins; assert.ok(has(G(M), /P0-3D（Android 12）：報告沒有記工具雜湊/));
+});
+
+test("閘門（反測必紅）：P0-3D 金絲雀缺一份、自我反測沒照預期、驗的是另一個 AAB 或版號 → 不能送審", () => {
+  assert.ok(has(G(all().slice(0, 5)), /缺 Android 16 的 P0-3D 金絲雀/));
+  let L = all(); L[4].json.pass = false; assert.ok(has(G(L), /P0-3D 金絲雀（Android 12）：自我反測沒有照預期/));
+  L = all(); L[5].json.aabSha256 = "b".repeat(64); assert.ok(has(G(L), /P0-3D 金絲雀（Android 16）：金絲雀要用同一個送審 AAB/));
+  L = all(); L[4].json.build = "20261122-0804"; assert.ok(has(G(L), /P0-3D 金絲雀（Android 12）：驗的版號/));
+  L = all(); L[4].json.apkBound = false; assert.ok(has(G(L), /P0-3D 金絲雀（Android 12）：沒核對實際測的 APK/));
+  L = [...all(), c3("12")]; assert.ok(has(G(L), /P0-3D 金絲雀（Android 12） 有兩份報告/));
+  /* 金絲雀報告不能拿來充當正式報告：只交金絲雀、不交正式的，照樣缺 */
+  assert.ok(has(G([img(), upd(), c3("12"), c3("16")]), /缺 Android 12 的 P0-3D 報告/));
+});
+
+test("閘門（反測必紅）：P0-IMG 金絲雀①②沒抓到不能豁免；③CDN 沒回 404 歸在可豁免的 P0-IMG/cdn；P0-UPD 假視窗沒抓到不能豁免", () => {
+  let L = all(); L[0].json.canary = { home: false, stale: true, cdn404: true };
+  let r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false); assert.ok(has(r, /P0-IMG：金絲雀沒被抓到/));
+  L = all(); L[0].json.canary = { home: true, stale: false, cdn404: true }; assert.ok(has(G(L), /改掉包裡檔的雜湊 ✘/));
+  L = all(); delete L[0].json.canary; assert.ok(has(G(L), /P0-IMG：金絲雀沒被抓到/), "沒記金絲雀＝沒抓到");
+  L = all(); L[0].json.canary = { home: true, stale: true, cdn404: false, cdnStatus: -1 };
+  assert.ok(has(G(L), /CDN 不存在的檔沒回 404/));
+  r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, true, "CDN 連不上那一條照舊可以豁免"); assert.equal(r.waived.length, 1);
+  L = all(); L[1].json.canary = { dialog: false }; r = G(L, W("P0-UPD/old-worker")); assert.equal(r.ok, false); assert.ok(has(r, /P0-UPD：金絲雀（假的「有新版本」視窗）沒被抓到/));
+  L = all(); delete L[1].json.canary; assert.ok(has(G(L), /P0-UPD：金絲雀/));
+});
+
+test("P0-IMG 金絲雀：用同一個 classify 判，拿掉首頁素材、改掉雜湊都要被判 ✘；找不到可以弄壞的對象＝不成立（寧可擋）", () => {
+  const need = new Map([["data/a.webp", { size: 10, h: "aaaaaaaa" }], ["data/b.json", { size: 10 }]]);
+  const pack = new Set(["data/a.webp", ...HOME_REQUIRED.map((x) => "data/" + x)]);
+  const native = { cdnFallback: true, partsJoin: true }, sha = (f) => (f === "data/a.webp" ? "aaaaaaaa" : "x");
+  assert.equal(CA.classify(need, (f) => pack.has(f), sha, native).red.length, 0, "真實狀態沒有 ✘");
+  const c = CA.canaryChecks(need, (f) => pack.has(f), sha, native);
+  assert.equal(c.home, true); assert.equal(c.stale, true); assert.equal(c.staleFile, "data/a.webp");
+  assert.equal(CA.canaryChecks(need, (f) => f === "data/a.webp", sha, native).home, false, "包裡沒有任何首頁素材：金絲雀①不成立");
+  assert.equal(CA.canaryChecks(new Map([["data/b.json", { size: 10 }]]), (f) => pack.has(f), sha, native).stale, false, "清單沒有雜湊：金絲雀②不成立");
+  assert.equal(CA.canaryChecks(need, (f) => pack.has(f), () => "zzzzzzzz", native).stale, false, "包裡的檔本來就跟清單不符：拿它當金絲雀不算數");
+  /* 金絲雀存在的意義：判斷被改壞時要報警。拿三種壞掉的判斷進去，金絲雀都要報「沒抓到」 */
+  const none = () => ({ red: [], warn: [], ok: { inPack: 0, viaCdn: 0 }, viaCdn: [] });
+  const noHome = (n, h, s, nat) => { const r = CA.classify(n, h, s, nat); r.red = r.red.filter((x) => !/首頁離線必要素材/.test(x.why)); return r };
+  const noHash = (n, h, s, nat) => { const r = CA.classify(n, h, s, nat); r.red = r.red.filter((x) => !/跟清單不符/.test(x.why)); return r };
+  let b = CA.canaryChecks(need, (f) => pack.has(f), sha, native, none); assert.equal(b.home, false); assert.equal(b.stale, false, "判斷一律放行：兩隻都報警");
+  b = CA.canaryChecks(need, (f) => pack.has(f), sha, native, noHome); assert.equal(b.home, false, "拿掉首頁素材的檢查：①報警"); assert.equal(b.stale, true);
+  b = CA.canaryChecks(need, (f) => pack.has(f), sha, native, noHash); assert.equal(b.home, true); assert.equal(b.stale, false, "拿掉雜湊比對：②報警");
+});
+
+test("P0-IMG 結束代碼：金絲雀沒抓到＝4，優先於其他；舊的呼叫（沒給 canaryOk）照舊", () => {
+  assert.equal(CA.exitCode({ red: 0, unknown: 0, cdn: true, canaryOk: false }), 4);
+  assert.equal(CA.exitCode({ red: 3, unknown: 2, cdn: true, canaryOk: false }), 4);
+  assert.equal(CA.exitCode({ red: 1, unknown: 0, cdn: true, canaryOk: true }), 1);
+  assert.equal(CA.exitCode({ red: 0, unknown: 1, cdn: true }), 3);
+  assert.equal(CA.exitCode({ red: 0, unknown: 0, cdn: true }), 0);
+});
+
+test("P0-UPD 金絲雀：假視窗要被數到、而且真的 verdict 要因此判出「更新提示視窗」；數到了但 verdict 沒判出也不算", () => {
+  const row = { build: V, raw: "kept", setting: "kept", regs: 0, controller: false, oldKeys: [], webUpdate: false, notify: "undefined", dialogs: 1, manual: "由 Google Play 更新" };
+  const bad = verdict(row, V);
+  assert.ok(bad.some((b) => /更新提示視窗/.test(b)), "真的 verdict 對 dialogs＝1 要判出更新提示視窗");
+  assert.equal(canaryVerdict(1, bad).dialog, true);
+  assert.equal(canaryVerdict(0, bad).dialog, false, "沒數到");
+  assert.equal(canaryVerdict(1, []).dialog, false, "verdict 沒判出（判斷被改鬆）");
+  assert.deepEqual(verdict({ ...row, dialogs: 0 }, V), [], "沒有視窗的正常狀態不擋（金絲雀不是靠一律判失敗）");
+});
+
+test("〔原始碼〕三支工具的報告都寫 toolPins；P0-IMG、P0-UPD 寫 canary，P0-3D 寫 selfTest；P0-UPD 金絲雀沒抓到就不算通過", () => {
+  const caa = rd("check-aab-assets.js"), up = rd("check-upgrade.js"), c3d = rd("check-3d.js");
+  assert.match(caa, /pass: CDN_CHECK && code === 0 && canary\.ok, canary, toolPins: require\("\.\/tool-pin\.js"\)\.pinsFor\("P0-IMG"\)/);
+  assert.match(up, /R\.toolPins = require\("\.\/tool-pin\.js"\)\.pinsFor\("P0-UPD"\)/);
+  assert.match(up, /R\.pass = !bad\.length && R\.canary\.dialog === true/);
+  assert.match(c3d, /selfTest: !!O\.selfTest, toolPins: require\("\.\/tool-pin\.js"\)\.pinsFor\("P0-3D"\)/);
+  assert.match(c3d, /S\.pass = a\.pass === true && b\.pass === false;/, "自我反測：正常要過、遮罩要被判失敗");
+});

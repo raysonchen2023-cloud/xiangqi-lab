@@ -41,6 +41,7 @@ const CLASSIFIED = new Set([
   "test-android-build.js",   /* 11/13 第 15 輪 F3、F4 Android debug APK 編譯＋可重現檢查 repro-check.js、建置與工具鏈紀錄（行為 9、混合 2、原始碼 1）；11/13 Service Worker 標頭修法正式採用（混合 +1、原始碼 +1） */
   "test-aab-assets-check-1121.js",   /* 11/21 W41① 送審前安裝包內容檢查 xiangqi-android/scripts/check-aab-assets.js（封測 P0-IMG：W21 缺素材、W30 切塊大檔接不回、舊檔；行為 6） */
   "test-p0-aab-bound-1122.js",   /* 11/22 W69 流程盤點第 3 項：P0 證據綁住送審 AAB（p0-gate 三份報告同一個 AAB 雜湊、P0-IMG 要 --cdn 且 0、P0-UPD 不准 --no-old-worker）、包裡素材跟 CDN 現行版交叉核對、建包只換清單內舊副本、簽章密碼不上命令列、建包腳本 --home-art 必填；PR #42 審查：版號要等於送審版號、P0-3D Android 12／16 各一份且完整跑、已知問題清單用倉庫那份（行為 7、原始碼 1） */
+  "test-p0-canary-1123.js",   /* 11/23 AGENTS.md「P0 出口驗證要難作假」：P0 工具鎖定 tool-pin.js（報告記工具雜湊、閘門比 origin/main）、三項金絲雀（破圖拿掉首頁素材／改雜湊／CDN 404、更新檢查假視窗、3D 自我反測遮罩）、閘門收 Android 12／16 金絲雀；行為 9、原始碼 1 */
   "test-preview-build-1121.js",   /* 11/21 W43 Cloudflare PR 預覽建置 source/preview-build.js（版號跟 sw.js 一致、刪超過 25 MB 的檔、寫 404.html；行為 5） */
   "test-device-checks-1121.js",   /* 11/21 W41②③ 升級測試 check-upgrade.js 與 44 畫面破圖掃描 check-scenes.js 的判斷規則（P0-UPD、P0-IMG；離線只算看得到的破圖；測不成立回 2；只准模擬器；更新視窗看 20 秒；行為 12、原始碼 3） */
   "test-jianghu-wind-1121.js",   /* 11/21 W45 十州棋館風向標（m/07z9b-jianghu.js：照共用天氣挑 2～3 派順風、旗號金光、上課與掌門修為多給、每派每天一次；行為 8、原始碼 1）；PR #15 審查後續：掌門盤照開局時記下的順風算、+30 說明（行為 +1、原始碼 +1）；PR #16 審查：有 zmCur 沒有 jw（下到一半）照現在的天氣算 */

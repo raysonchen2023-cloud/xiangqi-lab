@@ -325,7 +325,10 @@ async function run(name, inject) {
     ...BIND, known: KNOWN.map((x) => x.id + "≤" + x.until),
     knownFile: { path: O.known || "（沒有）", sha256: KNOWN_RAW ? require("crypto").createHash("sha256").update(KNOWN_RAW).digest("hex") : null, fromRepo: KNOWN_FROM_REPO },
     /* PR #42 審查②：只跑部分情境（--only）或自我反測不算完整，送審只認 full＝true */
-    full: !O.only && !O.selfTest, results: [] };
+    full: !O.only && !O.selfTest, results: [],
+    /* 2026-11-23（AGENTS.md「P0 出口驗證要難作假」）：--self-test 就是 P0-3D 的金絲雀（落點蓋遮罩要被判失敗），送審閘門要收 Android 12、16 各一份；
+       toolPins＝這支與共用模組的雜湊（tool-pin.js），閘門拿去跟 origin/main 比 */
+    selfTest: !!O.selfTest, toolPins: require("./tool-pin.js").pinsFor("P0-3D") };
   CUR = S;
   if (KNOWN.length && !KNOWN_FROM_REPO) console.log("⚠ 已知問題清單不是倉庫 .github/p0-known.json（" + O.known + "）：這份沒經過逐行審，送審不能用");
   if (O.selfTest) {

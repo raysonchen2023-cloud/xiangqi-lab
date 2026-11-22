@@ -21,8 +21,12 @@
 //   報告（--out）：tool＝"P0-IMG"、aabSha256（這個 AAB 的 SHA-256）、pass（加 --cdn 且結束代碼 0）；送審前由 p0-gate.js 核對
 // 用法：node scripts/check-aab-assets.js --aab <檔.aab> [--repo <公開倉庫>] [--cdn] [--out 報告.json]
 //   需要 unzip；清單優先用安裝包裡的 data/preload.json，沒有才用 --repo 的 sharedWebCommit 版本
-// 結束代碼：0＝沒有 ✘（加 --cdn 時也全部確認過）；1＝有 ✘；2＝用法或環境錯誤；3＝加 --cdn 但有沒確認到的（缺驗，不能送審）
-// P0-IMG 通過條件＝加 --cdn 且結束代碼 0
+// 金絲雀（2026-11-23，AGENTS.md「P0 出口驗證要難作假」）：每次實跑都用同一套判斷、同一份真實清單故意弄壞三處，三處都要被判 ✘：
+//   ①把一個首頁必要素材當成不在包裡 ②把包裡一個檔的雜湊當成不符 ③（--cdn）問 CDN 一個一定不存在的檔，要拿到 404／410
+//   有一處沒抓到＝這支檢查失靈（被改鬆、判斷壞掉、CDN 核對一律當成有），結束代碼 4，報告 pass＝false
+//   報告另記 toolPins（tool-pin.js：這支工具與共用模組的雜湊），送審閘門拿去跟 origin/main 比
+// 結束代碼：0＝沒有 ✘（加 --cdn 時也全部確認過）；1＝有 ✘；2＝用法或環境錯誤；3＝加 --cdn 但有沒確認到的（缺驗，不能送審）；4＝金絲雀沒被抓到（工具失靈）
+// P0-IMG 通過條件＝加 --cdn、結束代碼 0、三隻金絲雀都抓到
 "use strict";
 const fs = require("fs"), path = require("path"), os = require("os"), cp = require("child_process"), crypto = require("crypto");
 
@@ -81,21 +85,12 @@ async function main() {
 
     // 3. 逐項判斷
     const R = { red: [], warn: [], ok: { inPack: 0, viaCdn: 0 } };
-    const viaCdn = [];
-    for (const f of HOME_REQUIRED.map(x => "data/" + x)) if (!inPack.has(f)) R.red.push({ f, why: "首頁離線必要素材不在安裝包裡（第一次離線開啟就破圖，W21）" });
-    for (const [f, n] of need) {
-      if (inPack.has(f)) {
-        if (n.h && sha1_8(fs.readFileSync(inPack.get(f))) !== n.h) R.red.push({ f, why: `安裝包裡的檔跟清單不符（SHA-1 前 8 碼 ${sha1_8(fs.readFileSync(inPack.get(f)))}，清單 ${n.h}）：會顯示舊內容` });
-        else R.ok.inPack++;
-        continue;
-      }
-      const split = n.big || n.size > SPLIT;
-      // XQOfflineAssets 只回「包裡已有」的檔，大檔不在包裡時救不了；只有 W30 的切塊接回能救（11/21 反測 26112102 時發現原本誤放行）
-      if (split && !native.partsJoin) { R.red.push({ f, why: native.cdnFallback ? "CDN 上切塊的大檔不在安裝包裡，原生補抓不會接回切塊（W30）" : "CDN 上切塊的大檔不在安裝包裡，原生也不會補抓" }); continue; }
-      if (native.cdnFallback) { R.ok.viaCdn++; viaCdn.push([f, split]); continue; }
-      if (MEDIA.test(f)) R.red.push({ f, why: "不在安裝包裡，原生又不會向 CDN 補抓：圖片／音樂直接破（W21）" });
-      else { R.warn.push({ f, why: "不在安裝包裡、原生不會補抓；網頁程式會自己改抓 CDN" }); R.ok.viaCdn++; viaCdn.push([f, split]); }
-    }
+    const sha1Of = f => sha1_8(fs.readFileSync(inPack.get(f)));
+    const C = classify(need, f => inPack.has(f), sha1Of, native);
+    R.red.push(...C.red); R.warn.push(...C.warn); R.ok = C.ok;
+    const viaCdn = C.viaCdn;
+    /* 金絲雀（AGENTS.md「P0 出口驗證要難作假」）：用同一個 classify、同一份真實清單，故意弄壞兩處，都要被判 ✘ */
+    const canary = canaryChecks(need, f => inPack.has(f), sha1Of, native);
 
     // 4. 實際問 CDN（加 --cdn）
     if (CDN_CHECK) {
@@ -111,7 +106,12 @@ async function main() {
         else if (st !== 200) unknown.push({ f, why: `CDN 沒確認到（${st === -1 ? "連不上" : "HTTP " + st}，請稍後重跑 --cdn）` }); } }
       await Promise.all(Array.from({ length: 6 }, worker));
       R.red.push(...miss); R.warn.push(...unknown); R.unknown = unknown.length;
+      /* 金絲雀③：問 CDN 一個一定不存在的檔，要拿到 404／410——證明 CDN 核對真的在問、沒有一律當成「有」 */
+      const probe = CDN + "data/__xq_p0_canary_" + crypto.randomBytes(6).toString("hex") + ".webp";
+      let st = -1; for (let t = 0; t < 4 && st === -1; t++) { if (t) await sleep(800 * t); try { st = (await fetch(probe, { method: "HEAD" })).status } catch (e) { st = -1 } }
+      canary.cdn404 = st === 404 || st === 410; canary.cdnStatus = st;
     }
+    canary.ok = canary.home === true && canary.stale === true && canary.cdn404 === true;
 
     // 4b. 包裡的檔跟 CDN 現行版逐檔比 SHA-1（W42；加 --cdn 才做）
     if (CDN_CHECK) {
@@ -131,17 +131,52 @@ async function main() {
     const group = list => { const g = new Map(); for (const x of list) g.set(x.why, (g.get(x.why) || []).concat(x.f)); return g };
     for (const [why, fs_] of group(R.red)) console.log(`✘ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
     for (const [why, fs_] of group(R.warn)) console.log(`△ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
-    const code = exitCode({ red: R.red.length, unknown: R.unknown || 0, cdn: CDN_CHECK });
-    console.log(code === 1 ? `✘ 不能送審：${R.red.length} 項`
+    console.log(`金絲雀：拿掉首頁素材 ${canary.home ? "✔ 抓到" : "✘ 沒抓到"}｜改掉包裡檔的雜湊 ${canary.stale ? "✔ 抓到" : "✘ 沒抓到"}｜CDN 不存在的檔 ${!CDN_CHECK ? "（沒加 --cdn，沒驗）" : canary.cdn404 ? "✔ 回 " + canary.cdnStatus : "✘ 回 " + canary.cdnStatus}`);
+    const code = exitCode({ red: R.red.length, unknown: R.unknown || 0, cdn: CDN_CHECK, canaryOk: !CDN_CHECK || canary.ok });
+    console.log(code === 4 ? "✘ 不能送審：金絲雀沒被抓到，這支檢查本身失靈了，結果不可信"
+      : code === 1 ? `✘ 不能送審：${R.red.length} 項`
       : code === 3 ? `△ 還不能送審：CDN 有 ${R.unknown} 項沒確認到（缺驗），請稍後重跑 --cdn`
       : CDN_CHECK ? "✔ 安裝包內容沒有發現會破圖或讀不到的問題（含 CDN 核對）"
       : "✔ 安裝包本身沒有問題；送審前還要加 --cdn 核對 CDN（P0-IMG 通過條件＝--cdn 且結束代碼 0）");
-    if (OUT) fs.writeFileSync(OUT, JSON.stringify({ tool: "P0-IMG", ...sum, cdnCompared: R.cdnCompared || 0, unknown: R.unknown || 0, exitCode: code, pass: CDN_CHECK && code === 0, redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
+    if (OUT) fs.writeFileSync(OUT, JSON.stringify({ tool: "P0-IMG", ...sum, cdnCompared: R.cdnCompared || 0, unknown: R.unknown || 0, exitCode: code, pass: CDN_CHECK && code === 0 && canary.ok, canary, toolPins: require("./tool-pin.js").pinsFor("P0-IMG"), redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
     process.exitCode = code;
   } finally { fs.rmSync(tmp, { recursive: true, force: true }) }
 }
-/* 結束代碼（PR #11 審查：缺驗不能送審）：有 ✘＝1；加 --cdn 而有沒確認到的＝3；其餘＝0 */
-function exitCode({ red, unknown, cdn }) { return red ? 1 : cdn && unknown ? 3 : 0 }
+/* 結束代碼（PR #11 審查：缺驗不能送審）：金絲雀沒被抓到＝4（檢查本身失靈，其他結果都不可信，最優先）；有 ✘＝1；加 --cdn 而有沒確認到的＝3；其餘＝0
+   canaryOk 沒給（舊呼叫）當成 true，只有明確傳 false 才回 4 */
+function exitCode({ red, unknown, cdn, canaryOk = true }) { return canaryOk === false ? 4 : red ? 1 : cdn && unknown ? 3 : 0 }
+
+/* 逐項判斷（純函式，金絲雀也用這一支）：need＝需求清單 Map；has(f)＝包裡有沒有；sha1Of(f)＝包裡那份的 SHA-1 前 8 碼；native＝原生能力 */
+function classify(need, has, sha1Of, native) {
+  const red = [], warn = [], ok = { inPack: 0, viaCdn: 0 }, viaCdn = [];
+  for (const f of HOME_REQUIRED.map(x => "data/" + x)) if (!has(f)) red.push({ f, why: "首頁離線必要素材不在安裝包裡（第一次離線開啟就破圖，W21）" });
+  for (const [f, n] of need) {
+    if (has(f)) {
+      const s = n.h ? sha1Of(f) : null;
+      if (n.h && s !== n.h) red.push({ f, why: `安裝包裡的檔跟清單不符（SHA-1 前 8 碼 ${s}，清單 ${n.h}）：會顯示舊內容` });
+      else ok.inPack++;
+      continue;
+    }
+    const split = n.big || n.size > SPLIT;
+    // XQOfflineAssets 只回「包裡已有」的檔，大檔不在包裡時救不了；只有 W30 的切塊接回能救（11/21 反測 26112102 時發現原本誤放行）
+    if (split && !native.partsJoin) { red.push({ f, why: native.cdnFallback ? "CDN 上切塊的大檔不在安裝包裡，原生補抓不會接回切塊（W30）" : "CDN 上切塊的大檔不在安裝包裡，原生也不會補抓" }); continue; }
+    if (native.cdnFallback) { ok.viaCdn++; viaCdn.push([f, split]); continue; }
+    if (MEDIA.test(f)) red.push({ f, why: "不在安裝包裡，原生又不會向 CDN 補抓：圖片／音樂直接破（W21）" });
+    else { warn.push({ f, why: "不在安裝包裡、原生不會補抓；網頁程式會自己改抓 CDN" }); ok.viaCdn++; viaCdn.push([f, split]); }
+  }
+  return { red, warn, ok, viaCdn };
+}
+
+/* 金絲雀①②（純函式）：①把一個首頁必要素材當成不在包裡 ②把包裡一個有清單雜湊的檔當成雜湊不符；用同一個 classify 判，兩個都要出現在 ✘
+   找不到可以弄壞的對象（包裡沒有首頁素材、清單沒有任何雜湊）＝金絲雀不成立，當成沒抓到（寧可擋） */
+function canaryChecks(need, has, sha1Of, native, cls = classify) {   /* cls 可注入：自我測試拿「壞掉的判斷」來證明金絲雀會報警 */
+  const out = { home: false, stale: false, homeFile: null, staleFile: null };
+  const hf = HOME_REQUIRED.map(x => "data/" + x).find(f => has(f));
+  if (hf) { out.homeFile = hf; out.home = cls(need, f => f !== hf && has(f), sha1Of, native).red.some(x => x.f === hf) }
+  const sf = [...need].find(([f, n]) => n.h && has(f) && sha1Of(f) === n.h);
+  if (sf) { out.staleFile = sf[0]; out.stale = cls(need, has, f => f === sf[0] ? "00000000" : sha1Of(f), native).red.some(x => x.f === sf[0]) }
+  return out;
+}
 /* 包裡的檔（路徑 → 完整 SHA-1）跟 CDN manifest（路徑 → [大小, SHA-1 前 12 碼]）比。
    需求清單（preload／大檔／比賽對局）裡的素材不同＝✘：App 先用包裡那份，會顯示舊內容（W42：7 個舊副本，清單也是舊的）；
    清單外的檔（說明文件、回饋清單、校正表等，每次發布或匯出都會更新）不同＝△：多半是 CDN 在建包後更新過，列出來但不擋（26112201 實測 6 項都是這種） */
@@ -150,5 +185,5 @@ function staleVsCdn(packSha1, manFiles, need) { const red = [], warn = [];
     if (need && need.has(f)) red.push({ f, why: `安裝包裡的素材跟 CDN 現行版不同（包 ${h.slice(0, 12)}、CDN ${m[1]}）：是倉庫或建包時留下的舊副本（W42），換成 CDN 現行版再建` });
     else warn.push({ f, why: "清單外的檔跟 CDN 現行版不同（多半是 CDN 在建包後更新過；說明文件、回饋清單之類），列出來但不擋" }) }
   return { red, warn } }
-module.exports = { exitCode, PARTS_MARKER, staleVsCdn };
+module.exports = { exitCode, PARTS_MARKER, staleVsCdn, classify, canaryChecks };
 if (require.main === module) main().catch(e => die(e.stack || String(e)));
