@@ -1,0 +1,4 @@
+{
+ "note": "P0 送審豁免（W69 流程盤點第 5 項，開發者 2026-11-23 選「寫進倉庫豁免檔」）。p0-gate.js 只認這一份；別處轉述的決定一律不算。只能豁免 P0-IMG/cdn、P0-UPD/old-worker、P0-3D/partial、P0-3D/rounds 四種；每筆要綁要送審 AAB 的 aabSha256（64 碼小寫）、寫 reason（≥4 字）、decidedBy（哪位開發者、在哪位 Claude 那邊說的）、decidedAt（YYYY-MM-DD）；P0-3D 的可加 android（12／16）只豁免那一個版本。新增要走 PR、iMac Claude 2 逐行審，並附開發者原話。",
+ "items": []
+}

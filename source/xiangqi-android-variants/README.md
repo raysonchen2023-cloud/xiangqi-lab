@@ -23,9 +23,35 @@
 
 - **沒有在乾淨環境從頭重建這些版本**，也沒有逐位元比對 APK。重建步驟沿用 `source/xiangqi-android/REBUILD.md`。差別是：網頁成品要先切到該版的 `webCommit`，再套用本資料夾的差異。
 
-## 重建某一版（概要）
+## 建包與送審（2026-11-22 起，W69 流程盤點第 3 項）
 
-以 `mini-26112104` 為例，工作區 `$W` 照 `REBUILD.md` 準備：
+建包步驟已寫成 [`source/xiangqi-android/scripts/build-variant.js`](../xiangqi-android/scripts/build-variant.js)，不再手寫 build.sh。26112201 第一版就是漏了 `--home-art`，少了 81 個首頁素材。
+
+```
+# 1. 建 AAB：從網頁發布的 tag＋這一版的原生差異（每一步都檢查，任何一步不對就停）
+node scripts/build-variant.js --repo <公開倉庫> --tag web-<版號> --variant <變體> --code <versionCode> --name <versionName> \
+     --home-art <開發者電腦 xiangqi-db/art> --work <工作資料夾> --signing <signing.properties>
+#    → <work>/out/xiangqi-<code>-<name>.aab 與 build-record.json（tag、提交、換成 CDN 現行版的檔、AAB 的 SHA-256）
+
+# 2. P0 用的 APK 一律從「同一個 AAB」產（bundletool universal，同一把上傳金鑰）
+node scripts/aab-to-apk.js --aab <上一步的 AAB> --signing <signing.properties> --out <資料夾> --bundletool <bundletool-all.jar>
+
+# 3. P0 三項都綁這個 AAB（P0-UPD／P0-3D 帶第 2 步的 aab-apk.json，工具自己算實際 APK 的雜湊來比，不符＝測試不成立）
+node scripts/check-aab-assets.js --aab <AAB> --cdn --out p0-img.json                         # P0-IMG（報告自己算 AAB 雜湊）
+node scripts/check-upgrade.js --old <上一版 APK> --new <第 2 步的 APK> … --aab-apk <第 2 步的 aab-apk.json> --out <資料夾>   # P0-UPD（upgrade.json）
+node scripts/check-3d.js --build <版號> --aab-apk <第 2 步的 aab-apk.json> …              # P0-3D（W67；先把第 2 步的 APK 裝到模擬器，工具會拉回手機上的 base.apk 核對；預設連跑 2 輪，兩輪都全過才算，每次嘗試記在 attempts.jsonl）
+
+# 4. 送審閘門：三份報告都綁在這個 AAB 上、都通過，才能送審（例外只認倉庫 .github/p0-waivers.json，要走 PR、iMac Claude 2 逐行審；轉述的決定不算）
+node scripts/p0-gate.js --aab <AAB> --build <網頁版號> --reports p0-img.json <資料夾>/upgrade.json <P0-3D Android 12 報告> <P0-3D Android 16 報告>
+```
+
+- `build-variant.js` 會把安裝包裡「需求清單內、跟 CDN 現行版不同」的素材換成 CDN 那份，並核對 SHA-1。W42 那 7 個舊副本，不再靠人記檔名。
+- 變體設定檔的 `webRemove` 寫要從安裝包拿掉的檔，例如封測小包不放 `data/docs/evidence`。
+- 重建比這支腳本還早的版本時，用 `--variant-from` 指定較新的變體資料夾，`build-record.json` 會記下來。
+
+## 重建某一版（手動步驟，供參考）
+
+以 `mini-26112104` 為例，工作區 `$W` 照 `REBUILD.md` 準備（現在用上面的 `build-variant.js` 一次做完）：
 
 ```
 # 1. 原生專案：共用建置鏈＋這一版的原生差異

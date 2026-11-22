@@ -59,6 +59,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["發布產物守門", ["node", ".github/scripts/guard-release-pr.cjs", base]],   /* W69 流程盤點第 2 項（PR #46）：改到的每個檔都要對得到來源 */
   ["假略過檢查", ["node", ".github/scripts/check-fake-skip.cjs"]],
   ["略過稽核", ["node", ".github/scripts/check-test-skips.cjs", "base-verify.txt"]],
+  ["todo 稽核", ["node", ".github/scripts/check-test-todos.cjs", "base-tally.json", "--base", base]],   /* W69 流程盤點第 9 項：預期失敗也要在白名單、白名單只能減 */
   ["新測試要分類", ["node", ".github/scripts/check-test-classified.cjs", base]],
   ["iOS 原生檢查", ["node", "source/xiangqi-ios/scripts/check-native.js"]],   /* PR #45：跟 verify.yml 同一步 */
   ["iOS P0-3D 腳本自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/p03d/test-p03d.cjs"]],
@@ -68,6 +69,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["組出 index.html", ["node", "source/check-build.js", "--out", "index.html"]],
   ["完整驗證", ["node", "source/xiangqi-lab/tools/verify-all.js", "--skip", "release-verify", "--out", "base-verify.txt", "--tally-out", "base-tally.json"]],
   ["略過稽核", ["node", ".github/scripts/check-test-skips.cjs", "base-verify.txt"]],
+  ["todo 稽核", ["node", ".github/scripts/check-test-todos.cjs", "base-tally.json", "--base", base]],   /* W69 流程盤點第 9 項：預期失敗也要在白名單、白名單只能減 */
   ["新測試要分類", ["node", ".github/scripts/check-test-classified.cjs", base]],
   ["私密掃描", ["node", "source/xiangqi-lab/tools/oss-scan.js", "source"]],
   ["iOS 原生檢查", ["node", "source/xiangqi-ios/scripts/check-native.js"]],   /* PR #45：跟 verify.yml 同一步 */

@@ -17,9 +17,12 @@
 // 自我反測 --self-test：同桌翻面後黑方跑兩次，一次正常（要過），一次在落點上蓋一層透明遮罩（重現 W02「觸控被接走」，要被判失敗）；
 //   兩次都照預期才結束碼 0。改動這支的判斷邏輯後要跑一次，證明它還抓得到 W02。
 // 用法：node scripts/check-3d.js --build <版號> [--serial emulator-5580] [--port 9291] [--out p0-3d] [--only <情境正規式>]
-//         [--self-test] [--allow-real-device] [--aab-sha <送審 AAB 的 SHA-256，寫進報告>] [--known <已知問題清單，預設倉庫 .github/p0-known.json>]
+//         [--self-test] [--allow-real-device] [--aab-apk <aab-to-apk.js 產生的 aab-apk.json：拉回手機實際安裝的 APK 比 SHA-256，對上才寫進報告>] [--known <已知問題清單，預設倉庫 .github/p0-known.json>]
 //   需要：已開好的模擬器（或加 --allow-real-device 的實體手機）、已裝好要驗的候選包、adb（環境變數 ADB 或 PATH）
 //   會關掉重開 App、在測試房 xq_test 開新局；不會解除安裝、不刪存檔
+//   [--rounds N]（預設 2）：九情境整組連跑 N 輪，每一輪都全過才算過（W69 流程盤點第 5 項，開發者 11/23 選「連續 2 輪」：
+//     不再接受「失敗後重跑到過」）。每次執行不論過不過都追加一行到 <out>/attempts.jsonl；報告記這是同一個 AAB／Android 版本的第幾次嘗試、之前失敗幾次
+//     （環境不成立、例外結束也會記；紀錄跟著 --out 資料夾走：同一個候選包請一直用同一個 --out，換資料夾就看不到之前的失敗）
 // 結束代碼：0＝全部通過（或 --self-test 兩次都照預期）；1＝有情境沒過；2＝用法錯誤或環境不成立（版號不對、不在測試房、量不到 WebView），不能當通過
 "use strict";
 const fs = require("fs"), path = require("path"), cp = require("child_process");
@@ -90,7 +93,14 @@ function webViewBounds(xml) {
   const m = /class="android\.webkit\.WebView"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"/.exec(xml) || /bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"[^>]*class="android\.webkit\.WebView"/.exec(xml);
   return m ? { x: +m[1], y: +m[2], right: +m[3], bottom: +m[4] } : null;
 }
-module.exports = { SCENARIOS, SAFE, PREFER, ONLY, BODY_TRIES, BODY, inSafe, inTop, bodyPoint, padPresses, knownFor, covered, chooseMoves, settled, toDevice, moved, webViewBounds };
+/* 嘗試紀錄（W69 流程盤點第 5 項）：同一個 AAB＋同一個 Android 版本，之前跑過幾次、失敗幾次（純函式） */
+function priorAttempts(lines, aabSha256, android) {
+  const same = lines.map((l) => { try { return JSON.parse(l) } catch (e) { return null } }).filter((x) => x && x.aabSha256 && x.aabSha256 === aabSha256 && String(x.android) === String(android));
+  return { before: same.length, failedBefore: same.filter((x) => x.pass !== true).length };
+}
+/* 每一輪都全過才算過（已知問題照清單放行）；rounds＝每一輪的結果陣列（純函式） */
+const roundPass = (results) => results.length > 0 && results.every((r) => r.pass === true || (r.pass === null && !!r.known));
+module.exports = { priorAttempts, roundPass, SCENARIOS, SAFE, PREFER, ONLY, BODY_TRIES, BODY, inSafe, inTop, bodyPoint, padPresses, knownFor, covered, chooseMoves, settled, toDevice, moved, webViewBounds };
 if (require.main !== module) return;
 
 /* ---- 實機流程 ---- */
@@ -99,14 +109,21 @@ const { checkDevice } = require("./device-guard.js");
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d };
 const O = { build: arg("--build"), serial: arg("--serial", "emulator-5580"), port: Number(arg("--port", 9291)), out: path.resolve(arg("--out", "p0-3d")),
   only: arg("--only"), selfTest: process.argv.includes("--self-test"), allowReal: process.argv.includes("--allow-real-device"),
-  aabSha: arg("--aab-sha"), known: arg("--known", [path.join(__dirname, "..", "..", "..", ".github", "p0-known.json"), path.join(__dirname, "..", "..", "xiangqi-lab", "site", ".github", "p0-known.json")].find((f) => fs.existsSync(f)) || "") };   /* 公開倉庫：source/ 的上一層；開發者電腦：xiangqi-lab/site */
+  rounds: Number(arg("--rounds", 2)),
+  aabApk: arg("--aab-apk"), known: arg("--known", [path.join(__dirname, "..", "..", "..", ".github", "p0-known.json"), path.join(__dirname, "..", "..", "xiangqi-lab", "site", ".github", "p0-known.json")].find((f) => fs.existsSync(f)) || "") };   /* 公開倉庫：source/ 的上一層；開發者電腦：xiangqi-lab/site */
 /* 已知問題清單：讀不到就當沒有（不放行任何已知問題）。報告記下清單路徑與 SHA-256；不是倉庫 .github 那一份時印 ⚠（PR #42 審查①：--known 可指到任何檔，等於繞過逐行審） */
 const REPO_KNOWN = path.join(__dirname, "..", "..", "..", ".github", "p0-known.json");
 const KNOWN_RAW = (() => { try { return fs.readFileSync(O.known) } catch (e) { return null } })();
 const KNOWN = (() => { try { const j = JSON.parse(String(KNOWN_RAW)); return Array.isArray(j.items) ? j.items : [] } catch (e) { return [] } })();
 const KNOWN_FROM_REPO = !!O.known && fs.existsSync(REPO_KNOWN) && path.resolve(O.known) === path.resolve(REPO_KNOWN);
-if (!O.build) { console.error("用法：node scripts/check-3d.js --build <版號> [--serial emulator-5580] [--port 9291] [--out p0-3d] [--only <情境>] [--self-test]"); process.exit(2) }
+/* PR #58 審查：倉庫那份也要跟 origin/main 逐位元組一樣，本機改過、沒開 PR 的不算數（結束代碼 2） */
+if (KNOWN_FROM_REPO) { const pin = require("./repo-pin.js").sameAsMain(REPO_KNOWN); if (!pin.ok) { console.error("測試不成立：" + pin.msg); process.exit(2) } }
+if (!O.build) { console.error("用法：node scripts/check-3d.js --build <版號> [--serial emulator-5580] [--port 9291] [--out p0-3d] [--only <情境>] [--rounds 2] [--self-test]"); process.exit(2) }
+if (!Number.isInteger(O.rounds) || O.rounds < 1 || O.rounds > 9) { console.error("✘ --rounds 要是 1～9 的整數：" + arg("--rounds")); process.exit(2) }
 const PKG = "com.raysonchen.xiangqiqianqiu", ADB = process.env.ADB || "adb";
+/* PR #58 審查：環境不成立或例外結束也要寫進嘗試紀錄（CUR＝目前知道的 AAB 與 Android 版本） */
+let CUR = { aabSha256: null, android: null };
+const logAttempt = (o) => { try { fs.mkdirSync(O.out, { recursive: true }); fs.appendFileSync(path.join(O.out, "attempts.jsonl"), JSON.stringify({ at: new Date().toISOString(), aabSha256: CUR.aabSha256 || null, android: CUR.android || null, build: O.build, ...o }) + "\n") } catch (e) { } };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const adb = (...a) => cp.execFileSync(ADB, ["-s", O.serial, ...a], { encoding: "utf8", timeout: 120000, maxBuffer: 30e6 }).trim();
 const shot = (name) => { try { fs.writeFileSync(path.join(O.out, name + ".png"), cp.execFileSync(ADB, ["-s", O.serial, "exec-out", "screencap", "-p"], { maxBuffer: 30e6 })) } catch (e) { } };
@@ -292,14 +309,24 @@ async function run(name, inject) {
   const g = checkDevice((...a) => adb(...a), O.allowReal);
   if (!g.ok) throw new Unfit(g.message);
   if (g.message) console.log(g.message);
-  /* 送審閘門 p0-gate.js（Windows Claude 1，W69 第 3 項）讀 tool、aabSha256、pass：雜湊要 64 碼小寫，格式不對就不跑 */
-  if (O.aabSha && !/^[0-9a-f]{64}$/.test(O.aabSha)) throw new Unfit("--aab-sha 要是 64 碼小寫的 SHA-256：" + O.aabSha);
+  /* 送審閘門 p0-gate.js（W69 第 3 項，PR #44 審查後）：--aab-sha 只會照抄雜湊，停用；改帶 aab-to-apk.js 的 aab-apk.json，
+     從手機拉回實際安裝的 base.apk 算 SHA-256 比對，對上才把 AAB 雜湊寫進報告（apkBound） */
+  if (process.argv.includes("--aab-sha")) throw new Unfit("--aab-sha 已停用（只會照抄雜湊、核對不到實際 APK）：改帶 --aab-apk <aab-to-apk.js 產生的 aab-apk.json>");
+  let BIND = { aabSha256: null, apkSha256: null, apkBound: false };
+  if (O.aabApk) {
+    const AB = require("./apk-bind.js"), rb = AB.readBind(O.aabApk); if (!rb.ok) throw new Unfit(rb.msg);
+    const ia = AB.installedApkSha((args) => cp.execFileSync(ADB, ["-s", O.serial, ...args], { encoding: "utf8", timeout: 300000, maxBuffer: 30e6 }), PKG, O.out);
+    if (!ia.ok) throw new Unfit(ia.msg);
+    const bd = AB.bind(rb.rec, ia.sha, "手機上實際安裝的 APK"); if (!bd.ok) throw new Unfit(bd.msg);
+    BIND = bd.fields; CUR.aabSha256 = BIND.aabSha256; console.log(`✔ 手機上的 App 就是從送審 AAB（${BIND.aabSha256.slice(0, 12)}）產生的 APK`);
+  } else console.log("⚠ 沒帶 --aab-apk：這份報告沒綁送審 AAB，p0-gate.js 不收");
   const S = { tool: "P0-3D", build: O.build, serial: O.serial, android: adb("shell", "getprop", "ro.build.version.release"),
     webview: (adb("shell", "dumpsys", "package", "com.google.android.webview").match(/versionName=(\S+)/) || [])[1] || "", at: new Date().toISOString(),
-    aabSha256: O.aabSha || null, known: KNOWN.map((x) => x.id + "≤" + x.until),
+    ...BIND, known: KNOWN.map((x) => x.id + "≤" + x.until),
     knownFile: { path: O.known || "（沒有）", sha256: KNOWN_RAW ? require("crypto").createHash("sha256").update(KNOWN_RAW).digest("hex") : null, fromRepo: KNOWN_FROM_REPO },
     /* PR #42 審查②：只跑部分情境（--only）或自我反測不算完整，送審只認 full＝true */
     full: !O.only && !O.selfTest, results: [] };
+  CUR = S;
   if (KNOWN.length && !KNOWN_FROM_REPO) console.log("⚠ 已知問題清單不是倉庫 .github/p0-known.json（" + O.known + "）：這份沒經過逐行審，送審不能用");
   if (O.selfTest) {
     const a = await run("pvp-black", false), b = await run("pvp-black", true);
@@ -308,13 +335,28 @@ async function run(name, inject) {
     console.log((a.pass ? "✔" : "✘") + " 正常：同桌翻面後黑方" + (a.pass ? "通過" : "沒過（" + a.error + "）"));
     console.log((b.pass === false ? "✔" : "✘") + " 反測：落點蓋遮罩（重現 W02）" + (b.pass === false ? "被判失敗（" + b.error + "）" : "竟然通過，這支抓不到 W02"));
   } else {
+    /* W69 流程盤點第 5 項：同一次執行連跑 O.rounds 輪，每輪都全過才算過；任一輪沒過就停（不再「重跑到過」） */
+    S.rounds = O.rounds; S.roundsPassed = 0;
+    for (let rd = 1; rd <= O.rounds; rd++) {
+    if (O.rounds > 1) console.log(`── 第 ${rd}／${O.rounds} 輪`);
+    const RR = [];
     for (const n of SCENARIOS.filter((x) => !O.only || new RegExp(O.only).test(x))) {
-      const r = await run(n, false); S.results.push(r);
+      const r = await run(n, false); r.round = rd; RR.push(r); S.results.push(r);
       console.log((r.pass ? "✔ " : r.known ? "⚠ " : "✘ ") + n.padEnd(10) + (r.pass ? "" : " " + (r.known || r.error)) + (r.misses && r.misses.length ? "　（先換過 " + r.misses.length + " 個選不到的起點）" : "") + (r.startTries && r.startTries.length > 1 ? "　（起點點了 " + r.startTries.length + " 下才選中）" : ""));
     }
-    S.pass = S.results.length > 0 && S.results.every((r) => r.pass === true || (r.pass === null && !!r.known));
+    if (!roundPass(RR)) break;
+    S.roundsPassed = rd;
+    }
+    S.pass = S.roundsPassed === O.rounds && roundPass(S.results);
   }
+  /* 嘗試紀錄：先算之前的，再把這次追加進去（不論過不過） */
+  const AF = path.join(O.out, "attempts.jsonl");
+  const prevLines = (() => { try { return fs.readFileSync(AF, "utf8").split("\n").filter(Boolean) } catch (e) { return [] } })();
+  const pa = priorAttempts(prevLines, S.aabSha256, S.android);
+  S.attempt = pa.before + 1; S.failedBefore = pa.failedBefore;
+  fs.appendFileSync(AF, JSON.stringify({ at: S.at, aabSha256: S.aabSha256, android: S.android, build: S.build, full: S.full, rounds: S.rounds || 0, roundsPassed: S.roundsPassed || 0, pass: !!S.pass }) + "\n");
+  if (S.failedBefore) console.log(`⚠ 這個 AAB 在 Android ${S.android} 之前失敗過 ${S.failedBefore} 次（第 ${S.attempt} 次嘗試）：報告照實記下，送審閘門會列出`);
   fs.writeFileSync(path.join(O.out, "summary.json"), JSON.stringify(S, null, 2));
   console.log((S.pass ? "✔ 通過" : "✘ 沒過") + "：" + S.results.length + " 項" + (S.full ? "（九情境完整）" : "（只跑部分情境：送審不能用）") + "，報告 " + path.join(O.out, "summary.json"));
   process.exit(S.pass ? 0 : 1);
-})().catch((e) => { console.error((e instanceof Unfit ? "測試不成立：" : "✘ ") + e.message); process.exit(e instanceof Unfit ? 2 : 1) });
+})().catch((e) => { logAttempt({ pass: false, unfit: e instanceof Unfit, error: String(e.message).slice(0, 200) }); console.error((e instanceof Unfit ? "測試不成立：" : "✘ ") + e.message); process.exit(e instanceof Unfit ? 2 : 1) });
