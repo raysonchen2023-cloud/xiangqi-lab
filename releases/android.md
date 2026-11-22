@@ -5,7 +5,7 @@
 - **網頁基底**：原生版網頁所根據的公開倉庫提交，也就是安裝包 `native-build.json` 裡的 `sharedWebCommit`。
 - **原生原始碼**：在 `source/xiangqi-android/`（共用建置鏈）加上 `source/xiangqi-android-variants/<版本>/`（該版差異）。組法見[變體說明](../source/xiangqi-android-variants/README.md)。
 - 之後每次送審，送出前先在公開倉庫打 tag `android-<versionCode>`，並在這張表加一列。App 內的原始碼連結會改成指向該版的 tag（併入下一個發布版）。
-  - **怎麼打（W69 流程盤點中 14，2026-11-23 起）：** 候選包通過 P0 閘門（`p0-gate.js` 全過）、送審前，建包的人跑：`gh workflow run tag-native.yml --ref main -f platform=android -f build=<versionCode> -f web=<網頁版號>`。由 GitHub Actions 打在 main 最新提交（含該版的原生差異），`web-<網頁版號>` 要已存在；同號不覆寫。iOS 一樣，`platform=ios`、`build=<build>`。版本標籤受規則集保護，手動 `git push` 標籤會被拒絕。
+  - **怎麼打（W69 流程盤點中 14，2026-11-23 起）：** 候選包通過 P0 閘門（`p0-gate.js` 全過）、送審前，建包的人跑：先把這一版的變體資料夾（含 `VARIANT-MANIFEST.json`）合併進 main，再跑 `gh workflow run tag-native.yml --ref main -f platform=android -f build=<versionCode> -f web=<網頁版號> -f variant_commit=<那個 main 提交，40 碼> -f pkg_sha256=<AAB 的 SHA-256>`。由 GitHub Actions 打在 `web-<網頁版號>` 的提交（網頁跟 AAB 一樣），並核對變體清單的 `webCommit`、`siteVersion`；變體提交與 AAB 雜湊寫進標籤說明。同號不覆寫。iOS 一樣，`platform=ios`、`build=<build>`、`pkg_sha256` 填 IPA 的雜湊。版本標籤受規則集保護，不准改、不准刪；打錯只能換新的建置號。
 
 | versionCode | versionName | 種類 | 網頁基底 | 原生原始碼 | 對應程度 |
 |---|---|---|---|---|---|
