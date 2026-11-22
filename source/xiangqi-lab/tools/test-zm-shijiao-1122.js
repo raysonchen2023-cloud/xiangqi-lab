@@ -61,12 +61,12 @@ test("手算案例 6～7：過河卒算 2 分；被牽制的俥不能吃", () =>
   assert.equal(M.jhSjSee(C, bd({ R: "d1", r: "d9", p: "c1" }), "r", sq("c1"), false).v, 0);
 });
 
-test("題庫：60 題、每級 20 題吃不吃各 10、id 依序、局面不重複；每題用同一支程式重算，答案、分數、帳都對得上", () => {
+test("題庫：60 題、每級 20 題吃不吃各 10、id 依序、局面不重複、同一級同一種誰吃誰最多 3 題；每題用同一支程式重算，答案、分數、帳都對得上", () => {
   const Q = M.JH_SJ_Q;
   assert.equal(Q.length, 60);
   assert.deepEqual(J(Q.map((q) => q.id)), Array.from({ length: 60 }, (_, i) => "s" + String(i + 1).padStart(2, "0")));
   for (const lv of [1, 2, 3]) for (const a of ["y", "n"]) assert.equal(Q.filter((q) => q.lv === lv && q.ans === a).length, 10, "級" + lv + " " + a);
-  const src = new Set(), pos = new Set();
+  const src = new Set(), pos = new Set(), pair = {};
   for (const q of Q) {
     assert.ok(!pos.has(q.fen + "|" + q.t), q.id + " 跟前面的題目是同一個局面同一格");
     pos.add(q.fen + "|" + q.t);
@@ -88,6 +88,9 @@ test("題庫：60 題、每級 20 題吃不吃各 10、id 依序、局面不重�
     if (q.lv === 1) assert.ok(n >= 1 && n <= 2, q.id + " 初級 1～2 步");
     if (q.lv === 2) assert.ok(n >= 2 && n <= 3 && r.pv.some((x) => (x.cap.toUpperCase() === "P" && x.val === 2) || /[AB]/.test(x.cap.toUpperCase())), q.id + " 中級 2～3 步含過河兵或仕象");
     if (q.lv === 3) assert.ok(n >= 3 && n <= 4 && caps.some((x) => x === "C" || x === "R"), q.id + " 高級 3～4 步含炮或車");
+    const pk = q.lv + ":" + r.pv[0].p.toUpperCase() + r.pv[0].cap.toUpperCase();
+    pair[pk] = (pair[pk] || 0) + 1;
+    assert.ok(pair[pk] <= 3, q.id + " 同一級同一種誰吃誰（" + pk + "）超過 3 題");
     const L = M.jhSjLedger(q);
     assert.equal(L.sum, q.v, q.id + " 兌換帳加總");
     assert.match(q.src, /^gm\d+@\d+$/);

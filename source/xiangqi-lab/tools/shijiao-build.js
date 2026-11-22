@@ -2,7 +2,7 @@
 /* W48-S3 仕角炮門「當鋪算兌子」出題腳本（不是測試，CI 不跑：要讀 33 MB 的大師對局）。
    從 data/gmgames.json 主線第 16～60 手、輪紅走的局面，找「紅方可以吃、吃了會引發一串互吃」的格子，
    用 m/07z9e-shijiao.js 自己的 jhSjSee 窮舉（同一支程式，App 和題庫算法一定一樣），寫回模組裡 JH_SJ_Q 那一段。
-   篩選：輪紅走且沒被將軍；被捉的是黑方非將的子；帳裡沒有任何一步是將軍；淨得失不是 0；每盤棋最多一題；同一個局面同一格不重複出。
+   篩選：輪紅走且沒被將軍；被捉的是黑方非將的子；帳裡沒有任何一步是將軍；淨得失不是 0；每盤棋最多一題；同一個局面同一格不重複出；每一級同一種「誰吃誰」（第一步）最多 3 題。
    難度：高級＝互吃 3～4 步且帳裡有炮或車；中級＝2～3 步且帳裡有過河兵或仕象；初級＝1～2 步的其餘。
    每級 20 題：吃 10、不吃 10（初級「吃」裡一步就吃完、對方吃不回的最多 4 題）。
    gmgames.json 本機沒有（或 --gm 沒指定）就照 CDN 的分塊清單下載接回、核對 sha1（只讀，不存檔）。
@@ -45,7 +45,8 @@ function level(r) {
 (async () => {
   const G = await loadGm(), N = G.length;
   const want = { 1: { y: 10, n: 10 }, 2: { y: 10, n: 10 }, 3: { y: 10, n: 10 } }, have = { 1: { y: 0, n: 0, y1: 0 }, 2: { y: 0, n: 0 }, 3: { y: 0, n: 0 } }, out = [];
-  const seen = new Set();   /* 不同對局常走到同一個開局局面：用「局面＋被捉的格子」去重 */
+  const seen = new Set(), pair = {};   /* pair：每一級同一種「誰吃誰」（第一步吃子方＋被吃的子）最多 3 題（PR #37 審查②：中級原本一半是兵吃卒） */
+  const pairKey = (lv, r) => lv + ":" + r.pv[0].p.toUpperCase() + r.pv[0].cap.toUpperCase();   /* 不同對局常走到同一個開局局面：用「局面＋被捉的格子」去重 */
   const full = () => [1, 2, 3].every((l) => have[l].y >= want[l].y && have[l].n >= want[l].n);
   for (let k = 0; k < N && !full(); k++) {
     const gi = (k * 7919) % N, g = G[gi], main = g.lines && g.lines.find((x) => x.parent == null);
@@ -61,6 +62,7 @@ function level(r) {
           const lv = level(r), ans = r.v > 0 ? "y" : "n";
           if (!lv || have[lv][ans] >= want[lv][ans]) continue;
           if (lv === 1 && ans === "y" && r.pv.length === 1 && have[1].y1 >= 4) continue;
+          if ((pair[pairKey(lv, r)] || 0) >= 3) continue;
           got = { lv, T, r, ans, ply: i };
           break;
         }
@@ -72,6 +74,7 @@ function level(r) {
     if (!got) continue;
     const { lv, T, r, ans, ply } = got;
     seen.add(C.fen(bd, "r") + "|" + T);
+    pair[pairKey(lv, r)] = (pair[pairKey(lv, r)] || 0) + 1;
     have[lv][ans]++; if (lv === 1 && ans === "y" && r.pv.length === 1) have[1].y1++;
     out.push({ lv, fen: C.fen(bd, "r") + " - - 0 1", t: T, ans, v: r.v, pv: r.pv.map((x) => uci(x.f) + uci(x.t)), src: "gm" + gi + "@" + ply });
   }
