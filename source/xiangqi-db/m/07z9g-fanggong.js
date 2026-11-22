@@ -58,14 +58,14 @@ async function jhFanggongOpen(lv0){const G=jhFgGet(),L=JH_FG_LV.find(x=>x.k===(l
   sheet(jhL("🖋 雕版案・活字排局陣","🖋 Printing desk · Movable-type openings"),b=>{
     b.innerHTML=`<p class="muted">${esc(jhL("陶秉衡：「字模排歪了印出來就糊，棋步排亂了中卒也守不住，來排排看！」","Tao Bingheng: \"Misplace a type and the print blurs; misorder the moves and your center pawn falls. Set them right!\""))}</p>
       <div class="jh-gp-lv">${JH_FG_LV.map(x=>`<button class="btn ${x.k===L.k?"":"ghost"}" data-lv="${x.k}">${esc(jhL(x.zh,x.en))}</button>`).join("")}</div>
-      <p id="jhFq" class="jh-gp-q"></p><div id="jhFb" class="jh-scr-bd"></div>
-      <ol id="jhFs" class="jh-fg-slots"></ol><div id="jhFc" class="jh-fg-cards"></div>
-      <div class="jh-actions"><button class="btn ghost" id="jhFu">${esc(jhL("↶ 撤回一張","↶ Undo"))}</button><button class="btn ghost" id="jhFh">${esc(jhL("💡 亮出下一張","💡 Show next"))}</button><button class="btn" id="jhFn" style="display:none"></button></div>
-      <p id="jhFm" class="jh-mate-say" style="display:none"></p>`;
-    const $=s=>b.querySelector(s),C=window.XQCore,brd=Board();$("#jhFb").append(brd.svg);
+      <p id="jhFgQ" class="jh-gp-q"></p><div id="jhFgB" class="jh-scr-bd"></div>
+      <ol id="jhFgS" class="jh-fg-slots"></ol><div id="jhFgC" class="jh-fg-cards"></div>
+      <div class="jh-actions"><button class="btn ghost" id="jhFgU">${esc(jhL("↶ 撤回一張","↶ Undo"))}</button><button class="btn ghost" id="jhFgH">${esc(jhL("💡 亮出下一張","💡 Show next"))}</button><button class="btn" id="jhFgN" style="display:none"></button></div>
+      <p id="jhFgM" class="jh-mate-say" style="display:none"></p>`;
+    const $=s=>b.querySelector(s),C=window.XQCore,brd=Board();$("#jhFgB").append(brd.svg);
     b.querySelectorAll("[data-lv]").forEach(x=>x.onclick=()=>{try{closeSheet()}catch(e){}setTimeout(()=>jhFanggongOpen(x.dataset.lv),250)});
     let q=null,used=[],done=false;
-    const say=t=>{const s=$("#jhFm");s.style.display=t?"":"none";s.textContent=t||""};
+    const say=t=>{const s=$("#jhFgM");s.style.display=t?"":"none";s.textContent=t||""};
     /* 目前排出來的完整序列：固定的步照主線，打散的步依玩家點的順序填 */
     const ans=()=>{const o=[];let k=0;for(let i=0;i<q.seq.length;i++){if(!q.slots.includes(i)){o.push(q.seq[i]);continue}if(k>=used.length)break;o.push(q.cards[used[k++]].u)}return o};
     const nextSlot=()=>q.slots[used.length];
@@ -73,13 +73,13 @@ async function jhFanggongOpen(lv0){const G=jhFgGet(),L=JH_FG_LV.find(x=>x.k===(l
       for(let i=0;i<(r.ok===false&&r.step<a.length?r.step:a.length);i++){const f=C.parseSq(a[i].slice(0,2)),t=C.parseSq(a[i].slice(2,4));bd=C.make(bd,f,t);last={f,t}}
       brd.draw(bd,{last});
       const ns=nextSlot();
-      $("#jhFs").innerHTML=q.seq.map((u,i)=>{const fixed=!q.slots.includes(i),k=q.slots.indexOf(i),c=k>=0&&k<used.length?q.cards[used[k]]:null;
+      $("#jhFgS").innerHTML=q.seq.map((u,i)=>{const fixed=!q.slots.includes(i),k=q.slots.indexOf(i),c=k>=0&&k<used.length?q.cards[used[k]]:null;
         return`<li class="${fixed?"fix":c?"set":i===ns?"next":""}">${esc(fixed?q.nt[i]:c?c.nt:(i===ns?jhL("← 下一張","← next"):"＿＿"))}</li>`}).join("");
-      $("#jhFc").innerHTML=q.cards.map((c,k)=>`<button class="btn ${used.includes(k)?"ghost":""} jh-fg-card ${c.side}" data-k="${k}" ${used.includes(k)||done?"disabled":""}>${esc(c.nt)}</button>`).join("");
-      $("#jhFc").querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>pick(+x.dataset.k));
+      $("#jhFgC").innerHTML=q.cards.map((c,k)=>`<button class="btn ${used.includes(k)?"ghost":""} jh-fg-card ${c.side}" data-k="${k}" ${used.includes(k)||done?"disabled":""}>${esc(c.nt)}</button>`).join("");
+      $("#jhFgC").querySelectorAll("[data-k]").forEach(x=>x.onclick=()=>pick(+x.dataset.k));
       return r};
-    const start=()=>{q=Q[qi];used=[];done=false;say("");$("#jhFn").style.display="none";
-      $("#jhFq").textContent=jhL(`第 ${qi+1}／${Q.length} 題：反宮馬開局 ${q.seq.length} 步，${L.both?"紅黑":"黑方"}的活字被打散了。照次序一張一張點回去（${L.both?"紅字是紅方、黑字是黑方":"紅方的步已經排好"}）。`,
+    const start=()=>{q=Q[qi];used=[];done=false;say("");$("#jhFgN").style.display="none";
+      $("#jhFgQ").textContent=jhL(`第 ${qi+1}／${Q.length} 題：反宮馬開局 ${q.seq.length} 步，${L.both?"紅黑":"黑方"}的活字被打散了。照次序一張一張點回去（${L.both?"紅字是紅方、黑字是黑方":"紅方的步已經排好"}）。`,
         `${qi+1}/${Q.length}: a ${q.seq.length}-move Palace Horse opening; the ${L.both?"red and black":"black"} types are shuffled. Tap them back in order.`);draw()};
     const pick=k=>{if(done||used.includes(k))return;
       const r0=jhFgCheck(q,ans());if(r0.ok===false&&r0.step<ans().length){say(jhL("前面有一張走不下去，先按「撤回一張」。","An earlier type doesn't fit; tap Undo first."));return}
@@ -91,13 +91,13 @@ async function jhFanggongOpen(lv0){const G=jhFgGet(),L=JH_FG_LV.find(x=>x.k===(l
       done=true;draw();if(r.ok)right++;
       say(r.ok?jhL("好眼力！活字排得正，棋路也走得順。","Sharp eye! The types are set and the moves flow.")+(r.why?" "+r.why:""):r.why+jhL("按「撤回一張」再排。"," Tap Undo and rearrange."));
       if(!r.ok){done=false;return}
-      const nb=$("#jhFn");nb.style.display="";nb.textContent=qi+1<Q.length?jhL("下一題","Next"):jhL("印好了","Done");
+      const nb=$("#jhFgN");nb.style.display="";nb.textContent=qi+1<Q.length?jhL("下一題","Next"):jhL("印好了","Done");
       nb.onclick=()=>{if(qi+1<Q.length){qi++;start();return}nb.style.display="none";const xp=right===Q.length?jhFgDayXP():0;
         say(jhL(`這一輪排對 ${right}／${Q.length} 題。${xp?`全對，修為 +${xp}`:""}`,`${right}/${Q.length} set right.${xp?` All right: +${xp} XP`:""}`))}};
-    $("#jhFu").onclick=()=>{if(done||!used.length)return;used.pop();say("");draw()};
-    $("#jhFh").onclick=()=>{if(done)return;const ns=nextSlot(),want=q.seq[ns],k=q.cards.findIndex((c,i)=>!used.includes(i)&&c.u===want);
+    $("#jhFgU").onclick=()=>{if(done||!used.length)return;used.pop();say("");draw()};
+    $("#jhFgH").onclick=()=>{if(done)return;const ns=nextSlot(),want=q.seq[ns],k=q.cards.findIndex((c,i)=>!used.includes(i)&&c.u===want);
       if(k<0){say(jhL("前面有一張排錯了，先撤回。","An earlier type is wrong; undo first."));return}
-      const el=$("#jhFc").querySelector(`[data-k="${k}"]`);if(el){el.classList.add("hint");setTimeout(()=>el.classList.remove("hint"),1600)}say(jhL(`第 ${ns+1} 步是「${q.cards[k].nt}」。`,`Move ${ns+1} is "${q.cards[k].nt}".`))};
+      const el=$("#jhFgC").querySelector(`[data-k="${k}"]`);if(el){el.classList.add("hint");setTimeout(()=>el.classList.remove("hint"),1600)}say(jhL(`第 ${ns+1} 步是「${q.cards[k].nt}」。`,`Move ${ns+1} is "${q.cards[k].nt}".`))};
     start()})}
 (function(){if(typeof document==="undefined")return;const s=document.createElement("style");s.id="jhFgCss";s.textContent=`
 .jh-fg-slots{display:grid;grid-template-columns:repeat(2,1fr);gap:2px 10px;margin:6px 0 6px 1.4em;padding:0;font-size:15px}.jh-fg-slots li.fix{opacity:.6}.jh-fg-slots li.next{font-weight:700}
