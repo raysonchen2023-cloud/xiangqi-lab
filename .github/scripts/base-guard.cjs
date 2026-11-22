@@ -24,6 +24,30 @@ const isGuard = (f) => GUARD.some((r) => r.test(f));
 /* PR 改到的守門程式（含刪除、改名的兩個路徑） */
 function guardChanged(files) { return [...new Set(files.filter(isGuard))].sort() }
 
+/* testkinds.js 同時是守門程式和「已分類測試清單」（CLASSIFIED）。#43 上線後，每個新增測試的 PR 都要在清單加一行登記，
+   整支換回 main 版會讓新測試變成沒分類、基準版守門誤判紅燈（#48 實際發生）。
+   所以（iMac Claude 2 審查四點）：PR 版 testkinds.js 只「新增」登記行，去掉這些新增行後跟 main 版逐字相同，而且
+     ・每一行新增都符合嚴格格式：兩格縮排、"test-小寫英數與連字號.js"、逗號、空白、一段註解（註解裡不准再出現註解結束記號，免得在後面夾帶程式）
+     ・新增行都在 CLASSIFIED 清單裡（PENDING、SKIP 的任何改動都會讓「去掉新增行後逐字相同」不成立：加進 PENDING＝把既有測試降級、SKIP＝整支不跑）
+     ・登記的檔名都是這個 PR 新增的測試檔（不能拿來登記既有或不存在的檔）
+   才把 testkinds.js 當資料、不換回；刪除或修改任何既有行，一律換回 main 版。 */
+const TK_PATH = "source/xiangqi-lab/tools/testkinds.js";
+const TK_ENTRY = /^  "(test-[a-z0-9-]+\.js)",\s+\/\*(?:(?!\*\/)[^\n])*\*\/$/;
+function classifiedOnly(baseSrc, prSrc, addedTests) {
+  const A = String(baseSrc).split("\n"), B = String(prSrc).split("\n"), added = new Set(addedTests || []);
+  const a = B.findIndex((l) => l.startsWith("const CLASSIFIED = new Set([")), b = a < 0 ? -1 : B.findIndex((l, i) => i > a && l === "]);");
+  if (a < 0 || b < 0) return false;
+  /* 只有新增：照順序走，PR 的行跟 main 對得上就前進，對不上的就是新增行 */
+  let i = 0, n = 0;
+  for (let k = 0; k < B.length; k++) {
+    if (i < A.length && B[k] === A[i]) { i++; continue }
+    const m = TK_ENTRY.exec(B[k]);
+    if (!m || k <= a || k >= b || !added.has(m[1])) return false;
+    n++;
+  }
+  return i === A.length && n > 0;
+}
+
 /* 要跑的檢查：跟 verify.yml 同一組（換回 main 版之後）；mode 由 main 版的 ci-mode.cjs 判斷（發布 PR 本來就會改網站檔，要跑發布那一組） */
 const STEPS = (base, mode) => mode === "release" ? [
   ["完整驗證（全套）", ["node", "source/xiangqi-lab/tools/verify-all.js", "--out", "base-verify.txt", "--tally-out", "base-tally.json"]],
@@ -67,7 +91,20 @@ function runGuard({ base = "origin/main", headRef = "", git, spawn, fsx = fs, lo
   let files;
   try { files = git("diff", "--name-only", "-z", "--no-renames", `${base}...HEAD`).split("\0").filter(Boolean) }
   catch (e) { log("✘ 讀不到跟 " + base + " 的差異：" + e.message); return 2 }
-  const changed = guardChanged(files);
+  let changed = guardChanged(files);
+  if (changed.includes(TK_PATH)) {
+    let baseSrc = null, prSrc = null;
+    /* 跟分岔點（merge-base）比，跟 git diff base...HEAD 一致（PR #51 審查）：好幾派 PR 同時開著，別的 PR 先合併後 main 會多別人的登記行，
+       跟 main 最新版比會讓還沒 update-branch 的 PR 變成「不只新增」而換回、又紅燈 */
+    try { const mb = git("merge-base", base, "HEAD").trim(); baseSrc = git("show", `${mb}:${TK_PATH}`) } catch (e) { }
+    try { prSrc = fsx.readFileSync(TK_PATH, "utf8") } catch (e) { }
+    let addedTests = [];
+    try { addedTests = git("diff", "--name-only", "-z", "--no-renames", "--diff-filter=A", `${base}...HEAD`).split("\0").filter(Boolean).filter((f) => /^source\/xiangqi-lab\/tools\/test-[^/]+\.js$/.test(f)).map((f) => f.split("/").pop()) } catch (e) { }
+    if (baseSrc != null && prSrc != null && classifiedOnly(baseSrc, prSrc, addedTests)) {
+      changed = changed.filter((f) => f !== TK_PATH);
+      log("  testkinds.js 只在 CLASSIFIED 新增本 PR 測試的登記（其他一個字都沒變）：當資料，不換回");
+    }
+  }
   if (!changed.length) { log("✔ 這個 PR 沒有改到判斷紅綠的程式，不用另跑基準版"); return 0 }
   log("這個 PR 改到 " + changed.length + " 支判斷紅綠的程式，換回 " + base + " 那一版再跑一次：\n  " + changed.join("\n  "));
   for (const l of restore(changed, (f) => { try { return git("show", `${base}:${f}`) } catch (e) { return null } }, fsx)) log("  " + l);
@@ -85,7 +122,7 @@ function runGuard({ base = "origin/main", headRef = "", git, spawn, fsx = fs, lo
   return code;
 }
 
-module.exports = { GUARD, isGuard, guardChanged, STEPS, restore, modeArgs, modeOf, finalCode, runGuard };
+module.exports = { GUARD, isGuard, guardChanged, STEPS, restore, modeArgs, modeOf, finalCode, runGuard, classifiedOnly, TK_PATH };
 if (require.main !== module) return;
 
 const git = (...a) => execFileSync("git", ["-c", "core.quotePath=false", ...a], { encoding: "utf8", maxBuffer: 64e6 });
