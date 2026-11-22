@@ -49,7 +49,7 @@ const CLASSIFIED = new Set([
   "test-zm-hall-1121.js",   /* 11/21 W48 十派門內場景頁 JhHall（先做中炮門：設定範圍、百分比座標、前院門人、路由順序、圖讀不到退回小卡、立繪疊主位；前院門下棋友：資料、站位、請教與打聽、切磋只指定一次；PR #21 審查兩輪：指定用掉就清、45 秒時限與到期計時器、選單之後才開新局仍坐指定的人、外部指定優先、前院能下的優先（雜湊排前也一樣）；行為 13、原始碼 4，其中原圖檢查在公開副本略過） */
   "test-jh-kick-1122.js",   /* 11/22 W45② 十州踢館令（開發者選單：相剋表、印記＋棋譜＋修為 30、程式畫的戰書旗）：相剋表、定式合法且局面對得上、解鎖條件、開局參數、結算只給一次、再下一盤、小卡內容；W65 戰書段連結字色對比（行為 11、原始碼 2） */
   "test-jh-canal-1122.js",   /* 11/22 W46 十州漕運殘局（門派任務版）：運河四州、時辰換州、真題庫挑題（一～三步殺、殺法標籤）、點船挑題、殘局頁外掛模式驗證、每天每州修為只給一次、漕船圖與退路（行為 7、混合 1、原始碼 1） */
-  "test-zm-screen-data-1122.js",   /* 11/22 W48-S2 屏風馬門兩套題庫資料（開發者選單：課堂挑錯著、算盤算帳）：data/zmhall/screen-errata.json、screen-abacus.json 的格式、每手用 core.js 重走合法、壞著是黑方、ok 含 best、答案與分數門檻與子力一致（不跑引擎；引擎分數由 tools/screen-quiz-build.js 產生；行為 6） */
+  "test-zm-screen-data-1122.js",   /* 11/22 W48-S2 屏風馬門兩套題庫資料（開發者選單：課堂挑錯著、算盤算帳）：xiangqi-db/art/zmhall/ 兩份題庫（發布時帶到 data/zmhall/）的格式、每手用 core.js 重走合法、壞著是黑方、ok 含 best、答案與分數門檻與子力一致（不跑引擎；引擎分數由 tools/screen-quiz-build.js 產生；行為 7：含網站副本與原始資料一致） */
   "test-android-roadmap.js",   /* 11/13 第 14 輪 F3 Android 路線圖＋可重現驗證包：verify-all.js、xiangqi-android 骨架檢查、F-Droid 草稿、make-www（行為 8、混合 1）；11/13 骨架檢查 native.swclient（行為 +1） */
   "test-fdroid-evidence.js",   /* 11/13 第 13 輪 F2 F-Droid 可建置證據：pikafish-verify.js、release-verify.js（行為 8、原始碼 1） */
   "test-daily.js",   /* 11/13 第 13 輪 F1 每日同題＋無雷分享（m/07dq-daily.js；行為 11、原始碼 2）；第 14 輪 X4 題庫改版名冊＋邊界（行為 +13） */

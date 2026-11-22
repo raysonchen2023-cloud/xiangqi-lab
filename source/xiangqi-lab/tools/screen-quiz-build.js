@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /* W48-S2 屏風馬門兩套題庫的建置腳本（不是測試，CI 不跑：要載入 50 MB 的 nnue，全部跑完要十幾分鐘）。
-   產出：
-     data/zmhall/screen-errata.json  課堂挑錯著 20 題（從 data/opening-school/screen.json 第 1～16 課的主線取材；第 17～22 課學生執紅，不用）
-     data/zmhall/screen-abacus.json  算盤算帳 30 題（從大師對局 data/gmgames.json 第 20～40 手抽局面）
+   產出（素材原始資料夾 xiangqi-db/art/zmhall/，發布時帶到網站 data/zmhall/）：
+     screen-errata.json  課堂挑錯著 20 題（從 data/opening-school/screen.json 第 1～16 課的主線取材；第 17～22 課學生執紅，不用）
+     screen-abacus.json  算盤算帳 30 題（從大師對局 data/gmgames.json 第 20～40 手抽局面）
    引擎：App 自己的網頁版 Pikafish（網站根目錄 engine/，在 Node 裡跑；載入方式同 tools/kick-verify.js）
      Threads 1、Hash 64 MB、每次搜尋前 ucinewgame，固定深度 16，所以重跑結果一樣。分數一律換成厘兵（100＝一兵）。
    挑錯著的規則（Windows Claude 1 交辦單 W48-S2）：
@@ -25,7 +25,9 @@ const SITE = fs.existsSync(path.join(ROOT, "xiangqi-lab", "site", "core.js")) ? 
 const C = require(path.join(SITE, "core.js"));
 const CHECK = process.argv.includes("--check");
 const DEPTH = 16, V = "1122";
-const OUT_E = path.join(SITE, "data", "zmhall", "screen-errata.json"), OUT_A = path.join(SITE, "data", "zmhall", "screen-abacus.json");
+/* 產出放素材原始資料夾 xiangqi-db/art/zmhall/（公開倉庫是 source/xiangqi-db/art/zmhall/）；發布時跟門內圖一起帶到網站的 data/zmhall/、上 CDN。
+   功能 PR 不能改網站的 data/（.github/scripts/guard-release-files.cjs），所以不直接寫 data/ */
+const OUT_E = path.join(ROOT, "xiangqi-db", "art", "zmhall", "screen-errata.json"), OUT_A = path.join(ROOT, "xiangqi-db", "art", "zmhall", "screen-abacus.json");
 
 /* bad 選項的說明：鍵是「課程/例題/著法」，照該課在教什麼寫一句，不寫引擎分數 */
 const WHY = {
@@ -226,10 +228,10 @@ const dump = (items) => '{"v":"' + V + '","items":[\n' + items.map((x) => JSON.s
   if (miss.length) { console.log("✘ 這幾題 bad 選項還沒寫 why（補進 WHY 表）：" + miss.map((x) => x.id + " " + x.lesson + " " + x.mv[x.wrong]).join("、")); process.exit(1) }
   if (CHECK) {
     let bad = 0;
-    for (const [f, s] of out) { const same = fs.existsSync(f) && fs.readFileSync(f, "utf8") === s; if (!same) bad++; console.log((same ? "✔ 一樣 " : "✘ 不一樣 ") + path.relative(SITE, f)) }
+    for (const [f, s] of out) { const same = fs.existsSync(f) && fs.readFileSync(f, "utf8") === s; if (!same) bad++; console.log((same ? "✔ 一樣 " : "✘ 不一樣 ") + path.relative(ROOT, f)) }
     process.exit(bad ? 1 : 0);
   }
   fs.mkdirSync(path.dirname(OUT_E), { recursive: true });
-  for (const [f, s] of out) { fs.writeFileSync(f, s); console.log("✔ 寫入 " + path.relative(SITE, f) + "（" + Buffer.byteLength(s) + " 位元組）") }
+  for (const [f, s] of out) { fs.writeFileSync(f, s); console.log("✔ 寫入 " + path.relative(ROOT, f) + "（" + Buffer.byteLength(s) + " 位元組）") }
   process.exit(0);
 })().catch((e) => { console.error("✘", e.message || e); process.exit(1) });

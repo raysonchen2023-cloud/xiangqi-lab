@@ -1,5 +1,6 @@
 // W48-S2 屏風馬門兩套題庫資料（開發者 11/22 選單：屏風馬門要有中炮門沒有的玩法——課堂挑錯著、算盤算帳）：
-//   data/zmhall/screen-errata.json（20 題）、data/zmhall/screen-abacus.json（30 題）的格式與棋規檢查。
+//   xiangqi-db/art/zmhall/screen-errata.json（20 題）、screen-abacus.json（30 題）的格式與棋規檢查。
+//   這兩個檔是素材原始資料（功能 PR 不能改網站 data/），發布時帶到網站 data/zmhall/；網站上已有那一份時，要跟原始資料逐位元一樣。
 //   每一手都用 core.js 重走一遍；不跑引擎（引擎分數由 xiangqi-lab/tools/screen-quiz-build.js 產生，--check 可重跑比對）。
 // 用法：node --test xiangqi-lab/tools/test-zm-screen-data-1122.js
 "use strict";
@@ -7,11 +8,12 @@ const assert = require("node:assert/strict"), test = require("node:test"), fs = 
 const ROOT = path.join(__dirname, "../..");
 const SITE = path.join(ROOT, "xiangqi-lab", "site");
 const C = require(path.join(SITE, "core.js"));
-/* 公開倉庫（有 .github）一定要有這兩個檔；開發者電腦的 site 還沒同步時才略過 */
+const ART = path.join(ROOT, "xiangqi-db", "art", "zmhall");
+/* 公開倉庫（有 .github）一定要有這兩個檔；開發者電腦還沒放進素材資料夾時才略過 */
 const PUBLIC = fs.existsSync(path.join(SITE, ".github"));
 /* 沒有檔案時回 null，由 need() 決定：公開倉庫直接失敗，開發者電腦才 t.skip */
-const rdj = (p) => { const f = path.join(SITE, p); return fs.existsSync(f) ? { raw: fs.readFileSync(f, "utf8"), j: JSON.parse(fs.readFileSync(f, "utf8")) } : null };
-const E = rdj("data/zmhall/screen-errata.json"), A = rdj("data/zmhall/screen-abacus.json");
+const rdj = (p) => { const f = path.join(ART, p); return fs.existsSync(f) ? { raw: fs.readFileSync(f, "utf8"), j: JSON.parse(fs.readFileSync(f, "utf8")) } : null };
+const E = rdj("screen-errata.json"), A = rdj("screen-abacus.json");
 const S = JSON.parse(fs.readFileSync(path.join(SITE, "data", "opening-school", "screen.json"), "utf8"));
 const need = (t, x, name) => { if (x) return true; assert.ok(!PUBLIC, "公開倉庫少了 " + name); t.skip("這台的網站資料夾沒有 " + name); return false };
 
@@ -30,6 +32,16 @@ test("兩個檔的外框：v、題數、id 依序不重複、檔案小於 100 KB
     assert.ok(Buffer.byteLength(x.raw) < 100 * 1024);
     assert.ok(!x.raw.includes("\r"));
   }
+});
+
+test("網站 data/zmhall/ 已經有這兩個檔時，要跟素材原始資料一模一樣", (t) => {
+  if (!need(t, E, "screen-errata.json") || !need(t, A, "screen-abacus.json")) return;
+  let n = 0;
+  for (const [x, f] of [[E, "screen-errata.json"], [A, "screen-abacus.json"]]) {
+    const w = path.join(SITE, "data", "zmhall", f);
+    if (fs.existsSync(w)) { n++; assert.equal(fs.readFileSync(w, "utf8"), x.raw, "data/zmhall/" + f + " 跟 xiangqi-db/art/zmhall/ 的不一樣") }
+  }
+  if (!n) t.diagnostic("網站還沒有 data/zmhall/ 題庫（還沒發布），只驗原始資料");
 });
 
 test("課堂挑錯著：欄位齊全、課程存在、整串 6～14 手每手合法", (t) => {
