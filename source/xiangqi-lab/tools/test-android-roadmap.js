@@ -178,7 +178,7 @@ test("make-www：只用公開倉庫、不帶 .github 和 source/、native-build.
   } finally { clean(d); clean(out) }
 });
 
-test("〔混合〕android.md、foss.md 兩份逐字相同、LF；路線圖有兩條路、反特性、要決定的事；foss.md 連到 android.md 和驗證紀錄", (t) => {
+test("〔混合〕android.md、foss.md 兩份逐字相同、LF；路線圖有兩條路、反特性、要決定的事；foss.md 連到 android.md 和驗證紀錄", () => {
   for (const f of ["android.md", "foss.md"]) {
     const a = fs.readFileSync(path.join(ROOT, "xiangqi-db", "art", "docs", f)), b = fs.readFileSync(path.join(LAB, "site", "data", "docs", f));
     assert.ok(a.equals(b), f + " 兩份要逐字相同");
@@ -188,9 +188,13 @@ test("〔混合〕android.md、foss.md 兩份逐字相同、LF；路線圖有兩
   for (const h of ["## Google Play 路線", "## F-Droid 路線", "## 要做的事與順序", "## 要開發者決定的事", "## 引擎多執行緒", "## 可重現驗證包", "## 限制"]) assert.ok(A.includes(h), "android.md 缺 " + h);
   for (const k of ["NonFreeAssets", "NonFreeNet", "Tracking", "setCrossOriginIsolatedAllowlist", "Document-Isolation-Policy", "verify-all.js"]) assert.ok(A.includes(k), "android.md 沒提 " + k);
   assert.ok(F.includes("[android.md](android.md)") && F.includes("verification-log-20261113-0452.txt") && F.includes("### 可重現驗證包 verify-all.js"));
-  /* 11/13 0452 的驗證紀錄只在開發者電腦的 opensource-stage/（公開倉庫沒有）：有才檢查內容；連結文字上面已經查過（W69 第 8 項，11/22） */
+});
+
+/* W69 第 8 項（11/22，PR #52 審查）：讀 0452 驗證紀錄的部分拆成獨立一項——上面那項在公開 CI 一定跑；
+   紀錄只在開發者電腦的 opensource-stage/，公開倉庫沒有時明列略過（照 test-fdroid-evidence.js 的做法，列在 .github/test-skip-allow.json） */
+test("〔原始碼〕11/13 0452 驗證紀錄：4 步全過、沒有使用者資料夾路徑或 CR", (t) => {
   const LOGF = path.join(LAB, "opensource-stage", "verification-log-20261113-0452.txt");
-  if (!fs.existsSync(LOGF)) { t.skip("0452 驗證紀錄只在開發者電腦的 opensource-stage/（公開倉庫沒有）"); return }
+  if (!fs.existsSync(LOGF)) { t.skip("0452 驗證紀錄只在開發者電腦的 opensource-stage/，公開副本沒有"); return }
   const log = fs.readFileSync(LOGF, "utf8");
   assert.match(log, /總結：4 步，通過 4、失敗 0、略過 0\n✔ 全部通過\n$/);
   assert.ok(!log.includes(os.homedir()) && !log.includes(os.homedir().split("\\").join("/")) && !log.includes("\r"), "紀錄不能有使用者資料夾路徑或 CR");
