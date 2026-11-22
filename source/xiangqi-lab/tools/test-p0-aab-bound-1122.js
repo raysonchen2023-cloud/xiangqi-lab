@@ -12,28 +12,40 @@ const { staleVsCdn } = require(path.join(AND, "check-aab-assets.js"));
 const { cdnStale } = require(path.join(AND, "build-variant.js"));
 const { readSigning, buildApksArgs } = require(path.join(AND, "aab-to-apk.js"));
 const A = "a".repeat(64), B = "b".repeat(64);
+const V = "20261122-0804";
+const d3 = (sha, android) => ({ file: "3d-" + android + ".json", json: { tool: "P0-3D", aabSha256: sha, pass: true, build: V, android, full: true, knownFile: { fromRepo: true } } });
 const ok3 = (sha = A) => [
-  { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0 } },
-  { file: "upd.json", json: { tool: "P0-UPD", aabSha256: sha, pass: true, oldWorker: true } },
-  { file: "3d.json", json: { tool: "P0-3D", aabSha256: sha, pass: true } }];
+  { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V } },
+  { file: "upd.json", json: { tool: "P0-UPD", aabSha256: sha, pass: true, oldWorker: true, new: { build: V } } },
+  d3(sha, "12"), d3(sha, "16")];
+const has = (r, re) => r.problems.some((p) => re.test(p));
 
-test("閘門：三份都綁在要送審的 AAB 上、都通過＝可以送審", () => {
-  assert.deepEqual(gate(A, ok3()), { ok: true, problems: [] });
+test("閘門：P0-IMG、P0-UPD、P0-3D（Android 12、16）都綁在要送審的 AAB 與版號上、都通過＝可以送審", () => {
+  assert.deepEqual(gate(A, V, ok3()), { ok: true, problems: [] });
 });
 
-test("閘門（反測必紅）：驗的是另一個 AAB、少一份、沒記雜湊、沒通過——都不能送審", () => {
-  let r = gate(A, ok3(B)); assert.equal(r.ok, false); assert.equal(r.problems.filter((p) => /另一個 AAB/.test(p)).length, 3);
-  r = gate(A, ok3().slice(0, 2)); assert.equal(r.ok, false); assert.ok(r.problems.some((p) => /缺 P0-3D/.test(p)));
-  const L = ok3(); delete L[2].json.aabSha256; r = gate(A, L); assert.ok(r.problems.some((p) => /沒有記 AAB 的 SHA-256/.test(p)));
-  const M = ok3(); M[0].json.pass = false; r = gate(A, M); assert.ok(r.problems.some((p) => /P0-IMG：沒有通過/.test(p)));
-  r = gate(A, [...ok3(), ok3()[2]]); assert.ok(r.problems.some((p) => /兩份報告/.test(p)), "同一項交兩份不行（挑過的那份）");
-  r = gate(A, [{ file: "x.json", json: null }, ...ok3()]); assert.ok(r.problems.some((p) => /讀不到 JSON/.test(p)));
+test("閘門（反測必紅）：驗的是另一個 AAB、少一份、沒記雜湊、沒通過、交兩份、壞 JSON——都不能送審", () => {
+  let r = gate(A, V, ok3(B)); assert.equal(r.ok, false); assert.equal(r.problems.filter((p) => /另一個 AAB/.test(p)).length, 4);
+  r = gate(A, V, ok3().slice(0, 3)); assert.equal(r.ok, false); assert.ok(has(r, /缺 Android 16 的 P0-3D/), "P0-3D 只交 Android 12 不行");
+  r = gate(A, V, ok3().slice(1)); assert.ok(has(r, /缺 P0-IMG/));
+  const L = ok3(); delete L[2].json.aabSha256; r = gate(A, V, L); assert.ok(has(r, /沒有記 AAB 的 SHA-256/));
+  const M = ok3(); M[0].json.pass = false; r = gate(A, V, M); assert.ok(has(r, /P0-IMG：沒有通過/));
+  r = gate(A, V, [...ok3(), ok3()[2]]); assert.ok(has(r, /P0-3D（Android 12） 有兩份報告/), "同一項交兩份不行（挑過的那份）");
+  r = gate(A, V, [{ file: "x.json", json: null }, ...ok3()]); assert.ok(has(r, /讀不到 JSON/));
 });
 
-test("閘門：P0-IMG 要加 --cdn 且結束代碼 0（缺驗＝3 不行）；P0-UPD 用 --no-old-worker 跑的不算", () => {
-  let L = ok3(); L[0].json.cdnChecked = false; assert.ok(gate(A, L).problems.some((p) => /要加 --cdn/.test(p)));
-  L = ok3(); L[0].json.exitCode = 3; assert.ok(gate(A, L).problems.some((p) => /要加 --cdn 且結束代碼 0/.test(p)));
-  L = ok3(); L[1].json.oldWorker = false; assert.ok(gate(A, L).problems.some((p) => /--no-old-worker/.test(p)));
+test("閘門：每份的版號都要等於送審版號（P0-IMG siteVersion、P0-UPD new.build、P0-3D build）", () => {
+  const r = gate(A, "20261123-0900", ok3());
+  assert.equal(r.problems.filter((p) => /不是要送審的 20261123-0900/.test(p)).length, 4);
+});
+
+test("閘門：P0-IMG 要 --cdn 且 0；P0-UPD 不能 --no-old-worker；P0-3D 要完整跑、已知問題清單要用倉庫那份（PR #42 審查）", () => {
+  let L = ok3(); L[0].json.cdnChecked = false; assert.ok(has(gate(A, V, L), /要加 --cdn/));
+  L = ok3(); L[0].json.exitCode = 3; assert.ok(has(gate(A, V, L), /要加 --cdn 且結束代碼 0/));
+  L = ok3(); L[1].json.oldWorker = false; assert.ok(has(gate(A, V, L), /--no-old-worker/));
+  L = ok3(); L[3].json.full = false; assert.ok(has(gate(A, V, L), /P0-3D（Android 16）：不是完整跑/));
+  L = ok3(); L[2].json.knownFile = { fromRepo: false }; assert.ok(has(gate(A, V, L), /P0-3D（Android 12）：已知問題清單不是倉庫的/));
+  L = ok3(); delete L[2].json.knownFile; assert.ok(has(gate(A, V, L), /已知問題清單不是倉庫的/));
 });
 
 test("包裡素材跟 CDN 現行版交叉核對（W42）：清單內的素材不同＝✘；清單外的檔不同＝△；相同不列", () => {

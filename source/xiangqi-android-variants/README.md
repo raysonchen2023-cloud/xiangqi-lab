@@ -42,7 +42,7 @@ node scripts/check-upgrade.js --old <上一版 APK> --new <第 2 步的 APK> …
 node scripts/check-3d.js --build <版號> --aab-sha <雜湊> …                                   # P0-3D（W67）
 
 # 4. 送審閘門：三份報告都綁在這個 AAB 上、都通過，才能送審
-node scripts/p0-gate.js --aab <AAB> --reports p0-img.json <資料夾>/upgrade.json <P0-3D 報告>
+node scripts/p0-gate.js --aab <AAB> --build <網頁版號> --reports p0-img.json <資料夾>/upgrade.json <P0-3D Android 12 報告> <P0-3D Android 16 報告>
 ```
 
 - `build-variant.js` 會把安裝包裡「需求清單內、跟 CDN 現行版不同」的素材換成 CDN 那份，並核對 SHA-1。W42 那 7 個舊副本，不再靠人記檔名。
