@@ -178,14 +178,8 @@ test("原始碼：只改「什麼時候叫」——native-bridge 的轉向照舊
   assert.ok(!X4.includes("setTimeout(()=>{try{if(OFF)lbsBanFetch()}catch(e){}},2500);"), "拿掉開 App 2.5 秒就抓停權名單");
   assert.match(X4, /addEventListener\("hashchange",lbsBanRoute\)/);
   assert.ok(S3.includes("(typeof myFixes===\"function\"?myFixes():Promise.resolve(null))"), "信房告示榜照舊叫 myFixes（打開才抓）");
-  const IOS = path.join(ROOT, "xiangqi-ios");
-  if (fs.existsSync(IOS)) {
-    const NB = rd("xiangqi-ios/src/native-bridge.js");
-    assert.ok(NB.includes('if (rel === "data/banlist.json") {') && NB.includes('if (rel === "data/fixes.json") {'), "native-bridge 轉向還在");
-    const AP = rd("xiangqi-ios/appstore/app-privacy.md");
-    assert.ok(AP.includes("如果你送過意見回饋，App 開啟時會從 Cloudflare 下載一次修正清單和開發者回覆，讓你收到飛鴿傳書；沒送過就只在打開意見回饋時下載。"));
-    assert.match(AP, /隱私標籤不另外勾選/);
-  }
+  const NB = rd("xiangqi-ios/src/native-bridge.js");   /* W69 盤點高 7：iOS 專案在公開倉庫裡，一律照驗；app-privacy.md 拆到下一項 */
+  assert.ok(NB.includes('if (rel === "data/banlist.json") {') && NB.includes('if (rel === "data/fixes.json") {'), "native-bridge 轉向還在");
   const P = rd("xiangqi-db/art/docs/privacy.md");
   assert.equal(P, rd("xiangqi-lab/site/data/docs/privacy.md"), "兩份 privacy.md 一樣");
   assert.ok(P.includes("- 如果你送過意見回饋，App 開啟時會從 Cloudflare 下載一次修正清單和開發者回覆，讓你收到飛鴿傳書；沒送過就只在打開意見回饋時下載。"));
@@ -197,4 +191,9 @@ test("原始碼：只改「什麼時候叫」——native-bridge 的轉向照舊
   const I = M("07i18n.js");
   for (const k of ["XQ_NETWHEN_NAT", "XQ_NETWHEN_WEB"]) { const m = X4.match(new RegExp("const " + k + "=(\"[^\"]+\");")); assert.ok(m, k); assert.ok(I.includes(m[1] + ":\"If you have sent feedback,"), k + " 有英文") }
   assert.ok(X4.match(/const XQ_NETWHEN_NAT="([^"]+)"/)[1].startsWith("如果你送過意見回饋，App 開啟時會從 Cloudflare 下載一次修正清單和開發者回覆，讓你收到飛鴿傳書；沒送過就只在打開意見回饋時下載。"));
+});
+test("〔原始碼〕App 隱私申報 app-privacy.md 跟 privacy.md 同一套說法（送過意見回饋才在開 App 時下載修正清單；隱私標籤不另外勾選）", { skip: fs.existsSync(path.join(ROOT, "xiangqi-ios", "appstore")) ? false : "沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦）" }, () => {
+  const AP = rd("xiangqi-ios/appstore/app-privacy.md");   /* W69 盤點高 7：從上一項拆出來，缺 appstore/ 才略過，不再整段看有沒有 xiangqi-ios */
+  assert.ok(AP.includes("如果你送過意見回饋，App 開啟時會從 Cloudflare 下載一次修正清單和開發者回覆，讓你收到飛鴿傳書；沒送過就只在打開意見回饋時下載。"));
+  assert.match(AP, /隱私標籤不另外勾選/);
 });

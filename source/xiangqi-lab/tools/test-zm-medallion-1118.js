@@ -33,6 +33,7 @@ test("ring3d.json 有十位掌門的圓牌位置（數值合理），兩份一�
   /* 公開副本（source/）沒有 xiangqi-db/art 和 site：改讀倉庫根目錄的 data/tripo_app；glydepth.json 只在 CDN，沒有就不查 */
   let A = path.join(ROOT, "xiangqi-db", "art", "tripo_app"), S = path.join(ROOT, "xiangqi-lab", "site", "data", "tripo_app");
   if (!fs.existsSync(path.join(A, "ring3d.json"))) A = path.join(ROOT, "..", "data", "tripo_app");
+  if (!fs.existsSync(path.join(A, "ring3d.json"))) A = S;   /* W69 盤點高 7：公開倉庫的 run-tests 裡 xiangqi-lab/site＝倉庫根目錄，data/tripo_app/ring3d.json 就在那裡（素材原始資料不公開，兩份一致那句只在開發者電腦有意義） */
   if (!fs.existsSync(path.join(A, "ring3d.json"))) return t.skip("沒有 tripo_app/ring3d.json（公開副本的 run-tests 把 source/ 抄到暫存資料夾，倉庫的 data/ 也不在旁邊）");   /* W57：原本直接 return，會被算成通過 */
   const R = JSON.parse(rd(path.join(A, "ring3d.json")));
   for (const s of Object.keys(gch())) {

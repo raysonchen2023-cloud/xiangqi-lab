@@ -7,7 +7,7 @@ const ROOT = path.join(__dirname, "..", "..");
 const rd = p => fs.readFileSync(path.join(ROOT, p), "utf8").replace(/\r\n/g, "\n");
 const M = f => rd("xiangqi-db/m/" + f);
 const EXT = path.join(ROOT, "xiangqi-db", "i18n-en.json"), HAS_EXT = fs.existsSync(EXT), SKIP = HAS_EXT ? false : "沒有 xiangqi-db/i18n-en.json（只放 CDN）";
-const IOS = path.join(ROOT, "xiangqi-ios", "appstore", "metadata.md"), SKIP_IOS = fs.existsSync(IOS) ? false : "沒有 xiangqi-ios（公開副本不含）";
+const IOS = path.join(ROOT, "xiangqi-ios", "appstore", "metadata.md"), SKIP_IOS = fs.existsSync(IOS) ? false : "沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦）";   /* W69 盤點高 7：原因寫準確（iOS 專案在公開倉庫裡，缺的是 appstore/） */
 const CJK = /[\u3400-\u9fff\uf900-\ufaff]/;   /* 用跳脫碼（寫檔時相容字會被正規化） */
 const between = (s, a, b) => { const i = s.indexOf(a), j = s.indexOf(b, i + 1); assert.ok(i >= 0 && j > i, "切不到：" + a + " … " + b); return s.slice(i, j) };
 const I18N = M("07i18n.js");
