@@ -1,0 +1,56 @@
+# 基準版守門（W69 流程盤點第 1 項）：PR 改到判斷紅綠的程式時，換回 main 那一版再跑一次。
+# 用 pull_request_target：workflow 與 base-guard.cjs 都取 main 那一份，PR 改不到；PR 的內容照樣 checkout 下來檢查。
+# 安全：只有讀取權限（contents: read）、不用任何 secrets、checkout 不留憑證（persist-credentials: false）；
+#   PR 的程式碼只在這個沒有寫入權的工作裡跑，跟 verify.yml 跑 PR 程式碼的權限一樣。
+# 新增這個 workflow 的那一個 PR 本身不會觸發（main 還沒有它）；合併後才開始生效。
+# 要真的擋住合併：開發者要在分支保護把「基準版守門」加進必要檢查（帳號設定，要開發者本人操作）。
+name: 基準版守門
+
+on:
+  pull_request_target:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  guard-base:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      # fork 開的 PR 直接紅燈（PR #43 審查 A，複審更正）：pull_request_target 會自動跑 fork 的 PR 程式，等於繞過 pull_request 對 fork
+      # 「第一次貢獻要核准」，所以 fork 不能跑 PR 程式；但也不能用 job 層的 if 跳過——必要檢查遇到「被跳過」會當成通過，
+      # fork 就完全繞過這一層。做法：job 照常跑，第一步（還沒 checkout、沒執行任何 PR 程式）判斷是 fork 就結束代碼 1。
+      # 兩個 repo 名稱經環境變數傳入（防注入），不直接嵌進指令。
+      - name: fork 開的 PR 不跑 PR 程式（直接紅燈）
+        env:
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
+        run: |
+          if [ "$HEAD_REPO" != "$BASE_REPO" ]; then
+            echo "✘ fork 的 PR 不跑 PR 程式，請改從本倉庫的分支開 PR（$HEAD_REPO → $BASE_REPO）"
+            exit 1
+          fi
+          echo "✔ 本倉庫分支開的 PR"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: 取 main 那一版的 base-guard.cjs（PR 改不到）
+        run: |
+          git fetch --no-tags origin main
+          git show origin/main:.github/scripts/base-guard.cjs > "$RUNNER_TEMP/base-guard.cjs"
+
+      - name: 改到守門程式就換回 main 版再跑一次
+        # 分支名經環境變數傳入（防注入）。事件名稱不傳：這裡是 pull_request_target，ci-mode.cjs 會把非 pull_request 都當發布模式，
+        # base-guard.cjs 一律以 pull_request 判斷，模式只看分支名，跟 verify.yml 一致。
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: node "$RUNNER_TEMP/base-guard.cjs" origin/main
