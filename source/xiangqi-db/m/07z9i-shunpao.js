@@ -4,9 +4,11 @@
    「殺步」＝連將殺的步數：攻方每一步都要叫將，守方怎麼應都擋不住，第幾步將死（小學生最常漏算的就是叫將、擋將的步數）。
    PR #53 審查（iMac Claude 2、Windows Claude 1 預驗）：原本比「紅黑誰先殺到」，但連將殺時輪走方只要有殺就一定先殺到（對方只能應將），題目不成立；
      開發者 11/22 選單改成「改問『最快幾步殺』——只問輪走方最快幾步連將殺，選 1／2／3 步（高級到 4）；答案程式算得準，扣『計步』本意。答對後在盤上示範殺法」。
-     初級：雙方各 2 顆攻子，答案 1 或 2 步，選項 1／2／3。
-     中級：各 3 顆攻子＋0～2 顆仕相，答案 2 或 3 步，選項 1～4。
-     高級：各 4 顆攻子＋1～3 顆仕相，答案 3 或 4 步，選項 1～4。
+   W48 順炮 P3（Windows Claude 1 回報、開發者 11/23 選「滑動窗口三選一」）：原本畫面給 3～4 個選項、題庫每級只有 2 種答案，
+     玩幾題就知道某些選項永遠不對（等於二選一）。改成每級三個連續步數，題庫每個選項各 10 題，選項跟題庫答案由 CI 核對一致：
+     初級：雙方各 2 顆攻子，選項＝答案 1／2／3 步。
+     中級：各 3 顆攻子＋0～2 顆仕相，選項＝答案 2／3／4 步。
+     高級：各 4 顆攻子＋1～3 顆仕相，選項＝答案 3／4／5 步。
    題目由 tools/shunpao-build.js 用固定種子擺子、用本模組的 jhSpFastest 窮舉後寫進下面 JH_SP_Q（不用引擎、不另放資料檔，預覽站也能玩）；
    CI 的 test-jh-shunpao-1122.js 用另一套獨立寫的連將殺搜尋重算每一題，並確認少一步殺不了。
    提示：亮出最快那一路的第一步叫將。
@@ -14,9 +16,9 @@
    門內頁的入口（鹽田海堤練拳木樁）等順炮門的門內圖出好再接；這裡先提供 jhShunpaoOpen()。 */
 const JH_SP_LV=[
   {k:"easy",zh:"初級",en:"Easy",opt:[1,2,3]},
-  {k:"mid",zh:"中級",en:"Medium",opt:[1,2,3,4]},
-  {k:"hard",zh:"高級",en:"Hard",opt:[1,2,3,4]}];
-const JH_SP_MAX=4;
+  {k:"mid",zh:"中級",en:"Medium",opt:[2,3,4]},
+  {k:"hard",zh:"高級",en:"Hard",opt:[3,4,5]}];   /* W48 順炮 P3（開發者 11/23 選「滑動窗口三選一」）：每級三個選項，題庫每個選項各 10 題，沒有永遠不對的選項 */
+const JH_SP_MAX=Math.max(...JH_SP_LV.flatMap(x=>x.opt));   /* 最多問幾步殺：跟著選項走（高級 5 步） */
 function jhSpGet(){let o=null;try{o=store.get("jhShunpao",null)}catch(e){}o=o&&typeof o==="object"?o:{};
   return{lv:JH_SP_LV.some(x=>x.k===o.lv)?o.lv:"easy",d:typeof o.d==="string"?o.d.slice(0,12):"",sd:typeof o.sd==="string"?o.sd.slice(0,12):"",st:Math.max(0,Math.min(99,+o.st||0))}}
 function jhSpSet(o){try{store.set("jhShunpao",o)}catch(e){}}
@@ -46,60 +48,90 @@ const JH_SP_Q=[
   {"lv":"easy","fen":"3k5/9/9/3P5/1r7/9/7C1/9/4K1n2/9","turn":"b","n":1},
   {"lv":"easy","fen":"9/5P3/4k4/9/7R1/4pp3/9/9/5K3/9","turn":"r","n":1},
   {"lv":"easy","fen":"9/4k4/r7P/9/9/6C2/6r2/9/5K3/9","turn":"b","n":1},
+  {"lv":"easy","fen":"9/5k3/9/2R6/3r5/R8/9/3c5/5K3/9","turn":"r","n":3},
+  {"lv":"easy","fen":"6r2/5k3/9/9/9/9/9/N2K5/1r7/1C7","turn":"b","n":1},
   {"lv":"easy","fen":"9/3rk4/9/9/1N6c/1R7/9/9/9/5K3","turn":"r","n":2},
   {"lv":"easy","fen":"5k1P1/2r6/4r4/9/9/9/9/3R5/9/5K3","turn":"b","n":2},
   {"lv":"easy","fen":"5k3/P8/9/p8/R8/9/9/9/9/p3K4","turn":"r","n":1},
   {"lv":"easy","fen":"9/4k3n/9/3P5/9/2P3r2/9/9/9/3K5","turn":"b","n":1},
   {"lv":"easy","fen":"7R1/4P4/3k5/9/9/1c2p4/9/5K3/9/9","turn":"r","n":1},
   {"lv":"easy","fen":"9/4k4/9/8C/9/9/1R7/6r2/5r3/3K5","turn":"b","n":1},
+  {"lv":"easy","fen":"5k3/9/R8/6R2/9/9/9/9/n7r/5K3","turn":"r","n":3},
+  {"lv":"easy","fen":"9/4k4/9/7r1/1r7/2C6/9/3K4C/9/9","turn":"b","n":2},
   {"lv":"easy","fen":"9/5k3/9/9/9/9/1pC5c/4K4/9/5C3","turn":"r","n":1},
-  {"lv":"easy","fen":"9/5k3/7C1/4r4/4r2P1/9/9/9/5K3/9","turn":"b","n":1},
+  {"lv":"easy","fen":"9/7P1/5k3/1r7/9/9/9/8r/1N7/3K5","turn":"b","n":3},
+  {"lv":"easy","fen":"8R/N2k5/9/9/9/8p/9/7p1/5K3/9","turn":"r","n":3},
+  {"lv":"easy","fen":"9/3R5/4k4/8r/9/2r6/9/9/7R1/5K3","turn":"b","n":2},
   {"lv":"easy","fen":"9/3N5/2nk1r3/9/9/1R7/9/9/4K4/9","turn":"r","n":2},
   {"lv":"easy","fen":"6r2/4k4/9/8r/9/9/9/3K1R3/2N6/9","turn":"b","n":2},
+  {"lv":"easy","fen":"9/6R2/3k5/9/4n4/9/6r2/4K4/9/8R","turn":"r","n":3},
+  {"lv":"easy","fen":"9/4k4/2R6/1N7/9/7n1/9/6r2/9/4K4","turn":"b","n":2},
   {"lv":"easy","fen":"4rk3/9/4r3N/9/9/9/9/9/3R5/5K3","turn":"r","n":2},
-  {"lv":"easy","fen":"1r1N5/4k4/9/1N7/9/9/9/9/9/3K3n1","turn":"b","n":2},
-  {"lv":"easy","fen":"4k3r/9/R8/3R5/9/5c3/9/9/5K3/9","turn":"r","n":2},
-  {"lv":"easy","fen":"9/9/4k4/9/r8/2p6/2PR5/5K3/9/9","turn":"b","n":2},
-  {"lv":"mid","fen":"3a1r3/9/4k4/9/6RR1/8p/2P3r2/9/4K4/9","turn":"r","n":2},
-  {"lv":"mid","fen":"7P1/6nR1/2P1k4/r8/9/9/9/2n1K4/9/3A5","turn":"b","n":2},
-  {"lv":"mid","fen":"4ka3/6c2/9/9/9/R8/p8/3K5/3RA1Rp1/9","turn":"r","n":3},
-  {"lv":"mid","fen":"3k5/8P/b8/6p2/R2r5/9/9/5K3/3N5/2r6","turn":"b","n":3},
-  {"lv":"mid","fen":"2P6/9/5k3/2R6/9/3R5/1p7/3ABK3/4r2r1/9","turn":"r","n":2},
-  {"lv":"mid","fen":"9/2N1k4/9/6r2/9/9/5r3/7r1/R3KC3/9","turn":"b","n":2},
-  {"lv":"mid","fen":"2b6/9/3k1n3/9/9/9/N5R2/4Kc3/7N1/8r","turn":"r","n":2},
-  {"lv":"mid","fen":"6r2/4k4/1r3a3/9/2b6/2C6/7C1/c8/N8/3K5","turn":"b","n":3},
-  {"lv":"mid","fen":"6P2/4k4/8b/5cr2/2R3bn1/9/9/R3B4/9/5K3","turn":"r","n":2},
-  {"lv":"mid","fen":"2b6/9/1N3k3/r8/2b6/3p3C1/4r4/2C6/9/5K3","turn":"b","n":3},
-  {"lv":"mid","fen":"9/7R1/4k4/7R1/9/8c/6Pp1/4KA3/5p3/9","turn":"r","n":2},
-  {"lv":"mid","fen":"9/2rkC4/2P6/9/2N3r2/5p3/9/3K1A3/9/5A3","turn":"b","n":3},
-  {"lv":"mid","fen":"9/1R3P3/3k5/9/5r3/2P6/p8/8p/9/2B1K1B2","turn":"r","n":3},
-  {"lv":"mid","fen":"P2k5/8P/b3n4/1P7/6b2/9/6r1r/3A5/9/3K5","turn":"b","n":2},
-  {"lv":"mid","fen":"6b2/4n4/2P1bk3/1c7/9/2B3B2/1C7/4R4/5n3/4K4","turn":"r","n":2},
-  {"lv":"mid","fen":"9/3k2N1c/9/9/9/9/2r2C3/5p3/3K5/C8","turn":"b","n":2},
-  {"lv":"mid","fen":"8r/9/5k3/9/9/2R6/C1R6/B4K3/2n5n/9","turn":"r","n":3},
-  {"lv":"mid","fen":"4r1b2/3k5/6C2/2r6/9/8N/9/N8/4c4/5K3","turn":"b","n":3},
-  {"lv":"mid","fen":"R5N2/6n2/5k2b/3c5/2b6/2p3B2/9/3K5/6R2/9","turn":"r","n":3},
+  {"lv":"easy","fen":"9/4k4/9/1R7/9/9/9/9/7p1/5K1Cr","turn":"b","n":3},
+  {"lv":"easy","fen":"9/9/4k4/9/2R4c1/9/5p3/3K1R3/9/9","turn":"r","n":3},
+  {"lv":"easy","fen":"4k4/9/9/9/1r7/3R5/6r2/3K5/9/8R","turn":"b","n":3},
+  {"lv":"easy","fen":"4k4/5c3/6N2/9/9/9/8c/6R2/3K5/9","turn":"r","n":3},
+  {"lv":"easy","fen":"3r5/3k5/9/5N3/2r6/9/9/5K2N/9/9","turn":"b","n":3},
+  {"lv":"mid","fen":"3r5/4k4/8R/3r1C2r/9/2BR5/9/4K4/9/6B2","turn":"r","n":4},
   {"lv":"mid","fen":"5kb2/6C2/b8/8r/9/5rP2/9/9/3N5/4K2c1","turn":"b","n":3},
-  {"lv":"hard","fen":"2n2kr2/1n7/5a2b/9/2R3b2/5r3/9/1R1RB3B/4K4/7R1","turn":"r","n":4},
-  {"lv":"hard","fen":"2bk5/5n3/1C1a5/P8/6bcN/2B6/9/B2K5/Cr2A1n2/9","turn":"b","n":3},
-  {"lv":"hard","fen":"3k2NP1/R8/C2a1a3/2p6/9/9/5n3/3A5/3K5/p1p6","turn":"r","n":3},
-  {"lv":"hard","fen":"3N5/1r2k1C2/8b/9/9/9/9/3AB1r2/n4K3/R1Np5","turn":"b","n":3},
-  {"lv":"hard","fen":"6b2/2n6/b3k4/9/1n7/2B1n1R2/1rC6/3A5/8R/R2K5","turn":"r","n":3},
-  {"lv":"hard","fen":"5a3/4C4/3kNa3/2P5N/9/5r3/9/9/3n2p2/3AK2c1","turn":"b","n":3},
-  {"lv":"hard","fen":"3r2c2/4k4/8R/R2R5/P5b2/2B5c/9/5K3/9/2p6","turn":"r","n":3},
-  {"lv":"hard","fen":"3a5/P2k2P2/9/6P2/P8/7p1/4p4/B2K4B/2r1n4/3A5","turn":"b","n":3},
-  {"lv":"hard","fen":"3k1a3/4a4/bR3c3/7C1/4P1p2/6R2/9/9/5K3/2c3B1n","turn":"r","n":4},
-  {"lv":"hard","fen":"2b3b1N/5k3/5a3/3r2R2/1N4c1c/9/8R/5K3/6r2/6B2","turn":"b","n":3},
-  {"lv":"hard","fen":"9/4ck3/b1n1b4/7P1/2b3nR1/9/8p/4N4/4A3R/2BK5","turn":"r","n":3},
-  {"lv":"hard","fen":"3k1r1P1/9/b2a1P3/9/9/9/6p2/C2K4B/R8/1r5r1","turn":"b","n":3},
-  {"lv":"hard","fen":"9/9/1P2bk2c/1R1n2n2/4r2N1/9/9/3A5/2R6/3A1KB2","turn":"r","n":4},
-  {"lv":"hard","fen":"2bc5/1C5C1/3k1a3/3c3P1/1N7/7n1/8p/3K4B/9/5A3","turn":"b","n":4},
+  {"lv":"mid","fen":"n2a1a3/3kn3N/8n/2R6/9/9/9/R8/5K3/9","turn":"r","n":3},
+  {"lv":"mid","fen":"5N3/1r7/5k3/r8/9/9/9/4K4/3RN1r2/9","turn":"b","n":2},
+  {"lv":"mid","fen":"5r3/4C4/5k3/9/9/2p1p4/9/4R2R1/3K5/6B2","turn":"r","n":2},
+  {"lv":"mid","fen":"4P4/4k1C2/9/9/5n3/9/n8/3A1K3/3r5/1N7","turn":"b","n":3},
+  {"lv":"mid","fen":"5N3/9/5k3/9/3n5/R5C2/9/4K4/2r5p/2B6","turn":"r","n":3},
+  {"lv":"mid","fen":"1R1a5/9/3k4b/2P6/9/9/1r4n2/1C3p3/9/4K4","turn":"b","n":3},
+  {"lv":"mid","fen":"1Pbc2b2/4Nk3/9/9/9/r5B2/9/4K4/9/2B3R1n","turn":"r","n":2},
+  {"lv":"mid","fen":"9/3c1k3/7P1/9/3R5/7r1/9/2N6/5K3/1p3A3","turn":"b","n":3},
+  {"lv":"mid","fen":"2b2k3/3n3P1/1N7/9/2b6/9/3p5/9/n1R6/4K1B2","turn":"r","n":2},
+  {"lv":"mid","fen":"7n1/r4P3/4k4/9/6b2/2P3B2/9/c2K5/2N6/5A3","turn":"b","n":2},
+  {"lv":"mid","fen":"R8/c3k2c1/5NN2/1r7/9/2B6/9/9/4A4/3K5","turn":"r","n":3},
+  {"lv":"mid","fen":"2b6/5k3/9/P4c2C/2b4r1/3n5/9/B2A5/4K4/8C","turn":"b","n":4},
+  {"lv":"mid","fen":"1R4N2/5k3/7c1/4R4/9/6B2/9/9/1p3K3/2c6","turn":"r","n":2},
+  {"lv":"mid","fen":"4k4/4a4/7n1/9/2b6/9/1C4P2/3A5/4K4/1C5rr","turn":"b","n":2},
+  {"lv":"mid","fen":"5a3/9/b2k5/2R6/9/1R1r4p/2r6/9/6C2/2B2K3","turn":"r","n":2},
+  {"lv":"mid","fen":"9/9/3ak4/6R2/5c3/P8/9/9/1rnK1C3/6B2","turn":"b","n":3},
+  {"lv":"mid","fen":"5n3/5k3/r8/9/8R/3N5/8R/2n2A3/3K5/9","turn":"r","n":3},
+  {"lv":"mid","fen":"2bk5/9/7N1/7r1/4R4/P4r3/2c6/5A3/9/3K5","turn":"b","n":4},
+  {"lv":"mid","fen":"5nb2/N8/3k5/9/1P7/3pR4/9/9/8n/5K3","turn":"r","n":2},
+  {"lv":"mid","fen":"3k3P1/9/9/5r3/7N1/9/4N2n1/3K1A3/4A4/1c7","turn":"b","n":3},
+  {"lv":"mid","fen":"r5b2/9/5k3/1n7/4P1b2/9/2R6/7C1/5K3/5p3","turn":"r","n":4},
+  {"lv":"mid","fen":"8r/4k4/9/9/c5b2/1C7/5c3/3K5/9/R2A2R2","turn":"b","n":2},
+  {"lv":"mid","fen":"9/9/2P1k4/9/9/c1R5n/8R/4B1n2/9/3K5","turn":"r","n":4},
+  {"lv":"mid","fen":"9/8R/2c2k3/9/3C5/9/r5r2/8R/9/5K3","turn":"b","n":4},
+  {"lv":"mid","fen":"3k5/9/9/9/9/4r4/1r6C/5KR2/2R6/p5B2","turn":"r","n":4},
+  {"lv":"mid","fen":"3r5/3k5/2C6/6n2/P8/9/4Cr3/9/3K5/9","turn":"b","n":4},
+  {"lv":"mid","fen":"9/4k1N2/4b4/1r1RN4/6b2/6r2/3n5/3K4B/9/3A5","turn":"r","n":4},
+  {"lv":"mid","fen":"1P1k1a3/4C4/4b4/9/2N6/5r3/9/n2K5/4A4/3A3p1","turn":"b","n":4},
+  {"lv":"hard","fen":"2r6/r8/R3bk3/3n2R2/3n5/R1B6/9/3A5/9/4K1B1C","turn":"r","n":4},
+  {"lv":"hard","fen":"5N3/9/3k4b/1r6p/8P/1r7/9/4NA3/3K2N2/3p5","turn":"b","n":4},
   {"lv":"hard","fen":"1c1a3c1/6PR1/4k3b/9/n8/9/9/3cB2R1/9/3C1K3","turn":"r","n":4},
-  {"lv":"hard","fen":"6R2/4akn2/2C6/2p2r3/9/9/9/B1C1B2Cr/9/3K1A3","turn":"b","n":4},
-  {"lv":"hard","fen":"3k5/9/3a1a3/7n1/6c2/1RN1c4/7c1/5R3/8R/4KA3","turn":"r","n":4},
+  {"lv":"hard","fen":"5kb2/6C1R/b1R6/9/9/7C1/rr3rp2/9/9/4K1B2","turn":"b","n":3},
+  {"lv":"hard","fen":"9/9/3n1k3/1r7/2b4P1/9/2r5R/3RK1C2/2p6/6B2","turn":"r","n":4},
+  {"lv":"hard","fen":"6b1C/9/1C2ka2b/6n2/4r4/C7p/4r4/7C1/5K3/2B6","turn":"b","n":3},
+  {"lv":"hard","fen":"5a3/2N6/5k3/5r3/4R2r1/9/9/3A1A2B/2RK1R3/6p1n","turn":"r","n":4},
+  {"lv":"hard","fen":"2R6/5k2r/b8/P2r5/1r7/6r2/6R2/B8/4AN3/4K4","turn":"b","n":5},
+  {"lv":"hard","fen":"3R1c3/P5r2/b3ka3/9/4P4/4N4/9/2p2A3/5K3/2B1p4","turn":"r","n":5},
+  {"lv":"hard","fen":"9/3k5/2N6/1P7/2b1n4/1N6p/4P4/5K3/2n3n2/5A3","turn":"b","n":3},
+  {"lv":"hard","fen":"3k5/3ca3P/9/6C2/R8/4p4/1cr3N2/5K3/9/2B6","turn":"r","n":3},
   {"lv":"hard","fen":"1Pb6/6c2/b3k3b/3P5/8p/6n2/3C5/3K5/6r2/3A4C","turn":"b","n":4},
   {"lv":"hard","fen":"9/1R7/c2k1n1R1/9/6b2/8R/p8/4B3B/4A2p1/4K2R1","turn":"r","n":4},
-  {"lv":"hard","fen":"9/4ckN2/2ca4r/9/N1b3b2/1r7/6CR1/B2K5/4A4/3A5","turn":"b","n":4}];
+  {"lv":"hard","fen":"2b2kc2/9/3N1P2b/9/9/rp7/6C2/1r3A3/9/4KABR1","turn":"b","n":3},
+  {"lv":"hard","fen":"5a3/4a1c2/2N2k3/1R1c5/5N2N/1r4Br1/9/3K5/9/3A1A3","turn":"r","n":5},
+  {"lv":"hard","fen":"9/4ckN2/2ca4r/9/N1b3b2/1r7/6CR1/B2K5/4A4/3A5","turn":"b","n":4},
+  {"lv":"hard","fen":"3P1a2C/9/r4k3/2r3R1N/9/9/9/n2A1A2n/9/5K3","turn":"r","n":3},
+  {"lv":"hard","fen":"2bk3C1/N3a4/9/r8/2c6/2R1c1R2/9/B4Kc2/9/2B6","turn":"b","n":3},
+  {"lv":"hard","fen":"9/4k4/b2R5/3rP2R1/1P4r2/8c/9/9/4K4/4p1B2","turn":"r","n":3},
+  {"lv":"hard","fen":"2b2a3/9/b3k4/3N3C1/9/8P/4p2r1/2c1B4/3K5/4r1R2","turn":"b","n":3},
+  {"lv":"hard","fen":"3a1k3/9/b3C3N/1rN1Rn3/9/9/3p5/1p6B/9/3A1KB2","turn":"r","n":4},
+  {"lv":"hard","fen":"2C1ka1R1/6r1P/9/9/6b2/7p1/1p5R1/4K3B/3n5/9","turn":"b","n":3},
+  {"lv":"hard","fen":"2b6/3k5/2r2P3/9/7r1/1R7/7c1/4R4/1n3KR2/5A3","turn":"r","n":4},
+  {"lv":"hard","fen":"3k1an2/r8/3a1a1N1/9/9/4C4/2C4n1/3KBn1C1/4A4/5A3","turn":"b","n":5},
+  {"lv":"hard","fen":"1rb3c2/9/3k5/5r3/2R2C3/8R/9/3A1K3/4An3/2C3B2","turn":"r","n":5},
+  {"lv":"hard","fen":"1Pb3N2/9/b2ak3c/6C2/9/9/6p2/5Kc2/2r1A1C2/9","turn":"b","n":5},
+  {"lv":"hard","fen":"9/4k4/2Ra3n1/3C4N/9/2p6/6R1r/4BA3/c8/3K1A3","turn":"r","n":5},
+  {"lv":"hard","fen":"P2P5/4k4/9/9/2b2r3/8R/cC7/2r6/4K4/2Bc1A3","turn":"b","n":5},
+  {"lv":"hard","fen":"2C2a3/3P5/4bk2b/2N1P4/9/9/n4n3/6n2/c2KA4/3A1A3","turn":"r","n":5},
+  {"lv":"hard","fen":"r2C2b2/5r3/3k1P3/9/4P4/8r/9/6Nc1/3K5/3A5","turn":"b","n":5}];
 /* ==/JH_SP_Q== */
 /* 一輪 3 題：同一天、同一級固定；同一題不重複 */
 function jhSpRound(lv,day){const P=JH_SP_Q.filter(q=>q.lv===lv);if(!P.length)return[];const o=[],used=new Set();let h=jhSpHash("shunpao:"+day+":"+lv);
