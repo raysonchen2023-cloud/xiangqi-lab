@@ -56,6 +56,7 @@ JOURNEY_KEYS.push("m_jhKick");   /* 11/22 開發者（W45② 十州踢館令，0
 JOURNEY_KEYS.push("m_jhScreen");   /* 11/22 開發者（W48 屏風馬門門內，07z9c-screen.js）：jhScreen＝雙馬守中宮第一次過關與最多守幾步、挑錯著與算帳今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhGong");   /* 11/22 開發者（W48 過宮炮門「宣紙蓋子位」，07z9d-gongpao.js）：jhGong＝上次選的難度、今天領過修為的日子、一輪最多記對幾題 */
 JOURNEY_KEYS.push("m_jhQima");   /* 11/22 開發者（W48 起馬門「驛馬繞險路」，07z9f-qima.js）：jhQima＝上次選的難度、今天領過修為的日子 */
+JOURNEY_KEYS.push("m_jhShunpao");   /* 11/22 開發者（W48 順炮門「搶攻算殺步」，07z9i-shunpao.js）：jhShunpao＝上次選的難度、今天領過修為的日子、今天最多連對幾題 */
 JOURNEY_KEYS.push("m_jhCanal");   /* 11/22 開發者（W46 十州漕運殘局，07z9b-jianghu.js）：jhCanal＝今天各州漕船挑好的題、解開了沒（換日清掉） */
 JOURNEY_KEYS.push("m_jhShijiao");   /* 11/22 開發者（W48 仕角炮門「當鋪算兌子」，07z9e-shijiao.js）：jhShijiao＝上次選的難度、今天領過修為的日子、一輪最多算對幾題 */
 JOURNEY_KEYS.push("m_jhFanggong");   /* 11/22 開發者（W48-S4 反宮馬門「活字排局陣」，07z9g-fanggong.js）：jhFanggong＝上次選的難度、今天領過修為的日子 */

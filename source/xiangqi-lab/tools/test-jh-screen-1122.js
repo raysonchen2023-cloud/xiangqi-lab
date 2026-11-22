@@ -179,6 +179,9 @@ test("門內設定：前院不站門人、沒有前院入口；石馬、算盤�
   assert.ok(c.JH_HALL.central.mates && c.JH_HALL.central.spots.yard, "中炮門照舊");
   /* 11/22 開發者實機「怎麼會坐在桌子上」：立繪下面裁掉 cut，裁切線要落在桌子後緣（原圖 y≈270，容許 ±4）；立繪 380×512 */
   assert.ok(H.cut > 0.2 && H.cut < 0.45, "要裁掉下半截：" + H.cut);
+  /* 11/22 史學顧問 191「全圖無字」：掌門抱的大棋子「屏」字從立繪高 0.59 起，裁切要藏住；圖換過（後牆掛物塗平）要升 v */
+  assert.ok(H.cut >= 0.42, "要藏住棋子上的字：" + H.cut);
+  assert.notStrictEqual(H.v, "1122", "門內圖換過要升版");
   const line = H.seat[1] - H.w * 512 / 380 * H.cut;
   assert.ok(Math.abs(line - 270) <= 4, "裁切線要對齊桌子後緣：" + line.toFixed(1));
   assert.match(rd("xiangqi-db/m/07z9b-jianghu.js"), /\(H\.cut\?`;clip-path:inset\(0 0 \$\{H\.cut\*100\}% 0\)/, "裁切在共用的 JhHall 裡做（中炮門一起改）");
