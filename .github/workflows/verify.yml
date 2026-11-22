@@ -31,8 +31,8 @@ jobs:
         with:
           node-version: 24
 
-      - name: 自動檢查腳本的自我測試（文字檢查、模式判斷、守門、私密掃描補強、防注入、略過稽核、測試分類、自動標籤）
-        run: node --test .github/scripts/test-check-text.cjs .github/scripts/test-ci-mode.cjs .github/scripts/test-guard-scan.cjs .github/scripts/test-skip-checks.cjs .github/scripts/test-test-classified.cjs .github/scripts/test-tag-release.cjs .github/scripts/test-check-evidence.cjs
+      - name: 自動檢查腳本的自我測試（文字檢查、模式判斷、守門、私密掃描補強、防注入、略過稽核、測試分類、自動標籤、發布產物守門）
+        run: node --test .github/scripts/test-check-text.cjs .github/scripts/test-ci-mode.cjs .github/scripts/test-guard-scan.cjs .github/scripts/test-skip-checks.cjs .github/scripts/test-test-classified.cjs .github/scripts/test-tag-release.cjs .github/scripts/test-check-evidence.cjs .github/scripts/test-release-guard.cjs
 
       - name: 判斷模式（功能 PR／發布 PR）
         id: mode
@@ -59,6 +59,10 @@ jobs:
       - name: 功能 PR：私密掃描（source/ 全掃）
         if: steps.mode.outputs.mode == 'feature'
         run: node source/xiangqi-lab/tools/oss-scan.js source
+
+      - name: 發布 PR：產物守門（改到的每個檔都要對得到來源：發布產物、src 複製、素材原始資料、CDN 清單；W69 流程盤點第 2 項）
+        if: steps.mode.outputs.mode == 'release'
+        run: node .github/scripts/guard-release-pr.cjs "origin/$BASE_REF"
 
       - name: 發布 PR：完整驗證（全套）
         if: steps.mode.outputs.mode == 'release'
