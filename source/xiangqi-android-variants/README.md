@@ -39,9 +39,9 @@ node scripts/aab-to-apk.js --aab <上一步的 AAB> --signing <signing.propertie
 # 3. P0 三項都綁這個 AAB（P0-UPD／P0-3D 帶第 2 步的 aab-apk.json，工具自己算實際 APK 的雜湊來比，不符＝測試不成立）
 node scripts/check-aab-assets.js --aab <AAB> --cdn --out p0-img.json                         # P0-IMG（報告自己算 AAB 雜湊）
 node scripts/check-upgrade.js --old <上一版 APK> --new <第 2 步的 APK> … --aab-apk <第 2 步的 aab-apk.json> --out <資料夾>   # P0-UPD（upgrade.json）
-node scripts/check-3d.js --build <版號> --aab-apk <第 2 步的 aab-apk.json> …              # P0-3D（W67；先把第 2 步的 APK 裝到模擬器，工具會拉回手機上的 base.apk 核對）
+node scripts/check-3d.js --build <版號> --aab-apk <第 2 步的 aab-apk.json> …              # P0-3D（W67；先把第 2 步的 APK 裝到模擬器，工具會拉回手機上的 base.apk 核對；預設連跑 2 輪，兩輪都全過才算，每次嘗試記在 attempts.jsonl）
 
-# 4. 送審閘門：三份報告都綁在這個 AAB 上、都通過，才能送審
+# 4. 送審閘門：三份報告都綁在這個 AAB 上、都通過，才能送審（例外只認倉庫 .github/p0-waivers.json，要走 PR、iMac Claude 2 逐行審；轉述的決定不算）
 node scripts/p0-gate.js --aab <AAB> --build <網頁版號> --reports p0-img.json <資料夾>/upgrade.json <P0-3D Android 12 報告> <P0-3D Android 16 報告>
 ```
 
