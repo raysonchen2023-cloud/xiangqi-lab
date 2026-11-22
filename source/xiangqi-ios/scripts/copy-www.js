@@ -160,14 +160,17 @@ async function cdnGet(rel) {
   for (const [rel, p] of plan) if (p.buf) { const c = ctlCheck(rel, p.buf); if (c) bad.push(c); }
   if (br.includes(13)) bad.push("native-bridge.js：有 CR（\\r）");
 
-  /* 大小摘要 */
-  const byDir = {}; let total = 0;
-  for (const [rel, p] of plan) { const top = rel.includes("/") ? rel.split("/").slice(0, rel.startsWith("data/") ? 2 : 1).join("/") : "(根目錄)"; byDir[top] = (byDir[top] || 0) + p.size; total += p.size; }
+  /* 大小摘要（--cdn-fetch 換檔後要重算，見下方寫 native-build.json 前） */
+  const summarize = () => {
+    const byDir = {}; let total = 0;
+    for (const [rel, p] of plan) { const top = rel.includes("/") ? rel.split("/").slice(0, rel.startsWith("data/") ? 2 : 1).join("/") : "(根目錄)"; byDir[top] = (byDir[top] || 0) + p.size; total += p.size; }
+    return { total, top: Object.entries(byDir).sort((a, b) => b[1] - a[1]) };
+  };
+  let { total, top } = summarize();
 
   console.log(`來源：${SITE}`);
   console.log(`已發布 commit：${REF} = ${commit.slice(0, 10)}（版本 ${siteVersion}）；工作區 sw.js 版本 ${wtVersion}${wtVersion !== siteVersion ? "（工作區不是已發布版，程式一律取已發布的）" : ""}`);
   console.log(`git 追蹤的檔 ${ents.length} 個；工作區補的大檔 ${wt.length} 個；共 ${plan.size} 個、${MB(total)}`);
-  const top = Object.entries(byDir).sort((a, b) => b[1] - a[1]);
   console.log("最大的幾個資料夾：" + top.slice(0, 12).map(([k, v]) => `${k} ${MB(v)}`).join("、"));
   if (bad.length) { console.error("✘ 不能用：\n  " + bad.join("\n  ")); process.exit(1); }
 
@@ -219,6 +222,7 @@ async function cdnGet(rel) {
     }
   };
   clean(WWW, "");
+  ({ total, top } = summarize());   // 含 --cdn-fetch 從 CDN 換進來的檔（2026-11-22 之前 bytes 少算了這些）
   const info = { app: "象棋千秋", ref: REF, commit, siteVersion, generatedAt: new Date().toISOString(), files: plan.size + 1, bytes: total, byDir: Object.fromEntries(top.map(([k, v]) => [k, v])), cdnChecked: CDN_CHECK, cdnDiff };
   fs.writeFileSync(path.join(WWW, "native-build.json"), JSON.stringify(info, null, 1) + "\n");
   fs.writeFileSync(LIST_OUT, JSON.stringify({ commit, siteVersion, files: list }) + "\n");
