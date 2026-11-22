@@ -15,6 +15,9 @@ permissions:
 
 jobs:
   guard-base:
+    # 只跑本倉庫分支開的 PR（PR #43 審查 A）：pull_request_target 會自動跑 fork 開的 PR 程式，等於繞過 pull_request 對 fork「第一次貢獻要核准」；
+    # 現在雖然只有讀取權、沒有 secrets，以後若加快取或寫入權就會變成漏洞。fork 的 PR 照樣有 verify.yml（pull_request）把關。
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     timeout-minutes: 40
     steps:
