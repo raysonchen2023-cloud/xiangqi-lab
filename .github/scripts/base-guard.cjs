@@ -65,6 +65,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["假略過檢查", ["node", ".github/scripts/check-fake-skip.cjs"]],
   ["斷言次數檢查", ["node", ".github/scripts/check-zero-assert.cjs", ASSERT_DIR, "base-verify.txt"]],   /* W69 第 10 項 */
   ["略過稽核", ["node", ".github/scripts/check-test-skips.cjs", "base-verify.txt"]],
+  ["略過白名單本身", ["node", ".github/scripts/check-skip-allow.cjs", "--base", base]],   /* W69 流程盤點高 7：每條寫缺哪個檔、只能減不能增 */
   ["todo 稽核", ["node", ".github/scripts/check-test-todos.cjs", "base-tally.json", "--base", base]],   /* W69 流程盤點第 9 項：預期失敗也要在白名單、白名單只能減 */
   ["0 項檢查", ["node", ".github/scripts/check-test-empty.cjs", "base-tally.json"]],   /* W69 流程盤點第 18 項：0 項的檔、沒跑到的檔都紅燈 */
   ["新測試要分類", ["node", ".github/scripts/check-test-classified.cjs", base]],
@@ -77,6 +78,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["完整驗證", ["node", "source/xiangqi-lab/tools/verify-all.js", "--skip", "release-verify", "--out", "base-verify.txt", "--tally-out", "base-tally.json"]],
   ["斷言次數檢查", ["node", ".github/scripts/check-zero-assert.cjs", ASSERT_DIR, "base-verify.txt"]],   /* W69 第 10 項 */
   ["略過稽核", ["node", ".github/scripts/check-test-skips.cjs", "base-verify.txt"]],
+  ["略過白名單本身", ["node", ".github/scripts/check-skip-allow.cjs", "--base", base]],   /* W69 流程盤點高 7：每條寫缺哪個檔、只能減不能增 */
   ["todo 稽核", ["node", ".github/scripts/check-test-todos.cjs", "base-tally.json", "--base", base]],   /* W69 流程盤點第 9 項：預期失敗也要在白名單、白名單只能減 */
   ["0 項檢查", ["node", ".github/scripts/check-test-empty.cjs", "base-tally.json"]],   /* W69 流程盤點第 18 項：0 項的檔、沒跑到的檔都紅燈 */
   ["新測試要分類", ["node", ".github/scripts/check-test-classified.cjs", base]],

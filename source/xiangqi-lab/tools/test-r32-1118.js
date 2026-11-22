@@ -9,13 +9,13 @@ const assert = require("node:assert/strict"), test = skipMissing(require("node:t
 const ROOT = path.join(__dirname, "..", "..");
 /* 11/18 公開證據（0319）：公開副本（ROOT 有 STAGE-MANIFEST.json）沒有 xiangqi-ios、xiangqi-lab/site、xiangqi-lab/src 的支援／隱私頁、xiangqi-db/art/docs、xiangqi-db/i18n-en.json（只放 CDN）。
    site 的檔、文件原稿、支援／隱私頁退回倉庫根目錄那一份（跟線上同一份：../、../data/docs/、../support.html）；還是找不到的子測試照實標略過、寫原因。開發者電腦上（沒有 STAGE-MANIFEST.json）照常跑，缺檔照樣失敗 */
-const PUB = fs.existsSync(path.join(ROOT, "STAGE-MANIFEST.json")) || !fs.existsSync(path.join(ROOT, "xiangqi-ios"));   /* 公開副本的 run-tests 會把 source/ 抄到暫存資料夾再跑（那裡沒有 STAGE-MANIFEST.json），沒有 xiangqi-ios 也算公開副本 */
+const PUB = fs.existsSync(path.join(ROOT, "STAGE-MANIFEST.json")) || process.env.XQ_PUBLIC_COPY === "1";   /* 公開副本：倉庫的 source/run-tests.js 會設 XQ_PUBLIC_COPY=1（W69 盤點高 7：以前用「沒有 xiangqi-ios」判斷，run-tests 複製 iOS 後就判錯） */
 function alt(p) { p = String(p); if (!PUB || fs.existsSync(path.join(ROOT, p))) return p;
   for (const [re, to] of [[/^xiangqi-lab\/site\//, "../"], [/^xiangqi-db\/art\/docs(\/|$)/, "../data/docs$1"], [/^xiangqi-lab\/src\/(support|privacy)\.html$/, "../$1.html"]]) if (re.test(p)) { const q = p.replace(re, to); if (fs.existsSync(path.join(ROOT, q))) return q }
   return p }
 function skipMissing(t0) {
   const why = p => { const s = String(p || "").split(String.fromCharCode(92)).join("/");
-    return /xiangqi-ios/.test(s) ? "沒有 xiangqi-ios（公開副本不含）" : /i18n-en\.json/.test(s) ? "沒有 xiangqi-db/i18n-en.json（只放 CDN）" : /xiangqi-db\/art\/docs/.test(s) ? "沒有 xiangqi-db/art/docs 文件原稿（公開副本不含）" : /xiangqi-lab\/(site|src)\//.test(s) ? "沒有 " + s.slice(s.indexOf("xiangqi-lab/")) + "（公開副本不含）" : /docs-internal/.test(s) ? "沒有內部台帳（公開副本不含）" : "" };
+    return /xiangqi-ios[\\/](www([\\/]|$)|ios[\\/]App[\\/]App[\\/](public([\\/]|$)|capacitor\.config\.json))/.test(s) ? "沒有 iOS 建置產物 xiangqi-ios/www、ios/App/App/public、capacitor.config.json（cap sync 產生，.gitignore 不進倉庫）" : /xiangqi-ios[\\/]appstore/.test(s) ? "沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦）" : /xiangqi-ios/.test(s) ? "沒有 xiangqi-ios（公開副本不含）" : /i18n-en\.json/.test(s) ? "沒有 xiangqi-db/i18n-en.json（只放 CDN）" : /xiangqi-db\/art\/docs/.test(s) ? "沒有 xiangqi-db/art/docs 文件原稿（公開副本不含）" : /xiangqi-lab\/(site|src)\//.test(s) ? "沒有 " + s.slice(s.indexOf("xiangqi-lab/")) + "（公開副本不含）" : /docs-internal/.test(s) ? "沒有內部台帳（公開副本不含）" : "" };
   const w = (name, opt, fn) => { if (typeof opt === "function") { fn = opt; opt = undefined }
     const run = async t => { try { return await fn(t) } catch (e) { const r = PUB && e && e.code === "ENOENT" ? why(e.path) : ""; if (r) { t.skip(r); return } throw e } };
     return opt ? t0(name, opt, run) : t0(name, run) };
