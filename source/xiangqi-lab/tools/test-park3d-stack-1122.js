@@ -12,13 +12,13 @@ const CODE = SRC.slice(a, b);
 
 /* 黑洞第一戰的局面（BHX_FEN）：中路由上到下 4 將、13 士、22 俥、31 炮；85 帥在最下面 */
 const FEN = "4k4/4a4/2N1R1N2/4C4/8P/9/9/9/9/4KAB2";
-function board() { const b = Array(90).fill(null); FEN.split("/").forEach((row, r) => { let c = 0; for (const ch of row) { if (/\d/.test(ch)) c += +ch; else { b[r * 9 + c] = ch; c++ } } }); return b }
+function board(fen) { const b = Array(90).fill(null); (fen || FEN).split("/").forEach((row, r) => { let c = 0; for (const ch of row) { if (/\d/.test(ch)) c += +ch; else { b[r * 9 + c] = ch; c++ } } }); return b }
 /* 背面視角的畫面：同一路 x 一樣，每排往下 24px，人偶高 30px（11/22 預覽站 402×874 量到的數字） */
 const scr = (i) => ({ x: 40 + (i % 9) * 40, y: 300 + Math.floor(i / 9) * 24 });
 function load(o = {}) {
   const made = [], taps = [];
   const mk = (tag) => { const e = { tag, style: {}, attrs: {}, kids: [], textContent: "", setAttribute(k, v) { this.attrs[k] = v }, append(...x) { this.kids.push(...x) }, remove() { this.removed = true }, onclick: null, onpointerdown: null }; made.push(e); return e };
-  const B = board(), pieces = {}; B.forEach((p, i) => { if (p) pieces[i] = { visible: true } });
+  const B = board(o.fen), pieces = {}; B.forEach((p, i) => { if (p) pieces[i] = { visible: true } });
   const c = {
     UNDER: o.under !== false, GIANT: true, selI: o.sel == null ? -1 : o.sel, SNAP: { b: B, me: "r" }, pieces,
     screenOf: (i) => scr(i), headOf: (i) => { const s = scr(i); return { x: s.x, y: s.y - 30 } },
@@ -70,4 +70,18 @@ test("〔原始碼〕兩處點棋子都走 tapPiece；離開背面就收選單�
   assert.match(SRC, /UNDER=cam\.position\.y<MY;if\(!UNDER\)stkClose\(\);/);
   assert.doesNotMatch(SRC, /gntXray|GXR\b/, "半透明試作（背面變黑影）不能留");
   assert.ok(!/[;})]\s*\/\/(?!#)/.test(CODE.split("\n").filter((l) => !/^\s*\/\*/.test(l)).join("\n").replace(/\/\*[\s\S]*?\*\//g, "")), "W68 這段沒有一行程式後面接 // 註解");
+});
+
+test("PR #38 審查：疊子裡自己的子只有一顆＝直接選它，不跳只有一個按鈕的選單", () => {
+  let L = load(); L.R.tapPiece(22, 200, 380);   /* 俥後面只疊黑士、黑將 */
+  assert.deepEqual(L.taps, [22]); assert.equal(L.c.el.last, undefined, "不跳選單");
+  L = load({ fen: "4k4/9/4R4/4p4/9/9/9/9/9/3K5" }); L.R.tapPiece(31, 200, 400);   /* 點到擋在前面的黑卒，後面只有自己的俥 */
+  assert.deepEqual(L.taps, [22], "直接選後面那顆自己的俥"); assert.equal(L.c.el.last, undefined);
+  L = load(); L.R.tapPiece(13, 200, 360);   /* 點黑士：後面只有黑將，沒有自己的子 */
+  assert.deepEqual(L.taps, [13], "照舊交給 onTap");
+});
+
+test("〔原始碼〕PR #38 審查：點棋盤任何地方（含空白處）都先收起疊子選單；選單按鈕的 pointerup 不往棋盤傳", () => {
+  assert.equal(SRC.split("stkClose();const i=pick(e.clientX,e.clientY);").length - 1, 2, "兩處點擊處理在 pick 之前都收選單");
+  assert.ok(SRC.includes("b.onpointerdown=b.onpointerup=e=>e.stopPropagation();"), "選單按鈕的 pointerup 不往棋盤傳");
 });

@@ -19,7 +19,7 @@ function kit() {
     const ptrs=new Map(),TDPT=new Map(),TDOR={pin:null,hold:0,z:1};let down=null,lastTap=0,pinch=null,tyaw=0,tpitch=.5,tzoom=1,userZ=false,tapAmb=null;
     const IN={ph:""},opt={onTap:i=>log.tap.push(i)},clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
     const spread=()=>{const p=[...ptrs.values()];return Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)};
-    const inEnd=()=>{},gntFocus=()=>null,reset=()=>{},pick=()=>3,showAmb=()=>{},infoPick=()=>null,pwPoke=()=>{},tdDown=()=>{},tdMove=()=>{},tdUp=()=>{},tdDragEnd=()=>{},tapPiece=(i)=>opt.onTap(i);   /* W68（11/22）點棋子改走 tapPiece：背面疊子才跳選單（另見 test-park3d-stack-1122.js），這裡測觸控、照舊直接交給 onTap */
+    const inEnd=()=>{},gntFocus=()=>null,reset=()=>{},pick=()=>3,showAmb=()=>{},infoPick=()=>null,pwPoke=()=>{},tdDown=()=>{},tdMove=()=>{},tdUp=()=>{},tdDragEnd=()=>{},tapPiece=(i)=>opt.onTap(i),stkClose=()=>{};   /* W68（11/22）點棋子改走 tapPiece：背面疊子才跳選單（另見 test-park3d-stack-1122.js），這裡測觸控、照舊直接交給 onTap */
     const performance={now:()=>Date.now()};
     ${CODE}
     return{st:()=>({n:ptrs.size,pinch:!!pinch,down:!!down,yaw:tyaw,zoom:tzoom})}`);

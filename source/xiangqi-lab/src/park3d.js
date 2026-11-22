@@ -2436,10 +2436,11 @@
       const tip=document.createElement("span");tip.textContent="選哪顆？";tip.style.cssText="align-self:center;color:#3a2618;font-size:13px;margin-right:2px";stkMenu.append(tip);
       for(const k of own){const b=document.createElement("button");b.type="button";b.setAttribute("role","menuitem");const p=B[k];b.textContent=(NAMES[sideOf(p)]||{})[p.toUpperCase()]||p;
         b.style.cssText="min-width:40px;min-height:40px;border-radius:50%;border:2px solid #8a6a3a;background:#f7ecd2;color:"+(sideOf(p)==="r"?"#b0261c":"#222")+";font:800 18px/1 serif;cursor:pointer";
-        b.onpointerdown=e=>e.stopPropagation();b.onclick=e=>{e.stopPropagation();stkClose();if(opt.onTap)opt.onTap(k)};stkMenu.append(b)}
+        b.onpointerdown=b.onpointerup=e=>e.stopPropagation();b.onclick=e=>{e.stopPropagation();stkClose();if(opt.onTap)opt.onTap(k)};stkMenu.append(b)}
       el.append(stkMenu);stkT=setTimeout(stkClose,4000);return true};
     /* 點到一顆子：背面、還沒選子、正後方疊了別的子 → 跳選單；其他情況照舊 */
-    const tapPiece=(i,x,y)=>{stkClose();if(selI<0&&UNDER&&GIANT){const L=gntStack(i);if(L.length>1&&showStack(L,x,y))return}if(opt.onTap)opt.onTap(i)};
+    const tapPiece=(i,x,y)=>{stkClose();if(selI<0&&UNDER&&GIANT){const L=gntStack(i),B=SNAP.b||[],own=L.filter(k=>B[k]&&sideOf(B[k])===SNAP.me);   /* PR #38 審查（iMac Claude 1）：自己的子只有一顆就直接選它（就算點到的是擋在前面的對方子），兩顆以上才跳選單 */
+      if(own.length>1&&showStack(own,x,y))return;if(own.length===1&&own[0]!==i){if(opt.onTap)opt.onTap(own[0]);return}}if(opt.onTap)opt.onTap(i)};
     /* 望遠鏡：站在預設視角的位置（GNT_V[1]），往 yaw／pitch 的方向看；視角＝1 倍視角×zoom（zoom 最小 .025＝40 倍） */
     const gntTele=()=>{if(cam.near!==.5){cam.near=.5;cam.updateProjectionMatrix()}const P=GV1.set(GNT_V[1][0]*GS,GNT_V[1][1]*GS,GNT_V[1][2]*GS),az=-yaw,elv=clamp(.1+pitch*1.2,-.9,1.45);cam.position.copy(P);
       GV2.set(P.x-Math.sin(az)*Math.cos(elv),P.y+Math.sin(elv),P.z-Math.cos(az)*Math.cos(elv));cam.lookAt(GV2);const f=clamp((CAMV.fov||50)*zoom,1,CAMV.fov||50);if(Math.abs(cam.fov-f)>1e-4){cam.fov=f;cam.updateProjectionMatrix()}gntClear(false)};
@@ -2616,7 +2617,7 @@
     const tdUp=e=>{TDPT.delete(e.pointerId);if(TDOR.pin){if(TDPT.size<2){TDOR.pin=null;TDOR.hold=0;TDOR.rel=performance.now();TDP=null;pwPoke(1700)}return}   /* 捏合放手：剩下的那根手指不再拖、不算點擊 */
       const P=TDP;if(!P||e.pointerId!==P.id)return;TDP=null;if(P.orb){TDOR.hold=0;TDOR.rel=performance.now();pwPoke(1700);return}
       if(P.drag){TDP={drag:P.drag};const i=pick(e.clientX,e.clientY-TDUP),ok=i>=0&&selI>=0&&SNAP.t.includes(i);if(ok){tdDragEnd(true);if(opt.onTap)opt.onTap(i)}else{tdDragEnd(false);if(i===-2&&tapAmb)showAmb(tapAmb)}TDP=null;return}
-      if(P.moved)return;const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){tapPiece(i,e.clientX,e.clientY);return}
+      if(P.moved)return;stkClose();const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}if(i>=0){tapPiece(i,e.clientX,e.clientY);return}
       if(selI>=0&&opt.onTap)opt.onTap(selI)};   /* 點棋盤外＝取消選取 */
     /* 11/16 hspx P0（開發者「不知道滑到那個地方 導致轉動旋轉會壞掉失常」「會無法兩指放大或是正常旋轉畫面」）：手指滑出畫面、碰到按鈕或被系統手勢搶走時，iPhone 有時不送 pointerup／pointercancel，
        ptrs（塔防是 TDPT）留下一根看不見的手指，之後一根手指按下去就被當成兩指捏合。第一根手指（isPrimary＝這時沒有別的手指在螢幕上）按下時先清掉殘留的；失去追蹤（lostpointercapture）也當放開 */
@@ -2635,7 +2636,7 @@
       if(!down)return;const d=down;down=null;if(d.moved)return;const inH=IN.ph==="held";   /* 11/11 入座運鏡中點的這一下：用玩家當下看到的畫面照常吸附、選子，處理完才跳到 topfit */
       try{const now=performance.now();
       const i0=pick(e.clientX,e.clientY),onPc=i0>=0||i0===-2;   /* 11/17 iMac H P2-3：按「＋」放大後點棋子，兩下太快（選子、再點落點）會被當成「點兩下回全盤」，鏡頭又縮回去。點到棋盤格（選子、走子）一律照常處理，只有點在棋盤外的兩下才回正 */
-      if(!onPc&&now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=onPc?0:now;let fg=null;if(GIANT)try{fg=gntFocus(e.clientX,e.clientY,70)}catch(_){}const i=pick(e.clientX,e.clientY);if(i===-2){if(tapAmb)showAmb(tapAmb);return}
+      if(!onPc&&now-lastTap<320&&(tyaw||tpitch!==HOME.p||tzoom!==HOME.z)){reset();lastTap=0;return}lastTap=onPc?0:now;let fg=null;if(GIANT)try{fg=gntFocus(e.clientX,e.clientY,70)}catch(_){}stkClose();const i=pick(e.clientX,e.clientY);   /* 點棋盤任何地方都先收起疊子選單（PR #38 審查：點空白處原本沒收） */if(i===-2){if(tapAmb)showAmb(tapAmb);return}
       if(i>=0){
         tapPiece(i,e.clientX,e.clientY);
         // 選子後保留這一格看到的視角，讓落點留在手指剛看到的位置。
