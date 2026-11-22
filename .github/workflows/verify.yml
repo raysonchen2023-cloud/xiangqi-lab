@@ -32,7 +32,7 @@ jobs:
           node-version: 24
 
       - name: 自動檢查腳本的自我測試（文字檢查、模式判斷、守門、私密掃描補強、防注入、略過稽核、測試分類、自動標籤、基準版守門、發布產物守門、todo 稽核）
-        run: node --test .github/scripts/test-check-text.cjs .github/scripts/test-ci-mode.cjs .github/scripts/test-guard-scan.cjs .github/scripts/test-skip-checks.cjs .github/scripts/test-test-classified.cjs .github/scripts/test-tag-release.cjs .github/scripts/test-check-evidence.cjs .github/scripts/test-base-guard.cjs .github/scripts/test-release-guard.cjs .github/scripts/test-todo-checks.cjs
+        run: node --test .github/scripts/test-check-text.cjs .github/scripts/test-ci-mode.cjs .github/scripts/test-guard-scan.cjs .github/scripts/test-skip-checks.cjs .github/scripts/test-test-classified.cjs .github/scripts/test-tag-release.cjs .github/scripts/test-check-evidence.cjs .github/scripts/test-base-guard.cjs .github/scripts/test-release-guard.cjs .github/scripts/test-todo-checks.cjs .github/scripts/test-check-verify-log.cjs
 
       - name: 判斷模式（功能 PR／發布 PR）
         id: mode
@@ -74,6 +74,10 @@ jobs:
       - name: 發布 PR：data/docs/evidence.md 要是這一次 CI 重產的（只忽略執行編號、產生時間）
         if: steps.mode.outputs.mode == 'release'
         run: node .github/scripts/check-evidence.cjs data/docs/evidence.md evidence-ci.md
+
+      - name: 發布 PR：data/docs/verification-log.txt 要跟 evidence.md 同一次 CI 執行、版本對、內容跟這次重跑一致（W69 流程盤點第 12 項）
+        if: steps.mode.outputs.mode == 'release'
+        run: node .github/scripts/check-verify-log.cjs . verify-ci.txt
 
       - name: 發布 PR：私密掃描與同步檢查
         if: steps.mode.outputs.mode == 'release'

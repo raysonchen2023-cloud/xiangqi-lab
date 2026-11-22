@@ -29,6 +29,7 @@ const no = (status, p, c) => assert.equal(J1(status, p, c).ok, false, status + "
 test("發布產物放行；驗證紀錄可以以新換舊，其他發布產物不能刪", () => {
   for (const p of ["index.html", "sw.js", "release.json", "data/docs/evidence.md", "data/docs/foss.md", "source/STAGE-MANIFEST.json", "source/verification-log-20261122-0804.txt"]) ok("M", p);
   ok("A", "source/verification-log-20261123-1200.txt");
+  ok("M", "data/docs/verification-log.txt");   /* W69 流程盤點第 12 項：驗證紀錄改放 data/docs（CI 版，跟 evidence.md 同號） */
   ok("D", "source/verification-log-20261121-0643.txt");
   for (const p of ["index.html", "release.json", "data/docs/evidence.md", "source/STAGE-MANIFEST.json"]) no("D", p);
 });
