@@ -51,6 +51,8 @@ test("題庫：第 7～16 課、每課兵七兵三各一條；每條從開局照
 test("出題：選項三個不重複、含答案、都有同一邊挺兵的例題；初級三種子、中級一同類、高級兩同類；同一天同一級固定、一輪三題答案不同", () => {
   const { R } = load();
   const L = R.jhXrLines(D);
+  /* 三級的「同類錯誤選項數」寫死在這裡（PR #55 審查：原本拿模組自己的 same 當標準，把高級改成 1 也照樣過） */
+  assert.deepEqual(J(R.JH_XR_LV.map((x) => [x.k, x.same])), [["easy", 0], ["mid", 1], ["hard", 2]]);
   for (const lv of R.JH_XR_LV) for (const day of ["2026-12-01", "2026-12-02", "2026-12-03", "2026-12-04"]) {
     const Q = R.jhXrRound(L, lv, day);
     assert.equal(Q.length, 3, lv.k + " " + day);
