@@ -200,18 +200,22 @@ test("repo-pin：本機檔跟 origin/main 一樣才算；不一樣、main 沒有
   const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-pin-"));
   try {
     const f = path.join(d, ".github", "p0-waivers.json"); fs.mkdirSync(path.dirname(f)); fs.writeFileSync(f, '{"items":[]}\n');
+    /* PR #58 複審：比 blob id（hash-object --path 會照倉庫換行設定轉換），不比位元組——autocrlf 工作區是 CRLF 也不誤判 */
+    const B1 = "1".repeat(40), B2 = "2".repeat(40);
     const calls = [];
-    const fake = ({ main = '{"items":[]}\n', fetchFail = false, showFail = false, notRepo = false } = {}) => (args, cwd) => {
-      calls.push(args[0]);
-      if (args[0] === "rev-parse") { if (notRepo) throw new Error("not a git repo"); return Buffer.from(d + "\n") }
+    const fake = ({ main = B1, local = B1, fetchFail = false, showFail = false, notRepo = false } = {}) => (args, cwd) => {
+      calls.push(args[0] + (args[1] === "--show-toplevel" ? ":top" : ""));
+      if (args[0] === "rev-parse" && args[1] === "--show-toplevel") { if (notRepo) throw new Error("not a git repo"); return Buffer.from(d + "\n") }
       if (args[0] === "fetch") { if (fetchFail) throw new Error("offline"); return Buffer.from("") }
-      if (args[0] === "show") { assert.equal(args[1], "origin/main:.github/p0-waivers.json"); if (showFail) throw new Error("no such path"); return Buffer.from(main) }
+      if (args[0] === "rev-parse") { assert.equal(args[1], "origin/main:.github/p0-waivers.json"); if (showFail) throw new Error("no such path"); return Buffer.from(main + "\n") }
+      if (args[0] === "hash-object") { assert.equal(args[1], "--path=.github/p0-waivers.json"); return local + "\n" }
       throw new Error("unexpected " + args[0]);
     };
     assert.equal(sameAsMain(f, fake()).ok, true);
-    assert.ok(calls.indexOf("fetch") >= 0 && calls.indexOf("fetch") < calls.indexOf("show"), "先 fetch 再 show");
-    assert.match(sameAsMain(f, fake({ main: '{"items":[{"code":"P0-IMG/cdn"}]}\n' })).msg, /跟 origin\/main 那份不一樣/);
-    assert.match(sameAsMain(f, fake({ main: '{"items":[]}\r\n' })).msg, /不一樣/, "換行不同也算不一樣（逐位元組）");
+    assert.ok(calls.indexOf("fetch") >= 0 && calls.indexOf("fetch") < calls.lastIndexOf("rev-parse"), "先 fetch 再查 origin/main");
+    assert.match(sameAsMain(f, fake({ local: B2 })).msg, /跟 origin\/main 那份不一樣/, "內容改過＝blob 不同");
+    fs.writeFileSync(f, '{"items":[]}\r\n'); assert.equal(sameAsMain(f, fake()).ok, true, "工作區 CRLF、轉換後 blob 一樣＝沒改過，不誤擋");
+    assert.match(sameAsMain(f, fake({ main: "xyz" })).msg, /blob id 格式不對/);
     assert.match(sameAsMain(f, fake({ showFail: true })).msg, /origin\/main 沒有/);
     assert.match(sameAsMain(f, fake({ fetchFail: true })).msg, /fetch origin main 失敗/);
     assert.match(sameAsMain(f, fake({ notRepo: true })).msg, /不在 git 倉庫裡/);
