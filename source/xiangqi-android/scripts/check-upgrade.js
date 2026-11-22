@@ -11,6 +11,7 @@
 //      網頁更新檢查關閉、沒有更新提示視窗、「檢查更新」按鈕說由 Google Play 更新
 // 用法：node scripts/check-upgrade.js --old <舊.apk> --old-build <舊版號> --new <新.apk> --new-build <新版號> [--serial emulator-5580]
 //         [--out <資料夾>] [--cold 3] [--no-old-worker（舊版本身就是原生版、不會有舊 Worker 時）] [--allow-wipe-device（實體手機才要，會刪存檔）]
+//         [--aab-sha <要送審 AAB 的 SHA-256>（送審前必帶：新版 APK 要由 aab-to-apk.js 從那個 AAB 產生；upgrade.json 記 tool／aabSha256／pass／oldWorker 給 p0-gate.js）]
 //   預設只在模擬器上跑（device-guard.js）：會解除安裝 App。冷啟後看 20 秒，期間跳出過更新視窗就算
 //   需要已開好的模擬器或手機、adb（環境變數 ADB 或 PATH）；兩個 APK 要同一把簽章（測試金鑰），不然不能覆蓋安裝
 // 結束代碼：0＝通過；1＝升級後有任何一項不符；2＝用法錯誤，或舊版沒能建立要重現的狀態（測試本身不成立，不能當通過）
@@ -21,14 +22,15 @@ const { connect } = require("./cdp.js");
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d };
 const O = { old: arg("--old"), oldBuild: arg("--old-build"), neu: arg("--new"), newBuild: arg("--new-build"), serial: arg("--serial", "emulator-5580"),
   out: path.resolve(arg("--out", "upgrade-check")), cold: Number(arg("--cold", 3)), oldWorker: !process.argv.includes("--no-old-worker"),
-  allowWipe: process.argv.includes("--allow-wipe-device") };
+  allowWipe: process.argv.includes("--allow-wipe-device"),
+  aabSha: arg("--aab-sha") };   /* W69（流程盤點第 3 項）：新版 APK 要由 aab-to-apk.js 從要送審的 AAB 產生，這裡帶那個 AAB 的 SHA-256，寫進報告給 p0-gate.js 核對 */
 const { checkDevice } = require("./device-guard.js");
 const DIALOG_WATCH_SEC = 20;
 const DIALOGS = `[...document.querySelectorAll('.modal')].filter(x=>/有新版本|新版可用|new version|update available/i.test(x.textContent)).length`;
 const PKG = "com.raysonchen.xiangqiqianqiu", ADB = process.env.ADB || "adb", PORT = 9290;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const adb = (...a) => cp.execFileSync(ADB, ["-s", O.serial, ...a], { encoding: "utf8", timeout: 180000 }).trim();
-const R = { serial: O.serial, old: { apk: O.old && path.basename(O.old), build: O.oldBuild }, new: { apk: O.neu && path.basename(O.neu), build: O.newBuild }, before: null, after: [] };
+const R = { tool: "P0-UPD", aabSha256: O.aabSha && /^[0-9a-f]{64}$/i.test(O.aabSha) ? O.aabSha.toLowerCase() : null, oldWorker: O.oldWorker, pass: false, serial: O.serial, old: { apk: O.old && path.basename(O.old), build: O.oldBuild }, new: { apk: O.neu && path.basename(O.neu), build: O.newBuild }, before: null, after: [] };
 const save = () => fs.writeFileSync(path.join(O.out, "upgrade.json"), JSON.stringify(R, null, 1) + "\n");
 const snap = name => { try { fs.writeFileSync(path.join(O.out, name + ".png"), cp.execFileSync(ADB, ["-s", O.serial, "exec-out", "screencap", "-p"], { maxBuffer: 1e8 })); return name + ".png" } catch (e) { return null } };
 function fail(code, msg) { R.result = code === 1 ? "不通過" : "測試不成立"; R.error = msg; R.screenshot = snap("upgrade-error"); save(); console.error("✘ " + msg); process.exit(code) }
@@ -126,7 +128,7 @@ async function main() {
     } finally { c2.close() }
   }
   const bad = R.after.filter(r => !r.pass);
-  R.result = bad.length ? "不通過" : "通過"; save();
+  R.result = bad.length ? "不通過" : "通過"; R.pass = !bad.length; save();   /* pass 給 p0-gate.js 看；用 --no-old-worker 跑的，閘門另外擋（規則：舊 Worker 要實際接管過） */
   console.log(bad.length ? `✘ 不能送審：${bad.length}／${O.cold} 次冷啟不符（P0-UPD）` : `✔ 升級測試通過：${O.oldBuild} → ${O.newBuild}，冷啟 ${O.cold} 次都符合`);
   process.exit(bad.length ? 1 : 0);
 }
