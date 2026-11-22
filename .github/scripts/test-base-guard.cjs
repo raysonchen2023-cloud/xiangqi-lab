@@ -198,6 +198,7 @@ test("主流程：PR 只在 testkinds 新增本 PR 測試的登記 → testkinds
   const calls = [], wrote = {};
   const git = (...a) => {
     if (a[0] === "diff") return (a.includes("--diff-filter=A") ? ["source/xiangqi-lab/tools/test-new-1122.js"] : files).join(NUL);
+    if (a[0] === "merge-base") return "mb1234" + NL;
     if (a[0] === "show") return a[1].endsWith("testkinds.js") ? TK_BASE : "main 版";
     throw new Error("沒預期的 git");
   };
@@ -211,4 +212,21 @@ test("主流程：PR 只在 testkinds 新增本 PR 測試的登記 → testkinds
   const git2 = (...a) => a[0] === "diff" ? (a.includes("--diff-filter=A") ? ["source/xiangqi-lab/tools/test-new-1122.js"] : only).join(NUL) : TK_BASE;
   assert.equal(runGuard({ git: git2, spawn: (c, a) => { calls2.push(a); return { status: 0 } }, fsx, log: () => {} }), 0);
   assert.equal(calls2.length, 0, "沒有要換回的守門，不另跑基準版");
+});
+
+test("主流程：別的 PR 先合併、main 多了別人的登記行，本 PR 還沒 update-branch、只加自己那一行 → 跟分岔點比，不換回（PR #51 審查）", () => {
+  const TK_MAIN = tkAdd('  "test-other-1122.js",   /* 別的 PR 已合併 */');
+  const files = [TK_PATH, "source/xiangqi-lab/tools/test-new-1122.js"], calls = [], asked = [];
+  const git = (...a) => {
+    if (a[0] === "diff") return (a.includes("--diff-filter=A") ? ["source/xiangqi-lab/tools/test-new-1122.js"] : files).join(NUL);
+    if (a[0] === "merge-base") return "fork111" + NL;
+    if (a[0] === "show") { asked.push(a[1]); return a[1].startsWith("fork111:") ? TK_BASE : TK_MAIN }
+    throw new Error("沒預期的 git");
+  };
+  const fsx = { existsSync: () => true, rmSync() {}, mkdirSync() {}, writeFileSync() {}, readFileSync: () => tkAdd(NEW_LINE) };
+  assert.equal(runGuard({ git, spawn: (c, a) => { calls.push(a); return { status: 0 } }, fsx, log: () => {} }), 0);
+  assert.ok(asked.includes("fork111:" + TK_PATH), "要讀分岔點那一版");
+  assert.equal(calls.length, 0, "不換回、不另跑");
+  /* 對照：如果跟 main 最新版比，就會誤判（這正是要避免的） */
+  assert.equal(classifiedOnly(TK_MAIN, tkAdd(NEW_LINE), ["test-new-1122.js"]), false);
 });

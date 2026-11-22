@@ -93,7 +93,9 @@ function runGuard({ base = "origin/main", headRef = "", git, spawn, fsx = fs, lo
   let changed = guardChanged(files);
   if (changed.includes(TK_PATH)) {
     let baseSrc = null, prSrc = null;
-    try { baseSrc = git("show", `${base}:${TK_PATH}`) } catch (e) { }
+    /* 跟分岔點（merge-base）比，跟 git diff base...HEAD 一致（PR #51 審查）：好幾派 PR 同時開著，別的 PR 先合併後 main 會多別人的登記行，
+       跟 main 最新版比會讓還沒 update-branch 的 PR 變成「不只新增」而換回、又紅燈 */
+    try { const mb = git("merge-base", base, "HEAD").trim(); baseSrc = git("show", `${mb}:${TK_PATH}`) } catch (e) { }
     try { prSrc = fsx.readFileSync(TK_PATH, "utf8") } catch (e) { }
     let addedTests = [];
     try { addedTests = git("diff", "--name-only", "-z", "--no-renames", "--diff-filter=A", `${base}...HEAD`).split("\0").filter(Boolean).filter((f) => /^source\/xiangqi-lab\/tools\/test-[^/]+\.js$/.test(f)).map((f) => f.split("/").pop()) } catch (e) { }
