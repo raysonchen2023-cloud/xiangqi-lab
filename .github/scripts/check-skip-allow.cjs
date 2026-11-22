@@ -8,7 +8,7 @@
 //   ① 每一條都要寫出缺的檔，至少一個：
 //      missing＝倉庫裡的路徑（倉庫根目錄起算，第一段要是倉庫真的有的頂層資料夾，例如 source/、data/），在倉庫裡都要真的不存在（沒被 git 追蹤、磁碟上也沒有）；
 //      outside＝倉庫外的路徑（開發者電腦暫存區之類，照實寫；第一段不能是倉庫的頂層資料夾）。
-//      路徑不能是空的（"/"、"//"）、絕對路徑或有 . ..；兩種的檔名（最後一段；或去掉副檔名、至少 4 個字的主檔名）要出現在那支測試的原始碼裡：寫一個不存在的路徑交差，抓得到
+//      路徑不能是空的（"/"、"//"）、絕對路徑或有 . ..；兩種的檔名（最後一段；或去掉副檔名、至少 4 個字的主檔名）要出現在那支測試的程式碼或字串裡（註解不算）：寫一個不存在的路徑交差，抓得到
 //   ② missing、outside 裡不能有白名單沒有的條目（舊的要一起刪）
 //   ③ 只能減、不能增：跟基準（main）那一版比，總數不能變多；基準還沒有的測試檔（新的檔）不能有略過
 //      （改寫原因、把原本沒驗的條件式拆成明列的略過可以，但總數要靠別處真的跑起來補回來）
@@ -32,6 +32,37 @@ function norm(p) {
   return { q };
 }
 
+/* 拿掉 JS 原始碼裡的註解（雙斜線到行尾、斜線星號到星號斜線），字串、樣板字串、regex 字面值裡的照留：
+   缺檔的檔名只寫在註解裡不算（PR #62 Codex 審查）。斜線前面是運算子、括號、逗號或 return 之類的關鍵字，就當成 regex 字面值開頭。
+   自我測試會把倉庫裡每一支測試檔拿掉註解後再編譯一次，確認沒有掃錯 */
+function stripComments(src) {
+  const s = String(src).replace(/^#![^\n]*/, ""); let out = "", i = 0;
+  const regexOk = () => { const t = out.replace(/\s+$/, ""), c = t[t.length - 1]; return !c || /[(,=:[!&|?{};+\-*%<>~^]/.test(c) || /(^|[^\w$])(return|typeof|instanceof|in|of|new|delete|void|throw|case|do|else|yield|await)$/.test(t) };
+  while (i < s.length) {
+    const c = s[i], d = s[i + 1];
+    if (c === "/" && d === "/") { while (i < s.length && s[i] !== "\n") i++; continue }
+    if (c === "/" && d === "*") { const j = s.indexOf("*/", i + 2); i = j < 0 ? s.length : j + 2; out += " "; continue }
+    if (c === "'" || c === '"' || c === "`") {
+      let j = i + 1, depth = 0;
+      for (; j < s.length; j++) {
+        if (s[j] === "\\") { j++; continue }
+        if (c === "`" && s[j] === "$" && s[j + 1] === "{") { depth++; j++; continue }
+        if (c === "`" && depth && s[j] === "}") { depth--; continue }
+        if (!depth && s[j] === c) break;
+        if (c !== "`" && s[j] === "\n") break;
+      }
+      out += s.slice(i, j + 1); i = j + 1; continue;
+    }
+    if (c === "/" && regexOk()) {
+      let j = i + 1, cls = false;
+      for (; j < s.length && s[j] !== "\n"; j++) { if (s[j] === "\\") { j++; continue } if (s[j] === "[") cls = true; else if (s[j] === "]") cls = false; else if (s[j] === "/" && !cls) break }
+      out += s.slice(i, j + 1); i = j + 1; continue;
+    }
+    out += c; i++;
+  }
+  return out;
+}
+
 /* 純函式：allow＝這一版的條目；missing＝{條目: [倉庫裡的路徑…]}；outside＝{條目: [倉庫外的路徑…]}（開發者電腦暫存區之類，照實寫）；
    baseAllow＝基準那一版的條目；baseHas(檔名)＝基準有沒有這支測試檔；top＝倉庫的頂層資料夾（git ls-files 的第一段）；
    tracked(p)＝倉庫有沒有追蹤這個路徑（含資料夾底下有檔）；onDisk(p)＝磁碟上有沒有；src(檔名)＝測試原始碼（讀不到回 null） */
@@ -43,7 +74,7 @@ function judge({ allow, missing, outside, baseAllow, baseHas, top, tracked, onDi
     const f = fileOf(e), ps = own(missing, e) ? missing[e] : [], os = own(outside, e) ? outside[e] : [];
     if (!f) { bad.push(`看不出是哪支測試檔：${e}`); continue }
     if (!Array.isArray(ps) || !Array.isArray(os) || ps.length + os.length === 0) { bad.push(`沒寫缺哪個檔（missing 或 outside）：${e}`); continue }
-    const S = src(f);
+    const S0 = src(f), S = S0 == null ? null : stripComments(S0);   /* 只看程式碼和字串，不看註解（PR #62 Codex 審查） */
     if (S == null) { bad.push(`找不到測試檔 ${f}：${e}`); continue }
     for (const p of ps) {
       const n = norm(p); if (n.err) { bad.push(`missing 的 ${JSON.stringify(p)}：${n.err}（${e}）`); continue }
@@ -68,7 +99,7 @@ function judge({ allow, missing, outside, baseAllow, baseHas, top, tracked, onDi
   return { bad, grew, added, removed, ok: !bad.length && !grew.length };
 }
 
-module.exports = { judge, fileOf, tally, norm };
+module.exports = { judge, fileOf, tally, norm, stripComments };
 if (require.main !== module) return;
 
 const args = process.argv.slice(2), opt = (k, d) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : d };

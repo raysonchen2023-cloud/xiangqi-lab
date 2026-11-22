@@ -2,7 +2,7 @@
 // 用法：node --test .github/scripts/test-skip-allow-check.cjs
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process");
-const { judge, fileOf, tally, norm } = require("./check-skip-allow.cjs");
+const { judge, fileOf, tally, norm, stripComments } = require("./check-skip-allow.cjs");
 const CHECK = path.join(__dirname, "check-skip-allow.cjs");
 
 const E1 = "test-a.js：英文字典都有（沒有 xiangqi-db/i18n-en.json（只放 CDN））", E2 = "test-a.js：第二項（沒有 xiangqi-db/i18n-en.json（只放 CDN））", E3 = "test-b.js：上架文案（沒有 xiangqi-ios/appstore）";
@@ -50,6 +50,28 @@ test("① 缺檔的檔名沒出現在測試原始碼裡、路徑寫成絕對路�
   assert.deepEqual(norm("source//xiangqi-ios/appstore/"), { q: "source/xiangqi-ios/appstore" }, "多餘的斜線收掉");
   r = base({ src: (f) => (f === "test-b.js" ? null : SRC[f]) });
   assert.match(r.bad.join("\n"), /找不到測試檔 test-b\.js/);
+});
+
+test("① 檔名只寫在註解裡不算；寫在字串、regex 字面值裡算（PR #62 Codex 審查）", () => {
+  const E = "test-c.js：某項（沒有 data/某檔）", M = { [E1]: ["source/xiangqi-db/i18n-en.json"], [E2]: ["source/xiangqi-db/i18n-en.json"], [E3]: ["source/xiangqi-ios/appstore"] };
+  const one = (code) => base({ allow: [E1, E2, E3, E], baseAllow: [E1, E2, E3, E], missing: Object.assign({ [E]: ["data/zm/central.webp"] }, M), src: (x) => (x === "test-c.js" ? code : SRC[x] ?? null) });
+  for (const code of ['// 讀 data/zm/central.webp\nassert.ok(1)', '/* central.webp */ assert.ok(1)', 'x(); /* 多行\n central.webp\n */ y()', '#!/usr/bin/env node // central.webp\nx()'])
+    assert.match(one(code).bad.join("\n"), /檔名「central\.webp」沒出現在 test-c\.js 裡/, "只在註解：" + JSON.stringify(code));
+  for (const code of ['rd("xiangqi-db/art/zm/central.webp")', "const p = 'central.webp' // 註解", "t.skip(`沒有 ${\"central\"}.webp`); x(`central.webp`)", 'if (/central\\.webp|central/.test(s)) x()'])
+    assert.deepEqual(one(code).bad, [], "程式碼或字串裡有：" + JSON.stringify(code));
+});
+
+test("拿掉註解：字串、樣板字串、regex 字面值裡的 // 和 /* 照留；拿掉後倉庫裡每一支測試檔、.github 腳本都還能編譯", () => {
+  assert.equal(stripComments('a("x // y") // z'), 'a("x // y") ');
+  assert.equal(stripComments("const r = /\\/\\//g; // 註解"), "const r = /\\/\\//g; ");
+  assert.equal(stripComments("x = `a ${'//' + b} /* c */`; /* d */ y"), "x = `a ${'//' + b} /* c */`;   y");
+  assert.equal(stripComments("a = b / c; // 除法\nd = e / f"), "a = b / c; \nd = e / f", "除號不是 regex");
+  assert.equal(stripComments("return /x\\/y/.test(s) /* 註解 */"), "return /x\\/y/.test(s)  ");
+  const vm = require("vm"), ROOT = path.join(__dirname, "..", ".."), bad = [];
+  for (const D of [path.join(ROOT, "source", "xiangqi-lab", "tools"), __dirname]) for (const n of fs.readdirSync(D).filter((x) => /\.c?js$/.test(x))) {
+    try { new vm.Script("(function(){" + stripComments(fs.readFileSync(path.join(D, n), "utf8")) + "\n})") } catch (e) { bad.push(n + "：" + e.message) }
+  }
+  assert.deepEqual(bad, [], "拿掉註解後語法壞了，表示掃錯了");
 });
 
 test("② missing、outside 有、白名單沒有的舊條目 → 不成立", () => {
