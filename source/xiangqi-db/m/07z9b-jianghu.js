@@ -791,6 +791,7 @@ function jhKickCss(){if(typeof document==="undefined"||document.getElementById("
 .jh-kick-row{padding:10px 12px;border-radius:12px;background:#fbf3e3;border:1.5px solid #c9a96b;color:#2b2118}
 .jh-kick-row .muted{color:#5c4a32}
 .jh-kick-row.won{border-color:#b3261e}
+.jh-kick-row .jh-link{color:#7a1712;font-weight:700}   /* W65（iMac 驗 0804）：.jh-link 用 var(--ink)，深色主題是淺色字，戰書段卻是固定淺米底 → 看不清楚；這裡固定深朱紅 */
 .jh-kick-h{display:flex;align-items:center;gap:8px;margin:0 0 4px}.jh-kick-h .jh-kflag{width:20px;height:22px;flex:none}
 .jh-kseal-s{flex:none;font:900 11px/1 var(--serif,serif);color:#b3261e;border:2px solid #b3261e;border-radius:4px;padding:3px 4px;transform:rotate(-8deg)}`;document.head.append(s)}
 /* ---------- W46 十州漕運殘局（Gemini 188 案 1；開發者 11/22「門派任務版」範圍）----------

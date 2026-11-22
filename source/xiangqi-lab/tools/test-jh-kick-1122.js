@@ -170,3 +170,12 @@ test("〔原始碼〕掛接：小卡插入踢館段與按鈕；存檔鍵跟旅�
   for (const f of ["zmGameEnd", "zmAgainArgs", "Jianghu"]) assert.match(JH, new RegExp(f + "\\.jhKick=1"), f + " 只包一次");
   assert.match(JH, /location\.hash="#\/db\/play\/"\+encodeURIComponent\(x\.dataset\.kickg\)/);
 });
+
+test("〔原始碼〕W65：戰書段的連結（看破陣那一盤）固定深色字，不跟深色主題的 --ink 變淺；跟淺米底的對比夠", () => {
+  const m = JH.match(/\.jh-kick-row \.jh-link\{color:(#[0-9a-f]{6})/i);
+  assert.ok(m, "要有 .jh-kick-row .jh-link 的固定字色");
+  const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2] };
+  const bg = JH.match(/\.jh-kick-row\{[^}]*background:(#[0-9a-f]{6})/i)[1], L1 = lum(bg), L2 = lum(m[1]);
+  const ratio = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+  assert.ok(ratio >= 4.5, "WCAG AA 對比至少 4.5：" + ratio.toFixed(2));
+});
