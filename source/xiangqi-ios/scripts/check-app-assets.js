@@ -10,10 +10,11 @@
      ✘ 上面列的圖片／音樂／模型、CDN 切塊的大檔不在包裡：離線時直接破圖（連線時只能靠網頁程式自己改抓 CDN，不算數）
      △ 上面列的 JSON 不在包裡：網頁程式會自己改抓 CDN（00-util.js），列出來但不擋
      ✘ 加 --cdn（或 --manifest 本機檔）：包裡 data/、engine/ 的檔跟 CDN 的 cdn-manifest.json 比大小與 SHA-1 前 12 碼，對不上＝包跟玩家在網頁版拿到的不是同一份
-   用法：node scripts/check-app-assets.js --app <App.app 或 .ipa> [--cdn | --manifest <cdn-manifest.json>] [--home <bundle-home-assets.js>] [--out 報告.json]
+   用法：node scripts/check-app-assets.js --app <App.app 或 .ipa> [--cdn | --manifest <cdn-manifest.json>] [--gate] [--home <bundle-home-assets.js>] [--out 報告.json]
+     --gate＝送審閘門用：沒加 --cdn（或 --manifest）就直接結束代碼 2，不會被誤當成通過；報告 JSON 的 p0img 欄寫 pass／fail／缺驗
      首頁必要素材清單預設讀同一個倉庫的 ../../xiangqi-android/scripts/bundle-home-assets.js；只複製 xiangqi-ios 出去時用 --home 指定
    結束代碼：0＝沒有 ✘；1＝有 ✘；2＝用法或環境錯誤；3＝要核對 CDN 卻抓不到清單（缺驗，不能送審）
-   P0-IMG（iOS 包內素材）通過條件＝加 --cdn 且結束代碼 0 */
+   P0-IMG（iOS 包內素材）通過條件＝加 --gate --cdn 且結束代碼 0 */
 "use strict";
 const fs = require("fs"), path = require("path"), os = require("os"), cp = require("child_process"), crypto = require("crypto");
 
@@ -26,9 +27,8 @@ const sha1 = b => crypto.createHash("sha1").update(b).digest("hex");
 function exitCode({ red, unknown }) { return red ? 1 : unknown ? 3 : 0 }
 
 /* 找出 public/：.app 直接用；.ipa 解到暫存資料夾、找 Payload/<名>.app/public */
-function openApp(p, tmpRoot) {
+function openApp(p, tmp) {
   if (fs.statSync(p).isDirectory()) { const pub = path.join(p, "public"); return fs.existsSync(pub) ? pub : null }
-  const tmp = fs.mkdtempSync(path.join(tmpRoot, "xq-ipachk-"));
   cp.execFileSync("unzip", ["-q", "-o", p, "-d", tmp], { stdio: ["ignore", "ignore", "pipe"], maxBuffer: 1e8 });
   const pay = path.join(tmp, "Payload");
   const app = fs.existsSync(pay) ? fs.readdirSync(pay).find(n => n.endsWith(".app")) : null;
@@ -87,15 +87,17 @@ function check(pub, { manifest = null, home = [] } = {}) {
 async function main() {
   const arg = k => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null };
   const die = (m, c = 2) => { console.error("✘ " + m); process.exit(c) };
-  const APP = arg("--app"), OUT = arg("--out"), MAN = arg("--manifest"), CDN_CHECK = process.argv.includes("--cdn");
-  if (!APP || !fs.existsSync(APP)) die("用法：node scripts/check-app-assets.js --app <App.app 或 .ipa> [--cdn | --manifest <cdn-manifest.json>] [--home <bundle-home-assets.js>] [--out 報告.json]");
+  const APP = arg("--app"), OUT = arg("--out"), MAN = arg("--manifest"), CDN_CHECK = process.argv.includes("--cdn"), GATE = process.argv.includes("--gate");
+  if (!APP || !fs.existsSync(APP)) die("用法：node scripts/check-app-assets.js --app <App.app 或 .ipa> [--cdn | --manifest <cdn-manifest.json>] [--gate] [--home <bundle-home-assets.js>] [--out 報告.json]");
   const home = homeRequired(arg("--home"));
   if (!home) die("找不到首頁必要素材清單 bundle-home-assets.js：在公開倉庫裡跑，或用 --home 指定");
-  const tmpRoot = os.tmpdir(); let pub, cleanup = null;
-  try { pub = openApp(APP, tmpRoot) } catch (e) { die("讀不到安裝包：" + String(e.stderr || e.message).slice(0, 200)) }
-  if (!pub) die("安裝包裡找不到 public/（.app 要有 public/；.ipa 要有 Payload/<名>.app/public/）");
-  if (!fs.statSync(APP).isDirectory()) cleanup = path.dirname(path.dirname(path.dirname(pub)));
+  if (GATE && !CDN_CHECK && !MAN) die("--gate（送審閘門）一定要核對 CDN：請加 --cdn");
+  /* .ipa 的暫存資料夾一開始就建、一定清（PR #41 審查 c：解壓失敗或找不到 public/ 時原本沒清） */
+  const cleanup = fs.statSync(APP).isDirectory() ? null : fs.mkdtempSync(path.join(os.tmpdir(), "xq-ipachk-"));
   try {
+    let pub = null;
+    try { pub = openApp(APP, cleanup) } catch (e) { console.error("✘ 讀不到安裝包：" + String(e.stderr || e.message).slice(0, 200)); process.exitCode = 2; return }
+    if (!pub) { console.error("✘ 安裝包裡找不到 public/（.app 要有 public/；.ipa 要有 Payload/<名>.app/public/）"); process.exitCode = 2; return }
     let manifest = null, unknown = 0, cdnAt = null;
     if (MAN) { const j = JSON.parse(fs.readFileSync(MAN, "utf8")); manifest = j.files || j; cdnAt = j.at || null }
     else if (CDN_CHECK) {
@@ -107,6 +109,7 @@ async function main() {
     }
     const R = check(pub, { manifest, home });
     const code = exitCode({ red: R.red.length, unknown });
+    const p0img = !manifest && !unknown ? "沒核對 CDN" : code === 0 ? "pass" : code === 3 ? "缺驗" : "fail";   /* PR #41 審查 b：送審報告直接寫 P0-IMG 結果 */
     console.log(`安裝包：${path.basename(APP)}（XQ_BUILD ${R.build || "讀不到"}，public/ 共 ${R.files} 個檔）`);
     console.log(`首頁必要素材 ${home.length} 項；素材清單 ${R.need} 項：在包裡 ${R.inPack}、靠網頁改抓 CDN ${R.viaWeb}`);
     console.log(manifest ? `CDN 清單（${cdnAt || "時間不明"}）：核對了 ${R.cdnChecked} 個檔` : unknown ? "△ 抓不到 CDN 的 cdn-manifest.json：沒核對" : "沒核對 CDN（加 --cdn 才會比對 cdn-manifest.json）");
@@ -118,7 +121,7 @@ async function main() {
       : manifest ? "✔ 安裝包素材沒有發現會破圖、放錯版或跟 CDN 不同的問題"
       : "✔ 安裝包本身沒有問題；送審前還要加 --cdn 核對 CDN（P0-IMG 通過條件＝--cdn 且結束代碼 0）");
     if (OUT) fs.writeFileSync(OUT, JSON.stringify({ app: path.basename(APP), build: R.build, files: R.files, need: R.need, inPack: R.inPack, viaWeb: R.viaWeb,
-      cdnChecked: R.cdnChecked, cdnAt, unknown, exitCode: code, redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
+      cdnChecked: R.cdnChecked, cdnAt, unknown, gate: GATE, p0img, exitCode: code, redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
     process.exitCode = code;
   } finally { if (cleanup) fs.rmSync(cleanup, { recursive: true, force: true }) }
 }

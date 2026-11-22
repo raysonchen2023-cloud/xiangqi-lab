@@ -4,7 +4,11 @@
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process"), crypto = require("crypto"), zlib = require("zlib");
 const ROOT = path.join(__dirname, "..", "..");
-const CHECK = path.join(ROOT, "xiangqi-ios", "scripts", "check-app-assets.js");
+/* 開發者電腦有 xiangqi-ios/；公開倉庫的 run-tests.js 只把 xiangqi-db、xiangqi-lab、xiangqi-android 抄到暫存資料夾，
+   xiangqi-ios 要從 xiangqi-lab/site（＝倉庫根目錄）底下的 source/ 找（PR #41 第一次 CI：只看 ROOT 就整支讀不到） */
+const IOS = [path.join(ROOT, "xiangqi-ios"), path.join(ROOT, "xiangqi-lab", "site", "source", "xiangqi-ios")].find(d => fs.existsSync(path.join(d, "scripts", "check-app-assets.js")));
+assert.ok(IOS, "找不到 xiangqi-ios/scripts/check-app-assets.js");
+const CHECK = path.join(IOS, "scripts", "check-app-assets.js");
 const HOMEJS = path.join(ROOT, "xiangqi-android", "scripts", "bundle-home-assets.js");
 const { required: HOME } = require(HOMEJS);
 const M = require(CHECK);
@@ -99,13 +103,29 @@ test("反測：包裡的檔跟 CDN 清單不同（大小、SHA-1 各一種）→
   r = run(makeApp(f), "--manifest", writeManifest(m3)); assert.equal(r.code, 0, r.out);
 });
 
-test(".ipa 也能檢查：正常包 0、拿掉首頁圖 1，暫存資料夾會清掉", () => {
+test(".ipa 也能檢查：正常包 0、拿掉首頁圖 1；壞掉的 .ipa、沒有 public/ 的 .ipa 結束代碼 2；暫存資料夾一律清掉", () => {
   const f = goodFiles(), man = writeManifest(manifestOf(f));
-  const before = fs.readdirSync(os.tmpdir()).filter(n => n.startsWith("xq-ipachk-")).length;
+  const left = () => fs.readdirSync(os.tmpdir()).filter(n => n.startsWith("xq-ipachk-")).length, before = left();
   assert.equal(run(makeIpa(f), "--manifest", man).code, 0);
   const g = goodFiles(); delete g["data/" + HOME[1]];
   assert.equal(run(makeIpa(g), "--manifest", man).code, 1);
-  assert.equal(fs.readdirSync(os.tmpdir()).filter(n => n.startsWith("xq-ipachk-")).length, before);
+  const broken = path.join(tmpdir(), "Broken.ipa"); fs.writeFileSync(broken, "not a zip");
+  assert.equal(run(broken).code, 2);
+  const noPub = path.join(tmpdir(), "NoPub.ipa"); fs.writeFileSync(noPub, zip({ "Payload/App.app/Info.plist": "x" }));
+  assert.equal(run(noPub).code, 2);
+  assert.equal(left(), before, "PR #41 審查 c：出錯時暫存資料夾也要清");
+});
+
+test("--gate（送審閘門）：沒核對 CDN 就結束代碼 2；有核對時報告寫 p0img＝pass／fail", () => {
+  const f = goodFiles(), app = makeApp(f), out = path.join(tmpdir(), "r.json");
+  assert.equal(run(app, "--gate").code, 2);
+  assert.equal(run(app, "--gate", "--manifest", writeManifest(manifestOf(f)), "--out", out).code, 0);
+  assert.equal(JSON.parse(fs.readFileSync(out, "utf8")).p0img, "pass");
+  const m = manifestOf(f); m["data/park/a.webp"] = [1, "000000000000"];
+  assert.equal(run(app, "--gate", "--manifest", writeManifest(m), "--out", out).code, 1);
+  assert.equal(JSON.parse(fs.readFileSync(out, "utf8")).p0img, "fail");
+  assert.equal(run(app, "--out", out).code, 0);
+  assert.equal(JSON.parse(fs.readFileSync(out, "utf8")).p0img, "沒核對 CDN");
 });
 
 test("壞的輸入：沒有 preload.json → 1；沒有 public/ 或沒給 --app → 2；要核對 CDN 卻缺驗 → 3", () => {
