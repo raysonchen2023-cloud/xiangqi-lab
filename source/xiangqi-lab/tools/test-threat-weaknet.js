@@ -110,15 +110,24 @@ test("〔原始碼〕threat-model.md：兩份逐字相同、LF、沒有控制字
 });
 /* 公開倉庫 CI：要接不公開營運程式（千秋盃裁判台 cup-host.js，開發者 11/22 選不公開）的測試不在 tools/，
    但一定要列在 STAGE-MANIFEST.json 的 excludedTests 並寫原因，才算「存在」；隨便寫一個檔名還是會擋（W69 第 8 項） */
+/* 只收有寫原因（去空白後 ≥4 字）的項目；沒寫原因、只寫一兩個字的不算 */
+const privPick = (excluded) => { const o = {}; for (const [k, why] of Object.entries(excluded || {})) if (String(why == null ? "" : why).trim().length >= 4) o[k] = why; return o };
 const PRIV_TESTS = (() => {
   /* run-tests 暫存配置：xiangqi-lab/site 連回倉庫根目錄 → site/source/STAGE-MANIFEST.json；開發者電腦：往上找 source/ */
   const cands = [path.join(__dirname, "..", "site", "source", "STAGE-MANIFEST.json")];
   for (let d = __dirname, i = 0; i < 6; i++, d = path.dirname(d)) cands.push(path.join(d, "STAGE-MANIFEST.json"), path.join(d, "source", "STAGE-MANIFEST.json"));
   for (const f of cands) {
-    try { const e = JSON.parse(fs.readFileSync(f, "utf8")).excludedTests || {}; const o = {}; for (const [k, why] of Object.entries(e)) if (String(why).trim().length >= 4) o[k] = why; return o } catch (e2) { }
+    try { return privPick(JSON.parse(fs.readFileSync(f, "utf8")).excludedTests) } catch (e2) { }
   }
   return {};
 })();
+/* PR #52 審查：證明「沒寫原因的不收」真的有效（反向案例） */
+test("〔原始碼〕對照表的不公開測試：排除清單沒寫原因、原因太短、空白的都不算存在；有寫原因的才算", () => {
+  const p = privPick({ "test-ok.js": "要接千秋盃裁判台 cup-host.js", "test-empty.js": "", "test-short.js": "不", "test-space.js": "    ", "test-null.js": null });
+  assert.deepEqual(Object.keys(p), ["test-ok.js"]);
+  assert.ok(Object.keys(PRIV_TESTS).length > 0, "找得到 STAGE-MANIFEST.json 的排除清單");
+  assert.ok(PRIV_TESTS["test-net-pin.js"] && !PRIV_TESTS["test-fake-xyz.js"]);
+});
 test("〔原始碼〕threat-model.md 的對照表：每一列都有編號、寫到的 net.js 名稱都存在、測試檔都存在", () => {
   const s = fs.readFileSync(DOC, "utf8"), rows = s.split("\n").filter(l => /^\| [STRIDE]\d+ \|/.test(l));
   assert.ok(rows.length >= 20, "至少 20 個威脅（實際 " + rows.length + "）");

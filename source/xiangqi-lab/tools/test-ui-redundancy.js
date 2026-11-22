@@ -51,11 +51,12 @@ test("〔原始碼〕fresh 跟首頁 hmNew 同一套（campSeen／record／tsmPr
   assert.match(HUB, /const fresh=!store\.get\("campSeen",false\)[^\n]*tsmProgNow\(\)\.any\);/);
   assert.match(HUB, /hbHot\(o\.c\)\|\|hbFirstHot\(o\.id,fresh\)/);
   /* hbBridge（首頁橋上石桌）是開發者本機還沒發布的區塊：本機版要保留；公開倉庫沒有它時，每個呼叫處都要先判斷 typeof，不然會當掉（W69 第 8 項，11/22） */
+  /* PR #52 審查：逐個呼叫查——每個 hbBridge() 往前同一行 160 字內要有 typeof hbBridge==="function"（同檔有一處防護不代表其他呼叫都有） */
+  const unguarded = (t) => { const bad = []; for (const m of t.matchAll(/hbBridge\(\)/g)) { const ls = t.lastIndexOf("\n", m.index) + 1, before = t.slice(Math.max(ls, m.index - 160), m.index); if (!before.includes('typeof hbBridge==="function"')) bad.push(m.index) } return bad };
+  assert.equal(unguarded('const a=typeof hbBridge==="function"?hbBridge():null;').length, 0, "反向案例：有防護的不算");
+  assert.equal(unguarded('const a=typeof hbBridge==="function"?hbBridge():null;\nconst b=hbBridge();').length, 1, "反向案例：同檔另一處沒防護的要抓到");
   if (/function hbBridge\(\)/.test(HUB)) return;
-  for (const f of fs.readdirSync(M).filter(n => n.endsWith(".js"))) {
-    const t = rd(f), calls = (t.match(/hbBridge\(\)/g) || []).length, guards = (t.match(/typeof hbBridge==="function"/g) || []).length;
-    assert.ok(guards >= 1 || calls === 0, f + "：公開版沒有 hbBridge，呼叫前要先判斷 typeof");
-  }
+  for (const f of fs.readdirSync(M).filter(n => n.endsWith(".js"))) assert.deepEqual(unguarded(rd(f)), [], f + "：公開版沒有 hbBridge，每個呼叫前都要先判斷 typeof");
 });
 
 /* ========== 第 3 項：對戰、學習場景返回只留一個真的出口（07w9-exits + 07w-shipwalk） ========== */
