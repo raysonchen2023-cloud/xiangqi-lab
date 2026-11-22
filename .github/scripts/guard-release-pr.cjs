@@ -20,7 +20,7 @@ const { execFileSync } = require("child_process");
 const fs = require("fs"), crypto = require("crypto");
 
 const CDN = "https://xiangqi-cdn.pages.dev/";
-const PRODUCTS = [/^index\.html$/, /^sw\.js$/, /^release\.json$/, /^data\/docs\/(evidence|foss)\.md$/, /^source\/STAGE-MANIFEST\.json$/, /^source\/verification-log-[0-9-]+\.txt$/];
+const PRODUCTS = [/^index\.html$/, /^sw\.js$/, /^release\.json$/, /^data\/docs\/(evidence|foss)\.md$/, /^data\/docs\/verification-log\.txt$/, /^source\/STAGE-MANIFEST\.json$/, /^source\/verification-log-[0-9-]+\.txt$/];
 
 /* 判斷一個檔：c＝{status:"A"|"M"|"D", path}；ctx 提供查詢函式（測試可以注入）。回傳 {ok, why} */
 function judgeOne(c, ctx) {
