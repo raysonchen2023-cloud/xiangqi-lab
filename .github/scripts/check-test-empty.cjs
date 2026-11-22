@@ -56,6 +56,7 @@ function run({ tallyFile, dir = DIR, read = (f) => fs.readFileSync(f, "utf8"), l
     bad = 1;
     err(`有 ${r.empty.length} 支測試檔一項都沒跑出來（0/0 不算失敗，會讓 CI 照樣綠）：\n` + r.empty.map((f) => "  － " + f).join("\n"));
     err("要嘛補上真的會跑的測試，要嘛刪掉那支檔；跑不了的項目用 { skip: \"原因\" }，會進略過稽核。");
+    err("如果那支檔只有一項、名稱剛好跟檔名一樣：TAP 裡跟「一項都沒跑」長得一樣，分不出來，寧可紅燈；把那一項改名就好（PR #60 Codex 審查）。");
   }
   if (r.missing.length) {
     bad = 1;

@@ -234,6 +234,6 @@ if (require.main === module && !process.env.NODE_TEST_CONTEXT) {
   console.log("說明：原始碼比對只證明程式碼存在，不證明功能會動；測試由開發用的 AI 撰寫，不等於第三方驗證。");
   /* 11/13：有任何一項沒過就回報失敗（結束代碼 1），source/run-tests.js、verify-all.js 才不會把沒過的當成通過 */
   /* W69 流程盤點第 18 項（11/23）：一項都沒跑出來的檔（0/0）也算沒過，不然 test() 被包進條件、整段註解掉，CI 照樣綠 */
-  if (mode === "run") { const zero = files.filter(f => !f.items.length).map(f => f.file); if (zero.length) { console.log("✖ 測試檔一項都沒跑出來：" + zero.join("、")); process.exitCode = 1 } }
+  if (mode === "run") { const zero = files.filter(f => !f.items.length).map(f => f.file); if (zero.length) { console.log("✖ 測試檔一項都沒跑出來：" + zero.join("、") + "（如果那支檔只有一項、名稱剛好跟檔名一樣，跟「沒跑」分不出來，請把那一項改名）"); process.exitCode = 1 } }
   if (mode === "run") { const bad = files.filter(f => KINDS.some(k => f.n[k].pass + f.n[k].skip < f.n[k].all) || f.n.todo.xpass).map(f => f.file);   /* 預期失敗卻通過也算：漏洞可能修好了，要把 todo 改成一般測試 */ if (bad.length) { console.log("✖ 有測試沒過：" + bad.join("、")); process.exitCode = 1 } }
 }

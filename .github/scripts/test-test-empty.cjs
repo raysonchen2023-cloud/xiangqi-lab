@@ -77,5 +77,11 @@ test("testkinds.js 實跑：一支 0 項的測試檔要判失敗（結束代碼 
     assert.equal(bad.status, 1, bad.stdout + bad.stderr);
     assert.match(bad.stdout, /一項都沒跑出來：test-zero\.js/);
     assert.doesNotMatch(bad.stdout, /test-zero\.js\t[^\n]*1\/1/, "不能把檔案本身算成 1 項通過");
+    /* PR #60 Codex 審查：唯一一項的名稱剛好等於檔名，TAP 跟「沒跑」分不出來 → 寧可紅燈，訊息要教人改名 */
+    fs.rmSync(path.join(tmp, "test-zero.js"));
+    fs.writeFileSync(path.join(tmp, "test-same.js"), 'require("node:test")("test-same.js", () => {});\n');
+    const same = runTk();
+    assert.equal(same.status, 1, same.stdout + same.stderr);
+    assert.match(same.stdout, /一項都沒跑出來：test-same\.js（[^\n]*名稱剛好跟檔名一樣[^\n]*改名）/);
   } finally { fs.rmSync(tmp, { recursive: true, force: true }) }
 });
