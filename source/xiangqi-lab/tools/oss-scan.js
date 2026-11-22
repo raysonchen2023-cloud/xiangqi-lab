@@ -29,7 +29,7 @@ const RULES = [
   { id: "bearer", risk: "medium", what: "Bearer 憑證", re: /\bBearer\s+[A-Za-z0-9_\-.=]{20,}/g, secret: true, fix: "確認是不是真的憑證" },
   { id: "mqtt-credentials", risk: "medium", what: "MQTT 帳密", re: /\buser(?:name)?\s*:\s*["'][^"'\s]{2,}["']\s*,\s*pass(?:word)?\s*:\s*["'][^"'\s]{2,}["']/g, secret: true, fix: "App 用的公開帳號可以留（伺服器端要限權限）；其他帳號改讀設定檔" },
   { id: "dev-hash", risk: "low", what: "開發者登入雜湊 DEV_HASH", re: /\bDEV_HASH\s*=\s*["']([0-9a-f]{64})["']/g, fix: "是 SHA-256 雜湊、不是明碼，可以留；密碼本身要夠長夠亂（雜湊沒加鹽）" },
-  { id: "email", risk: "medium", what: "電子郵件地址", re: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, skipVal: /@(?:example\.(?:com|org|net)|users\.noreply\.github\.com|noreply\.)|^noreply@|^git@github\.com$/i, email: true, fix: "個人信箱拿掉；第三方作者的信箱（授權檔裡）可以留" },
+  { id: "email", risk: "medium", what: "電子郵件地址", re: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, skipVal: /@(?:example\.(?:com|org|net)|users\.noreply\.github\.com|noreply\.)|^noreply@|^git@github\.com$|@\d+x\.(?:png|jpe?g|webp|gif|pdf)$/i, email: true, fix: "個人信箱拿掉；第三方作者的信箱（授權檔裡）可以留" },
   { id: "phone-tw", risk: "medium", what: "電話號碼", re: /(?<![\d.])(?:\+886[- ]?9\d{2}|09\d{2})[- ]?\d{3}[- ]?\d{3}(?![\d])/g, secret: true, fix: "拿掉" },
   { id: "tw-id", risk: "medium", what: "身分證字號格式", re: /\b[A-Z][12]\d{8}\b/g, secret: true, fix: "確認不是真的身分證字號" },
   { id: "local-path", risk: "medium", what: "本機路徑（含使用者名稱）", re: /\b[A-Za-z]:(?:\\\\|\\|\/)+Users(?:\\\\|\\|\/)+[^\\\/\s"'`<>*]+|(?<![\w.])\/(?:c\/)?Users\/[A-Za-z0-9._-]+|(?<![\w.])\/home\/[a-z0-9._-]+/gi, fix: "改成相對路徑、os.homedir() 或 %USERPROFILE%" },

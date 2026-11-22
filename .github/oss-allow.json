@@ -1,0 +1,18 @@
+{
+ "note": "私密掃描補強（scan-changed.cjs）的放行清單（W69 流程盤點中 16，2026-11-23）。改到的檔有中風險時，只有列在這裡的不擋。每筆要有 rule（oss-scan 的規則）、file（路徑結尾）或 match（掃到的字的一部分）至少一個、reason（至少 4 個字）；不准整條規則全放行。改這份要走 PR、改 .github/ 一律逐行審；不要把個資本身寫進來（信箱這類用 file 限定檔案，不寫地址）。",
+ "items": [
+  { "rule": "google-endpoint", "match": "script.google.com/macros/s/AKfycbxl", "reason": "App 送意見回饋用的 Apps Script 網址，本來就在 App 裡公開（02-shell.js、組出的 index.html）" },
+  { "rule": "google-endpoint", "match": "docs.google.com/forms/d/e/1FAIpQLScxK1rQ", "reason": "App 設定頁的意見回饋表單，本來就公開（05-settings.js、組出的 index.html）" },
+  { "rule": "ntfy-topic", "match": "ntfy.sh/xqlab-", "reason": "App 內建的通知頻道前綴，本來就在 App 裡（local.js）" },
+  { "rule": "mqtt-credentials", "match": "xqapp", "reason": "App 連線大廳用的公開帳號 xqapp：會跟著 App 程式公開，伺服器端只准 xqlab-…／+/v1/… 頻道（net.js 註解）" },
+  { "rule": "password-assign", "match": "xqapp", "reason": "同上：公開帳號 xqapp 的密碼本來就在 App 裡，伺服器端限權限" },
+  { "rule": "email", "file": "data/docs/privacy.md", "reason": "隱私權政策上的客服聯絡信箱，上架資料本來就公開" },
+  { "rule": "email", "file": "data/docs/support.md", "reason": "客服頁的聯絡信箱，上架資料本來就公開" },
+  { "rule": "email", "file": "xiangqi-android/fdroid/com.raysonchen.xiangqiqianqiu.yml", "reason": "F-Droid 上架資料的作者聯絡信箱，本來就公開" },
+  { "rule": "email", "file": "xiangqi-lab/tools/test-support-pages-1117.js", "reason": "測試客服頁與隱私頁有寫聯絡信箱（同上那個公開信箱）" },
+  { "rule": "phone-tw", "file": "xiangqi-android/android/gradle/verification-metadata.xml", "reason": "誤判：Gradle 依賴的雜湊值裡剛好有 09 開頭的十位數字，不是電話" },
+  { "rule": "phone-tw", "file": "xiangqi-lab/tools/redblue-cases.js", "reason": "名稱過濾的反例清單：故意放的假電話 0912…，要確認會被擋" },
+  { "rule": "phone-tw", "file": "xiangqi-lab/tools/test-name-safe.js", "reason": "名稱過濾測試：故意放的假電話 0912…，要確認會被擋" },
+  { "rule": "phone-tw", "file": "xiangqi-lab/tools/test-r25-1117.js", "reason": "名稱過濾測試：故意放的假電話 0912…，要確認會被擋" }
+ ]
+}
