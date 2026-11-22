@@ -44,6 +44,13 @@ test("rounds.js：連續 N 輪（預設 2）、每一輪都全過才算；嘗試
   assert.deepEqual(priorAttempts(L, A, "26"), { before: 3, failedBefore: 2 }, "測試不成立的那次也算一次失敗");
   assert.deepEqual(priorAttempts(L, A, "18"), { before: 1, failedBefore: 1 });
   assert.deepEqual(priorAttempts(L, null, "26"), { before: 0, failedBefore: 0 }, "沒有包的雜湊不比");
+  assert.deepEqual(priorAttempts(L.concat([JSON.stringify({ indexSha256: A, ios: "26", pass: false, fault: true })]), A, "26"), { before: 3, failedBefore: 2 }, "反測的紀錄不算（PR #61 審查②）");
+  /* 命令列 unfit：p0-3d.sh 的 die() 追加一筆測試不成立（PR #61 審查③） */
+  const os = require("os"), tf = path.join(fs.mkdtempSync(path.join(os.tmpdir(), "p03d-")), "att.jsonl");
+  require("child_process").spawnSync(process.execPath, [path.join(D, "rounds.js"), "unfit", tf, A, "20261122-0804", "27", "U1", "p03d-x", "", "模擬器上裝的不是這個包"]);
+  const u = JSON.parse(fs.readFileSync(tf, "utf8").trim());
+  assert.equal(u.unfit, true); assert.equal(u.pass, false); assert.equal(u.fault, false); assert.equal(u.indexSha256, A); assert.equal(u.ios, "27"); assert.match(u.error, /不是這個包/);
+  assert.deepEqual(priorAttempts([fs.readFileSync(tf, "utf8").trim()], A, "27"), { before: 1, failedBefore: 1 }, "測試不成立算一次沒過");
   assert.deepEqual(priorAttempts([], A, "26"), { before: 0, failedBefore: 0 });
 });
 
@@ -53,6 +60,8 @@ test("p0-3d.sh：嘗試紀錄傳給 p03d.js，放在 output 底下的固定檔",
   assert.match(S, /P03D_ATTEMPTS=\$ATT /);
   assert.match(S, /IOSV=\$\(xcrun simctl list devices -j \| node \$HERE\/rounds\.js ios \$U\)/, "iOS 版本從模擬器系統讀");
   assert.match(S, / P03D_IOS=\$IOSV /);
+  assert.match(S, /die\(\)\{[^\n]*node \$HERE\/rounds\.js unfit "\$ATT"/, "測試不成立也寫嘗試紀錄（PR #61 審查③）");
+  assert.match(S, /echo "包：\$APP" \| tee \$OUT\/run\.txt\necho "模擬器 iOS/, "run.txt 先寫「包：」再追加，不被蓋掉（PR #61 審查①）");
   assert.doesNotMatch(rd("p03d.js"), /userAgent[^\n]*IOS|IOS[^\n]*\.ua\b/, "不用 WebView 的 userAgent 判 iOS 版本（凍結值）");
 });
 

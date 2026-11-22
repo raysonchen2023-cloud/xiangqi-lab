@@ -28,13 +28,26 @@ function runtimeMajor(rt) { const m = /\.iOS-(\d+)-\d+/.exec(String(rt || "")); 
 function priorAttempts(lines, indexSha256, ios) {
   if (!indexSha256) return { before: 0, failedBefore: 0 };
   const same = (lines || []).map((l) => { try { return JSON.parse(l) } catch (e) { return null } })
-    .filter((x) => x && x.indexSha256 === indexSha256 && String(x.ios) === String(ios));
+    .filter((x) => x && !x.fault && x.indexSha256 === indexSha256 && String(x.ios) === String(ios));   /* 反測（故意注入故障）的紀錄不算（PR #61 審查②） */
   return { before: same.length, failedBefore: same.filter((x) => x.pass !== true).length };
 }
 
 module.exports = { parseRounds, roundPass, runtimeMajor, priorAttempts };
 
-/* 命令列（p0-3d.sh 用）：node rounds.js ios <UDID>，從 stdin 讀 `xcrun simctl list devices -j`，印出那台模擬器的 iOS 大版號 */
+/* 測試不成立的一筆嘗試紀錄（p0-3d.sh 的 die() 用；欄位跟 p03d.js 的 logAttempt 一樣） */
+function unfitRecord({ indexSha256, build, ios, udid, out, fault, error, at }) {
+  return { at: at || new Date().toISOString(), indexSha256: indexSha256 || null, build: build || null, ios: ios || null, udid: udid || null, out: out || null,
+    full: false, fault: fault === "cover", rounds: 0, pass: false, unfit: true, error: String(error || "").slice(0, 200) };
+}
+module.exports.unfitRecord = unfitRecord;
+
+/* 命令列（p0-3d.sh 用）：
+   node rounds.js ios <UDID>：從 stdin 讀 `xcrun simctl list devices -j`，印出那台模擬器的 iOS 大版號
+   node rounds.js unfit <嘗試紀錄檔> <SHA> <版號> <iOS> <UDID> <證據資料夾名> <P03D_FAULT> <原因>：追加一筆「測試不成立」 */
+if (require.main === module && process.argv[2] === "unfit") {
+  const [file, indexSha256, build, ios, udid, out, fault, error] = process.argv.slice(3);
+  try { require("fs").appendFileSync(file, JSON.stringify(unfitRecord({ indexSha256, build, ios, udid, out, fault, error })) + "\n") } catch (e) { }
+}
 if (require.main === module && process.argv[2] === "ios") {
   let s = ""; process.stdin.on("data", (d) => (s += d)).on("end", () => {
     let out = "";

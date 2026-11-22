@@ -21,15 +21,15 @@ BOOTED=$(xcrun simctl list devices booted | grep -c Booted)
 [ "$BOOTED" -gt 0 ] && ! xcrun simctl list devices booted | grep -q $U && { echo "✘ 已經有別台模擬器開著（一台機器一次一台），先關掉"; exit 2; }
 T=$(date +%m%d-%H%M%S); OUT=${P03D_OUTDIR:-$PWD/output}/p03d-$T; mkdir -p $OUT; OUT=${OUT:A}
 IOSV=$(xcrun simctl list devices -j | node $HERE/rounds.js ios $U)   # 模擬器系統的 iOS 大版號（WebView 回報的是凍結值，不能用）
-echo "模擬器 iOS：${IOSV:-（讀不到）}" | tee -a $OUT/run.txt
 ATT=${OUT:h}/p03d-attempts.jsonl   # 嘗試紀錄：每次執行（過不過、測試不成立）都追加一行到同一份固定檔，同一個包之前失敗過看得到（W69 流程盤點第 5 項）
 echo "包：$APP" | tee $OUT/run.txt
+echo "模擬器 iOS：${IOSV:-（讀不到）}" | tee -a $OUT/run.txt
 XB=$(grep -ao 'XQ_BUILD="[0-9-]*"' $APP/public/index.html | head -1 | cut -d'"' -f2)
 XS=$(shasum -a 256 $APP/public/index.html | cut -c1-64)
 [ -n "$XB" ] || { echo "✘ 包裡讀不到 XQ_BUILD"; exit 2; }
 echo "包內 XQ_BUILD：$XB" | tee -a $OUT/run.txt
 echo "index.html SHA-256：$XS" | tee -a $OUT/run.txt
-die(){ echo "✘ $1：測試不成立" | tee -a $OUT/run.txt; xcrun simctl shutdown $U >/dev/null 2>&1; exit 2; }
+die(){ echo "✘ $1：測試不成立" | tee -a $OUT/run.txt; node $HERE/rounds.js unfit "$ATT" "$XS" "$XB" "$IOSV" "$U" "${OUT:t}" "${P03D_FAULT:-}" "$1"; xcrun simctl shutdown $U >/dev/null 2>&1; exit 2; }   # 測試不成立（裝包失敗、包不符）也寫嘗試紀錄（PR #61 審查③）
 # 1. 乾淨模擬器
 xcrun simctl shutdown $U >/dev/null 2>&1
 $HERE/fresh-app.sh $U "$APP" > $OUT/fresh-app.log 2>&1 || die "抹掉／安裝失敗（見 fresh-app.log）"   # fresh-app：抹掉、開機、裝包、預寫 xq_netRoot＝xq_test
