@@ -41,7 +41,7 @@ test("網站 data/zmhall/ 已經有這兩個檔時，要跟素材原始資料一
     const w = path.join(SITE, "data", "zmhall", f);
     if (fs.existsSync(w)) { n++; assert.equal(fs.readFileSync(w, "utf8"), x.raw, "data/zmhall/" + f + " 跟 xiangqi-db/art/zmhall/ 的不一樣") }
   }
-  if (!n) t.diagnostic("網站還沒有 data/zmhall/ 題庫（還沒發布），只驗原始資料");
+  if (!n) return t.skip("網站還沒有 data/zmhall/ 題庫（還沒發布）；原始資料由上一項驗");   /* W69 第 10 項（11/22）：原本只印 diagnostic 就算通過，一次斷言都沒做 */
 });
 
 test("課堂挑錯著：欄位齊全、課程存在、整串 6～14 手每手合法", (t) => {
