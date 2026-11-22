@@ -179,6 +179,9 @@ function runFile(file) {
     const sk = /\s# SKIP\b\s*(.*)$/i.exec(m[2]);   /* 11/14：SKIP＝略過（TAP 裡是 ok，但沒有跑），另外統計、不算通過 */
     res.push({ name, ok: m[1] === "ok", todo: /\s# TODO\b/i.test(m[2]), skip: !!sk, why: sk ? sk[1].replace(/\\#/g, "#").replace(/\\\\/g, "\\") : undefined });   /* 第 17 輪 F3：todo＝還沒修的漏洞（預期失敗），另外統計 */
   }
+  /* W69 流程盤點第 18 項（11/23）：檔裡一項 test() 都沒跑時，node --test 會把「這支檔本身」報成一項通過（名稱＝檔名），
+     等於沒測試卻算 1 項通過；還原成 0 項，下面判失敗。載入就壞的檔是「not ok - 檔名」，照常算失敗 */
+  if (res.length === 1 && res[0].ok && !res[0].skip && !res[0].todo && res[0].name === file) return [];
   return res;
 }
 /* 不跑測試：數 test( 呼叫處的名稱（第一段字面字串） */
@@ -230,5 +233,7 @@ if (require.main === module && !process.env.NODE_TEST_CONTEXT) {
   if (total.todo.all) console.log(`預期失敗（還沒修的漏洞，node:test todo；不算進上面三類）：${total.todo.all} 項，其中「預期失敗卻通過」${total.todo.xpass} 項（${files.filter(f => f.n.todo.all).map(f => f.file + " " + f.n.todo.all).join("、")}）`);
   console.log("說明：原始碼比對只證明程式碼存在，不證明功能會動；測試由開發用的 AI 撰寫，不等於第三方驗證。");
   /* 11/13：有任何一項沒過就回報失敗（結束代碼 1），source/run-tests.js、verify-all.js 才不會把沒過的當成通過 */
+  /* W69 流程盤點第 18 項（11/23）：一項都沒跑出來的檔（0/0）也算沒過，不然 test() 被包進條件、整段註解掉，CI 照樣綠 */
+  if (mode === "run") { const zero = files.filter(f => !f.items.length).map(f => f.file); if (zero.length) { console.log("✖ 測試檔一項都沒跑出來：" + zero.join("、")); process.exitCode = 1 } }
   if (mode === "run") { const bad = files.filter(f => KINDS.some(k => f.n[k].pass + f.n[k].skip < f.n[k].all) || f.n.todo.xpass).map(f => f.file);   /* 預期失敗卻通過也算：漏洞可能修好了，要把 todo 改成一般測試 */ if (bad.length) { console.log("✖ 有測試沒過：" + bad.join("、")); process.exitCode = 1 } }
 }

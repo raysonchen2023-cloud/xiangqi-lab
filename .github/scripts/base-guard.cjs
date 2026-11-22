@@ -58,6 +58,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["假略過檢查", ["node", ".github/scripts/check-fake-skip.cjs"]],
   ["略過稽核", ["node", ".github/scripts/check-test-skips.cjs", "base-verify.txt"]],
   ["todo 稽核", ["node", ".github/scripts/check-test-todos.cjs", "base-tally.json", "--base", base]],   /* W69 流程盤點第 9 項：預期失敗也要在白名單、白名單只能減 */
+  ["0 項檢查", ["node", ".github/scripts/check-test-empty.cjs", "base-tally.json"]],   /* W69 流程盤點第 18 項：0 項的檔、沒跑到的檔都紅燈 */
   ["新測試要分類", ["node", ".github/scripts/check-test-classified.cjs", base]],
 ] : [
   ["假略過檢查", ["node", ".github/scripts/check-fake-skip.cjs"]],
@@ -66,6 +67,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["完整驗證", ["node", "source/xiangqi-lab/tools/verify-all.js", "--skip", "release-verify", "--out", "base-verify.txt", "--tally-out", "base-tally.json"]],
   ["略過稽核", ["node", ".github/scripts/check-test-skips.cjs", "base-verify.txt"]],
   ["todo 稽核", ["node", ".github/scripts/check-test-todos.cjs", "base-tally.json", "--base", base]],   /* W69 流程盤點第 9 項：預期失敗也要在白名單、白名單只能減 */
+  ["0 項檢查", ["node", ".github/scripts/check-test-empty.cjs", "base-tally.json"]],   /* W69 流程盤點第 18 項：0 項的檔、沒跑到的檔都紅燈 */
   ["新測試要分類", ["node", ".github/scripts/check-test-classified.cjs", base]],
   ["私密掃描", ["node", "source/xiangqi-lab/tools/oss-scan.js", "source"]],
 ];
