@@ -61,6 +61,12 @@ test("p0-3d.sh：嘗試紀錄傳給 p03d.js，放在 output 底下的固定檔",
   assert.match(S, /IOSV=\$\(xcrun simctl list devices -j \| node \$HERE\/rounds\.js ios \$U\)/, "iOS 版本從模擬器系統讀");
   assert.match(S, / P03D_IOS=\$IOSV /);
   assert.match(S, /die\(\)\{[^\n]*node \$HERE\/rounds\.js unfit "\$ATT"/, "測試不成立也寫嘗試紀錄（PR #61 審查③）");
+  /* PR #61 Codex：嘗試紀錄的位置（ATT）定好之後，提早結束一律走 die()（讀不到版號、觸控伺服建置失敗也要記）；之前的（找不到模擬器、找不到包、別台開著）還沒有包可記 */
+  const after = S.slice(S.indexOf("\nATT=")), dieAt = after.indexOf("\ndie(){");
+  assert.ok(dieAt >= 0 && dieAt < after.indexOf("\nXB="), "die() 要在讀版號之前就定好");
+  assert.deepEqual(after.split("\n").filter((l) => /exit 2/.test(l) && !/^die\(\)\{/.test(l)), [], "ATT 之後不能有不經過 die() 的 exit 2");
+  assert.match(S, /\[ -n "\$XB" \] \|\| die "包裡讀不到 XQ_BUILD"/);
+  assert.match(S, /build-for-testing > \$OUT\/p03d-build\.log 2>&1 \|\| die "P03D 建置失敗/);
   assert.match(S, /echo "包：\$APP" \| tee \$OUT\/run\.txt\necho "模擬器 iOS/, "run.txt 先寫「包：」再追加，不被蓋掉（PR #61 審查①）");
   assert.doesNotMatch(rd("p03d.js"), /userAgent[^\n]*IOS|IOS[^\n]*\.ua\b/, "不用 WebView 的 userAgent 判 iOS 版本（凍結值）");
 });

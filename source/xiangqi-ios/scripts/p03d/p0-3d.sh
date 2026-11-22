@@ -24,12 +24,12 @@ IOSV=$(xcrun simctl list devices -j | node $HERE/rounds.js ios $U)   # 模擬器
 ATT=${OUT:h}/p03d-attempts.jsonl   # 嘗試紀錄：每次執行（過不過、測試不成立）都追加一行到同一份固定檔，同一個包之前失敗過看得到（W69 流程盤點第 5 項）
 echo "包：$APP" | tee $OUT/run.txt
 echo "模擬器 iOS：${IOSV:-（讀不到）}" | tee -a $OUT/run.txt
+die(){ echo "✘ $1：測試不成立" | tee -a $OUT/run.txt; node $HERE/rounds.js unfit "$ATT" "$XS" "$XB" "$IOSV" "$U" "${OUT:t}" "${P03D_FAULT:-}" "$1"; xcrun simctl shutdown $U >/dev/null 2>&1; exit 2; }   # 測試不成立（讀不到版號、裝包失敗、包不符、觸控伺服建置失敗）也寫嘗試紀錄（PR #61 審查③、Codex）
 XB=$(grep -ao 'XQ_BUILD="[0-9-]*"' $APP/public/index.html | head -1 | cut -d'"' -f2)
 XS=$(shasum -a 256 $APP/public/index.html | cut -c1-64)
-[ -n "$XB" ] || { echo "✘ 包裡讀不到 XQ_BUILD"; exit 2; }
+[ -n "$XB" ] || die "包裡讀不到 XQ_BUILD"
 echo "包內 XQ_BUILD：$XB" | tee -a $OUT/run.txt
 echo "index.html SHA-256：$XS" | tee -a $OUT/run.txt
-die(){ echo "✘ $1：測試不成立" | tee -a $OUT/run.txt; node $HERE/rounds.js unfit "$ATT" "$XS" "$XB" "$IOSV" "$U" "${OUT:t}" "${P03D_FAULT:-}" "$1"; xcrun simctl shutdown $U >/dev/null 2>&1; exit 2; }   # 測試不成立（裝包失敗、包不符）也寫嘗試紀錄（PR #61 審查③）
 # 1. 乾淨模擬器
 xcrun simctl shutdown $U >/dev/null 2>&1
 $HERE/fresh-app.sh $U "$APP" > $OUT/fresh-app.log 2>&1 || die "抹掉／安裝失敗（見 fresh-app.log）"   # fresh-app：抹掉、開機、裝包、預寫 xq_netRoot＝xq_test
@@ -43,7 +43,7 @@ xcrun simctl launch $U com.raysonchen.xiangqiqianqiu.dev >/dev/null || die "App 
 # 2. 觸控伺服
 cd $HERE
 DD=${P03D_DD:-${TMPDIR:-/tmp}/p03d-dd}   # XCUITest 建置資料夾放暫存目錄，不留在倉庫裡
-xcodebuild -project P03D.xcodeproj -scheme P03DUITests -destination "platform=iOS Simulator,id=$U" -derivedDataPath $DD build-for-testing > $OUT/p03d-build.log 2>&1 || { echo "✘ P03D 建置失敗，見 $OUT/p03d-build.log"; exit 2; }
+xcodebuild -project P03D.xcodeproj -scheme P03DUITests -destination "platform=iOS Simulator,id=$U" -derivedDataPath $DD build-for-testing > $OUT/p03d-build.log 2>&1 || die "P03D 建置失敗（見 p03d-build.log）"
 # 3. 跑
 P03D_DD=$DD P03D_UDID=$U P03D_OUT=$OUT P03D_ATTEMPTS=$ATT P03D_IOS=$IOSV P03D_EXPECT_BUILD=$XB P03D_EXPECT_SHA=$XS node p03d.js "$@"; RC=$?
 # 4. 抹掉
