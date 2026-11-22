@@ -149,6 +149,7 @@
   "test-xsm-stalls-1116.js：西市借的三首配樂檔都在（mp3 只放 CDN）（沒有 data/bgm 的 mp3（只放 CDN，公開副本沒有））",
   "test-zm-hall-1121.js：門內圖原檔（只在開發者電腦；發布時才放上 CDN）：尺寸 768×1376、大小合理（沒有 xiangqi-db/art/zmhall/central.webp（美術原檔只在開發者電腦，公開副本沒有））",
   "test-zm-medallion-1118.js：ring3d.json 有十位掌門的圓牌位置（數值合理），兩份一致（沒有 tripo_app/ring3d.json（公開副本的 run-tests 把 source/ 抄到暫存資料夾，倉庫的 data/ 也不在旁邊））",
-  "test-zm-medallion-1118.js：深度表 glydepth.json 也算過十位掌門（W57：從上一支拆出）（沒有 tripo_app/glydepth.json（只放 CDN））"
+  "test-zm-medallion-1118.js：深度表 glydepth.json 也算過十位掌門（W57：從上一支拆出）（沒有 tripo_app/glydepth.json（只放 CDN））",
+  "test-zm-screen-data-1122.js：網站 data/zmhall/ 已經有這兩個檔時，要跟素材原始資料一模一樣（網站還沒有 data/zmhall/ 題庫（還沒發布）；原始資料由上一項驗）"
  ]
 }
