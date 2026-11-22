@@ -1,5 +1,5 @@
 {
- "note": "略過白名單（W57，2026-11-21）：這個公開倉庫的 CI 環境跑不了、確定要略過的測試項。每一行是驗證輸出裡「﹣ 檔名：項目（原因）」那一行的內容。只能經過 .github/ 逐行審的 PR 修改；新增要寫明為什麼這個環境跑不了。 每一條都要在 missing 寫出缺的檔（倉庫根目錄起算；開發者電腦暫存區的檔寫資料夾名起算），由 .github/scripts/check-skip-allow.cjs 核對：倉庫裡真的沒有、檔名出現在那支測試裡；跟 main 比，總數只能減不能增、新的測試檔不能有略過（W69 流程盤點高 7，2026-11-23）。",
+ "note": "略過白名單（W57，2026-11-21）：這個公開倉庫的 CI 環境跑不了、確定要略過的測試項。每一行是驗證輸出裡「﹣ 檔名：項目（原因）」那一行的內容。只能經過 .github/ 逐行審的 PR 修改；新增要寫明為什麼這個環境跑不了。 每一條都要寫出缺的檔：倉庫裡的寫進 missing（倉庫根目錄起算），倉庫外的（開發者電腦暫存區之類）照實寫進 outside，由 .github/scripts/check-skip-allow.cjs 核對：倉庫裡真的沒有、檔名出現在那支測試裡；跟 main 比，總數只能減不能增、新的測試檔不能有略過（W69 流程盤點高 7，2026-11-23）。",
  "allow": [
   "test-android-roadmap.js：〔原始碼〕11/13 0452 驗證紀錄：4 步全過、沒有使用者資料夾路徑或 CR（0452 驗證紀錄只在開發者電腦的 opensource-stage/，公開副本沒有）",
   "test-bh-sg-bgm-1116.js：配樂檔 bh_6～10 與新曲名都在（配樂只放 CDN）（沒有 data/bgm/blackhole 配樂與新曲名（只放 CDN，公開副本沒有））",
@@ -160,10 +160,6 @@
   ],
   "test-daynight-1117.js：冬季圖、長卷都在（換季只是換哪一張，沒有新圖要畫）；載不到有退路（沒有季節首頁圖（只放 CDN，公開副本沒有））": [
    "data/homemap/home_qin_spring.webp"
-  ],
-  "test-daynight-1117.js：07s4-passmap（禁改檔）的改動寫在 reps-next.json，以線上 pub.html 為底每組只命中 1 次（公開副本：這項檢查開發者電腦上的發版暫存檔，不在公開副本跑（11/17 1757 證據補））": [
-   "relD/reps-next.json",
-   "relD/pub.html"
   ],
   "test-extra-bgm-1116.js：配樂檔與新曲名都在（配樂只放 CDN）（沒有 data/bgm 配樂與新曲名（只放 CDN，公開副本沒有））": [
    "data/bgm/blackhole/bh_1.mp3"
@@ -531,9 +527,6 @@
    "source/xiangqi-db/art/tripo_app/x_bing.glb",
    "source/xiangqi-lab/src/GLTFLoader.mjs"
   ],
-  "test-r40-1118.js：快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡；暖機 WS 那段 11/18 第 36 輪又改過，不比）（沒有 1010 快照（只在這台電腦的暫存區））": [
-   "relD/src-20261118-1010"
-  ],
   "test-review-e-1117.js：8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（沒有 iOS 建置產物 xiangqi-ios/www、ios/App/App/public、capacitor.config.json（cap sync 產生，.gitignore 不進倉庫））": [
    "source/xiangqi-ios/www",
    "source/xiangqi-ios/ios/App/App/public",
@@ -596,6 +589,15 @@
   ],
   "test-zm-screen-data-1122.js：網站 data/zmhall/ 已經有這兩個檔時，要跟素材原始資料一模一樣（網站還沒有 data/zmhall/ 題庫（還沒發布）；原始資料由上一項驗）": [
    "data/zmhall"
+  ]
+ },
+ "outside": {
+  "test-daynight-1117.js：07s4-passmap（禁改檔）的改動寫在 reps-next.json，以線上 pub.html 為底每組只命中 1 次（公開副本：這項檢查開發者電腦上的發版暫存檔，不在公開副本跑（11/17 1757 證據補））": [
+   "開發者電腦的暫存區/scratchpad/relD/reps-next.json",
+   "開發者電腦的暫存區/scratchpad/relD/pub.html"
+  ],
+  "test-r40-1118.js：快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡；暖機 WS 那段 11/18 第 36 輪又改過，不比）（沒有 1010 快照（只在這台電腦的暫存區））": [
+   "開發者電腦的暫存區/scratchpad/relD/src-20261118-1010"
   ]
  }
 }

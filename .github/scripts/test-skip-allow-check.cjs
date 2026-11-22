@@ -2,23 +2,23 @@
 // 用法：node --test .github/scripts/test-skip-allow-check.cjs
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process");
-const { judge, fileOf, tally } = require("./check-skip-allow.cjs");
+const { judge, fileOf, tally, norm } = require("./check-skip-allow.cjs");
 const CHECK = path.join(__dirname, "check-skip-allow.cjs");
 
 const E1 = "test-a.js：英文字典都有（沒有 xiangqi-db/i18n-en.json（只放 CDN））", E2 = "test-a.js：第二項（沒有 xiangqi-db/i18n-en.json（只放 CDN））", E3 = "test-b.js：上架文案（沒有 xiangqi-ios/appstore）";
 const SRC = { "test-a.js": 'const p = "xiangqi-db/i18n-en.json";', "test-b.js": 'rd("xiangqi-ios/appstore/metadata.md")' };
 const REPO = new Set(["source/xiangqi-ios/capacitor.config.json", "data/gmbios.json"]);
-const base = (o) => judge(Object.assign({ allow: [E1, E2, E3], missing: { [E1]: ["source/xiangqi-db/i18n-en.json"], [E2]: ["source/xiangqi-db/i18n-en.json"], [E3]: ["source/xiangqi-ios/appstore"] }, baseAllow: [E1, E2, E3], baseHas: (f) => f in SRC,
+const base = (o) => judge(Object.assign({ allow: [E1, E2, E3], missing: { [E1]: ["source/xiangqi-db/i18n-en.json"], [E2]: ["source/xiangqi-db/i18n-en.json"], [E3]: ["source/xiangqi-ios/appstore"] }, baseAllow: [E1, E2, E3], baseHas: (f) => f in SRC, top: new Set(["source", "data", ".github"]),
   tracked: (p) => REPO.has(p) || [...REPO].some((f) => f.startsWith(p + "/")), onDisk: () => false, src: (f) => SRC[f] ?? null }, o));
 
 test("每一條都寫了缺的檔、倉庫裡真的沒有、檔名出現在測試裡 → 通過", () => {
   const r = base({}); assert.deepEqual(r.bad, []); assert.deepEqual(r.grew, []); assert.equal(r.ok, true);
 });
 
-test("① 沒寫 missing、空陣列、空字串 → 不成立", () => {
-  for (const m of [undefined, [], [""], [" "], [1]]) {
+test("① 沒寫 missing、空陣列、不是陣列、空字串、不是字串 → 不成立", () => {
+  for (const [m, why] of [[undefined, /沒寫缺哪個檔.*test-b\.js/], [[], /沒寫缺哪個檔.*test-b\.js/], ["x", /沒寫缺哪個檔.*test-b\.js/], [[""], /路徑是空的.*test-b\.js/], [[" "], /路徑是空的.*test-b\.js/], [[1], /不是字串.*test-b\.js/]]) {
     const missing = { [E1]: ["source/xiangqi-db/i18n-en.json"], [E2]: ["source/xiangqi-db/i18n-en.json"] }; if (m !== undefined) missing[E3] = m;
-    const r = base({ missing }); assert.equal(r.ok, false, JSON.stringify(m)); assert.match(r.bad.join("\n"), /沒寫缺哪個檔.*test-b\.js/);
+    const r = base({ missing }); assert.equal(r.ok, false, JSON.stringify(m)); assert.match(r.bad.join("\n"), why, JSON.stringify(m));
   }
 });
 
@@ -40,17 +40,42 @@ test("① 缺檔的檔名沒出現在測試原始碼裡、路徑寫成絕對路�
   assert.deepEqual(r.bad, [], "主檔名 metadata 有出現（測試用程式拼副檔名）也算");
   r = base({ missing: { [E1]: ["source/xiangqi-db/i18n-en.json"], [E2]: ["source/xiangqi-db/i18n-en.json"], [E3]: ["source/xiangqi-ios/rd.md"] } });
   assert.match(r.bad.join("\n"), /檔名「rd\.md」沒出現/, "主檔名太短（rd）不算");
-  for (const p of ["/etc/passwd", "C:/x/appstore", "source/../appstore"]) {
+  for (const [p, why] of [["/etc/passwd", /絕對路徑/], ["C:/x/appstore", /絕對路徑/], ["source/../appstore", /不能有 \. 或 \.\./], ["source/./appstore", /不能有 \. 或 \.\./], ["/", /絕對路徑/], ["//", /絕對路徑/], ["", /路徑是空的/], ["\\", /絕對路徑/]]) {
     r = base({ missing: { [E1]: ["source/xiangqi-db/i18n-en.json"], [E2]: ["source/xiangqi-db/i18n-en.json"], [E3]: [p] } });
-    assert.match(r.bad.join("\n"), /要從倉庫根目錄寫起/, p);
+    assert.equal(r.ok, false, JSON.stringify(p)); assert.match(r.bad.join("\n"), why, JSON.stringify(p));
   }
+  /* #62 審查（Windows Claude 2）：路徑第一段要是倉庫真的有的頂層資料夾；倉庫外的檔寫 relD/x 這種假路徑，「倉庫裡沒有」永遠成立 */
+  r = base({ missing: { [E1]: ["source/xiangqi-db/i18n-en.json"], [E2]: ["source/xiangqi-db/i18n-en.json"], [E3]: ["relD/appstore"] } });
+  assert.match(r.bad.join("\n"), /第一段「relD」不是倉庫裡的頂層資料夾/);
+  assert.deepEqual(norm("source//xiangqi-ios/appstore/"), { q: "source/xiangqi-ios/appstore" }, "多餘的斜線收掉");
   r = base({ src: (f) => (f === "test-b.js" ? null : SRC[f]) });
   assert.match(r.bad.join("\n"), /找不到測試檔 test-b\.js/);
 });
 
-test("② missing 有、白名單沒有的舊條目 → 不成立", () => {
-  const r = base({ missing: { [E1]: ["source/xiangqi-db/i18n-en.json"], [E2]: ["source/xiangqi-db/i18n-en.json"], [E3]: ["source/xiangqi-ios/appstore"], "test-z.js：舊的": ["x"] } });
+test("② missing、outside 有、白名單沒有的舊條目 → 不成立", () => {
+  let r = base({ missing: { [E1]: ["source/xiangqi-db/i18n-en.json"], [E2]: ["source/xiangqi-db/i18n-en.json"], [E3]: ["source/xiangqi-ios/appstore"], "test-z.js：舊的": ["x"] } });
   assert.match(r.bad.join("\n"), /missing 有、白名單沒有.*test-z\.js：舊的/);
+  r = base({ outside: { "test-z.js：舊的": ["暫存區/x"] } });
+  assert.match(r.bad.join("\n"), /outside 有、白名單沒有.*test-z\.js：舊的/);
+});
+
+test("outside：倉庫外的檔照實寫；第一段是倉庫的資料夾要改寫進 missing；空路徑、檔名沒出現在測試 → 不成立；只有 outside 也算有寫", () => {
+  const M2 = { [E1]: ["source/xiangqi-db/i18n-en.json"], [E2]: ["source/xiangqi-db/i18n-en.json"] };
+  let r = base({ missing: M2, outside: { [E3]: ["開發者電腦的暫存區/relD/appstore"] } });
+  assert.deepEqual(r.bad, [], "只有 outside、而且檔名出現在測試裡，算有寫");
+  r = base({ missing: M2, outside: { [E3]: ["source/xiangqi-ios/appstore"] } });
+  assert.match(r.bad.join("\n"), /第一段「source」是倉庫裡的資料夾，要寫進 missing/);
+  r = base({ missing: M2, outside: { [E3]: ["/"] } });
+  assert.match(r.bad.join("\n"), /outside 的 "\/"：要寫相對路徑/);
+  r = base({ missing: M2, outside: { [E3]: ["暫存區/隨便寫的.md"] } });
+  assert.match(r.bad.join("\n"), /倉庫外的 暫存區\/隨便寫的\.md 檔名「隨便寫的\.md」沒出現/);
+  r = base({ missing: M2, outside: { [E3]: [] } });
+  assert.match(r.bad.join("\n"), /沒寫缺哪個檔（missing 或 outside）/, "兩邊都空");
+});
+
+test("列出這次新增、刪掉的條目（給審查者逐條看）", () => {
+  const r = base({ baseAllow: [E1, E2, "test-a.js：舊的那一條（舊原因）"] });
+  assert.deepEqual(r.added, [E3]); assert.deepEqual(r.removed, ["test-a.js：舊的那一條（舊原因）"]);
 });
 
 test("③ 只能減不能增：總數變多、新的測試檔有略過 → 不成立；既有的檔改寫原因、拆成明列的略過（總數沒變多）、減少都可以", () => {
@@ -62,7 +87,7 @@ test("③ 只能減不能增：總數變多、新的測試檔有略過 → 不�
   assert.equal(r.ok, false);
   r = base({ baseAllow: [E1, "test-a.js：拆開前的那一項（舊原因）", "test-z.js：別處那一條（舊原因）"] });
   assert.deepEqual(r.grew, [], "既有的檔：test-b 原本 0 條、現在 1 條，但總數沒變多");
-  r = judge({ allow: [E1], missing: { [E1]: ["source/xiangqi-db/i18n-en.json"] }, baseAllow: [E1, E2, E3], baseHas: () => true, tracked: () => false, onDisk: () => false, src: (f) => SRC[f] });
+  r = judge({ allow: [E1], missing: { [E1]: ["source/xiangqi-db/i18n-en.json"] }, baseAllow: [E1, E2, E3], baseHas: () => true, top: new Set(["source"]), tracked: () => false, onDisk: () => false, src: (f) => SRC[f] });
   assert.equal(r.ok, true, "減少一定可以");
 });
 
