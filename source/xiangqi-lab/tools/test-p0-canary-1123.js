@@ -17,7 +17,7 @@ const G = (reps, w = [], mainSha = MAIN, cdnProbe = null) => gate(A, V, reps, w,
 const DOWN = { reachable: false, detail: "假：閘門也連不上" }, UP = { reachable: true, detail: "假：閘門連得上" };
 const d3 = (android, o = {}) => ({ file: "3d-" + android, json: Object.assign({ tool: "P0-3D", aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D") }, o) });
 const c3 = (android, o = {}) => ({ file: "3dc-" + android, json: Object.assign({ tool: "P0-3D", selfTest: true, aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") }, o) });
-const img = (o = {}) => ({ file: "img", json: Object.assign({ tool: "P0-IMG", aabSha256: A, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true }, toolPins: TP.pinsFor("P0-IMG") }, o) });
+const img = (o = {}) => ({ file: "img", json: Object.assign({ tool: "P0-IMG", aabSha256: A, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true, deep: { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: true } } }, toolPins: TP.pinsFor("P0-IMG") }, o) });
 /* 正確的工具在「CDN 沒驗到」時寫出的報告：結束代碼 3、沒通過、沒有 ✘、有沒驗到的項目（PR #66 第八次複審） */
 /* 第九次複審：金絲雀③也要是 CDN 全斷時的樣子（探測檔沒拿到 404、工具說連不上） */
 /* 第十次複審：照正確的工具在 CDN 全斷時寫的逐項清單（探測檔也在缺驗清單裡）；金絲雀③那塊用工具裡真的 cdnCanary 產生，不自己捏欄位 */
@@ -29,6 +29,7 @@ const miss = (L) => {
   Object.assign(L[0].json, { exitCode: 3, pass: false, red: 0, unknown: unk.length + 1, redItems: [], warn: warnItems.length, warnItems, cdnCompared: 0, viaCdn: unk.length - 1, inPack: 5, need: 5 + unk.length - 1, native: { cdnFallback: true, partsJoin: true, assetPacks: [] } });   /* 第十一次：viaCdn＝要向 CDN 補抓的檔（探測檔不算），need＝包裡＋補抓 */
   const c = { ...L[0].json.canary, ...cdnCanary(PROBE_F, [], unk, { ok200: 0, manOk: false }) }; c.ok = c.home === true && c.stale === true && c.cdn404 === true;
   c.homeFile = "data/homemap/home_classic.webp"; c.staleFile = "data/a/x.webp";   /* 第十五次：金絲雀①②真的弄壞過包裡的檔 */
+  c.deep = { ...c.deep, w42: { ok: false, skip: "沒有 CDN manifest" } };   /* PR②：manifest 讀不到時，深層的 W42 做不出來、標沒驗 */
   L[0].json.canary = c; return L };
 const upd = (o = {}) => ({ file: "upd", json: Object.assign({ tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") }, o) });
 const all = () => [img(), upd(), d3("12"), d3("16"), c3("12"), c3("16")];
@@ -81,15 +82,15 @@ test("閘門（反測必紅）：P0-3D 金絲雀缺一份、自我反測沒照�
 });
 
 test("閘門（反測必紅）：P0-IMG 金絲雀①②沒抓到不能豁免；③CDN 沒回 404 歸在可豁免的 P0-IMG/cdn；P0-UPD 假視窗沒抓到不能豁免", () => {
-  let L = all(); L[0].json.canary = { home: false, stale: true, cdn404: true };
+  let L = all(); L[0].json.canary = { ...L[0].json.canary, home: false, stale: true, cdn404: true };
   let r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false); assert.ok(has(r, /P0-IMG：金絲雀沒被抓到/));
-  L = all(); L[0].json.canary = { home: true, stale: false, cdn404: true }; assert.ok(has(G(L), /改掉包裡檔的雜湊 ✘/));
+  L = all(); L[0].json.canary = { ...L[0].json.canary, home: true, stale: false, cdn404: true }; assert.ok(has(G(L), /改掉包裡檔的雜湊 ✘/));
   L = all(); delete L[0].json.canary; assert.ok(has(G(L), /P0-IMG：金絲雀沒被抓到/), "沒記金絲雀＝沒抓到");
   L = miss(all()); L[0].json.canary = { ...L[0].json.canary, home: true, stale: true, cdn404: false, cdnUnreachable: true };   /* 第十五次：cdn 文字留工具算的，不能自己寫 */
   assert.ok(has(G(L), /CDN 不存在的檔沒被判成沒有（沒確認到（CDN 連不上或暫時出錯/));
   r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false, "閘門沒有自己探測：不能豁免");
   r = G(L, W("P0-IMG/cdn"), MAIN, UP); assert.equal(r.ok, false, "閘門連得上、報告說連不上：工具失靈"); assert.ok(has(r, /閘門自己連得上 CDN.*工具失靈/));
-  r = G(L, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, true, "報告說連不上、閘門也連不上：才可以豁免"); assert.equal(r.waived.length, 2, "正確的報告是結束代碼 3：「要加 --cdn」和金絲雀③兩條都掛 P0-IMG/cdn（第八次複審後）");
+  r = G(L, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, true, "報告說連不上、閘門也連不上：才可以豁免"); assert.equal(r.waived.length, 3, "正確的報告是結束代碼 3：「要加 --cdn」、金絲雀③、深層 W42 沒驗三條都掛 P0-IMG/cdn");
   L = miss(all()); L[0].json.canary = { ...L[0].json.canary, home: true, stale: true, cdn404: false, cdn: "沒確認到（CDN 連不上）" }; delete L[0].json.canary.cdnUnreachable;
   r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false, "訊息寫「連不上」但沒有 cdnUnreachable 布林：不能豁免（不看文字）");
   L = all(); L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdn: "被當成有（CDN 核對失靈）" };
@@ -285,7 +286,7 @@ test("閘門（PR #66 第九次複審）：工具同一輪拿到過 CDN 的 404�
     const N = miss(all()); Object.assign(N[0].json, o); if (c === null) delete N[0].json.canary; else N[0].json.canary = { ...N[0].json.canary, ...c };
     const r = G(N, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, false, why); assert.equal(r.waived.length, 0, why);
   }
-  const ok = miss(all()); const r = G(ok, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, true, "CDN 全斷的真報告照樣能豁免"); assert.equal(r.waived.length, 2);
+  const ok = miss(all()); const r = G(ok, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, true, "CDN 全斷的真報告照樣能豁免"); assert.equal(r.waived.length, 3);
 });
 
 test("閘門探測（PR #66 第九次複審）：manifest 正常就算連得上，亂數檔 HEAD 斷線、500 也一樣", async () => {
@@ -391,7 +392,7 @@ test("閘門（PR #66 第十一、十三次複審，端對端）：真的 check-
     const r = cp.spawnSync(process.execPath, ["--require", net, path.join(AND, "check-aab-assets.js"), "--aab", aab, "--cdn", "--out", out], { encoding: "utf8", timeout: 100000 });
     return { status: r.status, err: (r.stderr || "").slice(0, 300), report: fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, "utf8")) : null };
   };
-  const waive = (rep, why) => { const g = G(put(rep), W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(g.ok, true, why + "：" + JSON.stringify(g.problems || g).slice(0, 300)); assert.equal(g.waived.length, 2, why) };
+  const waive = (rep, why) => { const g = G(put(rep), W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(g.ok, true, why + "：" + JSON.stringify(g.problems || g).slice(0, 300)); assert.equal(g.waived.length, 3, why + "：「要加 --cdn」、金絲雀③、深層 W42 沒驗三條") };
   const block = (rep, why) => assert.equal(G(put(rep), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, why);
   try {
     /* ① 會補抓、會接回切塊，缺一個 JSON 和一個大檔 */
@@ -431,7 +432,7 @@ test("閘門（PR #66 第十一、十三次複審，端對端）：真的 check-
     assert.equal(em.status, 3, "空的 manifest＝讀不到，缺驗 3：" + em.err); assert.equal(em.report.canary.cdnUnreachable, true);
     assert.equal(onlyCdnDown(em.report), null); waive(em.report, "空的 manifest、其他全斷");
     /* ② 第十三次複審：原生不會補抓、只缺 JSON（正確的包；網頁程式會自己改抓 CDN）：上一輪誤擋，現在要能豁免 */
-    const b = runReal({ dex: [], has: ["x"], big: false });
+    const b = runReal({ dex: [], has: ["x", "gm"] });   /* PR②：包裡要有切塊大檔，深層 W30 才做得出來（真的候選包一定有）；缺的只有 JSON */
     assert.equal(b.status, 3, "不補抓只缺 JSON，CDN 全斷＝缺驗 3：" + b.err); assert.equal(b.report.native.cdnFallback, false);
     assert.equal(onlyCdnDown(b.report), null, "不補抓只缺 JSON：算單純 CDN 連不上"); waive(b.report, "不補抓只缺 JSON 的正確包");
     /* 第十四次複審：不補抓時，提醒要跟缺驗一對一、原因文字要是工具那句 */
@@ -462,4 +463,129 @@ test("閘門（PR #66 第十一、十三次複審，端對端）：真的 check-
     const orphan = JSON.parse(JSON.stringify(b.report)); orphan.warnItems.push({ f: "data/z.json", why: "不在安裝包裡、原生不會補抓；網頁程式會自己改抓 CDN" }); orphan.warn++;
     assert.match(String(onlyCdnDown(orphan)), /CDN 以外的提醒/); block(orphan, "對不到缺驗的提醒");
   } finally { fs.rmSync(d, { recursive: true, force: true }) }
+});
+
+/* ---- 深層金絲雀（2026-11-23「壞樣本自己做、測深層判斷」）：在真的資料夾上動手，用同一個 analyzeTree 重判 ---- */
+const os = require("os"), crypto = require("crypto"), zlib = require("zlib"), cp = require("child_process");
+const sha1h = (b) => crypto.createHash("sha1").update(b).digest("hex");
+const W30M = ["X-XQ-Cdn-Cache", ".parts.json", "[A-Za-z0-9._-]+", "SHA-1"];
+const made = []; test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }) });
+/* 假的「解開後的安裝包」：x.webp（媒體，在包裡）、y.json、gm.json（切塊大檔，不在包裡）、首頁素材、dex 有 W30 四個特徵 */
+function tree(files) { const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-deep-")); made.push(d); for (const [n, v] of Object.entries(files)) { fs.mkdirSync(path.dirname(path.join(d, n)), { recursive: true }); fs.writeFileSync(path.join(d, n), v) } return d }
+function goodFiles() {
+  const P = "base/assets/public/", s8 = (s) => sha1h(s).slice(0, 8);
+  const f = { [P + "native-build.json"]: JSON.stringify({ siteVersion: V, sharedWebCommit: "0".repeat(40) }),
+    [P + "data/preload.json"]: JSON.stringify({ v: "t", items: [["data/a/x.webp", 3, s8("abc"), 1], ["data/a/y.json", 2, s8("{}"), 1]], big: [["data/gm.json", 30 * 1024 * 1024, s8("[]")]], pages: {} }),
+    [P + "data/big-books.json"]: "[]", [P + "data/a/x.webp"]: "abc", "base/dex/classes.dex": "dex\n035\0" + W30M.join("\0") + "\0" };
+  for (const h of HOME_REQUIRED) f[P + "data/" + h] = "w";
+  return f;
+}
+const snap = (d) => { const o = {}; (function w(p) { for (const e of fs.readdirSync(p, { withFileTypes: true })) { const q = path.join(p, e.name); if (e.isDirectory()) w(q); else o[path.relative(d, q)] = sha1h(fs.readFileSync(q)) } })(d); return o };
+
+test("深層金絲雀：正常的安裝包上，W21、W30、首頁真的刪、內容被改都抓到；沒有 manifest 時 W42 標沒驗；跑完資料夾一個位元組都沒變", () => {
+  const d = tree(goodFiles()), before = snap(d);
+  const A = CA.analyzeTree(d, {}); assert.equal(A.R.red.length, 0, "正常包沒有 ✘");
+  const r = CA.deepCanaries(d, A, {});
+  for (const k of ["w21", "w30", "home", "hash"]) assert.equal(r[k].ok, true, k + "：" + JSON.stringify(r[k]));
+  assert.equal(r.w21.file, "data/a/x.webp"); assert.equal(r.w30.file, "data/gm.json");
+  assert.match(r.w21.note, /偵測到「沒有 CDN 補抓」/); assert.match(r.w30.note, /偵測到「不會接回切塊」/);
+  assert.equal(r.w42.ok, false); assert.ok(r.w42.skip);
+  assert.deepEqual(snap(d), before, "壞樣本都還原了");
+  assert.equal(CA.deepOk(r, false), true); assert.equal(CA.deepOk(r, true), true, "W42 沒 manifest＝缺驗，不算失靈");
+});
+
+test("深層金絲雀：有 CDN manifest 時，W42 改掉包裡一個跟 CDN 一樣的素材，要判出「跟 CDN 現行版不同」", () => {
+  const d = tree(goodFiles()), man = { files: { "data/a/x.webp": [3, sha1h("abc").slice(0, 12)] } };
+  const A = CA.analyzeTree(d, { man }); assert.equal(A.R.red.length, 0);
+  const r = CA.deepCanaries(d, A, { man }); assert.equal(r.w42.ok, true, JSON.stringify(r.w42)); assert.equal(r.w42.file, "data/a/x.webp");
+});
+
+test("深層金絲雀報警（反測必紅）：判斷被改壞（不看檔、不看 dex、不看清單雜湊）時，對應的金絲雀要報「沒抓到」", () => {
+  const d = tree(goodFiles()), A = CA.analyzeTree(d, {});
+  const frozen = () => A;   /* 判斷一律回原本的結果＝什麼都看不到 */
+  let r = CA.deepCanaries(d, A, {}, frozen); for (const k of ["w21", "w30", "home", "hash"]) assert.equal(r[k].ok, false, k);
+  const noDex = (t, o) => { const x = CA.analyzeTree(t, o); x.native.cdnFallback = true; x.native.partsJoin = true; x.R.red = CA.classify(x.need, (f) => x.inPack.has(f), x.sha1Of, x.native).red; return x };
+  r = CA.deepCanaries(d, A, {}, noDex); assert.equal(r.w21.ok, false, "原生能力偵測壞掉：W21 報警"); assert.equal(r.w30.ok, false, "W30 報警"); assert.equal(r.home.ok, true);
+  assert.equal(CA.deepOk(r, false), false);
+  assert.deepEqual(snap(d), snap(d));
+});
+
+test("深層金絲雀：找不到可以弄壞的對象時，真實結果已判出同一類才算成立，否則不成立", () => {
+  const f = goodFiles(); delete f["base/assets/public/data/a/x.webp"];   /* 包裡沒有媒體檔可藏 */
+  const d = tree(f), A = CA.analyzeTree(d, {});
+  const r = CA.deepCanaries(d, A, {});
+  assert.equal(r.w21.ok, false, "沒有媒體在包裡、真實結果也沒判出（有 CDN 補抓）：不成立"); assert.match(r.w21.note, /不成立/);
+});
+
+test("閘門：深層金絲雀 W21／W30／首頁／內容沒抓到不能豁免；W42 沒驗歸 P0-IMG/cdn 可豁免", () => {
+  let L = all(); L[0].json.canary = { ...L[0].json.canary, deep: { ...L[0].json.canary.deep, w30: { ok: false } } };
+  let r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false); assert.ok(has(r, /深層金絲雀沒抓到（w30）/));
+  L = all(); delete L[0].json.canary.deep; assert.ok(has(G(L), /深層金絲雀沒抓到（w21、w30、home、hash）/), "沒記深層＝都沒抓到");
+  L = all(); L[0].json.canary = { ...L[0].json.canary, deep: { ...L[0].json.canary.deep, w42: { ok: false, skip: "沒有 CDN manifest" } } };
+  assert.ok(has(G(L), /W42.*沒驗/)); r = G(L, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, false, "報告其他地方都說 CDN 讀得到、卻說 W42 沒 manifest：矛盾，不能豁免（#66 第五次起豁免要單純缺驗）");
+  L = miss(all()); r = G(L, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, true, "單純缺驗、閘門也連不上：W42 沒驗可以豁免"); assert.ok(r.waived.some((x) => /W42/.test(x)));
+  r = G(L, W("P0-IMG/cdn"), MAIN, UP); assert.equal(r.ok, false, "閘門連得上：W42 沒驗不能豁免");
+  L = all(); L[0].json.canary = { ...L[0].json.canary, deep: { ...L[0].json.canary.deep, w42: { ok: false } } };
+  r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false, "W42 驗了卻沒抓到：不能豁免");
+});
+
+test("深層金絲雀實跑：用假 AAB 跑真的 check-aab-assets.js，正常包綠燈、五隻都列出；dex 沒有切塊特徵的包照樣紅燈（不被金絲雀蓋掉）", () => {
+  function zip(files) { const L = [], C = []; let off = 0;
+    for (const [n, v] of Object.entries(files)) { const data = Buffer.from(v), name = Buffer.from(n, "utf8"), crc = zlib.crc32(data) >>> 0;
+      const lh = Buffer.alloc(30); lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(20, 4); lh.writeUInt16LE(0x0800, 6); lh.writeUInt32LE(crc, 14); lh.writeUInt32LE(data.length, 18); lh.writeUInt32LE(data.length, 22); lh.writeUInt16LE(name.length, 26);
+      const ch = Buffer.alloc(46); ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(20, 4); ch.writeUInt16LE(20, 6); ch.writeUInt16LE(0x0800, 8); ch.writeUInt32LE(crc, 16); ch.writeUInt32LE(data.length, 20); ch.writeUInt32LE(data.length, 24); ch.writeUInt16LE(name.length, 28); ch.writeUInt32LE(off, 42);
+      L.push(lh, name, data); C.push(ch, name); off += 30 + name.length + data.length }
+    const cd = Buffer.concat(C), end = Buffer.alloc(22); end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(C.length / 2, 8); end.writeUInt16LE(C.length / 2, 10); end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(off, 16);
+    return Buffer.concat([...L, cd, end]) }
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "xq-deepaab-")); made.push(dir);
+  const ok = path.join(dir, "ok.aab"); fs.writeFileSync(ok, zip(goodFiles()));
+  let r = cp.spawnSync(process.execPath, [path.join(AND, "check-aab-assets.js"), "--aab", ok], { encoding: "utf8" });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  for (const label of ["W21 媒體缺檔＋原生不會補抓：✔ 抓到", "W30 切塊大檔接不回：✔ 抓到", "首頁素材缺（真的刪檔）：✔ 抓到", "包裡檔內容被改：✔ 抓到"]) assert.ok(r.stdout.includes("深層金絲雀 " + label), label);
+  const g = goodFiles(); g["base/dex/classes.dex"] = "dex\n035\0X-XQ-Cdn-Cache\0"; const bad = path.join(dir, "w30.aab"); fs.writeFileSync(bad, zip(g));
+  r = cp.spawnSync(process.execPath, [path.join(AND, "check-aab-assets.js"), "--aab", bad], { encoding: "utf8" });
+  assert.equal(r.status, 1, "真的 W30 包：✘ 優先回 1"); assert.match(r.stdout, /切塊的大檔不在安裝包裡/);
+  /* 包裡沒有媒體檔可藏、原生又會補抓（真實結果沒有 ✘）：W21 深層金絲雀不成立 → 看起來全過、其實沒驗到 → 4 */
+  const g2 = goodFiles(); delete g2["base/assets/public/data/a/x.webp"]; const nomedia = path.join(dir, "nomedia.aab"); fs.writeFileSync(nomedia, zip(g2));
+  r = cp.spawnSync(process.execPath, [path.join(AND, "check-aab-assets.js"), "--aab", nomedia], { encoding: "utf8" });
+  assert.equal(r.status, 4, r.stdout + r.stderr); assert.match(r.stdout, /深層金絲雀 W21 媒體缺檔＋原生不會補抓：✘ 沒抓到/);
+});
+
+test("P0-UPD 深層金絲雀：用 App 自己的 modal() 跳「有新版本」、在正式的觀察迴圈期間跳；觀察迴圈 coldWatch 要數到、verdict 要判出", async () => {
+  const UP = require(path.join(AND, "check-upgrade.js"));
+  assert.match(UP.CANARY_JS, /^setTimeout\(\(\)=>\{try\{modal\('[^']*<h2>有新版本<\/h2>/, "用 App 的 modal()、跟真的更新提示同一個標題");
+  assert.ok(UP.CANARY_AT_SEC > 0 && UP.CANARY_AT_SEC < UP.DIALOG_WATCH_SEC, "在觀察期間內跳出");
+  /* build：測試沒帶命令列參數，coldWatch 裡的 verdict 預期版號是 --new-build 的預設值 null */
+  const ok = { build: null, raw: "kept", setting: "kept", regs: 0, controller: false, oldKeys: [], webUpdate: false, notify: "undefined", manual: "由 Google Play 更新" };
+  /* 假連線：第 3 秒起畫面上有 1 個更新視窗（模擬 modal 跳出），PROBE 回正常狀態 */
+  const fake = (from) => { let t = 0; return { ev: async (js) => js === UP.DIALOGS ? (t++ >= from ? 1 : 0) : { ...ok, dialogs: 0 } } };
+  let row = await UP.coldWatch(fake(3), 5, async () => {});
+  assert.equal(row.dialogs, 1, "觀察期間跳出的視窗要被記到（即使 PROBE 那一刻沒有）");
+  assert.ok(row.bad.some((b) => /更新提示視窗/.test(b))); assert.equal(UP.canaryVerdict(row.dialogs, row.bad).dialog, true);
+  row = await UP.coldWatch(fake(99), 5, async () => {});
+  assert.equal(row.dialogs, 0); assert.equal(row.pass, true, "沒跳出＝正常狀態通過"); assert.equal(UP.canaryVerdict(row.dialogs, row.bad).dialog, false, "金絲雀沒被看到＝報警");
+});
+
+test("〔原始碼〕P0-UPD：正式冷啟與金絲雀都走 coldWatch；金絲雀先確認 App 有 modal()", () => {
+  const up = rd("check-upgrade.js");
+  assert.match(up, /const row = await coldWatch\(c2\); row\.screenshot = snap\("after-cold-" \+ i\);/);
+  assert.match(up, /await c3\.ev\(CANARY_JS\);\n\s+const row = await coldWatch\(c3\);/);
+  assert.match(up, /typeof modal==="function"/);
+});
+
+test("P0-IMG：深層金絲雀沒抓到＝結束代碼 4（沒 ✘ 時）、報告 pass 也要看深層", () => {
+  const okDeep = { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: false, skip: "沒 manifest" } };
+  assert.equal(CA.canaryExitOk({ home: true, stale: true, deep: okDeep }, false), true);
+  assert.equal(CA.canaryExitOk({ home: true, stale: true, deep: { ...okDeep, w21: { ok: false } } }, false), false, "深層沒抓到＝失靈");
+  assert.equal(CA.canaryExitOk({ home: true, stale: true, deep: { ...okDeep, w42: { ok: false } } }, true), false, "W42 驗了卻沒抓到＝失靈");
+  assert.match(rd("check-aab-assets.js"), /canary\.ok = canary\.home === true && canary\.stale === true && canary\.cdn404 === true && deepOk\(canary\.deep, true\);/);
+});
+
+test("深層金絲雀 W21：小包裡只剩首頁素材是媒體時，退而藏首頁的（不能因為挑不到對象誤擋小包）", () => {
+  const f = goodFiles(), P = "base/assets/public/", h0 = "data/" + HOME_REQUIRED[0];
+  delete f[P + "data/a/x.webp"];
+  const pre = JSON.parse(f[P + "data/preload.json"]); pre.items = pre.items.filter((x) => x[0] !== "data/a/x.webp"); pre.items.push([h0, 1, sha1h("w").slice(0, 8), 1]);
+  f[P + "data/preload.json"] = JSON.stringify(pre);
+  const d = tree(f), A = CA.analyzeTree(d, {}); assert.equal(A.R.red.length, 0);
+  const r = CA.deepCanaries(d, A, {}); assert.equal(r.w21.ok, true, JSON.stringify(r.w21)); assert.equal(r.w21.file, h0);
 });

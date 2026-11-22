@@ -23,7 +23,7 @@ const d3 = (sha, android) => ({ file: "3d-" + android + ".json", json: { tool: "
 /* P0-3D 金絲雀：check-3d.js --self-test 的報告（2026-11-23） */
 const c3 = (sha, android) => ({ file: "3d-canary-" + android + ".json", json: { tool: "P0-3D", selfTest: true, aabSha256: sha, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") } });
 const ok3 = (sha = A) => [
-  { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true }, toolPins: TP.pinsFor("P0-IMG") } },
+  { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true, deep: { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: true } } }, toolPins: TP.pinsFor("P0-IMG") } },
   { file: "upd.json", json: { tool: "P0-UPD", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") } },
   d3(sha, "12"), d3(sha, "16"), c3(sha, "12"), c3(sha, "16")];
 const has = (r, re) => r.problems.some((p) => re.test(p));
@@ -173,13 +173,13 @@ test("豁免：只認齊全、綁同一個 AAB、在可豁免清單裡的；轉�
 
 test("豁免：P0-IMG 缺驗（結束代碼 3）有倉庫豁免就放行並列出；沒有就擋；不可豁免的照擋", () => {
   const L = ok3(); Object.assign(L[0].json, { exitCode: 3, pass: false, unknown: 2, warn: 2, cdnCompared: 0, viaCdn: 0, inPack: 1, need: 1, warnItems: [{ f: "data/__xq_p0_canary_0123456789ab.webp", st: -1, why: "CDN 沒確認到（連不上，請稍後重跑 --cdn）" }, { f: "cdn-manifest.json", why: "讀不到 CDN 的 cdn-manifest.json，沒能核對包裡的檔是不是 CDN 現行版（缺驗）" }] });
-  L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdnUnreachable: true, cdnStatus: -1, ok: false, cdn: "沒確認到（CDN 連不上或暫時出錯，沒拿到 HTTP 狀態）", homeFile: "data/homemap/home_classic.webp", staleFile: "data/a/x.webp" };   /* 第九、十次複審：CDN 全斷時的真報告（逐項清單） */
+  L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdnUnreachable: true, cdnStatus: -1, ok: false, cdn: "沒確認到（CDN 連不上或暫時出錯，沒拿到 HTTP 狀態）", homeFile: "data/homemap/home_classic.webp", staleFile: "data/a/x.webp", deep: { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: false, skip: "沒有 CDN manifest" } } };   /* 第九、十次複審：CDN 全斷時的真報告（逐項清單） */
   let r = G(A, V, L); assert.equal(r.ok, false); assert.ok(has(r, /P0-IMG：要加 --cdn 且結束代碼 0/)); assert.ok(!has(r, /P0-IMG：沒有通過/), "缺驗歸在可豁免那一條");
   const w = { code: "P0-IMG/cdn", aabSha256: A, reason: "CDN 維護中無法交叉核對", decidedBy: "開發者", decidedAt: "2026-11-23" };
   /* PR #66 第六次複審：缺驗的豁免要閘門自己也連不上 CDN（cdnProbe.reachable＝false）；沒探測或連得上都不放行 */
   r = G(A, V, L, [w]); assert.equal(r.ok, false, "閘門沒自己探測 CDN：不放行");
   const DOWN = { reachable: false, detail: "假：閘門也連不上" };
-  r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: DOWN }); assert.equal(r.ok, true); assert.equal(r.waived.length, 2, "CDN 全斷的真報告：「要加 --cdn」和金絲雀③兩條都掛 P0-IMG/cdn"); assert.match(r.waived[0], /已豁免：CDN 維護中/);
+  r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: DOWN }); assert.equal(r.ok, true); assert.equal(r.waived.length, 3, "CDN 全斷的真報告：「要加 --cdn」、金絲雀③、深層 W42 沒驗三條都掛 P0-IMG/cdn"); assert.match(r.waived[0], /已豁免：CDN 維護中/);
   r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: { reachable: true, detail: "假：連得上" } }); assert.equal(r.ok, false, "閘門連得上：不放行");
   r = gate(A, V, L, [{ ...w, aabSha256: B }], { mainSha: MAIN, cdnProbe: DOWN }); assert.equal(r.ok, false, "綁別的 AAB 的豁免不算");
   const M = ok3(); M[0].json.pass = false; M[0].json.exitCode = 1;

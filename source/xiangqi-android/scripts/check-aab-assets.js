@@ -24,6 +24,8 @@
 // 金絲雀（2026-11-23，AGENTS.md「P0 出口驗證要難作假」）：每次實跑都用同一套判斷、同一份真實清單故意弄壞三處，三處都要被判 ✘：
 //   ①把一個首頁必要素材當成不在包裡 ②把包裡一個檔的雜湊當成不符 ③（--cdn）問 CDN 一個一定不存在的檔，要拿到 404／410
 //   有一處沒抓到＝這支檢查失靈（被改鬆、判斷壞掉、CDN 核對一律當成有），報告 pass＝false；沒有 ✘ 時結束代碼 4（看起來全過、其實失靈），有 ✘ 照舊 1
+//   深層金絲雀（同日，「壞樣本自己做、測深層判斷」）：在解開的資料夾上真的動手（藏檔、改 dex 特徵、改內容），用同一個 analyzeTree 重判、判完還原：
+//     W21 媒體缺檔＋原生不會補抓、W30 切塊大檔接不回、首頁素材真的刪、包裡檔內容被改、W42 包跟 CDN 現行版不同（有 manifest 才驗）；也確認 dex 特徵弄壞後原生能力偵測跟著變
 //   ③的不存在檔排進正式 worker 的同一個佇列判斷；CDN 連不上歸缺驗（3）。找不到正常的檔可以弄壞時，真實結果已判出同一類 ✘ 才算成立
 //   報告另記 toolPins（tool-pin.js：這支工具與共用模組的雜湊），送審閘門拿去跟 origin/main 比
 // 結束代碼：0＝沒有 ✘（加 --cdn 時也全部確認過）；1＝有 ✘；2＝用法或環境錯誤；3＝加 --cdn 但有沒確認到的（缺驗，不能送審）；4＝金絲雀沒被抓到（工具失靈）
@@ -49,6 +51,61 @@ const sha1_8 = b => crypto.createHash("sha1").update(b).digest("hex").slice(0, 8
 const { required: HOME_REQUIRED } = require("./bundle-home-assets.js");
 const TOOL_PINS = require("./tool-pin.js").pinsFor("P0-IMG");   /* 啟動就先算：記的是實際被載入、跑這一次的那一份（PR #66 審查） */
 
+/* 檔案的 SHA-1（完整 40 碼），用路徑＋大小＋修改時間快取：深層金絲雀每一隻都要重跑一次 analyzeTree，大安裝包不快取會太慢；被金絲雀改過的檔時間會變，自動重算 */
+function fileSha1(p, cache) {
+  const st = fs.statSync(p), k = p, hit = cache && cache.get(k);
+  if (hit && hit.size === st.size && hit.mtimeMs === st.mtimeMs) return hit.sha;
+  const sha = crypto.createHash("sha1").update(fs.readFileSync(p)).digest("hex");
+  if (cache) cache.set(k, { size: st.size, mtimeMs: st.mtimeMs, sha });
+  return sha;
+}
+
+/* 解開後的安裝包 → 判斷（正式檢查與深層金絲雀走同一支；2026-11-23 AGENTS.md「壞樣本自己做、測深層判斷」）。
+   不問 CDN 的 HEAD（那是 main 裡的 worker）；man＝CDN 的 cdn-manifest.json，給了才做 W42 比對。讀不到 preload.json 丟例外 */
+function analyzeTree(tmp, { repo = REPO, man = null, cache = new Map() } = {}) {
+  const modules = fs.readdirSync(tmp).filter(m => fs.existsSync(path.join(tmp, m, "assets", "public")));
+  const inPack = new Map();   // data/… → 所在模組的完整路徑
+  for (const m of modules) {
+    const root = path.join(tmp, m, "assets", "public");
+    (function walk(d) { for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const f = path.join(d, e.name);
+      if (e.isDirectory()) walk(f); else inPack.set(path.relative(root, f).split(path.sep).join("/"), f);
+    } })(root);
+  }
+  const dex = fs.readdirSync(path.join(tmp, "base", "dex")).map(f => fs.readFileSync(path.join(tmp, "base", "dex", f)));
+  const dexHas = s => dex.some(b => b.includes(Buffer.from(s, "utf8")));
+  // 切塊接回（W30）的特徵：只看 ".parts.json" 不夠——26112102 小包帶著全離線版的 XQOfflineAssets，也有這個字面值卻接不回切塊（11/21 PR #11 審查後實測）。
+  // W30 才加的是檔名檢查 "[A-Za-z0-9._-]+" 和 "SHA-1"；四個同時出現才算。之後原生加了專用標記 PARTS_MARKER，就直接認標記。
+  const native = {
+    cdnFallback: dexHas("X-XQ-Cdn-Cache"),
+    partsJoin: dexHas(PARTS_MARKER) || ["X-XQ-Cdn-Cache", ".parts.json", "[A-Za-z0-9._-]+", "SHA-1"].every(dexHas),
+    offlineAssets: dexHas("xq-offline.json"),
+    assetPacks: modules.filter(m => m !== "base"),
+  };
+  // 2. 需求清單
+  const nb = inPack.has("native-build.json") ? JSON.parse(fs.readFileSync(inPack.get("native-build.json"), "utf8")) : {};
+  const fromGit = f => { if (!repo || !nb.sharedWebCommit) return null;
+    try { return cp.execFileSync("git", ["-C", repo, "show", nb.sharedWebCommit + ":" + f], { maxBuffer: 1e9 }) } catch (e) { return null } };
+  const readJson = f => inPack.has(f) ? JSON.parse(fs.readFileSync(inPack.get(f), "utf8")) : (b => b && JSON.parse(b.toString("utf8")))(fromGit(f));
+  const preload = readJson("data/preload.json");
+  if (!preload) throw new Error("安裝包裡沒有 data/preload.json，請加 --repo <公開倉庫> 從 sharedWebCommit 讀");
+  const bigBooks = readJson("data/big-books.json") || [];
+  const need = new Map();
+  for (const [f, size, h] of preload.items) need.set(f, { size, h });
+  for (const [f, size, h] of preload.big || []) need.set(f, { size, h, big: true });
+  for (const b of bigBooks) need.set("data/" + b.key + ".json", { size: b.size, h: b.h, big: true });
+  // 3. 逐項判斷
+  const sha1Of = f => fileSha1(inPack.get(f), cache).slice(0, 8);
+  const C = classify(need, f => inPack.has(f), sha1Of, native);
+  const R = { red: C.red, warn: C.warn, ok: C.ok };
+  // 4b. 包裡的檔跟 CDN 現行版逐檔比 SHA-1（W42；有 manifest 才做）
+  if (manHasFiles(man)) {   /* #66 第十五次複審：跟閘門同一個定義，空的 manifest 算讀不到 */
+    const H = new Map(); for (const [f2, p] of inPack) if (f2.startsWith("data/") && man.files[f2]) H.set(f2, fileSha1(p, cache));
+    const S = staleVsCdn(H, man.files, need); R.red.push(...S.red); R.warn.push(...S.warn); R.cdnCompared = H.size;
+  }
+  return { R, native, need, inPack, nb, viaCdn: C.viaCdn, modules, sha1Of };
+}
+
 async function main() {
   if (!AAB || !fs.existsSync(AAB)) die("用法：node scripts/check-aab-assets.js --aab <檔.aab> [--repo <公開倉庫>] [--cdn] [--out 報告.json]");
   // 1. 解出安裝包的 assets/public 與 dex
@@ -58,50 +115,20 @@ async function main() {
     cp.execFileSync("unzip", ["-q", "-o", AAB, "-d", tmp], { stdio: ["ignore", "ignore", "pipe"], maxBuffer: 1e8 });
   } catch (e) { if (!fs.existsSync(path.join(tmp, "base"))) die("unzip 失敗：" + String(e.stderr || e.message).slice(0, 200)) }
   try {
-    const modules = fs.readdirSync(tmp).filter(m => fs.existsSync(path.join(tmp, m, "assets", "public")));
-    const inPack = new Map();   // data/… → 所在模組的完整路徑
-    for (const m of modules) {
-      const root = path.join(tmp, m, "assets", "public");
-      (function walk(d) { for (const e of fs.readdirSync(d, { withFileTypes: true })) {
-        const f = path.join(d, e.name);
-        if (e.isDirectory()) walk(f); else inPack.set(path.relative(root, f).split(path.sep).join("/"), f);
-      } })(root);
-    }
-    const dex = fs.readdirSync(path.join(tmp, "base", "dex")).map(f => fs.readFileSync(path.join(tmp, "base", "dex", f)));
-    const dexHas = s => dex.some(b => b.includes(Buffer.from(s, "utf8")));
-    // 切塊接回（W30）的特徵：只看 ".parts.json" 不夠——26112102 小包帶著全離線版的 XQOfflineAssets，也有這個字面值卻接不回切塊（11/21 PR #11 審查後實測）。
-    // W30 才加的是檔名檢查 "[A-Za-z0-9._-]+" 和 "SHA-1"；四個同時出現才算。之後原生加了專用標記 PARTS_MARKER，就直接認標記。
-    const native = {
-      cdnFallback: dexHas("X-XQ-Cdn-Cache"),
-      partsJoin: dexHas(PARTS_MARKER) || ["X-XQ-Cdn-Cache", ".parts.json", "[A-Za-z0-9._-]+", "SHA-1"].every(dexHas),
-      offlineAssets: dexHas("xq-offline.json"),
-      assetPacks: modules.filter(m => m !== "base"),
-    };
-
-    // 2. 需求清單
-    const nb = inPack.has("native-build.json") ? JSON.parse(fs.readFileSync(inPack.get("native-build.json"), "utf8")) : {};
-    const fromGit = f => { if (!REPO || !nb.sharedWebCommit) return null;
-      try { return cp.execFileSync("git", ["-C", REPO, "show", nb.sharedWebCommit + ":" + f], { maxBuffer: 1e9 }) } catch (e) { return null } };
-    const readJson = f => inPack.has(f) ? JSON.parse(fs.readFileSync(inPack.get(f), "utf8")) : (b => b && JSON.parse(b.toString("utf8")))(fromGit(f));
-    const preload = readJson("data/preload.json");
-    if (!preload) die("安裝包裡沒有 data/preload.json，請加 --repo <公開倉庫> 從 sharedWebCommit 讀");
-    const bigBooks = readJson("data/big-books.json") || [];
-    const need = new Map();
-    for (const [f, size, h] of preload.items) need.set(f, { size, h });
-    for (const [f, size, h] of preload.big || []) need.set(f, { size, h, big: true });
-    for (const b of bigBooks) need.set("data/" + b.key + ".json", { size: b.size, h: b.h, big: true });
-
-    // 3. 逐項判斷
-    const R = { red: [], warn: [], ok: { inPack: 0, viaCdn: 0 } };
-    const sha1Of = f => sha1_8(fs.readFileSync(inPack.get(f)));
-    const C = classify(need, f => inPack.has(f), sha1Of, native);
-    R.red.push(...C.red); R.warn.push(...C.warn); R.ok = C.ok;
-    const viaCdn = C.viaCdn;
-    /* 金絲雀（AGENTS.md「P0 出口驗證要難作假」）：用同一個 classify、同一份真實清單，故意弄壞兩處，都要被判 ✘ */
-    const canary = canaryChecks(need, f => inPack.has(f), sha1Of, native);
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    /* CDN 的 manifest 先抓一次（W42 比對；深層金絲雀也用同一份） */
+    let man = null;
+    if (CDN_CHECK) for (let t = 0; t < 4 && !man; t++) { try { const r = await fetch(CDN + "cdn-manifest.json"); if (r.ok) man = await r.json() } catch (e) {} if (!man) await sleep(800 * (t + 1)) }
+    const cache = new Map();
+    let A;
+    try { A = analyzeTree(tmp, { man, cache }) } catch (e) { die(e.message) }
+    const { R, native, need, inPack, nb, viaCdn } = A;
+    if (CDN_CHECK && !manHasFiles(man)) { R.warn.push({ f: "cdn-manifest.json", why: MAN_MISS_WHY }); R.unknown = (R.unknown || 0) + 1 }
+    /* 淺層金絲雀①②（PR #66）：同一個 classify、同一份真實清單 */
+    const canary = canaryChecks(need, f => inPack.has(f), A.sha1Of, native);
 
     // 4. 實際問 CDN（加 --cdn）
-    let man = null, cdnRun = null;   /* PR #66 第四次複審：CDN 金絲雀要用「同一輪連得上」當反證，worker 與 manifest 的結果都留到後面一起判 */
+    let cdnRun = null;   /* PR #66 第四次複審：CDN 金絲雀要用「同一輪連得上」當反證，worker 與 manifest 的結果都留到後面一起判 */
     if (CDN_CHECK) {
       // 11/21 實測：同時 16 個請求會被 CDN 限流，472 項連線失敗被誤算成「沒有」→ 改成 6 個、失敗等一下再試 4 次；
       // 連不上（沒拿到 HTTP 狀態）只算「沒確認到」（△），拿到 404 等狀態才算確定缺（✘）
@@ -121,18 +148,15 @@ async function main() {
       cdnRun = { probeF, miss, unknown, ok200 };
       /* 金絲雀檔不算進正式結果：判成「沒有」是預期的，拿掉；判成「沒確認到」（CDN 連不上）照樣算缺驗，留在 unknown */
       const realMiss = miss.filter(x => x.f !== probeF);
-      R.red.push(...realMiss); R.warn.push(...unknown); R.unknown = unknown.length;
+      R.red.push(...realMiss); R.warn.push(...unknown); R.unknown = (R.unknown || 0) + unknown.length;   /* 累加：讀不到 manifest 那一筆前面已經算過 */
     }
-    // 4b. 包裡的檔跟 CDN 現行版逐檔比 SHA-1（W42；加 --cdn 才做）
-    if (CDN_CHECK) {
-      for (let t = 0; t < 4 && !man; t++) { try { const r = await fetch(CDN + "cdn-manifest.json"); if (r.ok) man = await r.json() } catch (e) {} if (!man) await new Promise(r => setTimeout(r, 800 * (t + 1))) }
-      if (!manHasFiles(man)) { R.warn.push({ f: "cdn-manifest.json", why: MAN_MISS_WHY }); R.unknown = (R.unknown || 0) + 1 }
-      else { const H = new Map(); for (const [f2, p] of inPack) if (f2.startsWith("data/") && man.files[f2]) H.set(f2, crypto.createHash("sha1").update(fs.readFileSync(p)).digest("hex"));
-        const S = staleVsCdn(H, man.files, need); R.red.push(...S.red); R.warn.push(...S.warn); R.cdnCompared = H.size }
-    }
+    /* W42（包跟 CDN 現行版逐檔比）已經在 analyzeTree 裡用同一份 manifest 做過（PR②），這裡不再抓第二次、比第二次 */
     /* 金絲雀③：同一輪有檔拿到 200、或 manifest 讀得到＝CDN 連得上；這時探測檔還記成連不上，就是判斷壞了 */
     if (cdnRun) Object.assign(canary, cdnCanary(cdnRun.probeF, cdnRun.miss, cdnRun.unknown, { ok200: cdnRun.ok200, manOk: manHasFiles(man) }));
-    canary.ok = canary.home === true && canary.stale === true && canary.cdn404 === true;
+    /* 深層金絲雀（2026-11-23「壞樣本自己做、測深層判斷」，PR②）：在解開的資料夾上真的動手弄壞（藏檔、改 dex 特徵、改內容），用同一個 analyzeTree 重判，判完還原。
+       W42 要 manifest 才做得出來；manifest 讀不到（含空的 {"files":{}}，跟 manHasFiles 同一個定義）就標沒驗（#66 第十六次複審建議） */
+    canary.deep = deepCanaries(tmp, A, { man: manHasFiles(man) ? man : null, cache });
+    canary.ok = canary.home === true && canary.stale === true && canary.cdn404 === true && deepOk(canary.deep, true);
 
     // 5. 報告
     const sum = { aab: path.basename(AAB), aabSha256: crypto.createHash("sha256").update(fs.readFileSync(AAB)).digest("hex"), siteVersion: nb.siteVersion || null, sharedWebCommit: nb.sharedWebCommit || null, native,
@@ -144,6 +168,7 @@ async function main() {
     for (const [why, fs_] of group(R.red)) console.log(`✘ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
     for (const [why, fs_] of group(R.warn)) console.log(`△ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
     console.log(`金絲雀：拿掉首頁素材 ${canary.home ? "✔ 抓到" : "✘ 沒抓到"}｜改掉包裡檔的雜湊 ${canary.stale ? "✔ 抓到" : "✘ 沒抓到"}｜CDN 不存在的檔 ${!CDN_CHECK ? "（沒加 --cdn，沒驗）" : canary.cdn404 ? "✔ 判成沒有" : "✘ " + canary.cdn}`);
+    for (const [k, label] of DEEP_LABELS) { const d = canary.deep[k]; console.log(`深層金絲雀 ${label}：${d.ok ? "✔ 抓到" : d.skip ? "（" + d.skip + "）" : "✘ 沒抓到"}${d.file ? "（" + d.file + "）" : ""}${d.note ? "　" + d.note : ""}`) }
     /* PR #66 審查②：沒加 --cdn 時，金絲雀①②沒抓到照樣回 4；③只在加 --cdn 時算，CDN 連不上歸缺驗（3），不算工具失靈 */
     const code = exitCode({ red: R.red.length, unknown: R.unknown || 0, cdn: CDN_CHECK, canaryOk: canaryExitOk(canary, CDN_CHECK) });
     console.log(code === 4 ? "✘ 不能送審：金絲雀沒被抓到，這支檢查本身失靈了，結果不可信"
@@ -155,6 +180,74 @@ async function main() {
     process.exitCode = code;
   } finally { fs.rmSync(tmp, { recursive: true, force: true }) }
 }
+
+/* ---- 深層金絲雀（2026-11-23，AGENTS.md「壞樣本自己做、測深層判斷」）---- */
+const DEEP_LABELS = [["w21", "W21 媒體缺檔＋原生不會補抓"], ["w30", "W30 切塊大檔接不回"], ["home", "首頁素材缺（真的刪檔）"], ["hash", "包裡檔內容被改"], ["w42", "W42 包跟 CDN 現行版不同"]];
+const CDN_MARK = "X-XQ-Cdn-Cache", PARTS_MARKS = [PARTS_MARKER, "[A-Za-z0-9._-]+"];
+/* Buffer 裡所有 from 換成同長度的 to（改 dex 特徵字串用；長度不變，其他位元組不動） */
+function bufReplaceAll(buf, from, to) {
+  const a = Buffer.from(from, "utf8"), b = Buffer.from(to, "utf8"); if (a.length !== b.length) throw new Error("長度要一樣");
+  const out = Buffer.from(buf); let i = 0, n = 0;
+  while ((i = out.indexOf(a, i)) >= 0) { b.copy(out, i); i += a.length; n++ }
+  return { buf: out, n };
+}
+/* 同長度的「壞掉」版本：最後一個字元換掉（X-XQ-Cdn-Cache → X-XQ-Cdn-Cachf） */
+const spoil = s => s.slice(0, -1) + (s.slice(-1) === "f" ? "g" : "f");
+
+/* 在解開的資料夾上做一次壞樣本：apply 回傳 revert；跑 analyze；判斷 want(結果)；一定還原 */
+function withMutation(apply, run) { const revert = apply(); try { return run() } finally { revert() } }
+const hideFile = p => () => { const q = p + ".xq-canary"; fs.renameSync(p, q); return () => fs.renameSync(q, p) };
+const touchBytes = p => () => { const orig = fs.readFileSync(p); fs.writeFileSync(p, Buffer.concat([orig, Buffer.from([0x0a])])); return () => fs.writeFileSync(p, orig) };
+function patchDex(tmp, marks) {
+  return () => {
+    const dir = path.join(tmp, "base", "dex"), saved = [];
+    for (const f of fs.readdirSync(dir)) { const p = path.join(dir, f), orig = fs.readFileSync(p); let b = orig, hit = 0;
+      for (const m of marks) { const r = bufReplaceAll(b, m, spoil(m)); b = r.buf; hit += r.n }
+      if (hit) { fs.writeFileSync(p, b); saved.push([p, orig]) } }
+    return () => { for (const [p, o] of saved) fs.writeFileSync(p, o) };
+  };
+}
+const both = (...fns) => () => { const rs = fns.map(f => f()); return () => { for (const r of rs.reverse()) r() } };
+
+/* 每一隻：挑對象 → 動手 → 用同一個 analyze 重判 → 結果裡要出現那個檔、那種原因。
+   挑不到對象時：真實結果已判出同一類 ✘＝判斷有在運作，算成立；否則不成立（寧可擋）。w42 沒有 manifest 時標 skip（歸缺驗，不算失靈） */
+function deepCanaries(tmp, A, { man = null, cache = new Map() } = {}, analyze = analyzeTree) {
+  const { need, inPack, R } = A, home = new Set(HOME_REQUIRED.map(x => "data/" + x));
+  const realHas = re => R.red.some(x => re.test(x.why));
+  const one = (pick, mutate, re, extra) => {
+    const f = pick();
+    if (!f) return realHas(re) ? { ok: true, note: "找不到正常的檔可以弄壞；真實結果已判出同一類" } : { ok: false, note: "找不到可以弄壞的對象，真實結果也沒有這一類：不成立" };
+    try {
+      return withMutation(mutate(f), () => {
+        const r = analyze(tmp, { man, cache }), caught = r.R.red.some(x => x.f === f && re.test(x.why));
+        const ex = extra ? extra(r) : null;
+        return { ok: caught && (!ex || ex.ok), file: f, note: ex && ex.note };
+      });
+    } catch (e) { return { ok: false, file: f, note: "壞樣本跑不起來：" + String(e.message).slice(0, 120) } }
+  };
+  const out = {};
+  /* W21：一個靠 CDN 補抓、在包裡的媒體檔藏起來，dex 的 CDN 補抓特徵弄壞 → 要判「圖片／音樂直接破」，而且偵測到原生沒有 CDN 補抓 */
+  /* 先挑首頁以外的媒體；小包裡只剩首頁素材時退而用首頁的（藏起來後一樣會被判「圖片／音樂直接破」），不然小包會因為挑不到對象被誤擋 */
+  const media = (f) => MEDIA.test(f) && inPack.has(f) && !need.get(f).big && need.get(f).size <= SPLIT;
+  out.w21 = one(() => [...need.keys()].find(f => media(f) && !home.has(f)) || [...need.keys()].find(media),
+    f => both(hideFile(inPack.get(f)), patchDex(tmp, [CDN_MARK, PARTS_MARKER])), /圖片／音樂直接破/,
+    r => ({ ok: r.native.cdnFallback === false, note: r.native.cdnFallback === false ? "dex 特徵弄壞後偵測到「沒有 CDN 補抓」" : "dex 特徵弄壞後還判成有 CDN 補抓（原生能力偵測失靈）" }));
+  /* W30：一個要切塊的大檔不在包裡（在包裡就藏起來），dex 的切塊接回特徵弄壞 → 要判「切塊的大檔不在安裝包裡」，而且偵測到不會接回 */
+  out.w30 = one(() => [...need.keys()].find(f => need.get(f).big || need.get(f).size > SPLIT),
+    f => both(inPack.has(f) ? hideFile(inPack.get(f)) : () => () => {}, patchDex(tmp, PARTS_MARKS)), /切塊的大檔不在安裝包裡/,
+    r => ({ ok: r.native.partsJoin === false, note: r.native.partsJoin === false ? "dex 特徵弄壞後偵測到「不會接回切塊」" : "dex 特徵弄壞後還判成會接回切塊（原生能力偵測失靈）" }));
+  /* 首頁素材：真的把檔藏起來（不是假裝） */
+  out.home = one(() => [...home].find(f => inPack.has(f)), f => hideFile(inPack.get(f)), /首頁離線必要素材不在安裝包裡/);
+  /* 內容被改：包裡一個有清單雜湊、而且現在對得上的檔，檔尾加一個位元組 */
+  out.hash = one(() => [...need].map(([f]) => f).find(f => need.get(f).h && inPack.has(f) && A.sha1Of(f) === need.get(f).h), f => touchBytes(inPack.get(f)), /跟清單不符/);
+  /* W42：包裡一個在 CDN manifest 裡、現在跟 CDN 一樣的需求素材，改內容 → 要判「跟 CDN 現行版不同」 */
+  if (manHasFiles(man)) out.w42 = one(() => [...inPack.keys()].find(f => f.startsWith("data/") && need.has(f) && man.files[f] && man.files[f][1] && fileSha1(inPack.get(f), cache).startsWith(man.files[f][1])),
+    f => touchBytes(inPack.get(f)), /跟 CDN 現行版不同/);
+  else out.w42 = { ok: false, skip: "沒有 CDN manifest，沒驗（缺驗）" };
+  return out;
+}
+/* 深層金絲雀都抓到（w42 只在 needW42 時算；skip＝沒 manifest，歸缺驗） */
+function deepOk(d, needW42) { return !!d && ["w21", "w30", "home", "hash"].every(k => d[k] && d[k].ok === true) && (!needW42 || (d.w42 && (d.w42.ok === true || !!d.w42.skip))) }
 /* 結束代碼（PR #11 審查：缺驗不能送審）：有 ✘＝1；沒有 ✘ 但金絲雀沒被抓到＝4（看起來全過、其實檢查本身失靈：4 要防的就是這種）；
    加 --cdn 而有沒確認到的＝3；其餘＝0。有 ✘ 時本來就不能送審，回 1 比較有用，金絲雀結果照樣印出、寫進報告（pass 照樣 false）。
    canaryOk 沒給（舊呼叫）當成 true，只有明確傳 false 才回 4 */
@@ -217,7 +310,8 @@ function cdnCanary(probe, miss, unknown, ev = {}) {
   if (flaky && !reach) return { cdn404: false, cdnUnreachable: true, cdnStatus: st, cdn: `沒確認到（CDN 連不上或暫時出錯，${lab}）` };
   return { cdn404: false, cdnUnreachable: false, cdnStatus: st, cdn: flaky ? `同一輪 CDN 連得上，探測檔卻記成${lab}（CDN 核對失靈）` : `被歸成沒確認到（${lab}，CDN 核對失靈）` };
 }
-/* 結束代碼用的金絲雀判斷（純函式）：①②一律要抓到；加 --cdn 時③要抓到，或 CDN 真的連不上（cdnUnreachable，歸缺驗 3，不算失靈）；看布林欄位，不看訊息文字 */
-function canaryExitOk(c, cdn) { return c.home === true && c.stale === true && (!cdn || c.cdn404 === true || c.cdnUnreachable === true) }
-module.exports = { exitCode, PARTS_MARKER, MEDIA, NOTE_VIA_WEB, MAN_MISS_WHY, manHasFiles, unknownWhy, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk };
+/* 結束代碼用的金絲雀判斷（純函式）：①②一律要抓到；加 --cdn 時③要抓到，或 CDN 真的連不上（cdnUnreachable，歸缺驗 3，不算失靈）；看布林欄位，不看訊息文字。
+   深層金絲雀（PR②）：有跑就要過（W42 沒 manifest＝缺驗，不算失靈） */
+function canaryExitOk(c, cdn) { return c.home === true && c.stale === true && (!cdn || c.cdn404 === true || c.cdnUnreachable === true) && (c.deep === undefined || deepOk(c.deep, true)) }
+module.exports = { exitCode, PARTS_MARKER, MEDIA, NOTE_VIA_WEB, MAN_MISS_WHY, manHasFiles, unknownWhy, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk, analyzeTree, deepCanaries, deepOk, bufReplaceAll, spoil, fileSha1 };
 if (require.main === module) main().catch(e => die(e.stack || String(e)));
