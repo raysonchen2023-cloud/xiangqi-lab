@@ -116,6 +116,8 @@ const REPO_KNOWN = path.join(__dirname, "..", "..", "..", ".github", "p0-known.j
 const KNOWN_RAW = (() => { try { return fs.readFileSync(O.known) } catch (e) { return null } })();
 const KNOWN = (() => { try { const j = JSON.parse(String(KNOWN_RAW)); return Array.isArray(j.items) ? j.items : [] } catch (e) { return [] } })();
 const KNOWN_FROM_REPO = !!O.known && fs.existsSync(REPO_KNOWN) && path.resolve(O.known) === path.resolve(REPO_KNOWN);
+/* PR #58 審查：倉庫那份也要跟 origin/main 逐位元組一樣，本機改過、沒開 PR 的不算數（結束代碼 2） */
+if (KNOWN_FROM_REPO) { const pin = require("./repo-pin.js").sameAsMain(REPO_KNOWN); if (!pin.ok) { console.error("測試不成立：" + pin.msg); process.exit(2) } }
 if (!O.build) { console.error("用法：node scripts/check-3d.js --build <版號> [--serial emulator-5580] [--port 9291] [--out p0-3d] [--only <情境>] [--rounds 2] [--self-test]"); process.exit(2) }
 if (!Number.isInteger(O.rounds) || O.rounds < 1 || O.rounds > 9) { console.error("✘ --rounds 要是 1～9 的整數：" + arg("--rounds")); process.exit(2) }
 const PKG = "com.raysonchen.xiangqiqianqiu", ADB = process.env.ADB || "adb";

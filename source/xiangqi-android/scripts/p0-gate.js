@@ -91,6 +91,8 @@ function main() {
   if (fs.existsSync(WF)) { try { const wj = JSON.parse(fs.readFileSync(WF, "utf8")); if (!Array.isArray(wj.items)) throw 0; waivers = wj.items } catch (e) { console.error("✘ 豁免檔格式錯（要有 items 陣列）：" + WF); process.exit(2) } }
   else if (a("--waivers")) { console.error("✘ 找不到豁免檔：" + WF); process.exit(2) }
   const fromRepo = fs.existsSync(REPO_W) && path.resolve(WF) === path.resolve(REPO_W);
+  /* PR #58 審查：只比路徑不夠——本機直接改、沒開 PR 的豁免也會算數；要跟 origin/main 那份逐位元組一樣 */
+  if (fromRepo) { const pin = require("./repo-pin.js").sameAsMain(REPO_W); if (!pin.ok) { console.error("✘ " + pin.msg); process.exit(2) } }
   const sha = crypto.createHash("sha256").update(fs.readFileSync(AAB)).digest("hex");
   const reports = files.map((file) => { let json = null; try { json = JSON.parse(fs.readFileSync(file, "utf8")) } catch (e) {} return { file, json } });
   const r = gate(sha, BUILD, reports, fromRepo ? waivers : []);

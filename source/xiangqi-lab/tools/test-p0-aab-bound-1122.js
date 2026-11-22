@@ -193,3 +193,35 @@ test("〔原始碼〕check-3d 預設跑 2 輪、每次嘗試都寫 attempts.json
   const wj = JSON.parse(fs.readFileSync(WF, "utf8")); assert.ok(Array.isArray(wj.items));
   for (const it of wj.items) assert.ok(it.aabSha256 && it.reason && it.decidedBy && it.decidedAt, "每筆豁免都要齊全");
 });
+
+/* ===== PR #58 審查（iMac Claude 2）：豁免檔、已知問題清單要跟 origin/main 逐位元組一樣，本機改過的不算 ===== */
+test("repo-pin：本機檔跟 origin/main 一樣才算；不一樣、main 沒有、fetch 失敗、不在 git 裡都不算", () => {
+  const { sameAsMain } = require(path.join(AND, "repo-pin.js"));
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-pin-"));
+  try {
+    const f = path.join(d, ".github", "p0-waivers.json"); fs.mkdirSync(path.dirname(f)); fs.writeFileSync(f, '{"items":[]}\n');
+    const calls = [];
+    const fake = ({ main = '{"items":[]}\n', fetchFail = false, showFail = false, notRepo = false } = {}) => (args, cwd) => {
+      calls.push(args[0]);
+      if (args[0] === "rev-parse") { if (notRepo) throw new Error("not a git repo"); return Buffer.from(d + "\n") }
+      if (args[0] === "fetch") { if (fetchFail) throw new Error("offline"); return Buffer.from("") }
+      if (args[0] === "show") { assert.equal(args[1], "origin/main:.github/p0-waivers.json"); if (showFail) throw new Error("no such path"); return Buffer.from(main) }
+      throw new Error("unexpected " + args[0]);
+    };
+    assert.equal(sameAsMain(f, fake()).ok, true);
+    assert.ok(calls.indexOf("fetch") >= 0 && calls.indexOf("fetch") < calls.indexOf("show"), "先 fetch 再 show");
+    assert.match(sameAsMain(f, fake({ main: '{"items":[{"code":"P0-IMG/cdn"}]}\n' })).msg, /跟 origin\/main 那份不一樣/);
+    assert.match(sameAsMain(f, fake({ main: '{"items":[]}\r\n' })).msg, /不一樣/, "換行不同也算不一樣（逐位元組）");
+    assert.match(sameAsMain(f, fake({ showFail: true })).msg, /origin\/main 沒有/);
+    assert.match(sameAsMain(f, fake({ fetchFail: true })).msg, /fetch origin main 失敗/);
+    assert.match(sameAsMain(f, fake({ notRepo: true })).msg, /不在 git 倉庫裡/);
+    assert.equal(sameAsMain(path.join(d, ".github", "none.json"), fake()).ok, false, "讀不到本機檔");
+  } finally { fs.rmSync(d, { recursive: true, force: true }) }
+});
+
+test("〔原始碼〕p0-gate 用倉庫豁免檔、check-3d 用倉庫已知問題清單時，都先跟 origin/main 比，不一樣就結束代碼 2", () => {
+  const pg = rd("p0-gate.js"), c3 = rd("check-3d.js");
+  assert.match(pg, /if \(fromRepo\) \{ const pin = require\("\.\/repo-pin\.js"\)\.sameAsMain\(REPO_W\); if \(!pin\.ok\) \{ console\.error\("✘ " \+ pin\.msg\); process\.exit\(2\) \} \}/);
+  assert.match(c3, /if \(KNOWN_FROM_REPO\) \{ const pin = require\("\.\/repo-pin\.js"\)\.sameAsMain\(REPO_KNOWN\); if \(!pin\.ok\) \{ console\.error\("測試不成立：" \+ pin\.msg\); process\.exit\(2\) \} \}/);
+  assert.ok(!rd("repo-pin.js").includes("\r"));
+});
