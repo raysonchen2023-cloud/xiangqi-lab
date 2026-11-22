@@ -4,6 +4,7 @@
    險格（審稿第 7 點）：黑方不動，只算「傌停在那一格時，黑子能不能直接吃到它」；途中每一站和終點都不能是險格。傌照真的走法（蹩馬腿用 core.js legal），不吃子。
    最短步數用廣度優先搜尋算；題目由程式產生（同一天、同一級固定三題），不用引擎。
      初級：黑子 1～2 顆、最短 2～3 步；中級：2～3 顆、3～4 步；高級：3～5 顆、4～5 步。
+   終點用 Board 的 hint 藍框標（PR #39 審查：原本用 last:{f:goal,t:goal}，01-board 只在 f!==t 時才畫，終點根本看不到）。
    小學生提示：「⚠ 亮出險格」一鍵把黑子盯著的格子框出來。
    走到險格＝當場說明哪顆黑子吃得到、這題重來；走到終點但比最短多走＝說明最短幾步、算沒過。
    修為：一輪 3 題都用最短步數走到，每天 +10（只給一次）。門內頁入口（拴馬樁）等起馬門門內圖出好再接；這裡先提供 jhQimaOpen()。 */
@@ -63,13 +64,13 @@ function jhQimaOpen(lv0){const G=jhQimaGet(),L=JH_QIMA_LV.find(x=>x.k===(lv0||G.
     b.querySelectorAll("[data-lv]").forEach(x=>x.onclick=()=>{try{closeSheet()}catch(e){}setTimeout(()=>jhQimaOpen(x.dataset.lv),250)});
     const say=t=>{const s=$("#jhQs");s.style.display=t?"":"none";s.textContent=t||""};
     const danger=()=>{const o=[];for(let s=0;s<90;s++){if(bd[s]&&s!==at)continue;const nb=s===at?bd:jhQimaMove(bd,at,s);if(jhQimaDanger(nb,s))o.push(s)}return o};
-    const draw=()=>{const nx=done?[]:jhQimaSteps(bd,at);brd.draw(bd,{sel:at,targets:hint?[...new Set([...nx,...danger()])]:nx,last:{f:cur.goal,t:cur.goal}})};
+    const draw=()=>{const nx=done?[]:jhQimaSteps(bd,at);brd.draw(bd,{sel:at,targets:hint?[...new Set([...nx,...danger()])]:nx,hint:[cur.goal]})};
     const reset=()=>{bd=cur.b.slice();at=cur.from;steps=0;done=false;$("#jhQn").style.display="none";draw()};
     const start=()=>{cur=Q[qi];hint=false;say("");reset();
       $("#jhQq").textContent=jhL(`第 ${qi+1}／${Q.length} 題：把傌牽到亮框那一格（最少 ${cur.d} 步），點傌能去的格子一步一步走`,`${qi+1}/${Q.length}: lead the horse to the highlighted square (${cur.d} moves at best). Tap where it can go, one step at a time`)};
     const tap=x=>{if(done||x===at||!jhQimaSteps(bd,at).includes(x))return;bd=jhQimaMove(bd,at,x);at=x;steps++;
       const A=jhQimaAttackers(bd,at);
-      if(A.length){done=true;draw();brd.draw(bd,{sel:at,targets:A,last:{f:cur.goal,t:cur.goal}});say(jhL(`停在會被吃的格子了：黑${JH_QIMA_NM[bd[A[0]]]||"子"}吃得到這裡（框起來的那顆）。按「重來」再試。`,`That square is attacked: the boxed black piece can take the horse. Tap Retry.`));return}
+      if(A.length){done=true;draw();brd.draw(bd,{sel:at,targets:A,hint:[cur.goal]});say(jhL(`停在會被吃的格子了：黑${JH_QIMA_NM[bd[A[0]]]||"子"}吃得到這裡（框起來的那顆）。按「重來」再試。`,`That square is attacked: the boxed black piece can take the horse. Tap Retry.`));return}
       if(at!==cur.goal){draw();say(jhL(`走了 ${steps} 步。`,`${steps} move${steps>1?"s":""} so far.`));return}
       done=true;draw();const okD=steps===cur.d;if(okD)best++;
       say(okD?jhL("走得漂亮！避開險格又準時送到。","Well ridden! Safe and on time."):jhL(`送到了，但走了 ${steps} 步；最短只要 ${cur.d} 步。按「重來」再找更近的路。`,`Delivered, but in ${steps} moves; the shortest is ${cur.d}. Tap Retry to find a shorter road.`));

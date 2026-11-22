@@ -30,8 +30,12 @@ test("傌照真的走法：蹩馬腿走不過去；不吃子", () => {
   const want = C.legal(b, "r").filter(([f, t]) => f === at && !b[t]).map((z) => z[1]).sort((a, b2) => a - b2);
   assert.deepEqual(J(st), J(want));
   assert.ok(!st.includes(C.parseSq("d0")) && !st.includes(C.parseSq("f0")), "往下被自己的兵蹩腿");
-  const b2 = B("4k4/9/9/9/9/9/5p3/4N4/9/4K4");   /* f3 有黑卒：傌不能停在有子的格（不吃子） */
-  assert.ok(!R.jhQimaSteps(b2, at).includes(C.parseSq("f3")));
+  /* 不吃子（PR #39 審查：原本把黑卒放在 f3，傌從 e2 本來就跳不到 f3，抓不到「傌可以吃子」的錯）：
+     黑卒放在 g3——e2→g3 是合法馬步（馬腿 f2 是空的），而且 core.js 的 legal 會把「吃 g3」列進去，模組要自己濾掉 */
+  const b2 = B("4k4/9/9/9/9/9/6p2/4N4/9/5K3");
+  assert.ok(C.legal(b2, "r").some(([f, t]) => f === at && t === C.parseSq("g3")), "前提：吃 g3 是合法著法");
+  assert.ok(!R.jhQimaSteps(b2, at).includes(C.parseSq("g3")), "傌不能停在有子的格（不吃子）");
+  assert.ok(R.jhQimaSteps(b2, at).includes(C.parseSq("g1")), "其他空格照走");
 });
 
 test("險格＝傌停在那裡時，黑子能直接吃到（黑方不動）", () => {
@@ -88,5 +92,9 @@ test("〔原始碼〕m.html 在 07z9d 之後引入 07z9f；存檔清單有 m_jhQ
   assert.ok(html.indexOf("//#include m/07z9f-qima.js") > html.indexOf("//#include m/07z9d-gongpao.js"));
   assert.match(rd("xiangqi-db/m/05b-save.js"), /JOURNEY_KEYS\.push\("m_jhQima"\)/);
   assert.ok(!SRC.includes("\r"));
+  /* PR #39 審查：終點要用 Board 的 hint（藍框）標；last:{f:goal,t:goal} 在 01-board 只有 f!==t 才畫，終點會看不到 */
+  assert.equal(SRC.split("hint:[cur.goal]").length - 1, 2, "終點用 hint 標（一般畫面與踩到險格時）");
+  assert.ok(!SRC.includes("last:{f:cur.goal,t:cur.goal}"), "不能再用 last 標終點");
+  assert.ok(rd("xiangqi-db/m/01-board.js").includes("o.hint)for(const q of o.hint)"), "前提：Board 會畫 hint");
   for (const l of SRC.split("\n")) if (/[;})]\s*\/\/(?!#)/.test(l) && !/https?:\/\//.test(l)) assert.fail("一行程式後面接 // 註解：" + l.slice(0, 80));
 });

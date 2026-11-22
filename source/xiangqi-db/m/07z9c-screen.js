@@ -61,10 +61,11 @@ function jhScrGuardFin(st,P,ok,why){store.set("jPending",null);try{if(typeof rsF
   jhScrSet(G);if(xp&&typeof addXP==="function")try{addXP(xp,jhL("雙馬守中宮","Guard the palace"),"guard:"+st.id)}catch(e){}
   toast(ok?jhL(`🐎 守住了！走滿 ${JH_SCR_GUARD.limit} 步，中宮沒破`,`🐎 Held! ${JH_SCR_GUARD.limit} moves and the palace stands`):why);
   setTimeout(()=>{if(typeof navKey==="function"&&navKey(location.hash)==="/journey/play")location.hash="#/jianghu/hall/screen"},1800)}
-/* 對局頁每次更新都會呼叫 lvWatch（08b-cpugame）：包一層，守中宮的盤在這裡判定 */
+/* 對局頁每次更新都會呼叫 lvWatch（08b-cpugame）：包一層，守中宮的盤在這裡判定。
+   PR #39 審查（iMac Claude 2）：淨虧只在輪到紅方（玩家剛走完）時判——紅方剛吃子、輪到玩家還沒吃回的那一刻不算，「換子不算」才成立 */
 try{if(typeof lvWatch==="function"&&!lvWatch.jhScr){const w0=lvWatch;lvWatch=function(st,v){const P=jhScrGuardOf(st);
     if(P&&!st.result){try{const E=jhScrGuardEval(st);
-        if(E.net>=JH_SCR_GUARD.lose)return jhScrGuardFin(st,P,false,jhL("💥 大子被吃虧了，中宮沒守住。再試一次！","💥 You lost material. The palace fell. Try again!"));
+        if(st.turn!==st.human&&E.net>=JH_SCR_GUARD.lose)return jhScrGuardFin(st,P,false,jhL("💥 大子被吃虧了，中宮沒守住。再試一次！","💥 You lost material. The palace fell. Try again!"));
         if(E.n>=JH_SCR_GUARD.limit&&st.turn!==st.human)return jhScrGuardFin(st,P,true)}catch(e){}return}
     return w0.apply(this,arguments)};lvWatch.jhScr=1}}catch(e){}
 /* 沒守滿就分出勝負（被將死、認輸）：照常結算對局修為，另外記最多守了幾步 */

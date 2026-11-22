@@ -106,6 +106,15 @@ test("大子淨虧 3 分以上：當場失敗、不給修為、記最多守幾�
   assert.equal(R.jhScrGet().g, null);
 });
 
+test("PR #39 審查：換子途中（紅方剛吃黑馬、輪到玩家還沒吃回）不判失敗；輪到紅方時淨虧才判", () => {
+  const { R, mem, calls } = load({ store: { jPending: { id: "jh:guard:screen", game: "g1", jhg: { limit: 10 } } } });
+  const b0 = board(R.JH_SCR_GUARD.fen), noHorse = b0.slice(); noHorse[b0.indexOf("n")] = null;
+  R.lvWatch(st(noHorse, 4, { turn: "b" }), {});   /* 輪到玩家（黑）：還可以吃回來 */
+  assert.ok(mem.jPending, "輪到玩家時不判"); assert.equal(calls.toast.length, 0);
+  R.lvWatch(st(noHorse, 5, { turn: "r" }), {});   /* 玩家走完了還是淨虧 4 */
+  assert.equal(mem.jPending, null, "輪到紅方時才判失敗");
+});
+
 test("別的對局照原本的 lvWatch；分出勝負時照原本結算、另外記守了幾步", () => {
   const { R, calls, mem } = load({ store: { jPending: { id: "inn:zm_screen", game: "g1" } } });
   R.lvWatch(st(board(R.JH_SCR_GUARD.fen), 10), {});

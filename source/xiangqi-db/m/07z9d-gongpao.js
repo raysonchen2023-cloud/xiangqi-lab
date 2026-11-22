@@ -1,6 +1,6 @@
 /* ---------- W48 過宮炮門門內玩法「宣紙蓋子位」（記位）----------
    開發者 11/22 選八派門內玩法第一批：過宮炮（記位）、仕角炮（算兌換）、起馬（找路）；定稿 story/gemini_app/193_八派門內玩法細化_1122_Gemini回覆.md 第 7 節＋_Claude審稿.md。
-   掌門黎疏桐是涇縣宣紙坊主。看盤幾秒 → 宣紙蓋下來 → 抽走幾顆子 → 玩家從托盤把子一顆顆擺回原位 → 核對。
+   掌門黎疏桐是涇縣宣紙坊主。看盤幾秒 → 宣紙蓋下來 → 抽走幾顆子 → 玩家從下面那排把子一顆顆擺回原位（畫面不寫「托盤」：App 的繁簡轉換會把它變成「託盤」） → 核對。
      初級：6～8 子、看 8 秒、抽 3 顆（蓋紙前先閃一下要考的子＝小學生的提示）；中級：9～12 子、6 秒、抽 4 顆；高級：13～16 子、4 秒、抽 5 顆。
    局面：殘局題庫（07c-canju 的 cjData，data/canju/canju-set.json）裡子數合的局面，優先挑盤上有炮的（扣「過宮炮」）；同一天、同一級固定那三題。
    核對：同一種子（例如兩顆紅兵）位置互換也算對；放錯的亮出原本的位置。
@@ -57,7 +57,7 @@ async function jhGongOpen(lv0){const G=jhGongGet(),L=JH_GONG_LV.find(x=>x.k===(l
     const drawTray=()=>{$("#jhGt").innerHTML=tray.map((x,k)=>`<button class="jh-gp-pc ${x.p===x.p.toUpperCase()?"r":"b"}${k===sel?" on":""}" data-t="${k}" aria-label="${esc(JH_GONG_NM[x.p])}">${esc(JH_GONG_NM[x.p])}</button>`).join("");
       $("#jhGt").querySelectorAll("[data-t]").forEach(x=>x.onclick=()=>{sel=+x.dataset.t===sel?-1:+x.dataset.t;drawTray()});$("#jhGk").style.display=stage==="place"&&!tray.length?"":"none"};
     const tap=x=>{if(stage!=="place")return;const k=placed.findIndex(z=>z.i===x);
-      if(k>=0){const z=placed.splice(k,1)[0];board[x]=null;tray.push({p:z.p});sel=tray.length-1;bd.draw(board,{});drawTray();return}   /* 點自己擺的子＝收回托盤 */
+      if(k>=0){const z=placed.splice(k,1)[0];board[x]=null;tray.push({p:z.p});sel=tray.length-1;bd.draw(board,{});drawTray();return}   /* 點自己擺的子＝收回下面那排 */
       if(sel<0||board[x])return;const p=tray.splice(sel,1)[0].p;board[x]=p;placed.push({p,i:x});sel=tray.length?0:-1;bd.draw(board,{});drawTray()};
     const start=()=>{cur=Q[qi];stage="look";placed=[];tray=[];sel=-1;say("");$("#jhGn").style.display="none";$("#jhGk").style.display="none";$("#jhGt").innerHTML="";
       bd.draw(cur.b,L.flash?{targets:cur.take.map(x=>x.i)}:{});   /* 初級：先閃一下要考的子 */
@@ -65,7 +65,7 @@ async function jhGongOpen(lv0){const G=jhGongGet(),L=JH_GONG_LV.find(x=>x.k===(l
       let s=L.sec;const tick=()=>{$("#jhGq").textContent=jhL(`第 ${qi+1}／${Q.length} 題：記住盤面，${s} 秒後宣紙蓋下來`,`${qi+1}/${Q.length}: memorize the board. Paper in ${s}s`);if(s--<=0)return cover();later(tick,1000)};tick()};
     const cover=()=>{stage="cover";const p=$("#jhGp");p.classList.add("on");$("#jhGq").textContent=jhL("宣紙蓋上了……","The paper is down...");
       later(()=>{p.classList.remove("on");board=cur.b.slice();cur.take.forEach(x=>{board[x.i]=null});tray=cur.take.map(x=>({p:x.p}));sel=0;stage="place";bd.draw(board,{});drawTray();
-        $("#jhGq").textContent=jhL(`抽走了 ${tray.length} 顆：點托盤的子，再點棋盤上它原本的位置（點擺好的子可以收回）`,`${tray.length} pieces were taken. Tap one below, then its square (tap a placed piece to take it back)`)},900)};
+        $("#jhGq").textContent=jhL(`抽走了 ${tray.length} 顆：點下面那排的子，再點棋盤上它原本的位置（點擺好的子可以收回）`,`${tray.length} pieces were taken. Tap one below, then its square (tap a placed piece to take it back)`)},900)};
     $("#jhGk").onclick=()=>{if(stage!=="place"||tray.length)return;stage="done";const R=jhGongCheck(cur.take,placed);if(R.all)right++;
       bd.draw(cur.b,R.all?{}:{targets:R.miss.map(x=>x.i)});
       say(R.all?jhL("記性真好！每一顆子都放回原位了。","Great memory! Every piece is back in place."):jhL(`放對 ${R.ok} 顆、放錯 ${R.miss.length} 顆：亮框是它們原本的位置。`,`${R.ok} right, ${R.miss.length} wrong: the highlighted squares are where they belonged.`));
