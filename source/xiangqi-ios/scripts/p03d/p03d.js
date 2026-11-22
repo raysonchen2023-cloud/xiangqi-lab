@@ -227,28 +227,62 @@ async function prep() {
 
 const LIST = { prep: () => prep(), cpu: () => SC.cpu(), inn: () => SC.inn(), pvp: () => SC.pvp(), simul: () => SC.simul(), "bhx-front": () => SC.bhx("front"), "bhx-back": () => SC.bhx("back"), "siege-top": () => SC.siege("top"), "siege-iso": () => SC.siege("iso") };
 
+/* ---------- 連續 N 輪與嘗試紀錄（W69 流程盤點第 5 項，照 Android PR #58；純函式在 rounds.js） ---------- */
+const RD = require("./rounds.js");
+const FAULT = process.env.P03D_FAULT === "cover";
+const ARGS = process.argv.slice(2), FULL = !ARGS.length && !FAULT;   /* 只跑部分情境或反測的不算完整，送審不能用 */
+const ROUNDS = FAULT ? 1 : RD.parseRounds(process.env.P03D_ROUNDS);   /* 反測只跑一輪：要的是每個情境都被擋到 */
+if (ROUNDS === null) { console.error("✘ P03D_ROUNDS 要是 1～9 的整數：" + process.env.P03D_ROUNDS); process.exit(2); }
+/* 嘗試紀錄放在證據資料夾的上一層（固定檔），每次執行的 p03d-<時間> 都寫到同一份 */
+const ATT = process.env.P03D_ATTEMPTS || path.join(path.dirname(OUT), "p03d-attempts.jsonl");
+const IOS = process.env.P03D_IOS || null;   /* 模擬器系統的 iOS 大版號（p0-3d.sh 從 simctl 讀；WebView 的 userAgent 版號是凍結值，不能用） */
+const unfit = (error) => ({ pass: false, unfit: true, error: String(error).slice(0, 200) });   /* 測試不成立（版號不符、例外結束）也算一次沒過的嘗試 */
+function logAttempt(o) {
+  try { fs.appendFileSync(ATT, JSON.stringify({ at: new Date().toISOString(), indexSha256: process.env.P03D_EXPECT_SHA || null, build: process.env.P03D_EXPECT_BUILD || null, ios: IOS, udid: UDID, out: path.basename(OUT), full: FULL, fault: FAULT, rounds: ROUNDS, ...o }) + "\n") } catch (e) { }
+}
+
+async function runOne(k, R) {
+  if (!LIST[k]) { R[k] = { ok: false, err: "不認得的情境（可用：" + Object.keys(LIST).join(" ") + "）" }; log("✘ " + k + "：" + R[k].err); return; }
+  try { R[k] = { ok: true, moves: await LIST[k]() }; log("✔ " + k + " " + JSON.stringify(R[k].moves)); }
+  catch (e) { R[k] = { ok: false, err: e.message }; log("✘ " + k + "：" + e.message); shot(k + "-失敗"); }
+  const rm = await jsj(`const a=window.__p03dRm||[];window.__p03dRm=[];return a`).catch(() => []);
+  if (rm && rm.length) { R[k].removed = rm; log("  移除的遮罩：" + rm.join("；")); }
+}
+
 (async () => {
-  const want = ["prep", ...(process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(LIST).filter((k) => k !== "prep"))].filter((k, i, a) => a.indexOf(k) === i);
-  log("P0-3D iOS｜模擬器 " + UDID + "｜證據 " + OUT);
+  const want = (ARGS.length ? ARGS : Object.keys(LIST).filter((k) => k !== "prep")).filter((k, i, a) => k !== "prep" && a.indexOf(k) === i);
+  log("P0-3D iOS｜模擬器 " + UDID + "｜證據 " + OUT + "｜連跑 " + ROUNDS + " 輪");
   const info = await jsj(`return {b:typeof XQ_BUILD!=="undefined"?XQ_BUILD:null,w:innerWidth,h:innerHeight,dpr:devicePixelRatio,ua:navigator.userAgent}`);
   log("App：" + JSON.stringify(info));
   /* 核對模擬器上實際跑的是不是要驗的那個包（p0-3d.sh 會傳 P03D_EXPECT_BUILD） */
-  if (process.env.P03D_EXPECT_BUILD && info.b !== process.env.P03D_EXPECT_BUILD) { log("✘ App 執行時的 XQ_BUILD 是 " + info.b + "，要驗的包是 " + process.env.P03D_EXPECT_BUILD + "：測試不成立"); process.exit(2); }
+  if (process.env.P03D_EXPECT_BUILD && info.b !== process.env.P03D_EXPECT_BUILD) { log("✘ App 執行時的 XQ_BUILD 是 " + info.b + "，要驗的包是 " + process.env.P03D_EXPECT_BUILD + "：測試不成立"); logAttempt(unfit("XQ_BUILD 不符：" + info.b)); process.exit(2); }
   startServer(); await waitServer(); log("XCUITest 觸控伺服就緒");
-  const R = {};
-  for (const k of want) {
-    if (!LIST[k]) { R[k] = { ok: false, err: "不認得的情境（可用：" + Object.keys(LIST).join(" ") + "）" }; log("✘ " + k + "：" + R[k].err); continue; }
-    try { R[k] = { ok: true, moves: await LIST[k]() }; log("✔ " + k + " " + JSON.stringify(R[k].moves)); }
-    catch (e) { R[k] = { ok: false, err: e.message }; log("✘ " + k + "：" + e.message); shot(k + "-失敗"); }
-    const rm = await jsj(`const a=window.__p03dRm||[];window.__p03dRm=[];return a`).catch(() => []);
-    if (rm && rm.length) { R[k].removed = rm; log("  移除的遮罩：" + rm.join("；")); }
+  /* 玩家狀態只建一次；之後八個情境整組連跑 ROUNDS 輪，任一輪沒過就停（不再「重跑到過」） */
+  const P = {}; await runOne("prep", P);
+  const RR = []; let roundsPassed = 0;
+  if (P.prep.ok) for (let rd = 1; rd <= ROUNDS; rd++) {
+    if (ROUNDS > 1) log("── 第 " + rd + "／" + ROUNDS + " 輪");
+    const R = {}; RR.push(R);
+    for (const k of want) await runOne(k, R);
+    if (!RD.roundPass(R)) break;
+    roundsPassed = rd;
   }
+  const R = Object.assign({}, P, RR[RR.length - 1] || {});   /* 最後跑的那一輪（反測模式＝唯一那一輪） */
   await stopServer();
-  fs.writeFileSync(path.join(OUT, "result.json"), JSON.stringify({ app: info, expect: { build: process.env.P03D_EXPECT_BUILD || null, indexSha256: process.env.P03D_EXPECT_SHA || null }, udid: UDID, at: new Date().toISOString(), results: R }, null, 1));
+  const pass = P.prep.ok && roundsPassed === ROUNDS && RR.length === ROUNDS && RR.every((x) => RD.roundPass(x));
+  const pa = RD.priorAttempts((() => { try { return fs.readFileSync(ATT, "utf8").split("\n").filter(Boolean) } catch (e) { return [] } })(), process.env.P03D_EXPECT_SHA, IOS);
+  const SUM = { app: info, ios: IOS, expect: { build: process.env.P03D_EXPECT_BUILD || null, indexSha256: process.env.P03D_EXPECT_SHA || null }, udid: UDID, at: new Date().toISOString(),
+    full: FULL, rounds: ROUNDS, roundsPassed, pass: FAULT ? null : pass, attempt: pa.before + 1, failedBefore: pa.failedBefore, prep: P.prep, perRound: RR, results: R };
+  fs.writeFileSync(path.join(OUT, "result.json"), JSON.stringify(SUM, null, 1));
+  if (!FAULT) {
+    logAttempt({ rounds: ROUNDS, roundsPassed, pass });
+    if (pa.failedBefore) log("⚠ 這個包在 iOS " + IOS + " 之前失敗過 " + pa.failedBefore + " 次（這是第 " + (pa.before + 1) + " 次嘗試）：result.json 照實記下");
+  }
   const bad = Object.keys(R).filter((k) => !R[k].ok);
-  const fb = Object.keys(R).filter((k) => R[k].ok && (R[k].moves || []).some((m) => m.sel && /^cgPlay/.test(m.sel)));
+  if (!pass && !bad.length) bad.push("沒有完整跑完 " + ROUNDS + " 輪（沒有情境可驗）");   /* 結束代碼只看 bad：沒過一定要有一項 */
+  const fb = RR.flatMap((x, i) => Object.keys(x).filter((k) => x[k].ok && (x[k].moves || []).some((m) => m.sel && /^cgPlay/.test(m.sel))).map((k) => (ROUNDS > 1 ? "第" + (i + 1) + "輪 " : "") + k));
   if (fb.length) log("ⓘ " + fb.length + " 個情境選子用了退路 cgPlay.tap（落點仍是真實觸控）：" + fb.join("、"));
-  if (process.env.P03D_FAULT === "cover") {
+  if (FAULT) {
     /* 反測模式（PR #45 審查②）：注入了 W02 故障，期望是「每個情境都判落點被 BUTTON 蓋住」；全部擋到才回 0，有任何情境照常通過或因別的原因失敗都回 1 */
     const sc = Object.keys(R).filter((k) => k !== "prep"), caught = sc.filter((k) => !R[k].ok && /被 BUTTON 蓋住/.test(R[k].err || ""));
     const miss = sc.filter((k) => !caught.includes(k)), prepOk = !R.prep || R.prep.ok;
@@ -257,6 +291,7 @@ const LIST = { prep: () => prep(), cpu: () => SC.cpu(), inn: () => SC.inn(), pvp
     log(good ? "✔ 反測成立：" + caught.length + " 個情境都判出落點被蓋住（W02）" : "✘ 反測不成立：" + (miss.length ? "沒擋到 " + miss.join("、") : "沒有情境可驗") + (prepOk ? "" : "；玩家狀態沒建好"));
     process.exit(good ? 0 : 1);
   }
-  log(bad.length ? "✘ 失敗：" + bad.join("、") : "✔ 全部通過（" + Object.keys(R).length + " 個情境）");
+  log(pass ? "✔ 全部通過（" + want.length + " 個情境 × " + ROUNDS + " 輪" + (FULL ? "，完整" : "，只跑部分情境：送審不能用") + "）"
+    : "✘ 沒過：" + bad.join("、") + "（過了 " + roundsPassed + "／" + ROUNDS + " 輪）");
   process.exit(bad.length ? 1 : 0);
-})().catch(async (e) => { log("✘ " + e.message); await stopServer(); process.exit(2); });
+})().catch(async (e) => { log("✘ " + e.message); logAttempt(unfit(e.message)); await stopServer(); process.exit(2); });
