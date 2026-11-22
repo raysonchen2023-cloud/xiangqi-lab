@@ -3,13 +3,16 @@
    1. index.html 有插 capacitor.js、native-bridge.js，而且在 App 自己的程式之前
    2. data/preload.json 列的每個檔（開 App 要先有的圖、音效）都在
    3. data/big-books.json 的比賽對局、引擎三個檔、背景音樂清單裡的 mp3 都在
-   4. 檔案大小跟 copy-www.js 記的一樣（scripts/.www-files.json）
+   4. 檔案大小跟 copy-www.js 記的一樣（scripts/.www-files.json）；清單有記 sha1 的檔，內容也要一樣（W69：大小一樣、內容被換掉的也要抓到）
    5. 程式檔沒有控制字元
-   用法：node scripts/check-www.js [--public]   （--public 改檢查 ios/App/App/public） */
+   用法：node scripts/check-www.js [--public] [--dir <要檢查的資料夾>] [--list <清單檔>]
+     --public 改檢查 ios/App/App/public；--dir 指定別的資料夾（金絲雀 canary-www.js 用它檢查壞樣本）；--list 指定清單（預設 scripts/.www-files.json）
+   結束代碼：0 沒問題；1 有問題（找不到資料夾也算） */
 "use strict";
-const fs = require("fs"), path = require("path");
+const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const HERE = path.join(__dirname, "..");
-const ROOT = process.argv.includes("--public") ? path.join(HERE, "ios", "App", "App", "public") : path.join(HERE, "www");
+const argv = process.argv.slice(2), opt = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };
+const ROOT = opt("--dir") ? path.resolve(opt("--dir")) : argv.includes("--public") ? path.join(HERE, "ios", "App", "App", "public") : path.join(HERE, "www");
 const bad = [], warn = [];
 const rd = rel => fs.readFileSync(path.join(ROOT, ...rel.split("/")));
 const exists = rel => fs.existsSync(path.join(ROOT, ...rel.split("/")));
@@ -45,11 +48,16 @@ if (exists("data/banlist.json")) warn.push("data/banlist.json 不該包進去（
 if (exists("data/tripo_anim")) warn.push("data/tripo_anim 不該包進去");
 
 /* 4 */
-const LIST = path.join(__dirname, ".www-files.json");
+const LIST = opt("--list") ? path.resolve(opt("--list")) : path.join(__dirname, ".www-files.json");
 let total = 0, files = 0;
 if (fs.existsSync(LIST)) {
   const L = JSON.parse(fs.readFileSync(LIST, "utf8")).files;
-  for (const [rel, [sz]] of Object.entries(L)) { files++; total += sz; if (!exists(rel)) bad.push("少了 " + rel); else if (size(rel) !== sz) bad.push("大小不對 " + rel); }
+  for (const [rel, [sz, h]] of Object.entries(L)) {
+    files++; total += sz;
+    if (!exists(rel)) bad.push("少了 " + rel);
+    else if (size(rel) !== sz) bad.push("大小不對 " + rel);
+    else if (h && crypto.createHash("sha1").update(rd(rel)).digest("hex").slice(0, 12) !== h) bad.push("內容跟清單不同 " + rel);   /* W69：清單記了 sha1 前 12 碼的檔（大檔沒記）要比內容 */
+  }
 } else warn.push("沒有 scripts/.www-files.json（先跑 node scripts/copy-www.js）");
 
 /* 5 */

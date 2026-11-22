@@ -18,7 +18,7 @@ test("哪些算判斷紅綠的程式：.github/scripts 全部、run-tests、chec
   assert.deepEqual(guardChanged(["source/run-tests.js", "README.md", "source/run-tests.js", ".github/scripts/a.cjs"]), [".github/scripts/a.cjs", "source/run-tests.js"]);
   assert.ok(GUARD.length >= 4);
   /* PR #45（W69）：verify.yml 加跑的 iOS 兩步也是判紅綠的程式；p03d.js、README 是被檢查的對象，不換回 */
-  for (const f of ["source/xiangqi-ios/scripts/check-native.js", "source/xiangqi-ios/scripts/p03d/test-p03d.cjs"]) assert.ok(isGuard(f), f);
+  for (const f of ["source/xiangqi-ios/scripts/check-native.js", "source/xiangqi-ios/scripts/p03d/test-p03d.cjs", "source/xiangqi-ios/scripts/test-canary-www.cjs"]) assert.ok(isGuard(f), f);
   for (const f of ["source/xiangqi-ios/scripts/p03d/p03d.js", "source/xiangqi-ios/scripts/p03d/README.md", "source/xiangqi-ios/scripts/install-native.js"]) assert.ok(!isGuard(f), f);
 });
 
@@ -32,7 +32,7 @@ test("要跑的檢查：功能模式跟 verify.yml 功能那一組一樣；發�
   for (const k of [".github/scripts/check-evidence.cjs data/docs/evidence.md base-evidence.md", "source/xiangqi-lab/tools/release-sync-check.js --dir .",
     ".github/scripts/check-test-skips.cjs base-verify.txt", ".github/scripts/check-verify-log.cjs . base-verify.txt"]) assert.ok(R.some((x) => x.startsWith(k)), "發布模式少了 " + k);
   assert.ok(R.some((x) => x.startsWith("source/xiangqi-lab/tools/verify-all.js") && !x.includes("--skip")), "發布模式要跑全套");
-  for (const S of [F, R]) for (const k of ["source/xiangqi-ios/scripts/check-native.js", "--test source/xiangqi-ios/scripts/p03d/test-p03d.cjs"]) assert.ok(S.includes(k), "兩種模式都要跑 iOS 那兩步（PR #45）：" + k);
+  for (const S of [F, R]) for (const k of ["source/xiangqi-ios/scripts/check-native.js", "--test source/xiangqi-ios/scripts/p03d/test-p03d.cjs", "--test source/xiangqi-ios/scripts/test-canary-www.cjs"]) assert.ok(S.includes(k), "兩種模式都要跑 iOS 那兩步（PR #45）：" + k);
 });
 
 test("換回基準版：在暫存 git 倉庫模擬 PR 改壞守門、新增守門、改到一般檔；只換守門程式，PR 新加的守門先拿掉", () => {
