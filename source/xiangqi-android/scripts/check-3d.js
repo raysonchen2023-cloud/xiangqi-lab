@@ -100,8 +100,11 @@ const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ?
 const O = { build: arg("--build"), serial: arg("--serial", "emulator-5580"), port: Number(arg("--port", 9291)), out: path.resolve(arg("--out", "p0-3d")),
   only: arg("--only"), selfTest: process.argv.includes("--self-test"), allowReal: process.argv.includes("--allow-real-device"),
   aabSha: arg("--aab-sha"), known: arg("--known", [path.join(__dirname, "..", "..", "..", ".github", "p0-known.json"), path.join(__dirname, "..", "..", "xiangqi-lab", "site", ".github", "p0-known.json")].find((f) => fs.existsSync(f)) || "") };   /* 公開倉庫：source/ 的上一層；開發者電腦：xiangqi-lab/site */
-/* 已知問題清單：讀不到就當沒有（不放行任何已知問題） */
-const KNOWN = (() => { try { const j = JSON.parse(fs.readFileSync(O.known, "utf8")); return Array.isArray(j.items) ? j.items : [] } catch (e) { return [] } })();
+/* 已知問題清單：讀不到就當沒有（不放行任何已知問題）。報告記下清單路徑與 SHA-256；不是倉庫 .github 那一份時印 ⚠（PR #42 審查①：--known 可指到任何檔，等於繞過逐行審） */
+const REPO_KNOWN = path.join(__dirname, "..", "..", "..", ".github", "p0-known.json");
+const KNOWN_RAW = (() => { try { return fs.readFileSync(O.known) } catch (e) { return null } })();
+const KNOWN = (() => { try { const j = JSON.parse(String(KNOWN_RAW)); return Array.isArray(j.items) ? j.items : [] } catch (e) { return [] } })();
+const KNOWN_FROM_REPO = !!O.known && fs.existsSync(REPO_KNOWN) && path.resolve(O.known) === path.resolve(REPO_KNOWN);
 if (!O.build) { console.error("用法：node scripts/check-3d.js --build <版號> [--serial emulator-5580] [--port 9291] [--out p0-3d] [--only <情境>] [--self-test]"); process.exit(2) }
 const PKG = "com.raysonchen.xiangqiqianqiu", ADB = process.env.ADB || "adb";
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -285,12 +288,17 @@ async function run(name, inject) {
 
 (async () => {
   fs.mkdirSync(O.out, { recursive: true });
+  if (!online()) throw new Unfit(O.serial + " 不在線：先開好模擬器（adb devices 要看得到）");
   const g = checkDevice((...a) => adb(...a), O.allowReal);
   if (!g.ok) throw new Unfit(g.message);
   if (g.message) console.log(g.message);
   const S = { build: O.build, serial: O.serial, android: adb("shell", "getprop", "ro.build.version.release"),
     webview: (adb("shell", "dumpsys", "package", "com.google.android.webview").match(/versionName=(\S+)/) || [])[1] || "", at: new Date().toISOString(),
-    aabSha256: O.aabSha || "（沒給 --aab-sha）", known: KNOWN.map((x) => x.id + "≤" + x.until), results: [] };
+    aabSha256: O.aabSha || "（沒給 --aab-sha）", known: KNOWN.map((x) => x.id + "≤" + x.until),
+    knownFile: { path: O.known || "（沒有）", sha256: KNOWN_RAW ? require("crypto").createHash("sha256").update(KNOWN_RAW).digest("hex") : null, fromRepo: KNOWN_FROM_REPO },
+    /* PR #42 審查②：只跑部分情境（--only）或自我反測不算完整，送審只認 full＝true */
+    full: !O.only && !O.selfTest, results: [] };
+  if (KNOWN.length && !KNOWN_FROM_REPO) console.log("⚠ 已知問題清單不是倉庫 .github/p0-known.json（" + O.known + "）：這份沒經過逐行審，送審不能用");
   if (O.selfTest) {
     const a = await run("pvp-black", false), b = await run("pvp-black", true);
     S.results.push({ ...a, expect: "pass" }, { ...b, name: "pvp-black＋落點遮罩", expect: "fail" });
@@ -305,6 +313,6 @@ async function run(name, inject) {
     S.pass = S.results.length > 0 && S.results.every((r) => r.pass === true || (r.pass === null && !!r.known));
   }
   fs.writeFileSync(path.join(O.out, "summary.json"), JSON.stringify(S, null, 2));
-  console.log((S.pass ? "✔ 通過" : "✘ 沒過") + "：" + S.results.length + " 項，報告 " + path.join(O.out, "summary.json"));
+  console.log((S.pass ? "✔ 通過" : "✘ 沒過") + "：" + S.results.length + " 項" + (S.full ? "（九情境完整）" : "（只跑部分情境：送審不能用）") + "，報告 " + path.join(O.out, "summary.json"));
   process.exit(S.pass ? 0 : 1);
 })().catch((e) => { console.error((e instanceof Unfit ? "測試不成立：" : "✘ ") + e.message); process.exit(e instanceof Unfit ? 2 : 1) });
