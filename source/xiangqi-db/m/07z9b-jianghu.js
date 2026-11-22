@@ -576,7 +576,10 @@ try{if(typeof journeyGameEnd==="function"&&!journeyGameEnd.jhIntel){const g0=jou
    11/22 中炮門換第 7 版圖（史學顧問三回審定，story/gemini_app/190_*）：佈局照長卷改成長石階＋四座方亭＋頂上大殿，最下方是碼頭階埠與漕船；
    座標依新圖重量——講棋堂＝左上方亭、前院＝碼頭石平台、出口在碼頭邊（搭船回長卷）。v 一併改成 1122，讓舊快取的第 2 版圖失效。 */
 const JH_HALL={
-  central:{v:"1122",seat:[387,297],w:72,spots:{hall:[384,112],study:[226,458],yard:[384,1008],gate:[384,1330]}}
+  /* 11/22 開發者看屏風馬門實機「怎麼會坐在桌子上」，選「中炮門一起改」：立繪疊在圖的最上層，盤坐的腳畫在桌子前面 →
+     cut＝裁掉立繪下面幾成（JhHall 用 clip-path），裁切線對齊桌子後緣：seat 的 y＝桌子後緣＋立繪高×cut（立繪 380×512）。
+     中炮門桌子後緣原圖 y≈275：寬 66 → 高 89 → 275＋27＝302 */
+  central:{v:"1122",seat:[387,302],w:66,cut:.3,spots:{hall:[384,112],study:[226,458],yard:[384,1008],gate:[384,1330]}}
 };
 const JH_HALL_W=768,JH_HALL_H=1376;
 const JH_HALL_BAD=new Set();   /* 這次開 App 讀圖失敗過的派：小卡不再顯示「走進山門」，免得一直繞回來 */
@@ -601,7 +604,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   const back=()=>{f.classList.remove("on");location.hash="#/jianghu";setTimeout(()=>{try{jhSheet(sid)}catch(e){}},700)};
   img.onerror=()=>{JH_HALL_BAD.add(sid);back()};   /* 圖還沒上 CDN、史學顧問還沒審完：退回長卷、開原本的小卡 */
   if(m){const z=document.createElement("img");z.className="jh-hall-zm";z.src=`data/npc/${m.id}.webp`;z.alt=jhL(`掌門${m.nm}坐在大廳主位`,`Master ${m.en} seated in the hall`);
-    z.style.cssText=jhHallPc(H.seat)+`;width:${(H.w/JH_HALL_W*100).toFixed(2)}%`;z.onclick=()=>jhSheet(sid);z.onerror=()=>z.remove();P.append(z)}
+    z.style.cssText=jhHallPc(H.seat)+`;width:${(H.w/JH_HALL_W*100).toFixed(2)}%`+(H.cut?`;clip-path:inset(0 0 ${H.cut*100}% 0);-webkit-clip-path:inset(0 0 ${H.cut*100}% 0)`:"");z.onclick=()=>jhSheet(sid);z.onerror=()=>z.remove();P.append(z)}
   const spot=(k,label,go)=>{const p=H.spots[k];if(!p)return;const b=document.createElement("button");b.type="button";b.className="shp-spot jh-hall-spot"+(k==="gate"?" ex-spot":"");b.dataset.k=k;b.style.cssText=jhHallPc(p);b.innerHTML=`<b>${esc(label)}</b>`;b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}go()};P.append(b)};
   spot("hall",m?jhL(`🏯 掌門大廳・${m.nm}`,`🏯 Master's hall · ${m.en}`):jhL("🏯 掌門大廳","🏯 Master's hall"),()=>jhSheet(sid));
   spot("study",jhL("📖 講棋堂","📖 Lecture hall"),()=>jhHallStudy(sid));
@@ -804,7 +807,7 @@ function jhKickCss(){if(typeof document==="undefined"||document.getElementById("
    存檔 jhCanal（跟旅程走，05b-save.js JOURNEY_KEYS 的 m_jhCanal）＝{d:日, s:{派:{t,p}}, pick:{"日/派":題號}}；換日就清掉前一天的。 */
 /* 停靠點＝長卷原圖（data/yunhe/pano.webp，3024×1340）的水面：用顏色找各派附近半徑 30 像素內大多是藍灰水面的點，再畫在圖上逐一看過（11/22）。
    11/22 開發者實機截圖「這船重疊了，而且很像飄起來」：半徑 30 像素只檢查到錨點附近，漕船實際蓋住長卷約 106×73 像素（船身＝錨點左右 53、上 19～下 22），
-   徐州那艘壓在長卷原本畫的小船上、淮安壓到碼頭與停著的船、泗州碰到棧橋與石橋、揚州碰到松樹。重量：把船身框畫在原圖上逐一看——
+   徐州那艘壓在長卷原本畫的小船上、淮安壓到碼頭與停著的船、泗州碰到棧橋與石橋、揚州碰到松樹。重選：把船身框畫在原圖上逐一看——
    泗州、淮安、揚州移到附近整塊空水面；徐州河道只有 55 像素寬、原本的小船就停在正中，改成漕船整艘蓋住那艘小船（看起來就是漕船停在那裡）。 */
 const JH_CANAL=[
   {sid:"horse",zh:"徐州",en:"Xuzhou",at:[206,738],th:["臥槽馬","掛角馬","馬殺"]},

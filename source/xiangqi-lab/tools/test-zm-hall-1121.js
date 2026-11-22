@@ -339,3 +339,13 @@ test("門內頁順風徽章：在掌門大廳標籤正下方、不重疊；中�
   assert.ok(m, "找不到門內頁順風徽章的字");
   assert.ok([...m[1]].length <= 8 && m[2].length <= 16, "中文 ≤8 字、英文 ≤16 字：" + m[1] + " / " + m[2]);
 });
+
+test("〔原始碼〕11/22 開發者「怎麼會坐在桌子上」→ 中炮門一起改：掌門立繪裁掉下半截，裁切線對齊桌子後緣（原圖 y≈275）", () => {
+  const JHs = rd("xiangqi-db/m/07z9b-jianghu.js");
+  const m = JHs.match(/  central:\{v:"\d+",seat:\[(\d+),(\d+)\],w:(\d+),cut:([\d.]+),/);
+  assert.ok(m, "中炮門要有 cut");
+  const y = +m[2], w = +m[3], cut = +m[4], line = y - w * 512 / 380 * cut;   /* 立繪 380×512 */
+  assert.ok(cut > 0.2 && cut < 0.45, "裁掉下半截：" + cut);
+  assert.ok(Math.abs(line - 275) <= 4, "裁切線要對齊桌子後緣：" + line.toFixed(1));
+  assert.match(JHs, /\(H\.cut\?`;clip-path:inset\(0 0 \$\{H\.cut\*100\}% 0\);-webkit-clip-path:/, "JhHall 照 cut 裁");
+});
