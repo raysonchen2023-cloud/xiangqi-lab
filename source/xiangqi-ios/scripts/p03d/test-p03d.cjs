@@ -22,8 +22,42 @@ test("wir.js：binary plist 編碼後再解碼，內容一樣（中文、大數�
   assert.equal(r.__argument.t, true); assert.equal(r.__argument.f, false);
 });
 
-test("p03d.js、wir.js 能編譯（語法沒壞）", () => {
-  for (const f of ["p03d.js", "wir.js"]) assert.doesNotThrow(() => new vm.Script(rd(f).replace(/^#!.*\n/, ""), { filename: f }), f);
+test("rounds.js：連續 N 輪（預設 2）、每一輪都全過才算；嘗試紀錄只算同一個包＋同一個 iOS 版本（W69 流程盤點第 5 項）", () => {
+  const { parseRounds, roundPass, runtimeMajor, priorAttempts } = require(path.join(D, "rounds.js"));
+  assert.equal(parseRounds(undefined), 2); assert.equal(parseRounds(""), 2); assert.equal(parseRounds("3"), 3);
+  for (const v of ["0", "10", "x", "1.5", "-1"]) assert.equal(parseRounds(v), null, "格式錯：" + v);
+  assert.equal(roundPass({ prep: { ok: true }, cpu: { ok: true }, inn: { ok: true } }), true);
+  assert.equal(roundPass({ cpu: { ok: true }, inn: { ok: false } }), false, "一個沒過＝這輪沒過");
+  assert.equal(roundPass({ prep: { ok: true } }), false, "只有 prep、沒有情境不算過");
+  assert.equal(roundPass({}), false);
+  assert.equal(roundPass({ cpu: { ok: "yes" } }), false, "ok 要是 true");
+  assert.equal(runtimeMajor("com.apple.CoreSimulator.SimRuntime.iOS-27-2"), "27");
+  assert.equal(runtimeMajor("com.apple.CoreSimulator.SimRuntime.watchOS-12-0"), null, "不是 iOS 的不算");
+  assert.equal(runtimeMajor("沒有版本"), null);
+  /* 命令列：從 simctl 的 JSON 找出指定那台的 iOS 大版號 */
+  const J = JSON.stringify({ devices: { "com.apple.CoreSimulator.SimRuntime.iOS-26-1": [{ udid: "U1" }], "com.apple.CoreSimulator.SimRuntime.iOS-27-2": [{ udid: "U2" }] } });
+  const cli = (u) => require("child_process").spawnSync(process.execPath, [path.join(D, "rounds.js"), "ios", u], { input: J, encoding: "utf8" }).stdout;
+  assert.equal(cli("U2"), "27"); assert.equal(cli("U1"), "26"); assert.equal(cli("沒有這台"), "");
+  const A = "a".repeat(64), B = "b".repeat(64);
+  const L = [{ indexSha256: A, ios: "26", pass: false }, { indexSha256: A, ios: "26", pass: true }, { indexSha256: A, ios: "18", pass: false }, { indexSha256: B, ios: "26", pass: false }, { indexSha256: A, ios: "26", pass: false, unfit: true }]
+    .map((x) => JSON.stringify(x)).concat(["壞掉的一行"]);
+  assert.deepEqual(priorAttempts(L, A, "26"), { before: 3, failedBefore: 2 }, "測試不成立的那次也算一次失敗");
+  assert.deepEqual(priorAttempts(L, A, "18"), { before: 1, failedBefore: 1 });
+  assert.deepEqual(priorAttempts(L, null, "26"), { before: 0, failedBefore: 0 }, "沒有包的雜湊不比");
+  assert.deepEqual(priorAttempts([], A, "26"), { before: 0, failedBefore: 0 });
+});
+
+test("p0-3d.sh：嘗試紀錄傳給 p03d.js，放在 output 底下的固定檔", () => {
+  const S = rd("p0-3d.sh");
+  assert.match(S, /ATT=\$\{OUT:h\}\/p03d-attempts\.jsonl/);
+  assert.match(S, /P03D_ATTEMPTS=\$ATT /);
+  assert.match(S, /IOSV=\$\(xcrun simctl list devices -j \| node \$HERE\/rounds\.js ios \$U\)/, "iOS 版本從模擬器系統讀");
+  assert.match(S, / P03D_IOS=\$IOSV /);
+  assert.doesNotMatch(rd("p03d.js"), /userAgent[^\n]*IOS|IOS[^\n]*\.ua\b/, "不用 WebView 的 userAgent 判 iOS 版本（凍結值）");
+});
+
+test("p03d.js、wir.js、rounds.js 能編譯（語法沒壞）", () => {
+  for (const f of ["p03d.js", "wir.js", "rounds.js"]) assert.doesNotThrow(() => new vm.Script(rd(f).replace(/^#!.*\n/, ""), { filename: f }), f);
 });
 
 test("p03d.js：防「沒驗到卻算通過」的關卡都在", () => {
@@ -34,6 +68,16 @@ test("p03d.js：防「沒驗到卻算通過」的關卡都在", () => {
   assert.match(S, /P03D_FAULT === "cover"/, "反測注入（模擬 W02）");
   assert.match(S, /const good = prepOk && sc\.length > 0 && miss\.length === 0;/, "反測模式：每個情境都被擋到才回 0（PR #45 審查②）");
   assert.match(S, /process\.exit\(bad\.length \? 1 : 0\)/, "有失敗結束代碼要非 0");
+  assert.match(S, /if \(!pass && !bad\.length\) bad\.push\(/, "沒過（含沒跑滿輪數）一定要記一項失敗，結束代碼才不會是 0");
+  /* W69 流程盤點第 5 項（照 Android PR #58）：同一次執行連續 N 輪全過、每次嘗試都留紀錄 */
+  assert.match(S, /const ROUNDS = FAULT \? 1 : RD\.parseRounds\(process\.env\.P03D_ROUNDS\);/, "預設連跑 2 輪（parseRounds）");
+  assert.match(S, /if \(!RD\.roundPass\(R\)\) break;/, "任一輪沒過就停");
+  assert.match(S, /const pass = P\.prep\.ok && roundsPassed === ROUNDS && RR\.length === ROUNDS && RR\.every\(\(x\) => RD\.roundPass\(x\)\);/, "每一輪都全過才算過");
+  assert.match(S, /logAttempt\(\{ rounds: ROUNDS, roundsPassed, pass \}\);/, "跑完不論過不過都寫嘗試紀錄");
+  assert.match(S, /\.catch\(async \(e\) => \{ log\("✘ " \+ e\.message\); logAttempt\(unfit\(e\.message\)\);/, "例外結束也寫嘗試紀錄");
+  assert.match(S, /logAttempt\(unfit\("XQ_BUILD 不符：" \+ info\.b\)\); process\.exit\(2\);/, "版號不符（測試不成立）也寫嘗試紀錄");
+  assert.match(S, /const unfit = \(error\) => \(\{ pass: false, unfit: true,/, "測試不成立記成沒過");
+  assert.match(S, /path\.join\(path\.dirname\(OUT\), "p03d-attempts\.jsonl"\)/, "嘗試紀錄放在證據資料夾的上一層固定檔");
   assert.match(S, /x\.f === m\.f && x\.t === m\.t/, "棋譜新增那一步的起點、落點都要對");
   assert.match(S, /op: "tap"/, "點擊走 XCUITest 真實觸控");
   assert.doesNotMatch(S, /\.click\(\)\s*;?\s*\/\*\s*落點/, "落點不能用 JS click");

@@ -2,6 +2,7 @@
 # 用法：p0-3d.sh <App.app 路徑> [情境…]   例：p0-3d.sh build-sim/Build/Products/Debug-iphonesimulator/App.app
 # 環境變數：P03D_UDID（模擬器 UDID；不給就找名字是 $P03D_DEVICE（預設 iPhone 18 Pro）的那台）、P03D_OUTDIR（證據放哪，預設目前目錄的 output/）
 #   P03D_FAULT=cover：反測（模擬 W02：落點被按鈕蓋住），每個情境都必須失敗、結束代碼非 0
+#   P03D_ROUNDS（預設 2）：八個情境整組連跑幾輪，每一輪都全過才算過（開發者 11/23 選「連續 2 輪」；失敗後重跑到過的不算）
 # iOS 版 P0-3D（發版回歸驗收規則「封測 P0 永久測項」）：模擬器上真實觸控選子、點暗綠落點，再讀同一盤棋譜確認新增那一步。
 #   1. 抹掉模擬器、系統語言設繁中、裝包、預寫測試房（fresh-app.sh）、冷啟
 #   2. 建 P03D（XCUITest 觸控伺服，本資料夾的 P03D.xcodeproj）
@@ -19,6 +20,9 @@ shift 2>/dev/null || true
 BOOTED=$(xcrun simctl list devices booted | grep -c Booted)
 [ "$BOOTED" -gt 0 ] && ! xcrun simctl list devices booted | grep -q $U && { echo "✘ 已經有別台模擬器開著（一台機器一次一台），先關掉"; exit 2; }
 T=$(date +%m%d-%H%M%S); OUT=${P03D_OUTDIR:-$PWD/output}/p03d-$T; mkdir -p $OUT; OUT=${OUT:A}
+IOSV=$(xcrun simctl list devices -j | node $HERE/rounds.js ios $U)   # 模擬器系統的 iOS 大版號（WebView 回報的是凍結值，不能用）
+echo "模擬器 iOS：${IOSV:-（讀不到）}" | tee -a $OUT/run.txt
+ATT=${OUT:h}/p03d-attempts.jsonl   # 嘗試紀錄：每次執行（過不過、測試不成立）都追加一行到同一份固定檔，同一個包之前失敗過看得到（W69 流程盤點第 5 項）
 echo "包：$APP" | tee $OUT/run.txt
 XB=$(grep -ao 'XQ_BUILD="[0-9-]*"' $APP/public/index.html | head -1 | cut -d'"' -f2)
 XS=$(shasum -a 256 $APP/public/index.html | cut -c1-64)
@@ -41,7 +45,7 @@ cd $HERE
 DD=${P03D_DD:-${TMPDIR:-/tmp}/p03d-dd}   # XCUITest 建置資料夾放暫存目錄，不留在倉庫裡
 xcodebuild -project P03D.xcodeproj -scheme P03DUITests -destination "platform=iOS Simulator,id=$U" -derivedDataPath $DD build-for-testing > $OUT/p03d-build.log 2>&1 || { echo "✘ P03D 建置失敗，見 $OUT/p03d-build.log"; exit 2; }
 # 3. 跑
-P03D_DD=$DD P03D_UDID=$U P03D_OUT=$OUT P03D_EXPECT_BUILD=$XB P03D_EXPECT_SHA=$XS node p03d.js "$@"; RC=$?
+P03D_DD=$DD P03D_UDID=$U P03D_OUT=$OUT P03D_ATTEMPTS=$ATT P03D_IOS=$IOSV P03D_EXPECT_BUILD=$XB P03D_EXPECT_SHA=$XS node p03d.js "$@"; RC=$?
 # 4. 抹掉
 xcrun simctl shutdown $U >/dev/null 2>&1; xcrun simctl erase $U
 echo "模擬器已抹掉（$U）" | tee -a $OUT/run.txt

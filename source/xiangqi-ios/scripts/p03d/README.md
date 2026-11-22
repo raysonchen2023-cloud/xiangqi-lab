@@ -19,6 +19,13 @@ source/xiangqi-ios/scripts/p03d/p0-3d.sh <候選 App.app 路徑> [情境…]
   4. 跑 `p03d.js`。
   5. **跑完再抹掉模擬器**。
 - 結束代碼 0 表示全過。
+- **連續 2 輪（W69 流程盤點第 5 項，開發者 11/23 選「連續 2 輪」，照 Android PR #58）**：
+  - 玩家狀態建一次，八個情境整組連跑 `P03D_ROUNDS` 輪（預設 2），**每一輪都全過才算過**；任一輪沒過就停，結束代碼 1。
+  - 不再接受「失敗後重跑到過」。`result.json` 記 `rounds`、`roundsPassed`、`perRound`（每一輪的結果）、`full`（八個情境全跑、不是反測才是 true；只跑部分情境的送審不能用）。
+  - 每次執行（過、沒過、測試不成立、例外結束）都追加一行到 `$P03D_OUTDIR/p03d-attempts.jsonl`。這份是固定檔，不跟著每次的 `p03d-<時間>` 資料夾走，所以同一個包之前失敗過看得到。
+  - `result.json` 的 `attempt`、`failedBefore`：同一個包（index.html SHA-256）在同一個 iOS 大版號上，這是第幾次嘗試、之前失敗幾次。
+  - iOS 大版號由 `p0-3d.sh` 從模擬器系統（`simctl` 的 runtime）讀。WebView 回報的版號是凍結值，不能用：iOS 27.2 的模擬器回報「iPhone OS 18_7」。之前失敗過，log 會印 ⚠，送審時要照實寫。
+  - 反測（`P03D_FAULT=cover`）只跑一輪，不寫嘗試紀錄。
 - 證據放在 `$P03D_OUTDIR/p03d-<時間>/`（預設是目前目錄的 `output/`）：
   - `run.txt`：包路徑、XQ_BUILD、index SHA-256
   - `log.txt`、`result.json`
@@ -33,6 +40,7 @@ source/xiangqi-ios/scripts/p03d/p0-3d.sh <候選 App.app 路徑> [情境…]
 | `P03D.xcodeproj` | 獨立的 XCUITest 專案，用 bundle id 去點 App，不動 App 專案。<br>`testServe` 會常駐，輪詢 `cmd-<n>.json`，用 `XCUICoordinate.tap()` 真實觸控。 |
 | `p03d.js` | 驅動：玩家狀態、進場、挑著法、等鏡頭停、點選子和落點、讀棋譜。 |
 | `p0-3d.sh` | 包裝：乾淨模擬器、建置、跑、抹掉。 |
+| `rounds.js` | 連續 N 輪與嘗試紀錄的判斷（純函式，`test-p03d.cjs` 測）。 |
 | `fresh-app.sh` | 抹掉模擬器、開機、裝包，第一次開啟前預寫測試房 `xq_netRoot=xq_test`。 |
 
 ## 判斷（照 Android）
