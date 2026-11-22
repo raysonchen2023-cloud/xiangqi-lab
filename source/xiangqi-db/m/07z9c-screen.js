@@ -9,7 +9,9 @@
    JhHall 本體不動：門內圖、座位、地點寫進 JH_HALL／JH_HALL_WALK，標籤文字與多出來的兩個入口在 JhHall 包裝裡補。
    座標都是門內圖原圖像素（768×1376，park/zmhall/hall_screen 修過草地假字的版本）。 */
 if(typeof JH_HALL!=="undefined"){
-  JH_HALL.screen={v:"1122",seat:[386,292],w:72,spots:{hall:[386,120],study:[386,570],gate:[386,1290]},
+  /* 11/22 開發者實機截圖「怎麼會坐在桌子上」：立繪疊在圖的最上層，整個人（含盤坐的腳）畫在桌子前面。改成裁掉立繪下面 cut（30%），
+     裁切線對齊桌子後緣（原圖 y≈270）：seat 的 y＝270＋立繪高×cut（寬 66 → 高 89 → 270＋27＝297）；看起來就是坐在桌子後面、圓牌靠著桌緣 */
+  JH_HALL.screen={v:"1122",seat:[386,297],w:66,cut:.3,spots:{hall:[386,120],study:[386,570],gate:[386,1290]},
     extra:{horse:[386,880],abacus:[318,338]}};   /* 沒有 yard、沒有 mates：前院不站門人（開發者選單） */
 }
 if(typeof JH_HALL_WALK!=="undefined"){
@@ -137,6 +139,7 @@ async function jhScrAbacus(){const L=await jhScrLoad("abacus");if(!L){toast(jhL(
 
 /* ---- 門內頁：換標籤、加石馬與算盤兩個入口 ---- */
 function jhScrHall(v,sid){if(sid!=="screen")return;const H=JH_HALL.screen,P=v&&v.querySelector(".jh-hall");if(!H||!P)return;
+  const zm=P.querySelector(".jh-hall-zm");if(zm&&H.cut)zm.style.clipPath=zm.style.webkitClipPath=`inset(0 0 ${H.cut*100}% 0)`;   /* 桌子以下裁掉＝坐在桌子後面 */
   const img=P.querySelector("img");if(img)img.alt=jhL("屏風馬門門內：牌坊山門、前院、堂前一對石馬的課堂，兩側長迴廊，最上面是掌門大廳","Inside the Screen Horses: an archway gate, the front yard, a classroom with two stone horses, long side galleries, and the master's hall at the top");
   const set=(k,label,go)=>{const x=P.querySelector(`.jh-hall-spot[data-k="${k}"]`);if(!x)return;x.innerHTML=`<b>${esc(label)}</b>`;if(go)x.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}go()}};
   set("study",jhL("📖 女塾課堂","📖 Classroom"),jhScrStudy);

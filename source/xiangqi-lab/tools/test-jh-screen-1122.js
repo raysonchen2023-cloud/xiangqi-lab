@@ -142,6 +142,11 @@ test("門內設定：前院不站門人、沒有前院入口；石馬、算盤�
   assert.deepEqual(Object.keys(H.extra).sort(), ["abacus", "horse"]);
   for (const p of [...Object.values(H.spots), ...Object.values(H.extra), H.seat]) assert.ok(p[0] > 0 && p[0] < 768 && p[1] > 0 && p[1] < 1376, "座標在圖內：" + p);
   assert.ok(c.JH_HALL.central.mates && c.JH_HALL.central.spots.yard, "中炮門照舊");
+  /* 11/22 開發者實機「怎麼會坐在桌子上」：立繪下面裁掉 cut，裁切線要落在桌子後緣（原圖 y≈270，容許 ±4）；立繪 380×512 */
+  assert.ok(H.cut > 0.2 && H.cut < 0.45, "要裁掉下半截：" + H.cut);
+  const line = H.seat[1] - H.w * 512 / 380 * H.cut;
+  assert.ok(Math.abs(line - 270) <= 4, "裁切線要對齊桌子後緣：" + line.toFixed(1));
+  assert.match(SRC, /zm\.style\.clipPath=zm\.style\.webkitClipPath=`inset\(0 0 \$\{H\.cut\*100\}% 0\)`/);
 });
 
 test("3D 走路：起點叫 dock（07z9b 傳 home:\"dock\"）、每個入口的停靠點都在路網上、路網連通", () => {
