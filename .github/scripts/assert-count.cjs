@@ -19,7 +19,7 @@ if (OUT) {
     if (!a || a[MARK]) return a;
     for (const k of Object.keys(a)) {
       const f = a[k];
-      if (typeof f !== "function" || k === "AssertionError" || /^[A-Z]/.test(k)) continue;
+      if (typeof f !== "function" || k === "AssertionError" || k === "strict" || /^[A-Z]/.test(k)) continue;   /* strict 本身也是函式：不包外殼，下面另外包它裡面的方法（PR #57 審查） */
       a[k] = function (...x) { const c = ALS.getStore(); if (c) c.n++; return f.apply(this, x) };
     }
     Object.defineProperty(a, MARK, { value: true });

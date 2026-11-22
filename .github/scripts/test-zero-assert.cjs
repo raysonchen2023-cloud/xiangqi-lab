@@ -20,6 +20,7 @@ const FAKE = [
   'test("只印 diagnostic 就結束", (t) => { t.diagnostic("沒東西可驗") });',
   'test("用 t.skip 明列略過", (t) => { return t.skip("這個環境沒有") });',
   'test("用 node:assert（非 strict）也算", () => { require("node:assert").strictEqual(2, 2) });',
+  'test("用 assert.strict 子物件也算", () => { require("node:assert").strict.equal(3, 3) });',
 ].join(NL) + NL;
 
 function runFake() {
@@ -33,13 +34,14 @@ test("計數器真的跑：各種寫法的斷言次數；空測試、三元式�
   const { d, out } = runFake();
   try {
     const R = readDir(out), L = R["test-fake.js"], by = Object.fromEntries(L.map((c) => [c.name, c]));
-    assert.equal(L.length, 7, "七項都要記到");
+    assert.equal(L.length, 8, "八項都要記到");
     assert.equal(by["同步：兩次斷言"].n, 2);
     assert.equal(by["非同步：await 之後的斷言也算"].n, 1, "AsyncLocalStorage 要跟到 await 之後");
     assert.equal(by["用 node:assert（非 strict）也算"].n, 1);
+    assert.equal(by["用 assert.strict 子物件也算"].n, 1, "PR #57 審查：assert.strict 子物件也要包到");
     for (const k of ["空測試", "三元式繞過：檔案不在就什麼都不做", "只印 diagnostic 就結束"]) assert.equal(by[k].n, 0, k);
     assert.equal(by["用 t.skip 明列略過"].skipped, true);
-    const j = judge(R, 4, []);
+    const j = judge(R, 5, []);
     assert.deepEqual(j.zero.sort(), ["test-fake.js：三元式繞過：檔案不在就什麼都不做", "test-fake.js：只印 diagnostic 就結束", "test-fake.js：空測試"].sort());
     assert.equal(j.ok, false);
   } finally { fs.rmSync(d, { recursive: true, force: true }) }
@@ -95,4 +97,6 @@ test("〔原始碼〕verify.yml 兩種模式的完整驗證都掛計數器、之
   const { STEPS, assertEnv, ASSERT_DIR } = require("./base-guard.cjs");
   for (const m of ["feature", "release"]) assert.ok(STEPS("origin/main", m).some(([, c]) => c[1] === ".github/scripts/check-zero-assert.cjs" && c[2] === ASSERT_DIR), m + " 模式要跑斷言次數檢查");
   const e = assertEnv(); assert.equal(e.XQ_ASSERT_DIR, ASSERT_DIR); assert.match(e.NODE_OPTIONS, /--require .*assert-count\.cjs/);
+  /* PR #57 審查：基準版守門跑每一步都要帶計數器的環境變數（拿掉的話，換回 main 版後的完整驗證不會記斷言） */
+  assert.match(fs.readFileSync(path.join(__dirname, "base-guard.cjs"), "utf8"), /spawn\(cmd\[0\], cmd\.slice\(1\), \{ inherit: true, env: assertEnv\(\) \}\)/);
 });

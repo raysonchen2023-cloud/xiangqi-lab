@@ -45,7 +45,7 @@ if (require.main === module) {
   console.log(`斷言次數檢查：記到沒略過的測試 ${r.counted} 項，0 次斷言 ${r.zero.length} 項（白名單 ${allow.length} 項）`);
   if (r.short) console.error("✘ " + r.short);
   for (const z of r.zero) console.error("  ✘ " + z + "：通過了，但一次斷言都沒做");
-  if (r.zero.length) console.error("改法：真的要驗就加斷言；這個環境驗不了就用 t.skip(\"原因\") 明列（再到 .github/test-skip-allow.json 登記）。確定不需要斷言才加進 .github/zero-assert-allow.json（改 .github/ 要逐行審）");
+  if (r.zero.length) console.error("注意：只用 t.assert 或自己 throw 錯誤的測試，這裡也會記成 0 次（計數器只算 node:assert）。改法：真的要驗就加斷言（用 node:assert）；這個環境驗不了就用 t.skip(\"原因\") 明列（再到 .github/test-skip-allow.json 登記）。確定不需要斷言才加進 .github/zero-assert-allow.json（改 .github/ 要逐行審）");
   for (const u of r.unused) console.log("  △ 白名單有、這次沒用到（可以拿掉）：" + u);
   process.exit(r.ok ? 0 : 1);
 }
