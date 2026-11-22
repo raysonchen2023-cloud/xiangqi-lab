@@ -59,6 +59,7 @@ JOURNEY_KEYS.push("m_jhQima");   /* 11/22 開發者（W48 起馬門「驛馬繞�
 JOURNEY_KEYS.push("m_jhCanal");   /* 11/22 開發者（W46 十州漕運殘局，07z9b-jianghu.js）：jhCanal＝今天各州漕船挑好的題、解開了沒（換日清掉） */
 JOURNEY_KEYS.push("m_jhShijiao");   /* 11/22 開發者（W48 仕角炮門「當鋪算兌子」，07z9e-shijiao.js）：jhShijiao＝上次選的難度、今天領過修為的日子、一輪最多算對幾題 */
 JOURNEY_KEYS.push("m_jhFanggong");   /* 11/22 開發者（W48-S4 反宮馬門「活字排局陣」，07z9g-fanggong.js）：jhFanggong＝上次選的難度、今天領過修為的日子 */
+JOURNEY_KEYS.push("m_jhLiepao");   /* 11/22 開發者（W48-S5 列炮門「擊板記譜局」，07z9h-liepao.js）：jhLiepao＝上次選的難度、今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhFeixiang");   /* 11/22 開發者（W48-S8 飛相門「築堤擺陣形」，07z9j-feixiang.js）：jhFeixiang＝上次選的難度、今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhXianren");   /* 11/22 開發者（W48-S7 仙人指路門「探路猜陣勢」，07z9k-xianren.js）：jhXianren＝上次選的難度、今天領過修為的日子、累計答對題數（揚州園林探路紀錄） */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
