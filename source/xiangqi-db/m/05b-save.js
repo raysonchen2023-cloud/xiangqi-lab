@@ -58,6 +58,7 @@ JOURNEY_KEYS.push("m_jhGong");   /* 11/22 開發者（W48 過宮炮門「宣紙�
 JOURNEY_KEYS.push("m_jhQima");   /* 11/22 開發者（W48 起馬門「驛馬繞險路」，07z9f-qima.js）：jhQima＝上次選的難度、今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhCanal");   /* 11/22 開發者（W46 十州漕運殘局，07z9b-jianghu.js）：jhCanal＝今天各州漕船挑好的題、解開了沒（換日清掉） */
 JOURNEY_KEYS.push("m_jhShijiao");   /* 11/22 開發者（W48 仕角炮門「當鋪算兌子」，07z9e-shijiao.js）：jhShijiao＝上次選的難度、今天領過修為的日子、一輪最多算對幾題 */
+JOURNEY_KEYS.push("m_jhFanggong");   /* 11/22 開發者（W48-S4 反宮馬門「活字排局陣」，07z9g-fanggong.js）：jhFanggong＝上次選的難度、今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhFeixiang");   /* 11/22 開發者（W48-S8 飛相門「築堤擺陣形」，07z9j-feixiang.js）：jhFeixiang＝上次選的難度、今天領過修為的日子 */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
