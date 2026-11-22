@@ -23,7 +23,8 @@
 //   需要 unzip；清單優先用安裝包裡的 data/preload.json，沒有才用 --repo 的 sharedWebCommit 版本
 // 金絲雀（2026-11-23，AGENTS.md「P0 出口驗證要難作假」）：每次實跑都用同一套判斷、同一份真實清單故意弄壞三處，三處都要被判 ✘：
 //   ①把一個首頁必要素材當成不在包裡 ②把包裡一個檔的雜湊當成不符 ③（--cdn）問 CDN 一個一定不存在的檔，要拿到 404／410
-//   有一處沒抓到＝這支檢查失靈（被改鬆、判斷壞掉、CDN 核對一律當成有），結束代碼 4，報告 pass＝false
+//   有一處沒抓到＝這支檢查失靈（被改鬆、判斷壞掉、CDN 核對一律當成有），報告 pass＝false；沒有 ✘ 時結束代碼 4（看起來全過、其實失靈），有 ✘ 照舊 1
+//   ③的不存在檔排進正式 worker 的同一個佇列判斷；CDN 連不上歸缺驗（3）。找不到正常的檔可以弄壞時，真實結果已判出同一類 ✘ 才算成立
 //   報告另記 toolPins（tool-pin.js：這支工具與共用模組的雜湊），送審閘門拿去跟 origin/main 比
 // 結束代碼：0＝沒有 ✘（加 --cdn 時也全部確認過）；1＝有 ✘；2＝用法或環境錯誤；3＝加 --cdn 但有沒確認到的（缺驗，不能送審）；4＝金絲雀沒被抓到（工具失靈）
 // P0-IMG 通過條件＝加 --cdn、結束代碼 0、三隻金絲雀都抓到
@@ -40,6 +41,7 @@ const die = (m, c = 2) => { console.error("✘ " + m); process.exit(c) };
 
 const sha1_8 = b => crypto.createHash("sha1").update(b).digest("hex").slice(0, 8);
 const { required: HOME_REQUIRED } = require("./bundle-home-assets.js");
+const TOOL_PINS = require("./tool-pin.js").pinsFor("P0-IMG");   /* 啟動就先算：記的是實際被載入、跑這一次的那一份（PR #66 審查） */
 
 async function main() {
   if (!AAB || !fs.existsSync(AAB)) die("用法：node scripts/check-aab-assets.js --aab <檔.aab> [--repo <公開倉庫>] [--cdn] [--out 報告.json]");
@@ -98,18 +100,20 @@ async function main() {
       // 連不上（沒拿到 HTTP 狀態）只算「沒確認到」（△），拿到 404 等狀態才算確定缺（✘）
       let i = 0; const miss = [], unknown = [];
       const sleep = ms => new Promise(r => setTimeout(r, ms));
-      async function worker() { while (i < viaCdn.length) { const [f, split] = viaCdn[i++];
+      /* 金絲雀③（PR #66 審查③）：一個一定不存在的檔排進同一個佇列，走同一個 worker 判斷，要被判成「CDN 上沒有」 */
+      const probeF = "data/__xq_p0_canary_" + crypto.randomBytes(6).toString("hex") + ".webp";
+      const queue = [...viaCdn, [probeF, false]];
+      async function worker() { while (i < queue.length) { const [f, split] = queue[i++];
         const url = CDN + f + (split ? ".parts.json" : "");
         let st = -1; for (let t = 0; t < 4 && st !== 200; t++) { if (t) await sleep(800 * t); try { st = (await fetch(url, { method: "HEAD" })).status } catch (e) { st = -1 } }
         // PR #11 審查：只有 404／410 是確定沒有；連不上、429（限流）、5xx 都只算沒確認到
         if (st === 404 || st === 410) miss.push({ f, why: `CDN 上沒有（${split ? ".parts.json " : ""}HTTP ${st}）：靠 CDN 補抓會失敗` });
         else if (st !== 200) unknown.push({ f, why: `CDN 沒確認到（${st === -1 ? "連不上" : "HTTP " + st}，請稍後重跑 --cdn）` }); } }
       await Promise.all(Array.from({ length: 6 }, worker));
-      R.red.push(...miss); R.warn.push(...unknown); R.unknown = unknown.length;
-      /* 金絲雀③：問 CDN 一個一定不存在的檔，要拿到 404／410——證明 CDN 核對真的在問、沒有一律當成「有」 */
-      const probe = CDN + "data/__xq_p0_canary_" + crypto.randomBytes(6).toString("hex") + ".webp";
-      let st = -1; for (let t = 0; t < 4 && st === -1; t++) { if (t) await sleep(800 * t); try { st = (await fetch(probe, { method: "HEAD" })).status } catch (e) { st = -1 } }
-      canary.cdn404 = st === 404 || st === 410; canary.cdnStatus = st;
+      Object.assign(canary, cdnCanary(probeF, miss, unknown));
+      /* 金絲雀檔不算進正式結果：判成「沒有」是預期的，拿掉；判成「沒確認到」（CDN 連不上）照樣算缺驗，留在 unknown */
+      const realMiss = miss.filter(x => x.f !== probeF);
+      R.red.push(...realMiss); R.warn.push(...unknown); R.unknown = unknown.length;
     }
     canary.ok = canary.home === true && canary.stale === true && canary.cdn404 === true;
 
@@ -131,20 +135,22 @@ async function main() {
     const group = list => { const g = new Map(); for (const x of list) g.set(x.why, (g.get(x.why) || []).concat(x.f)); return g };
     for (const [why, fs_] of group(R.red)) console.log(`✘ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
     for (const [why, fs_] of group(R.warn)) console.log(`△ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
-    console.log(`金絲雀：拿掉首頁素材 ${canary.home ? "✔ 抓到" : "✘ 沒抓到"}｜改掉包裡檔的雜湊 ${canary.stale ? "✔ 抓到" : "✘ 沒抓到"}｜CDN 不存在的檔 ${!CDN_CHECK ? "（沒加 --cdn，沒驗）" : canary.cdn404 ? "✔ 回 " + canary.cdnStatus : "✘ 回 " + canary.cdnStatus}`);
-    const code = exitCode({ red: R.red.length, unknown: R.unknown || 0, cdn: CDN_CHECK, canaryOk: !CDN_CHECK || canary.ok });
+    console.log(`金絲雀：拿掉首頁素材 ${canary.home ? "✔ 抓到" : "✘ 沒抓到"}｜改掉包裡檔的雜湊 ${canary.stale ? "✔ 抓到" : "✘ 沒抓到"}｜CDN 不存在的檔 ${!CDN_CHECK ? "（沒加 --cdn，沒驗）" : canary.cdn404 ? "✔ 判成沒有" : "✘ " + canary.cdn}`);
+    /* PR #66 審查②：沒加 --cdn 時，金絲雀①②沒抓到照樣回 4；③只在加 --cdn 時算，CDN 連不上歸缺驗（3），不算工具失靈 */
+    const code = exitCode({ red: R.red.length, unknown: R.unknown || 0, cdn: CDN_CHECK, canaryOk: canaryExitOk(canary, CDN_CHECK) });
     console.log(code === 4 ? "✘ 不能送審：金絲雀沒被抓到，這支檢查本身失靈了，結果不可信"
       : code === 1 ? `✘ 不能送審：${R.red.length} 項`
       : code === 3 ? `△ 還不能送審：CDN 有 ${R.unknown} 項沒確認到（缺驗），請稍後重跑 --cdn`
       : CDN_CHECK ? "✔ 安裝包內容沒有發現會破圖或讀不到的問題（含 CDN 核對）"
       : "✔ 安裝包本身沒有問題；送審前還要加 --cdn 核對 CDN（P0-IMG 通過條件＝--cdn 且結束代碼 0）");
-    if (OUT) fs.writeFileSync(OUT, JSON.stringify({ tool: "P0-IMG", ...sum, cdnCompared: R.cdnCompared || 0, unknown: R.unknown || 0, exitCode: code, pass: CDN_CHECK && code === 0 && canary.ok, canary, toolPins: require("./tool-pin.js").pinsFor("P0-IMG"), redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
+    if (OUT) fs.writeFileSync(OUT, JSON.stringify({ tool: "P0-IMG", ...sum, cdnCompared: R.cdnCompared || 0, unknown: R.unknown || 0, exitCode: code, pass: CDN_CHECK && code === 0 && canary.ok, canary, toolPins: TOOL_PINS, redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
     process.exitCode = code;
   } finally { fs.rmSync(tmp, { recursive: true, force: true }) }
 }
-/* 結束代碼（PR #11 審查：缺驗不能送審）：金絲雀沒被抓到＝4（檢查本身失靈，其他結果都不可信，最優先）；有 ✘＝1；加 --cdn 而有沒確認到的＝3；其餘＝0
+/* 結束代碼（PR #11 審查：缺驗不能送審）：有 ✘＝1；沒有 ✘ 但金絲雀沒被抓到＝4（看起來全過、其實檢查本身失靈：4 要防的就是這種）；
+   加 --cdn 而有沒確認到的＝3；其餘＝0。有 ✘ 時本來就不能送審，回 1 比較有用，金絲雀結果照樣印出、寫進報告（pass 照樣 false）。
    canaryOk 沒給（舊呼叫）當成 true，只有明確傳 false 才回 4 */
-function exitCode({ red, unknown, cdn, canaryOk = true }) { return canaryOk === false ? 4 : red ? 1 : cdn && unknown ? 3 : 0 }
+function exitCode({ red, unknown, cdn, canaryOk = true }) { return red ? 1 : canaryOk === false ? 4 : cdn && unknown ? 3 : 0 }
 
 /* 逐項判斷（純函式，金絲雀也用這一支）：need＝需求清單 Map；has(f)＝包裡有沒有；sha1Of(f)＝包裡那份的 SHA-1 前 8 碼；native＝原生能力 */
 function classify(need, has, sha1Of, native) {
@@ -171,10 +177,15 @@ function classify(need, has, sha1Of, native) {
    找不到可以弄壞的對象（包裡沒有首頁素材、清單沒有任何雜湊）＝金絲雀不成立，當成沒抓到（寧可擋） */
 function canaryChecks(need, has, sha1Of, native, cls = classify) {   /* cls 可注入：自我測試拿「壞掉的判斷」來證明金絲雀會報警 */
   const out = { home: false, stale: false, homeFile: null, staleFile: null };
+  /* 找不到正常的檔可以弄壞時（包裡本來就缺首頁素材、雜湊本來就不符）：同一個判斷對真實狀態已經判出同一類 ✘，就是它有在運作的直接證據，算成立；
+     兩者都沒有才算不成立（寧可擋）。真實狀態有 ✘ 本來就不能送審 */
+  const real = cls(need, has, sha1Of, native).red;
   const hf = HOME_REQUIRED.map(x => "data/" + x).find(f => has(f));
   if (hf) { out.homeFile = hf; out.home = cls(need, f => f !== hf && has(f), sha1Of, native).red.some(x => x.f === hf) }
+  else if (real.some(x => /首頁離線必要素材/.test(x.why))) { out.homeFile = "（包裡本來就缺，真實結果已判出）"; out.home = true }
   const sf = [...need].find(([f, n]) => n.h && has(f) && sha1Of(f) === n.h);
   if (sf) { out.staleFile = sf[0]; out.stale = cls(need, has, f => f === sf[0] ? "00000000" : sha1Of(f), native).red.some(x => x.f === sf[0]) }
+  else if (real.some(x => /跟清單不符/.test(x.why))) { out.staleFile = "（包裡本來就不符，真實結果已判出）"; out.stale = true }
   return out;
 }
 /* 包裡的檔（路徑 → 完整 SHA-1）跟 CDN manifest（路徑 → [大小, SHA-1 前 12 碼]）比。
@@ -185,5 +196,12 @@ function staleVsCdn(packSha1, manFiles, need) { const red = [], warn = [];
     if (need && need.has(f)) red.push({ f, why: `安裝包裡的素材跟 CDN 現行版不同（包 ${h.slice(0, 12)}、CDN ${m[1]}）：是倉庫或建包時留下的舊副本（W42），換成 CDN 現行版再建` });
     else warn.push({ f, why: "清單外的檔跟 CDN 現行版不同（多半是 CDN 在建包後更新過；說明文件、回饋清單之類），列出來但不擋" }) }
   return { red, warn } }
-module.exports = { exitCode, PARTS_MARKER, staleVsCdn, classify, canaryChecks };
+/* 金絲雀③的結果（純函式）：probe 被正式 worker 判在 miss＝抓到；在 unknown＝CDN 連不上（缺驗）；都不在＝被當成「有」，工具失靈 */
+function cdnCanary(probe, miss, unknown) {
+  const m = miss.some(x => x.f === probe), u = unknown.some(x => x.f === probe);
+  return { cdn404: m, cdn: m ? "判成沒有" : u ? "沒確認到（CDN 連不上）" : "被當成有（CDN 核對失靈）" };
+}
+/* 結束代碼用的金絲雀判斷（純函式）：①②一律要抓到；加 --cdn 時③要抓到，或 CDN 連不上（那種歸缺驗 3，不算失靈） */
+function canaryExitOk(c, cdn) { return c.home === true && c.stale === true && (!cdn || c.cdn404 === true || /連不上/.test(String(c.cdn || ""))) }
+module.exports = { exitCode, PARTS_MARKER, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk };
 if (require.main === module) main().catch(e => die(e.stack || String(e)));

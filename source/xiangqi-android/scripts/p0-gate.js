@@ -43,6 +43,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
   const found = [], notes = [], seen = new Map();
   const add = (msg, code = null, android = null) => found.push({ msg, code, android });
   const mainSha = typeof opts.mainSha === "function" ? opts.mainSha : () => null;
+  const apk3d = new Map();   /* "f12"／"c12" → apkSha256 */
   for (const { file, json } of reports) {
     if (!json || typeof json !== "object") { add(`${file}：讀不到 JSON`); continue }
     const t = json.tool;
@@ -52,6 +53,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
     const key = t === "P0-3D" ? `P0-3D${canary3d ? " 金絲雀" : ""}（Android ${av || "?"}）` : t;
     /* 工具鎖定（2026-11-23）：報告要記跑它的工具雜湊，而且要等於 origin/main 那一版；不能豁免 */
     for (const p of TP.checkPins(t, json.toolPins, mainSha)) add(`${key}：${p}`);
+    if (t === "P0-3D" && HEX64.test(String(json.apkSha256 || ""))) apk3d.set((canary3d ? "c" : "f") + av, json.apkSha256);
     if (canary3d) {
       /* P0-3D 金絲雀＝check-3d.js --self-test：正常那次要過、落點蓋遮罩那次要被判失敗（pass＝true 代表兩次都照預期）；跟正式報告綁同一個 AAB、版號、APK */
       if (seen.has(key)) add(`${key} 有兩份報告（${seen.get(key)}、${file}）：只能交一份`);
@@ -77,7 +79,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
     if (t === "P0-IMG") {
       const c = json.canary || {};
       if (c.home !== true || c.stale !== true) add(`P0-IMG：金絲雀沒被抓到（拿掉首頁素材 ${c.home === true ? "✔" : "✘"}、改掉包裡檔的雜湊 ${c.stale === true ? "✔" : "✘"}）：這支破圖檢查可能失靈，結果不可信`);
-      if (c.cdn404 !== true) add(`P0-IMG：金絲雀③ CDN 不存在的檔沒回 404（${c.cdnStatus === undefined ? "沒驗" : "回 " + c.cdnStatus}）：CDN 核對沒驗到`, "P0-IMG/cdn");
+      if (c.cdn404 !== true) add(`P0-IMG：金絲雀③ CDN 不存在的檔沒被判成沒有（${c.cdn || "沒驗"}）：CDN 核對沒驗到`, "P0-IMG/cdn");
     }
     if (t === "P0-UPD" && !(json.canary && json.canary.dialog === true)) add("P0-UPD：金絲雀（假的「有新版本」視窗）沒被抓到：這支更新檢查可能失靈，結果不可信");
     if (t === "P0-UPD" && json.oldWorker !== true) add("P0-UPD：用 --no-old-worker 跑的不算（封測 P0 規則：舊 Worker 要實際接管過；流程盤點第 5 項）", "P0-UPD/old-worker");
@@ -92,6 +94,8 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
   if (!seen.has("P0-IMG")) add("缺 P0-IMG 的報告（缺驗不能送審）");
   if (!seen.has("P0-UPD")) add("缺 P0-UPD 的報告（缺驗不能送審）");
   for (const v of ANDROID_3D) if (!seen.has(`P0-3D（Android ${v}）`)) add(`缺 Android ${v} 的 P0-3D 報告（P0 規定 Android 12 與 16 都要跑）`);
+  /* PR #66 審查建議：同一個 Android 版本，金絲雀和正式報告要測同一個 APK（apkSha256 一樣） */
+  for (const v of ANDROID_3D) { const f = apk3d.get("f" + v), c = apk3d.get("c" + v); if (f && c && f !== c) add(`P0-3D 金絲雀（Android ${v}）：測的 APK（${c.slice(0, 12)}）跟正式報告（${f.slice(0, 12)}）不是同一個`) }
   for (const v of ANDROID_3D) if (!seen.has(`P0-3D 金絲雀（Android ${v}）`)) add(`缺 Android ${v} 的 P0-3D 金絲雀（check-3d.js --self-test，同一個 AAB）：沒證明 3D 檢查抓得到 W02`);
   const ok3 = (waivers || []).filter((w) => validWaiver(w, aabSha));
   const problems = [], waived = [];

@@ -27,6 +27,7 @@ const O = { old: arg("--old"), oldBuild: arg("--old-build"), neu: arg("--new"), 
   allowWipe: process.argv.includes("--allow-wipe-device"),
   aabApk: arg("--aab-apk") };   /* W69（流程盤點第 3 項，PR #44 審查後）：帶 aab-to-apk.js 的 aab-apk.json；安裝前算 --new 的 SHA-256 比對，對上才把 AAB 雜湊寫進報告給 p0-gate.js */
 const AB = require("./apk-bind.js");
+const TOOL_PINS = require("./tool-pin.js").pinsFor("P0-UPD");   /* 啟動就先算（PR #66 審查） */
 const { checkDevice } = require("./device-guard.js");
 const DIALOG_WATCH_SEC = 20;
 const DIALOGS = `[...document.querySelectorAll('.modal')].filter(x=>/有新版本|新版可用|new version|update available/i.test(x.textContent)).length`;
@@ -150,7 +151,7 @@ async function main() {
     } catch (e) { R.canary.error = String(e.message || e).slice(0, 200) } finally { c3.close() }
   }
   console.log(R.canary.dialog ? "✔ 金絲雀：假的更新視窗被抓到" : "✘ 金絲雀：假的更新視窗沒被抓到，這支偵測失靈了，結果不可信");
-  R.toolPins = require("./tool-pin.js").pinsFor("P0-UPD");
+  R.toolPins = TOOL_PINS;
   const bad = R.after.filter(r => !r.pass);
   R.result = !R.canary.dialog ? "金絲雀沒抓到（工具失靈）" : bad.length ? "不通過" : "通過"; R.pass = !bad.length && R.canary.dialog === true; save();
   if (!R.canary.dialog) process.exit(1);   /* pass 給 p0-gate.js 看；用 --no-old-worker 跑的，閘門另外擋（規則：舊 Worker 要實際接管過） */

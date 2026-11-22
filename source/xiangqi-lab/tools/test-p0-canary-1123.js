@@ -72,8 +72,8 @@ test("閘門（反測必紅）：P0-IMG 金絲雀①②沒抓到不能豁免；�
   let r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false); assert.ok(has(r, /P0-IMG：金絲雀沒被抓到/));
   L = all(); L[0].json.canary = { home: true, stale: false, cdn404: true }; assert.ok(has(G(L), /改掉包裡檔的雜湊 ✘/));
   L = all(); delete L[0].json.canary; assert.ok(has(G(L), /P0-IMG：金絲雀沒被抓到/), "沒記金絲雀＝沒抓到");
-  L = all(); L[0].json.canary = { home: true, stale: true, cdn404: false, cdnStatus: -1 };
-  assert.ok(has(G(L), /CDN 不存在的檔沒回 404/));
+  L = all(); L[0].json.canary = { home: true, stale: true, cdn404: false, cdn: "沒確認到（CDN 連不上）" };
+  assert.ok(has(G(L), /CDN 不存在的檔沒被判成沒有（沒確認到（CDN 連不上））/));
   r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, true, "CDN 連不上那一條照舊可以豁免"); assert.equal(r.waived.length, 1);
   L = all(); L[1].json.canary = { dialog: false }; r = G(L, W("P0-UPD/old-worker")); assert.equal(r.ok, false); assert.ok(has(r, /P0-UPD：金絲雀（假的「有新版本」視窗）沒被抓到/));
   L = all(); delete L[1].json.canary; assert.ok(has(G(L), /P0-UPD：金絲雀/));
@@ -86,9 +86,13 @@ test("P0-IMG 金絲雀：用同一個 classify 判，拿掉首頁素材、改掉
   assert.equal(CA.classify(need, (f) => pack.has(f), sha, native).red.length, 0, "真實狀態沒有 ✘");
   const c = CA.canaryChecks(need, (f) => pack.has(f), sha, native);
   assert.equal(c.home, true); assert.equal(c.stale, true); assert.equal(c.staleFile, "data/a.webp");
-  assert.equal(CA.canaryChecks(need, (f) => f === "data/a.webp", sha, native).home, false, "包裡沒有任何首頁素材：金絲雀①不成立");
-  assert.equal(CA.canaryChecks(new Map([["data/b.json", { size: 10 }]]), (f) => pack.has(f), sha, native).stale, false, "清單沒有雜湊：金絲雀②不成立");
-  assert.equal(CA.canaryChecks(need, (f) => pack.has(f), () => "zzzzzzzz", native).stale, false, "包裡的檔本來就跟清單不符：拿它當金絲雀不算數");
+  const none0 = () => ({ red: [], warn: [], ok: { inPack: 0, viaCdn: 0 }, viaCdn: [] });
+  /* 找不到正常的檔可以弄壞：真實結果已判出同一類 ✘＝判斷有在運作，算成立；判斷壞掉（判不出）＝不成立 */
+  assert.equal(CA.canaryChecks(need, (f) => f === "data/a.webp", sha, native).home, true, "包裡本來就缺首頁素材，而且真實結果判出了");
+  assert.equal(CA.canaryChecks(need, (f) => f === "data/a.webp", sha, native, none0).home, false, "包裡本來就缺、判斷又壞掉：不成立");
+  assert.equal(CA.canaryChecks(new Map([["data/b.json", { size: 10 }]]), (f) => pack.has(f), sha, native).stale, false, "清單沒有雜湊、也沒有真實不符：金絲雀②不成立");
+  assert.equal(CA.canaryChecks(need, (f) => pack.has(f), () => "zzzzzzzz", native).stale, true, "包裡的檔本來就跟清單不符，而且真實結果判出了");
+  assert.equal(CA.canaryChecks(need, (f) => pack.has(f), () => "zzzzzzzz", native, none0).stale, false, "本來就不符、判斷又壞掉：不成立");
   /* 金絲雀存在的意義：判斷被改壞時要報警。拿三種壞掉的判斷進去，金絲雀都要報「沒抓到」 */
   const none = () => ({ red: [], warn: [], ok: { inPack: 0, viaCdn: 0 }, viaCdn: [] });
   const noHome = (n, h, s, nat) => { const r = CA.classify(n, h, s, nat); r.red = r.red.filter((x) => !/首頁離線必要素材/.test(x.why)); return r };
@@ -98,9 +102,10 @@ test("P0-IMG 金絲雀：用同一個 classify 判，拿掉首頁素材、改掉
   b = CA.canaryChecks(need, (f) => pack.has(f), sha, native, noHash); assert.equal(b.home, true); assert.equal(b.stale, false, "拿掉雜湊比對：②報警");
 });
 
-test("P0-IMG 結束代碼：金絲雀沒抓到＝4，優先於其他；舊的呼叫（沒給 canaryOk）照舊", () => {
-  assert.equal(CA.exitCode({ red: 0, unknown: 0, cdn: true, canaryOk: false }), 4);
-  assert.equal(CA.exitCode({ red: 3, unknown: 2, cdn: true, canaryOk: false }), 4);
+test("P0-IMG 結束代碼：沒有 ✘ 但金絲雀沒抓到＝4（優先於缺驗 3）；有 ✘ 回 1（本來就不能送審）；舊的呼叫（沒給 canaryOk）照舊", () => {
+  assert.equal(CA.exitCode({ red: 0, unknown: 0, cdn: true, canaryOk: false }), 4, "看起來全過、其實失靈");
+  assert.equal(CA.exitCode({ red: 0, unknown: 2, cdn: true, canaryOk: false }), 4, "失靈優先於缺驗");
+  assert.equal(CA.exitCode({ red: 3, unknown: 2, cdn: true, canaryOk: false }), 1, "有 ✘ 本來就擋");
   assert.equal(CA.exitCode({ red: 1, unknown: 0, cdn: true, canaryOk: true }), 1);
   assert.equal(CA.exitCode({ red: 0, unknown: 1, cdn: true }), 3);
   assert.equal(CA.exitCode({ red: 0, unknown: 0, cdn: true }), 0);
@@ -118,9 +123,43 @@ test("P0-UPD 金絲雀：假視窗要被數到、而且真的 verdict 要因此�
 
 test("〔原始碼〕三支工具的報告都寫 toolPins；P0-IMG、P0-UPD 寫 canary，P0-3D 寫 selfTest；P0-UPD 金絲雀沒抓到就不算通過", () => {
   const caa = rd("check-aab-assets.js"), up = rd("check-upgrade.js"), c3d = rd("check-3d.js");
-  assert.match(caa, /pass: CDN_CHECK && code === 0 && canary\.ok, canary, toolPins: require\("\.\/tool-pin\.js"\)\.pinsFor\("P0-IMG"\)/);
-  assert.match(up, /R\.toolPins = require\("\.\/tool-pin\.js"\)\.pinsFor\("P0-UPD"\)/);
+  /* PR #66 審查：工具雜湊在啟動時就算（記的是實際載入、跑這一次的那一份），不是跑完才算 */
+  for (const [src, tool] of [[caa, "P0-IMG"], [up, "P0-UPD"], [c3d, "P0-3D"]]) assert.match(src, new RegExp('^const TOOL_PINS = require\\("\\./tool-pin\\.js"\\)\\.pinsFor\\("' + tool + '"\\);', "m"), tool + " 啟動就算");
+  assert.match(caa, /pass: CDN_CHECK && code === 0 && canary\.ok, canary, toolPins: TOOL_PINS,/);
+  assert.match(caa, /canaryOk: canaryExitOk\(canary, CDN_CHECK\)/, "審查②：沒加 --cdn 也要看金絲雀①②");
+  assert.match(caa, /const queue = \[\.\.\.viaCdn, \[probeF, false\]\];/, "審查③：金絲雀檔排進正式 worker 的同一個佇列");
+  assert.match(up, /R\.toolPins = TOOL_PINS;/);
   assert.match(up, /R\.pass = !bad\.length && R\.canary\.dialog === true/);
-  assert.match(c3d, /selfTest: !!O\.selfTest, toolPins: require\("\.\/tool-pin\.js"\)\.pinsFor\("P0-3D"\)/);
-  assert.match(c3d, /S\.pass = a\.pass === true && b\.pass === false;/, "自我反測：正常要過、遮罩要被判失敗");
+  assert.match(c3d, /selfTest: !!O\.selfTest, toolPins: TOOL_PINS \};/);
+  assert.match(c3d, /S\.pass = selfTestOk\(a, b\);/, "審查④：自我反測用 selfTestOk 判");
+});
+
+test("P0-3D 金絲雀（PR #66 審查④）：遮罩那次要真的點到落點、而且是被遮罩接走才算抓到；放遮罩之前就失敗不算", () => {
+  const { selfTestOk } = require(path.join(AND, "check-3d.js"));
+  const a = { pass: true }, hitMask = { pass: false, startTap: { x: 1, y: 1 }, targetTap: { x: 2, y: 2 }, targetHit: { id: "xq3dInject", tag: "DIV" } };
+  assert.equal(selfTestOk(a, hitMask), true);
+  assert.equal(selfTestOk(a, { pass: false, error: "鏡頭 10 秒內沒停穩" }), false, "放遮罩之前就失敗");
+  assert.equal(selfTestOk(a, { pass: false, startTap: { x: 1, y: 1 }, misses: [1] }), false, "起點沒選中");
+  assert.equal(selfTestOk(a, { ...hitMask, targetHit: { id: "", tag: "BUTTON" } }), false, "落點被別的東西蓋住，不是遮罩");
+  assert.equal(selfTestOk(a, { ...hitMask, pass: true }), false, "遮罩那次竟然過了");
+  assert.equal(selfTestOk({ pass: false }, hitMask), false, "正常那次沒過");
+});
+
+test("P0-IMG 金絲雀③與結束代碼（PR #66 審查②③）：③看正式 worker 的判斷；沒加 --cdn 時①②沒抓到照樣回 4", () => {
+  const P = "data/__xq_p0_canary_x.webp";
+  assert.deepEqual(CA.cdnCanary(P, [{ f: P }], []), { cdn404: true, cdn: "判成沒有" });
+  assert.equal(CA.cdnCanary(P, [], [{ f: P }]).cdn404, false); assert.match(CA.cdnCanary(P, [], [{ f: P }]).cdn, /連不上/);
+  assert.match(CA.cdnCanary(P, [], []).cdn, /被當成有/, "worker 把不存在的檔當成有＝失靈");
+  assert.equal(CA.canaryExitOk({ home: false, stale: true }, false), false, "沒加 --cdn：①沒抓到也要回 4");
+  assert.equal(CA.canaryExitOk({ home: true, stale: false }, false), false);
+  assert.equal(CA.canaryExitOk({ home: true, stale: true }, false), true);
+  assert.equal(CA.canaryExitOk({ home: true, stale: true, cdn404: false, cdn: "被當成有（CDN 核對失靈）" }, true), false, "③被當成有＝4");
+  assert.equal(CA.canaryExitOk({ home: true, stale: true, cdn404: false, cdn: "沒確認到（CDN 連不上）" }, true), true, "CDN 連不上歸缺驗 3，不是 4");
+  assert.equal(CA.exitCode({ red: 0, unknown: 0, cdn: false, canaryOk: CA.canaryExitOk({ home: false, stale: true }, false) }), 4);
+});
+
+test("閘門（PR #66 審查建議）：同一個 Android 版本，3D 金絲雀和正式報告要測同一個 APK", () => {
+  const L = all(); L[4].json.apkSha256 = "d".repeat(64);
+  assert.ok(has(G(L), /P0-3D 金絲雀（Android 12）：測的 APK.*跟正式報告.*不是同一個/));
+  assert.equal(G(all()).ok, true);
 });

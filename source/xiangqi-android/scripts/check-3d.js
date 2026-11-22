@@ -27,6 +27,7 @@
 "use strict";
 const fs = require("fs"), path = require("path"), cp = require("child_process");
 
+const TOOL_PINS = require("./tool-pin.js").pinsFor("P0-3D");   /* 啟動就先算（PR #66 審查） */
 const SCENARIOS = ["cpu", "inn", "pvp-red", "pvp-black", "simul", "bhx-front", "bhx-back", "siege-top", "siege-iso"];
 /* 畫面安全區（CSS 像素）：上面是標題列與按鈕、下面是操作列，太靠邊的格子手指點不準 */
 const SAFE = { x: 30, top: 160, bottom: 140 };
@@ -98,9 +99,14 @@ function priorAttempts(lines, aabSha256, android) {
   const same = lines.map((l) => { try { return JSON.parse(l) } catch (e) { return null } }).filter((x) => x && x.aabSha256 && x.aabSha256 === aabSha256 && String(x.android) === String(android));
   return { before: same.length, failedBefore: same.filter((x) => x.pass !== true).length };
 }
+/* 自我反測（P0-3D 金絲雀）照預期（純函式；PR #66 審查④）：正常那次要過；遮罩那次要「選中起點、點了落點、落點量到的元件就是遮罩、棋譜沒多出那一步」。
+   遮罩那次在放遮罩之前就失敗（選不到起點、鏡頭沒停穩、例外）不算抓到——那證明不了這支抓得到 W02 */
+function selfTestOk(a, b) {
+  return !!a && a.pass === true && !!b && b.pass === false && !!b.startTap && !!b.targetTap && !!b.targetHit && b.targetHit.id === "xq3dInject";
+}
 /* 每一輪都全過才算過（已知問題照清單放行）；rounds＝每一輪的結果陣列（純函式） */
 const roundPass = (results) => results.length > 0 && results.every((r) => r.pass === true || (r.pass === null && !!r.known));
-module.exports = { priorAttempts, roundPass, SCENARIOS, SAFE, PREFER, ONLY, BODY_TRIES, BODY, inSafe, inTop, bodyPoint, padPresses, knownFor, covered, chooseMoves, settled, toDevice, moved, webViewBounds };
+module.exports = { priorAttempts, roundPass, selfTestOk, SCENARIOS, SAFE, PREFER, ONLY, BODY_TRIES, BODY, inSafe, inTop, bodyPoint, padPresses, knownFor, covered, chooseMoves, settled, toDevice, moved, webViewBounds };
 if (require.main !== module) return;
 
 /* ---- 實機流程 ---- */
@@ -328,13 +334,13 @@ async function run(name, inject) {
     full: !O.only && !O.selfTest, results: [],
     /* 2026-11-23（AGENTS.md「P0 出口驗證要難作假」）：--self-test 就是 P0-3D 的金絲雀（落點蓋遮罩要被判失敗），送審閘門要收 Android 12、16 各一份；
        toolPins＝這支與共用模組的雜湊（tool-pin.js），閘門拿去跟 origin/main 比 */
-    selfTest: !!O.selfTest, toolPins: require("./tool-pin.js").pinsFor("P0-3D") };
+    selfTest: !!O.selfTest, toolPins: TOOL_PINS };
   CUR = S;
   if (KNOWN.length && !KNOWN_FROM_REPO) console.log("⚠ 已知問題清單不是倉庫 .github/p0-known.json（" + O.known + "）：這份沒經過逐行審，送審不能用");
   if (O.selfTest) {
     const a = await run("pvp-black", false), b = await run("pvp-black", true);
     S.results.push({ ...a, expect: "pass" }, { ...b, name: "pvp-black＋落點遮罩", expect: "fail" });
-    S.pass = a.pass === true && b.pass === false;
+    S.pass = selfTestOk(a, b);   /* PR #66 審查④：遮罩那次要真的走到點落點、而且是被遮罩接走才算抓到；放遮罩之前就失敗不算 */
     console.log((a.pass ? "✔" : "✘") + " 正常：同桌翻面後黑方" + (a.pass ? "通過" : "沒過（" + a.error + "）"));
     console.log((b.pass === false ? "✔" : "✘") + " 反測：落點蓋遮罩（重現 W02）" + (b.pass === false ? "被判失敗（" + b.error + "）" : "竟然通過，這支抓不到 W02"));
   } else {
