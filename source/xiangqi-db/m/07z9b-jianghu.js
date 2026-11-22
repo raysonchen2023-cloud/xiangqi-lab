@@ -607,7 +607,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   spot("study",jhL("📖 講棋堂","📖 Lecture hall"),()=>jhHallStudy(sid));
   spot("yard",jhL("👥 前院・門下棋友","👥 Front yard"),()=>jhHallYard(sid));
   spot("gate",jhL("‹ 搭船回十州棋館","‹ Take a boat back to the Ten Prefectures"),()=>jhGo("#/jianghu"));
-  if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");P.append(n)}
+  if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("順風・修為多給","Fair wind +XP");n.title=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");P.append(n)}   /* 11/22 Windows Claude 2 查 W62 時發現：英文原句折成兩行壓到「掌門大廳」標籤；實測中文一行也會壓到。門內頁改成掌門大廳標籤正下方置中的一行小徽章（圖比螢幕寬、左右會被裁，不能放角落），完整說明在掌門小卡 */
   const ready=()=>{if(P.isConnected)jhFadeOut()};if(img.complete&&img.naturalWidth)setTimeout(ready,0);else img.onload=ready;
   setTimeout(()=>{if(f.classList.contains("on")&&P.isConnected&&img.naturalWidth)jhFadeOut()},6000);
   return{}}
@@ -615,7 +615,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
 (function(){if(typeof document==="undefined")return;const s=document.createElement("style");s.id="jhHallCss";s.textContent=`
 .jh-hall{position:relative}.jh-hall>img:first-child{display:block;width:100%;height:auto;user-select:none;-webkit-user-drag:none}
 .jh-hall-zm{position:absolute;transform:translate(-50%,-100%);height:auto;cursor:pointer;filter:drop-shadow(0 2px 2px rgba(30,20,10,.35))}
-.jh-hall-note{position:absolute;left:4%;right:4%;top:2%;margin:0}
+.jh-hall .jh-hall-note{position:absolute;left:50%;right:auto;top:11.5%;transform:translateX(-50%);margin:0;padding:2px 6px;font-size:11px;line-height:1.35;white-space:nowrap;border-radius:7px}   /* 要比之後才插入的 .jh-windnote（14px、padding 8px 10px）更具體，不然被蓋掉 */
 .jh-mates{list-style:none;padding:0;margin:8px 0}.jh-mates li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.08)}`;
   if(!document.getElementById("jhHallCss"))document.head.append(s)})();
 /* ---------- W48 前院門下棋友（開發者 11/21：「門下棋友也站在前院給玩家點選和對話，增加一些和門下棋友的互動」）----------
@@ -791,6 +791,7 @@ function jhKickCss(){if(typeof document==="undefined"||document.getElementById("
 .jh-kick-row{padding:10px 12px;border-radius:12px;background:#fbf3e3;border:1.5px solid #c9a96b;color:#2b2118}
 .jh-kick-row .muted{color:#5c4a32}
 .jh-kick-row.won{border-color:#b3261e}
+.jh-kick-row .jh-link{color:#7a1712;font-weight:700}   /* W65（iMac 驗 0804）：.jh-link 用 var(--ink)，深色主題是淺色字，戰書段卻是固定淺米底 → 看不清楚；這裡固定深朱紅 */
 .jh-kick-h{display:flex;align-items:center;gap:8px;margin:0 0 4px}.jh-kick-h .jh-kflag{width:20px;height:22px;flex:none}
 .jh-kseal-s{flex:none;font:900 11px/1 var(--serif,serif);color:#b3261e;border:2px solid #b3261e;border-radius:4px;padding:3px 4px;transform:rotate(-8deg)}`;document.head.append(s)}
 /* ---------- W46 十州漕運殘局（Gemini 188 案 1；開發者 11/22「門派任務版」範圍）----------
@@ -801,12 +802,15 @@ function jhKickCss(){if(typeof document==="undefined"||document.getElementById("
    獎勵：殘局頁本來就給的修為 5；另外每天每一州第一次不看答案解開，再加修為 15（跟輿圖遊歷一站一樣）。星輝照 07pty 的規則從修為分出去，不另外給。
    漕船標記：開發者 11/22「這船太醜了 找gemini畫圖」→ Gemini 出 1 張（xiangqi-db/tools/art_canal.json，參考長卷上原有的帆船；綠幕去背；原檔 xiangqi-db/art/canal/barge.webp，build-site 複製成 data/canal/barge.webp，跟門內圖一樣只放 CDN、不進 GitHub，發布時照 P0-IMG 確認）；讀不到才退回程式畫的 SVG。
    存檔 jhCanal（跟旅程走，05b-save.js JOURNEY_KEYS 的 m_jhCanal）＝{d:日, s:{派:{t,p}}, pick:{"日/派":題號}}；換日就清掉前一天的。 */
-/* 停靠點＝長卷原圖（data/yunhe/pano.webp，3024×1340）的水面：用顏色找各派附近半徑 30 像素內大多是藍灰水面的點，再畫在圖上逐一看過（11/22） */
+/* 停靠點＝長卷原圖（data/yunhe/pano.webp，3024×1340）的水面：用顏色找各派附近半徑 30 像素內大多是藍灰水面的點，再畫在圖上逐一看過（11/22）。
+   11/22 開發者實機截圖「這船重疊了，而且很像飄起來」：半徑 30 像素只檢查到錨點附近，漕船實際蓋住長卷約 106×73 像素（船身＝錨點左右 53、上 19～下 22），
+   徐州那艘壓在長卷原本畫的小船上、淮安壓到碼頭與停著的船、泗州碰到棧橋與石橋、揚州碰到松樹。重量：把船身框畫在原圖上逐一看——
+   泗州、淮安、揚州移到附近整塊空水面；徐州河道只有 55 像素寬、原本的小船就停在正中，改成漕船整艘蓋住那艘小船（看起來就是漕船停在那裡）。 */
 const JH_CANAL=[
-  {sid:"horse",zh:"徐州",en:"Xuzhou",at:[200,720],th:["臥槽馬","掛角馬","馬殺"]},
-  {sid:"elephant",zh:"泗州",en:"Sizhou",at:[528,712],th:["雙車錯","車殺"]},
-  {sid:"central",zh:"淮安",en:"Huai'an",at:[900,552],th:["重炮","炮殺","悶宮"]},
-  {sid:"pawn",zh:"揚州",en:"Yangzhou",at:[1580,650],th:["小兵擒王"]}];
+  {sid:"horse",zh:"徐州",en:"Xuzhou",at:[206,738],th:["臥槽馬","掛角馬","馬殺"]},
+  {sid:"elephant",zh:"泗州",en:"Sizhou",at:[468,787],th:["雙車錯","車殺"]},
+  {sid:"central",zh:"淮安",en:"Huai'an",at:[862,650],th:["重炮","炮殺","悶宮"]},
+  {sid:"pawn",zh:"揚州",en:"Yangzhou",at:[1585,625],th:["小兵擒王"]}];
 const JH_CANAL_XP=15;
 /* 時辰：子時 23～1 點＝0、丑時 1～3 點＝1 …；漕船停的州＝時辰 % 4 */
 const jhShichen=d=>Math.floor(((d.getHours()+1)%24)/2);
@@ -860,10 +864,12 @@ function jhCanalDeco(v){const map=v&&v.querySelector&&v.querySelector(".jh-map")
   if(!map.dataset.canalT){map.dataset.canalT=1;const t=setInterval(()=>{if(!map.isConnected){clearInterval(t);return}try{jhCanalDeco(v)}catch(e){}},60000)}}
 try{if(typeof Jianghu==="function"&&!Jianghu.jhCanal){const j0=Jianghu;Jianghu=function(v){const r=j0.apply(this,arguments);try{jhCanalDeco(v)}catch(e){}return r};Jianghu.jhCanal=1}}catch(e){}
 function jhCanalCss(){if(typeof document==="undefined"||document.getElementById("jhCanalCss"))return;const s=document.createElement("style");s.id="jhCanalCss";s.textContent=`
-.jh-canal{position:absolute;transform:translate(-50%,-70%);width:66px;height:46px;padding:0;border:0;background:none;cursor:pointer;z-index:3;filter:drop-shadow(0 2px 3px rgba(30,20,10,.45));animation:jhCanalBob 3.2s ease-in-out infinite}
+.jh-canal{position:absolute;transform:translate(-50%,-70%);width:66px;height:46px;padding:0;border:0;background:none;cursor:pointer;z-index:3;filter:drop-shadow(0 0 1px rgba(30,20,10,.35));animation:jhCanalBob 3.2s ease-in-out infinite}   /* 11/22「很像飄起來」：陰影不再往下偏（往下偏的影子像船離開水面），只留一圈淡輪廓 */
+.jh-canal .jh-canal-img,.jh-canal .jh-canal-svg{-webkit-mask-image:linear-gradient(to bottom,#000 84%,rgba(0,0,0,.25) 100%);mask-image:linear-gradient(to bottom,#000 84%,rgba(0,0,0,.25) 100%)}   /* 船底最下面一截淡出＝吃水 */
+.jh-canal::after{content:"";position:absolute;left:8%;right:10%;bottom:-2px;height:7px;border-radius:50%;background:radial-gradient(ellipse at center,rgba(232,242,246,.55),rgba(232,242,246,0) 70%);border-bottom:1px solid rgba(250,252,255,.6);pointer-events:none}   /* 船底一道水紋 */
 .jh-canal .jh-canal-svg,.jh-canal .jh-canal-img{width:100%;height:100%;display:block;object-fit:contain;-webkit-user-drag:none;user-select:none}
 .jh-canal.done{opacity:.6}
-@keyframes jhCanalBob{0%,100%{translate:0 0}50%{translate:0 -3px}}
+@keyframes jhCanalBob{0%,100%{translate:0 0}50%{translate:0 -1.5px}}
 @media (prefers-reduced-motion:reduce){.jh-canal{animation:none}}
 .jh-canal-card{display:flex;gap:12px;align-items:flex-start}.jh-canal-ic{flex:none;width:64px}.jh-canal-ic svg,.jh-canal-ic img{width:64px;height:46px;object-fit:contain}
 .jh-canal-h{font:800 16px/1.5 var(--serif,serif);margin:0 0 4px}`;document.head.append(s)}

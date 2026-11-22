@@ -54,6 +54,7 @@ JOURNEY_KEYS.push("m_zm","m_zmCur");   /* 11/18 開發者（十派掌門，07z9-
 JOURNEY_KEYS.push("m_osc");   /* 11/18 開發者（開局門派，07z9-school.js）：osc＝每位七星的門派、各課進度、看過提示／示範、三階段完成時間（跟旅程走；修為去重的 oscClaim 是帳號層，不在這裡） */
 JOURNEY_KEYS.push("m_jhKick");   /* 11/22 開發者（W45② 十州踢館令，07z9b-jianghu.js）：jhKick＝各組踢館第一次破陣的時間、局號、哪位角色（帳號第一次破陣的修為去重在 oscClaim 的 kick:A>B） */
 JOURNEY_KEYS.push("m_jhCanal");   /* 11/22 開發者（W46 十州漕運殘局，07z9b-jianghu.js）：jhCanal＝今天各州漕船挑好的題、解開了沒（換日清掉） */
+JOURNEY_KEYS.push("m_jhShijiao");   /* 11/22 開發者（W48 仕角炮門「當鋪算兌子」，07z9e-shijiao.js）：jhShijiao＝上次選的難度、今天領過修為的日子、一輪最多算對幾題 */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
 /* 開發者 11/6 修：全新玩家第一次打開，開機時就會寫進 era、jStars、playSec 這些鍵，原本的判斷會把新玩家當成舊玩家，跳出「存檔功能上線了、角色是小帥Q版」。改成只看真的玩過才會有的鍵（新手引導做完、修為、戰績、故事進度） */

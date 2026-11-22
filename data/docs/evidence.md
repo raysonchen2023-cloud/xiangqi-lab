@@ -1,11 +1,12 @@
-# 驗證紀錄（版本 20261121-0643）
+# 驗證紀錄（版本 20261122-0804）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 產生時間：2026/11/20 16:03:07（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 2522 項＝**通過 2382**、**失敗 0**、**略過 140**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（STAGE-MANIFEST.json 沒寫 commit），對應的發布版：`20261121-0643`。開發者電腦上還沒發布的修改不在這份測試裡。
-- `source/` 沒放的測試檔（和少數只給它們用的工具）有46 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
+- 執行編號：gh-44965088018-1（Node.js v24.22.3；這一頁、驗證紀錄 verify-all.js、測試分類報表是同一次執行產生的；比對時這一行與下一行不算）
+- 產生時間：2026-11-22 08:08:06（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 2633 項＝**通過 2484**、**失敗 0**、**略過 149**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（696 個檔，樹雜湊 SHA-256 `ef0fedba0d4134b53ec9fee78f114606a24a2a37a21e9b68051a19ea6b6678ab`），對應的發布版：`20261122-0804`。開發者電腦上還沒發布的修改不在這份測試裡。
+- `source/` 沒放的測試檔有 46 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
 
@@ -16,6 +17,7 @@
 - ﹣ 冬季圖、長卷都在（換季只是換哪一張，沒有新圖要畫）；載不到有退路（test-daynight-1117.js；沒有季節首頁圖（只放 CDN，公開副本沒有））
 - ﹣ 07s4-passmap（禁改檔）的改動寫在 reps-next.json，以線上 pub.html 為底每組只命中 1 次（test-daynight-1117.js；公開副本：這項檢查開發者電腦上的發版暫存檔，不在公開副本跑（11/17 1757 證據補））
 - ﹣ 配樂檔與新曲名都在（配樂只放 CDN）（test-extra-bgm-1116.js；沒有 data/bgm 配樂與新曲名（只放 CDN，公開副本沒有））
+- ﹣ Pikafish 跟建置紀錄一致（W57：原本寫在上一支裡，沒有紀錄時直接 return 會被算成通過，拆出來明列略過）（test-fdroid-evidence.js；沒有 xiangqi-wasm/build-record.json（Pikafish 重編紀錄只在開發者電腦））
 - ﹣ 〔混合〕去背圖的尺寸跟出圖工具記的一樣（位置表是照這些尺寸排的）（test-gx-gatepano.js；去背圖只在開發者電腦與 CDN，公開副本沒有 art/gxgate）
 - ﹣ 評比循環工具不在這個副本，跳過（test-handoff-facts.js；沒有 handoff-facts.js）
 - ﹣ 登記的每個變體都有左右兩屏的圖（864×1376＝一屏 768＋多蓋中間那屏 96），中間那屏也在；而且工具的 BAND 跟樣式的 112.5% 對得上（test-home-pano.js；要讀只在開發者電腦的出圖工具 tools/homemap_pano.py 和 art/homemap 原圖（公開副本沒有；開發者電腦上照跑））
@@ -69,6 +71,8 @@
 - ﹣ P2-1：術語碑介面英文——分類鈕（含「棋形」「俗語」）、搜尋提示；「目前選哪個」看 data-c 不看鈕上的字；示範鈕（test-imac-v1514.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ 先 install-native、再模擬 cap sync 重寫 capacitor.config.json：XQSpeech 的註冊仍然在（在 App 的 XQBridgeViewController.swift 裡，不靠 packageClassList）（test-ios-capsync-1118.js；沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
 - ﹣ Game Center、小工具（--gc-widget）也一樣：檔案裝進去、packageClassList 不列；BridgeVC 有編進 App 才用 NSClassFromString 註冊（test-ios-capsync-1118.js；沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
+- ﹣ 〔混合〕漕船圖（開發者 11/22「這船太醜了 找gemini畫圖」）：原檔 webp、大小合理；讀不到退回程式畫的 SVG（test-jh-canal-1122.js；沒有 xiangqi-db/art/canal/barge.webp（美術原檔只在開發者電腦，公開副本沒有））
+- ﹣ 圖：art/yunhe/pano.webp 在、大小合理（test-jianghu-1118.js；沒有 xiangqi-db/art/yunhe/pano.webp（美術原檔只在開發者電腦，公開副本沒有））
 - ﹣ 審查備註：改成「照手機系統語言、要看中文到設定切換」，中英都有；CRLF 也在 4000 字內（test-lang-default-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ iOS 包排除 data/docs/android.md（網頁版照舊）；其他說明文件照包（test-lang-default-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 原生：回前景重驗通過在 console 印一行；check-native.js 全部通過（test-lang-default-1117.js；沒有 xiangqi-ios（公開副本不含））
@@ -80,10 +84,12 @@
 - ﹣ 〔原始碼〕預先驗證方案 v1.2：B1 差 1 級的規則、截點的敏感度與適用範圍、上下界只對單調統計量有效、已決定的事、算法三角對照能回答與不能回答什麼；v1.1、v1 保留（test-mathmodel-81.js；沒有 story/數學模型_預先驗證方案_v1.2.md（文件只在開發者電腦，公開副本沒有））
 - ﹣ 〔原始碼〕外部公式參考 v2：殺棋整點寫成跟 Lichess 相同、封頂維持 ±2000；三種對照算法各有定義、固定的出處與適用限制（test-mathmodel-81.js；沒有 story/數學模型_外部公式參考.md（文件只在開發者電腦，公開副本沒有））
 - ﹣ 〔原始碼〕預先驗證方案 v1.3：三類證據分開、分流數字不是通過條件、mm 的名稱、便利樣本、總結的精確規格、併入開發者決定；v1.2 凍結不動（雜湊跟紀錄一樣）（test-mathmodel-82.js；沒有 story/數學模型_預先驗證方案_v1.3.md（文件只在開發者電腦，公開副本沒有））
+- ﹣ 預算敏感度的結果文件寫明它只檢查分析可靠性（W57：從上一支拆出，沒有文件時明列略過）（test-mathmodel-82.js；沒有 story/數學模型_引擎預算敏感度_1115.md（故事稿資料夾不公開））
 - ﹣ 千秋盃虛擬棋客由裁判台代簽：開局寫棋客座位的一次性公開金鑰（sv 2）；棋客的棋步、認輸有簽名，真人、觀眾、裁判台都收；簽好名的盤照常計分（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
 - ﹣ 冒充棋客、重放：沒簽名的棋客認輸、用自己的金鑰冒簽、把棋客在別盤的真簽名搬過來、把棋客舊的那步換更大的 rev 重送——真人、觀眾、裁判台都不收，積分和賽果都不變（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
 - ﹣ 簽署完成前禁止計分入口：舊裁判台（sv 1）開的盤、棋客座位沒有金鑰——棋客沒簽名的認輸照舊收（相容），但這盤不進正式積分（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
 - ﹣ 〔原始碼〕棋客程式交給裁判台代簽；裁判台開局寫 sv 2、棋客金鑰只在記憶體；App 的計分入口有三道門（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
+- ﹣ 外掛字典只放 CDN，公開副本沒有：這支檢查略過（test-osc-en-1118.js；沒有 xiangqi-db/i18n-en.json（只放 CDN，公開副本沒有））
 - ﹣ 過場圖檔都在（art 原圖與 site/data 成品；圖只放 CDN）（test-pjc-joincut-1116.js；沒有 art/ptyjoin 過場圖（只放 CDN，公開副本沒有））
 - ﹣ 渡口上色圖都在（場景圖只放 CDN）（test-port-yz-color-1116.js；沒有 data/shipmap 場景圖（只放 CDN，公開副本沒有））
 - ﹣ D P2-1：開場、選格、存檔讀檔畫面的字都翻得出（組合字串用 pat）（test-r18-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
@@ -135,6 +141,7 @@
 - ﹣ N33-1 射線：真的棋子人模型（x_bing、x_shuai 有骨架、擺過姿勢；xs_zu 黑卒沒骨架）每條射線結果相同，而且快很多（沒有模型檔＝略過）（test-r35-1118.js；沒有模型檔（只在 CDN））
 - ﹣ 真實模型＋墨線開著：每條射線新舊結果相同；每一面牌子 glyPzCalc＝改之前 mk 的算法（x_bing、x_shuai、xs_zu、x_wood 全格掃；黑洞巨盤 15 種棋子人兩面都比）（test-r37-1118.js；沒有模型原檔或 src（只在開發者電腦上；公開副本不含））
 - ﹣ 先算好的深度 glydepth.json：跟現在的模型檔（SHA-1）、bot3d 程式、牌子參數重算出來的一模一樣（tools/gly-depth.js --check）；黑洞巨盤 15 種兩面都在（test-r37-1118.js；沒有模型原檔或 src（只在開發者電腦上；公開副本不含））
+- ﹣ 快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡；暖機 WS 那段 11/18 第 36 輪又改過，不比）（test-r40-1118.js；沒有 1010 快照（只在這台電腦的暫存區））
 - ﹣ 8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 10 原生設定：loggingBehavior＝none、CFBundleLocalizations 有 en、CAPACITOR_DEBUG 只在 Debug 設定檔（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
@@ -151,15 +158,18 @@
 - ﹣ iOS：scripts/.www-files.json 有 7 張、大小對；www/native-build.json 的資料夾大小算進去（test-winter-scenes-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 英文：櫃坊新字串併進外掛字典後都翻得出（掌櫃、七星的信照 {你}／{名} 換過的樣子）（test-xsm-counter-1116.js；沒有 xiangqi-db/i18n-en.json 英文外掛字典（只放 CDN，公開副本沒有））
 - ﹣ 西市借的三首配樂檔都在（mp3 只放 CDN）（test-xsm-stalls-1116.js；沒有 data/bgm 的 mp3（只放 CDN，公開副本沒有））
+- ﹣ 門內圖原檔（只在開發者電腦；發布時才放上 CDN）：尺寸 768×1376、大小合理（test-zm-hall-1121.js；沒有 xiangqi-db/art/zmhall/central.webp（美術原檔只在開發者電腦，公開副本沒有））
+- ﹣ ring3d.json 有十位掌門的圓牌位置（數值合理），兩份一致（test-zm-medallion-1118.js；沒有 tripo_app/ring3d.json（公開副本的 run-tests 把 source/ 抄到暫存資料夾，倉庫的 data/ 也不在旁邊））
+- ﹣ 深度表 glydepth.json 也算過十位掌門（W57：從上一支拆出）（test-zm-medallion-1118.js；沒有 tripo_app/glydepth.json（只放 CDN））
 
 ## 先看這三個數字（不要只看總數）
 
 | 類別 | 項數 | 這類測試證明了什麼 |
 |---|---:|---|
-| 行為 | 1213 項（通過 1209、略過 4） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
-| 混合 | 75 項（通過 74、略過 1） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
-| 原始碼比對 | 202 項（通過 197、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 1031 項（通過 901、略過 130） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-refit-1118.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-film-tap-1118.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-jh-fade-1118.js`、`test-jianghu-1118.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js`、`test-zm-medallion-1118.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 行為 | 1301 項（通過 1294、略過 7） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
+| 混合 | 76 項（通過 74、略過 2） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
+| 原始碼比對 | 219 項（通過 214、略過 5） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
+| 待分類 | 1037 項（通過 902、略過 135） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-refit-1118.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-film-tap-1118.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-jh-fade-1118.js`、`test-jianghu-1118.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-pvp-faceoff-1121.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js`、`test-zm-medallion-1118.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -167,12 +177,11 @@
 
 ## 怎麼自己重做一次
 
-這一份是對發布版的 `source/` 跑的。在公開倉庫根目錄：`node source/run-tests.js`（全部，印三類統計）、`node source/xiangqi-lab/tools/verify-all.js --out 紀錄.txt`（四步核對留紀錄）、`node source/xiangqi-lab/tools/redblue-run.js`（紅藍隊攻擊重現，逐案列預期與實際）。下面 1～3 寫的是開發時的資料夾配置，`run-tests.js` 會在暫存資料夾組出來。
-
-1. 原始程式碼和測試都在專案的 `xiangqi-lab/tools/test-*.js`。它們用 Node.js 內建的 `node --test`，直接載入網站上同一份 `core.js`、`local.js`、`net.js`。只把時鐘、計時器、儲存換成假的，所以邊界時間可以精確到毫秒。
-2. 在 `xiangqi-lab/tools` 資料夾執行：`node --test test-asian-rules.js test-clock-pv.js test-reply-risk.js test-report-id.js test-repwarn.js test-rule-handshake.js`
-3. 三類各幾項：在 `xiangqi-lab/tools` 執行 `node testkinds.js`（會逐檔跑一次，印出每檔三類的項數與通過數）。
-4. 版本是否一致：打開網站根目錄的 `/release.json`，裡面有這一版每支模組的雜湊。`intentionalDiffs` 欄位說明刻意不發布的原始碼差異。
+在公開倉庫根目錄：
+1. `node source/xiangqi-lab/tools/verify-all.js --out verify.txt --tally-out tally.json`：四步核對（組版、發布雜湊、Pikafish、重跑全部測試），紀錄與逐項結果是同一次執行。
+2. `node source/xiangqi-lab/tools/make-evidence.js --verify verify.txt --tally tally.json --out evidence.md`：從這兩份產生這一頁（不再另外跑測試）。
+3. 跟 `data/docs/evidence.md` 比：`node .github/scripts/check-evidence.cjs data/docs/evidence.md evidence.md`（只忽略執行編號與產生時間兩行）。在不同作業系統跑，「略過」的項目可能不一樣（有些測試只在特定環境略過）；這一頁是 GitHub Actions 的 Linux 環境產生的。
+4. 只看三類各幾項：`node source/run-tests.js`。
 
 ## 逐項證據索引
 
@@ -233,7 +242,7 @@
 ### E04 「錯過殺棋」只在引擎真的給出殺棋訊號時才說
 
 - 從哪一版：2230
-- 自動測試：19 項（行為 16、混合 1、原始碼比對 2）
+- 自動測試：20 項（行為 17、混合 1、原始碼比對 2）
   - ✔ 〔行為〕lossAbout：loss ≥ 2000（殺棋夾值）一律「差很多」，其他跟 pawnAbout 同一個數字
   - ✔ 〔行為〕賽後講解（紅方）：普通分 +1950、實走 +1450、損失 500，新存檔沒有殺棋訊號 → 不說錯過殺棋
   - ✔ 〔行為〕賽後講解（紅方）：只有 bv（今天稍早的存檔）、+1950 不到殺棋分界 → 不說錯過殺棋
@@ -243,6 +252,7 @@
   - ✔ 〔行為〕賽後講解（黑方）：引擎說最佳著是殺棋（bmt＞0）、實走不是 → 才說錯過殺棋
   - ✔ 〔行為〕殺棋動畫延後的結果視窗（modal 回傳 null）等真的畫出來才插；過了 GRW_TTL 沒有結果視窗＝不插、快照不動（下一盤一起算）
   - ✔ 〔行為〕剛震過這裡的節奏 0.45 秒內，舊的 vibrate()（將軍印章、殺棋動畫）不蓋掉；之後照常
+  - ✔ 〔行為〕題庫（真的 canju-set.json）：每一州都有題；全是殺棋、一～三步殺、帶這一州的殺法標籤
   - ✔ 〔行為〕必改 1：沒有 bv 的舊存檔走進殺棋（均勢 → −29990），還原後是敗著、勝率掉約 50%，不是「正著、100 分」
   - ﹣ 略過 〔行為〕必改 1：真實引擎資料（xiangqi-db/analysis-cache.json）裡走進殺棋的步，還原後都不是正著、穩著（略過原因：沒有 analysis-cache.json）
   - ✔ 〔行為〕必改 2：審查的例子——局面 −213 時走進殺棋：不能只算緩著（是敗著、標送殺）
@@ -299,10 +309,9 @@
 ### E06 還沒評完的盤顯示「還有 N 步在分析」，評好寫回存檔
 
 - 從哪一版：2300
-- 自動測試：9 項（行為 6、混合 1、原始碼比對 1、待分類 1）
+- 自動測試：8 項（行為 6、原始碼比對 1、待分類 1）
   - ✔ 〔行為〕breaking the cycle clears pending adjudication
   - ✔ 〔行為〕different routes with idle moves on one side stay pending
-  - ✔ 〔混合〕新版 pending：換頁時剛下完（60 秒內）不套用；過了才 reload，重整前 rlgPrep("upd")；馬上套用那條的 busyNow 也看 rlgHold
   - ✔ 〔行為〕對局紀錄清單：pend＝我方還有幾步沒評（對方的步不算）；舊存檔沒有 rr 照常讀
   - ✔ 〔行為〕/db/grades：後來評好的補進存檔（帶 rr）；f、t 對不上的不補、已經有評等的不動；補完清單的 pend 跟著少
   - ✔ 〔行為〕崩潰：xq_play 壞掉（JSON 斷在一半）＝重開改讀 xq_playPrev（上一個完整存檔）、寫回去，紀錄有「改讀上一份完整存檔」；兩份都壞＝開新的、不當掉
@@ -392,7 +401,7 @@
 ### E14 檢舉追蹤編號與狀態
 
 - 從哪一版：2330
-- 自動測試：27 項（行為 16、原始碼比對 2、待分類 9）
+- 自動測試：33 項（行為 22、原始碼比對 2、待分類 9）
   - ✔ 〔原始碼〕01-board 的格子說明用 axmCellLabel（翻轉時用畫面上的格子編號 k）
   - ✔ 〔行為〕清單齊全：英文六個畫面＋繁中六個功能、編號不重複、每項都寫要證明什麼與評審細項
   - ✔ 〔行為〕檔名：B<編號>-<id>-<尺寸>.png，符合 manifest 的檔名規則；防爆版頁面都有名字
@@ -403,6 +412,12 @@
   - ✔ 〔待分類〕G-1（P1）：名帖的「🚩 檢舉」「🚫 封鎖」「解除封鎖」鈕自帶深底淺字＋框線，不管名帖底色都看得清楚（對比 ≥ 4.5:1）、高 44；網頁版同一支程式
   - ﹣ 略過 〔待分類〕檢舉 7 天內處理：limits.md、支援頁、審核備註同一個說法；metadata 待勾項目勾掉（略過原因：沒有 xiangqi-lab/src/support.html（公開副本不含））
   - ✔ 〔待分類〕N2 reportPlayer：本機網址不送的判斷要排除 App
+  - ✔ 〔行為〕讀驗證紀錄：執行編號、時間、版本、source/ 樹雜湊、run-tests 狀態
+  - ✔ 〔行為〕同一次執行才產生：執行編號不同、缺編號、run-tests 沒跑都拒絕
+  - ✔ 〔行為〕evidence.md：標題與「對應的發布版」照 release-sync-check 的格式；檔頭寫同一個執行編號、source/ 樹雜湊；四欄數字分開
+  - ✔ 〔行為〕跟 check-evidence.cjs 接起來：同一份結果、不同次執行（編號、時間、Node 小版本不同）→ 算同一份；有一項結果不同 → 不算
+  - ✔ 〔行為〕測試分類報表跟 evidence.md 同一個執行編號、同一個 source/ 樹雜湊
+  - ✔ 〔行為〕verify-all.js：執行編號寫進紀錄，也傳給「重跑測試」那一步（XQ_RUN_ID、XQ_TALLY_OUT）
   - ✔ 〔原始碼〕第 2 項：匯出鈕只接在開發者模式才畫的影子區塊（reportSheet 只有 DEVMODE 才算 SH、才呼叫 mxShHtml）；mxShExport 裡沒有任何送出
   - ✔ 〔待分類〕送出成功（stub sendBeacon 回 true，不真的送）後重開 App：開 App 時 fixes.json 出現一次（修正通知、飛鴿、檢舉進度共用）
   - ✔ 〔待分類〕舊存檔（這版以前送過，沒有 fbSentAt）：有 fbMine 且不是全部在排隊、或有已送出的檢舉 → 當送過，開 App 抓一次；只有排隊中的 → 不算
@@ -651,7 +666,7 @@
 ### E22 教練功能：PGN／中文記譜匯出、殘局 621 題戰術主題標籤與依主題選題、作業連結（不收集資料）
 
 - 從哪一版：0100（下一版）
-- 自動測試：24 項（行為 14、原始碼比對 5、待分類 5）
+- 自動測試：25 項（行為 14、原始碼比對 6、待分類 5）
   - ✔ 〔行為〕高對比主題：文字、按鈕、棋盤線、棋子字都 7:1 以上
   - ✔ 〔行為〕高對比棋子（hiCon）或高對比主題開著：不重複畫黑環和將字牌，只把上一步改朱橘
   - ✔ 〔待分類〕全部經過同一個判斷（改 07w7 一處全部一起變）；退路；深色主題照舊；時辰鐘、黑洞檔沒動
@@ -676,6 +691,7 @@
   - ✔ 〔行為〕e mqtt-prune judgeX：過期（加 10 分鐘寬限）、沒有期限、只剩分段的整組清；期限內的、其他主題不動
   - ✔ 〔行為〕主題 id、回條不能再用一次 SHA-256 反推：跟 v3 算法不同，而且是 PBKDF2-SHA512 30 萬次以上導出
   - ✔ 〔行為〕舊 v3 的 8 碼已停收：伺服器上真的有舊手機傳的 v3 資料也不收；不讀、不訂閱任何主題，直接提示「已經停用、請重新產生」；這支手機的存檔不動
+  - ✔ 〔原始碼〕門內走路：圖載好才掛 shwMount；地點、門人、掌門都是入口（data-k）；立繪不跟標籤淡掉；名牌在角色上面
 - 截圖：（無）
 - 怎麼操作：檢討頁右上 📤 匯出棋譜；一盞茶殘局 → 依主題選題；#/hw 挑題產生作業連結，學生做完複製成績。說明見 /data/docs/coach.md。
 - 預期結果：PGN 可被解析器讀回、照規則重走局面一致；作業連結編碼解碼一致。
@@ -708,6 +724,7 @@
 | test-a11y-audio.js | — | 15 | 0 | 3 |  | 18／18 |
 | test-a11y-emoji.js | — | 4 | 0 | 1 |  | 5／5 |
 | test-a11y.js | — | 11 | 2 | 3 |  | 16／16 |
+| test-aab-assets-check-1121.js | — | 8 | 0 | 0 |  | 8／8 |
 | test-ai-think.js | — | 6 | 0 | 2 |  | 8／8 |
 | test-analysis-cases.js | — | 38 | 0 | 0 |  | 38／38 |
 | test-android-build.js | — | 12 | 4 | 3 |  | 19／19 |
@@ -738,6 +755,7 @@
 | test-colorblind.js | — | 10 | 0 | 4 |  | 14／14 |
 | test-cpuroom-copy.js | — | 0 | 7 | 2 |  | 9／9 |
 | test-daynight-1117.js | — | 0 | 0 | 0 | 8 | 6／8（略過 2） |
+| test-device-checks-1121.js | — | 11 | 0 | 3 |  | 14／14 |
 | test-devview-1116.js | — | 1 | 0 | 2 |  | 3／3 |
 | test-dgl-off-1116.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-dgl.js | — | 0 | 0 | 0 | 45 | 45／45 |
@@ -754,7 +772,7 @@
 | test-fb871.js | — | 8 | 2 | 2 |  | 12／12 |
 | test-fb888.js | — | 11 | 0 | 3 |  | 14／14 |
 | test-fb897-1115.js | — | 8 | 0 | 3 |  | 11／11 |
-| test-fdroid-evidence.js | — | 8 | 0 | 1 |  | 9／9 |
+| test-fdroid-evidence.js | — | 9 | 0 | 1 |  | 9／10（略過 1） |
 | test-figview-ghost-1115.js | — | 5 | 0 | 2 |  | 7／7 |
 | test-film-tap-1118.js | — | 0 | 0 | 0 | 3 | 3／3 |
 | test-gate-siege-3d.js | — | 19 | 3 | 3 |  | 25／25 |
@@ -797,17 +815,21 @@
 | test-ios-capsync-1118.js | — | 0 | 0 | 0 | 2 | 0／2（略過 2） |
 | test-ios-native-1116.js | — | 0 | 0 | 0 | 6 | 6／6 |
 | test-ipad-fill.js | — | 9 | 0 | 1 |  | 10／10 |
+| test-jh-canal-1122.js | — | 7 | 1 | 1 |  | 8／9（略過 1） |
 | test-jh-fade-1118.js | — | 0 | 0 | 0 | 2 | 2／2 |
-| test-jianghu-1118.js | — | 0 | 0 | 0 | 11 | 11／11 |
+| test-jh-kick-1122.js | — | 11 | 0 | 1 |  | 12／12 |
+| test-jianghu-1118.js | — | 0 | 0 | 0 | 13 | 12／13（略過 1） |
+| test-jianghu-wind-1121.js | — | 9 | 0 | 2 |  | 11／11 |
 | test-land3d.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-lang-default-1117.js | — | 0 | 0 | 0 | 7 | 4／7（略過 3） |
 | test-layout-r16.js | — | 5 | 1 | 5 |  | 11／11 |
 | test-lefty.js | — | 10 | 0 | 2 |  | 12／12 |
+| test-make-evidence.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-mathmodel-1046.js | — | 20 | 5 | 1 |  | 23／26（略過 3） |
 | test-mathmodel-79.js | — | 20 | 1 | 3 |  | 23／24（略過 1） |
 | test-mathmodel-80.js | — | 13 | 0 | 2 |  | 14／15（略過 1） |
 | test-mathmodel-81.js | — | 14 | 3 | 4 |  | 19／21（略過 2） |
-| test-mathmodel-82.js | — | 6 | 1 | 2 |  | 8／9（略過 1） |
+| test-mathmodel-82.js | — | 7 | 1 | 2 |  | 8／10（略過 2） |
 | test-mnq-at-1117.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-mnq-skipall-1117.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-mp-p2.js | — | 7 | 0 | 1 |  | 8／8 |
@@ -822,7 +844,8 @@
 | test-newjourney-entry-1116.js | — | 4 | 0 | 2 |  | 6／6 |
 | test-noscore.js | — | 0 | 0 | 0 | 14 | 10／14（略過 4） |
 | test-opening-order-1117.js | — | 0 | 0 | 0 | 21 | 21／21 |
-| test-osc-en-1118.js | — | 0 | 0 | 0 | 1 | 1／1 |
+| test-osc-en-1118.js | — | 0 | 0 | 0 | 1 | 0／1（略過 1） |
+| test-osc-en0.js | — | 3 | 0 | 1 |  | 4／4 |
 | test-oss-scan.js | — | 7 | 0 | 0 |  | 7／7 |
 | test-p0-regress.js | — | 12 | 0 | 1 |  | 13／13 |
 | test-park-firstflat.js | — | 8 | 0 | 1 |  | 9／9 |
@@ -845,6 +868,7 @@
 | test-port-yz-color-1116.js | — | 0 | 0 | 0 | 4 | 3／4（略過 1） |
 | test-preload-bg.js | — | 12 | 1 | 1 |  | 14／14 |
 | test-premove-online3d.js | — | 12 | 0 | 3 |  | 15／15 |
+| test-preview-build-1121.js | — | 5 | 0 | 0 |  | 5／5 |
 | test-provenance.js | — | 4 | 0 | 1 |  | 5／5 |
 | test-pty-capsay-1116.js | — | 1 | 1 | 2 |  | 4／4 |
 | test-pty-events-1116.js | — | 0 | 0 | 0 | 8 | 8／8 |
@@ -853,6 +877,7 @@
 | test-pty-statbar-1116.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-pty-stats-1116.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-pv-stepper.js | — | 3 | 1 | 2 |  | 6／6 |
+| test-pvp-faceoff-1121.js | — | 0 | 0 | 0 | 3 | 3／3 |
 | test-qixing.js | — | 6 | 0 | 0 |  | 6／6 |
 | test-quiz-check-exit.js | — | 1 | 1 | 2 |  | 4／4 |
 | test-r11-1117.js | — | 0 | 0 | 0 | 9 | 9／9 |
@@ -883,7 +908,7 @@
 | test-r38-1118.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-r39-1118.js | — | 0 | 0 | 0 | 6 | 6／6 |
 | test-r4-1117.js | — | 0 | 0 | 0 | 49 | 49／49 |
-| test-r40-1118.js | — | 0 | 0 | 0 | 5 | 5／5 |
+| test-r40-1118.js | — | 0 | 0 | 0 | 5 | 4／5（略過 1） |
 | test-raid-label-1116.js | — | 1 | 0 | 0 |  | 1／1 |
 | test-redblue-public.js | — | 29 | 0 | 1 |  | 30／30 |
 | test-release-sync.js | — | 9 | 0 | 0 |  | 9／9 |
@@ -944,7 +969,9 @@
 | test-xsm-counter-1116.js | — | 0 | 0 | 0 | 11 | 10／11（略過 1） |
 | test-xsm-dark.js | — | 0 | 0 | 0 | 15 | 15／15 |
 | test-xsm-stalls-1116.js | — | 0 | 0 | 0 | 12 | 11／12（略過 1） |
-| test-zm-medallion-1118.js | — | 0 | 0 | 0 | 4 | 4／4 |
+| test-zm-hall-1121.js | — | 20 | 0 | 5 |  | 24／25（略過 1） |
+| test-zm-intel-1121.js | — | 5 | 0 | 3 |  | 8／8 |
+| test-zm-medallion-1118.js | — | 0 | 0 | 0 | 5 | 3／5（略過 2） |
 
 ## 全部測試名稱
 
@@ -995,6 +1022,17 @@
 - ✔ 〔行為〕棋鐘：跨過 5 分、1 分、30 秒、10 秒才念
 - ✔ 〔行為〕圖示按鈕名字：title 優先、常見圖示有名字、看不懂的不亂取
 - ✔ 〔原始碼〕接線：m.html include 11b-a11y.js；螢幕報讀模式讓 focusOn() 打開；設定頁有開關；名稱不撞
+
+### test-aab-assets-check-1121.js
+
+- ✔ 〔行為〕正常的小包（CDN 補抓＋切塊接回、首頁素材隨包、指紋一致）→ 綠燈
+- ✔ 〔行為〕W21 型（1406）：原生不會補抓、首頁素材沒隨包、圖片不在包裡 → 紅燈，圖片算破、JSON 只警告
+- ✔ 〔行為〕W30 型（26112102）：有 CDN 補抓、dex 也有 .parts.json（來自 XQOfflineAssets），但沒有切塊接回 → 大檔不在包裡要紅燈
+- ✔ 〔行為〕11/21 反測抓到的誤放行：小包帶著全離線版的 XQOfflineAssets，大檔不在包裡仍要紅燈
+- ✔ 〔行為〕舊檔：安裝包裡的素材跟清單指紋不符 → 紅燈並列出兩邊的 SHA-1
+- ✔ 〔行為〕PR #11 審查：通用字串只出現一部分不算切塊接回；原生加了專用標記就直接認
+- ✔ 〔行為〕PR #11 審查：缺驗不能送審——結束代碼 有 ✘＝1、加 --cdn 有沒確認到的＝3、沒加 --cdn 不算缺驗＝0，並提醒要加 --cdn
+- ✔ 〔行為〕大檔放進包裡（全離線版）就不需要切塊接回 → 綠燈
 
 ### test-ai-think.js
 
@@ -1481,6 +1519,23 @@
 - ✔ 〔待分類〕全部經過同一個判斷（改 07w7 一處全部一起變）；退路；深色主題照舊；時辰鐘、黑洞檔沒動
 - ﹣ 略過 〔待分類〕07s4-passmap（禁改檔）的改動寫在 reps-next.json，以線上 pub.html 為底每組只命中 1 次（略過原因：公開副本：這項檢查開發者電腦上的發版暫存檔，不在公開副本跑（11/17 1757 證據補））
 
+### test-device-checks-1121.js
+
+- ✔ 〔行為〕升級測試：升級後一切正常 → 沒有任何一項不符
+- ✔ 〔行為〕升級測試：W01 的狀態（舊 Worker 還接管、舊快取沒清、網頁更新檢查還開著）每一項都列得出來
+- ✔ 〔行為〕升級測試：單一項不符就要抓到（例如只剩一個舊快取）
+- ✔ 〔原始碼〕升級測試：舊版沒有原生修正的函式時要當成「沒關掉」，不能因為函式不存在就跳過
+- ✔ 〔行為〕破圖掃描：連線時看得到的破圖、背景圖解不開、讀取失敗、畫面錯誤都算紅燈
+- ✔ 〔行為〕破圖掃描：離線只算看得到的破圖；沒下載過的檔讀不到算提醒（開發者 11/21）
+- ✔ 〔行為〕破圖掃描：預設掃 44 個畫面，包含首頁、雲河星槎、十州棋館、對局與設定
+- ✔ 〔原始碼〕封測玩家狀態：等預載頁收掉的判斷看的是畫面上的「正在準備棋盤」
+- ✔ 〔行為〕PR #12 審查：只准在模擬器上跑——實體手機會被解除安裝、刪掉存檔，要加 --allow-wipe-device 才放行並警告
+- ✔ 〔行為〕PR #12 審查：更新視窗要等大廳送 version 才跳，冷啟後至少看 15 秒
+- ✔ 〔行為〕PR #12 再審：冷啟後 20 秒內跳出過、後來被關掉的更新視窗也要判紅
+- ✔ 〔行為〕PR #12 再審：拿不到讀取狀態碼又沒有紅燈 → 結束代碼 2（測不成立）；有紅燈照樣 1；都正常 0
+- ✔ 〔原始碼〕PR #12 審查：掃描會回報 WebView 能不能給讀取狀態碼（舊 WebView 拿不到時整輪當測不成立）
+- ✔ 〔行為〕測不成立就回 2：沒帶參數、模式寫錯、找不到裝置都不能被當成通過
+
 ### test-devview-1116.js
 
 - ✔ 〔行為〕〔行為〕兩個開關預設關＝跟玩家一樣；開發者模式關著時開關存了也沒用；自我檢查紀錄最多 30 筆
@@ -1714,6 +1769,7 @@
 - ✔ 〔行為〕成品：release.json 的 sw 雜湊不符、版本號不一樣、不是 JSON、缺檔 → 各回報正確（缺檔代碼 2）
 - ✔ 〔行為〕成品：--url 模式從網站下載三個檔（用本機 127.0.0.1 假網站，不連外網）
 - ✔ 〔行為〕真的公開倉庫（本機 git origin/main，不連網）：成品跟 release.json 一致、Pikafish 跟建置紀錄一致
+- ﹣ 略過 〔行為〕Pikafish 跟建置紀錄一致（W57：原本寫在上一支裡，沒有紀錄時直接 return 會被算成通過，拆出來明列略過）（略過原因：沒有 xiangqi-wasm/build-record.json（Pikafish 重編紀錄只在開發者電腦））
 - ✔ 〔原始碼〕foss.md 兩份逐字相同、LF；缺口分「做不到／可以補但還沒做／這輪補了」三類並附重跑指令
 
 ### test-figview-ghost-1115.js
@@ -2282,16 +2338,44 @@
 - ✔ 〔行為〕意見回饋 885：「我的角色」書齋牆（.mz-wall）在 iPad 直向不縮成一屏、照手機滿寬往下捲；橫向照原本的 r07Wide
 - ✔ 〔原始碼〕m.html 在 07t3 和 07sp 後面載入 07fl；07sp 量看得到的範圍；07fl 沒有 // 行內註解
 
+### test-jh-canal-1122.js
+
+- ✔ 〔行為〕運河四州由北往南：徐州（起馬）→泗州（飛相）→淮安（中炮）→揚州（仙人指路）；停靠點在長卷圖內
+- ✔ 〔行為〕時辰：子時 23～1 點＝0、丑時＝1…；每個時辰換一州、四個時辰繞一圈
+- ✔ 〔行為〕題庫（真的 canju-set.json）：每一州都有題；全是殺棋、一～三步殺、帶這一州的殺法標籤
+- ✔ 〔行為〕挑題：同一天同一州固定一題；換一天會換題（看 30 天至少換過）
+- ✔ 〔行為〕點漕船：挑好這一班的題記進存檔、開小卡；題庫載不到就提示
+- ✔ 〔行為〕殘局頁外掛模式：題號要跟這一班挑好的一樣、日期要是今天；別的網址交給原本的 cjXMode
+- ✔ 〔行為〕解開：每天每一州第一次不看答案解開修為 +15，只給一次；換一天重新算；換日讀存檔清掉前一天
+- ✔ 〔原始碼〕掛接：存檔鍵跟旅程走；殘局頁與長卷只包一次；殘局頁路由會把 cy/… 整段交給 CanjuPlay
+- ﹣ 略過 〔混合〕漕船圖（開發者 11/22「這船太醜了 找gemini畫圖」）：原檔 webp、大小合理；讀不到退回程式畫的 SVG（略過原因：沒有 xiangqi-db/art/canal/barge.webp（美術原檔只在開發者電腦，公開副本沒有））
+
 ### test-jh-fade-1118.js
 
 - ✔ 〔待分類〕離開長卷頁（hashchange 到別頁）就拿掉遮罩；還在長卷頁不動
 - ✔ 〔待分類〕6 秒保險：長卷頁已經不在畫面上時也把遮罩拿掉
+
+### test-jh-kick-1122.js
+
+- ✔ 〔行為〕相剋表＝開發者 11/22 選的那張：十派各一組、下帖的不是自己
+- ✔ 〔行為〕定式：雙方各三步都合法；寫在表裡的局面＝從開局照走六步的結果、輪紅走
+- ✔ 〔行為〕定式第一步就是 A 派的招牌開局（玩家執紅的五派）；玩家執黑的四派，黑方第一步是本派的招牌
+- ✔ 〔行為〕戰書出現的條件：A 派掌門被打敗過才有；破陣紀錄照存檔
+- ✔ 〔行為〕接下戰書：照掌門那一盤開（驛站 inn:zm_<B>），玩家執 A 派那一方、從定式局面開下；zmCur 記上 kick
+- ✔ 〔行為〕接下戰書時手上已經有同一位掌門下到一半的棋：接著下那一盤，不算踢館
+- ✔ 〔行為〕沒有修行角色不能踢館
+- ✔ 〔行為〕下完：贏了記破陣（局號、角色）＋修為 30，只給一次；再贏不改第一次的局號
+- ✔ 〔行為〕下完：輸、和、不是踢館的掌門盤、zmCur 對不上這位掌門，都不記破陣
+- ✔ 〔行為〕再下一盤：上一盤是踢館就照樣從定式局面開、玩家執同一方，zmCur 保留 kick；一般掌門盤不動
+- ✔ 〔行為〕小卡：有戰書才多一段；寫出下帖的話、定式記譜、執哪一方；破陣過的有印記和「看破陣那一盤」
+- ✔ 〔原始碼〕掛接：小卡插入踢館段與按鈕；存檔鍵跟旅程走；包裝只包一次；看棋譜走 #/db/play/
 
 ### test-jianghu-1118.js
 
 - ✔ 〔待分類〕十派每一派都有駐地，座標都在長卷圖裡；牌旗在站點上方
 - ✔ 〔待分類〕十派所有道路的節點都連成同一個步行路網
 - ✔ 〔待分類〕各區的道路、石階和橋可點；山壁、河面與屋頂不吸附
+- ✔ 〔待分類〕W23 手機點擊：一個指尖內吸到最近的路，太遠的地方不走並原地提示
 - ✔ 〔待分類〕仕角炮門石坪容易點選，隔壁山壁保持禁行
 - ✔ 〔待分類〕途中改道仍走路網；路線選擇、門派名帖和跨區移動分開
 - ✔ 〔待分類〕長卷點路面能下山、繞過水榭走到對岸，連續點相鄰路段可改道
@@ -2299,7 +2383,22 @@
 - ✔ 〔待分類〕十派廣場走到點下的位置，進出與改道都不切出邊界
 - ✔ 〔待分類〕照片岸路和路肩都可由長卷的左右兩端走到，岸邊水面仍擋路
 - ✔ 〔待分類〕頁面：路由、組版 include、淡出淡入、第一次歡迎文字、入口（首頁遠山、找地方、開局棋路頁）
-- ✔ 〔待分類〕圖：art/yunhe/pano.webp 在、大小合理；文字中英並列（不靠外掛字典）
+- ✔ 〔待分類〕文字中英並列（不靠外掛字典）
+- ﹣ 略過 〔待分類〕圖：art/yunhe/pano.webp 在、大小合理（略過原因：沒有 xiangqi-db/art/yunhe/pano.webp（美術原檔只在開發者電腦，公開副本沒有））
+
+### test-jianghu-wind-1121.js
+
+- ✔ 〔行為〕候選門派：四種天氣的候選都是真的派，十派每一派至少在一種天氣裡會順風
+- ✔ 〔行為〕挑派：每段 2～3 派、不重複、都在那種天氣的候選裡；同一天同一段結果固定
+- ✔ 〔行為〕挑派會輪替：晴天一週下來，候選的五派每一派都輪得到，也不是每段都同一組
+- ✔ 〔行為〕天氣判斷：下雪、下雨照共用天氣；沒下雨雪時入夜算夜、白天算晴
+- ✔ 〔行為〕上課修為：順風的派第一次完成照 1.5 倍給，不順風照舊；已拿過的每派每天多給一次 10 修為
+- ✔ 〔行為〕掌門修為：順風的派第一次贏照 1.5 倍；再下（輸、和、贏都算下完一盤）每派每天多給一次
+- ✔ 〔行為〕包一次就好：包住 07z9 那段再跑一次，也不會把加成疊兩層
+- ✔ 〔行為〕進長卷的提示：同一段時間只跳一次，寫出順風的派名、不寫倍率
+- ✔ 〔原始碼〕長卷與駐地小卡：順風的旗號加 wind、掛「順風」大字；小卡只寫「修為多給」，畫面上不寫倍率；減少動態時不閃
+- ✔ 〔行為〕PR #15 審查：掌門盤照開局那一刻算順風——開局順風、結算時換段了也照給；開局不順風、結算時才順風也不給
+- ✔ 〔原始碼〕PR #15 審查：掌門頁與大百科的「+30」都補上「順風時更多」，中英都有
 
 ### test-land3d.js
 
@@ -2345,6 +2444,17 @@
 - ✔ 〔行為〕拇指熱區模型（touch-stress.js）：左右手對稱、下方中間易及、對角上方角落難及、大手機上方更遠
 - ✔ 〔原始碼〕左撇子樣式只搬按鈕：不鏡像棋盤、不改文字方向；m.html 在觸覺回饋後面 include；lh 前綴沒撞名
 - ✔ 〔原始碼〕F2：剩下的小目標修正還在（外觀不變、點選範圍 ≥44）
+
+### test-make-evidence.js
+
+- ✔ 〔行為〕讀驗證紀錄：執行編號、時間、版本、source/ 樹雜湊、run-tests 狀態
+- ✔ 〔行為〕同一次執行才產生：執行編號不同、缺編號、run-tests 沒跑都拒絕
+- ✔ 〔行為〕evidence.md：標題與「對應的發布版」照 release-sync-check 的格式；檔頭寫同一個執行編號、source/ 樹雜湊；四欄數字分開
+- ✔ 〔行為〕跟 check-evidence.cjs 接起來：同一份結果、不同次執行（編號、時間、Node 小版本不同）→ 算同一份；有一項結果不同 → 不算
+- ✔ 〔行為〕測試分類報表跟 evidence.md 同一個執行編號、同一個 source/ 樹雜湊
+- ✔ 〔行為〕verify-all.js：執行編號寫進紀錄，也傳給「重跑測試」那一步（XQ_RUN_ID、XQ_TALLY_OUT）
+- ✔ 〔行為〕make-evidence.js 指令：兩份檔不是同一次執行就不產生（結束代碼 1），是同一次就寫出 evidence.md 與分類報表
+- ✔ 〔原始碼〕testkinds.js 在 XQ_TALLY_OUT 有設時寫出逐項結果（帶 XQ_RUN_ID），寫不出來算失敗
 
 ### test-mathmodel-1046.js
 
@@ -2455,6 +2565,7 @@
 - ✔ 〔行為〕預算敏感度：用 App 真正的 classifyRaw 與賽後報告算一盤（假的評估函式，不啟動引擎）——每一步有評語、首選、殺棋欄位，雙方各有舊總分、影子 base／score、三種對照算法；中斷續跑的結果跟一次跑完一模一樣
 - ✔ 〔行為〕預算敏感度：compare——同一個預算比自己，全部相同、沒有換級；評估有雜訊的「低預算」比沒有雜訊的「高預算」，評語相同的比例下降、分數差與換級數得出來；報表列設定、每一步、每一方與最不穩定的盤
 - ✔ 〔原始碼〕預算敏感度工具只讀 App 的檔、用節點數當預算、不送任何東西；結果文件寫明它只檢查分析可靠性
+- ﹣ 略過 〔行為〕預算敏感度的結果文件寫明它只檢查分析可靠性（W57：從上一支拆出，沒有文件時明列略過）（略過原因：沒有 story/數學模型_引擎預算敏感度_1115.md（故事稿資料夾不公開））
 
 ### test-mnq-at-1117.js
 
@@ -2622,7 +2733,14 @@
 
 ### test-osc-en-1118.js
 
-- ✔ 〔待分類〕外掛字典只放 CDN，公開副本沒有：這支檢查略過
+- ﹣ 略過 〔待分類〕外掛字典只放 CDN，公開副本沒有：這支檢查略過（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN，公開副本沒有））
+
+### test-osc-en0.js
+
+- ✔ 〔行為〕內建表完整：門派資料裡要翻的每個中文字串（派、掌門、門人、風格標籤）都有英譯，而且不是中文
+- ✔ 〔行為〕字典還沒下載、英文模式：派名、定式名、口號、門人都是英文（W62 的病灶：The 屏風馬門 challenges you）
+- ✔ 〔行為〕中文模式不受影響：oscT 原樣回傳
+- ✔ 〔原始碼〕oscT 先查單字棋子、再查 OSC_EN0、最後才用外掛字典；OSC_EN0 註明由 gen-osc-en0.js 產生
 
 ### test-oss-scan.js
 
@@ -2673,7 +2791,7 @@
 
 - ✔ 〔行為〕山坡剖面：石台上是平地，往外一路變低，接點跟剖面資料一致
 - ✔ 〔行為〕〔行為〕飄雲：一朵都不會坐在石台或山坡上（雲底高過下面的山坡，且在石台外）
-- ✔ 〔行為〕〔行為〕雨雪：範圍蓋到石台外的山坡，篷子底下不生，每滴落到自己那個位置的地面
+- ✔ 〔行為〕〔行為〕雨雪：範圍蓋到山坡；雨能落到篷頂；鏡頭縮小後雨區加寬加高
 - ✔ 〔原始碼〕雨雪重生改用每滴自己的地面高度 GYS，舊的固定 Y0 拿掉；山坡模型用同一份剖面
 
 ### test-park3d-bench.js
@@ -2890,6 +3008,14 @@
 - ✔ 〔原始碼〕park3d：draw 畫 pkcbPre、帶 BLZ；走子、被吃飛走、黑洞專屬走法與吃子放大縮回都有 k；動畫推進乘 k；markAdd 認得 tris、「預」字牌
 - ✔ 〔原始碼〕blitz.md 兩份逐字一樣、LF；寫了線上對局、3D 園子、千秋盃、3D 動畫縮短與限制
 
+### test-preview-build-1121.js
+
+- ✔ 〔行為〕版號：把 __BUILD__ 換成 release.json 的版號
+- ✔ 〔行為〕版號：找不到佔位字、版號格式不對都要停，不部署版號錯的預覽
+- ✔ 〔行為〕大檔：Pages 單檔上限 25 MB；挑出超過上限的檔，不進 .git
+- ✔ 〔行為〕整套（不組版）：換好版號、寫 404.html；sw.js 版號不一致就失敗
+- ✔ 〔行為〕整套（不組版）：超過門檻的檔真的會被刪掉，小檔留著（PR #13 審查：刪大檔那行原本沒測到）
+
 ### test-provenance.js
 
 - ✔ 〔行為〕四種說法跟文史考據頁（history.md「四種標籤」）一字不差，兩份 history.md 一樣
@@ -2957,6 +3083,12 @@
 - ✔ 〔混合〕點後續的第幾個著法＝跳到第幾步（只算「Pikafish 的後續」那一行）
 - ✔ 〔原始碼〕四個地方都接上逐步播放
 - ✔ 〔原始碼〕點後續著法時先交給逐步播放，不在當前局面亂找同名走法
+
+### test-pvp-faceoff-1121.js
+
+- ✔ 〔待分類〕同桌對弈預設不自動轉向（沒存過設定時為 false）
+- ✔ 〔待分類〕轉向判斷：遠端座位照座位、同桌只有打開自動轉向才跟著輪到的一方
+- ✔ 〔待分類〕設定裡仍可打開自動轉向，⇅ 手動翻轉仍在
 
 ### test-qixing.js
 
@@ -3358,7 +3490,7 @@
 - ✔ 〔待分類〕② 巨盤 create 的程式貼圖延後分段畫：create 時只排隊；有人先要用畫布（getContext）就先畫好那張；create 最後每段 30ms 畫完；淡入前等畫完、等全景圖解碼完
 - ✔ 〔待分類〕② 第一次擺棋子人放到下一段（parkDraw）；接模型整段排進 glyLater；④ 走路小人縮小只改 CSS 大小
 - ✔ 〔待分類〕⑤ N35-1「星盤展開中…」1.6 秒開始淡入（0.4 秒淡完，2.0 秒那一格看得到）
-- ✔ 〔待分類〕快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡；暖機 WS 那段 11/18 第 36 輪又改過，不比）
+- ﹣ 略過 〔待分類〕快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡；暖機 WS 那段 11/18 第 36 輪又改過，不比）（略過原因：沒有 1010 快照（只在這台電腦的暫存區））
 
 ### test-raid-label-1116.js
 
@@ -3417,7 +3549,7 @@
 - ✔ 〔行為〕重載判斷：使用者按的（有正常卸載 pagehide）不記、不改網址；新版套用、跨來源隔離各記各的原因；剛下完超過 90 秒只記不改
 - ✔ 〔行為〕異常紀錄：最多留 10 筆、只存在 localStorage（不送網路）；開發者模式設定頁看得到，一般玩家看不到
 - ✔ 〔混合〕跨來源隔離自動重整（02-shell.js 第 176 行）：在忙時每 3 秒再看一次，不忙才重整，重整前叫 rlgPrep("coi")
-- ✔ 〔混合〕新版 pending：換頁時剛下完（60 秒內）不套用；過了才 reload，重整前 rlgPrep("upd")；馬上套用那條的 busyNow 也看 rlgHold
+- ✔ 〔混合〕更新只在安全頁面重新載入，排程後進入對局也不打斷
 - ✔ 〔原始碼〕02r-reloadguard.js 在 02-shell.js 後面、第一次 route()（11-watch.js）前面組進 m.html；一行程式裡沒有 // 註解
 - ✔ 〔行為〕勝負先寫入：絕殺那一步在 xq-play 通知畫面（之後才畫結果、放殺棋特效）之前，晉級賽積分、這一級戰績、帶 result 的桌上那盤都已經寫進 localStorage
 - ✔ 〔行為〕賽後分析等殺棋特效播完：XQ_fxBusy 為真時不開始（每 0.5 秒再看），播完才分析；最多等 20 秒；沒有 XQ_fxBusy（舊頁面、測試）照舊馬上分析
@@ -3972,7 +4104,7 @@
 
 - ✔ 〔待分類〕〔行為〕更新重載（3 分鐘內）：不出開頭畫面；網址沒帶頁面就回原頁；記號用一次就刪
 - ✔ 〔待分類〕〔行為〕沒有記號（真的關掉 App 再開）或記號過期（超過 3 分鐘）：照舊出開頭畫面
-- ✔ 〔待分類〕〔原始碼〕02-shell 套用新版前（markDone）記下 xqUpdBack＝{t,h}，兩條套用路（馬上套用、換頁套用）都先 markDone 再重新載入
+- ✔ 〔待分類〕〔原始碼〕套用新版的共同路徑先保留網址，再安全重載
 
 ### test-verify-daily.js
 
@@ -4182,9 +4314,49 @@
 - ✔ 〔待分類〕找棋子（11/16 開發者選單「照現在＋讀螢幕可直接收」）：只在 ♿ 螢幕報讀與鍵盤模式多一顆「直接收下」，效果跟圖上找到一樣（+10、湊齊 +50、同一天不重複）；一般模式不出現
 - ﹣ 略過 〔待分類〕西市借的三首配樂檔都在（mp3 只放 CDN）（略過原因：沒有 data/bgm 的 mp3（只放 CDN，公開副本沒有））
 
+### test-zm-hall-1121.js
+
+- ✔ 〔行為〕門內設定：只列有圖的派（先只有中炮門）；主位與四個地點都在原圖 768×1376 範圍內
+- ✔ 〔行為〕座標換成百分比：jhHallPc
+- ✔ 〔行為〕前院：列出這一派的門下棋友與他們在哪裡（驛站、園子、秘境）
+- ✔ 〔原始碼〕路由：#/jianghu/hall/<派> 排在長卷之前，不會被長卷吃掉
+- ✔ 〔原始碼〕圖讀不到：記下這一派、退回長卷開原本的小卡；小卡在門內或讀圖失敗過就不顯示「走進山門」
+- ✔ 〔原始碼〕掌門立繪疊在主位、可以點（＝掌門小卡）；讀不到立繪就拿掉，不留破圖
+- ﹣ 略過 〔行為〕門內圖原檔（只在開發者電腦；發布時才放上 CDN）：尺寸 768×1376、大小合理（略過原因：沒有 xiangqi-db/art/zmhall/central.webp（美術原檔只在開發者電腦，公開副本沒有））
+- ✔ 〔行為〕前院門人：園子棋友用閒聊與小知識、能下；秘境人物沒遇過不能下並說明原因；立繪路徑分 npc／actors
+- ✔ 〔行為〕前院站誰：能下的排前面；同一天固定；最多站設定的人數
+- ✔ 〔行為〕前院互動：請教講本派開局要點；打聽掌門——還沒打聽到說要贏一盤，打聽到了照實說
+- ✔ 〔行為〕切磋一盤：園子棋友指定由他坐下（只用一次）；驛站旅人走驛站開法；不能下的不開局
+- ✔ 〔原始碼〕前院門人：站位在原圖範圍內、立繪大小合理；JhHall 與 parkNpcNew 的包裝只做一次
+- ✔ 〔行為〕PR #21 再審（C 路徑）：jStart 先跳選單就 return，玩家之後按「放棄，開新的」才抽人——坐下的仍是指定的門人
+- ✔ 〔行為〕PR #21 審查：沒用掉（接續舊盤、取消、API 出錯）時，到期計時器清掉；下一盤不會被指定
+- ✔ 〔行為〕PR #21 審查：指定超過 45 秒就不算數（就算計時器還沒跑）
+- ✔ 〔行為〕PR #21 審查（反向對照補測）：外部傳進來的指定（例如攔路棋客）優先
+- ✔ 〔行為〕PR #21 再審（反向對照補測）：前院能下的優先——就算不能下的那位雜湊排在前面
+- ✔ 〔行為〕PR #22 審查：前院站滿時，門人名牌兩兩不重疊（375 寬手機、用本派最長的名字算）
+- ✔ 〔行為〕PR #22 審查：門人 3 位以上時前院只畫 2 位；同一天固定，換日期會換到別人
+- ✔ 〔行為〕PR #22 審查：只有兩位時左右對稱站（前兩個站位對中軸 384 對稱、同一高度）
+- ✔ 〔行為〕門內走路座標表：每個入口都有停靠點；路的兩端都是存在的節點；座標都在圖內；從碼頭起點走得到每個入口
+- ✔ 〔原始碼〕門內走路：圖載好才掛 shwMount；地點、門人、掌門都是入口（data-k）；立繪不跟標籤淡掉；名牌在角色上面
+- ✔ 〔行為〕PR #23 審查：門內頁有自己的出口設定（不套預設出口）；點碼頭下緣算出口、搭船標籤在那一塊裡
+- ✔ 〔行為〕PR #23 審查：第一次進門，出口亮框與「要回去，點這裡」都在「搭船」標籤上，不在頂欄返回鍵
+- ✔ 〔行為〕門內頁順風徽章：在掌門大廳標籤正下方、不重疊；中英文都短到一行放得下；樣式比 .jh-windnote 更具體
+
+### test-zm-intel-1121.js
+
+- ✔ 〔行為〕案 4：引擎端與 App 端算出的「今天走主修或副修」完全一致（120 天 × 十派）
+- ✔ 〔行為〕案 4：同一天固定，換一天會變；打聽到的棋路是主修或副修那一派
+- ✔ 〔原始碼〕案 4：引擎端只有十派掌門改成依日期固定，其他棋友照舊 75%／25% 隨機
+- ✔ 〔行為〕案 4：贏了門下棋友（至少 10 步）才打聽得到；同一天只打聽一次；原本的結算照跑
+- ✔ 〔行為〕案 4：掌門盤本身、沒有對應門派的對局都不會解鎖
+- ✔ 〔行為〕案 4：駐地小卡——打聽到了寫出今天的棋路；還沒有就說要贏哪幾位門人；沒有門人就不寫
+- ✔ 〔原始碼〕案 4：小卡接上暗樁那一段；包裝只做一次
+- ✔ 〔原始碼〕案 9：掌門盤沒贏、自己下了 3 手以上，主要按鈕是關鍵步重練；中英都有
+
 ### test-zm-medallion-1118.js
 
 - ✔ 〔待分類〕門派字＝派名第一個字，十派各一、不重複
 - ✔ 〔待分類〕掌門對局的外觀帶 gch，紅黑跟掌門執子方一致（黑方四派黑字）
 - ✔ 〔待分類〕bot3d：figure 收 gch／gred，胸前字照指定顏色畫，用完重設
-- ✔ 〔待分類〕ring3d.json 有十位掌門的圓牌位置（數值合理），兩份一致；深度表也算過
+- ﹣ 略過 〔待分類〕ring3d.json 有十位掌門的圓牌位置（數值合理），兩份一致（略過原因：沒有 tripo_app/ring3d.json（公開副本的 run-tests 把 source/ 抄到暫存資料夾，倉庫的 data/ 也不在旁邊））
+- ﹣ 略過 〔待分類〕深度表 glydepth.json 也算過十位掌門（W57：從上一支拆出）（略過原因：沒有 tripo_app/glydepth.json（只放 CDN））
