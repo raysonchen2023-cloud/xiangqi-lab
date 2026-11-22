@@ -21,7 +21,6 @@ try {
   fs.cpSync(path.join(SRC, "xiangqi-db"), path.join(WS, "xiangqi-db"), { recursive: true });
   fs.cpSync(path.join(SRC, "xiangqi-lab"), path.join(WS, "xiangqi-lab"), { recursive: true });
   fs.copyFileSync(path.join(SRC, "xiangqi-referee.js"), path.join(WS, "xiangqi-referee.js"));
-  fs.copyFileSync(path.join(SRC, "STAGE-MANIFEST.json"), path.join(WS, "STAGE-MANIFEST.json"));   /* W69 第 8 項：test-threat-weaknet 要查哪些測試是「不公開、有寫原因」 */
   if (fs.existsSync(path.join(SRC, "xiangqi-android"))) fs.cpSync(path.join(SRC, "xiangqi-android"), path.join(WS, "xiangqi-android"), { recursive: true });   /* Android 建置鏈（11/13 第 17 輪起公開） */
   link(REPO, path.join(WS, "xiangqi-lab", "site"));
   if (fs.existsSync(path.join(REPO, "data", "docs"))) link(path.join(REPO, "data", "docs"), path.join(WS, "xiangqi-db", "art", "docs"));

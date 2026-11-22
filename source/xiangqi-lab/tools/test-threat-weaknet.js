@@ -111,7 +111,10 @@ test("〔原始碼〕threat-model.md：兩份逐字相同、LF、沒有控制字
 /* 公開倉庫 CI：要接不公開營運程式（千秋盃裁判台 cup-host.js，開發者 11/22 選不公開）的測試不在 tools/，
    但一定要列在 STAGE-MANIFEST.json 的 excludedTests 並寫原因，才算「存在」；隨便寫一個檔名還是會擋（W69 第 8 項） */
 const PRIV_TESTS = (() => {
-  for (let d = __dirname, i = 0; i < 6; i++, d = path.dirname(d)) for (const f of [path.join(d, "STAGE-MANIFEST.json"), path.join(d, "source", "STAGE-MANIFEST.json")]) {
+  /* run-tests 暫存配置：xiangqi-lab/site 連回倉庫根目錄 → site/source/STAGE-MANIFEST.json；開發者電腦：往上找 source/ */
+  const cands = [path.join(__dirname, "..", "site", "source", "STAGE-MANIFEST.json")];
+  for (let d = __dirname, i = 0; i < 6; i++, d = path.dirname(d)) cands.push(path.join(d, "STAGE-MANIFEST.json"), path.join(d, "source", "STAGE-MANIFEST.json"));
+  for (const f of cands) {
     try { const e = JSON.parse(fs.readFileSync(f, "utf8")).excludedTests || {}; const o = {}; for (const [k, why] of Object.entries(e)) if (String(why).trim().length >= 4) o[k] = why; return o } catch (e2) { }
   }
   return {};

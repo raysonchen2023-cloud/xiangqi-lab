@@ -178,7 +178,7 @@ test("make-www：只用公開倉庫、不帶 .github 和 source/、native-build.
   } finally { clean(d); clean(out) }
 });
 
-test("〔混合〕android.md、foss.md 兩份逐字相同、LF；路線圖有兩條路、反特性、要決定的事；foss.md 連到 android.md 和驗證紀錄", () => {
+test("〔混合〕android.md、foss.md 兩份逐字相同、LF；路線圖有兩條路、反特性、要決定的事；foss.md 連到 android.md 和驗證紀錄", (t) => {
   for (const f of ["android.md", "foss.md"]) {
     const a = fs.readFileSync(path.join(ROOT, "xiangqi-db", "art", "docs", f)), b = fs.readFileSync(path.join(LAB, "site", "data", "docs", f));
     assert.ok(a.equals(b), f + " 兩份要逐字相同");
@@ -190,7 +190,7 @@ test("〔混合〕android.md、foss.md 兩份逐字相同、LF；路線圖有兩
   assert.ok(F.includes("[android.md](android.md)") && F.includes("verification-log-20261113-0452.txt") && F.includes("### 可重現驗證包 verify-all.js"));
   /* 11/13 0452 的驗證紀錄只在開發者電腦的 opensource-stage/（公開倉庫沒有）：有才檢查內容；連結文字上面已經查過（W69 第 8 項，11/22） */
   const LOGF = path.join(LAB, "opensource-stage", "verification-log-20261113-0452.txt");
-  if (!fs.existsSync(LOGF)) return;
+  if (!fs.existsSync(LOGF)) { t.skip("0452 驗證紀錄只在開發者電腦的 opensource-stage/（公開倉庫沒有）"); return }
   const log = fs.readFileSync(LOGF, "utf8");
   assert.match(log, /總結：4 步，通過 4、失敗 0、略過 0\n✔ 全部通過\n$/);
   assert.ok(!log.includes(os.homedir()) && !log.includes(os.homedir().split("\\").join("/")) && !log.includes("\r"), "紀錄不能有使用者資料夾路徑或 CR");
