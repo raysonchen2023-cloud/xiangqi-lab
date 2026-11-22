@@ -22,7 +22,7 @@ if(typeof JH_HALL_WALK!=="undefined"){
     E:"gate-dock dock-home home-yard yard-hf hf-cf yard-gL gL-gL2 gL2-gL3 gL3-ct ct-hall",
     HS:{hall:["hall",50.3,21,"bow"],zm:["hall",50.3,21,"bow"],abacus:["hall",46,20,"bow"],study:["cf",50,52,"bow"],horse:["hf",30,61,"wave"],gate:["gate",50,98,"wave"]}};
 }
-const JH_SCR_GUARD={mv:"h2e2 h9g7 h0g2 i9h9 i0h0 b9c7 h0h6",fen:"r1bakabr1/9/1cn3nc1/p1p1p1pRp/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKAB2",turn:"b",limit:10,lose:3};
+const JH_SCR_GUARD={mv:"h2e2 h9g7 h0g2 i9h9 i0h0 b9c7 h0h6",fen:"r1bakabr1/9/1cn3nc1/p1p1p1pRp/9/9/P1P1P1P1P/1C2C1N2/9/RNBAKAB2",turn:"b",limit:10,lose:3,grace:2};   /* grace：開發者 11/22「先棄後取」——大子淨虧後給幾步取回（在 iMac Claude 1 那邊選「兩個都改」） */
 const JH_SCR_VAL={R:9,N:4,C:4.5};
 const JH_SCR_J="jh:guard:screen";
 /* 存檔：g＝守中宮第一次過關（時間、局號）；best＝最多守了幾步；de／da＝挑錯著、算帳今天拿過修為的日子 */
@@ -38,7 +38,7 @@ function jhScrGuardCard(){const G=jhScrGet();
   sheet(jhL("🐎 石馬・雙馬守中宮","🐎 Stone horses · Guard the palace"),b=>{
     b.innerHTML=`<p>${esc(jhL("對方擺出中炮過河車，車炮直衝你的中路。屏風馬的本事就是兩匹馬互相照應、守住中卒。","Red opens with the Central Cannon and a river-crossing chariot, charging at your center. The Screen Horses' art is two horses guarding each other and the central pawn."))}</p>
       <p class="muted">${esc(jhL("你執黑，從這個局面開始：","You play Black from this position: "))}${esc(jhScrCn(JH_SCR_GUARD.mv))}</p>
-      <p>${esc(jhL(`🎯 走滿 ${JH_SCR_GUARD.limit} 步：不被將死、車馬炮不淨虧（換子不算）。`,`🎯 Make ${JH_SCR_GUARD.limit} moves without being mated or losing material in chariots, horses and cannons (even trades are fine).`))}</p>
+      <p>${esc(jhL(`🎯 走滿 ${JH_SCR_GUARD.limit} 步：不被將死、車馬炮不淨虧（換子不算；先棄後取，${JH_SCR_GUARD.grace} 步內取回也算）。`,`🎯 Make ${JH_SCR_GUARD.limit} moves without being mated or losing material in chariots, horses and cannons (even trades are fine; a sacrifice you win back within ${JH_SCR_GUARD.grace} moves is fine too).`))}</p>
       ${G.g?`<p class="muted">${esc(jhL("✔ 已經守住過一次，再守只記紀錄。","✔ Already held once; replays only count in your record."))}</p>`:G.best?`<p class="muted">${esc(jhL(`目前最多守了 ${G.best} 步。`,`Best so far: ${G.best} moves.`))}</p>`:""}
       <div class="jh-actions"><button class="btn" id="jhScrGo">${esc(jhL("開始守中宮","Start"))}</button></div>`;
     b.querySelector("#jhScrGo").onclick=()=>{try{closeSheet()}catch(e){}jhScrGuardStart()}})}
@@ -65,8 +65,11 @@ function jhScrGuardFin(st,P,ok,why){store.set("jPending",null);try{if(typeof rsF
    PR #39 審查（iMac Claude 2）：淨虧只在輪到紅方（玩家剛走完）時判——紅方剛吃子、輪到玩家還沒吃回的那一刻不算，「換子不算」才成立 */
 try{if(typeof lvWatch==="function"&&!lvWatch.jhScr){const w0=lvWatch;lvWatch=function(st,v){const P=jhScrGuardOf(st);
     if(P&&!st.result){try{const E=jhScrGuardEval(st);
-        if(st.turn!==st.human&&E.net>=JH_SCR_GUARD.lose)return jhScrGuardFin(st,P,false,jhL("💥 大子被吃虧了，中宮沒守住。再試一次！","💥 You lost material. The palace fell. Try again!"));
-        if(E.n>=JH_SCR_GUARD.limit&&st.turn!==st.human)return jhScrGuardFin(st,P,true)}catch(e){}return}
+        if(st.turn!==st.human){const g=P.jhg,G=JH_SCR_GUARD;   /* 開發者 11/22「先棄後取」：淨虧 3 分以上先記下從第幾步開始虧（owe），grace 步內取回就清掉；超過 grace 步還虧才判輸；走滿 limit 步時還虧也算輸 */
+          if(E.net>=G.lose){if(g.owe==null){g.owe=E.n;store.set("jPending",P);if(E.n<G.limit)toast(jhL(`⚠ 大子少了 ${E.net} 分：${G.grace} 步內取回就不算輸（先棄後取）`,`⚠ Down ${E.net} in material: win it back within ${G.grace} moves (sacrifice first, take back later)`))}
+            else if(E.n-g.owe>=G.grace)return jhScrGuardFin(st,P,false,jhL(`💥 棄了子 ${G.grace} 步還沒取回，中宮沒守住。再試一次！`,`💥 The material wasn't won back within ${G.grace} moves. The palace fell. Try again!`))}
+          else if(g.owe!=null){g.owe=null;store.set("jPending",P)}
+          if(E.n>=G.limit)return E.net>=G.lose?jhScrGuardFin(st,P,false,jhL(`💥 走滿 ${G.limit} 步了，大子還虧，中宮沒守住。再試一次！`,`💥 ${G.limit} moves made, but still down material. Try again!`)):jhScrGuardFin(st,P,true)}}catch(e){}return}
     return w0.apply(this,arguments)};lvWatch.jhScr=1}}catch(e){}
 /* 沒守滿就分出勝負（被將死、認輸）：照常結算對局修為，另外記最多守了幾步 */
 try{if(typeof journeyGameEnd==="function"&&!journeyGameEnd.jhScr){const g0=journeyGameEnd;journeyGameEnd=function(st){let P=null;try{P=st&&st.result?jhScrGuardOf(st):null}catch(e){}
