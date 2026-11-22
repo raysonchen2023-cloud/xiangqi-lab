@@ -4,8 +4,9 @@
 //
 // 為什麼：以前 P0 報告只記檔名；送審的 AAB、驗過的 APK、P0-IMG 檢查的 AAB 是不是同一份，靠人記。
 // 規則（封測 P0 永久測項：任何一項失敗或缺驗都不能送審）：
-//   ・P0-IMG（check-aab-assets.js --cdn --out）一份、P0-UPD（check-upgrade.js --aab-sha 的 upgrade.json）一份、
-//     P0-3D（check-3d.js --aab-sha 的 summary.json）Android 12 與 16 各一份（P0 規定兩個版本都要跑）
+//   ・P0-IMG（check-aab-assets.js --cdn --out）一份、P0-UPD（check-upgrade.js --aab-apk 的 upgrade.json）一份、
+//     P0-3D（check-3d.js --aab-apk 的 summary.json）Android 12 與 16 各一份（P0 規定兩個版本都要跑）
+//   ・P0-UPD／P0-3D 要 apkBound＝true：工具自己算過實際測的 APK（--new 檔／手機上安裝的 base.apk），等於 aab-apk.json 記的 apkSha256（PR #44 審查：不能只照抄雜湊）
 //   ・每份的 aabSha256＝要送審的 AAB 實際算出的 SHA-256（P0-UPD／P0-3D 用的 APK 要由 aab-to-apk.js 從這個 AAB 產生）
 //   ・每份的版號＝--build（網頁版號 XQ_BUILD）：P0-IMG 看 siteVersion、P0-UPD 看 new.build、P0-3D 看 build
 //   ・每份 pass＝true；P0-IMG 另外要 cdnChecked＝true 且 exitCode＝0（缺驗＝3 也不能送審）；
@@ -34,6 +35,8 @@ function gate(aabSha, build, reports) {
     else if (json.aabSha256 !== aabSha) problems.push(`${key}：驗的是另一個 AAB（${json.aabSha256.slice(0, 12)}），不是要送審的這個（${aabSha.slice(0, 12)}）`);
     if (verOf(json) !== build) problems.push(`${key}：驗的版號是 ${verOf(json)}，不是要送審的 ${build}`);
     if (json.pass !== true) problems.push(`${key}：沒有通過（pass＝${json.pass}）`);
+    if ((t === "P0-UPD" || t === "P0-3D") && !(json.apkBound === true && /^[0-9a-f]{64}$/.test(String(json.apkSha256 || ""))))
+      problems.push(`${key}：沒核對實際測的 APK 是從這個 AAB 產生的（要用 --aab-apk 跑，報告要有 apkBound＝true 與 apkSha256）`);
     if (t === "P0-IMG" && (json.cdnChecked !== true || json.exitCode !== 0)) problems.push(`P0-IMG：要加 --cdn 且結束代碼 0（cdnChecked＝${json.cdnChecked}、exitCode＝${json.exitCode}）`);
     if (t === "P0-UPD" && json.oldWorker !== true) problems.push("P0-UPD：用 --no-old-worker 跑的不算（封測 P0 規則：舊 Worker 要實際接管過；流程盤點第 5 項）");
     if (t === "P0-3D") {

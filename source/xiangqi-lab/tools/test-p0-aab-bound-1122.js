@@ -1,6 +1,6 @@
 // W69 流程盤點第 3 項（11/22）：P0 證據要綁住「實際送審的 AAB」，建包腳本收進倉庫。
 //   aab-to-apk.js（從送審 AAB 產 P0 用 APK）、p0-gate.js（三份 P0 報告都綁同一個 AAB 才能送審）、
-//   check-aab-assets.js（包裡素材跟 CDN 現行版交叉核對、報告帶 AAB 雜湊）、check-upgrade.js（--aab-sha）、build-variant.js（建包步驟寫死）。
+//   check-aab-assets.js（包裡素材跟 CDN 現行版交叉核對、報告帶 AAB 雜湊）、check-upgrade.js／check-3d.js（--aab-apk：自己算實際 APK 的雜湊比 aab-apk.json）、build-variant.js（建包步驟寫死）。
 //   不連網、不開模擬器、不跑 gradle：測純函式與報告格式；實際建包與產 APK 的實測寫在 PR 說明。
 // 用法：node --test xiangqi-lab/tools/test-p0-aab-bound-1122.js
 "use strict";
@@ -11,12 +11,13 @@ const { gate } = require(path.join(AND, "p0-gate.js"));
 const { staleVsCdn } = require(path.join(AND, "check-aab-assets.js"));
 const { cdnStale } = require(path.join(AND, "build-variant.js"));
 const { readSigning, buildApksArgs } = require(path.join(AND, "aab-to-apk.js"));
-const A = "a".repeat(64), B = "b".repeat(64);
+const AB = require(path.join(AND, "apk-bind.js"));
+const A = "a".repeat(64), B = "b".repeat(64), K = "c".repeat(64);
 const V = "20261122-0804";
-const d3 = (sha, android) => ({ file: "3d-" + android + ".json", json: { tool: "P0-3D", aabSha256: sha, pass: true, build: V, android, full: true, knownFile: { fromRepo: true } } });
+const d3 = (sha, android) => ({ file: "3d-" + android + ".json", json: { tool: "P0-3D", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, knownFile: { fromRepo: true } } });
 const ok3 = (sha = A) => [
   { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V } },
-  { file: "upd.json", json: { tool: "P0-UPD", aabSha256: sha, pass: true, oldWorker: true, new: { build: V } } },
+  { file: "upd.json", json: { tool: "P0-UPD", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V } } },
   d3(sha, "12"), d3(sha, "16")];
 const has = (r, re) => r.problems.some((p) => re.test(p));
 
@@ -46,6 +47,34 @@ test("閘門：P0-IMG 要 --cdn 且 0；P0-UPD 不能 --no-old-worker；P0-3D �
   L = ok3(); L[3].json.full = false; assert.ok(has(gate(A, V, L), /P0-3D（Android 16）：不是完整跑/));
   L = ok3(); L[2].json.knownFile = { fromRepo: false }; assert.ok(has(gate(A, V, L), /P0-3D（Android 12）：已知問題清單不是倉庫的/));
   L = ok3(); delete L[2].json.knownFile; assert.ok(has(gate(A, V, L), /已知問題清單不是倉庫的/));
+});
+
+test("閘門（PR #44 審查）：P0-UPD、P0-3D 要核對過實際測的 APK（apkBound＋apkSha256）；只照抄 AAB 雜湊的不收", () => {
+  let L = ok3(); delete L[1].json.apkBound; assert.ok(has(gate(A, V, L), /P0-UPD：沒核對實際測的 APK/));
+  L = ok3(); L[2].json.apkBound = "true"; assert.ok(has(gate(A, V, L), /P0-3D（Android 12）：沒核對實際測的 APK/), "字串 true 不算");
+  L = ok3(); delete L[3].json.apkSha256; assert.ok(has(gate(A, V, L), /P0-3D（Android 16）：沒核對實際測的 APK/));
+  L = ok3(); delete L[0].json.apkBound; assert.equal(gate(A, V, L).ok, true, "P0-IMG 直接檢查 AAB，不需要 apkBound");
+});
+
+test("apk-bind：實際 APK 的 SHA-256 要等於 aab-apk.json 記的 apkSha256；不符、格式錯、檔案讀不到都不成立", () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-bind-"));
+  try {
+    const apk = path.join(d, "x.apk"), other = path.join(d, "y.apk"), js = path.join(d, "aab-apk.json");
+    fs.writeFileSync(apk, "APK-1"); fs.writeFileSync(other, "APK-2");
+    fs.writeFileSync(js, JSON.stringify({ aab: "app.aab", aabSha256: A, apk: "x.apk", apkSha256: AB.sha256File(apk) }));
+    const rb = AB.readBind(js); assert.ok(rb.ok);
+    const ok = AB.bind(rb.rec, AB.sha256File(apk), "--new");
+    assert.deepEqual(ok.fields, { aabSha256: A, apkSha256: AB.sha256File(apk), apkBound: true, aabApk: "app.aab" });
+    const bad = AB.bind(rb.rec, AB.sha256File(other), "--new"); assert.equal(bad.ok, false); assert.match(bad.msg, /不是從要送審的 AAB 產生的/);
+    assert.equal(AB.bind(rb.rec, "xyz").ok, false);
+    assert.equal(AB.readBind(null).ok, false); assert.equal(AB.readBind(path.join(d, "none.json")).ok, false);
+    fs.writeFileSync(js, JSON.stringify({ aabSha256: A })); assert.match(AB.readBind(js).msg, /缺 aabSha256／apkSha256/);
+    /* 手機上拉回的 APK：pm path 只能有一個 base.apk（拆分安裝比不出來）；拉回來算雜湊 */
+    const fakeAdb = (lines) => (args) => { if (args[1] === "pm") return lines; fs.copyFileSync(apk, args[2]); return "" };
+    const ia = AB.installedApkSha(fakeAdb("package:/data/app/x/base.apk\n"), "pkg", d); assert.deepEqual(ia, { ok: true, sha: AB.sha256File(apk) });
+    assert.equal(AB.installedApkSha(fakeAdb("package:/a/base.apk\npackage:/a/split_x.apk\n"), "pkg", d).ok, false);
+    assert.ok(!fs.existsSync(path.join(d, "installed-base.apk")), "拉回的暫存 APK 要刪掉");
+  } finally { fs.rmSync(d, { recursive: true, force: true }) }
 });
 
 test("包裡素材跟 CDN 現行版交叉核對（W42）：清單內的素材不同＝✘；清單外的檔不同＝△；相同不列", () => {
@@ -82,7 +111,11 @@ test("aab-to-apk：簽章檔四個欄位都要有；密碼只用 file: 交給 bu
 test("〔原始碼〕三支 P0 工具的報告都帶 tool／aabSha256／pass；建包腳本 --home-art 必填、webRemove 照變體設定", () => {
   const caa = rd("check-aab-assets.js"), up = rd("check-upgrade.js"), bv = rd("build-variant.js");
   assert.match(caa, /tool: "P0-IMG", \.\.\.sum,/); assert.match(caa, /aabSha256: crypto\.createHash\("sha256"\)/); assert.match(caa, /pass: CDN_CHECK && code === 0/);
-  assert.match(up, /tool: "P0-UPD", aabSha256:/); assert.match(up, /R\.pass = !bad\.length/); assert.match(up, /aabSha: arg\("--aab-sha"\)/);
+  assert.match(up, /tool: "P0-UPD", aabSha256: null, apkSha256: null, apkBound: false,/); assert.match(up, /R\.pass = !bad\.length/);
+  /* PR #44 審查：--aab-sha 只會照抄，停用；兩支都用 apk-bind 算實際 APK（check-upgrade 算 --new 檔、check-3d 拉回手機上的 base.apk） */
+  const c3 = rd("check-3d.js");
+  for (const [nm, t] of [["check-upgrade", up], ["check-3d", c3]]) { assert.match(t, /aabApk: arg\("--aab-apk"\)/, nm); assert.match(t, /--aab-sha 已停用/, nm); assert.ok(!/O\.aabSha\b/.test(t), nm + " 不能再用 --aab-sha 的值") }
+  assert.match(up, /AB\.bind\(rb\.rec, AB\.sha256File\(O\.neu\)/); assert.match(c3, /AB\.installedApkSha\(/); assert.match(c3, /\.\.\.BIND, known:/);
   assert.match(bv, /for \(const k of \["repo", "tag", "variant", "code", "name", "homeArt", "work"\]\)/, "--home-art 跟其他參數一樣必填");
   assert.match(bv, /"--home-art", path\.resolve\(O\.homeArt\)/, "make-www.js 一定帶 --home-art");
   assert.match(bv, /for \(const r of VM\.webRemove \|\| \[\]\)/);
@@ -92,5 +125,5 @@ test("〔原始碼〕三支 P0 工具的報告都帶 tool／aabSha256／pass；�
   assert.ok(VMF, "找得到 mini-26112104 的 VARIANT-MANIFEST.json");
   const vm = JSON.parse(fs.readFileSync(VMF, "utf8"));
   assert.deepEqual(vm.webRemove, ["data/docs/evidence"]);
-  for (const f of ["aab-to-apk.js", "p0-gate.js", "build-variant.js"]) assert.ok(!rd(f).includes("\r"), f + " 不能有 CR");
+  for (const f of ["aab-to-apk.js", "p0-gate.js", "build-variant.js", "apk-bind.js", "check-upgrade.js", "check-3d.js"]) assert.ok(!rd(f).includes("\r"), f + " 不能有 CR");
 });

@@ -11,7 +11,7 @@
 //      網頁更新檢查關閉、沒有更新提示視窗、「檢查更新」按鈕說由 Google Play 更新
 // 用法：node scripts/check-upgrade.js --old <舊.apk> --old-build <舊版號> --new <新.apk> --new-build <新版號> [--serial emulator-5580]
 //         [--out <資料夾>] [--cold 3] [--no-old-worker（舊版本身就是原生版、不會有舊 Worker 時）] [--allow-wipe-device（實體手機才要，會刪存檔）]
-//         [--aab-sha <要送審 AAB 的 SHA-256>（送審前必帶：新版 APK 要由 aab-to-apk.js 從那個 AAB 產生；upgrade.json 記 tool／aabSha256／pass／oldWorker 給 p0-gate.js）]
+//         [--aab-apk <aab-to-apk.js 產生的 aab-apk.json>（送審前必帶：安裝前核對 --new 的 SHA-256＝json 的 apkSha256，不符＝測試不成立；upgrade.json 記 tool／aabSha256／apkSha256／apkBound／pass／oldWorker 給 p0-gate.js）]
 //   預設只在模擬器上跑（device-guard.js）：會解除安裝 App。冷啟後看 20 秒，期間跳出過更新視窗就算
 //   需要已開好的模擬器或手機、adb（環境變數 ADB 或 PATH）；兩個 APK 要同一把簽章（測試金鑰），不然不能覆蓋安裝
 // 結束代碼：0＝通過；1＝升級後有任何一項不符；2＝用法錯誤，或舊版沒能建立要重現的狀態（測試本身不成立，不能當通過）
@@ -23,14 +23,15 @@ const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ?
 const O = { old: arg("--old"), oldBuild: arg("--old-build"), neu: arg("--new"), newBuild: arg("--new-build"), serial: arg("--serial", "emulator-5580"),
   out: path.resolve(arg("--out", "upgrade-check")), cold: Number(arg("--cold", 3)), oldWorker: !process.argv.includes("--no-old-worker"),
   allowWipe: process.argv.includes("--allow-wipe-device"),
-  aabSha: arg("--aab-sha") };   /* W69（流程盤點第 3 項）：新版 APK 要由 aab-to-apk.js 從要送審的 AAB 產生，這裡帶那個 AAB 的 SHA-256，寫進報告給 p0-gate.js 核對 */
+  aabApk: arg("--aab-apk") };   /* W69（流程盤點第 3 項，PR #44 審查後）：帶 aab-to-apk.js 的 aab-apk.json；安裝前算 --new 的 SHA-256 比對，對上才把 AAB 雜湊寫進報告給 p0-gate.js */
+const AB = require("./apk-bind.js");
 const { checkDevice } = require("./device-guard.js");
 const DIALOG_WATCH_SEC = 20;
 const DIALOGS = `[...document.querySelectorAll('.modal')].filter(x=>/有新版本|新版可用|new version|update available/i.test(x.textContent)).length`;
 const PKG = "com.raysonchen.xiangqiqianqiu", ADB = process.env.ADB || "adb", PORT = 9290;
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const adb = (...a) => cp.execFileSync(ADB, ["-s", O.serial, ...a], { encoding: "utf8", timeout: 180000 }).trim();
-const R = { tool: "P0-UPD", aabSha256: O.aabSha && /^[0-9a-f]{64}$/i.test(O.aabSha) ? O.aabSha.toLowerCase() : null, oldWorker: O.oldWorker, pass: false, serial: O.serial, old: { apk: O.old && path.basename(O.old), build: O.oldBuild }, new: { apk: O.neu && path.basename(O.neu), build: O.newBuild }, before: null, after: [] };
+const R = { tool: "P0-UPD", aabSha256: null, apkSha256: null, apkBound: false, oldWorker: O.oldWorker, pass: false, serial: O.serial, old: { apk: O.old && path.basename(O.old), build: O.oldBuild }, new: { apk: O.neu && path.basename(O.neu), build: O.newBuild }, before: null, after: [] };
 const save = () => fs.writeFileSync(path.join(O.out, "upgrade.json"), JSON.stringify(R, null, 1) + "\n");
 const snap = name => { try { fs.writeFileSync(path.join(O.out, name + ".png"), cp.execFileSync(ADB, ["-s", O.serial, "exec-out", "screencap", "-p"], { maxBuffer: 1e8 })); return name + ".png" } catch (e) { return null } };
 function fail(code, msg) { R.result = code === 1 ? "不通過" : "測試不成立"; R.error = msg; R.screenshot = snap("upgrade-error"); save(); console.error("✘ " + msg); process.exit(code) }
@@ -86,7 +87,13 @@ function verdict(row, newBuild = O.newBuild) {
 async function main() {
   if (!O.old || !O.neu || !O.oldBuild || !O.newBuild || !fs.existsSync(O.old) || !fs.existsSync(O.neu) || !(O.cold > 0))
     { console.error("用法：node scripts/check-upgrade.js --old <舊.apk> --old-build <舊版號> --new <新.apk> --new-build <新版號> [--serial emulator-5580] [--out 資料夾] [--cold 3] [--no-old-worker] [--allow-wipe-device]"); process.exit(2) }
+  if (process.argv.includes("--aab-sha")) { console.error("✘ --aab-sha 已停用（只會照抄雜湊、核對不到實際 APK）：改帶 --aab-apk <aab-to-apk.js 產生的 aab-apk.json>"); process.exit(2) }
   fs.mkdirSync(O.out, { recursive: true });
+  if (O.aabApk) {
+    const rb = AB.readBind(O.aabApk); if (!rb.ok) fail(2, rb.msg);
+    const bd = AB.bind(rb.rec, AB.sha256File(O.neu), "--new 的 APK"); if (!bd.ok) fail(2, bd.msg);
+    Object.assign(R, bd.fields); console.log(`✔ --new 就是從送審 AAB（${R.aabSha256.slice(0, 12)}）產生的 APK`);
+  } else console.log("⚠ 沒帶 --aab-apk：這份報告沒綁送審 AAB，p0-gate.js 不收");
   try { R.device = { model: adb("shell", "getprop", "ro.product.model"), android: adb("shell", "getprop", "ro.build.version.release") } }
   catch (e) { fail(2, `找不到裝置 ${O.serial}（adb devices 看看）`) }
   { const g = checkDevice(adb, O.allowWipe); R.device.emulator = g.emulator; if (!g.ok) fail(2, g.message); if (g.message) console.log(g.message) }

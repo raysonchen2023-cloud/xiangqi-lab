@@ -54,7 +54,7 @@ function main() {
     const ver = cp.spawnSync(JAVA, ["-jar", JAR, "version"], { encoding: "utf8" }).stdout.trim();
     const rec = { aab: path.basename(AAB), aabSha256: sha256(AAB), apk: name, apkSha256: sha256(apk), bundletool: ver, mode: "universal", madeAt: new Date().toISOString() };
     fs.writeFileSync(path.join(OUT, "aab-apk.json"), JSON.stringify(rec, null, 1) + "\n");
-    console.log(`✔ ${rec.apk}\n  AAB SHA-256 ${rec.aabSha256}\n  APK SHA-256 ${rec.apkSha256}\n  bundletool ${ver}；P0 三份報告都要帶這個 AAB 的 SHA-256（--aab-sha）`);
+    console.log(`✔ ${rec.apk}\n  AAB SHA-256 ${rec.aabSha256}\n  APK SHA-256 ${rec.apkSha256}\n  bundletool ${ver}；P0-UPD／P0-3D 帶 --aab-apk ${path.join(OUT, "aab-apk.json")}（工具會核對實際 APK）`);
   } finally { fs.rmSync(tmp, { recursive: true, force: true }) }
 }
 module.exports = { readSigning, buildApksArgs };
