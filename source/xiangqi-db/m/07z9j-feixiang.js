@@ -72,20 +72,20 @@ function jhFeixiangOpen(lv0){const G=jhFxGet(),L=JH_FX_LV.find(x=>x.k===(lv0||G.
   sheet(jhL("🏯 講經亭・築堤擺陣形","🏯 Lecture pavilion · Build the formation"),b=>{
     b.innerHTML=`<p class="muted">${esc(jhL("孟懷瑾：「治學先立根基，布陣先穩陣腳，用最少步數把陣形擺出來。」","Meng Huaijin: \"Learning starts with foundations, and a formation with a firm base. Set it up in the fewest moves.\""))}</p>
       <div class="jh-gp-lv">${JH_FX_LV.map(x=>`<button class="btn ${x.k===L.k?"":"ghost"}" data-lv="${x.k}">${esc(jhL(x.zh,x.en))}</button>`).join("")}</div>
-      <p id="jhFq" class="jh-gp-q"></p><div id="jhFb" class="jh-scr-bd"></div><p id="jhFn" class="muted" style="text-align:center;margin:4px 0"></p>
-      <div class="jh-actions"><button class="btn ghost" id="jhFh">${esc(jhL("💡 提示","💡 Hint"))}</button><button class="btn ghost" id="jhFr">${esc(jhL("↺ 重來","↺ Retry"))}</button><button class="btn" id="jhFx" style="display:none"></button></div>
-      <p id="jhFs" class="jh-mate-say" style="display:none"></p>`;
-    const $=s=>b.querySelector(s);let cur=null,bd=null,sel=-1,steps=0,done=false,last=null,mark=-1;const brd=Board(x=>tap(x));$("#jhFb").append(brd.svg);
+      <p id="jhFxQ" class="jh-gp-q"></p><div id="jhFxB" class="jh-scr-bd"></div><p id="jhFxN" class="muted" style="text-align:center;margin:4px 0"></p>
+      <div class="jh-actions"><button class="btn ghost" id="jhFxH">${esc(jhL("💡 提示","💡 Hint"))}</button><button class="btn ghost" id="jhFxR">${esc(jhL("↺ 重來","↺ Retry"))}</button><button class="btn" id="jhFxNext" style="display:none"></button></div>
+      <p id="jhFxS" class="jh-mate-say" style="display:none"></p>`;
+    const $=s=>b.querySelector(s);let cur=null,bd=null,sel=-1,steps=0,done=false,last=null,mark=-1;const brd=Board(x=>tap(x));$("#jhFxB").append(brd.svg);
     b.querySelectorAll("[data-lv]").forEach(x=>x.onclick=()=>{try{closeSheet()}catch(e){}setTimeout(()=>jhFeixiangOpen(x.dataset.lv),250)});
-    const say=t=>{const s=$("#jhFs");s.style.display=t?"":"none";s.textContent=t||""};
+    const say=t=>{const s=$("#jhFxS");s.style.display=t?"":"none";s.textContent=t||""};
     const left=()=>cur.T.filter(x=>bd[x.s]!==x.p).map(x=>JH_FX_NM[x.p]);
     const draw=()=>{const mv=sel>=0?jhFxMoves(bd).filter(([f])=>f===sel).map(z=>z[1]):[];
       const tg=sel>=0?cur.T.filter(x=>x.p===bd[sel]).map(x=>x.s):cur.T.map(x=>x.s);
       brd.draw(bd,{sel:sel>=0?sel:mark,targets:mv,hint:tg});
-      const L2=left();$("#jhFn").textContent=jhL(`已走 ${steps} 步（最少 ${cur.d} 步）`,`${steps} move${steps===1?"":"s"} (best ${cur.d})`)+(L2.length&&!done?jhL(`｜還沒到位：${L2.join("、")}`,` · not yet placed: ${L2.length}`):"")};
-    const reset=()=>{bd=cur.b.slice();sel=-1;steps=0;done=false;last=null;mark=-1;$("#jhFx").style.display="none";draw()};
+      const L2=left();$("#jhFxN").textContent=jhL(`已走 ${steps} 步（最少 ${cur.d} 步）`,`${steps} move${steps===1?"":"s"} (best ${cur.d})`)+(L2.length&&!done?jhL(`｜還沒到位：${L2.join("、")}`,` · not yet placed: ${L2.length}`):"")};
+    const reset=()=>{bd=cur.b.slice();sel=-1;steps=0;done=false;last=null;mark=-1;$("#jhFxNext").style.display="none";draw()};
     const start=()=>{cur=Q[qi];say("");reset();
-      $("#jhFq").textContent=jhL(`第 ${qi+1}／${Q.length} 題：把紅子擺進虛線框（同種子的框都可以），最少 ${cur.d} 步。點一顆子，框會只留它能去的目標`,`${qi+1}/${Q.length}: move the red pieces into the dashed boxes (any box of the same kind), ${cur.d} moves at best. Tap a piece to see its own targets`)};
+      $("#jhFxQ").textContent=jhL(`第 ${qi+1}／${Q.length} 題：把紅子擺進虛線框（同種子的框都可以），最少 ${cur.d} 步。點一顆子，框會只留它能去的目標`,`${qi+1}/${Q.length}: move the red pieces into the dashed boxes (any box of the same kind), ${cur.d} moves at best. Tap a piece to see its own targets`)};
     const tap=x=>{if(done)return;mark=-1;
       if(sel>=0&&jhFxMoves(bd).some(([f,t])=>f===sel&&t===x)){
         if(last&&last[0]===x&&last[1]===sel){say(jhL("這顆子剛從那裡過來，走回去只是白費一步。","That piece just came from there. Going back wastes a move."));sel=-1;draw();return}
@@ -93,12 +93,12 @@ function jhFeixiangOpen(lv0){const G=jhFxGet(),L=JH_FX_LV.find(x=>x.k===(lv0||G.
         if(!jhFxDone(bd,cur.T)){say("");draw();return}
         done=true;draw();const ok=steps===cur.d;if(ok)best++;
         say(ok?jhL("陣腳穩固，步數算得剛剛好！","A firm base, and not a move wasted!"):jhL(`陣形擺好了，但多走了 ${steps-cur.d} 步；先看哪顆子可以直接到位。按「重來」再試。`,`Formation set, but ${steps-cur.d} move${steps-cur.d>1?"s":""} too many. Look for pieces that can go straight in. Tap Retry.`));
-        const nb=$("#jhFx");nb.style.display="";nb.textContent=qi+1<Q.length?jhL("下一題","Next"):jhL("收工","Finish");
+        const nb=$("#jhFxNext");nb.style.display="";nb.textContent=qi+1<Q.length?jhL("下一題","Next"):jhL("收工","Finish");
         nb.onclick=()=>{if(qi+1<Q.length){qi++;start();return}nb.style.display="none";const xp=best===Q.length?jhFxDayXP():0;
           say(jhL(`這一輪最少步數擺成 ${best}／${Q.length} 題。${xp?`全對，修為 +${xp}`:""}`,`${best}/${Q.length} in the fewest moves.${xp?` All right: +${xp} XP`:""}`))};
         return}
       sel=bd[x]&&JH_FX_NM[bd[x]]&&jhFxMoves(bd).some(([f])=>f===x)?x:-1;draw()};
-    $("#jhFh").onclick=()=>{if(done)return;const n=jhFxNearest(bd,cur.T);sel=-1;mark=n?n.at:-1;draw();
+    $("#jhFxH").onclick=()=>{if(done)return;const n=jhFxNearest(bd,cur.T);sel=-1;mark=n?n.at:-1;draw();
       say(n?jhL(`已走 ${steps} 步。離目標最近的是${JH_FX_NM[n.p]}（框起來的那顆），最快 ${n.d} 步能到位。`,`${steps} moves so far. The closest is the highlighted piece: ${n.d} move${n.d>1?"s":""} from its box.`):"")};
-    $("#jhFr").onclick=()=>{if(!cur)return;if(done&&steps===cur.d)return;reset();say("")};
+    $("#jhFxR").onclick=()=>{if(!cur)return;if(done&&steps===cur.d)return;reset();say("")};
     start()})}

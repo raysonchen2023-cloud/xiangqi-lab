@@ -109,7 +109,10 @@ test("提示：指出還沒到位、離空著的目標格最近的那顆子", ()
   const n = R.jhFxNearest(b, T);
   assert.ok(n && [83, 84].includes(n.at) && n.d === 1);
   b[67] = "B"; b[83] = null;
-  assert.equal(R.jhFxNearest(b, T).at, 84, "已到位的相不算");
+  assert.equal(R.jhFxNearest(b, T).at, 84, "已到位的相不算");  /* PR #49 審查③：同種子兩顆、其中一顆已到位——已到位那顆離另一個空框只要 1 步，不能被當成「最近」 */
+  const T2 = R.jhFxTargets({ B: [67, 83] }), c = new Array(90).fill(null); c[85] = "K"; c[3] = "k"; c[67] = "B"; c[87] = "B";
+  const n2 = R.jhFxNearest(c, T2);
+  assert.equal(n2.at, 87, "要指還沒到位的那顆相"); assert.equal(n2.to, 83);
 });
 
 test("每天修為：一輪全對 +10，同一天再全對不給；換日再給", () => {
@@ -122,6 +125,7 @@ test("每天修為：一輪全對 +10，同一天再全對不給；換日再給"
 
 test("〔原始碼〕只開一個全域入口 jhFeixiangOpen；防同一顆子來回走；沒有行內 // 註解；m.html、存檔鍵、testkinds 各一行", () => {
   assert.match(SRC, /function jhFeixiangOpen\(/);
+  for (const id of SRC.match(/id="[^"]+"/g) || []) assert.match(id, /^id="jhFx/, "DOM id 要用 jhFx 開頭（PR #49 審查①，免得跟別的門派小卡撞名）：" + id);
   assert.match(SRC, /last\[0\]===x&&last\[1\]===sel/, "同一顆子剛走過來又走回去要擋");
   for (const l of SRC.split("\n")) if (/[;})]\s*\/\/(?!#)/.test(l) && !/https?:\/\//.test(l)) assert.fail("一行程式後面接 // 註解會吃掉後面的程式：" + l.slice(0, 80));
   assert.match(rd("xiangqi-db/m.html"), /\/\/#include m\/07z9j-feixiang\.js/);
