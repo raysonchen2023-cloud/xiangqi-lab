@@ -8,10 +8,10 @@ App 依 GPL-3.0-or-later 授權；象棋引擎 Pikafish 是 GPL-3。這個資料
 
 | 項目 | 值 |
 | --- | --- |
-| App 內版號（`XQ_BUILD`） | `20261121-0643` |
-| 網頁基底：本倉庫的提交 | `2ca12e10e84b3787dff8492803a8354fceca0944` |
-| 重建後 `www/index.html` 的 SHA-256 | `e6f2c861be3c98fd117190ae62b92931aa70e1eb4fc565c4b179656ae2b5233e` |
-| 開發者驗收過的安裝包 | `iOS-0260-to-0643-QA`（開發簽章，裝在開發者自己的 iPhone；還沒上 TestFlight 或 App Store） |
+| App 內版號（`XQ_BUILD`） | `20261122-0804` |
+| 網頁基底：本倉庫的提交 | `6f85af4c7aaefb61b6191e7d7762d5a246144ddc`（標籤 `web-20261122-0804`） |
+| 重建後 `www/index.html` 的 SHA-256 | `0b3d774be9d27ff7e51d6cc8b62dcfdc0811c71917b8688383e99df32fddf7f4` |
+| 候選安裝包 | 2026-11-22 從標籤 `web-20261122-0804` 建（開發簽章，iOS 候選驗收中；還沒上 TestFlight 或 App Store）。上一版 `20261121-0643` 見 [VERSIONS.md](VERSIONS.md) |
 
 其他版本請見 [VERSIONS.md](VERSIONS.md)。
 
@@ -34,7 +34,7 @@ App 依 GPL-3.0-or-later 授權；象棋引擎 Pikafish 是 GPL-3。這個資料
 
 ```
 git clone https://github.com/raysonchen2023-cloud/xiangqi-lab.git $W/web
-git -C $W/web -c core.autocrlf=false checkout 2ca12e10e84b3787dff8492803a8354fceca0944
+git -C $W/web -c core.autocrlf=false checkout 6f85af4c7aaefb61b6191e7d7762d5a246144ddc
 cp -R $W/web/source/xiangqi-ios $W/ios      # 原生專案；用同一個倉庫裡含本資料夾的提交
 cd $W/ios
 npm ci
@@ -43,7 +43,7 @@ npm ci
 ### 2. 做網頁成品
 
 ```
-node scripts/copy-www.js --site $W/web --ref 2ca12e10e84b3787dff8492803a8354fceca0944 --cdn-fetch
+node scripts/copy-www.js --site $W/web --ref 6f85af4c7aaefb61b6191e7d7762d5a246144ddc --cdn-fetch
 ```
 
 - 程式和小檔讀自 `--ref` 指定的提交（用 `git ls-tree`／`cat-file` 讀，不需要 checkout）。
@@ -55,11 +55,11 @@ node scripts/copy-www.js --site $W/web --ref 2ca12e10e84b3787dff8492803a8354fcec
 ```
 patch -s www/index.html < web-overlay/index.html.patch
 cp web-overlay/release.json web-overlay/native-build.json www/
-shasum -a 256 www/index.html     # 應該等於第一節的 e6f2c861…
+shasum -a 256 www/index.html     # 應該等於第一節的 0b3d774b…
 ```
 
 `copy-www.js` 會改寫 `scripts/.www-files.json`，變成這次複製的清單，再拿來給 `check-www.js` 用；套用覆蓋後，`index.html` 和 `release.json` 會被列為大小不符，這是預期的。
-要和開發者驗收的 0643 安裝包逐檔比對，請用倉庫裡原本那份清單（每個檔的大小，加上 git 追蹤檔的 sha1 前 12 碼）：`git -C $W/web show HEAD:source/xiangqi-ios/scripts/.www-files.json`。
+要和這一版的候選安裝包逐檔比對，請用倉庫裡原本那份清單（每個檔的大小，加上 git 追蹤檔的 sha1 前 12 碼）：`git -C $W/web show HEAD:source/xiangqi-ios/scripts/.www-files.json`。
 
 `web-overlay/index.html.patch` 只有原生版才需要的 6 段：
 - 原生版不用網頁的版本更新和 Service Worker（`appVer`、`xqWebUpdateOn`、`XQNet version`）。
@@ -82,9 +82,12 @@ xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -de
 
 ## 四、已知差異
 
-- `park3d.js`：開發者驗收的安裝包裡這個檔是 CRLF 換行，照本流程重建會是 LF。內容逐行相同，只差換行。
-- `data/park/classic_360_bookcliff.webp`：驗收的安裝包裡多一張圖，程式沒有引用，公開倉庫和 CDN 都沒有，重建不會產生。對功能沒有影響。
-- 2026-11-21 的實測：照本流程在全新資料夾重建，和開發者驗收的安裝包比對，4,695 個共同檔中 4,694 個逐位元相同（只差 `park3d.js` 的換行），模擬器版 `xcodebuild` 成功，產物裡的 `index.html` 是 `e6f2c861…`。
+- 2026-11-22（`20261122-0804`）：iOS 候選包直接照本流程從標籤 `web-20261122-0804` 建（iMac 的 `tools-imac/stage-from-tag.sh`），所以安裝包和本流程的重建結果相同：`index.html` 是 `0b3d774b…`，共 4,700 個檔；Release 實機版、Debug 模擬器版 `xcodebuild` 都成功。
+- `web-overlay/release.json`、`native-build.json` 是「這一版」iOS 包的版本清單，每一版重產：`release.json` 是標籤的網頁版 `release.json` 加上原生欄位（`html` 是套補丁後 `index.html` 的 sha1，另有 `sharedWebCommit`、`packageFiles` 的 SHA-256）；`native-build.json` 是 `copy-www.js` 產生的。`scripts/.www-files.json` 裡 `index.html`、`release.json`、`native-build.json` 這三筆已經是套用覆蓋後的大小，`check-www.js` 不會再報大小不符。
+- `index.html.patch` 套到新版 `index.html` 時，`patch` 可能因為行號位移留下 `www/index.html.orig`，要刪掉，不能進安裝包。
+- 上一版 `20261121-0643` 的已知差異（那個安裝包是當時 Windows 的更新包，不是照本流程建的）：
+  - `park3d.js`：安裝包是 CRLF 換行，本流程重建是 LF，內容相同。
+  - `data/park/classic_360_bookcliff.webp`：安裝包裡有，當時公開倉庫和 CDN 都沒有。`park3d.js` 有引用這張圖（classic 朝代的長卷），網頁版因此從 0643 起缺長卷（W61），0804 已補上 CDN。
 - 重建結果取決於 CDN 當時的內容。CDN 換檔之後，`--cdn-fetch` 會拿到新檔；要逐位元重現舊版，請比對 `scripts/.www-files.json`。
 
 ## 五、原生程式說明
