@@ -52,6 +52,7 @@ const CLASSIFIED = new Set([
   "test-jh-canal-1122.js",   /* 11/22 W46 十州漕運殘局（門派任務版）：運河四州、時辰換州、真題庫挑題（一～三步殺、殺法標籤）、點船挑題、殘局頁外掛模式驗證、每天每州修為只給一次、漕船圖與退路；11/22 停靠點避開長卷原有的船與岸、船貼水面（行為 7、混合 1、原始碼 2） */
   "test-zm-screen-data-1122.js",   /* 11/22 W48-S2 屏風馬門兩套題庫資料（開發者選單：課堂挑錯著、算盤算帳）：xiangqi-db/art/zmhall/ 兩份題庫（發布時帶到 data/zmhall/）的格式、每手用 core.js 重走合法、壞著是黑方、ok 含 best、答案與分數門檻與子力一致（不跑引擎；引擎分數由 tools/screen-quiz-build.js 產生；行為 7：含網站副本與原始資料一致） */
   "test-zm-shijiao-1122.js",   /* 11/22 W48-S3 仕角炮門「當鋪算兌子」（開發者選單：193 八派第一批）：m/07z9e-shijiao.js 互吃窮舉 7 個手算案例（含雙方停手、過河卒、牽制）、60 題題庫用同一支程式重算、答錯說明、一輪 3 題不重複且打散、每天修為只給一次（行為 8） */
+  "test-jh-screen-1122.js",   /* 11/22 W48 屏風馬門門內（開發者：要跟中炮門不同玩法；三種都做、前院不站門人）：守中宮起始局面合法、開局參數、大子淨虧計算、走滿 10 步過關且修為只給一次、淨虧當場失敗、別的對局照舊、挑錯著與算帳每天一次修為、門內設定與 3D 路網（行為 10、原始碼 1） */
   "test-android-roadmap.js",   /* 11/13 第 14 輪 F3 Android 路線圖＋可重現驗證包：verify-all.js、xiangqi-android 骨架檢查、F-Droid 草稿、make-www（行為 8、混合 1）；11/13 骨架檢查 native.swclient（行為 +1） */
   "test-fdroid-evidence.js",   /* 11/13 第 13 輪 F2 F-Droid 可建置證據：pikafish-verify.js、release-verify.js（行為 8、原始碼 1） */
   "test-daily.js",   /* 11/13 第 13 輪 F1 每日同題＋無雷分享（m/07dq-daily.js；行為 11、原始碼 2）；第 14 輪 X4 題庫改版名冊＋邊界（行為 +13） */
