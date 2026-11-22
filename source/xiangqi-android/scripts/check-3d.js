@@ -292,9 +292,11 @@ async function run(name, inject) {
   const g = checkDevice((...a) => adb(...a), O.allowReal);
   if (!g.ok) throw new Unfit(g.message);
   if (g.message) console.log(g.message);
-  const S = { build: O.build, serial: O.serial, android: adb("shell", "getprop", "ro.build.version.release"),
+  /* 送審閘門 p0-gate.js（Windows Claude 1，W69 第 3 項）讀 tool、aabSha256、pass：雜湊要 64 碼小寫，格式不對就不跑 */
+  if (O.aabSha && !/^[0-9a-f]{64}$/.test(O.aabSha)) throw new Unfit("--aab-sha 要是 64 碼小寫的 SHA-256：" + O.aabSha);
+  const S = { tool: "P0-3D", build: O.build, serial: O.serial, android: adb("shell", "getprop", "ro.build.version.release"),
     webview: (adb("shell", "dumpsys", "package", "com.google.android.webview").match(/versionName=(\S+)/) || [])[1] || "", at: new Date().toISOString(),
-    aabSha256: O.aabSha || "（沒給 --aab-sha）", known: KNOWN.map((x) => x.id + "≤" + x.until),
+    aabSha256: O.aabSha || null, known: KNOWN.map((x) => x.id + "≤" + x.until),
     knownFile: { path: O.known || "（沒有）", sha256: KNOWN_RAW ? require("crypto").createHash("sha256").update(KNOWN_RAW).digest("hex") : null, fromRepo: KNOWN_FROM_REPO },
     /* PR #42 審查②：只跑部分情境（--only）或自我反測不算完整，送審只認 full＝true */
     full: !O.only && !O.selfTest, results: [] };
