@@ -22,6 +22,7 @@
 //   會關掉重開 App、在測試房 xq_test 開新局；不會解除安裝、不刪存檔
 //   [--rounds N]（預設 2）：九情境整組連跑 N 輪，每一輪都全過才算過（W69 流程盤點第 5 項，開發者 11/23 選「連續 2 輪」：
 //     不再接受「失敗後重跑到過」）。每次執行不論過不過都追加一行到 <out>/attempts.jsonl；報告記這是同一個 AAB／Android 版本的第幾次嘗試、之前失敗幾次
+//     （環境不成立、例外結束也會記；紀錄跟著 --out 資料夾走：同一個候選包請一直用同一個 --out，換資料夾就看不到之前的失敗）
 // 結束代碼：0＝全部通過（或 --self-test 兩次都照預期）；1＝有情境沒過；2＝用法錯誤或環境不成立（版號不對、不在測試房、量不到 WebView），不能當通過
 "use strict";
 const fs = require("fs"), path = require("path"), cp = require("child_process");
@@ -116,7 +117,11 @@ const KNOWN_RAW = (() => { try { return fs.readFileSync(O.known) } catch (e) { r
 const KNOWN = (() => { try { const j = JSON.parse(String(KNOWN_RAW)); return Array.isArray(j.items) ? j.items : [] } catch (e) { return [] } })();
 const KNOWN_FROM_REPO = !!O.known && fs.existsSync(REPO_KNOWN) && path.resolve(O.known) === path.resolve(REPO_KNOWN);
 if (!O.build) { console.error("用法：node scripts/check-3d.js --build <版號> [--serial emulator-5580] [--port 9291] [--out p0-3d] [--only <情境>] [--rounds 2] [--self-test]"); process.exit(2) }
-if (!Number.isInteger(O.rounds) || O.rounds < 1 || O.rounds > 9) { console.error("✘ --rounds 要是 1～9 的整數：" + arg("--rounds")); process.exit(2) }const PKG = "com.raysonchen.xiangqiqianqiu", ADB = process.env.ADB || "adb";
+if (!Number.isInteger(O.rounds) || O.rounds < 1 || O.rounds > 9) { console.error("✘ --rounds 要是 1～9 的整數：" + arg("--rounds")); process.exit(2) }
+const PKG = "com.raysonchen.xiangqiqianqiu", ADB = process.env.ADB || "adb";
+/* PR #58 審查：環境不成立或例外結束也要寫進嘗試紀錄（CUR＝目前知道的 AAB 與 Android 版本） */
+let CUR = { aabSha256: null, android: null };
+const logAttempt = (o) => { try { fs.mkdirSync(O.out, { recursive: true }); fs.appendFileSync(path.join(O.out, "attempts.jsonl"), JSON.stringify({ at: new Date().toISOString(), aabSha256: CUR.aabSha256 || null, android: CUR.android || null, build: O.build, ...o }) + "\n") } catch (e) { } };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const adb = (...a) => cp.execFileSync(ADB, ["-s", O.serial, ...a], { encoding: "utf8", timeout: 120000, maxBuffer: 30e6 }).trim();
 const shot = (name) => { try { fs.writeFileSync(path.join(O.out, name + ".png"), cp.execFileSync(ADB, ["-s", O.serial, "exec-out", "screencap", "-p"], { maxBuffer: 30e6 })) } catch (e) { } };
@@ -311,7 +316,7 @@ async function run(name, inject) {
     const ia = AB.installedApkSha((args) => cp.execFileSync(ADB, ["-s", O.serial, ...args], { encoding: "utf8", timeout: 300000, maxBuffer: 30e6 }), PKG, O.out);
     if (!ia.ok) throw new Unfit(ia.msg);
     const bd = AB.bind(rb.rec, ia.sha, "手機上實際安裝的 APK"); if (!bd.ok) throw new Unfit(bd.msg);
-    BIND = bd.fields; console.log(`✔ 手機上的 App 就是從送審 AAB（${BIND.aabSha256.slice(0, 12)}）產生的 APK`);
+    BIND = bd.fields; CUR.aabSha256 = BIND.aabSha256; console.log(`✔ 手機上的 App 就是從送審 AAB（${BIND.aabSha256.slice(0, 12)}）產生的 APK`);
   } else console.log("⚠ 沒帶 --aab-apk：這份報告沒綁送審 AAB，p0-gate.js 不收");
   const S = { tool: "P0-3D", build: O.build, serial: O.serial, android: adb("shell", "getprop", "ro.build.version.release"),
     webview: (adb("shell", "dumpsys", "package", "com.google.android.webview").match(/versionName=(\S+)/) || [])[1] || "", at: new Date().toISOString(),
@@ -319,6 +324,7 @@ async function run(name, inject) {
     knownFile: { path: O.known || "（沒有）", sha256: KNOWN_RAW ? require("crypto").createHash("sha256").update(KNOWN_RAW).digest("hex") : null, fromRepo: KNOWN_FROM_REPO },
     /* PR #42 審查②：只跑部分情境（--only）或自我反測不算完整，送審只認 full＝true */
     full: !O.only && !O.selfTest, results: [] };
+  CUR = S;
   if (KNOWN.length && !KNOWN_FROM_REPO) console.log("⚠ 已知問題清單不是倉庫 .github/p0-known.json（" + O.known + "）：這份沒經過逐行審，送審不能用");
   if (O.selfTest) {
     const a = await run("pvp-black", false), b = await run("pvp-black", true);
@@ -351,4 +357,4 @@ async function run(name, inject) {
   fs.writeFileSync(path.join(O.out, "summary.json"), JSON.stringify(S, null, 2));
   console.log((S.pass ? "✔ 通過" : "✘ 沒過") + "：" + S.results.length + " 項" + (S.full ? "（九情境完整）" : "（只跑部分情境：送審不能用）") + "，報告 " + path.join(O.out, "summary.json"));
   process.exit(S.pass ? 0 : 1);
-})().catch((e) => { console.error((e instanceof Unfit ? "測試不成立：" : "✘ ") + e.message); process.exit(e instanceof Unfit ? 2 : 1) });
+})().catch((e) => { logAttempt({ pass: false, unfit: e instanceof Unfit, error: String(e.message).slice(0, 200) }); console.error((e instanceof Unfit ? "測試不成立：" : "✘ ") + e.message); process.exit(e instanceof Unfit ? 2 : 1) });

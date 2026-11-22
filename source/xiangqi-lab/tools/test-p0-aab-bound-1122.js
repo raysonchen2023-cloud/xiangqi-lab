@@ -186,6 +186,7 @@ test("豁免：P0-3D 的豁免可以只針對一個 Android 版本", () => {
 test("〔原始碼〕check-3d 預設跑 2 輪、每次嘗試都寫 attempts.jsonl；p0-gate 只認倉庫 .github/p0-waivers.json；豁免檔是空的", () => {
   const c3 = rd("check-3d.js"), pg = rd("p0-gate.js");
   assert.match(c3, /rounds: Number\(arg\("--rounds", 2\)\)/); assert.match(c3, /fs\.appendFileSync\(AF, JSON\.stringify\(/); assert.match(c3, /if \(!roundPass\(RR\)\) break;/);
+  assert.match(c3, /\}\)\(\)\.catch\(\(e\) => \{ logAttempt\(\{ pass: false, unfit: e instanceof Unfit/, "環境不成立、例外結束也寫嘗試紀錄（PR #58 審查）");
   assert.match(pg, /const r = gate\(sha, BUILD, reports, fromRepo \? waivers : \[\]\);/);
   const WF = [path.join(__dirname, "..", "..", "..", ".github", "p0-waivers.json"), path.join(__dirname, "..", "site", ".github", "p0-waivers.json")].find((f) => fs.existsSync(f));
   assert.ok(WF, "倉庫有 .github/p0-waivers.json");
