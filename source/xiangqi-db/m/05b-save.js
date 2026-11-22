@@ -54,6 +54,7 @@ JOURNEY_KEYS.push("m_zm","m_zmCur");   /* 11/18 開發者（十派掌門，07z9-
 JOURNEY_KEYS.push("m_osc");   /* 11/18 開發者（開局門派，07z9-school.js）：osc＝每位七星的門派、各課進度、看過提示／示範、三階段完成時間（跟旅程走；修為去重的 oscClaim 是帳號層，不在這裡） */
 JOURNEY_KEYS.push("m_jhKick");   /* 11/22 開發者（W45② 十州踢館令，07z9b-jianghu.js）：jhKick＝各組踢館第一次破陣的時間、局號、哪位角色（帳號第一次破陣的修為去重在 oscClaim 的 kick:A>B） */
 JOURNEY_KEYS.push("m_jhScreen");   /* 11/22 開發者（W48 屏風馬門門內，07z9c-screen.js）：jhScreen＝雙馬守中宮第一次過關與最多守幾步、挑錯著與算帳今天領過修為的日子 */
+JOURNEY_KEYS.push("m_jhGong");   /* 11/22 開發者（W48 過宮炮門「宣紙蓋子位」，07z9d-gongpao.js）：jhGong＝上次選的難度、今天領過修為的日子、一輪最多記對幾題 */
 JOURNEY_KEYS.push("m_jhCanal");   /* 11/22 開發者（W46 十州漕運殘局，07z9b-jianghu.js）：jhCanal＝今天各州漕船挑好的題、解開了沒（換日清掉） */
 JOURNEY_KEYS.push("m_jhShijiao");   /* 11/22 開發者（W48 仕角炮門「當鋪算兌子」，07z9e-shijiao.js）：jhShijiao＝上次選的難度、今天領過修為的日子、一輪最多算對幾題 */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
