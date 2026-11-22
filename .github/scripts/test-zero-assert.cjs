@@ -21,6 +21,7 @@ const FAKE = [
   'test("用 t.skip 明列略過", (t) => { return t.skip("這個環境沒有") });',
   'test("用 node:assert（非 strict）也算", () => { require("node:assert").strictEqual(2, 2) });',
   'test("用 assert.strict 子物件也算", () => { require("node:assert").strict.equal(3, 3) });',
+  'test("直接呼叫 assert(條件) 也算", () => { require("node:assert")(true); require("node:assert/strict")(1); require("node:assert").strict(2); assert(3) });',
 ].join(NL) + NL;
 
 function runFake() {
@@ -34,7 +35,8 @@ test("計數器真的跑：各種寫法的斷言次數；空測試、三元式�
   const { d, out } = runFake();
   try {
     const R = readDir(out), L = R["test-fake.js"], by = Object.fromEntries(L.map((c) => [c.name, c]));
-    assert.equal(L.length, 8, "八項都要記到");
+    assert.equal(L.length, 9, "九項都要記到");
+    assert.equal(by["直接呼叫 assert(條件) 也算"].n, 4, "PR #57 Codex 審查：assert 本身、assert/strict 本身、assert.strict 本身都能直接呼叫");
     assert.equal(by["同步：兩次斷言"].n, 2);
     assert.equal(by["非同步：await 之後的斷言也算"].n, 1, "AsyncLocalStorage 要跟到 await 之後");
     assert.equal(by["用 node:assert（非 strict）也算"].n, 1);

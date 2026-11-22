@@ -15,16 +15,26 @@ if (OUT) {
   const Module = require("module"), fs = require("fs"), path = require("path"), { AsyncLocalStorage } = require("async_hooks");
   const ALS = new AsyncLocalStorage(), REC = [];
   const MARK = Symbol.for("xq.assertCount");
+  /* assert 本身也能直接呼叫（assert(條件)）：用 Proxy 只攔「呼叫」，屬性照原物件（PR #57 Codex 審查） */
+  const PROX = new WeakMap();
+  const callable = (f) => {
+    if (typeof f !== "function") return f;
+    if (!PROX.has(f)) PROX.set(f, new Proxy(f, { apply(t, self, x) { const c = ALS.getStore(); if (c) c.n++; return Reflect.apply(t, self, x) } }));
+    return PROX.get(f);
+  };
   const wrapAssert = (a) => {
-    if (!a || a[MARK]) return a;
-    for (const k of Object.keys(a)) {
-      const f = a[k];
-      if (typeof f !== "function" || k === "AssertionError" || k === "strict" || /^[A-Z]/.test(k)) continue;   /* strict 本身也是函式：不包外殼，下面另外包它裡面的方法（PR #57 審查） */
-      a[k] = function (...x) { const c = ALS.getStore(); if (c) c.n++; return f.apply(this, x) };
+    if (!a) return a;
+    if (!a[MARK]) {
+      Object.defineProperty(a, MARK, { value: true });
+      for (const k of Object.keys(a)) {
+        const f = a[k];
+        if (typeof f !== "function" || k === "AssertionError" || k === "strict" || /^[A-Z]/.test(k)) continue;   /* strict 本身也是函式：不包外殼，下面另外包它裡面的方法（PR #57 審查） */
+        a[k] = function (...x) { const c = ALS.getStore(); if (c) c.n++; return f.apply(this, x) };
+      }
+      const s = a.strict;
+      if (typeof s === "function") { if (s !== a) wrapAssert(s); a.strict = callable(s) }   /* assert.strict(條件) 也算 */
     }
-    Object.defineProperty(a, MARK, { value: true });
-    if (a.strict && a.strict !== a) wrapAssert(a.strict);
-    return a;
+    return callable(a);
   };
   const wrapTest = (T) => {
     if (typeof T !== "function" || T[MARK]) return T;
