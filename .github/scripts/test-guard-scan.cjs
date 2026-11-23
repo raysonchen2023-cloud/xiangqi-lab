@@ -212,12 +212,12 @@ test("oss-scan 信箱規則：AppIcon@2x.png 這類圖檔名不是信箱（審�
   assert.deepEqual(f.map((x) => x.line), [2], "只抓第 2 行的真信箱");
 });
 
-test("oss-scan：檔頭不是圖片的檔（就算叫 .png、開頭塞 NUL）當文字掃；真的 PNG 不當文字掃（第二輪審查①⑦）", () => {
+test("oss-scan：檔頭不是圖片的檔（就算叫 .png、開頭塞 NUL）當文字掃；真的 PNG 也照樣掃到金鑰（第二輪審查①⑦、第三輪審查①）", () => {
   const O = require(OSS), d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-fakepng-")); made.push(d);
   const KEY = "AIza" + "S".repeat(35);
   fs.writeFileSync(path.join(d, "fake.png"), Buffer.concat([Buffer.from([0, 1, 2]), Buffer.from(KEY)]));
   fs.writeFileSync(path.join(d, "real.png"), Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.from(KEY)]));
-  assert.deepEqual(O.scan(d).findings.map((f) => f.rule + " " + f.file), ["google-api-key fake.png"]);
+  assert.deepEqual(O.scan(d).findings.map((f) => f.rule + " " + f.file).sort(), ["google-api-key fake.png", "google-api-key real.png"]);
 });
 
 test("〔資料〕倉庫的 .github/oss-allow.json：items、inline 都齊全、只放行中低風險、不把信箱電話本身寫進去", () => {
@@ -280,4 +280,86 @@ test("私密掃描補強（中 16 第二輪②）：掃的是 git 裡存的內�
   const d = repo(({ put }) => put("source/k.txt", PEM));
   fs.writeFileSync(path.join(d, "source/k.txt"), "乾淨\n");   /* 工作區跟倉庫不同 */
   const r = scan(d); assert.equal(r.status, 1, "倉庫裡存的是私鑰：" + r.stdout);
+});
+
+/* ---- PR #68 第三輪審查（iMac Claude 2）：比 main 版退步的兩項與其他五項 ---- */
+const SIG = { png: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), gif: Buffer.from("GIF89a"), bmp: Buffer.concat([Buffer.from("BM"), Buffer.alloc(30)]),
+  jpg: Buffer.from([0xff, 0xd8, 0xff, 0xda]), webp: Buffer.concat([Buffer.from("RIFF"), Buffer.alloc(4), Buffer.from("WEBP")]), tif: Buffer.from("II*\0") };
+const KEY3 = "AIza" + "Q".repeat(35), MAIL3 = "someone.real" + "@" + "mail-host.com.tw";
+test("第三輪①：檔頭像圖片（BM、PNG、GIF89a、FF D8 FF DA、WEBP、TIFF）後面接金鑰，不管叫什麼名字都擋；真圖片裡的長信箱也抓", () => {
+  for (const [k, head] of Object.entries(SIG)) for (const name of ["a.js", "a." + k, "noext"]) {
+    const r = scan(repo(({ put }) => put("source/" + name, Buffer.concat([head, Buffer.from(" " + KEY3 + " ")]))));
+    assert.equal(r.status, 1, k + " " + name + "\n" + r.stdout); assert.match(r.stdout, /Google／Gemini API 金鑰/, k + " " + name);
+  }
+  const O = require(OSS), d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-img3-")); made.push(d);
+  fs.writeFileSync(path.join(d, "a.png"), Buffer.concat([SIG.png, Buffer.from("\0" + MAIL3 + "\0 v" + "@" + "z.Xl\0")]));
+  fs.writeFileSync(path.join(d, "b.js"), Buffer.concat([SIG.png, Buffer.from("\0 v" + "@" + "z.Xl\0")]));
+  assert.deepEqual(O.scan(d).findings.map((f) => f.file + " " + f.shown).sort(), ["a.png s***@mail-host.com.tw", "b.js v***@z.Xl"],
+    "真的圖片（副檔名＋檔頭）：中風險只看 12 字以上的連續字（壓縮資料湊出來的短字串不算）；不是圖片副檔名的照全文掃");
+});
+test("第三輪②：oss-scan:<控制字元>allow 這種標記也要登記（找標記用 oss-scan 換過控制字元的文字）；登記之後才過", () => {
+  for (const c of ["\x01", "\x0b", "\x0c", "\x1f", "\0", " \t "]) {
+    const line = KEY3 + " // oss-scan:" + c + "allow";
+    const d = repo(({ put }) => put("source/m.js", "x\n" + line + "\n"));
+    const r = scanA(d, []); assert.equal(r.status, 1, JSON.stringify(c) + "\n" + r.stdout); assert.match(r.stdout, /沒登記/);
+    const O = require(OSS), h = SC.lineSha(O.textsOf(Buffer.from(line))[0]);
+    if (c !== "\0") assert.equal(scanA(d, [], [{ file: "source/m.js", sha256: h, reason: "測試用假金鑰" }]).status, 0, "登記換過的那一行就過：" + JSON.stringify(c));
+    else {   /* 有 NUL 的檔會多解幾種文字（textsOf），每一種裡的標記行都要登記 */
+      const all = SC.markerLines(O.textsOf(Buffer.from("x\n" + line + "\n")), O.MARK);
+      assert.ok(all.length >= 2, "NUL 拿掉後的那一種也算標記");
+      assert.equal(scanA(d, [], [{ file: "source/m.js", sha256: h, reason: "測試用假金鑰" }]).status, 1, "只登記一種不夠");
+      assert.equal(scanA(d, [], all.map((m) => ({ file: "source/m.js", sha256: m.sha256, reason: "測試用假金鑰" }))).status, 0);
+    }
+  }
+});
+test("第三輪③：UTF-16BE 奇數長度、沒有 BOM 以中文為主的 UTF-16LE／BE、UTF-32LE／BE 裡的金鑰與信箱都抓到", () => {
+  const zh = "這是一段很長的中文說明，用來讓判斷式以為不是 UTF-16。".repeat(20);
+  const enc = {
+    "be-odd": (t) => Buffer.concat([Buffer.from(t, "utf16le").swap16(), Buffer.from([0x41])]),
+    "le-zh": (t) => Buffer.from(zh + t + zh, "utf16le"),
+    "be-zh": (t) => Buffer.from(zh + t + zh, "utf16le").swap16(),
+    "le-odd-start": (t) => Buffer.concat([Buffer.from([0x41]), Buffer.from(zh + t, "utf16le")]),
+    "u32le": (t) => { const b = Buffer.alloc(t.length * 4); [...t].forEach((ch, i) => b.writeUInt32LE(ch.codePointAt(0), i * 4)); return b },
+    "u32be": (t) => { const b = Buffer.alloc(t.length * 4); [...t].forEach((ch, i) => b.writeUInt32BE(ch.codePointAt(0), i * 4)); return b },
+  };
+  const O = require(OSS);
+  for (const [k, f] of Object.entries(enc)) {
+    const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-enc3-")); made.push(d);
+    fs.writeFileSync(path.join(d, "k.txt"), f(" " + KEY3 + " ")); fs.writeFileSync(path.join(d, "m.txt"), f(" " + MAIL3 + " "));
+    const rules = O.scan(d).findings.map((x) => x.file + " " + x.rule).sort();
+    assert.deepEqual([...new Set(rules)], ["k.txt google-api-key", "m.txt email"], k);
+  }
+});
+test("第三輪④：scan-changed 連 node_modules、.git 開頭以外的資料夾都掃（oss-scan --all）；平常全掃 source/ 才跳過 node_modules", () => {
+  const r = scan(repo(({ put }) => put("source/node_modules/x/i.js", "k=" + KEY3 + "\n")));
+  assert.equal(r.status, 1, r.stdout); assert.match(r.stdout, /node_modules\/x\/i\.js/);
+  const O = require(OSS), d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-nm3-")); made.push(d);
+  fs.mkdirSync(path.join(d, "node_modules")); fs.writeFileSync(path.join(d, "node_modules", "i.js"), KEY3);
+  assert.equal(O.scan(d).findings.length, 0); assert.equal(O.scan(d, { all: true }).findings.length, 1);
+});
+test("第三輪⑤：圖裡解出來的文字不會蓋掉倉庫裡同名的 .meta.txt（蓋掉的話那個檔就沒掃到）", () => {
+  const taken = new Set(["a.png", "a.png.meta.txt", "a.png.meta-1.txt"]);
+  assert.equal(SC.freeName("a.png", taken), "a.png.meta-2.txt"); assert.equal(SC.freeName("b.png", taken), "b.png.meta.txt"); assert.equal(SC.freeName("b.png", taken), "b.png.meta-1.txt");
+  const zlib = require("zlib"), crc = (b) => { let c, t = -1; for (const x of b) { c = (t ^ x) & 255; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t = (t >>> 8) ^ c } return (t ^ -1) >>> 0 };
+  const chunk = (type, data) => { const len = Buffer.alloc(4), td = Buffer.concat([Buffer.from(type), data]), c = Buffer.alloc(4); len.writeUInt32BE(data.length); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]) };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(1, 0); ihdr.writeUInt32BE(1, 4); ihdr[8] = 8;
+  const png = Buffer.concat([SIG.png, chunk("IHDR", ihdr), chunk("tEXt", Buffer.from("Comment\0hello")), chunk("IDAT", zlib.deflateSync(Buffer.from([0, 0]))), chunk("IEND", Buffer.alloc(0))]);
+  const r = scan(repo(({ put }) => { put("source/p.png", png); put("source/p.png.meta.txt", "k=" + KEY3 + "\n") }));
+  assert.equal(r.status, 1, r.stdout); assert.match(r.stdout, /Google／Gemini API 金鑰/, "倉庫裡同名的檔沒被圖裡解出來的文字蓋掉");
+});
+test("第三輪⑥：符號連結指向的路徑字串也掃（例如指到本機使用者資料夾）", () => {
+  const d = repo(({ put }) => put("source/a.js", "改了\n"));
+  fs.symlinkSync("/Us" + "ers/realperson/secret-dir/" + KEY3, path.join(d, "source", "lnk"));
+  execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.com", "add", "-A"], { cwd: d });
+  execFileSync("git", ["-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "-m", "lnk"], { cwd: d });
+  const r = spawnSync(process.execPath, [SCAN, "HEAD~2", path.join(d, ".scan-tmp")], { cwd: d, encoding: "utf8", env: { ...process.env, OSS_SCAN: OSS } });
+  assert.equal(r.status, 1, r.stdout); assert.match(r.stdout, /lnk/); assert.match(r.stdout, /Google／Gemini API 金鑰/);
+});
+test("第三輪⑦：放行清單的 match 要跟掃到的字一模一樣；只寫開頭的一段，後面換了別的密碼就不放行", () => {
+  const O = require(OSS), d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m3-")); made.push(d);
+  const PA = "pa" + "ss:", US = "us" + "er:";
+  fs.writeFileSync(path.join(d, "net.js"), "c={" + US + '"xqapp",' + PA + '"xqapp-other-secret"}\n');
+  const pa = (allow) => O.scan(d, { allow }).findings.find((f) => f.rule === "password-assign").allowed;
+  assert.equal(pa([{ rule: "password-assign", match: PA + '"xqapp', reason: "只寫開頭" }]), null);
+  assert.equal(pa([{ rule: "password-assign", match: PA + '"xqapp-other-secret"', reason: "完整的" }]), "完整的");
 });

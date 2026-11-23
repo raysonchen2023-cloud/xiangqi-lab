@@ -2,9 +2,10 @@
 // 公開原始碼前的機密與個資掃描（開發者 11/13：原始碼要公開，先掃 opensource-stage/）
 // 用法：node xiangqi-lab/tools/oss-scan.js <資料夾> [--public <已公開的資料夾>] [--allow <白名單.json>] [--json <輸出.json>] [--no-known] [--known-file <檔>]
 //   --public  已經公開的東西（例如公開倉庫匯出的一份），掃到的字串如果在那裡也有，標「本來就公開」（不算新洩漏）
-//   --allow   白名單：[{ "rule": "email", "file": "路徑結尾", "match": "掃到的字的一部分", "reason": "為什麼可以留" }]
+//   --allow   白名單：[{ "rule": "email", "file": "路徑結尾", "match": "掃到的那一串字（要一模一樣）", "reason": "為什麼可以留" }]
 //             （rule、file、match 都可省略，省略＝不限；reason 必填）。某一行寫了 oss-scan:allow 也會略過那一行
 //   --no-known  不比對本機的已知機密（見下）
+//   --all     什麼都不跳過（平常會跳過 .git、node_modules；scan-changed 用）
 // 已知機密比對：讀使用者資料夾的 .xiangqi-* 金鑰檔、tools/mqtt-config.json、名稱像 KEY／TOKEN／SECRET／PASS 的環境變數，
 //   只在記憶體裡比對「這些值有沒有出現在要公開的檔案裡」，報告只寫哪一檔哪一行、哪一種，絕不印出值本身。
 // 結束代碼：有沒被白名單略過的高風險＝1；其他＝0。
@@ -43,30 +44,55 @@ const NAME_RULES = [
   { id: "secret-file", risk: "high", what: "金鑰／帳密檔", re: /(?:^|\/)(?:\.xiangqi-[^\/]*|\.cup-key[^\/]*|[^\/]*\.pem|[^\/]*\.key|id_rsa[^\/]*|id_ed25519[^\/]*|\.env(?:\.[^\/]*)?|mqtt-config\.json|remote-key\.json|[^\/]*\.p12|[^\/]*\.pfx|[^\/]*\.keystore|[^\/]*\.jks|credentials\.json|service-account[^\/]*\.json|\.npmrc|\.netrc)$/i, fix: "從要公開的資料夾移除" },
   { id: "data-log", risk: "medium", what: "收集來的紀錄檔（.jsonl／.log）", re: /\.(?:jsonl|log)$/i, fix: "確認不是玩家資料" },
 ];
-/* W69 盤點中 16（PR #68 第二輪審查①⑦）：不再用副檔名決定掃不掃（.bak、.sql、.go、沒副檔名、點開頭的檔都可能放機密）：
-   圖片（看檔頭）交給 image-meta.cjs 檢查中繼資料、這裡不當文字掃；其他每一個檔都當文字掃——
-   UTF-16（BOM 或一半是 NUL）先解碼；其餘照 UTF-8 解，控制字元（含 NUL）換成空白，長度與換行不變，所以塞 NUL、混二進位都躲不掉 */
+/* W69 盤點中 16（PR #68 第二輪審查①⑦）：不再用副檔名決定掃不掃（.bak、.sql、.go、沒副檔名、點開頭的檔都可能放機密），每一個檔都當文字掃——
+   UTF-16（BOM 或一半是 NUL）先解碼；其餘照 UTF-8 解，控制字元（含 NUL）換成空白，長度與換行不變，所以塞 NUL、混二進位都躲不掉。
+   PR #68 第三輪審查：①檔頭像圖片的檔也照樣當文字掃（圖片另外由 image-meta.cjs 查中繼資料），不然在 BM／PNG／GIF 檔頭後面接機密就躲過去了；
+   ③檔裡有 NUL 時，另外多解幾種（見 textsOf），沒有 BOM 的 UTF-16、奇數長度的 UTF-16BE、UTF-32 都躲不掉。IMG_HEAD 留著給外面判斷用 */
 const IMG_HEAD = (b) => (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) || (b.length >= 8 && b[0] === 0x89 && b.toString("latin1", 1, 4) === "PNG") ||
   (b.length >= 12 && b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP") || (b.length >= 6 && /^GIF8[79]a$/.test(b.toString("latin1", 0, 6))) ||
   (b.length >= 4 && /^(?:II\*\0|MM\0\*)$/.test(b.toString("latin1", 0, 4))) || (b.length >= 2 && b.toString("latin1", 0, 2) === "BM" && b.length >= 26);
+const CTRL = /[\x00-\x08\x0b\x0c\x0e-\x1f]/g;
 function asText(b) {
   const n = Math.min(b.length, 65536); let z0 = 0, z1 = 0;
   for (let i = 0; i < n; i++) if (b[i] === 0) { if (i & 1) z1++; else z0++ }
   const bomLE = b[0] === 0xff && b[1] === 0xfe, bomBE = b[0] === 0xfe && b[1] === 0xff;
-  if (bomLE || (n > 16 && z1 > n * 0.3 && z0 < n * 0.05)) return b.subarray(bomLE ? 2 : 0).toString("utf16le");
-  if (bomBE || (n > 16 && z0 > n * 0.3 && z1 < n * 0.05)) { const c = Buffer.from(b.subarray(bomBE ? 2 : 0)); c.swap16 && c.length % 2 === 0 && c.swap16(); return c.toString("utf16le") }
-  return b.toString("utf8").replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, " ");
+  if (bomLE || (n > 16 && z1 > n * 0.3 && z0 < n * 0.05)) return b.subarray(bomLE ? 2 : 0).toString("utf16le").replace(CTRL, " ");
+  if (bomBE || (n > 16 && z0 > n * 0.3 && z1 < n * 0.05)) { const c = Buffer.from(b.subarray(bomBE ? 2 : 0)); const e = Buffer.from(c.subarray(0, c.length & ~1)); e.swap16(); return e.toString("utf16le").replace(CTRL, " ") }
+  return b.toString("utf8").replace(CTRL, " ");
 }
+/* 一個檔要掃的每一種文字（PR #68 第三輪審查③）：第一種一定是 asText；檔裡有 NUL 的，再加
+   ・把 NUL 全部拿掉後照 UTF-8 解：UTF-16LE／BE（不論從第幾個位元組對齊）、UTF-32 裡的英數字都會連回原樣（機密、信箱、電話都是英數字）
+   ・照 UTF-16LE、UTF-16BE 各從第 0、第 1 個位元組解一次：沒有 BOM、以中文為主的 UTF-16（判斷式抓不到的那種）
+   行內放行標記也是在這幾種文字裡找（scan-changed 要求登記時用同一份，見 MARK） */
+function textsOf(b) {
+  const out = [asText(b)];
+  if (b.indexOf(0) < 0) return out;
+  out.push(Buffer.from(b.filter((x) => x !== 0)).toString("utf8").replace(CTRL, " "));
+  for (const off of [0, 1]) {
+    const c = Buffer.from(b.subarray(off, off + ((b.length - off) & ~1)));
+    out.push(c.toString("utf16le").replace(CTRL, " ")); c.swap16(); out.push(c.toString("utf16le").replace(CTRL, " "));
+  }
+  return [...new Set(out)];
+}
+/* 真的圖片（副檔名是圖片、檔頭也是圖片）：壓縮後的像素資料會隨機湊出像信箱的短字串（一個字母＋小老鼠＋幾個字母）（倉庫裡的截圖實測 5 張會誤報）。
+   所以高風險規則與本機已知機密照全文掃；中、低風險只看連續 12 個以上可見英數符號的那一段（測過倉庫 320 張圖都不誤報）。
+   副檔名不是圖片、檔頭卻像圖片的（例如 .js 開頭放 PNG 檔頭）一律全文掃：不比 main 版鬆。圖裡的文字中繼資料由 scan-changed 解出來另外全文掃 */
+const IMG_NAME = /\.(?:jpe?g|png|webp|gif|bmp|tiff?|heic|heif|avif|ico)$/i, IMG_RUN = 12;
+const longRuns = (s) => s.replace(/[\x21-\x7e]+/g, (m) => m.length >= IMG_RUN ? m : " ".repeat(m.length));
+/* 行內放行標記：這一行不掃。scan-changed.cjs 用同一個判斷、同一份文字找標記要求登記（PR #68 第三輪審查②：oss-scan:\x01allow 換成空白後也算標記，所以一定要拿換過的文字比） */
+const MARK = /oss-scan:\s*allow/;
 
 const mask = (s, isEmail) => {
   if (isEmail) { const [u, d] = s.split("@"); return u[0] + "***@" + d }
   return s.length <= 8 ? s[0] + "…（" + s.length + " 字）" : s.slice(0, 4) + "…（共 " + s.length + " 字）";
 };
-const walk = (d, base = d, out = []) => {
+/* all＝什麼都不跳過（scan-changed 用：暫存資料夾裡的檔全是從 git 拿出來的，node_modules 底下的也是要公開的檔；PR #68 第三輪審查④）；
+   平常掃 source/ 時跳過 .git 與 node_modules（本機裝的套件不會進倉庫） */
+const walk = (d, base = d, out = [], all = false) => {
   for (const e of fs.readdirSync(d, { withFileTypes: true })) {
-    if (e.name === ".git" || e.name === "node_modules") continue;
+    if (!all && (e.name === ".git" || e.name === "node_modules")) continue;
     const p = path.join(d, e.name);
-    if (e.isDirectory()) walk(p, base, out); else out.push({ abs: p, rel: path.relative(base, p).split(path.sep).join("/") });
+    if (e.isDirectory()) walk(p, base, out, all); else out.push({ abs: p, rel: path.relative(base, p).split(path.sep).join("/") });
   }
   return out;
 };
@@ -109,50 +135,56 @@ function knownSecrets(opts = {}) {
 function loadPublic(dir) {
   if (!dir) return null;
   const texts = [];
-  for (const f of walk(dir)) { const st = fs.statSync(f.abs); if (st.size > 40e6) continue; const b = fs.readFileSync(f.abs); if (IMG_HEAD(b)) continue; texts.push(asText(b)) }
+  for (const f of walk(dir)) { const st = fs.statSync(f.abs); if (st.size > 40e6) continue; texts.push(...textsOf(fs.readFileSync(f.abs))) }
   return texts;
 }
 
 function scan(dir, opts = {}) {
   const allow = opts.allow || [], known = opts.known || [], pub = opts.publicTexts || null, findings = [];
   /* file 要跟掃描根目錄算起的路徑一模一樣（PR #68 第二輪審查⑤：寫檔名或路徑結尾，別的資料夾同名的檔也會被放行）；
-     sha256＝掃到的那一串字的 SHA-256：個資（信箱、電話）用它指定是哪一筆，放行清單裡不寫個資本身 */
+     sha256＝掃到的那一串字的 SHA-256：個資（信箱、電話）用它指定是哪一筆，放行清單裡不寫個資本身；
+     match 要跟掃到的那一串字一模一樣（PR #68 第三輪審查⑦：寫一部分的話，pass:"xqapp 會連 pass:"xqapp-別的密碼 也放行） */
   const sha = (x) => require("crypto").createHash("sha256").update(String(x), "utf8").digest("hex");
-  const allowed = (rule, rel, match) => allow.find(a => (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match).includes(a.match)) && (!a.sha256 || sha(match) === a.sha256));
+  const allowed = (rule, rel, match) => allow.find(a => (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256));
   const isPublic = s => !!pub && pub.some(t => t.includes(s));
   const push = (rule, rel, line, match, extra = {}) => {
     const a = allowed(rule.id, rel, match);
     findings.push({ rule: rule.id, risk: rule.risk, what: rule.what, file: rel, line, shown: extra.shown || (rule.secret ? mask(match) : rule.email ? mask(match, true) : match.slice(0, 120)),
       public: isPublic(match), allowed: a ? a.reason || "白名單" : null, fix: rule.fix });
   };
-  const files = walk(dir);
+  const files = walk(dir, dir, [], !!opts.all), seen = new Set();
+  const report = (rule, rel, line, match, extra) => { const k = rule.id + "\n" + rel + "\n" + line + "\n" + match; if (seen.has(k)) return; seen.add(k); push(rule, rel, line, match, extra) };
   for (const f of files) {
     for (const r of NAME_RULES) if (r.re.test(f.rel)) push(r, f.rel, 0, path.basename(f.rel), { shown: path.basename(f.rel) });
     const name = path.basename(f.rel);
     const buf = fs.readFileSync(f.abs);
-    if (IMG_HEAD(buf)) continue;   /* 圖片：中繼資料交給 image-meta.cjs（scan-changed 會把圖裡解出來的文字另外放成 .meta.txt 給這裡掃） */
-    const s = asText(buf), starts = [0];
+    /* 圖片也照樣掃（中繼資料另外交給 image-meta.cjs；scan-changed 會把圖裡解出來的文字另外放成 .meta 檔給這裡掃） */
+    const realImg = IMG_HEAD(buf) && IMG_NAME.test(f.rel);
+    for (const s of textsOf(buf)) {
+    const starts = [0], sMid = realImg ? longRuns(s) : s;
     for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) === 10) starts.push(i + 1);
     const lineOf = idx => { let lo = 0, hi = starts.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (starts[m] <= idx) lo = m; else hi = m - 1 } return lo + 1 };
     const lineText = n => s.slice(starts[n - 1], (starts[n] || s.length + 1) - 1);
     for (const r of RULES) {
+      const t = r.risk === "high" ? s : sMid;
       r.re.lastIndex = 0; let m;
-      while ((m = r.re.exec(s))) {
+      while ((m = r.re.exec(t))) {
         const match = m[0], val = m[1] || match;
         if (r.skipVal && r.skipVal.test(r.email ? match : val)) continue;
-        if (r.near && !r.near.test(s.slice(Math.max(0, m.index - 300), m.index + 300))) continue;
+        if (r.near && !r.near.test(t.slice(Math.max(0, m.index - 300), m.index + 300))) continue;
         const ln = lineOf(m.index);
-        if (/oss-scan:\s*allow/.test(lineText(ln))) continue;
-        push(r, f.rel, ln, match);
+        if (MARK.test(lineText(ln))) continue;
+        report(r, f.rel, ln, match);
       }
     }
     for (const k of known) {
       let i = s.indexOf(k.value);
       while (i >= 0) {
         const ln = lineOf(i);
-        if (!/oss-scan:\s*allow/.test(lineText(ln))) push({ id: "known-secret", risk: "high", what: "本機已知機密（" + k.label + "）", fix: "刪掉；這個值要當作已外洩、換新的" }, f.rel, ln, k.value, { shown: "（值不顯示）" });
+        if (!MARK.test(lineText(ln))) report({ id: "known-secret", risk: "high", what: "本機已知機密（" + k.label + "）", fix: "刪掉；這個值要當作已外洩、換新的" }, f.rel, ln, k.value, { shown: "（值不顯示）" });
         i = s.indexOf(k.value, i + 1);
       }
+    }
     }
   }
   return { files: files.length, findings };
@@ -164,7 +196,7 @@ function summary(res) {
     alreadyPublic: live.filter(f => f.public).length, failing: by("high").length };
 }
 
-module.exports = { scan, summary, knownSecrets, loadPublic, asText, IMG_HEAD, RULES, NAME_RULES };
+module.exports = { scan, summary, knownSecrets, loadPublic, asText, textsOf, MARK, IMG_HEAD, RULES, NAME_RULES };
 
 if (require.main === module) {
   const argv = process.argv.slice(2), opt = k => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };
@@ -174,7 +206,7 @@ if (require.main === module) {
   /* --known-file <檔>（可以給好幾個）：只拿這些檔當已知機密（測試用；不讀使用者資料夾和環境變數） */
   const kf = argv.map((a, i) => a === "--known-file" ? argv[i + 1] : null).filter(Boolean);
   const known = argv.includes("--no-known") ? [] : kf.length ? knownSecrets({ knownFiles: kf.map(f => path.resolve(f)) }) : knownSecrets();
-  const res = scan(path.resolve(dir), { allow, known, publicTexts: loadPublic(opt("--public")) }), S = summary(res);
+  const res = scan(path.resolve(dir), { allow, known, publicTexts: loadPublic(opt("--public")), all: argv.includes("--all") }), S = summary(res);
   const RISK = { high: "高", medium: "中", low: "低" };
   for (const r of ["high", "medium", "low"]) {
     const L = res.findings.filter(f => f.risk === r && !f.allowed); if (!L.length) continue;

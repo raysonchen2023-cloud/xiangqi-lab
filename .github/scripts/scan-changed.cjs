@@ -15,6 +15,11 @@
 //      這個 PR 改到的 .gitattributes 裡有 working-tree-encoding 或 filter= 就擋（oss-scan source 讀的是工作區，靠這一條補）。
 //   ④ 圖裡解出來的文字（PNG 文字區、XMP、JPEG／GIF 註解）另外寫成 <檔>.meta.txt 交給 oss-scan 的規則掃。
 //   ⑤ 放行清單的 file 要寫完整路徑；個資規則（信箱、電話、身分證號）一定要用 sha256 指定是哪一串字。
+// PR #68 第三輪審查：
+//   ② 找行內標記用 oss-scan 的 textsOf 解出來的每一種文字、同一個判斷（MARK），所以 oss-scan:\x01allow（控制字元換成空白後也算標記）也要登記
+//   ④ oss-scan 加 --all：暫存資料夾裡 node_modules 底下的檔也掃（都是要公開的檔）
+//   ⑤ 圖裡解出來的文字寫成不會跟倉庫裡的檔撞名的檔（撞到就加編號）
+//   ⑥ 符號連結也掃：從 git 拿它存的內容（指向的路徑字串），不再用工作區的 isFile 把它濾掉
 // 已知限制：base64 等編碼過的機密 oss-scan 本來就認不出來。
 // 結束代碼：0＝沒問題；1＝有要擋的；2＝用法錯誤或放行清單格式錯
 "use strict";
@@ -24,7 +29,7 @@ const { imageMeta, sniff, KIND_ZH } = require("./image-meta.cjs");
 
 /* 行內放行標記的字樣：用拼的，這支自己的說明與訊息不會被當成放行、也照常被掃 */
 const TOK = "oss-scan" + ":allow";
-const MARK = /oss-scan:\s*allow/;   /* 跟 oss-scan.js 判斷「這一行不掃」用的一樣 */
+const MARK = /oss-scan:\s*allow/;   /* 跟 oss-scan.js 判斷「這一行不掃」用的一樣（實際執行時用 oss-scan 匯出的 MARK） */
 
 /* 放行清單要齊全才收（PR #68 審查⑥）：
    items：rule 要是 oss-scan 認得的中、低風險規則（高風險不准放行）；file（完整路徑）、match（至少 6 個字）、sha256 至少一個；
@@ -57,13 +62,19 @@ function checkAllow(list, risks) {
 const PERSONAL = ["email", "phone-tw", "tw-id"];
 /* .gitattributes 裡會讓工作區跟倉庫內容不同的設定（純函式）：回傳有問題的行 */
 function badAttrs(text) { return String(text).split("\n").map((l, i) => ({ line: i + 1, text: l.trim() })).filter((x) => !/^#/.test(x.text) && /\bworking-tree-encoding\b|\bfilter\s*=/.test(x.text)) }
-/* 一個檔裡有行內放行標記的行：[{line, sha256, text}]。照 oss-scan 的切法（只認 \n），雜湊前去掉行尾 \r 和前後空白 */
+/* 一個檔裡有行內放行標記的行：[{line, sha256, text}]。照 oss-scan 的切法（只認 \n），雜湊前去掉行尾 \r 和前後空白。
+   text 可以是字串，或字串陣列（oss-scan 的 textsOf 解出來的每一種文字；同一行同雜湊只算一次） */
 const lineSha = (s) => crypto.createHash("sha256").update(String(s).replace(/\r$/, "").trim(), "utf8").digest("hex");
-function markerLines(text) {
-  const out = [];
-  String(text).split("\n").forEach((l, i) => { if (MARK.test(l)) out.push({ line: i + 1, sha256: lineSha(l), text: l.replace(/\r$/, "").trim().slice(0, 160) }) });
+function markerLines(text, mark = MARK) {
+  const out = [], seen = new Set();
+  for (const t of [].concat(text)) String(t).split("\n").forEach((l, i) => {
+    if (!mark.test(l)) return; const h = lineSha(l), k = i + "\n" + h; if (seen.has(k)) return; seen.add(k);
+    out.push({ line: i + 1, sha256: h, text: l.replace(/\r$/, "").trim().slice(0, 160) });
+  });
   return out;
 }
+/* 暫存資料夾裡不跟別的檔撞名的名字（純函式）：taken 是已經用掉的相對路徑集合 */
+function freeName(file, taken) { let n = file + ".meta.txt", i = 1; while (taken.has(n)) n = file + ".meta-" + (i++) + ".txt"; taken.add(n); return n }
 /* 標記行有沒有登記：回傳沒登記的 [{file, line, sha256, text}]（純函式） */
 function unregistered(files, inline) {
   const ok = new Set((inline || []).map((a) => a.file + "\n" + a.sha256)), out = [];
@@ -85,24 +96,27 @@ function judge({ findings, images, unreg, attrs = [] }) {
   return { medium, meta, unreadable, unreg: unreg || [], attrs, ok: !medium.length && !meta.length && !unreadable.length && !(unreg || []).length && !attrs.length };
 }
 
-module.exports = { checkAllow, markerLines, unregistered, imageCheck, judge, lineSha, badAttrs, TOK, PERSONAL };
+module.exports = { checkAllow, markerLines, unregistered, imageCheck, judge, lineSha, badAttrs, freeName, TOK, PERSONAL };
 if (require.main !== module) return;
 
 const [base = "origin/main", out] = process.argv.slice(2);
 if (!out) { console.log("用法：node scan-changed.cjs <比較基準> <暫存資料夾>"); process.exit(2); }
 const scanner = path.resolve(process.env.OSS_SCAN || "source/xiangqi-lab/tools/oss-scan.js");
 const allowF = process.env.OSS_ALLOW || path.join(".github", "oss-allow.json");
-let list = { items: [], inline: [] };
+let list = { items: [], inline: [] }, S = null;
+try { S = require(scanner) } catch (e) { console.log("✘ 載入不了 oss-scan：" + scanner); process.exit(2) }
 if (fs.existsSync(allowF)) {
   try { list = JSON.parse(fs.readFileSync(allowF, "utf8")); list.inline = list.inline || [] } catch (e) { console.log("✘ 放行清單讀不懂：" + allowF); process.exit(2) }
-  let risks = {}; try { const S = require(scanner); for (const r of S.RULES.concat(S.NAME_RULES)) risks[r.id] = r.risk } catch (e) { }
+  const risks = {}; for (const r of S.RULES.concat(S.NAME_RULES)) risks[r.id] = r.risk;
   const bad = checkAllow(list, risks);
   if (bad.length) { console.log("✘ 放行清單 " + allowF + " 格式不對：\n  " + bad.join("\n  ")); process.exit(2) }
 }
 const git = (args) => execFileSync("git", ["-c", "core.quotePath=false", ...args], { maxBuffer: 200e6 }).toString();
-/* A＝新增、M＝修改、T＝型別改變（例如符號連結換成一般檔；PR #68 審查④） */
+/* A＝新增、M＝修改、T＝型別改變（例如符號連結換成一般檔；PR #68 審查④）。
+   只看 HEAD 裡是 blob 的（一般檔、執行檔、符號連結；子模組是 commit、跳過），不看工作區（第三輪審查⑥：符號連結原本被 isFile 濾掉） */
+const kind = new Map(git(["ls-tree", "-r", "-z", "HEAD"]).split("\0").filter(Boolean).map((l) => { const t = l.indexOf("\t"); return [l.slice(t + 1), l.slice(0, t).split(" ")[1]] }));
 const files = git(["diff", "--name-only", "-z", "--no-renames", "--diff-filter=AMT", `${base}...HEAD`])
-  .split("\0").filter(f => f && fs.existsSync(f) && fs.lstatSync(f).isFile());
+  .split("\0").filter((f) => f && kind.get(f) === "blob");
 if (!files.length) { console.log("本 PR 沒有新增或修改的檔，略過"); process.exit(0); }
 /* 讀 git 裡存的內容（PR #68 第二輪審查②）；圖片另外把解出來的文字寫成 <檔>.meta.txt 給 oss-scan 掃（審查④） */
 const blob = (f) => execFileSync("git", ["cat-file", "blob", "HEAD:" + f], { maxBuffer: 500e6 });
@@ -110,16 +124,17 @@ const bufs = files.map((f) => ({ file: f, buf: blob(f) }));
 const images = bufs.map(({ file, buf }) => imageCheck(file, buf)).filter(Boolean);
 fs.rmSync(out, { recursive: true, force: true });
 for (const { file, buf } of bufs) { const d = path.join(out, file); fs.mkdirSync(path.dirname(d), { recursive: true }); fs.writeFileSync(d, buf) }
-for (const x of images) if (x.meta && x.meta.texts && x.meta.texts.length) fs.writeFileSync(path.join(out, x.file + ".meta.txt"), x.meta.texts.join("\n"));
+const taken = new Set(files.flatMap((f) => f.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))));   /* 檔和它上層的資料夾名都算用掉 */
+for (const x of images) if (x.meta && x.meta.texts && x.meta.texts.length) fs.writeFileSync(path.join(out, freeName(x.file, taken)), x.meta.texts.join("\n"));
 console.log(`複製 ${files.length} 個改到的檔到暫存資料夾，交給 oss-scan 掃（放行清單 ${list.items.length} 筆、行內標記登記 ${list.inline.length} 筆）`);
 const tmpA = out + ".allow.json", tmpJ = out + ".scan.json";
 fs.writeFileSync(tmpA, JSON.stringify(list.items));
-const r = spawnSync(process.execPath, [scanner, out, "--allow", tmpA, "--json", tmpJ], { stdio: "inherit" });
+const r = spawnSync(process.execPath, [scanner, out, "--all", "--allow", tmpA, "--json", tmpJ], { stdio: "inherit" });
 let findings = null; try { findings = JSON.parse(fs.readFileSync(tmpJ, "utf8")).findings } catch (e) { }
 fs.rmSync(out, { recursive: true, force: true }); fs.rmSync(tmpA, { force: true }); fs.rmSync(tmpJ, { force: true });
 if (r.status === null || findings === null) { console.log("✘ oss-scan 沒有跑完或沒有寫出結果：不能當沒問題"); process.exit(1) }
 
-const marked = bufs.map(({ file, buf }) => ({ file, marks: markerLines(buf.toString("utf8")) })).filter((x) => x.marks.length);
+const marked = bufs.map(({ file, buf }) => ({ file, marks: markerLines(S.textsOf(buf), S.MARK) })).filter((x) => x.marks.length);
 const attrs = bufs.filter(({ file }) => path.basename(file) === ".gitattributes").flatMap(({ file, buf }) => badAttrs(buf.toString("utf8")).map((x) => ({ file, ...x })));
 const J = judge({ findings, images, unreg: unregistered(marked, list.inline), attrs });
 for (const a of J.attrs) console.log(`  ✘ ${a.file}:${a.line}  ${a.text}  ← working-tree-encoding／filter 會讓工作區跟倉庫的內容不同，私密掃描會被繞過：不准用`);
