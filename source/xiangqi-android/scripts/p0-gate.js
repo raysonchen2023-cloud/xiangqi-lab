@@ -38,6 +38,17 @@ function validWaiver(w, aabSha) {
 
 /* 純函式：aabSha＝實際算出的雜湊；build＝送審版號；reports＝[{file, json}]；waivers＝豁免檔的 items
    回傳 { ok, problems:[還擋著的…], waived:[豁免掉的…], notes:[不擋、照實列出的…] } */
+/* 閘門自己探測 CDN（不靠 P0 工具）：manifest 要是合法 JSON、files 要有 data/ 的項目；亂數檔名的 HEAD 要回 404／410。任一個成立＝連得上。
+   fetchFn 可注入（自我測試用假 fetch） */
+const GATE_CDN = "https://xiangqi-cdn.pages.dev/";
+async function probeCdn(fetchFn = fetch, base = GATE_CDN, rnd = () => require("crypto").randomBytes(6).toString("hex")) {
+  let manOk = false, manWhy = "", head = -1;
+  try { const r = await fetchFn(base + "cdn-manifest.json"); if (!r.ok) manWhy = "manifest HTTP " + r.status; else { const j = await r.json(); const ks = j && j.files && typeof j.files === "object" ? Object.keys(j.files).filter((k) => k.startsWith("data/")) : []; manOk = ks.length > 0; manWhy = manOk ? "manifest " + ks.length + " 個 data 檔" : "manifest 是空的或格式不對" } } catch (e) { manWhy = "manifest 連不上" }
+  try { head = (await fetchFn(base + "data/__xq_gate_probe_" + rnd() + ".webp", { method: "HEAD" })).status } catch (e) { head = -1 }
+  const headOk = head === 404 || head === 410;
+  return { reachable: manOk || headOk, manOk, head, detail: manWhy + "；亂數檔 HEAD " + (head === -1 ? "連不上" : head) };
+}
+
 /* opts.mainSha(路徑)＝origin/main 那一版去掉 CR 的 SHA-256（tool-pin.js 的 normSha）；沒給＝讀不到 main，每份報告都過不了工具鎖定 */
 function gate(aabSha, build, reports, waivers = [], opts = {}) {
   const found = [], notes = [], seen = new Map();
@@ -79,7 +90,15 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
     if (t === "P0-IMG") {
       const c = json.canary || {};
       if (c.home !== true || c.stale !== true) add(`P0-IMG：金絲雀沒被抓到（拿掉首頁素材 ${c.home === true ? "✔" : "✘"}、改掉包裡檔的雜湊 ${c.stale === true ? "✔" : "✘"}）：這支破圖檢查可能失靈，結果不可信`);
-      if (c.cdn404 !== true) add(`P0-IMG：金絲雀③ CDN 不存在的檔沒被判成沒有（${c.cdn || "沒驗"}）${c.cdnUnreachable === true ? "：CDN 連不上，沒驗到" : "：CDN 核對可能失靈，不能豁免"}`, c.cdnUnreachable === true ? "P0-IMG/cdn" : null);   /* 只有 cdnUnreachable（布林，同一輪沒有連得上的反證）能豁免；不看訊息文字（PR #66 第四次複審） */
+      if (c.cdn404 !== true) {
+        /* PR #66 第五次複審（開發者選）：豁免要靠工具以外的證據。工具壞掉時看到的跟真的斷線一樣，只在工具裡補反證補不完；
+           所以只有報告說連不上（cdnUnreachable）、而且閘門自己連 CDN 也連不上（opts.cdnProbe.reachable＝false）才給豁免代碼 */
+        const p = opts.cdnProbe, gateDown = !!p && p.reachable === false, gateUp = !!p && p.reachable === true;
+        const why = c.cdnUnreachable !== true ? "：CDN 核對可能失靈，不能豁免"
+          : gateUp ? `：閘門自己連得上 CDN（${p.detail}），報告卻說連不上：工具失靈，不能豁免`
+          : gateDown ? `：閘門自己也連不上 CDN（${p.detail}），沒驗到` : "：閘門沒有自己探測 CDN，不能豁免";
+        add(`P0-IMG：金絲雀③ CDN 不存在的檔沒被判成沒有（${c.cdn || "沒驗"}）${why}`, c.cdnUnreachable === true && gateDown ? "P0-IMG/cdn" : null);
+      }
     }
     if (t === "P0-UPD" && !(json.canary && json.canary.dialog === true)) add("P0-UPD：金絲雀（假的「有新版本」視窗）沒被抓到：這支更新檢查可能失靈，結果不可信");
     if (t === "P0-UPD" && json.oldWorker !== true) add("P0-UPD：用 --no-old-worker 跑的不算（封測 P0 規則：舊 Worker 要實際接管過；流程盤點第 5 項）", "P0-UPD/old-worker");
@@ -106,7 +125,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
   return { ok: problems.length === 0, problems, waived, notes };
 }
 
-function main() {
+async function main() {
   const a = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null };
   const j = process.argv.indexOf("--reports"), AAB = a("--aab"), BUILD = a("--build");
   const files = j > 0 ? process.argv.slice(j + 1).filter((x) => !x.startsWith("--")) : [];
@@ -137,7 +156,10 @@ function main() {
   }
   const sha = crypto.createHash("sha256").update(fs.readFileSync(AAB)).digest("hex");
   const reports = files.map((file) => { let json = null; try { json = JSON.parse(fs.readFileSync(file, "utf8")) } catch (e) {} return { file, json } });
-  const r = gate(sha, BUILD, reports, fromRepo ? waivers : [], { mainSha });
+  /* 有 P0-IMG 報告說 CDN 連不上時，閘門自己連一次 CDN（結果印出來，豁免要靠它） */
+  let cdnProbe = null;
+  if (reports.some(({ json }) => json && json.tool === "P0-IMG" && json.canary && json.canary.cdnUnreachable === true)) { cdnProbe = await probeCdn(); console.log(`閘門自己探測 CDN：${cdnProbe.reachable ? "連得上" : "連不上"}（${cdnProbe.detail}）`) }
+  const r = gate(sha, BUILD, reports, fromRepo ? waivers : [], { mainSha, cdnProbe });
   console.log(`要送審的 AAB：${AAB}（版號 ${BUILD}）\n  SHA-256 ${sha}`);
   if (a("--waivers") && !fromRepo) console.log("⚠ 豁免檔不是倉庫的 .github/p0-waivers.json：沒經過逐行審，裡面的豁免一律不算");
   for (const n of r.notes) console.log("⚠ " + n);
@@ -146,5 +168,5 @@ function main() {
   for (const p of r.problems) console.log("✘ " + p);
   console.log("✘ 不能送審"); process.exit(1);
 }
-module.exports = { gate, validWaiver, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
-if (require.main === module) main();
+module.exports = { probeCdn, GATE_CDN, gate, validWaiver, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
+if (require.main === module) main().catch((e) => { console.error("✘ " + (e && e.message)); process.exit(2) });

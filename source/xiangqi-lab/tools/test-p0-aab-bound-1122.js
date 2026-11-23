@@ -193,7 +193,7 @@ test("〔原始碼〕check-3d 預設跑 2 輪、每次嘗試都寫 attempts.json
   const c3 = rd("check-3d.js"), pg = rd("p0-gate.js");
   assert.match(c3, /rounds: Number\(arg\("--rounds", 2\)\)/); assert.match(c3, /fs\.appendFileSync\(AF, JSON\.stringify\(/); assert.match(c3, /if \(!roundPass\(RR\)\) break;/);
   assert.match(c3, /\}\)\(\)\.catch\(\(e\) => \{ logAttempt\(\{ pass: false, unfit: e instanceof Unfit/, "環境不成立、例外結束也寫嘗試紀錄（PR #58 審查）");
-  assert.match(pg, /const r = gate\(sha, BUILD, reports, fromRepo \? waivers : \[\], \{ mainSha \}\);/);
+  assert.match(pg, /const r = gate\(sha, BUILD, reports, fromRepo \? waivers : \[\], \{ mainSha, cdnProbe \}\);/);
   const WF = [path.join(__dirname, "..", "..", "..", ".github", "p0-waivers.json"), path.join(__dirname, "..", "site", ".github", "p0-waivers.json")].find((f) => fs.existsSync(f));
   assert.ok(WF, "倉庫有 .github/p0-waivers.json");
   const wj = JSON.parse(fs.readFileSync(WF, "utf8")); assert.ok(Array.isArray(wj.items));

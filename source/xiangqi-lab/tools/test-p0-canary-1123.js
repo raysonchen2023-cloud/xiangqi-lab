@@ -13,7 +13,8 @@ const { required: HOME_REQUIRED } = require(path.join(AND, "bundle-home-assets.j
 
 const A = "a".repeat(64), K = "c".repeat(64), V = "20261123-0900";
 const MAIN = (p) => TP.normSha(fs.readFileSync(path.join(AND, path.basename(p))));
-const G = (reps, w = [], mainSha = MAIN) => gate(A, V, reps, w, { mainSha });
+const G = (reps, w = [], mainSha = MAIN, cdnProbe = null) => gate(A, V, reps, w, { mainSha, cdnProbe });
+const DOWN = { reachable: false, detail: "假：閘門也連不上" }, UP = { reachable: true, detail: "假：閘門連得上" };
 const d3 = (android, o = {}) => ({ file: "3d-" + android, json: Object.assign({ tool: "P0-3D", aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D") }, o) });
 const c3 = (android, o = {}) => ({ file: "3dc-" + android, json: Object.assign({ tool: "P0-3D", selfTest: true, aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") }, o) });
 const img = (o = {}) => ({ file: "img", json: Object.assign({ tool: "P0-IMG", aabSha256: A, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, canary: { home: true, stale: true, cdn404: true, ok: true }, toolPins: TP.pinsFor("P0-IMG") }, o) });
@@ -74,7 +75,9 @@ test("閘門（反測必紅）：P0-IMG 金絲雀①②沒抓到不能豁免；�
   L = all(); delete L[0].json.canary; assert.ok(has(G(L), /P0-IMG：金絲雀沒被抓到/), "沒記金絲雀＝沒抓到");
   L = all(); L[0].json.canary = { home: true, stale: true, cdn404: false, cdnUnreachable: true, cdn: "沒確認到（CDN 連不上）" };
   assert.ok(has(G(L), /CDN 不存在的檔沒被判成沒有（沒確認到（CDN 連不上））/));
-  r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, true, "CDN 連不上那一條照舊可以豁免"); assert.equal(r.waived.length, 1);
+  r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false, "閘門沒有自己探測：不能豁免");
+  r = G(L, W("P0-IMG/cdn"), MAIN, UP); assert.equal(r.ok, false, "閘門連得上、報告說連不上：工具失靈"); assert.ok(has(r, /閘門自己連得上 CDN.*工具失靈/));
+  r = G(L, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, true, "報告說連不上、閘門也連不上：才可以豁免"); assert.equal(r.waived.length, 1);
   L = all(); L[0].json.canary = { home: true, stale: true, cdn404: false, cdn: "沒確認到（CDN 連不上）" };
   r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false, "訊息寫「連不上」但沒有 cdnUnreachable 布林：不能豁免（不看文字）");
   L = all(); L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdn: "被當成有（CDN 核對失靈）" };
@@ -204,4 +207,25 @@ test("〔原始碼〕P0-IMG 金絲雀③（PR #66 第四次複審）：worker �
   const caa = rd("check-aab-assets.js");
   assert.match(caa, /\n\s+if \(st === 200\) ok200\+\+;\n/);
   assert.match(caa, /cdnCanary\(cdnRun\.probeF, cdnRun\.miss, cdnRun\.unknown, \{ ok200: cdnRun\.ok200, manOk: !!\(man && man\.files\) \}\)/);
+});
+
+test("閘門自己探測 CDN（PR #66 第五次複審，開發者選）：CDN 正常＝連得上；真斷線＝連不上；manifest 空的不算連得上；亂數檔 HEAD 回 404 也算連得上", async () => {
+  const { probeCdn } = require(path.join(AND, "p0-gate.js"));
+  const res = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
+  const fake = (man, head) => async (url, o) => { if (o && o.method === "HEAD") { if (head === "throw") throw new Error("斷線"); return res(head) } if (man === "throw") throw new Error("斷線"); return man };
+  const ok = await probeCdn(fake(res(200, { files: { "data/a.webp": [1, "x"] } }), 404), "https://cdn/", () => "r");
+  assert.equal(ok.reachable, true, "正常 CDN"); assert.equal(ok.manOk, true); assert.equal(ok.head, 404);
+  const down = await probeCdn(fake("throw", "throw"), "https://cdn/", () => "r");
+  assert.equal(down.reachable, false, "真斷線"); assert.match(down.detail, /連不上/);
+  const empty = await probeCdn(fake(res(200, { files: {} }), "throw"), "https://cdn/", () => "r");
+  assert.equal(empty.reachable, false, "manifest 空的、HEAD 也連不上：不能算連得上"); assert.match(empty.detail, /空的/);
+  const nullFiles = await probeCdn(fake(res(200, { files: null }), 503), "https://cdn/", () => "r");
+  assert.equal(nullFiles.reachable, false, "files 是 null、HEAD 503：不算連得上");
+  const headOnly = await probeCdn(fake(res(500, null), 404), "https://cdn/", () => "r");
+  assert.equal(headOnly.reachable, true, "manifest 壞了但亂數檔回 404：CDN 有在回應");
+  /* 閘門把探測結果用在豁免上：連得上＝不准豁免；連不上才准 */
+  const L = all(); L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdnUnreachable: true, cdn: "沒確認到（CDN 連不上或暫時出錯，沒拿到 HTTP 狀態）" };
+  assert.equal(G(L, W("P0-IMG/cdn"), MAIN, ok).ok, false);
+  assert.equal(G(L, W("P0-IMG/cdn"), MAIN, down).ok, true);
+  assert.equal(G(L, W("P0-IMG/cdn"), MAIN, empty).ok, true, "閘門也只看到空的 manifest、連不上：照樣准豁免（缺驗）");
 });
