@@ -95,24 +95,50 @@ test("走滿 10 步、沒淨虧：過關、修為 +20 只給一次、回門內�
   assert.equal(calls.xp.length, 1);
 });
 
-test("大子淨虧 3 分以上：當場失敗、不給修為、記最多守幾步", () => {
+test("先棄後取（開發者 11/22）：大子淨虧 3 分以上先不判輸，記下從第幾步開始虧並提醒；寬限 2 步後還虧才判輸、不給修為", () => {
   const { R, calls, mem } = load({ store: { jPending: { id: "jh:guard:screen", game: "g1", jhg: { limit: 10 } } } });
+  assert.equal(R.JH_SCR_GUARD.grace, 2);
   const b0 = board(R.JH_SCR_GUARD.fen), noHorse = b0.slice(); noHorse[b0.indexOf("n")] = null;
   R.lvWatch(st(noHorse, 4), {});
-  assert.equal(mem.jPending, null);
+  assert.ok(mem.jPending, "剛虧的那一步不判輸"); assert.equal(mem.jPending.jhg.owe, 4);
+  assert.match(calls.toast.at(-1), /2 步內取回就不算輸/);
+  R.lvWatch(st(noHorse, 5), {});
+  assert.ok(mem.jPending, "寬限第 1 步還沒到");
+  R.lvWatch(st(noHorse, 6), {});
+  assert.equal(mem.jPending, null, "寬限 2 步後還虧＝判輸");
   assert.equal(calls.xp.length, 0);
-  assert.match(calls.toast.at(-1), /沒守住/);
-  assert.equal(R.jhScrGet().best, 4);
+  assert.match(calls.toast.at(-1), /2 步還沒取回/);
+  assert.equal(R.jhScrGet().best, 6);
   assert.equal(R.jhScrGet().g, null);
 });
 
-test("PR #39 審查：換子途中（紅方剛吃黑馬、輪到玩家還沒吃回）不判失敗；輪到紅方時淨虧才判", () => {
+test("先棄後取：寬限內取回（淨虧回到 3 分以下）就清掉紀錄、繼續守；之後再虧重新起算", () => {
+  const { R, mem } = load({ store: { jPending: { id: "jh:guard:screen", game: "g1", jhg: { limit: 10 } } } });
+  const b0 = board(R.JH_SCR_GUARD.fen), noHorse = b0.slice(); noHorse[b0.indexOf("n")] = null;
+  const trade = noHorse.slice(); trade[trade.indexOf("N")] = null;   /* 黑方吃回紅傌：淨虧 0 */
+  R.lvWatch(st(noHorse, 3), {}); assert.equal(mem.jPending.jhg.owe, 3);
+  R.lvWatch(st(trade, 4), {}); assert.ok(mem.jPending); assert.equal(mem.jPending.jhg.owe, null, "取回就清掉");
+  R.lvWatch(st(noHorse, 7), {}); assert.equal(mem.jPending.jhg.owe, 7, "之後再虧，從第 7 步重新起算");
+  R.lvWatch(st(noHorse, 8), {}); assert.ok(mem.jPending);
+});
+
+test("先棄後取：走滿 10 步時還虧＝判輸（寬限不能拖過結算）；沒虧才過關", () => {
+  let L = load({ store: { jPending: { id: "jh:guard:screen", game: "g1", jhg: { limit: 10, owe: 9 } } } });
+  const b0 = board(L.R.JH_SCR_GUARD.fen), noHorse = b0.slice(); noHorse[b0.indexOf("n")] = null;
+  L.R.lvWatch(st(noHorse, 10), {});
+  assert.equal(L.mem.jPending, null); assert.equal(L.calls.xp.length, 0); assert.match(L.calls.toast.at(-1), /大子還虧/);
+  L = load({ store: { jPending: { id: "jh:guard:screen", game: "g1", jhg: { limit: 10, owe: 9 } } } });
+  L.R.lvWatch(st(b0, 10), {});
+  assert.equal(L.mem.jPending, null); assert.deepEqual(J(L.calls.xp), [[20, "guard:g1"]], "最後取回了＝過關");
+});
+
+test("PR #39 審查：換子途中（紅方剛吃黑馬、輪到玩家還沒吃回）不判也不記；輪到紅方時才開始算", () => {
   const { R, mem, calls } = load({ store: { jPending: { id: "jh:guard:screen", game: "g1", jhg: { limit: 10 } } } });
   const b0 = board(R.JH_SCR_GUARD.fen), noHorse = b0.slice(); noHorse[b0.indexOf("n")] = null;
   R.lvWatch(st(noHorse, 4, { turn: "b" }), {});   /* 輪到玩家（黑）：還可以吃回來 */
-  assert.ok(mem.jPending, "輪到玩家時不判"); assert.equal(calls.toast.length, 0);
+  assert.ok(mem.jPending, "輪到玩家時不判"); assert.equal(mem.jPending.jhg.owe, undefined, "也不記"); assert.equal(calls.toast.length, 0);
   R.lvWatch(st(noHorse, 5, { turn: "r" }), {});   /* 玩家走完了還是淨虧 4 */
-  assert.equal(mem.jPending, null, "輪到紅方時才判失敗");
+  assert.equal(mem.jPending.jhg.owe, 5, "輪到紅方時才開始算寬限");
 });
 
 test("別的對局照原本的 lvWatch；分出勝負時照原本結算、另外記守了幾步", () => {
@@ -153,6 +179,9 @@ test("門內設定：前院不站門人、沒有前院入口；石馬、算盤�
   assert.ok(c.JH_HALL.central.mates && c.JH_HALL.central.spots.yard, "中炮門照舊");
   /* 11/22 開發者實機「怎麼會坐在桌子上」：立繪下面裁掉 cut，裁切線要落在桌子後緣（原圖 y≈270，容許 ±4）；立繪 380×512 */
   assert.ok(H.cut > 0.2 && H.cut < 0.45, "要裁掉下半截：" + H.cut);
+  /* 11/22 史學顧問 191「全圖無字」：掌門抱的大棋子「屏」字從立繪高 0.59 起，裁切要藏住；圖換過（後牆掛物塗平）要升 v */
+  assert.ok(H.cut >= 0.42, "要藏住棋子上的字：" + H.cut);
+  assert.notStrictEqual(H.v, "1122", "門內圖換過要升版");
   const line = H.seat[1] - H.w * 512 / 380 * H.cut;
   assert.ok(Math.abs(line - 270) <= 4, "裁切線要對齊桌子後緣：" + line.toFixed(1));
   assert.match(rd("xiangqi-db/m/07z9b-jianghu.js"), /\(H\.cut\?`;clip-path:inset\(0 0 \$\{H\.cut\*100\}% 0\)/, "裁切在共用的 JhHall 裡做（中炮門一起改）");

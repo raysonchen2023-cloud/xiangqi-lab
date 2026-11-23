@@ -15,7 +15,10 @@
 //     ✘ 不在包裡、原生又不會補抓的圖片／音樂／模型：<img> 直接破圖
 //     ✘ CDN 上切塊的大檔不在包裡、原生又不會接回切塊：讀不到
 //     △ 不在包裡、原生不會補抓的 JSON：網頁程式會自己改抓 CDN（00-util.js），列出來但不擋
-//     加 --cdn：再實際問 CDN，靠 CDN 補抓的檔要真的在（切塊檔看 .parts.json）
+//     加 --cdn：再實際問 CDN，靠 CDN 補抓的檔要真的在（切塊檔看 .parts.json）；
+//       而且安裝包裡的每個 data/ 檔都要跟 CDN 現行版（cdn-manifest.json 的 SHA-1）一樣——W42：倉庫留著 7 個舊副本，包裡的清單也是舊的，
+//       只拿包裡自己的 preload.json 驗自己抓不到（W69 流程盤點第 3 項）；manifest 讀不到算缺驗
+//   報告（--out）：tool＝"P0-IMG"、aabSha256（這個 AAB 的 SHA-256）、pass（加 --cdn 且結束代碼 0）；送審前由 p0-gate.js 核對
 // 用法：node scripts/check-aab-assets.js --aab <檔.aab> [--repo <公開倉庫>] [--cdn] [--out 報告.json]
 //   需要 unzip；清單優先用安裝包裡的 data/preload.json，沒有才用 --repo 的 sharedWebCommit 版本
 // 結束代碼：0＝沒有 ✘（加 --cdn 時也全部確認過）；1＝有 ✘；2＝用法或環境錯誤；3＝加 --cdn 但有沒確認到的（缺驗，不能送審）
@@ -110,8 +113,17 @@ async function main() {
       R.red.push(...miss); R.warn.push(...unknown); R.unknown = unknown.length;
     }
 
+    // 4b. 包裡的檔跟 CDN 現行版逐檔比 SHA-1（W42；加 --cdn 才做）
+    if (CDN_CHECK) {
+      let man = null;
+      for (let t = 0; t < 4 && !man; t++) { try { const r = await fetch(CDN + "cdn-manifest.json"); if (r.ok) man = await r.json() } catch (e) {} if (!man) await new Promise(r => setTimeout(r, 800 * (t + 1))) }
+      if (!man || !man.files) { R.warn.push({ f: "cdn-manifest.json", why: "讀不到 CDN 的 cdn-manifest.json，沒能核對包裡的檔是不是 CDN 現行版（缺驗）" }); R.unknown = (R.unknown || 0) + 1 }
+      else { const H = new Map(); for (const [f2, p] of inPack) if (f2.startsWith("data/") && man.files[f2]) H.set(f2, crypto.createHash("sha1").update(fs.readFileSync(p)).digest("hex"));
+        const S = staleVsCdn(H, man.files, need); R.red.push(...S.red); R.warn.push(...S.warn); R.cdnCompared = H.size }
+    }
+
     // 5. 報告
-    const sum = { aab: path.basename(AAB), siteVersion: nb.siteVersion || null, sharedWebCommit: nb.sharedWebCommit || null, native,
+    const sum = { aab: path.basename(AAB), aabSha256: crypto.createHash("sha256").update(fs.readFileSync(AAB)).digest("hex"), siteVersion: nb.siteVersion || null, sharedWebCommit: nb.sharedWebCommit || null, native,
       need: need.size, inPack: R.ok.inPack, viaCdn: R.ok.viaCdn, cdnChecked: CDN_CHECK, red: R.red.length, warn: R.warn.length };
     console.log(`安裝包：${sum.aab}（網站 ${sum.siteVersion}，網頁 ${String(sum.sharedWebCommit).slice(0, 7)}）`);
     console.log(`原生：CDN 補抓 ${native.cdnFallback ? "有" : "沒有"}｜切塊接回 ${native.partsJoin ? "有" : "沒有"}｜離線素材包 ${native.assetPacks.length ? native.assetPacks.join("、") : "沒有"}`);
@@ -124,11 +136,19 @@ async function main() {
       : code === 3 ? `△ 還不能送審：CDN 有 ${R.unknown} 項沒確認到（缺驗），請稍後重跑 --cdn`
       : CDN_CHECK ? "✔ 安裝包內容沒有發現會破圖或讀不到的問題（含 CDN 核對）"
       : "✔ 安裝包本身沒有問題；送審前還要加 --cdn 核對 CDN（P0-IMG 通過條件＝--cdn 且結束代碼 0）");
-    if (OUT) fs.writeFileSync(OUT, JSON.stringify({ ...sum, unknown: R.unknown || 0, exitCode: code, redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
+    if (OUT) fs.writeFileSync(OUT, JSON.stringify({ tool: "P0-IMG", ...sum, cdnCompared: R.cdnCompared || 0, unknown: R.unknown || 0, exitCode: code, pass: CDN_CHECK && code === 0, redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
     process.exitCode = code;
   } finally { fs.rmSync(tmp, { recursive: true, force: true }) }
 }
 /* 結束代碼（PR #11 審查：缺驗不能送審）：有 ✘＝1；加 --cdn 而有沒確認到的＝3；其餘＝0 */
 function exitCode({ red, unknown, cdn }) { return red ? 1 : cdn && unknown ? 3 : 0 }
-module.exports = { exitCode, PARTS_MARKER };
+/* 包裡的檔（路徑 → 完整 SHA-1）跟 CDN manifest（路徑 → [大小, SHA-1 前 12 碼]）比。
+   需求清單（preload／大檔／比賽對局）裡的素材不同＝✘：App 先用包裡那份，會顯示舊內容（W42：7 個舊副本，清單也是舊的）；
+   清單外的檔（說明文件、回饋清單、校正表等，每次發布或匯出都會更新）不同＝△：多半是 CDN 在建包後更新過，列出來但不擋（26112201 實測 6 項都是這種） */
+function staleVsCdn(packSha1, manFiles, need) { const red = [], warn = [];
+  for (const [f, h] of packSha1) { const m = manFiles[f]; if (!m || !m[1] || h.startsWith(m[1])) continue;
+    if (need && need.has(f)) red.push({ f, why: `安裝包裡的素材跟 CDN 現行版不同（包 ${h.slice(0, 12)}、CDN ${m[1]}）：是倉庫或建包時留下的舊副本（W42），換成 CDN 現行版再建` });
+    else warn.push({ f, why: "清單外的檔跟 CDN 現行版不同（多半是 CDN 在建包後更新過；說明文件、回饋清單之類），列出來但不擋" }) }
+  return { red, warn } }
+module.exports = { exitCode, PARTS_MARKER, staleVsCdn };
 if (require.main === module) main().catch(e => die(e.stack || String(e)));

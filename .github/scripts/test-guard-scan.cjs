@@ -41,6 +41,16 @@ test("守門：刪除網站檔、把原始碼改名成網站檔、根目錄新�
     ["中文檔", ({ put }) => put("說明.md", "x\n"), "說明.md"],
   ]) { const r = guard(repo(ch)); assert.equal(r.status, 1, name + "：" + r.stdout); assert.match(r.stdout, new RegExp("\\n  " + hit.replace(".", "\\."))); }
 });
+test("守門：根目錄的 AGENTS.md（給 Codex 的審查規則，W70）→ 通過；只准這一個固定檔名，換大小寫、副檔名、放到網站資料夾都擋", () => {
+  const ok = guard(repo(({ put }) => { put("AGENTS.md", "# 規則\n"); put("source/a.js", "改了\n"); }));
+  assert.equal(ok.status, 0, ok.stdout + ok.stderr);
+  assert.match(ok.stdout, /✔ 沒有動到會直接上線的網站檔/);
+  for (const name of ["agents.md", "AGENTS.md.bak", "AGENTS.mdx", "data/AGENTS.md", "engine/AGENTS.md", "x-AGENTS.md"]) {
+    const r = guard(repo(({ put }) => put(name, "x\n")));
+    assert.equal(r.status, 1, name + "：" + r.stdout);
+    assert.match(r.stdout, new RegExp("\\n  " + name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(\\n|$)"), name);
+  }
+});
 test("私密掃描補強：PR 改到的 source/ 以外的檔有私鑰 → 擋下；乾淨 → 通過；沒改檔 → 略過", () => {
   const key = "-----BEGIN " + "RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA" + "x".repeat(60) + "\n-----END " + "RSA PRIVATE KEY-----\n";
   const bad = scan(repo(({ put }) => put("releases/筆記.txt", key)));

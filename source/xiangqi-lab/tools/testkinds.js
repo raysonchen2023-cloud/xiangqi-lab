@@ -40,6 +40,7 @@ const CLASSIFIED = new Set([
   "test-evidence-shots.js",   /* 11/13 第 15 輪 F1／F2／X2 可重現畫面證據包＋英文防爆版檢查（tools/qa/evidence-shots.js 的純函式；行為 16、原始碼 1） */
   "test-android-build.js",   /* 11/13 第 15 輪 F3、F4 Android debug APK 編譯＋可重現檢查 repro-check.js、建置與工具鏈紀錄（行為 9、混合 2、原始碼 1）；11/13 Service Worker 標頭修法正式採用（混合 +1、原始碼 +1） */
   "test-aab-assets-check-1121.js",   /* 11/21 W41① 送審前安裝包內容檢查 xiangqi-android/scripts/check-aab-assets.js（封測 P0-IMG：W21 缺素材、W30 切塊大檔接不回、舊檔；行為 6） */
+  "test-p0-aab-bound-1122.js",   /* 11/22 W69 流程盤點第 3 項：P0 證據綁住送審 AAB（p0-gate 三份報告同一個 AAB 雜湊、P0-IMG 要 --cdn 且 0、P0-UPD 不准 --no-old-worker）、包裡素材跟 CDN 現行版交叉核對、建包只換清單內舊副本、簽章密碼不上命令列、建包腳本 --home-art 必填；PR #42 審查：版號要等於送審版號、P0-3D Android 12／16 各一份且完整跑、已知問題清單用倉庫那份（行為 7、原始碼 1） */
   "test-app-assets-check-1122.js",   /* 11/22 W69② iOS 送審前安裝包素材檢查 xiangqi-ios/scripts/check-app-assets.js（對應 Android W41①：首頁必要素材、清單 SHA-1、缺圖與切塊大檔、跟 CDN 清單比對、.ipa；反測必紅；--gate 送審閘門沒核對 CDN 就擋、.ipa 出錯也清暫存（PR #41 審查）；行為 8、原始碼 1） */
   "test-preview-build-1121.js",   /* 11/21 W43 Cloudflare PR 預覽建置 source/preview-build.js（版號跟 sw.js 一致、刪超過 25 MB 的檔、寫 404.html；行為 5） */
   "test-device-checks-1121.js",   /* 11/21 W41②③ 升級測試 check-upgrade.js 與 44 畫面破圖掃描 check-scenes.js 的判斷規則（P0-UPD、P0-IMG；離線只算看得到的破圖；測不成立回 2；只准模擬器；更新視窗看 20 秒；行為 12、原始碼 3） */
@@ -53,9 +54,16 @@ const CLASSIFIED = new Set([
   "test-jh-canal-1122.js",   /* 11/22 W46 十州漕運殘局（門派任務版）：運河四州、時辰換州、真題庫挑題（一～三步殺、殺法標籤）、點船挑題、殘局頁外掛模式驗證、每天每州修為只給一次、漕船圖與退路；11/22 停靠點避開長卷原有的船與岸、船貼水面（行為 7、混合 1、原始碼 2） */
   "test-zm-screen-data-1122.js",   /* 11/22 W48-S2 屏風馬門兩套題庫資料（開發者選單：課堂挑錯著、算盤算帳）：xiangqi-db/art/zmhall/ 兩份題庫（發布時帶到 data/zmhall/）的格式、每手用 core.js 重走合法、壞著是黑方、ok 含 best、答案與分數門檻與子力一致（不跑引擎；引擎分數由 tools/screen-quiz-build.js 產生；行為 7：含網站副本與原始資料一致） */
   "test-zm-shijiao-1122.js",   /* 11/22 W48-S3 仕角炮門「當鋪算兌子」（開發者選單：193 八派第一批）：m/07z9e-shijiao.js 互吃窮舉 7 個手算案例（含雙方停手、過河卒、牽制）、60 題題庫用同一支程式重算、答錯說明、一輪 3 題不重複且打散、每天修為只給一次（行為 8） */
-  "test-jh-screen-1122.js",   /* 11/22 W48 屏風馬門門內（開發者：要跟中炮門不同玩法；三種都做、前院不站門人）：守中宮起始局面合法、開局參數、大子淨虧計算、走滿 10 步過關且修為只給一次、淨虧當場失敗、別的對局照舊、挑錯著與算帳每天一次修為、門內設定與 3D 路網；PR #39 審查：換子途中不判失敗（行為 11、原始碼 1） */
+  "test-jh-screen-1122.js",   /* 11/22 W48 屏風馬門門內（開發者：要跟中炮門不同玩法；三種都做、前院不站門人）：守中宮起始局面合法、開局參數、大子淨虧計算、走滿 10 步過關且修為只給一次、淨虧當場失敗、別的對局照舊、挑錯著與算帳每天一次修為、門內設定與 3D 路網；PR #39 審查：換子途中不判失敗；11/22 先棄後取：淨虧後寬限 2 步、取回就清掉、走滿 10 步還虧算輸（行為 13、原始碼 1） */
   "test-jh-gong-1122.js",   /* 11/22 W48 過宮炮門「宣紙蓋子位」（記位，193 第一批）：三級難度、真殘局題庫出題池與有炮優先、一輪三題固定與換日、抽子規則、同種互換算對、每天一次修為（行為 5、原始碼 1） */
+  "test-jh-shunpao-1122.js",   /* 11/22 W48-S6 順炮門「搶攻算殺步」（計步）：連將殺步數手算案例、60 題題庫用獨立搜尋重算（少一步殺不了）、示範殺法逐步重放、一輪 3 題、修為一天一次與連對數（行為 6、原始碼 1；PR #53 後改問最快幾步殺、獨立重算） */
   "test-jh-qima-1122.js",   /* 11/22 W48 起馬門「驛馬繞險路」（找路，193 第一批）：傌照真走法（蹩馬腿、不吃子）、險格＝黑方不動能直接吃到、最短安全路線、三級出題（黑子數、步數、起終點安全、沒被將軍、同一天固定）、每天一次修為（行為 5、原始碼 1） */
+  "test-jh-fanggong-1122.js",   /* 11/22 W48-S4 反宮馬門「活字排局陣」（開發者「門派分給三位平行做完」；選單「照主線次序才算對」）：m/07z9g-fanggong.js 課程主線取出與合法、三級出題（初中只打散黑方、高級紅黑都打散）、照主線次序判對錯並指出第幾步、走不下去指出原因、每天修為只給一次（行為 5、原始碼 1） */
+  "test-jh-zm-engine-1123.js",   /* 11/23 W73 順炮、仕角炮、反宮馬棋理修正（Windows Claude 1 用 Pikafish 驗出）：順炮 90 題局面合法（獨立檢查子數、九宮、仕相兵、照面）、引擎最短殺等於答案；仕角炮 60 題引擎條件（吃差 50 cp 內／不吃好 100 cp 以上）、13 題舊題不在；反宮馬 palace_horse_06 例題 b 不出（行為 5、原始碼 1） */
+  "test-jh-liepao-1122.js",   /* 11/22 W48-S5 列炮門「擊板記譜局」（開發者「門派分給三位平行做完」）：m/07z9h-liepao.js 課程主線取出與合法、三級步數 4／6／8 與分段 3～4 步、同一輪 3 題開頭不同、判一步分「動錯子／落點錯」、每天修為只給一次（行為 5、原始碼 1） */
+  "test-jh-feixiang-1122.js",   /* 11/22 W48-S8 飛相門「築堤擺陣形」（擺陣，193 第 5 節）：三級子數與步數、出題局面合法且同一天固定、最少步數由模組 IDA* 與測試另寫的雙向 BFS 兩套對得上、走法不吃子帥不動、提示最近的子、每天一次修為（行為 6、原始碼 1） */
+  "test-jh-xianren-1122.js",   /* 11/22 W48-S7 仙人指路門「探路猜陣勢」（推測，193 第 4 節）：課程第 7～16 課主線合法且布局分類跟黑方第一步動的子一致、三級選項組成、同一天固定、答錯指出第一個分岔、提示最特別的一步、每天一次修為與探路紀錄（行為 5、原始碼 1） */
+  "test-check-3d-1122.js",   /* 11/22 W67 封測 P0-3D 真實觸控檢查 xiangqi-android/scripts/check-3d.js 的判斷規則（九個情境、挑候選與安全區、黑洞只試正解、起點點在棋子身上、黑洞背面十字鍵、鏡頭停穩、座標換算、只看棋譜、WebView 位置、用法錯誤結束碼 2；流程盤點第 4、6 項：已知問題要在 .github/p0-known.json 且沒過期、合法落點被蓋住就不算過、同桌紅黑先驗上緣落點；行為 13） */
   "test-android-roadmap.js",   /* 11/13 第 14 輪 F3 Android 路線圖＋可重現驗證包：verify-all.js、xiangqi-android 骨架檢查、F-Droid 草稿、make-www（行為 8、混合 1）；11/13 骨架檢查 native.swclient（行為 +1） */
   "test-fdroid-evidence.js",   /* 11/13 第 13 輪 F2 F-Droid 可建置證據：pikafish-verify.js、release-verify.js（行為 8、原始碼 1） */
   "test-daily.js",   /* 11/13 第 13 輪 F1 每日同題＋無雷分享（m/07dq-daily.js；行為 11、原始碼 2）；第 14 輪 X4 題庫改版名冊＋邊界（行為 +13） */
@@ -173,6 +181,9 @@ function runFile(file) {
     const sk = /\s# SKIP\b\s*(.*)$/i.exec(m[2]);   /* 11/14：SKIP＝略過（TAP 裡是 ok，但沒有跑），另外統計、不算通過 */
     res.push({ name, ok: m[1] === "ok", todo: /\s# TODO\b/i.test(m[2]), skip: !!sk, why: sk ? sk[1].replace(/\\#/g, "#").replace(/\\\\/g, "\\") : undefined });   /* 第 17 輪 F3：todo＝還沒修的漏洞（預期失敗），另外統計 */
   }
+  /* W69 流程盤點第 18 項（11/23）：檔裡一項 test() 都沒跑時，node --test 會把「這支檔本身」報成一項通過（名稱＝檔名），
+     等於沒測試卻算 1 項通過；還原成 0 項，下面判失敗。載入就壞的檔是「not ok - 檔名」，照常算失敗 */
+  if (res.length === 1 && res[0].ok && !res[0].skip && !res[0].todo && res[0].name === file) return [];
   return res;
 }
 /* 不跑測試：數 test( 呼叫處的名稱（第一段字面字串） */
@@ -224,5 +235,7 @@ if (require.main === module && !process.env.NODE_TEST_CONTEXT) {
   if (total.todo.all) console.log(`預期失敗（還沒修的漏洞，node:test todo；不算進上面三類）：${total.todo.all} 項，其中「預期失敗卻通過」${total.todo.xpass} 項（${files.filter(f => f.n.todo.all).map(f => f.file + " " + f.n.todo.all).join("、")}）`);
   console.log("說明：原始碼比對只證明程式碼存在，不證明功能會動；測試由開發用的 AI 撰寫，不等於第三方驗證。");
   /* 11/13：有任何一項沒過就回報失敗（結束代碼 1），source/run-tests.js、verify-all.js 才不會把沒過的當成通過 */
+  /* W69 流程盤點第 18 項（11/23）：一項都沒跑出來的檔（0/0）也算沒過，不然 test() 被包進條件、整段註解掉，CI 照樣綠 */
+  if (mode === "run") { const zero = files.filter(f => !f.items.length).map(f => f.file); if (zero.length) { console.log("✖ 測試檔一項都沒跑出來：" + zero.join("、") + "（如果那支檔只有一項、名稱剛好跟檔名一樣，跟「沒跑」分不出來，請把那一項改名）"); process.exitCode = 1 } }
   if (mode === "run") { const bad = files.filter(f => KINDS.some(k => f.n[k].pass + f.n[k].skip < f.n[k].all) || f.n.todo.xpass).map(f => f.file);   /* 預期失敗卻通過也算：漏洞可能修好了，要把 todo 改成一般測試 */ if (bad.length) { console.log("✖ 有測試沒過：" + bad.join("、")); process.exitCode = 1 } }
 }
