@@ -121,10 +121,14 @@ async function jhMzWorld3(box,c,S){
   const mesh=(geo,mat,x,y,z)=>{const o=new T3.Mesh(geo,mat);o.position.set(x,y,z);return o};
   const add=(g,x,y,on)=>{g.position.set(x+.5,0,y+.5);sc.add(g);const mats=[];g.traverse(o=>{if(o.material&&o.material.userData&&o.material.userData.base&&!mats.includes(o.material))mats.push(o.material)});const it={g,x,y,mats,on};objs.push(it);return it};
   const sackG=new T3.SphereGeometry(.21,14,10),tieG=new T3.CylinderGeometry(.04,.05,.07,8),sackM=lam("#b08850"),tieM=lam("#5a3c18");
-  const flames=[],lights={};
+  const flames=[],lights={},sparks=[];
   for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const ch=JH_MZ_MAP[y][x];
     if(ch==="S"){const g=new T3.Group();for(const[a,b,z]of[[-.2,.16,.18],[.2,.16,.18],[0,.16,-.16],[-.11,.43,0],[.14,.41,-.03]]){const s=mesh(sackG,sackM,a,b,z);s.scale.set(1,.78,1);g.add(s);g.add(mesh(tieG,tieM,a,b+.17,z))}add(g,x,y,()=>true)}
     else if(ch==="C"){const g=new T3.Group();g.add(mesh(new T3.BoxGeometry(.6,.34,.42),lam("#8c2a1e"),0,.17,0));g.add(mesh(new T3.BoxGeometry(.63,.07,.45),lam("#a8342a"),0,.36,0));g.add(mesh(new T3.BoxGeometry(.08,.1,.02),lam("#d9a441"),0,.25,.22));
+      /* 11/23 Windows Claude 2 預驗 #92：寶箱 (7,9) 南邊是牆，俯角下只看得到紅色頂面、看不出是箱子。
+         ①箱蓋頂面加金色十字扣條，從正上方也認得出是箱子；②箱子上方浮一顆小金光（比牆頂 0.85 高），慢慢轉、上下浮，被南牆擋住也看得到；撿走就跟著箱子消失 */
+      const gold=lam("#d9a441");g.add(mesh(new T3.BoxGeometry(.64,.025,.09),gold,0,.405,0));g.add(mesh(new T3.BoxGeometry(.09,.025,.48),gold,0,.405,0));
+      const gm=new T3.Mesh(new T3.OctahedronGeometry(.085),new T3.MeshBasicMaterial({color:0xFFD36B}));gm.position.set(0,1.05,0);g.add(gm);sparks.push({gm,x});
       add(g,x,y,()=>S.grid[y][x]==="C")}
     else if(ch==="T"){const g=new T3.Group();g.add(mesh(new T3.CylinderGeometry(.05,.07,.9,8),lam("#3a2c1e"),0,.45,0));g.add(mesh(new T3.CylinderGeometry(.13,.08,.09,10),lam("#2b2118"),0,.93,0));
       const fm=new T3.Mesh(new T3.SphereGeometry(.09,10,8),new T3.MeshBasicMaterial({color:0xFFB347}));fm.position.set(0,1.05,0);fm.scale.set(1,1.6,1);g.add(fm);flames.push({fm,k:y*S.W+x,x,y});add(g,x,y,()=>true)}
@@ -169,6 +173,7 @@ async function jhMzWorld3(box,c,S){
       cells.forEach(([x,y],i)=>fl.setColorAt(i,cK.setScalar(bright(L,x,y))));fl.instanceColor.needsUpdate=true;
       walls.forEach(([x,y],i)=>wl.setColorAt(i,cK.setScalar(bright(L,x,y))));wl.instanceColor.needsUpdate=true;
       for(const o of objs){const b=bright(L,o.x,o.y);o.g.visible=b>0&&o.on();if(o.g.visible)for(const m of o.mats)m.color.copy(m.userData.base).multiplyScalar(b)}
+      for(const s of sparks){s.gm.rotation.y=now/600+s.x;s.gm.position.y=1.05+Math.sin(now/400+s.x)*.06}
       for(const f of flames){const on=S.lit.has(f.k);f.fm.visible=on;if(on){f.fm.scale.set(1,1.6+Math.sin(now/90+f.x)*.18,1);if(!lights[f.k]&&Object.keys(lights).length<4){const pl=new T3.PointLight(0xFFA040,.9,4.2,1.5);pl.position.set(f.x+.5,1.1,f.y+.5);pl.layers.enable(1);sc.add(pl);lights[f.k]=pl}}}
       const gL=L[G.y*S.W+G.x]||0;gd.visible=gL>.15;gd.position.set(G.fx+.5,0,G.y+.5);gdB.rotation.y=G.dx>0?Math.PI/2:-Math.PI/2;eyeM.color.setHex(G.stun?0x8A8A8A:0xE24A3A);
       const sx=jhMzSight(S);sights.forEach((o,i)=>{const x=sx[i];o.visible=x!=null&&(L[G.y*S.W+x]||0)>.15;if(o.visible)o.position.set(x+.5,.012,G.y+.5)});
