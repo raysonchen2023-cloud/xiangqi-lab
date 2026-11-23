@@ -71,7 +71,8 @@ const mainOf = (listBuf, over = {}) => (rel) => (rel in over ? over[rel] : rel =
 /* 「check-www 自己 --cdn」的替身：真的跑 check-www，只把網址換成金絲雀下載好的那份本機清單（PR #67 第十二次審查：要比對「比了幾個檔」，不能只回 0） */
 const okCdn = (d, lf, ctx) => cp.spawnSync(process.execPath, [CHECK, "--dir", d, "--list", lf, "--cdn-manifest", ctx.cdnFile], { encoding: "utf8" });
 const runCheck = (dir, list, ...more) => cp.spawnSync(process.execPath, [CHECK, "--dir", dir, "--list", list, ...more], { encoding: "utf8" });
-const runCanary = (canary, args, o = {}) => cp.spawnSync(process.execPath, [canary, ...args], { encoding: "utf8", env: env(o) });
+/* PR #67 第十六次審查①：base-guard 每一步都帶 NODE_OPTIONS=--require assert-count.cjs；叫金絲雀時預設拿掉（只有測「環境被動過」那一項自己帶），不然在 guard-base 會回 2 */
+const runCanary = (canary, args, o = {}) => cp.spawnSync(process.execPath, [canary, ...args], { encoding: "utf8", env: env({ NODE_OPTIONS: null, ...o }) });
 
 test("check-www.js：乾淨的假 www 全過；同大小換內容抓得到；--cdn 時 App 會要的檔跟 CDN 現行版不同會擋；讀不到 CDN 清單回 3（缺驗）", () => {
   const { D, L, M } = fakeWww();
@@ -91,7 +92,7 @@ test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；25 �
   const R = JSON.parse(fs.readFileSync(out, "utf8"));
   assert.equal(R.pass, true); assert.equal(R.full, false, "--cdn-manifest 給的本機清單不算正式 CDN，送審不能用（PR #67 第四次審查：本機清單可能是拿包自己算的）"); assert.equal(R.seed, 7);
   assert.deepEqual(R.kinds, ["home", "casehome", "bgm", "casebgm", "caselist", "casedir", "nodata", "rmdir", "mani", "engine", "core", "big", "swap", "bridge", "nocap", "nobridge", "cmtcap", "cdnstale", "cdnmiss", "cdnfail", "ctrl", "nohash", "listmiss", "bigpre", "capord"]);
-  for (const x of R.results) { assert.equal(x.caught, true, x.kind + " " + x.file); assert.equal(x.exit, ["cdnmiss", "cdnfail", "nohash"].includes(x.kind) ? 3 : 1, x.kind) }
+  for (const x of R.results) { assert.equal(x.caught, true, x.kind + " " + x.file); assert.equal(x.exit, x.kind === "(乾淨重跑)" ? 0 : ["cdnmiss", "cdnfail", "nohash"].includes(x.kind) ? 3 : 1, x.kind) }   /* 乾淨重跑要回 0（PR #67 第十六次審查②） */
   assert.ok(R.results.some((x) => x.kind === "swap" && x.file === "engine/pikafish.nnue"), "swap 固定測最大的記了 sha1 的檔（PR #67 第五次審查）");
   const files = (k) => R.results.filter((x) => x.kind === k).map((x) => x.file);
   for (const era of ["han", "tang", "song", "ming", "qing", "sui"]) assert.ok(files("bgm").some((f) => f.startsWith("data/bgm/" + era + "/")), "背景音樂每個朝代都要測到：" + era);
@@ -563,4 +564,35 @@ test("每一次檢查都在一樣形狀的副本路徑上跑：check-www 只對 
   const src = fs.readFileSync(CANARY, "utf8");
   assert.match(src, /const pre = check\(cleanD, LF, null\)/); assert.match(src, /const clean = check\(cleanD, LF, cdnFile\)/);
   assert.doesNotMatch(src, /path\.join\(base, tag\)/, "壞樣本路徑不能帶種類名稱");
+});
+
+test("在 base-guard 的環境（NODE_OPTIONS=--require assert-count.cjs）下跑這支自我測試，叫金絲雀照樣不會被判成環境被動過（PR #67 第十六次審查①）", () => {
+  const { D, L } = fakeWww(), save = process.env.NODE_OPTIONS;
+  const AC = path.join(HERE, "..", "..", "..", ".github", "scripts", "assert-count.cjs");
+  process.env.NODE_OPTIONS = ((save || "") + " --require " + AC).trim();
+  try { const r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"]); assert.equal(r.status, 0, r.stdout + r.stderr) }
+  finally { if (save === undefined) delete process.env.NODE_OPTIONS; else process.env.NODE_OPTIONS = save }
+  const bg = fs.readFileSync(path.join(HERE, "..", "..", "..", ".github", "scripts", "base-guard.cjs"), "utf8");
+  assert.match(bg, /NODE_OPTIONS: \(\(process\.env\.NODE_OPTIONS \|\| ""\) \+ " --require "/, "base-guard 的 assertEnv 還是這樣帶 NODE_OPTIONS（改了就要重看這項）");
+});
+
+test("乾淨的那次在中間和最後各用全新副本再跑一次；check-www 只有第一次放水（看順序）時判成失靈（PR #67 第十六次審查②）", () => {
+  const { D, L } = fakeWww(), out = path.join(tmp("xq-again-"), "r.json");
+  const r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home,mani", "--seed", "3", "--out", out]); assert.equal(r.status, 0, r.stdout + r.stderr);
+  const R = JSON.parse(fs.readFileSync(out, "utf8")); assert.deepEqual(R.results.filter((x) => x.kind === "(乾淨重跑)").map((x) => x.file).sort(), ["中間", "最後"].sort());
+  /* 審查的攻擊：真包是壞的；改壞的 check-www 用記號檔記「跑過幾次」，最前面兩次（乾淨那次）說謊回 ✔，之後照實檢查——
+     壞樣本都抓得到，沒有乾淨重跑的話會回 0、放行壞真包；有乾淨重跑就判失靈（4） */
+  fs.rmSync(path.join(D, "data", "home", "qin.webp"));
+  const mark = path.join(tmp("xq-mark-"), "n");
+  const C = blindCanary('if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); }', 'if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); } { const M = ' + JSON.stringify(mark) + '; const n = fs.existsSync(M) ? +fs.readFileSync(M, "utf8") : 0; fs.writeFileSync(M, String(n + 1)); if (n < 2) { console.log("✔ 沒問題"); process.exit(0) } }');
+  const r2 = runCanary(C, ["--dir", D, "--list", L, "--only", "home", "--seed", "3"]); assert.equal(r2.status, 4, r2.stdout + r2.stderr); assert.match(r2.stdout, /✘ 乾淨的再跑一次/);
+  const src = fs.readFileSync(CANARY, "utf8"); assert.match(src, /fs\.mkdtempSync\(path\.join\(tmp, "xq-"\)\)/, "每次檢查各自 mkdtemp");
+});
+
+test("always 丟例外不當掉；.ipa 解不開不留暫存（PR #67 第十六次審查③④）", () => {
+  const { D, L } = fakeWww(); fs.rmSync(path.join(D, "data", "preload.json"));
+  const C = blindCanary('bad.push("讀不到 data/preload.json：" + e.message);', "{}");   /* 失靈的 check-www：preload 讀不到也不報，乾淨那次就會過 */
+  const r = runCanary(C, ["--dir", D, "--list", L, "--only", "rmdir,casedir", "--seed", "1"]); assert.notEqual(r.status, 1, "不能當掉回 1：" + r.stdout + r.stderr);
+  const T = tmp("xq-ipatmp-"), bad = path.join(tmp("xq-badipa-"), "x.ipa"); fs.writeFileSync(bad, "不是 zip");
+  const x = run({ pkg: bad, list: L, tmp: T, log: () => {} }); assert.equal(x.code, 2); assert.deepEqual(fs.readdirSync(T).filter((n) => n.startsWith("xq-canary-ipa-")), [], "解不開時暫存要清掉");
 });

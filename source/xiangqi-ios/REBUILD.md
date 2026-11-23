@@ -74,7 +74,7 @@ node scripts/canary-www.js --pkg <要送審的 .ipa> --list scripts/.www-files.j
 - 收據記下每一種壞樣本挑了哪個檔、種子、兩支工具的 SHA-256（CRLF 換成 LF）、`public` 的樹雜湊、安裝包的 SHA-256、清單的 SHA-256 和 origin/main 那份清單的 SHA-256、origin/main 上兩支工具的 SHA-256、比對時本機 origin/main 的提交、包裡 `release.json` 的版號。
 - `.ipa` 會整包解開（不靠萬用字元），解完核對 public 底下的檔數跟 zip 目錄一樣；zip 裡有重複的檔名項目就回 2。`--seed` 要是非負整數。
 - **送審只看金絲雀的收據。** 上面那道單獨的 `check-www.js … --cdn` 指令只是給人看的，結果不算數：金絲雀自己會在副本上做乾淨的那次檢查和每個壞樣本，判定都來自那裡。
-- 每一次檢查（乾淨的、每個壞樣本、`--cdn` 那次）都在副本上跑，路徑一律是 `<暫存>/<亂數>/Payload/App.app/public`，check-www 從路徑分不出是真包還是壞樣本、是哪一種壞樣本。
+- 每一次檢查（乾淨的、每個壞樣本、`--cdn` 那次）都在各自全新的暫存資料夾裡、同樣形狀的路徑上跑（`<暫存>/xq-XXXX/<亂數>/Payload/App.app/public`），彼此看不到；乾淨的那次除了最先跑，也在壞樣本中間隨機一個位置和最後各用全新副本再跑一次，要都回 0，不一致就判失靈（4）。這擋得住「看路徑」「看哪個資料夾先建」這類寫法，但刻意偵測執行環境的工具仍可能分得出來，最後要靠 CI 工具鎖定（用 main 版工具重跑）。
 - 整批缺檔：`nodata`（整個 `data/` 不見）、`rmdir`（拿掉檔案最多的 3 個素材目錄）、`mani`（`release.json` 和三份清單檔各拿掉一次）每次都測。
 - 執行環境：金絲雀要用乾淨的 `node` 直接跑。`NODE_OPTIONS` 有值，或 node 帶了參數（`--require`、`--import` 等），金絲雀直接回 2；叫 `check-www.js` 時拿掉所有 `NODE_*` 環境變數。收據記 node 版本、node 參數和 `NODE_OPTIONS`。
 - `check-www.js --cdn`（自己下載正式 CDN 清單）那次要回 0，而且「跟 CDN 現行版比了 N 個檔」的 N 要跟金絲雀用本機那份 CDN 清單檢查時一樣，才算正式 CDN 那條路驗過。

@@ -101,10 +101,12 @@ const BIG = 20 * 1048576;
 /* 某個目錄整個出事時，錯誤照 check-www 的順序（preload → 背景音樂 → 清單「少了」）第一個會出現的那一行：「目錄|檔|種類」；
    清單檔的上層目錄（data、data/bgm）回 null（清單本身讀不到，錯誤是另一種，nodata／mani 另外測） */
 const MANI = ["data/preload.json", "data/bgm/index.json", "data/big-books.json"];
+/* PR #67 第十六次審查⑤：首頁、背景音樂、清單在場的檔只算一次（每個目錄都重讀一遍，真包要好幾分鐘） */
+const dirMemo = new WeakMap();
+const dirArrays = (D, L) => { let m = dirMemo.get(L); if (!m) { m = new Map(); dirMemo.set(L, m) } if (!m.has(D)) m.set(D, { pre: [...preloadItems(D), ...bigItems(D).filter((x) => fs.existsSync(at(D, x)))], bgm: bgmFiles(D), lst: Object.keys(L).filter((f) => fs.existsSync(at(D, f))) }); return m.get(D) };
 const dirExpect = (D, L, d) => {
   if (MANI.some((m) => m.startsWith(d + "/"))) return null;
-  const pre = [...preloadItems(D), ...bigItems(D).filter((x) => fs.existsSync(at(D, x)))], bgm = bgmFiles(D), lst = Object.keys(L).filter((f) => fs.existsSync(at(D, f)));
-  const under = (arr) => arr.find((f) => f.startsWith(d + "/")), p = under(pre), b = under(bgm), l = under(lst);
+  const { pre, bgm, lst } = dirArrays(D, L), under = (arr) => arr.find((f) => f.startsWith(d + "/")), p = under(pre), b = under(bgm), l = under(lst);
   return p ? d + "|" + p + "|p" : b ? d + "|" + b + "|b" : l ? d + "|" + l + "|l" : null };
 const dirMsg = (x) => { const [, f, t] = x.split("|"); return (t === "p" ? "preload.json 列了但沒有：" : t === "b" ? "背景音樂清單有但沒有檔：" : "少了 ") + f };
 /* rmdir 的候選：data/ 底下第一層、檔案最多的幾個目錄（W21 整批素材沒進包） */
@@ -113,7 +115,9 @@ const bigDirs = (D, L, n = 3) => { const c = new Map(); for (const f of Object.k
 /* casedir 的候選：每個目錄（名字裡要有英文字母才翻得了）一次。錯誤照 check-www 的順序：preload → 背景音樂 → 清單「少了」，
    所以預期的那一行取「這個目錄底下（含子目錄）照那個順序排第一個的檔」，一定在印出來的前幾行。
    背景音樂目錄要底下沒有首頁素材；清單目錄要底下沒有首頁素材和背景音樂（不然先出現的是別種錯誤） */
-const caseDirs = (D, L) => {
+const caseMemo = new WeakMap();
+const caseDirs = (D, L) => { const c = caseMemo.get(L); if (c && c.D === D) return c.v; const v = caseDirs0(D, L); caseMemo.set(L, { D, v }); return v };
+const caseDirs0 = (D, L) => {
   const dirs = new Set(); for (const f of Object.keys(L)) { const parts = f.split("/"); for (let k = 1; k < parts.length; k++) dirs.add(parts.slice(0, k).join("/")) }
   return [...dirs].sort().filter((d) => caseFlip(d) !== d).map((d) => dirExpect(D, L, d)).filter(Boolean) };
 const needStrata = (D) => [...byDirExt(preloadItems(D)), bigItems(D).filter((f) => fs.existsSync(at(D, f))), ...bgmEras(D)].filter((x) => x.length);
@@ -255,6 +259,9 @@ function pkgPublic(pkg, tmp) {
   const st = fs.statSync(pkg);
   if (st.isDirectory()) { const p = path.join(pkg, "public"); if (!fs.existsSync(path.join(p, "index.html"))) throw new Error(pkg + " 裡沒有 public/index.html"); return { dir: p, kind: "app", sha256: treeSha(pkg) } }
   const d = fs.mkdtempSync(path.join(tmp, "xq-canary-ipa-"));
+  try { return ipaPublic(pkg, d) } catch (e) { fs.rmSync(d, { recursive: true, force: true }); throw e }   /* PR #67 第十六次審查④：解壓失敗不留暫存 */
+}
+function ipaPublic(pkg, d) {
   /* PR #67 第九次審查：整包解開（不靠萬用字元跨 /），解完核對 public 底下的檔數跟 zip 目錄一樣；同名項目重複也算解不開 */
   const ls = cp.spawnSync("unzip", ["-Z1", pkg], { encoding: "utf8", maxBuffer: 256e6 });
   if (ls.status !== 0) throw new Error("unzip 讀不了 " + pkg + " 的目錄：" + String(ls.stderr || ls.error || "").split("\n")[0]);
@@ -299,6 +306,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
     let LJ; try { LJ = JSON.parse(fs.readFileSync(LF, "utf8")) } catch (e) { return unfit("讀不到清單 " + LF) }
     const L = LJ.files || {};
     const base = fs.mkdtempSync(path.join(tmp, "xq-canary-www-"));
+    const made = [];   /* 每次檢查各自的暫存資料夾，最後一起清 */
     try {
       const check = (d, lf, cdnArg, more = []) => cp.spawnSync(process.execPath, [CHECK, "--dir", d, "--list", lf, ...(cdnArg ? ["--cdn-manifest", cdnArg] : []), ...more], { encoding: "utf8", maxBuffer: 256e6, env: cleanEnv() });   /* 跟正式用法一樣，不加 --all（PR #67 第五次審查） */
       /* CDN 清單只下載一次，乾淨的那份和每個壞樣本都用同一份，收據記下它的雜湊（PR #67 審查：分兩次下載，兩份可能不同） */
@@ -306,7 +314,8 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       /* PR #67 第四次審查：先驗乾淨的樣本（不連 CDN），再讀 CDN。乾淨的有錯就回 2，不會被「CDN 讀不到」蓋成 3 */
       /* PR #67 第十五次審查：每一次檢查（乾淨的、每個壞樣本、--cdn 那次）都在副本上跑，路徑一律是 <base>/<亂數>/Payload/App.app/public，
          check-www 從路徑分不出哪一次是真包、哪一次是哪一種壞樣本（之前乾淨的用真包路徑、壞樣本路徑帶種類名稱） */
-      const shape = () => { const d = path.join(base, crypto.randomBytes(6).toString("hex"), "Payload", "App.app", "public"); fs.mkdirSync(path.dirname(d), { recursive: true }); return d };
+      /* PR #67 第十六次審查②：每次檢查各自一個全新的暫存資料夾（不在同一個 base 底下，彼此看不到、也看不出誰先建） */
+      const shape = () => { const top = fs.mkdtempSync(path.join(tmp, "xq-")); made.push(top); const d = path.join(top, crypto.randomBytes(6).toString("hex"), "Payload", "App.app", "public"); fs.mkdirSync(path.dirname(d), { recursive: true }); return d };
       const cleanD = shape(); cloneDir(dir, cleanD);
       const pre = check(cleanD, LF, null);
       if (pre.status !== 0) return unfit("乾淨的樣本沒過 check-www.js（先修好再跑金絲雀）：" + String(pre.stderr).split("\n")[0]);
@@ -324,36 +333,42 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       const seedGiven = seed != null && seed !== "", seedFrom = seedGiven ? "given" : P ? "pkg+mainCommit" : "random";
       const SEED = seedGiven ? Number(seed) >>> 0 : P ? parseInt(sha256(P.sha256 + "|" + (typeof mainCommit === "string" ? mainCommit : "")).slice(0, 8), 16) >>> 0 : crypto.randomInt(2 ** 31), rand = rng(SEED);
       const results = [];
-      for (const k of want) {
+      /* PR #67 第十六次審查②：乾淨的那次不只最先跑——在壞樣本中間隨機一個位置、和最後，各用全新的副本再跑一次，要回 0；
+         不一致代表 check-www 會看順序或環境，判成檢查失靈（4） */
+      const cleanAgain = (when) => { const C = shape(); try { cloneDir(dir, C); const r = check(C, LF, cdnFile); results.push({ kind: "(乾淨重跑)", file: when, exit: r.status, caught: r.status === 0 }); log((r.status === 0 ? "✔ " : "✘ ") + "乾淨的再跑一次（" + when + "）結束代碼 " + r.status) } finally { fs.rmSync(C, { recursive: true, force: true }) } };
+      const midAt = Math.floor(rand() * want.length);
+      for (const [ki, k] of want.entries()) {
+        if (ki === midAt) cleanAgain("中間");
         const K = KINDS[k];
         let cands = []; try { cands = K.cands(dir, L, M) } catch (e) { cands = [] }
         let strata = null; try { strata = K.strata ? K.strata(dir, L, M) : null } catch (e) { strata = null }
         /* 分層時：全部候選挑頭、中、尾＋隨機，另外每一層（完整父目錄＋副檔名）都挑 1 個——不再抽樣（PR #67 第十一次審查：只抽樣，檢查只對某目錄、某副檔名失靈時九成抽不到）。
            檔多的壞樣本一次弄壞好幾個（batch），每個檔的錯誤都要出現；這樣每一層都測到，跑 check-www 的次數也不會暴增 */
-        const chosen = [...new Set([...picks(cands, rand), ...(strata ? strata.filter((s) => s.length).map((s) => s[Math.floor(rand() * s.length)]) : []), ...(K.always ? K.always(dir, L, M) : [])])];
+        const chosen = [...new Set([...picks(cands, rand), ...(strata ? strata.filter((s) => s.length).map((s) => s[Math.floor(rand() * s.length)]) : []), ...(K.always ? (() => { try { return K.always(dir, L, M) } catch (e) { return [] } })() : [])])];   /* PR #67 第十六次審查③：always 丟例外不當掉 */
         if (!chosen.length) { results.push({ kind: k, caught: false, unfit: true, why: "乾淨的樣本裡找不到可以弄壞的檔" }); continue }
         const size = K.batch || 1;
         for (let bi = 0; bi < chosen.length; bi += size) {
           const group = chosen.slice(bi, bi + size), tag = k + "-" + results.length;
-          const D = K.noClone ? cleanD : shape();   /* 只改清單或 CDN 清單的壞樣本不動檔案，用乾淨的那份副本 */
+          const D = shape();   /* PR #67 第十六次審查②：只改清單的壞樣本也各自複製一份，不跟乾淨的共用 */
           let lf = LF, cf = cdnFile, Lc = L, Mc = M, cdnPath = null;
           try {
-            if (!K.noClone) cloneDir(dir, D);   /* shape() 只建好上層，D 本身還不存在 */
+            cloneDir(dir, D);   /* shape() 只建好上層，D 本身還不存在 */
             for (const f of group) { const B = K.break(D, f, Lc, Mc) || {}; if (B.list) Lc = B.list; if (B.cdn) Mc = B.cdn; if (B.cdnPath) cdnPath = B.cdnPath }
             if (Lc !== L) { lf = path.join(base, tag + "-list.json"); fs.writeFileSync(lf, JSON.stringify({ ...LJ, files: Lc })) }
             if (Mc !== M) { cf = path.join(base, tag + "-cdn.json"); fs.writeFileSync(cf, JSON.stringify({ files: Mc })) }
             if (cdnPath) cf = cdnPath;
           }
-          catch (e) { for (const f of group) results.push({ kind: k, file: f, caught: false, unfit: true, why: "做壞樣本失敗：" + e.message }); if (!K.noClone) fs.rmSync(D, { recursive: true, force: true }); continue }
+          catch (e) { for (const f of group) results.push({ kind: k, file: f, caught: false, unfit: true, why: "做壞樣本失敗：" + e.message }); fs.rmSync(D, { recursive: true, force: true }); continue }
           const r = check(D, lf, cf), out = String(r.stdout) + String(r.stderr), want = K.exit || 1;
           for (const f of group) {
             const exp = K.expect(f), seen = hit(out, exp, want === 3 ? "△" : "✘"), caught = r.status === want && seen;
             results.push({ kind: k, file: f, candidates: cands.length, batch: group.length, expect: exp, exit: r.status, caught });
             log((caught ? "✔ " : "✘ ") + k + "：" + f + "（候選 " + cands.length + " 個" + (group.length > 1 ? "，同一份副本弄壞 " + group.length + " 個" : "") + "）" + (caught ? " 被抓到" : " 沒被抓到（結束代碼 " + r.status + "，錯誤裡" + (seen ? "有" : "沒有") + "「" + [].concat(exp).join("…") + "」）"));
           }
-          if (!K.noClone) fs.rmSync(D, { recursive: true, force: true });
+          fs.rmSync(D, { recursive: true, force: true });
         }
       }
+      cleanAgain("最後");
       const listSha = sha256(fs.readFileSync(LF)), mainBuf = fromMain(REL_LIST);
       const listMainSha256 = mainBuf ? sha256(mainBuf) : null, listBound = !!listMainSha256 && listMainSha256 === listSha;
       /* PR #67 第六次審查：工具也要是 origin/main 那一版（自己算的，只擋不小心改過；故意偽造要靠 CI 用 main 版工具重算） */
@@ -383,7 +398,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
         pass: passAll, code,
       };
       return { code, receipt };
-    } finally { fs.rmSync(base, { recursive: true, force: true }) }
+    } finally { fs.rmSync(base, { recursive: true, force: true }); for (const m of made) fs.rmSync(m, { recursive: true, force: true }) }
   } finally { if (P && P.cleanup) fs.rmSync(P.cleanup, { recursive: true, force: true }) }
 }
 
