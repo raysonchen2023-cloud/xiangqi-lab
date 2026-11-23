@@ -532,3 +532,15 @@ test("casedir：目錄名改成不同大小寫，首頁素材、背景音樂、�
   for (const t of ["p", "b", "l"]) assert.ok(files.some((f) => f.endsWith("|" + t)), "要測到 " + t + " 類目錄");
   assert.ok(files.some((f) => f.startsWith("data/homemap|")), "首頁素材的目錄");
 });
+
+test("swap 每次都測 index.html、核心程式、根目錄程式檔；只對它們放水金絲雀要回 4；git 不認 replace 物件、收據記 git／unzip 路徑（PR #67 第十四次審查）", () => {
+  for (const [nm, to] of [["index.html", '    else if (h && rel !== "index.html" && crypto'], ["core.js", '    else if (h && rel !== "core.js" && crypto'], ["park3d.js", '    else if (h && rel !== "park3d.js" && crypto']]) for (const seed of ["1", "2"]) {
+    const { D, L } = fakeWww(), C = blindCanary("    else if (h && crypto", to), out = path.join(tmp("xq-swapfix-"), "r.json");
+    const r = runCanary(C, ["--dir", D, "--list", L, "--only", "swap", "--seed", seed, "--out", out]); assert.equal(r.status, 4, nm + "（種子 " + seed + "）：" + r.stdout + r.stderr);
+    assert.ok(JSON.parse(fs.readFileSync(out, "utf8")).results.some((x) => x.file === nm && !x.caught), nm + " 要被測到、而且判成沒抓到");
+  }
+  const src = fs.readFileSync(CANARY, "utf8");
+  assert.match(src, /\["--no-replace-objects", \.\.\.args\]/); assert.doesNotMatch(src, /spawnSync\("git"(?!, \["--no-replace-objects")/, "叫 git 都要經過 GIT()");
+  const { D, L } = fakeWww(), x = run({ dir: D, list: L, only: "home", seed: 1, log: () => {} });
+  assert.ok("git" in x.receipt.runtime && "unzip" in x.receipt.runtime);
+});

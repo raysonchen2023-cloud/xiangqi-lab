@@ -77,7 +77,8 @@ node scripts/canary-www.js --pkg <要送審的 .ipa> --list scripts/.www-files.j
 - `check-www.js --cdn`（自己下載正式 CDN 清單）那次要回 0，而且「跟 CDN 現行版比了 N 個檔」的 N 要跟金絲雀用本機那份 CDN 清單檢查時一樣，才算正式 CDN 那條路驗過。
 - 加了 `--cdn`，卻讀不到 `check-www.js` 裡的正式 CDN 網址，回 2。
 - 比對錯誤訊息要精確：檔名後面要接行尾或分隔字元，「少了 park3d.json」那行不算抓到「少了 park3d.js」。
-- 已知限制：只有一支檔、或極少數檔失靈的改壞，抽樣不一定抽得到；所以核心程式、根目錄程式檔、引擎、最大的兩個記了雜湊的檔每次都測。
+- 已知限制：只有一支檔、或極少數檔失靈的改壞，抽樣不一定抽得到；所以下面這些每次都測：控制字元和缺檔測核心程式、根目錄程式檔、引擎；「內容被換掉」（swap）測 index.html、7 支核心程式、根目錄的 .js／.mjs、最大的兩個記了雜湊的檔、所有大於 20 MB 記了雜湊的檔。
+- git 用 `--no-replace-objects`、拿掉 `GIT_*` 環境變數讀 origin/main；收據記下實際用到的 git、unzip 路徑。
 - 種子：有安裝包時由「安裝包 SHA-256＋origin/main 提交」推出來，重跑一樣，不能自己挑；給了 `--seed` 的收據一律不算送審用。
 - 送審只收 `full: true` 的收據。金絲雀本身要回 0（全部抓到；回 4 或 2 都不算），而且下面五個條件都要成立：`--pkg` 給的是 `.ipa`（`.app` 只有資料夾的樹雜湊，對不到送審的檔）、加了 `--cdn`（正式 CDN；`--cdn-manifest` 給的本機檔不算）、沒有 `--only`、用的清單和 `check-www.js`、`canary-www.js` 兩支工具都跟 `origin/main` 那一版一模一樣（拿包重產的清單、改過的工具都不算）、清單的 `siteVersion` 跟包裡 `public/release.json` 的 `version` 一樣。要在有 `origin` 的倉庫裡跑，先 `git fetch origin main`（收據的 `bind.mainCommit` 記下比對時 origin/main 在哪一版）。正式 CDN 的網址只定義在 `check-www.js` 一個地方，金絲雀從那裡讀。
 - 工具雜湊和清單雜湊都是工具自己算的，只抓得到不小心改過；故意偽造要靠之後的 CI 核對（打送審標籤前，CI 用 main 版工具和 main 的清單重算收據裡的 `toolPins`、`bind.listMainSha256`）。只核對雜湊不夠：執行環境可以被動過，工具一個字沒改也能拿到 0，所以 CI 要拿收據記的那個 `.ipa`，用 main 版工具在乾淨的環境重跑金絲雀，結果要一樣。**這個 CI 核對還沒做（後續工單，跟 Android 的工具鎖定 CI 一起），做好之前，送審不能只認這張收據，還要照 AGENTS.md 由開發者本人看實機三項。**

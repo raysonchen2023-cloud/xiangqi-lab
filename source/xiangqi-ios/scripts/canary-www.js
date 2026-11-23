@@ -105,8 +105,11 @@ const caseDirs = (D, L) => {
   const pre = [...preloadItems(D), ...bigItems(D).filter((x) => fs.existsSync(at(D, x)))], bgm = bgmFiles(D), lst = Object.keys(L).filter((f) => fs.existsSync(at(D, f)));
   const dirs = new Set(); for (const f of [...pre, ...bgm, ...lst]) { const parts = f.split("/"); for (let k = 1; k < parts.length; k++) dirs.add(parts.slice(0, k).join("/")) }
   const under = (d, arr) => arr.find((f) => f.startsWith(d + "/")), out = [];
+  /* 清單檔（preload.json、bgm/index.json、big-books.json）所在的上層目錄（data、data/bgm）不測：名字錯了清單本身就讀不到，
+     check-www 照樣擋，但錯誤是「讀不到清單」那一行；而且 macOS（不分大小寫）讀得到、Linux 讀不到，預期的那一行兩邊不同（CI 在 Linux 紅過） */
+  const MANI = ["data/preload.json", "data/bgm/index.json", "data/big-books.json"];
   for (const d of [...dirs].sort()) {
-    if (caseFlip(d) === d) continue;
+    if (caseFlip(d) === d || MANI.some((m) => m.startsWith(d + "/"))) continue;
     const p = under(d, pre), b = under(d, bgm), l = under(d, lst);
     if (p) out.push(d + "|" + p + "|p"); else if (b) out.push(d + "|" + b + "|b"); else if (l) out.push(d + "|" + l + "|l");
   }
@@ -145,7 +148,8 @@ const KINDS = {
     batch: 30,
     cands: (D, L) => Object.entries(L).filter(([rel, [sz, h]]) => h && sz >= 16 && rel !== "index.html" && fs.existsSync(at(D, rel))).map((x) => x[0]),
     strata: (D, L) => byDirExt(KINDS.swap.cands(D, L)),
-    always: (D, L) => Object.entries(L).filter(([rel, [sz, h]]) => h && sz >= 16 && rel !== "index.html" && fs.existsSync(at(D, rel))).sort((a, b) => b[1][0] - a[1][0] || (a[0] < b[0] ? -1 : 1)).filter((x, k) => k < 2 || x[1][0] > BIG).map((x) => x[0]),   /* PR #67 第五次審查：W30 那種大檔一定要測到 */   /* PR #67 第十三次審查：大於 20 MB、記了雜湊的檔（W30 切塊大檔）全部都測，不只最大的兩個 */
+    always: (D, L) => Object.entries(L).filter(([rel, [sz, h]]) => h && sz >= 16 && rel !== "index.html" && fs.existsSync(at(D, rel))).sort((a, b) => b[1][0] - a[1][0] || (a[0] < b[0] ? -1 : 1)).filter((x, k) => k < 2 || x[1][0] > BIG).map((x) => x[0]).concat(Object.keys(L).filter((rel) => L[rel][1] && L[rel][0] >= 16 && fs.existsSync(at(D, rel)) && (rel === "index.html" || CORE.includes(rel) || (!rel.includes("/") && /\.m?js$/.test(rel))))),   /* PR #67 第五次審查：W30 那種大檔一定要測到 */   /* PR #67 第十三次審查：大於 20 MB、記了雜湊的檔（W30 切塊大檔）全部都測，不只最大的兩個 */
+    /* PR #67 第十四次審查：index.html、7 支核心程式、根目錄的 .js／.mjs 也每次都測「內容被換掉」 */
     break: (D, f) => { const b = Buffer.from(fs.readFileSync(at(D, f))); b[Math.floor(b.length / 2)] ^= 0xff; rewrite(at(D, f), b) },
     expect: (f) => "內容跟清單不同 " + f,
   },
@@ -260,9 +264,14 @@ function pkgPublic(pkg, tmp) {
 /* 結束代碼（純函式）：全抓到 0；有任何一個「做出來了卻沒被抓到」就是 4（檢查失靈，優先，不能被「不成立」蓋掉）；其餘沒過的是 2 */
 /* origin/main 上那份清單（收據要綁住倉庫的清單，不能拿包重產）；讀不到就回 null，full 一律 false */
 const ROOT = path.join(__dirname, "..", "..", "..");
+/* PR #67 第十四次審查：git 不認 replace 物件（git replace 能偽造 origin/main 上的檔），也不吃呼叫者的 GIT_* 環境變數 */
+const gitEnv = () => Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^GIT_/i.test(k)));
+const GIT = (args, o = {}) => cp.spawnSync("git", ["--no-replace-objects", ...args], { ...o, env: gitEnv() });
+/* 收據記下實際用到的 git、unzip 是哪一支（PATH 換掉時看得出來） */
+const whichBin = (n) => { for (const d of String(process.env.PATH || "").split(path.delimiter)) { const f = path.join(d, n); try { fs.accessSync(f, fs.constants.X_OK); return fs.realpathSync(f) } catch (e) { } } return null };
 function mainFromGit(rel) {
-  if (rel === "@commit") { const r = cp.spawnSync("git", ["-C", ROOT, "rev-parse", "origin/main"], { encoding: "utf8" }); return r.status === 0 ? r.stdout.trim() : null }
-  const r = cp.spawnSync("git", ["-C", ROOT, "show", "origin/main:" + rel], { maxBuffer: 64e6 });
+  if (rel === "@commit") { const r = GIT(["-C", ROOT, "rev-parse", "origin/main"], { encoding: "utf8" }); return r.status === 0 ? r.stdout.trim() : null }
+  const r = GIT(["-C", ROOT, "show", "origin/main:" + rel], { maxBuffer: 64e6 });
   return r.status === 0 ? r.stdout : null;
 }
 const REL_LIST = "source/xiangqi-ios/scripts/.www-files.json", REL_CHECK = "source/xiangqi-ios/scripts/check-www.js", REL_CANARY = "source/xiangqi-ios/scripts/canary-www.js";
@@ -356,7 +365,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
         toolPins: pins,
         seed: SEED, seedFrom, kinds: want, results,
         cdnViaCheck,
-        runtime: { node: process.version, execArgv: process.execArgv.slice(0, 40), nodeOptions: process.env.NODE_OPTIONS || null },   /* PR #67 第十二次審查：記執行環境 */
+        runtime: { node: process.version, execArgv: process.execArgv.slice(0, 40), nodeOptions: process.env.NODE_OPTIONS || null, git: whichBin("git"), unzip: whichBin("unzip") },   /* PR #67 第十二次審查：記執行環境 */
         full: passAll && code === 0 && !only && !seedGiven && !!OFFICIAL_CDN && cdn === OFFICIAL_CDN && !!cdnViaCheck && cdnViaCheck.exit === 0 && cdnViaCheck.n != null && cdnViaCheck.n === cdnViaCheck.want && !!P && P.kind === "ipa" && listBound && verBound && toolsBound,   /* PR #67 第七次審查：讀不到網址（null）不能算正式 CDN；check-www 自己的 --cdn 也要回 0 */   /* 只認正式 CDN（第四次審查）；要 .ipa、清單是 main 那份、版號對得上（第五次審查） */
         pass: passAll, code,
       };
