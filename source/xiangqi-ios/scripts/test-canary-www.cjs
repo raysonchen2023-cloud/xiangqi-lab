@@ -562,7 +562,7 @@ test("每一次檢查都在一樣形狀的副本路徑上跑：check-www 只對 
     assert.equal(r.status, 4, "每個壞樣本也走同樣形狀的路徑，要判出失靈：" + r.stdout + r.stderr);
   }
   const src = fs.readFileSync(CANARY, "utf8");
-  assert.match(src, /const pre = check\(cleanD, LF, null\)/); assert.match(src, /const clean = check\(cleanD, LF, cdnFile\)/);
+  assert.match(src, /const pre = runIn\(cleanD, L, undefined\)/); assert.match(src, /const clean = runIn\(cleanD, L, /);   /* 第十七次審查後改用 runIn（固定檔名） */
   assert.doesNotMatch(src, /path\.join\(base, tag\)/, "壞樣本路徑不能帶種類名稱");
 });
 
@@ -570,7 +570,12 @@ test("在 base-guard 的環境（NODE_OPTIONS=--require assert-count.cjs）下�
   const { D, L } = fakeWww(), save = process.env.NODE_OPTIONS;
   const AC = path.join(HERE, "..", "..", "..", ".github", "scripts", "assert-count.cjs");
   process.env.NODE_OPTIONS = ((save || "") + " --require " + AC).trim();
-  try { const r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"]); assert.equal(r.status, 0, r.stdout + r.stderr) }
+  try {
+    const r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"]); assert.equal(r.status, 0, r.stdout + r.stderr);
+    /* 第十七次審查⑤：同一個環境不經過 runCanary（直接帶 base-guard 的 NODE_OPTIONS）會回 2——證明 runCanary 拿掉 NODE_OPTIONS 這件事真的有作用 */
+    const raw = cp.spawnSync(process.execPath, [CANARY, "--dir", D, "--list", L, "--only", "home", "--seed", "1"], { encoding: "utf8", env: { ...process.env } });
+    assert.equal(raw.status, 2, "直接帶 assert-count 的 NODE_OPTIONS 應該被判成環境被動過：" + raw.stdout + raw.stderr);
+  }
   finally { if (save === undefined) delete process.env.NODE_OPTIONS; else process.env.NODE_OPTIONS = save }
   const bg = fs.readFileSync(path.join(HERE, "..", "..", "..", ".github", "scripts", "base-guard.cjs"), "utf8");
   assert.match(bg, /NODE_OPTIONS: \(\(process\.env\.NODE_OPTIONS \|\| ""\) \+ " --require "/, "base-guard 的 assertEnv 還是這樣帶 NODE_OPTIONS（改了就要重看這項）");
@@ -595,4 +600,20 @@ test("always 丟例外不當掉；.ipa 解不開不留暫存（PR #67 第十六�
   const r = runCanary(C, ["--dir", D, "--list", L, "--only", "rmdir,casedir", "--seed", "1"]); assert.notEqual(r.status, 1, "不能當掉回 1：" + r.stdout + r.stderr);
   const T = tmp("xq-ipatmp-"), bad = path.join(tmp("xq-badipa-"), "x.ipa"); fs.writeFileSync(bad, "不是 zip");
   const x = run({ pkg: bad, list: L, tmp: T, log: () => {} }); assert.equal(x.code, 2); assert.deepEqual(fs.readdirSync(T).filter((n) => n.startsWith("xq-canary-ipa-")), [], "解不開時暫存要清掉");
+});
+
+test("每次叫 check-www 的參數，除了亂數路徑以外完全一樣（清單、CDN 清單都是固定檔名）；檢查時看不到別份副本（PR #67 第十七次審查①②）", () => {
+  const { D, L, M } = fakeWww(), log = path.join(tmp("xq-argslog-"), "a.jsonl"), T = tmp("xq-tmpbox-");
+  /* 改壞的 check-www：每次被叫就記下參數（亂數那段換成 X），以及同一個暫存區底下還看得到幾份別的副本 */
+  const rec = 'fs.appendFileSync(' + JSON.stringify(log) + ', JSON.stringify({ a: process.argv.slice(2).map((x) => x.replace(/xq-[A-Za-z0-9]+[\\\\/][0-9a-f]{12}/, "X")), others: fs.readdirSync(' + JSON.stringify(T) + ').filter((n) => /^xq-/.test(n) && !n.startsWith("xq-canary-www-") && !ROOT.includes(n)).length }) + "\\n");';
+  const C = blindCanary('if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); }', 'if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); } ' + rec);
+  const r = runCanary(C, ["--dir", D, "--list", L, "--cdn-manifest", M, "--only", "home,cdnstale,cdnmiss,cdnfail,nohash", "--seed", "1"], { TMPDIR: T });
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const rows = fs.readFileSync(log, "utf8").trim().split("\n").map((l) => JSON.parse(l));
+  const withCdn = rows.filter((x) => x.a.includes("--cdn-manifest"));
+  assert.ok(withCdn.length >= 8, "要有好幾次帶 CDN 清單的檢查：" + withCdn.length);
+  const shapes = new Set(withCdn.map((x) => JSON.stringify(x.a.map((v) => v.replace(/^.*?(X[\\/].*)$/, "$1")))));
+  assert.equal(shapes.size, 1, "參數形狀要完全一樣：" + [...shapes].join(" | "));
+  assert.match([...shapes][0], /list\.json/); assert.match([...shapes][0], /cdn-manifest\.json/);
+  assert.ok(rows.every((x) => x.others === 0), "檢查時同一個暫存區看得到別份副本：" + JSON.stringify(rows.map((x) => x.others)));
 });

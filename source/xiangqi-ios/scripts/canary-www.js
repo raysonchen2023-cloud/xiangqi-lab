@@ -187,15 +187,15 @@ const KINDS = {
     expect: (f) => "跟 CDN 現行版不同 " + f,
   },
   cdnmiss: {
-    needsCdn: true, exit: 3, noClone: true, batch: 8,
+    needsCdn: true, exit: 3, batch: 8,
     cands: (D, L, M) => cdnStrata(D, L, M, false).flat(), strata: (D, L, M) => cdnStrata(D, L, M, false),
     break: (D, f, L, M) => { const M2 = { ...M }; delete M2[f]; return { cdn: M2 } },
     expect: (f) => ["沒跟 CDN 比到", f],   /* 同一行要有那個檔名（一次弄壞好幾個，錯誤列前 10 個） */
   },
   cdnfail: {
-    needsCdn: true, exit: 3, noClone: true,
+    needsCdn: true, exit: 3,
     cands: () => ["cdn-manifest.json"],
-    break: (D) => ({ cdnPath: path.join(D, "沒有這個-cdn-manifest.json") }),
+    break: () => ({ cdnGone: true }),   /* 同一個固定檔名，只是檔案不存在（第十七次審查①：檔名不能寫著種類） */
     expect: () => "讀不到 CDN 清單",
   },
   ctrl: {
@@ -214,7 +214,6 @@ const KINDS = {
     cands: (D, L) => [ENGINE, ...needStrata(D)].flat().filter((f) => L[f] && L[f][1] && fs.existsSync(at(D, f))),
     /* 只改清單、跟目錄無關，粗分四層就好：引擎、首頁 items、preload big、背景音樂 */
     strata: (D, L) => [ENGINE, preloadItems(D), bigItems(D), bgmFiles(D), Object.keys(L).filter((f) => L[f][0] > BIG)].map((s) => s.filter((f) => L[f] && L[f][1] && fs.existsSync(at(D, f)))).filter((x) => x.length),   /* 最後一層：大於 20 MB 的檔（不一定是 App 會要的，PR #67 第十次審查） */
-    noClone: true,
     always: (D, L) => Object.keys(L).filter((f) => L[f][0] > BIG && L[f][1] && fs.existsSync(at(D, f))),   /* PR #67 第十三次審查：大於 20 MB 那一層全測 */
     break: (D, f, L) => ({ list: { ...L, [f]: [L[f][0], null] } }),
     expect: (f) => ["清單沒記雜湊的重要檔", f],
@@ -316,11 +315,21 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
          check-www 從路徑分不出哪一次是真包、哪一次是哪一種壞樣本（之前乾淨的用真包路徑、壞樣本路徑帶種類名稱） */
       /* PR #67 第十六次審查②：每次檢查各自一個全新的暫存資料夾（不在同一個 base 底下，彼此看不到、也看不出誰先建） */
       const shape = () => { const top = fs.mkdtempSync(path.join(tmp, "xq-")); made.push(top); const d = path.join(top, crypto.randomBytes(6).toString("hex"), "Payload", "App.app", "public"); fs.mkdirSync(path.dirname(d), { recursive: true }); return d };
+      /* PR #67 第十七次審查①②：每次檢查的清單和 CDN 清單都寫進「那一次自己的暫存資料夾」、檔名固定（list.json、cdn-manifest.json），
+         參數除了亂數路徑以外完全一樣，check-www 從檔名看不出是哪一種壞樣本；每次檢查跑完就刪掉整個暫存資料夾（同層看不到別份） */
+      const boxOf = (D) => path.resolve(D, "..", "..", ".."), topOf = (D) => path.resolve(D, "..", "..", "..", "..");
+      const drop = (D) => fs.rmSync(topOf(D), { recursive: true, force: true });
+      let Mobj = null;
+      const runIn = (D, files, cdnFiles, more = []) => {   /* cdnFiles：undefined＝不帶 --cdn-manifest；null＝帶了但檔案不存在（讀不到）；物件＝那份 CDN 清單的 files */
+        const lf = path.join(boxOf(D), "list.json"); fs.writeFileSync(lf, JSON.stringify({ ...LJ, files }));
+        let cf = null; if (cdnFiles !== undefined) { cf = path.join(boxOf(D), "cdn-manifest.json"); if (cdnFiles !== null) fs.writeFileSync(cf, JSON.stringify({ ...(Mobj || {}), files: cdnFiles })) }
+        return check(D, lf, cf, more);
+      };
       const cleanD = shape(); cloneDir(dir, cleanD);
-      const pre = check(cleanD, LF, null);
+      const pre = runIn(cleanD, L, undefined);
       if (pre.status !== 0) return unfit("乾淨的樣本沒過 check-www.js（先修好再跑金絲雀）：" + String(pre.stderr).split("\n")[0]);
-      if (cdn) { try { const txt = readM(cdn); M = JSON.parse(txt).files; cdnFile = path.join(base, "cdn-manifest.json"); fs.writeFileSync(cdnFile, txt); cdnSha = sha256(Buffer.from(txt, "utf8")) } catch (e) { return unfit("金絲雀讀不到 CDN 清單：" + cdn, 3) } }
-      const clean = check(cleanD, LF, cdnFile);
+      if (cdn) { try { const txt = readM(cdn); Mobj = JSON.parse(txt); M = Mobj.files; cdnFile = path.join(base, "cdn-manifest.json"); fs.writeFileSync(cdnFile, txt); cdnSha = sha256(Buffer.from(txt, "utf8")) } catch (e) { return unfit("金絲雀讀不到 CDN 清單：" + cdn, 3) } }
+      const clean = runIn(cleanD, L, cdn ? M : undefined); drop(cleanD);   /* 乾淨的跑完就刪（第十七次審查②） */
       if (clean.status === 3) return unfit("乾淨的樣本沒錯，但 CDN 清單沒能比對（缺驗）：" + String(clean.stderr).split("\n")[0], 3);
       if (clean.status !== 0) return unfit("乾淨的樣本沒過 check-www.js（先修好再跑金絲雀）：" + String(clean.stderr).split("\n")[0]);
       if (only != null && !String(only).split(",").map((s) => s.trim()).filter(Boolean).length) return unfit("--only 沒有列任何壞樣本");   /* PR #67 第七次審查：空的 --only 不能回 0 */
@@ -335,7 +344,8 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       const results = [];
       /* PR #67 第十六次審查②：乾淨的那次不只最先跑——在壞樣本中間隨機一個位置、和最後，各用全新的副本再跑一次，要回 0；
          不一致代表 check-www 會看順序或環境，判成檢查失靈（4） */
-      const cleanAgain = (when) => { const C = shape(); try { cloneDir(dir, C); const r = check(C, LF, cdnFile); results.push({ kind: "(乾淨重跑)", file: when, exit: r.status, caught: r.status === 0 }); log((r.status === 0 ? "✔ " : "✘ ") + "乾淨的再跑一次（" + when + "）結束代碼 " + r.status) } finally { fs.rmSync(C, { recursive: true, force: true }) } };
+      const cleanAgain = (when) => { const C = shape(); try { cloneDir(dir, C); const r = runIn(C, L, cdn ? M : undefined); results.push({ kind: "(乾淨重跑)", file: when, exit: r.status, caught: r.status === 0 }); log((r.status === 0 ? "✔ " : "✘ ") + "乾淨的再跑一次（" + when + "）結束代碼 " + r.status) }
+        catch (e) { results.push({ kind: "(乾淨重跑)", file: when, caught: false, unfit: true, why: "乾淨重跑做不出來：" + e.message }) } finally { drop(C) } };   /* 第十七次審查④：例外不當掉 */
       const midAt = Math.floor(rand() * want.length);
       for (const [ki, k] of want.entries()) {
         if (ki === midAt) cleanAgain("中間");
@@ -350,22 +360,19 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
         for (let bi = 0; bi < chosen.length; bi += size) {
           const group = chosen.slice(bi, bi + size), tag = k + "-" + results.length;
           const D = shape();   /* PR #67 第十六次審查②：只改清單的壞樣本也各自複製一份，不跟乾淨的共用 */
-          let lf = LF, cf = cdnFile, Lc = L, Mc = M, cdnPath = null;
+          let Lc = L, Mc = M, cdnGone = false;
           try {
             cloneDir(dir, D);   /* shape() 只建好上層，D 本身還不存在 */
-            for (const f of group) { const B = K.break(D, f, Lc, Mc) || {}; if (B.list) Lc = B.list; if (B.cdn) Mc = B.cdn; if (B.cdnPath) cdnPath = B.cdnPath }
-            if (Lc !== L) { lf = path.join(base, tag + "-list.json"); fs.writeFileSync(lf, JSON.stringify({ ...LJ, files: Lc })) }
-            if (Mc !== M) { cf = path.join(base, tag + "-cdn.json"); fs.writeFileSync(cf, JSON.stringify({ files: Mc })) }
-            if (cdnPath) cf = cdnPath;
+            for (const f of group) { const B = K.break(D, f, Lc, Mc) || {}; if (B.list) Lc = B.list; if (B.cdn) Mc = B.cdn; if (B.cdnGone) cdnGone = true }
           }
-          catch (e) { for (const f of group) results.push({ kind: k, file: f, caught: false, unfit: true, why: "做壞樣本失敗：" + e.message }); fs.rmSync(D, { recursive: true, force: true }); continue }
-          const r = check(D, lf, cf), out = String(r.stdout) + String(r.stderr), want = K.exit || 1;
+          catch (e) { for (const f of group) results.push({ kind: k, file: f, caught: false, unfit: true, why: "做壞樣本失敗：" + e.message }); drop(D); continue }
+          const r = runIn(D, Lc, cdn ? (cdnGone ? null : Mc) : undefined), out = String(r.stdout) + String(r.stderr), want = K.exit || 1;
           for (const f of group) {
             const exp = K.expect(f), seen = hit(out, exp, want === 3 ? "△" : "✘"), caught = r.status === want && seen;
             results.push({ kind: k, file: f, candidates: cands.length, batch: group.length, expect: exp, exit: r.status, caught });
             log((caught ? "✔ " : "✘ ") + k + "：" + f + "（候選 " + cands.length + " 個" + (group.length > 1 ? "，同一份副本弄壞 " + group.length + " 個" : "") + "）" + (caught ? " 被抓到" : " 沒被抓到（結束代碼 " + r.status + "，錯誤裡" + (seen ? "有" : "沒有") + "「" + [].concat(exp).join("…") + "」）"));
           }
-          fs.rmSync(D, { recursive: true, force: true });
+          drop(D);
         }
       }
       cleanAgain("最後");
@@ -381,7 +388,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       let cdnViaCheck = null;
       /* PR #67 第十二次審查：只看結束代碼不夠（--cdn 網址那條路改成不比，也回 0）。要求「跟 CDN 現行版比了 N 個檔」的 N 跟本機 CDN 清單那次一樣 */
       const cmpN = (t) => { const m = /跟 CDN 現行版比了 (\d+) 個檔/.exec(String(t || "")); return m ? Number(m[1]) : null }, wantN = cmpN(clean.stdout);
-      if (OFFICIAL_CDN && cdn === OFFICIAL_CDN) { const r = (selfCdn || ((d, lf) => check(d, lf, null, ["--cdn"])))(cleanD, LF, { cdnFile }); cdnViaCheck = { exit: r.status, n: cmpN(r.stdout), want: wantN, note: String(r.stderr || "").split("\n")[0].slice(0, 200) }; log((r.status === 0 && cdnViaCheck.n === wantN ? "✔ " : "✘ ") + "check-www --cdn 比了 " + cdnViaCheck.n + " 個檔（本機清單那次 " + wantN + "）；結束代碼 " + r.status) }
+      if (OFFICIAL_CDN && cdn === OFFICIAL_CDN) { const V = shape(); let r; try { cloneDir(dir, V); const lfV = path.join(boxOf(V), "list.json"), cfV = path.join(boxOf(V), "cdn-manifest.json"); fs.writeFileSync(lfV, JSON.stringify({ ...LJ, files: L })); fs.writeFileSync(cfV, JSON.stringify({ ...(Mobj || {}), files: M })); r = (selfCdn || ((d, lf) => check(d, lf, null, ["--cdn"])))(V, lfV, { cdnFile: cfV }) } finally { drop(V) }   /* 第十七次審查②：--cdn 那次也用自己的新副本 */ cdnViaCheck = { exit: r.status, n: cmpN(r.stdout), want: wantN, note: String(r.stderr || "").split("\n")[0].slice(0, 200) }; log((r.status === 0 && cdnViaCheck.n === wantN ? "✔ " : "✘ ") + "check-www --cdn 比了 " + cdnViaCheck.n + " 個檔（本機清單那次 " + wantN + "）；結束代碼 " + r.status) }
       const passAll = want.every((k) => results.some((x) => x.kind === k)) && results.every((x) => x.caught === true), code = exitOf(results, passAll);   /* PR #67 第九次審查：結束代碼先算好，full 要看它 */
       const receipt = {
         tool: "P0-IMG-canary", platform: "ios", at: new Date().toISOString(),
