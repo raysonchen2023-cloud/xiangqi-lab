@@ -31,7 +31,8 @@ const toolSha = (p) => sha256(Buffer.from(fs.readFileSync(p, "utf8").replace(/\r
 /* 整個資料夾的雜湊：每個檔「相對路徑＋NUL＋SHA-256＋換行」照路徑排序後再算（收據綁住檢查的是哪一份內容） */
 function treeSha(dir) {
   const out = [];
-  const walk = (d, pre) => { for (const n of fs.readdirSync(d).sort()) { const p = path.join(d, n), r = pre ? pre + "/" + n : n, st = fs.lstatSync(p); if (st.isDirectory()) walk(p, r); else if (st.isFile()) out.push(r + "\0" + sha256(fs.readFileSync(p)) + "\n") } };
+  /* 符號連結也算進去（記連到哪裡），.app 裡的 Frameworks 常有（PR #67 第三次審查） */
+  const walk = (d, pre) => { for (const n of fs.readdirSync(d).sort()) { const p = path.join(d, n), r = pre ? pre + "/" + n : n, st = fs.lstatSync(p); if (st.isSymbolicLink()) out.push(r + "\0L:" + fs.readlinkSync(p) + "\n"); else if (st.isDirectory()) walk(p, r); else if (st.isFile()) out.push(r + "\0" + sha256(fs.readFileSync(p)) + "\n") } };
   walk(dir, ""); return sha256(out.sort().join(""));
 }
 /* 挑檔：頭、中、尾，再加一個用種子挑的（mulberry32），去掉重複 */
@@ -98,6 +99,9 @@ function pkgPublic(pkg, tmp) {
   return { dir: p, kind: "ipa", sha256: sha256(fs.readFileSync(pkg)), cleanup: d };
 }
 
+/* 結束代碼（純函式）：全抓到 0；有任何一個「做出來了卻沒被抓到」就是 4（檢查失靈，優先，不能被「不成立」蓋掉）；其餘沒過的是 2 */
+const exitOf = (results, pass) => (pass ? 0 : results.some((x) => !x.unfit && x.caught !== true) ? 4 : 2);
+
 /* 主流程（自我測試直接呼叫）：回傳 { code, receipt } */
 function run({ dir = null, list = null, cdn = null, pkg = null, only = null, seed = null, tmp = os.tmpdir(), log = console.log }) {
   const unfit = (why, code = 2) => ({ code, receipt: { tool: "P0-IMG-canary", platform: "ios", unfit: true, why } });
@@ -112,12 +116,12 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
     const base = fs.mkdtempSync(path.join(tmp, "xq-canary-www-"));
     try {
       const check = (d, lf, cdnArg) => cp.spawnSync(process.execPath, [CHECK, "--dir", d, "--list", lf, "--all", ...(cdnArg ? ["--cdn-manifest", cdnArg] : [])], { encoding: "utf8", maxBuffer: 256e6 });
-      /* 乾淨的那份用正式的 --cdn 路徑（網址）檢查；CDN 清單只下載一次，壞樣本用同一份（PR #67 審查：每個壞樣本都重抓清單） */
-      const clean = check(dir, LF, cdn);
-      if (clean.status === 3) return unfit("乾淨的樣本沒錯，但讀不到 CDN 清單（缺驗）：" + String(clean.stderr).split("\n")[0], 3);
+      /* CDN 清單只下載一次，乾淨的那份和每個壞樣本都用同一份，收據記下它的雜湊（PR #67 審查：分兩次下載，兩份可能不同） */
+      let M = null, cdnFile = null, cdnSha = null;
+      if (cdn) { try { const txt = readManifest(cdn); M = JSON.parse(txt).files; cdnFile = path.join(base, "cdn-manifest.json"); fs.writeFileSync(cdnFile, txt); cdnSha = sha256(Buffer.from(txt, "utf8")) } catch (e) { return unfit("金絲雀讀不到 CDN 清單：" + cdn, 3) } }
+      const clean = check(dir, LF, cdnFile);
+      if (clean.status === 3) return unfit("乾淨的樣本沒錯，但 CDN 清單沒能比對（缺驗）：" + String(clean.stderr).split("\n")[0], 3);
       if (clean.status !== 0) return unfit("乾淨的樣本沒過 check-www.js（先修好再跑金絲雀）：" + String(clean.stderr).split("\n")[0]);
-      let M = null, cdnFile = null;
-      if (cdn) { try { const txt = readManifest(cdn); M = JSON.parse(txt).files; cdnFile = path.join(base, "cdn-manifest.json"); fs.writeFileSync(cdnFile, txt) } catch (e) { return unfit("金絲雀讀不到 CDN 清單：" + cdn, 3) } }
       const want = only ? only.split(",").map((s) => s.trim()).filter(Boolean) : Object.keys(KINDS).filter((k) => cdn || !KINDS[k].needsCdn);
       for (const k of want) { if (!KINDS[k]) return unfit("不認得的壞樣本：" + k + "（可用：" + Object.keys(KINDS).join(" ") + "）"); if (KINDS[k].needsCdn && !cdn) return unfit(k + " 要加 --cdn 才能跑") }
       const SEED = seed != null && seed !== "" ? Number(seed) >>> 0 : crypto.randomInt(2 ** 31), rand = rng(SEED);
@@ -143,20 +147,19 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
         tool: "P0-IMG-canary", platform: "ios", at: new Date().toISOString(),
         sample: { dir: P ? "（安裝包裡的 public）" : path.basename(path.resolve(dir)), treeSha256: treeSha(dir), indexSha256: sha256(fs.readFileSync(path.join(dir, "index.html"))), listSha256: sha256(fs.readFileSync(LF)), siteVersion: LJ.siteVersion || null, commit: LJ.commit || null },
         pkg: P ? { file: path.basename(pkg), kind: P.kind, sha256: P.sha256 } : null,
-        cdn: cdn ? { manifest: cdn } : null,
+        cdn: cdn ? { manifest: cdn, sha256: cdnSha } : null,
         /* 工具自己算、自己寫進收據：只抓得到本機不小心改過（例如忘了切回 main）；故意偽造要靠之後的 CI 用 main 版工具重跑（Android PR③） */
         toolPins: { "source/xiangqi-ios/scripts/check-www.js": toolSha(CHECK), "source/xiangqi-ios/scripts/canary-www.js": toolSha(__filename) },
         seed: SEED, kinds: want, results,
         full: !only && !!cdn && !!P,
         pass: want.every((k) => results.some((x) => x.kind === k)) && results.every((x) => x.caught === true),
       };
-      const anyUnfit = results.some((x) => x.unfit);
-      return { code: receipt.pass ? 0 : anyUnfit ? 2 : 4, receipt };
+      return { code: exitOf(results, receipt.pass), receipt };
     } finally { fs.rmSync(base, { recursive: true, force: true }) }
   } finally { if (P && P.cleanup) fs.rmSync(P.cleanup, { recursive: true, force: true }) }
 }
 
-module.exports = { run, KINDS, toolSha, treeSha, picks, rng };
+module.exports = { run, KINDS, toolSha, treeSha, picks, rng, exitOf };
 if (require.main === module) {
   const cdn = opt("--cdn-manifest") || (argv.includes("--cdn") ? "https://xiangqi-cdn.pages.dev/cdn-manifest.json" : null);
   const { code, receipt } = run({ dir: opt("--dir"), list: opt("--list"), cdn, pkg: opt("--pkg"), only: opt("--only"), seed: opt("--seed") });

@@ -156,3 +156,26 @@ test("測試不成立回 2、缺驗回 3：找不到資料夾、乾淨的就沒�
   fs.rmSync(path.join(D, "data", "home", "qin.webp"));
   const r = run("--dir", D, "--list", L, "--cdn-manifest", M); assert.equal(r.status, 2); assert.match(r.stderr, /乾淨的樣本沒過/);
 });
+
+test("check-www.js：App 會要的檔只要有一個沒跟 CDN 比到（CDN 清單沒有、雜湊是 null）就回 3，並列出是哪個；清單只放無關的檔也回 3（PR #67 第三次審查）", () => {
+  const { D, L, M } = fakeWww(), man = JSON.parse(fs.readFileSync(M, "utf8")), d = tmp("xq-cdnpart-");
+  const w = (n, files) => { const p = path.join(d, n + ".json"); fs.writeFileSync(p, JSON.stringify({ files })); return p };
+  const drop = { ...man.files }; delete drop["data/home/qin.webp"];
+  let r = runCheck(D, L, "--cdn-manifest", w("drop", drop)); assert.equal(r.status, 3, r.stdout + r.stderr); assert.match(r.stderr, /沒跟 CDN 比到.*data\/home\/qin\.webp/);
+  const nul = JSON.parse(JSON.stringify(man.files)); nul["data/bgm/tang/pipa_1.mp3"][1] = null;
+  r = runCheck(D, L, "--cdn-manifest", w("null", nul)); assert.equal(r.status, 3, r.stdout + r.stderr); assert.match(r.stderr, /data\/bgm\/tang\/pipa_1\.mp3/);
+  r = runCheck(D, L, "--cdn-manifest", w("only", { "data/gmgames.json": man.files["data/gmgames.json"] || [5000, "000000000000"] })); assert.equal(r.status, 3, r.stdout + r.stderr);
+  r = runCanary(CANARY, ["--dir", D, "--list", L, "--cdn-manifest", w("drop2", drop), "--only", "home"]); assert.equal(r.status, 3, "乾淨的就沒比全，金絲雀回 3");
+});
+
+test("結束代碼：有任何一個做出來了卻沒被抓到，就回 4，不會被「測試不成立」蓋成 2；收據記 CDN 清單的雜湊；符號連結算進樹雜湊", () => {
+  const { exitOf } = require("./canary-www.js");
+  assert.equal(exitOf([{ caught: true }], true), 0);
+  assert.equal(exitOf([{ caught: false, unfit: true }, { caught: false }], false), 4, "失靈優先");
+  assert.equal(exitOf([{ caught: false, unfit: true }, { caught: true }], false), 2);
+  const { D, L, M } = fakeWww(), out = path.join(tmp("xq-canaryout-"), "r.json");
+  const r = runCanary(CANARY, ["--dir", D, "--list", L, "--cdn-manifest", M, "--only", "home", "--out", out]); assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(JSON.parse(fs.readFileSync(out, "utf8")).cdn.sha256, sha256(fs.readFileSync(M)));
+  const a = tmp("xq-link-"); fs.writeFileSync(path.join(a, "x"), "1"); const t0 = treeSha(a); fs.symlinkSync("x", path.join(a, "y"));
+  assert.notEqual(treeSha(a), t0, "多一個符號連結，樹雜湊要變");
+});

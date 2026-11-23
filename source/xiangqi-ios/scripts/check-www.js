@@ -65,7 +65,7 @@ if (fs.existsSync(LIST)) {
 
 /* 6（W42）：跟 CDN 現行版比 */
 const CDNM = opt("--cdn-manifest") || (argv.includes("--cdn") ? "https://xiangqi-cdn.pages.dev/cdn-manifest.json" : null);
-let cdnN = 0;
+let cdnN = 0; const compared = new Set();
 if (CDNM) {
   let man = null;
   try {
@@ -80,13 +80,16 @@ if (CDNM) {
   if (man) for (const [rel, v] of Object.entries(man.files)) {
     const h = Array.isArray(v) ? v[1] : null;
     if (!rel.startsWith("data/") || !h || !exists(rel)) continue;
-    cdnN++;
+    cdnN++; compared.add(rel);
     const mine = crypto.createHash("sha1").update(rd(rel)).digest("hex").slice(0, 12);
     if (mine === h) continue;
     if (need.has(rel)) bad.push("跟 CDN 現行版不同 " + rel + "（包 " + mine + "、CDN " + h + "；建包時留下的舊副本，W42）");
     else warn.push("清單外的檔跟 CDN 現行版不同 " + rel + "（多半是 CDN 在建包後更新過，列出來但不擋）");
   }
   if (man && !cdnN) unverified.push("CDN 清單裡沒有任何一個包裡有的 data/ 檔可以比：W42 等於沒驗");   /* PR #67 審查③ */
+  /* PR #67 第三次審查：App 會要的檔（preload、背景音樂）只要有一個沒跟 CDN 比到（清單沒有這個檔、或沒記雜湊），就不能當成驗過 */
+  const notCmp = man ? [...need].filter((rel) => exists(rel) && !compared.has(rel)).sort() : [];
+  if (notCmp.length) unverified.push("App 會要的檔有 " + notCmp.length + " 個沒跟 CDN 比到（CDN 清單沒有、或沒記雜湊）：" + notCmp.slice(0, 10).join("、") + (notCmp.length > 10 ? "…" : ""));
 }
 
 /* 5 */
