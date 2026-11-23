@@ -1,6 +1,6 @@
 // iOS P0-IMG 金絲雀 canary-www.js 與 check-www.js 的自我測試（AGENTS.md「P0 出口驗證要難作假」，2026-11-23）
 //   在暫存資料夾做一個小的假 www（index.html、首頁素材、背景音樂、引擎、大檔、清單）和一份假的 CDN 清單，用真的 check-www.js 檢查：
-//   乾淨的要全過；25 種壞樣本都要被抓到；再把 check-www.js 的判斷一條一條改壞（放在副本），金絲雀要回 4（檢查失靈）。
+//   乾淨的要全過；27 種壞樣本都要被抓到；再把 check-www.js 的判斷一條一條改壞（放在副本），金絲雀要回 4（檢查失靈）。
 // 用法：node --test source/xiangqi-ios/scripts/test-canary-www.cjs
 "use strict";
 const test = require("node:test"), assert = require("node:assert/strict"), fs = require("fs"), os = require("os"), path = require("path"), crypto = require("crypto"), cp = require("child_process");
@@ -85,13 +85,13 @@ test("check-www.js：乾淨的假 www 全過；同大小換內容抓得到；--c
 });
 
 
-test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；25 種壞樣本、每類頭中尾＋一個種子挑的都被抓到；收據綁住安裝包、不會改到原本那份", () => {
+test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；27 種壞樣本、每類頭中尾＋一個種子挑的都被抓到；收據綁住安裝包、不會改到原本那份", () => {
   const { D, L, M } = fakeWww(), A = fakeApp(D), before = treeSha(A), out = path.join(tmp("xq-canaryout-"), "r.json");
   const r = runCanary(CANARY, ["--pkg", A, "--list", L, "--cdn-manifest", M, "--seed", "7", "--out", out]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const R = JSON.parse(fs.readFileSync(out, "utf8"));
   assert.equal(R.pass, true); assert.equal(R.full, false, "--cdn-manifest 給的本機清單不算正式 CDN，送審不能用（PR #67 第四次審查：本機清單可能是拿包自己算的）"); assert.equal(R.seed, 7);
-  assert.deepEqual(R.kinds, ["home", "casehome", "bgm", "casebgm", "caselist", "casedir", "nodata", "rmdir", "mani", "engine", "core", "big", "swap", "bridge", "nocap", "nobridge", "cmtcap", "cdnstale", "cdnmiss", "cdnfail", "ctrl", "nohash", "listmiss", "bigpre", "capord"]);
+  assert.deepEqual(R.kinds, ["home", "casehome", "bgm", "casebgm", "caselist", "casedir", "nodata", "rmdir", "mani", "engine", "core", "big", "empty", "grow", "swap", "bridge", "nocap", "nobridge", "cmtcap", "cdnstale", "cdnmiss", "cdnfail", "ctrl", "nohash", "listmiss", "bigpre", "capord"]);
   for (const x of R.results) { assert.equal(x.caught, true, x.kind + " " + x.file); assert.equal(x.exit, x.kind === "(乾淨重跑)" ? 0 : ["cdnmiss", "cdnfail", "nohash"].includes(x.kind) ? 3 : 1, x.kind) }   /* 乾淨重跑要回 0（PR #67 第十六次審查②） */
   assert.ok(R.results.some((x) => x.kind === "swap" && x.file === "engine/pikafish.nnue"), "swap 固定測最大的記了 sha1 的檔（PR #67 第五次審查）");
   const files = (k) => R.results.filter((x) => x.kind === k).map((x) => x.file);
@@ -192,6 +192,9 @@ test("check-www.js 的判斷一條一條改壞（含只查第一個、只查 .js
     /* PR #67 第十二次審查：背景音樂、清單檔的大小寫判斷改回不分大小寫；HTML 註解裡的標籤也算有插 */
     ["casebgm", 'if (!exists(r)) bad.push("背景音樂清單有但沒有檔：" + r);', 'if (!((rel) => { let d = ROOT; for (const seg of rel.split("/")) { const s = listDir(d), m = s && [...s].find((x) => x.toLowerCase() === seg.toLowerCase()); if (!m) return false; d = path.join(d, m) } return true })(r)) bad.push("背景音樂清單有但沒有檔：" + r);'],
     ["caselist", 'if (!exists(rel)) bad.push("少了 " + rel);', 'if (!((rel) => { let d = ROOT; for (const seg of rel.split("/")) { const s = listDir(d), m = s && [...s].find((x) => x.toLowerCase() === seg.toLowerCase()); if (!m) return false; d = path.join(d, m) } return true })(rel)) bad.push("少了 " + rel);'],
+    /* PR #67 第十八次審查：0 位元組當占位檔、比清單大當 CDN 新版，只出警告不擋 */
+    ["empty", 'else if (size(rel) !== sz) bad.push("大小不對 " + rel);', 'else if (size(rel) !== sz) { if (size(rel) === 0) warn.push("空檔（占位）" + rel); else bad.push("大小不對 " + rel) }'],
+    ["grow", 'else if (size(rel) !== sz) bad.push("大小不對 " + rel);', 'else if (size(rel) !== sz) { if (size(rel) > sz) warn.push("比清單大（CDN 新版）" + rel); else bad.push("大小不對 " + rel) }'],
     /* PR #67 第十五次審查：整批缺檔、清單檔缺 */
     ["nodata", 'bad.push("讀不到 data/preload.json：" + e.message);', "{}"],
     ["nodata", 'if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); }', 'if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); } if (!fs.existsSync(path.join(ROOT, "data"))) { console.log("✔ 沒問題"); process.exit(0) }'],

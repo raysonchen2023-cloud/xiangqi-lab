@@ -98,6 +98,8 @@ const byDir = (list) => { const m = new Map(); for (const f of list) { const k =
 const extOf = (rel) => { const m = /\.([A-Za-z0-9]+)$/.exec(rel); return m ? m[1].toLowerCase() : "" };
 const byDirExt = (list) => { const m = new Map(); for (const f of list) { const k = groupKey(f) + "|" + extOf(f); if (!m.has(k)) m.set(k, []); m.get(k).push(f) } return [...m.values()] };
 const BIG = 20 * 1048576;
+/* 大小類壞樣本（big、empty、grow）的候選：清單有記、包裡在的檔（index.html 另有判斷，不算；引擎另有 engine 那一類） */
+const sizeCands = (D, L, min = 1025) => Object.keys(L).filter((rel) => L[rel][0] >= min && rel !== "index.html" && !rel.startsWith("engine/") && fs.existsSync(at(D, rel)));
 /* 某個目錄整個出事時，錯誤照 check-www 的順序（preload → 背景音樂 → 清單「少了」）第一個會出現的那一行：「目錄|檔|種類」；
    清單檔的上層目錄（data、data/bgm）回 null（清單本身讀不到，錯誤是另一種，nodata／mani 另外測） */
 const MANI = ["data/preload.json", "data/bgm/index.json", "data/big-books.json"];
@@ -153,8 +155,24 @@ const KINDS = {
   engine: { cands: (D) => ENGINE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺引擎 " + f },
   core: { cands: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), always: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺 " + f },
   big: {
-    cands: (D, L) => Object.entries(L).filter(([rel, [sz]]) => sz > 1024 && rel !== "index.html" && !rel.startsWith("engine/") && fs.existsSync(at(D, rel))).sort((a, b) => b[1][0] - a[1][0]).slice(0, 5).map((x) => x[0]),
+    batch: 30,
+    cands: (D, L) => sizeCands(D, L),
+    strata: (D, L) => byDirExt(sizeCands(D, L)),   /* PR #67 第十八次審查：big 也照「目錄＋副檔名」分層，不只最大的 5 個 */
+    always: (D, L) => sizeCands(D, L).map((f) => [f, L[f][0]]).sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).slice(0, 5).map((x) => x[0]),
     break: (D, f) => { const b = fs.readFileSync(at(D, f)); rewrite(at(D, f), b.subarray(0, Math.floor(b.length / 2))) },
+    expect: (f) => "大小不對 " + f,
+  },
+  /* PR #67 第十八次審查：檔案變成 0 位元組（占位檔、下載失敗留下的空檔），以及比清單大（多接了東西），check-www 都要報「大小不對」 */
+  empty: {
+    batch: 30,
+    cands: (D, L) => sizeCands(D, L, 1), strata: (D, L) => byDirExt(sizeCands(D, L, 1)),
+    break: (D, f) => rewrite(at(D, f), Buffer.alloc(0)),
+    expect: (f) => "大小不對 " + f,
+  },
+  grow: {
+    batch: 30,
+    cands: (D, L) => sizeCands(D, L, 1), strata: (D, L) => byDirExt(sizeCands(D, L, 1)),
+    break: (D, f) => { const b = fs.readFileSync(at(D, f)); rewrite(at(D, f), Buffer.concat([b, Buffer.from("xq-grow")])) },
     expect: (f) => "大小不對 " + f,
   },
   swap: {
