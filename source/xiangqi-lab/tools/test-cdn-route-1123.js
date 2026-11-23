@@ -100,12 +100,13 @@ test("結束代碼：要改向卻沒證明攔截生效＝2（測不成立）；�
 test("改向參數：只能連線輪；目標要是 https 或存在的資料夾；開關檔要有 off、兩種開關參數只能擇一", () => {
   const d = stage(), j = path.join(d, "f.json"), bad = path.join(d, "g.json");
   fs.writeFileSync(j, JSON.stringify({ v: 1, off: { halls8: "W76" } })); fs.writeFileSync(bad, JSON.stringify({ v: 1, off: [] }));
-  assert.equal(routeArgError({ mode: "online", cdnTo: d }), null); assert.equal(routeArgError({ mode: "online", cdnTo: "https://p/" }), null);
+  assert.equal(routeArgError({ mode: "online", cdnTo: d, apk: "x.apk" }), null); assert.equal(routeArgError({ mode: "online", cdnTo: "https://p/", apk: "x.apk" }), null);
+  assert.match(routeArgError({ mode: "online", cdnTo: "https://p/" }), /--cdn-to 要配 --apk/, "#74 第四次重跑：包裡有沒有要讀安裝包清單");
   assert.match(routeArgError({ mode: "both", cdnTo: d }), /只能配 --mode online/);
   assert.match(routeArgError({ mode: "offline", flagsFail: true }), /只能配 --mode online/);
-  assert.match(routeArgError({ mode: "online", cdnTo: "http://p/" }), /https 網址或存在的資料夾/);
-  assert.match(routeArgError({ mode: "online", cdnTo: path.join(d, "沒有") }), /https 網址或存在的資料夾/);
-  assert.match(routeArgError({ mode: "online", cdnTo: j }), /https 網址或存在的資料夾/, "給檔案不行，要資料夾");
+  assert.match(routeArgError({ mode: "online", apk: "x.apk", cdnTo: "http://p/" }), /https 網址或存在的資料夾/);
+  assert.match(routeArgError({ mode: "online", apk: "x.apk", cdnTo: path.join(d, "沒有") }), /https 網址或存在的資料夾/);
+  assert.match(routeArgError({ mode: "online", apk: "x.apk", cdnTo: j }), /https 網址或存在的資料夾/, "給檔案不行，要資料夾");
   assert.match(routeArgError({ mode: "online", flagsFile: j, flagsFail: true }), /擇一/);
   assert.match(routeArgError({ mode: "online", flagsFile: bad }), /要有 "off"/);
   assert.match(routeArgError({ mode: "online", flagsFile: path.join(d, "沒有.json") }), /讀不到或不是 JSON/);
@@ -126,9 +127,10 @@ test("〔原始碼〕掃描流程：先開攔截、再重新載入、等首頁�
   assert.match(s, /rep\.route = summarize\(routeLog, await probeOk\(c\)\)/);
   assert.match(s, /if \(routeLog\) \{ rep\.route = summarize\(routeLog, rep\.route\.probeOk\);/);
   /* #74 Android 12 實跑後補：--cdn-to 時掃完畫面要跑包外檔讀取輪；判成 1 要進紅燈清單 */
-  const o = s.indexOf("outside = await runOutside(c)"), cl = s.indexOf("c.close();\n  rep.badRoutes");
+  const o = s.indexOf("outside = await runOutside(c, { pack: O.pack })"), cl = s.indexOf("c.close();\n  rep.badRoutes");
   assert.ok(o > l && o < cl, "包外檔讀取輪在掃完畫面之後、關掉連線之前");
-  assert.match(s, /if \(routeLog && O\.cdnTo\) outside = await runOutside\(c\);/);
+  assert.match(s, /if \(routeLog && O\.cdnTo\) outside = await runOutside\(c, \{ pack: O\.pack \}\);/, "把安裝包清單傳進讀取輪");
+  assert.match(s, /if \(O\.cdnTo\) \{ try \{ O\.pack = apkDataFiles\(O\.apk\) \}/, "開跑前先讀安裝包清單");
   assert.doesNotMatch(s, /c\.ev\(OUTSIDE_JS\(/, "不能再一次 evaluate 做完整輪（會撞 cdp.js 每次 30 秒的逾時）");
   assert.match(s, /outsideJudge\.code === 1\) rep\.badRoutes\.push\(/);
   assert.match(s, /routeBadOf\(R\.sweeps, O\.routing && \{ cdnTo: O\.cdnTo, flags: !!\(O\.flagsFile \|\| O\.flagsFail\) \}\)/);
@@ -256,6 +258,42 @@ test("讀取輪分段跑（#74 Android 12 第三次重跑：一次 evaluate 超�
   assert.match(flaky.error, /連續 3 次失敗/); assert.equal(R.judgeOutside(flaky).code, 2);
   /* 做到一半的結果會寫進說明 */
   assert.match(R.judgeOutside({ error: "逾時", partial: { checked: ["data/b.json"], probed: 5, ms: 31000 } }).why, /做到一半：驗到 1 個、試了 5 個、花 31 秒/);
+});
+
+/* 做一個只用 store 的小 zip（跟 APK 一樣的 zip 結構），給 zipNames／apkDataFiles 讀 */
+function mkZip(names) {
+  const loc = [], cen = []; let off = 0;
+  for (const n of names) {
+    const nb = Buffer.from(n, "utf8"), h = Buffer.alloc(30); h.writeUInt32LE(0x04034b50, 0); h.writeUInt16LE(20, 4); h.writeUInt16LE(0x800, 6); h.writeUInt16LE(nb.length, 26);
+    loc.push(h, nb);
+    const c = Buffer.alloc(46); c.writeUInt32LE(0x02014b50, 0); c.writeUInt16LE(20, 4); c.writeUInt16LE(20, 6); c.writeUInt16LE(0x800, 8); c.writeUInt16LE(nb.length, 28); c.writeUInt32LE(off, 42);
+    cen.push(c, nb); off += 30 + nb.length;
+  }
+  const cd = Buffer.concat(cen), e = Buffer.alloc(22); e.writeUInt32LE(0x06054b50, 0); e.writeUInt16LE(names.length, 8); e.writeUInt16LE(names.length, 10); e.writeUInt32LE(cd.length, 12); e.writeUInt32LE(off, 16);
+  return Buffer.concat([...loc, cd, e]);
+}
+
+test("包外檔讀取輪（#74 Android 12 第四次重跑）：有安裝包清單時只查清單，不在頁面裡用 fetch 試（原生 App 的 CDN 補抓會騙過 fetch）；zip 中央目錄讀得到檔名", async () => {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-apkzip-")), z = path.join(d, "t.apk");
+  try {
+    fs.writeFileSync(z, mkZip(["AndroidManifest.xml", "assets/public/index.html", "assets/public/data/", "assets/public/data/a.json", "assets/public/data/中文/長卷.webp", "res/x.png"]));
+    assert.deepEqual(R.zipNames(z).length, 6); assert.deepEqual(R.apkDataFiles(z), ["data/a.json", "data/中文/長卷.webp"], "只留 assets/public/data/ 底下的檔、去掉前綴、資料夾不算");
+    fs.writeFileSync(path.join(d, "壞.apk"), Buffer.from("不是 zip"));
+    assert.throws(() => R.zipNames(path.join(d, "壞.apk")), /不是 zip/);
+  } finally { fs.rmSync(d, { recursive: true, force: true }) }
+  /* 模擬原生 App：本機讀不到的 data/ 檔自動改去 CDN 補抓，回應網址卻是本機的（fetch 試出來會全判成在包裡） */
+  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}", "data/c.json": "{\"c\":3}", "data/d.json": "{\"d\":4}" };
+  const XQ_CDN = "https://xiangqi-cdn.pages.dev/", hdr = { get: () => "application/json" };
+  const res = (url, body) => ({ ok: body !== undefined, status: body === undefined ? 404 : 200, url, headers: hdr, arrayBuffer: async () => { const b = Buffer.from(body || ""); return b.buffer.slice(b.byteOffset, b.byteOffset + b.length) }, json: async () => JSON.parse(String(body)) });
+  const fetch = async (u) => { const p = String(u).split("?")[0]; if (p.startsWith(XQ_CDN)) return res(p, { "cdn-manifest.json": man(F), ...F }[p.slice(XQ_CDN.length)]); return res("https://localhost/" + p, F[p]) };   /* 補抓：本機也「讀得到」每個檔 */
+  const run = (pack) => vm.runInNewContext(R.OUTSIDE_JS(30, pack), { XQ_CDN, fetch, Date, Object, Array, Uint8Array, String, Math, Buffer, Set, JSON, crypto: crypto.webcrypto }).then((o) => JSON.parse(JSON.stringify(o)));
+  const byFetch = await run(null);
+  assert.equal(byFetch.packSource, "fetch"); assert.deepEqual(byFetch.checked, [], "沒有清單時會被補抓騙到（這就是 Android 12 看到的情形）"); assert.equal(R.judgeOutside(byFetch).code, 2);
+  const byApk = await run(["data/a.json"]);
+  assert.equal(byApk.packSource, "apk"); assert.equal(byApk.packCount, 1);
+  assert.deepEqual(byApk.checked.sort(), ["data/b.json", "data/c.json", "data/d.json"], "有清單：不在清單裡的都去 CDN 驗"); assert.equal(R.judgeOutside(byApk).code, 0);
+  assert.deepEqual(byApk.inPack, [{ f: "data/a.json", size: 7, want: 7, type: "安裝包清單" }]);
+  assert.ok(byApk.timing.filter((t) => t.cdnMs !== null).length === 3, "去 CDN 讀的檔都有時間紀錄");
 });
 
 test("結束代碼（#74 實跑後補）：--cdn-to 沒有包外檔讀取輪、或一個包外檔都沒驗到＝2；判定 1 不算測不成立（由紅燈擋）；換開關檔卻沒攔到開關檔＝2", () => {

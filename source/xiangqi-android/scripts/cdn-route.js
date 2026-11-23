@@ -91,8 +91,9 @@ function summarize(log, probe) {
 const OUTSIDE_MAX = 30, OUTSIDE_PROBES = 800, OUTSIDE_SIZE = 2 * 1024 * 1024;
 /* 大檔另外挑 OUTSIDE_BIG 個（20 MB 以內）；驗到的包外檔少於 OUTSIDE_MIN 個＝證據太少，測不成立（#74 Android 12 重跑後，iMac Claude 2 建議） */
 const OUTSIDE_BIG = 3, OUTSIDE_BIG_SIZE = 20 * 1024 * 1024, OUTSIDE_MIN = 3;
-const OUTSIDE_JS = (n = OUTSIDE_MAX) => `(async () => {
-  const out = { manifest: null, candidates: 0, probed: 0, checked: [], bad: [], hash: typeof crypto === "object" && !!crypto.subtle, inPack: [], localOdd: [], localOddCount: 0, timing: [], ms: 0 };
+const OUTSIDE_JS = (n = OUTSIDE_MAX, pack = null) => `(async () => {
+  const PACK = ${pack ? JSON.stringify(pack) : "null"}, inPackSet = PACK ? new Set(PACK) : null;
+  const out = { packSource: PACK ? "apk" : "fetch", packCount: PACK ? PACK.length : null, timingLocal: 0, manifest: null, candidates: 0, probed: 0, checked: [], bad: [], hash: typeof crypto === "object" && !!crypto.subtle, inPack: [], localOdd: [], localOddCount: 0, timing: [], ms: 0 };
   const T0 = Date.now();
   if (typeof window === "object" && window.__xqOut) window.__xqOut.o = out;   /* 進度即時看得到：逾時時至少知道做到哪 */
   let man;
@@ -105,13 +106,18 @@ const OUTSIDE_JS = (n = OUTSIDE_MAX) => `(async () => {
   out.candidates = files.length; out.bigCandidates = bigs.length; out.bigChecked = 0;
   const hex = (b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join("");
   const step = Math.max(1, Math.floor(files.length / ${OUTSIDE_PROBES}));
-  const one = async (e) => { const t0 = Date.now(), tm = { f: e[0], size: e[1][0], localMs: null, cdnMs: null }; if (out.timing.length < 60) out.timing.push(tm);
-    try { return await one1(e, tm) } finally { tm.ms = Date.now() - t0; out.ms = Date.now() - T0 } };
+  /* 時間紀錄優先留給真的去 CDN 讀的檔（大檔也記得到）；只查包裡的最多留 10 筆 */
+  const one = async (e) => { const t0 = Date.now(), tm = { f: e[0], size: e[1][0], localMs: null, cdnMs: null };
+    try { return await one1(e, tm) } finally { tm.ms = Date.now() - t0; out.ms = Date.now() - T0;
+      if (tm.cdnMs !== null ? out.timing.length < 60 : out.timingLocal++ < 10) out.timing.push(tm) } };
   const one1 = async ([f, v], tm) => {
     /* 包裡有沒有：回應成功、不是從 CDN 來的，而且內容就是清單那個檔（大小一樣，能算 SHA-1 就再比）。
        #74 Android 12 重跑：只看回應成功時 800 個全判成在包裡（本機伺服器對不存在的路徑可能回 index.html），所以要比內容 */
     let local = false; const tl = Date.now();
-    try {
+    /* #74 Android 12 第四次重跑：原生 App 會把本機讀不到的 data/ 檔自動改去 CDN 補抓，頁面裡用 fetch 試會被騙（123 個大檔全判成在包裡，安裝包實際只有 9 個大於 2 MB）；
+       有安裝包的檔案清單（--apk 讀中央目錄）就只查清單，不在頁面裡試 */
+    if (inPackSet) { tm.localMs = 0; if (inPackSet.has(f)) { if (out.inPack.length < 5) out.inPack.push({ f, size: v[0], want: v[0], type: "安裝包清單" }); return "local" } }
+    else try {
       const r = await fetch(f + "?xqlocal=" + Date.now(), { cache: "no-store" });
       if (r.ok && String(r.url).indexOf(XQ_CDN) !== 0) {
         const b = await r.arrayBuffer();
@@ -150,13 +156,13 @@ const OUTSIDE_JS = (n = OUTSIDE_MAX) => `(async () => {
 /* 在 App 頁面裡跑讀取輪（#74 Android 12 第三次重跑：一次 evaluate 做完全部，超過 cdp.js 每次 30 秒的逾時）：
    先用一次很短的 evaluate 在背景開跑（結果、進度寫在 window.__xqOut），之後每 pollMs 用短呼叫取回，最多等 timeoutMs。
    cdp.js 是 P0 工具共用的（工具鎖定），不改它的逾時。逾時＝回傳 error＋做到一半的結果（判 2，不會放行） */
-const OUTSIDE_START_JS = (n = OUTSIDE_MAX) => `(() => { window.__xqOut = { done: false, o: null };
-  ${OUTSIDE_JS(n)}.then((o) => { window.__xqOut = { done: true, o } }, (e) => { window.__xqOut = { done: true, o: { error: "頁面例外：" + String(e && e.message || e) } } });
+const OUTSIDE_START_JS = (n = OUTSIDE_MAX, pack = null) => `(() => { window.__xqOut = { done: false, o: null };
+  ${OUTSIDE_JS(n, pack)}.then((o) => { window.__xqOut = { done: true, o } }, (e) => { window.__xqOut = { done: true, o: { error: "頁面例外：" + String(e && e.message || e) } } });
   return "started" })()`;
 const OUTSIDE_POLL_JS = "JSON.stringify(window.__xqOut || null)";
-async function runOutside(c, { n = OUTSIDE_MAX, timeoutMs = 360000, pollMs = 2000, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = () => Date.now() } = {}) {
+async function runOutside(c, { n = OUTSIDE_MAX, pack = null, timeoutMs = 360000, pollMs = 2000, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = () => Date.now() } = {}) {
   const t0 = now();
-  try { if ((await c.ev(OUTSIDE_START_JS(n))) !== "started") return { error: "讀取輪沒有開跑" } } catch (e) { return { error: "讀取輪沒有開跑：" + String(e.message || e).slice(0, 120) } }
+  try { if ((await c.ev(OUTSIDE_START_JS(n, pack))) !== "started") return { error: "讀取輪沒有開跑" } } catch (e) { return { error: "讀取輪沒有開跑：" + String(e.message || e).slice(0, 120) } }
   let fails = 0, last = null;
   for (;;) {
     await sleep(pollMs);
@@ -175,4 +181,29 @@ function judgeOutside(o) {
   return { code: 0, why: `${o.checked.length} 個包外才有的檔都從新 CDN 讀到，大小${o.hash ? "和 SHA-1 " : ""}都跟清單對得上` + (o.hash ? "" : "（這台沒有 crypto.subtle，只比大小）") };
 }
 
-module.exports = { decide, routeCdn, probeOk, summarize, judgeOutside, runOutside, OUTSIDE_JS, OUTSIDE_START_JS, OUTSIDE_POLL_JS, OUTSIDE_MAX, OUTSIDE_PROBES, CDN, FLAGS_URL, PROBE, PROBE_BODY, PROBE_JS };
+/* 安裝包（APK 是 zip）的檔名清單：只讀檔尾的中央目錄，不整包解開、不靠外部 unzip。zip64（超過 4 GB 或 65535 個檔）不支援，丟錯 */
+function zipNames(file) {
+  const fd = fs.openSync(file, "r");
+  try {
+    const size = fs.fstatSync(fd).size, tl = Math.min(size, 65557), tail = Buffer.alloc(tl);
+    fs.readSync(fd, tail, 0, tl, size - tl);
+    let e = -1; for (let i = tl - 22; i >= 0; i--) if (tail.readUInt32LE(i) === 0x06054b50) { e = i; break }
+    if (e < 0) throw new Error("不是 zip：找不到中央目錄結尾");
+    const count = tail.readUInt16LE(e + 10), cdSize = tail.readUInt32LE(e + 12), cdOff = tail.readUInt32LE(e + 16);
+    if (count === 0xffff || cdSize === 0xffffffff || cdOff === 0xffffffff) throw new Error("zip64 不支援");
+    if (cdOff + cdSize > size) throw new Error("中央目錄超出檔案範圍");
+    const cd = Buffer.alloc(cdSize); fs.readSync(fd, cd, 0, cdSize, cdOff);
+    const names = []; let q = 0;
+    for (let k = 0; k < count; k++) {
+      if (q + 46 > cdSize || cd.readUInt32LE(q) !== 0x02014b50) throw new Error("中央目錄第 " + (k + 1) + " 筆壞了");
+      const nl = cd.readUInt16LE(q + 28), xl = cd.readUInt16LE(q + 30), cl = cd.readUInt16LE(q + 32);
+      names.push(cd.toString("utf8", q + 46, q + 46 + nl)); q += 46 + nl + xl + cl;
+    }
+    return names;
+  } finally { fs.closeSync(fd) }
+}
+/* 安裝包裡網頁資料檔的路徑（跟 CDN 一樣的 data/… 寫法） */
+const APK_PUBLIC = "assets/public/";
+function apkDataFiles(file) { return zipNames(file).filter((x) => x.startsWith(APK_PUBLIC + "data/") && !x.endsWith("/")).map((x) => x.slice(APK_PUBLIC.length)) }
+
+module.exports = { zipNames, apkDataFiles, decide, routeCdn, probeOk, summarize, judgeOutside, runOutside, OUTSIDE_JS, OUTSIDE_START_JS, OUTSIDE_POLL_JS, OUTSIDE_MAX, OUTSIDE_PROBES, CDN, FLAGS_URL, PROBE, PROBE_BODY, PROBE_JS };

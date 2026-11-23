@@ -18,7 +18,7 @@ const fs = require("fs"), path = require("path"), cp = require("child_process");
 const { connect } = require("./cdp.js");
 const { setupPlayer, waitPreload } = require("./player-state.js");
 const { checkDevice } = require("./device-guard.js");
-const { routeCdn, probeOk, summarize, judgeOutside, runOutside } = require("./cdn-route.js");
+const { routeCdn, probeOk, summarize, judgeOutside, runOutside, apkDataFiles } = require("./cdn-route.js");
 
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d };
 const O = { apk: arg("--apk"), serial: arg("--serial", "emulator-5580"), mode: arg("--mode", "both"), out: path.resolve(arg("--out", "scene-check")),
@@ -148,7 +148,7 @@ async function sweep(mode) {
   }
   /* W74：包外檔讀取輪（掃畫面時現行 App 可能一個 CDN 請求都沒發，要另外證明讀得到新 CDN 上包外才有的檔） */
   let outside = null;
-  if (routeLog && O.cdnTo) outside = await runOutside(c);   /* 背景開跑、短呼叫取回，不受 cdp.js 每次 30 秒逾時限制（#74 Android 12 第三次重跑） */
+  if (routeLog && O.cdnTo) outside = await runOutside(c, { pack: O.pack });   /* 背景開跑、短呼叫取回，不受 cdp.js 每次 30 秒逾時限制（#74 Android 12 第三次重跑） */
   const sweepIntercepted = routeLog ? summarize(routeLog, true).intercepted : 0;
   if (routeLog) { rep.route = summarize(routeLog, rep.route.probeOk); rep.route.sweepIntercepted = sweepIntercepted }   /* 掃完再算一次，把 44 個畫面期間攔到的也算進去 */
   if (outside) { rep.route.outside = outside; rep.route.outsideJudge = judgeOutside(outside); console.log(`包外檔讀取輪：${rep.route.outsideJudge.code === 0 ? "✔" : rep.route.outsideJudge.code === 1 ? "✘" : "△"} ${rep.route.outsideJudge.why}（掃畫面時攔到 ${sweepIntercepted} 個 CDN 請求）`) }
@@ -167,6 +167,7 @@ async function main() {
   const why = routeArgError(O);
   if (why) { console.error("✘ " + why); process.exit(2) }
   if (O.flagsFile) O.flags = JSON.parse(fs.readFileSync(O.flagsFile, "utf8"));
+  if (O.cdnTo) { try { O.pack = apkDataFiles(O.apk) } catch (e) { console.error("✘ 讀不到安裝包的檔案清單：" + e.message); process.exit(2) } if (!O.pack.length) { console.error("✘ 安裝包裡沒有 assets/public/data/ 的檔：" + O.apk); process.exit(2) } }
   fs.mkdirSync(O.out, { recursive: true });
   const R = { serial: O.serial, apk: O.apk && path.basename(O.apk), state: O.fresh ? "空白存檔（新安裝第一次打開）" : "封測玩家狀態", startedAt: new Date().toISOString(), sweeps: [] };
   if (O.routing) R.routing = { cdnTo: O.cdnTo || null, flags: O.flagsFail ? "讀不到" : O.flagsFile ? path.basename(O.flagsFile) : null };
@@ -202,6 +203,8 @@ async function main() {
 function routeArgError(o) {
   if ((o.cdnTo || o.flagsFile || o.flagsFail) && o.mode !== "online") return "--cdn-to、--flags-file、--flags-fail 只能配 --mode online（離線輪不改向：攔截會讓離線的 App 讀得到東西）";
   if (o.cdnTo) {
+    /* #74 Android 12 第四次重跑：「包裡有沒有」要讀安裝包的檔案清單（頁面裡用 fetch 試會被原生 App 的 CDN 補抓騙到），所以 --cdn-to 一定要配 --apk */
+    if (!o.apk) return "--cdn-to 要配 --apk（包外檔讀取輪要讀安裝包的檔案清單，才分得出哪些檔只在 CDN 上）";
     if (!/^https:\/\//.test(o.cdnTo) && !(fs.existsSync(o.cdnTo) && fs.statSync(o.cdnTo).isDirectory())) return "--cdn-to 要是 https 網址或存在的資料夾：" + o.cdnTo;
   }
   if (o.flagsFile && o.flagsFail) return "--flags-file 跟 --flags-fail 只能擇一";
