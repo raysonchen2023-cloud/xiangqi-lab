@@ -1,6 +1,6 @@
 {
  "ref": "origin/main",
- "madeAt": "2026-11-23T07:25:05.870Z",
+ "madeAt": "2026-11-23T08:53:06.920Z",
  "files": {
   "xiangqi-db/m/00-util.js": "local=live",
   "xiangqi-db/m/01-board.js": "local=live",
@@ -617,8 +617,8 @@
   "test-osc-school-1118.js": "指令排除：要讀十派課程 opening-school/*.json（只放 CDN 與倉庫 data/，公開副本 source/ 沒有）",
   "test-zm-masters-1118.js": "指令排除：要讀掌門立繪 npc/zm_*.webp 與棋友開局表（只在開發者電腦與 CDN）"
  },
- "version": "20261123-1525",
- "indexSha1": "383c3b67ba99",
+ "version": "20261123-1652",
+ "indexSha1": "8eef57a9a485",
  "toLF": [],
  "scrubbed": [
   "xiangqi-lab/tools/qa/colorblind-scan.js（1 處）",
@@ -646,5 +646,5 @@
    }
   ]
  },
- "baseCommit": "fe4918368aae3a128814faf10e5b06950c7bb5f7"
+ "baseCommit": "acc72d7692c9669f99ce0e2543931486f2188a13"
 }
