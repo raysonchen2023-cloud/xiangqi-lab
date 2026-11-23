@@ -136,6 +136,7 @@ function runGuard({ base = "origin/main", headRef = "", git, spawn, fsx = fs, lo
     results.push({ name, status: r.status });
     log((r.status === 0 ? "✔ " : "✘ ") + "基準版：" + name + (r.status === 0 ? "" : "（結束代碼 " + r.status + "）"));
   }
+  try { fsx.rmSync(ASSERT_DIR, { recursive: true, force: true }) } catch (e) { }   /* 跑完清掉自己這一份，不在暫存區留一堆（PR #69 複審建議） */
   const code = finalCode(results);
   log(code ? `✘ 換回 main 版的守門後有 ${results.filter((r) => r.status !== 0).length} 步沒過：這個 PR 放寬或改壞了守門，要開發者看過` : "✔ 換回 main 版的守門也全過");
   return code;

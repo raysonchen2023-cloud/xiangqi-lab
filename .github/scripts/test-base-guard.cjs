@@ -6,6 +6,10 @@
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process");
 const { GUARD, isGuard, guardChanged, STEPS, restore, modeArgs, modeOf, finalCode, runGuard, classifiedOnly, TK_PATH, ASSERT_DIR } = require("./base-guard.cjs");
 const NL = String.fromCharCode(10), NUL = String.fromCharCode(0);
+/* PR #69 複審：整支測試跑的期間，真的 fs 刪除一律經過記錄器（照樣刪）；最後一項斷言一次都沒刪到 base-assert-count*（含舊的固定路徑）。
+   測試自己要清的暫存資料夾用 REAL 刪，不算在內 */
+const REAL = { rmSync: fs.rmSync, rmdirSync: fs.rmdirSync, unlinkSync: fs.unlinkSync }, REAL_DEL = [];
+for (const k of Object.keys(REAL)) fs[k] = function (p, ...r) { REAL_DEL.push(String(p)); return REAL[k].call(this, p, ...r) };
 
 test("哪些算判斷紅綠的程式：.github/scripts 全部、run-tests、check-build、testkinds、verify-all、make-evidence、oss-scan、release-sync-check、release-verify、pikafish-verify", () => {
   for (const f of [".github/scripts/check-test-skips.cjs", ".github/scripts/base-guard.cjs", "source/run-tests.js", "source/check-build.js",
@@ -107,7 +111,7 @@ function fake({ files = [], fail = [], release = false, diffThrows = false } = {
     if (a[0] === ".github/scripts/ci-mode.cjs") return { status: 0, stdout: release ? "mode=release" + NL : "mode=feature" + NL };
     return { status: fail.some((k) => a.join(" ").includes(k)) ? 1 : 0 };
   };
-  const fsx = { existsSync: () => true, rmSync: (f) => removed.push(f), mkdirSync() {}, writeFileSync: (f, s) => { wrote[f] = s } };
+  const fsx = { existsSync: () => true, rmSync: (f) => removed.push(f), mkdirSync() {}, writeFileSync: (f, s) => { wrote[f] = s }, readdirSync: () => [] };
   return { git, spawn, fsx, calls, wrote, removed, log: () => {} };
 }
 
@@ -123,7 +127,7 @@ test("主流程：改到守門就換回、照 main 版 ci-mode 判斷模式；�
   const F = fake({ files: [".github/scripts/check-test-skips.cjs", ".github/scripts/new.cjs", "source/app.js"], fail: ["check-test-skips.cjs base-verify.txt"] });
   assert.equal(runGuard({ ...F, headRef: "w69/x" }), 1, "略過稽核換回 main 版後沒過，要紅燈");
   assert.equal(F.wrote[".github/scripts/check-test-skips.cjs"], "main 版 .github/scripts/check-test-skips.cjs");
-  assert.deepEqual(F.removed, [".github/scripts/new.cjs", ASSERT_DIR], "換回時拿掉新檔；跑之前清掉這次程序自己的斷言計數資料夾（走注入的 fsx，PR #69 審查）");
+  assert.deepEqual(F.removed, [".github/scripts/new.cjs", ASSERT_DIR, ASSERT_DIR], "換回時拿掉新檔；跑之前、跑完都清掉這次程序自己的斷言計數資料夾（走注入的 fsx，PR #69 審查）");
   assert.deepEqual(F.calls[0], ["node", ".github/scripts/ci-mode.cjs", "w69/x", "pull_request"], "事件名稱一律 pull_request");
   assert.ok(F.calls.some((c) => c.join(" ").includes("guard-release-files.cjs")), "功能模式要跑功能守門");
   const ok = fake({ files: ["source/run-tests.js"] });
@@ -256,6 +260,10 @@ test("自我測試跑 runGuard 不碰真的暫存資料夾：別的程序正在�
     runGuard({ ...F, headRef: "w69/x" });
     assert.ok(fs.existsSync(path.join(other, "test-x.js.json")), "別的程序的斷言計數不能被清掉");
     assert.deepEqual(list(), before, "真的 fs 上沒有任何 base-assert-count* 被刪");
-    assert.deepEqual(F.removed, [ASSERT_DIR], "只透過注入的 fsx 清自己這一份");
-  } finally { fs.rmSync(other, { recursive: true, force: true }) }
+    assert.deepEqual(F.removed, [ASSERT_DIR, ASSERT_DIR], "只透過注入的 fsx 清自己這一份（跑之前、跑完各一次）");
+  } finally { REAL.rmSync(other, { recursive: true, force: true }) }
+});
+
+test("整支測試跑的期間，真的 fs 一次都沒刪到 base-assert-count*（PR #69 複審：前面的測試先刪掉、後面比清單會看不出來）", () => {
+  assert.deepEqual(REAL_DEL.filter((p) => /^base-assert-count/.test(path.basename(p))), []);
 });
