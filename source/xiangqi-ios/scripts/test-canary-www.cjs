@@ -21,12 +21,18 @@ function fakeWww() {
   for (const f of ["capacitor.js", "native-bridge.js", "core.js", "engine.js", "local.js", "net.js", "zh.js"]) put(f, "/* " + f + " */\nvar x = 1;\n");
   for (const n of ["han", "qin", "tang"]) put("data/home/" + n + ".webp", Buffer.alloc(200 + n.length, n.length));
   /* PR #67 第八次審查：做得像真包——首頁素材很多（照字母排背景音樂會落在中間）、背景音樂分好幾個朝代、大檔也有雜湊 */
-  const homeX = []; for (let i = 0; i < 60; i++) { const r = "data/home/x" + String(i).padStart(2, "0") + ".webp"; put(r, Buffer.alloc(100 + i, 100 + i)); homeX.push([r, 100 + i]) }
+  const homeX = [];
+  /* PR #67 第九次審查：首頁素材分在好幾個目錄（真包有 data/homemap/、data/icons/…），根目錄也有 3D 場景程式；homemap 放在 items 前段，不分層的話頭、中、尾都挑不到 */
+  for (let i = 0; i < 12; i++) { const r = "data/homemap/m" + String(i).padStart(2, "0") + ".webp"; put(r, Buffer.alloc(170 + i, 30 + i)); homeX.push([r, 170 + i]) }
+  for (let i = 0; i < 60; i++) { const r = "data/home/x" + String(i).padStart(2, "0") + ".webp"; put(r, Buffer.alloc(100 + i, 100 + i)); homeX.push([r, 100 + i]) }
+  for (const f of ["three.min.js", "park3d.js", "map3d.js", "bot3d.js", "GLTFLoader.mjs"]) put(f, "/* " + f + " */\nvar y = 2;\n");
   put("data/preload.json", JSON.stringify({ items: [["data/home/han.webp", 203], ["data/home/qin.webp", 203], ["data/home/tang.webp", 204], ...homeX], big: [["data/gmgames.json", 5000]] }));
   put("release.json", JSON.stringify({ version: "test" }));
   for (let i = 0; i < 40; i++) put("data/misc/m" + String(i).padStart(2, "0") + ".json", JSON.stringify({ i, pad: "x".repeat(20 + i) }));   /* 一堆小檔：swap 只靠頭中尾＋隨機，幾乎挑不到最大的那個 */   /* 包裡的版號，要跟清單的 siteVersion 一樣 */
   put("data/big-books.json", "[]");
-  put("data/bgm/index.json", JSON.stringify({ han: ["zheng_1.mp3", "zheng_2.mp3"], tang: ["pipa_1.mp3", "pipa_2.mp3"], song: ["qin_1.mp3", "qin_2.mp3", "qin_3.mp3"] }));
+  put("data/bgm/index.json", JSON.stringify({ han: ["zheng_1.mp3", "zheng_2.mp3"], tang: ["pipa_1.mp3", "pipa_2.mp3"], song: ["qin_1.mp3", "qin_2.mp3", "qin_3.mp3"], ming: ["sx_1.mp3", "sx_2.mp3"], qing: ["eh_1.mp3", "eh_2.mp3"], sui: ["dz_1.mp3", "dz_2.mp3"] }));
+  /* 朝代多一點：只靠頭、中、尾挑不到每個朝代（PR #67 第九次審查） */
+  for (const [era, fs2] of [["ming", ["sx_1", "sx_2"]], ["qing", ["eh_1", "eh_2"]], ["sui", ["dz_1", "dz_2"]]]) fs2.forEach((n, i) => put("data/bgm/" + era + "/" + n + ".mp3", Buffer.alloc(300 + i, era.length + i)));
   put("data/bgm/song/qin_1.mp3", Buffer.alloc(410, 8)); put("data/bgm/song/qin_2.mp3", Buffer.alloc(411, 9)); put("data/bgm/song/qin_3.mp3", Buffer.alloc(412, 10));
   put("data/bgm/han/zheng_1.mp3", Buffer.alloc(400, 1)); put("data/bgm/han/zheng_2.mp3", Buffer.alloc(420, 2));
   put("data/bgm/tang/pipa_1.mp3", Buffer.alloc(430, 6)); put("data/bgm/tang/pipa_2.mp3", Buffer.alloc(440, 7));
@@ -79,8 +85,7 @@ test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；15 �
   for (const x of R.results) { assert.equal(x.caught, true, x.kind + " " + x.file); assert.equal(x.exit, ["cdnmiss", "cdnfail", "nohash"].includes(x.kind) ? 3 : 1, x.kind) }
   assert.ok(R.results.some((x) => x.kind === "swap" && x.file === "engine/pikafish.nnue"), "swap 固定測最大的記了 sha1 的檔（PR #67 第五次審查）");
   const files = (k) => R.results.filter((x) => x.kind === k).map((x) => x.file);
-  for (const era of ["han", "tang", "song"]) assert.ok(files("bgm").some((f) => f.startsWith("data/bgm/" + era + "/")), "背景音樂每個朝代都要測到：" + era);
-  assert.ok(files("bgm").includes("data/bgm/song/qin_1.mp3") && files("bgm").includes("data/bgm/song/qin_3.mp3"), "每個朝代測頭、尾");
+  for (const era of ["han", "tang", "song", "ming", "qing", "sui"]) assert.ok(files("bgm").some((f) => f.startsWith("data/bgm/" + era + "/")), "背景音樂每個朝代都要測到：" + era);
   for (const k of ["cdnstale", "cdnmiss"]) { assert.ok(files(k).some((f) => f.startsWith("data/bgm/")), k + " 要測到背景音樂（PR #67 第八次審查）"); assert.ok(files(k).includes("data/gmgames.json"), k + " 要測到 preload big") }
   assert.deepEqual(files("engine").slice(0, 3), ["engine/pikafish.js", "engine/pikafish.wasm", "engine/pikafish.nnue"], "三個引擎檔都測");
   assert.ok(files("core").includes("capacitor.js") && files("core").includes("zh.js"));
@@ -151,6 +156,11 @@ test("check-www.js 的判斷一條一條改壞（含只查第一個、只查 .js
     ["cdnmiss", "n++; need.add(it[0]);", "n++; if ((P.items || []).includes(it)) need.add(it[0]);"],
     ["cdnmiss", "const r = \"data/bgm/\" + era + \"/\" + f; need.add(r);", "const r = \"data/bgm/\" + era + \"/\" + f;"],
     ["nohash", "if (noHash.length) unverified.push(", "if (false) unverified.push("],
+    /* PR #67 第九次審查：只對某個目錄／某幾個檔放水 */
+    ["listmiss", 'if (!exists(rel)) bad.push("少了 " + rel);', 'if (!exists(rel) && !/3d|three|GLTF/.test(rel)) bad.push("少了 " + rel);'],
+    ["listmiss", 'if (!exists(rel)) bad.push("少了 " + rel);', 'if (!exists(rel) && !rel.startsWith("data/misc/")) bad.push("少了 " + rel);'],
+    ["cdnstale", "    if (need.has(rel)) bad.push(", '    if (need.has(rel) && !rel.startsWith("data/homemap/")) bad.push('],
+    ["home", 'if (!exists(it[0])) bad.push("preload.json 列了但沒有：" + it[0]);', 'if (!exists(it[0]) && !it[0].startsWith("data/homemap/")) bad.push("preload.json 列了但沒有：" + it[0]);'],
     ["nohash", 'if (!h && (rel.startsWith("engine/") || need.has(rel) || sz > 20 * 1048576)) noHash.push(rel);', 'if (!h && rel.startsWith("engine/")) noHash.push(rel);'],
     ["ctrl", "s.match(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/)", "s.match(/[\\x01]/)"],
     ["ctrl", "s.match(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/)", "s.match(/[\\x01-\\x08]/)"],
@@ -303,4 +313,59 @@ test("check-www.js：清單沒記雜湊的引擎、App 會要的檔、大於 20 
   const w = (n, f) => { const j = JSON.parse(JSON.stringify(J)); j.files[f][1] = null; const p = path.join(d, n + ".json"); fs.writeFileSync(p, JSON.stringify(j)); return p };
   for (const f of ["engine/pikafish.nnue", "data/home/x30.webp", "data/bgm/song/qin_2.mp3", "data/gmgames.json"]) { const r = runCheck(D, w(f.replace(/\W/g, "_"), f)); assert.equal(r.status, 3, f + "：" + r.stdout + r.stderr); assert.match(r.stderr, /清單沒記雜湊的重要檔/) }
   const r = runCheck(D, w("misc", "data/misc/m05.json")); assert.equal(r.status, 0, "不重要的小檔沒記雜湊不擋：" + r.stderr);
+});
+
+test("回 4（檢查失靈）或回 2（找不到可弄壞的檔）時 full 一定是 false；收據記結束代碼（PR #67 第九次審查）", () => {
+  const { D, L, M } = fakeWww(), ipa = fakeIpa(fakeApp(D)), txt = fs.readFileSync(M, "utf8"), quiet = () => {};
+  const base = { pkg: ipa, list: L, cdn: OFFICIAL_CDN, seed: 7, readM: () => txt, mainFile: mainOf(fs.readFileSync(L)), selfCdn: okCdn, log: quiet };
+  let r = run(base); assert.equal(r.code, 0); assert.equal(r.receipt.full, true); assert.equal(r.receipt.code, 0);
+  /* 回 4：check-www 的首頁判斷改壞（替身），工具雜湊另外給替身那份，其他條件都成立 */
+  const d = tmp("xq-blind4-"), src = fs.readFileSync(CHECK, "utf8").replace('if (!exists(it[0])) bad.push("preload.json 列了但沒有：" + it[0]);', "if (false) {}");
+  fs.writeFileSync(path.join(d, "check-www.js"), src); fs.copyFileSync(CANARY, path.join(d, "canary-www.js"));
+  const C2 = require(path.join(d, "canary-www.js"));
+  r = C2.run({ ...base, mainFile: mainOf(fs.readFileSync(L), { "source/xiangqi-ios/scripts/check-www.js": Buffer.from(src) }) });
+  assert.equal(r.code, 4); assert.equal(r.receipt.pass, false); assert.equal(r.receipt.full, false, "回 4 不能是 full"); assert.equal(r.receipt.code, 4);
+  /* 回 2：找不到可以弄壞的檔（preload big 清空） */
+  const D2 = tmp("xq-nobig-"); fs.cpSync(D, D2, { recursive: true }); const pj = path.join(D2, "data", "preload.json"), P = JSON.parse(fs.readFileSync(pj, "utf8")); P.big = []; fs.writeFileSync(pj, JSON.stringify(P));
+  const LJ = JSON.parse(fs.readFileSync(L, "utf8")); LJ.files["data/preload.json"] = [fs.statSync(pj).size, sha1(fs.readFileSync(pj))]; const L2 = path.join(tmp("xq-l2b-"), "l.json"); fs.writeFileSync(L2, JSON.stringify(LJ));
+  r = run({ ...base, pkg: fakeIpa(fakeApp(D2)), list: L2, mainFile: mainOf(fs.readFileSync(L2)) });
+  assert.equal(r.code, 2, JSON.stringify(r.receipt.results.filter((x) => x.unfit))); assert.equal(r.receipt.full, false, "回 2 不能是 full");
+});
+
+test("參數：--dir=X 的寫法要認；打錯的旗標報錯；--seed 不是數字回 2；大小寫要完全一樣；.ipa 有重複項目回 2（PR #67 第九次審查）", () => {
+  const { D, L } = fakeWww();
+  let r = cp.spawnSync(process.execPath, [CHECK, "--dir=" + D, "--list=" + L], { encoding: "utf8" }); assert.equal(r.status, 0, r.stdout + r.stderr); assert.match(r.stdout, new RegExp("檢查 " + D.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  r = cp.spawnSync(process.execPath, [CHECK, "--dir", D, "--list", L, "--cnd"], { encoding: "utf8" }); assert.equal(r.status, 1); assert.match(r.stderr, /不認得的參數 --cnd/);
+  r = cp.spawnSync(process.execPath, [CHECK, "--dir=", "--list", L], { encoding: "utf8" }); assert.equal(r.status, 1, "--dir= 空的不能退回預設");
+  assert.equal(runCanary(CANARY, ["--dir", D, "--list", L, "--cnd"]).status, 2);
+  assert.equal(runCanary(CANARY, ["--dir", D, "--list", L, "--seed", "abc"]).status, 2);
+  assert.equal(runCanary(CANARY, ["--dir=" + D, "--list=" + L, "--only=home"]).status, 0);
+  /* 大小寫：preload 列 H3.webp、實際是 h3.webp（macOS 預設不分大小寫，iPhone 分） */
+  const C = tmp("xq-case-"); fs.cpSync(D, C, { recursive: true }); fs.renameSync(path.join(C, "data", "home", "qin.webp"), path.join(C, "data", "home", "Qin.webp"));
+  r = runCheck(C, L); assert.equal(r.status, 1, r.stdout + r.stderr); assert.match(r.stderr, /preload\.json 列了但沒有：data\/home\/qin\.webp/);
+  /* .ipa 有兩筆同名項目 */
+  const A = fakeApp(D), ipa = fakeIpa(A), dup = path.join(tmp("xq-dupipa-"), "d.ipa");
+  const py = "import sys,zipfile\nz=zipfile.ZipFile(sys.argv[1]);o=zipfile.ZipFile(sys.argv[2],'w')\nfor i in z.infolist(): o.writestr(i, z.read(i))\ni=[x for x in z.infolist() if x.filename.endswith('public/zh.js')][0]; o.writestr(i.filename, b'/* other */')\no.close()";
+  const q = cp.spawnSync("python3", ["-W", "ignore", "-c", py, ipa, dup], { encoding: "utf8" }); assert.equal(q.status, 0, q.stderr);
+  r = runCanary(CANARY, ["--pkg", dup, "--list", L, "--only", "home"]); assert.equal(r.status, 2, r.stdout + r.stderr); assert.match(r.stderr, /重複的檔名項目/);
+});
+
+test("分層真的有作用：每個種子 home 都測到 data/homemap/；listmiss 每次都測到全部根目錄程式檔（PR #67 第九次審查）", () => {
+  const { D, L, M } = fakeWww(), od = tmp("xq-strata-");
+  for (const seed of ["1", "2", "3", "4", "5"]) {
+    const out = path.join(od, seed + ".json"), r = runCanary(CANARY, ["--dir", D, "--list", L, "--cdn-manifest", M, "--only", "home,listmiss,cdnstale,cdnmiss", "--seed", seed, "--out", out]);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const R = JSON.parse(fs.readFileSync(out, "utf8")).results, f = (k) => R.filter((x) => x.kind === k).map((x) => x.file);
+    for (const k of ["home", "cdnstale", "cdnmiss"]) assert.ok(f(k).some((x) => x.startsWith("data/homemap/")), "種子 " + seed + "：" + k + " 要測到 data/homemap/：" + f(k).join(","));
+    for (const js of ["three.min.js", "park3d.js", "map3d.js", "bot3d.js", "GLTFLoader.mjs"]) assert.ok(f("listmiss").includes(js), "種子 " + seed + "：listmiss 要測到 " + js);
+  }
+});
+
+test("背景音樂分朝代：每個種子每個朝代都測到（PR #67 第九次審查）", () => {
+  const { D, L } = fakeWww(), od = tmp("xq-bgmera-");
+  for (const seed of ["1", "2", "3", "4", "5"]) {
+    const out = path.join(od, seed + ".json"), r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "bgm", "--seed", seed, "--out", out]); assert.equal(r.status, 0, r.stdout + r.stderr);
+    const got = JSON.parse(fs.readFileSync(out, "utf8")).results.map((x) => x.file);
+    for (const era of ["han", "tang", "song", "ming", "qing", "sui"]) assert.ok(got.some((f) => f.startsWith("data/bgm/" + era + "/")), "種子 " + seed + " 要測到 " + era + "：" + got.join(","));
+  }
 });

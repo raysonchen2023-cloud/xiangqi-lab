@@ -15,13 +15,20 @@
 "use strict";
 const fs = require("fs"), path = require("path"), crypto = require("crypto"), { execFileSync } = require("child_process");
 const HERE = path.join(__dirname, "..");
-const argv = process.argv.slice(2), opt = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };
+/* PR #67 第九次審查：認 --dir=X 這種寫法；不認得的旗標（打錯字，例如 --cnd）直接報錯，不悄悄退回預設 */
+const KNOWN = ["--public", "--dir", "--list", "--cdn", "--cdn-manifest", "--all"];
+const argv = process.argv.slice(2).flatMap((a) => { const m = /^(--[a-z-]+)=(.*)$/s.exec(a); return m ? [m[1], m[2]] : [a] });
+for (const a of argv) if (a.startsWith("--") && !KNOWN.includes(a)) { console.error("✘ 不認得的參數 " + a + "（可用：" + KNOWN.join(" ") + "）"); process.exit(1) }
+const opt = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };
 /* PR #67 第五次審查：要接值的參數放最後、沒給值，不能悄悄退回預設 */
-for (const k of ["--dir", "--list", "--cdn-manifest"]) { const i = argv.indexOf(k); if (i >= 0 && (i + 1 >= argv.length || String(argv[i + 1]).startsWith("--"))) { console.error("✘ " + k + " 後面要接值"); process.exit(1) } }
+for (const k of ["--dir", "--list", "--cdn-manifest"]) { const i = argv.indexOf(k); if (i >= 0 && (i + 1 >= argv.length || argv[i + 1] === "" || String(argv[i + 1]).startsWith("--"))) { console.error("✘ " + k + " 後面要接值"); process.exit(1) } }
 const ROOT = opt("--dir") ? path.resolve(opt("--dir")) : argv.includes("--public") ? path.join(HERE, "ios", "App", "App", "public") : path.join(HERE, "www");
 const bad = [], warn = [], unverified = [], need = new Set();   /* need：App 會要的檔（preload、背景音樂），第 6 項用 */
 const rd = rel => fs.readFileSync(path.join(ROOT, ...rel.split("/")));
-const exists = rel => fs.existsSync(path.join(ROOT, ...rel.split("/")));
+/* PR #67 第九次審查：大小寫要完全一樣。macOS 預設不分大小寫，iPhone 分；用目錄列表比對確切檔名 */
+const dirCache = new Map();
+const listDir = (d) => { if (!dirCache.has(d)) { let s = null; try { s = new Set(fs.readdirSync(d)) } catch (e) { s = null } dirCache.set(d, s) } return dirCache.get(d) };
+const exists = rel => { let d = ROOT; for (const seg of rel.split("/")) { const s = listDir(d); if (!s || !s.has(seg)) return false; d = path.join(d, seg) } return true };
 const size = rel => fs.statSync(path.join(ROOT, ...rel.split("/"))).size;
 
 if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); }
