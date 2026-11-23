@@ -153,7 +153,13 @@ test("P0-3D 金絲雀（PR #66 審查④）：遮罩那次要真的點到落點�
 test("P0-IMG 金絲雀③與結束代碼（PR #66 審查②③）：③看正式 worker 的判斷；沒加 --cdn 時①②沒抓到照樣回 4", () => {
   const P = "data/__xq_p0_canary_x.webp";
   assert.deepEqual(CA.cdnCanary(P, [{ f: P }], []), { cdn404: true, cdn: "判成沒有" });
-  assert.equal(CA.cdnCanary(P, [], [{ f: P }]).cdn404, false); assert.match(CA.cdnCanary(P, [], [{ f: P }]).cdn, /連不上/);
+  assert.equal(CA.cdnCanary(P, [], [{ f: P, st: -1 }]).cdn404, false); assert.match(CA.cdnCanary(P, [], [{ f: P, st: -1 }]).cdn, /連不上/);
+  for (const st of [429, 503]) assert.match(CA.cdnCanary(P, [], [{ f: P, st }]).cdn, /連不上或暫時出錯/, "限流、伺服器錯誤歸缺驗：" + st);
+  /* PR #66 第三次複審：worker 被改壞、把 404 放進 unknown，不能被歸成「連不上」 */
+  for (const u of [{ f: P, st: 404 }, { f: P, st: 410 }, { f: P }]) {
+    const c = CA.cdnCanary(P, [], [u]); assert.doesNotMatch(c.cdn, /連不上/, JSON.stringify(u)); assert.match(c.cdn, /失靈/);
+    assert.equal(CA.canaryExitOk({ home: true, stale: true, ...c }, true), false, "失靈＝結束代碼 4：" + JSON.stringify(u));
+  }
   assert.match(CA.cdnCanary(P, [], []).cdn, /被當成有/, "worker 把不存在的檔當成有＝失靈");
   assert.equal(CA.canaryExitOk({ home: false, stale: true }, false), false, "沒加 --cdn：①沒抓到也要回 4");
   assert.equal(CA.canaryExitOk({ home: true, stale: false }, false), false);

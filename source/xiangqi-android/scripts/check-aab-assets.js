@@ -108,7 +108,7 @@ async function main() {
         let st = -1; for (let t = 0; t < 4 && st !== 200; t++) { if (t) await sleep(800 * t); try { st = (await fetch(url, { method: "HEAD" })).status } catch (e) { st = -1 } }
         // PR #11 審查：只有 404／410 是確定沒有；連不上、429（限流）、5xx 都只算沒確認到
         if (st === 404 || st === 410) miss.push({ f, why: `CDN 上沒有（${split ? ".parts.json " : ""}HTTP ${st}）：靠 CDN 補抓會失敗` });
-        else if (st !== 200) unknown.push({ f, why: `CDN 沒確認到（${st === -1 ? "連不上" : "HTTP " + st}，請稍後重跑 --cdn）` }); } }
+        else if (st !== 200) unknown.push({ f, st, why: `CDN 沒確認到（${st === -1 ? "連不上" : "HTTP " + st}，請稍後重跑 --cdn）` }); } }
       await Promise.all(Array.from({ length: 6 }, worker));
       Object.assign(canary, cdnCanary(probeF, miss, unknown));
       /* 金絲雀檔不算進正式結果：判成「沒有」是預期的，拿掉；判成「沒確認到」（CDN 連不上）照樣算缺驗，留在 unknown */
@@ -198,8 +198,12 @@ function staleVsCdn(packSha1, manFiles, need) { const red = [], warn = [];
   return { red, warn } }
 /* 金絲雀③的結果（純函式）：probe 被正式 worker 判在 miss＝抓到；在 unknown＝CDN 連不上（缺驗）；都不在＝被當成「有」，工具失靈 */
 function cdnCanary(probe, miss, unknown) {
-  const m = miss.some(x => x.f === probe), u = unknown.some(x => x.f === probe);
-  return { cdn404: m, cdn: m ? "判成沒有" : u ? "沒確認到（CDN 連不上）" : "被當成有（CDN 核對失靈）" };
+  /* PR #66 第三次複審：探測檔落在 unknown 時要看狀態碼。只有沒拿到 HTTP 狀態（-1）、限流（429）、伺服器錯誤（5xx）才算 CDN 這邊的問題（缺驗）；
+     404／410 被放進 unknown、或沒記狀態碼，是判斷被改壞（工具失靈），不能歸成「連不上」 */
+  const m = miss.some(x => x.f === probe), u = unknown.find(x => x.f === probe);
+  if (m) return { cdn404: true, cdn: "判成沒有" };
+  if (u) { const st = u.st; return { cdn404: false, cdnStatus: st, cdn: st === -1 || st === 429 || st >= 500 ? `沒確認到（CDN 連不上或暫時出錯，${st === -1 ? "沒拿到 HTTP 狀態" : "HTTP " + st}）` : `被歸成沒確認到（${st == null ? "沒記狀態碼" : "HTTP " + st}，CDN 核對失靈）` } }
+  return { cdn404: false, cdn: "被當成有（CDN 核對失靈）" };
 }
 /* 結束代碼用的金絲雀判斷（純函式）：①②一律要抓到；加 --cdn 時③要抓到，或 CDN 連不上（那種歸缺驗 3，不算失靈） */
 function canaryExitOk(c, cdn) { return c.home === true && c.stale === true && (!cdn || c.cdn404 === true || /連不上/.test(String(c.cdn || ""))) }
