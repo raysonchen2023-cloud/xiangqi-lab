@@ -45,6 +45,6 @@
   { "file": "source/xiangqi-lab/tools/test-oss-scan.js", "sha256": "aea25225de7b0f5339c915cacae2557a823192449af7dd751c5fe1dea0cadfb0", "reason": "掃描工具測試的檔頭說明，提到放行標記" },
   { "file": "source/xiangqi-lab/tools/test-oss-scan.js", "sha256": "a4338290253b29de1b0b2849606e850bec7d7d770262ca902b06ef33f16a5cbf", "reason": "掃描工具測試：假的 Cloudflare token 鍵名，用拼的組出來測規則，不是真的金鑰" },
   { "file": "source/xiangqi-lab/tools/test-oss-scan.js", "sha256": "b79d7d73b2a06b4658f3b28bac6a6fd61c0bb091c6c9bc50f23355ea9a4af79b", "reason": "掃描工具測試的測試名稱，提到放行標記" },
-  { "file": "source/xiangqi-lab/tools/test-oss-scan.js", "sha256": "f44c83cecb597e7f111331bda18229c19dd28c1030ed7597d4ae69c73d73297c", "reason": "掃描工具測試：要驗證行內放行標記會略過那一行，用的是假資料" }
+  { "file": "source/xiangqi-lab/tools/test-oss-scan.js", "sha256": "6ed40a3af64f8d9a08d8523f54afe4b82db33a1fbae8556104b8b740131f82f6", "reason": "掃描工具測試：要驗證行內放行標記會略過那一行，用的是假資料" }
  ]
 }

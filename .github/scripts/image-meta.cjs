@@ -98,9 +98,11 @@ function imageMeta(buf) {
   }
   if (fmt === "png") {
     let p = 8;
-    while (p + 12 <= b.length) {
+    while (p + 8 <= b.length) {
       const len = b.readUInt32BE(p), type = b.toString("latin1", p + 4, p + 8), d = b.subarray(p + 8, p + 8 + len);
+      if (p + 12 + len > b.length) return null;   /* 第五輪審查③：區塊長度超出檔案＝結構壞掉＝讀不懂 */
       if (type === "eXIf") tiff(d, out);
+      else if (type === "iCCP") { const z = d.indexOf(0); texts.push(inflate(d.subarray(z + 2)).toString("latin1").replace(/[^\x20-\x7e\n]+/g, " ")) }   /* 壓縮的 ICC：解開後的描述文字交給規則掃 */
       else if (type === "tEXt" || type === "zTXt" || type === "iTXt") {
         const z = d.indexOf(0), key = d.toString("latin1", 0, Math.max(0, z));
         let text = "";
@@ -112,8 +114,7 @@ function imageMeta(buf) {
         if (key === "XML:com.adobe.xmp") xmp(text, out);
         if (/^Raw profile type (?:exif|app1|xmp)$/i.test(key)) rawProfile(key, text, out);
       }
-      if (type === "IEND") break;
-      p += 12 + len;
+      p += 12 + len;   /* 第五輪審查③：IEND 之後的區塊照樣看（原本遇到 IEND 就停，後面的 zTXt、eXIf 都沒解） */
     }
     return done();
   }
@@ -130,8 +131,8 @@ function imageMeta(buf) {
   if (fmt === "tiff") { tiff(b, out); xmp(b.toString("latin1"), out); texts.push(b.toString("latin1").replace(/[^\x20-\x7e\n]+/g, " ")); return done() }
   if (fmt === "gif") {
     const i = b.indexOf("XMP DataXMP"); if (i >= 0) { const t = b.subarray(i).toString("utf8"); xmp(t, out); texts.push(t) }
-    /* 註解擴充區塊 21 FE：一串子區塊（長度＋內容），長度 0 結束 */
-    for (let j = b.indexOf(Buffer.from([0x21, 0xfe])); j >= 0; j = b.indexOf(Buffer.from([0x21, 0xfe]), j + 2)) {
+    /* 擴充區塊 21 FE（註解）、21 01（純文字）、21 FF（應用程式）：一串子區塊（長度＋內容），長度 0 結束；子區塊接回來（第五輪審查④：原本只接 21 FE，切開放的金鑰會漏） */
+    for (const lab of [0xfe, 0x01, 0xff]) for (let j = b.indexOf(Buffer.from([0x21, lab])); j >= 0; j = b.indexOf(Buffer.from([0x21, lab]), j + 2)) {
       let q = j + 2, t = ""; while (q < b.length && b[q] > 0) { t += b.toString("latin1", q + 1, q + 1 + b[q]); q += 1 + b[q] } texts.push(t);
     }
     return done();

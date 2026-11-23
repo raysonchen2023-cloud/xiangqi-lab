@@ -325,7 +325,7 @@ test("第四輪②：圖裡解出來的文字（壓縮的 zTXt／iTXt、分段�
   const zlib = require("zlib"), crc = (b) => { let c, t = -1; for (const x of b) { c = (t ^ x) & 255; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t = (t >>> 8) ^ c } return (t ^ -1) >>> 0 };
   const chunk = (type, data) => { const len = Buffer.alloc(4), td = Buffer.concat([Buffer.from(type), data]), c = Buffer.alloc(4); len.writeUInt32BE(data.length); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]) };
   const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(1, 0); ihdr.writeUInt32BE(1, 4); ihdr[8] = 8;
-  const MK = "oss-scan" + ":allow", line = "k=" + KEY3 + " " + MK;
+  const MK = "oss-scan" + ":allow", line = "m=" + MAIL3 + " " + MK;   /* 中風險（第五輪起高風險不受標記影響，用信箱才測得到這一條） */
   const png = (c) => Buffer.concat([SIG.png, chunk("IHDR", ihdr), c, chunk("IDAT", zlib.deflateSync(Buffer.from([0, 0]))), chunk("IEND", Buffer.alloc(0))]);
   const z = png(chunk("zTXt", Buffer.concat([Buffer.from("Comment\0\0"), zlib.deflateSync(Buffer.from(line))])));
   const it = png(chunk("iTXt", Buffer.concat([Buffer.from("Comment\0\x01\0\0\0"), zlib.deflateSync(Buffer.from(line))])));
@@ -336,17 +336,15 @@ test("第四輪②：圖裡解出來的文字（壓縮的 zTXt／iTXt、分段�
 });
 test("第三輪②：oss-scan:<控制字元>allow 這種標記也要登記（找標記用 oss-scan 換過控制字元的文字）；登記之後才過", () => {
   for (const c of ["\x01", "\x0b", "\x0c", "\x1f", "\0", " \t "]) {
-    const line = KEY3 + " // oss-scan:" + c + "allow";
+    const line = "u=https://ntfy" + ".sh/my-private-topic // oss-scan:" + c + "allow";   /* 中風險：標記只略過中、低風險（第五輪②） */
     const d = repo(({ put }) => put("source/m.js", "x\n" + line + "\n"));
     const r = scanA(d, []); assert.equal(r.status, 1, JSON.stringify(c) + "\n" + r.stdout); assert.match(r.stdout, /沒登記/);
-    const O = require(OSS), h = SC.lineSha(O.textsOf(Buffer.from(line))[0]);
-    if (c !== "\0") assert.equal(scanA(d, [], [{ file: "source/m.js", sha256: h, reason: "測試用假金鑰" }]).status, 0, "登記換過的那一行就過：" + JSON.stringify(c));
-    else {   /* 有 NUL 的檔會多解幾種文字（textsOf），每一種裡的標記行都要登記 */
-      const all = SC.markerLines(O.textsOf(Buffer.from("x\n" + line + "\n")), O.MARK);
-      assert.ok(all.length >= 2, "NUL 拿掉後的那一種也算標記");
-      assert.equal(scanA(d, [], [{ file: "source/m.js", sha256: h, reason: "測試用假金鑰" }]).status, 1, "只登記一種不夠");
-      assert.equal(scanA(d, [], all.map((m) => ({ file: "source/m.js", sha256: m.sha256, reason: "測試用假金鑰" }))).status, 0);
-    }
+    const O = require(OSS), all = SC.markerLines(O.textsOf(Buffer.from("x\n" + line + "\n")), O.MARK);
+    assert.ok(all.length >= 1, "換過控制字元的那一種文字裡找得到標記");
+    const reg = all.map((m) => ({ file: "source/m.js", sha256: m.sha256, reason: "測試用假頻道" }));
+    /* textsOf 也放一份不換控制字元的原文（第五輪①）：標記裡夾的是空白類（\t、\v、\f）時那一份也算標記，登記全部就過；
+       夾的是其他控制字元（\x01、\x1f、NUL）時原文那一份不算標記、那一行照掃，登記了也照擋（比較嚴） */
+    assert.equal(scanA(d, [], reg).status, /^\s+$/.test(c) ? 0 : 1, "登記之後：" + JSON.stringify(c));
   }
 });
 test("第三輪③：UTF-16BE 奇數長度、沒有 BOM 以中文為主的 UTF-16LE／BE、UTF-32LE／BE 裡的金鑰與信箱都抓到", () => {
@@ -422,4 +420,56 @@ test("第四輪⑤：image-meta 的各個欄位都有反例——JPEG APP13 IPTC
   const R = IM.imageMeta(png(chunk("tEXt", Buffer.from("Raw profile type app1\0\napp1\n      " + (hex.length / 2) + "\n" + hex + "\n", "latin1"))));
   assert.deepEqual(R.kinds, ["camera"], "Raw profile type app1 要解開當 EXIF 看（M25）");
   for (const k of ["Owner", "Artist", "Author", "Copyright"]) assert.deepEqual(IM.imageMeta(png(chunk("tEXt", Buffer.from(k + "\0某人", "utf8")))).kinds, ["owner"], k + " 算擁有者（M26）");
+});
+
+/* ---- PR #68 第五輪審查（iMac Claude 2） ---- */
+test("第五輪①：網址帳密裡夾控制字元（\\x1f、ANSI 碼 \\x1b[0m）照擋（main 版會擋，換成空白會把規則切斷）", () => {
+  const AT = "@";
+  for (const u of ["bob:hun\x1fter22" + AT + "db.example.org/x", "post" + "gres://app:pa\x1b[0mss99" + AT + "10.1.2.3:5432/db"]) {
+    const r = scan(repo(({ put }) => put("source/c.js", "const u = \"" + (u.includes("://") ? "" : "https://") + u + "\";\n")));
+    assert.equal(r.status, 1, JSON.stringify(u) + "\n" + r.stdout); assert.match(r.stdout, /網址裡帶帳密/);
+  }
+});
+test("第五輪②：行內標記登記之後，同一行的高風險、本機已知機密照擋；中風險才略過", () => {
+  const O = require(OSS), d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m5-")); made.push(d);
+  const AK = "AKIA" + "Q".repeat(16), MK = "oss-scan" + ":allow";
+  fs.writeFileSync(path.join(d, "a.js"), "k=" + AK + " // " + MK + "\nn=https://ntfy" + ".sh/abc-private // " + MK + "\ns=Known-Secret-Value-1234 // " + MK + "\n");
+  const R = O.scan(d, { known: [{ label: "測試", value: "Known-Secret-Value-1234" }] }), rules = R.findings.map((f) => f.rule).sort();
+  assert.deepEqual(rules, ["aws-key", "known-secret"], "高風險、已知機密照報；ntfy（中風險）略過");
+  const line = "k=" + AK + " // " + MK, dd = repo(({ put }) => put("source/a.js", line + "\n"));
+  assert.equal(scanA(dd, [], [{ file: "source/a.js", sha256: SC.lineSha(line), reason: "登記也沒用" }]).status, 1, "登記了照擋");
+});
+test("第五輪③：PNG 的 iCCP（壓縮的 ICC）解開掃；IEND 之後的 zTXt、eXIf GPS 照看；區塊長度超出檔案＝讀不懂", () => {
+  const zlib = require("zlib"), crc = (b) => { let c, t = -1; for (const x of b) { c = (t ^ x) & 255; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t = (t >>> 8) ^ c } return (t ^ -1) >>> 0 };
+  const chunk = (type, data) => { const len = Buffer.alloc(4), td = Buffer.concat([Buffer.from(type), data]), c = Buffer.alloc(4); len.writeUInt32BE(data.length); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]) };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(1, 0); ihdr.writeUInt32BE(1, 4); ihdr[8] = 8;
+  const head = Buffer.concat([SIG.png, chunk("IHDR", ihdr)]), tail = Buffer.concat([chunk("IDAT", zlib.deflateSync(Buffer.from([0, 0]))), chunk("IEND", Buffer.alloc(0))]);
+  const icc = IM.imageMeta(Buffer.concat([head, chunk("iCCP", Buffer.concat([Buffer.from("icc\0\0"), zlib.deflateSync(Buffer.from("desc " + MAIL3))])), tail]));
+  assert.ok(icc.texts.join(" ").includes(MAIL3), "iCCP 解開後的文字交給規則");
+  const after = IM.imageMeta(Buffer.concat([head, tail, chunk("zTXt", Buffer.concat([Buffer.from("Comment\0\0"), zlib.deflateSync(Buffer.from(MAIL3))]))]));
+  assert.ok(after.texts.join(" ").includes(MAIL3), "IEND 之後的 zTXt 也解");
+  const tif = Buffer.alloc(26); tif.write("II*\0", 0, "latin1"); tif.writeUInt32LE(8, 4); tif.writeUInt16LE(1, 8); tif.writeUInt16LE(0x8825, 10); tif.writeUInt16LE(4, 12); tif.writeUInt32LE(1, 14); tif.writeUInt32LE(26, 18); tif.writeUInt32LE(0, 22);
+  const gps = Buffer.concat([tif, Buffer.from([1, 0, 2, 0, 2, 0, 2, 0, 0, 0, 0x4e, 0, 0, 0, 0, 0, 0, 0])]);
+  assert.deepEqual(IM.imageMeta(Buffer.concat([head, chunk("eXIf", gps), tail])).kinds, ["gps"], "樣本本身要認得出 GPS");
+  assert.deepEqual(IM.imageMeta(Buffer.concat([head, tail, chunk("eXIf", gps)])).kinds, ["gps"], "IEND 之後的 eXIf GPS 照看");
+  const big = Buffer.concat([head, tail]); const cut = Buffer.concat([head, Buffer.from([0, 0, 0x10, 0]), Buffer.from("tEXt"), Buffer.from("x\0y")]);
+  assert.ok(IM.imageMeta(big)); assert.equal(IM.imageMeta(cut), null, "區塊長度超出檔案＝讀不懂");
+});
+test("第五輪④：GIF 21 01（純文字）、21 FF（應用程式）擴充的子區塊接回來，切開放的金鑰抓得到", () => {
+  const sub = (s, n) => { const out = []; for (let i = 0; i < s.length; i += n) { const p = Buffer.from(s.slice(i, i + n), "latin1"); out.push(Buffer.from([p.length]), p) } out.push(Buffer.from([0])); return Buffer.concat(out) };
+  for (const lab of [0x01, 0xff, 0xfe]) {
+    const g = Buffer.concat([Buffer.from("GIF89a"), Buffer.alloc(7), Buffer.from([0x21, lab]), sub(" k=" + KEY3 + " ", 5), Buffer.from([0x3b])]);
+    const m = IM.imageMeta(g); assert.ok(m && m.texts.join("").includes(KEY3), "21 " + lab.toString(16) + " 的子區塊接回來");
+    const r = scan(repo(({ put }) => put("source/g.gif", g)));
+    assert.equal(r.status, 1, lab.toString(16) + "\n" + r.stdout); assert.match(r.stdout, /Google／Gemini API 金鑰/);
+  }
+});
+test("第五輪建議：放行清單的個資規則一定要寫 file、理由欄不准寫個資、rule 用 Object.hasOwn 判斷；CI 紀錄印原文時遮罩", () => {
+  const H = "a".repeat(64);
+  assert.equal(SC.checkAllow({ items: [{ rule: "email", sha256: H, reason: "沒寫 file" }], inline: [] }, RISKS).length, 1);
+  assert.equal(SC.checkAllow({ items: [{ rule: "local-path", file: "a/b.js", match: "/ho" + "me/xyz", reason: "聯絡 " + MAIL3 }], inline: [] }, RISKS).length, 1);
+  assert.equal(SC.checkAllow({ items: [], inline: [{ file: "a.js", sha256: H, reason: "電話 09" + "12345678" }] }, RISKS).length, 1);
+  assert.ok(SC.checkAllow({ items: [{ rule: "__proto__", file: "a.js", match: "abcdef", reason: "原型鏈" }], inline: [] }, RISKS).some((x) => /不是 oss-scan 的規則/.test(x)));
+  const O = require(OSS), t = SC.maskText("k=" + KEY3 + " m=" + MAIL3, O.RULES);
+  assert.ok(!t.includes(KEY3) && !t.includes(MAIL3), t);
 });

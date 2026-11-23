@@ -24,7 +24,11 @@
 //   ② 圖裡解出來的文字（.meta 檔）裡有行內標記就擋：圖裡的文字不准用標記（壓縮的 zTXt／iTXt、分段的 GIF 註解原本都能藏）
 //   ③④ 圖片跟一般檔一樣全文掃；壓縮資料偶然湊出的中風險，放行清單寫 file（圖片的完整路徑）＋fileSha256（整張圖的雜湊）
 //   .github/oss-allow.json 是資料、不在 base-guard 的 GUARD 清單裡（跟 test-skip-allow.json 一樣）：改它要逐行審，換回 main 版守門時用的是 PR 這一份
-// 已知限制：base64 等編碼過的機密 oss-scan 本來就認不出來；機密的字中間插控制字元（例如 \x01）或零寬字元也認不出來。
+// 已知限制：base64 等編碼過的機密 oss-scan 本來就認不出來；機密的字中間插控制字元（例如 \x01）或零寬字元也認不出來；
+//   zip／docx／gz 等壓縮檔裡面、影片的 GPS、檔名裡的信箱、Git LFS 指標檔指向的內容、提交歷史裡加了又刪掉的內容都不掃；
+//   JPEG 放在 SOS（影像資料）之後的 GPS、延伸 XMP 分段之間被切開的字串也認不出來（只有刻意藏才會發生）。
+// PR #68 第五輪審查：行內標記只略過中、低風險（高風險、本機已知機密照擋）；PNG 的 iCCP 也解開、IEND 之後的區塊照看、區塊長度超出檔案＝讀不懂；
+//   GIF 的 21 01（純文字）、21 FF（應用程式）擴充跟 21 FE 一樣把子區塊接回來；放行清單個資規則一定要寫 file、理由欄不准寫個資；CI 紀錄印原文時遮罩。
 // 結束代碼：0＝沒問題；1＝有要擋的；2＝用法錯誤或放行清單格式錯
 "use strict";
 const { execFileSync, spawnSync } = require("child_process");
@@ -46,7 +50,7 @@ function checkAllow(list, risks) {
   items.forEach((a, i) => {
     const at = `items 第 ${i + 1} 筆`;
     if (!a || typeof a !== "object") { bad.push(at + "不是物件"); return }
-    if (!(a.rule in risks)) bad.push(`${at}的 rule「${a.rule}」不是 oss-scan 的規則`);
+    if (!Object.hasOwn(risks, a.rule)) bad.push(`${at}的 rule「${a.rule}」不是 oss-scan 的規則`);
     else if (risks[a.rule] === "high") bad.push(`${at}的 rule「${a.rule}」是高風險：不准放行`);
     if (!String(a.file || "").trim() && !String(a.match || "").trim() && !a.sha256 && !a.fileSha256) bad.push(at + "沒有 file、match、sha256、fileSha256：不准整條規則全部放行");
     if (a.fileSha256 != null && (!/^[0-9a-f]{64}$/.test(String(a.fileSha256)) || !IMG_EXT.test(String(a.file || "")))) bad.push(at + "的 fileSha256 要是 64 碼小寫，而且 file 要寫圖片的完整路徑（整張圖雜湊放行只給圖片用）");
@@ -55,6 +59,8 @@ function checkAllow(list, risks) {
     if (a.match != null && String(a.match).length < 6) bad.push(at + "的 match 太短（至少 6 個字）");
     if (a.file != null && (String(a.file).length < 3 || /^\/|[*?]|\\/.test(a.file))) bad.push(at + "的 file 要寫倉庫裡的完整路徑（不加開頭的 /、不用萬用字元）");
     if (String(a.reason || "").trim().length < 4) bad.push(at + "沒寫理由（reason 至少 4 個字）");
+    if (PERSONAL.includes(a.rule) && !String(a.file || "").trim()) bad.push(at + "是個資規則（" + a.rule + "）：一定要寫 file（不然那一筆放進任何檔都會過）");
+    if (PII_RE.test(String(a.reason || ""))) bad.push(at + "的理由裡不能寫信箱或電話");
   });
   inline.forEach((a, i) => {
     const at = `inline 第 ${i + 1} 筆`;
@@ -62,10 +68,14 @@ function checkAllow(list, risks) {
     else if (/^\/|[*?]|\\/.test(a.file)) bad.push(at + "的 file 要寫倉庫裡的完整路徑");
     if (!/^[0-9a-f]{64}$/.test(String(a && a.sha256))) bad.push(at + "的 sha256 要是 64 碼小寫");
     if (String((a && a.reason) || "").trim().length < 4) bad.push(at + "沒寫理由（reason 至少 4 個字）");
+    if (a && PII_RE.test(String(a.reason || ""))) bad.push(at + "的理由裡不能寫信箱或電話");
   });
   return bad;
 }
 const PERSONAL = ["email", "phone-tw", "tw-id"];
+const PII_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|(?:\+886[- ]?9\d{2}|09\d{2})[- ]?\d{3}[- ]?\d{3}|\b[A-Z][12]\d{8}\b/;   /* 放行清單的理由欄不准寫個資（第五輪審查建議） */
+/* CI 紀錄是公開的：印出原文前把會被規則抓到的字遮掉（第五輪審查建議） */
+function maskText(s, rules) { let t = String(s); for (const r of rules || []) { t = t.replace(new RegExp(r.re.source, r.re.flags.includes("g") ? r.re.flags : r.re.flags + "g"), (m) => m.length <= 4 ? "＊" : m.slice(0, 2) + "＊（" + m.length + " 字）") } return t }
 /* .gitattributes 裡會讓工作區跟倉庫內容不同的設定（純函式）：回傳有問題的行 */
 function badAttrs(text) { return String(text).split("\n").map((l, i) => ({ line: i + 1, text: l.trim() })).filter((x) => !/^#/.test(x.text) && /\bworking-tree-encoding\b|\bfilter\s*=/.test(x.text)) }
 /* 一個檔裡有行內放行標記的行：[{line, sha256, text}]。照 oss-scan 的切法（只認 \n），雜湊前去掉行尾 \r 和前後空白。
@@ -102,7 +112,7 @@ function judge({ findings, images, unreg, attrs = [], metaMarks = [] }) {
   return { medium, meta, unreadable, unreg: unreg || [], attrs, metaMarks, ok: !medium.length && !meta.length && !unreadable.length && !(unreg || []).length && !attrs.length && !metaMarks.length };
 }
 
-module.exports = { checkAllow, markerLines, unregistered, imageCheck, judge, lineSha, badAttrs, freeName, TOK, PERSONAL };
+module.exports = { maskText, checkAllow, markerLines, unregistered, imageCheck, judge, lineSha, badAttrs, freeName, TOK, PERSONAL };
 if (require.main !== module) return;
 
 const [base = "origin/main", out] = process.argv.slice(2);
@@ -148,7 +158,7 @@ if (r.status === null || findings === null) { console.log("✘ oss-scan 沒有�
 const marked = bufs.map(({ file, buf }) => ({ file, marks: markerLines(S.textsOf(buf), S.MARK) })).filter((x) => x.marks.length);
 const attrs = bufs.filter(({ file }) => path.basename(file) === ".gitattributes").flatMap(({ file, buf }) => badAttrs(buf.toString("utf8")).map((x) => ({ file, ...x })));
 const J = judge({ findings, images, unreg: unregistered(marked, list.inline), attrs, metaMarks });
-for (const m of J.metaMarks) console.log(`  ✘ ${m.file}：圖裡的文字（中繼資料、註解）有 ${TOK}：「${m.text}」← 圖裡的文字不准用行內標記，請重新匯出不含這段文字的圖`);
+for (const m of J.metaMarks) console.log(`  ✘ ${m.file}：圖裡的文字（中繼資料、註解）有 ${TOK}：「${maskText(m.text, S.RULES)}」← 圖裡的文字不准用行內標記，請重新匯出不含這段文字的圖`);
 for (const a of J.attrs) console.log(`  ✘ ${a.file}:${a.line}  ${a.text}  ← working-tree-encoding／filter 會讓工作區跟倉庫的內容不同，私密掃描會被繞過：不准用`);
 
 console.log(`\n圖片中繼資料：看了 ${images.length} 張新增或修改的圖（用檔頭判斷格式）`);
@@ -158,7 +168,7 @@ const nMarks = marked.reduce((n, x) => n + x.marks.length, 0);
 if (nMarks) {
   console.log(`\n改到的檔裡有 ${nMarks} 行用了 ${TOK}（那一行整個不掃），要在 ${allowF} 的 inline 登記：`);
   for (const x of marked) for (const m of x.marks) { const reg = !J.unreg.some((u) => u.file === x.file && u.sha256 === m.sha256);
-    console.log(`  ${reg ? "△" : "✘"} ${x.file}:${m.line}  ${m.text}${reg ? "（已登記）" : `\n      ← 這一行全文（${m.full.length} 字）：${JSON.stringify(m.full)}\n      ← 沒登記：在 inline 加 {"file":"${x.file}","sha256":"${m.sha256}","reason":"為什麼可以不掃"}`}`) }
+    console.log(`  ${reg ? "△" : "✘"} ${x.file}:${m.line}  ${m.text}${reg ? "（已登記）" : `\n      ← 這一行全文（${m.full.length} 字，會被規則抓到的字已遮掉）：${JSON.stringify(maskText(m.full, S.RULES))}\n      ← 沒登記：在 inline 加 {"file":"${x.file}","sha256":"${m.sha256}","reason":"為什麼可以不掃"}`}`) }
 }
 if (J.medium.length) {
   console.log(`\n✘ 改到的檔有 ${J.medium.length} 筆中風險沒被放行（上面「中風險」那一段）。`);

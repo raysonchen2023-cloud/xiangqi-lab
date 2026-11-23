@@ -67,7 +67,8 @@ function asText(b) {
    ・照 UTF-16LE、UTF-16BE 各從第 0、第 1 個位元組解一次：沒有 BOM、以中文為主的 UTF-16（判斷式抓不到的那種）
    行內放行標記也是在這幾種文字裡找（scan-changed 要求登記時用同一份，見 MARK） */
 function textsOf(b) {
-  const out = [asText(b), b.toString("utf8").replace(CTRL, " ")];   /* 第四輪審查①：有 BOM 但內容其實是 UTF-8 的檔，照 UTF-16 解會漏，所以一律也照 UTF-8 解一次 */
+  const out = [asText(b), b.toString("utf8").replace(CTRL, " "), b.toString("utf8")];   /* 第四輪審查①：有 BOM 但內容其實是 UTF-8 的檔，照 UTF-16 解會漏，所以一律也照 UTF-8 解一次；
+     第五輪審查①：再放一份不換控制字元的原文（網址帳密裡夾 \x1f、ANSI 碼時，換成空白會把「不含空白」的規則切斷，main 版會擋） */
   if (b.indexOf(0) < 0) return out;
   out.push(Buffer.from(b.filter((x) => x !== 0)).toString("utf8").replace(CTRL, " "));
   for (const off of [0, 1]) {
@@ -172,7 +173,7 @@ function scan(dir, opts = {}) {
         if (r.skipVal && r.skipVal.test(r.email ? match : val)) continue;
         if (r.near && !r.near.test(t.slice(Math.max(0, m.index - 300), m.index + 300))) continue;
         const ln = lineOf(m.index);
-        if (MARK.test(lineText(ln))) continue;
+        if (r.risk !== "high" && MARK.test(lineText(ln))) continue;   /* 第五輪審查②：行內標記只略過中、低風險，高風險照擋 */
         report(r, f.rel, ln, match);
       }
     }
@@ -180,7 +181,7 @@ function scan(dir, opts = {}) {
       let i = s.indexOf(k.value);
       while (i >= 0) {
         const ln = lineOf(i);
-        if (!MARK.test(lineText(ln))) report({ id: "known-secret", risk: "high", what: "本機已知機密（" + k.label + "）", fix: "刪掉；這個值要當作已外洩、換新的" }, f.rel, ln, k.value, { shown: "（值不顯示）" });
+        report({ id: "known-secret", risk: "high", what: "本機已知機密（" + k.label + "）", fix: "刪掉；這個值要當作已外洩、換新的" }, f.rel, ln, k.value, { shown: "（值不顯示）" });
         i = s.indexOf(k.value, i + 1);
       }
     }
