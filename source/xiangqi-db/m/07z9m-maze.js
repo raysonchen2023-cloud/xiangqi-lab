@@ -169,7 +169,8 @@ async function jhMzWorld3(box,c,S){
       if(w!==cw||h!==ch){cw=w;ch=h;r.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix()}
       const P=S.player,G=S.guard,px=P.fx+.5,pz=P.fy+.5;
       if(tgx===null||Math.hypot(px-tgx,pz-tgz)>3){tgx=px;tgz=pz}else{const k=Math.min(1,dt*7);tgx+=(px-tgx)*k;tgz+=(pz-tgz)*k}
-      const D=Math.max(7.6/(2*TAN*cam.aspect),6.4/(2*TAN));cam.position.set(tgx,D*Math.sin(EL),tgz+D*Math.cos(EL));cam.lookAt(tgx,0,tgz);
+      /* 看得到幾格：手機至少寬 7.6、高 6.4 格；大螢幕照「每格約 72px」放寬（Windows Claude 2 預驗 #92：平板寬鏡頭太近、只看到約 6×5 格） */
+      const Wt=Math.max(7.6,w/72),Ht=Math.max(6.4,h/72),D=Math.max(Wt/(2*TAN*cam.aspect),Ht/(2*TAN));cam.position.set(tgx,D*Math.sin(EL),tgz+D*Math.cos(EL));cam.lookAt(tgx,0,tgz);
       cells.forEach(([x,y],i)=>fl.setColorAt(i,cK.setScalar(bright(L,x,y))));fl.instanceColor.needsUpdate=true;
       walls.forEach(([x,y],i)=>wl.setColorAt(i,cK.setScalar(bright(L,x,y))));wl.instanceColor.needsUpdate=true;
       for(const o of objs){const b=bright(L,o.x,o.y);o.g.visible=b>0&&o.on();if(o.g.visible)for(const m of o.mats)m.color.copy(m.userData.base).multiplyScalar(b)}
