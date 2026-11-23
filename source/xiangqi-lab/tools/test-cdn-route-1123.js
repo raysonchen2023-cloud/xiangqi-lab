@@ -126,9 +126,10 @@ test("〔原始碼〕掃描流程：先開攔截、再重新載入、等首頁�
   assert.match(s, /rep\.route = summarize\(routeLog, await probeOk\(c\)\)/);
   assert.match(s, /if \(routeLog\) \{ rep\.route = summarize\(routeLog, rep\.route\.probeOk\);/);
   /* #74 Android 12 實跑後補：--cdn-to 時掃完畫面要跑包外檔讀取輪；判成 1 要進紅燈清單 */
-  const o = s.indexOf("outside = await c.ev(OUTSIDE_JS())"), cl = s.indexOf("c.close();\n  rep.badRoutes");
+  const o = s.indexOf("outside = await runOutside(c)"), cl = s.indexOf("c.close();\n  rep.badRoutes");
   assert.ok(o > l && o < cl, "包外檔讀取輪在掃完畫面之後、關掉連線之前");
-  assert.match(s, /if \(routeLog && O\.cdnTo\) \{ try \{ outside = await c\.ev\(OUTSIDE_JS\(\)\) \}/);
+  assert.match(s, /if \(routeLog && O\.cdnTo\) outside = await runOutside\(c\);/);
+  assert.doesNotMatch(s, /c\.ev\(OUTSIDE_JS\(/, "不能再一次 evaluate 做完整輪（會撞 cdp.js 每次 30 秒的逾時）");
   assert.match(s, /outsideJudge\.code === 1\) rep\.badRoutes\.push\(/);
   assert.match(s, /routeBadOf\(R\.sweeps, O\.routing && \{ cdnTo: O\.cdnTo, flags: !!\(O\.flagsFile \|\| O\.flagsFail\) \}\)/);
 });
@@ -222,6 +223,39 @@ test("包外檔讀取輪（#74 Android 12 第二次重跑）：小檔都在包�
   const two = { ...small, "data/big1.json": big["data/big1.json"], "data/big2.json": big["data/big2.json"] };
   const t = await page({ pack: small, cdn: { "cdn-manifest.json": man(two), ...two } }).run();
   assert.equal(t.checked.length, 2); assert.equal(R.judgeOutside(t).code, 2); assert.match(R.judgeOutside(t).why, /只驗到 2 個（至少要 3 個/);
+});
+
+test("讀取輪分段跑（#74 Android 12 第三次重跑：一次 evaluate 超過 cdp.js 的 30 秒）：背景開跑、短呼叫取回；做完回結果、逾時回 error＋做到一半的；每個檔記時間", async () => {
+  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}", "data/c.json": "{\"c\":3}", "data/d.json": "{\"d\":4}" };
+  /* 假的 CDP：evaluate 在同一個 vm 頁面裡跑（有 window），每次呼叫都立刻回來 */
+  const fakeC = (pageOpts, { stall = false } = {}) => {
+    const XQ_CDN = "https://xiangqi-cdn.pages.dev/", { pack = {}, cdn = {} } = pageOpts;
+    const hdr = { get: () => "application/json" };
+    const res = (url, body) => body === undefined ? { ok: false, status: 404, url, headers: hdr, arrayBuffer: async () => new ArrayBuffer(0), json: async () => { throw new Error("404") } }
+      : { ok: true, status: 200, url, headers: hdr, arrayBuffer: async () => { const b = Buffer.from(body); return b.buffer.slice(b.byteOffset, b.byteOffset + b.length) }, json: async () => JSON.parse(String(body)) };
+    const fetch = stall ? () => new Promise(() => {}) : async (u) => { const p = String(u).split("?")[0]; return p.startsWith(XQ_CDN) ? res(p, cdn[p.slice(XQ_CDN.length)]) : res("https://localhost/" + p, pack[p]) };
+    const ctx = vm.createContext({ XQ_CDN, fetch, Date, Object, Array, Uint8Array, String, Math, Buffer, JSON, crypto: crypto.webcrypto });
+    ctx.window = ctx; const calls = [];
+    return { calls, ev: async (js) => { calls.push(js.length); return vm.runInContext(js, ctx) } };
+  };
+  const fast = { sleep: () => new Promise((r) => setImmediate(r)), pollMs: 0 };
+  const c = fakeC({ pack: { "data/a.json": F["data/a.json"] }, cdn: { "cdn-manifest.json": man(F), ...F } });
+  const o = JSON.parse(JSON.stringify(await R.runOutside(c, fast)));
+  assert.deepEqual(o.checked.sort(), ["data/b.json", "data/c.json", "data/d.json"]); assert.equal(R.judgeOutside(o).code, 0);
+  assert.ok(c.calls.length >= 2, "開跑一次、取回至少一次"); assert.ok(c.calls[0] > 500 && c.calls.slice(1).every((n) => n < 100), "只有開跑那次帶整段程式，之後都是短呼叫");
+  assert.equal(o.timing.length, 4); assert.ok(o.timing.every((t) => Number.isInteger(t.ms) && t.localMs !== null), "每個檔都記時間"); assert.ok(o.timing.filter((t) => t.cdnMs !== null).length === 3, "包外的才有 CDN 時間");
+  /* 永遠做不完：逾時回 error＋做到一半的結果，判 2 */
+  let t = 0; const slow = fakeC({ cdn: { "cdn-manifest.json": man(F) } }, { stall: true });
+  const x = await R.runOutside(slow, { ...fast, timeoutMs: 1000, now: () => (t += 400) });
+  assert.match(x.error, /逾時（1 秒還沒做完）/); assert.equal(R.judgeOutside(x).code, 2); assert.match(R.judgeOutside(x).why, /沒有跑出結果/);
+  /* 開跑失敗、取回連續 3 次失敗：都判 2，不會無限等 */
+  const boom = await R.runOutside({ ev: async () => { throw new Error("斷線") } }, fast); assert.match(boom.error, /沒有開跑：斷線/); assert.equal(R.judgeOutside(boom).code, 2);
+  let polled = 0; const nope = await R.runOutside({ ev: async (js) => { if (js === R.OUTSIDE_POLL_JS) polled++; return "不是 started" } }, fast);
+  assert.equal(nope.error, "讀取輪沒有開跑"); assert.equal(polled, 0, "沒開跑就不去取回");
+  let k = 0; const flaky = await R.runOutside({ ev: async () => (k++ === 0 ? "started" : Promise.reject(new Error("CDP 逾時"))) }, fast);
+  assert.match(flaky.error, /連續 3 次失敗/); assert.equal(R.judgeOutside(flaky).code, 2);
+  /* 做到一半的結果會寫進說明 */
+  assert.match(R.judgeOutside({ error: "逾時", partial: { checked: ["data/b.json"], probed: 5, ms: 31000 } }).why, /做到一半：驗到 1 個、試了 5 個、花 31 秒/);
 });
 
 test("結束代碼（#74 實跑後補）：--cdn-to 沒有包外檔讀取輪、或一個包外檔都沒驗到＝2；判定 1 不算測不成立（由紅燈擋）；換開關檔卻沒攔到開關檔＝2", () => {

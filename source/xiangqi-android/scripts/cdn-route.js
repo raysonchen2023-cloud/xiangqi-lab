@@ -92,7 +92,9 @@ const OUTSIDE_MAX = 30, OUTSIDE_PROBES = 800, OUTSIDE_SIZE = 2 * 1024 * 1024;
 /* 大檔另外挑 OUTSIDE_BIG 個（20 MB 以內）；驗到的包外檔少於 OUTSIDE_MIN 個＝證據太少，測不成立（#74 Android 12 重跑後，iMac Claude 2 建議） */
 const OUTSIDE_BIG = 3, OUTSIDE_BIG_SIZE = 20 * 1024 * 1024, OUTSIDE_MIN = 3;
 const OUTSIDE_JS = (n = OUTSIDE_MAX) => `(async () => {
-  const out = { manifest: null, candidates: 0, probed: 0, checked: [], bad: [], hash: typeof crypto === "object" && !!crypto.subtle, inPack: [], localOdd: [], localOddCount: 0 };
+  const out = { manifest: null, candidates: 0, probed: 0, checked: [], bad: [], hash: typeof crypto === "object" && !!crypto.subtle, inPack: [], localOdd: [], localOddCount: 0, timing: [], ms: 0 };
+  const T0 = Date.now();
+  if (typeof window === "object" && window.__xqOut) window.__xqOut.o = out;   /* 進度即時看得到：逾時時至少知道做到哪 */
   let man;
   try { const r = await fetch(XQ_CDN + "cdn-manifest.json?t=" + Date.now(), { cache: "no-store" }); out.manifest = r.status; if (!r.ok) return out; man = await r.json() }
   catch (e) { out.manifest = "讀不到：" + e.message; return out }
@@ -103,10 +105,12 @@ const OUTSIDE_JS = (n = OUTSIDE_MAX) => `(async () => {
   out.candidates = files.length; out.bigCandidates = bigs.length; out.bigChecked = 0;
   const hex = (b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join("");
   const step = Math.max(1, Math.floor(files.length / ${OUTSIDE_PROBES}));
-  const one = async ([f, v]) => {
+  const one = async (e) => { const t0 = Date.now(), tm = { f: e[0], size: e[1][0], localMs: null, cdnMs: null }; if (out.timing.length < 60) out.timing.push(tm);
+    try { return await one1(e, tm) } finally { tm.ms = Date.now() - t0; out.ms = Date.now() - T0 } };
+  const one1 = async ([f, v], tm) => {
     /* 包裡有沒有：回應成功、不是從 CDN 來的，而且內容就是清單那個檔（大小一樣，能算 SHA-1 就再比）。
        #74 Android 12 重跑：只看回應成功時 800 個全判成在包裡（本機伺服器對不存在的路徑可能回 index.html），所以要比內容 */
-    let local = false;
+    let local = false; const tl = Date.now();
     try {
       const r = await fetch(f + "?xqlocal=" + Date.now(), { cache: "no-store" });
       if (r.ok && String(r.url).indexOf(XQ_CDN) !== 0) {
@@ -119,15 +123,18 @@ const OUTSIDE_JS = (n = OUTSIDE_MAX) => `(async () => {
         if (!same) out.localOddCount++;
       }
     } catch (e) { }
+    tm.localMs = Date.now() - tl;
     if (local) return "local";
+    const tc = Date.now();
     try {
       const r = await fetch(XQ_CDN + f + "?t=" + Date.now(), { cache: "no-store" });
       if (!r.ok) { out.bad.push({ f, why: "狀態 " + r.status }); return "bad" }
       const b = await r.arrayBuffer();
       if (b.byteLength !== v[0]) { out.bad.push({ f, why: "大小 " + b.byteLength + "，清單 " + v[0] }); return "bad" }
       if (out.hash && v[1]) { const h = hex(await crypto.subtle.digest("SHA-1", b)); if (!h.startsWith(String(v[1]))) { out.bad.push({ f, why: "SHA-1 " + h.slice(0, 12) + "，清單 " + v[1] }); return "bad" } }
-      out.checked.push(f); return "ok";
+      out.checked.push(f); tm.cdnMs = Date.now() - tc; return "ok";
     } catch (e) { out.bad.push({ f, why: "讀不到：" + e.message }); return "bad" }
+    finally { if (tm.cdnMs === null) tm.cdnMs = Date.now() - tc }
   };
   for (let i = 0; i < files.length; i += step) {
     if (out.checked.length + out.bad.length >= ${n} || out.probed >= ${OUTSIDE_PROBES}) break;
@@ -137,11 +144,30 @@ const OUTSIDE_JS = (n = OUTSIDE_MAX) => `(async () => {
     if (out.bigChecked >= ${OUTSIDE_BIG}) break;
     out.probed++; if ((await one(e)) !== "local") out.bigChecked++;
   }
+  out.ms = Date.now() - T0;
   return out;
 })()`;
+/* 在 App 頁面裡跑讀取輪（#74 Android 12 第三次重跑：一次 evaluate 做完全部，超過 cdp.js 每次 30 秒的逾時）：
+   先用一次很短的 evaluate 在背景開跑（結果、進度寫在 window.__xqOut），之後每 pollMs 用短呼叫取回，最多等 timeoutMs。
+   cdp.js 是 P0 工具共用的（工具鎖定），不改它的逾時。逾時＝回傳 error＋做到一半的結果（判 2，不會放行） */
+const OUTSIDE_START_JS = (n = OUTSIDE_MAX) => `(() => { window.__xqOut = { done: false, o: null };
+  ${OUTSIDE_JS(n)}.then((o) => { window.__xqOut = { done: true, o } }, (e) => { window.__xqOut = { done: true, o: { error: "頁面例外：" + String(e && e.message || e) } } });
+  return "started" })()`;
+const OUTSIDE_POLL_JS = "JSON.stringify(window.__xqOut || null)";
+async function runOutside(c, { n = OUTSIDE_MAX, timeoutMs = 360000, pollMs = 2000, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), now = () => Date.now() } = {}) {
+  const t0 = now();
+  try { if ((await c.ev(OUTSIDE_START_JS(n))) !== "started") return { error: "讀取輪沒有開跑" } } catch (e) { return { error: "讀取輪沒有開跑：" + String(e.message || e).slice(0, 120) } }
+  let fails = 0, last = null;
+  for (;;) {
+    await sleep(pollMs);
+    try { const s = JSON.parse(await c.ev(OUTSIDE_POLL_JS)); fails = 0; if (s && s.done) return s.o; last = s && s.o } catch (e) { if (++fails >= 3) return { error: "取回進度連續 3 次失敗：" + String(e.message || e).slice(0, 120), partial: last } }
+    if (now() - t0 > timeoutMs) return { error: `逾時（${Math.round(timeoutMs / 1000)} 秒還沒做完）`, partial: last };
+  }
+}
 /* 包外檔讀取輪的判定（純函式）：清單讀不到或有檔不對＝1（現行 App 讀新 CDN 會壞）；一個包外檔都沒驗到＝2（驗不到）；其餘＝0 */
 function judgeOutside(o) {
-  if (!o || typeof o !== "object" || o.error) return { code: 2, why: "包外檔讀取輪沒有跑出結果" + (o && o.error ? "（" + o.error + "）" : "") };
+  if (!o || typeof o !== "object" || o.error) return { code: 2, why: "包外檔讀取輪沒有跑出結果" + (o && o.error ? "（" + o.error + "）" : "") +
+    (o && o.partial ? `；做到一半：驗到 ${(o.partial.checked || []).length} 個、試了 ${o.partial.probed} 個、花 ${Math.round((o.partial.ms || 0) / 1000)} 秒` : "") };
   if (o.manifest !== 200) return { code: 1, why: `新 CDN 的 cdn-manifest.json 讀不到（${o.manifest}）：現行 App 要向 CDN 補抓的檔都會失敗` };
   if (Array.isArray(o.bad) && o.bad.length) return { code: 1, why: `${o.bad.length} 個包外才有的檔從新 CDN 讀不到或內容不對：` + o.bad.slice(0, 5).map((b) => `${b.f}（${b.why}）`).join("、") };
   if (!Array.isArray(o.checked) || o.checked.length < OUTSIDE_MIN) return { code: 2, why: `包外才有的檔只驗到 ${Array.isArray(o.checked) ? o.checked.length : 0} 個（至少要 ${OUTSIDE_MIN} 個；小檔 ${o.candidates} 個、大檔 ${o.bigCandidates ?? "?"} 個，試了 ${o.probed} 個）：證據太少，驗不到現行 App 經由 CDN 讀資料` +
@@ -149,4 +175,4 @@ function judgeOutside(o) {
   return { code: 0, why: `${o.checked.length} 個包外才有的檔都從新 CDN 讀到，大小${o.hash ? "和 SHA-1 " : ""}都跟清單對得上` + (o.hash ? "" : "（這台沒有 crypto.subtle，只比大小）") };
 }
 
-module.exports = { decide, routeCdn, probeOk, summarize, judgeOutside, OUTSIDE_JS, OUTSIDE_MAX, OUTSIDE_PROBES, CDN, FLAGS_URL, PROBE, PROBE_BODY, PROBE_JS };
+module.exports = { decide, routeCdn, probeOk, summarize, judgeOutside, runOutside, OUTSIDE_JS, OUTSIDE_START_JS, OUTSIDE_POLL_JS, OUTSIDE_MAX, OUTSIDE_PROBES, CDN, FLAGS_URL, PROBE, PROBE_BODY, PROBE_JS };

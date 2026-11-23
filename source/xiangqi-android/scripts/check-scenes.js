@@ -18,7 +18,7 @@ const fs = require("fs"), path = require("path"), cp = require("child_process");
 const { connect } = require("./cdp.js");
 const { setupPlayer, waitPreload } = require("./player-state.js");
 const { checkDevice } = require("./device-guard.js");
-const { routeCdn, probeOk, summarize, judgeOutside, OUTSIDE_JS } = require("./cdn-route.js");
+const { routeCdn, probeOk, summarize, judgeOutside, runOutside } = require("./cdn-route.js");
 
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d };
 const O = { apk: arg("--apk"), serial: arg("--serial", "emulator-5580"), mode: arg("--mode", "both"), out: path.resolve(arg("--out", "scene-check")),
@@ -148,7 +148,7 @@ async function sweep(mode) {
   }
   /* W74：包外檔讀取輪（掃畫面時現行 App 可能一個 CDN 請求都沒發，要另外證明讀得到新 CDN 上包外才有的檔） */
   let outside = null;
-  if (routeLog && O.cdnTo) { try { outside = await c.ev(OUTSIDE_JS()) } catch (e) { outside = { error: String(e.message || e).slice(0, 160) } } }
+  if (routeLog && O.cdnTo) outside = await runOutside(c);   /* 背景開跑、短呼叫取回，不受 cdp.js 每次 30 秒逾時限制（#74 Android 12 第三次重跑） */
   const sweepIntercepted = routeLog ? summarize(routeLog, true).intercepted : 0;
   if (routeLog) { rep.route = summarize(routeLog, rep.route.probeOk); rep.route.sweepIntercepted = sweepIntercepted }   /* 掃完再算一次，把 44 個畫面期間攔到的也算進去 */
   if (outside) { rep.route.outside = outside; rep.route.outsideJudge = judgeOutside(outside); console.log(`包外檔讀取輪：${rep.route.outsideJudge.code === 0 ? "✔" : rep.route.outsideJudge.code === 1 ? "✘" : "△"} ${rep.route.outsideJudge.why}（掃畫面時攔到 ${sweepIntercepted} 個 CDN 請求）`) }
