@@ -14,7 +14,9 @@
 //         [--aab-apk <aab-to-apk.js 產生的 aab-apk.json>（送審前必帶：安裝前核對 --new 的 SHA-256＝json 的 apkSha256，不符＝測試不成立；upgrade.json 記 tool／aabSha256／apkSha256／apkBound／pass／oldWorker 給 p0-gate.js）]
 //   預設只在模擬器上跑（device-guard.js）：會解除安裝 App。冷啟後看 20 秒，期間跳出過更新視窗就算
 //   需要已開好的模擬器或手機、adb（環境變數 ADB 或 PATH）；兩個 APK 要同一把簽章（測試金鑰），不然不能覆蓋安裝
-// 結束代碼：0＝通過；1＝升級後有任何一項不符；2＝用法錯誤，或舊版沒能建立要重現的狀態（測試本身不成立，不能當通過）
+// 金絲雀（2026-11-23，AGENTS.md「P0 出口驗證要難作假」）：冷啟 N 次之後再開一次，放一個假的「有新版本」視窗，同一套偵測要抓到；
+//   抓不到＝偵測失靈，報告 pass＝false、結束代碼 1。報告另記 toolPins（tool-pin.js），送審閘門拿去跟 origin/main 比
+// 結束代碼：0＝通過；1＝升級後有任何一項不符，或金絲雀沒抓到；2＝用法錯誤，或舊版沒能建立要重現的狀態（測試本身不成立，不能當通過）
 "use strict";
 const fs = require("fs"), path = require("path"), cp = require("child_process");
 const { connect } = require("./cdp.js");
@@ -25,6 +27,7 @@ const O = { old: arg("--old"), oldBuild: arg("--old-build"), neu: arg("--new"), 
   allowWipe: process.argv.includes("--allow-wipe-device"),
   aabApk: arg("--aab-apk") };   /* W69（流程盤點第 3 項，PR #44 審查後）：帶 aab-to-apk.js 的 aab-apk.json；安裝前算 --new 的 SHA-256 比對，對上才把 AAB 雜湊寫進報告給 p0-gate.js */
 const AB = require("./apk-bind.js");
+const TOOL_PINS = require("./tool-pin.js").pinsFor("P0-UPD");   /* 啟動就先算（PR #66 審查） */
 const { checkDevice } = require("./device-guard.js");
 const DIALOG_WATCH_SEC = 20;
 const DIALOGS = `[...document.querySelectorAll('.modal')].filter(x=>/有新版本|新版可用|new version|update available/i.test(x.textContent)).length`;
@@ -134,10 +137,28 @@ async function main() {
       console.log(`${row.pass ? "✔" : "✘"} 第 ${i} 次冷啟：${row.pass ? "通過" : row.bad.join("；")}`);
     } finally { c2.close() }
   }
+  /* 4. 金絲雀（AGENTS.md「P0 出口驗證要難作假」，2026-11-23）：再開一次，在畫面上放一個假的「有新版本」視窗，
+     用同一個 DIALOGS 偵測、同一個 verdict 判斷，要被抓到；抓不到＝這支偵測失靈，整份不算通過 */
+  R.canary = { dialog: false };
+  { let c3;
+    try { c3 = await launch(O.newBuild) } catch (e) { fail(2, "金絲雀那次冷啟沒起來：" + e.message) }
+    try {
+      await c3.ev(`(()=>{const d=document.createElement('div');d.className='modal';d.id='xq-p0-canary';d.textContent='有新版本（P0 金絲雀）';document.body.appendChild(d)})()`);
+      const seen = await c3.ev(DIALOGS);
+      const row = mergeWatch(await c3.ev(PROBE), seen);
+      R.canary = canaryVerdict(seen, verdict(row));
+      await c3.ev(`(()=>{const d=document.getElementById('xq-p0-canary');if(d)d.remove()})()`);
+    } catch (e) { R.canary.error = String(e.message || e).slice(0, 200) } finally { c3.close() }
+  }
+  console.log(R.canary.dialog ? "✔ 金絲雀：假的更新視窗被抓到" : "✘ 金絲雀：假的更新視窗沒被抓到，這支偵測失靈了，結果不可信");
+  R.toolPins = TOOL_PINS;
   const bad = R.after.filter(r => !r.pass);
-  R.result = bad.length ? "不通過" : "通過"; R.pass = !bad.length; save();   /* pass 給 p0-gate.js 看；用 --no-old-worker 跑的，閘門另外擋（規則：舊 Worker 要實際接管過） */
+  R.result = !R.canary.dialog ? "金絲雀沒抓到（工具失靈）" : bad.length ? "不通過" : "通過"; R.pass = !bad.length && R.canary.dialog === true; save();
+  if (!R.canary.dialog) process.exit(1);   /* pass 給 p0-gate.js 看；用 --no-old-worker 跑的，閘門另外擋（規則：舊 Worker 要實際接管過） */
   console.log(bad.length ? `✘ 不能送審：${bad.length}／${O.cold} 次冷啟不符（P0-UPD）` : `✔ 升級測試通過：${O.oldBuild} → ${O.newBuild}，冷啟 ${O.cold} 次都符合`);
   process.exit(bad.length ? 1 : 0);
 }
-module.exports = { verdict, mergeWatch, PROBE, DIALOG_WATCH_SEC };
+/* 金絲雀判斷（純函式）：假視窗要被 DIALOGS 數到，而且 verdict 要因此判出「更新提示視窗」那一條 */
+function canaryVerdict(seen, bad) { const caught = Number(seen) >= 1 && (bad || []).some(b => /更新提示視窗/.test(b)); return { dialog: caught, seen: Number(seen) || 0 } }
+module.exports = { verdict, mergeWatch, canaryVerdict, PROBE, DIALOGS, DIALOG_WATCH_SEC };
 if (require.main === module) main().catch(e => fail(2, e.stack || String(e)));
