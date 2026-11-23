@@ -18,12 +18,16 @@ const fs = require("fs"), path = require("path"), cp = require("child_process");
 const { bundleHomeAssets } = require("./bundle-home-assets.js");
 const HERE = path.join(__dirname, "..");
 /* 倉庫根目錄裡不進 App 的東西：版本控制、CI、原始碼（GPL 對應原始碼在倉庫和 F-Droid 原始碼包裡）、只給 GitHub Pages 用的檔 */
-const EXCLUDE = new Set([".git", ".github", ".gitignore", ".gitattributes", ".nojekyll", "source", "node_modules", "android"]);
+/* 11/23：AGENTS.md（給審查者的規則）、releases/（發布說明）不是網站程式，App 不讀，不進安裝包（26112301 第一版帶進去了；iOS 同一件事是 #86） */
+const EXCLUDE = new Set([".git", ".github", ".gitignore", ".gitattributes", ".nojekyll", "source", "node_modules", "android", "AGENTS.md", "releases"]);
+/* 不在最上層、但也不進安裝包的單一檔：CI 產生的驗證紀錄（網頁公開版有，App 不讀） */
+const EXCLUDE_FILES = new Set(["data/docs/verification-log.txt"]);
 
 function listFiles(root, rel = "", out = []) {
   for (const e of fs.readdirSync(path.join(root, rel), { withFileTypes: true })) {
     if (!rel && EXCLUDE.has(e.name)) continue;
     const r = rel ? rel + "/" + e.name : e.name;
+    if (EXCLUDE_FILES.has(r)) continue;
     if (e.isDirectory()) listFiles(root, r, out); else if (e.isFile()) out.push(r);
   }
   return out.sort();

@@ -14,7 +14,8 @@
 //         [--aab-apk <aab-to-apk.js 產生的 aab-apk.json>（送審前必帶：安裝前核對 --new 的 SHA-256＝json 的 apkSha256，不符＝測試不成立；upgrade.json 記 tool／aabSha256／apkSha256／apkBound／pass／oldWorker 給 p0-gate.js）]
 //   預設只在模擬器上跑（device-guard.js）：會解除安裝 App。冷啟後看 20 秒，期間跳出過更新視窗就算
 //   需要已開好的模擬器或手機、adb（環境變數 ADB 或 PATH）；兩個 APK 要同一把簽章（測試金鑰），不然不能覆蓋安裝
-// 金絲雀（2026-11-23，AGENTS.md「P0 出口驗證要難作假」）：冷啟 N 次之後再開一次，放一個假的「有新版本」視窗，同一套偵測要抓到；
+// 金絲雀（2026-11-23，AGENTS.md「P0 出口驗證要難作假」「壞樣本自己做、測深層判斷」）：冷啟 N 次之後再冷啟一次，走同一個 20 秒觀察迴圈，
+//   冷啟後第 3 秒用 App 自己的 modal() 跳出「有新版本」，同一套偵測要在觀察期間抓到；
 //   抓不到＝偵測失靈，報告 pass＝false、結束代碼 1。報告另記 toolPins（tool-pin.js），送審閘門拿去跟 origin/main 比
 // 結束代碼：0＝通過；1＝升級後有任何一項不符，或金絲雀沒抓到；2＝用法錯誤，或舊版沒能建立要重現的狀態（測試本身不成立，不能當通過）
 "use strict";
@@ -128,26 +129,25 @@ async function main() {
     let c2;
     try { c2 = await launch(O.newBuild) } catch (e) { fail(1, `第 ${i} 次冷啟：${e.message}`) }
     try {
-      /* PR #12 審查：更新視窗要等大廳連線送來 version 才會跳，冷啟後持續看 DIALOG_WATCH_SEC 秒，期間出現過就算 */
-      let seen = 0;
-      for (let t = 0; t < DIALOG_WATCH_SEC; t++) { try { seen = Math.max(seen, await c2.ev(DIALOGS)) } catch (e) { } await sleep(1000) }
-      const row = mergeWatch(await c2.ev(PROBE), seen);
-      row.bad = verdict(row); row.pass = !row.bad.length; row.screenshot = snap("after-cold-" + i);
+      const row = await coldWatch(c2); row.screenshot = snap("after-cold-" + i);
       R.after.push(row); save();
       console.log(`${row.pass ? "✔" : "✘"} 第 ${i} 次冷啟：${row.pass ? "通過" : row.bad.join("；")}`);
     } finally { c2.close() }
   }
-  /* 4. 金絲雀（AGENTS.md「P0 出口驗證要難作假」，2026-11-23）：再開一次，在畫面上放一個假的「有新版本」視窗，
-     用同一個 DIALOGS 偵測、同一個 verdict 判斷，要被抓到；抓不到＝這支偵測失靈，整份不算通過 */
+  /* 4. 金絲雀（AGENTS.md「P0 出口驗證要難作假」＋「壞樣本自己做、測深層判斷」，2026-11-23）：再冷啟一次，走同一個 coldWatch（同一個 20 秒觀察迴圈、同一個 verdict），
+     冷啟後第 CANARY_AT_SEC 秒用 App 自己的 modal()（跟真的更新提示同一個函式、同一種畫面）跳出「有新版本」，要在觀察期間被抓到；抓不到＝這支偵測失靈，整份不算通過 */
   R.canary = { dialog: false };
   { let c3;
     try { c3 = await launch(O.newBuild) } catch (e) { fail(2, "金絲雀那次冷啟沒起來：" + e.message) }
     try {
-      await c3.ev(`(()=>{const d=document.createElement('div');d.className='modal';d.id='xq-p0-canary';d.textContent='有新版本（P0 金絲雀）';document.body.appendChild(d)})()`);
-      const seen = await c3.ev(DIALOGS);
-      const row = mergeWatch(await c3.ev(PROBE), seen);
-      R.canary = canaryVerdict(seen, verdict(row));
-      await c3.ev(`(()=>{const d=document.getElementById('xq-p0-canary');if(d)d.remove()})()`);
+      const has = await c3.ev(`typeof modal==="function"`);
+      if (!has) R.canary.error = "App 沒有 modal()：金絲雀做不出來";
+      else {
+        await c3.ev(CANARY_JS);
+        const row = await coldWatch(c3);
+        R.canary = { ...canaryVerdict(row.dialogs, row.bad), via: "App modal()", at: CANARY_AT_SEC };
+        R.canary.screenshot = snap("canary-dialog");
+      }
     } catch (e) { R.canary.error = String(e.message || e).slice(0, 200) } finally { c3.close() }
   }
   console.log(R.canary.dialog ? "✔ 金絲雀：假的更新視窗被抓到" : "✘ 金絲雀：假的更新視窗沒被抓到，這支偵測失靈了，結果不可信");
@@ -158,7 +158,18 @@ async function main() {
   console.log(bad.length ? `✘ 不能送審：${bad.length}／${O.cold} 次冷啟不符（P0-UPD）` : `✔ 升級測試通過：${O.oldBuild} → ${O.newBuild}，冷啟 ${O.cold} 次都符合`);
   process.exit(bad.length ? 1 : 0);
 }
+/* 冷啟一次：持續看 DIALOG_WATCH_SEC 秒（PR #12 審查：更新視窗要等大廳連線送來 version 才會跳，期間出現過就算），再取 PROBE 判斷；正式冷啟與金絲雀共用 */
+async function coldWatch(c, sec = DIALOG_WATCH_SEC, wait = sleep) {   /* sec、wait 可注入：自我測試不用真的等 20 秒 */
+  let seen = 0;
+  for (let t = 0; t < sec; t++) { try { seen = Math.max(seen, await c.ev(DIALOGS)) } catch (e) { } await wait(1000) }
+  const row = mergeWatch(await c.ev(PROBE), seen);
+  row.bad = verdict(row); row.pass = !row.bad.length;
+  return row;
+}
+/* 金絲雀：冷啟後第 CANARY_AT_SEC 秒，用 App 自己的 modal() 跳出跟真的更新提示一樣的視窗（02-shell.js 的「有新版本」） */
+const CANARY_AT_SEC = 3;
+const CANARY_JS = `setTimeout(()=>{try{modal('<div class="em">🆕</div><h2>有新版本</h2><p class="muted">P0 金絲雀（升級測試故意跳出）</p>',[["知道了",()=>{}]])}catch(e){}},${CANARY_AT_SEC * 1000})`;
 /* 金絲雀判斷（純函式）：假視窗要被 DIALOGS 數到，而且 verdict 要因此判出「更新提示視窗」那一條 */
 function canaryVerdict(seen, bad) { const caught = Number(seen) >= 1 && (bad || []).some(b => /更新提示視窗/.test(b)); return { dialog: caught, seen: Number(seen) || 0 } }
-module.exports = { verdict, mergeWatch, canaryVerdict, PROBE, DIALOGS, DIALOG_WATCH_SEC };
+module.exports = { verdict, mergeWatch, canaryVerdict, coldWatch, PROBE, DIALOGS, DIALOG_WATCH_SEC, CANARY_JS, CANARY_AT_SEC };
 if (require.main === module) main().catch(e => fail(2, e.stack || String(e)));
