@@ -51,6 +51,18 @@ test("出題：初級 6 步、中級 8 步只打散黑方（第 2、4、6…步�
   }
 });
 
+test("Pikafish 盤整 P2（11/24）：一輪 3 題的前 n 步互不相同（初級 42 條只有 10 種前 6 步，原本常重複）；每天都一樣", () => {
+  for (const L of R.JH_FG_LV) {
+    const kinds = new Set(LINES.filter((l) => l.length >= L.n).map((l) => l.slice(0, L.n).join(" "))).size;
+    assert.ok(kinds >= 3, L.k + " 只有 " + kinds + " 種");
+    for (let d = 1; d <= 30; d++) {
+      const day = "2026-12-" + String(d).padStart(2, "0"), Q = J(R.jhFgRound(LINES, L, day));
+      assert.equal(new Set(Q.map((q) => q.seq.join(" "))).size, 3, L.k + " " + day + " 一輪有重複的題");
+      assert.deepEqual(J(R.jhFgRound(LINES, L, day)), Q, "同一天要出同一輪");
+    }
+  }
+});
+
 test("判對錯：照主線次序才算對；換了次序（就算走得通、局面一樣）也算錯，並指出第幾步主線先走哪一張", () => {
   const q = J(R.jhFgMake(LINES, R.JH_FG_LV[0], "x"));
   assert.deepEqual(J(R.jhFgCheck(q, q.seq)), { ok: true, step: 6, why: "" });
