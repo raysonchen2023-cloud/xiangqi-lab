@@ -134,6 +134,8 @@ function jhMzCss(){if(document.getElementById("jhMzCss"))return;const s=document
 const JH_MZ_PN={r:{K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},b:{k:"將",a:"士",b:"象",n:"馬",r:"車",c:"砲",p:"卒"}};
 function jhMzFen(f){const b=[];f.split("/").forEach((row,r)=>{let c=0;for(const ch of row){if(/\d/.test(ch))c+=+ch;else{b.push({p:ch,r,c});c++}}});return b}
 function jhMzSq(u){return{c:"abcdefghi".indexOf(u[0]),r:9-(+u[1])}}
+/* 點的兩格（盤面第 r 列、第 c 行，r=0 是上面黑方那一邊）換成著法字串，例如 {c:0,r:9}→{c:0,r:0} 是 "a0a9"。#83 審查：抽出來測（原本寫在點擊裡，算錯玩家永遠解不開） */
+function jhMzMv(a,b){return"abcdefghi"[a.c]+(9-a.r)+"abcdefghi"[b.c]+(9-b.r)}
 
 function JhMaze(v){jhCss();jhMzCss();
   if(!jhMzOn()){location.hash="#/jianghu/hall/central";return{}}
@@ -209,7 +211,7 @@ function JhMaze(v){jhCss();jhMzCss();
     const row=h=>{const r=o.querySelector(".jh-mz-row");r.innerHTML=h;return r};
     const pick=(c,r)=>{if(won)return;const q=pcs.find(x=>x.c===c&&x.r===r);if(q&&q.p===q.p.toUpperCase()){sel={c,r};draw();return}
       if(!sel){res(jhL("先點一顆紅方的棋子。","Tap a red piece first."));return}
-      const mv="abcdefghi"[sel.c]+(9-sel.r)+"abcdefghi"[c]+(9-r),got=jhMzTry(S,id,mv);sel=null;
+      const mv=jhMzMv(sel,{c,r}),got=jhMzTry(S,id,mv);sel=null;
       if(got==="ok"){won=true;pcs=pcs.filter(x=>!(x.c===c&&x.r===r));const me=pcs.find(x=>x.c===jhMzSq(mv.slice(0,2)).c&&x.r===jhMzSq(mv.slice(0,2)).r);if(me){me.c=c;me.r=r}draw();
         res(id==="door"?jhL("將死！炮隔著兵打到將，石門轟隆一聲往上收。","Checkmate! The cannon fires over the pawn and the stone door rumbles open."):jhL("將死！暗匪愣在原地，你趁機脫身。","Checkmate! The thief freezes and you slip away."),"ok");
         const b=row(`<button type="button" class="main">${esc(jhL("繼續","Continue"))}</button>`).querySelector("button");b.onclick=()=>{shut(o);jhMzSolved(S,id);

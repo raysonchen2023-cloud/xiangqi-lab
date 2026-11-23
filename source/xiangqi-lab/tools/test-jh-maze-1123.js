@@ -166,6 +166,26 @@ test("路由：Jianghu 包一層，#/jianghu/maze 畫迷宮、#/jianghu 照舊�
   B.c.JhMaze({}); assert.equal(B.hash.v, "#/jianghu/hall/central");
 });
 
+test("#83 審查①：石門一定要解開殘局才開——碰門多少次、解錯多少次都不開、不穿過去；只有解對（jhMzSolved）才變地面", () => {
+  const { c } = load(), S = c.jhMzNew(); farGuard(S);
+  at(S, 6, 5);
+  for (let i = 0; i < 6; i++) { assert.equal(c.jhMzStep(S, 0, -1).ev, "door"); assert.equal(S.player.y, 5); assert.equal(S.grid[4][6], "D") }
+  for (let i = 0; i < 6; i++) assert.equal(c.jhMzTry(S, "door", "e0e1"), "bad");
+  assert.equal(S.grid[4][6], "D", "解錯不開"); assert.ok(!S.doorOpen);
+  for (let y = 0; y < S.H; y++) S.seen.add(y * S.W + 6);
+  const p = c.jhMzPath(S, 6, 2); assert.equal(p, null, "門沒開，自動走也到不了門後");
+  assert.equal(c.jhMzTry(S, "door", PUZ.door.ans), "ok"); c.jhMzSolved(S, "door"); assert.equal(S.grid[4][6], "."); assert.ok(S.doorOpen);
+});
+
+test("#83 審查②：點棋盤換成著法 jhMzMv——兩題答案從格子反推回來要一模一樣；紅方在下（第 9 列＝0 線）", () => {
+  const { c } = load();
+  for (const P of Object.values(PUZ)) { const a = c.jhMzSq(P.ans.slice(0, 2)), b = c.jhMzSq(P.ans.slice(2)); assert.equal(c.jhMzMv(a, b), P.ans) }
+  assert.equal(c.jhMzMv({ c: 0, r: 9 }, { c: 0, r: 0 }), "a0a9", "左下角走到左上角");
+  assert.equal(c.jhMzMv({ c: 7, r: 7 }, { c: 4, r: 7 }), "h2e2");
+  const { B } = mateIn1(PUZ.trap.fen), m = C.legal(B, "r").find((x) => toIccs(x) === PUZ.trap.ans);
+  assert.equal(c.jhMzMv({ c: m[0] % 9, r: Math.floor(m[0] / 9) }, { c: m[1] % 9, r: Math.floor(m[1] / 9) }), PUZ.trap.ans, "core.js 的合法著法換算成點擊格子，再換回著法要一樣");
+});
+
 test("〔原始碼〕07z9m-maze.js：LF、沒有控制字元、沒有行內 // 註解；m.html 有登記、排在 07z9l-halls.js 後面（包得到八派的 JhHall）", () => {
   assert.ok(!SRC.includes("\r"));
   assert.ok(!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(SRC));
