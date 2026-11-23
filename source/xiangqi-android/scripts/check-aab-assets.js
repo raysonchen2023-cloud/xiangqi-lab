@@ -95,10 +95,11 @@ async function main() {
     const canary = canaryChecks(need, f => inPack.has(f), sha1Of, native);
 
     // 4. 實際問 CDN（加 --cdn）
+    let man = null, cdnRun = null;   /* PR #66 第四次複審：CDN 金絲雀要用「同一輪連得上」當反證，worker 與 manifest 的結果都留到後面一起判 */
     if (CDN_CHECK) {
       // 11/21 實測：同時 16 個請求會被 CDN 限流，472 項連線失敗被誤算成「沒有」→ 改成 6 個、失敗等一下再試 4 次；
       // 連不上（沒拿到 HTTP 狀態）只算「沒確認到」（△），拿到 404 等狀態才算確定缺（✘）
-      let i = 0; const miss = [], unknown = [];
+      let i = 0, ok200 = 0; const miss = [], unknown = [];
       const sleep = ms => new Promise(r => setTimeout(r, ms));
       /* 金絲雀③（PR #66 審查③）：一個一定不存在的檔排進同一個佇列，走同一個 worker 判斷，要被判成「CDN 上沒有」 */
       const probeF = "data/__xq_p0_canary_" + crypto.randomBytes(6).toString("hex") + ".webp";
@@ -106,25 +107,26 @@ async function main() {
       async function worker() { while (i < queue.length) { const [f, split] = queue[i++];
         const url = CDN + f + (split ? ".parts.json" : "");
         let st = -1; for (let t = 0; t < 4 && st !== 200; t++) { if (t) await sleep(800 * t); try { st = (await fetch(url, { method: "HEAD" })).status } catch (e) { st = -1 } }
+        if (st === 200) ok200++;
         // PR #11 審查：只有 404／410 是確定沒有；連不上、429（限流）、5xx 都只算沒確認到
         if (st === 404 || st === 410) miss.push({ f, why: `CDN 上沒有（${split ? ".parts.json " : ""}HTTP ${st}）：靠 CDN 補抓會失敗` });
         else if (st !== 200) unknown.push({ f, st, why: `CDN 沒確認到（${st === -1 ? "連不上" : "HTTP " + st}，請稍後重跑 --cdn）` }); } }
       await Promise.all(Array.from({ length: 6 }, worker));
-      Object.assign(canary, cdnCanary(probeF, miss, unknown));
+      cdnRun = { probeF, miss, unknown, ok200 };
       /* 金絲雀檔不算進正式結果：判成「沒有」是預期的，拿掉；判成「沒確認到」（CDN 連不上）照樣算缺驗，留在 unknown */
       const realMiss = miss.filter(x => x.f !== probeF);
       R.red.push(...realMiss); R.warn.push(...unknown); R.unknown = unknown.length;
     }
-    canary.ok = canary.home === true && canary.stale === true && canary.cdn404 === true;
-
     // 4b. 包裡的檔跟 CDN 現行版逐檔比 SHA-1（W42；加 --cdn 才做）
     if (CDN_CHECK) {
-      let man = null;
       for (let t = 0; t < 4 && !man; t++) { try { const r = await fetch(CDN + "cdn-manifest.json"); if (r.ok) man = await r.json() } catch (e) {} if (!man) await new Promise(r => setTimeout(r, 800 * (t + 1))) }
       if (!man || !man.files) { R.warn.push({ f: "cdn-manifest.json", why: "讀不到 CDN 的 cdn-manifest.json，沒能核對包裡的檔是不是 CDN 現行版（缺驗）" }); R.unknown = (R.unknown || 0) + 1 }
       else { const H = new Map(); for (const [f2, p] of inPack) if (f2.startsWith("data/") && man.files[f2]) H.set(f2, crypto.createHash("sha1").update(fs.readFileSync(p)).digest("hex"));
         const S = staleVsCdn(H, man.files, need); R.red.push(...S.red); R.warn.push(...S.warn); R.cdnCompared = H.size }
     }
+    /* 金絲雀③：同一輪有檔拿到 200、或 manifest 讀得到＝CDN 連得上；這時探測檔還記成連不上，就是判斷壞了 */
+    if (cdnRun) Object.assign(canary, cdnCanary(cdnRun.probeF, cdnRun.miss, cdnRun.unknown, { ok200: cdnRun.ok200, manOk: !!(man && man.files) }));
+    canary.ok = canary.home === true && canary.stale === true && canary.cdn404 === true;
 
     // 5. 報告
     const sum = { aab: path.basename(AAB), aabSha256: crypto.createHash("sha256").update(fs.readFileSync(AAB)).digest("hex"), siteVersion: nb.siteVersion || null, sharedWebCommit: nb.sharedWebCommit || null, native,
@@ -196,16 +198,20 @@ function staleVsCdn(packSha1, manFiles, need) { const red = [], warn = [];
     if (need && need.has(f)) red.push({ f, why: `安裝包裡的素材跟 CDN 現行版不同（包 ${h.slice(0, 12)}、CDN ${m[1]}）：是倉庫或建包時留下的舊副本（W42），換成 CDN 現行版再建` });
     else warn.push({ f, why: "清單外的檔跟 CDN 現行版不同（多半是 CDN 在建包後更新過；說明文件、回饋清單之類），列出來但不擋" }) }
   return { red, warn } }
-/* 金絲雀③的結果（純函式）：probe 被正式 worker 判在 miss＝抓到；在 unknown＝CDN 連不上（缺驗）；都不在＝被當成「有」，工具失靈 */
-function cdnCanary(probe, miss, unknown) {
-  /* PR #66 第三次複審：探測檔落在 unknown 時要看狀態碼。只有沒拿到 HTTP 狀態（-1）、限流（429）、伺服器錯誤（5xx）才算 CDN 這邊的問題（缺驗）；
-     404／410 被放進 unknown、或沒記狀態碼，是判斷被改壞（工具失靈），不能歸成「連不上」 */
+/* 金絲雀③的結果（純函式）：probe 被正式 worker 判在 miss＝抓到；在 unknown＝要看狀態碼和同一輪的反證；都不在＝被當成「有」，工具失靈。
+   ev.ok200＝同一輪拿到 200 的項數、ev.manOk＝cdn-manifest.json 讀得到：任何一個成立＝CDN 連得上。
+   cdnUnreachable（布林）＝CDN 這邊真的有問題（缺驗，可豁免）：探測檔沒拿到狀態（-1）、限流（429）、5xx，而且同一輪沒有連得上的反證。
+   其他都是工具失靈（PR #66 第三、四次複審：404 被放進 unknown、沒記狀態碼、狀態碼被寫壞成 -1／503 而同一輪明明連得上） */
+function cdnCanary(probe, miss, unknown, ev = {}) {
   const m = miss.some(x => x.f === probe), u = unknown.find(x => x.f === probe);
-  if (m) return { cdn404: true, cdn: "判成沒有" };
-  if (u) { const st = u.st; return { cdn404: false, cdnStatus: st, cdn: st === -1 || st === 429 || st >= 500 ? `沒確認到（CDN 連不上或暫時出錯，${st === -1 ? "沒拿到 HTTP 狀態" : "HTTP " + st}）` : `被歸成沒確認到（${st == null ? "沒記狀態碼" : "HTTP " + st}，CDN 核對失靈）` } }
-  return { cdn404: false, cdn: "被當成有（CDN 核對失靈）" };
+  if (m) return { cdn404: true, cdnUnreachable: false, cdn: "判成沒有" };
+  if (!u) return { cdn404: false, cdnUnreachable: false, cdn: "被當成有（CDN 核對失靈）" };
+  const st = u.st, reach = (Number(ev.ok200) || 0) > 0 || ev.manOk === true, flaky = st === -1 || st === 429 || (typeof st === "number" && st >= 500);
+  const lab = st == null ? "沒記狀態碼" : st === -1 ? "沒拿到 HTTP 狀態" : st === 403 ? "HTTP 403（拒絕存取）" : "HTTP " + st;
+  if (flaky && !reach) return { cdn404: false, cdnUnreachable: true, cdnStatus: st, cdn: `沒確認到（CDN 連不上或暫時出錯，${lab}）` };
+  return { cdn404: false, cdnUnreachable: false, cdnStatus: st, cdn: flaky ? `同一輪 CDN 連得上，探測檔卻記成${lab}（CDN 核對失靈）` : `被歸成沒確認到（${lab}，CDN 核對失靈）` };
 }
-/* 結束代碼用的金絲雀判斷（純函式）：①②一律要抓到；加 --cdn 時③要抓到，或 CDN 連不上（那種歸缺驗 3，不算失靈） */
-function canaryExitOk(c, cdn) { return c.home === true && c.stale === true && (!cdn || c.cdn404 === true || /連不上/.test(String(c.cdn || ""))) }
+/* 結束代碼用的金絲雀判斷（純函式）：①②一律要抓到；加 --cdn 時③要抓到，或 CDN 真的連不上（cdnUnreachable，歸缺驗 3，不算失靈）；看布林欄位，不看訊息文字 */
+function canaryExitOk(c, cdn) { return c.home === true && c.stale === true && (!cdn || c.cdn404 === true || c.cdnUnreachable === true) }
 module.exports = { exitCode, PARTS_MARKER, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk };
 if (require.main === module) main().catch(e => die(e.stack || String(e)));

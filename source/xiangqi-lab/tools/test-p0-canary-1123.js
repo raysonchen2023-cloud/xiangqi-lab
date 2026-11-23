@@ -72,9 +72,11 @@ test("閘門（反測必紅）：P0-IMG 金絲雀①②沒抓到不能豁免；�
   let r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false); assert.ok(has(r, /P0-IMG：金絲雀沒被抓到/));
   L = all(); L[0].json.canary = { home: true, stale: false, cdn404: true }; assert.ok(has(G(L), /改掉包裡檔的雜湊 ✘/));
   L = all(); delete L[0].json.canary; assert.ok(has(G(L), /P0-IMG：金絲雀沒被抓到/), "沒記金絲雀＝沒抓到");
-  L = all(); L[0].json.canary = { home: true, stale: true, cdn404: false, cdn: "沒確認到（CDN 連不上）" };
+  L = all(); L[0].json.canary = { home: true, stale: true, cdn404: false, cdnUnreachable: true, cdn: "沒確認到（CDN 連不上）" };
   assert.ok(has(G(L), /CDN 不存在的檔沒被判成沒有（沒確認到（CDN 連不上））/));
   r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, true, "CDN 連不上那一條照舊可以豁免"); assert.equal(r.waived.length, 1);
+  L = all(); L[0].json.canary = { home: true, stale: true, cdn404: false, cdn: "沒確認到（CDN 連不上）" };
+  r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false, "訊息寫「連不上」但沒有 cdnUnreachable 布林：不能豁免（不看文字）");
   L = all(); L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdn: "被當成有（CDN 核對失靈）" };
   r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false, "不存在的檔被當成有＝工具失靈，不能豁免"); assert.ok(has(r, /CDN 核對可能失靈，不能豁免/));
   L = all(); L[1].json.canary = { dialog: false }; r = G(L, W("P0-UPD/old-worker")); assert.equal(r.ok, false); assert.ok(has(r, /P0-UPD：金絲雀（假的「有新版本」視窗）沒被抓到/));
@@ -152,9 +154,15 @@ test("P0-3D 金絲雀（PR #66 審查④）：遮罩那次要真的點到落點�
 
 test("P0-IMG 金絲雀③與結束代碼（PR #66 審查②③）：③看正式 worker 的判斷；沒加 --cdn 時①②沒抓到照樣回 4", () => {
   const P = "data/__xq_p0_canary_x.webp";
-  assert.deepEqual(CA.cdnCanary(P, [{ f: P }], []), { cdn404: true, cdn: "判成沒有" });
-  assert.equal(CA.cdnCanary(P, [], [{ f: P, st: -1 }]).cdn404, false); assert.match(CA.cdnCanary(P, [], [{ f: P, st: -1 }]).cdn, /連不上/);
-  for (const st of [429, 503]) assert.match(CA.cdnCanary(P, [], [{ f: P, st }]).cdn, /連不上或暫時出錯/, "限流、伺服器錯誤歸缺驗：" + st);
+  assert.deepEqual(CA.cdnCanary(P, [{ f: P }], []), { cdn404: true, cdnUnreachable: false, cdn: "判成沒有" });
+  assert.equal(CA.cdnCanary(P, [], [{ f: P, st: -1 }]).cdn404, false); assert.equal(CA.cdnCanary(P, [], [{ f: P, st: -1 }]).cdnUnreachable, true, "沒有反證：真的連不上");
+  /* PR #66 第四次複審：同一輪有檔拿到 200、或 manifest 讀得到＝CDN 連得上，探測檔卻記成 -1／429／503 → 失靈 */
+  for (const ev of [{ ok200: 1 }, { manOk: true }]) for (const st of [-1, 429, 503]) {
+    const c = CA.cdnCanary(P, [], [{ f: P, st }], ev); assert.equal(c.cdnUnreachable, false, JSON.stringify({ st, ev })); assert.match(c.cdn, /同一輪 CDN 連得上.*失靈/);
+    assert.equal(CA.canaryExitOk({ home: true, stale: true, ...c }, true), false, "＝結束代碼 4");
+  }
+  assert.match(CA.cdnCanary(P, [], [{ f: P, st: 403 }]).cdn, /403（拒絕存取）.*失靈/);
+  for (const st of [429, 503]) { const c = CA.cdnCanary(P, [], [{ f: P, st }]); assert.match(c.cdn, /連不上或暫時出錯/, "限流、伺服器錯誤歸缺驗：" + st); assert.equal(c.cdnUnreachable, true) }
   /* PR #66 第三次複審：worker 被改壞、把 404 放進 unknown，不能被歸成「連不上」 */
   for (const u of [{ f: P, st: 404 }, { f: P, st: 410 }, { f: P }]) {
     const c = CA.cdnCanary(P, [], [u]); assert.doesNotMatch(c.cdn, /連不上/, JSON.stringify(u)); assert.match(c.cdn, /失靈/);
@@ -165,7 +173,8 @@ test("P0-IMG 金絲雀③與結束代碼（PR #66 審查②③）：③看正式
   assert.equal(CA.canaryExitOk({ home: true, stale: false }, false), false);
   assert.equal(CA.canaryExitOk({ home: true, stale: true }, false), true);
   assert.equal(CA.canaryExitOk({ home: true, stale: true, cdn404: false, cdn: "被當成有（CDN 核對失靈）" }, true), false, "③被當成有＝4");
-  assert.equal(CA.canaryExitOk({ home: true, stale: true, cdn404: false, cdn: "沒確認到（CDN 連不上）" }, true), true, "CDN 連不上歸缺驗 3，不是 4");
+  assert.equal(CA.canaryExitOk({ home: true, stale: true, cdn404: false, cdnUnreachable: true, cdn: "沒確認到（CDN 連不上）" }, true), true, "CDN 連不上歸缺驗 3，不是 4");
+  assert.equal(CA.canaryExitOk({ home: true, stale: true, cdn404: false, cdn: "沒確認到（CDN 連不上）" }, true), false, "只有文字、沒有布林：不算連不上");
   assert.equal(CA.exitCode({ red: 0, unknown: 0, cdn: false, canaryOk: CA.canaryExitOk({ home: false, stale: true }, false) }), 4);
 });
 
@@ -189,4 +198,10 @@ test("〔混合〕PR #66 複審：單獨的 CR 會改變程式意義，雜湊要
   assert.equal(CA.canaryChecks(need, (f) => pack.has(f), sha, native, wrongReason).home, false);
   const wrongStale = (n, h, s, nat) => { const r = CA.classify(n, h, s, nat); r.red = r.red.map((x) => /跟清單不符/.test(x.why) ? { ...x, why: "別的原因" } : x); return r };
   assert.equal(CA.canaryChecks(need, (f) => pack.has(f), sha, native, wrongStale).stale, false);
+});
+
+test("〔原始碼〕P0-IMG 金絲雀③（PR #66 第四次複審）：worker 要數拿到 200 的項數，連同 manifest 讀得到沒，一起交給 cdnCanary 當反證", () => {
+  const caa = rd("check-aab-assets.js");
+  assert.match(caa, /\n\s+if \(st === 200\) ok200\+\+;\n/);
+  assert.match(caa, /cdnCanary\(cdnRun\.probeF, cdnRun\.miss, cdnRun\.unknown, \{ ok200: cdnRun\.ok200, manOk: !!\(man && man\.files\) \}\)/);
 });

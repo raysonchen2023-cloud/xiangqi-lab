@@ -79,7 +79,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
     if (t === "P0-IMG") {
       const c = json.canary || {};
       if (c.home !== true || c.stale !== true) add(`P0-IMG：金絲雀沒被抓到（拿掉首頁素材 ${c.home === true ? "✔" : "✘"}、改掉包裡檔的雜湊 ${c.stale === true ? "✔" : "✘"}）：這支破圖檢查可能失靈，結果不可信`);
-      if (c.cdn404 !== true) add(`P0-IMG：金絲雀③ CDN 不存在的檔沒被判成沒有（${c.cdn || "沒驗"}）${/連不上/.test(String(c.cdn || "")) ? "：CDN 連不上，沒驗到" : "：CDN 核對可能失靈，不能豁免"}`, /連不上/.test(String(c.cdn || "")) ? "P0-IMG/cdn" : null);   /* PR #66 第二次複審：只有連不上能豁免；「不存在的檔被當成有」是工具失靈 */
+      if (c.cdn404 !== true) add(`P0-IMG：金絲雀③ CDN 不存在的檔沒被判成沒有（${c.cdn || "沒驗"}）${c.cdnUnreachable === true ? "：CDN 連不上，沒驗到" : "：CDN 核對可能失靈，不能豁免"}`, c.cdnUnreachable === true ? "P0-IMG/cdn" : null);   /* 只有 cdnUnreachable（布林，同一輪沒有連得上的反證）能豁免；不看訊息文字（PR #66 第四次複審） */
     }
     if (t === "P0-UPD" && !(json.canary && json.canary.dialog === true)) add("P0-UPD：金絲雀（假的「有新版本」視窗）沒被抓到：這支更新檢查可能失靈，結果不可信");
     if (t === "P0-UPD" && json.oldWorker !== true) add("P0-UPD：用 --no-old-worker 跑的不算（封測 P0 規則：舊 Worker 要實際接管過；流程盤點第 5 項）", "P0-UPD/old-worker");
