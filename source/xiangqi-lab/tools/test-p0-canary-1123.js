@@ -588,7 +588,21 @@ test("P0-IMG：深層金絲雀沒抓到＝結束代碼 4（沒 ✘ 時）、報�
   const okDeep = { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: false, skip: "沒 manifest" } };
   assert.equal(CA.canaryExitOk({ home: true, stale: true, deep: okDeep }, false), true);
   assert.equal(CA.canaryExitOk({ home: true, stale: true, deep: { ...okDeep, w21: { ok: false } } }, false), false, "深層沒抓到＝失靈");
-  assert.equal(CA.canaryExitOk({ home: true, stale: true, deep: { ...okDeep, w42: { ok: false } } }, true), false, "W42 驗了卻沒抓到＝失靈");
+  /* #84 審查①：加了 --cdn 時要帶 cdn404，不然不管深層怎樣都回 false，等於沒測到 W42 */
+  assert.equal(CA.canaryExitOk({ home: true, stale: true, cdn404: true, deep: { ...okDeep, w42: { ok: true } } }, true), true, "對照組：W42 抓到＝成立");
+  assert.equal(CA.canaryExitOk({ home: true, stale: true, cdn404: true, deep: { ...okDeep, w42: { ok: false } } }, true), false, "W42 驗了卻沒抓到＝失靈");
+  assert.equal(CA.canaryExitOk({ home: true, stale: true, cdn404: true, deep: okDeep }, true), true, "W42 沒 manifest（skip）＝缺驗，不算失靈");
+  /* #84 審查②：五項逐一沒抓到，都要判失靈（之前只有 w21 有測試，拿掉 w30 照樣綠） */
+  for (const k of ["w21", "w30", "home", "hash"]) {
+    assert.equal(CA.deepOk({ ...okDeep, [k]: { ok: false } }, false), false, k + " 沒抓到");
+    assert.equal(CA.deepOk({ ...okDeep, [k]: undefined }, false), false, k + " 沒記");
+    assert.equal(CA.canaryExitOk({ home: true, stale: true, cdn404: true, deep: { ...okDeep, [k]: { ok: false } } }, true), false, k + " 沒抓到＝結束代碼看成失靈");
+  }
+  assert.equal(CA.deepOk(okDeep, false), true); assert.equal(CA.deepOk(okDeep, true), true, "W42 skip＝缺驗");
+  assert.equal(CA.deepOk({ ...okDeep, w42: { ok: false } }, true), false, "要 W42、驗了卻沒抓到");
+  assert.equal(CA.deepOk({ ...okDeep, w42: undefined }, true), false, "要 W42、卻沒記");
+  assert.equal(CA.deepOk({ ...okDeep, w42: { ok: false } }, false), true, "不要 W42 時不看它");
+  assert.equal(CA.deepOk(null, false), false);
   assert.match(rd("check-aab-assets.js"), /canary\.ok = canary\.home === true && canary\.stale === true && canary\.cdn404 === true && deepOk\(canary\.deep, true\);/);
 });
 

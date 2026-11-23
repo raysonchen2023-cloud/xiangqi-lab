@@ -257,7 +257,7 @@ function deepCanaries(tmp, A, { man = null, cache = new Map() } = {}, analyze = 
   return out;
 }
 /* 深層金絲雀都抓到（w42 只在 needW42 時算；skip＝沒 manifest，歸缺驗） */
-function deepOk(d, needW42) { return !!d && ["w21", "w30", "home", "hash"].every(k => d[k] && d[k].ok === true) && (!needW42 || (d.w42 && (d.w42.ok === true || !!d.w42.skip))) }
+function deepOk(d, needW42) { return !!d && ["w21", "w30", "home", "hash"].every(k => d[k] && d[k].ok === true) && (!needW42 || !!(d.w42 && (d.w42.ok === true || !!d.w42.skip))) }
 /* 結束代碼（PR #11 審查：缺驗不能送審）：有 ✘＝1；沒有 ✘ 但金絲雀沒被抓到＝4（看起來全過、其實檢查本身失靈：4 要防的就是這種）；
    加 --cdn 而有沒確認到的＝3；其餘＝0。有 ✘ 時本來就不能送審，回 1 比較有用，金絲雀結果照樣印出、寫進報告（pass 照樣 false）。
    canaryOk 沒給（舊呼叫）當成 true，只有明確傳 false 才回 4 */
