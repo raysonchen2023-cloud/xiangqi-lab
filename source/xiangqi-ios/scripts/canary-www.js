@@ -76,6 +76,10 @@ const bgmEras = (D) => { const B = JSON.parse(fs.readFileSync(at(D, "data/bgm/in
 /* PR #67 第九次審查：首頁 items 再照目錄分層（data/homemap/ 和 data/icons/ 各一層），只對某個目錄放水也抓得到 */
 const groupKey = (rel) => { const s = rel.split("/"); return s.length <= 1 ? "(根目錄)" : s[0] === "data" && s.length > 2 ? s[0] + "/" + s[1] : s[0] };
 const byDir = (list) => { const m = new Map(); for (const f of list) { const k = groupKey(f); if (!m.has(k)) m.set(k, []); m.get(k).push(f) } return [...m.values()] };
+/* PR #67 第十次審查：目錄＋副檔名分層（判斷只對某種副檔名失靈，例如 .glb、.png 也抽得到） */
+const extOf = (rel) => { const m = /\.([A-Za-z0-9]+)$/.exec(rel); return m ? m[1].toLowerCase() : "" };
+const byDirExt = (list) => { const m = new Map(); for (const f of list) { const k = groupKey(f) + "|" + extOf(f); if (!m.has(k)) m.set(k, []); m.get(k).push(f) } return [...m.values()] };
+const BIG = 20 * 1048576;   /* 跟 check-www.js 第 4 項「大於 20 MB 沒記雜湊算缺驗」一樣 */
 const needStrata = (D) => [...byDir(preloadItems(D)), bigItems(D).filter((f) => fs.existsSync(at(D, f))), ...bgmEras(D)].filter((x) => x.length);
 const bgmFiles = (D) => { const B = JSON.parse(fs.readFileSync(at(D, "data/bgm/index.json"), "utf8")), o = []; for (const [era, list] of Object.entries(B)) for (const f of Array.isArray(list) ? list : []) if (typeof f === "string" && fs.existsSync(at(D, "data/bgm/" + era + "/" + f))) o.push("data/bgm/" + era + "/" + f); return o };
 
@@ -83,10 +87,10 @@ const bgmFiles = (D) => { const B = JSON.parse(fs.readFileSync(at(D, "data/bgm/i
 const cdnStrata = (D, L, M, needList) => needStrata(D).map((s) => s.filter((rel) => M && Array.isArray(M[rel]) && M[rel][1] && (!needList || L[rel]) && fs.existsSync(at(D, rel)))).filter((x) => x.length);
 /* 每一種壞樣本：cands 列出所有可以弄壞的檔；break 在副本上真的弄壞（需要時回傳改過的清單）；expect 是 check-www 錯誤裡要出現的字 */
 const KINDS = {
-  home: { cands: (D) => preloadItems(D), strata: (D) => byDir(preloadItems(D)), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "preload.json 列了但沒有：" + f },
+  home: { cands: (D) => preloadItems(D), strata: (D) => byDirExt(preloadItems(D)), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "preload.json 列了但沒有：" + f },
   bgm: { cands: (D) => bgmFiles(D), strata: (D) => bgmEras(D), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "背景音樂清單有但沒有檔：" + f },
   engine: { cands: (D) => ENGINE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺引擎 " + f },
-  core: { cands: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺 " + f },
+  core: { cands: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), always: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺 " + f },
   big: {
     cands: (D, L) => Object.entries(L).filter(([rel, [sz]]) => sz > 1024 && rel !== "index.html" && !rel.startsWith("engine/") && fs.existsSync(at(D, rel))).sort((a, b) => b[1][0] - a[1][0]).slice(0, 5).map((x) => x[0]),
     break: (D, f) => { const b = fs.readFileSync(at(D, f)); rewrite(at(D, f), b.subarray(0, Math.floor(b.length / 2))) },
@@ -94,6 +98,7 @@ const KINDS = {
   },
   swap: {
     cands: (D, L) => Object.entries(L).filter(([rel, [sz, h]]) => h && sz >= 16 && rel !== "index.html" && fs.existsSync(at(D, rel))).map((x) => x[0]),
+    strata: (D, L) => byDirExt(KINDS.swap.cands(D, L)),
     always: (D, L) => Object.entries(L).filter(([rel, [sz, h]]) => h && sz >= 16 && rel !== "index.html" && fs.existsSync(at(D, rel))).sort((a, b) => b[1][0] - a[1][0] || (a[0] < b[0] ? -1 : 1)).slice(0, 2).map((x) => x[0]),   /* PR #67 第五次審查：W30 那種大檔一定要測到 */
     break: (D, f) => { const b = Buffer.from(fs.readFileSync(at(D, f))); b[Math.floor(b.length / 2)] ^= 0xff; rewrite(at(D, f), b) },
     expect: (f) => "內容跟清單不同 " + f,
@@ -111,13 +116,13 @@ const KINDS = {
     expect: (f) => "跟 CDN 現行版不同 " + f,
   },
   cdnmiss: {
-    needsCdn: true, exit: 3,
+    needsCdn: true, exit: 3, noClone: true,
     cands: (D, L, M) => cdnStrata(D, L, M, false).flat(), strata: (D, L, M) => cdnStrata(D, L, M, false),
     break: (D, f, L, M) => { const M2 = { ...M }; delete M2[f]; return { cdn: M2 } },
     expect: (f) => "沒跟 CDN 比到",
   },
   cdnfail: {
-    needsCdn: true, exit: 3,
+    needsCdn: true, exit: 3, noClone: true,
     cands: () => ["cdn-manifest.json"],
     break: (D) => ({ cdnPath: path.join(D, "沒有這個-cdn-manifest.json") }),
     expect: () => "讀不到 CDN 清單",
@@ -125,7 +130,8 @@ const KINDS = {
   ctrl: {
     /* PR #67 第六、七次審查：不只 \x01。候選是「檔｜字元」的組合，另外固定把 30 個控制字元各插一次到第一個檔 */
     cands: (D, L) => CTRL.filter((f) => L[f] && fs.existsSync(at(D, f))).flatMap((f) => CTRL_CH.map((c) => f + "|" + c)),
-    always: (D, L) => { const f = CTRL.find((x) => L[x] && fs.existsSync(at(D, x))); return f ? CTRL_CH.map((c) => f + "|" + c) : [] },
+    /* 第一個檔把 30 個控制字元都插一次；其他每一支程式檔也各固定插一個（PR #67 第十次審查：只抽樣時，少查某一支抽不到） */
+    always: (D, L) => { const fs6 = CTRL.filter((x) => L[x] && fs.existsSync(at(D, x))); return fs6.length ? [...CTRL_CH.map((c) => fs6[0] + "|" + c), ...fs6.slice(1).map((f) => f + "|01")] : [] },
     break: (D, fc, L) => { const [f, c] = fc.split("|"), b = Buffer.concat([fs.readFileSync(at(D, f)), Buffer.from([parseInt(c, 16)])]); rewrite(at(D, f), b); return { list: relist(L, f, b) } },
     expect: (fc) => { const [f, c] = fc.split("|"); return f + " 有控制字元 U+" + parseInt(c, 16).toString(16) },
   },
@@ -134,7 +140,8 @@ const KINDS = {
     /* PR #67 第八次審查：清單裡引擎、App 會要的檔的雜湊被拿掉（只剩大小），要回 3 */
     cands: (D, L) => [ENGINE, ...needStrata(D)].flat().filter((f) => L[f] && L[f][1] && fs.existsSync(at(D, f))),
     /* 只改清單、跟目錄無關，粗分四層就好：引擎、首頁 items、preload big、背景音樂 */
-    strata: (D, L) => [ENGINE, preloadItems(D), bigItems(D), bgmFiles(D)].map((s) => s.filter((f) => L[f] && L[f][1] && fs.existsSync(at(D, f)))).filter((x) => x.length),
+    strata: (D, L) => [ENGINE, preloadItems(D), bigItems(D), bgmFiles(D), Object.keys(L).filter((f) => L[f][0] > BIG)].map((s) => s.filter((f) => L[f] && L[f][1] && fs.existsSync(at(D, f)))).filter((x) => x.length),   /* 最後一層：大於 20 MB 的檔（不一定是 App 會要的，PR #67 第十次審查） */
+    noClone: true,
     break: (D, f, L) => ({ list: { ...L, [f]: [L[f][0], null] } }),
     expect: (f) => "清單沒記雜湊的重要檔",
   },
@@ -237,10 +244,10 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
         const chosen = [...new Set([...picks(cands, rand), ...(strata ? strata.filter((s) => s.length).map((s) => s[Math.floor(rand() * s.length)]) : []), ...(K.always ? K.always(dir, L, M) : [])])];
         if (!chosen.length) { results.push({ kind: k, caught: false, unfit: true, why: "乾淨的樣本裡找不到可以弄壞的檔" }); continue }
         for (const f of chosen) {
-          const D = path.join(base, k + "-" + results.length);
+          const D = K.noClone ? dir : path.join(base, k + "-" + results.length);   /* 只改清單或 CDN 清單的壞樣本不動檔案，不用複製整份 */
           let lf = LF, cf = cdnFile;
           try {
-            cloneDir(dir, D); const B = K.break(D, f, L, M) || {};
+            if (!K.noClone) cloneDir(dir, D); const B = K.break(D, f, L, M) || {};
             if (B.list) { lf = path.join(base, k + "-" + results.length + "-list.json"); fs.writeFileSync(lf, JSON.stringify({ ...LJ, files: B.list })) }
             if (B.cdn) { cf = path.join(base, k + "-" + results.length + "-cdn.json"); fs.writeFileSync(cf, JSON.stringify({ files: B.cdn })) }
             if (B.cdnPath) cf = B.cdnPath;
@@ -250,7 +257,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
           const caught = r.status === want && out.includes(exp);
           results.push({ kind: k, file: f, candidates: cands.length, expect: exp, exit: r.status, caught });
           log((caught ? "✔ " : "✘ ") + k + "：" + f + "（候選 " + cands.length + " 個）" + (caught ? " 被抓到" : " 沒被抓到（結束代碼 " + r.status + "，錯誤裡" + (out.includes(exp) ? "有" : "沒有") + "「" + exp + "」）"));
-          fs.rmSync(D, { recursive: true, force: true });
+          if (!K.noClone) fs.rmSync(D, { recursive: true, force: true });
         }
       }
       const fromMain = (rel) => { try { return mainFile(rel) } catch (e) { return null } };

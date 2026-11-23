@@ -25,6 +25,11 @@ function fakeWww() {
   /* PR #67 第九次審查：首頁素材分在好幾個目錄（真包有 data/homemap/、data/icons/…），根目錄也有 3D 場景程式；homemap 放在 items 前段，不分層的話頭、中、尾都挑不到 */
   for (let i = 0; i < 12; i++) { const r = "data/homemap/m" + String(i).padStart(2, "0") + ".webp"; put(r, Buffer.alloc(170 + i, 30 + i)); homeX.push([r, 170 + i]) }
   for (let i = 0; i < 60; i++) { const r = "data/home/x" + String(i).padStart(2, "0") + ".webp"; put(r, Buffer.alloc(100 + i, 100 + i)); homeX.push([r, 100 + i]) }
+  /* PR #67 第十次審查：零星的副檔名（首頁有 2 張 .png、場景目錄有 2 個 .glb 混在一堆 .webp 裡、音效 .wav） */
+  for (const n of ["p1", "p2"]) { const r = "data/home/" + n + ".png"; put(r, Buffer.alloc(150, n.length + 40)); homeX.splice(30, 0, [r, 150]) }
+  for (let i = 0; i < 20; i++) put("data/scene/s" + String(i).padStart(2, "0") + ".webp", Buffer.alloc(120 + i, 60 + i));
+  for (const n of ["m1", "m2"]) put("data/scene/" + n + ".glb", Buffer.alloc(130, n.length + 70));
+  for (const n of ["w1", "w2"]) put("data/sfx/" + n + ".wav", Buffer.alloc(140, n.length + 80));
   for (const f of ["three.min.js", "park3d.js", "map3d.js", "bot3d.js", "GLTFLoader.mjs"]) put(f, "/* " + f + " */\nvar y = 2;\n");
   put("data/preload.json", JSON.stringify({ items: [["data/home/han.webp", 203], ["data/home/qin.webp", 203], ["data/home/tang.webp", 204], ...homeX], big: [["data/gmgames.json", 5000]] }));
   put("release.json", JSON.stringify({ version: "test" }));
@@ -149,6 +154,11 @@ test("check-www.js 的判斷一條一條改壞（含只查第一個、只查 .js
     ["capord", "else if (!(iCap < iBr && (iCore < 0 || iBr < iCore))) bad.push(", "else if (!((iCore < 0 || iBr < iCore))) bad.push("],
     ["swap", "    else if (h && crypto", "    else if (h && size(rel) < 450 && crypto"],
     ["home", "if (bad.length) {", "if (bad.length && ALL) {"],
+    /* PR #67 第十次審查：只對某種副檔名、某一支檔放水 */
+    ["swap", "    else if (h && crypto", '    else if (h && !rel.endsWith(".glb") && crypto'],
+    ["home", 'if (!exists(it[0])) bad.push("preload.json 列了但沒有：" + it[0]);', 'if (!exists(it[0]) && !it[0].endsWith(".png")) bad.push("preload.json 列了但沒有：" + it[0]);'],
+    ["ctrl", 'for (const f of ["index.html", "native-bridge.js", "core.js", "engine.js", "local.js", "net.js"]) {', 'for (const f of ["index.html", "native-bridge.js", "core.js", "engine.js", "net.js"]) {'],
+    ["core", '"local.js", "net.js", "zh.js"]) if (!exists(f)) bad.push("缺 " + f);', '"local.js", "zh.js"]) if (!exists(f)) bad.push("缺 " + f);'],
     /* PR #67 第六次審查 */
     ["listmiss", 'if (!exists(rel)) bad.push("少了 " + rel);', "if (!exists(rel)) {}"],
     /* PR #67 第八次審查 */
@@ -368,4 +378,16 @@ test("背景音樂分朝代：每個種子每個朝代都測到（PR #67 第九�
     const got = JSON.parse(fs.readFileSync(out, "utf8")).results.map((x) => x.file);
     for (const era of ["han", "tang", "song", "ming", "qing", "sui"]) assert.ok(got.some((f) => f.startsWith("data/bgm/" + era + "/")), "種子 " + seed + " 要測到 " + era + "：" + got.join(","));
   }
+});
+
+test("nohash 也測「大於 20 MB、不是 App 會要的檔」：check-www 把這條拿掉，金絲雀要回 4（PR #67 第十次審查）", () => {
+  const { D, L } = fakeWww(), J = JSON.parse(fs.readFileSync(L, "utf8"));
+  const big = Buffer.alloc(21 * 1048576, 9); fs.mkdirSync(path.join(D, "data", "huge"), { recursive: true }); fs.writeFileSync(path.join(D, "data", "huge", "pack.bin"), big);
+  J.files["data/huge/pack.bin"] = [big.length, sha1(big)]; const L2 = path.join(tmp("xq-biglist-"), "l.json"); fs.writeFileSync(L2, JSON.stringify(J));
+  const out = path.join(tmp("xq-bigout-"), "r.json");
+  let r = runCanary(CANARY, ["--dir", D, "--list", L2, "--only", "nohash", "--seed", "1", "--out", out]); assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.ok(JSON.parse(fs.readFileSync(out, "utf8")).results.some((x) => x.file === "data/huge/pack.bin"), "大檔那一層要測到");
+  const C = blindCanary('if (!h && (rel.startsWith("engine/") || need.has(rel) || sz > 20 * 1048576)) noHash.push(rel);', 'if (!h && (rel.startsWith("engine/") || need.has(rel))) noHash.push(rel);');
+  r = runCanary(C, ["--dir", D, "--list", L2, "--only", "nohash", "--seed", "1"]); assert.equal(r.status, 4, r.stdout + r.stderr);
+  assert.ok(fs.existsSync(path.join(D, "data", "huge", "pack.bin")) && fs.statSync(path.join(D, "data", "huge", "pack.bin")).size === big.length, "nohash 不複製也不改原本那份");
 });
