@@ -46,6 +46,7 @@ function jhScrCn(mv){try{const C=window.XQCore;let b=C.parseFen(C.START.split(" 
     for(const u of mv.split(" ")){const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4)),cn=C.notate(b,f,t);o.push(typeof oscEn==="function"&&oscEn()&&typeof i18nWxf==="function"?(i18nWxf(cn)||cn):cn);b=C.make(b,f,t)}
     return o.join(" ")}catch(e){return mv}}
 function jhScrGuardStart(){if(typeof jStart!=="function")return;const lv=typeof parkNpcLv==="function"?parkNpcLv():3;
+  if(typeof jRetSet==="function")jRetSet(JH_SCR_J,"#/jianghu/hall/screen",typeof jhSch==="function"&&jhSch("screen")?jhSch("screen").nm:"屏風馬門");   /* W80：對局頁的返回鍵回屏風馬門門內（原本 jh:guard: 落到石桌往事書架） */
   jStart(JH_SCR_J,{human:"b",level:lv,journey:JH_SCR_J,lv:{fen:JH_SCR_GUARD.fen,turn:JH_SCR_GUARD.turn}},fresh=>{
     const P=store.get("jPending",null);if(P&&P.id===JH_SCR_J&&!P.jhg){P.jhg={limit:JH_SCR_GUARD.limit};store.set("jPending",P)}
     location.hash="#/journey/play";
