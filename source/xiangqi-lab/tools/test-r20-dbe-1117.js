@@ -222,6 +222,11 @@ test("E N20-8：privacy.md、family.md 最後核對日期兩份一致，跟 priv
   const S = M("05-settings.js"), xqDocVar = vm.runInNewContext(between(S, "function xqDocVar(", "function xqDocBtns(") + ";xqDocVar");
   const hd = (rd("xiangqi-lab/site/privacy.html").match(/最後更新：(2026 年 \d{1,2} 月 \d{1,2} 日)/) || [])[1];
   assert.ok(hd, "privacy.html 找得到最後更新日期");
+  /* #79 審查：三份一起改成更早或寫錯的日期（例如 2026 年 1 月 1 日）也會一致——加下限：不早於原本寫死的 11 月 17 日；上限：不晚於今天（臺灣時間） */
+  const ymd = (s) => { const m = /^(\d{4}) 年 (\d{1,2}) 月 (\d{1,2}) 日$/.exec(s); assert.ok(m, "日期格式：" + s); return +m[1] * 10000 + +m[2] * 100 + +m[3] };
+  const tw = new Date(Date.now() + 8 * 3600e3), today = tw.getUTCFullYear() * 10000 + (tw.getUTCMonth() + 1) * 100 + tw.getUTCDate();
+  assert.ok(ymd(hd) >= 20261117, "最後更新不早於 2026 年 11 月 17 日：" + hd);
+  assert.ok(ymd(hd) <= today, "最後更新不晚於今天（臺灣時間）：" + hd);
   for (const f of ["privacy.md", "family.md"]) {
     const a = rd("xiangqi-db/art/docs/" + f); assert.equal(a, rd("xiangqi-lab/site/data/docs/" + f));
     const d = (a.match(/^最後核對：(2026 年 \d{1,2} 月 \d{1,2} 日)/m) || [])[1];
