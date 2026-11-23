@@ -102,7 +102,7 @@ function priorAttempts(lines, aabSha256, android) {
 /* 自我反測（P0-3D 金絲雀）照預期（純函式；PR #66 審查④）：正常那次要過；遮罩那次要「選中起點、點了落點、落點量到的元件就是遮罩、棋譜沒多出那一步」。
    遮罩那次在放遮罩之前就失敗（選不到起點、鏡頭沒停穩、例外）不算抓到——那證明不了這支抓得到 W02 */
 function selfTestOk(a, b) {
-  return !!a && a.pass === true && !!b && b.pass === false && !!b.startTap && !!b.targetTap && !!b.targetHit && b.targetHit.id === "xq3dInject";
+  return !!a && a.pass === true && !!b && b.pass === false && b.moved === false && !!b.startTap && !!b.targetTap && !!b.targetHit && b.targetHit.id === "xq3dInject";   /* moved＝false：棋真的沒走成；別的落點被蓋住而 pass＝false、棋卻走成了，不算抓到 */
 }
 /* 每一輪都全過才算過（已知問題照清單放行）；rounds＝每一輪的結果陣列（純函式） */
 const roundPass = (results) => results.length > 0 && results.every((r) => r.pass === true || (r.pass === null && !!r.known));
@@ -246,7 +246,7 @@ async function step(c, kind, tb, off, name, R, inject, usePad) {
       let ok = false;
       for (let i = 0; i < 30 && !ok; i++) { await sleep(200); const m = await c.ev(`(async()=>{const s=await api('/play/state');return s.moves.map(x=>({f:x.f,t:x.t}))})()`); ok = moved(S.n, m, mv) }
       shot(name + "-after");
-      Object.assign(R, { move: mv, startTap: a, goTap: b, turn: S.turn, pass: ok });
+      Object.assign(R, { move: mv, startTap: a, goTap: b, turn: S.turn, moved: ok, pass: ok });
       if (!ok) R.error = "按落子後棋譜沒有多出這一步";
       return R;
     }
@@ -265,7 +265,7 @@ async function step(c, kind, tb, off, name, R, inject, usePad) {
     for (let i = 0; i < 30 && !ok; i++) { await sleep(200); const m = await c.ev(`(async()=>{const raw=await api(${JSON.stringify(STATE[kind])}),s=${tb != null ? `raw.tb[${tb}]` : "raw"};return s.moves.map(x=>({f:x.f,t:x.t}))})()`); ok = moved(S.n, m, mv) }
     if (inject) await c.ev(`document.getElementById('xq3dInject')?.remove()`);
     shot(name + "-after");
-    Object.assign(R, { move: mv, startTap: a, targetTap: b, targetHit: hit, turn: S.turn, topBand: inTop(t, pts.w), pass: ok && !R.covered });
+    Object.assign(R, { move: mv, startTap: a, targetTap: b, targetHit: hit, turn: S.turn, topBand: inTop(t, pts.w), moved: ok, pass: ok && !R.covered });   /* moved：棋譜真的多出那一步（PR #66 第二次複審：selfTestOk 要看這個，不能只看 pass） */
     if (ok && R.covered) R.error = "有 " + R.covered.length + " 個合法落點被蓋住：" + R.covered.map((x) => x.t + "（" + x.by + "）").join("、");
     if (!ok) R.error = "點了落點棋譜沒有多出這一步" + (hit.tag !== "CANVAS" ? "（落點被 " + (hit.id || hit.cls || hit.tag) + " 蓋住）" : "");
     return R;

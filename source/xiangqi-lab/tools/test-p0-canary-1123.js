@@ -22,7 +22,7 @@ const all = () => [img(), upd(), d3("12"), d3("16"), c3("12"), c3("16")];
 const has = (r, re) => r.problems.some((p) => re.test(p));
 const W = (code) => [{ code, aabSha256: A, reason: "測試用豁免", decidedBy: "開發者", decidedAt: "2026-11-23" }];
 
-test("工具鎖定：清單跟三支工具實際 require 的共用模組一致（工具改了 require 而清單沒跟上，這項會紅）", () => {
+test("〔原始碼〕工具鎖定：清單跟三支工具實際 require 的共用模組一致（工具改了 require 而清單沒跟上，這項會紅）", () => {
   for (const [tool, file] of [["P0-IMG", "check-aab-assets.js"], ["P0-UPD", "check-upgrade.js"], ["P0-3D", "check-3d.js"]]) {
     const reqs = [...rd(file).matchAll(/require\("\.\/([^"]+)"\)/g)].map((m) => m[1]);
     const want = [...new Set([file, ...reqs])].sort();
@@ -75,6 +75,8 @@ test("閘門（反測必紅）：P0-IMG 金絲雀①②沒抓到不能豁免；�
   L = all(); L[0].json.canary = { home: true, stale: true, cdn404: false, cdn: "沒確認到（CDN 連不上）" };
   assert.ok(has(G(L), /CDN 不存在的檔沒被判成沒有（沒確認到（CDN 連不上））/));
   r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, true, "CDN 連不上那一條照舊可以豁免"); assert.equal(r.waived.length, 1);
+  L = all(); L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdn: "被當成有（CDN 核對失靈）" };
+  r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false, "不存在的檔被當成有＝工具失靈，不能豁免"); assert.ok(has(r, /CDN 核對可能失靈，不能豁免/));
   L = all(); L[1].json.canary = { dialog: false }; r = G(L, W("P0-UPD/old-worker")); assert.equal(r.ok, false); assert.ok(has(r, /P0-UPD：金絲雀（假的「有新版本」視窗）沒被抓到/));
   L = all(); delete L[1].json.canary; assert.ok(has(G(L), /P0-UPD：金絲雀/));
 });
@@ -136,8 +138,11 @@ test("〔原始碼〕三支工具的報告都寫 toolPins；P0-IMG、P0-UPD 寫 
 
 test("P0-3D 金絲雀（PR #66 審查④）：遮罩那次要真的點到落點、而且是被遮罩接走才算抓到；放遮罩之前就失敗不算", () => {
   const { selfTestOk } = require(path.join(AND, "check-3d.js"));
-  const a = { pass: true }, hitMask = { pass: false, startTap: { x: 1, y: 1 }, targetTap: { x: 2, y: 2 }, targetHit: { id: "xq3dInject", tag: "DIV" } };
+  const a = { pass: true }, hitMask = { pass: false, moved: false, startTap: { x: 1, y: 1 }, targetTap: { x: 2, y: 2 }, targetHit: { id: "xq3dInject", tag: "DIV" } };
   assert.equal(selfTestOk(a, hitMask), true);
+  /* PR #66 第二次複審的反例：別的落點被蓋住（pass＝false），遮罩沒擋住、棋也走成了（moved＝true）——不能算抓到 */
+  assert.equal(selfTestOk(a, { ...hitMask, moved: true, covered: [{ t: 3, by: "BUTTON" }] }), false, "棋走成了就不算抓到");
+  assert.equal(selfTestOk(a, { ...hitMask, moved: undefined }), false, "沒記 moved 也不算");
   assert.equal(selfTestOk(a, { pass: false, error: "鏡頭 10 秒內沒停穩" }), false, "放遮罩之前就失敗");
   assert.equal(selfTestOk(a, { pass: false, startTap: { x: 1, y: 1 }, misses: [1] }), false, "起點沒選中");
   assert.equal(selfTestOk(a, { ...hitMask, targetHit: { id: "", tag: "BUTTON" } }), false, "落點被別的東西蓋住，不是遮罩");
@@ -164,7 +169,7 @@ test("閘門（PR #66 審查建議）：同一個 Android 版本，3D 金絲雀�
   assert.equal(G(all()).ok, true);
 });
 
-test("PR #66 複審：單獨的 CR 會改變程式意義，雜湊要不同；pinsFor 不接受指定資料夾；金絲雀①②要因為對的那條原因判出", () => {
+test("〔混合〕PR #66 複審：單獨的 CR 會改變程式意義，雜湊要不同；pinsFor 不接受指定資料夾；金絲雀①②要因為對的那條原因判出", () => {
   const CR = String.fromCharCode(13), LF = String.fromCharCode(10);
   assert.equal(TP.normSha("a" + CR + LF + "b"), TP.normSha("a" + LF + "b"), "CRLF 跟 LF 一樣");
   assert.notEqual(TP.normSha("return" + CR + " red ? 1 : 0"), TP.normSha("return red ? 1 : 0"), "單獨的 CR 保留：雜湊要不同");
