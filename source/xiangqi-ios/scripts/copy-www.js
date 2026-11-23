@@ -7,7 +7,7 @@
         這些檔玩家實際是從 Cloudflare CDN 拿的；加 --cdn-check 會抓 CDN 的 cdn-manifest.json 比對大小和 sha1，
         加 --cdn-fetch 會把對不上的檔直接從 CDN 下載進 www/（確保跟玩家拿到的一模一樣）。
    不包進安裝檔：.git、.github、點開頭的檔、data/_rekey_backup/（備份）、data/tripo_anim/（App 沒用到、沒發布）、
-     data/evidence/（開發測試錄影）、檔名有 .old 的檔、data/banlist.json（停權名單要即時，App 一律上網抓，見 native-bridge.js）。
+     data/evidence/（開發測試錄影）、AGENTS.md、releases/、data/docs/verification-log.txt（開發用文件）、檔名有 .old 的檔、data/banlist.json（停權名單要即時，App 一律上網抓，見 native-bridge.js）。
    會改的：只有 www/index.html 在 <meta charset> 後面插一行 <script src="native-bridge.js"></script>（原生橋接，見 src/native-bridge.js）。
    用法：
      node scripts/copy-www.js                 照預設複製（只抄有變的檔；www/ 裡多的檔會刪掉）
@@ -38,6 +38,7 @@ const SKIP = [
   /^data\/_rekey_backup\//, /^data\/tripo_anim\//, /^data\/evidence\//,
   /\.old/, /^data\/banlist\.json$/,
   /^data\/docs\/android\.md$/,   /* 11/17 iMac H：iOS 包不放 Android 的安裝說明（網頁版照舊有；這裡只管 iOS 的 www） */
+  /^AGENTS\.md$/, /^releases\//, /^data\/docs\/verification-log\.txt$/,   /* 11/23 iMac Claude 1 #80 iOS 預驗：給 Claude 的規則檔、發布說明（releases/android.md）、CI 驗證紀錄是開發用文件，App 不讀，不放進 iOS 包（網頁版照舊公開） */
   /^(support|privacy)\.html$/,
   /^data\/voice\//,   /* 11/18 iMac R2 驗 1041 的 P1（準則 5.2）：12 個 Windows 語音檔已改用手機系統語音朗讀、程式不再讀，不放進 iOS 包（公開倉庫與 CDN 的舊檔下次發布時另外清） */
   /^source(\/|$)/,   /* 11/17 iMac K P3-4：原生包不放 source/（裡面有 xiangqi-lab/tools/test-*.js 這類開發檔）；GPL 原始碼由關於頁連到的公開倉庫（github …/tree/main/source）提供，App 內沒有任何地方讀本機的 source/ */   /* 11/17：App Store Connect 填的支援網址、隱私權政策網址用的公開網頁，App 裡用不到，不包進 iOS */
