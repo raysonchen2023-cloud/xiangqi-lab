@@ -45,8 +45,18 @@ function jhFxSolve(b0,T,max){let bound=jhFxH(b0,T);if(bound>=99)return-1;let nod
     return min};
   while(bound<=max){const r=dfs(b0,0,null);if(r===-1)return bound;if(r>=99)return-1;bound=r}
   return-1}
-/* 倒著走一步：把 s 上的子放回某個空格 q，要能從 q 正走到 s */
-function jhFxBack(b,s){const C=window.XQCore,o=[];for(let q=0;q<90;q++){if(b[q])continue;if(b[s]==="P"&&(q/9|0)>6)continue;   /* 兵不會出現在自己的兵線後面 */const x=b.slice();x[q]=x[s];x[s]=null;if(C.legal(x,"r").some(([f,t])=>f===q&&t===s))o.push(q)}return o}
+/* 這種紅子能不能站在 q（真實棋局可能出現的位置）。
+   W73（11/23 Pikafish 棋理驗證）：core.js 對相、仕只限制「落點」，不限制「出發點」，倒推時把相放到河對岸、仕放到九宮外，
+   365 天模擬有 36% 的題目起始局面不可能出現（例：3k5/9/9/4B4/… 相在 e6）。所以倒推時出發格也要合法。
+   相：己方七個象眼點；仕：九宮五點；兵：不在兵線後面，沒過河時只在雙數路（1、3、5、7、9 路＝欄 0、2、4、6、8）。 */
+const JH_FX_OKB=[47,51,63,67,71,83,87],JH_FX_OKA=[66,68,76,84,86];
+function jhFxOkAt(p,q){const r=q/9|0,c=q%9;
+  if(p==="B")return JH_FX_OKB.includes(q);
+  if(p==="A")return JH_FX_OKA.includes(q);
+  if(p==="P")return r<=6&&(r<=4||c%2===0);
+  return true}
+/* 倒著走一步：把 s 上的子放回某個空格 q，要能從 q 正走到 s，而且 q 本身是這種子合法的位置 */
+function jhFxBack(b,s){const C=window.XQCore,o=[];for(let q=0;q<90;q++){if(b[q])continue;if(!jhFxOkAt(b[s],q))continue;const x=b.slice();x[q]=x[s];x[s]=null;if(C.legal(x,"r").some(([f,t])=>f===q&&t===s))o.push(q)}return o}
 /* 出一題：照種子挑模板、倒著走，最少步數落在這一級的範圍才出 */
 function jhFxMake(L,seed){let h=jhFxHash("fx:"+seed);const R=()=>{h=jhFxHash(h+"|");return h};
   for(let tries=0;tries<60;tries++){const tpl=L.tpl[R()%L.tpl.length],T=jhFxTargets(tpl);
