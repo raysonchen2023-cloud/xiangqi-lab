@@ -116,8 +116,6 @@ async function jhMzWorld3(box,c,S){
   const side=new T3.MeshLambertMaterial({map:brickT}),topM=new T3.MeshLambertMaterial({map:topT});
   const wl=new T3.InstancedMesh(wg,[side,side,topM,side,side,side],walls.length);
   walls.forEach(([x,y],i)=>{m4.makeTranslation(x+.5,0,y+.5);wl.setMatrixAt(i,m4);wl.setColorAt(i,cK.setRGB(0,0,0))});sc.add(wl);
-  /* 角色正前方（南邊那一排、含斜對角）的牆會擋住角色（預覽站實看：64° 俯角、牆高 0.85 格仍擋住下半身），那幾面牆平滑矮到 0.28 倍，走開再長回來（俯視 3D 遊戲常見的做法） */
-  const wH=new Float32Array(walls.length).fill(1);
   /* 物件：材質記下原色，每一格照亮度乘上去；on()＝現在還在不在（箱子撿走、門開了就不畫） */
   const objs=[],lam=hex=>{const m=new T3.MeshLambertMaterial({color:col(hex)});m.userData.base=m.color.clone();return m};
   const mesh=(geo,mat,x,y,z)=>{const o=new T3.Mesh(geo,mat);o.position.set(x,y,z);return o};
@@ -144,6 +142,10 @@ async function jhMzWorld3(box,c,S){
   const root=new T3.Group();root.rotation.order="YXZ";root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
   const bx=new T3.Box3().setFromObject(B.bot),ct=bx.getCenter(new T3.Vector3()),hM=(bx.max.y-bx.min.y)||1;B.bot.position.x-=ct.x;B.bot.position.z-=ct.z;B.bot.position.y-=bx.min.y;const by=B.bot.position.y;
   const wrap=new T3.Group();wrap.add(root);wrap.scale.setScalar(1.1/hM);sc.add(wrap);
+  /* 牆不動（開發者 11/23：「為什麼腳色走過去的時候 牆壁也會跟著動」→ 拿掉「前方的牆變矮」）。角色走到牆後面時，被擋住的部分畫成一層淡淡的暖色剪影：
+     角色另外放在第 1 層，畫完整個場景後只畫角色一次，深度比已經畫的東西還遠（GreaterDepth）的地方才上色＝只有被擋住的部分；看得到的部分往前推一點深度，不會冒出雜點 */
+  wrap.traverse(o=>o.layers.enable(1));r.autoClear=false;
+  const sil=new T3.MeshBasicMaterial({color:col("#ffcf8a"),transparent:true,opacity:.5,depthWrite:false,depthFunc:T3.GreaterDepth,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-4});
   const shG=new T3.PlaneGeometry(.95,.95);shG.rotateX(-Math.PI/2);const sh=new T3.Mesh(shG,new T3.MeshBasicMaterial({map:shT,transparent:true,depthWrite:false}));sh.position.y=.01;sc.add(sh);
   const clips=B.mixer&&B.clips||null;let cur=null,yawR=0,t=0,tgx=null,tgz=null,cw=0,ch=0;
   const anim=n=>{if(!clips)return;const a=clips[n]||clips.idle;if(!a||a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};anim("idle");
@@ -156,7 +158,6 @@ async function jhMzWorld3(box,c,S){
       const P=S.player,G=S.guard,px=P.fx+.5,pz=P.fy+.5;
       if(tgx===null||Math.hypot(px-tgx,pz-tgz)>3){tgx=px;tgz=pz}else{const k=Math.min(1,dt*7);tgx+=(px-tgx)*k;tgz+=(pz-tgz)*k}
       const D=Math.max(7.6/(2*TAN*cam.aspect),6.4/(2*TAN));cam.position.set(tgx,D*Math.sin(EL),tgz+D*Math.cos(EL));cam.lookAt(tgx,0,tgz);
-      const pcx=Math.round(P.fx),pcy=Math.round(P.fy);let wm=false;walls.forEach(([x,y],i)=>{const tg=y===pcy+1&&Math.abs(x-pcx)<=1?.28:1,h0=wH[i],h1=Math.abs(tg-h0)<.01?tg:h0+(tg-h0)*Math.min(1,dt*9);if(h1!==h0){wH[i]=h1;m4.makeScale(1,h1,1).setPosition(x+.5,0,y+.5);wl.setMatrixAt(i,m4);wm=true}});if(wm)wl.instanceMatrix.needsUpdate=true;
       cells.forEach(([x,y],i)=>fl.setColorAt(i,cK.setScalar(bright(L,x,y))));fl.instanceColor.needsUpdate=true;
       walls.forEach(([x,y],i)=>wl.setColorAt(i,cK.setScalar(bright(L,x,y))));wl.instanceColor.needsUpdate=true;
       for(const o of objs){const b=bright(L,o.x,o.y);o.g.visible=b>0&&o.on();if(o.g.visible)for(const m of o.mats)m.color.copy(m.userData.base).multiplyScalar(b)}
@@ -168,7 +169,7 @@ async function jhMzWorld3(box,c,S){
       if(clips){anim(walk?"walk":"idle");if(walk&&cur)cur.timeScale=1.7;B.mixer.update(dt)}
       else{const ph=t*14;root.position.y=walk?Math.abs(Math.sin(ph))*hM*.04:0;root.rotation.z=walk?Math.sin(ph)*.07:0;
         if(B.legs&&B.legs.length===2)B.legs.forEach((l,i)=>l.rotation.x=walk?Math.sin(ph)*.6*(i?1:-1):0);if(B.arms&&B.arms.length===2)B.arms.forEach((a,i)=>a.rotation.x=walk?Math.sin(ph)*.5*(i?-1:1):0)}
-      B.bot.position.y=by;r.render(sc,cam)},
+      B.bot.position.y=by;r.clear();r.render(sc,cam);cam.layers.set(1);sc.overrideMaterial=sil;r.render(sc,cam);sc.overrideMaterial=null;cam.layers.set(0)},
     /* 點畫面：先打牆和地面（點到牆頂就是那面牆），都沒打到再算地面高度 */
     pick(x,y){const b=cv.getBoundingClientRect();if(!b.width)return null;ray.setFromCamera(new T3.Vector2((x-b.left)/b.width*2-1,-((y-b.top)/b.height)*2+1),cam);
       const hit=ray.intersectObjects([wl,fl],false)[0];if(hit&&hit.instanceId!=null){const q=(hit.object===wl?walls:cells)[hit.instanceId];if(q)return{x:q[0],y:q[1]}}
