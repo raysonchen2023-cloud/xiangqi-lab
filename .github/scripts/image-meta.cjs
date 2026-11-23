@@ -69,21 +69,31 @@ const inflate = (d) => { try { return zlib.inflateSync(d) } catch (e) { return B
 /* JPEG APP13（Photoshop 8BIM）裡的 IPTC：1C 02 50＝By-line、1C 02 74＝Copyright、1C 02 76＝Contact */
 function iptc(seg, out) { for (let i = 0; i + 3 <= seg.length; i++) if (seg[i] === 0x1c && seg[i + 1] === 0x02 && [0x50, 0x74, 0x76].includes(seg[i + 2])) { out.add("owner"); return } }
 
-/* 回傳 { format, kinds:[…] }；讀不懂的格式（HEIC、AVIF、不是圖片）回 null */
+/* 回傳 { format, kinds:[…], texts:[…] }；讀不懂的格式（HEIC、AVIF、不是圖片、JPEG 結構壞掉）回 null。
+   texts＝圖裡解出來的文字（PNG 文字區、XMP、JPEG／GIF 註解），scan-changed 交給 oss-scan 的規則掃（PR #68 第二輪審查④：Comment 裡寫信箱也要抓到） */
 function imageMeta(buf) {
-  const b = Buffer.isBuffer(buf) ? buf : Buffer.from(buf), out = new Set(), fmt = sniff(b);
-  const done = () => ({ format: fmt, kinds: [...out].sort() });
+  const b = Buffer.isBuffer(buf) ? buf : Buffer.from(buf), out = new Set(), fmt = sniff(b), texts = [];
+  const done = () => ({ format: fmt, kinds: [...out].sort(), texts });
   if (fmt === "jpeg") {
-    let p = 2;
-    while (p + 4 <= b.length && b[p] === 0xff) {
-      const m = b[p + 1]; if (m === 0xda || m === 0xd9) break;
-      const len = b.readUInt16BE(p + 2), seg = b.subarray(p + 4, p + 2 + len), head = seg.toString("latin1", 0, 40);
+    /* PR #68 第二輪審查③：標記前可以有任意個填充用的 FF，要跳過；一路要走到 SOS（影像資料開始）才算讀完，走不到＝結構壞掉＝讀不懂 */
+    let p = 2, sos = false;
+    while (p + 1 < b.length) {
+      if (b[p] !== 0xff) return null;
+      while (p + 1 < b.length && b[p + 1] === 0xff) p++;
+      const m = b[p + 1];
+      if (m === 0xda) { sos = true; break }
+      if (m === 0xd9) break;
+      if (m === 0x01 || (m >= 0xd0 && m <= 0xd7)) { p += 2; continue }   /* 沒有長度的標記 */
+      if (p + 4 > b.length) return null;
+      const len = b.readUInt16BE(p + 2); if (len < 2 || p + 2 + len > b.length) return null;
+      const seg = b.subarray(p + 4, p + 2 + len), head = seg.toString("latin1", 0, 40);
       if (m === 0xe1 && head.startsWith("Exif\0\0")) tiff(seg.subarray(6), out);
-      else if (m === 0xe1 && /^http:\/\/ns\.adobe\.com\/xmp\/extension\/|^http:\/\/ns\.adobe\.com\/xap\/1\.0\//.test(head)) xmp(seg.toString("utf8"), out);
-      else if (m === 0xed) iptc(seg, out);
-      else if (m === 0xfe && seg.length) out.add("comment");
+      else if (m === 0xe1 && /^http:\/\/ns\.adobe\.com\/xmp\/extension\/|^http:\/\/ns\.adobe\.com\/xap\/1\.0\//.test(head)) { const t = seg.toString("utf8"); xmp(t, out); texts.push(t) }
+      else if (m === 0xed) { iptc(seg, out); texts.push(seg.toString("latin1")) }
+      else if (m === 0xfe && seg.length) { out.add("comment"); texts.push(seg.toString("utf8")) }
       p += 2 + len;
     }
+    if (!sos) return null;
     return done();
   }
   if (fmt === "png") {
@@ -97,6 +107,7 @@ function imageMeta(buf) {
         if (type === "tEXt") text = d.subarray(z + 1).toString("latin1");
         else if (type === "zTXt") text = inflate(d.subarray(z + 2)).toString("latin1");
         else { const comp = d[z + 1], r = d.subarray(z + 3); const a = r.indexOf(0), b2 = r.indexOf(0, a + 1); const body = r.subarray(b2 + 1); text = (comp ? inflate(body) : body).toString("utf8") }
+        texts.push(key + ": " + text);
         if (/^(?:Author|Copyright|Owner|Artist)$/i.test(key)) out.add("owner");
         if (key === "XML:com.adobe.xmp") xmp(text, out);
         if (/^Raw profile type (?:exif|app1|xmp)$/i.test(key)) rawProfile(key, text, out);
@@ -111,13 +122,20 @@ function imageMeta(buf) {
     while (p + 8 <= b.length) {
       const cc = b.toString("latin1", p, p + 4), len = b.readUInt32LE(p + 4), d = b.subarray(p + 8, p + 8 + len);
       if (cc === "EXIF") tiff(d.toString("latin1", 0, 6) === "Exif\0\0" ? d.subarray(6) : d, out);
-      else if (cc === "XMP ") xmp(d.toString("utf8"), out);
+      else if (cc === "XMP ") { xmp(d.toString("utf8"), out); texts.push(d.toString("utf8")) }
       p += 8 + len + (len & 1);
     }
     return done();
   }
-  if (fmt === "tiff") { tiff(b, out); xmp(b.toString("latin1"), out); return done() }
-  if (fmt === "gif") { const i = b.indexOf("XMP DataXMP"); if (i >= 0) xmp(b.subarray(i).toString("utf8"), out); return done() }
+  if (fmt === "tiff") { tiff(b, out); xmp(b.toString("latin1"), out); texts.push(b.toString("latin1").replace(/[^\x20-\x7e\n]+/g, " ")); return done() }
+  if (fmt === "gif") {
+    const i = b.indexOf("XMP DataXMP"); if (i >= 0) { const t = b.subarray(i).toString("utf8"); xmp(t, out); texts.push(t) }
+    /* 註解擴充區塊 21 FE：一串子區塊（長度＋內容），長度 0 結束 */
+    for (let j = b.indexOf(Buffer.from([0x21, 0xfe])); j >= 0; j = b.indexOf(Buffer.from([0x21, 0xfe]), j + 2)) {
+      let q = j + 2, t = ""; while (q < b.length && b[q] > 0) { t += b.toString("latin1", q + 1, q + 1 + b[q]); q += 1 + b[q] } texts.push(t);
+    }
+    return done();
+  }
   if (fmt === "bmp") return done();
   return null;
 }

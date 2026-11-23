@@ -43,9 +43,20 @@ const NAME_RULES = [
   { id: "secret-file", risk: "high", what: "金鑰／帳密檔", re: /(?:^|\/)(?:\.xiangqi-[^\/]*|\.cup-key[^\/]*|[^\/]*\.pem|[^\/]*\.key|id_rsa[^\/]*|id_ed25519[^\/]*|\.env(?:\.[^\/]*)?|mqtt-config\.json|remote-key\.json|[^\/]*\.p12|[^\/]*\.pfx|[^\/]*\.keystore|[^\/]*\.jks|credentials\.json|service-account[^\/]*\.json|\.npmrc|\.netrc)$/i, fix: "從要公開的資料夾移除" },
   { id: "data-log", risk: "medium", what: "收集來的紀錄檔（.jsonl／.log）", re: /\.(?:jsonl|log)$/i, fix: "確認不是玩家資料" },
 ];
-/* W69 盤點中 16（PR #68 審查④）：補上原生程式與建置設定（Android：kt、java、gradle、properties；iOS：swift、plist、xcconfig、pbxproj、
-   entitlements、storyboard、xib、strings、m、h），還有 jsx、tsx、bat、cmd；原本這些連高風險都不掃 */
-const TEXT_EXT = /\.(?:js|mjs|cjs|ts|jsx|tsx|json|jsonl|md|txt|html?|css|py|gs|ps1|bat|cmd|sh|yml|yaml|svg|csv|xml|ini|cfg|conf|toml|env|log|kt|kts|java|gradle|properties|pro|swift|m|mm|h|c|cc|cpp|plist|xcconfig|pbxproj|entitlements|storyboard|xib|strings|xcscheme|xcworkspacedata|resolved)$|^[^.]+$|^\.[^.]+$/i;
+/* W69 盤點中 16（PR #68 第二輪審查①⑦）：不再用副檔名決定掃不掃（.bak、.sql、.go、沒副檔名、點開頭的檔都可能放機密）：
+   圖片（看檔頭）交給 image-meta.cjs 檢查中繼資料、這裡不當文字掃；其他每一個檔都當文字掃——
+   UTF-16（BOM 或一半是 NUL）先解碼；其餘照 UTF-8 解，控制字元（含 NUL）換成空白，長度與換行不變，所以塞 NUL、混二進位都躲不掉 */
+const IMG_HEAD = (b) => (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) || (b.length >= 8 && b[0] === 0x89 && b.toString("latin1", 1, 4) === "PNG") ||
+  (b.length >= 12 && b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP") || (b.length >= 6 && /^GIF8[79]a$/.test(b.toString("latin1", 0, 6))) ||
+  (b.length >= 4 && /^(?:II\*\0|MM\0\*)$/.test(b.toString("latin1", 0, 4))) || (b.length >= 2 && b.toString("latin1", 0, 2) === "BM" && b.length >= 26);
+function asText(b) {
+  const n = Math.min(b.length, 65536); let z0 = 0, z1 = 0;
+  for (let i = 0; i < n; i++) if (b[i] === 0) { if (i & 1) z1++; else z0++ }
+  const bomLE = b[0] === 0xff && b[1] === 0xfe, bomBE = b[0] === 0xfe && b[1] === 0xff;
+  if (bomLE || (n > 16 && z1 > n * 0.3 && z0 < n * 0.05)) return b.subarray(bomLE ? 2 : 0).toString("utf16le");
+  if (bomBE || (n > 16 && z0 > n * 0.3 && z1 < n * 0.05)) { const c = Buffer.from(b.subarray(bomBE ? 2 : 0)); c.swap16 && c.length % 2 === 0 && c.swap16(); return c.toString("utf16le") }
+  return b.toString("utf8").replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g, " ");
+}
 
 const mask = (s, isEmail) => {
   if (isEmail) { const [u, d] = s.split("@"); return u[0] + "***@" + d }
@@ -59,7 +70,6 @@ const walk = (d, base = d, out = []) => {
   }
   return out;
 };
-const isBinary = b => b.subarray(0, 8192).includes(0);
 
 /* Windows 的使用者環境變數（setx 存的，例如 API 金鑰；已經開著的程式不一定拿得到）：只取名稱像金鑰的，值不印 */
 function winUserEnv() {
@@ -99,15 +109,16 @@ function knownSecrets(opts = {}) {
 function loadPublic(dir) {
   if (!dir) return null;
   const texts = [];
-  for (const f of walk(dir)) { if (!TEXT_EXT.test(path.basename(f.rel))) continue; const st = fs.statSync(f.abs); if (st.size > 40e6) continue; texts.push(fs.readFileSync(f.abs, "utf8")) }
+  for (const f of walk(dir)) { const st = fs.statSync(f.abs); if (st.size > 40e6) continue; const b = fs.readFileSync(f.abs); if (IMG_HEAD(b)) continue; texts.push(asText(b)) }
   return texts;
 }
 
 function scan(dir, opts = {}) {
   const allow = opts.allow || [], known = opts.known || [], pub = opts.publicTexts || null, findings = [];
-  /* file 要對到整段路徑（一模一樣，或前面剛好是 /）：放行 data/docs/privacy.md 不會順便放行 releases/metadata/docs/privacy.md（PR #68 審查⑥） */
-  const fileOk = (rel, f) => rel === f || rel.endsWith("/" + f);
-  const allowed = (rule, rel, match) => allow.find(a => (!a.rule || a.rule === rule) && (!a.file || fileOk(rel, a.file)) && (!a.match || String(match).includes(a.match)));
+  /* file 要跟掃描根目錄算起的路徑一模一樣（PR #68 第二輪審查⑤：寫檔名或路徑結尾，別的資料夾同名的檔也會被放行）；
+     sha256＝掃到的那一串字的 SHA-256：個資（信箱、電話）用它指定是哪一筆，放行清單裡不寫個資本身 */
+  const sha = (x) => require("crypto").createHash("sha256").update(String(x), "utf8").digest("hex");
+  const allowed = (rule, rel, match) => allow.find(a => (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match).includes(a.match)) && (!a.sha256 || sha(match) === a.sha256));
   const isPublic = s => !!pub && pub.some(t => t.includes(s));
   const push = (rule, rel, line, match, extra = {}) => {
     const a = allowed(rule.id, rel, match);
@@ -119,10 +130,8 @@ function scan(dir, opts = {}) {
     for (const r of NAME_RULES) if (r.re.test(f.rel)) push(r, f.rel, 0, path.basename(f.rel), { shown: path.basename(f.rel) });
     const name = path.basename(f.rel);
     const buf = fs.readFileSync(f.abs);
-    /* 文字副檔名的檔一律掃，裡面有 NUL 也照掃（PR #68 審查④：開頭塞一個 NUL 就整支略過）；其他副檔名才看是不是二進位 */
-    if (!TEXT_EXT.test(name)) continue;
-    if (/^\.?[^.]+$/.test(name) && isBinary(buf)) continue;   /* 沒有副檔名的才看內容：引擎執行檔這類二進位不當文字掃 */
-    const s = buf.toString("utf8"), starts = [0];
+    if (IMG_HEAD(buf)) continue;   /* 圖片：中繼資料交給 image-meta.cjs（scan-changed 會把圖裡解出來的文字另外放成 .meta.txt 給這裡掃） */
+    const s = asText(buf), starts = [0];
     for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) === 10) starts.push(i + 1);
     const lineOf = idx => { let lo = 0, hi = starts.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (starts[m] <= idx) lo = m; else hi = m - 1 } return lo + 1 };
     const lineText = n => s.slice(starts[n - 1], (starts[n] || s.length + 1) - 1);
@@ -155,7 +164,7 @@ function summary(res) {
     alreadyPublic: live.filter(f => f.public).length, failing: by("high").length };
 }
 
-module.exports = { scan, summary, knownSecrets, loadPublic, RULES, NAME_RULES };
+module.exports = { scan, summary, knownSecrets, loadPublic, asText, IMG_HEAD, RULES, NAME_RULES };
 
 if (require.main === module) {
   const argv = process.argv.slice(2), opt = k => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };

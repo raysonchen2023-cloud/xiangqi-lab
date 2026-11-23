@@ -107,7 +107,8 @@ test("--public：已公開的資料夾裡也有的字串標「本來就公開」
   } finally { clean(d); clean(pub) }
 });
 
-test("二進位檔不掃內容、.git 與 node_modules 跳過", () => {
-  const d = fake({ "img.png": Buffer.concat([Buffer.from([0, 1, 2]), Buffer.from(SECRETS["google-api-key"])]), ".git/config": SECRETS["url-credentials"], "node_modules/x/i.js": SECRETS["aws-key"] });
-  try { const R = OS.scan(d); assert.deepEqual(R.findings, []); assert.equal(R.files, 1) } finally { clean(d) }
+test("圖片（看檔頭）不當文字掃、.git 與 node_modules 跳過（W69 中 16：「叫 .png 但不是圖、開頭塞 NUL 照樣掃」的反例在 .github/scripts/test-guard-scan.cjs，基準版守門換回舊掃描時不會誤紅）", () => {
+  const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const d = fake({ "img.png": Buffer.concat([PNG, Buffer.from(SECRETS["google-api-key"])]), ".git/config": SECRETS["url-credentials"], "node_modules/x/i.js": SECRETS["aws-key"] });
+  try { const R = OS.scan(d); assert.deepEqual(R.findings, [], "真的 PNG：中繼資料交給 image-meta.cjs"); assert.equal(R.files, 1) } finally { clean(d) }
 });
