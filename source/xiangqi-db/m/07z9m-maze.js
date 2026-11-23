@@ -50,6 +50,10 @@ const JH_MZ_PUZ={
         fen:"3k5/2P1a4/9/9/9/9/9/9/9/R4K3",ans:"a0a9"}};
 const JH_MZ_REW=[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"中炮譜殘頁",en:"Central Cannon manual page"},{k:"box",zh:"朱紅漆盒",en:"Vermilion lacquer box"}];
 const JH_MZ_XP=30;
+/* 專屬配樂「地底漕倉」（開發者 11/23：「找gemini製作迷宮的背景音樂，根據剛剛提到的四大回味感來製作」；聽過回「可以 非常符合我要的」）。
+   Gemini lyria-3.5，約 2 分鐘可循環，只放 CDN（data/bgm/maze/maze_1.mp3）。進迷宮頁指定播這首，離開就回到朝代配樂輪播（跟觀星臺 GXD_BGM 同一種做法） */
+const JH_MZ_BGM="maze/maze_1.mp3";
+function jhMzBgm(on){try{if(typeof bgmForce!=="function"||typeof BGM==="undefined")return;if(on){if(BGM.force!==JH_MZ_BGM)bgmForce(JH_MZ_BGM)}else if(BGM.force===JH_MZ_BGM)bgmForce(null)}catch(e){}}
 
 /* ===== 純邏輯（測試用 vm 直接跑這一段）===== */
 function jhMzNew(){const S={W:JH_MZ_MAP[0].length,H:JH_MZ_MAP.length,seen:new Set(),lit:new Set(),bag:{gong:0,page:0,box:0},doorOpen:false,fails:{door:0,trap:0},turn:0,done:false,chests:new Set()};
@@ -248,4 +252,5 @@ function jhMzHall(v,sid){if(sid!=="central"||!jhMzOn())return;const P=v&&v.query
   b.innerHTML=`<b>${esc(jhL("🕳 拋石車・地底密道","🕳 Catapult · Hidden passage"))}</b>`;
   b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}jhGo("#/jianghu/maze")};P.insertBefore(b,P.querySelector(".jh-hall-spot"))}
 try{if(typeof JhHall==="function"&&!JhHall.jhMz){const h0=JhHall;JhHall=function(v,sid){const r=h0.apply(this,arguments);try{jhMzHall(v,sid)}catch(e){}return r};JhHall.jhMz=1}}catch(e){}
-try{if(typeof Jianghu==="function"&&!Jianghu.jhMz){const j0=Jianghu;Jianghu=function(v){try{if(String(location.hash||"").split("?")[0]==="#/jianghu/maze")return JhMaze(v)}catch(e){}return j0.apply(this,arguments)};Jianghu.jhMz=1}}catch(e){}
+if(typeof addEventListener==="function")addEventListener("hashchange",()=>{try{if(String(location.hash||"").split("?")[0]!=="#/jianghu/maze")jhMzBgm(false)}catch(e){}});
+try{if(typeof Jianghu==="function"&&!Jianghu.jhMz){const j0=Jianghu;Jianghu=function(v){try{if(String(location.hash||"").split("?")[0]==="#/jianghu/maze"){if(jhMzOn())jhMzBgm(true);return JhMaze(v)}}catch(e){}return j0.apply(this,arguments)};Jianghu.jhMz=1}}catch(e){}

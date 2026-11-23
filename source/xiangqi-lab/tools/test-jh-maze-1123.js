@@ -161,8 +161,11 @@ test("中炮門門內頁：多一個「拋石車・地底密道」入口，點�
 test("路由：Jianghu 包一層，#/jianghu/maze 畫迷宮、#/jianghu 照舊畫長卷；開關關掉時直接開網址退回門內頁", () => {
   const A = load({ hall: true, hash: "#/jianghu" }); assert.deepEqual(A.c.Jianghu({}), { scroll: 1 });
   let called = 0; A.c.JhMaze = () => { called++; return { maze: 1 } };
+  A.c.BGM = { force: null }; A.c.bgmForce = (f) => { A.c.BGM.force = f || null };
   A.hash.v = "#/jianghu/maze"; assert.deepEqual(A.c.Jianghu({}), { maze: 1 }); assert.equal(called, 1);
+  assert.equal(A.c.BGM.force, "maze/maze_1.mp3", "進迷宮指定播專屬配樂");
   const B = load({ hall: true, hash: "#/jianghu/maze", off: ["maze"] }); B.c.jhCss = () => {}; B.c.jhMzCss = () => {};
+  B.c.BGM = { force: null }; B.c.bgmForce = (f) => { B.c.BGM.force = f || null }; B.c.Jianghu({}); assert.equal(B.c.BGM.force, null, "開關關掉不播");
   B.c.JhMaze({}); assert.equal(B.hash.v, "#/jianghu/hall/central");
 });
 
@@ -184,6 +187,19 @@ test("#83 審查②：點棋盤換成著法 jhMzMv——兩題答案從格子反
   assert.equal(c.jhMzMv({ c: 7, r: 7 }, { c: 4, r: 7 }), "h2e2");
   const { B } = mateIn1(PUZ.trap.fen), m = C.legal(B, "r").find((x) => toIccs(x) === PUZ.trap.ans);
   assert.equal(c.jhMzMv({ c: m[0] % 9, r: Math.floor(m[0] / 9) }, { c: m[1] % 9, r: Math.floor(m[1] / 9) }), PUZ.trap.ans, "core.js 的合法著法換算成點擊格子，再換回著法要一樣");
+});
+
+test("專屬配樂：進迷宮指定播 maze/maze_1.mp3；換到別頁（hashchange）還原成朝代輪播；別的頁指定的配樂不會被迷宮關掉", () => {
+  const mem = {}, hash = { v: "#/jianghu/maze" }, ev = {}, calls = [];
+  const c = { store: { get: (k, d) => d, set() {} }, jhL: (zh) => zh, esc: String, Math, JSON, Set, Map, Number, String, Array, Object,
+    BGM: { force: null }, addEventListener: (n, f) => { ev[n] = f } };
+  c.bgmForce = (f) => { calls.push(f); c.BGM.force = f || null };
+  Object.defineProperty(c, "location", { get: () => ({ get hash() { return hash.v } }) });
+  vm.createContext(c); vm.runInContext(SRC, c); assert.ok(mem);
+  c.jhMzBgm(true); assert.equal(c.BGM.force, "maze/maze_1.mp3"); c.jhMzBgm(true); assert.equal(calls.length, 1, "已經在播就不重設");
+  hash.v = "#/jianghu/maze"; ev.hashchange(); assert.equal(c.BGM.force, "maze/maze_1.mp3", "還在迷宮不還原");
+  hash.v = "#/jianghu/hall/central"; ev.hashchange(); assert.equal(c.BGM.force, null, "離開迷宮還原");
+  c.BGM.force = "guanxing/yixiang_1.mp3"; ev.hashchange(); assert.equal(c.BGM.force, "guanxing/yixiang_1.mp3", "別首指定配樂不關");
 });
 
 test("〔原始碼〕07z9m-maze.js：LF、沒有控制字元、沒有行內 // 註解；m.html 有登記、排在 07z9l-halls.js 後面（包得到八派的 JhHall）", () => {
