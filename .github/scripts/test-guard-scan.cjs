@@ -329,7 +329,7 @@ test("第四輪②：圖裡解出來的文字（壓縮的 zTXt／iTXt、分段�
   const zlib = require("zlib"), crc = (b) => { let c, t = -1; for (const x of b) { c = (t ^ x) & 255; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t = (t >>> 8) ^ c } return (t ^ -1) >>> 0 };
   const chunk = (type, data) => { const len = Buffer.alloc(4), td = Buffer.concat([Buffer.from(type), data]), c = Buffer.alloc(4); len.writeUInt32BE(data.length); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]) };
   const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(1, 0); ihdr.writeUInt32BE(1, 4); ihdr[8] = 8;
-  const MK = "oss-scan" + ":allow", line = "m=" + MAIL3 + " " + MK;   /* 中風險（第五輪起高風險不受標記影響，用信箱才測得到這一條） */
+  const MK = "oss-scan" + ":allow", line = "p=/Us" + "ers/zed.fake " + MK;   /* 中風險、認標記的規則（第五輪起高風險、第十二輪起個資都不受標記影響，用本機路徑才測得到這一條） */
   const png = (c) => Buffer.concat([SIG.png, chunk("IHDR", ihdr), c, chunk("IDAT", zlib.deflateSync(Buffer.from([0, 0]))), chunk("IEND", Buffer.alloc(0))]);
   const z = png(chunk("zTXt", Buffer.concat([Buffer.from("Comment\0\0"), zlib.deflateSync(Buffer.from(line))])));
   const it = png(chunk("iTXt", Buffer.concat([Buffer.from("Comment\0\x01\0\0\0"), zlib.deflateSync(Buffer.from(line))])));
@@ -702,7 +702,10 @@ test("第十一輪①：純文字檔寫了 fileSha256 也不放行（只對檔�
   const t = Buffer.from("聯絡 " + MAIL3 + "\n"), h = require("crypto").createHash("sha256").update(t).digest("hex");
   const d = repo(({ put }) => put("source/notes.txt", t));
   assert.notEqual(scanA(d, [{ rule: "email", file: "source/notes.txt", fileSha256: h, reason: "整檔雜湊" }]).status, 0, "純文字檔：fileSha256 不算數（第十二輪起清單格式就退）");
-  assert.equal(scanA(d, [{ rule: "local-path", file: "source/notes.txt", fileSha256: h, reason: "整檔雜湊" }]).status, 1, "純文字檔：非個資規則的 fileSha256 照樣不算數，信箱照擋");
+  const t2 = Buffer.from("路徑 /Us" + "ers/zed.fake\n"), h2 = require("crypto").createHash("sha256").update(t2).digest("hex"), d2 = repo(({ put }) => put("source/notes.txt", t2));
+  assert.equal(scanA(d2, [{ rule: "local-path", file: "source/notes.txt", fileSha256: h2, reason: "整檔雜湊" }]).status, 1, "純文字檔：非個資規則（本機路徑）的 fileSha256 也不算數");
+  const d3 = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m11b-")); made.push(d3); fs.writeFileSync(path.join(d3, "n.txt"), t2);
+  assert.equal(require(OSS).scan(d3, { allow: [{ rule: "local-path", file: "n.txt", fileSha256: h2, reason: "整檔雜湊" }] }).findings.find((f) => f.rule === "local-path").allowed, null, "oss-scan 自己也不放");
   const O = require(OSS), dd = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m11-")); made.push(dd); fs.writeFileSync(path.join(dd, "n.txt"), t);
   assert.equal(O.scan(dd, { allow: [{ rule: "email", file: "n.txt", fileSha256: h, reason: "整檔雜湊" }] }).findings.find((f) => f.rule === "email").allowed, null);
 });
