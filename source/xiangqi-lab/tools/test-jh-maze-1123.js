@@ -304,3 +304,86 @@ test("〔原始碼〕07z9m-maze.js：LF、沒有控制字元、沒有行內 // �
   const H = fs.readFileSync(path.join(ROOT, "xiangqi-db", "m.html"), "utf8"), a = H.indexOf("//#include m/07z9l-halls.js"), b = H.indexOf("//#include m/07z9m-maze.js");
   assert.ok(a > 0 && b > a);
 });
+
+/* ---------- W87（11/24）九派地底迷宮共用：門派登記、守衛走法、多步殺、題庫輪換、存檔分開、入口與路由 ---------- */
+/* 測試用的假門派：直走的車（上下巡）＋橫走的車兩個守衛；R＝擋路但透光（像太湖石）；題庫兩題兩步殺；onStep 推箱子 B */
+const FAKE = `jhMzDef("testsch",{map:[
+"#########",
+"#@..R...#",
+"#.......#",
+"#..B....#",
+"#.......#",
+"#...P..>#",
+"####D####",
+"#########"],
+  guards:[{kind:"rook",x:6,y:1,dx:0,dy:1},{kind:"rook",x:1,y:4,dx:1,dy:0,range:3}],solid:"#SDRB",opaque:"#D",
+  pool:{door:[{zh:["門一","說明"],en:["d1","x"],fen:"4k4/9/9/9/9/9/9/9/9/4K4",line:["a0a1","a9a8","a1a9"]},{zh:["門二","說明"],en:["d2","x"],fen:"4k4/9/9/9/9/9/9/9/9/4K4",line:["b0b1","b9b8","b1b9"]}],
+        trap:[{zh:["陷一","x"],en:["t1","x"],fen:"4k4/9/9/9/9/9/9/9/9/4K4",ans:"c0c1"},{zh:["陷二","x"],en:["t2","x"],fen:"4k4/9/9/9/9/9/9/9/9/4K4",ans:"d0d1"}]},
+  rew:[{k:"a",zh:"甲",en:"A"},{k:"b",zh:"乙",en:"B"}],xp:12,xpKey:"maze:testsch:1",key:"jhMaze_testsch",hall:{at:[100,100],zh:"測試入口",en:"Test"},
+  onStep(S,dx,dy,c){if(c!=="B")return null;const P=S.player,bx=P.x+dx*2,by=P.y+dy*2;if(jhMzSolid(S,bx,by))return{ev:"wall"};S.grid[P.y+dy][P.x+dx]=".";S.grid[by][bx]="B";P.x+=dx;P.y+=dy;S.turn++;return{ev:"push"}}});`;
+const loadF = (o = {}) => { const L = load(o); vm.runInContext(FAKE, L.c); return L };
+
+test("W87 門派登記：中炮門照舊登記、設定照原本的常數；路由 #/jianghu/maze＝中炮門、#/jianghu/maze/<派> 有登記才算、其他網址不是迷宮", () => {
+  const { c } = loadF(), LV = vm.runInContext("JH_MZ_LV", c), sidOf = vm.runInContext("jhMzSidOf", c);   /* const 宣告的不在 vm 的全域物件上，要用 runInContext 取 */
+  const lv = LV.central; assert.ok(lv); assert.equal(lv.map, c.JH_MZ_MAP); assert.equal(lv.puz, c.JH_MZ_PUZ); assert.equal(lv.key, "jhMaze"); assert.equal(lv.jump, "S");
+  assert.equal(sidOf("#/jianghu/maze"), "central"); assert.equal(sidOf("#/jianghu/maze/central"), "central"); assert.equal(sidOf("#/jianghu/maze/testsch"), "testsch");
+  assert.equal(sidOf("#/jianghu/maze/nosuch"), null, "沒登記的派不算迷宮（不能隨便開）"); assert.equal(sidOf("#/jianghu/hall/central"), null); assert.equal(sidOf("#/jianghu"), null);
+  const S = c.jhMzNew("testsch"); assert.equal(S.sid, "testsch"); assert.equal(S.W, 9); assert.equal(S.H, 8); assert.equal(S.guards.length, 2); assert.equal(S.guard, S.guards[0]);
+  assert.equal(c.jhMzNew().sid, "central", "沒給＝中炮門"); assert.equal(c.jhMzNew("nosuch").sid, "central");
+});
+
+test("W87 守衛：直走的車上下巡、碰牆掉頭；兩個守衛都會走、都會抓人，抓到的記在 caughtBy，解開陷阱暈的是它；範圍照 range", () => {
+  const { c } = loadF(), S = c.jhMzNew("testsch"), [A, B] = S.guards;
+  assert.deepEqual(JSON.parse(JSON.stringify(c.jhMzSight(S, A).map((q) => [q.x, q.y]))), [[6, 2], [6, 3], [6, 4], [6, 5]], "往下看到第 5 列為止（第 6 列是牆）");
+  c.jhMzGuardStep(S); assert.deepEqual([A.x, A.y, B.x, B.y], [6, 2, 2, 4], "兩個都走一步");
+  A.y = 5; A.dy = 1; c.jhMzGuardStep(S); assert.deepEqual([A.y, A.dy], [4, -1], "下面是牆就掉頭往上");
+  assert.equal(c.jhMzSight(S, B).length, 3, "range 3 只看得到 3 格");
+  S.player.x = 4; S.player.y = 4; A.stun = 9; assert.ok(c.jhMzCaught(S), "第二個守衛看得到"); assert.equal(S.caughtBy, B);
+  c.jhMzSolved(S, "trap"); assert.equal(B.stun, 4, "暈的是抓到人的那個"); assert.equal(S.caughtBy, null);
+});
+
+test("W87 擋路與擋光分開：R 擋路但透光（光、視線穿得過去），沒設 jump 的門派糧袋不能跳；onStep 機關（推箱子）照該派寫的走", () => {
+  const { c } = loadF(), S = c.jhMzNew("testsch"); S.guards.forEach((G) => (G.stun = 99));
+  assert.ok(c.jhMzSolid(S, 4, 1), "R 擋路"); assert.ok(!c.jhMzOpaque(S, 4, 1), "R 不擋光"); assert.ok(c.jhMzLos(S, 3, 1, 5, 1), "光穿得過 R");
+  S.player.x = 3; S.player.y = 1; assert.equal(c.jhMzStep(S, 1, 0).ev, "wall", "R 走不進去、也不能跳（這派沒設 jump）");
+  S.player.x = 3; S.player.y = 2; const r = c.jhMzStep(S, 0, 1); assert.equal(r.ev, "push"); assert.deepEqual([S.player.x, S.player.y, S.grid[4][3], S.grid[3][3]], [3, 3, "B", "."], "箱子往前推一格");
+});
+
+test("W87 多步殺：照 line 一步一步走——走對回 next（還沒將死）、最後一步回 ok；中途走錯回 bad、從頭再來；一步殺（ans）照舊", () => {
+  const { c } = loadF(), S = c.jhMzNew("testsch", 0), P = c.jhMzPuz(S, "door");
+  assert.equal(P.en[0], "d1");
+  assert.equal(c.jhMzTry(S, "door", "a0a1"), "next"); assert.deepEqual({ ...S.pz }, { id: "door", i: 2 });
+  assert.equal(c.jhMzTry(S, "door", "a1a9"), "ok"); assert.equal(S.pz, null);
+  assert.equal(c.jhMzTry(S, "door", "a0a1"), "next"); assert.equal(c.jhMzTry(S, "door", "h0h1"), "bad", "中途走錯"); assert.equal(S.pz, null);
+  assert.equal(c.jhMzTry(S, "door", "a1a9"), "bad", "從頭再來：第二步不能直接接上"); assert.equal(S.fails.door, 2);
+  assert.equal(c.jhMzTry(S, "trap", "c0c1"), "ok", "一步殺照舊");
+});
+
+test("W87 題庫輪換：第幾次走換一題（run）；同一層解開陷阱、被拖回入口後換下一題；題庫只有一題時照用", () => {
+  const { c } = loadF();
+  assert.equal(c.jhMzPuz(c.jhMzNew("testsch", 0), "door").en[0], "d1"); assert.equal(c.jhMzPuz(c.jhMzNew("testsch", 1), "door").en[0], "d2", "第二次走換一題");
+  const S = c.jhMzNew("testsch", 0); assert.equal(c.jhMzPuz(S, "trap").en[0], "t1");
+  c.jhMzSolved(S, "trap"); assert.equal(c.jhMzPuz(S, "trap").en[0], "t2", "解開陷阱換下一題");
+  c.jhMzCaughtBack(S); assert.equal(c.jhMzPuz(S, "trap").en[0], "t1", "拖回入口也換（兩題輪回來）");
+  assert.equal(c.jhMzPuz(c.jhMzNew("central", 5), "door"), c.JH_MZ_PUZ.door, "中炮門沒有題庫就用固定題");
+});
+
+test("W87 存檔分開：每一派存自己的鍵、修為照自己的 xp 與代號；中炮門照舊存 jhMaze（舊存檔不用搬）；獎勵照該派的 rew", () => {
+  const { c, xp, mem } = loadF(), S = c.jhMzNew("testsch"); S.turn = 9; S.bag.a = 1;
+  const r = c.jhMzSave(S); assert.ok(r.first); assert.deepEqual(xp, [[12, "maze:testsch:1"]]);
+  assert.ok("jhMaze_testsch" in mem); assert.ok(!("jhMaze" in mem), "不會寫到中炮門的存檔");
+  assert.deepEqual(JSON.parse(mem.jhMaze_testsch), { clear: 1, best: 9, a: 1, b: 0 });
+  assert.deepEqual({ ...c.jhMzGet("testsch") }, { clear: 1, best: 9, a: 1, b: 0 }); assert.equal(c.jhMzGet("central").clear, 0);
+  const T = c.jhMzNew("testsch"); for (let i = 0; i < T.W * T.H; i++) T.seen.add(i); T.guards.forEach((G) => (G.stun = 99));
+  T.grid[2][2] = "C"; T.chests.add(2 * T.W + 2); T.chest0 = 1; T.player.x = 2; T.player.y = 1; const e = c.jhMzStep(T, 0, 1); assert.equal(e.chest, "a", "箱子給的是這一派的獎勵");
+});
+
+test("W87 門內頁入口：有登記 hall 的門派都放（網址 #/jianghu/maze/<派>），中炮門照舊 #/jianghu/maze；沒登記的不放；路由帶 sid 進 JhMaze", () => {
+  const A = loadF({ hall: true }); withDoc(A.c);
+  const p = hallPage(); A.c.JhHall(p.v, "testsch"); assert.equal(p.kids.length, 1); assert.match(p.kids[0].innerHTML, /測試入口/);
+  p.kids[0].onclick({ stopPropagation() {} }); assert.deepEqual(A.c.__went, ["#/jianghu/maze/testsch"]);
+  const q = hallPage(); A.c.JhHall(q.v, "horse"); assert.equal(q.kids.length, 0, "沒登記的派不放");
+  let got = null; A.c.JhMaze = (v, sid) => { got = sid; return { maze: 1 } }; A.c.BGM = { force: null }; A.c.bgmForce = (f) => { A.c.BGM.force = f || null };
+  A.hash.v = "#/jianghu/maze/testsch"; assert.deepEqual(A.c.Jianghu({}), { maze: 1 }); assert.equal(got, "testsch");
+  A.hash.v = "#/jianghu/maze/nosuch"; assert.deepEqual(A.c.Jianghu({}), { scroll: 1 }, "沒登記的派照舊畫長卷");
+});
