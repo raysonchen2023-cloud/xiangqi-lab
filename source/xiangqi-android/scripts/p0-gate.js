@@ -236,12 +236,19 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
 }
 
 /* #102 審查建議①（作者採用）：閘門不信報告本身——手上有新版 AAB，再收 --old-aab，用跟 origin/main 一樣的 aab-diff.js 自己重算紅黃項與金絲雀。
-   放行參數照報告記的（印進收據、太寬的話金絲雀會抓到），確認清單用閘門自己收的 --ack（人寫的那份，不用報告裡的）。A、B＝兩包的索引（readZipIndex） */
+   放行參數照報告記的（原樣印進收據；寫成全部放行時金絲雀會抓到，比較細的放寬不一定，要人看「放行」那一節），確認清單用閘門自己收的 --ack（人寫的那份，不用報告裡的）。A、B＝兩包的索引（readZipIndex） */
 function recomputeDiff(AD, A, B, args, ack) {
   const re = (k) => (args && typeof args[k] === "string" && args[k] ? new RegExp(args[k]) : undefined);
   const o = { expectRemoved: re("expect-removed"), expectAdded: re("expect-added"), expectShrunk: re("expect-shrunk"), ack: ack instanceof Set ? ack : new Set() };
   const r = AD.diffIndex(A, B, o), c = AD.canaryRun(A, B, o);
   return { red: r.red, yellow: r.yellow, acked: r.acked.map((y) => y.ack), allowed: r.allowed.length, canaryOk: c.ok === true, canary: c };
+}
+/* #102 複審（高）：從兩個檔重算——先跟 aab-diff 命令列一樣核對輸入（兩包都要是 AAB、不能是同一個檔、不能每個檔都一樣），不合格丟例外（閘門判沒驗到、結束代碼 2）；
+   複審（中）：主程式只呼叫這一支，測試直接拿真的 zip 跑，新舊讀錯檔會被抓到 */
+function recomputeFromFiles(AD, oldPath, newPath, args, ack) {
+  const A = AD.readZipIndex(oldPath), B = AD.readZipIndex(newPath), bad = AD.checkInputs(A, B, oldPath, newPath);
+  if (bad) throw new Error("產物比對沒驗到：" + bad);
+  return Object.assign(recomputeDiff(AD, A, B, args, ack), { oldSha256: AD.sha256File(oldPath), newSha256: AD.sha256File(newPath) });
 }
 /* #102 審查④：收據（JSON）——送審 AAB、舊版、放行參數原樣、確認過的黃項確認碼逐筆、工具雜湊。閘門通過才寫 */
 function aabDiffReceipt(aabSha, reports, re) {
@@ -302,7 +309,7 @@ async function main() {
     if (!fs.existsSync(OLD)) { console.error("✘ 找不到 --old-aab：" + OLD); process.exit(2) }
     let ack = new Set();
     if (ACK) { try { const j = JSON.parse(fs.readFileSync(ACK, "utf8")); if (!Array.isArray(j) || !j.every((x) => typeof x === "string")) throw 0; ack = new Set(j) } catch (e) { console.error("✘ --ack 清單讀不到或格式不對（要是確認碼字串的陣列）：" + ACK); process.exit(2) } }
-    try { const AD = require("./aab-diff.js"); oldSha = AD.sha256File(OLD); diffRe = recomputeDiff(AD, AD.readZipIndex(OLD), AD.readZipIndex(AAB), adRep && adRep.json && adRep.json.args, ack) }
+    try { diffRe = recomputeFromFiles(require("./aab-diff.js"), OLD, AAB, adRep && adRep.json && adRep.json.args, ack); oldSha = diffRe.oldSha256 }
     catch (e) { console.error("✘ 閘門重算產物比對失敗：" + (e && e.message)); process.exit(2) }
   }
   const r = gate(sha, BUILD, reports, fromRepo ? waivers : [], { mainSha, cdnProbe, diffRe, oldSha });
@@ -320,5 +327,5 @@ async function main() {
   for (const p of r.problems) console.log("✘ " + p);
   console.log("✘ 不能送審"); process.exit(1);
 }
-module.exports = { probeCdn, GATE_CDN, gate, aabDiffInfo, recomputeDiff, aabDiffReceipt, validWaiver, onlyCdnDown, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
+module.exports = { probeCdn, GATE_CDN, gate, aabDiffInfo, recomputeDiff, recomputeFromFiles, aabDiffReceipt, validWaiver, onlyCdnDown, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
 if (require.main === module) main().catch((e) => { console.error("✘ " + (e && e.message)); process.exit(2) });

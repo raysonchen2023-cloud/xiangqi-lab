@@ -491,3 +491,16 @@ test("#102 審查③：命令列實跑時，金絲雀用的是同一套參數—
   const c2 = run(a, b, "--strict", "--old-code=1", "--new-code=2", "--json=" + out), j2 = JSON.parse(fs.readFileSync(out, "utf8"));
   assert.equal(j2.canary.home.ok, true, "沒放寬的照常抓到"); assert.equal(c2.status, 0);
 });
+
+test("#102 複審：閘門從兩個檔重算（recomputeFromFiles）——新版少了首頁素材要重算出紅項、兩個雜湊照實回報；新舊同一個檔、只差 zip 註解（每個檔都一樣）、不是 AAB，一律丟例外（閘門判沒驗到）", () => {
+  const G = require(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js")), crypto = require("crypto"), sh = (f) => crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+  const old = makeZip("rf-old.zip", W91), lost = Object.assign({}, W91); delete lost[P + "data/homemap/home.webp"]; const neu = makeZip("rf-new.zip", lost);
+  const r = G.recomputeFromFiles(AD, old, neu, {}, new Set());
+  assert.ok(r.red.some((x) => x.f === P + "data/homemap/home.webp"), "新版少了首頁素材：重算要有紅項（新舊讀錯檔就抓不到）");
+  assert.equal(r.oldSha256, sh(old)); assert.equal(r.newSha256, sh(neu)); assert.notEqual(r.oldSha256, r.newSha256);
+  assert.throws(() => G.recomputeFromFiles(AD, neu, neu, {}, new Set()), /同一個檔/, "新舊同一個檔");
+  const withComment = path.join(TMP, "rf-comment.zip"), buf = fs.readFileSync(neu), c = Buffer.from("x".repeat(9)); const z = Buffer.concat([buf, c]); z.writeUInt16LE(c.length, buf.length - 2); fs.writeFileSync(withComment, z);
+  assert.notEqual(sh(withComment), sh(neu), "加了 zip 註解，雜湊不同");
+  assert.throws(() => G.recomputeFromFiles(AD, withComment, neu, {}, new Set()), /一模一樣/, "只差 zip 註解：每個檔都一樣，多半拿錯檔");
+  assert.throws(() => G.recomputeFromFiles(AD, makeZip("rf-x.zip", { "README.md": "a" }), neu, {}, new Set()), /不是 AAB/, "不是 AAB");
+});
