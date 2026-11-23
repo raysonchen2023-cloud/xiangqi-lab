@@ -36,6 +36,9 @@ const AAB = arg("--aab"), REPO = arg("--repo"), OUT = arg("--out"), CDN_CHECK = 
 const CDN = "https://xiangqi-cdn.pages.dev/";
 const MEDIA = /\.(webp|png|jpe?g|gif|svg|mp3|ogg|m4a|wav|glb|gltf|bin|mp4|webm)$/i;
 const SPLIT = 20 * 1024 * 1024;   // tools/cdn-deploy.js：超過 20 MB 的檔在 CDN 上切塊
+/* 閘門（p0-gate.js）會照這兩句固定文字核對「單純 CDN 連不上」的報告（PR #66 第十四次複審）：改文字要兩邊一起改 */
+const NOTE_VIA_WEB = "不在安裝包裡、原生不會補抓；網頁程式會自己改抓 CDN";
+const unknownWhy = (st) => `CDN 沒確認到（${st === -1 ? "連不上" : "HTTP " + st}，請稍後重跑 --cdn）`;
 const PARTS_MARKER = "XQ-CDN-PARTS-v1";   // 預留：XQCdnFallback 下次改版時加這個字串常數，檢查就不用靠一般字串猜
 const die = (m, c = 2) => { console.error("✘ " + m); process.exit(c) };
 
@@ -110,7 +113,7 @@ async function main() {
         if (st === 200) ok200++;
         // PR #11 審查：只有 404／410 是確定沒有；連不上、429（限流）、5xx 都只算沒確認到
         if (st === 404 || st === 410) miss.push({ f, why: `CDN 上沒有（${split ? ".parts.json " : ""}HTTP ${st}）：靠 CDN 補抓會失敗` });
-        else if (st !== 200) unknown.push({ f, st, why: `CDN 沒確認到（${st === -1 ? "連不上" : "HTTP " + st}，請稍後重跑 --cdn）` }); } }
+        else if (st !== 200) unknown.push({ f, st, why: unknownWhy(st) }); } }
       await Promise.all(Array.from({ length: 6 }, worker));
       cdnRun = { probeF, miss, unknown, ok200 };
       /* 金絲雀檔不算進正式結果：判成「沒有」是預期的，拿掉；判成「沒確認到」（CDN 連不上）照樣算缺驗，留在 unknown */
@@ -170,7 +173,7 @@ function classify(need, has, sha1Of, native) {
     if (split && !native.partsJoin) { red.push({ f, why: native.cdnFallback ? "CDN 上切塊的大檔不在安裝包裡，原生補抓不會接回切塊（W30）" : "CDN 上切塊的大檔不在安裝包裡，原生也不會補抓" }); continue; }
     if (native.cdnFallback) { ok.viaCdn++; viaCdn.push([f, split]); continue; }
     if (MEDIA.test(f)) red.push({ f, why: "不在安裝包裡，原生又不會向 CDN 補抓：圖片／音樂直接破（W21）" });
-    else { warn.push({ f, why: "不在安裝包裡、原生不會補抓；網頁程式會自己改抓 CDN" }); ok.viaCdn++; viaCdn.push([f, split]); }
+    else { warn.push({ f, why: NOTE_VIA_WEB }); ok.viaCdn++; viaCdn.push([f, split]); }
   }
   return { red, warn, ok, viaCdn };
 }
@@ -213,5 +216,5 @@ function cdnCanary(probe, miss, unknown, ev = {}) {
 }
 /* 結束代碼用的金絲雀判斷（純函式）：①②一律要抓到；加 --cdn 時③要抓到，或 CDN 真的連不上（cdnUnreachable，歸缺驗 3，不算失靈）；看布林欄位，不看訊息文字 */
 function canaryExitOk(c, cdn) { return c.home === true && c.stale === true && (!cdn || c.cdn404 === true || c.cdnUnreachable === true) }
-module.exports = { exitCode, PARTS_MARKER, MEDIA, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk };
+module.exports = { exitCode, PARTS_MARKER, MEDIA, NOTE_VIA_WEB, unknownWhy, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk };
 if (require.main === module) main().catch(e => die(e.stack || String(e)));

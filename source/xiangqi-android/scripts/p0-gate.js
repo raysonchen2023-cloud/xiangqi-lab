@@ -24,7 +24,7 @@
 "use strict";
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const TP = require("./tool-pin.js");
-const { MEDIA } = require("./check-aab-assets.js");   /* 第十三次複審：媒體檔照破圖工具自己的規則判 */
+const { MEDIA, NOTE_VIA_WEB, unknownWhy } = require("./check-aab-assets.js");   /* 第十三、十四次複審：媒體檔、提醒與缺驗的固定文字都照破圖工具自己的定義；所以 check-aab-assets.js 也列進閘門的自我鎖定 */
 const PROBE_RE = /^data\/__xq_p0_canary_[0-9a-f]{12}\.webp$/;   /* 金絲雀③的探測檔（check-aab-assets.js 產生的檔名），不是真的要補抓的檔 */
 
 const TOOLS = ["P0-IMG", "P0-UPD", "P0-3D"], ANDROID_3D = ["12", "16"], ROUNDS_3D = 2;
@@ -58,10 +58,18 @@ function onlyCdnDown(json) {
   /* 第十二、十三次複審：不帶狀態的項目，除了 manifest 那一筆，只准是「同一個檔另有一筆帶狀態的缺驗、而且不是媒體檔」：
      原生不補抓、缺的是 JSON 時，正確的工具會多寫一筆「網頁程式會自己改抓 CDN」的提醒，那一筆 CDN 全斷時也會沒確認到（第十三次：上一輪誤擋了這種正確的包）。
      其他不帶狀態的（例如媒體檔的 W21 提醒、對不到缺驗項目的）不是 CDN 的問題 */
-  const stF = new Set(W.filter((w) => w && typeof w === "object" && "st" in w).map((w) => w.f));
-  const noSt = W.filter((w) => !(w && typeof w === "object" && "st" in w) && !(w && w.f === "cdn-manifest.json")
-    && !(w && typeof w.f === "string" && stF.has(w.f) && !MEDIA.test(w.f)));
-  if (noSt.length) return `逐項清單有 CDN 以外的提醒（${noSt.slice(0, 3).map((w) => (w && w.f) || "?").join("、")}），不是單純 CDN 連不上`;
+  /* 第十四次複審：上面那條可以被湊出來（會補抓的報告多加一筆同檔名、原因寫別的提醒也放行），改成一對一核對：
+     原生會補抓時，一筆提醒都不准有；不會補抓時，每個要補抓、不是媒體、不是探測檔的缺驗，都剛好有一筆提醒，原因文字等於工具那句 NOTE_VIA_WEB */
+  const isSt = (w) => !!w && typeof w === "object" && "st" in w;
+  const st0 = W.filter(isSt), fb = !!(json.native && json.native.cdnFallback === true);
+  const notes = W.filter((w) => !isSt(w) && !(w && w.f === "cdn-manifest.json"));
+  const want = fb ? [] : st0.filter((w) => typeof w.f === "string" && !PROBE_RE.test(w.f) && !MEDIA.test(w.f)).map((w) => w.f).sort();
+  const got = notes.map((w) => (w && w.why === NOTE_VIA_WEB && typeof w.f === "string" ? w.f : "?")).sort();
+  if (JSON.stringify(got) !== JSON.stringify(want)) return `逐項清單有 CDN 以外的提醒，或提醒跟缺驗對不起來（${notes.slice(0, 3).map((w) => (w && w.f) || "?").join("、") || "少了提醒"}${fb ? "；原生會補抓時不該有提醒" : ""}），不是單純 CDN 連不上`;
+  /* 第十四次複審建議：探測檔只能有一筆；每筆缺驗的原因文字要跟它的狀態碼對得上（工具 unknownWhy 寫的） */
+  if (st0.filter((w) => PROBE_RE.test(String(w.f))).length !== 1) return "探測檔不是剛好一筆";
+  const whyBad = st0.filter((w) => w.why !== unknownWhy(w.st));
+  if (whyBad.length) return `缺驗的原因文字跟狀態碼對不起來（${whyBad.slice(0, 3).map((w) => w.f).join("、")}）`;
   /* 原生不會向 CDN 補抓時，要補抓的檔裡不能有媒體檔（探測檔除外）：缺的圖片、音樂在玩家手上就是破圖（W21），不能拿「CDN 連不上」豁免。
      JSON 這類資料檔網頁程式會自己改抓 CDN，照樣算 CDN 的問題。沒記 native 一律不算 */
   if (json.viaCdn > 0 && !(json.native && json.native.cdnFallback === true)) {
@@ -206,7 +214,8 @@ async function main() {
       return TP.normSha(cp.execFileSync("git", ["-C", ROOT, "show", "origin/main:" + p], { maxBuffer: 64e6, stdio: ["ignore", "pipe", "ignore"] }));
     } catch (e) { return null }
   };
-  for (const f of ["p0-gate.js", "tool-pin.js", "repo-pin.js"]) {
+  /* 第十四次複審：閘門讀 check-aab-assets.js 的規則（它又載入 bundle-home-assets.js），這兩支也要跟 main 一樣 */
+  for (const f of ["p0-gate.js", "tool-pin.js", "repo-pin.js", "check-aab-assets.js", "bundle-home-assets.js"]) {
     const m = mainSha(TP.DIR + f), l = TP.normSha(fs.readFileSync(path.join(__dirname, f)));
     if (m !== l) { console.error(`✘ ${TP.DIR + f} ${m ? "跟 origin/main 那一版不一樣" : "讀不到 origin/main 那一版（git fetch 失敗或不在倉庫裡）"}：送審閘門本身要是審過的那一版`); process.exit(2) }
   }

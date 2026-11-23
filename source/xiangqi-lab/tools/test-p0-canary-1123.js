@@ -21,7 +21,7 @@ const img = (o = {}) => ({ file: "img", json: Object.assign({ tool: "P0-IMG", aa
 /* 正確的工具在「CDN 沒驗到」時寫出的報告：結束代碼 3、沒通過、沒有 ✘、有沒驗到的項目（PR #66 第八次複審） */
 /* 第九次複審：金絲雀③也要是 CDN 全斷時的樣子（探測檔沒拿到 404、工具說連不上） */
 /* 第十次複審：照正確的工具在 CDN 全斷時寫的逐項清單（探測檔也在缺驗清單裡）；金絲雀③那塊用工具裡真的 cdnCanary 產生，不自己捏欄位 */
-const PROBE_F = "data/__xq_p0_canary_test.webp";
+const PROBE_F = "data/__xq_p0_canary_0123456789ab.webp";   /* 跟工具產生的格式一樣（12 個十六進位字元） */
 const downItems = () => [{ f: "data/a.webp", st: -1, why: "CDN 沒確認到（連不上，請稍後重跑 --cdn）" }, { f: PROBE_F, st: -1, why: "CDN 沒確認到（連不上，請稍後重跑 --cdn）" }];
 const miss = (L) => {
   const { cdnCanary } = require(path.join(AND, "check-aab-assets.js")), unk = downItems();
@@ -299,7 +299,7 @@ test("閘門探測（PR #66 第九次複審）：manifest 正常就算連得上�
 test("閘門（PR #66 第十次複審）：從逐項清單重算；混一筆 404、200、比對過 CDN、探測狀態不是連不上、筆數對不起來，閘門連不上也不能豁免", () => {
   const { onlyCdnDown } = require(path.join(AND, "p0-gate.js"));
   assert.equal(onlyCdnDown(miss(all())[0].json), null, "正確工具在 CDN 全斷時的報告");
-  const add = (j, it) => { j.warnItems.push(it); j.warn = j.warnItems.length; if ("st" in it) { j.unknown++; j.viaCdn++; j.need++ } };   /* 像真的報告：多一個沒確認到的補抓檔 */
+  const add = (j, it) => { if ("st" in it && !it.why) it.why = CA.unknownWhy(it.st); j.warnItems.push(it); j.warn = j.warnItems.length; if ("st" in it) { j.unknown++; j.viaCdn++; j.need++ } };   /* 第十四次：加的缺驗帶上工具會寫的原因文字，擋下來的才是要測的那條 */   /* 像真的報告：多一個沒確認到的補抓檔 */
   for (const [why, f, re] of [
     ["混一筆 404（真的缺檔）", (j) => add(j, { f: "data/x.webp", st: 404 }), /不是「連不上」/], ["混一筆 200", (j) => add(j, { f: "data/x.webp", st: 200 }), /不是「連不上」/],
     ["狀態是字串", (j) => add(j, { f: "data/x.webp", st: "-1" }), /不是「連不上」/], ["狀態 600", (j) => add(j, { f: "data/x.webp", st: 600 }), /不是「連不上」/], ["狀態 403（第十一次）", (j) => add(j, { f: "data/x.webp", st: 403 }), /不是「連不上」/],
@@ -311,7 +311,7 @@ test("閘門（PR #66 第十次複審）：從逐項清單重算；混一筆 404
     ["unknown 少算", (j) => { j.unknown-- }, /unknown/], ["unknown 多算", (j) => { j.unknown++ }, /unknown/], ["warn 對不起來", (j) => { j.warn++ }, /warn/],
     ["沒有 manifest 那筆", (j) => { j.warnItems = j.warnItems.filter((w) => w.f !== "cdn-manifest.json"); j.warn = j.warnItems.length; j.unknown-- }, /cdn-manifest/],
     ["兩筆 manifest", (j) => add(j, { f: "cdn-manifest.json", why: "x" }), /cdn-manifest/], ["沒有逐項清單", (j) => { delete j.warnItems }, /逐項清單/],
-    ["只有 manifest 那筆", (j) => { j.warnItems = j.warnItems.filter((w) => !("st" in w)); j.warn = j.warnItems.length; j.unknown = 1 }, /少於 2/]]) {
+    ["只有 manifest 那筆", (j) => { j.warnItems = j.warnItems.filter((w) => !("st" in w)); j.warn = j.warnItems.length; j.unknown = 1 }, /探測檔不是剛好一筆/]]) {
     const N = miss(all()); f(N[0].json);
     assert.match(String(onlyCdnDown(N[0].json)), re, why);
     const r = G(N, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, false, why); assert.equal(r.waived.length, 0, why);
@@ -339,6 +339,7 @@ test("〔原始碼〕閘門：自己用的 CDN 網址跟破圖工具一樣；報
   const pg = rd("p0-gate.js"), caa = rd("check-aab-assets.js");
   const g = /const GATE_CDN = "([^"]+)";/.exec(pg), c = /\nconst CDN = "([^"]+)";/.exec(caa);
   assert.ok(g && c); assert.equal(g[1], c[1], "閘門與工具的 CDN 網址要相同");
+  assert.ok(pg.includes('for (const f of ["p0-gate.js", "tool-pin.js", "repo-pin.js", "check-aab-assets.js", "bundle-home-assets.js"])'), "第十四次複審：閘門讀 check-aab-assets.js 的規則，它和 bundle-home-assets.js 也要列進自我鎖定");
   assert.match(pg, /async function main\(\) \{\n  process\.exitCode = 2;/, "PR #66 第八次複審：main 一開始就把結束代碼設成 2，探測卡住提早結束時不會變成 0");
   assert.match(pg, /json\.tool === "P0-IMG" && \(json\.exitCode !== 0 \|\| \(json\.canary && json\.canary\.cdnUnreachable === true\)\)\)\) \{ cdnProbe = await probeCdn\(\);/);
   assert.match(pg, /AbortSignal\.timeout\(15000\)/); assert.match(pg, /at: new Date\(\)\.toISOString\(\)/);
@@ -401,14 +402,33 @@ test("閘門（PR #66 第十一、十三次複審，端對端）：真的 check-
     const mNote = JSON.parse(JSON.stringify(a.report)); mNote.warnItems.find((w) => w.f === "data/a/y.json" && "st" in w).f = "data/a/y.webp";
     mNote.warnItems.push({ f: "data/a/y.webp", why: "不在安裝包裡、原生不會補抓" }); mNote.warn++;
     assert.match(String(onlyCdnDown(mNote)), /CDN 以外的提醒/); block(mNote, "同名的不帶狀態提醒是媒體檔");
+    /* 第十四次複審：會補抓的真報告多加一筆同檔名、不帶狀態的提醒（原因寫別的），以前會放行 */
+    const fake30 = JSON.parse(JSON.stringify(a.report)); fake30.warnItems.push({ f: "data/a/y.json", why: "CDN 上切塊的大檔不在安裝包裡（W30）" }); fake30.warn++;
+    assert.match(String(onlyCdnDown(fake30)), /原生會補抓時不該有提醒/); block(fake30, "會補抓卻多一筆同名提醒");
+    const dupP = JSON.parse(JSON.stringify(a.report)); const p0 = dupP.warnItems.find((w) => /__xq_p0_canary_/.test(w.f));
+    dupP.warnItems.push({ ...p0, f: "data/__xq_p0_canary_ffffffffffff.webp" }); dupP.warn++; dupP.unknown++; dupP.viaCdn++; dupP.need++;
+    assert.match(String(onlyCdnDown(dupP)), /探測檔不是剛好一筆/); block(dupP, "兩筆探測檔");
+    const why1 = JSON.parse(JSON.stringify(a.report)); why1.warnItems.find((w) => w.f === "data/a/y.json").why = CA.unknownWhy(503);
+    assert.match(String(onlyCdnDown(why1)), /原因文字跟狀態碼對不起來/); block(why1, "狀態 -1 卻寫 HTTP 503");
     /* ② 第十三次複審：原生不會補抓、只缺 JSON（正確的包；網頁程式會自己改抓 CDN）：上一輪誤擋，現在要能豁免 */
     const b = runReal({ dex: [], has: ["x"], big: false });
     assert.equal(b.status, 3, "不補抓只缺 JSON，CDN 全斷＝缺驗 3：" + b.err); assert.equal(b.report.native.cdnFallback, false);
     assert.equal(onlyCdnDown(b.report), null, "不補抓只缺 JSON：算單純 CDN 連不上"); waive(b.report, "不補抓只缺 JSON 的正確包");
+    /* 第十四次複審：不補抓時，提醒要跟缺驗一對一、原因文字要是工具那句 */
+    const bWhy = JSON.parse(JSON.stringify(b.report)); bWhy.warnItems.find((w) => !("st" in w) && w.f === "data/a/y.json").why = "別的原因";
+    assert.match(String(onlyCdnDown(bWhy)), /提醒跟缺驗對不起來/); block(bWhy, "提醒的原因不是工具那句");
+    const bDup = JSON.parse(JSON.stringify(b.report)); bDup.warnItems.push({ f: "data/a/y.json", why: CA.NOTE_VIA_WEB }); bDup.warn++;
+    assert.match(String(onlyCdnDown(bDup)), /提醒跟缺驗對不起來/); block(bDup, "同一個檔兩筆提醒");
+    const bLess = JSON.parse(JSON.stringify(b.report)); bLess.warnItems = bLess.warnItems.filter((w) => !(!("st" in w) && w.f === "data/a/y.json")); bLess.warn = bLess.warnItems.length;
+    assert.match(String(onlyCdnDown(bLess)), /提醒跟缺驗對不起來/); block(bLess, "不補抓卻少了提醒");
     /* ③ 第十三次複審：只有接回切塊的標記、不會補抓，缺的是大的 JSON：也要能豁免 */
     const c = runReal({ dex: [CA.PARTS_MARKER], has: ["x", "y"] });
     assert.equal(c.status, 3, "只有標記、缺大 JSON，CDN 全斷＝缺驗 3：" + c.err); assert.equal(c.report.native.cdnFallback, false); assert.equal(c.report.native.partsJoin, true);
     waive(c.report, "只有標記、不補抓、缺大 JSON 的正確包");
+    /* 第十四次複審：素材全在包裡（viaCdn＝0），CDN 全斷時只有探測檔和 manifest 沒確認到：也要能豁免（之前沒有這種包，「viaCdn 小於 1 就擋」的改壞抓不到） */
+    const z = runReal({ dex: FULL, has: ["x", "y", "gm"] });
+    assert.equal(z.status, 3, "素材全在包裡，CDN 全斷＝缺驗 3：" + z.err); assert.equal(z.report.viaCdn, 0);
+    assert.equal(onlyCdnDown(z.report), null, "素材全在包裡：算單純 CDN 連不上"); waive(z.report, "素材全在包裡的正確包");
     /* ④ 不補抓又缺媒體（W21）：工具自己就判 ✘，閘門一定擋，不會因為上面放寬而放過 */
     const e = runReal({ dex: [], has: ["y"], big: false });
     assert.equal(e.status, 1, "不補抓又缺媒體：工具判 ✘ 回 1：" + e.err); assert.ok(e.report.red > 0);
