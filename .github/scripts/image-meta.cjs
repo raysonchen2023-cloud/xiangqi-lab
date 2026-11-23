@@ -191,5 +191,31 @@ function imageMeta0(buf) {
   return null;
 }
 
+/* 第十三輪審查①：圖片結構真正的結尾在哪（PNG＝第一個 IEND 區塊之後、JPEG＝影像資料之後的 EOI、GIF＝0x3B 之後、WebP＝RIFF 長度、BMP＝檔頭記的大小）。
+   結尾之後還有東西、或格式算不出結尾（TIFF、HEIF、ICO…），回 null：個資的整檔雜湊放行只給「結尾＝檔案長度」的圖（scan-changed 用） */
+function imageEnd(b) {
+  const fmt = imgFormat(b);
+  if (fmt === "png") { let p = 8; while (p + 12 <= b.length) { const len = b.readUInt32BE(p); if (p + 12 + len > b.length) return null; if (b.toString("latin1", p + 4, p + 8) === "IEND") return p + 12 + len; p += 12 + len } return null }
+  if (fmt === "gif") { const ct = (f) => (f & 0x80 ? 3 * (2 << (f & 7)) : 0), subs = (q) => { while (q < b.length && b[q] > 0) q += 1 + b[q]; return q < b.length ? q + 1 : -1 };
+    let g = 13 + ct(b[10]); while (g >= 0 && g < b.length) { const c = b[g]; if (c === 0x3b) return g + 1; if (c === 0x21) g = g + 2 > b.length ? -1 : subs(g + 2); else if (c === 0x2c) g = g + 11 > b.length ? -1 : subs(g + 10 + ct(b[g + 9]) + 1); else return null } return null }
+  if (fmt === "webp") { const n = b.readUInt32LE(4); return 8 + n + (n & 1) }
+  if (fmt === "bmp") return b.readUInt32LE(2);
+  if (fmt === "jpeg") {
+    let p = 2;
+    while (p + 1 < b.length) {
+      if (b[p] !== 0xff) return null;
+      while (p + 1 < b.length && b[p + 1] === 0xff) p++;
+      const m = b[p + 1];
+      if (m === 0xd9) return p + 2;
+      if (m === 0x01 || (m >= 0xd0 && m <= 0xd7)) { p += 2; continue }
+      if (p + 4 > b.length) return null;
+      const len = b.readUInt16BE(p + 2); if (len < 2 || p + 2 + len > b.length) return null;
+      p += 2 + len;
+      if (m === 0xda) { while (p + 1 < b.length && !(b[p] === 0xff && b[p + 1] !== 0 && !(b[p + 1] >= 0xd0 && b[p + 1] <= 0xd7) && b[p + 1] !== 0xff)) p++ }   /* 影像資料：FF00 是跳脫、FFD0～D7 是重新同步，其他 FF xx 是下一個標記 */
+    }
+    return null;
+  }
+  return null;
+}
 const KIND_ZH = { gps: "拍攝地點（GPS）", camera: "相機廠牌／型號", owner: "拍攝者／著作權人／相機主人或序號", comment: "JPEG 註解" };
-module.exports = { imgFormat, imageMeta, sniff, KIND_ZH };
+module.exports = { imgFormat, imageMeta, imageEnd, sniff, KIND_ZH };

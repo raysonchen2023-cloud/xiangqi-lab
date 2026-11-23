@@ -33,7 +33,7 @@
 "use strict";
 const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
-const { imageMeta, sniff, KIND_ZH } = require("./image-meta.cjs");
+const { imageMeta, imageEnd, sniff, KIND_ZH } = require("./image-meta.cjs");
 
 /* 行內放行標記的字樣：用拼的，這支自己的說明與訊息不會被當成放行、也照常被掃 */
 const TOK = "oss-scan" + ":allow";
@@ -156,10 +156,12 @@ for (const x of images) if (x.meta && x.meta.texts && x.meta.texts.length) {
 }
 console.log(`複製 ${files.length} 個改到的檔到暫存資料夾，交給 oss-scan 掃（放行清單 ${list.items.length} 筆、行內標記登記 ${list.inline.length} 筆）`);
 /* 第十二輪審查①：個資的整檔雜湊放行，只給「副檔名是圖、檔頭是圖、結構讀得到結尾（imageMeta 不是 null）」的檔；其他的在這裡拿掉，不交給 oss-scan */
-const readableImg = new Set(images.filter((x) => x.meta).map((x) => x.file));
+const endOk = new Set(bufs.filter(({ buf }) => imageEnd(buf) === buf.length).map(({ file }) => file));   /* 第十三輪審查①：結構的結尾＝檔案長度（結尾之後接了東西、或算不出結尾的格式都不算） */
+const readableImg = new Set(images.filter((x) => x.meta && endOk.has(x.file)).map((x) => x.file));
 const items = list.items.filter((a) => a.rule !== UNREAD && !(PERSONAL.includes(a.rule) && a.fileSha256 && !(IMG_EXT.test(String(a.file)) && readableImg.has(a.file))));
 const metaItems = [];
-for (const a of items) if (a.fileSha256 && metaOf.has(a.file) && shaOf.get(a.file) === a.fileSha256) { const c = { ...a, file: metaOf.get(a.file) }; delete c.fileSha256; metaItems.push(c) }
+for (const a of items) if (a.fileSha256 && !PERSONAL.includes(a.rule) && metaOf.has(a.file) && shaOf.get(a.file) === a.fileSha256)   /* 第十三輪審查①：圖裡解出來的文字一定是真的文字，個資不能靠整檔雜湊放行 */
+  { const c = { ...a, file: metaOf.get(a.file) }; delete c.fileSha256; metaItems.push(c) }
 const unreadOk = list.items.filter((a) => a.rule === UNREAD && shaOf.get(a.file) === a.fileSha256).map((a) => a.file);
 function runScan(dir, allowItems, tag) {
   const tmpA = out + "." + tag + ".allow.json", tmpJ = out + "." + tag + ".scan.json";
