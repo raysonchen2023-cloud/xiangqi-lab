@@ -5,15 +5,18 @@
    3. data/big-books.json 的比賽對局、引擎三個檔、背景音樂清單裡的 mp3 都在
    4. 檔案大小跟 copy-www.js 記的一樣（scripts/.www-files.json）；清單有記 sha1 的檔，內容也要一樣（W69：大小一樣、內容被換掉的也要抓到）
    5. 程式檔沒有控制字元
-   用法：node scripts/check-www.js [--public] [--dir <要檢查的資料夾>] [--list <清單檔>]
-     --public 改檢查 ios/App/App/public；--dir 指定別的資料夾（金絲雀 canary-www.js 用它檢查壞樣本）；--list 指定清單（預設 scripts/.www-files.json）
-   結束代碼：0 沒問題；1 有問題（找不到資料夾也算） */
+   6. 加 --cdn：包裡 data/ 的檔跟 CDN 現行版（cdn-manifest.json）逐檔比 sha1（W42：建包時留下舊副本，清單也照舊副本產生，第 4 項比不出來）。
+      App 會要的檔（preload、背景音樂）不同就擋；其他的只列出來（多半是 CDN 在建包後更新過）
+   用法：node scripts/check-www.js [--public] [--dir <要檢查的資料夾>] [--list <清單檔>] [--cdn | --cdn-manifest <網址或檔>] [--all]
+     --public 改檢查 ios/App/App/public；--dir 指定別的資料夾（金絲雀 canary-www.js 用它檢查壞樣本）；--list 指定清單（預設 scripts/.www-files.json）；
+     --cdn 讀 https://xiangqi-cdn.pages.dev/cdn-manifest.json；--cdn-manifest 指定別的網址或本機檔（自我測試用）；--all 錯誤全部印出（預設只印前 40 項）
+   結束代碼：0 沒問題；1 有問題（找不到資料夾也算）；3 沒有問題、但加了 --cdn 卻讀不到 CDN 清單（缺驗，不能當沒問題） */
 "use strict";
-const fs = require("fs"), path = require("path"), crypto = require("crypto");
+const fs = require("fs"), path = require("path"), crypto = require("crypto"), { execFileSync } = require("child_process");
 const HERE = path.join(__dirname, "..");
 const argv = process.argv.slice(2), opt = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };
 const ROOT = opt("--dir") ? path.resolve(opt("--dir")) : argv.includes("--public") ? path.join(HERE, "ios", "App", "App", "public") : path.join(HERE, "www");
-const bad = [], warn = [];
+const bad = [], warn = [], unverified = [], need = new Set();   /* need：App 會要的檔（preload、背景音樂），第 6 項用 */
 const rd = rel => fs.readFileSync(path.join(ROOT, ...rel.split("/")));
 const exists = rel => fs.existsSync(path.join(ROOT, ...rel.split("/")));
 const size = rel => fs.statSync(path.join(ROOT, ...rel.split("/"))).size;
@@ -31,7 +34,7 @@ for (const f of ["capacitor.js", "native-bridge.js", "core.js", "engine.js", "lo
 let n = 0;
 try {
   const P = JSON.parse(rd("data/preload.json"));
-  for (const it of [...(P.items || []), ...(P.big || [])]) { n++; if (!exists(it[0])) bad.push("preload.json 列了但沒有：" + it[0]); else if (it[1] && size(it[0]) !== it[1]) warn.push("大小跟 preload.json 不同：" + it[0]); }
+  for (const it of [...(P.items || []), ...(P.big || [])]) { n++; need.add(it[0]); if (!exists(it[0])) bad.push("preload.json 列了但沒有：" + it[0]); else if (it[1] && size(it[0]) !== it[1]) warn.push("大小跟 preload.json 不同：" + it[0]); }
 } catch (e) { bad.push("讀不到 data/preload.json：" + e.message); }
 try { for (const g of JSON.parse(rd("data/big-books.json"))) { n++; if (!exists("data/" + g.key + ".json")) warn.push("沒包比賽對局 data/" + g.key + ".json（App 要用時會去 CDN 抓；如果是 --exclude 故意拿掉的就沒關係）"); } } catch (e) { bad.push("讀不到 data/big-books.json"); }
 for (const f of ["engine/pikafish.js", "engine/pikafish.wasm", "engine/pikafish.nnue"]) { n++; if (!exists(f)) bad.push("缺引擎 " + f); }
@@ -40,7 +43,7 @@ try {
   const B = JSON.parse(rd("data/bgm/index.json"));
   for (const [era, list] of Object.entries(B)) for (const f of (Array.isArray(list) ? list : [])) {
     if (typeof f !== "string") continue; n++;
-    const r = "data/bgm/" + era + "/" + f;
+    const r = "data/bgm/" + era + "/" + f; need.add(r);
     if (!exists(r)) bad.push("背景音樂清單有但沒有檔：" + r);
   }
 } catch (e) { warn.push("讀不到 data/bgm/index.json"); }
@@ -60,6 +63,28 @@ if (fs.existsSync(LIST)) {
   }
 } else warn.push("沒有 scripts/.www-files.json（先跑 node scripts/copy-www.js）");
 
+/* 6（W42）：跟 CDN 現行版比 */
+const CDNM = opt("--cdn-manifest") || (argv.includes("--cdn") ? "https://xiangqi-cdn.pages.dev/cdn-manifest.json" : null);
+let cdnN = 0;
+if (CDNM) {
+  let man = null;
+  try {
+    const txt = /^https?:\/\//.test(CDNM)
+      ? execFileSync(process.execPath, ["-e", "fetch(process.argv[1]).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(t=>process.stdout.write(t)).catch(e=>{console.error(e.message);process.exit(1)})", CDNM], { encoding: "utf8", maxBuffer: 256e6, timeout: 120000, stdio: ["ignore", "pipe", "pipe"] })
+      : fs.readFileSync(CDNM, "utf8");
+    man = JSON.parse(txt); if (!man || typeof man.files !== "object") throw new Error("沒有 files");
+  } catch (e) { unverified.push("讀不到 CDN 清單 " + CDNM + "（" + String(e.message).split("\n")[0] + "）：加了 --cdn 卻沒驗到 W42") }
+  if (man) for (const [rel, v] of Object.entries(man.files)) {
+    const h = Array.isArray(v) ? v[1] : null;
+    if (!rel.startsWith("data/") || !h || !exists(rel)) continue;
+    cdnN++;
+    const mine = crypto.createHash("sha1").update(rd(rel)).digest("hex").slice(0, 12);
+    if (mine === h) continue;
+    if (need.has(rel)) bad.push("跟 CDN 現行版不同 " + rel + "（包 " + mine + "、CDN " + h + "；建包時留下的舊副本，W42）");
+    else warn.push("清單外的檔跟 CDN 現行版不同 " + rel + "（多半是 CDN 在建包後更新過，列出來但不擋）");
+  }
+}
+
 /* 5 */
 for (const f of ["index.html", "native-bridge.js", "core.js", "engine.js", "local.js", "net.js"]) {
   if (!exists(f)) continue;
@@ -67,7 +92,9 @@ for (const f of ["index.html", "native-bridge.js", "core.js", "engine.js", "loca
   if (m) bad.push(f + " 有控制字元 U+" + m[0].charCodeAt(0).toString(16));
 }
 
-console.log(`檢查 ${ROOT}：清單 ${files} 個檔、${(total / 1048576).toFixed(1)} MB；核對了 ${n} 個 App 會要的檔`);
+console.log(`檢查 ${ROOT}：清單 ${files} 個檔、${(total / 1048576).toFixed(1)} MB；核對了 ${n} 個 App 會要的檔` + (CDNM ? `；跟 CDN 現行版比了 ${cdnN} 個檔` : "（沒比 CDN，加 --cdn 才比）"));
+const ALL = argv.includes("--all");
 if (warn.length) console.log("⚠ " + warn.slice(0, 30).join("\n⚠ ") + (warn.length > 30 ? `\n⚠ …共 ${warn.length} 項` : ""));
-if (bad.length) { console.error("✘ " + bad.slice(0, 40).join("\n✘ ") + (bad.length > 40 ? `\n✘ …共 ${bad.length} 項` : "")); process.exit(1); }
+if (bad.length) { const B = ALL ? bad : bad.slice(0, 40); console.error("✘ " + B.join("\n✘ ") + (bad.length > B.length ? `\n✘ …共 ${bad.length} 項（加 --all 全部印出）` : "")); process.exit(1); }
+if (unverified.length) { console.error("△ " + unverified.join("\n△ ")); process.exit(3); }
 console.log("✔ 沒問題");
