@@ -3,7 +3,7 @@
 // W69 流程盤點中 16「私密掃描在 CI 偏弱」（2026-11-23，iMac Claude 1）再加三道：
 //   ① 改到的檔有「中風險」（信箱、電話、本機路徑、帳密設定值、Google 表單網址…）也擋：原本只有高風險會紅燈。
 //      App 本來就公開、或確定是誤判的，寫進 .github/oss-allow.json（改 .github/ 要逐行審），每筆都要寫理由。
-//   ② 這個 PR 新加的 oss-scan:allow（寫在程式行裡，那一行整個不掃）一條一條列出來給審查者看；沒寫理由的擋。
+//   ② 這個 PR 新加的行內放行標記（oss-scan 冒號 allow，寫在程式行裡，那一行整個不掃）一條一條列出來給審查者看；沒寫理由的擋。
 //   ③ 新增或修改的圖片（jpg、png、webp）裡有拍攝地點、相機型號、拍攝者或序號的中繼資料就擋（image-meta.cjs）。
 // 用法：node .github/scripts/scan-changed.cjs <比較基準> <暫存資料夾>
 //   掃描工具位置可用環境變數 OSS_SCAN 指定（預設 source/xiangqi-lab/tools/oss-scan.js，自我測試會用到）
@@ -27,7 +27,7 @@ function checkAllow(items, ruleIds) {
   });
   return bad;
 }
-/* git diff -U0 的輸出裡，這個 PR 新加的 oss-scan:allow 行：[{file, line, text, reason}] */
+/* git diff -U0 的輸出裡，這個 PR 新加的行內放行標記：[{file, line, text, reason}] */
 function addedAllows(diff) {
   const out = []; let file = null, ln = 0;
   for (const l of String(diff).split("\n")) {
@@ -41,8 +41,10 @@ function addedAllows(diff) {
   }
   return out;
 }
+/* 行內放行標記的字樣：用拼的，這支自己的說明與訊息不會被當成放行、也照常被掃 */
+const TOK = "oss-scan" + ":allow";
 const IMG = /\.(?:jpe?g|png|webp)$/i;
-/* 中風險（沒被放行）＋圖片中繼資料＋沒理由的 oss-scan:allow → 要擋的清單（純函式） */
+/* 中風險（沒被放行）＋圖片中繼資料＋沒理由的行內放行標記 → 要擋的清單（純函式） */
 function judge({ findings, images, allows }) {
   const medium = (findings || []).filter((f) => f.risk === "medium" && !f.allowed);
   const meta = (images || []).filter((x) => x.meta && x.meta.kinds.length);
@@ -50,7 +52,7 @@ function judge({ findings, images, allows }) {
   return { medium, meta, noReason, ok: !medium.length && !meta.length && !noReason.length };
 }
 
-module.exports = { checkAllow, addedAllows, judge };
+module.exports = { checkAllow, addedAllows, judge, TOK };
 if (require.main !== module) return;
 
 const [base = "origin/main", out] = process.argv.slice(2);
@@ -86,8 +88,8 @@ console.log(`\n圖片中繼資料：看了 ${images.length} 張新增或修改�
 for (const x of images.filter((x) => !x.meta)) console.log(`  ⚠ ${x.file}：格式讀不懂，沒有檢查到`);
 for (const x of J.meta) console.log(`  ✘ ${x.file}：有${x.meta.kinds.map((k) => KIND_ZH[k] || k).join("、")}的中繼資料 → 先去掉再放進倉庫（例如 exiftool -all= 檔名，或重新匯出不含中繼資料）`);
 if (allows.length) {
-  console.log(`\n這個 PR 新加的 oss-scan:allow（那一行整個不掃，審查者要逐條確認）：${allows.length} 條`);
-  for (const a of allows) console.log(`  ${a.reason.length >= 4 ? "△" : "✘"} ${a.file}:${a.line}  ${a.text}${a.reason.length >= 4 ? "" : "  ← 沒寫理由：在 oss-scan:allow 後面寫為什麼可以留"}`);
+  console.log(`\n這個 PR 新加的 ${TOK}（那一行整個不掃，審查者要逐條確認）：${allows.length} 條`);
+  for (const a of allows) console.log(`  ${a.reason.length >= 4 ? "△" : "✘"} ${a.file}:${a.line}  ${a.text}${a.reason.length >= 4 ? "" : "  ← 沒寫理由：在 ${TOK} 後面寫為什麼可以留"}`);
 }
 if (J.medium.length) {
   console.log(`\n✘ 改到的檔有 ${J.medium.length} 筆中風險沒被放行（上面「中風險」那一段）。`);

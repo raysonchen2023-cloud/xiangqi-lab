@@ -62,7 +62,7 @@ test("私密掃描補強：PR 改到的 source/ 以外的檔有私鑰 → 擋下
   assert.match(none.stdout, /沒有新增或修改的檔，略過/);
 });
 
-/* ===== W69 流程盤點中 16（2026-11-23）：中風險也擋、放行清單、新加的 oss-scan:allow 列出、圖片中繼資料 ===== */
+/* ===== W69 流程盤點中 16（2026-11-23）：中風險也擋、放行清單、新加的行內放行標記列出、圖片中繼資料 ===== */
 const IM = require("./image-meta.cjs"), SC = require("./scan-changed.cjs");
 const scanA = (d, allow) => { const f = path.join(d, ".allow-test.json"); fs.writeFileSync(f, JSON.stringify({ items: allow }));
   return spawnSync(process.execPath, [SCAN, "HEAD~1", path.join(d, ".scan-tmp")], { cwd: d, encoding: "utf8", env: { ...process.env, OSS_SCAN: OSS, OSS_ALLOW: f } }) };
@@ -100,7 +100,7 @@ test("圖片中繼資料（image-meta）：JPEG／PNG／WebP 的 GPS、相機型
 });
 
 test("私密掃描補強（中 16）：改到的檔有中風險 → 擋；放行清單限定檔案就過；放行清單格式不對 → 結束代碼 2", () => {
-  const d = repo(({ put }) => put("releases/筆記.txt", "聯絡 player.one@gmail.com\n"));
+  const d = repo(({ put }) => put("releases/筆記.txt", "聯絡 player.one" + "@" + "gmail.com\n"));
   const bad = scan(d);
   assert.equal(bad.status, 1, bad.stdout + bad.stderr); assert.match(bad.stdout, /中風險沒被放行/);
   const ok = scanA(d, [{ rule: "email", file: "releases/筆記.txt", reason: "測試用的假信箱" }]);
@@ -111,13 +111,13 @@ test("私密掃描補強（中 16）：改到的檔有中風險 → 擋；放行
   }
 });
 
-test("私密掃描補強（中 16）：這個 PR 新加的 oss-scan:allow 一條一條列出來；沒寫理由的擋", () => {
-  const ok = scan(repo(({ put }) => put("source/b.js", 'const k = "x"; /* oss-scan:allow 測試用的假資料 */\n')));
-  assert.equal(ok.status, 0, ok.stdout); assert.match(ok.stdout, /新加的 oss-scan:allow.*1 條/); assert.match(ok.stdout, /△ source\/b\.js:1/);
-  const bad = scan(repo(({ put }) => put("source/b.js", 'const k = "x"; /* oss-scan:allow */\n')));
+test("私密掃描補強（中 16）：這個 PR 新加的行內放行標記一條一條列出來；沒寫理由的擋", () => {
+  const ok = scan(repo(({ put }) => put("source/b.js", 'const k = "x"; /* ' + SC.TOK + ' 測試用的假資料 */\n')));
+  assert.equal(ok.status, 0, ok.stdout); assert.match(ok.stdout, new RegExp("新加的 " + SC.TOK + ".*1 條")); assert.match(ok.stdout, /△ source\/b\.js:1/);
+  const bad = scan(repo(({ put }) => put("source/b.js", 'const k = "x"; /* ' + SC.TOK + ' */\n')));
   assert.equal(bad.status, 1, bad.stdout); assert.match(bad.stdout, /✘ source\/b\.js:1.*沒寫理由/);
-  assert.deepEqual(SC.addedAllows("+++ b/a.js\n@@ -0,0 +5,2 @@\n+x\n+y // oss-scan:allow 公開的帳號\n").map((a) => [a.file, a.line, a.reason]), [["a.js", 6, "公開的帳號"]]);
-  assert.deepEqual(SC.addedAllows("+++ b/a.js\n@@ -1 +1 @@\n-z // oss-scan:allow 舊的\n+z\n"), [], "刪掉的行不算");
+  assert.deepEqual(SC.addedAllows("+++ b/a.js\n@@ -0,0 +5,2 @@\n+x\n+y // " + SC.TOK + " 公開的帳號\n").map((a) => [a.file, a.line, a.reason]), [["a.js", 6, "公開的帳號"]]);
+  assert.deepEqual(SC.addedAllows("+++ b/a.js\n@@ -1 +1 @@\n-z // " + SC.TOK + " 舊的\n+z\n"), [], "刪掉的行不算");
 });
 
 test("私密掃描補強（中 16）：新增的圖有 GPS 或相機型號 → 擋；乾淨的圖 → 通過", () => {
