@@ -234,6 +234,8 @@ function JhMaze(v){jhCss();jhMzCss();
   document.addEventListener("keydown",onKey);window.addEventListener("resize",resize);
   const intro=jhL("你從拋石車底下的暗門爬下來，四周一片漆黑。<b>點地面就會走過去</b>，也可以用下面的方向鈕。走到壁燈旁邊會點亮它。","You climb down through the hatch under the catapult into pitch darkness. <b>Tap the floor to walk there</b>, or use the arrows below. Walk next to a wall lamp to light it.");
   bag();say(intro);requestAnimationFrame(()=>{resize();requestAnimationFrame(frame)});
+  /* 從門內頁按入口進來走的是 jhGo（先蓋上淡出遮罩再換頁），目的頁要自己淡出；直接開網址時沒有遮罩，呼叫也沒關係 */
+  setTimeout(()=>{try{if(typeof jhFadeOut==="function")jhFadeOut()}catch(e){}},0);
   return{}}
 
 /* 中炮門門內頁：在大殿前的拋石車加「地底密道」入口（遠端開關 maze 關掉就不放） */
