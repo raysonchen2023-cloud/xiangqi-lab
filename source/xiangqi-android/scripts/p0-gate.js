@@ -43,10 +43,11 @@ function validWaiver(w, aabSha) {
 const GATE_CDN = "https://xiangqi-cdn.pages.dev/";
 async function probeCdn(fetchFn = fetch, base = GATE_CDN, rnd = () => require("crypto").randomBytes(6).toString("hex")) {
   let manOk = false, manWhy = "", head = -1;
-  try { const r = await fetchFn(base + "cdn-manifest.json"); if (!r.ok) manWhy = "manifest HTTP " + r.status; else { const j = await r.json(); const ks = j && j.files && typeof j.files === "object" ? Object.keys(j.files).filter((k) => k.startsWith("data/")) : []; manOk = ks.length > 0; manWhy = manOk ? "manifest " + ks.length + " 個 data 檔" : "manifest 是空的或格式不對" } } catch (e) { manWhy = "manifest 連不上" }
-  try { head = (await fetchFn(base + "data/__xq_gate_probe_" + rnd() + ".webp", { method: "HEAD" })).status } catch (e) { head = -1 }
+  const sig = () => (typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined);   /* 每次最多等 15 秒 */
+  try { const r = await fetchFn(base + "cdn-manifest.json", { signal: sig() }); if (!r.ok) manWhy = "manifest HTTP " + r.status; else { const j = await r.json(); const ks = j && j.files && typeof j.files === "object" ? Object.keys(j.files).filter((k) => k.startsWith("data/")) : []; manOk = ks.length > 0; manWhy = manOk ? "manifest " + ks.length + " 個 data 檔" : "manifest 是空的或格式不對" } } catch (e) { manWhy = "manifest 連不上" }
+  try { head = (await fetchFn(base + "data/__xq_gate_probe_" + rnd() + ".webp", { method: "HEAD", signal: sig() })).status } catch (e) { head = -1 }
   const headOk = head === 404 || head === 410;
-  return { reachable: manOk || headOk, manOk, head, detail: manWhy + "；亂數檔 HEAD " + (head === -1 ? "連不上" : head) };
+  return { reachable: manOk || headOk, manOk, head, at: new Date().toISOString(), detail: manWhy + "；亂數檔 HEAD " + (head === -1 ? "連不上" : head) };
 }
 
 /* opts.mainSha(路徑)＝origin/main 那一版去掉 CR 的 SHA-256（tool-pin.js 的 normSha）；沒給＝讀不到 main，每份報告都過不了工具鎖定 */
@@ -85,7 +86,12 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
     if (json.pass !== true && !imgMissing) add(`${key}：沒有通過（pass＝${json.pass}）`);
     if ((t === "P0-UPD" || t === "P0-3D") && !(json.apkBound === true && HEX64.test(String(json.apkSha256 || ""))))
       add(`${key}：沒核對實際測的 APK 是從這個 AAB 產生的（要用 --aab-apk 跑，報告要有 apkBound＝true 與 apkSha256）`);
-    if (t === "P0-IMG" && (json.cdnChecked !== true || json.exitCode !== 0)) add(`P0-IMG：要加 --cdn 且結束代碼 0（cdnChecked＝${json.cdnChecked}、exitCode＝${json.exitCode}）`, "P0-IMG/cdn");
+    if (t === "P0-IMG" && (json.cdnChecked !== true || json.exitCode !== 0)) {
+      /* PR #66 第六次複審：這條也掛 P0-IMG/cdn，同樣要閘門自己也連不上 CDN 才准豁免（exit 3 可能是工具的 manifest 讀取寫壞了） */
+      const p = opts.cdnProbe, gateDown = !!p && p.reachable === false;
+      const why = json.cdnChecked !== true ? "" : gateDown ? `；閘門自己也連不上 CDN（${p.detail}）` : p && p.reachable === true ? `；閘門自己連得上 CDN（${p.detail}）：不能豁免` : "；閘門沒有自己探測 CDN：不能豁免";
+      add(`P0-IMG：要加 --cdn 且結束代碼 0（cdnChecked＝${json.cdnChecked}、exitCode＝${json.exitCode}）${why}`, json.cdnChecked === true && gateDown ? "P0-IMG/cdn" : null);
+    }
     /* 金絲雀（2026-11-23，AGENTS.md「P0 出口驗證要難作假」）：工具在實跑時故意弄壞的地方要被抓到；抓不到＝工具失靈，不能豁免 */
     if (t === "P0-IMG") {
       const c = json.canary || {};
@@ -158,7 +164,7 @@ async function main() {
   const reports = files.map((file) => { let json = null; try { json = JSON.parse(fs.readFileSync(file, "utf8")) } catch (e) {} return { file, json } });
   /* 有 P0-IMG 報告說 CDN 連不上時，閘門自己連一次 CDN（結果印出來，豁免要靠它） */
   let cdnProbe = null;
-  if (reports.some(({ json }) => json && json.tool === "P0-IMG" && json.canary && json.canary.cdnUnreachable === true)) { cdnProbe = await probeCdn(); console.log(`閘門自己探測 CDN：${cdnProbe.reachable ? "連得上" : "連不上"}（${cdnProbe.detail}）`) }
+  if (reports.some(({ json }) => json && json.tool === "P0-IMG" && (json.exitCode !== 0 || (json.canary && json.canary.cdnUnreachable === true)))) { cdnProbe = await probeCdn(); console.log(`閘門自己探測 CDN：${cdnProbe.reachable ? "連得上" : "連不上"}（${cdnProbe.detail}）`) }
   const r = gate(sha, BUILD, reports, fromRepo ? waivers : [], { mainSha, cdnProbe });
   console.log(`要送審的 AAB：${AAB}（版號 ${BUILD}）\n  SHA-256 ${sha}`);
   if (a("--waivers") && !fromRepo) console.log("⚠ 豁免檔不是倉庫的 .github/p0-waivers.json：沒經過逐行審，裡面的豁免一律不算");

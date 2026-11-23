@@ -229,3 +229,19 @@ test("閘門自己探測 CDN（PR #66 第五次複審，開發者選）：CDN �
   assert.equal(G(L, W("P0-IMG/cdn"), MAIN, down).ok, true);
   assert.equal(G(L, W("P0-IMG/cdn"), MAIN, empty).ok, true, "閘門也只看到空的 manifest、連不上：照樣准豁免（缺驗）");
 });
+
+test("閘門（PR #66 第六次複審）：「要加 --cdn 且結束代碼 0」那條的豁免，同樣要閘門自己也連不上 CDN；結束代碼 3＋金絲雀③抓到＋閘門連得上 → 不能豁免", () => {
+  const L = all(); L[0].json.exitCode = 3; L[0].json.pass = false;
+  assert.equal(G(L, W("P0-IMG/cdn")).ok, false, "閘門沒探測：不能豁免");
+  const r = G(L, W("P0-IMG/cdn"), MAIN, UP); assert.equal(r.ok, false, "閘門連得上：不能豁免（可能是工具的 manifest 讀取壞了）"); assert.ok(has(r, /閘門自己連得上 CDN.*不能豁免/));
+  assert.equal(G(L, W("P0-IMG/cdn"), MAIN, DOWN).ok, true, "閘門也連不上：才可以豁免");
+  const M = all(); M[0].json.cdnChecked = false; assert.equal(G(M, W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "沒加 --cdn 不管閘門怎樣都不能豁免");
+});
+
+test("〔原始碼〕閘門：自己用的 CDN 網址跟破圖工具一樣；報告結束代碼不是 0、或說連不上時就探測；探測有逾時、有時間", () => {
+  const pg = rd("p0-gate.js"), caa = rd("check-aab-assets.js");
+  const g = /const GATE_CDN = "([^"]+)";/.exec(pg), c = /\nconst CDN = "([^"]+)";/.exec(caa);
+  assert.ok(g && c); assert.equal(g[1], c[1], "閘門與工具的 CDN 網址要相同");
+  assert.match(pg, /json\.tool === "P0-IMG" && \(json\.exitCode !== 0 \|\| \(json\.canary && json\.canary\.cdnUnreachable === true\)\)\)\) \{ cdnProbe = await probeCdn\(\);/);
+  assert.match(pg, /AbortSignal\.timeout\(15000\)/); assert.match(pg, /at: new Date\(\)\.toISOString\(\)/);
+});
