@@ -98,22 +98,24 @@ const byDir = (list) => { const m = new Map(); for (const f of list) { const k =
 const extOf = (rel) => { const m = /\.([A-Za-z0-9]+)$/.exec(rel); return m ? m[1].toLowerCase() : "" };
 const byDirExt = (list) => { const m = new Map(); for (const f of list) { const k = groupKey(f) + "|" + extOf(f); if (!m.has(k)) m.set(k, []); m.get(k).push(f) } return [...m.values()] };
 const BIG = 20 * 1048576;
+/* 某個目錄整個出事時，錯誤照 check-www 的順序（preload → 背景音樂 → 清單「少了」）第一個會出現的那一行：「目錄|檔|種類」；
+   清單檔的上層目錄（data、data/bgm）回 null（清單本身讀不到，錯誤是另一種，nodata／mani 另外測） */
+const MANI = ["data/preload.json", "data/bgm/index.json", "data/big-books.json"];
+const dirExpect = (D, L, d) => {
+  if (MANI.some((m) => m.startsWith(d + "/"))) return null;
+  const pre = [...preloadItems(D), ...bigItems(D).filter((x) => fs.existsSync(at(D, x)))], bgm = bgmFiles(D), lst = Object.keys(L).filter((f) => fs.existsSync(at(D, f)));
+  const under = (arr) => arr.find((f) => f.startsWith(d + "/")), p = under(pre), b = under(bgm), l = under(lst);
+  return p ? d + "|" + p + "|p" : b ? d + "|" + b + "|b" : l ? d + "|" + l + "|l" : null };
+const dirMsg = (x) => { const [, f, t] = x.split("|"); return (t === "p" ? "preload.json 列了但沒有：" : t === "b" ? "背景音樂清單有但沒有檔：" : "少了 ") + f };
+/* rmdir 的候選：data/ 底下第一層、檔案最多的幾個目錄（W21 整批素材沒進包） */
+const bigDirs = (D, L, n = 3) => { const c = new Map(); for (const f of Object.keys(L)) { const m = /^data\/[^/]+(?=\/)/.exec(f); if (m) c.set(m[0], (c.get(m[0]) || 0) + 1) }
+  return [...c.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).map((x) => dirExpect(D, L, x[0])).filter(Boolean).slice(0, n) };
 /* casedir 的候選：每個目錄（名字裡要有英文字母才翻得了）一次。錯誤照 check-www 的順序：preload → 背景音樂 → 清單「少了」，
    所以預期的那一行取「這個目錄底下（含子目錄）照那個順序排第一個的檔」，一定在印出來的前幾行。
    背景音樂目錄要底下沒有首頁素材；清單目錄要底下沒有首頁素材和背景音樂（不然先出現的是別種錯誤） */
 const caseDirs = (D, L) => {
-  const pre = [...preloadItems(D), ...bigItems(D).filter((x) => fs.existsSync(at(D, x)))], bgm = bgmFiles(D), lst = Object.keys(L).filter((f) => fs.existsSync(at(D, f)));
-  const dirs = new Set(); for (const f of [...pre, ...bgm, ...lst]) { const parts = f.split("/"); for (let k = 1; k < parts.length; k++) dirs.add(parts.slice(0, k).join("/")) }
-  const under = (d, arr) => arr.find((f) => f.startsWith(d + "/")), out = [];
-  /* 清單檔（preload.json、bgm/index.json、big-books.json）所在的上層目錄（data、data/bgm）不測：名字錯了清單本身就讀不到，
-     check-www 照樣擋，但錯誤是「讀不到清單」那一行；而且 macOS（不分大小寫）讀得到、Linux 讀不到，預期的那一行兩邊不同（CI 在 Linux 紅過） */
-  const MANI = ["data/preload.json", "data/bgm/index.json", "data/big-books.json"];
-  for (const d of [...dirs].sort()) {
-    if (caseFlip(d) === d || MANI.some((m) => m.startsWith(d + "/"))) continue;
-    const p = under(d, pre), b = under(d, bgm), l = under(d, lst);
-    if (p) out.push(d + "|" + p + "|p"); else if (b) out.push(d + "|" + b + "|b"); else if (l) out.push(d + "|" + l + "|l");
-  }
-  return out };
+  const dirs = new Set(); for (const f of Object.keys(L)) { const parts = f.split("/"); for (let k = 1; k < parts.length; k++) dirs.add(parts.slice(0, k).join("/")) }
+  return [...dirs].sort().filter((d) => caseFlip(d) !== d).map((d) => dirExpect(D, L, d)).filter(Boolean) };
 const needStrata = (D) => [...byDirExt(preloadItems(D)), bigItems(D).filter((f) => fs.existsSync(at(D, f))), ...bgmEras(D)].filter((x) => x.length);
 const bgmFiles = (D) => { const B = JSON.parse(fs.readFileSync(at(D, "data/bgm/index.json"), "utf8")), o = []; for (const [era, list] of Object.entries(B)) for (const f of Array.isArray(list) ? list : []) if (typeof f === "string" && fs.existsSync(at(D, "data/bgm/" + era + "/" + f))) o.push("data/bgm/" + era + "/" + f); return o };
 
@@ -136,7 +138,14 @@ const KINDS = {
   casedir: { cands: (D, L) => caseDirs(D, L), always: (D, L) => caseDirs(D, L).filter((x) => !x.endsWith("|l")),   /* 首頁素材、背景音樂的目錄全測；清單其他目錄照分層抽 */
     strata: (D, L) => { const c = caseDirs(D, L); return ["p", "b", "l"].map((t) => c.filter((x) => x.endsWith("|" + t))).filter((x) => x.length) },
     break: (D, x) => { const [d] = x.split("|"), a = at(D, d), b = at(D, caseFlip(d)), t = a + ".xqtmp"; fs.renameSync(a, t); fs.renameSync(t, b) },
-    expect: (x) => { const [, f, t] = x.split("|"); return (t === "p" ? "preload.json 列了但沒有：" : t === "b" ? "背景音樂清單有但沒有檔：" : "少了 ") + f } },
+    expect: (x) => dirMsg(x) },
+  /* PR #67 第十五次審查：整批缺檔。nodata＝整個 data/ 不見（錯誤是「讀不到 data/preload.json」）；rmdir＝拿掉檔案最多的 3 個素材目錄（每次都測） */
+  nodata: { cands: (D) => fs.existsSync(at(D, "data/preload.json")) ? ["data"] : [], always: (D) => fs.existsSync(at(D, "data/preload.json")) ? ["data"] : [],
+    break: (D) => fs.renameSync(at(D, "data"), at(D, "data.xqgone")), expect: () => "讀不到 data/preload.json" },
+  rmdir: { cands: (D, L) => bigDirs(D, L), always: (D, L) => bigDirs(D, L), break: (D, x) => fs.rmSync(at(D, x.split("|")[0]), { recursive: true }), expect: (x) => dirMsg(x) },
+  /* PR #67 第十五次審查：listmiss 排除的 4 個檔各拿掉一次（release.json 跟版號有關；三份清單檔讀不到的錯誤各不相同） */
+  mani: { cands: (D, L) => ["release.json", ...MANI].filter((f) => L[f] && fs.existsSync(at(D, f))), always: (D, L) => ["release.json", ...MANI].filter((f) => L[f] && fs.existsSync(at(D, f))),
+    break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => f === "data/preload.json" || f === "data/big-books.json" ? "讀不到 " + f : "少了 " + f },
   engine: { cands: (D) => ENGINE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺引擎 " + f },
   core: { cands: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), always: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺 " + f },
   big: {
@@ -295,10 +304,14 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       /* CDN 清單只下載一次，乾淨的那份和每個壞樣本都用同一份，收據記下它的雜湊（PR #67 審查：分兩次下載，兩份可能不同） */
       let M = null, cdnFile = null, cdnSha = null;
       /* PR #67 第四次審查：先驗乾淨的樣本（不連 CDN），再讀 CDN。乾淨的有錯就回 2，不會被「CDN 讀不到」蓋成 3 */
-      const pre = check(dir, LF, null);
+      /* PR #67 第十五次審查：每一次檢查（乾淨的、每個壞樣本、--cdn 那次）都在副本上跑，路徑一律是 <base>/<亂數>/Payload/App.app/public，
+         check-www 從路徑分不出哪一次是真包、哪一次是哪一種壞樣本（之前乾淨的用真包路徑、壞樣本路徑帶種類名稱） */
+      const shape = () => { const d = path.join(base, crypto.randomBytes(6).toString("hex"), "Payload", "App.app", "public"); fs.mkdirSync(path.dirname(d), { recursive: true }); return d };
+      const cleanD = shape(); cloneDir(dir, cleanD);
+      const pre = check(cleanD, LF, null);
       if (pre.status !== 0) return unfit("乾淨的樣本沒過 check-www.js（先修好再跑金絲雀）：" + String(pre.stderr).split("\n")[0]);
       if (cdn) { try { const txt = readM(cdn); M = JSON.parse(txt).files; cdnFile = path.join(base, "cdn-manifest.json"); fs.writeFileSync(cdnFile, txt); cdnSha = sha256(Buffer.from(txt, "utf8")) } catch (e) { return unfit("金絲雀讀不到 CDN 清單：" + cdn, 3) } }
-      const clean = check(dir, LF, cdnFile);
+      const clean = check(cleanD, LF, cdnFile);
       if (clean.status === 3) return unfit("乾淨的樣本沒錯，但 CDN 清單沒能比對（缺驗）：" + String(clean.stderr).split("\n")[0], 3);
       if (clean.status !== 0) return unfit("乾淨的樣本沒過 check-www.js（先修好再跑金絲雀）：" + String(clean.stderr).split("\n")[0]);
       if (only != null && !String(only).split(",").map((s) => s.trim()).filter(Boolean).length) return unfit("--only 沒有列任何壞樣本");   /* PR #67 第七次審查：空的 --only 不能回 0 */
@@ -322,10 +335,10 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
         const size = K.batch || 1;
         for (let bi = 0; bi < chosen.length; bi += size) {
           const group = chosen.slice(bi, bi + size), tag = k + "-" + results.length;
-          const D = K.noClone ? dir : path.join(base, tag);   /* 只改清單或 CDN 清單的壞樣本不動檔案，不用複製整份 */
+          const D = K.noClone ? cleanD : shape();   /* 只改清單或 CDN 清單的壞樣本不動檔案，用乾淨的那份副本 */
           let lf = LF, cf = cdnFile, Lc = L, Mc = M, cdnPath = null;
           try {
-            if (!K.noClone) cloneDir(dir, D);
+            if (!K.noClone) cloneDir(dir, D);   /* shape() 只建好上層，D 本身還不存在 */
             for (const f of group) { const B = K.break(D, f, Lc, Mc) || {}; if (B.list) Lc = B.list; if (B.cdn) Mc = B.cdn; if (B.cdnPath) cdnPath = B.cdnPath }
             if (Lc !== L) { lf = path.join(base, tag + "-list.json"); fs.writeFileSync(lf, JSON.stringify({ ...LJ, files: Lc })) }
             if (Mc !== M) { cf = path.join(base, tag + "-cdn.json"); fs.writeFileSync(cf, JSON.stringify({ files: Mc })) }
@@ -353,7 +366,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       let cdnViaCheck = null;
       /* PR #67 第十二次審查：只看結束代碼不夠（--cdn 網址那條路改成不比，也回 0）。要求「跟 CDN 現行版比了 N 個檔」的 N 跟本機 CDN 清單那次一樣 */
       const cmpN = (t) => { const m = /跟 CDN 現行版比了 (\d+) 個檔/.exec(String(t || "")); return m ? Number(m[1]) : null }, wantN = cmpN(clean.stdout);
-      if (OFFICIAL_CDN && cdn === OFFICIAL_CDN) { const r = (selfCdn || ((d, lf) => check(d, lf, null, ["--cdn"])))(dir, LF, { cdnFile }); cdnViaCheck = { exit: r.status, n: cmpN(r.stdout), want: wantN, note: String(r.stderr || "").split("\n")[0].slice(0, 200) }; log((r.status === 0 && cdnViaCheck.n === wantN ? "✔ " : "✘ ") + "check-www --cdn 比了 " + cdnViaCheck.n + " 個檔（本機清單那次 " + wantN + "）；結束代碼 " + r.status) }
+      if (OFFICIAL_CDN && cdn === OFFICIAL_CDN) { const r = (selfCdn || ((d, lf) => check(d, lf, null, ["--cdn"])))(cleanD, LF, { cdnFile }); cdnViaCheck = { exit: r.status, n: cmpN(r.stdout), want: wantN, note: String(r.stderr || "").split("\n")[0].slice(0, 200) }; log((r.status === 0 && cdnViaCheck.n === wantN ? "✔ " : "✘ ") + "check-www --cdn 比了 " + cdnViaCheck.n + " 個檔（本機清單那次 " + wantN + "）；結束代碼 " + r.status) }
       const passAll = want.every((k) => results.some((x) => x.kind === k)) && results.every((x) => x.caught === true), code = exitOf(results, passAll);   /* PR #67 第九次審查：結束代碼先算好，full 要看它 */
       const receipt = {
         tool: "P0-IMG-canary", platform: "ios", at: new Date().toISOString(),
