@@ -78,7 +78,15 @@ function jhMzGlide(o,tx,ty,dt){if(o.fy==null)o.fy=ty;if(o.fx==null)o.fx=tx;const
   if(d>1.5||d<=s||d<1e-4){o.fx=tx;o.fy=ty;return false}o.fx+=dx/d*s;o.fy+=dy/d*s;return true}
 /* 往 (dx,dy) 走時 3D 角色的轉向（繞 y 軸；0＝面向鏡頭＝往下走，跟 07w shwYaw 同一個方向） */
 const jhMzYaw=(dx,dy)=>Math.atan2(dx,dy);
-async function jhMzHero3(box,c){
+/* ===== 3D 迷宮（開發者 11/23：「地底迷宮的牆壁看起來是平面 可否做成像3D的強」）=====
+   整張迷宮用 three.js 畫成真的 3D（跟角色同一套 three.min.js、bot3d.js、同一張 WebGL 畫布）：
+     ・牆＝有高度的石磚方塊（牆頂淺、牆面深、磚紋貼圖），地面＝夯土石板貼圖；糧袋是一堆 3D 麻袋、箱子是朱紅木箱、石門是一扇門板、樓梯往下挖、壁燈是燈柱；
+     ・角色（隊伍領頭那位的 3D 模型）真的站在地面上，腳下一圈接地影子；暗匪是黑衣人、紅眼，看得到的地方地上一片紅光；
+     ・鏡頭跟著角色、從斜上方往下看（俯角 56°），手機直拿大約看得到 8 格寬；
+     ・黑暗照舊：每一格亮多少照 jhMzLight（手上的燈半徑約 3 格、牆擋光、點亮的壁燈），沒看過的全黑、走過的留淡淡的輪廓；
+       手上的燈另外是一盞暖色點光源、點亮的壁燈各一盞，讓牆面有明暗。
+   玩法、回合、殘局、存檔一行都不動；點地面用射線找到點的是哪一格。3D 載不起來（沒有 WebGL、three 載不到）照舊畫平面版（配色＋立繪）。 */
+async function jhMzWorld3(box,c,S){
   if(typeof loadScript!=="function")throw 0;const off=typeof OFF!=="undefined"&&OFF;
   await loadScript(off?"three.min.js":"/m/three.min.js");await loadScript((off?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));
   const T3=window.THREE;if(!T3||!window.XQBot3D||!XQBot3D.figure)throw 0;
@@ -86,27 +94,83 @@ async function jhMzHero3(box,c){
   const era=store.get("era","classic"),tr=c&&typeof TRIPO!=="undefined"&&TRIPO[c];
   const look=tr?{p:typeof myPc==="function"?myPc():undefined,e:era,g:9,glb:`data/tripo_app/${c}.glb`,ring:tr}:((typeof myLook==="function"&&myLook())||{p:typeof botPc==="function"?botPc():undefined,e:era,g:9});
   const B=XQBot3D.figure(look);if(look.glb){if(!B.glbP)throw 0;await B.glbP}if(!box.isConnected)throw 0;
-  const r=new T3.WebGLRenderer({antialias:true,alpha:true,powerPreference:"low-power"});r.setPixelRatio(Math.min(2,devicePixelRatio||1));if(look.glb&&T3.sRGBEncoding!=null)r.outputEncoding=T3.sRGBEncoding;
-  const cv=r.domElement;cv.className="jh-mz-hero";box.append(cv);
-  /* 地底只有手上一盞燈：暖色、偏暗 */
-  const sc=new T3.Scene();sc.add(new T3.HemisphereLight(0xFFE2B8,0x3A2C1E,1.05));const dl=new T3.DirectionalLight(0xFFC27A,.8);dl.position.set(-2,6,5);sc.add(dl);
+  const r=new T3.WebGLRenderer({antialias:true,powerPreference:"low-power"});r.setPixelRatio(Math.min(2,devicePixelRatio||1));if(T3.sRGBEncoding!=null)r.outputEncoding=T3.sRGBEncoding;r.setClearColor(0x000000,1);
+  const cv=r.domElement;cv.className="jh-mz-3d";box.append(cv);
+  const col=h=>{const k=new T3.Color(h);return k.convertSRGBToLinear?k.convertSRGBToLinear():k};
+  const sc=new T3.Scene();sc.add(new T3.AmbientLight(0xFFE6C8,.5));const key=new T3.DirectionalLight(0xFFD9A8,.6);key.position.set(-3,9,5);sc.add(key);
+  const lamp=new T3.PointLight(0xFFAA55,1.3,7,1.3);sc.add(lamp);
+  const texs=[],rr=i=>{const q=Math.sin(i*127.1+11.3)*43758.5453;return q-Math.floor(q)};
+  const tx=(w,h,fn)=>{const k=document.createElement("canvas");k.width=w;k.height=h;fn(k.getContext("2d"),w,h);const t=new T3.CanvasTexture(k);if(T3.sRGBEncoding!=null)t.encoding=T3.sRGBEncoding;t.anisotropy=4;texs.push(t);return t};
+  /* 地面：亮的暖色夯土石板；牆面：深色石磚；牆頂：淺一點的灰褐石 */
+  const floorT=tx(128,128,(g,w,h)=>{g.fillStyle="#9a7f5d";g.fillRect(0,0,w,h);for(let i=0;i<240;i++){const lt=rr(i)>.5;g.fillStyle=lt?`rgba(255,232,190,${.05+rr(i+9)*.07})`:`rgba(40,26,12,${.06+rr(i+9)*.08})`;g.fillRect(rr(i+1)*w,rr(i+2)*h,2+rr(i+3)*5,2+rr(i+4)*3)}
+    g.strokeStyle="rgba(60,40,20,.6)";g.lineWidth=5;g.strokeRect(2.5,2.5,w-5,h-5);g.lineWidth=1.5;g.beginPath();g.moveTo(w*.62,5);g.lineTo(w*.7,h*.5);g.stroke()});
+  const brickT=tx(128,128,(g,w,h)=>{g.fillStyle="#1e1813";g.fillRect(0,0,w,h);for(let y=0;y<4;y++){const o=y%2?w/4:0;for(let x=-1;x<3;x++){const v=62+rr(y*7+x)*24|0;g.fillStyle=`rgb(${v},${v*.86|0},${v*.72|0})`;g.fillRect(o+x*w/2+3,y*h/4+3,w/2-6,h/4-6)}}});
+  const topT=tx(64,64,(g,w,h)=>{g.fillStyle="#6a5e50";g.fillRect(0,0,w,h);g.fillStyle="rgba(0,0,0,.2)";for(let i=0;i<40;i++)g.fillRect(rr(i)*w,rr(i+5)*h,3,2);g.strokeStyle="rgba(170,150,118,.7)";g.lineWidth=3;g.strokeRect(1.5,1.5,w-3,h-3)});
+  const shT=tx(64,64,(g,w,h)=>{const gr=g.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);gr.addColorStop(0,"rgba(0,0,0,.75)");gr.addColorStop(.55,"rgba(0,0,0,.45)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,w,h)});
+  const WH=1.05,cells=[],walls=[];for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const ch=JH_MZ_MAP[y][x];if(ch==="#")walls.push([x,y]);else if(ch!==">")cells.push([x,y])}
+  const m4=new T3.Matrix4(),cK=new T3.Color();
+  const fg=new T3.PlaneGeometry(1,1);fg.rotateX(-Math.PI/2);
+  const fl=new T3.InstancedMesh(fg,new T3.MeshLambertMaterial({map:floorT}),cells.length);
+  cells.forEach(([x,y],i)=>{m4.makeTranslation(x+.5,0,y+.5);fl.setMatrixAt(i,m4);fl.setColorAt(i,cK.setRGB(0,0,0))});sc.add(fl);
+  const wg=new T3.BoxGeometry(1,WH,1);wg.translate(0,WH/2,0);
+  const side=new T3.MeshLambertMaterial({map:brickT}),topM=new T3.MeshLambertMaterial({map:topT});
+  const wl=new T3.InstancedMesh(wg,[side,side,topM,side,side,side],walls.length);
+  walls.forEach(([x,y],i)=>{m4.makeTranslation(x+.5,0,y+.5);wl.setMatrixAt(i,m4);wl.setColorAt(i,cK.setRGB(0,0,0))});sc.add(wl);
+  /* 物件：材質記下原色，每一格照亮度乘上去；on()＝現在還在不在（箱子撿走、門開了就不畫） */
+  const objs=[],lam=hex=>{const m=new T3.MeshLambertMaterial({color:col(hex)});m.userData.base=m.color.clone();return m};
+  const mesh=(geo,mat,x,y,z)=>{const o=new T3.Mesh(geo,mat);o.position.set(x,y,z);return o};
+  const add=(g,x,y,on)=>{g.position.set(x+.5,0,y+.5);sc.add(g);const mats=[];g.traverse(o=>{if(o.material&&o.material.userData&&o.material.userData.base&&!mats.includes(o.material))mats.push(o.material)});const it={g,x,y,mats,on};objs.push(it);return it};
+  const sackG=new T3.SphereGeometry(.21,14,10),tieG=new T3.CylinderGeometry(.04,.05,.07,8),sackM=lam("#b08850"),tieM=lam("#5a3c18");
+  const flames=[],lights={};
+  for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const ch=JH_MZ_MAP[y][x];
+    if(ch==="S"){const g=new T3.Group();for(const[a,b,z]of[[-.2,.16,.18],[.2,.16,.18],[0,.16,-.16],[-.11,.43,0],[.14,.41,-.03]]){const s=mesh(sackG,sackM,a,b,z);s.scale.set(1,.78,1);g.add(s);g.add(mesh(tieG,tieM,a,b+.17,z))}add(g,x,y,()=>true)}
+    else if(ch==="C"){const g=new T3.Group();g.add(mesh(new T3.BoxGeometry(.6,.34,.42),lam("#8c2a1e"),0,.17,0));g.add(mesh(new T3.BoxGeometry(.63,.07,.45),lam("#a8342a"),0,.36,0));g.add(mesh(new T3.BoxGeometry(.08,.1,.02),lam("#d9a441"),0,.25,.22));
+      add(g,x,y,()=>S.grid[y][x]==="C")}
+    else if(ch==="T"){const g=new T3.Group();g.add(mesh(new T3.CylinderGeometry(.05,.07,.9,8),lam("#3a2c1e"),0,.45,0));g.add(mesh(new T3.CylinderGeometry(.13,.08,.09,10),lam("#2b2118"),0,.93,0));
+      const fm=new T3.Mesh(new T3.SphereGeometry(.09,10,8),new T3.MeshBasicMaterial({color:0xFFB347}));fm.position.set(0,1.05,0);fm.scale.set(1,1.6,1);g.add(fm);flames.push({fm,k:y*S.W+x,x,y});add(g,x,y,()=>true)}
+    else if(ch==="D"){const g=new T3.Group();g.add(mesh(new T3.BoxGeometry(1,WH,.3),lam("#4a3220"),0,WH/2,0));const cm=lam("#c9a466");
+      const beam=mesh(new T3.BoxGeometry(.06,.62,.02),cm,0,.5,.16);beam.rotation.z=.6;g.add(beam);g.add(mesh(new T3.BoxGeometry(.5,.05,.02),cm,0,.3,.16));g.add(mesh(new T3.BoxGeometry(.05,.3,.02),cm,-.12,.42,.16));
+      add(g,x,y,()=>S.grid[y][x]==="D")}
+    else if(ch===">"){const g=new T3.Group(),sm=lam("#3a2e22"),dm=lam("#120d09");for(let i=0;i<4;i++)g.add(mesh(new T3.BoxGeometry(.84,.14,.25),sm,0,-.07-.14*i,-.38+.25*i));
+      g.add(mesh(new T3.BoxGeometry(1,.06,1),dm,0,-.62,0));g.add(mesh(new T3.BoxGeometry(.08,.62,1),dm,-.46,-.31,0));g.add(mesh(new T3.BoxGeometry(.08,.62,1),dm,.46,-.31,0));add(g,x,y,()=>true)}}
+  /* 暗匪：黑衣、兜帽、紅眼（暈倒時眼睛變灰）；看得到的格子地上一片紅光 */
+  const gd=new T3.Group(),gdB=new T3.Group();gd.add(gdB);gdB.add(mesh(new T3.CylinderGeometry(.18,.25,.58,12),lam("#151515"),0,.3,0));gdB.add(mesh(new T3.SphereGeometry(.17,12,10),lam("#222222"),0,.73,0));
+  const eyeM=new T3.MeshBasicMaterial({color:0xE24A3A});for(const ex of[-.06,.06])gdB.add(mesh(new T3.BoxGeometry(.05,.03,.02),eyeM,ex,.75,.16));sc.add(gd);
+  const sightG=new T3.PlaneGeometry(.9,.9);sightG.rotateX(-Math.PI/2);const sightM=new T3.MeshBasicMaterial({color:0xC83223,transparent:true,opacity:.35,depthWrite:false});
+  const sights=[];for(let i=0;i<5;i++){const o=new T3.Mesh(sightG,sightM);o.position.y=.012;o.visible=false;sc.add(o);sights.push(o)}
+  /* 角色：照模型實際高度縮到約 0.95 格，腳底踩在地面（y＝0），腳下接地影子 */
   const root=new T3.Group();root.rotation.order="YXZ";root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
   const bx=new T3.Box3().setFromObject(B.bot),ct=bx.getCenter(new T3.Vector3()),hM=(bx.max.y-bx.min.y)||1;B.bot.position.x-=ct.x;B.bot.position.z-=ct.z;B.bot.position.y-=bx.min.y;const by=B.bot.position.y;
-  /* 俯角 48°：地圖是從正上方看，角色太接近平視（原本 32°）會像站在畫面前面、飄在地上；拉高貼近地圖的俯視感 */
-  const EL=48*Math.PI/180,vh=hM*1.45,cam=new T3.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T3.Vector3(0,hM*.6,0);
-  cam.position.set(0,tg.y+Math.sin(EL)*hM*6,Math.cos(EL)*hM*6);cam.lookAt(tg);cam.updateMatrixWorld(true);
-  const ft=new T3.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,clips=B.mixer&&B.clips||null;let cur=null,yawR=0,cw=0,ch=0,t=0;
+  const wrap=new T3.Group();wrap.add(root);wrap.scale.setScalar(.95/hM);sc.add(wrap);
+  const shG=new T3.PlaneGeometry(.95,.95);shG.rotateX(-Math.PI/2);const sh=new T3.Mesh(shG,new T3.MeshBasicMaterial({map:shT,transparent:true,depthWrite:false}));sh.position.y=.01;sc.add(sh);
+  const clips=B.mixer&&B.clips||null;let cur=null,yawR=0,t=0,tgx=null,tgz=null,cw=0,ch=0;
   const anim=n=>{if(!clips)return;const a=clips[n]||clips.idle;if(!a||a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};anim("idle");
+  const FOV=42,EL=56*Math.PI/180,TAN=Math.tan(FOV*Math.PI/360),cam=new T3.PerspectiveCamera(FOV,1,.1,80);
+  const ray=new T3.Raycaster(),gp=new T3.Plane(new T3.Vector3(0,1,0),0);
+  const bright=(L,x,y)=>{const i=y*S.W+x;if(x<0||y<0||x>=S.W||y>=S.H||!S.seen.has(i))return 0;const q=L[i];return q<.12?.26:Math.min(1.05,.26+q*.85)};
   return{
-    /* x、y＝腳底在 .jh-mz-cv 裡的位置（CSS px）；h＝角色畫布高（CSS px） */
-    draw(dt,walk,yaw,x,y,h){t+=dt;h=Math.max(40,Math.round(h));if(h!==ch){ch=h;cw=Math.round(h*.75);r.setSize(cw,ch)}
-      cv.style.transform=`translate(${(x-cw/2).toFixed(1)}px,${(y-ftF*ch).toFixed(1)}px)`;
-      let dw=yaw-yawR;while(dw>Math.PI)dw-=Math.PI*2;while(dw<-Math.PI)dw+=Math.PI*2;yawR+=dw*Math.min(1,dt*(walk?16:9));root.rotation.y=yawR;
+    draw(dt,now,L,walk,yaw){t+=dt;const w=box.clientWidth,h=box.clientHeight;if(!w||!h)return;
+      if(w!==cw||h!==ch){cw=w;ch=h;r.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix()}
+      const P=S.player,G=S.guard,px=P.fx+.5,pz=P.fy+.5;
+      if(tgx===null||Math.hypot(px-tgx,pz-tgz)>3){tgx=px;tgz=pz}else{const k=Math.min(1,dt*7);tgx+=(px-tgx)*k;tgz+=(pz-tgz)*k}
+      const D=Math.max(7.6/(2*TAN*cam.aspect),6.4/(2*TAN));cam.position.set(tgx,D*Math.sin(EL),tgz+D*Math.cos(EL));cam.lookAt(tgx,0,tgz);
+      cells.forEach(([x,y],i)=>fl.setColorAt(i,cK.setScalar(bright(L,x,y))));fl.instanceColor.needsUpdate=true;
+      walls.forEach(([x,y],i)=>wl.setColorAt(i,cK.setScalar(bright(L,x,y))));wl.instanceColor.needsUpdate=true;
+      for(const o of objs){const b=bright(L,o.x,o.y);o.g.visible=b>0&&o.on();if(o.g.visible)for(const m of o.mats)m.color.copy(m.userData.base).multiplyScalar(b)}
+      for(const f of flames){const on=S.lit.has(f.k);f.fm.visible=on;if(on){f.fm.scale.set(1,1.6+Math.sin(now/90+f.x)*.18,1);if(!lights[f.k]&&Object.keys(lights).length<4){const pl=new T3.PointLight(0xFFA040,.9,4.2,1.5);pl.position.set(f.x+.5,1.1,f.y+.5);sc.add(pl);lights[f.k]=pl}}}
+      const gL=L[G.y*S.W+G.x]||0;gd.visible=gL>.15;gd.position.set(G.fx+.5,0,G.y+.5);gdB.rotation.y=G.dx>0?Math.PI/2:-Math.PI/2;eyeM.color.setHex(G.stun?0x8A8A8A:0xE24A3A);
+      const sx=jhMzSight(S);sights.forEach((o,i)=>{const x=sx[i];o.visible=x!=null&&(L[G.y*S.W+x]||0)>.15;if(o.visible)o.position.set(x+.5,.012,G.y+.5)});
+      lamp.position.set(px,1.25,pz);lamp.intensity=1.25+Math.sin(now/170)*.08+Math.sin(now/53)*.04;
+      let dw=yaw-yawR;while(dw>Math.PI)dw-=Math.PI*2;while(dw<-Math.PI)dw+=Math.PI*2;yawR+=dw*Math.min(1,dt*(walk?16:9));root.rotation.y=yawR;wrap.position.set(px,0,pz);sh.position.set(px,.01,pz);
       if(clips){anim(walk?"walk":"idle");if(walk&&cur)cur.timeScale=1.7;B.mixer.update(dt)}
       else{const ph=t*14;root.position.y=walk?Math.abs(Math.sin(ph))*hM*.04:0;root.rotation.z=walk?Math.sin(ph)*.07:0;
         if(B.legs&&B.legs.length===2)B.legs.forEach((l,i)=>l.rotation.x=walk?Math.sin(ph)*.6*(i?1:-1):0);if(B.arms&&B.arms.length===2)B.arms.forEach((a,i)=>a.rotation.x=walk?Math.sin(ph)*.5*(i?-1:1):0)}
       B.bot.position.y=by;r.render(sc,cam)},
-    dispose(){try{cv.remove()}catch(e){}try{r.dispose();r.forceContextLoss()}catch(e){}}}}
+    /* 點畫面：先打牆和地面（點到牆頂就是那面牆），都沒打到再算地面高度 */
+    pick(x,y){const b=cv.getBoundingClientRect();if(!b.width)return null;ray.setFromCamera(new T3.Vector2((x-b.left)/b.width*2-1,-((y-b.top)/b.height)*2+1),cam);
+      const hit=ray.intersectObjects([wl,fl],false)[0];if(hit&&hit.instanceId!=null){const q=(hit.object===wl?walls:cells)[hit.instanceId];if(q)return{x:q[0],y:q[1]}}
+      const p=new T3.Vector3();if(!ray.ray.intersectPlane(gp,p))return null;return{x:Math.floor(p.x),y:Math.floor(p.z)}},
+    dispose(){try{cv.remove()}catch(e){}try{texs.forEach(k=>k.dispose());r.dispose();r.forceContextLoss()}catch(e){}}}}
 
 /* ===== 純邏輯（測試用 vm 直接跑這一段）===== */
 function jhMzNew(){const S={W:JH_MZ_MAP[0].length,H:JH_MZ_MAP.length,seen:new Set(),lit:new Set(),bag:{gong:0,page:0,box:0},doorOpen:false,fails:{door:0,trap:0},turn:0,done:false,chests:new Set()};
@@ -174,7 +238,7 @@ const jhMzOn=()=>{try{return typeof xqFlag!=="function"||xqFlag("maze")}catch(e)
 function jhMzCss(){if(document.getElementById("jhMzCss"))return;const s=document.createElement("style");s.id="jhMzCss";s.textContent=`
 .jh-mz{display:flex;flex-direction:column;height:calc(100dvh - var(--topH,56px));background:#000;color:#e9dfc9}
 .jh-mz-cv{flex:1;min-height:0;position:relative;overflow:hidden}.jh-mz-cv canvas{width:100%;height:100%;display:block;touch-action:none}
-.jh-mz-cv canvas.jh-mz-hero{position:absolute;left:0;top:0;width:auto;height:auto;pointer-events:none;touch-action:auto}
+.jh-mz-cv canvas.jh-mz-3d{position:absolute;left:0;top:0;pointer-events:none;touch-action:auto}
 .jh-mz-msg{min-height:3.2em;padding:8px 12px;font-size:15px;line-height:1.5;background:#140f0a;border-top:1px solid #3a2c1e}
 .jh-mz-bag{display:flex;gap:8px;flex-wrap:wrap;padding:4px 12px;font-size:13px;color:#9b8a6e;background:#140f0a}.jh-mz-bag .on{color:#e8b75a}
 .jh-mz-pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,48px);gap:4px;justify-content:center;padding:8px 0 calc(8px + env(safe-area-inset-bottom));background:#140f0a}
@@ -206,8 +270,8 @@ function JhMaze(v){jhCss();jhMzCss();
   const cv=v.querySelector("canvas"),cx=cv.getContext("2d"),box=v.querySelector(".jh-mz-cv"),fog=document.createElement("canvas"),fx=fog.getContext("2d");fog.width=S.W;fog.height=S.H;
   const hero=new Image();hero.src=`data/xs/prev_${c0}.webp`;
   let T=48,camX=0,camY=0,dpr=1,path=[],busy=false,warned=false,held=null,h3=null,lastT=0,pWalk=false;
-  /* 3D 角色：載好之前（或載不到）畫立繪 */
-  jhMzHero3(box,c0).then(h=>{if(alive())h3=h;else h.dispose()}).catch(()=>{});
+  /* 3D 迷宮（h3）：載好之前（或載不到）畫平面版＋立繪；載好後平面畫布藏起來（透明，但照舊收點選） */
+  jhMzWorld3(box,c0,S).then(w=>{if(alive()){h3=w;cv.style.opacity="0"}else w.dispose()}).catch(()=>{});
   /* 畫面上還在走（離目標格超過 0.12 格）＝還不能踏下一格；剩一點點就先接下一格，連著走不停頓 */
   const moving=()=>{const P=S.player;return Math.hypot(P.x-P.fx,P.y-P.fy)>.12};
   const say=h=>{v.querySelector(".jh-mz-msg").innerHTML=h};
@@ -249,25 +313,24 @@ function JhMaze(v){jhCss();jhMzCss();
     camX+=(P.fx*T+T/2-vw/2-camX)*.2;camY+=(P.fy*T+T/2-vh/2-camY)*.2;
     cx.setTransform(dpr,0,0,dpr,0,0);cx.fillStyle="#000";cx.fillRect(0,0,vw,vh);cx.save();cx.translate(-Math.round(camX),-Math.round(camY));
     const L=new Float32Array(S.W*S.H);for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const q=jhMzLight(S,x,y,now);L[y*S.W+x]=q;if(q>.12)S.seen.add(y*S.W+x)}
+    if(h3){cx.restore();const d=P.dir||[0,1];try{h3.draw(dt,now,L,pWalk,jhMzYaw(d[0],d[1]))}catch(e){h3.dispose();h3=null;cv.style.opacity=""}requestAnimationFrame(frame);return}
     for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++)if(S.seen.has(y*S.W+x))tile(x,y,x*T,y*T);
     for(const x of jhMzSight(S))if(L[G.y*S.W+x]>.15){cx.fillStyle="rgba(200,50,35,.28)";cx.fillRect(x*T+2,G.y*T+2,T-4,T-4);cx.fillStyle="rgba(230,70,50,.7)";cx.fillRect(x*T+4,G.y*T+T/2-1.5,T-8,3)}
     if(L[G.y*S.W+G.x]>.15){const gx=G.fx*T+T/2,gy=G.y*T+T/2;cx.fillStyle="#141414";cx.beginPath();cx.ellipse(gx,gy+T*.05,T*.3,T*.36,0,0,7);cx.fill();cx.fillStyle="#2b2b2b";cx.beginPath();cx.arc(gx,gy-T*.2,T*.17,0,7);cx.fill();
       cx.fillStyle=G.stun?"#8a8a8a":"#e24a3a";cx.fillRect(gx+G.dx*T*.04-T*.09,gy-T*.23,T*.06,T*.04);cx.fillRect(gx+G.dx*T*.04+T*.03,gy-T*.23,T*.06,T*.04)}
-    /* 11/23 開發者：「腳色看起來是漂起來 請修正」：原本影子很淡（.4）又小、被身體蓋住，腳底站在格子下緣（.38）。
-       改成：3D 角色腳底站在格子中心偏下（.22），腳下一圈明顯的柔邊接地影子（比身體寬、從腳邊露出來）；立繪照舊站 .38 */
-    const hx=P.fx*T+T/2,hy=P.fy*T+T/2,ft=hy+T*(h3?.22:.38);
+    /* 平面版（3D 載不起來時）：立繪腳下一圈明顯的柔邊接地影子（開發者 11/23「腳色看起來是漂起來」） */
+    const hx=P.fx*T+T/2,hy=P.fy*T+T/2,ft=hy+T*.38;
     /* 預覽站量：影子半徑 .42 格時跟披風一樣寬、上下只有 12px，幾乎全被身體蓋住 → 放大到 .55 格、往下挪一點，左右和腳下都露得出來 */
     cx.save();cx.translate(hx,ft+T*.04);cx.scale(1,.4);const sg=cx.createRadialGradient(0,0,0,0,0,T*.55);sg.addColorStop(0,"rgba(0,0,0,.72)");sg.addColorStop(.5,"rgba(0,0,0,.45)");sg.addColorStop(1,"rgba(0,0,0,0)");
     cx.fillStyle=sg;cx.beginPath();cx.arc(0,0,T*.55,0,7);cx.fill();cx.restore();
-    /* 3D 載好就由 3D 畫（在下面）；還沒好或載不到：立繪也一樣等速走，走路時腳下一點一點、左右晃 */
-    if(!h3){const bob=pWalk?-Math.abs(Math.sin(now/95))*T*.06:Math.sin(now/220)*1.5,sw=pWalk?Math.sin(now/95)*.09:0;
+    /* 立繪也一樣等速走，走路時腳下一點一點、左右晃 */
+    {const bob=pWalk?-Math.abs(Math.sin(now/95))*T*.06:Math.sin(now/220)*1.5,sw=pWalk?Math.sin(now/95)*.09:0;
       if(hero.complete&&hero.naturalWidth){const h=T*1.05,w=h*hero.width/hero.height;cx.save();cx.translate(hx,hy+T*.38);cx.rotate(sw);cx.scale(P.face<0?-1:1,1);cx.drawImage(hero,-w/2,-T*.38-h*.62+bob,w,h);cx.restore()}
       else{cx.fillStyle="#e8b75a";cx.beginPath();cx.arc(hx,hy-T*.05+bob,T*.24,0,7);cx.fill()}}
     const id=fx.createImageData(S.W,S.H);for(let i=0;i<S.W*S.H;i++){const q=L[i],a=!S.seen.has(i)?1:q<.12?.8:Math.max(0,1-q*.95);id.data[i*4+3]=Math.round(a*255)}
     fx.putImageData(id,0,0);cx.imageSmoothingEnabled=true;cx.drawImage(fog,0,0,S.W*T,S.H*T);
     const gr=cx.createRadialGradient(hx,hy,T*.3,hx,hy,T*3.4);gr.addColorStop(0,"rgba(255,170,80,.14)");gr.addColorStop(1,"rgba(255,170,80,0)");cx.fillStyle=gr;cx.fillRect(hx-T*4,hy-T*4,T*8,T*8);
     cx.restore();
-    if(h3){const d=P.dir||[0,1];try{h3.draw(dt,pWalk,jhMzYaw(d[0],d[1]),hx-Math.round(camX),ft-Math.round(camY),T*1.75)}catch(e){h3.dispose();h3=null}}
     requestAnimationFrame(frame)};
   const act=(dx,dy)=>{if(busy||S.done)return false;if(dx||dy)S.player.dir=[dx,dy];const r=jhMzStep(S,dx,dy);
     if(r.ev==="wall"){say(esc(jhL("前面過不去。","Can't go that way.")));return false}
@@ -317,7 +380,7 @@ function JhMaze(v){jhCss();jhMzCss();
       <div class="jh-mz-row"><button type="button" data-a="again">${esc(jhL("再走一次","Play again"))}</button><button type="button" class="main" data-a="out">${esc(jhL("回中炮門","Back to the Central Cannon School"))}</button></div>`);
     o.querySelector('[data-a="again"]').onclick=()=>{shut(o);const n=jhMzNew();Object.assign(S,n);bag();say(intro)};
     o.querySelector('[data-a="out"]').onclick=()=>{shut(o);upTo("#/jianghu/hall/central")}};
-  cv.addEventListener("click",e=>{if(busy||S.done)return;const r=cv.getBoundingClientRect(),x=Math.floor((e.clientX-r.left+camX)/T),y=Math.floor((e.clientY-r.top+camY)/T);
+  cv.addEventListener("click",e=>{if(busy||S.done)return;const r=cv.getBoundingClientRect(),q=h3?h3.pick(e.clientX,e.clientY):{x:Math.floor((e.clientX-r.left+camX)/T),y:Math.floor((e.clientY-r.top+camY)/T)};if(!q)return;const x=q.x,y=q.y;
     if(x===S.player.x&&y===S.player.y)return;if(!S.seen.has(y*S.W+x)){say(jhL("那裡還是一片黑，<b>先走近一點照亮它</b>。","It's still pitch dark there. <b>Get closer to light it up.</b>"));return}
     const p=jhMzPath(S,x,y);if(!p){say(esc(jhL("走不到那裡。","You can't get there.")));return}path=p;held=null});
   /* 方向鈕、方向鍵：按下就走、按住一直走（每格踏到才接下一格）、放開停在下一格。鍵盤在按鈕上按 Enter／空白鍵＝走一格。「等」＝原地等一回合 */
