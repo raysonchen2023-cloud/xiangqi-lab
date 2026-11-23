@@ -160,3 +160,57 @@ test("〔原始碼〕jStart 第一件事核對來處；對局頁頂端返回鍵�
   assert.match(CG, /false,typeof jParkBackBtn==="function"\?jParkBackBtn\(\):\["‹ 回渡口",\(\)=>upTo\("#\/port"\)\]\);/);
   assert.ok(LEG.includes('const jBack=j=>String(j||"").startsWith("gx:")?"#/adventure":'));
 });
+
+/* W81（#76 第五輪審查建議 2、3，開發者 11/23「#76的兩個問題請找人來修」）：載入真的 jStart（和它的「繼續那一盤／放棄，開新的」選單）、
+   真的 jName、jSlotMsg、zmAct；手上那盤由假的 /play/state 回傳，選單的按鈕記下來再按 */
+function worldStart(stateJ) {
+  const W = world("#/jianghu/hall/central"), c = W.c;
+  W.btns = null; W.news = [];
+  Object.assign(c, {
+    api: async (p) => (p === "/play/state" ? (stateJ ? { journey: stateJ, moves: [1, 2, 3], result: null } : {}) : (W.news.push(p), { id: "g2" })),
+    modal: (h, b) => { W.btns = b }, esc: (x) => String(x), rsFinGame: () => false, rsJId: () => "", diffDx: () => 0, parkNpcNew() {},
+    ROAD_NAME: "雲河棋路", zmImg: () => "", NPC_LOOK: null, ZM_GCH: {}, igAct: () => null,
+    oscSchE: (id) => ({ screen: { nm: c.__en ? "Screen Horse School" : "屏風馬門" }, central: { nm: c.__en ? "Central Cannon School" : "中炮門" } }[id] || null),
+    oscL: (zh, en) => (c.__en ? en : zh),
+  });
+  c.OSC.mst = (j) => ({ zm_screen: { id: "zm_screen", sid: "screen", nm: "屏若山", en: "Ping Ruoshan", pc: "馬" } }[String(j || "").replace(/^inn:/, "")] || null);
+  vm.runInContext([fnSrc(LEG, "function jName("), fnSrc(LEG, "const jRnd="), fnSrc(LEG, "function jSlotMsg("), fnSrc(LEG, "async function jStart("), fnSrc(SC, "function zmAct(")].join("\n") + "\n;this.R={jStart,jName,zmAct};", c);
+  return W;
+}
+
+test("W81：先開掌門局沒下完，再到門內按門下棋友：選「⏳ 繼續那一盤」，掌門局照舊回屏風馬門；選「放棄，開新的」，新的那盤回中炮門、掌門局的紀錄清掉", async () => {
+  for (const pick of ["繼續那一盤", "放棄，開新的"]) {
+    const W = worldStart("inn:zm_screen"), { T, c } = W;
+    T.jRetSet("inn:zm_screen", "#/jianghu/hall/screen", "屏風馬門"); T.jRetTake("inn:zm_screen");   /* 掌門局從屏風馬門開過了 */
+    T.jRetSet("park", "#/jianghu/hall/central", "中炮門");   /* 到中炮門門內按門下棋友：開局前先登記 */
+    let went = null; await c.R.jStart("park", {}, (x) => { went = x });
+    assert.ok(Array.isArray(W.btns), "手上有另一盤沒下完：要跳出選單");
+    const b = W.btns.find((x) => String(x[0]).includes(pick)); assert.ok(b, "找得到「" + pick + "」");
+    await b[1]();
+    if (pick === "繼續那一盤") {
+      assert.equal(c.location.hash, "#/journey/play");
+      assert.equal(T.jBack("inn:zm_screen"), "#/jianghu/hall/screen", "掌門局返回去處：照舊回屏風馬門門內頁（修之前被門下棋友的紀錄蓋掉，落回驛站）");
+      assert.equal(T.jPlace("inn:zm_screen"), "屏風馬門", "掌門局結算寫的地名");
+    } else {
+      assert.equal(went, true, "開了新的那一盤"); assert.deepEqual(W.news, ["/play/new"]);
+      assert.equal(T.jBack("park"), "#/jianghu/hall/central"); assert.equal(T.jPlace("park"), "中炮門");
+      assert.equal(T.jRetOf("inn:zm_screen"), null, "被放棄的掌門局，來處紀錄一起清掉");
+    }
+  }
+  /* 沒有另一盤時不跳選單，直接開；從渡口開園子照舊清掉園子那一筆、不動別的代號 */
+  const N = worldStart(null);
+  N.T.jRetSet("inn:zm_screen", "#/jianghu/hall/screen", "屏風馬門"); N.T.jRetTake("inn:zm_screen");
+  N.T.jRetSet("park", "#/jianghu/hall/central", "中炮門"); N.T.jRetTake("park");   /* 園子之前從中炮門開過一盤，留著紀錄 */
+  assert.equal(N.T.jBack("park"), "#/jianghu/hall/central");
+  N.c.location.hash = "#/port"; await N.c.R.jStart("park", {}, () => {});
+  assert.equal(N.btns, null); assert.equal(N.T.jBack("park"), "#/port", "從渡口開園子：回渡口");
+  assert.equal(N.T.jBack("inn:zm_screen"), "#/jianghu/hall/screen", "別的代號的紀錄不受影響");
+});
+
+test("W81：掌門局的對局頁標題寫「派名掌門・名字」，中英文都對；找不到掌門、一般驛站照舊", () => {
+  const W = worldStart(null), R = W.c.R;
+  assert.equal(R.jName("inn:zm_screen"), "屏風馬門掌門・屏若山");
+  W.c.__en = true; assert.equal(R.jName("inn:zm_screen"), "Screen Horse School master · Ping Ruoshan"); W.c.__en = false;
+  assert.equal(R.jName("inn:zm_nobody"), "驛站", "找不到掌門：照舊");
+  assert.equal(R.jName("inn:x9"), "驛站", "一般驛站代號不受影響");
+});
