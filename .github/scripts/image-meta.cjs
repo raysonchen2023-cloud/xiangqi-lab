@@ -22,6 +22,11 @@ function sniff(buf) {
   if (b.length >= 4 && (s(0, 4) === "II*\0" || s(0, 4) === "MM\0*")) return "tiff";
   if (b.length >= 6 && /^GIF8[79]a$/.test(s(0, 6))) return "gif";
   if (b.length >= 2 && s(0, 2) === "BM") return "bmp";
+  /* 第七輪審查①：ICO／CUR、PSD、JPEG XL、JPEG 2000 也算圖片（讀不懂＝擋，請轉成 webp／png；也不准用行內標記放行） */
+  if (b.length >= 4 && b[0] === 0 && b[1] === 0 && (b[2] === 1 || b[2] === 2) && b[3] === 0) return "ico";
+  if (b.length >= 4 && s(0, 4) === "8BPS") return "psd";
+  if ((b.length >= 2 && b[0] === 0xff && b[1] === 0x0a) || (b.length >= 12 && s(4, 8) === "JXL ")) return "jxl";
+  if (b.length >= 12 && s(4, 8) === "jP  ") return "jp2";
   if (b.length >= 12 && s(4, 8) === "ftyp") { const brands = s(8, Math.min(b.length, 8 + 64)); if (/avi[fs]/.test(brands)) return "avif"; if (/hei[cfsx]|hev[cx]|mif1|msf1/.test(brands)) return "heif" }
   return null;
 }
@@ -65,7 +70,13 @@ function rawProfile(key, text, out) {
   if (/xmp/i.test(key)) return xmp(d.toString("utf8"), out);
   const i = d.indexOf("Exif\0\0"); tiff(i >= 0 ? d.subarray(i + 6) : d, out);
 }
-const inflate = (d) => { try { return zlib.inflateSync(d) } catch (e) { return Buffer.alloc(0) } };
+/* 第七輪審查④：壓縮資料不完整時也把解得出來的部分拿回來（Z_SYNC_FLUSH），不整段丟掉 */
+const inflate = (d) => { try { return zlib.inflateSync(d, { finishFlush: zlib.constants.Z_SYNC_FLUSH }) } catch (e) { return Buffer.alloc(0) } };
+/* 第七輪審查②：不管放在哪個區塊、哪一段（JPEG 第一個 SOS 之後、漸進式兩次掃描之間、EOI 之後），整個檔裡找得到的 Exif 與 XMP 都看 */
+function anywhere(b, out, texts) {
+  for (let i = b.indexOf("Exif\0\0"); i >= 0; i = b.indexOf("Exif\0\0", i + 6)) tiff(b.subarray(i + 6), out);
+  for (let i = b.indexOf("<x:xmpmeta"); i >= 0; i = b.indexOf("<x:xmpmeta", i + 10)) { const e = b.indexOf("</x:xmpmeta>", i), t = b.toString("utf8", i, e > i ? e + 12 : Math.min(b.length, i + 65536)); xmp(t, out); texts.push(t) }
+}
 /* JPEG APP13（Photoshop 8BIM）裡的 IPTC：1C 02 50＝By-line、1C 02 74＝Copyright、1C 02 76＝Contact */
 function iptc(seg, out) { for (let i = 0; i + 3 <= seg.length; i++) if (seg[i] === 0x1c && seg[i + 1] === 0x02 && [0x50, 0x74, 0x76].includes(seg[i + 2])) { out.add("owner"); return } }
 
@@ -73,7 +84,7 @@ function iptc(seg, out) { for (let i = 0; i + 3 <= seg.length; i++) if (seg[i] =
    texts＝圖裡解出來的文字（PNG 文字區、XMP、JPEG／GIF 註解），scan-changed 交給 oss-scan 的規則掃（PR #68 第二輪審查④：Comment 裡寫信箱也要抓到） */
 function imageMeta(buf) {
   const b = Buffer.isBuffer(buf) ? buf : Buffer.from(buf), out = new Set(), fmt = sniff(b), texts = [];
-  const done = () => ({ format: fmt, kinds: [...out].sort(), texts });
+  const done = () => { anywhere(b, out, texts); return { format: fmt, kinds: [...out].sort(), texts } };
   if (fmt === "jpeg") {
     /* PR #68 第二輪審查③：標記前可以有任意個填充用的 FF，要跳過；一路要走到 SOS（影像資料開始）才算讀完，走不到＝結構壞掉＝讀不懂 */
     let p = 2, sos = false;
@@ -122,6 +133,7 @@ function imageMeta(buf) {
     let p = 12;
     while (p + 8 <= b.length) {
       const cc = b.toString("latin1", p, p + 4), len = b.readUInt32LE(p + 4), d = b.subarray(p + 8, p + 8 + len);
+      if (p + 8 + len > b.length) return null;   /* 第七輪審查③：區塊長度超出檔案＝讀不懂 */
       if (cc === "EXIF") tiff(d.toString("latin1", 0, 6) === "Exif\0\0" ? d.subarray(6) : d, out);
       else if (cc === "XMP ") { xmp(d.toString("utf8"), out); texts.push(d.toString("utf8")) }
       p += 8 + len + (len & 1);

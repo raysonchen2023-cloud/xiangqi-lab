@@ -525,3 +525,51 @@ test("第六輪⑤：子資料夾的 .gitattributes 加 working-tree-encoding �
     assert.equal(r.status, 1, r.stdout); assert.match(r.stdout, /source\/sub\/dir\/\.gitattributes:1/);
   }
 });
+
+/* ---- PR #68 第七輪審查（iMac Claude 2） ---- */
+test("第七輪⑤：標記行、圖片文字一律不印內容——各種解碼都遮不到的寫法（信箱中間夾 NUL）也不會出現在輸出裡", () => {
+  const MK = "oss-scan" + ":allow", AT = "@";
+  const r = scan(repo(({ put }) => put("source/n.js", Buffer.from("x\ncontact zed.fake" + AT + "fake\0mail.tw // " + MK + "\n", "latin1"))));
+  for (const leak of ["zed.fake", "fake\0mail", "fake mail.tw", "fakemail.tw"]) assert.ok(!r.stdout.includes(leak), "輸出裡不能有：" + JSON.stringify(leak) + "\n" + r.stdout);
+  assert.match(r.stdout, /n\.js:2 {2}（內容不印：/);
+});
+test("第七輪⑥：倉庫裡每個檔用空的基準整倉掃，沒有未放行的高、中風險（下一個改到這些檔的 PR 不會被誤擋）", () => {
+  const O = require(OSS), root = path.join(__dirname, "..", ".."), L = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "oss-allow.json"), "utf8"));
+  const R = O.scan(root, { allow: L.items }), live = R.findings.filter((f) => !f.allowed && f.risk !== "low");
+  assert.deepEqual(live.map((f) => f.file + ":" + f.line + " " + f.rule), []);
+});
+test("第七輪①：ICO／CUR、PSD、JPEG XL、JPEG 2000 也算圖片——讀不懂就擋、不准用行內標記放行", () => {
+  const MK = "oss-scan" + ":allow", body = Buffer.from("\nm=" + MAIL3 + " " + MK + "\n");
+  const heads = { ico: Buffer.from([0, 0, 1, 0, 1, 0]), cur: Buffer.from([0, 0, 2, 0, 1, 0]), psd: Buffer.from("8BPS\0\x01"), jxl: Buffer.from([0xff, 0x0a]), jxlbox: Buffer.concat([Buffer.from([0, 0, 0, 0x0c]), Buffer.from("JXL \r\n\x87\n")]), jp2: Buffer.concat([Buffer.from([0, 0, 0, 0x0c]), Buffer.from("jP  \r\n\x87\n")]) };
+  const O = require(OSS);
+  for (const [k, h] of Object.entries(heads)) {
+    const b = Buffer.concat([h, Buffer.alloc(16), body]);
+    assert.ok(IM.sniff(b), k + " 要認得是圖片"); assert.equal(IM.imageMeta(b), null, k + " 讀不懂");
+    assert.ok(O.IMG_HEAD(b), k + "：oss-scan 也當圖片（不認標記）");
+    const r = scan(repo(({ put }) => put("source/x." + k, b)));
+    assert.equal(r.status, 1, k + "\n" + r.stdout); assert.match(r.stdout, /讀不懂/, k);
+  }
+});
+test("第七輪②：JPEG 第一個 SOS 之後、EOI 之後的 Exif GPS 也認得出來（整個檔找 Exif／XMP）", () => {
+  const seg = (m, d) => { const h = Buffer.from([0xff, m, 0, 0]); h.writeUInt16BE(d.length + 2, 2); return Buffer.concat([h, d]) };
+  const tif = Buffer.alloc(26); tif.write("II*\0", 0, "latin1"); tif.writeUInt32LE(8, 4); tif.writeUInt16LE(1, 8); tif.writeUInt16LE(0x8825, 10); tif.writeUInt16LE(4, 12); tif.writeUInt32LE(1, 14); tif.writeUInt32LE(26, 18); tif.writeUInt32LE(0, 22);
+  const gps = Buffer.concat([Buffer.from("Exif\0\0", "latin1"), tif, Buffer.from([1, 0, 2, 0, 2, 0, 2, 0, 0, 0, 0x4e, 0, 0, 0, 0, 0, 0, 0])]);
+  const base = Buffer.concat([Buffer.from([0xff, 0xd8]), seg(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])), Buffer.from([0, 0])]);
+  assert.deepEqual(IM.imageMeta(Buffer.concat([base, seg(0xe1, gps), seg(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])), Buffer.from([0xff, 0xd9])])).kinds, ["gps"], "兩次掃描之間");
+  assert.deepEqual(IM.imageMeta(Buffer.concat([base, Buffer.from([0xff, 0xd9]), seg(0xe1, gps)])).kinds, ["gps"], "EOI 之後");
+  const x = Buffer.from("<x:xmpmeta><exif:GPSLatitude>25,1N</exif:GPSLatitude></x:xmpmeta>");
+  assert.deepEqual(IM.imageMeta(Buffer.concat([base, Buffer.from([0xff, 0xd9]), x])).kinds, ["gps"], "EOI 之後的 XMP");
+});
+test("第七輪③：WebP 區塊長度超出檔案＝讀不懂", () => {
+  const x = Buffer.from("VP8L"), l = Buffer.alloc(4); l.writeUInt32LE(0x10000);
+  const body = Buffer.concat([Buffer.from("WEBP"), x, l, Buffer.alloc(8)]), rl = Buffer.alloc(4); rl.writeUInt32LE(body.length);
+  assert.equal(IM.imageMeta(Buffer.concat([Buffer.from("RIFF"), rl, body])), null);
+});
+test("第七輪④：PNG zTXt 壓縮資料不完整時，解得出來的部分照樣交給規則（Z_SYNC_FLUSH）", () => {
+  const zlib = require("zlib"), crc = (b) => { let c, t = -1; for (const x of b) { c = (t ^ x) & 255; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t = (t >>> 8) ^ c } return (t ^ -1) >>> 0 };
+  const chunk = (type, data) => { const len = Buffer.alloc(4), td = Buffer.concat([Buffer.from(type), data]), c = Buffer.alloc(4); len.writeUInt32BE(data.length); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]) };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(1, 0); ihdr.writeUInt32BE(1, 4); ihdr[8] = 8;
+  const z = zlib.deflateSync(Buffer.from("note " + MAIL3 + " " + "y".repeat(400))), cut = z.subarray(0, z.length - 6);
+  const png = Buffer.concat([SIG.png, chunk("IHDR", ihdr), chunk("zTXt", Buffer.concat([Buffer.from("Comment\0\0"), cut])), chunk("IDAT", zlib.deflateSync(Buffer.from([0, 0]))), chunk("IEND", Buffer.alloc(0))]);
+  assert.ok(IM.imageMeta(png).texts.join(" ").includes(MAIL3));
+});

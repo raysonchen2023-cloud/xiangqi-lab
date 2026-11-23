@@ -52,7 +52,9 @@ const NAME_RULES = [
    ③檔裡有 NUL 時，另外多解幾種（見 textsOf），沒有 BOM 的 UTF-16、奇數長度的 UTF-16BE、UTF-32 都躲不掉。IMG_HEAD 留著給外面判斷用 */
 const IMG_HEAD = (b) => (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) || (b.length >= 8 && b[0] === 0x89 && b.toString("latin1", 1, 4) === "PNG") ||
   (b.length >= 12 && b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP") || (b.length >= 6 && /^GIF8[79]a$/.test(b.toString("latin1", 0, 6))) ||
-  (b.length >= 4 && /^(?:II\*\0|MM\0\*)$/.test(b.toString("latin1", 0, 4))) || (b.length >= 2 && b.toString("latin1", 0, 2) === "BM" && b.length >= 26);
+  (b.length >= 4 && /^(?:II\*\0|MM\0\*)$/.test(b.toString("latin1", 0, 4))) || (b.length >= 2 && b.toString("latin1", 0, 2) === "BM" && b.length >= 26) ||
+  (b.length >= 4 && b[0] === 0 && b[1] === 0 && (b[2] === 1 || b[2] === 2) && b[3] === 0) || (b.length >= 4 && b.toString("latin1", 0, 4) === "8BPS") ||
+  (b.length >= 2 && b[0] === 0xff && b[1] === 0x0a) || (b.length >= 12 && /^(?:JXL |jP  )$/.test(b.toString("latin1", 4, 8)));   /* 第七輪審查①：ICO／CUR、PSD、JPEG XL、JPEG 2000 */
 const CTRL = /[\x00-\x08\x0b\x0c\x0e-\x1f]/g;
 function asText(b) {
   const n = Math.min(b.length, 65536); let z0 = 0, z1 = 0;

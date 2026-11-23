@@ -20,6 +20,7 @@
   { "rule": "email", "file": "engine/pikafish.nnue", "sha256": "958ebd2e4a30a438b3ca14a0c774c860a87d097643df2e9b7c3e6aea0fdc63b8", "reason": "誤判：Pikafish 神經網路權重（二進位）裡剛好湊成信箱格式的位元組" },
   { "rule": "email", "file": "pikafish-src/full/upstream/Pikafish-2026-09-06/src/external/decompress/huf_decompress_amd64.S", "sha256": "9324e72ad1d7b596645c9ac713020fc8d697f5c1c7c059c69c944d4f1898ebc0", "reason": "Pikafish 上游附的 zstd 原始碼裡的第三方作者信箱（GPL 對應原始碼，照原樣公開）" },
   { "rule": "email", "file": "privacy.html", "sha256": "b6d12a2f7826fc1b5056f2db328003f996e531c7faa8080f887cc22efeb8b32e", "reason": "隱私權政策上的客服聯絡信箱，上架資料本來就公開" },
+  { "rule": "email", "file": "source/xiangqi-lab/src/privacy.html", "sha256": "b6d12a2f7826fc1b5056f2db328003f996e531c7faa8080f887cc22efeb8b32e", "reason": "隱私權政策上的客服聯絡信箱，上架資料本來就公開（#78 加進 main 的原始碼那份）" },
   { "rule": "email", "file": "source/xiangqi-android/fdroid/com.raysonchen.xiangqiqianqiu.yml", "sha256": "b6d12a2f7826fc1b5056f2db328003f996e531c7faa8080f887cc22efeb8b32e", "reason": "F-Droid 上架資料的作者聯絡信箱，本來就公開" },
   { "rule": "email", "file": "source/xiangqi-lab/tools/test-support-pages-1117.js", "sha256": "b6d12a2f7826fc1b5056f2db328003f996e531c7faa8080f887cc22efeb8b32e", "reason": "測試客服頁與隱私頁有寫聯絡信箱（同上那個公開信箱）" },
   { "rule": "email", "file": "support.html", "sha256": "b6d12a2f7826fc1b5056f2db328003f996e531c7faa8080f887cc22efeb8b32e", "reason": "客服頁的聯絡信箱，上架資料本來就公開" },
