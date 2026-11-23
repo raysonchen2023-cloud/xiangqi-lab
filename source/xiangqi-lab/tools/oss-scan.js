@@ -186,7 +186,7 @@ function scan(dir, opts = {}) {
      非個資規則在圖片裡照舊只能用 fileSha256；fileSha256 只對「檔頭是圖」的檔算數（第十一輪審查①），而且只給非個資規則 */
   const allowed = (rule, rel, match) => allow.find((a) => {
     const isImg = imgFiles.has(rel), pii = PERSONAL.includes(rule);
-    if (isImg && pii) { if (a.fileSha256 != null || !a.file || !a.sha256) return false }
+    if (isImg && pii) { if (!a.file || !a.sha256) return false }   /* 寫了 fileSha256 的由最後一個條件擋（只有一處把關，突變測試才測得到） */
     else if (isImg && !a.fileSha256) return false;
     return (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256)
       && (a.fileSha256 == null || (isImg && !pii && fileSha.get(rel) === a.fileSha256));

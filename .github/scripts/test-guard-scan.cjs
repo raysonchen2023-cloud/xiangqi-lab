@@ -799,8 +799,8 @@ test("第十三輪②：只寫 rule 的放行（非個資規則）也不收—�
 
 /* ---- PR #68 第十四輪審查（iMac Claude 2）：開發者決定⑤＝圖片裡的個資一律不收整張圖雜湊，逐筆 file＋sha256 ---- */
 const TWID = "A" + "1" + "23456789";   /* 身分證字號格式的假資料（拼起來，測試檔本身不會被掃到） */
-const exifTiff = (text) => { const s = Buffer.from(text + "\0", "latin1"), h = Buffer.alloc(26); h.write("MM\0*", 0, "latin1"); h.writeUInt32BE(8, 4); h.writeUInt16BE(1, 8);
-  h.writeUInt16BE(0x010e, 10); h.writeUInt16BE(2, 12); h.writeUInt32BE(s.length, 14); h.writeUInt32BE(26, 18); h.writeUInt32BE(0, 22); return Buffer.concat([h, s]) };   /* IFD0 只有 ImageDescription（0x010e） */
+const exifTiff = (text, tag = 0x010e) => { const s = Buffer.from(text + "\0", "latin1"), h = Buffer.alloc(26); h.write("MM\0*", 0, "latin1"); h.writeUInt32BE(8, 4); h.writeUInt16BE(1, 8);
+  h.writeUInt16BE(tag, 10); h.writeUInt16BE(2, 12); h.writeUInt32BE(s.length, 14); h.writeUInt32BE(26, 18); h.writeUInt32BE(0, 22); return Buffer.concat([h, s]) };   /* IFD0 只有 ImageDescription（0x010e） */
 const hidePii = (pii) => {
   const { chunk, png } = PNGK, NZ = (n, s) => Buffer.from(Array.from({ length: n }, (_, i) => ((i * 167 + s * 61 + (i % 7) * 13) & 0xff) | 0x80));
   const jpeg = (...segs) => Buffer.concat([Buffer.from([0xff, 0xd8]), ...segs, seg(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])), Buffer.from([0x12, 0x34, 0xff, 0xd9])]);
@@ -828,6 +828,7 @@ test("第十四輪①（決定⑤）：個資藏在圖片各處（EXIF 說明欄
       assert.ok(hits([{ rule, file: "a.img", fileSha256: sha(b), reason: "整張圖雜湊" }]).every((f) => !f.allowed), rule + "／" + n + "：整張圖雜湊不放");
       { const H = hits([{ rule, file: "a.img", sha256: sha(pii), reason: "逐筆登記" }]); assert.ok(H.every((f) => f.allowed), rule + "／" + n + "：逐筆 sha256 放行 " + JSON.stringify(H.map((f) => [f.shown, f.line, f.allowed]))) }
       assert.ok(hits([{ rule, file: "b.img", sha256: sha(pii), reason: "別的檔" }]).every((f) => !f.allowed), rule + "／" + n + "：file 不同不放");
+      assert.ok(hits([{ rule, file: "a.img", reason: "只寫檔名" }]).every((f) => !f.allowed), rule + "／" + n + "：沒寫 sha256 不放");
     }
   }
   /* scan-changed：審查重跑的樣本（PNG eXIf 說明欄寫信箱、只登記一筆整張圖雜湊），清單格式就退 */
@@ -852,4 +853,17 @@ test("第十四輪①（決定⑤）：圖裡解出來的文字，個資只認�
   assert.ok(SC.checkAllow({ items: [{ rule: "tw-id", file: "src/a.js", reason: "只寫檔名" }], inline: [] }, RISKS).some((x) => /要用 sha256/.test(x)), "身分證字號：不寫 sha256 不收");
   const d = repo(({ put }) => put("source/id.js", "id=" + TWID + "\n"));
   assert.equal(scanA(d, []).status, 1, "改到的檔有身分證字號：擋");
+});
+test("第十四輪（突變補反例）：圖裡解出來的文字，個資逐筆登記才過；WebP XMP 的文字要交出來；PNG eXIf 開頭帶 Exif\\0\\0 也認", () => {
+  const sha = (x) => require("crypto").createHash("sha256").update(x).digest("hex");
+  const z = ztxtPng("mail " + MAIL3 + " "), d = repo(({ put }) => put("source/z.png", z));
+  assert.equal(scanA(d, []).status, 1, "zTXt 壓縮的信箱：沒登記擋");
+  assert.equal(scanA(d, [{ rule: "email", file: "source/z.png", sha256: sha(MAIL3), reason: "逐筆登記" }]).status, 0, "zTXt 壓縮的信箱：寫原圖 file＋那一筆 sha256 就過（圖裡解出來的文字也認）");
+  assert.equal(scanA(d, [{ rule: "email", file: "source/other.png", sha256: sha(MAIL3), reason: "寫的是別的檔" }]).status, 1, "寫別的檔不過");
+  const X = '<rdf:Description xmlns:tiff="http://ns.adobe.com/tiff/1.0/" tiff:Artist="Zed Fake"/>';
+  const w = IM.imageMeta(webp("XMP ", Buffer.from(X)));
+  assert.ok(w && w.texts.some((t) => t.includes("Zed Fake")), "WebP 的 XMP 文字要交給規則掃");
+  assert.ok(w.kinds.includes("owner"));
+  const e = IM.imageMeta(PNGK.png(PNGK.chunk("eXIf", Buffer.concat([Buffer.from("Exif\0\0", "latin1"), exifTiff("Zed Fake", 0x013b)]))));
+  assert.ok(e && e.kinds.includes("owner"), "eXIf 開頭帶 Exif\\0\\0：照樣讀到拍攝者");
 });

@@ -187,7 +187,7 @@ function imageMeta0(buf) {
     }
     return done();
   }
-  if (fmt === "bmp") { if (b.readUInt32LE(2) !== b.length || b.readUInt32LE(10) > b.length) return null; return done() }   /* 第十二輪審查①：BMP 檔頭記的檔案大小要跟實際一樣、像素位置在檔裡 */
+  if (fmt === "bmp") { if (b.readUInt32LE(2) !== b.length) return null; return done() }   /* 第十二輪審查①：BMP 檔頭記的檔案大小要跟實際一樣（像素位置在檔裡由 isBmp 檢查，這裡不重複） */
   return null;
 }
 
