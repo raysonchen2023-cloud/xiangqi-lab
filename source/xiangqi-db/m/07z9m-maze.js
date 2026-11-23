@@ -116,6 +116,8 @@ async function jhMzWorld3(box,c,S){
   const side=new T3.MeshLambertMaterial({map:brickT}),topM=new T3.MeshLambertMaterial({map:topT});
   const wl=new T3.InstancedMesh(wg,[side,side,topM,side,side,side],walls.length);
   walls.forEach(([x,y],i)=>{m4.makeTranslation(x+.5,0,y+.5);wl.setMatrixAt(i,m4);wl.setColorAt(i,cK.setRGB(0,0,0))});sc.add(wl);
+  /* 角色正前方（南邊那一排、含斜對角）的牆會擋住角色（預覽站實看：64° 俯角、牆高 0.85 格仍擋住下半身），那幾面牆平滑矮到 0.28 倍，走開再長回來（俯視 3D 遊戲常見的做法） */
+  const wH=new Float32Array(walls.length).fill(1);
   /* 物件：材質記下原色，每一格照亮度乘上去；on()＝現在還在不在（箱子撿走、門開了就不畫） */
   const objs=[],lam=hex=>{const m=new T3.MeshLambertMaterial({color:col(hex)});m.userData.base=m.color.clone();return m};
   const mesh=(geo,mat,x,y,z)=>{const o=new T3.Mesh(geo,mat);o.position.set(x,y,z);return o};
@@ -138,10 +140,10 @@ async function jhMzWorld3(box,c,S){
   const eyeM=new T3.MeshBasicMaterial({color:0xE24A3A});for(const ex of[-.06,.06])gdB.add(mesh(new T3.BoxGeometry(.05,.03,.02),eyeM,ex,.75,.16));sc.add(gd);
   const sightG=new T3.PlaneGeometry(.9,.9);sightG.rotateX(-Math.PI/2);const sightM=new T3.MeshBasicMaterial({color:0xC83223,transparent:true,opacity:.35,depthWrite:false});
   const sights=[];for(let i=0;i<5;i++){const o=new T3.Mesh(sightG,sightM);o.position.y=.012;o.visible=false;sc.add(o);sights.push(o)}
-  /* 角色：照模型實際高度縮到約 0.95 格，腳底踩在地面（y＝0），腳下接地影子 */
+  /* 角色：照模型實際高度縮到約 1.1 格，腳底踩在地面（y＝0），腳下接地影子 */
   const root=new T3.Group();root.rotation.order="YXZ";root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
   const bx=new T3.Box3().setFromObject(B.bot),ct=bx.getCenter(new T3.Vector3()),hM=(bx.max.y-bx.min.y)||1;B.bot.position.x-=ct.x;B.bot.position.z-=ct.z;B.bot.position.y-=bx.min.y;const by=B.bot.position.y;
-  const wrap=new T3.Group();wrap.add(root);wrap.scale.setScalar(.95/hM);sc.add(wrap);
+  const wrap=new T3.Group();wrap.add(root);wrap.scale.setScalar(1.1/hM);sc.add(wrap);
   const shG=new T3.PlaneGeometry(.95,.95);shG.rotateX(-Math.PI/2);const sh=new T3.Mesh(shG,new T3.MeshBasicMaterial({map:shT,transparent:true,depthWrite:false}));sh.position.y=.01;sc.add(sh);
   const clips=B.mixer&&B.clips||null;let cur=null,yawR=0,t=0,tgx=null,tgz=null,cw=0,ch=0;
   const anim=n=>{if(!clips)return;const a=clips[n]||clips.idle;if(!a||a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};anim("idle");
@@ -154,6 +156,7 @@ async function jhMzWorld3(box,c,S){
       const P=S.player,G=S.guard,px=P.fx+.5,pz=P.fy+.5;
       if(tgx===null||Math.hypot(px-tgx,pz-tgz)>3){tgx=px;tgz=pz}else{const k=Math.min(1,dt*7);tgx+=(px-tgx)*k;tgz+=(pz-tgz)*k}
       const D=Math.max(7.6/(2*TAN*cam.aspect),6.4/(2*TAN));cam.position.set(tgx,D*Math.sin(EL),tgz+D*Math.cos(EL));cam.lookAt(tgx,0,tgz);
+      const pcx=Math.round(P.fx),pcy=Math.round(P.fy);let wm=false;walls.forEach(([x,y],i)=>{const tg=y===pcy+1&&Math.abs(x-pcx)<=1?.28:1,h0=wH[i],h1=Math.abs(tg-h0)<.01?tg:h0+(tg-h0)*Math.min(1,dt*9);if(h1!==h0){wH[i]=h1;m4.makeScale(1,h1,1).setPosition(x+.5,0,y+.5);wl.setMatrixAt(i,m4);wm=true}});if(wm)wl.instanceMatrix.needsUpdate=true;
       cells.forEach(([x,y],i)=>fl.setColorAt(i,cK.setScalar(bright(L,x,y))));fl.instanceColor.needsUpdate=true;
       walls.forEach(([x,y],i)=>wl.setColorAt(i,cK.setScalar(bright(L,x,y))));wl.instanceColor.needsUpdate=true;
       for(const o of objs){const b=bright(L,o.x,o.y);o.g.visible=b>0&&o.on();if(o.g.visible)for(const m of o.mats)m.color.copy(m.userData.base).multiplyScalar(b)}
