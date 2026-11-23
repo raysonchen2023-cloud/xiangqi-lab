@@ -18798,6 +18798,42 @@
    248076,
    "84bcb87e269b"
   ],
+  "data/zmhall/advisor_corner.webp": [
+   331532,
+   "503af7e0fd16"
+  ],
+  "data/zmhall/cross_palace.webp": [
+   349954,
+   "468f728b25dd"
+  ],
+  "data/zmhall/elephant.webp": [
+   366806,
+   "457ef5e5579b"
+  ],
+  "data/zmhall/horse.webp": [
+   354360,
+   "3688bdd88a4a"
+  ],
+  "data/zmhall/opposite_cannon.webp": [
+   360790,
+   "7468533bf97a"
+  ],
+  "data/zmhall/palace_horse.webp": [
+   302292,
+   "2a53d5caba0a"
+  ],
+  "data/zmhall/pawn.webp": [
+   401082,
+   "179a27d78f3d"
+  ],
+  "data/zmhall/same_cannon.webp": [
+   330414,
+   "84740f403044"
+  ],
+  "data/zmhall/screen.webp": [
+   315672,
+   "1ccfc0939f11"
+  ],
   "native-build.json": [
    2373,
    "2700458fc033"
