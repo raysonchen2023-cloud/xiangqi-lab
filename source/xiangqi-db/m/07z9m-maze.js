@@ -214,13 +214,26 @@ function JhMaze(v){jhCss();jhMzCss();
   const resize=()=>{jhMzFit(v);const r=box.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1);cv.width=Math.max(1,r.width*dpr);cv.height=Math.max(1,r.height*dpr);T=Math.max(34,Math.min(64,Math.floor(r.width/8.5)))};
   const alive=()=>cv.isConnected;
   const rnd=(x,y,s)=>{const q=Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453;return q-Math.floor(q)};
-  const tile=(x,y,px,py)=>{const c=S.grid[y][x];
-    if(c==="#"){cx.fillStyle="#241d17";cx.fillRect(px,py,T,T);cx.fillStyle="#2f261e";for(let i=0;i<2;i++){const yy=py+i*T/2,off=(y+i)%2?T/2:0;for(let j=-1;j<2;j++)cx.fillRect(px+off+j*T+2,yy+2,T-4,T/2-4)}
-      cx.fillStyle="rgba(0,0,0,.35)";cx.fillRect(px,py+T-5,T,5);return}
-    const g=58+rnd(x,y,1)*14;cx.fillStyle=`rgb(${g},${g*.82|0},${g*.62|0})`;cx.fillRect(px,py,T,T);
-    cx.fillStyle="rgba(0,0,0,.18)";if(rnd(x,y,2)>.6)cx.fillRect(px+rnd(x,y,3)*T*.6,py+rnd(x,y,4)*T*.6,T*.25,T*.12);
-    cx.strokeStyle="rgba(0,0,0,.25)";cx.lineWidth=1;cx.strokeRect(px+.5,py+.5,T-1,T-1);
-    if(c==="S")for(const[a,b,s]of[[.3,.62,.3],[.7,.62,.3],[.5,.36,.28]]){cx.fillStyle="#8a6a3e";cx.beginPath();cx.ellipse(px+a*T,py+b*T,s*T,s*T*.78,0,0,7);cx.fill();cx.strokeStyle="#4e3a1f";cx.lineWidth=1.5;cx.stroke()}
+  /* 11/23 開發者：「地底迷宮的圖太難分別是可以走得或是不能走 請修正配色或是其他方式」。原本牆 #241d17、地面約 #3d3226，都是暗棕、在燈光邊緣幾乎一樣。改成：
+     ・可以走的地面＝亮的暖色夯土石板（約 #9a7f5d），石板縫明顯；
+     ・牆＝深灰褐的牆頂＋朝走道那一面畫出很深的「牆面」（下面是地面的那一格，牆頂與牆面交界一條受光邊），看起來是凸起來的石牆；
+     ・牆腳在地面上投一道影子（地面上方或左右是牆），地面像一條凹下去的路；
+     ・糧袋（擋路）堆滿一格、袋口紮繩、下緣有影子，不像散在地上可以踩過去的小東西；石門本來就擋，照舊。
+     記憶裡（走過、現在燈照不到）的地方霧稍微淡一點（.86→.8），走過的路跟牆分得出來。 */
+  const tile=(x,y,px,py)=>{const c=S.grid[y][x],up=jhMzCell(S,x,y-1),dn=jhMzCell(S,x,y+1),lf=jhMzCell(S,x-1,y),rt=jhMzCell(S,x+1,y),isW=k=>k===undefined||k==="#";
+    if(c==="#"){cx.save();cx.beginPath();cx.rect(px,py,T,T);cx.clip();cx.fillStyle="#3b342d";cx.fillRect(px,py,T,T);cx.fillStyle="#463e35";
+      for(let i=0;i<2;i++){const yy=py+i*T/2,off=(y+i)%2?T/2:0;for(let j=-1;j<2;j++)cx.fillRect(px+off+j*T+2,yy+2,T-4,T/2-4)}
+      if(!isW(dn)){const fh=T*.4,fy=py+T-fh;cx.fillStyle="#161009";cx.fillRect(px,fy,T,fh);cx.fillStyle="#241910";for(let j=0;j<3;j++)cx.fillRect(px+j*T/3+2,fy+fh*.45,T/3-4,2);
+        cx.fillStyle="#7c6c58";cx.fillRect(px,fy-2,T,2)}
+      cx.restore();return}
+    const r1=rnd(x,y,1),R=150+r1*16|0;cx.fillStyle=`rgb(${R},${R*.83|0},${R*.6|0})`;cx.fillRect(px,py,T,T);
+    cx.strokeStyle="rgba(70,48,24,.5)";cx.lineWidth=1.5;cx.strokeRect(px+.75,py+.75,T-1.5,T-1.5);
+    if(rnd(x,y,2)>.55){cx.strokeStyle="rgba(70,48,24,.35)";cx.lineWidth=1;cx.beginPath();const sx=px+T*(.25+rnd(x,y,3)*.5);cx.moveTo(sx,py+2);cx.lineTo(sx+T*.08,py+T*.5);cx.stroke()}
+    if(isW(up)){const gd=cx.createLinearGradient(0,py,0,py+T*.32);gd.addColorStop(0,"rgba(0,0,0,.5)");gd.addColorStop(1,"rgba(0,0,0,0)");cx.fillStyle=gd;cx.fillRect(px,py,T,T*.32)}
+    if(isW(lf)){cx.fillStyle="rgba(0,0,0,.25)";cx.fillRect(px,py,T*.1,T)}if(isW(rt)){cx.fillStyle="rgba(0,0,0,.25)";cx.fillRect(px+T*.9,py,T*.1,T)}
+    if(c==="S"){cx.fillStyle="rgba(0,0,0,.4)";cx.beginPath();cx.ellipse(px+T*.5,py+T*.9,T*.46,T*.1,0,0,7);cx.fill();
+      for(const[a,b,s]of[[.27,.66,.27],[.73,.66,.27],[.5,.68,.28],[.36,.36,.25],[.64,.36,.25]]){cx.fillStyle="#b08850";cx.beginPath();cx.ellipse(px+a*T,py+b*T,s*T,s*T*.8,0,0,7);cx.fill();cx.strokeStyle="#3e2a12";cx.lineWidth=1.8;cx.stroke();
+        cx.strokeStyle="#5a3c18";cx.lineWidth=1.2;cx.beginPath();cx.moveTo(px+(a-s*.35)*T,py+(b-s*.45)*T);cx.lineTo(px+(a+s*.35)*T,py+(b-s*.45)*T);cx.stroke()}}
     if(c==="T"){const on=S.lit.has(y*S.W+x);cx.fillStyle="#3a2c1e";cx.fillRect(px+T*.42,py+T*.2,T*.16,T*.5);
       if(on){const f=1+Math.sin(performance.now()/90+x)*.12;cx.fillStyle="#ffcf6a";cx.beginPath();cx.ellipse(px+T*.5,py+T*.17,T*.12*f,T*.2*f,0,0,7);cx.fill();cx.fillStyle="#ff8a2a";cx.beginPath();cx.ellipse(px+T*.5,py+T*.2,T*.07,T*.12,0,0,7);cx.fill()}
       else{cx.fillStyle="#1a140f";cx.beginPath();cx.arc(px+T*.5,py+T*.2,T*.09,0,7);cx.fill()}}
@@ -243,7 +256,7 @@ function JhMaze(v){jhCss();jhMzCss();
     if(!h3){const bob=pWalk?-Math.abs(Math.sin(now/95))*T*.06:Math.sin(now/220)*1.5,sw=pWalk?Math.sin(now/95)*.09:0;
       if(hero.complete&&hero.naturalWidth){const h=T*1.05,w=h*hero.width/hero.height;cx.save();cx.translate(hx,hy+T*.38);cx.rotate(sw);cx.scale(P.face<0?-1:1,1);cx.drawImage(hero,-w/2,-T*.38-h*.62+bob,w,h);cx.restore()}
       else{cx.fillStyle="#e8b75a";cx.beginPath();cx.arc(hx,hy-T*.05+bob,T*.24,0,7);cx.fill()}}
-    const id=fx.createImageData(S.W,S.H);for(let i=0;i<S.W*S.H;i++){const q=L[i],a=!S.seen.has(i)?1:q<.12?.86:Math.max(0,1-q*.95);id.data[i*4+3]=Math.round(a*255)}
+    const id=fx.createImageData(S.W,S.H);for(let i=0;i<S.W*S.H;i++){const q=L[i],a=!S.seen.has(i)?1:q<.12?.8:Math.max(0,1-q*.95);id.data[i*4+3]=Math.round(a*255)}
     fx.putImageData(id,0,0);cx.imageSmoothingEnabled=true;cx.drawImage(fog,0,0,S.W*T,S.H*T);
     const gr=cx.createRadialGradient(hx,hy,T*.3,hx,hy,T*3.4);gr.addColorStop(0,"rgba(255,170,80,.14)");gr.addColorStop(1,"rgba(255,170,80,0)");cx.fillStyle=gr;cx.fillRect(hx-T*4,hy-T*4,T*8,T*8);
     cx.restore();
