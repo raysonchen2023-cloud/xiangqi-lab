@@ -159,6 +159,7 @@ function scan(dir, opts = {}) {
     const name = path.basename(f.rel);
     const buf = fs.readFileSync(f.abs);
     /* 圖片也照樣掃（中繼資料另外交給 image-meta.cjs；scan-changed 會把圖裡解出來的文字另外放成 .meta 檔給這裡掃） */
+    const img = IMG_HEAD(buf);
     fileSha.set(f.rel, require("crypto").createHash("sha256").update(buf).digest("hex"));
     for (const s of textsOf(buf)) {
     const starts = [0];
@@ -173,7 +174,9 @@ function scan(dir, opts = {}) {
         if (r.skipVal && r.skipVal.test(r.email ? match : val)) continue;
         if (r.near && !r.near.test(t.slice(Math.max(0, m.index - 300), m.index + 300))) continue;
         const ln = lineOf(m.index);
-        if (r.risk !== "high" && MARK.test(lineText(ln))) continue;   /* 第五輪審查②：行內標記只略過中、低風險，高風險照擋 */
+        /* 第五輪審查②：行內標記只略過中、低風險，高風險照擋。第六輪審查②：比對到的字跨了幾行，每一行都要有標記才略過（\s 會吃掉換行，機密放下一行就漏）；
+           第六輪審查③：檔頭是圖片的檔不認標記（圖片只能用整張圖 sha256 放行） */
+        if (r.risk !== "high" && !img) { const l2 = lineOf(m.index + Math.max(0, match.length - 1)); let all = true; for (let q = ln; q <= l2; q++) if (!MARK.test(lineText(q))) { all = false; break } if (all) continue }
         report(r, f.rel, ln, match);
       }
     }

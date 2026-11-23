@@ -331,7 +331,7 @@ test("第四輪②：圖裡解出來的文字（壓縮的 zTXt／iTXt、分段�
   const it = png(chunk("iTXt", Buffer.concat([Buffer.from("Comment\0\x01\0\0\0"), zlib.deflateSync(Buffer.from(line))])));
   for (const [n, b] of [["z.png", z], ["i.png", it]]) {
     const r = scan(repo(({ put }) => put("source/" + n, b)));
-    assert.equal(r.status, 1, n + "\n" + r.stdout); assert.match(r.stdout, /圖裡的文字不准用行內標記/, n);
+    assert.equal(r.status, 1, n + "\n" + r.stdout); assert.match(r.stdout, /不准用行內標記/, n);
   }
 });
 test("第三輪②：oss-scan:<控制字元>allow 這種標記也要登記（找標記用 oss-scan 換過控制字元的文字）；登記之後才過", () => {
@@ -472,4 +472,56 @@ test("第五輪建議：放行清單的個資規則一定要寫 file、理由欄
   assert.ok(SC.checkAllow({ items: [{ rule: "__proto__", file: "a.js", match: "abcdef", reason: "原型鏈" }], inline: [] }, RISKS).some((x) => /不是 oss-scan 的規則/.test(x)));
   const O = require(OSS), t = SC.maskText("k=" + KEY3 + " m=" + MAIL3, O.RULES);
   assert.ok(!t.includes(KEY3) && !t.includes(MAIL3), t);
+});
+
+/* ---- PR #68 第六輪審查（iMac Claude 2） ---- */
+test("第六輪①：CI 紀錄（scan-changed 的輸出）不印出金鑰與信箱原文——標記行、沒登記的全文、圖片標記、.gitattributes 都先遮罩再切長度", () => {
+  const MK = "oss-scan" + ":allow", AK = "AKIA" + "Q".repeat(16), pad = "x".repeat(142);   /* 金鑰從第 143 字開始：切成 160 字時剩 17 字，先切再遮罩就會漏 */
+  const r = scan(repo(({ put }) => {
+    put("source/k.js", "k = \"" + AK + "\"; // " + MK + "\n" + "m = \"" + MAIL3 + "\"; // " + MK + "\n" + pad + " " + AK + " // " + MK + "\n");
+    put("source/.gitattributes", "*.js filter=x " + MAIL3 + "\n");
+  }));
+  assert.equal(r.status, 1, r.stdout);
+  for (const secret of [AK, MAIL3, AK.slice(0, 12)]) assert.ok(!r.stdout.includes(secret), "輸出裡不能有：" + secret.slice(0, 6) + "…\n" + r.stdout);
+});
+test("第六輪②：行內標記放行不跨行——比對到的字跨到下一行時，每一行都要有標記才略過", () => {
+  const O = require(OSS), MK = "oss-scan" + ":allow", d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m6-")); made.push(d);
+  const PW = "pass" + "word", BR = "Bear" + "er";
+  /* 標記放在第一行開頭的註解裡，比對從第一行開始、\s 吃掉換行後把第二行的值也吃進來 */
+  fs.writeFileSync(path.join(d, "a.js"), "/* " + MK + " */ c = { " + PW + ":\n  \"S3cretValue-Real-1\" }\n" + "/* " + MK + " */ h = \"" + BR + "\n" + "abcdefghijklmnopqrstuvwxyz012345\"\n");
+  const R = O.scan(d).findings.map((f) => f.rule).sort();
+  assert.ok(R.includes("password-assign") && R.includes("bearer"), "機密放在下一行要抓到：" + R.join(","));
+  fs.writeFileSync(path.join(d, "b.js"), "/* " + MK + " */ c = { " + PW + ":\n  \"S3cretValue-Real-1\" } // " + MK + "\n");
+  assert.ok(!O.scan(d).findings.some((f) => f.file === "b.js" && f.rule === "password-assign"), "每一行都有標記才略過");
+});
+test("第六輪③：檔頭是圖片的檔不准用 inline 放行（PNG 私有區塊 prVt、GIF 原始位元組裡放標記＋信箱）", () => {
+  const zlib = require("zlib"), crc = (b) => { let c, t = -1; for (const x of b) { c = (t ^ x) & 255; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t = (t >>> 8) ^ c } return (t ^ -1) >>> 0 };
+  const chunk = (type, data) => { const len = Buffer.alloc(4), td = Buffer.concat([Buffer.from(type), data]), c = Buffer.alloc(4); len.writeUInt32BE(data.length); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]) };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(1, 0); ihdr.writeUInt32BE(1, 4); ihdr[8] = 8;
+  const MK = "oss-scan" + ":allow", line = "\nm=" + MAIL3 + " " + MK + "\n";
+  const png = Buffer.concat([SIG.png, chunk("IHDR", ihdr), chunk("prVt", Buffer.from(line)), chunk("IDAT", zlib.deflateSync(Buffer.from([0, 0]))), chunk("IEND", Buffer.alloc(0))]);
+  const gif = Buffer.concat([Buffer.from("GIF89a"), Buffer.alloc(7), Buffer.from(line), Buffer.from([0x3b])]);
+  const O = require(OSS);
+  for (const [n, b] of [["p.png", png], ["g.gif", gif]]) {
+    const d = repo(({ put }) => put("source/" + n, b));
+    const reg = SC.markerLines(O.textsOf(b), O.MARK).map((m) => ({ file: "source/" + n, sha256: m.sha256, reason: "想登記放行" }));
+    const r = scanA(d, [], reg); assert.equal(r.status, 1, n + "\n" + r.stdout); assert.match(r.stdout, /不准用行內標記/, n);
+    const dd = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m6i-")); made.push(dd); fs.writeFileSync(path.join(dd, n), b);
+    assert.ok(O.scan(dd).findings.some((f) => f.rule === "email"), "oss-scan 對圖片不認標記：" + n);
+  }
+});
+test("第六輪④：PNG eXIf 開頭帶 Exif\\0\\0 時 GPS 也認得出來", () => {
+  const zlib = require("zlib"), crc = (b) => { let c, t = -1; for (const x of b) { c = (t ^ x) & 255; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t = (t >>> 8) ^ c } return (t ^ -1) >>> 0 };
+  const chunk = (type, data) => { const len = Buffer.alloc(4), td = Buffer.concat([Buffer.from(type), data]), c = Buffer.alloc(4); len.writeUInt32BE(data.length); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]) };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(1, 0); ihdr.writeUInt32BE(1, 4); ihdr[8] = 8;
+  const tif = Buffer.alloc(26); tif.write("II*\0", 0, "latin1"); tif.writeUInt32LE(8, 4); tif.writeUInt16LE(1, 8); tif.writeUInt16LE(0x8825, 10); tif.writeUInt16LE(4, 12); tif.writeUInt32LE(1, 14); tif.writeUInt32LE(26, 18); tif.writeUInt32LE(0, 22);
+  const gps = Buffer.concat([tif, Buffer.from([1, 0, 2, 0, 2, 0, 2, 0, 0, 0, 0x4e, 0, 0, 0, 0, 0, 0, 0])]);
+  const png = Buffer.concat([SIG.png, chunk("IHDR", ihdr), chunk("eXIf", Buffer.concat([Buffer.from("Exif\0\0", "latin1"), gps])), chunk("IDAT", zlib.deflateSync(Buffer.from([0, 0]))), chunk("IEND", Buffer.alloc(0))]);
+  assert.deepEqual(IM.imageMeta(png).kinds, ["gps"]);
+});
+test("第六輪⑤：子資料夾的 .gitattributes 加 working-tree-encoding 或 filter= 也擋", () => {
+  for (const line of ["*.js working-tree-encoding=UTF-16\n", "*.txt filter=lfs\n"]) {
+    const r = scan(repo(({ put }) => put("source/sub/dir/.gitattributes", line)));
+    assert.equal(r.status, 1, r.stdout); assert.match(r.stdout, /source\/sub\/dir\/\.gitattributes:1/);
+  }
 });

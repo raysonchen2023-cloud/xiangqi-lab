@@ -155,11 +155,16 @@ let findings = null; try { findings = JSON.parse(fs.readFileSync(tmpJ, "utf8")).
 fs.rmSync(out, { recursive: true, force: true }); fs.rmSync(tmpA, { force: true }); fs.rmSync(tmpJ, { force: true });
 if (r.status === null || findings === null) { console.log("✘ oss-scan 沒有跑完或沒有寫出結果：不能當沒問題"); process.exit(1) }
 
-const marked = bufs.map(({ file, buf }) => ({ file, marks: markerLines(S.textsOf(buf), S.MARK) })).filter((x) => x.marks.length);
+/* 第六輪審查③：檔頭是圖片的檔不准用行內標記（圖片只能用整張圖的 sha256 放行），有標記就跟圖裡的文字一樣擋 */
+const marked = [];
+for (const { file, buf } of bufs) { const marks = markerLines(S.textsOf(buf), S.MARK); if (!marks.length) continue;
+  if (S.IMG_HEAD(buf)) for (const m of marks) metaMarks.push({ file, ...m }); else marked.push({ file, marks }) }
+/* 第六輪審查①：CI 紀錄是公開的，印任何原文都先遮罩、再切長度（先切的話金鑰被切斷就遮不到） */
+const shown = (t, n = 160) => maskText(t, S.RULES).slice(0, n);
 const attrs = bufs.filter(({ file }) => path.basename(file) === ".gitattributes").flatMap(({ file, buf }) => badAttrs(buf.toString("utf8")).map((x) => ({ file, ...x })));
 const J = judge({ findings, images, unreg: unregistered(marked, list.inline), attrs, metaMarks });
-for (const m of J.metaMarks) console.log(`  ✘ ${m.file}：圖裡的文字（中繼資料、註解）有 ${TOK}：「${maskText(m.text, S.RULES)}」← 圖裡的文字不准用行內標記，請重新匯出不含這段文字的圖`);
-for (const a of J.attrs) console.log(`  ✘ ${a.file}:${a.line}  ${a.text}  ← working-tree-encoding／filter 會讓工作區跟倉庫的內容不同，私密掃描會被繞過：不准用`);
+for (const m of J.metaMarks) console.log(`  ✘ ${m.file}：圖片（或圖裡的文字）有 ${TOK}：「${shown(m.full)}」← 圖片不准用行內標記（只能用整張圖的 sha256 放行），請重新匯出不含這段文字的圖`);
+for (const a of J.attrs) console.log(`  ✘ ${a.file}:${a.line}  ${shown(a.text)}  ← working-tree-encoding／filter 會讓工作區跟倉庫的內容不同，私密掃描會被繞過：不准用`);
 
 console.log(`\n圖片中繼資料：看了 ${images.length} 張新增或修改的圖（用檔頭判斷格式）`);
 for (const x of J.unreadable) console.log(`  ✘ ${x.file}：${x.fmt ? x.fmt.toUpperCase() + " 格式讀不懂" : "副檔名是圖片、內容卻不是看得懂的圖"} → 轉成 webp 或 png 再放進倉庫（讀不懂就沒辦法確認沒有個資）`);
@@ -168,7 +173,7 @@ const nMarks = marked.reduce((n, x) => n + x.marks.length, 0);
 if (nMarks) {
   console.log(`\n改到的檔裡有 ${nMarks} 行用了 ${TOK}（那一行整個不掃），要在 ${allowF} 的 inline 登記：`);
   for (const x of marked) for (const m of x.marks) { const reg = !J.unreg.some((u) => u.file === x.file && u.sha256 === m.sha256);
-    console.log(`  ${reg ? "△" : "✘"} ${x.file}:${m.line}  ${m.text}${reg ? "（已登記）" : `\n      ← 這一行全文（${m.full.length} 字，會被規則抓到的字已遮掉）：${JSON.stringify(maskText(m.full, S.RULES))}\n      ← 沒登記：在 inline 加 {"file":"${x.file}","sha256":"${m.sha256}","reason":"為什麼可以不掃"}`}`) }
+    console.log(`  ${reg ? "△" : "✘"} ${x.file}:${m.line}  ${shown(m.full)}${reg ? "（已登記）" : `\n      ← 這一行全文（${m.full.length} 字，會被規則抓到的字已遮掉）：${JSON.stringify(shown(m.full, Infinity))}\n      ← 沒登記：在 inline 加 {"file":"${x.file}","sha256":"${m.sha256}","reason":"為什麼可以不掃"}`}`) }
 }
 if (J.medium.length) {
   console.log(`\n✘ 改到的檔有 ${J.medium.length} 筆中風險沒被放行（上面「中風險」那一段）。`);

@@ -101,7 +101,7 @@ function imageMeta(buf) {
     while (p + 8 <= b.length) {
       const len = b.readUInt32BE(p), type = b.toString("latin1", p + 4, p + 8), d = b.subarray(p + 8, p + 8 + len);
       if (p + 12 + len > b.length) return null;   /* 第五輪審查③：區塊長度超出檔案＝結構壞掉＝讀不懂 */
-      if (type === "eXIf") tiff(d, out);
+      if (type === "eXIf") tiff(d.toString("latin1", 0, 6) === "Exif\0\0" ? d.subarray(6) : d, out);   /* 第六輪審查④：開頭帶 Exif\0\0 的也認（跟 WebP 一樣） */
       else if (type === "iCCP") { const z = d.indexOf(0); texts.push(inflate(d.subarray(z + 2)).toString("latin1").replace(/[^\x20-\x7e\n]+/g, " ")) }   /* 壓縮的 ICC：解開後的描述文字交給規則掃 */
       else if (type === "tEXt" || type === "zTXt" || type === "iTXt") {
         const z = d.indexOf(0), key = d.toString("latin1", 0, Math.max(0, z));
