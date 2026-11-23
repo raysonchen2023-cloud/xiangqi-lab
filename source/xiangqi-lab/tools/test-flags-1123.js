@@ -103,6 +103,13 @@ test("W76：回到前景重讀失敗（離線）：維持手上那份，不會�
   assert.equal(L.calls.length, 3, "resume 也會重讀");
 });
 
+test("開源稽核 foss-audit 認得開關清單的網域：raw.githubusercontent.com 歸「自有」，其他 githubusercontent 子網域照舊是未分類（不放寬整個網域）；00f 用的網址的網域就是它", () => {
+  const FA = require(path.join(__dirname, "foss-audit.js"));
+  assert.equal(FA.classifyHost("raw.githubusercontent.com").kind, "own");
+  assert.equal(FA.classifyHost("evil.githubusercontent.com").kind, "unknown");
+  assert.equal(new URL(SRC.match(/XQ_FLAGS_URL="([^"]+)"/)[1]).host, "raw.githubusercontent.com");
+});
+
 test("〔原始碼〕開關清單正本 art/flags.json：合法 JSON、預設全開、說明寫明只能關不能開；m.html 在 00-util 後面、01-board 前面載入 00f；沒有行內 // 註解、LF", () => {
   const j = JSON.parse(fs.readFileSync(path.join(ROOT, "xiangqi-db/art/flags.json"), "utf8"));
   assert.equal(typeof j.off, "object"); assert.deepEqual(j.off, {}, "這版預設全部開著");
