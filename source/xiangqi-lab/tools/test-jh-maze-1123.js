@@ -94,7 +94,7 @@ test("壁燈：走到旁邊就點亮一次；箱子：每個只撿一次，三�
 });
 
 test("碰石門＝開殘局（不算回合、不穿過去）；解開後門變地面、走得過去；走到樓梯＝走完", () => {
-  const { c } = load(), S = c.jhMzNew(); farGuard(S);
+  const { c } = load(), S = c.jhMzNew(); farGuard(S); S.plate = true;   /* W71b：石門要先踩過機關踏板（鎖住的情況另一項測） */
   at(S, 6, 5); const t0 = S.turn; assert.equal(c.jhMzStep(S, 0, -1).ev, "door"); assert.equal(S.turn, t0); assert.deepEqual([S.player.x, S.player.y], [6, 5]);
   assert.equal(c.jhMzTry(S, "door", "a0a1"), "bad"); assert.equal(c.jhMzTry(S, "door", PUZ.door.ans), "ok"); c.jhMzSolved(S, "door");
   assert.equal(S.grid[4][6], "."); assert.equal(c.jhMzStep(S, 0, -1).ev, "move"); assert.equal(S.player.y, 4);
@@ -109,12 +109,12 @@ test("暗匪：站在他看得到的那一排（面向那邊 5 格內）＝陷�
   const S3 = c.jhMzNew(); S3.guard.x = 5; S3.guard.y = 12; S3.guard.dx = 1; at(S3, 6, 11); assert.equal(c.jhMzStep(S3, 0, 1).ev, "trap", "走進他的視線");
 });
 
-test("陷阱：答錯累計，第 4 次拖回入口（箱子保留、已撿的箱子不會再出現）；解開＝暗匪暈四回合", () => {
+test("陷阱：答錯累計，第 4 次拖回入口（W71b：最後撿到的那件丟回原來的箱子、箱子重新出現）；解開＝暗匪暈四回合", () => {
   const { c } = load(), S = c.jhMzNew(); farGuard(S);
   const [x, y] = [7, 9]; at(S, x, y - 1); c.jhMzStep(S, 0, 1); assert.equal(S.bag.gong, 1);
   for (let i = 1; i <= 3; i++) assert.equal(c.jhMzTry(S, "trap", "a0a1"), "bad");
-  assert.equal(c.jhMzTry(S, "trap", "a0a1"), "back"); c.jhMzCaughtBack(S);
-  assert.deepEqual([S.player.x, S.player.y], [S.start.x, S.start.y]); assert.equal(S.bag.gong, 1); assert.equal(S.grid[y][x], ".", "撿過的箱子不再出現"); assert.equal(S.fails.trap, 0);
+  assert.equal(c.jhMzTry(S, "trap", "a0a1"), "back"); assert.equal(c.jhMzCaughtBack(S), "gong", "回傳被丟回的是哪一種");
+  assert.deepEqual([S.player.x, S.player.y], [S.start.x, S.start.y]); assert.equal(S.bag.gong, 0, "最後撿到的被搶走"); assert.equal(S.grid[y][x], "C", "箱子重新出現"); assert.equal(S.fails.trap, 0);
   const S2 = c.jhMzNew(); assert.equal(c.jhMzTry(S2, "trap", PUZ.trap.ans), "ok"); c.jhMzSolved(S2, "trap"); assert.equal(S2.guard.stun, 4);
   for (let i = 0; i < 4; i++) c.jhMzGuardStep(S2); assert.equal(S2.guard.stun, 0);
 });
@@ -170,7 +170,7 @@ test("路由：Jianghu 包一層，#/jianghu/maze 畫迷宮、#/jianghu 照舊�
 });
 
 test("#83 審查①：石門一定要解開殘局才開——碰門多少次、解錯多少次都不開、不穿過去；只有解對（jhMzSolved）才變地面", () => {
-  const { c } = load(), S = c.jhMzNew(); farGuard(S);
+  const { c } = load(), S = c.jhMzNew(); farGuard(S); S.plate = true;   /* W71b：踏板踩過之後，碰門才是開殘局 */
   at(S, 6, 5);
   for (let i = 0; i < 6; i++) { assert.equal(c.jhMzStep(S, 0, -1).ev, "door"); assert.equal(S.player.y, 5); assert.equal(S.grid[4][6], "D") }
   for (let i = 0; i < 6; i++) assert.equal(c.jhMzTry(S, "door", "e0e1"), "bad");
@@ -241,7 +241,7 @@ test("代號表 flags-codes.json 的 maze 跟程式一致：中炮門、入口�
   assert.equal(s.kids.length, 1, "halls8、八派玩法全部關掉，迷宮入口照放");
 });
 
-test("角色走路：等速（每格 JH_MZ_SPD 秒、不是一下就到）、連走時剩餘的路照比例；到了回 false；差超過 1.5 格直接放過去（不穿牆走）；四個方向的轉身角度", () => {
+test("角色走路：等速（每格 JH_MZ_SPD 秒、不是一下就到）、連走時剩餘的路照比例；到了回 false；差超過 2.5 格直接放過去（不穿牆走；跳過糧袋 2 格照常等速）；四個方向的轉身角度", () => {
   const { c } = load(), SPD = vm.runInContext("JH_MZ_SPD", c), close = (a, b) => Math.abs(a - b) < 1e-9;
   assert.ok(SPD >= .15 && SPD <= .5, "每格 0.15～0.5 秒");
   const o = { fx: 3, fy: 4 };
@@ -254,6 +254,47 @@ test("角色走路：等速（每格 JH_MZ_SPD 秒、不是一下就到）、連
   const g = { fx: 5 }; c.jhMzGlide(g, 6, 2, SPD / 2); assert.equal(g.fy, 2, "暗匪沒有 fy 時補成那一列"); assert.ok(close(g.fx, 5.5));
   const yaw = vm.runInContext("jhMzYaw", c);
   assert.ok(close(yaw(0, 1), 0) && close(yaw(1, 0), Math.PI / 2) && close(Math.abs(yaw(0, -1)), Math.PI) && close(yaw(-1, 0), -Math.PI / 2), "下 0、右 90°、上 180°、左 -90°");
+});
+
+test("W71b 糧袋當炮架：隔一袋跳過去（算一步、落在後面那格）；兩袋並排、後面是牆都跳不過；跳過去踩到機關踏板＝踏板啟動", () => {
+  const { c } = load(), S = c.jhMzNew(); farGuard(S);
+  assert.equal(c.JH_MZ_MAP[9][8], "S"); assert.equal(c.JH_MZ_MAP[10][8], "P");
+  at(S, 8, 8); const t0 = S.turn, r = c.jhMzStep(S, 0, 1);
+  assert.equal(r.ev, "jump"); assert.deepEqual([S.player.x, S.player.y], [8, 10], "落在糧袋後面那一格（踏板）"); assert.equal(S.turn, t0 + 1, "跳一次算一步");
+  assert.ok(r.plate && S.plate, "踩到踏板＝啟動"); assert.equal(c.jhMzStep(S, 0, 0).plate, undefined, "已經啟動不再算");
+  assert.equal(c.jhMzStep(S, 0, -1).ev, "jump"); assert.deepEqual([S.player.x, S.player.y], [8, 8], "從踏板跳回來");
+  const S2 = c.jhMzNew(); farGuard(S2); S2.grid[9][8] = "S"; S2.grid[10][8] = "S"; at(S2, 8, 8);
+  assert.equal(c.jhMzStep(S2, 0, 1).ev, "wall", "兩袋並排跳不過"); assert.deepEqual([S2.player.x, S2.player.y], [8, 8]);
+  const S3 = c.jhMzNew(); farGuard(S3); S3.grid[10][8] = "#"; at(S3, 8, 8);
+  assert.equal(c.jhMzStep(S3, 0, 1).ev, "wall", "糧袋後面是牆跳不過");
+  const S4 = c.jhMzNew(); farGuard(S4); at(S4, 8, 8); S4.grid[9][8] = "."; assert.equal(c.jhMzStep(S4, 0, 1).ev, "move", "沒有糧袋就是一般走一格"); assert.equal(S4.player.y, 9);
+});
+
+test("W71b 石門鎖：沒踩過踏板碰石門＝locked（不算回合、不開殘局、不穿過去）；踩過才是 door；點地面自動走到不了踏板（只能跳）", () => {
+  const { c } = load(), S = c.jhMzNew(); farGuard(S);
+  at(S, 6, 5); const t0 = S.turn;
+  assert.equal(c.jhMzStep(S, 0, -1).ev, "locked"); assert.equal(S.turn, t0); assert.deepEqual([S.player.x, S.player.y], [6, 5]); assert.equal(S.grid[4][6], "D");
+  S.plate = true; assert.equal(c.jhMzStep(S, 0, -1).ev, "door");
+  const S2 = c.jhMzNew(); for (let i = 0; i < S2.W * S2.H; i++) S2.seen.add(i);
+  assert.equal(c.jhMzPath(S2, 8, 10), null, "踏板四周是牆和糧袋，自動走到不了");
+  const M = c.JH_MZ_MAP; assert.deepEqual([M[10][7], M[10][9], M[11][8]], ["#", "#", "#"], "踏板只有糧袋那一側能進");
+});
+
+test("W71b 拖回入口：最後撿到的丟回原來的箱子（箱子重新出現、再撿一次拿到同一種）；先撿的照舊保留；什麼都沒撿就回空字串", () => {
+  const { c } = load(), S = c.jhMzNew(); farGuard(S);
+  assert.equal(c.jhMzCaughtBack(S), "", "沒撿東西");
+  at(S, 7, 8); c.jhMzStep(S, 0, 1); at(S, 2, 12); c.jhMzStep(S, -1, 0);
+  assert.deepEqual([S.bag.gong, S.bag.page], [1, 1]);
+  assert.equal(c.jhMzCaughtBack(S), "page"); assert.deepEqual([S.bag.gong, S.bag.page], [1, 0], "先撿的保留、最後撿的被搶");
+  assert.equal(S.grid[12][1], "C", "被搶的那個箱子重新出現"); assert.equal(S.grid[9][7], ".", "先撿的箱子不會回來");
+  at(S, 2, 12); const r = c.jhMzStep(S, -1, 0); assert.equal(r.chest, "page", "再撿一次拿到同一種"); assert.equal(S.bag.page, 1);
+  S.plate = true; c.jhMzCaughtBack(S); assert.ok(S.plate, "踏板啟動過就不用再踩");
+});
+
+test("W71b 跳過糧袋 2 格照常等速走（不是瞬移）；超過 2.5 格才直接放到", () => {
+  const { c } = load(), SPD = vm.runInContext("JH_MZ_SPD", c);
+  const o = { fx: 8, fy: 8 }; assert.equal(c.jhMzGlide(o, 8, 10, SPD / 2), true, "2 格要走一段時間"); assert.ok(Math.abs(o.fy - 8.5) < 1e-9);
+  const b = { fx: 8, fy: 8 }; assert.equal(c.jhMzGlide(b, 8, 11, .001), false, "3 格直接放到"); assert.equal(b.fy, 11);
 });
 
 test("〔原始碼〕07z9m-maze.js：LF、沒有控制字元、沒有行內 // 註解；m.html 有登記、排在 07z9l-halls.js 後面（包得到八派的 JhHall）", () => {
