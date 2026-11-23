@@ -1,0 +1,18 @@
+{
+  "note": "W72 遠端開關代號表（W76 驗證工具照這張一個一個關、冷啟一次、回前景一次）。只能關不能開；開關清單正本 source/xiangqi-db/art/flags.json（W72），讀開關的程式在 m/07z9l-halls.js（jhHalls8On／jhHalls8Gate，也聽 xqflags 事件）。test-jh-halls8-1123.js 會核對這張表跟程式一致。",
+  "codes": [
+    { "code": "halls8", "entry": "八派門內頁（過宮炮、起馬、仕角炮、反宮馬、列炮、順炮、飛相、仙人指路）", "check": [
+      "長卷上點那一派、小卡裡沒有 #jhHallGo（「走進山門」按鈕）",
+      "直接開 #/jianghu/hall/horse 會被導回 #/jianghu，畫面上沒有 .jh-hall",
+      "中炮門 #/jianghu/hall/central、屏風馬門 #/jianghu/hall/screen 照常進得去（不受影響）"] },
+    { "code": "play_cross_palace", "sid": "cross_palace", "spot": "paper", "entry": "過宮炮門玩法「焙紙牆・宣紙蓋子位」" },
+    { "code": "play_horse", "sid": "horse", "spot": "post", "entry": "起馬門玩法「拴馬樁・驛馬繞險路」" },
+    { "code": "play_advisor_corner", "sid": "advisor_corner", "spot": "shop", "entry": "仕角炮門玩法「當鋪・算兌子」" },
+    { "code": "play_palace_horse", "sid": "palace_horse", "spot": "desk", "entry": "反宮馬門玩法「雕版案・活字排局陣」" },
+    { "code": "play_opposite_cannon", "sid": "opposite_cannon", "spot": "stage", "entry": "列炮門玩法「戲台・擊板記譜局」" },
+    { "code": "play_same_cannon", "sid": "same_cannon", "spot": "posts", "entry": "順炮門玩法「練拳木樁・搶攻算殺步」" },
+    { "code": "play_elephant", "sid": "elephant", "spot": "pavilion", "entry": "飛相門玩法「講經亭・築堤擺陣形」" },
+    { "code": "play_pawn", "sid": "pawn", "spot": "rock", "entry": "仙人指路門玩法「指路奇岩・探路猜陣勢」" }
+  ],
+  "playCheck": "play_<派> 關掉時：開 #/jianghu/hall/<sid>，門內頁照常（有 .jh-hall、出口「出山門」），但沒有 .jh-hall-spot[data-k=\"<spot>\"]；其他派的玩法入口照常。入口畫好之後才收到開關的，下一次重畫門內頁時就不再放入口（xqflags 事件會把 halls8 補進 JH_HALL_BAD）。"
+}

@@ -50,6 +50,7 @@ const HOSTS = [
   [/emqxsl\.com$|emqx/, "線上大廳 MQTT（開發者租用的 EMQX Cloud，新加坡；非自由網路服務）", "net"],
   [/^xiangqi-cdn\.pages\.dev$/, "圖片和大檔（開發者自己的 Cloudflare Pages）", "own"],
   [/^raysonchen2023-cloud\.github\.io$/, "網站本身（GitHub Pages）", "own"],
+  [/^raw\.githubusercontent\.com$/, "遠端開關清單（W72：讀本倉庫 main 上的 data/flags.json，只能關功能、不帶玩家資料）", "own"],
   [/^(script|docs)\.google\.com$/, "意見回饋（Google 表單；非自由網路服務）", "net"],
   [/open-meteo\.com$/, "問小帥查天氣（Open-Meteo，玩家自己問才連）", "net"],
   [/wikipedia\.org$/, "問小帥查百科（維基百科，玩家自己問才連）", "net"],
