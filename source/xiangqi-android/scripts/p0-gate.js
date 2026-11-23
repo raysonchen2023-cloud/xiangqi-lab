@@ -24,7 +24,7 @@
 "use strict";
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const TP = require("./tool-pin.js");
-const { MEDIA, NOTE_VIA_WEB, unknownWhy } = require("./check-aab-assets.js");   /* 第十三、十四次複審：媒體檔、提醒與缺驗的固定文字都照破圖工具自己的定義；所以 check-aab-assets.js 也列進閘門的自我鎖定 */
+const { MEDIA, NOTE_VIA_WEB, MAN_MISS_WHY, unknownWhy, cdnCanary } = require("./check-aab-assets.js");   /* 第十三、十四次複審：媒體檔、提醒與缺驗的固定文字都照破圖工具自己的定義；所以 check-aab-assets.js 也列進閘門的自我鎖定 */
 const PROBE_RE = /^data\/__xq_p0_canary_[0-9a-f]{12}\.webp$/;   /* 金絲雀③的探測檔（check-aab-assets.js 產生的檔名），不是真的要補抓的檔 */
 
 const TOOLS = ["P0-IMG", "P0-UPD", "P0-3D"], ANDROID_3D = ["12", "16"], ROUNDS_3D = 2;
@@ -68,6 +68,14 @@ function onlyCdnDown(json) {
   if (JSON.stringify(got) !== JSON.stringify(want)) return `逐項清單有 CDN 以外的提醒，或提醒跟缺驗對不起來（${notes.slice(0, 3).map((w) => (w && w.f) || "?").join("、") || "少了提醒"}${fb ? "；原生會補抓時不該有提醒" : ""}），不是單純 CDN 連不上`;
   /* 第十四次複審建議：探測檔只能有一筆；每筆缺驗的原因文字要跟它的狀態碼對得上（工具 unknownWhy 寫的） */
   if (st0.filter((w) => PROBE_RE.test(String(w.f))).length !== 1) return "探測檔不是剛好一筆";
+  /* 第十五次複審：欄位不能互相矛盾 —— 檔名要是字串、而且不重複；manifest 那一筆的原因照工具常數；
+     金絲雀③那一塊用工具真的 cdnCanary 重算一次，要一模一樣；首頁、雜湊兩個金絲雀要真的弄壞過一個檔（「本來就缺」代表包裡有 ✘，不會是單純缺驗） */
+  if (W.some((w) => !w || typeof w.f !== "string")) return "逐項清單有檔名不是字串的項目";
+  if (new Set(st0.map((w) => w.f)).size !== st0.length) return "逐項清單同一個檔出現兩次";
+  if (W.find((w) => w.f === "cdn-manifest.json").why !== MAN_MISS_WHY) return "「讀不到 cdn-manifest.json」那一筆的原因文字不是工具寫的";
+  { const probe = st0.find((w) => PROBE_RE.test(w.f)), re = cdnCanary(probe.f, [], st0, { ok200: 0, manOk: false });
+    if (!c || ["cdn404", "cdnUnreachable", "cdnStatus", "cdn"].some((k) => re[k] !== c[k])) return "金絲雀③的欄位跟用工具重算的不一樣"; }
+  if (!c || !/^data\//.test(String(c.homeFile)) || !/^data\//.test(String(c.staleFile))) return "金絲雀①②沒有真的弄壞過包裡的檔（本來就缺＝包裡有 ✘）";
   const whyBad = st0.filter((w) => w.why !== unknownWhy(w.st));
   if (whyBad.length) return `缺驗的原因文字跟狀態碼對不起來（${whyBad.slice(0, 3).map((w) => w.f).join("、")}）`;
   /* 原生不會向 CDN 補抓時，要補抓的檔裡不能有媒體檔（探測檔除外）：缺的圖片、音樂在玩家手上就是破圖（W21），不能拿「CDN 連不上」豁免。

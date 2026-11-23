@@ -25,9 +25,10 @@ const PROBE_F = "data/__xq_p0_canary_0123456789ab.webp";   /* 跟工具產生的
 const downItems = () => [{ f: "data/a.webp", st: -1, why: "CDN 沒確認到（連不上，請稍後重跑 --cdn）" }, { f: PROBE_F, st: -1, why: "CDN 沒確認到（連不上，請稍後重跑 --cdn）" }];
 const miss = (L) => {
   const { cdnCanary } = require(path.join(AND, "check-aab-assets.js")), unk = downItems();
-  const warnItems = [...unk, { f: "cdn-manifest.json", why: "讀不到 CDN 的 cdn-manifest.json（缺驗）" }];   /* 第十二次：不帶狀態的只有 manifest 那筆 */
+  const warnItems = [...unk, { f: "cdn-manifest.json", why: CA.MAN_MISS_WHY }];   /* 第十二次：不帶狀態的只有 manifest 那筆；第十五次：原因照工具常數 */
   Object.assign(L[0].json, { exitCode: 3, pass: false, red: 0, unknown: unk.length + 1, redItems: [], warn: warnItems.length, warnItems, cdnCompared: 0, viaCdn: unk.length - 1, inPack: 5, need: 5 + unk.length - 1, native: { cdnFallback: true, partsJoin: true, assetPacks: [] } });   /* 第十一次：viaCdn＝要向 CDN 補抓的檔（探測檔不算），need＝包裡＋補抓 */
   const c = { ...L[0].json.canary, ...cdnCanary(PROBE_F, [], unk, { ok200: 0, manOk: false }) }; c.ok = c.home === true && c.stale === true && c.cdn404 === true;
+  c.homeFile = "data/homemap/home_classic.webp"; c.staleFile = "data/a/x.webp";   /* 第十五次：金絲雀①②真的弄壞過包裡的檔 */
   L[0].json.canary = c; return L };
 const upd = (o = {}) => ({ file: "upd", json: Object.assign({ tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") }, o) });
 const all = () => [img(), upd(), d3("12"), d3("16"), c3("12"), c3("16")];
@@ -84,8 +85,8 @@ test("閘門（反測必紅）：P0-IMG 金絲雀①②沒抓到不能豁免；�
   let r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false); assert.ok(has(r, /P0-IMG：金絲雀沒被抓到/));
   L = all(); L[0].json.canary = { home: true, stale: false, cdn404: true }; assert.ok(has(G(L), /改掉包裡檔的雜湊 ✘/));
   L = all(); delete L[0].json.canary; assert.ok(has(G(L), /P0-IMG：金絲雀沒被抓到/), "沒記金絲雀＝沒抓到");
-  L = miss(all()); L[0].json.canary = { ...L[0].json.canary, home: true, stale: true, cdn404: false, cdnUnreachable: true, cdn: "沒確認到（CDN 連不上）" };
-  assert.ok(has(G(L), /CDN 不存在的檔沒被判成沒有（沒確認到（CDN 連不上））/));
+  L = miss(all()); L[0].json.canary = { ...L[0].json.canary, home: true, stale: true, cdn404: false, cdnUnreachable: true };   /* 第十五次：cdn 文字留工具算的，不能自己寫 */
+  assert.ok(has(G(L), /CDN 不存在的檔沒被判成沒有（沒確認到（CDN 連不上或暫時出錯/));
   r = G(L, W("P0-IMG/cdn")); assert.equal(r.ok, false, "閘門沒有自己探測：不能豁免");
   r = G(L, W("P0-IMG/cdn"), MAIN, UP); assert.equal(r.ok, false, "閘門連得上、報告說連不上：工具失靈"); assert.ok(has(r, /閘門自己連得上 CDN.*工具失靈/));
   r = G(L, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, true, "報告說連不上、閘門也連不上：才可以豁免"); assert.equal(r.waived.length, 2, "正確的報告是結束代碼 3：「要加 --cdn」和金絲雀③兩條都掛 P0-IMG/cdn（第八次複審後）");
@@ -217,7 +218,8 @@ test("〔混合〕PR #66 複審：單獨的 CR 會改變程式意義，雜湊要
 test("〔原始碼〕P0-IMG 金絲雀③（PR #66 第四次複審）：worker 要數拿到 200 的項數，連同 manifest 讀得到沒，一起交給 cdnCanary 當反證", () => {
   const caa = rd("check-aab-assets.js");
   assert.match(caa, /\n\s+if \(st === 200\) ok200\+\+;\n/);
-  assert.match(caa, /cdnCanary\(cdnRun\.probeF, cdnRun\.miss, cdnRun\.unknown, \{ ok200: cdnRun\.ok200, manOk: !!\(man && man\.files\) \}\)/);
+  assert.ok(caa.includes("cdnCanary(cdnRun.probeF, cdnRun.miss, cdnRun.unknown, { ok200: cdnRun.ok200, manOk: manHasFiles(man) })"), "第十五次複審：manOk 跟閘門同一個定義（manHasFiles）");
+  assert.equal(CA.manHasFiles({ files: {} }), false, "{files:{}} 算讀不到"); assert.equal(CA.manHasFiles({ files: [] }), false); assert.equal(CA.manHasFiles({ files: { "a": 1 } }), true);
 });
 
 test("閘門自己探測 CDN（PR #66 第五次複審，開發者選）：CDN 正常＝連得上；真斷線＝連不上；manifest 空的不算連得上；亂數檔 HEAD 回 404 也算連得上", async () => {
@@ -307,7 +309,7 @@ test("閘門（PR #66 第十次複審）：從逐項清單重算；混一筆 404
     ["need 對不起來", (j) => { j.need++ }, /need/], ["沒記 inPack", (j) => { delete j.inPack }, /need/],
     ["多一筆 W21 提醒（第十二次）", (j) => { j.warnItems.push({ f: "data/c.webp", why: "不在安裝包裡、原生不會補抓" }); j.warn++ }, /CDN 以外的提醒/],
     ["原生不會補抓（第十二次）", (j) => { j.native.cdnFallback = false }, /原生不會向 CDN 補抓/], ["沒記 native（第十二次）", (j) => { delete j.native }, /原生不會向 CDN 補抓/],
-    ["比對過 CDN", (j) => { j.cdnCompared = 1 }, /比對過/], ["探測狀態 200", (j) => { j.canary.cdnStatus = 200 }, /探測狀態/], ["金絲雀全過", (j) => { j.canary.ok = true }, /探測狀態/],
+    ["比對過 CDN", (j) => { j.cdnCompared = 1 }, /比對過/], ["探測狀態 200", (j) => { j.canary.cdnStatus = 200 }, /探測狀態|重算/], ["金絲雀全過", (j) => { j.canary.ok = true }, /探測狀態/],
     ["unknown 少算", (j) => { j.unknown-- }, /unknown/], ["unknown 多算", (j) => { j.unknown++ }, /unknown/], ["warn 對不起來", (j) => { j.warn++ }, /warn/],
     ["沒有 manifest 那筆", (j) => { j.warnItems = j.warnItems.filter((w) => w.f !== "cdn-manifest.json"); j.warn = j.warnItems.length; j.unknown-- }, /cdn-manifest/],
     ["兩筆 manifest", (j) => add(j, { f: "cdn-manifest.json", why: "x" }), /cdn-manifest/], ["沒有逐項清單", (j) => { delete j.warnItems }, /逐項清單/],
@@ -369,11 +371,14 @@ test("閘門（PR #66 第十一、十三次複審，端對端）：真的 check-
   const FULL = ["X-XQ-Cdn-Cache", ".parts.json", "[A-Za-z0-9._-]+", "SHA-1"];
   const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-e2e66-")), down = path.join(d, "down.js");
   fs.writeFileSync(down, "globalThis.fetch = async () => { throw new Error(\"假：CDN 全斷\") };\n");
+  /* 第十五次複審：manifest 回 {"files":{}}、其他請求全斷。工具和閘門都要把空的 manifest 當成讀不到 */
+  const emptyMan = path.join(d, "empty-man.js");
+  fs.writeFileSync(emptyMan, "globalThis.fetch = async (u) => { if (String(u).endsWith(\"cdn-manifest.json\")) return { ok: true, status: 200, json: async () => ({ files: {} }) }; throw new Error(\"假：CDN 全斷\") };\n");
   const { onlyCdnDown } = require(path.join(AND, "p0-gate.js"));
   const put = (j) => { const L = all(); L[0].json = { ...j, aabSha256: A, siteVersion: V }; return L };
   /* 做一個假包、CDN 全斷下跑真工具，回傳 { status, report }。dex＝原生帶的特徵字串；has＝放進包的檔（x＝data/a/x.webp、y＝data/a/y.json、gm＝大檔）；big＝preload 要不要列大檔 */
   let n = 0;
-  const runReal = ({ dex, has, big = true }) => {
+  const runReal = ({ dex, has, big = true, net = down }) => {
     const preload = { v: "t", items: [["data/a/x.webp", 3, sha8("abc"), 1], ["data/a/y.json", 2, sha8("{}"), 1]], big: big ? [["data/gm.json", 30 * 1024 * 1024, sha8("[]")]] : [], pages: {} };
     const f = { [P + "native-build.json"]: JSON.stringify({ siteVersion: V, sharedWebCommit: "0".repeat(40) }), [P + "data/preload.json"]: JSON.stringify(preload),
       [P + "data/big-books.json"]: "[]", "base/dex/classes.dex": "dex\n035\0" + dex.join("\0") + "\0" };
@@ -383,7 +388,7 @@ test("閘門（PR #66 第十一、十三次複審，端對端）：真的 check-
     for (const h of HOME_REQUIRED) f[P + "data/" + h] = "w";
     const aab = path.join(d, "t" + ++n + ".aab"), out = path.join(d, "img" + n + ".json");
     fs.writeFileSync(aab, zipOf(f));
-    const r = cp.spawnSync(process.execPath, ["--require", down, path.join(AND, "check-aab-assets.js"), "--aab", aab, "--cdn", "--out", out], { encoding: "utf8", timeout: 100000 });
+    const r = cp.spawnSync(process.execPath, ["--require", net, path.join(AND, "check-aab-assets.js"), "--aab", aab, "--cdn", "--out", out], { encoding: "utf8", timeout: 100000 });
     return { status: r.status, err: (r.stderr || "").slice(0, 300), report: fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, "utf8")) : null };
   };
   const waive = (rep, why) => { const g = G(put(rep), W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(g.ok, true, why + "：" + JSON.stringify(g.problems || g).slice(0, 300)); assert.equal(g.waived.length, 2, why) };
@@ -410,6 +415,21 @@ test("閘門（PR #66 第十一、十三次複審，端對端）：真的 check-
     assert.match(String(onlyCdnDown(dupP)), /探測檔不是剛好一筆/); block(dupP, "兩筆探測檔");
     const why1 = JSON.parse(JSON.stringify(a.report)); why1.warnItems.find((w) => w.f === "data/a/y.json").why = CA.unknownWhy(503);
     assert.match(String(onlyCdnDown(why1)), /原因文字跟狀態碼對不起來/); block(why1, "狀態 -1 卻寫 HTTP 503");
+    /* 第十五次複審：欄位互相矛盾的報告 */
+    const cp1 = (f) => { const j = JSON.parse(JSON.stringify(a.report)); f(j); return j };
+    for (const [why, j, re] of [
+      ["探測檔 -1、金絲雀卻記 503", cp1((j) => { j.canary.cdnStatus = 503 }), /重算/],
+      ["金絲雀寫「判成沒有」、cdn404 卻是 false", cp1((j) => { j.canary.cdn = "判成沒有" }), /重算/],
+      ["同一個檔兩筆缺驗", cp1((j) => { const y = j.warnItems.find((w) => w.f === "data/a/y.json"); j.warnItems.push({ ...y }); j.warn++; j.unknown++; j.viaCdn++; j.need++ }), /出現兩次/],
+      ["檔名不是字串", cp1((j) => { j.warnItems.find((w) => w.f === "data/a/y.json").f = 123 }), /不是字串/],
+      ["首頁金絲雀寫「本來就缺」", cp1((j) => { j.canary.homeFile = "（包裡本來就缺，真實結果已判出）" }), /沒有真的弄壞/],
+      ["manifest 那筆原因亂寫", cp1((j) => { j.warnItems.find((w) => w.f === "cdn-manifest.json").why = "隨便寫" }), /原因文字不是工具寫的/]]) {
+      assert.match(String(onlyCdnDown(j)), re, why); block(j, why);
+    }
+    /* 第十五次複審：manifest 回 {"files":{}}、其他全斷：工具回 3（不是 4），閘門照樣豁免 */
+    const em = runReal({ dex: FULL, has: ["x"], net: emptyMan });
+    assert.equal(em.status, 3, "空的 manifest＝讀不到，缺驗 3：" + em.err); assert.equal(em.report.canary.cdnUnreachable, true);
+    assert.equal(onlyCdnDown(em.report), null); waive(em.report, "空的 manifest、其他全斷");
     /* ② 第十三次複審：原生不會補抓、只缺 JSON（正確的包；網頁程式會自己改抓 CDN）：上一輪誤擋，現在要能豁免 */
     const b = runReal({ dex: [], has: ["x"], big: false });
     assert.equal(b.status, 3, "不補抓只缺 JSON，CDN 全斷＝缺驗 3：" + b.err); assert.equal(b.report.native.cdnFallback, false);

@@ -38,6 +38,9 @@ const MEDIA = /\.(webp|png|jpe?g|gif|svg|mp3|ogg|m4a|wav|glb|gltf|bin|mp4|webm)$
 const SPLIT = 20 * 1024 * 1024;   // tools/cdn-deploy.js：超過 20 MB 的檔在 CDN 上切塊
 /* 閘門（p0-gate.js）會照這兩句固定文字核對「單純 CDN 連不上」的報告（PR #66 第十四次複審）：改文字要兩邊一起改 */
 const NOTE_VIA_WEB = "不在安裝包裡、原生不會補抓；網頁程式會自己改抓 CDN";
+const MAN_MISS_WHY = "讀不到 CDN 的 cdn-manifest.json，沒能核對包裡的檔是不是 CDN 現行版（缺驗）";
+/* PR #66 第十五次複審：manifest「讀得到」跟閘門（p0-gate.js probeCdn）同一個定義：files 是物件、而且裡面有東西；{"files":{}} 算讀不到 */
+const manHasFiles = (m) => !!(m && m.files && typeof m.files === "object" && !Array.isArray(m.files) && Object.keys(m.files).length > 0);
 const unknownWhy = (st) => `CDN 沒確認到（${st === -1 ? "連不上" : "HTTP " + st}，請稍後重跑 --cdn）`;
 const PARTS_MARKER = "XQ-CDN-PARTS-v1";   // 預留：XQCdnFallback 下次改版時加這個字串常數，檢查就不用靠一般字串猜
 const die = (m, c = 2) => { console.error("✘ " + m); process.exit(c) };
@@ -123,12 +126,12 @@ async function main() {
     // 4b. 包裡的檔跟 CDN 現行版逐檔比 SHA-1（W42；加 --cdn 才做）
     if (CDN_CHECK) {
       for (let t = 0; t < 4 && !man; t++) { try { const r = await fetch(CDN + "cdn-manifest.json"); if (r.ok) man = await r.json() } catch (e) {} if (!man) await new Promise(r => setTimeout(r, 800 * (t + 1))) }
-      if (!man || !man.files) { R.warn.push({ f: "cdn-manifest.json", why: "讀不到 CDN 的 cdn-manifest.json，沒能核對包裡的檔是不是 CDN 現行版（缺驗）" }); R.unknown = (R.unknown || 0) + 1 }
+      if (!manHasFiles(man)) { R.warn.push({ f: "cdn-manifest.json", why: MAN_MISS_WHY }); R.unknown = (R.unknown || 0) + 1 }
       else { const H = new Map(); for (const [f2, p] of inPack) if (f2.startsWith("data/") && man.files[f2]) H.set(f2, crypto.createHash("sha1").update(fs.readFileSync(p)).digest("hex"));
         const S = staleVsCdn(H, man.files, need); R.red.push(...S.red); R.warn.push(...S.warn); R.cdnCompared = H.size }
     }
     /* 金絲雀③：同一輪有檔拿到 200、或 manifest 讀得到＝CDN 連得上；這時探測檔還記成連不上，就是判斷壞了 */
-    if (cdnRun) Object.assign(canary, cdnCanary(cdnRun.probeF, cdnRun.miss, cdnRun.unknown, { ok200: cdnRun.ok200, manOk: !!(man && man.files) }));
+    if (cdnRun) Object.assign(canary, cdnCanary(cdnRun.probeF, cdnRun.miss, cdnRun.unknown, { ok200: cdnRun.ok200, manOk: manHasFiles(man) }));
     canary.ok = canary.home === true && canary.stale === true && canary.cdn404 === true;
 
     // 5. 報告
@@ -216,5 +219,5 @@ function cdnCanary(probe, miss, unknown, ev = {}) {
 }
 /* 結束代碼用的金絲雀判斷（純函式）：①②一律要抓到；加 --cdn 時③要抓到，或 CDN 真的連不上（cdnUnreachable，歸缺驗 3，不算失靈）；看布林欄位，不看訊息文字 */
 function canaryExitOk(c, cdn) { return c.home === true && c.stale === true && (!cdn || c.cdn404 === true || c.cdnUnreachable === true) }
-module.exports = { exitCode, PARTS_MARKER, MEDIA, NOTE_VIA_WEB, unknownWhy, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk };
+module.exports = { exitCode, PARTS_MARKER, MEDIA, NOTE_VIA_WEB, MAN_MISS_WHY, manHasFiles, unknownWhy, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk };
 if (require.main === module) main().catch(e => die(e.stack || String(e)));

@@ -172,8 +172,8 @@ test("豁免：只認齊全、綁同一個 AAB、在可豁免清單裡的；轉�
 });
 
 test("豁免：P0-IMG 缺驗（結束代碼 3）有倉庫豁免就放行並列出；沒有就擋；不可豁免的照擋", () => {
-  const L = ok3(); Object.assign(L[0].json, { exitCode: 3, pass: false, unknown: 2, warn: 2, cdnCompared: 0, viaCdn: 0, inPack: 1, need: 1, warnItems: [{ f: "data/__xq_p0_canary_0123456789ab.webp", st: -1, why: "CDN 沒確認到（連不上，請稍後重跑 --cdn）" }, { f: "cdn-manifest.json", why: "讀不到" }] });
-  L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdnUnreachable: true, cdnStatus: -1, ok: false, cdn: "沒確認到（CDN 連不上）" };   /* 第九、十次複審：CDN 全斷時的真報告（逐項清單） */
+  const L = ok3(); Object.assign(L[0].json, { exitCode: 3, pass: false, unknown: 2, warn: 2, cdnCompared: 0, viaCdn: 0, inPack: 1, need: 1, warnItems: [{ f: "data/__xq_p0_canary_0123456789ab.webp", st: -1, why: "CDN 沒確認到（連不上，請稍後重跑 --cdn）" }, { f: "cdn-manifest.json", why: "讀不到 CDN 的 cdn-manifest.json，沒能核對包裡的檔是不是 CDN 現行版（缺驗）" }] });
+  L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdnUnreachable: true, cdnStatus: -1, ok: false, cdn: "沒確認到（CDN 連不上或暫時出錯，沒拿到 HTTP 狀態）", homeFile: "data/homemap/home_classic.webp", staleFile: "data/a/x.webp" };   /* 第九、十次複審：CDN 全斷時的真報告（逐項清單） */
   let r = G(A, V, L); assert.equal(r.ok, false); assert.ok(has(r, /P0-IMG：要加 --cdn 且結束代碼 0/)); assert.ok(!has(r, /P0-IMG：沒有通過/), "缺驗歸在可豁免那一條");
   const w = { code: "P0-IMG/cdn", aabSha256: A, reason: "CDN 維護中無法交叉核對", decidedBy: "開發者", decidedAt: "2026-11-23" };
   /* PR #66 第六次複審：缺驗的豁免要閘門自己也連不上 CDN（cdnProbe.reachable＝false）；沒探測或連得上都不放行 */
