@@ -47,6 +47,17 @@ function load(o = {}) {
   return { c, called, toasts, wrapped };
 }
 
+test("W72 代號表 flags-codes.json 跟程式一致：halls8＋八派各一個 play_<派>，入口鍵跟 JH_HALLS8 的 play.k 相同；每個代號真的會關掉東西", () => {
+  const T = JSON.parse(rd("xiangqi-lab/tools/flags-codes.json")), { c } = load();
+  const codes = T.codes.map((x) => x.code).sort();
+  assert.deepEqual(codes, ["halls8", ...SIDS.map((s) => "play_" + s)].sort());
+  for (const x of T.codes.filter((y) => y.sid)) {
+    assert.equal(x.code, "play_" + x.sid); assert.equal(c.JH_HALLS8[x.sid].play.k, x.spot, x.sid + " 入口鍵");
+    const L = load({ flags: { off: [x.code] } }), p = page(x.sid); L.c.JhHall(p.v, x.sid);
+    assert.equal(p.P.querySelector(`.jh-hall-spot[data-k="${x.spot}"]`), null, x.code + " 關掉後入口不見");
+  }
+});
+
 test("W72 遠端開關：halls8 關掉＝八派都進不了門內（小卡不顯示走進山門、直接打網址退回長卷）；中炮、屏風馬不受影響", () => {
   const F = { off: ["halls8"] }, { c, wrapped } = load({ flags: F });
   for (const sid of SIDS) assert.ok(c.JH_HALL_BAD.has(sid), sid + " 放進 JH_HALL_BAD");
