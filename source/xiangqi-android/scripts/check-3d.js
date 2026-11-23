@@ -99,6 +99,8 @@ function priorAttempts(lines, aabSha256, android) {
   const same = lines.map((l) => { try { return JSON.parse(l) } catch (e) { return null } }).filter((x) => x && x.aabSha256 && x.aabSha256 === aabSha256 && String(x.android) === String(android));
   return { before: same.length, failedBefore: same.filter((x) => x.pass !== true).length };
 }
+/* 星門圍城的視角名稱（App 只認 top／tilt／flat；以前寫 "iso" 會被當成不認得、什麼都不做，斜看那個情境其實一直是俯視；11/23 第一次實跑發現） */
+const siegeView = (name) => name === "siege-iso" ? "tilt" : "top";
 /* 自我反測（P0-3D 金絲雀）照預期（純函式；PR #66 審查④）：正常那次要過；遮罩那次要「選中起點、點了落點、落點量到的元件就是遮罩、棋譜沒多出那一步」。
    遮罩那次在放遮罩之前就失敗（選不到起點、鏡頭沒停穩、例外）不算抓到——那證明不了這支抓得到 W02 */
 function selfTestOk(a, b) {
@@ -106,7 +108,7 @@ function selfTestOk(a, b) {
 }
 /* 每一輪都全過才算過（已知問題照清單放行）；rounds＝每一輪的結果陣列（純函式） */
 const roundPass = (results) => results.length > 0 && results.every((r) => r.pass === true || (r.pass === null && !!r.known));
-module.exports = { priorAttempts, roundPass, selfTestOk, SCENARIOS, SAFE, PREFER, ONLY, BODY_TRIES, BODY, inSafe, inTop, bodyPoint, padPresses, knownFor, covered, chooseMoves, settled, toDevice, moved, webViewBounds };
+module.exports = { priorAttempts, roundPass, selfTestOk, siegeView, SCENARIOS, SAFE, PREFER, ONLY, BODY_TRIES, BODY, inSafe, inTop, bodyPoint, padPresses, knownFor, covered, chooseMoves, settled, toDevice, moved, webViewBounds };
 if (require.main !== module) return;
 
 /* ---- 實機流程 ---- */
@@ -136,6 +138,8 @@ const shot = (name) => { try { fs.writeFileSync(path.join(O.out, name + ".png"),
 class Unfit extends Error { }   /* 環境不成立（結束碼 2） */
 /* 模擬器當掉、adb 斷線：是測試環境的問題，不是 App 沒過，一律當「測試不成立」 */
 const OFFLINE = /device offline|device '?[^ ]*'? not found|no devices.emulators found|device unauthorized/i;
+/* 還連著但沒有回應（11/23 第一次實跑：Android 12 模擬器卡死，get-state 仍回 device，之後每一步 adb 都逾時）：15 秒內 shell 回不了 ok＝環境不成立 */
+function responsive() { try { return cp.execFileSync(ADB, ["-s", O.serial, "shell", "echo", "ok"], { encoding: "utf8", timeout: 15000 }).trim() === "ok" } catch (e) { return false } }
 function online() { try { return cp.execFileSync(ADB, ["-s", O.serial, "get-state"], { encoding: "utf8", timeout: 15000 }).trim() === "device" } catch (e) { return false } }
 
 async function ready() {
@@ -281,12 +285,14 @@ async function run(name, inject) {
   if (!online()) throw new Unfit(O.serial + " 不在線（模擬器當掉或 adb 斷線）");
   try {
     c = await ready(); const off = bounds(); R.webView = off;
+    /* 星門圍城自己記視角（store gsvView，沒選過＝平面），封測玩家狀態下沒選過：開局前先選好 3D 視角，不然 3D 永遠不會就緒（11/23 第一次實跑發現） */
+    if (kind === "siege") await c.ev(`gsvSetView(${JSON.stringify(siegeView(name))})`);
     await c.ev(START[kind === "pvp" ? "pvp" : kind]);
     let ok = false;
     for (let i = 0; i < 80 && !ok; i++) { await sleep(300); ok = await c.ev(READY.base + (READY[kind] ? "&&" + READY[kind] : "")) }
     if (!ok) throw Error("3D 沒就緒：" + (await c.ev(`document.body.innerText.slice(-300)`)));
     if (kind === "bhx") { await c.ev(name === "bhx-back" ? `PARK.v.setView('under')` : `PARK.v.setView(BHX_CAM)`); await sleep(600) }
-    if (kind === "siege") { await c.ev(`gsvSetView(${JSON.stringify(name === "siege-iso" ? "iso" : "top")})`); await sleep(600) }
+    if (kind === "siege") { await c.ev(`gsvSetView(${JSON.stringify(siegeView(name))})`); await sleep(600) }
     if (name === "pvp-black") {
       /* 先讓紅方走一步（也用真實觸控），等翻面後再驗黑方 */
       const r0 = {}; await step(c, "pvp", null, off, name + "-red", r0, false);
@@ -302,7 +308,7 @@ async function run(name, inject) {
     } else await step(c, kind === "pvp" ? "pvp" : kind, null, off, name, R, inject, name === "bhx-back");
   } catch (e) {
     if (e instanceof Unfit) throw e;
-    if (OFFLINE.test(String(e.message)) || !online()) throw new Unfit(O.serial + " 在跑「" + name + "」時斷線（" + String(e.message).trim().split(/\r?\n/).pop().slice(0, 80) + "）");
+    if (OFFLINE.test(String(e.message)) || /ETIMEDOUT/.test(String(e.code || e.message)) || !online() || !responsive()) throw new Unfit(O.serial + " 在跑「" + name + "」時斷線（" + String(e.message).trim().split(/\r?\n/).pop().slice(0, 80) + "）");
     R.pass = false; R.error = R.error || e.message;
   }
   finally { c?.close() }

@@ -605,3 +605,19 @@ test("深層金絲雀：每一類挑頭、中、尾三個檔都要抓到；正�
   assert.equal(b.w21.ok, false, "只查第一個檔：W21 要報警"); assert.equal(b.w21.missed, "data/a/c.webp");
   assert.equal(b.hash.ok, false, "只查第一個檔：內容被改要報警");
 });
+
+test("〔混合〕P0-3D 星門圍城：檢查用的視角名稱 App 要認得（以前寫 iso，App 只認 top／tilt／flat，斜看情境其實一直是俯視）；開局前先選好 3D 視角", () => {
+  const { siegeView } = require(path.join(AND, "check-3d.js"));
+  const src = fs.readFileSync(path.join(__dirname, "..", "..", "xiangqi-db", "m", "07bhg-gatesiege.js"), "utf8");
+  const m = /const gsvVwOk=(v=>[^;]+);/.exec(src); assert.ok(m, "App 的 gsvVwOk 找得到");
+  const ok = eval(m[1]);
+  for (const n of ["siege-top", "siege-iso"]) { assert.equal(ok(siegeView(n)), true, n + " → " + siegeView(n)); assert.notEqual(siegeView(n), "flat") }
+  assert.notEqual(siegeView("siege-top"), siegeView("siege-iso"), "兩個情境要是不同視角");
+  assert.match(rd("check-3d.js"), /if \(kind === "siege"\) await c\.ev\(`gsvSetView\(\$\{JSON\.stringify\(siegeView\(name\)\)\}\)`\);\n\s+await c\.ev\(START\[/, "開局前先選視角");
+});
+
+test("〔原始碼〕P0-3D：模擬器還連著但卡死（adb 逾時、shell 沒回應）要判測試不成立（2），不能算成情境沒過（11/23 第一次實跑發現）", () => {
+  const c3d = rd("check-3d.js");
+  assert.match(c3d, /function responsive\(\) \{ try \{ return cp\.execFileSync\(ADB, \["-s", O\.serial, "shell", "echo", "ok"\]/);
+  assert.match(c3d, /OFFLINE\.test\(String\(e\.message\)\) \|\| \/ETIMEDOUT\/\.test\(String\(e\.code \|\| e\.message\)\) \|\| !online\(\) \|\| !responsive\(\)\) throw new Unfit\(/);
+});
