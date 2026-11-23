@@ -14,6 +14,20 @@
 const zlib = require("zlib");
 
 /* 檔頭判斷格式：回 "jpeg"／"png"／"webp"／"tiff"／"gif"／"bmp"／"heif"／"avif"，不是圖片回 null */
+/* 第九輪審查③：BMP、ICO 的檔頭判斷收嚴，開頭剛好是「BM」的文字檔、00 00 01 00 開頭的資料檔不會被當成圖片：
+   BMP 要 14 位元組檔頭的保留欄是 0、像素位移在檔內、資訊頭大小是 12／40／52／56／64／108／124；
+   ICO／CUR 要張數 1～256，而且每一張的「大小＋位移」都落在檔內、位移在目錄之後 */
+function isBmp(b) {
+  if (b.length < 26 || b[0] !== 0x42 || b[1] !== 0x4d) return false;
+  const off = b.readUInt32LE(10), dib = b.readUInt32LE(14);
+  return b.readUInt32LE(6) === 0 && off >= 26 && off <= b.length && [12, 40, 52, 56, 64, 108, 124].includes(dib);
+}
+function isIco(b) {
+  if (b.length < 22 || b[0] !== 0 || b[1] !== 0 || !(b[2] === 1 || b[2] === 2) || b[3] !== 0) return false;
+  const n = b.readUInt16LE(4); if (n < 1 || n > 256 || 6 + 16 * n > b.length) return false;
+  for (let i = 0; i < n; i++) { const e = 6 + 16 * i, size = b.readUInt32LE(e + 8), off = b.readUInt32LE(e + 12); if (b[e + 3] !== 0 || size < 1 || off < 6 + 16 * n || off + size > b.length) return false }
+  return true;
+}
 function sniff(buf) {
   const b = Buffer.isBuffer(buf) ? buf : Buffer.from(buf), s = (a, z) => b.toString("latin1", a, z);
   if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "jpeg";
@@ -21,9 +35,9 @@ function sniff(buf) {
   if (b.length >= 12 && s(0, 4) === "RIFF" && s(8, 12) === "WEBP") return "webp";
   if (b.length >= 4 && (s(0, 4) === "II*\0" || s(0, 4) === "MM\0*")) return "tiff";
   if (b.length >= 6 && /^GIF8[79]a$/.test(s(0, 6))) return "gif";
-  if (b.length >= 2 && s(0, 2) === "BM") return "bmp";
+  if (isBmp(b)) return "bmp";
   /* 第七輪審查①：ICO／CUR、PSD、JPEG XL、JPEG 2000 也算圖片（讀不懂＝擋，請轉成 webp／png；也不准用行內標記放行） */
-  if (b.length >= 4 && b[0] === 0 && b[1] === 0 && (b[2] === 1 || b[2] === 2) && b[3] === 0) return "ico";
+  if (isIco(b)) return "ico";
   if (b.length >= 4 && s(0, 4) === "8BPS") return "psd";
   if ((b.length >= 2 && b[0] === 0xff && b[1] === 0x0a) || (b.length >= 12 && s(4, 8) === "JXL ")) return "jxl";
   if (b.length >= 12 && s(4, 8) === "jP  ") return "jp2";
@@ -73,7 +87,8 @@ function rawProfile(key, text, out) {
 /* 第七輪審查④：壓縮資料不完整時也把解得出來的部分拿回來（Z_SYNC_FLUSH），不整段丟掉 */
 /* 第八輪審查①：壓縮資料壞掉（Adler、FCHECK 錯）時不當成空的乾淨圖，丟出 BAD，imageMeta 回 null（讀不懂＝擋） */
 const BAD = new Error("壓縮資料壞掉");
-const inflate = (d) => { try { return zlib.inflateSync(d, { finishFlush: zlib.constants.Z_SYNC_FLUSH }) } catch (e) { throw BAD } };
+/* 第九輪審查③：Apple 的 CgBI PNG 用不帶檔頭的 raw deflate，先照 zlib 解，不行再照 raw deflate 解；兩種都不行才算壞掉 */
+const inflate = (d) => { const o = { finishFlush: zlib.constants.Z_SYNC_FLUSH }; try { return zlib.inflateSync(d, o) } catch (e) { try { return zlib.inflateRawSync(d, o) } catch (e2) { throw BAD } } };
 /* 第七輪審查②：不管放在哪個區塊、哪一段（JPEG 第一個 SOS 之後、漸進式兩次掃描之間、EOI 之後），整個檔裡找得到的 Exif 與 XMP 都看 */
 function anywhere(b, out, texts) {
   for (let i = b.indexOf("Exif\0\0"); i >= 0; i = b.indexOf("Exif\0\0", i + 6)) tiff(b.subarray(i + 6), out);
@@ -113,10 +128,13 @@ function imageMeta0(buf) {
     return done();
   }
   if (fmt === "png") {
-    let p = 8;
+    let p = 8, ended = false;
     while (p + 8 <= b.length) {
       const len = b.readUInt32BE(p), type = b.toString("latin1", p + 4, p + 8), d = b.subarray(p + 8, p + 8 + len);
-      if (p + 12 + len > b.length) return null;   /* 第五輪審查③：區塊長度超出檔案＝結構壞掉＝讀不懂 */
+      /* 第五輪審查③：區塊長度超出檔案＝結構壞掉＝讀不懂。第九輪審查③：IEND 之後殘留的舊尾巴（存檔工具留下的）長度對不上就停下來，不算讀不懂；
+         停下來的地方之後，整個檔的 Exif／XMP／TIFF 還是會由 anywhere 找 */
+      if (p + 12 + len > b.length) { if (ended) break; return null }
+      if (type === "IEND") ended = true;
       if (type === "eXIf") tiff(d.toString("latin1", 0, 6) === "Exif\0\0" ? d.subarray(6) : d, out);   /* 第六輪審查④：開頭帶 Exif\0\0 的也認（跟 WebP 一樣） */
       else if (type === "iCCP") { const z = d.indexOf(0), u = inflate(d.subarray(z + 2)); texts.push(u.toString("latin1").replace(/[^\x20-\x7e\n]+/g, " "), u.toString("latin1")) }   /* 第八輪審查②：另外留一份原文，mluc（UTF-16BE）的描述交給 textsOf 的「拿掉 NUL」解碼 */   /* 壓縮的 ICC：解開後的描述文字交給規則掃 */
       else if (type === "tEXt" || type === "zTXt" || type === "iTXt") {

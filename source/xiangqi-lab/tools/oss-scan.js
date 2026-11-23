@@ -50,10 +50,17 @@ const NAME_RULES = [
    PR #68 第三輪審查：①檔頭像圖片的檔也照樣當文字掃（圖片另外由 image-meta.cjs 查中繼資料），不然在 BM／PNG／GIF 檔頭後面接機密就躲過去了；
    第四輪（開發者 11/23 選「圖片全文掃、誤報用整張圖 sha256 放行」）：真圖片也全文掃、不設門檻；壓縮資料偶然湊出的誤報，放行清單寫 file＋fileSha256（整個檔的雜湊）；
    ③檔裡有 NUL 時，另外多解幾種（見 textsOf），沒有 BOM 的 UTF-16、奇數長度的 UTF-16BE、UTF-32 都躲不掉。IMG_HEAD 留著給外面判斷用 */
+/* 第九輪審查③：BMP、ICO 的判斷跟 .github/scripts/image-meta.cjs 的 isBmp／isIco 一樣嚴（文字檔開頭剛好是 BM、資料檔開頭是 00 00 01 00 不算圖片） */
+function isBmp(b) { if (b.length < 26 || b[0] !== 0x42 || b[1] !== 0x4d) return false; const off = b.readUInt32LE(10), dib = b.readUInt32LE(14); return b.readUInt32LE(6) === 0 && off >= 26 && off <= b.length && [12, 40, 52, 56, 64, 108, 124].includes(dib) }
+function isIco(b) {
+  if (b.length < 22 || b[0] !== 0 || b[1] !== 0 || !(b[2] === 1 || b[2] === 2) || b[3] !== 0) return false;
+  const n = b.readUInt16LE(4); if (n < 1 || n > 256 || 6 + 16 * n > b.length) return false;
+  for (let i = 0; i < n; i++) { const e = 6 + 16 * i, size = b.readUInt32LE(e + 8), off = b.readUInt32LE(e + 12); if (b[e + 3] !== 0 || size < 1 || off < 6 + 16 * n || off + size > b.length) return false }
+  return true;
+}
 const IMG_HEAD = (b) => (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) || (b.length >= 8 && b[0] === 0x89 && b.toString("latin1", 1, 4) === "PNG") ||
   (b.length >= 12 && b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP") || (b.length >= 6 && /^GIF8[79]a$/.test(b.toString("latin1", 0, 6))) ||
-  (b.length >= 4 && /^(?:II\*\0|MM\0\*)$/.test(b.toString("latin1", 0, 4))) || (b.length >= 2 && b.toString("latin1", 0, 2) === "BM" && b.length >= 26) ||
-  (b.length >= 4 && b[0] === 0 && b[1] === 0 && (b[2] === 1 || b[2] === 2) && b[3] === 0) || (b.length >= 4 && b.toString("latin1", 0, 4) === "8BPS") ||
+  (b.length >= 4 && /^(?:II\*\0|MM\0\*)$/.test(b.toString("latin1", 0, 4))) || isBmp(b) || isIco(b) || (b.length >= 4 && b.toString("latin1", 0, 4) === "8BPS") ||
   (b.length >= 2 && b[0] === 0xff && b[1] === 0x0a) || (b.length >= 12 && /^(?:JXL |jP  )$/.test(b.toString("latin1", 4, 8)));   /* 第七輪審查①：ICO／CUR、PSD、JPEG XL、JPEG 2000 */
 const CTRL = /[\x00-\x08\x0b\x0c\x0e-\x1f]/g;
 function asText(b) {
@@ -147,7 +154,9 @@ function scan(dir, opts = {}) {
      fileSha256＝整個檔的 SHA-256（第四輪：圖片壓縮資料湊出來的誤報用它放行，圖一改雜湊就變、要重新登記） */
   const sha = (x) => require("crypto").createHash("sha256").update(String(x), "utf8").digest("hex");
   const fileSha = new Map();
-  const allowed = (rule, rel, match) => allow.find(a => (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256) && (!a.fileSha256 || fileSha.get(rel) === a.fileSha256));
+  /* 第九輪審查①（開發者決定 4）：圖片只能用整張圖的 fileSha256 放行；沒寫 fileSha256 的放行項目對圖片不算數 */
+  const imgFiles = new Set();
+  const allowed = (rule, rel, match) => allow.find(a => (!imgFiles.has(rel) || a.fileSha256) && (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256) && (!a.fileSha256 || fileSha.get(rel) === a.fileSha256));
   const isPublic = s => !!pub && pub.some(t => t.includes(s));
   const push = (rule, rel, line, match, extra = {}) => {
     const a = allowed(rule.id, rel, match);
@@ -161,7 +170,7 @@ function scan(dir, opts = {}) {
     const name = path.basename(f.rel);
     const buf = fs.readFileSync(f.abs);
     /* 圖片也照樣掃（中繼資料另外交給 image-meta.cjs；scan-changed 會把圖裡解出來的文字另外放成 .meta 檔給這裡掃） */
-    const img = IMG_HEAD(buf);
+    const img = IMG_HEAD(buf); if (img) imgFiles.add(f.rel);
     fileSha.set(f.rel, require("crypto").createHash("sha256").update(buf).digest("hex"));
     for (const s of textsOf(buf)) {
     const starts = [0];

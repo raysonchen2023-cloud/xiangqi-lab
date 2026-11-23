@@ -50,10 +50,12 @@ function checkAllow(list, risks) {
   items.forEach((a, i) => {
     const at = `items 第 ${i + 1} 筆`;
     if (!a || typeof a !== "object") { bad.push(at + "不是物件"); return }
-    if (!Object.hasOwn(risks, a.rule)) bad.push(`${at}的 rule「${a.rule}」不是 oss-scan 的規則`);
+    if (a.rule === UNREAD) { if (!/^[0-9a-f]{64}$/.test(String(a.fileSha256 || "")) || !String(a.file || "").trim()) bad.push(at + "是「讀不懂的圖」放行：一定要寫 file 和 fileSha256（整張圖的雜湊）") }
+    else if (!Object.hasOwn(risks, a.rule)) bad.push(`${at}的 rule「${a.rule}」不是 oss-scan 的規則`);
     else if (risks[a.rule] === "high") bad.push(`${at}的 rule「${a.rule}」是高風險：不准放行`);
     if (!String(a.file || "").trim() && !String(a.match || "").trim() && !a.sha256 && !a.fileSha256) bad.push(at + "沒有 file、match、sha256、fileSha256：不准整條規則全部放行");
-    if (a.fileSha256 != null && (!/^[0-9a-f]{64}$/.test(String(a.fileSha256)) || !IMG_EXT.test(String(a.file || "")))) bad.push(at + "的 fileSha256 要是 64 碼小寫，而且 file 要寫圖片的完整路徑（整張圖雜湊放行只給圖片用）");
+    if (a.rule !== UNREAD && IMG_EXT.test(String(a.file || "")) && !a.fileSha256) bad.push(at + "放行的是圖片：圖片只能用 fileSha256（整張圖的雜湊）放行（第九輪審查①、開發者決定 4）");
+    if (a.rule !== UNREAD && a.fileSha256 != null && (!/^[0-9a-f]{64}$/.test(String(a.fileSha256)) || !IMG_EXT.test(String(a.file || "")))) bad.push(at + "的 fileSha256 要是 64 碼小寫，而且 file 要寫圖片的完整路徑（整張圖雜湊放行只給圖片用）");
     if (PERSONAL.includes(a.rule) && !/^[0-9a-f]{64}$/.test(String(a.sha256 || "")) && !(a.fileSha256 && a.file)) bad.push(at + "是個資規則（" + a.rule + "）：要用 sha256 指定是哪一筆（圖片可用 file＋fileSha256）");
     if (a.sha256 != null && !/^[0-9a-f]{64}$/.test(String(a.sha256))) bad.push(at + "的 sha256 要是 64 碼小寫");
     if (a.match != null && String(a.match).length < 6) bad.push(at + "的 match 太短（至少 6 個字）");
@@ -73,6 +75,8 @@ function checkAllow(list, risks) {
   return bad;
 }
 const PERSONAL = ["email", "phone-tw", "tw-id"];
+/* 第九輪審查③：讀不懂的圖（Apple CgBI 之外的特殊格式、舊工具留下的怪檔）有放行的路：rule 寫 image-unreadable，加 file＋fileSha256（整張圖的雜湊），寫理由；圖一改就要重新登記 */
+const UNREAD = "image-unreadable";
 const PII_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}|(?:\+886[- ]?9\d{2}|09\d{2})[- ]?\d{3}[- ]?\d{3}|\b[A-Z][12]\d{8}\b/;   /* 放行清單的理由欄不准寫個資（第五輪審查建議） */
 /* CI 紀錄是公開的：印出原文前把會被規則抓到的字遮掉（第五輪審查建議） */
 function maskText(s, rules) { let t = String(s); for (const r of rules || []) { t = t.replace(new RegExp(r.re.source, r.re.flags.includes("g") ? r.re.flags : r.re.flags + "g"), (m) => m.length <= 4 ? "＊" : m.slice(0, 2) + "＊（" + m.length + " 字）") } return t }
@@ -105,14 +109,14 @@ function imageCheck(file, buf) {
   return { file, fmt, meta: imageMeta(buf) };
 }
 /* 中風險（沒被放行）＋圖片有中繼資料或讀不懂＋沒登記的行內標記 → 要擋的清單（純函式） */
-function judge({ findings, images, unreg, attrs = [], metaMarks = [] }) {
+function judge({ findings, images, unreg, attrs = [], metaMarks = [], unreadOk = [] }) {
   const medium = (findings || []).filter((f) => f.risk === "medium" && !f.allowed);
   const meta = (images || []).filter((x) => x.meta && x.meta.kinds.length);
-  const unreadable = (images || []).filter((x) => !x.meta);
+  const okSet = new Set(unreadOk), unreadable = (images || []).filter((x) => !x.meta && !okSet.has(x.file));
   return { medium, meta, unreadable, unreg: unreg || [], attrs, metaMarks, ok: !medium.length && !meta.length && !unreadable.length && !(unreg || []).length && !attrs.length && !metaMarks.length };
 }
 
-module.exports = { maskText, checkAllow, markerLines, unregistered, imageCheck, judge, lineSha, badAttrs, freeName, TOK, PERSONAL };
+module.exports = { UNREAD, maskText, checkAllow, markerLines, unregistered, imageCheck, judge, lineSha, badAttrs, freeName, TOK, PERSONAL };
 if (require.main !== module) return;
 
 const [base = "origin/main", out] = process.argv.slice(2);
@@ -141,15 +145,24 @@ const images = bufs.map(({ file, buf }) => imageCheck(file, buf)).filter(Boolean
 fs.rmSync(out, { recursive: true, force: true });
 for (const { file, buf } of bufs) { const d = path.join(out, file); fs.mkdirSync(path.dirname(d), { recursive: true }); fs.writeFileSync(d, buf) }
 const taken = new Set(files.flatMap((f) => f.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))));   /* 檔和它上層的資料夾名都算用掉 */
-const metaMarks = [];
+const metaMarks = [], metaOf = new Map(), shaOf = new Map(bufs.map(({ file, buf }) => [file, crypto.createHash("sha256").update(buf).digest("hex")]));
 for (const x of images) if (x.meta && x.meta.texts && x.meta.texts.length) {
-  const t = Buffer.from(x.meta.texts.join("\n"), "utf8");
-  fs.writeFileSync(path.join(out, freeName(x.file, taken)), t);
+  const t = Buffer.from(x.meta.texts.join("\n"), "utf8"), nm = freeName(x.file, taken);
+  metaOf.set(x.file, nm); fs.writeFileSync(path.join(out, nm), t);
   for (const m of markerLines(S.textsOf(t), S.MARK)) metaMarks.push({ file: x.file, ...m });   /* 第四輪審查②：圖裡的文字不准用行內標記 */
 }
 console.log(`複製 ${files.length} 個改到的檔到暫存資料夾，交給 oss-scan 掃（放行清單 ${list.items.length} 筆、行內標記登記 ${list.inline.length} 筆）`);
 const tmpA = out + ".allow.json", tmpJ = out + ".scan.json";
-fs.writeFileSync(tmpA, JSON.stringify(list.items));
+/* 第九輪審查①：圖裡解出來的文字（.meta 檔）只認「對到原圖的 fileSha256」那幾筆：原圖改了就不再放行；
+   清單裡直接寫 .meta 檔名的、或對圖片沒寫 fileSha256 的，交給 oss-scan 前就拿掉 */
+const metaNames = new Set(metaOf.values()), items = [];
+for (const a of list.items) {
+  if (a.rule === UNREAD || metaNames.has(a.file)) continue;
+  items.push(a);
+  if (a.fileSha256 && metaOf.has(a.file) && shaOf.get(a.file) === a.fileSha256) { const c = { ...a, file: metaOf.get(a.file) }; delete c.fileSha256; items.push(c) }
+}
+const unreadOk = list.items.filter((a) => a.rule === UNREAD && shaOf.get(a.file) === a.fileSha256).map((a) => a.file);
+fs.writeFileSync(tmpA, JSON.stringify(items));
 const r = spawnSync(process.execPath, [scanner, out, "--all", "--allow", tmpA, "--json", tmpJ], { stdio: "inherit" });
 let findings = null; try { findings = JSON.parse(fs.readFileSync(tmpJ, "utf8")).findings } catch (e) { }
 fs.rmSync(out, { recursive: true, force: true }); fs.rmSync(tmpA, { force: true }); fs.rmSync(tmpJ, { force: true });
@@ -165,7 +178,8 @@ for (const { file, buf } of bufs) { const marks = markerLines(S.textsOf(buf), S.
 const lineInfo = (m) => `（內容不印：${m.full.length} 字，sha256 ${m.sha256.slice(0, 12)}…）`;
 const attrText = (t) => { const v = [t, t.replace(/[\s\x00-\x1f]+/g, ""), t.replace(/[^\x21-\x7e]+/g, "")]; return /[\x00-\x08\x0b-\x1f]/.test(t) || v.some((x) => maskText(x, S.RULES) !== x) ? "（內容不印：有會被規則抓到的字）" : t.slice(0, 160) };
 const attrs = bufs.filter(({ file }) => path.basename(file) === ".gitattributes").flatMap(({ file, buf }) => badAttrs(buf.toString("utf8")).map((x) => ({ file, ...x })));
-const J = judge({ findings, images, unreg: unregistered(marked, list.inline), attrs, metaMarks });
+const J = judge({ findings, images, unreg: unregistered(marked, list.inline), attrs, metaMarks, unreadOk });
+for (const f of unreadOk) console.log(`  △ ${f}：讀不懂的圖，照放行清單（${UNREAD}＋整張圖雜湊）放行`);
 for (const m of J.metaMarks) console.log(`  ✘ ${m.file}：圖片（或圖裡的文字）第 ${m.line} 行有 ${TOK}${lineInfo(m)} ← 圖片不准用行內標記（只能用整張圖的 sha256 放行），請重新匯出不含這段文字的圖`);
 for (const a of J.attrs) console.log(`  ✘ ${a.file}:${a.line}  ${attrText(a.text)}  ← working-tree-encoding／filter 會讓工作區跟倉庫的內容不同，私密掃描會被繞過：不准用`);
 
