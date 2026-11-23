@@ -49,6 +49,20 @@ public class MainActivity extends BridgeActivity {
         + "window.XQNative={android:true,plug:P,has:function(n){try{var C=window.Capacitor;"
         + "return!!(C&&typeof C.isPluginAvailable==='function'?C.isPluginAvailable(n):P(n))}catch(e){return false}}};})();";
 
+    /**
+     * W88（11/24）：清舊網頁版留下的 xqlab-app- 程式快取，並擋掉 Service Worker 註冊。
+     * 為什麼要這一段：變體原本靠 capacitor.config.json 的 appStartPath 先開遷移頁清快取，但 capacitor sync 會照專案根目錄的設定重產這個檔，
+     * appStartPath 被蓋掉（26112104、26112301 的安裝包裡都沒有），遷移頁從來沒跑過；舊快取其實是舊 Worker 接管頁面後才被清。
+     * 現在 WebView 啟動前就刪了註冊（purgeServiceWorkerRegistrations），頁面不會被接管，所以這裡直接清。
+     * 只刪 xqlab-app- 開頭的；素材（xqlab-look 等）、引擎、存檔都不動。不用 reload：註冊已經不在，這一頁本來就是本機檔。
+     */
+    static final String RETIRE_CACHE_JS = "(function(){try{"
+        + "if(location.origin!=='https://localhost'||window.top!==window||window.__xqRetiredCache)return;window.__xqRetiredCache=true;"
+        + "if('serviceWorker' in navigator)Object.defineProperty(navigator.serviceWorker,'register',{configurable:true,value:function(){return Promise.reject(new Error('Native app does not use a service worker'))}});"
+        + "if('caches' in window)caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf('xqlab-app-')===0}).map(function(k){return caches.delete(k)}))})"
+        + ".catch(function(e){console.warn('[native] old app cache cleanup failed',String(e))});"
+        + "}catch(e){console.warn('[native] old app cache cleanup failed',String(e))}})();";
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         purgeServiceWorkerRegistrations(getDataDir());   // 要在 super.onCreate 建立 WebView 之前
@@ -60,7 +74,7 @@ public class MainActivity extends BridgeActivity {
      * W88（11/24 P0-UPD）：從 1740 那一代（≤26111817，網頁版留下 Service Worker）升級，第一次冷啟舊 Worker 還在接管、顯示舊版，
      * 要第二次冷啟才好（Play 現行 26112104 也一樣）。遷移頁是在「已經被舊 Worker 接管的頁面」裡登出再換頁，跟舊 Worker 交棒有時間差。
      * 原生版從來不用 Service Worker，所以在 WebView 啟動之前，直接刪掉 WebView 的 Service Worker 註冊資料（Database、ScriptCache）：
-     * 沒有註冊，第一個文件就由 App 本機檔回應。不刪 CacheStorage（素材、CDN 補檔、引擎快取還要用）；舊的 xqlab-app- 程式快取照舊由遷移頁清。
+     * 沒有註冊，第一個文件就由 App 本機檔回應。不刪 CacheStorage（素材、CDN 補檔、引擎快取還要用）；舊的 xqlab-app- 程式快取由 RETIRE_CACHE_JS 清。
      * 沒有這個資料夾（新安裝）就什麼都不做。共用版 source/xiangqi-android 的 MainActivity 也有同一段。
      */
     static int purgeServiceWorkerRegistrations(java.io.File dataDir) {
@@ -126,6 +140,7 @@ public class MainActivity extends BridgeActivity {
         try {
             if (wv != null && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
                 WebViewCompat.addDocumentStartJavaScript(wv, NATIVE_BRIDGE_JS, Collections.singleton(APP_ORIGIN));
+                WebViewCompat.addDocumentStartJavaScript(wv, RETIRE_CACHE_JS, Collections.singleton(APP_ORIGIN));
             }
         } catch (RuntimeException e) {
             Logger.error("XQ", "注入 XQNative 橋失敗（改由頁面載完時補）", e);

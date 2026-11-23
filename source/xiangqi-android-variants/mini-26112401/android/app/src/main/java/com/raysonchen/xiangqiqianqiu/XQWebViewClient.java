@@ -89,6 +89,7 @@ public class XQWebViewClient extends BridgeWebViewClient {
         }
         if (url != null && (MainActivity.APP_ORIGIN.equals(url) || url.startsWith(APP_URL))) {
             view.evaluateJavascript(MainActivity.NATIVE_BRIDGE_JS, null);
+            view.evaluateJavascript(MainActivity.RETIRE_CACHE_JS, null);   // W88：舊版 WebView 沒有文件開始注入時的備援（腳本自己會跳過重複）
         }
     }
 

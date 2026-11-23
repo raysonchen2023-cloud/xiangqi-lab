@@ -451,3 +451,32 @@ test("〔原始碼〕W88（11/24 P0-UPD）：WebView 啟動前先刪舊 Service 
   const crypto = require("crypto");
   for (const [k, h] of Object.entries(VM.native)) assert.equal(crypto.createHash("sha256").update(fs.readFileSync(path.join(VARS, "mini-26112401", k))).digest("hex"), h, "變體設定檔的雜湊 " + k);
 });
+
+test("〔混合〕W88：封測變體的 RETIRE_CACHE_JS 真的只刪 xqlab-app- 程式快取、擋掉 Service Worker 註冊；文件開始注入，頁面載完再補一次（capacitor sync 會蓋掉 appStartPath，遷移頁不會跑）", async () => {
+  const VARS = [path.join(AND, "..", "xiangqi-android-variants"), path.join(LAB, "site", "source", "xiangqi-android-variants")].find((d) => fs.existsSync(path.join(d, "mini-26112401")));
+  assert.ok(VARS, "找得到 mini-26112401 變體");
+  const J = path.join(VARS, "mini-26112401", "android", "app", "src", "main", "java", "com", "raysonchen", "xiangqiqianqiu");
+  const main = fs.readFileSync(path.join(J, "MainActivity.java"), "utf8"), client = fs.readFileSync(path.join(J, "XQWebViewClient.java"), "utf8");
+  const m = main.match(/static final String RETIRE_CACHE_JS = ((?:"(?:[^"\\]|\\.)*"\s*\+?\s*)+);/);
+  assert.ok(m, "找不到 RETIRE_CACHE_JS");
+  const js = m[1].match(/"(?:[^"\\]|\\.)*"/g).map((x) => JSON.parse(x)).join("");
+  assert.match(main, /addDocumentStartJavaScript\(wv, RETIRE_CACHE_JS, Collections\.singleton\(APP_ORIGIN\)\)/, "文件開始注入");
+  assert.match(client, /evaluateJavascript\(MainActivity\.RETIRE_CACHE_JS, null\)/, "頁面載完的備援");
+  /* 實際跑一次：假的 caches 與 navigator */
+  const run = async (origin) => {
+    const keys = new Set(["xqlab-app-20261118-1740", "xqlab-app-20261121-0643", "xqlab-look-v3", "xq-engine", "xqlab-apps"]);
+    const sw = { register: () => Promise.resolve("registered") };
+    const ctx = { location: { origin }, navigator: { serviceWorker: sw }, console: { warn() {} },
+      caches: { keys: async () => [...keys], delete: async (k) => keys.delete(k) }, Promise };
+    ctx.window = ctx; ctx.top = ctx;
+    require("vm").runInNewContext(js, ctx);
+    await new Promise((r) => setTimeout(r, 20));
+    let reg = "ok"; try { await ctx.navigator.serviceWorker.register("sw.js") } catch (e) { reg = "rejected" }
+    return { keys: [...keys].sort(), reg };
+  };
+  const a = await run("https://localhost");
+  assert.deepEqual(a.keys, ["xq-engine", "xqlab-apps", "xqlab-look-v3"], "只刪 xqlab-app- 開頭的（xqlab-apps 不是這個前綴，也不能刪）");
+  assert.equal(a.reg, "rejected", "Service Worker 註冊要被擋掉");
+  const b = await run("https://example.com");
+  assert.equal(b.keys.length, 5, "別的來源不動");
+});
