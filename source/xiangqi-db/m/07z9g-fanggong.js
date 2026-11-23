@@ -18,9 +18,12 @@ const jhFgHash=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0)
 /* FNV 低位元混得不夠：先打散再取高位元（同 07z9e 的經驗） */
 const jhFgIdx=(h,n)=>{h^=h>>>16;h=Math.imul(h,0x45d9f3b);h^=h>>>16;h=Math.imul(h,0x45d9f3b);h^=h>>>16;return Math.floor((h>>>0)/4294967296*n)};
 const jhFgDay=()=>typeof jhWindDay==="function"?jhWindDay(new Date()):new Date().toISOString().slice(0,10);
-/* 課程主線：每個例題 pre ＋ 一路照提示著法（h）與回應（r）走到底；去掉重複 */
+/* W73（11/23 Windows Claude 1 用 Pikafish 驗出）：palace_horse_06 例題 b 的前置步序「炮二平五 砲8平6 傌二進三…」第 2 手就漏中卒
+   （紅方炮五進四吃掉後 +402），玩家不該照這條背；課程資料在 data/（網站成品，要走發布 PR），這裡先不出這條 */
+const JH_FG_SKIP=new Set(["palace_horse_06/b"]);
+/* 課程主線：每個例題 pre ＋ 一路照提示著法（h）與回應（r）走到底；去掉重複；JH_FG_SKIP 列的例題不出 */
 function jhFgLines(D){const out=[],seen=new Set();
-  for(const L of (D&&D.lessons)||[])for(const ex of L.ex||[]){const mv=[...(ex.pre||[])];let n=ex.root;
+  for(const L of (D&&D.lessons)||[])for(const ex of L.ex||[]){if(JH_FG_SKIP.has(L.id+"/"+ex.id))continue;const mv=[...(ex.pre||[])];let n=ex.root;
     while(n){if(n.k==="mv"&&n.ok&&n.ok[n.h]){const o=n.ok[n.h];mv.push(n.h);if(o.r)mv.push(o.r);n=o.n}else n=n.n}
     const k=mv.join(" ");if(mv.length&&!seen.has(k)){seen.add(k);out.push(mv)}}
   return out}
