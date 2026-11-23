@@ -12,7 +12,8 @@
     { "code": "play_opposite_cannon", "sid": "opposite_cannon", "spot": "stage", "entry": "列炮門玩法「戲台・擊板記譜局」" },
     { "code": "play_same_cannon", "sid": "same_cannon", "spot": "posts", "entry": "順炮門玩法「練拳木樁・搶攻算殺步」" },
     { "code": "play_elephant", "sid": "elephant", "spot": "pavilion", "entry": "飛相門玩法「講經亭・築堤擺陣形」" },
-    { "code": "play_pawn", "sid": "pawn", "spot": "rock", "entry": "仙人指路門玩法「指路奇岩・探路猜陣勢」" }
+    { "code": "play_pawn", "sid": "pawn", "spot": "rock", "entry": "仙人指路門玩法「指路奇岩・探路猜陣勢」" },
+    { "code": "maze", "sid": "central", "spot": "maze", "entry": "中炮門門內頁「拋石車・地底密道」入口（地底迷宮 W71，m/07z9m-maze.js）；關掉時直接開 #/jianghu/maze 也退回門內頁。判法跟 play_<派> 相同。要排在最後：halls8 的判法取第一個帶 sid 的項當八派代表，中炮門不受 halls8 影響" }
   ],
   "playCheck": "play_<派> 關掉時：開 #/jianghu/hall/<sid>，門內頁照常（有 .jh-hall、出口「出山門」），但沒有 .jh-hall-spot[data-k=\"<spot>\"]；其他派的玩法入口照常。入口畫好之後才收到開關的，下一次重畫門內頁時就不再放入口（xqflags 事件會把 halls8 補進 JH_HALL_BAD）。"
 }
