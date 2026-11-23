@@ -156,10 +156,11 @@ function imageMeta0(buf) {
     return done();
   }
   if (fmt === "webp") {
-    let p = 12;
-    while (p + 8 <= b.length) {
+    /* 第十一輪審查②：只讀到 RIFF 自己記的長度（8＋RIFF 長度）為止；結尾之後多出來的尾巴不算讀不懂（main 版會過），尾巴裡的 Exif／XMP／TIFF 照樣由 anywhere 找 */
+    let p = 12; const end = Math.min(b.length, 8 + b.readUInt32LE(4));
+    while (p + 8 <= end) {
       const cc = b.toString("latin1", p, p + 4), len = b.readUInt32LE(p + 4), d = b.subarray(p + 8, p + 8 + len);
-      if (p + 8 + len > b.length) return null;   /* 第七輪審查③：區塊長度超出檔案＝讀不懂 */
+      if (p + 8 + len > end) return null;   /* 第七輪審查③：區塊長度超出 RIFF＝讀不懂 */
       if (cc === "EXIF") tiff(d.toString("latin1", 0, 6) === "Exif\0\0" ? d.subarray(6) : d, out);
       else if (cc === "XMP ") { xmp(d.toString("utf8"), out); texts.push(d.toString("utf8")) }
       p += 8 + len + (len & 1);

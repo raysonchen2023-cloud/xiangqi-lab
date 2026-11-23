@@ -312,7 +312,7 @@ test("第三輪①：檔頭像圖片（BM、PNG、GIF89a、FF D8 FF DA、WEBP、
 test("第四輪：放行清單的 fileSha256 只給圖片用、要 64 碼、要寫 file；個資規則可用 file＋fileSha256 代替 sha256；inline 沒寫 file 或寫萬用字元都不收", () => {
   const H = "a".repeat(64);
   assert.deepEqual(SC.checkAllow({ items: [{ rule: "email", file: "src/a.png", fileSha256: H, reason: "截圖誤報" }], inline: [] }, RISKS), []);
-  assert.equal(SC.checkAllow({ items: [{ rule: "email", file: "src/a.js", fileSha256: H, reason: "檔頭是圖的 .js" }], inline: [] }, RISKS).length, 0, "第十輪③：fileSha256 不限圖片副檔名");
+  assert.equal(SC.checkAllow({ items: [{ rule: "email", file: "src/a.js", fileSha256: H, reason: "檔頭是圖的 .js" }], inline: [] }, RISKS).length, 0, "第十輪③：清單格式上 fileSha256 不限圖片副檔名（執行時只對檔頭是圖的檔算數，見第十一輪①的反例）");
   assert.equal(SC.checkAllow({ items: [{ rule: "email", fileSha256: H, reason: "沒寫 file" }], inline: [] }, RISKS).length >= 1, true);
   assert.equal(SC.checkAllow({ items: [{ rule: "local-path", file: "src/a.png", fileSha256: "abc", reason: "雜湊太短" }], inline: [] }, RISKS).length, 1);
   assert.equal(SC.checkAllow({ items: [], inline: [{ sha256: H, reason: "沒寫 file" }] }, RISKS).length, 1, "inline 一定要寫 file（第四輪 M27）");
@@ -690,4 +690,24 @@ test("第十輪③：檔頭是圖、副檔名不是圖的檔，中風險可以�
   const d = repo(({ put }) => put("source/thumb.bin", b));
   assert.equal(scanA(d, []).status, 1);
   assert.equal(scanA(d, [{ rule: "email", file: "source/thumb.bin", fileSha256: h, reason: "縮圖快取檔" }]).status, 0);
+});
+
+/* ---- PR #68 第十一輪審查（iMac Claude 2） ---- */
+test("第十一輪①：純文字檔寫了 fileSha256 也不放行（只對檔頭是圖的檔算數）", () => {
+  const t = Buffer.from("聯絡 " + MAIL3 + "\n"), h = require("crypto").createHash("sha256").update(t).digest("hex");
+  const d = repo(({ put }) => put("source/notes.txt", t));
+  assert.equal(scanA(d, [{ rule: "email", file: "source/notes.txt", fileSha256: h, reason: "整檔雜湊" }]).status, 1, "純文字檔：fileSha256 不算數");
+  const O = require(OSS), dd = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m11-")); made.push(dd); fs.writeFileSync(path.join(dd, "n.txt"), t);
+  assert.equal(O.scan(dd, { allow: [{ rule: "email", file: "n.txt", fileSha256: h, reason: "整檔雜湊" }] }).findings.find((f) => f.rule === "email").allowed, null);
+});
+test("第十一輪②：WebP 在 RIFF 結尾之後多一段尾巴，照樣讀得懂（main 版會過）；RIFF 範圍內的區塊超出 RIFF 長度才算讀不懂", () => {
+  const chunkW = (cc, d) => { const l = Buffer.alloc(4); l.writeUInt32LE(d.length); return Buffer.concat([Buffer.from(cc), l, d, Buffer.alloc(d.length & 1)]) };
+  const body = Buffer.concat([Buffer.from("WEBP"), chunkW("VP8L", Buffer.alloc(10))]), rl = Buffer.alloc(4); rl.writeUInt32LE(body.length);
+  const webp = Buffer.concat([Buffer.from("RIFF"), rl, body]);
+  assert.ok(IM.imageMeta(webp), "正常的 WebP");
+  assert.ok(IM.imageMeta(Buffer.concat([webp, Buffer.from("trailing junk bytes after RIFF")])), "RIFF 結尾之後多一段尾巴不算讀不懂");
+  const bad = Buffer.from(webp); bad.writeUInt32LE(4096, 16);
+  assert.equal(IM.imageMeta(Buffer.concat([bad, Buffer.alloc(8192)])), null, "RIFF 裡的區塊長度超出 RIFF＝讀不懂");
+  const r = scan(repo(({ put }) => put("source/w.webp", Buffer.concat([webp, Buffer.from("tail")]))));
+  assert.equal(r.status, 0, r.stdout);
 });

@@ -171,7 +171,7 @@ function scan(dir, opts = {}) {
   const fileSha = new Map();
   /* 第九輪審查①（開發者決定 4）：圖片只能用整張圖的 fileSha256 放行；沒寫 fileSha256 的放行項目對圖片不算數 */
   const imgFiles = new Set();
-  const allowed = (rule, rel, match) => allow.find(a => (!imgFiles.has(rel) || a.fileSha256) && (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256) && (!a.fileSha256 || fileSha.get(rel) === a.fileSha256));
+  const allowed = (rule, rel, match) => allow.find(a => (!imgFiles.has(rel) || a.fileSha256) && (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256) && (!a.fileSha256 || (imgFiles.has(rel) && fileSha.get(rel) === a.fileSha256))   /* 第十一輪審查①：fileSha256 只對「檔頭是圖」的檔算數，純文字檔寫了也不放行 */);
   const isPublic = s => !!pub && pub.some(t => t.includes(s));
   const push = (rule, rel, line, match, extra = {}) => {
     const a = allowed(rule.id, rel, match);
