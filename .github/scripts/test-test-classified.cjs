@@ -49,6 +49,17 @@ test("2026-11-23：登記行被註解吃掉就不算已登記（#74：一行註�
   assert.equal(classifiedSet(mk('  "test-a.js",\n  "helper.js"')), null);
 });
 
+test("#95 審查（iMac Claude 2）：] 後面一定要緊接 );——接 .filter／.slice／.concat 等於執行時可以拿掉登記，一律讀不懂（null）；中間只有空白或註解照讀", () => {
+  const head = 'const CLASSIFIED = new Set([\n  "test-a.js",\n  "test-x.js",\n]';
+  assert.equal(classifiedSet(head + '.filter((f) => f !== "test-x.js"));'), null, ".filter 拿掉 test-x.js");
+  assert.equal(classifiedSet(head + '.slice(0, 1));'), null, ".slice");
+  assert.equal(classifiedSet(head + '.concat([]));'), null, ".concat");
+  assert.equal(classifiedSet(head + ', []);'), null, "多一個參數");
+  assert.equal(classifiedSet(head + ')'), null, "少了分號");
+  const s = classifiedSet(head + '  /* 註解 */ )  // 結尾\n ;');
+  assert.ok(s && s.has("test-a.js") && s.has("test-x.js"), "] 和 ); 中間只有空白、註解照讀");
+});
+
 test("倉庫裡真的 testkinds.js 讀得出清單，而且 W45、W57 相關的新測試都在裡面", () => {
   const s = classifiedSet(fs.readFileSync(path.join(__dirname, "..", "..", "source", "xiangqi-lab", "tools", "testkinds.js"), "utf8"));
   assert.ok(s && s.size > 100, String(s && s.size));

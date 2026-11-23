@@ -35,6 +35,16 @@ function classifiedSet(src) {
     }
     if (!inArr) { if (src.startsWith(MARK, i)) { inArr = true; i += MARK.length } else i++; continue }
     if (c === "]") {
+      /* #95 審查（iMac Claude 2）：`]` 後面（跳過空白與註解）一定要緊接 `)` 再 `;`，也就是清單原封不動交給 new Set。
+         否則寫成 [ … ].filter(…)、.slice(…)、.concat(…) 就能在執行時拿掉登記，靜態讀到的清單卻還算已登記 */
+      let k = i + 1;
+      const skipWs = () => { for (;;) { while (k < n && /\s/.test(src[k])) k++;
+        if (src[k] === "/" && src[k + 1] === "*") { const e = src.indexOf("*/", k + 2); if (e < 0) return false; k = e + 2; continue }
+        if (src[k] === "/" && src[k + 1] === "/") { const e = src.indexOf("\n", k); k = e < 0 ? n : e; continue }
+        return true } };
+      if (!skipWs() || src[k] !== ")") return null;
+      k++;
+      if (!skipWs() || src[k] !== ";") return null;
       let arr;
       try { arr = JSON.parse("[" + out.replace(/,\s*$/, "") + "]") } catch (e) { return null }
       if (!arr.every(x => typeof x === "string" && /^test-[^/\\]+\.js$/.test(x))) return null;
