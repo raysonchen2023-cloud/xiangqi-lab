@@ -25,8 +25,8 @@ const PROBE_F = "data/__xq_p0_canary_test.webp";
 const downItems = () => [{ f: "data/a.webp", st: -1, why: "CDN 沒確認到（連不上，請稍後重跑 --cdn）" }, { f: PROBE_F, st: -1, why: "CDN 沒確認到（連不上，請稍後重跑 --cdn）" }];
 const miss = (L) => {
   const { cdnCanary } = require(path.join(AND, "check-aab-assets.js")), unk = downItems();
-  const warnItems = [...unk, { f: "cdn-manifest.json", why: "讀不到 CDN 的 cdn-manifest.json（缺驗）" }, { f: "data/b.webp", why: "不在安裝包裡、原生不會補抓；網頁程式會自己改抓 CDN" }];
-  Object.assign(L[0].json, { exitCode: 3, pass: false, red: 0, unknown: unk.length + 1, redItems: [], warn: warnItems.length, warnItems, cdnCompared: 0, viaCdn: unk.length - 1, inPack: 5, need: 5 + unk.length - 1 });   /* 第十一次：viaCdn＝要向 CDN 補抓的檔（探測檔不算），need＝包裡＋補抓 */
+  const warnItems = [...unk, { f: "cdn-manifest.json", why: "讀不到 CDN 的 cdn-manifest.json（缺驗）" }];   /* 第十二次：不帶狀態的只有 manifest 那筆 */
+  Object.assign(L[0].json, { exitCode: 3, pass: false, red: 0, unknown: unk.length + 1, redItems: [], warn: warnItems.length, warnItems, cdnCompared: 0, viaCdn: unk.length - 1, inPack: 5, need: 5 + unk.length - 1, native: { cdnFallback: true, partsJoin: true, assetPacks: [] } });   /* 第十一次：viaCdn＝要向 CDN 補抓的檔（探測檔不算），need＝包裡＋補抓 */
   const c = { ...L[0].json.canary, ...cdnCanary(PROBE_F, [], unk, { ok200: 0, manOk: false }) }; c.ok = c.home === true && c.stale === true && c.cdn404 === true;
   L[0].json.canary = c; return L };
 const upd = (o = {}) => ({ file: "upd", json: Object.assign({ tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") }, o) });
@@ -305,6 +305,8 @@ test("閘門（PR #66 第十次複審）：從逐項清單重算；混一筆 404
     ["狀態是字串", (j) => add(j, { f: "data/x.webp", st: "-1" }), /不是「連不上」/], ["狀態 600", (j) => add(j, { f: "data/x.webp", st: 600 }), /不是「連不上」/], ["狀態 403（第十一次）", (j) => add(j, { f: "data/x.webp", st: 403 }), /不是「連不上」/],
     ["viaCdn 多記（第十一次：拿到 200 的漏算）", (j) => { j.viaCdn++; j.need++ }, /補抓的檔數/], ["viaCdn 不是整數", (j) => { j.viaCdn = 1.5 }, /補抓的檔數/],
     ["need 對不起來", (j) => { j.need++ }, /need/], ["沒記 inPack", (j) => { delete j.inPack }, /need/],
+    ["多一筆 W21 提醒（第十二次）", (j) => { j.warnItems.push({ f: "data/c.webp", why: "不在安裝包裡、原生不會補抓" }); j.warn++ }, /CDN 以外的提醒/],
+    ["原生不會補抓（第十二次）", (j) => { j.native.cdnFallback = false }, /原生不會向 CDN 補抓/], ["沒記 native（第十二次）", (j) => { delete j.native }, /原生不會向 CDN 補抓/],
     ["比對過 CDN", (j) => { j.cdnCompared = 1 }, /比對過/], ["探測狀態 200", (j) => { j.canary.cdnStatus = 200 }, /探測狀態/], ["金絲雀全過", (j) => { j.canary.ok = true }, /探測狀態/],
     ["unknown 少算", (j) => { j.unknown-- }, /unknown/], ["unknown 多算", (j) => { j.unknown++ }, /unknown/], ["warn 對不起來", (j) => { j.warn++ }, /warn/],
     ["沒有 manifest 那筆", (j) => { j.warnItems = j.warnItems.filter((w) => w.f !== "cdn-manifest.json"); j.warn = j.warnItems.length; j.unknown-- }, /cdn-manifest/],
@@ -385,5 +387,9 @@ test("閘門（PR #66 第十一次複審，端對端）：真的 check-aab-asset
     assert.equal(G(put(more), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "viaCdn 多記一個（拿到 200 的被漏算）：不能豁免");
     const f403 = JSON.parse(JSON.stringify(real)); f403.warnItems.find((w) => "st" in w).st = 403;
     assert.equal(G(put(f403), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "混一筆 403：不能豁免");
+    const noFb = JSON.parse(JSON.stringify(real)); noFb.native.cdnFallback = false;
+    assert.equal(G(put(noFb), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "第十二次：原生不會補抓：不能豁免");
+    const w21 = JSON.parse(JSON.stringify(real)); w21.warnItems.push({ f: "data/c.webp", why: "不在安裝包裡、原生不會補抓" }); w21.warn++;
+    assert.equal(G(put(w21), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "第十二次：多一筆不帶狀態的 W21 提醒：不能豁免");
   } finally { fs.rmSync(d, { recursive: true, force: true }) }
 });
