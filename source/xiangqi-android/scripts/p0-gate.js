@@ -42,13 +42,30 @@ function validWaiver(w, aabSha) {
    fetchFn 可注入（自我測試用假 fetch） */
 const GATE_CDN = "https://xiangqi-cdn.pages.dev/";
 /* 不能豁免時的說法（兩條豁免共用；第九次複審：措辭要把條件寫全） */
-const NOT_ONLY_MISSING = "報告不是單純缺驗（要加 --cdn、結束代碼 3、沒通過、沒有 ✘、有沒驗到的項目，而且工具自己也連不上 CDN、沒拿到 404）";
-/* 閘門自己探測 CDN。manifest 只算 data/ 開頭的項目：P0-IMG 要確認的是 data/ 素材在 CDN 上找得到，manifest 裡沒有 data/ 檔就不能證明 CDN 正常（第九次複審要寫明）。
-   manifest 正常就算連得上，亂數檔 HEAD 失敗也一樣（HEAD 可能被 CDN 擋，manifest 已經證明連得上） */
+const NOT_ONLY_MISSING = "報告不是單純缺驗（要加 --cdn、結束代碼 3、沒通過、沒有 ✘、有沒驗到的項目，而且工具自己也連不上 CDN、沒拿到 404，逐項看也都只是 CDN 連不上）";
+/* PR #66 第十次複審：不再一欄一欄補彙總欄位，改從報告的逐項清單（warnItems）自己重算「是不是全部都只是 CDN 連不上」。
+   正確的工具在 CDN 全斷時：讀不到 cdn-manifest.json 那一筆（沒有 st）＋每個沒確認到的檔一筆（st 是 -1 連不上、429 或 5xx）；
+   unknown＝這些筆數（至少 2）、warn＝清單長度、cdnCompared＝0（manifest 讀不到就不會比）、金絲雀③探測狀態也是連不上、金絲雀沒全過。
+   有一筆 404（真的缺檔）、200、或欄位對不起來，就不是 CDN 的問題。回傳 null＝是單純 CDN 連不上；否則回傳原因 */
+const DOWN_ST = (s) => Number.isInteger(s) && (s === -1 || s === 429 || (s >= 500 && s <= 599));
+function onlyCdnDown(json) {
+  const W = json && json.warnItems, c = json && json.canary;
+  if (!Array.isArray(W)) return "報告沒有逐項清單（warnItems）";
+  if (json.warn !== W.length) return `warn（${json.warn}）跟逐項清單筆數（${W.length}）不一樣`;
+  if (W.filter((w) => w && w.f === "cdn-manifest.json" && !("st" in w)).length !== 1) return "逐項清單裡沒有「讀不到 cdn-manifest.json」那一筆";
+  const st = W.filter((w) => w && typeof w === "object" && "st" in w), bad = st.filter((w) => !DOWN_ST(w.st));
+  if (bad.length) return `逐項清單有不是「連不上」的狀態（${bad.slice(0, 3).map((w) => w.f + " " + w.st).join("、")}）`;
+  if (json.unknown !== st.length + 1 || json.unknown < 2) return `unknown（${json.unknown}）跟逐項清單算出來的（${st.length + 1}）不一樣，或少於 2`;
+  if (json.cdnCompared !== 0) return `有跟 CDN 比對過（cdnCompared＝${json.cdnCompared}），manifest 是讀得到的`;
+  if (!c || !DOWN_ST(c.cdnStatus) || c.ok !== false) return "金絲雀③的探測狀態不是「連不上」";
+  return null;
+}
+/* 閘門自己探測 CDN。manifest 的 files 不是空的就算連得上（開發者第五次複審選的定義；第十次複審：原本只算 data/ 開頭的鍵，比這個定義寬，
+   manifest 只有別的鍵時會被判成連不上、反而容易豁免）。manifest 正常就算連得上，亂數檔 HEAD 失敗也一樣（HEAD 可能被 CDN 擋，manifest 已經證明連得上） */
 async function probeCdn(fetchFn = fetch, base = GATE_CDN, rnd = () => require("crypto").randomBytes(6).toString("hex")) {
   let manOk = false, manWhy = "", head = -1;
   const sig = () => (typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined);   /* 每次最多等 15 秒 */
-  try { const r = await fetchFn(base + "cdn-manifest.json", { signal: sig() }); if (!r.ok) manWhy = "manifest HTTP " + r.status; else { let j = null; try { j = await r.json() } catch (e) { manWhy = "manifest 不是合法的 JSON" } const ks = j && j.files && typeof j.files === "object" ? Object.keys(j.files).filter((k) => k.startsWith("data/")) : []; manOk = ks.length > 0; manWhy = manOk ? "manifest " + ks.length + " 個 data 檔" : j === null && manWhy ? manWhy : "manifest 是空的或格式不對" } } catch (e) { manWhy = "manifest 連不上" }
+  try { const r = await fetchFn(base + "cdn-manifest.json", { signal: sig() }); if (!r.ok) manWhy = "manifest HTTP " + r.status; else { let j = null; try { j = await r.json() } catch (e) { manWhy = "manifest 不是合法的 JSON" } const ks = j && j.files && typeof j.files === "object" && !Array.isArray(j.files) ? Object.keys(j.files) : []; manOk = ks.length > 0; manWhy = manOk ? "manifest " + ks.length + " 個檔" : j === null && manWhy ? manWhy : "manifest 是空的或格式不對" } } catch (e) { manWhy = "manifest 連不上" }
   try { head = (await fetchFn(base + "data/__xq_gate_probe_" + rnd() + ".webp", { method: "HEAD", signal: sig() })).status } catch (e) { head = -1 }
   const headOk = head === 404 || head === 410;
   return { reachable: manOk || headOk, manOk, head, at: new Date().toISOString(), detail: manWhy + "；亂數檔 HEAD " + (head === -1 ? "連不上" : head) };
@@ -93,7 +110,8 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
        工具同一輪拿到過 404＝CDN 連得上，缺驗是別的原因（例如限流），重跑就好，不能拿閘門這邊離線來豁免 */
     const imgOnlyMissing = t === "P0-IMG" && json.cdnChecked === true && json.exitCode === 3 && json.pass === false
       && Array.isArray(json.redItems) && json.redItems.length === 0 && json.red === 0 && Number.isInteger(json.unknown) && json.unknown > 0
-      && !!json.canary && json.canary.cdnUnreachable === true && json.canary.cdn404 === false;
+      && !!json.canary && json.canary.cdnUnreachable === true && json.canary.cdn404 === false
+      && onlyCdnDown(json) === null;   /* 第十次複審：逐項重算 */
     if (json.pass !== true && !imgMissing) add(`${key}：沒有通過（pass＝${json.pass}）`);
     if ((t === "P0-UPD" || t === "P0-3D") && !(json.apkBound === true && HEX64.test(String(json.apkSha256 || ""))))
       add(`${key}：沒核對實際測的 APK 是從這個 AAB 產生的（要用 --aab-apk 跑，報告要有 apkBound＝true 與 apkSha256）`);
@@ -188,5 +206,5 @@ async function main() {
   for (const p of r.problems) console.log("✘ " + p);
   console.log("✘ 不能送審"); process.exit(1);
 }
-module.exports = { probeCdn, GATE_CDN, gate, validWaiver, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
+module.exports = { probeCdn, GATE_CDN, gate, validWaiver, onlyCdnDown, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
 if (require.main === module) main().catch((e) => { console.error("✘ " + (e && e.message)); process.exit(2) });
