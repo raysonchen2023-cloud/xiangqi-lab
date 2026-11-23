@@ -63,7 +63,8 @@ test("命令列：回前景等待不超過 60 秒、代號表讀不到、有不�
   fs.writeFileSync(t, JSON.stringify({ codes: CODES }));
   for (const [a, re] of [[["--fg-wait", "30", "--codes", t], /用法/], [["--codes", path.join(d, "沒有.json")], /讀不到代號表/],
     [["--codes", t, "--only", "halls9"], /不認得/], [["--codes", t, "--out", d, "--only", "play_horse,play_zz"], /play_zz/]]) {
-    const r = cp.spawnSync(process.execPath, [CF, ...a], { encoding: "utf8", timeout: 20000, env: { ...process.env, ADB: "不存在的adb" } });
+    /* cwd 放暫存資料夾：沒給 --out 的那幾種，預設輸出 flags-check/ 也落在暫存資料夾，不弄髒倉庫 */
+    const r = cp.spawnSync(process.execPath, [CF, ...a], { cwd: d, encoding: "utf8", timeout: 20000, env: { ...process.env, ADB: "不存在的adb" } });
     assert.equal(r.status, 2, a.join(" ")); assert.match(r.stderr, re);
   }
   assert.equal(JSON.parse(fs.readFileSync(path.join(d, "flags.json"), "utf8")).result, "測不成立", "報告也要寫測不成立");
