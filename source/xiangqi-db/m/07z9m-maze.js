@@ -82,7 +82,7 @@ const jhMzYaw=(dx,dy)=>Math.atan2(dx,dy);
    整張迷宮用 three.js 畫成真的 3D（跟角色同一套 three.min.js、bot3d.js、同一張 WebGL 畫布）：
      ・牆＝有高度的石磚方塊（牆頂淺、牆面深、磚紋貼圖），地面＝夯土石板貼圖；糧袋是一堆 3D 麻袋、箱子是朱紅木箱、石門是一扇門板、樓梯往下挖、壁燈是燈柱；
      ・角色（隊伍領頭那位的 3D 模型）真的站在地面上，腳下一圈接地影子；暗匪是黑衣人、紅眼，看得到的地方地上一片紅光；
-     ・鏡頭跟著角色、從斜上方往下看（俯角 56°），手機直拿大約看得到 8 格寬；
+     ・鏡頭跟著角色、從斜上方往下看（俯角 64°），手機直拿大約看得到 8 格寬；牆高 0.85 格：預覽站實看時 1.05 格高、56° 俯角會把站在牆後面的角色整個擋住（牆擋住後面 h÷tan(俯角)＝0.71 格，角色腳在 0.5 格），改成擋 0.41 格、腳露得出來；
      ・黑暗照舊：每一格亮多少照 jhMzLight（手上的燈半徑約 3 格、牆擋光、點亮的壁燈），沒看過的全黑、走過的留淡淡的輪廓；
        手上的燈另外是一盞暖色點光源、點亮的壁燈各一盞，讓牆面有明暗。
    玩法、回合、殘局、存檔一行都不動；點地面用射線找到點的是哪一格。3D 載不起來（沒有 WebGL、three 載不到）照舊畫平面版（配色＋立繪）。 */
@@ -107,7 +107,7 @@ async function jhMzWorld3(box,c,S){
   const brickT=tx(128,128,(g,w,h)=>{g.fillStyle="#1e1813";g.fillRect(0,0,w,h);for(let y=0;y<4;y++){const o=y%2?w/4:0;for(let x=-1;x<3;x++){const v=62+rr(y*7+x)*24|0;g.fillStyle=`rgb(${v},${v*.86|0},${v*.72|0})`;g.fillRect(o+x*w/2+3,y*h/4+3,w/2-6,h/4-6)}}});
   const topT=tx(64,64,(g,w,h)=>{g.fillStyle="#6a5e50";g.fillRect(0,0,w,h);g.fillStyle="rgba(0,0,0,.2)";for(let i=0;i<40;i++)g.fillRect(rr(i)*w,rr(i+5)*h,3,2);g.strokeStyle="rgba(170,150,118,.7)";g.lineWidth=3;g.strokeRect(1.5,1.5,w-3,h-3)});
   const shT=tx(64,64,(g,w,h)=>{const gr=g.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);gr.addColorStop(0,"rgba(0,0,0,.75)");gr.addColorStop(.55,"rgba(0,0,0,.45)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,w,h)});
-  const WH=1.05,cells=[],walls=[];for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const ch=JH_MZ_MAP[y][x];if(ch==="#")walls.push([x,y]);else if(ch!==">")cells.push([x,y])}
+  const WH=.85,cells=[],walls=[];for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const ch=JH_MZ_MAP[y][x];if(ch==="#")walls.push([x,y]);else if(ch!==">")cells.push([x,y])}
   const m4=new T3.Matrix4(),cK=new T3.Color();
   const fg=new T3.PlaneGeometry(1,1);fg.rotateX(-Math.PI/2);
   const fl=new T3.InstancedMesh(fg,new T3.MeshLambertMaterial({map:floorT}),cells.length);
@@ -145,7 +145,7 @@ async function jhMzWorld3(box,c,S){
   const shG=new T3.PlaneGeometry(.95,.95);shG.rotateX(-Math.PI/2);const sh=new T3.Mesh(shG,new T3.MeshBasicMaterial({map:shT,transparent:true,depthWrite:false}));sh.position.y=.01;sc.add(sh);
   const clips=B.mixer&&B.clips||null;let cur=null,yawR=0,t=0,tgx=null,tgz=null,cw=0,ch=0;
   const anim=n=>{if(!clips)return;const a=clips[n]||clips.idle;if(!a||a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};anim("idle");
-  const FOV=42,EL=56*Math.PI/180,TAN=Math.tan(FOV*Math.PI/360),cam=new T3.PerspectiveCamera(FOV,1,.1,80);
+  const FOV=42,EL=64*Math.PI/180,TAN=Math.tan(FOV*Math.PI/360),cam=new T3.PerspectiveCamera(FOV,1,.1,80);
   const ray=new T3.Raycaster(),gp=new T3.Plane(new T3.Vector3(0,1,0),0);
   const bright=(L,x,y)=>{const i=y*S.W+x;if(x<0||y<0||x>=S.W||y>=S.H||!S.seen.has(i))return 0;const q=L[i];return q<.12?.26:Math.min(1.05,.26+q*.85)};
   return{
