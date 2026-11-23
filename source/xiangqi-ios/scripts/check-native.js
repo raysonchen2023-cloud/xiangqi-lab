@@ -116,7 +116,9 @@ check(tk.includes("challenges.removeValue(forKey: c)"), "考題查過就作廢�
 const hw = body(srvCode, "private func handleWhoami(") || "";
 check(hw.includes("takeAnswer(for: challenge)") && hw.includes("let a = answer"), "whoami 只回這次考題的答案");
 const est = body(srvCode, "private func establishNow()") || "";
-check(count(est, "verifyNow(") >= 2 && est.includes("return .verified"), "establish 一定經過 verifyNow 才回 verified");
+/* 11/23 iOS 金絲雀：只數 verifyNow( 的次數，寫成「true || verifyNow(…)」就繞過了。每一個 verifyNow( 都要是「if verifyNow(timeout: 秒) {」，回 verified 的次數不能比它多 */
+const vIf = (est.match(/if verifyNow\(timeout: [\d.]+\) \{/g) || []).length;
+check(count(est, "verifyNow(") >= 2 && vIf === count(est, "verifyNow(") && count(est, "return .verified") >= 1 && count(est, "return .verified") <= vIf, "establish 一定經過 verifyNow 才回 verified");
 check(!/return \.verified/.test(srvCode.replace(est, "")), "verified 只會從 establishNow 回");
 const sl = body(srvCode, "private func startListening(") || "";
 check(/if exact == \.inUse \{\s*return \.inUse\s*\}/.test(sl), "位址被占用時不改綁萬用位址");

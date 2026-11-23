@@ -102,3 +102,24 @@ xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -de
 ## 六、不在這裡的東西
 
 簽章憑證、描述檔、Apple 帳號與 Team ID、Xcode 個人設定（xcuserdata）、建置產物（DerivedData、`ios/App/App/public/`、`www/`、`node_modules/`）。
+
+## 原生檢查的金絲雀（2026-11-23 起，AGENTS.md「P0 出口驗證要難作假」）
+
+```
+node scripts/canary-native.js --out <收據.json>
+```
+
+- `check-native.js` 是原生碼的原始碼比對檢查：兩份 Swift 要一樣、埠號 47821、本機伺服器的一次性考題驗證、驗證通過才載入畫面、外掛不連網、不讀玩家 ID 等等。
+- `canary-native.js` 會把 `source/xiangqi-ios`（不含 node_modules）和 check-native 會讀的兩支網頁檔（`07gc-native.js`、`01-board.js`）整份複製到暫存資料夾，在副本上一次改壞一處，再用複製過去、內容一模一樣的 `check-native.js` 檢查。
+  - 一共 73 種壞樣本，每一種都要被判失敗（結束代碼 1），而且錯誤裡要有那一條判斷的字。
+  - 乾淨的副本要全過。
+  - 會改到兩份 Swift 的壞樣本，`native/ios` 和 `ios/App/App` 兩份一起改，只讓要測的那一條判斷抓得到。
+- 結束代碼：
+  - 0：壞樣本全部抓到；
+  - 4：有壞樣本沒被抓到，代表 check-native 本身失靈，這一輪的結果不可信；
+  - 2：測試不成立，例如乾淨的副本就沒過、壞樣本做不出來、參數錯。
+- 自我測試 `test-canary-native.cjs` 會把 `check-native.js` 的每一條判斷逐一改成恆真，對應的壞樣本都要回 4。目前涵蓋 60 條，另外 5 條訊息是組出來的，另外測。
+- 沒涵蓋的有兩類，在 CI 和一般的倉庫副本裡，check-native 只會出警告：
+  - 要有 `node_modules/@capacitor/ios` 才會跑的 Capacitor 判斷；
+  - Game Center／小工具已經裝進 Xcode 專案之後才會跑的 packageClassList、Info.plist 判斷。
+- 2026-11-23 做金絲雀時發現一個缺口：check-native 判斷「establish 一定經過 verifyNow」原本只數 `verifyNow(` 出現幾次，寫成 `true || verifyNow(…)` 就繞過了。現在改成每一個 `verifyNow(` 都要是 `if verifyNow(timeout: 秒) {`，而且回 verified 的次數不能比它多。
