@@ -38,10 +38,38 @@ function load(o = {}) {
     JH_HALL: { central: { v: "1122" }, screen: { v: "1123" } },
     JhHall: function (v, sid) { wrapped.push(sid); return {} },
   };
+  if (o.flags) {   /* W72 遠端開關：假的 xqFlag、JH_HALL_BAD、location、xqflags 事件 */
+    c.xqFlag = (k) => !o.flags.off.includes(k); c.JH_HALL_BAD = new Set(); c.location = { hash: "#/jianghu/hall/x" };
+    c.window.addEventListener = (t, f) => { if (t === "xqflags") o.flags.listen = f };
+  }
   for (const fn of Object.keys(MOD)) if (!(o.missing || []).includes(fn)) c.window[fn] = (lv) => called.push([fn, lv]);
   vm.createContext(c); vm.runInContext(SRC + "\n;this.JH_HALLS8=JH_HALLS8;", c);
   return { c, called, toasts, wrapped };
 }
+
+test("W72 遠端開關：halls8 關掉＝八派都進不了門內（小卡不顯示走進山門、直接打網址退回長卷）；中炮、屏風馬不受影響", () => {
+  const F = { off: ["halls8"] }, { c, wrapped } = load({ flags: F });
+  for (const sid of SIDS) assert.ok(c.JH_HALL_BAD.has(sid), sid + " 放進 JH_HALL_BAD");
+  assert.ok(!c.JH_HALL_BAD.has("central") && !c.JH_HALL_BAD.has("screen"));
+  const { v } = page("horse"); c.location.hash = "#/jianghu/hall/horse"; c.JhHall(v, "horse");
+  assert.equal(c.location.hash, "#/jianghu"); assert.ok(!wrapped.includes("horse"), "沒畫門內頁");
+  const s = page("central"); c.JhHall(s.v, "central"); assert.ok(wrapped.includes("central"), "中炮門照常");
+});
+
+test("W72 遠端開關：play_<派> 只關那一派的玩法入口，門內頁照常；其他派入口照放", () => {
+  const { c } = load({ flags: { off: ["play_same_cannon"] } });
+  const a = page("same_cannon"); c.JhHall(a.v, "same_cannon");
+  assert.equal(a.P.querySelector('.jh-hall-spot[data-k="posts"]'), null, "順炮門沒有玩法入口");
+  assert.match(a.P.querySelector('.jh-hall-spot[data-k="gate"]').innerHTML, /出山門/, "門內頁其他部分照常");
+  const b = page("pawn"); c.JhHall(b.v, "pawn"); assert.ok(b.P.querySelector('.jh-hall-spot[data-k="rock"]'), "仙人指路門入口照放");
+});
+
+test("W72 遠端開關：設定檔晚到（xqflags 事件）才說關 halls8，也會補進 JH_HALL_BAD；沒有 00f 模組（沒有 xqFlag）時全部開著", () => {
+  const F = { off: [] }, { c } = load({ flags: F });
+  assert.equal(c.JH_HALL_BAD.size, 0);
+  F.off.push("halls8"); F.listen(); assert.equal(c.JH_HALL_BAD.size, 8);
+  const N = load(); const q = page("elephant"); N.c.JhHall(q.v, "elephant"); assert.ok(q.P.querySelector('.jh-hall-spot[data-k="pavilion"]'));
+});
 
 test("八派都有 JH_HALL：版本、座位、裁切（藏住棋子字）、四個地點、玩法入口；座標都在 768×1376 圖內；不動中炮、屏風馬", () => {
   const { c } = load();

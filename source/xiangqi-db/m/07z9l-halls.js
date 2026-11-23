@@ -40,7 +40,16 @@ function jhHalls8Hall(v,sid){const H=JH_HALLS8[sid],P=v&&v.querySelector(".jh-ha
   /* 順風小字：07z9b 寫死在畫面上方 11.5%（中炮門大廳標籤 y112 再往下 46）；其他派大廳位置不同，改放在自己的大廳標籤正下方 */
   const n=P.querySelector(".jh-hall-note"),hs=H.spots.hall;if(n&&hs){n.style.left=(hs[0]/768*100).toFixed(2)+"%";n.style.top=((hs[1]+46)/1376*100).toFixed(2)+"%"}
   const p=H.play;if(P.querySelector(`.jh-hall-spot[data-k="${p.k}"]`))return;
+  if(!jhHalls8On("play_"+sid))return;   /* 遠端開關關掉這一派的玩法：門內頁照常，只是不放玩法入口 */
   const b=document.createElement("button");b.type="button";b.className="shp-spot jh-hall-spot";b.dataset.k=p.k;b.style.cssText=jhHallPc(p.at);b.innerHTML=`<b>${esc(jhL(p.zh,p.en))}</b>`;
   b.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(e2){}const f=typeof window!=="undefined"?window[p.fn]:null;if(typeof f==="function")f();else toast(jhL("這裡還在整理，晚點再來。","Not ready yet. Come back later."))};
   P.insertBefore(b,P.querySelector(".jh-hall-spot"))}
-try{if(typeof JhHall==="function"&&!JhHall.jhH8){const h0=JhHall;JhHall=function(v,sid){const r=h0.apply(this,arguments);try{jhHalls8Hall(v,sid)}catch(e){}return r};JhHall.jhH8=1}}catch(e){}
+/* W72 遠端開關（m/00f-flags.js 的 xqFlag；沒有那支時一律開著）：
+   halls8＝整個八派門內頁（關掉時小卡不顯示「走進山門」、直接打網址也退回長卷，跟門內圖讀不到走同一條路 JH_HALL_BAD）；
+   play_<派>＝單獨關掉那一派的玩法入口（例如 play_same_cannon）。八派玩法只有這裡有入口，所以關這裡就等於關掉玩法。 */
+function jhHalls8On(k){try{return typeof xqFlag!=="function"||xqFlag(k)}catch(e){return true}}
+function jhHalls8Gate(){try{if(jhHalls8On("halls8")||typeof JH_HALL_BAD==="undefined")return;for(const sid of Object.keys(JH_HALLS8))JH_HALL_BAD.add(sid)}catch(e){}}
+jhHalls8Gate();try{window.addEventListener("xqflags",jhHalls8Gate)}catch(e){}
+try{if(typeof JhHall==="function"&&!JhHall.jhH8){const h0=JhHall;JhHall=function(v,sid){
+  if(JH_HALLS8[sid]&&!jhHalls8On("halls8")){try{location.hash="#/jianghu"}catch(e){}return{}}
+  const r=h0.apply(this,arguments);try{jhHalls8Hall(v,sid)}catch(e){}return r};JhHall.jhH8=1}}catch(e){}
