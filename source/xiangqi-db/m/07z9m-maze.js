@@ -256,8 +256,9 @@ function JhMaze(v){jhCss();jhMzCss();
     /* 11/23 開發者：「腳色看起來是漂起來 請修正」：原本影子很淡（.4）又小、被身體蓋住，腳底站在格子下緣（.38）。
        改成：3D 角色腳底站在格子中心偏下（.22），腳下一圈明顯的柔邊接地影子（比身體寬、從腳邊露出來）；立繪照舊站 .38 */
     const hx=P.fx*T+T/2,hy=P.fy*T+T/2,ft=hy+T*(h3?.22:.38);
-    cx.save();cx.translate(hx,ft);cx.scale(1,.36);const sg=cx.createRadialGradient(0,0,0,0,0,T*.42);sg.addColorStop(0,"rgba(0,0,0,.66)");sg.addColorStop(.55,"rgba(0,0,0,.4)");sg.addColorStop(1,"rgba(0,0,0,0)");
-    cx.fillStyle=sg;cx.beginPath();cx.arc(0,0,T*.42,0,7);cx.fill();cx.restore();
+    /* 預覽站量：影子半徑 .42 格時跟披風一樣寬、上下只有 12px，幾乎全被身體蓋住 → 放大到 .55 格、往下挪一點，左右和腳下都露得出來 */
+    cx.save();cx.translate(hx,ft+T*.04);cx.scale(1,.4);const sg=cx.createRadialGradient(0,0,0,0,0,T*.55);sg.addColorStop(0,"rgba(0,0,0,.72)");sg.addColorStop(.5,"rgba(0,0,0,.45)");sg.addColorStop(1,"rgba(0,0,0,0)");
+    cx.fillStyle=sg;cx.beginPath();cx.arc(0,0,T*.55,0,7);cx.fill();cx.restore();
     /* 3D 載好就由 3D 畫（在下面）；還沒好或載不到：立繪也一樣等速走，走路時腳下一點一點、左右晃 */
     if(!h3){const bob=pWalk?-Math.abs(Math.sin(now/95))*T*.06:Math.sin(now/220)*1.5,sw=pWalk?Math.sin(now/95)*.09:0;
       if(hero.complete&&hero.naturalWidth){const h=T*1.05,w=h*hero.width/hero.height;cx.save();cx.translate(hx,hy+T*.38);cx.rotate(sw);cx.scale(P.face<0?-1:1,1);cx.drawImage(hero,-w/2,-T*.38-h*.62+bob,w,h);cx.restore()}
