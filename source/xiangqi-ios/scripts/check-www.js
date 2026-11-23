@@ -72,7 +72,10 @@ if (CDNM) {
     const txt = /^https?:\/\//.test(CDNM)
       ? execFileSync(process.execPath, ["-e", "fetch(process.argv[1]).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(t=>process.stdout.write(t)).catch(e=>{console.error(e.message);process.exit(1)})", CDNM], { encoding: "utf8", maxBuffer: 256e6, timeout: 120000, stdio: ["ignore", "pipe", "pipe"] })
       : fs.readFileSync(CDNM, "utf8");
-    man = JSON.parse(txt); if (!man || typeof man.files !== "object") throw new Error("沒有 files");
+    const m = JSON.parse(txt);   /* 驗過格式才拿來用：files 不是物件、是空的，都算沒驗到（PR #67 審查③） */
+    if (!m || !m.files || typeof m.files !== "object" || Array.isArray(m.files)) throw new Error("沒有 files");
+    if (!Object.keys(m.files).length) throw new Error("files 是空的");
+    man = m;
   } catch (e) { unverified.push("讀不到 CDN 清單 " + CDNM + "（" + String(e.message).split("\n")[0] + "）：加了 --cdn 卻沒驗到 W42") }
   if (man) for (const [rel, v] of Object.entries(man.files)) {
     const h = Array.isArray(v) ? v[1] : null;
@@ -83,6 +86,7 @@ if (CDNM) {
     if (need.has(rel)) bad.push("跟 CDN 現行版不同 " + rel + "（包 " + mine + "、CDN " + h + "；建包時留下的舊副本，W42）");
     else warn.push("清單外的檔跟 CDN 現行版不同 " + rel + "（多半是 CDN 在建包後更新過，列出來但不擋）");
   }
+  if (man && !cdnN) unverified.push("CDN 清單裡沒有任何一個包裡有的 data/ 檔可以比：W42 等於沒驗");   /* PR #67 審查③ */
 }
 
 /* 5 */

@@ -5,7 +5,7 @@
 "use strict";
 const test = require("node:test"), assert = require("node:assert/strict"), fs = require("fs"), os = require("os"), path = require("path"), crypto = require("crypto"), cp = require("child_process");
 const HERE = __dirname, CHECK = path.join(HERE, "check-www.js"), CANARY = path.join(HERE, "canary-www.js");
-const { toolSha, treeSha } = require("./canary-www.js");
+const { toolSha, treeSha, picks, rng } = require("./canary-www.js");
 const made = [];
 test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }) });
 const tmp = (p) => { const d = fs.mkdtempSync(path.join(os.tmpdir(), p)); made.push(d); return d };
@@ -22,8 +22,9 @@ function fakeWww() {
   for (const n of ["han", "qin", "tang"]) put("data/home/" + n + ".webp", Buffer.alloc(200 + n.length, n.length));
   put("data/preload.json", JSON.stringify({ items: [["data/home/han.webp", 203], ["data/home/qin.webp", 203], ["data/home/tang.webp", 204]], big: [] }));
   put("data/big-books.json", "[]");
-  put("data/bgm/index.json", JSON.stringify({ han: ["zheng_1.mp3", "zheng_2.mp3"] }));
+  put("data/bgm/index.json", JSON.stringify({ han: ["zheng_1.mp3", "zheng_2.mp3"], tang: ["pipa_1.mp3", "pipa_2.mp3"] }));
   put("data/bgm/han/zheng_1.mp3", Buffer.alloc(400, 1)); put("data/bgm/han/zheng_2.mp3", Buffer.alloc(420, 2));
+  put("data/bgm/tang/pipa_1.mp3", Buffer.alloc(430, 6)); put("data/bgm/tang/pipa_2.mp3", Buffer.alloc(440, 7));
   put("engine/pikafish.js", "var Pikafish = 1;\n"); put("engine/pikafish.wasm", Buffer.alloc(500, 3)); put("engine/pikafish.nnue", Buffer.alloc(6000, 4), false);
   put("data/gmgames.json", Buffer.alloc(5000, 5), false);   /* 不是引擎檔裡最大的，沒記 sha1（照 copy-www.js：大檔不算 sha1） */
   const L = path.join(tmp("xq-fakelist-"), ".www-files.json");
@@ -33,6 +34,18 @@ function fakeWww() {
   const M = path.join(tmp("xq-fakecdn-"), "cdn-manifest.json");
   fs.writeFileSync(M, JSON.stringify({ at: "test", n: Object.keys(man).length, files: man }));
   return { D, L, M };
+}
+function fakeApp(D) {
+  const A = path.join(tmp("xq-fakeapp-"), "App.app"); fs.mkdirSync(A); fs.cpSync(D, path.join(A, "public"), { recursive: true });
+  for (const f of ["cordova.js", "cordova_plugins.js"]) fs.writeFileSync(path.join(A, "public", f), "/* " + f + " */\n");
+  fs.writeFileSync(path.join(A, "App"), "假的執行檔");
+  return A;
+}
+function fakeIpa(A) {
+  const ipa = path.join(tmp("xq-fakeipa-"), "App.ipa");
+  const py = "import os,sys,zipfile\nz=zipfile.ZipFile(sys.argv[2],'w')\nfor r,_,fs in os.walk(sys.argv[1]):\n  for f in fs:\n    p=os.path.join(r,f);z.write(p,os.path.join('Payload','App.app',os.path.relpath(p,sys.argv[1])))\nz.close()";
+  const r = cp.spawnSync("python3", ["-c", py, A, ipa], { encoding: "utf8" }); assert.equal(r.status, 0, r.stderr);
+  return ipa;
 }
 const runCheck = (dir, list, ...more) => cp.spawnSync(process.execPath, [CHECK, "--dir", dir, "--list", list, ...more], { encoding: "utf8" });
 const runCanary = (canary, args, o = {}) => cp.spawnSync(process.execPath, [canary, ...args], { encoding: "utf8", env: env(o) });
@@ -47,41 +60,49 @@ test("check-www.js：乾淨的假 www 全過；同大小換內容抓得到；--c
   r = runCheck(D, L); assert.equal(r.status, 1); assert.match(r.stderr, /內容跟清單不同 zh\.js/);
 });
 
-test("canary-www.js：8 種壞樣本都被抓到；收據記下每一種、候選數、工具雜湊、整個 www 的樹雜湊、IPA 雜湊；不會改到原本那份", () => {
-  const { D, L, M } = fakeWww();
-  const before = treeSha(D), out = path.join(tmp("xq-canaryout-"), "r.json"), ipa = path.join(tmp("xq-ipa-"), "App.ipa"); fs.writeFileSync(ipa, "假的 IPA");
-  const r = runCanary(CANARY, ["--dir", D, "--list", L, "--cdn-manifest", M, "--pkg", ipa, "--out", out], { XQ_CANARY_PICK: "first" });
+
+test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；8 種壞樣本、每類頭中尾＋一個種子挑的都被抓到；收據綁住安裝包、不會改到原本那份", () => {
+  const { D, L, M } = fakeWww(), A = fakeApp(D), before = treeSha(A), out = path.join(tmp("xq-canaryout-"), "r.json");
+  const r = runCanary(CANARY, ["--pkg", A, "--list", L, "--cdn-manifest", M, "--seed", "7", "--out", out]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const R = JSON.parse(fs.readFileSync(out, "utf8"));
-  assert.equal(R.pass, true); assert.equal(R.platform, "ios");
-  assert.equal(R.full, false, "固定挑檔（XQ_CANARY_PICK）的收據不能送審");
-  assert.deepEqual(R.results.map((x) => x.kind), ["home", "bgm", "engine", "core", "big", "swap", "bridge", "cdnstale"]);
-  for (const x of R.results) { assert.equal(x.caught, true, x.kind); assert.equal(x.exit, 1, x.kind) }
-  const by = Object.fromEntries(R.results.map((x) => [x.kind, x]));
-  assert.equal(by.home.candidates, 3); assert.equal(by.engine.candidates, 3); assert.equal(by.core.candidates, 7);
-  assert.equal(by.big.file, "data/gmgames.json", "前幾大的檔，不挑引擎檔");
-  assert.equal(R.sample.treeSha256, before); assert.equal(R.pkg.sha256, sha256(fs.readFileSync(ipa)));
+  assert.equal(R.pass, true); assert.equal(R.full, true, "--pkg＋--cdn、沒有 --only 才是送審用的收據"); assert.equal(R.seed, 7);
+  assert.deepEqual(R.kinds, ["home", "bgm", "engine", "core", "big", "swap", "bridge", "cdnstale"]);
+  for (const x of R.results) { assert.equal(x.caught, true, x.kind + " " + x.file); assert.equal(x.exit, 1, x.kind) }
+  const files = (k) => R.results.filter((x) => x.kind === k).map((x) => x.file);
+  assert.deepEqual(files("bgm").slice(0, 3), ["data/bgm/han/zheng_1.mp3", "data/bgm/han/zheng_2.mp3", "data/bgm/tang/pipa_2.mp3"], "背景音樂測頭、中、尾");
+  assert.deepEqual(files("engine").slice(0, 3), ["engine/pikafish.js", "engine/pikafish.wasm", "engine/pikafish.nnue"], "三個引擎檔都測");
+  assert.ok(files("core").includes("capacitor.js") && files("core").includes("zh.js"));
+  assert.equal(R.pkg.kind, "app"); assert.equal(R.pkg.sha256, before);
+  assert.equal(R.sample.treeSha256, treeSha(path.join(A, "public")), "收據記的就是包裡那份 public");
   assert.equal(R.toolPins["source/xiangqi-ios/scripts/check-www.js"], toolSha(CHECK));
-  assert.equal(treeSha(D), before, "原本那份一個位元組都沒變");
+  assert.equal(treeSha(A), before, "原本那份一個位元組都沒變");
 });
 
-test("隨機挑檔：沒設 XQ_CANARY_PICK 時，跑幾次會挑到不同的檔；收據 full＝true 要加 --cdn、不能 --only", () => {
-  const { D, L, M } = fakeWww(), seen = new Set();
-  for (let i = 0; i < 12 && seen.size < 2; i++) {
-    const out = path.join(tmp("xq-canaryout-"), "r.json");
-    const r = runCanary(CANARY, ["--dir", D, "--list", L, "--cdn-manifest", M, "--only", "home", "--out", out], { XQ_CANARY_PICK: null });
-    assert.equal(r.status, 0, r.stdout + r.stderr); seen.add(JSON.parse(fs.readFileSync(out, "utf8")).results[0].file);
-  }
-  assert.ok(seen.size >= 2, "12 次都挑到同一個首頁檔：" + [...seen]);
-  const out = path.join(tmp("xq-canaryout-"), "r.json");
-  let r = runCanary(CANARY, ["--dir", D, "--list", L, "--cdn-manifest", M, "--out", out], { XQ_CANARY_PICK: null });
-  assert.equal(r.status, 0, r.stdout + r.stderr); assert.equal(JSON.parse(fs.readFileSync(out, "utf8")).full, true);
-  r = runCanary(CANARY, ["--dir", D, "--list", L, "--out", out], { XQ_CANARY_PICK: null });
-  assert.equal(r.status, 0); const R = JSON.parse(fs.readFileSync(out, "utf8"));
-  assert.equal(R.full, false, "沒加 --cdn 不能送審"); assert.ok(!R.kinds.includes("cdnstale"));
+test("canary-www.js：--pkg 給 .ipa 會解開 Payload/*.app/public 來檢查；給了 --pkg 又給 --dir 回 2；IPA 解不開回 2", () => {
+  const { D, L, M } = fakeWww(), ipa = fakeIpa(fakeApp(D)), out = path.join(tmp("xq-canaryout-"), "r.json");
+  let r = runCanary(CANARY, ["--pkg", ipa, "--list", L, "--cdn-manifest", M, "--seed", "3", "--only", "home,engine", "--out", out]);
+  assert.equal(r.status, 0, r.stdout + r.stderr);
+  const R = JSON.parse(fs.readFileSync(out, "utf8"));
+  assert.equal(R.pkg.kind, "ipa"); assert.equal(R.pkg.sha256, sha256(fs.readFileSync(ipa))); assert.equal(R.full, false, "--only 不能送審");
+  r = runCanary(CANARY, ["--pkg", ipa, "--dir", D, "--list", L]); assert.equal(r.status, 2); assert.match(r.stderr, /給了 --pkg 就不要再給 --dir/);
+  const bad = path.join(tmp("xq-badipa-"), "x.ipa"); fs.writeFileSync(bad, "不是 zip");
+  r = runCanary(CANARY, ["--pkg", bad, "--list", L]); assert.equal(r.status, 2); assert.match(r.stderr, /安裝包/);
 });
 
-/* 把 check-www.js 的某一條判斷改壞（放在副本旁邊，用同一個金絲雀流程），金絲雀要判出「檢查失靈」 */
+test("只給 --dir（沒有安裝包）、沒加 --cdn 的收據 full＝false；同一個種子挑到的檔一樣，換種子會換", () => {
+  const { D, L, M } = fakeWww(), od = tmp("xq-canaryout-"), out = (n) => path.join(od, n + ".json");
+  let r = runCanary(CANARY, ["--dir", D, "--list", L, "--cdn-manifest", M, "--out", out("a")]); assert.equal(r.status, 0, r.stdout + r.stderr);
+  assert.equal(JSON.parse(fs.readFileSync(out("a"), "utf8")).full, false, "沒有安裝包不能送審");
+  r = runCanary(CANARY, ["--dir", D, "--list", L, "--out", out("b")]); assert.equal(r.status, 0);
+  const B = JSON.parse(fs.readFileSync(out("b"), "utf8")); assert.equal(B.full, false); assert.ok(!B.kinds.includes("cdnstale"));
+  const pick = (seed) => picks(Array.from({ length: 50 }, (_, i) => "f" + i), rng(seed));
+  assert.deepEqual(pick(11), pick(11), "同一個種子挑到的一樣");
+  assert.deepEqual(pick(11).slice(0, 3), ["f0", "f24", "f49"], "頭、中、尾固定");
+  assert.ok([1, 2, 3, 4, 5, 6].some((s) => pick(s)[3] !== pick(11)[3]), "換種子，第四個會換");
+});
+
+/* 把 check-www.js 的某一條判斷改壞（放在副本旁邊，用同一個金絲雀流程），金絲雀要判出「檢查失靈」——每一種都不靠運氣，任何種子都要抓到 */
 function blindCanary(from, to) {
   const d = tmp("xq-blind-"), s = fs.readFileSync(CHECK, "utf8");
   assert.ok(s.includes(from), "測試要改的那一行還在：" + from.slice(0, 40));
@@ -89,22 +110,26 @@ function blindCanary(from, to) {
   fs.copyFileSync(path.join(HERE, ".www-files.json"), path.join(d, ".www-files.json"));
   return path.join(d, "canary-www.js");
 }
-test("check-www.js 的判斷一條一條改壞（含只查第一個檔、W42 不比）：金絲雀回 4，指出是哪一種沒抓到", () => {
+test("check-www.js 的判斷一條一條改壞（含只查第一個、只查 .js、需求清單不收背景音樂、W42 不比）：不管種子是多少，金絲雀都回 4", () => {
   const cases = [
-    ["home", "first", 'if (!exists(it[0])) bad.push("preload.json 列了但沒有：" + it[0]);', "if (false) {}"],
-    ["home", "last", "for (const it of [...(P.items || []), ...(P.big || [])]) {", "for (const it of [...(P.items || []).slice(0, 1), ...(P.big || [])]) {"],   /* 只查第一個首頁檔：固定挑第一個的金絲雀抓不到，挑別的就抓到 */
-    ["bgm", "first", 'if (!exists(r)) bad.push("背景音樂清單有但沒有檔：" + r);', "if (false) {}"],
-    ["engine", "last", 'if (!exists(f)) bad.push("缺引擎 " + f);', "if (false) {}"],
-    ["core", "first", 'if (!exists(f)) bad.push("缺 " + f);', "if (false) {}"],
-    ["big", "first", 'else if (size(rel) !== sz) bad.push("大小不對 " + rel);', "else if (false) {}"],
-    ["swap", "first", '!== h) bad.push("內容跟清單不同 " + rel);', '!== h && false) bad.push("內容跟清單不同 " + rel);'],
-    ["bridge", "first", "else if (!(iCap < iBr && (iCore < 0 || iBr < iCore))) bad.push(", "else if (false) bad.push("],
-    ["cdnstale", "first", "    if (need.has(rel)) bad.push(", "    if (false) bad.push("],
+    ["home", 'if (!exists(it[0])) bad.push("preload.json 列了但沒有：" + it[0]);', "if (false) {}"],
+    ["home", "for (const it of [...(P.items || []), ...(P.big || [])]) {", "for (const it of [...(P.items || []).slice(0, 1), ...(P.big || [])]) {"],
+    ["bgm", 'if (!exists(r)) bad.push("背景音樂清單有但沒有檔：" + r);', "if (false) {}"],
+    ["bgm", "for (const [era, list] of Object.entries(B)) for (const f of (Array.isArray(list) ? list : [])) {", "for (const [era, list] of Object.entries(B).slice(0, 1)) for (const f of (Array.isArray(list) ? list.slice(0, 1) : [])) {"],
+    ["engine", 'if (!exists(f)) bad.push("缺引擎 " + f);', "if (false) {}"],
+    ["engine", 'for (const f of ["engine/pikafish.js", "engine/pikafish.wasm", "engine/pikafish.nnue"])', 'for (const f of ["engine/pikafish.js"])'],
+    ["core", 'if (!exists(f)) bad.push("缺 " + f);', "if (false) {}"],
+    ["big", 'else if (size(rel) !== sz) bad.push("大小不對 " + rel);', "else if (false) {}"],
+    ["swap", '!== h) bad.push("內容跟清單不同 " + rel);', '!== h && false) bad.push("內容跟清單不同 " + rel);'],
+    ["swap", "    else if (h && crypto", "    else if (h && /\\.js$/.test(rel) && crypto"],
+    ["bridge", "else if (!(iCap < iBr && (iCore < 0 || iBr < iCore))) bad.push(", "else if (false) bad.push("],
+    ["cdnstale", "    if (need.has(rel)) bad.push(", "    if (false) bad.push("],
+    ["cdnstale", "const r = \"data/bgm/\" + era + \"/\" + f; need.add(r);", "const r = \"data/bgm/\" + era + \"/\" + f;"],
   ];
-  for (const [kind, pick, from, to] of cases) {
+  for (const [kind, from, to] of cases) for (const seed of ["1", "2", "3"]) {
     const { D, L, M } = fakeWww(), C = blindCanary(from, to);
-    const r = runCanary(C, ["--dir", D, "--list", L, "--cdn-manifest", M, "--only", kind], { XQ_CANARY_PICK: pick });
-    assert.equal(r.status, 4, kind + "／" + pick + "：" + r.stdout + r.stderr);
+    const r = runCanary(C, ["--dir", D, "--list", L, "--cdn-manifest", M, "--only", kind, "--seed", seed]);
+    assert.equal(r.status, 4, kind + "（種子 " + seed + "）改成「" + to.slice(0, 50) + "」：" + r.stdout + r.stderr);
     assert.match(r.stdout, new RegExp("✘ " + kind + "："), kind + " 要被列成沒抓到");
     assert.match(r.stdout, /檢查本身失靈/);
   }
@@ -116,13 +141,18 @@ test("工具雜湊：CRLF 換成 LF 後一樣；多一個單獨的 CR 就不同�
   assert.equal(toolSha(a), toolSha(b)); assert.notEqual(toolSha(a), toolSha(c));
 });
 
-test("測試不成立回 2、缺驗回 3：找不到 www、乾淨的就沒過、清單讀不到、不認得的壞樣本、cdnstale 沒加 --cdn；CDN 清單讀不到回 3", () => {
-  const { D, L, M } = fakeWww(), run = (...a) => runCanary(CANARY, a);
+
+test("測試不成立回 2、缺驗回 3：找不到資料夾、乾淨的就沒過、清單讀不到、不認得的壞樣本、cdnstale 沒加 --cdn；CDN 清單讀不到、是空的、files 是 null 都回 3", () => {
+  const { D, L, M } = fakeWww(), run = (...a) => runCanary(CANARY, a), d = tmp("xq-badcdn-");
   assert.equal(run("--dir", path.join(D, "沒有"), "--list", L).status, 2);
   assert.equal(run("--dir", D, "--list", path.join(D, "沒有.json")).status, 2);
   assert.equal(run("--dir", D, "--list", L, "--only", "home,亂寫").status, 2);
   assert.equal(run("--dir", D, "--list", L, "--only", "cdnstale").status, 2);
-  assert.equal(run("--dir", D, "--list", L, "--cdn-manifest", path.join(D, "沒有.json")).status, 3);
+  for (const [n, body] of [["missing", null], ["empty", '{"files":{}}'], ["null", '{"files":null}'], ["array", '{"files":[1]}'], ["nomatch", '{"files":{"data/沒有.webp":[1,"aaaaaaaaaaaa"]}}']]) {
+    const p = path.join(d, n + ".json"); if (body != null) fs.writeFileSync(p, body);
+    assert.equal(run("--dir", D, "--list", L, "--cdn-manifest", p).status, 3, "CDN 清單 " + n + " 要回 3");
+    assert.equal(runCheck(D, L, "--cdn-manifest", p).status, 3, "check-www 對 CDN 清單 " + n + " 也要回 3");
+  }
   fs.rmSync(path.join(D, "data", "home", "qin.webp"));
   const r = run("--dir", D, "--list", L, "--cdn-manifest", M); assert.equal(r.status, 2); assert.match(r.stderr, /乾淨的樣本沒過/);
 });
