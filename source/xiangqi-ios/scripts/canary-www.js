@@ -19,7 +19,7 @@
      沒有安裝包時可以用 --dir <www 資料夾> 先試，但那種收據 full＝false，送審不能用。
    結束代碼：0 乾淨的全過、每個壞樣本都被抓到；4 有壞樣本沒被抓到（檢查本身失靈，結果不可信）；2 測試不成立（乾淨的沒過、找不到可以弄壞的檔、解不開安裝包）；
      3 乾淨的沒錯、但加了 --cdn 卻讀不到 CDN 清單（缺驗）
-   送審用的收據要 full＝true：給了 --pkg、加了 --cdn、沒有 --only。 */
+   送審用的收據要 full＝true：給了 --pkg、加了 --cdn（正式 CDN；--cdn-manifest 給的本機檔不算）、沒有 --only。 */
 "use strict";
 const fs = require("fs"), path = require("path"), os = require("os"), crypto = require("crypto"), cp = require("child_process");
 const argv = process.argv.slice(2), opt = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };
@@ -83,6 +83,7 @@ function cloneDir(src, dst) {
   if (process.platform === "darwin") { const r = cp.spawnSync("cp", ["-cR", src, dst], { stdio: "ignore" }); if (r.status === 0) return }
   fs.cpSync(src, dst, { recursive: true });
 }
+const OFFICIAL_CDN = "https://xiangqi-cdn.pages.dev/cdn-manifest.json";   /* 送審用（full＝true）只認這個 */
 const readManifest = (cdn) => /^https?:\/\//.test(cdn)
   ? cp.execFileSync(process.execPath, ["-e", "fetch(process.argv[1]).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(t=>process.stdout.write(t)).catch(e=>{console.error(e.message);process.exit(1)})", cdn], { encoding: "utf8", maxBuffer: 256e6, timeout: 120000, stdio: ["ignore", "pipe", "pipe"] })
   : fs.readFileSync(cdn, "utf8");
@@ -103,7 +104,7 @@ function pkgPublic(pkg, tmp) {
 const exitOf = (results, pass) => (pass ? 0 : results.some((x) => !x.unfit && x.caught !== true) ? 4 : 2);
 
 /* 主流程（自我測試直接呼叫）：回傳 { code, receipt } */
-function run({ dir = null, list = null, cdn = null, pkg = null, only = null, seed = null, tmp = os.tmpdir(), log = console.log }) {
+function run({ dir = null, list = null, cdn = null, pkg = null, only = null, seed = null, tmp = os.tmpdir(), log = console.log, readM = readManifest }) {   /* readM 只給自我測試換掉下載；命令列一律用真的下載 */
   const unfit = (why, code = 2) => ({ code, receipt: { tool: "P0-IMG-canary", platform: "ios", unfit: true, why } });
   if (pkg && dir) return unfit("給了 --pkg 就不要再給 --dir：檢查的就是包裡那份 public");
   let P = null;
@@ -118,7 +119,10 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       const check = (d, lf, cdnArg) => cp.spawnSync(process.execPath, [CHECK, "--dir", d, "--list", lf, "--all", ...(cdnArg ? ["--cdn-manifest", cdnArg] : [])], { encoding: "utf8", maxBuffer: 256e6 });
       /* CDN 清單只下載一次，乾淨的那份和每個壞樣本都用同一份，收據記下它的雜湊（PR #67 審查：分兩次下載，兩份可能不同） */
       let M = null, cdnFile = null, cdnSha = null;
-      if (cdn) { try { const txt = readManifest(cdn); M = JSON.parse(txt).files; cdnFile = path.join(base, "cdn-manifest.json"); fs.writeFileSync(cdnFile, txt); cdnSha = sha256(Buffer.from(txt, "utf8")) } catch (e) { return unfit("金絲雀讀不到 CDN 清單：" + cdn, 3) } }
+      /* PR #67 第四次審查：先驗乾淨的樣本（不連 CDN），再讀 CDN。乾淨的有錯就回 2，不會被「CDN 讀不到」蓋成 3 */
+      const pre = check(dir, LF, null);
+      if (pre.status !== 0) return unfit("乾淨的樣本沒過 check-www.js（先修好再跑金絲雀）：" + String(pre.stderr).split("\n")[0]);
+      if (cdn) { try { const txt = readM(cdn); M = JSON.parse(txt).files; cdnFile = path.join(base, "cdn-manifest.json"); fs.writeFileSync(cdnFile, txt); cdnSha = sha256(Buffer.from(txt, "utf8")) } catch (e) { return unfit("金絲雀讀不到 CDN 清單：" + cdn, 3) } }
       const clean = check(dir, LF, cdnFile);
       if (clean.status === 3) return unfit("乾淨的樣本沒錯，但 CDN 清單沒能比對（缺驗）：" + String(clean.stderr).split("\n")[0], 3);
       if (clean.status !== 0) return unfit("乾淨的樣本沒過 check-www.js（先修好再跑金絲雀）：" + String(clean.stderr).split("\n")[0]);
@@ -151,7 +155,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
         /* 工具自己算、自己寫進收據：只抓得到本機不小心改過（例如忘了切回 main）；故意偽造要靠之後的 CI 用 main 版工具重跑（Android PR③） */
         toolPins: { "source/xiangqi-ios/scripts/check-www.js": toolSha(CHECK), "source/xiangqi-ios/scripts/canary-www.js": toolSha(__filename) },
         seed: SEED, kinds: want, results,
-        full: !only && !!cdn && !!P,
+        full: !only && cdn === OFFICIAL_CDN && !!P,   /* PR #67 第四次審查：只認正式 CDN；本機清單（--cdn-manifest 檔案）可能是拿包自己算的，等於拿包比包 */
         pass: want.every((k) => results.some((x) => x.kind === k)) && results.every((x) => x.caught === true),
       };
       return { code: exitOf(results, receipt.pass), receipt };
@@ -159,9 +163,9 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
   } finally { if (P && P.cleanup) fs.rmSync(P.cleanup, { recursive: true, force: true }) }
 }
 
-module.exports = { run, KINDS, toolSha, treeSha, picks, rng, exitOf };
+module.exports = { run, KINDS, toolSha, treeSha, picks, rng, exitOf, OFFICIAL_CDN };
 if (require.main === module) {
-  const cdn = opt("--cdn-manifest") || (argv.includes("--cdn") ? "https://xiangqi-cdn.pages.dev/cdn-manifest.json" : null);
+  const cdn = opt("--cdn-manifest") || (argv.includes("--cdn") ? OFFICIAL_CDN : null);
   const { code, receipt } = run({ dir: opt("--dir"), list: opt("--list"), cdn, pkg: opt("--pkg"), only: opt("--only"), seed: opt("--seed") });
   if (receipt.unfit) console.error((code === 3 ? "△ 缺驗：" : "✘ 測試不成立：") + receipt.why);
   if (opt("--out")) fs.writeFileSync(opt("--out"), JSON.stringify(receipt, null, 1) + "\n");

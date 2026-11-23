@@ -5,7 +5,7 @@
 "use strict";
 const test = require("node:test"), assert = require("node:assert/strict"), fs = require("fs"), os = require("os"), path = require("path"), crypto = require("crypto"), cp = require("child_process");
 const HERE = __dirname, CHECK = path.join(HERE, "check-www.js"), CANARY = path.join(HERE, "canary-www.js");
-const { toolSha, treeSha, picks, rng } = require("./canary-www.js");
+const { toolSha, treeSha, picks, rng, run, OFFICIAL_CDN } = require("./canary-www.js");
 const made = [];
 test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }) });
 const tmp = (p) => { const d = fs.mkdtempSync(path.join(os.tmpdir(), p)); made.push(d); return d };
@@ -66,7 +66,7 @@ test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；8 �
   const r = runCanary(CANARY, ["--pkg", A, "--list", L, "--cdn-manifest", M, "--seed", "7", "--out", out]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const R = JSON.parse(fs.readFileSync(out, "utf8"));
-  assert.equal(R.pass, true); assert.equal(R.full, true, "--pkg＋--cdn、沒有 --only 才是送審用的收據"); assert.equal(R.seed, 7);
+  assert.equal(R.pass, true); assert.equal(R.full, false, "--cdn-manifest 給的本機清單不算正式 CDN，送審不能用（PR #67 第四次審查：本機清單可能是拿包自己算的）"); assert.equal(R.seed, 7);
   assert.deepEqual(R.kinds, ["home", "bgm", "engine", "core", "big", "swap", "bridge", "cdnstale"]);
   for (const x of R.results) { assert.equal(x.caught, true, x.kind + " " + x.file); assert.equal(x.exit, 1, x.kind) }
   const files = (k) => R.results.filter((x) => x.kind === k).map((x) => x.file);
@@ -178,4 +178,22 @@ test("結束代碼：有任何一個做出來了卻沒被抓到，就回 4，不
   assert.equal(JSON.parse(fs.readFileSync(out, "utf8")).cdn.sha256, sha256(fs.readFileSync(M)));
   const a = tmp("xq-link-"); fs.writeFileSync(path.join(a, "x"), "1"); const t0 = treeSha(a); fs.symlinkSync("x", path.join(a, "y"));
   assert.notEqual(treeSha(a), t0, "多一個符號連結，樹雜湊要變");
+});
+
+test("full＝true 只認正式 CDN：同一份清單從正式網址來才算，本機檔、別的網址都不算；乾淨的有錯時先回 2，不會被「CDN 讀不到」蓋成 3（PR #67 第四次審查）", () => {
+  const { D, L, M } = fakeWww(), A = fakeApp(D), txt = fs.readFileSync(M, "utf8"), quiet = () => {};
+  const from = (want) => (u) => { assert.equal(u, want, "只下載指定的那個網址"); return txt };
+  let r = run({ pkg: A, list: L, cdn: OFFICIAL_CDN, seed: 7, readM: from(OFFICIAL_CDN), log: quiet });
+  assert.equal(r.code, 0); assert.equal(r.receipt.full, true, "正式 CDN＋--pkg＋沒有 --only");
+  r = run({ pkg: A, list: L, cdn: M, seed: 7, readM: from(M), log: quiet });
+  assert.equal(r.code, 0); assert.equal(r.receipt.full, false, "本機清單：拿包比包，不能送審");
+  const other = "https://example.invalid/cdn-manifest.json";
+  r = run({ pkg: A, list: L, cdn: other, seed: 7, readM: from(other), log: quiet });
+  assert.equal(r.receipt.full, false, "別的網址也不算");
+  assert.equal(OFFICIAL_CDN, "https://xiangqi-cdn.pages.dev/cdn-manifest.json");
+  assert.doesNotMatch(fs.readFileSync(CANARY, "utf8").split("module.exports")[1], /readM/, "命令列不能換掉下載");
+  /* 乾淨的少一個首頁素材，CDN 又讀不到：要回 2（乾淨的沒過），不是 3 */
+  fs.rmSync(path.join(A, "public", "data", "home", "qin.webp"));
+  r = run({ pkg: A, list: L, cdn: OFFICIAL_CDN, readM: () => { throw new Error("斷線") }, log: quiet });
+  assert.equal(r.code, 2, "乾淨的有錯先回 2"); assert.match(JSON.stringify(r.receipt || r), /乾淨的樣本沒過/);
 });
