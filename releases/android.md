@@ -9,12 +9,13 @@
   - **產物比對也是送審閘門的一項（W91，2026-11-24 起）：** `p0-gate.js` 除了 P0-IMG、P0-UPD、P0-3D，還要收一份 `aab-diff.js` 的報告，缺了、或任一項不符就不能送審，也不能豁免。跑法（在 `source/xiangqi-android`）：
     ```
     node scripts/aab-diff.js <Play 現行版.aab> <要送審的.aab> --strict --old-code=<Play 現行版的 versionCode> --new-code=<這一版的 versionCode> [--expect-removed=… --expect-added=… --expect-shrunk=…] [--ack=<確認清單.json>] --json=aab-diff.json --md=aab-diff.md
-    node scripts/p0-gate.js --aab <要送審的.aab> --build <網頁版號> --reports img.json upd.json 3d-12.json 3d-16.json 3d-canary-12.json 3d-canary-16.json aab-diff.json
+    node scripts/p0-gate.js --aab <要送審的.aab> --build <網頁版號> --old-aab <Play 現行版.aab> [--ack <確認清單.json>] --diff-receipt aab-diff-receipt.json --reports img.json upd.json 3d-12.json 3d-16.json 3d-canary-12.json 3d-canary-16.json aab-diff.json
     ```
-    - 閘門核對：新版雜湊＝要送審的 AAB、舊版寫明 versionCode 而且不是同一個檔、用 `--strict` 跑、紅項 0、沒確認的黃項 0、結束代碼 0、`aab-diff.js` 跟 origin/main 那一版一樣（工具鎖定）。舊版是不是真的 Play 現行版，閘門看不到 Play，只能核對報告有寫；跑的人要從 Play Console「所有應用程式套件」確認。
-    - 黃項：人看過後把報告裡的確認碼寫進 `--ack` 清單再跑；紅項不能確認。新增的檔不在現行包本來就有的位置（例如根目錄多了說明文件、`releases/`），或驗證紀錄、證據頁進了安裝包，也算黃。
-    - 金絲雀：`aab-diff.js` 每次都從這個候選包自己做四種壞樣本（刪一個首頁素材、把一個 js 縮成 0 位元組、多帶一個 `.jks`、多一個沒確認的 `AGENTS.md`），用同一套參數與確認清單判斷；前三種要紅、第四種要黃，少一種沒抓到，報告就 `pass: false`，閘門擋。參數寫太寬（例如 `--expect-removed=.`）會讓金絲雀抓不到。
-    - 閘門會印出舊版 versionCode、放行參數、確認過的黃項數，送審收據照抄。
+    - 閘門核對：新版雜湊＝要送審的 AAB、舊版寫明 versionCode 而且不是同一個檔、新版 versionCode 比舊版大、用 `--strict` 跑、`aab-diff.js` 跟 origin/main 那一版一樣（工具鎖定）。
+    - **閘門自己重算（#102 起）：** 閘門用 `--old-aab` 那一包和送審的 AAB，自己用（跟 main 一樣的）`aab-diff.js` 重算紅黃項與金絲雀，不信報告裡的紅黃與 pass；報告比的舊版也要是 `--old-aab` 這一包。確認清單用閘門自己收的 `--ack`（人寫的那份）；放行參數照報告記的，寫太寬金絲雀會抓到。舊版是不是真的 Play 現行版，閘門看不到 Play，只能核對報告有寫；跑的人要從 Play Console「所有應用程式套件」確認。
+    - 黃項：人看過後把報告裡的確認碼寫進 `--ack` 清單再跑（aab-diff 與閘門用同一份）；紅項不能確認。新增的檔不在現行包本來就有的位置（例如根目錄多了說明文件），或驗證紀錄、證據頁（含 `data/docs/evidence/` 子資料夾，大小寫不分）、任何一層的 `AGENTS.md`、`CLAUDE.md`、`releases/` 進了安裝包，也算黃。
+    - 金絲雀：`aab-diff.js` 每次都從這個候選包自己做四種壞樣本（刪一個首頁素材、把一個 js 縮成 0 位元組、多帶一個 `.jks`、多一個沒確認的說明文件；後兩種的檔名新舊兩包都沒有），用同一套參數與確認清單判斷；前三種要紅、第四種要黃，少一種沒抓到，報告就 `pass: false`，閘門擋。參數寫太寬（例如 `--expect-removed=.`）會讓金絲雀抓不到。
+    - 閘門會印出舊版 versionCode、放行參數、重算結果，確認過的黃項確認碼逐筆印出；通過時寫出 `--diff-receipt` 收據 JSON（送審 AAB、舊版、新版版本碼、放行參數原樣、確認碼逐筆、工具雜湊），送審收據附這份。
 
 | versionCode | versionName | 種類 | 網頁基底 | 原生原始碼 | 對應程度 |
 |---|---|---|---|---|---|

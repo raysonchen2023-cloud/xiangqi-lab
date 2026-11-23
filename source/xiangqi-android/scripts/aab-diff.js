@@ -91,7 +91,8 @@ const MB = 1024 * 1024;
    補 26112301 那次漏掉的那一類：根目錄多了 AGENTS.md、releases/、驗證紀錄（W83）——不是 debug 檔、也不是金鑰，原本完全不報。 */
 const NEW_OK = /^(base\/assets\/public\/(data|engine|pikafish-src|licenses)\/|base\/assets\/public\/[^/]+\.(m?js|html?|css|json|png|svg|webp|ico)$|base\/assets\/public\/(LICENSE[^/]*|NOTICE[^/]*|NNUE-License\.md)$|base\/(dex|lib|res|manifest|root)\/|base\/[^/]+\.pb$|base\/assets\/[^/]+\.json$|BUNDLE-METADATA\/|META-INF\/|BundleConfig\.pb$)/;
 /* 在允許的位置裡、但不該進安裝包的：驗證紀錄、證據頁（W83 從 make-www 排除過；網頁版才放） */
-const NEW_SUSPECT = /^base\/assets\/public\/data\/docs\/(verification-log|evidence)[^/]*$/;
+/* #102 審查②：證據圖在 data/docs/evidence/ 子資料夾裡、檔名大小寫不同也要抓；審查建議⑥：AGENTS.md、CLAUDE.md、releases/ 不論在哪一層都不該進包 */
+const NEW_SUSPECT = /(^|\/)data\/docs\/(verification-log[^/]*|evidence([^/]*|\/.*))$|(^|\/)(AGENTS|CLAUDE)\.md$|(^|\/)releases\//i;
 const TOOL_PINS = require("./tool-pin.js").pinsFor("AAB-DIFF");   /* 啟動就先算：記的是實際被載入、跑這一次的那一份 */
 
 /* 比對兩份索引；opts.expectRemoved／expectAdded＝正規式（列在裡面的檔可以從新版拿掉／新增，不算紅，但會列在報告裡） */
@@ -125,7 +126,7 @@ function diffIndex(A, B, opts = {}) {
     else if (b.size === 0) yellow.push({ f: n, why: "新增的檔是 0 位元組，請人確認" });
     else if (NEW_SUSPECT.test(n) || !NEW_OK.test(n)) {
       if (ok) allowed.push({ f: n, crc: (b.crc >>> 0).toString(16) + ":" + b.size, why: "預期新增（--expect-added）" });
-      else yellow.push({ f: n, why: NEW_SUSPECT.test(n) ? "新增驗證紀錄／證據頁進了安裝包（網頁版才放，W83），請人確認" : "新增的檔不在現行包本來就有的位置（例如根目錄多了說明文件、releases/），請人確認" }) }
+      else yellow.push({ f: n, why: NEW_SUSPECT.test(n) ? "新增驗證紀錄、證據頁、說明文件或 releases/ 進了安裝包（網頁版或倉庫才放，W83），請人確認" :"新增的檔不在現行包本來就有的位置（例如根目錄多了說明文件、releases/），請人確認" }) }
     if (b.size > 20 * MB) yellow.push({ f: n, why: "新增超過 20 MB 的單檔（" + (b.size / MB).toFixed(1) + " MB）" });
   }
   if (ta > 0 && tb > ta * 1.2) yellow.push({ f: "（整包）", why: "壓縮前總大小增加 " + ((tb / ta - 1) * 100).toFixed(0) + "%（" + (ta / MB).toFixed(0) + " → " + (tb / MB).toFixed(0) + " MB）" });
@@ -164,9 +165,11 @@ function canaryRun(A, B, opts = {}) {
   };
   run("home", pick(/^base\/assets\/public\/data\/homemap\/[^/]+\.(webp|png|jpe?g)$/) || pick(/^base\/assets\/public\/data\/.+\.(webp|png|jpe?g)$/), (M, f) => M.delete(f), "red");
   run("zeroJs", pick(/^base\/assets\/public\/[^/]+\.js$/), (M, f) => M.set(f, { size: 0, csize: 0, crc: 0 }), "red");
-  const JKS = "base/assets/public/upload-keystore.jks", AG = "base/assets/public/AGENTS.md";
-  run("jks", B.has(JKS) ? null : JKS, (M, f) => M.set(f, { size: 2048, csize: 2000, crc: 0x1234abcd }), "red");
-  run("yellow", B.has(AG) ? null : AG, (M, f) => M.set(f, { size: 4096, csize: 1500, crc: 0x5a5a5a5a }), "yellow");
+  /* #102 審查①：壞樣本的檔名要新舊兩包都沒有（原本寫死 AGENTS.md：舊版帶著、新版正確拿掉時，放回去算「內容改變」不算「新增」，金絲雀誤判失靈）。
+     檔名後綴照新版整份清單算（同一個包每次一樣、可重現），撞名就再換 */
+  const z = require("zlib"), tag = (z.crc32([...B.keys()].sort().join("\n")) >>> 0).toString(16), fresh = (pre, ext) => { for (let i = 0; i < 50; i++) { const f = pre + tag + (i ? "-" + i : "") + ext; if (!A.has(f) && !B.has(f)) return f } return null };
+  run("jks", fresh("base/assets/public/upload-canary-", ".jks"), (M, f) => M.set(f, { size: 2048, csize: 2000, crc: 0x1234abcd }), "red");
+  run("yellow", fresh("base/assets/public/AGENTS-canary-", ".md"), (M, f) => M.set(f, { size: 4096, csize: 1500, crc: 0x5a5a5a5a }), "yellow");
   out.ok = ["home", "zeroJs", "jks", "yellow"].every((k) => out[k].ok === true);
   return out;
 }

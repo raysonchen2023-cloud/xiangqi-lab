@@ -13,7 +13,9 @@ const { required: HOME_REQUIRED } = require(path.join(AND, "bundle-home-assets.j
 
 const A = "a".repeat(64), K = "c".repeat(64), V = "20261123-0900";
 const MAIN = (p) => TP.normSha(fs.readFileSync(path.join(AND, path.basename(p))));
-const G = (reps, w = [], mainSha = MAIN, cdnProbe = null) => gate(A, V, reps, w, { mainSha, cdnProbe });
+/* #102：閘門自己重算產物比對的結果（合格的樣子：沒有紅、沒有沒確認的黃、金絲雀都抓到）；舊版雜湊跟報告記的一樣 */
+const OKRE = { red: [], yellow: [], acked: [], allowed: 0, canaryOk: true }, OLDSHA = "d".repeat(64);
+const G = (reps, w = [], mainSha = MAIN, cdnProbe = null, diffRe = OKRE) => gate(A, V, reps, w, { mainSha, cdnProbe, diffRe, oldSha: OLDSHA });
 const DOWN = { reachable: false, detail: "假：閘門也連不上" }, UP = { reachable: true, detail: "假：閘門連得上" };
 const d3 = (android, o = {}) => ({ file: "3d-" + android, json: Object.assign({ tool: "P0-3D", aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D") }, o) });
 const c3 = (android, o = {}) => ({ file: "3dc-" + android, json: Object.assign({ tool: "P0-3D", selfTest: true, aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") }, o) });
@@ -33,7 +35,7 @@ const miss = (L) => {
   L[0].json.canary = c; return L };
 const upd = (o = {}) => ({ file: "upd", json: Object.assign({ tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") }, o) });
 /* W91（11/24）：產物比對報告（aab-diff.js --strict --old-code --json），合格的樣子 */
-const ad = (sha = A, o = {}) => ({ file: "aab-diff.json", json: Object.assign({ tool: "AAB-DIFF", strict: true, newSha256: sha, oldSha256: "d".repeat(64), oldCode: "26112104", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {}, canary: { home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true }, ok: true }, toolPins: TP.pinsFor("AAB-DIFF") }, o) });
+const ad = (sha = A, o = {}) => ({ file: "aab-diff.json", json: Object.assign({ tool: "AAB-DIFF", strict: true, newSha256: sha, oldSha256: "d".repeat(64), oldCode: "26112104", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {}, canary: { home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true }, ok: true }, toolPins: TP.pinsFor("AAB-DIFF") }, o) });
 const all = () => [img(), upd(), d3("12"), d3("16"), c3("12"), c3("16"), ad()];
 const has = (r, re) => r.problems.some((p) => re.test(p));
 const W = (code) => [{ code, aabSha256: A, reason: "測試用豁免", decidedBy: "開發者", decidedAt: "2026-11-23" }];
@@ -344,7 +346,7 @@ test("〔原始碼〕閘門：自己用的 CDN 網址跟破圖工具一樣；報
   const pg = rd("p0-gate.js"), caa = rd("check-aab-assets.js");
   const g = /const GATE_CDN = "([^"]+)";/.exec(pg), c = /\nconst CDN = "([^"]+)";/.exec(caa);
   assert.ok(g && c); assert.equal(g[1], c[1], "閘門與工具的 CDN 網址要相同");
-  assert.ok(pg.includes('for (const f of ["p0-gate.js", "tool-pin.js", "repo-pin.js", "check-aab-assets.js", "bundle-home-assets.js"])'), "第十四次複審：閘門讀 check-aab-assets.js 的規則，它和 bundle-home-assets.js 也要列進自我鎖定");
+  assert.ok(pg.includes('for (const f of ["p0-gate.js", "tool-pin.js", "repo-pin.js", "check-aab-assets.js", "bundle-home-assets.js", "aab-diff.js"])'), "第十四次複審：閘門讀 check-aab-assets.js 的規則，它和 bundle-home-assets.js 也要列進自我鎖定（#102：閘門自己用 aab-diff 重算，它也要）");
   assert.match(pg, /async function main\(\) \{\n  process\.exitCode = 2;/, "PR #66 第八次複審：main 一開始就把結束代碼設成 2，探測卡住提早結束時不會變成 0");
   assert.match(pg, /json\.tool === "P0-IMG" && \(json\.exitCode !== 0 \|\| \(json\.canary && json\.canary\.cdnUnreachable === true\)\)\)\) \{ cdnProbe = await probeCdn\(\);/);
   assert.match(pg, /AbortSignal\.timeout\(15000\)/); assert.match(pg, /at: new Date\(\)\.toISOString\(\)/);
@@ -742,9 +744,34 @@ test("W91 閘門收產物比對（AAB-DIFF）：合格的才能送審；缺報�
   bad({ pass: false }, /沒有通過/, "pass 不是 true");
   for (const k of ["home", "zeroJs", "jks", "yellow"]) bad({ canary: { home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true }, [k]: { ok: false }, ok: false } }, new RegExp("金絲雀沒抓到（" + k), "金絲雀 " + k + " 沒抓到");
   let r = G([...all(), ad()]); assert.ok(has(r, /AAB-DIFF 有兩份報告/), "交兩份");
-  r = gate(A, V, all(), [], { mainSha: (p) => (p.endsWith("aab-diff.js") ? "f".repeat(64) : MAIN(p)) });
+  r = gate(A, V, all(), [], { mainSha: (p) => (p.endsWith("aab-diff.js") ? "f".repeat(64) : MAIN(p)), diffRe: OKRE, oldSha: OLDSHA });
   assert.ok(has(r, /AAB-DIFF：.*aab-diff\.js 跟 origin\/main 那一版不一樣/), "用改過的 aab-diff 跑的報告不算：" + r.problems.join("；"));
   const info = P0.aabDiffInfo([...without, ad(A, { args: { "expect-shrunk": "^x$", ack: "ack.json" }, acked: [{ ack: "a@1" }], allowed: [{ f: "x" }] })]);
   assert.deepEqual(info, { file: "aab-diff.json", oldCode: "26112104", oldSha256: "d".repeat(64), args: { "expect-shrunk": "^x$", ack: "ack.json" }, acked: ["a@1"], allowed: 1 }, "放行參數、確認過的黃項原樣帶出來（收據要記）");
   assert.equal(P0.aabDiffInfo(without), null);
+});
+
+test("#102 審查建議①：閘門自己重算產物比對——報告手改成 red:[]、pass:true 也騙不了；沒確認的黃、放行參數太寬（金絲雀沒抓到）、沒重算、舊版不是 --old-aab、新版本碼沒比舊版大都擋；收據記確認碼逐筆", () => {
+  const P0 = require(path.join(AND, "p0-gate.js")), AD = require(path.join(AND, "aab-diff.js"));
+  const P = "base/assets/public/", M = (o) => new Map(Object.entries(o).map(([k, [size, crc]]) => [k, { size, csize: size, crc }]));
+  const base = { "BundleConfig.pb": [10, 1], "base/manifest/AndroidManifest.xml": [20, 2], [P + "index.html"]: [300, 3], [P + "core.js"]: [900, 4], [P + "data/homemap/home.webp"]: [4000, 5] };
+  const Aidx = M(base), ok = P0.recomputeDiff(AD, Aidx, M(base), {}, new Set());
+  assert.equal(ok.red.length + ok.yellow.length, 0); assert.equal(ok.canaryOk, true, JSON.stringify(ok.canary));
+  const g = (re, o = {}, oldSha = OLDSHA) => gate(A, V, [...all().filter((r) => r.json.tool !== "AAB-DIFF"), ad(A, o)], [], { mainSha: MAIN, diffRe: re, oldSha });
+  assert.equal(g(ok).ok, true, g(ok).problems.join("；"));
+  const lost = Object.assign({}, base); delete lost[P + "data/homemap/home.webp"];
+  let r = g(P0.recomputeDiff(AD, Aidx, M(lost), {}, new Set()), { red: [], pass: true, exitCode: 0 });
+  assert.ok(has(r, /閘門重算有紅項.*home\.webp/), "報告說沒有紅項也沒用：" + r.problems.join("；"));
+  const more = Object.assign({}, base, { [P + "AGENTS.md"]: [500, 9] }), Y = P0.recomputeDiff(AD, Aidx, M(more), {}, new Set());
+  assert.ok(has(g(Y), /閘門重算有沒確認的黃項.*AGENTS\.md/), "沒確認的黃");
+  const Y2 = P0.recomputeDiff(AD, Aidx, M(more), {}, new Set([Y.yellow[0].ack])); assert.equal(g(Y2).ok, true, "確認清單（閘門自己的 --ack）寫了就過");
+  assert.deepEqual(JSON.parse(JSON.stringify(Y2.acked)), [Y.yellow[0].ack]);
+  const W2 = P0.recomputeDiff(AD, Aidx, M(base), { "expect-removed": "." }, new Set());
+  assert.equal(W2.canaryOk, false); assert.ok(has(g(W2), /閘門重算的金絲雀沒抓到/), "放行參數太寬");
+  assert.ok(has(g(null), /閘門沒有自己重算產物比對/), "沒給 --old-aab");
+  assert.ok(has(g(ok, {}, "9".repeat(64)), /不是 --old-aab 這一包/), "報告比的舊版跟閘門拿到的不同");
+  assert.ok(has(g(ok, { newCode: "26112104" }), /新版的 versionCode 沒寫、或沒有比舊版/), "新版本碼不比舊版大");
+  assert.ok(has(g(ok, { oldCode: "0" }), /沒寫舊版是 Play 上的哪一版/), "舊版本碼是 0");
+  const rc = P0.aabDiffReceipt(A, [ad(A, { args: { "expect-shrunk": "^x$", ack: "ack.json" } })], Y2);
+  assert.deepEqual(JSON.parse(JSON.stringify(rc)), { tool: "AAB-DIFF", aabSha256: A, oldCode: "26112104", newCode: "26112401", oldSha256: OLDSHA, args: { "expect-shrunk": "^x$" }, acked: [Y.yellow[0].ack], allowed: 0, recomputed: true, toolPins: TP.pinsFor("AAB-DIFF") }, "收據：放行參數原樣（不含 ack 路徑）、確認碼逐筆、有重算");
 });

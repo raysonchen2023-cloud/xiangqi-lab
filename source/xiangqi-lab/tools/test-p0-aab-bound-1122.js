@@ -16,14 +16,16 @@ const AB = require(path.join(AND, "apk-bind.js"));
 const TP = require(path.join(AND, "tool-pin.js"));
 /* 2026-11-23 工具鎖定：假報告記的是目前這一份工具的雜湊；假的 origin/main 也回同一份（等於工具沒改過） */
 const MAIN = (p) => TP.normSha(fs.readFileSync(path.join(AND, path.basename(p))));
-const G = (a, b, c, w) => gate(a, b, c, w, { mainSha: MAIN });
+/* #102：閘門自己重算產物比對的結果（合格的樣子：沒有紅、沒有沒確認的黃、金絲雀都抓到）；舊版雜湊跟報告記的一樣 */
+const OKRE = { red: [], yellow: [], acked: [], allowed: 0, canaryOk: true }, OLDSHA = "d".repeat(64);
+const G = (a, b, c, w) => gate(a, b, c, w, { mainSha: MAIN, diffRe: OKRE, oldSha: OLDSHA });
 const A = "a".repeat(64), B = "b".repeat(64), K = "c".repeat(64);
 const V = "20261122-0804";
 const d3 = (sha, android) => ({ file: "3d-" + android + ".json", json: { tool: "P0-3D", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D") } });
 /* P0-3D 金絲雀：check-3d.js --self-test 的報告（2026-11-23） */
 const c3 = (sha, android) => ({ file: "3d-canary-" + android + ".json", json: { tool: "P0-3D", selfTest: true, aabSha256: sha, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") } });
 /* W91（11/24）：產物比對報告（aab-diff.js --strict --old-code --json），合格的樣子 */
-const ad = (sha = A, o = {}) => ({ file: "aab-diff.json", json: Object.assign({ tool: "AAB-DIFF", strict: true, newSha256: sha, oldSha256: "d".repeat(64), oldCode: "26112104", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {}, canary: { home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true }, ok: true }, toolPins: TP.pinsFor("AAB-DIFF") }, o) });
+const ad = (sha = A, o = {}) => ({ file: "aab-diff.json", json: Object.assign({ tool: "AAB-DIFF", strict: true, newSha256: sha, oldSha256: "d".repeat(64), oldCode: "26112104", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {}, canary: { home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true }, ok: true }, toolPins: TP.pinsFor("AAB-DIFF") }, o) });
 const ok3 = (sha = A) => [
   { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true, deep: { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: true } } }, toolPins: TP.pinsFor("P0-IMG") } },
   { file: "upd.json", json: { tool: "P0-UPD", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") } },
@@ -181,9 +183,9 @@ test("豁免：P0-IMG 缺驗（結束代碼 3）有倉庫豁免就放行並列�
   /* PR #66 第六次複審：缺驗的豁免要閘門自己也連不上 CDN（cdnProbe.reachable＝false）；沒探測或連得上都不放行 */
   r = G(A, V, L, [w]); assert.equal(r.ok, false, "閘門沒自己探測 CDN：不放行");
   const DOWN = { reachable: false, detail: "假：閘門也連不上" };
-  r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: DOWN }); assert.equal(r.ok, true); assert.equal(r.waived.length, 3, "CDN 全斷的真報告：「要加 --cdn」、金絲雀③、深層 W42 沒驗三條都掛 P0-IMG/cdn"); assert.match(r.waived[0], /已豁免：CDN 維護中/);
-  r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: { reachable: true, detail: "假：連得上" } }); assert.equal(r.ok, false, "閘門連得上：不放行");
-  r = gate(A, V, L, [{ ...w, aabSha256: B }], { mainSha: MAIN, cdnProbe: DOWN }); assert.equal(r.ok, false, "綁別的 AAB 的豁免不算");
+  r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: DOWN, diffRe: OKRE, oldSha: OLDSHA }); assert.equal(r.ok, true); assert.equal(r.waived.length, 3, "CDN 全斷的真報告：「要加 --cdn」、金絲雀③、深層 W42 沒驗三條都掛 P0-IMG/cdn"); assert.match(r.waived[0], /已豁免：CDN 維護中/);
+  r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: { reachable: true, detail: "假：連得上" }, diffRe: OKRE, oldSha: OLDSHA }); assert.equal(r.ok, false, "閘門連得上：不放行");
+  r = gate(A, V, L, [{ ...w, aabSha256: B }], { mainSha: MAIN, cdnProbe: DOWN, diffRe: OKRE, oldSha: OLDSHA }); assert.equal(r.ok, false, "綁別的 AAB 的豁免不算");
   const M = ok3(); M[0].json.pass = false; M[0].json.exitCode = 1;
   r = G(A, V, M, [w]); assert.ok(has(r, /P0-IMG：沒有通過/), "真的沒過（結束代碼 1）不能豁免");
   const N = ok3(B); r = G(A, V, N, [w, { ...w, code: "P0-3D/rounds" }]); assert.equal(r.problems.filter((p) => /另一個 AAB/.test(p)).length, 4, "AAB 不符不能豁免");
@@ -200,7 +202,7 @@ test("〔原始碼〕check-3d 預設跑 2 輪、每次嘗試都寫 attempts.json
   const c3 = rd("check-3d.js"), pg = rd("p0-gate.js");
   assert.match(c3, /rounds: Number\(arg\("--rounds", 2\)\)/); assert.match(c3, /fs\.appendFileSync\(AF, JSON\.stringify\(/); assert.match(c3, /if \(!roundPass\(RR\)\) break;/);
   assert.match(c3, /\}\)\(\)\.catch\(\(e\) => \{ logAttempt\(\{ pass: false, unfit: e instanceof Unfit/, "環境不成立、例外結束也寫嘗試紀錄（PR #58 審查）");
-  assert.match(pg, /const r = gate\(sha, BUILD, reports, fromRepo \? waivers : \[\], \{ mainSha, cdnProbe \}\);/);
+  assert.match(pg, /const r = gate\(sha, BUILD, reports, fromRepo \? waivers : \[\], \{ mainSha, cdnProbe, diffRe, oldSha \}\);/);   /* #102：閘門自己重算產物比對的結果也傳進去 */
   const WF = [path.join(__dirname, "..", "..", "..", ".github", "p0-waivers.json"), path.join(__dirname, "..", "site", ".github", "p0-waivers.json")].find((f) => fs.existsSync(f));
   assert.ok(WF, "倉庫有 .github/p0-waivers.json");
   const wj = JSON.parse(fs.readFileSync(WF, "utf8")); assert.ok(Array.isArray(wj.items));

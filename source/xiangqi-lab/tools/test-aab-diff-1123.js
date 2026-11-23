@@ -442,7 +442,8 @@ test("W91 金絲雀：從候選包自己做四種壞樣本（刪首頁素材、j
   const wide = AD.canaryRun(A, B, { expectRemoved: new RegExp(".") });
   assert.equal(wide.home.ok, false, "--expect-removed=. 放行所有拿掉的檔：刪首頁素材那個壞樣本就不紅，金絲雀要判失靈");
   assert.equal(wide.ok, false);
-  const ackAll = AD.canaryRun(A, B, { ack: new Set([P + "AGENTS.md@5a5a5a5a:4096"]) });
+  assert.ok(!A.has(c.yellow.f) && !B.has(c.yellow.f) && !A.has(c.jks.f) && !B.has(c.jks.f), "#102 審查①：壞樣本的檔名新舊兩包都沒有");
+  const ackAll = AD.canaryRun(A, B, { ack: new Set([c.yellow.f + "@5a5a5a5a:4096"]) });
   assert.equal(ackAll.yellow.ok, false, "確認清單剛好含壞樣本的確認碼，黃項被確認掉就判失靈");
   const bare = AD.canaryRun(idx(BASE), idx(BASE));
   assert.equal(bare.ok, false, "包裡沒有首頁素材、沒有根目錄 js：做不出壞樣本＝失靈，不能當通過");
@@ -465,4 +466,28 @@ test("W91 報告：tool＝AAB-DIFF、strict、兩個 AAB 的 SHA-256、舊版本
   c = run(a0, b0, "--strict", "--old-code=1", "--json=" + out); j = JSON.parse(fs.readFileSync(out, "utf8"));
   assert.equal(c.status, 0, "結束代碼照舊只看紅黃"); assert.equal(j.canary.ok, false); assert.equal(j.pass, false, "金絲雀做不出來就不算通過");
   assert.equal(run(a, b, "--old-code=abc").status, 2);
+});
+
+test("#102 審查①：舊版帶著 AGENTS.md、新版正確拿掉（照參數放行）時，金絲雀照樣成立（壞樣本不再寫死這個檔名）", () => {
+  const A = idx(Object.assign({}, W91, { [P + "AGENTS.md"]: "x".repeat(400) })), B = idx(W91);
+  const o = { expectRemoved: new RegExp("AGENTS[.]md$") }, r = AD.diffIndex(A, B, o), c = AD.canaryRun(A, B, o);
+  assert.equal(r.red.length, 0); assert.equal(c.ok, true, JSON.stringify(c));
+});
+
+test("#102 審查②＋建議⑥：證據資料夾 data/docs/evidence/、檔名大小寫不同、不論在哪一層的 AGENTS.md、CLAUDE.md、releases/ 都亮黃", () => {
+  const A = idx(W91), extra = ["data/docs/evidence/01_a.png", "data/docs/Verification-Log.txt", "data/docs/EVIDENCE.md", "data/AGENTS.md", "data/x/releases/a.md"];
+  const B0 = Object.assign({}, W91); for (const f of extra) B0[P + f] = "z".repeat(200); B0["base/root/AGENTS.md"] = "z".repeat(200);
+  const y = new Set(AD.diffIndex(A, idx(B0)).yellow.map((x) => x.f));
+  for (const f of extra) assert.ok(y.has(P + f), f + " 要亮黃");
+  assert.ok(y.has("base/root/AGENTS.md"), "base/root/ 底下的 AGENTS.md 也要");
+  assert.ok(!AD.NEW_SUSPECT.test(P + "data/docs/privacy.md"), "一般說明文件照舊不報");
+});
+
+test("#102 審查③：命令列實跑時，金絲雀用的是同一套參數——--expect-removed=. 讓刪首頁素材的壞樣本不紅，報告 canary.home.ok＝false、pass＝false", () => {
+  const a = makeZip("c102-old.zip", W91), b = makeZip("c102-new.zip", Object.assign({}, W91, { [P + "data/new.webp"]: Buffer.alloc(100, 1) })), out = path.join(TMP, "c102.json");
+  const c = run(a, b, "--strict", "--old-code=1", "--new-code=2", "--expect-removed=.", "--json=" + out);
+  const j = JSON.parse(fs.readFileSync(out, "utf8"));
+  assert.equal(j.canary.home.ok, false, c.stdout); assert.equal(j.canary.ok, false); assert.equal(j.pass, false);
+  const c2 = run(a, b, "--strict", "--old-code=1", "--new-code=2", "--json=" + out), j2 = JSON.parse(fs.readFileSync(out, "utf8"));
+  assert.equal(j2.canary.home.ok, true, "沒放寬的照常抓到"); assert.equal(c2.status, 0);
 });
