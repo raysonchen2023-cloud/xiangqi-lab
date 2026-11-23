@@ -90,7 +90,9 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
       /* PR #66 第六次複審：這條也掛 P0-IMG/cdn，同樣要閘門自己也連不上 CDN 才准豁免（exit 3 可能是工具的 manifest 讀取寫壞了） */
       const p = opts.cdnProbe, gateDown = !!p && p.reachable === false;
       const why = json.cdnChecked !== true ? "" : gateDown ? `；閘門自己也連不上 CDN（${p.detail}）` : p && p.reachable === true ? `；閘門自己連得上 CDN（${p.detail}）：不能豁免` : "；閘門沒有自己探測 CDN：不能豁免";
-      add(`P0-IMG：要加 --cdn 且結束代碼 0（cdnChecked＝${json.cdnChecked}、exitCode＝${json.exitCode}）${why}`, json.cdnChecked === true && gateDown ? "P0-IMG/cdn" : null);
+      /* PR #66 第七次複審：只有「缺驗」（結束代碼 3）而且沒有任何 ✘（redItems 是空陣列）才算 CDN 的問題；1、4 這些是真的有問題或工具失靈，閘門連不上也不能豁免 */
+      const onlyMissing = json.exitCode === 3 && Array.isArray(json.redItems) && json.redItems.length === 0;
+      add(`P0-IMG：要加 --cdn 且結束代碼 0（cdnChecked＝${json.cdnChecked}、exitCode＝${json.exitCode}）${why}${json.cdnChecked === true && gateDown && !onlyMissing ? "；不是單純缺驗（結束代碼 3 且沒有 ✘），不能豁免" : ""}`, json.cdnChecked === true && gateDown && onlyMissing ? "P0-IMG/cdn" : null);
     }
     /* 金絲雀（2026-11-23，AGENTS.md「P0 出口驗證要難作假」）：工具在實跑時故意弄壞的地方要被抓到；抓不到＝工具失靈，不能豁免 */
     if (t === "P0-IMG") {

@@ -17,7 +17,7 @@ const G = (reps, w = [], mainSha = MAIN, cdnProbe = null) => gate(A, V, reps, w,
 const DOWN = { reachable: false, detail: "假：閘門也連不上" }, UP = { reachable: true, detail: "假：閘門連得上" };
 const d3 = (android, o = {}) => ({ file: "3d-" + android, json: Object.assign({ tool: "P0-3D", aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D") }, o) });
 const c3 = (android, o = {}) => ({ file: "3dc-" + android, json: Object.assign({ tool: "P0-3D", selfTest: true, aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") }, o) });
-const img = (o = {}) => ({ file: "img", json: Object.assign({ tool: "P0-IMG", aabSha256: A, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, canary: { home: true, stale: true, cdn404: true, ok: true }, toolPins: TP.pinsFor("P0-IMG") }, o) });
+const img = (o = {}) => ({ file: "img", json: Object.assign({ tool: "P0-IMG", aabSha256: A, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true }, toolPins: TP.pinsFor("P0-IMG") }, o) });
 const upd = (o = {}) => ({ file: "upd", json: Object.assign({ tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") }, o) });
 const all = () => [img(), upd(), d3("12"), d3("16"), c3("12"), c3("16")];
 const has = (r, re) => r.problems.some((p) => re.test(p));
@@ -212,7 +212,11 @@ test("〔原始碼〕P0-IMG 金絲雀③（PR #66 第四次複審）：worker �
 test("閘門自己探測 CDN（PR #66 第五次複審，開發者選）：CDN 正常＝連得上；真斷線＝連不上；manifest 空的不算連得上；亂數檔 HEAD 回 404 也算連得上", async () => {
   const { probeCdn } = require(path.join(AND, "p0-gate.js"));
   const res = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
-  const fake = (man, head) => async (url, o) => { if (o && o.method === "HEAD") { if (head === "throw") throw new Error("斷線"); return res(head) } if (man === "throw") throw new Error("斷線"); return man };
+  /* PR #66 第七次複審：假 fetch 要看網址。manifest 只認 <base>cdn-manifest.json、HEAD 只認 <base>data/__xq_gate_probe_<亂數>.webp；路徑不對時 manifest 回 404、HEAD 回 200（存在的檔），測試就會紅 */
+  const fake = (man, head) => async (url, o) => {
+    if (o && o.method === "HEAD") { if (url !== "https://cdn/data/__xq_gate_probe_r.webp") return res(200); if (head === "throw") throw new Error("斷線"); return res(head) }
+    if (url !== "https://cdn/cdn-manifest.json") return res(404, null);
+    if (man === "throw") throw new Error("斷線"); return man };
   const ok = await probeCdn(fake(res(200, { files: { "data/a.webp": [1, "x"] } }), 404), "https://cdn/", () => "r");
   assert.equal(ok.reachable, true, "正常 CDN"); assert.equal(ok.manOk, true); assert.equal(ok.head, 404);
   const down = await probeCdn(fake("throw", "throw"), "https://cdn/", () => "r");
@@ -236,6 +240,14 @@ test("閘門（PR #66 第六次複審）：「要加 --cdn 且結束代碼 0」�
   const r = G(L, W("P0-IMG/cdn"), MAIN, UP); assert.equal(r.ok, false, "閘門連得上：不能豁免（可能是工具的 manifest 讀取壞了）"); assert.ok(has(r, /閘門自己連得上 CDN.*不能豁免/));
   assert.equal(G(L, W("P0-IMG/cdn"), MAIN, DOWN).ok, true, "閘門也連不上：才可以豁免");
   const M = all(); M[0].json.cdnChecked = false; assert.equal(G(M, W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "沒加 --cdn 不管閘門怎樣都不能豁免");
+});
+
+test("閘門（PR #66 第七次複審）：只有單純缺驗（結束代碼 3、redItems 是空陣列）才能豁免；結束代碼 1、4，或有 ✘、或沒記 redItems，閘門連不上也不行", () => {
+  for (const [code, red] of [[1, []], [4, []], [3, [{ f: "data/x.webp", why: "不在安裝包裡" }]], [3, undefined]]) {
+    const N = all(); N[0].json.exitCode = code; N[0].json.pass = false; N[0].json.redItems = red;
+    const r = G(N, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, false, JSON.stringify({ code, red })); assert.ok(has(r, /不是單純缺驗/), JSON.stringify({ code, red }));
+  }
+  const ok = all(); ok[0].json.exitCode = 3; ok[0].json.pass = false; assert.equal(G(ok, W("P0-IMG/cdn"), MAIN, DOWN).ok, true, "單純缺驗＋閘門連不上：照樣可以豁免");
 });
 
 test("〔原始碼〕閘門：自己用的 CDN 網址跟破圖工具一樣；報告結束代碼不是 0、或說連不上時就探測；探測有逾時、有時間", () => {
