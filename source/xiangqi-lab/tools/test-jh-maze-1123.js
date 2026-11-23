@@ -241,6 +241,21 @@ test("代號表 flags-codes.json 的 maze 跟程式一致：中炮門、入口�
   assert.equal(s.kids.length, 1, "halls8、八派玩法全部關掉，迷宮入口照放");
 });
 
+test("角色走路：等速（每格 JH_MZ_SPD 秒、不是一下就到）、連走時剩餘的路照比例；到了回 false；差超過 1.5 格直接放過去（不穿牆走）；四個方向的轉身角度", () => {
+  const { c } = load(), SPD = vm.runInContext("JH_MZ_SPD", c), close = (a, b) => Math.abs(a - b) < 1e-9;
+  assert.ok(SPD >= .15 && SPD <= .5, "每格 0.15～0.5 秒");
+  const o = { fx: 3, fy: 4 };
+  assert.equal(c.jhMzGlide(o, 4, 4, SPD / 4), true, "走了四分之一格還沒到"); assert.ok(close(o.fx, 3.25) && o.fy === 4, "等速：四分之一的時間走四分之一格");
+  assert.equal(c.jhMzGlide(o, 4, 4, SPD / 4), true); assert.ok(close(o.fx, 3.5), "再四分之一，一樣的距離（不是越來越慢）");
+  assert.equal(c.jhMzGlide(o, 4, 4, SPD), false, "時間夠就到"); assert.equal(o.fx, 4);
+  assert.equal(c.jhMzGlide(o, 4, 4, .05), false, "已經在目標格＝沒在走");
+  const q = { fx: 2, fy: 2 }; assert.equal(c.jhMzGlide(q, 2, 3, 0), true, "dt=0 不動"); assert.ok(q.fx === 2 && q.fy === 2);
+  const b = { fx: 1, fy: 1 }; assert.equal(c.jhMzGlide(b, 1, 9, .001), false, "被拖回入口這種大跳＝直接放到"); assert.ok(b.fx === 1 && b.fy === 9);
+  const g = { fx: 5 }; c.jhMzGlide(g, 6, 2, SPD / 2); assert.equal(g.fy, 2, "暗匪沒有 fy 時補成那一列"); assert.ok(close(g.fx, 5.5));
+  const yaw = vm.runInContext("jhMzYaw", c);
+  assert.ok(close(yaw(0, 1), 0) && close(yaw(1, 0), Math.PI / 2) && close(Math.abs(yaw(0, -1)), Math.PI) && close(yaw(-1, 0), -Math.PI / 2), "下 0、右 90°、上 180°、左 -90°");
+});
+
 test("〔原始碼〕07z9m-maze.js：LF、沒有控制字元、沒有行內 // 註解；m.html 有登記、排在 07z9l-halls.js 後面（包得到八派的 JhHall）", () => {
   assert.ok(!SRC.includes("\r"));
   assert.ok(!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(SRC));
