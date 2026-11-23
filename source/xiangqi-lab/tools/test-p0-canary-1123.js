@@ -19,7 +19,8 @@ const d3 = (android, o = {}) => ({ file: "3d-" + android, json: Object.assign({ 
 const c3 = (android, o = {}) => ({ file: "3dc-" + android, json: Object.assign({ tool: "P0-3D", selfTest: true, aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") }, o) });
 const img = (o = {}) => ({ file: "img", json: Object.assign({ tool: "P0-IMG", aabSha256: A, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true }, toolPins: TP.pinsFor("P0-IMG") }, o) });
 /* 正確的工具在「CDN 沒驗到」時寫出的報告：結束代碼 3、沒通過、沒有 ✘、有沒驗到的項目（PR #66 第八次複審） */
-const miss = (L) => { Object.assign(L[0].json, { exitCode: 3, pass: false, red: 0, unknown: 2, redItems: [] }); return L };
+/* 第九次複審：金絲雀③也要是 CDN 全斷時的樣子（探測檔沒拿到 404、工具說連不上） */
+const miss = (L) => { Object.assign(L[0].json, { exitCode: 3, pass: false, red: 0, unknown: 2, redItems: [] }); L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdnUnreachable: true, cdn: "沒確認到（CDN 連不上）" }; return L };
 const upd = (o = {}) => ({ file: "upd", json: Object.assign({ tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") }, o) });
 const all = () => [img(), upd(), d3("12"), d3("16"), c3("12"), c3("16")];
 const has = (r, re) => r.problems.some((p) => re.test(p));
@@ -263,7 +264,28 @@ test("閘門（PR #66 第八次複審）：單純缺驗還要 red＝0、unknown�
   const C = miss(all()); C[0].json.cdnChecked = false; assert.equal(G(C, W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "沒加 --cdn 的單純缺驗也不能豁免");
   /* 金絲雀③：報告結束代碼 0、通過，卻說探測檔連不上＝前後矛盾（正確的工具做不出來），閘門連不上也不能豁免 */
   const K = all(); K[0].json.canary = { home: true, stale: true, cdn404: false, cdnUnreachable: true, cdn: "沒確認到（CDN 連不上）" };
-  const r = G(K, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, false, "exit 0＋金絲雀③連不上：不能豁免"); assert.ok(has(r, /工具前後矛盾/));
+  const r = G(K, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, false, "exit 0＋金絲雀③連不上：不能豁免"); assert.ok(has(r, /報告跟「CDN 連不上」對不起來/));
+});
+
+test("閘門（PR #66 第九次複審）：工具同一輪拿到過 CDN 的 404（cdn404＝true）、或沒說連不上、或 unknown 不是整數，閘門這邊離線也不能豁免", () => {
+  for (const [why, c, o] of [["工具拿到 404（CDN 連得上，例如限流）", { cdn404: true, cdnUnreachable: false }, {}],
+    ["矛盾：拿到 404 又說連不上", { cdn404: true, cdnUnreachable: true }, {}],
+    ["沒說連不上", { cdn404: false, cdnUnreachable: undefined }, {}], ["沒有金絲雀", null, {}],
+    ["unknown 1.5", {}, { unknown: 1.5 }], ["unknown 是字串", {}, { unknown: "2" }]]) {
+    const N = miss(all()); Object.assign(N[0].json, o); if (c === null) delete N[0].json.canary; else N[0].json.canary = { ...N[0].json.canary, ...c };
+    const r = G(N, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, false, why); assert.equal(r.waived.length, 0, why);
+  }
+  const ok = miss(all()); const r = G(ok, W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(r.ok, true, "CDN 全斷的真報告照樣能豁免"); assert.equal(r.waived.length, 2);
+});
+
+test("閘門探測（PR #66 第九次複審）：manifest 正常就算連得上，亂數檔 HEAD 斷線、500 也一樣", async () => {
+  const { probeCdn } = require(path.join(AND, "p0-gate.js"));
+  const res = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => body });
+  const man = res(200, { files: { "data/a.webp": [1, "x"] } });
+  for (const h of ["throw", 500, 403, 200]) {
+    const f = async (url, o) => { if (o && o.method === "HEAD") { if (h === "throw") throw new Error("斷線"); return res(h) } return url === "https://cdn/cdn-manifest.json" ? man : res(404, null) };
+    const p = await probeCdn(f, "https://cdn/", () => "r"); assert.equal(p.reachable, true, String(h)); assert.equal(p.manOk, true);
+  }
 });
 
 test("閘門探測（開發者 11/23 選「維持現狀」）：manifest 不能用時，亂數檔 HEAD 只有 404／410 算連得上；200、301、403、500 都算連不上", async () => {

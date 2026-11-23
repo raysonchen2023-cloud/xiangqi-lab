@@ -172,13 +172,13 @@ test("豁免：只認齊全、綁同一個 AAB、在可豁免清單裡的；轉�
 });
 
 test("豁免：P0-IMG 缺驗（結束代碼 3）有倉庫豁免就放行並列出；沒有就擋；不可豁免的照擋", () => {
-  const L = ok3(); Object.assign(L[0].json, { exitCode: 3, pass: false, unknown: 2 });
+  const L = ok3(); Object.assign(L[0].json, { exitCode: 3, pass: false, unknown: 2 }); L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdnUnreachable: true, cdn: "沒確認到（CDN 連不上）" };   /* 第九次複審：CDN 全斷時的真報告 */
   let r = G(A, V, L); assert.equal(r.ok, false); assert.ok(has(r, /P0-IMG：要加 --cdn 且結束代碼 0/)); assert.ok(!has(r, /P0-IMG：沒有通過/), "缺驗歸在可豁免那一條");
   const w = { code: "P0-IMG/cdn", aabSha256: A, reason: "CDN 維護中無法交叉核對", decidedBy: "開發者", decidedAt: "2026-11-23" };
   /* PR #66 第六次複審：缺驗的豁免要閘門自己也連不上 CDN（cdnProbe.reachable＝false）；沒探測或連得上都不放行 */
   r = G(A, V, L, [w]); assert.equal(r.ok, false, "閘門沒自己探測 CDN：不放行");
   const DOWN = { reachable: false, detail: "假：閘門也連不上" };
-  r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: DOWN }); assert.equal(r.ok, true); assert.equal(r.waived.length, 1); assert.match(r.waived[0], /已豁免：CDN 維護中/);
+  r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: DOWN }); assert.equal(r.ok, true); assert.equal(r.waived.length, 2, "CDN 全斷的真報告：「要加 --cdn」和金絲雀③兩條都掛 P0-IMG/cdn"); assert.match(r.waived[0], /已豁免：CDN 維護中/);
   r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: { reachable: true, detail: "假：連得上" } }); assert.equal(r.ok, false, "閘門連得上：不放行");
   r = gate(A, V, L, [{ ...w, aabSha256: B }], { mainSha: MAIN, cdnProbe: DOWN }); assert.equal(r.ok, false, "綁別的 AAB 的豁免不算");
   const M = ok3(); M[0].json.pass = false; M[0].json.exitCode = 1;

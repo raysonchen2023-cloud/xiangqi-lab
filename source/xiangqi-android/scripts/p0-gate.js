@@ -41,6 +41,10 @@ function validWaiver(w, aabSha) {
 /* 閘門自己探測 CDN（不靠 P0 工具）：manifest 要是合法 JSON、files 要有 data/ 的項目；亂數檔名的 HEAD 要回 404／410。任一個成立＝連得上。
    fetchFn 可注入（自我測試用假 fetch） */
 const GATE_CDN = "https://xiangqi-cdn.pages.dev/";
+/* 不能豁免時的說法（兩條豁免共用；第九次複審：措辭要把條件寫全） */
+const NOT_ONLY_MISSING = "報告不是單純缺驗（要加 --cdn、結束代碼 3、沒通過、沒有 ✘、有沒驗到的項目，而且工具自己也連不上 CDN、沒拿到 404）";
+/* 閘門自己探測 CDN。manifest 只算 data/ 開頭的項目：P0-IMG 要確認的是 data/ 素材在 CDN 上找得到，manifest 裡沒有 data/ 檔就不能證明 CDN 正常（第九次複審要寫明）。
+   manifest 正常就算連得上，亂數檔 HEAD 失敗也一樣（HEAD 可能被 CDN 擋，manifest 已經證明連得上） */
 async function probeCdn(fetchFn = fetch, base = GATE_CDN, rnd = () => require("crypto").randomBytes(6).toString("hex")) {
   let manOk = false, manWhy = "", head = -1;
   const sig = () => (typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined);   /* 每次最多等 15 秒 */
@@ -84,9 +88,12 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
     /* P0-IMG 缺驗（結束代碼 3）時 pass 一定是 false：歸在可豁免的 P0-IMG/cdn 那一條，不另算「沒有通過」 */
     const imgMissing = t === "P0-IMG" && json.exitCode === 3;
     /* PR #66 第七、八次複審：「單純缺驗」才可能是 CDN 的問題：加了 --cdn、結束代碼 3、沒通過、沒有任何 ✘（redItems 空陣列、red＝0），而且真的有沒驗到的項目（unknown＞0）。
-       豁免（要加 --cdn 那條、金絲雀③）都要先滿足這個；正確的工具在探測檔沒確認到時一定是 3＋沒通過，做不出 exit 0 又連不上的報告 */
+       豁免（要加 --cdn 那條、金絲雀③）都要先滿足這個；正確的工具在探測檔沒確認到時一定是 3＋沒通過，做不出 exit 0 又連不上的報告。
+       PR #66 第九次複審：工具自己也要說 CDN 連不上（金絲雀③ cdnUnreachable＝true），而且沒拿到 CDN 的 404（cdn404＝false）；
+       工具同一輪拿到過 404＝CDN 連得上，缺驗是別的原因（例如限流），重跑就好，不能拿閘門這邊離線來豁免 */
     const imgOnlyMissing = t === "P0-IMG" && json.cdnChecked === true && json.exitCode === 3 && json.pass === false
-      && Array.isArray(json.redItems) && json.redItems.length === 0 && json.red === 0 && Number(json.unknown) > 0;
+      && Array.isArray(json.redItems) && json.redItems.length === 0 && json.red === 0 && Number.isInteger(json.unknown) && json.unknown > 0
+      && !!json.canary && json.canary.cdnUnreachable === true && json.canary.cdn404 === false;
     if (json.pass !== true && !imgMissing) add(`${key}：沒有通過（pass＝${json.pass}）`);
     if ((t === "P0-UPD" || t === "P0-3D") && !(json.apkBound === true && HEX64.test(String(json.apkSha256 || ""))))
       add(`${key}：沒核對實際測的 APK 是從這個 AAB 產生的（要用 --aab-apk 跑，報告要有 apkBound＝true 與 apkSha256）`);
@@ -94,7 +101,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
       /* PR #66 第六次複審：這條也掛 P0-IMG/cdn，同樣要閘門自己也連不上 CDN 才准豁免（exit 3 可能是工具的 manifest 讀取寫壞了） */
       const p = opts.cdnProbe, gateDown = !!p && p.reachable === false;
       const why = json.cdnChecked !== true ? "" : gateDown ? `；閘門自己也連不上 CDN（${p.detail}）` : p && p.reachable === true ? `；閘門自己連得上 CDN（${p.detail}）：不能豁免` : "；閘門沒有自己探測 CDN：不能豁免";
-      add(`P0-IMG：要加 --cdn 且結束代碼 0（cdnChecked＝${json.cdnChecked}、exitCode＝${json.exitCode}）${why}${json.cdnChecked === true && gateDown && !imgOnlyMissing ? "；不是單純缺驗（結束代碼 3、沒通過、沒有 ✘、有沒驗到的項目），不能豁免" : ""}`, gateDown && imgOnlyMissing ? "P0-IMG/cdn" : null);
+      add(`P0-IMG：要加 --cdn 且結束代碼 0（cdnChecked＝${json.cdnChecked}、exitCode＝${json.exitCode}）${why}${json.cdnChecked === true && gateDown && !imgOnlyMissing ? "；" + NOT_ONLY_MISSING + "，不能豁免" : ""}`, gateDown && imgOnlyMissing ? "P0-IMG/cdn" : null);
     }
     /* 金絲雀（2026-11-23，AGENTS.md「P0 出口驗證要難作假」）：工具在實跑時故意弄壞的地方要被抓到；抓不到＝工具失靈，不能豁免 */
     if (t === "P0-IMG") {
@@ -106,9 +113,10 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
         const p = opts.cdnProbe, gateDown = !!p && p.reachable === false, gateUp = !!p && p.reachable === true;
         const why = c.cdnUnreachable !== true ? "：CDN 核對可能失靈，不能豁免"
           : gateUp ? `：閘門自己連得上 CDN（${p.detail}），報告卻說連不上：工具失靈，不能豁免`
-          : !imgOnlyMissing ? "：報告不是單純缺驗（要結束代碼 3、沒通過、沒有 ✘、有沒驗到的項目），工具前後矛盾，不能豁免"
+          : !imgOnlyMissing ? "：" + NOT_ONLY_MISSING + "，報告跟「CDN 連不上」對不起來，不能豁免"
           : gateDown ? `：閘門自己也連不上 CDN（${p.detail}），沒驗到` : "：閘門沒有自己探測 CDN，不能豁免";
-        add(`P0-IMG：金絲雀③ CDN 不存在的檔沒被判成沒有（${c.cdn || "沒驗"}）${why}`, c.cdnUnreachable === true && gateDown && imgOnlyMissing ? "P0-IMG/cdn" : null);
+        /* cdnUnreachable＝true 已包含在 imgOnlyMissing 裡（第九次複審），這裡不再重複判斷 */
+        add(`P0-IMG：金絲雀③ CDN 不存在的檔沒被判成沒有（${c.cdn || "沒驗"}）${why}`, gateDown && imgOnlyMissing ? "P0-IMG/cdn" : null);
       }
     }
     if (t === "P0-UPD" && !(json.canary && json.canary.dialog === true)) add("P0-UPD：金絲雀（假的「有新版本」視窗）沒被抓到：這支更新檢查可能失靈，結果不可信");
