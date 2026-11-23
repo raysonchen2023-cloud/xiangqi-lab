@@ -153,11 +153,11 @@ function page({ pack = {}, cdn = {}, wrap = false, subtle = true, spa = null }) 
 const man = (files) => JSON.stringify({ files: Object.fromEntries(Object.entries(files).map(([f, b]) => [f, [Buffer.byteLength(b), sha12(b)]])) });
 
 test("包外檔讀取輪：包裡有的跳過、包外的經由 CDN 讀，大小和 SHA-1 都對才算驗到；判定 0", async () => {
-  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}", "data/c.webp": "ccc", "data/d.json": "{\"d\":4}" };
+  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}", "data/c.webp": "ccc", "data/d.json": "{\"d\":4}", "data/e.json": "{\"e\":5}" };
   const p = page({ pack: { "data/a.json": F["data/a.json"], "data/c.webp": F["data/c.webp"] }, cdn: { "cdn-manifest.json": man(F), ...F } });
   const o = await p.run();
-  assert.equal(o.manifest, 200); assert.deepEqual(o.checked.sort(), ["data/b.json", "data/d.json"]); assert.deepEqual(o.bad, []); assert.equal(o.hash, true);
-  assert.deepEqual(R.judgeOutside(o), { code: 0, why: "2 個包外才有的檔都從新 CDN 讀到，大小和 SHA-1 都跟清單對得上" });
+  assert.equal(o.manifest, 200); assert.deepEqual(o.checked.sort(), ["data/b.json", "data/d.json", "data/e.json"]); assert.deepEqual(o.bad, []); assert.equal(o.hash, true);
+  assert.deepEqual(R.judgeOutside(o), { code: 0, why: "3 個包外才有的檔都從新 CDN 讀到，大小和 SHA-1 都跟清單對得上" });
   assert.ok(!p.seen.includes("https://xiangqi-cdn.pages.dev/data/a.json"), "包裡有的不去 CDN 讀");
 });
 
@@ -172,16 +172,16 @@ test("包外檔讀取輪（反測必紅）：改向到空資料夾（清單 404�
   o = await page({ cdn: { "cdn-manifest.json": man(F), "data/a.json": F["data/a.json"], "data/b.json": "{\"b\":22}" } }).run();
   assert.match(R.judgeOutside(o).why, /data\/b\.json（大小 8，清單 7）/);
   o = await page({ pack: F, cdn: { "cdn-manifest.json": man(F), ...F } }).run();
-  assert.deepEqual(o.checked, []); assert.equal(R.judgeOutside(o).code, 2, "全部都在包裡＝驗不到"); assert.match(R.judgeOutside(o).why, /找不到包外才有的檔/);
+  assert.deepEqual(o.checked, []); assert.equal(R.judgeOutside(o).code, 2, "全部都在包裡＝驗不到"); assert.match(R.judgeOutside(o).why, /包外才有的檔只驗到 0 個（至少要 3 個/);
   for (const x of [null, undefined, "x", { error: "逾時" }]) assert.equal(R.judgeOutside(x).code, 2, JSON.stringify(x));
 });
 
 test("包外檔讀取輪：App 把 fetch 包成「包裡讀不到改問 CDN」時，照樣認得出包外的檔；沒有 crypto.subtle 時只比大小、照實寫出來", async () => {
-  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}" };
+  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}", "data/c.json": "{\"c\":3}" };
   const o = await page({ pack: { "data/a.json": F["data/a.json"] }, cdn: { "cdn-manifest.json": man(F), ...F }, wrap: true }).run();
-  assert.deepEqual(o.checked, ["data/b.json"], "回應網址是 CDN 的＝包外");
+  assert.deepEqual(o.checked.sort(), ["data/b.json", "data/c.json"], "回應網址是 CDN 的＝包外");
   const n = await page({ cdn: { "cdn-manifest.json": man(F), ...F }, subtle: false }).run();
-  assert.equal(n.hash, false); assert.equal(n.checked.length, 2); assert.match(R.judgeOutside(n).why, /只比大小/);
+  assert.equal(n.hash, false); assert.equal(n.checked.length, 3); assert.match(R.judgeOutside(n).why, /只比大小/);
   /* 只挑 data/ 底下、2 MB 以內，探測檔不算 */
   const big = { files: { "data/x.json": [3 * 1024 * 1024, "0"], "engine/e.bin": [3, "0"], "data/__xq_route_probe.txt": [11, "0"], "data/y.json": [7, sha12("{\"y\":1}")] } };
   const y = await page({ cdn: { "cdn-manifest.json": JSON.stringify(big), "data/y.json": "{\"y\":1}" } }).run();
@@ -189,15 +189,15 @@ test("包外檔讀取輪：App 把 fetch 包成「包裡讀不到改問 CDN」�
 });
 
 test("包外檔讀取輪（#74 Android 12 重跑）：本機伺服器對不存在的路徑回 200 的 index.html 時，要比內容，不能全判成在包裡；判成在包裡的、內容不對的都記前幾筆", async () => {
-  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}", "data/c.json": "{\"c\":3}" }, html = "<!doctype html><title>象棋千秋</title>";
+  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}", "data/c.json": "{\"c\":3}", "data/d.json": "{\"d\":4}" }, html = "<!doctype html><title>象棋千秋</title>";
   const o = await page({ pack: { "data/a.json": F["data/a.json"] }, cdn: { "cdn-manifest.json": man(F), ...F }, spa: html }).run();
-  assert.deepEqual(o.checked.sort(), ["data/b.json", "data/c.json"], "回 index.html 的不算在包裡");
+  assert.deepEqual(o.checked.sort(), ["data/b.json", "data/c.json", "data/d.json"], "回 index.html 的不算在包裡");
   assert.deepEqual(o.inPack, [{ f: "data/a.json", size: 7, want: 7, type: "application/json" }]);
-  assert.equal(o.localOddCount, 2); assert.deepEqual(o.localOdd[0], { f: "data/b.json", size: Buffer.byteLength(html), want: 7, type: "text/html" });
+  assert.equal(o.localOddCount, 3); assert.deepEqual(o.localOdd[0], { f: "data/b.json", size: Buffer.byteLength(html), want: 7, type: "text/html" });
   assert.equal(R.judgeOutside(o).code, 0);
   /* 沒有 crypto.subtle（只能比大小）時，回 index.html 的照樣不算在包裡：鎖住「比大小」那一條 */
   const n = await page({ pack: { "data/a.json": F["data/a.json"] }, cdn: { "cdn-manifest.json": man(F), ...F }, spa: html, subtle: false }).run();
-  assert.deepEqual(n.checked.sort(), ["data/b.json", "data/c.json"], "只比大小也要擋下 index.html");
+  assert.deepEqual(n.checked.sort(), ["data/b.json", "data/c.json", "data/d.json"], "只比大小也要擋下 index.html");
   /* 包裡那份大小一樣、內容不同（舊版）：SHA-1 比得出來，當成包外去 CDN 讀 */
   const p = await page({ pack: { "data/a.json": "{\"a\":9}" }, cdn: { "cdn-manifest.json": man({ "data/a.json": F["data/a.json"] }), "data/a.json": F["data/a.json"] } }).run();
   assert.deepEqual(p.checked, ["data/a.json"]); assert.equal(p.localOddCount, 1);
@@ -206,12 +206,31 @@ test("包外檔讀取輪（#74 Android 12 重跑）：本機伺服器對不存�
   assert.match(R.judgeOutside(q).why, /判成在包裡的前幾個：data\/a\.json（7 位元組、application\/json）/);
 });
 
+test("包外檔讀取輪（#74 Android 12 第二次重跑）：小檔都在包裡時，另外挑 2～20 MB 的包外大檔，從小的先挑、最多 3 個；超過 20 MB（CDN 切塊）不挑；驗到少於 3 個＝2", async () => {
+  const M = 1024 * 1024, mk = (n, c) => Buffer.alloc(n, c);
+  const small = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}" };
+  const big = { "data/big1.json": mk(2 * M + 10, 1), "data/big2.json": mk(3 * M, 2), "data/big3.json": mk(4 * M, 3), "data/big4.json": mk(5 * M, 4), "data/huge.json": mk(21 * M, 5) };
+  const all = { ...small, ...big };
+  const o = await page({ pack: small, cdn: { "cdn-manifest.json": man(all), ...all } }).run();
+  assert.equal(o.bigCandidates, 4, "超過 20 MB 的不算候選"); assert.equal(o.bigChecked, 3);
+  assert.deepEqual(o.checked, ["data/big1.json", "data/big2.json", "data/big3.json"], "從小的先挑、最多 3 個");
+  assert.deepEqual(o.bad, []); assert.equal(R.judgeOutside(o).code, 0);
+  /* 大檔在 CDN 上內容不對：照樣抓得到（SHA-1） */
+  const w = await page({ pack: small, cdn: { "cdn-manifest.json": man(all), ...all, "data/big2.json": mk(3 * M, 9) } }).run();
+  assert.equal(R.judgeOutside(w).code, 1); assert.match(R.judgeOutside(w).why, /data\/big2\.json（SHA-1 /);
+  /* 只有 2 個包外大檔：驗到 2 個＝證據太少 */
+  const two = { ...small, "data/big1.json": big["data/big1.json"], "data/big2.json": big["data/big2.json"] };
+  const t = await page({ pack: small, cdn: { "cdn-manifest.json": man(two), ...two } }).run();
+  assert.equal(t.checked.length, 2); assert.equal(R.judgeOutside(t).code, 2); assert.match(R.judgeOutside(t).why, /只驗到 2 個（至少要 3 個/);
+});
+
 test("結束代碼（#74 實跑後補）：--cdn-to 沒有包外檔讀取輪、或一個包外檔都沒驗到＝2；判定 1 不算測不成立（由紅燈擋）；換開關檔卻沒攔到開關檔＝2", () => {
   const s = (route) => [{ mode: "online", route: { probeOk: true, ...route } }], cdn = { cdnTo: "https://x/" }, fl = { flags: true };
   assert.equal(routeBadOf(s({}), cdn), true, "沒有包外檔讀取輪");
   assert.equal(routeBadOf(s({ outside: { manifest: 200, checked: [], bad: [], candidates: 3, probed: 3 } }), cdn), true, "一個都沒驗到");
   assert.equal(routeBadOf(s({ outside: { error: "逾時" } }), cdn), true);
-  assert.equal(routeBadOf(s({ outside: { manifest: 200, checked: ["data/b.json"], bad: [] } }), cdn), false);
+  assert.equal(routeBadOf(s({ outside: { manifest: 200, checked: ["data/b.json", "data/c.json", "data/d.json"], bad: [] } }), cdn), false);
+  assert.equal(routeBadOf(s({ outside: { manifest: 200, checked: ["data/b.json", "data/c.json"], bad: [] } }), cdn), true, "只驗到 2 個＝證據太少（#74 Android 12 重跑後改成至少 3 個）");
   assert.equal(routeBadOf(s({ outside: { manifest: 404 } }), cdn), false, "判定 1 由紅燈擋，不是測不成立");
   assert.equal(routeBadOf(s({ flags: [] }), fl), true, "開關檔一次都沒攔到"); assert.equal(routeBadOf(s({ flags: ["fulfill"] }), fl), false);
   assert.equal(routeBadOf(s({}), true), false, "舊的呼叫（只給 true）照舊只看探測檔");
