@@ -6,7 +6,8 @@
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process");
 const { GUARD, isGuard, guardChanged, STEPS, restore, modeArgs, modeOf, finalCode, runGuard, classifiedOnly, TK_PATH, ASSERT_DIR } = require("./base-guard.cjs");
 const NL = String.fromCharCode(10), NUL = String.fromCharCode(0);
-/* PR #69 複審：整支測試跑的期間，真的 fs 刪除一律經過記錄器（照樣刪）；最後一項斷言一次都沒刪到 base-assert-count*（含舊的固定路徑）。
+/* PR #69 複審：整支測試跑的期間，fs 的三個同步刪除函式（rmSync、rmdirSync、unlinkSync）經過記錄器（照樣刪）；最後一項斷言沒刪到 base-assert-count*（含舊的固定路徑）。
+   限制：只攔這三個；先抓住的參考、fs.rm／fs.promises、renameSync、子程序刪的都攔不到。最後一項要排在檔尾（node:test 同一檔照順序跑）。
    測試自己要清的暫存資料夾用 REAL 刪，不算在內 */
 const REAL = { rmSync: fs.rmSync, rmdirSync: fs.rmdirSync, unlinkSync: fs.unlinkSync }, REAL_DEL = [];
 for (const k of Object.keys(REAL)) fs[k] = function (p, ...r) { REAL_DEL.push(String(p)); return REAL[k].call(this, p, ...r) };
@@ -111,7 +112,7 @@ function fake({ files = [], fail = [], release = false, diffThrows = false } = {
     if (a[0] === ".github/scripts/ci-mode.cjs") return { status: 0, stdout: release ? "mode=release" + NL : "mode=feature" + NL };
     return { status: fail.some((k) => a.join(" ").includes(k)) ? 1 : 0 };
   };
-  const fsx = { existsSync: () => true, rmSync: (f) => removed.push(f), mkdirSync() {}, writeFileSync: (f, s) => { wrote[f] = s }, readdirSync: () => [] };
+  const fsx = { existsSync: () => true, rmSync: (f) => removed.push(f), mkdirSync() {}, writeFileSync: (f, s) => { wrote[f] = s }, readdirSync: (d, ...o) => fs.readdirSync(d, ...o) };   /* 列資料夾用真的（PR #69 第三輪：假的永遠回 []，「列出別人的再刪掉」測不出來）；刪除仍只記錄 */
   return { git, spawn, fsx, calls, wrote, removed, log: () => {} };
 }
 
