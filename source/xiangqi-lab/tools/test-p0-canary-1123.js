@@ -511,6 +511,31 @@ test("深層金絲雀：有 CDN manifest 時，W42 改掉包裡一個跟 CDN 一
   const r = CA.deepCanaries(d, A, { man }); assert.equal(r.w42.ok, true, JSON.stringify(r.w42)); assert.equal(r.w42.file, "data/a/x.webp");
 });
 
+test("深層金絲雀（#84 第二輪審查）：W42 只靠「跟 CDN 比」那條判斷抓到；那條失靈時要報沒抓到，不能被「跟清單不符」頂替", () => {
+  const d = tree(goodFiles()), man = { files: { "data/a/x.webp": [3, sha1h("abc").slice(0, 12)] } }, before = snap(d);
+  const A = CA.analyzeTree(d, { man });
+  /* W42 壞樣本只動 manifest 副本，包裡的檔不動：「跟清單不符」不會出現 */
+  let seen = null; const spy = (t, o) => { const r = CA.analyzeTree(t, o); if (o.man && o.man !== man) seen = r.R.red.map((x) => x.why); return r };
+  assert.equal(CA.deepCanaries(d, A, { man }, spy).w42.ok, true);
+  assert.ok(seen && seen.some((w) => /跟 CDN 現行版不同/.test(w)) && !seen.some((w) => /跟清單不符/.test(w)), "W42 壞樣本只觸發「跟 CDN 比」：" + JSON.stringify(seen));
+  assert.deepEqual(snap(d), before, "包裡的檔一個位元組都沒動");
+  /* 「跟 CDN 比」那條判斷失靈（結果被丟掉）：W42 要報沒抓到 */
+  const blind = (t, o) => { const r = CA.analyzeTree(t, o); r.R.red = r.R.red.filter((x) => !/跟 CDN 現行版不同/.test(x.why)); return r };
+  const rb = CA.deepCanaries(d, A, { man }, blind); assert.equal(rb.w42.ok, false, "W42 判斷失靈：沒抓到"); assert.equal(rb.w42.missed, "data/a/x.webp");
+  /* 改成「抓到哪條都算」：同一個檔被「跟清單不符」抓到也不能算 W42 */
+  const wrong = (t, o) => { const r = CA.analyzeTree(t, o); r.R.red = r.R.red.map((x) => /跟 CDN 現行版不同/.test(x.why) ? { ...x, why: x.why + "；跟清單不符" } : x); return r };
+  assert.equal(CA.deepCanaries(d, A, { man }, wrong).w42.ok, false, "同時判出「跟清單不符」＝不是乾淨的 W42 抓到");
+});
+
+test("深層金絲雀（#84 第二輪審查）：壞樣本跑不起來（判斷丟例外）時，每一項都要判沒抓到，不能算過", () => {
+  const d = tree(goodFiles()), man = { files: { "data/a/x.webp": [3, sha1h("abc").slice(0, 12)] } }, before = snap(d);
+  const A = CA.analyzeTree(d, { man });
+  const boom = () => { throw new Error("假的判斷壞掉") };
+  const r = CA.deepCanaries(d, A, { man }, boom);
+  for (const k of ["w21", "w30", "home", "hash", "w42"]) { assert.equal(r[k].ok, false, k + "：" + JSON.stringify(r[k])); assert.match(String(r[k].note), /壞樣本跑不起來：假的判斷壞掉/, k) }
+  assert.equal(CA.deepOk(r, true), false); assert.deepEqual(snap(d), before, "丟例外也要把壞樣本還原");
+});
+
 test("深層金絲雀報警（反測必紅）：判斷被改壞（不看檔、不看 dex、不看清單雜湊）時，對應的金絲雀要報「沒抓到」", () => {
   const d = tree(goodFiles()), A = CA.analyzeTree(d, {});
   const frozen = () => A;   /* 判斷一律回原本的結果＝什麼都看不到 */

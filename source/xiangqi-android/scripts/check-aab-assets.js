@@ -250,10 +250,24 @@ function deepCanaries(tmp, A, { man = null, cache = new Map() } = {}, analyze = 
   out.home = one([...home].filter(f => inPack.has(f)), f => hideFile(inPack.get(f)), /首頁離線必要素材不在安裝包裡/);
   /* 內容被改：包裡一個有清單雜湊、而且現在對得上的檔，檔尾加一個位元組 */
   out.hash = one([...need].map(([f]) => f).filter(f => need.get(f).h && inPack.has(f) && A.sha1Of(f) === need.get(f).h), f => touchBytes(inPack.get(f)), /跟清單不符/);
-  /* W42：包裡一個在 CDN manifest 裡、現在跟 CDN 一樣的需求素材，改內容 → 要判「跟 CDN 現行版不同」 */
-  if (manHasFiles(man)) out.w42 = one([...inPack.keys()].filter(f => f.startsWith("data/") && need.has(f) && man.files[f] && man.files[f][1] && fileSha1(inPack.get(f), cache).startsWith(man.files[f][1])),
-    f => touchBytes(inPack.get(f)), /跟 CDN 現行版不同/);
-  else out.w42 = { ok: false, skip: "沒有 CDN manifest，沒驗（缺驗）" };
+  /* W42：包裡一個在 CDN manifest 裡、現在跟 CDN 一樣的需求素材 → 要判「跟 CDN 現行版不同」。
+     #84 第二輪審查：原本是改包裡的檔內容（touchBytes），會同時觸發「跟清單不符」，W42 那條判斷壞了也看不出來。
+     改成包裡的檔不動、只改 manifest 副本裡那個檔的雜湊：只有「跟 CDN 比」那條判斷會抓到；而且要確認不是被「跟清單不符」抓到的 */
+  if (manHasFiles(man)) {
+    const cands = [...inPack.keys()].filter(f => f.startsWith("data/") && need.has(f) && man.files[f] && man.files[f][1] && fileSha1(inPack.get(f), cache).startsWith(man.files[f][1]));
+    const fs_ = spread(cands);
+    if (!fs_.length) out.w42 = { ok: false, note: "找不到包裡跟 CDN 一樣的需求素材可以拿來比：不成立" };
+    else {
+      out.w42 = { ok: true, file: fs_[0], files: fs_, note: null };
+      for (const f of fs_) {
+        try {
+          const m2 = { ...man, files: { ...man.files, [f]: [man.files[f][0], "0".repeat(String(man.files[f][1]).length)] } };
+          const r = analyze(tmp, { man: m2, cache }), mine = r.R.red.filter(x => x.f === f);
+          if (!(mine.some(x => /跟 CDN 現行版不同/.test(x.why)) && !mine.some(x => /跟清單不符/.test(x.why)))) { out.w42.ok = false; out.w42.missed = f; break }
+        } catch (e) { out.w42 = { ok: false, file: f, files: fs_, note: "壞樣本跑不起來：" + String(e.message).slice(0, 120) }; break }
+      }
+    }
+  } else out.w42 = { ok: false, skip: "沒有 CDN manifest，沒驗（缺驗）" };
   return out;
 }
 /* 深層金絲雀都抓到（w42 只在 needW42 時算；skip＝沒 manifest，歸缺驗） */
