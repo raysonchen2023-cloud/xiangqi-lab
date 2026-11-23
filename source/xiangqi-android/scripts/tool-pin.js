@@ -4,8 +4,10 @@
 // 為什麼（AGENTS.md「P0 出口驗證要難作假」，開發者 11/23）：P0 工具由 Claude 寫、Claude 跑、Claude 報結果。
 //   工具在本機改鬆（例如判斷少一條）再跑，報告照樣 pass、照樣綁同一個 AAB，送審閘門看不出來。
 // 做法：每支 P0 工具把自己和它載入的共用模組的內容雜湊寫進報告（toolPins）；p0-gate.js 用 git 讀 origin/main 那一版算同一種雜湊來比。
-//   雜湊＝去掉 CR 後內容的 SHA-256：Windows 工作區 core.autocrlf=true 是 CRLF、倉庫是 LF，沒改過也不會被誤判；
-//   不靠 git，所以在建包的工作資料夾（不是 git 倉庫）裡跑工具也算得出來。
+//   雜湊＝CRLF 換成 LF 後內容的 SHA-256：Windows 工作區 core.autocrlf=true 是 CRLF、倉庫是 LF，沒改過也不會被誤判；
+//   單獨的 CR 會改變程式意義，保留下來讓雜湊不同（PR #66 複審②）。不靠 git，所以在建包的工作資料夾（不是 git 倉庫）裡跑工具也算得出來。
+// 保證範圍（PR #66 複審①）：雜湊是工具自己算、自己填的。擋得住「忘了切回 main 版」「本機改了、沒開 PR 就跑」這類非刻意的情況；
+//   擋不住刻意偽造（改過的工具可以直接寫出 main 版的雜湊）。要擋這種，得由 CI 用 main 版工具重算（PR③，規劃中）。
 "use strict";
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 
@@ -18,13 +20,13 @@ const TOOL_FILES = {
 };
 const HEX64 = /^[0-9a-f]{64}$/;
 
-/* 去掉 CR 後的 SHA-256 */
-const normSha = (buf) => crypto.createHash("sha256").update(Buffer.from(String(Buffer.isBuffer(buf) ? buf.toString("utf8") : buf).replace(/\r/g, ""), "utf8")).digest("hex");
+/* CRLF 換成 LF 後的 SHA-256（單獨的 CR 保留） */
+const normSha = (buf) => crypto.createHash("sha256").update(Buffer.from(String(Buffer.isBuffer(buf) ? buf.toString("utf8") : buf).replace(/\r\n/g, "\n"), "utf8")).digest("hex");
 
-/* 工具執行時呼叫：回傳 { "source/xiangqi-android/scripts/xxx.js": 雜湊, … }（讀這支模組旁邊的檔，也就是實際被載入的那一份） */
-function pinsFor(tool, dir = __dirname) {
+/* 工具執行時呼叫：回傳 { "source/xiangqi-android/scripts/xxx.js": 雜湊, … }（一律讀這支模組旁邊、實際被載入的那一份；PR #66 複審①：不給指定資料夾，免得指到乾淨的副本） */
+function pinsFor(tool) {
   const out = {};
-  for (const f of TOOL_FILES[tool] || []) { try { out[DIR + f] = normSha(fs.readFileSync(path.join(dir, f))) } catch (e) { out[DIR + f] = null } }
+  for (const f of TOOL_FILES[tool] || []) { try { out[DIR + f] = normSha(fs.readFileSync(path.join(__dirname, f))) } catch (e) { out[DIR + f] = null } }
   return out;
 }
 

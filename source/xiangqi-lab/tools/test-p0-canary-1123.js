@@ -14,10 +14,10 @@ const { required: HOME_REQUIRED } = require(path.join(AND, "bundle-home-assets.j
 const A = "a".repeat(64), K = "c".repeat(64), V = "20261123-0900";
 const MAIN = (p) => TP.normSha(fs.readFileSync(path.join(AND, path.basename(p))));
 const G = (reps, w = [], mainSha = MAIN) => gate(A, V, reps, w, { mainSha });
-const d3 = (android, o = {}) => ({ file: "3d-" + android, json: Object.assign({ tool: "P0-3D", aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D", AND) }, o) });
-const c3 = (android, o = {}) => ({ file: "3dc-" + android, json: Object.assign({ tool: "P0-3D", selfTest: true, aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D", AND) }, o) });
-const img = (o = {}) => ({ file: "img", json: Object.assign({ tool: "P0-IMG", aabSha256: A, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, canary: { home: true, stale: true, cdn404: true, ok: true }, toolPins: TP.pinsFor("P0-IMG", AND) }, o) });
-const upd = (o = {}) => ({ file: "upd", json: Object.assign({ tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD", AND) }, o) });
+const d3 = (android, o = {}) => ({ file: "3d-" + android, json: Object.assign({ tool: "P0-3D", aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D") }, o) });
+const c3 = (android, o = {}) => ({ file: "3dc-" + android, json: Object.assign({ tool: "P0-3D", selfTest: true, aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") }, o) });
+const img = (o = {}) => ({ file: "img", json: Object.assign({ tool: "P0-IMG", aabSha256: A, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, canary: { home: true, stale: true, cdn404: true, ok: true }, toolPins: TP.pinsFor("P0-IMG") }, o) });
+const upd = (o = {}) => ({ file: "upd", json: Object.assign({ tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") }, o) });
 const all = () => [img(), upd(), d3("12"), d3("16"), c3("12"), c3("16")];
 const has = (r, re) => r.problems.some((p) => re.test(p));
 const W = (code) => [{ code, aabSha256: A, reason: "測試用豁免", decidedBy: "開發者", decidedAt: "2026-11-23" }];
@@ -34,7 +34,7 @@ test("工具鎖定：清單跟三支工具實際 require 的共用模組一致�
 test("工具鎖定：雜湊去掉 CR 才算（CRLF 工作區沒改過不誤判）；缺雜湊、跟 main 不同、讀不到 main、多記檔 → 都擋", () => {
   assert.equal(TP.normSha("a\r\nb\r\n"), TP.normSha("a\nb\n"));
   assert.notEqual(TP.normSha("a\nb\n"), TP.normSha("a\nc\n"));
-  const pins = TP.pinsFor("P0-IMG", AND);
+  const pins = TP.pinsFor("P0-IMG");
   assert.deepEqual(TP.checkPins("P0-IMG", pins, MAIN), []);
   assert.match(TP.checkPins("P0-IMG", null, MAIN)[0], /沒有記工具雜湊/);
   const p2 = { ...pins, [TP.DIR + "check-aab-assets.js"]: "f".repeat(64) };
@@ -162,4 +162,20 @@ test("閘門（PR #66 審查建議）：同一個 Android 版本，3D 金絲雀�
   const L = all(); L[4].json.apkSha256 = "d".repeat(64);
   assert.ok(has(G(L), /P0-3D 金絲雀（Android 12）：測的 APK.*跟正式報告.*不是同一個/));
   assert.equal(G(all()).ok, true);
+});
+
+test("PR #66 複審：單獨的 CR 會改變程式意義，雜湊要不同；pinsFor 不接受指定資料夾；金絲雀①②要因為對的那條原因判出", () => {
+  const CR = String.fromCharCode(13), LF = String.fromCharCode(10);
+  assert.equal(TP.normSha("a" + CR + LF + "b"), TP.normSha("a" + LF + "b"), "CRLF 跟 LF 一樣");
+  assert.notEqual(TP.normSha("return" + CR + " red ? 1 : 0"), TP.normSha("return red ? 1 : 0"), "單獨的 CR 保留：雜湊要不同");
+  assert.match(rd("tool-pin.js"), /\nfunction pinsFor\(tool\) \{/, "pinsFor 只收工具名稱，不能指到別的資料夾（有預設值的參數不算進 length，所以比對原始碼）");
+  assert.match(rd("tool-pin.js"), /readFileSync\(path\.join\(__dirname, f\)\)/);
+  /* 首頁檢查壞掉、但媒體那條把同一個首頁檔判成「直接破」：金絲雀①不能算抓到 */
+  const need = new Map([["data/a.webp", { size: 10, h: "aaaaaaaa" }]]);
+  const pack = new Set(["data/a.webp", ...HOME_REQUIRED.map((x) => "data/" + x)]);
+  const sha = (f) => (f === "data/a.webp" ? "aaaaaaaa" : "x"), native = { cdnFallback: false, partsJoin: true };
+  const wrongReason = (n, h, s, nat) => { const r = CA.classify(n, h, s, nat); r.red = r.red.map((x) => /首頁離線必要素材/.test(x.why) ? { ...x, why: "不在安裝包裡，原生又不會向 CDN 補抓：圖片／音樂直接破（W21）" } : x); return r };
+  assert.equal(CA.canaryChecks(need, (f) => pack.has(f), sha, native, wrongReason).home, false);
+  const wrongStale = (n, h, s, nat) => { const r = CA.classify(n, h, s, nat); r.red = r.red.map((x) => /跟清單不符/.test(x.why) ? { ...x, why: "別的原因" } : x); return r };
+  assert.equal(CA.canaryChecks(need, (f) => pack.has(f), sha, native, wrongStale).stale, false);
 });

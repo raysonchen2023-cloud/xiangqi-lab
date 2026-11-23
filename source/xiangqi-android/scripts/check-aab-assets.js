@@ -181,10 +181,10 @@ function canaryChecks(need, has, sha1Of, native, cls = classify) {   /* cls 可�
      兩者都沒有才算不成立（寧可擋）。真實狀態有 ✘ 本來就不能送審 */
   const real = cls(need, has, sha1Of, native).red;
   const hf = HOME_REQUIRED.map(x => "data/" + x).find(f => has(f));
-  if (hf) { out.homeFile = hf; out.home = cls(need, f => f !== hf && has(f), sha1Of, native).red.some(x => x.f === hf) }
+  if (hf) { out.homeFile = hf; out.home = cls(need, f => f !== hf && has(f), sha1Of, native).red.some(x => x.f === hf && /首頁離線必要素材/.test(x.why)) }   /* PR #66 複審③：要因為首頁那條判出，別條判斷把同一個檔判錯不算 */
   else if (real.some(x => /首頁離線必要素材/.test(x.why))) { out.homeFile = "（包裡本來就缺，真實結果已判出）"; out.home = true }
   const sf = [...need].find(([f, n]) => n.h && has(f) && sha1Of(f) === n.h);
-  if (sf) { out.staleFile = sf[0]; out.stale = cls(need, has, f => f === sf[0] ? "00000000" : sha1Of(f), native).red.some(x => x.f === sf[0]) }
+  if (sf) { out.staleFile = sf[0]; out.stale = cls(need, has, f => f === sf[0] ? "00000000" : sha1Of(f), native).red.some(x => x.f === sf[0] && /跟清單不符/.test(x.why)) }
   else if (real.some(x => /跟清單不符/.test(x.why))) { out.staleFile = "（包裡本來就不符，真實結果已判出）"; out.stale = true }
   return out;
 }
