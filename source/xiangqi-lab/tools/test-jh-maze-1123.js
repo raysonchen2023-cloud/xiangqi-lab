@@ -227,6 +227,20 @@ test("專屬配樂：出迷宮回到進去前那一首（不重新挑歌）；�
   assert.deepEqual(b.log, ["force:maze/maze_1.mp3", "force:null", "sync:true"], "進去前是別頁指定配樂：不記原曲，照舊 bgmForce(null)");
 });
 
+test("代號表 flags-codes.json 的 maze 跟程式一致：中炮門、入口鍵相同；開著用代號表的選擇器找得到入口、關掉找不到；別的代號關掉不影響迷宮入口", () => {
+  const T = JSON.parse(fs.readFileSync(path.join(ROOT, "xiangqi-lab", "tools", "flags-codes.json"), "utf8"));
+  const x = T.codes.find((y) => y.code === "maze");
+  assert.ok(x && x.entry, "代號表有 maze、寫了管哪個入口"); assert.equal(x.sid, "central");
+  const sel = `.jh-hall-spot[data-k="${x.spot}"]`;
+  const A = load({ hall: true }); withDoc(A.c); const p = hallPage(); A.c.JhHall(p.v, x.sid);
+  assert.equal(p.kids.length, 1); assert.equal(p.kids[0].dataset.k, x.spot, "程式放的入口鍵＝代號表的 spot");
+  assert.ok(p.v.querySelector(".jh-hall").querySelector(sel), "開著時找得到入口");
+  const B = load({ hall: true, off: [x.code] }); withDoc(B.c); const r = hallPage(); B.c.JhHall(r.v, x.sid);
+  assert.equal(r.v.querySelector(".jh-hall").querySelector(sel), null, "關掉 maze 後入口不見");
+  const D = load({ hall: true, off: T.codes.map((y) => y.code).filter((k) => k !== "maze") }); withDoc(D.c); const s = hallPage(); D.c.JhHall(s.v, x.sid);
+  assert.equal(s.kids.length, 1, "halls8、八派玩法全部關掉，迷宮入口照放");
+});
+
 test("〔原始碼〕07z9m-maze.js：LF、沒有控制字元、沒有行內 // 註解；m.html 有登記、排在 07z9l-halls.js 後面（包得到八派的 JhHall）", () => {
   assert.ok(!SRC.includes("\r"));
   assert.ok(!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(SRC));

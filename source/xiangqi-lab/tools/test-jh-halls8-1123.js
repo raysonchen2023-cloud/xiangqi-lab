@@ -56,8 +56,10 @@ test("W72 代號表 flags-codes.json 跟程式一致：halls8＋八派各一個 
   assert.ok(T.codes.find((x) => x.code === "halls8").check.length >= 2, "halls8 寫了關掉後怎麼確認");
   assert.match(T.playCheck, /\.jh-hall-spot\[data-k=/, "play_<派> 寫了關掉後怎麼確認（選擇器）");
   for (const x of T.codes.filter((y) => y.sid)) assert.ok(x.entry && x.spot, x.code + " 寫了管哪個入口");
-  assert.deepEqual(codes, ["halls8", ...SIDS.map((s) => "play_" + s)].sort());
-  for (const x of T.codes.filter((y) => y.sid)) {
+  /* 11/23 W71：代號表多了 maze（中炮門迷宮入口，test-jh-maze-1123.js 驗它）。這裡只驗八派，集合寫死、不能多也不能少 */
+  assert.deepEqual(codes, ["halls8", "maze", ...SIDS.map((s) => "play_" + s)].sort());
+  assert.ok(T.codes.findIndex((y) => y.sid) === T.codes.findIndex((y) => y.sid && y.code.startsWith("play_")), "第一個帶 sid 的項要是 play_<派>（halls8 判法拿它當八派代表）");
+  for (const x of T.codes.filter((y) => y.sid && y.code !== "maze")) {
     assert.equal(x.code, "play_" + x.sid); assert.equal(c.JH_HALLS8[x.sid].play.k, x.spot, x.sid + " 入口鍵");
     const L = load({ flags: { off: [x.code] } }), p = page(x.sid); L.c.JhHall(p.v, x.sid);
     assert.equal(p.P.querySelector(`.jh-hall-spot[data-k="${x.spot}"]`), null, x.code + " 關掉後入口不見");
