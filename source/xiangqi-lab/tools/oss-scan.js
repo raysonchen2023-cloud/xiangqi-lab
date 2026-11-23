@@ -43,7 +43,9 @@ const NAME_RULES = [
   { id: "secret-file", risk: "high", what: "金鑰／帳密檔", re: /(?:^|\/)(?:\.xiangqi-[^\/]*|\.cup-key[^\/]*|[^\/]*\.pem|[^\/]*\.key|id_rsa[^\/]*|id_ed25519[^\/]*|\.env(?:\.[^\/]*)?|mqtt-config\.json|remote-key\.json|[^\/]*\.p12|[^\/]*\.pfx|[^\/]*\.keystore|[^\/]*\.jks|credentials\.json|service-account[^\/]*\.json|\.npmrc|\.netrc)$/i, fix: "從要公開的資料夾移除" },
   { id: "data-log", risk: "medium", what: "收集來的紀錄檔（.jsonl／.log）", re: /\.(?:jsonl|log)$/i, fix: "確認不是玩家資料" },
 ];
-const TEXT_EXT = /\.(?:js|mjs|cjs|ts|json|jsonl|md|txt|html?|css|py|gs|ps1|sh|yml|yaml|svg|csv|xml|ini|cfg|toml|env|log)$|^[^.]+$|^\.[^.]+$/i;
+/* W69 盤點中 16（PR #68 審查④）：補上原生程式與建置設定（Android：kt、java、gradle、properties；iOS：swift、plist、xcconfig、pbxproj、
+   entitlements、storyboard、xib、strings、m、h），還有 jsx、tsx、bat、cmd；原本這些連高風險都不掃 */
+const TEXT_EXT = /\.(?:js|mjs|cjs|ts|jsx|tsx|json|jsonl|md|txt|html?|css|py|gs|ps1|bat|cmd|sh|yml|yaml|svg|csv|xml|ini|cfg|conf|toml|env|log|kt|kts|java|gradle|properties|pro|swift|m|mm|h|c|cc|cpp|plist|xcconfig|pbxproj|entitlements|storyboard|xib|strings|xcscheme|xcworkspacedata|resolved)$|^[^.]+$|^\.[^.]+$/i;
 
 const mask = (s, isEmail) => {
   if (isEmail) { const [u, d] = s.split("@"); return u[0] + "***@" + d }
@@ -103,7 +105,9 @@ function loadPublic(dir) {
 
 function scan(dir, opts = {}) {
   const allow = opts.allow || [], known = opts.known || [], pub = opts.publicTexts || null, findings = [];
-  const allowed = (rule, rel, match) => allow.find(a => (!a.rule || a.rule === rule) && (!a.file || rel.endsWith(a.file)) && (!a.match || String(match).includes(a.match)));
+  /* file 要對到整段路徑（一模一樣，或前面剛好是 /）：放行 data/docs/privacy.md 不會順便放行 releases/metadata/docs/privacy.md（PR #68 審查⑥） */
+  const fileOk = (rel, f) => rel === f || rel.endsWith("/" + f);
+  const allowed = (rule, rel, match) => allow.find(a => (!a.rule || a.rule === rule) && (!a.file || fileOk(rel, a.file)) && (!a.match || String(match).includes(a.match)));
   const isPublic = s => !!pub && pub.some(t => t.includes(s));
   const push = (rule, rel, line, match, extra = {}) => {
     const a = allowed(rule.id, rel, match);
@@ -115,7 +119,9 @@ function scan(dir, opts = {}) {
     for (const r of NAME_RULES) if (r.re.test(f.rel)) push(r, f.rel, 0, path.basename(f.rel), { shown: path.basename(f.rel) });
     const name = path.basename(f.rel);
     const buf = fs.readFileSync(f.abs);
-    if (isBinary(buf) || !TEXT_EXT.test(name)) continue;
+    /* 文字副檔名的檔一律掃，裡面有 NUL 也照掃（PR #68 審查④：開頭塞一個 NUL 就整支略過）；其他副檔名才看是不是二進位 */
+    if (!TEXT_EXT.test(name)) continue;
+    if (/^\.?[^.]+$/.test(name) && isBinary(buf)) continue;   /* 沒有副檔名的才看內容：引擎執行檔這類二進位不當文字掃 */
     const s = buf.toString("utf8"), starts = [0];
     for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) === 10) starts.push(i + 1);
     const lineOf = idx => { let lo = 0, hi = starts.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (starts[m] <= idx) lo = m; else hi = m - 1 } return lo + 1 };

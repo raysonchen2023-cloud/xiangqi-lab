@@ -1,18 +1,36 @@
 {
- "note": "私密掃描補強（scan-changed.cjs）的放行清單（W69 流程盤點中 16，2026-11-23）。改到的檔有中風險時，只有列在這裡的不擋。每筆要有 rule（oss-scan 的規則）、file（路徑結尾）或 match（掃到的字的一部分）至少一個、reason（至少 4 個字）；不准整條規則全放行。改這份要走 PR、改 .github/ 一律逐行審；不要把個資本身寫進來（信箱這類用 file 限定檔案，不寫地址）。",
+ "note": "私密掃描補強（scan-changed.cjs）的放行清單（W69 流程盤點中 16，2026-11-23；PR #68 審查後收緊）。改這份要走 PR、改 .github/ 一律逐行審；不要把個資本身寫進來（信箱這類用 file 限定檔案，不寫地址）。items：改到的檔有中、低風險時只有列在這裡的不擋；rule 只准中、低風險規則（高風險不准放行），file（完整路徑或路徑結尾，要對到 / 邊界）或 match（至少 6 個字）至少一個，reason 至少 4 個字。inline：行內放行標記（那一行整個不掃）一律要登記檔名＋那一行去掉前後空白後的 SHA-256＋理由，沒登記就擋；scan-changed 沒登記時會印出要貼的那一筆。",
  "items": [
   { "rule": "google-endpoint", "match": "script.google.com/macros/s/AKfycbxl", "reason": "App 送意見回饋用的 Apps Script 網址，本來就在 App 裡公開（02-shell.js、組出的 index.html）" },
   { "rule": "google-endpoint", "match": "docs.google.com/forms/d/e/1FAIpQLScxK1rQ", "reason": "App 設定頁的意見回饋表單，本來就公開（05-settings.js、組出的 index.html）" },
-  { "rule": "ntfy-topic", "match": "ntfy.sh/xqlab-", "reason": "App 內建的通知頻道前綴，本來就在 App 裡（local.js）" },
-  { "rule": "mqtt-credentials", "match": "xqapp", "reason": "App 連線大廳用的公開帳號 xqapp：會跟著 App 程式公開，伺服器端只准 xqlab-…／+/v1/… 頻道（net.js 註解）" },
-  { "rule": "password-assign", "match": "xqapp", "reason": "同上：公開帳號 xqapp 的密碼本來就在 App 裡，伺服器端限權限" },
+  { "rule": "ntfy-topic", "file": "local.js", "match": "ntfy.sh/xqlab-", "reason": "App 內建的通知頻道前綴，本來就在 App 裡（local.js）" },
+  { "rule": "mqtt-credentials", "file": "net.js", "match": "user:\"xqapp\"", "reason": "App 連線大廳用的公開帳號 xqapp：會跟著 App 程式公開，伺服器端只准 xqlab-…／+/v1/… 頻道（net.js 註解）" },
+  { "rule": "password-assign", "file": "net.js", "match": "pass:\"xqapp", "reason": "同上：公開帳號 xqapp 的密碼本來就在 App 裡，伺服器端限權限" },
   { "rule": "email", "file": "data/docs/privacy.md", "reason": "隱私權政策上的客服聯絡信箱，上架資料本來就公開" },
   { "rule": "email", "file": "data/docs/support.md", "reason": "客服頁的聯絡信箱，上架資料本來就公開" },
+  { "rule": "email", "file": "privacy.html", "reason": "網站隱私權頁（根目錄與 source/xiangqi-lab/src/）的客服聯絡信箱，上架資料本來就公開" },
+  { "rule": "email", "file": "support.html", "reason": "網站客服頁（根目錄與 source/xiangqi-lab/src/）的聯絡信箱，上架資料本來就公開" },
   { "rule": "email", "file": "xiangqi-android/fdroid/com.raysonchen.xiangqiqianqiu.yml", "reason": "F-Droid 上架資料的作者聯絡信箱，本來就公開" },
   { "rule": "email", "file": "xiangqi-lab/tools/test-support-pages-1117.js", "reason": "測試客服頁與隱私頁有寫聯絡信箱（同上那個公開信箱）" },
+  { "rule": "email", "file": "data/kaiju.json", "reason": "古譜資料原文裡錄入人留下的聯絡信箱（第三方、原始來源公開）；要不要從資料拿掉待開發者決定" },
+  { "rule": "email", "file": "data/shiqingyaqu.json", "reason": "古譜資料原文裡錄入人留下的聯絡信箱（第三方、原始來源公開）；要不要從資料拿掉待開發者決定" },
+  { "rule": "local-path", "file": "engine/pikafish.js", "match": "/home/web_user", "reason": "誤判：Emscripten 編出來的引擎在瀏覽器裡的虛擬檔案系統路徑，不是誰的電腦" },
+  { "rule": "password-assign", "file": "src/benchmark.cpp", "match": "token : \"default\"", "reason": "誤判：Pikafish 上游原始碼的變數名 token，值是 default" },
+  { "rule": "phone-tw", "file": "pikafish-src/full/SHA256SUMS-PACK", "reason": "誤判：Pikafish 原始碼包的雜湊值裡剛好有 09 開頭的十位數字" },
+  { "rule": "data-log", "file": "pikafish-src/full/rebuild-evidence/build.log", "reason": "GPL 對應原始碼要附的 Pikafish 建置紀錄（公開的可重現證據），不是玩家資料" },
   { "rule": "phone-tw", "file": "xiangqi-android/android/gradle/verification-metadata.xml", "reason": "誤判：Gradle 依賴的雜湊值裡剛好有 09 開頭的十位數字，不是電話" },
   { "rule": "phone-tw", "file": "xiangqi-lab/tools/redblue-cases.js", "reason": "名稱過濾的反例清單：故意放的假電話 0912…，要確認會被擋" },
   { "rule": "phone-tw", "file": "xiangqi-lab/tools/test-name-safe.js", "reason": "名稱過濾測試：故意放的假電話 0912…，要確認會被擋" },
-  { "rule": "phone-tw", "file": "xiangqi-lab/tools/test-r25-1117.js", "reason": "名稱過濾測試：故意放的假電話 0912…，要確認會被擋" }
+  { "rule": "phone-tw", "file": "xiangqi-lab/tools/test-r25-1117.js", "reason": "名稱過濾測試：故意放的假電話 0912…，要確認會被擋" },
+  { "rule": "local-path", "file": ".github/oss-allow.json", "match": "/home/web_user", "reason": "放行清單自己寫了上面那一筆要放行的字樣" },
+  { "rule": "ntfy-topic", "file": ".github/oss-allow.json", "match": "ntfy.sh/xqlab-", "reason": "放行清單自己寫了上面那一筆要放行的字樣" }
+ ],
+ "inline": [
+  { "file": "data/docs/evidence.md", "sha256": "1126d7a0e3c8318f7a29a865690feb465340e16bdfb6923609f4656d52fd54ca", "reason": "驗證紀錄頁列出 test-oss-scan 的測試名稱，名稱裡提到放行標記；不是要略過掃描" },
+  { "file": "source/xiangqi-lab/tools/oss-scan.js", "sha256": "42d24eb8f9581d6bab9d01fd2e38d1457b999d4326e5ae5bdfd304febf291fb3", "reason": "掃描工具自己的用法說明，提到放行標記" },
+  { "file": "source/xiangqi-lab/tools/test-oss-scan.js", "sha256": "aea25225de7b0f5339c915cacae2557a823192449af7dd751c5fe1dea0cadfb0", "reason": "掃描工具測試的檔頭說明，提到放行標記" },
+  { "file": "source/xiangqi-lab/tools/test-oss-scan.js", "sha256": "a4338290253b29de1b0b2849606e850bec7d7d770262ca902b06ef33f16a5cbf", "reason": "掃描工具測試：假的 Cloudflare token 鍵名，用拼的組出來測規則，不是真的金鑰" },
+  { "file": "source/xiangqi-lab/tools/test-oss-scan.js", "sha256": "b79d7d73b2a06b4658f3b28bac6a6fd61c0bb091c6c9bc50f23355ea9a4af79b", "reason": "掃描工具測試的測試名稱，提到放行標記" },
+  { "file": "source/xiangqi-lab/tools/test-oss-scan.js", "sha256": "f44c83cecb597e7f111331bda18229c19dd28c1030ed7597d4ae69c73d73297c", "reason": "掃描工具測試：要驗證行內放行標記會略過那一行，用的是假資料" }
  ]
 }
