@@ -30,10 +30,11 @@ function world(hash) {
     Date: class extends Date { static now() { return clock.t } }, JSON, String, Math, Object, Array, setTimeout: () => 0,
     upTo: (h) => ups.push(h), toast() {}, CNUM: (n) => String(n),
     jRunGet: () => null, jFindStage: () => null, jChapterHref: () => "#/shelf/1", gxtBhBack: () => "#/adventure",
-    jhL: (zh) => zh, jhSch: (s) => ({ central: { nm: "中炮門" }, horse: { nm: "起馬門" }, screen: { nm: "屏風馬門" } }[s] || null),
+    jhL: (zh, en) => (c.__en ? en : zh), jhSch: (s) => ({ central: { nm: c.__en ? "Central Cannon School" : "中炮門" }, horse: { nm: c.__en ? "Horse Opening School" : "起馬門" }, screen: { nm: c.__en ? "Screen Horse School" : "屏風馬門" } }[s] || null),
+    jhNm: (x) => ({ x_swordboy: c.__en ? "Sword Boy" : "劍童" }[x] || x),
     oscL: (zh) => zh,
     INN: [{ id: "i1" }], SECRETS: [{ id: "s1" }], innLvN: () => 3, innRlv: () => null, secretLv: () => 5, parkNpcLv: () => 3, JH_MATE_KEEP_MS: 45000,
-    ptyGet: () => ({ look: "x_swordboy" }), PTY: { has: () => true }, zmGet: () => ({}), zmArgs: () => ({ human: "r" }),
+    ptyGet: () => ({ look: "x_swordboy" }), PTY: { has: () => true, ORDER: ["x_swordboy"] }, zmGet: () => ({}), zmArgs: () => ({ human: "r" }),
     OSC: { zmRlv: () => 0, MST: [{ id: "m1", sid: "screen" }], side: () => "r" }, jhKickOf: () => ({ a: "central", b: "screen", fen: "x" }),
     JH_SCR_J: "jh:guard:screen", JH_SCR_GUARD: { fen: "x", turn: "b", limit: 10 },
   };
@@ -75,7 +76,9 @@ test("挑戰掌門、十州踢館：照開局當下所在的頁面（長卷＝�
   const A = world("#/jianghu"); A.T.zmStart({ id: "m1", pre: "" }, "x_swordboy"); A.c.location.hash = "#/journey/play";
   assert.deepEqual([A.T.jBack("inn:m1"), A.T.jPlace("inn:m1")], ["#/jianghu", "十州棋館"]);
   const B = world("#/school/x_swordboy"); B.T.zmStart({ id: "m1", pre: "" }, "x_swordboy"); B.c.location.hash = "#/journey/play";
-  assert.deepEqual([B.T.jBack("inn:m1"), B.T.jPlace("inn:m1")], ["#/school/x_swordboy", "門派修行"]);
+  assert.deepEqual([B.T.jBack("inn:m1"), B.T.jPlace("inn:m1")], ["#/school/x_swordboy", "劍童的門派"]);
+  const Z = world("#/school/masters"); Z.T.zmStart({ id: "m1", pre: "" }, "x_swordboy"); Z.c.location.hash = "#/journey/play";
+  assert.deepEqual([Z.T.jBack("inn:m1"), Z.T.jPlace("inn:m1")], ["#/school/masters", "十派掌門"], "從十派掌門頁開掌門局：寫十派掌門、回十派掌門頁（#76 第二輪審查）");
   const K = world("#/jianghu/hall/central"); K.T.jhKickStart("central>screen", "x_swordboy"); K.c.location.hash = "#/journey/play";
   assert.deepEqual([K.T.jBack("inn:m1"), K.T.jPlace("inn:m1")], ["#/jianghu/hall/central", "中炮門"]);
   const H = world("#/port"); H.T.zmStart({ id: "m1", pre: "" }, "x_swordboy");
@@ -103,12 +106,24 @@ test("紀錄 12 小時後失效；網址不是 #/ 開頭的不採用", () => {
   const B = world(); B.T.jRetSet("park", "javascript:alert(1)", "x"); B.T.jRetTake("park"); assert.equal(B.T.jBack("park"), "#/port");
 });
 
+test("英文介面：派名不截斷，開局後才換語言也跟著變（#76 第二輪審查：原本存死、截成 12 字）", () => {
+  const { T, c } = world("#/jianghu/hall/central"); T.jhMatePlay({ can: true, kind: "npc", id: "w15" }, "central"); c.location.hash = "#/journey/play";
+  assert.equal(T.jPlace("park"), "中炮門");
+  c.__en = true;
+  assert.equal(T.jPlace("park"), "Central Cannon School"); assert.equal(T.jParkBackBtn()[0], "‹ 回Central Cannon School");
+  const E = world("#/school/masters"); E.c.__en = true; E.T.zmStart({ id: "m1", pre: "" }, "x_swordboy"); E.c.location.hash = "#/journey/play";
+  assert.equal(E.T.jPlace("inn:m1"), "Ten School Masters");
+  const L = world(); L.T.jRetSet("park", "#/port/somewhere", "A Very Long Place Name Over Twelve"); L.T.jRetTake("park");
+  assert.equal(L.T.jPlace("park"), "A Very Long Place Name Over Twelve", "算不出名字時用存的，而且不截斷");
+});
+
 test("返回鍵的字：bkName 對十州棋館、門內頁、門派修行寫名字（門內頁寫派名），其他頁照舊", () => {
   const m = SH.match(/function bkName\(h\)\{[\s\S]*?\n  let n="";[^\n]*\n/); assert.ok(m);
   const w = world();
   const c = { navKey: (h) => String(h).replace(/^#/, ""), BK_NAME: [["/port", "渡口"]], usePlace: () => "", xqHubName: () => "", jhRetPlace: w.T.jhRetPlace };
   vm.createContext(c); vm.runInContext(m[0] + ";this.bkName=bkName;", c);
-  assert.equal(c.bkName("#/jianghu/hall/central"), "中炮門"); assert.equal(c.bkName("#/jianghu"), "十州棋館"); assert.equal(c.bkName("#/school/x"), "門派修行"); assert.equal(c.bkName("#/port"), "渡口");
+  assert.equal(c.bkName("#/jianghu/hall/central"), "中炮門"); assert.equal(c.bkName("#/jianghu"), "十州棋館"); assert.equal(c.bkName("#/school/x"), "門派修行");
+  assert.equal(c.bkName("#/school"), "開局棋路"); assert.equal(c.bkName("#/school/masters"), "十派掌門"); assert.equal(c.bkName("#/school/x_swordboy"), "劍童的門派"); assert.equal(c.bkName("#/school/x_swordboy/central_01"), "劍童的門派"); assert.equal(c.bkName("#/port"), "渡口");
 });
 
 test("〔原始碼〕jStart 第一件事核對來處；對局頁頂端返回鍵先看來處；園子結算視窗用 jParkBackBtn；jBack 原本的開頭照舊（test-fb897）", () => {

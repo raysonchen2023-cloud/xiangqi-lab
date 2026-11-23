@@ -512,14 +512,16 @@ function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(Str
    jBack／jPlace／對局頁頂端返回鍵（08b）／園子結算的「‹ 回渡口」（jParkBackBtn）都先看 jRetOf；12 小時後紀錄失效。
    iMac Claude 1 審查（#76）：jBack／jPlace 不改名、不包一層（test-fb897 逐字比對原本的開頭），來處判斷插在園子、驛站分支前面。 */
 let JRET_ARM=null;
-function jRetSet(j,back,place){try{store.set("jRet",{j:String(j),back:String(back),place:String(place||"").slice(0,12),t:Date.now()})}catch(e){}JRET_ARM=String(j)}
+function jRetSet(j,back,place){try{store.set("jRet",{j:String(j),back:String(back),place:String(place||"").slice(0,80),t:Date.now()})}catch(e){}JRET_ARM=String(j)}
+/* #76 第二輪審查：名稱在顯示時用網址當場算（英文派名不截斷、中途換語言也跟著變）；算不出來才用開局當下存的 */
+function jRetName(r){if(!r)return"";try{const n=typeof jhRetPlace==="function"?jhRetPlace(r.back):"";if(n)return n}catch(e){}return r.place||""}
 function jRetOf(j){try{const r=store.get("jRet",null);if(r&&r.j===String(j)&&Date.now()-r.t<12*3600e3&&/^#\//.test(r.back))return r}catch(e){}return null}
 function jRetTake(id){const a=JRET_ARM;JRET_ARM=null;try{const r=store.get("jRet",null);if(!r)return;if(a===String(id))return;
   if(r.j===String(id)&&typeof navKey==="function"&&navKey(location.hash)==="/journey/play")return;store.set("jRet",null)}catch(e){}}
 /* 園子結算視窗的返回鈕（08b）：有來處就「‹ 回中炮門」回門內頁，沒有就照舊「‹ 回渡口」。upTo＝回那一層 */
-function jParkBackBtn(){const r=jRetOf("park");return r?["‹ 回"+(r.place||"門派"),()=>upTo(r.back)]:["‹ 回渡口",()=>upTo("#/port")]}
+function jParkBackBtn(){const r=jRetOf("park");return r?["‹ 回"+(jRetName(r)||"門派"),()=>upTo(r.back)]:["‹ 回渡口",()=>upTo("#/port")]}
 const jBack=j=>String(j||"").startsWith("gx:")?"#/adventure":String(j||"").startsWith("gxd:")?"#/guanxing":String(j||"").startsWith("bh:")?(typeof gxtBhBack==="function"?gxtBhBack(j):"#/adventure"):String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":jRetOf(j)?jRetOf(j).back:j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();   /* 11/16 開發者：gxd:＝觀星臺的今日異象、自由擺陣（07gxd-daily.js），返回鈕回觀星臺（jPlace 叫「觀星臺」） */
-const jPlace=j=>String(j||"").startsWith("gx:")?"幻譜星門":String(j||"").startsWith("gxd:")?"觀星臺":String(j||"").startsWith("bh:")?"星槎":String(j||"").startsWith("bt:")?"古戰場":jRetOf(j)&&jRetOf(j).place?jRetOf(j).place:j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
+const jPlace=j=>String(j||"").startsWith("gx:")?"幻譜星門":String(j||"").startsWith("gxd:")?"觀星臺":String(j||"").startsWith("bh:")?"星槎":String(j||"").startsWith("bt:")?"古戰場":jRetName(jRetOf(j))?jRetName(jRetOf(j)):j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
 /* 11/17 Windows 測試員 D P3-2：開新局時「石桌往事還有一盤沒下完」也用在觀星臺（今日異象、自由擺陣 gxd:）、星門圍城／黑洞（bh:）、幻譜星門（gx:）、古戰場（bt:）的局——
    這些局跟石桌往事共用同一格（/play 的 journey），一次只留一盤是真的，但不是石桌往事的局就不要寫石桌往事。字照「手上那一盤」是哪一類換。
    回合數：原本 Math.ceil(手數/2)，紅黑各走一步（2 手）還寫「第 1 回合」；改成「正要下的那一步在第幾回合」＝Math.floor(手數/2)+1（紅先），

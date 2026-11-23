@@ -654,7 +654,11 @@ function jhMateIntel(sid,M){const m=OSC.MST.find(x=>x.sid===sid);if(!m)return"";
 /* W80 開局來處（07-legend jRetSet）：從十州棋館、門內頁、門派修行頁開的棋局，返回鍵回到原來那一頁。
    jhRetPlace＝那一頁的名字（返回鍵、結束視窗「回 ○○」用）；jhRetHere＝照開局當下所在的頁面登記。 */
 function jhRetPlace(h){const k=typeof navKey==="function"?navKey(h||location.hash):String(h||location.hash).replace(/^#/,""),m=k.match(/^\/jianghu\/hall\/([a-z_]+)/);
-  if(m&&jhSch(m[1]))return jhSch(m[1]).nm;if(/^\/jianghu/.test(k))return jhL("十州棋館","Ten Prefectures");if(/^\/school/.test(k))return jhL("門派修行","School");return""}
+  if(m&&jhSch(m[1]))return jhSch(m[1]).nm;if(/^\/jianghu/.test(k))return jhL("十州棋館","Ten Prefectures");
+  /* #76 第二輪審查：照各頁 setTop 的標題命名（#/school＝開局棋路、#/school/masters＝十派掌門、#/school/<角色>＝某某的門派） */
+  if(k==="/school")return jhL("開局棋路","Opening Paths");if(/^\/school\/masters(\/|$)/.test(k))return jhL("十派掌門","Ten School Masters");
+  const c=(k.match(/^\/school\/([a-z_]+)/)||[])[1];if(c&&typeof PTY==="object"&&PTY&&Array.isArray(PTY.ORDER)&&PTY.ORDER.includes(c)){const nm=jhNm(c);return jhL(nm+"的門派",nm+"'s School")}
+  if(/^\/school/.test(k))return jhL("門派修行","School Training");return""}
 function jhRetHere(j){try{if(typeof jRetSet!=="function")return;const k=typeof navKey==="function"?navKey(location.hash):location.hash.replace(/^#/,"");
   if(!/^\/(jianghu|school)(\/|$)/.test(k))return;jRetSet(j,"#"+k,jhRetPlace("#"+k))}catch(e){}}
 function jhMatePlay(M,sid){if(!M||!M.can)return;
