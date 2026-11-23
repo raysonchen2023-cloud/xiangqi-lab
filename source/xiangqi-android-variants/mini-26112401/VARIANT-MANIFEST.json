@@ -1,0 +1,53 @@
+{
+ "schema": "xq-android-variant/1",
+ "name": "mini-26112401",
+ "kind": "封測小包（約 100 MB）",
+ "versionName": "20261123-1652-mini",
+ "versionCode": 26112401,
+ "siteVersion": "20261123-1652",
+ "webCommit": "c1ecf3fd8f9db36c936ecd607eaf66e04dfa6063",
+ "base": "source/xiangqi-android",
+ "androidNativeFixes": [
+  "retire-pwa-cache-recheck",
+  "no-cold-start-webview-prompt",
+  "local-3d-board-controls-docked",
+  "home-assets-bundled",
+  "cdn-fallback-cache",
+  "closed-test-mini",
+  "cdn-fallback-split-parts",
+  "purge-sw-registrations-before-webview",
+  "retire-old-app-cache-without-migration-page"
+ ],
+ "native": {
+  "android/app/build.gradle": "23f05d0573ed09817991130afcd87ea3af0b3d39087ac7658a170e732186b801",
+  "android/app/src/main/assets/capacitor.config.json": "d13eedae7e03645771f70893e739c3fba13b5cac95137ed8bab8c0786357e971",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/MainActivity.java": "b47650422ca3b69888497e153a6db4a7381132cb66ca878d35943f543282a98d",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQCdnFallback.java": "65c7b44113f4a17e5c23665754fbf889bbc4ea6fca34b44a29218a9c1c15e476",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQWebViewClient.java": "6b88b5d8e624f049f9ae061e136df4fd0f9e320e3978122d6bd9002a4165dd7b",
+  "android/settings.gradle": "d21530a3cc825c432fb616556ab36a226c4e8ffbc839a5c0f7d3f164e54454fa"
+ },
+ "sameAsBase": 60,
+ "notInThisBuild": [
+  "android/xq_art/build.gradle",
+  "android/xq_bgm/build.gradle",
+  "android/xq_games/build.gradle",
+  "android/xq_models/build.gradle"
+ ],
+ "missing": {},
+ "webRemove": [
+  "data/docs/evidence"
+ ],
+ "webRemoveNote": "封測小包：公開證據頁不放進安裝包（26112104、26112201 都這樣建）；scripts/build-variant.js 照這個欄位拿掉",
+ "web": {
+  "index.html.patch": {
+   "sha256": "f97a231d41dd6d863790e0fbbd36682ad576bee5c1ba20171a01dc84d5c11c01",
+   "appliesTo": "2ca12e10e84b3787dff8492803a8354fceca0944:index.html",
+   "hunks": 6
+  },
+  "swFrom": "source/xiangqi-android/scripts/native-sw.js（make-www.js 產生）",
+  "xq-native-migration.html": "174ac94c307c58005e524acea5aa4e2232da825a3488149f3dad57b2340a1ed9"
+ },
+ "aab": {
+  "note": "W88 驗證包建好後補；正式候選要等這個變體進網頁發布 tag 後再建"
+ }
+}
