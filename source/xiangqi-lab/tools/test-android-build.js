@@ -429,3 +429,25 @@ test("〔混合〕乾淨環境重建紀錄：全新 Gradle／npm 快取、全新
   }
   for (const k of ["npm ci", "make-www.js", "capacitor sync android", "assembleRelease bundleRelease", "-PxqSigning", "keytool -genkeypair", "Play App Signing", "verification-metadata.xml", "clean-rebuild.js"]) assert.ok(reb.includes(k), "REBUILD.md 缺 " + k);
 });
+
+test("〔原始碼〕W88（11/24 P0-UPD）：WebView 啟動前先刪舊 Service Worker 註冊（Database、ScriptCache），不刪 CacheStorage；共用版和最新封測變體都有", () => {
+  const rel = ["android", "app", "src", "main", "java", "com", "raysonchen", "xiangqiqianqiu", "MainActivity.java"];
+  /* 開發者電腦／公開倉庫的 source/ 底下，或 run-tests 暫存配置裡掛在 xiangqi-lab/site（＝倉庫根目錄）底下；都沒有就失敗（不略過） */
+  const VARS = [path.join(AND, "..", "xiangqi-android-variants"), path.join(LAB, "site", "source", "xiangqi-android-variants")].find((d) => fs.existsSync(path.join(d, "mini-26112401")));
+  assert.ok(VARS, "找得到 mini-26112401 變體");
+  const files = [path.join(AND, ...rel), path.join(VARS, "mini-26112401", ...rel)];
+  for (const f of files) {
+    assert.ok(fs.existsSync(f), f);
+    const s = fs.readFileSync(f, "utf8"), oc = s.slice(s.indexOf("public void onCreate("), s.indexOf("}", s.indexOf("public void onCreate(")));
+    assert.ok(!s.includes("\r"), f + " 要 LF");
+    const a = oc.indexOf("purgeServiceWorkerRegistrations(getDataDir())"), b = oc.indexOf("super.onCreate(");
+    assert.ok(a >= 0 && b > a, f + "：清註冊要在 super.onCreate（建立 WebView）之前");
+    assert.match(s, /new java\.io\.File\(dataDir, "app_webview\/Default\/Service Worker"\)/, f + " 路徑");
+    assert.match(s, /new String\[\] \{"Database", "ScriptCache"\}/, f + " 只刪註冊資料");
+    assert.ok(!/CacheStorage"/.test(s), f + "：不能刪 CacheStorage（素材、引擎快取）");
+  }
+  const VM = JSON.parse(fs.readFileSync(path.join(VARS, "mini-26112401", "VARIANT-MANIFEST.json"), "utf8"));
+  assert.ok(VM.androidNativeFixes.includes("purge-sw-registrations-before-webview"));
+  const crypto = require("crypto");
+  for (const [k, h] of Object.entries(VM.native)) assert.equal(crypto.createHash("sha256").update(fs.readFileSync(path.join(VARS, "mini-26112401", k))).digest("hex"), h, "變體設定檔的雜湊 " + k);
+});
