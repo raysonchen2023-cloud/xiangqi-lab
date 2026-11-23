@@ -8,20 +8,24 @@ const ROOT = path.join(__dirname, "../..");
 const SRC = fs.readFileSync(path.join(ROOT, "xiangqi-db/m/00f-flags.js"), "utf8");
 const tick = () => new Promise((r) => setImmediate(r));
 
-function load({ store = {}, reply, throws = false } = {}) {
-  const calls = [], events = [], timers = [];
+function load({ store = {}, reply, throws = false, next, capacitor = false } = {}) {
+  const calls = [], events = [], timers = [], clock = { t: 1_800_000_000_000 }, docL = {}, cap = {};
+  const FakeDate = class extends Date { static now() { return clock.t } };
   const c = {
     localStorage: { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v) } },
     setTimeout: (f, ms) => { timers.push({ f, ms }); return timers.length },
     AbortController: class { constructor() { this.signal = { aborted: false } } abort() { this.signal.aborted = true } },
     CustomEvent: class { constructor(t, o) { this.type = t; this.detail = o && o.detail } },
-    fetch: (u, o) => { calls.push({ u, o }); if (throws) return Promise.reject(new Error("離線")); return Promise.resolve(reply) },
-    Date, JSON, Object, String, Array, Promise,
+    fetch: (u, o) => { calls.push({ u, o }); const nx = next && next(calls.length); if (nx === "throw" || (!nx && throws)) return Promise.reject(new Error("離線")); return Promise.resolve(nx || reply) },
+    Date: FakeDate, JSON, Object, String, Array, Promise,
+    document: { visibilityState: "visible", addEventListener: (t, f) => { (docL[t] = docL[t] || []).push(f) } },
   };
   c.window = { dispatchEvent: (e) => events.push(e) };
+  if (capacitor) c.window.Capacitor = { Plugins: { App: { addListener: (t, f) => { cap[t] = f } } } };
   vm.createContext(c);
   vm.runInContext(SRC + "\n;this.xqFlag=xqFlag;", c);
-  return { c, calls, events, timers, store };
+  const show = (state) => { c.document.visibilityState = state; for (const f of docL.visibilitychange || []) f() };
+  return { c, calls, events, timers, store, clock, show, cap };
 }
 const ok = (j) => ({ ok: true, json: () => Promise.resolve(j) });
 
@@ -74,6 +78,29 @@ test("請求：只向 raw.githubusercontent.com 的 main 版抓、網址只帶�
   assert.match(u, /^https:\/\/raw\.githubusercontent\.com\/raysonchen2023-cloud\/xiangqi-lab\/main\/data\/flags\.json\?t=\d+$/);
   assert.equal(o.cache, "no-store"); assert.equal(o.credentials, "omit"); assert.equal(o.mode, "cors"); assert.equal(o.method, undefined);
   assert.ok(L.timers.some((t) => t.ms === 5000), "5 秒逾時");
+});
+
+test("W76：App 回到前景（visibilitychange→visible）會重讀；設定檔改成關 halls8 就跟著關；60 秒內不重抓；切到背景不抓", async () => {
+  const L = load({ next: (n) => (n === 1 ? ok({ v: 1, off: {} }) : ok({ v: 1, off: { halls8: "破圖" } })) });
+  await tick(); await tick();
+  assert.equal(L.calls.length, 1); assert.equal(L.c.xqFlag("halls8"), true);
+  L.clock.t += 30_000; L.show("visible"); await tick(); await tick();
+  assert.equal(L.calls.length, 1, "60 秒內不重抓");
+  L.clock.t += 31_000; L.show("hidden"); await tick();
+  assert.equal(L.calls.length, 1, "切到背景不抓");
+  L.show("visible"); await tick(); await tick();
+  assert.equal(L.calls.length, 2, "回到前景重讀"); assert.equal(L.c.xqFlag("halls8"), false, "回到前景後關掉");
+  assert.match(L.calls[1].u, /\?t=\d+$/); assert.equal(L.calls[1].o.cache, "no-store");
+});
+
+test("W76：回到前景重讀失敗（離線）：維持手上那份，不會因為讀不到就把關掉的又打開；iOS 的 Capacitor resume 也會重讀", async () => {
+  const L = load({ next: (n) => (n === 1 ? ok({ v: 1, off: { halls8: "x" } }) : "throw"), capacitor: true });
+  await tick(); await tick(); assert.equal(L.c.xqFlag("halls8"), false);
+  L.clock.t += 61_000; L.show("visible"); await tick(); await tick();
+  assert.equal(L.calls.length, 2); assert.equal(L.c.xqFlag("halls8"), false, "讀不到維持關著");
+  assert.equal(typeof L.cap.resume, "function", "接上 Capacitor App 的 resume");
+  L.clock.t += 61_000; L.cap.resume(); await tick(); await tick();
+  assert.equal(L.calls.length, 3, "resume 也會重讀");
 });
 
 test("〔原始碼〕開關清單正本 art/flags.json：合法 JSON、預設全開、說明寫明只能關不能開；m.html 在 00-util 後面、01-board 前面載入 00f；沒有行內 // 註解、LF", () => {

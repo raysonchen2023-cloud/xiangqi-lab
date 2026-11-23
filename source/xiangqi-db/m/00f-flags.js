@@ -21,12 +21,23 @@ function xqFlagsApply(j){
   if(!j||typeof j!=="object"||typeof j.off!=="object"||j.off===null||Array.isArray(j.off))return false;
   const o={};for(const k of Object.keys(j.off))if(/^[a-z0-9_-]{1,40}$/i.test(k))o[k]=String(j.off[k]||"").slice(0,200);
   XQ_FLAGS_OFF=o;try{window.dispatchEvent(new CustomEvent("xqflags",{detail:{off:Object.keys(o)}}))}catch(e){}return true}
-(function(){
-  try{const s=localStorage.getItem("xqFlags");if(s)xqFlagsApply(JSON.parse(s))}catch(e){}
-  if(typeof fetch!=="function")return;
+/* 抓一次開關清單。W76（11/23 開發者看外部評論後選的「上線前相容、開關與 go/no-go」）：
+   App 回到前景時也要重讀，不然玩家把 App 放在背景好幾天，關掉的功能一直不會關。
+   回到前景：網頁標準 visibilitychange（網頁、Android、iOS 的 WebView 都有）；iOS 另有 Capacitor App 外掛的 resume 也接上。
+   同一份規則：只能關、不能開；讀不到就維持手上那份（上一次成功的）。60 秒內不重抓，免得切來切去一直連線。 */
+let XQ_FLAGS_AT=0,XQ_FLAGS_BUSY=false;
+function xqFlagsFetch(){
+  if(typeof fetch!=="function"||XQ_FLAGS_BUSY)return;
+  const now=Date.now();if(XQ_FLAGS_AT&&now-XQ_FLAGS_AT<60000)return;XQ_FLAGS_AT=now;XQ_FLAGS_BUSY=true;
   let ac=null;try{ac=new AbortController();setTimeout(()=>{try{ac.abort()}catch(e){}},5000)}catch(e){}
-  fetch(XQ_FLAGS_URL+"?t="+Date.now(),{cache:"no-store",mode:"cors",credentials:"omit",signal:ac?ac.signal:undefined})
+  fetch(XQ_FLAGS_URL+"?t="+now,{cache:"no-store",mode:"cors",credentials:"omit",signal:ac?ac.signal:undefined})
     .then(r=>r.ok?r.json():null)
     .then(j=>{if(j&&xqFlagsApply(j)){try{localStorage.setItem("xqFlags",JSON.stringify({v:j.v||1,off:XQ_FLAGS_OFF}))}catch(e){}}})
-    .catch(()=>{});
+    .catch(()=>{}).then(()=>{XQ_FLAGS_BUSY=false});
+}
+(function(){
+  try{const s=localStorage.getItem("xqFlags");if(s)xqFlagsApply(JSON.parse(s))}catch(e){}
+  xqFlagsFetch();
+  try{document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")xqFlagsFetch()})}catch(e){}
+  try{const A=window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App;if(A&&typeof A.addListener==="function")A.addListener("resume",()=>xqFlagsFetch())}catch(e){}
 })();
