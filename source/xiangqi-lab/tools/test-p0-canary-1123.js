@@ -589,3 +589,19 @@ test("深層金絲雀 W21：小包裡只剩首頁素材是媒體時，退而藏�
   const d = tree(f), A = CA.analyzeTree(d, {}); assert.equal(A.R.red.length, 0);
   const r = CA.deepCanaries(d, A, {}); assert.equal(r.w21.ok, true, JSON.stringify(r.w21)); assert.equal(r.w21.file, h0);
 });
+
+test("深層金絲雀：每一類挑頭、中、尾三個檔都要抓到；正式判斷只查第一個檔時要報警（PR #67 審查同一類弱點）", () => {
+  const P = "base/assets/public/", s8 = (s) => sha1h(s).slice(0, 8), f = goodFiles();
+  const pre = JSON.parse(f[P + "data/preload.json"]);
+  for (const n of ["b", "c", "d", "e"]) { pre.items.push(["data/a/" + n + ".webp", 3, s8(n + "bc"), 1]); f[P + "data/a/" + n + ".webp"] = n + "bc" }
+  f[P + "data/preload.json"] = JSON.stringify(pre);
+  const d = tree(f), A = CA.analyzeTree(d, {});
+  const r = CA.deepCanaries(d, A, {});
+  assert.equal(r.w21.ok, true); assert.equal(r.w21.files.length, 3, "挑了三個：" + JSON.stringify(r.w21.files));
+  assert.deepEqual(r.w21.files, ["data/a/x.webp", "data/a/c.webp", "data/a/e.webp"], "頭、中、尾");
+  /* 正式判斷被改成「只查第一個媒體檔」：其他檔缺了也不判 */
+  const firstOnly = (t, o) => { const x = CA.analyzeTree(t, o); x.R.red = x.R.red.filter((y) => !/圖片／音樂直接破|跟清單不符/.test(y.why) || y.f === "data/a/x.webp"); return x };
+  const b = CA.deepCanaries(d, A, {}, firstOnly);
+  assert.equal(b.w21.ok, false, "只查第一個檔：W21 要報警"); assert.equal(b.w21.missed, "data/a/c.webp");
+  assert.equal(b.hash.ok, false, "只查第一個檔：內容被改要報警");
+});

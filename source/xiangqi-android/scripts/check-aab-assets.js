@@ -168,7 +168,7 @@ async function main() {
     for (const [why, fs_] of group(R.red)) console.log(`✘ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
     for (const [why, fs_] of group(R.warn)) console.log(`△ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
     console.log(`金絲雀：拿掉首頁素材 ${canary.home ? "✔ 抓到" : "✘ 沒抓到"}｜改掉包裡檔的雜湊 ${canary.stale ? "✔ 抓到" : "✘ 沒抓到"}｜CDN 不存在的檔 ${!CDN_CHECK ? "（沒加 --cdn，沒驗）" : canary.cdn404 ? "✔ 判成沒有" : "✘ " + canary.cdn}`);
-    for (const [k, label] of DEEP_LABELS) { const d = canary.deep[k]; console.log(`深層金絲雀 ${label}：${d.ok ? "✔ 抓到" : d.skip ? "（" + d.skip + "）" : "✘ 沒抓到"}${d.file ? "（" + d.file + "）" : ""}${d.note ? "　" + d.note : ""}`) }
+    for (const [k, label] of DEEP_LABELS) { const d = canary.deep[k]; console.log(`深層金絲雀 ${label}：${d.ok ? "✔ 抓到" : d.skip ? "（" + d.skip + "）" : "✘ 沒抓到"}${d.files ? "（" + d.files.length + " 個：" + d.files.join("、") + "）" : d.file ? "（" + d.file + "）" : ""}${d.missed ? "　沒抓到：" + d.missed : ""}${d.note ? "　" + d.note : ""}`) }
     /* PR #66 審查②：沒加 --cdn 時，金絲雀①②沒抓到照樣回 4；③只在加 --cdn 時算，CDN 連不上歸缺驗（3），不算工具失靈 */
     const code = exitCode({ red: R.red.length, unknown: R.unknown || 0, cdn: CDN_CHECK, canaryOk: canaryExitOk(canary, CDN_CHECK) });
     console.log(code === 4 ? "✘ 不能送審：金絲雀沒被抓到，這支檢查本身失靈了，結果不可信"
@@ -214,34 +214,44 @@ const both = (...fns) => () => { const rs = fns.map(f => f()); return () => { fo
 function deepCanaries(tmp, A, { man = null, cache = new Map() } = {}, analyze = analyzeTree) {
   const { need, inPack, R } = A, home = new Set(HOME_REQUIRED.map(x => "data/" + x));
   const realHas = re => R.red.some(x => re.test(x.why));
-  const one = (pick, mutate, re, extra) => {
-    const f = pick();
-    if (!f) return realHas(re) ? { ok: true, note: "找不到正常的檔可以弄壞；真實結果已判出同一類" } : { ok: false, note: "找不到可以弄壞的對象，真實結果也沒有這一類：不成立" };
-    try {
-      return withMutation(mutate(f), () => {
-        const r = analyze(tmp, { man, cache }), caught = r.R.red.some(x => x.f === f && re.test(x.why));
-        const ex = extra ? extra(r) : null;
-        return { ok: caught && (!ex || ex.ok), file: f, note: ex && ex.note };
-      });
-    } catch (e) { return { ok: false, file: f, note: "壞樣本跑不起來：" + String(e.message).slice(0, 120) } }
+  /* 每一類從候選清單的頭、中、尾各挑一個（不重複，最多 3 個），一個一個弄壞重判，全部都要抓到。
+     只挑第一個的話，正式判斷改成「只查第一個檔」也照樣過（PR #67 審查同一類弱點） */
+  const spread = (arr) => [...new Set([arr[0], arr[Math.floor((arr.length - 1) / 2)], arr[arr.length - 1]].filter(Boolean))];
+  const one = (cands, mutate, re, extra) => {
+    const fs_ = spread(cands);
+    if (!fs_.length) return realHas(re) ? { ok: true, note: "找不到正常的檔可以弄壞；真實結果已判出同一類" } : { ok: false, note: "找不到可以弄壞的對象，真實結果也沒有這一類：不成立" };
+    const res = { ok: true, file: fs_[0], files: fs_, note: null };
+    for (const f of fs_) {
+      try {
+        const r1 = withMutation(mutate(f), () => {
+          const r = analyze(tmp, { man, cache }), caught = r.R.red.some(x => x.f === f && re.test(x.why));
+          const ex = extra ? extra(r) : null;
+          return { ok: caught && (!ex || ex.ok), note: ex && ex.note };
+        });
+        if (r1.note) res.note = r1.note;
+        if (!r1.ok) { res.ok = false; res.missed = f; break }
+      } catch (e) { return { ok: false, file: f, files: fs_, note: "壞樣本跑不起來：" + String(e.message).slice(0, 120) } }
+    }
+    return res;
   };
   const out = {};
   /* W21：一個靠 CDN 補抓、在包裡的媒體檔藏起來，dex 的 CDN 補抓特徵弄壞 → 要判「圖片／音樂直接破」，而且偵測到原生沒有 CDN 補抓 */
   /* 先挑首頁以外的媒體；小包裡只剩首頁素材時退而用首頁的（藏起來後一樣會被判「圖片／音樂直接破」），不然小包會因為挑不到對象被誤擋 */
   const media = (f) => MEDIA.test(f) && inPack.has(f) && !need.get(f).big && need.get(f).size <= SPLIT;
-  out.w21 = one(() => [...need.keys()].find(f => media(f) && !home.has(f)) || [...need.keys()].find(media),
+  const nonHomeMedia = [...need.keys()].filter(f => media(f) && !home.has(f));
+  out.w21 = one(nonHomeMedia.length ? nonHomeMedia : [...need.keys()].filter(media),
     f => both(hideFile(inPack.get(f)), patchDex(tmp, [CDN_MARK, PARTS_MARKER])), /圖片／音樂直接破/,
     r => ({ ok: r.native.cdnFallback === false, note: r.native.cdnFallback === false ? "dex 特徵弄壞後偵測到「沒有 CDN 補抓」" : "dex 特徵弄壞後還判成有 CDN 補抓（原生能力偵測失靈）" }));
   /* W30：一個要切塊的大檔不在包裡（在包裡就藏起來），dex 的切塊接回特徵弄壞 → 要判「切塊的大檔不在安裝包裡」，而且偵測到不會接回 */
-  out.w30 = one(() => [...need.keys()].find(f => need.get(f).big || need.get(f).size > SPLIT),
+  out.w30 = one([...need.keys()].filter(f => need.get(f).big || need.get(f).size > SPLIT),
     f => both(inPack.has(f) ? hideFile(inPack.get(f)) : () => () => {}, patchDex(tmp, PARTS_MARKS)), /切塊的大檔不在安裝包裡/,
     r => ({ ok: r.native.partsJoin === false, note: r.native.partsJoin === false ? "dex 特徵弄壞後偵測到「不會接回切塊」" : "dex 特徵弄壞後還判成會接回切塊（原生能力偵測失靈）" }));
   /* 首頁素材：真的把檔藏起來（不是假裝） */
-  out.home = one(() => [...home].find(f => inPack.has(f)), f => hideFile(inPack.get(f)), /首頁離線必要素材不在安裝包裡/);
+  out.home = one([...home].filter(f => inPack.has(f)), f => hideFile(inPack.get(f)), /首頁離線必要素材不在安裝包裡/);
   /* 內容被改：包裡一個有清單雜湊、而且現在對得上的檔，檔尾加一個位元組 */
-  out.hash = one(() => [...need].map(([f]) => f).find(f => need.get(f).h && inPack.has(f) && A.sha1Of(f) === need.get(f).h), f => touchBytes(inPack.get(f)), /跟清單不符/);
+  out.hash = one([...need].map(([f]) => f).filter(f => need.get(f).h && inPack.has(f) && A.sha1Of(f) === need.get(f).h), f => touchBytes(inPack.get(f)), /跟清單不符/);
   /* W42：包裡一個在 CDN manifest 裡、現在跟 CDN 一樣的需求素材，改內容 → 要判「跟 CDN 現行版不同」 */
-  if (manHasFiles(man)) out.w42 = one(() => [...inPack.keys()].find(f => f.startsWith("data/") && need.has(f) && man.files[f] && man.files[f][1] && fileSha1(inPack.get(f), cache).startsWith(man.files[f][1])),
+  if (manHasFiles(man)) out.w42 = one([...inPack.keys()].filter(f => f.startsWith("data/") && need.has(f) && man.files[f] && man.files[f][1] && fileSha1(inPack.get(f), cache).startsWith(man.files[f][1])),
     f => touchBytes(inPack.get(f)), /跟 CDN 現行版不同/);
   else out.w42 = { ok: false, skip: "沒有 CDN manifest，沒驗（缺驗）" };
   return out;
