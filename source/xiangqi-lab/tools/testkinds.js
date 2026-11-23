@@ -44,6 +44,7 @@ const CLASSIFIED = new Set([
   "test-preview-build-1121.js",   /* 11/21 W43 Cloudflare PR 預覽建置 source/preview-build.js（版號跟 sw.js 一致、刪超過 25 MB 的檔、寫 404.html；行為 5） */
   "test-device-checks-1121.js",   /* 11/21 W41②③ 升級測試 check-upgrade.js 與 44 畫面破圖掃描 check-scenes.js 的判斷規則（P0-UPD、P0-IMG；離線只算看得到的破圖；測不成立回 2；只准模擬器；更新視窗看 20 秒；行為 12、原始碼 3） */
   "test-cdn-route-1123.js",   /* 11/23 W74～W76（開發者看外部評論後選「步驟 7 移到網頁上線前」「P0 加回退與開關測項」）：cdn-route.js 把 CDN／遠端開關改向，check-scenes --cdn-to／--flags-file／--flags-fail；探測檔讀不到＝測不成立；行為 8、原始碼 1 */
+  "test-check-flags-1123.js",   /* 11/23 W76 遠端開關真的關得掉：check-flags.js 照代號表一個一個關（冷啟、回前景），再試讀不到；全開時入口就不在、不認得的代號＝測不成立；行為 7、原始碼 1 */
   "test-jianghu-wind-1121.js",   /* 11/21 W45 十州棋館風向標（m/07z9b-jianghu.js：照共用天氣挑 2～3 派順風、旗號金光、上課與掌門修為多給、每派每天一次；行為 8、原始碼 1）；PR #15 審查後續：掌門盤照開局時記下的順風算、+30 說明（行為 +1、原始碼 +1）；PR #16 審查：有 zmCur 沒有 jw（下到一半）照現在的天氣算 */
   "test-zm-intel-1121.js",   /* 11/21 W48 門內玩法首發：案 4 掌門暗樁（引擎與 App 同一套主修／副修算法、贏門人才解鎖、一天一次）、案 9 掌門盤接關鍵步重練（行為 5、原始碼 3） */
   "test-net-failover-1122.js",   /* 11/22 W53 大廳連線「連不上換下一個網址」：沒備援照舊只連主網址、主網址連不上換備援並記住、重開從記住的開始、連上後才斷不換、兩個都不通輪流試、記住的不在清單從頭、正式版備援清單是空的（行為 6、原始碼 1） */
