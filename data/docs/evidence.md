@@ -1,11 +1,11 @@
-# 驗證紀錄（版本 20261123-1525）
+# 驗證紀錄（版本 20261123-1652）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 執行編號：gh-45135134633-1（Node.js v24.22.3；這一頁、驗證紀錄 verify-all.js、測試分類報表是同一次執行產生的；比對時這一行與下一行不算）
-- 產生時間：2026-11-23 16:00:24（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 3003 項＝**通過 2856**、**失敗 0**、**略過 147**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（771 個檔，樹雜湊 SHA-256 `a2ff2a3c11a929295fe21322c99877c68a0588bd02d88dcaaf3add956f5bc1f9`），對應的發布版：`20261123-1525`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 執行編號：gh-45142256710-1（Node.js v24.22.3；這一頁、驗證紀錄 verify-all.js、測試分類報表是同一次執行產生的；比對時這一行與下一行不算）
+- 產生時間：2026-11-23 16:53:51（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 3029 項＝**通過 2882**、**失敗 0**、**略過 147**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（773 個檔，樹雜湊 SHA-256 `1a5d1f026a9966012a6d8ce400ca41a92f0983c11fb941cd7bcbf0b21b35f71b`），對應的發布版：`20261123-1652`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔有 37 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -164,9 +164,9 @@
 
 | 類別 | 項數 | 這類測試證明了什麼 |
 |---|---:|---|
-| 行為 | 1626 項（通過 1619、略過 7） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
-| 混合 | 78 項（通過 76、略過 2） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
-| 原始碼比對 | 262 項（通過 256、略過 6） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
+| 行為 | 1647 項（通過 1640、略過 7） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
+| 混合 | 79 項（通過 77、略過 2） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
+| 原始碼比對 | 266 項（通過 260、略過 6） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
 | 待分類 | 1037 項（通過 905、略過 132） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-refit-1118.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-film-tap-1118.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-jh-fade-1118.js`、`test-jianghu-1118.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-pvp-faceoff-1121.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js`、`test-zm-medallion-1118.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
@@ -886,6 +886,7 @@
 | test-osc-en0.js | — | 3 | 0 | 1 |  | 4／4 |
 | test-oss-scan.js | — | 7 | 0 | 0 |  | 7／7 |
 | test-p0-aab-bound-1122.js | — | 16 | 0 | 3 |  | 19／19 |
+| test-p0-canary-1123.js | — | 21 | 1 | 4 |  | 26／26 |
 | test-p0-regress.js | — | 12 | 0 | 1 |  | 13／13 |
 | test-park-firstflat.js | — | 8 | 0 | 1 |  | 9／9 |
 | test-park-garden-1115.js | — | 1 | 1 | 2 |  | 4／4 |
@@ -3160,6 +3161,35 @@
 - ✔ 〔原始碼〕check-3d 預設跑 2 輪、每次嘗試都寫 attempts.jsonl；p0-gate 只認倉庫 .github/p0-waivers.json；豁免檔是空的
 - ✔ 〔行為〕repo-pin：本機檔跟 origin/main 一樣才算；不一樣、main 沒有、fetch 失敗、不在 git 裡都不算
 - ✔ 〔原始碼〕p0-gate 用倉庫豁免檔、check-3d 用倉庫已知問題清單時，都先跟 origin/main 比，不一樣就結束代碼 2
+
+### test-p0-canary-1123.js
+
+- ✔ 〔原始碼〕工具鎖定：清單跟三支工具實際 require 的共用模組一致（工具改了 require 而清單沒跟上，這項會紅）
+- ✔ 〔行為〕工具鎖定：雜湊去掉 CR 才算（CRLF 工作區沒改過不誤判）；缺雜湊、跟 main 不同、讀不到 main、多記檔 → 都擋
+- ✔ 〔行為〕閘門：三項正式報告＋Android 12、16 兩份 3D 金絲雀、工具都跟 main 一樣 → 可以送審
+- ✔ 〔行為〕閘門（反測必紅）：用改過的工具跑的報告不收，而且不能豁免；讀不到 origin/main 也不收
+- ✔ 〔行為〕閘門（反測必紅）：P0-3D 金絲雀缺一份、自我反測沒照預期、驗的是另一個 AAB 或版號 → 不能送審
+- ✔ 〔行為〕閘門（反測必紅）：P0-IMG 金絲雀①②沒抓到不能豁免；③CDN 沒回 404 歸在可豁免的 P0-IMG/cdn；P0-UPD 假視窗沒抓到不能豁免
+- ✔ 〔行為〕P0-IMG 金絲雀：用同一個 classify 判，拿掉首頁素材、改掉雜湊都要被判 ✘；找不到可以弄壞的對象＝不成立（寧可擋）
+- ✔ 〔行為〕P0-IMG 結束代碼：沒有 ✘ 但金絲雀沒抓到＝4（優先於缺驗 3）；有 ✘ 回 1（本來就不能送審）；舊的呼叫（沒給 canaryOk）照舊
+- ✔ 〔行為〕P0-UPD 金絲雀：假視窗要被數到、而且真的 verdict 要因此判出「更新提示視窗」；數到了但 verdict 沒判出也不算
+- ✔ 〔原始碼〕三支工具的報告都寫 toolPins；P0-IMG、P0-UPD 寫 canary，P0-3D 寫 selfTest；P0-UPD 金絲雀沒抓到就不算通過
+- ✔ 〔行為〕P0-3D 金絲雀（PR #66 審查④）：遮罩那次要真的點到落點、而且是被遮罩接走才算抓到；放遮罩之前就失敗不算
+- ✔ 〔行為〕P0-IMG 金絲雀③與結束代碼（PR #66 審查②③）：③看正式 worker 的判斷；沒加 --cdn 時①②沒抓到照樣回 4
+- ✔ 〔行為〕閘門（PR #66 審查建議）：同一個 Android 版本，3D 金絲雀和正式報告要測同一個 APK
+- ✔ 〔混合〕PR #66 複審：單獨的 CR 會改變程式意義，雜湊要不同；pinsFor 不接受指定資料夾；金絲雀①②要因為對的那條原因判出
+- ✔ 〔原始碼〕P0-IMG 金絲雀③（PR #66 第四次複審）：worker 要數拿到 200 的項數，連同 manifest 讀得到沒，一起交給 cdnCanary 當反證
+- ✔ 〔行為〕閘門自己探測 CDN（PR #66 第五次複審，開發者選）：CDN 正常＝連得上；真斷線＝連不上；manifest 空的不算連得上；亂數檔 HEAD 回 404 也算連得上
+- ✔ 〔行為〕閘門（PR #66 第六次複審）：「要加 --cdn 且結束代碼 0」那條的豁免，同樣要閘門自己也連不上 CDN；結束代碼 3＋金絲雀③抓到＋閘門連得上 → 不能豁免
+- ✔ 〔行為〕閘門（PR #66 第七次複審）：只有單純缺驗（結束代碼 3、redItems 是空陣列）才能豁免；結束代碼 1、4，或有 ✘、或沒記 redItems，閘門連不上也不行
+- ✔ 〔行為〕閘門（PR #66 第八次複審）：單純缺驗還要 red＝0、unknown＞0、pass＝false、加了 --cdn；金絲雀③的豁免也要單純缺驗
+- ✔ 〔行為〕閘門（PR #66 第九次複審）：工具同一輪拿到過 CDN 的 404（cdn404＝true）、或沒說連不上、或 unknown 不是整數，閘門這邊離線也不能豁免
+- ✔ 〔行為〕閘門探測（PR #66 第九次複審）：manifest 正常就算連得上，亂數檔 HEAD 斷線、500 也一樣
+- ✔ 〔行為〕閘門（PR #66 第十次複審）：從逐項清單重算；混一筆 404、200、比對過 CDN、探測狀態不是連不上、筆數對不起來，閘門連不上也不能豁免
+- ✔ 〔行為〕閘門探測（PR #66 第十次複審）：manifest 的 files 不是空的就算連得上（不限 data/ 開頭）；files 是陣列不算
+- ✔ 〔行為〕閘門探測（開發者 11/23 選「維持現狀」）：manifest 不能用時，亂數檔 HEAD 只有 404／410 算連得上；200、301、403、500 都算連不上
+- ✔ 〔原始碼〕閘門：自己用的 CDN 網址跟破圖工具一樣；報告結束代碼不是 0、或說連不上時就探測；探測有逾時、有時間
+- ✔ 〔行為〕閘門（PR #66 第十一、十三次複審，端對端）：真的 check-aab-assets.js 在 CDN 全斷下寫的報告直接進閘門：會補抓的包、不補抓只缺 JSON 的包都能豁免；不補抓又缺媒體的包擋；同一份報告 viaCdn 多記、混一筆 403、多一筆 W21 提醒也擋
 
 ### test-p0-regress.js
 

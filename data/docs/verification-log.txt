@@ -1,46 +1,46 @@
 《象棋千秋》可重現驗證紀錄（verify-all.js）
 ========================================
-執行時間：2026-11-23T08:00:24.054Z（UTC）＝ 2026-11-23 16:00:24（臺灣時間）
-執行編號：gh-45135134633-1
+執行時間：2026-11-23T08:53:51.170Z（UTC）＝ 2026-11-23 16:53:51（臺灣時間）
+執行編號：gh-45142256710-1
 Node.js：v24.22.3；作業系統：linux 7.0.0-1020-azure x64
 倉庫資料夾：<倉庫資料夾>
-倉庫 commit：b0c25fc1c1ab8226b579affef23027e5e8565dc4
-release.json：版本 20261123-1525、html 383c3b67ba99、sw 88f488a59aeb
+倉庫 commit：4a63382ca54ee94299355976f08537e118d33c9a
+release.json：版本 20261123-1652、html 8eef57a9a485、sw fcadf12bb1f7
 verify-all.js SHA-256：c3e0e7688daaa79d547dfaa77c6a6a6d9c94e5f391bd80972d4d1cf1c8a5f060
 
 成品 SHA-256（SHA-1 前 12 碼）：
-  index.html  af00fd9354e8980c81a97afeb20e1e37e0ffc0526498216b48c457c26d5074f2  (383c3b67ba99)
-  sw.js  833513561f32972f33893b68dc4711568713bf456ef8da26602f4928b5f5aab0  (88f488a59aeb)
-  release.json  d7168d2065ab420bd9422cb8611ab1f2bf3ed85631fd262b2b35eb6e5b3f53db  (3b439a790ded)
+  index.html  bddd11fb632d54ed6092592af584176d6831d615a49e957a79063d8ce163aeb3  (8eef57a9a485)
+  sw.js  59d8a3f526ef4d39a74962afc7a2cb10bfdf1919f137b4364d39a9cc2fb73c18  (fcadf12bb1f7)
+  release.json  05eebfd801262bb89f042a8ad16920a83e893766c2819a6e7ca4b05bd65d8432  (b9e56439425a)
   core.js  fdaea59621ff94d664218f14c1a11b9abe0d4566da7d3e45733caf34fa7a50d3  (972b7ec035c7)
   engine.js  689fc0dbed0381923ebcba7c8556e887cc8ae7849e550ff1c89a0bcd87fbf135  (5e3dfe849644)
   engine/pikafish.wasm  7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331  (d568cded4f5b)
   engine/pikafish.js  dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7  (77eca54d3204)
   engine/pikafish.nnue  7d13d73569a9b571ba0eb20cf1596247bc2a42738967e61afef6482b231e900e  (3a043e259a72)
-source/ 資料夾：771 個檔，樹雜湊 SHA-256 a2ff2a3c11a929295fe21322c99877c68a0588bd02d88dcaaf3add956f5bc1f9
+source/ 資料夾：773 個檔，樹雜湊 SHA-256 1a5d1f026a9966012a6d8ce400ca41a92f0983c11fb941cd7bcbf0b21b35f71b
 Pikafish 建置紀錄：<倉庫資料夾>/pikafish-src/build-record.json  SHA-256 489173747f8de4abec4f9dda704538fecb24af4c02f294e57b8f7ead857ad738
 （樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256＋換行」照路徑排序後再算 SHA-256）
 
 ----------------------------------------
-第 1 步 check-build：通過（結束代碼 0，0.2 秒）
+第 1 步 check-build：通過（結束代碼 0，0.1 秒）
 指令（在倉庫資料夾執行）：node source/check-build.js
 工具 SHA-256：8e5202037f127d5039faf7f195a3286103d71ba1a128801cbb6dfcc12a1aa381
 輸出：
   ✔ 一致：<倉庫資料夾>/index.html 就是這份原始碼組出來的（忽略授權聲明、版本號、整包大小）
 ----------------------------------------
-第 2 步 release-verify：通過（結束代碼 0，0.1 秒）
+第 2 步 release-verify：通過（結束代碼 0，0.0 秒）
 指令（在倉庫資料夾執行）：node source/xiangqi-lab/tools/release-verify.js --dir .
 工具 SHA-256：4874be00c4f2fce8b777204299e23339abf56c472ee57bc2e603a5edaaf00e78
 輸出：
   成品核對：<倉庫資料夾>
-    ✔ release.json：版本 20261123-1525、html 383c3b67ba99、sw 88f488a59aeb（檢查時間 2026-11-23T07:25:05.822Z）
-    ✔ index.html SHA-1 前 12 碼 383c3b67ba99，跟 release.json 一致
-    ✔ sw.js SHA-1 前 12 碼 88f488a59aeb，跟 release.json 一致
-    ✔ 版本號：index.html 20261123-1525、sw.js 20261123-1525、release.json 20261123-1525，三個一樣
+    ✔ release.json：版本 20261123-1652、html 8eef57a9a485、sw fcadf12bb1f7（檢查時間 2026-11-23T08:53:06.871Z）
+    ✔ index.html SHA-1 前 12 碼 8eef57a9a485，跟 release.json 一致
+    ✔ sw.js SHA-1 前 12 碼 fcadf12bb1f7，跟 release.json 一致
+    ✔ 版本號：index.html 20261123-1652、sw.js 20261123-1652、release.json 20261123-1652，三個一樣
   
   ✔ index.html、sw.js 跟 release.json 一致
 ----------------------------------------
-第 3 步 pikafish-verify：通過（結束代碼 0，0.1 秒）
+第 3 步 pikafish-verify：通過（結束代碼 0，0.0 秒）
 指令（在倉庫資料夾執行）：node source/xiangqi-lab/tools/pikafish-verify.js --dir . --record pikafish-src/build-record.json
 工具 SHA-256：da3a10677bdf0be32998e22fa6010bdc29055893678bd6553b224cb681fedc7c
 輸出：
@@ -64,7 +64,7 @@ Pikafish 建置紀錄：<倉庫資料夾>/pikafish-src/build-record.json  SHA-25
   
   ✔ 全部符合（△ 是照實列出的缺口，不算失敗）
 ----------------------------------------
-第 4 步 run-tests：通過（結束代碼 0，428.1 秒）
+第 4 步 run-tests：通過（結束代碼 0，321.5 秒）
 指令（在倉庫資料夾執行）：node source/run-tests.js
 工具 SHA-256：4703a18636b515baa163819ba44bd73b8cd4a5c0fa3b92d2b1b637b2aab9b8f1
 輸出：
@@ -221,6 +221,7 @@ Pikafish 建置紀錄：<倉庫資料夾>/pikafish-src/build-record.json  SHA-25
   test-osc-en0.js	3/3	0/0	1/1	0/0
   test-oss-scan.js	7/7	0/0	0/0	0/0
   test-p0-aab-bound-1122.js	16/16	0/0	3/3	0/0
+  test-p0-canary-1123.js	21/21	1/1	4/4	0/0
   test-p0-regress.js	12/12	0/0	1/1	0/0
   test-park-firstflat.js	8/8	0/0	1/1	0/0
   test-park-garden-1115.js	1/1	1/1	2/2	0/0
@@ -352,11 +353,11 @@ Pikafish 建置紀錄：<倉庫資料夾>/pikafish-src/build-record.json  SHA-25
   test-zm-medallion-1118.js	0/0	0/0	0/0	3/5（略過 2）
   test-zm-screen-data-1122.js	7/7	0/0	0/0	0/0
   test-zm-shijiao-1122.js	8/8	0/0	0/0	0/0
-  合計	1619/1626（略過 7）	76/78（略過 2）	256/262（略過 6）	905/1037（略過 132）
+  合計	1640/1647（略過 7）	77/79（略過 2）	260/266（略過 6）	905/1037（略過 132）
   
-  交接單引用：行為 1619/1626（略過 7）、混合 76/78（略過 2）、原始碼比對 256/262（略過 6）、待分類 905/1037（略過 132），共 3003 項。
+  交接單引用：行為 1640/1647（略過 7）、混合 77/79（略過 2）、原始碼比對 260/266（略過 6）、待分類 905/1037（略過 132），共 3029 項。
   待分類的檔：test-bh-loading-1117.js、test-bh-sg-bgm-1116.js、test-bh-sg-bgm-1117b.js、test-bhfx.js、test-bhtd-combo.js、test-bhtd-r2.js、test-bhtd-rules.js、test-bhtl.js、test-bhx-allstars-1116.js、test-bhx-hold-1116.js、test-bhx-refit-1118.js、test-bhx-resume-1116.js、test-bhx-skip-1116.js、test-cap-crop-1117.js、test-cdn-svg-1117.js、test-daynight-1117.js、test-dgl.js、test-eng-over-1116.js、test-extra-bgm-1116.js、test-film-tap-1118.js、test-gc-native-1117.js、test-ghost-game-1116.js、test-grw-lv-1117.js、test-gsv-rules-1117.js、test-gxd-daily-1116.js、test-gxt-exit-1117.js、test-gxt-where-1117.js、test-home-c1-tap-1117.js、test-home-pano.js、test-i18n-ext-1117.js、test-i18n-select-1117.js、test-i18n-story.js、test-icon-gap-1117.js、test-imac-g1514.js、test-imac-h1514.js、test-imac-hfk-1117.js、test-imac-i1757.js、test-imac-j1757.js、test-imac-v1514.js、test-inst-stq-1117.js、test-ios-capsync-1118.js、test-ios-native-1116.js、test-jh-fade-1118.js、test-jianghu-1118.js、test-lang-default-1117.js、test-mnq-at-1117.js、test-mnq-skipall-1117.js、test-n33-warm-1118.js、test-netfetch-1117.js、test-noscore.js、test-opening-order-1117.js、test-osc-en-1118.js、test-park3d-capbase.js、test-park3d-ghostptr-1116.js、test-pjc-joincut-1116.js、test-port-yz-color-1116.js、test-pty-events-1116.js、test-pty-hint-wait-1117.js、test-pty-join-1117.js、test-pvp-faceoff-1121.js、test-r11-1117.js、test-r17-qa.js、test-r18-1117.js、test-r19-1117.js、test-r20-1117.js、test-r20-dbe-1117.js、test-r21-1117.js、test-r22-1117.js、test-r23-1117.js、test-r24-1117.js、test-r25-1117.js、test-r26-1117.js、test-r27-1117.js、test-r28-1117.js、test-r29b-1117.js、test-r29d-1117.js、test-r29e-1117.js、test-r30-1118.js、test-r31-1118.js、test-r32-1118.js、test-r33-1118.js、test-r34-1118.js、test-r35-1118.js、test-r36-1118.js、test-r37-1118.js、test-r38-1118.js、test-r39-1118.js、test-r4-1117.js、test-r40-1118.js、test-review-e-1117.js、test-season-card-1117.js、test-season-queue-1117.js、test-season-say-1117.js、test-sg2-def-1117b.js、test-sg2-drift-result-1117.js、test-sg2-edge-1117b.js、test-sg2-hud-1117.js、test-sg2-layout-1117b.js、test-sg2-premove-1117.js、test-sg2-select-1117.js、test-sg2-title-1117b.js、test-siege2-local.js、test-siege2.js、test-sitemap-places-1116.js、test-slot-msg-1117.js、test-support-pages-1117.js、test-toast-pass-1117.js、test-upd-notitle-1116.js、test-visit-place-1117.js、test-winter-scenes-1117.js、test-xsm-counter-1116.js、test-xsm-dark.js、test-xsm-stalls-1116.js、test-zm-medallion-1118.js
-  四欄合計：通過 2856、失敗 0、略過 147、預期失敗 0（其中預期失敗卻通過 0）；三類項數合計 3003（含略過），預期失敗另計。
+  四欄合計：通過 2882、失敗 0、略過 147、預期失敗 0（其中預期失敗卻通過 0）；三類項數合計 3029（含略過），預期失敗另計。
   略過的項目（這個環境跑不了、沒有執行，不算通過）：
     ﹣ test-android-roadmap.js：〔原始碼〕11/13 0452 驗證紀錄：4 步全過、沒有使用者資料夾路徑或 CR（0452 驗證紀錄只在開發者電腦的 opensource-stage/，公開副本沒有）
     ﹣ test-bh-sg-bgm-1116.js：配樂檔 bh_6～10 與新曲名都在（配樂只放 CDN）（沒有 data/bgm/blackhole 配樂與新曲名（只放 CDN，公開副本沒有））
