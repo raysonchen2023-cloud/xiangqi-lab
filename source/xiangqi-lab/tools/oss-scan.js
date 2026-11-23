@@ -50,8 +50,12 @@ const NAME_RULES = [
    PR #68 第三輪審查：①檔頭像圖片的檔也照樣當文字掃（圖片另外由 image-meta.cjs 查中繼資料），不然在 BM／PNG／GIF 檔頭後面接機密就躲過去了；
    第四輪（開發者 11/23 選「圖片全文掃、誤報用整張圖 sha256 放行」）：真圖片也全文掃、不設門檻；壓縮資料偶然湊出的誤報，放行清單寫 file＋fileSha256（整個檔的雜湊）；
    ③檔裡有 NUL 時，另外多解幾種（見 textsOf），沒有 BOM 的 UTF-16、奇數長度的 UTF-16BE、UTF-32 都躲不掉。IMG_HEAD 留著給外面判斷用 */
-/* 第九輪審查③：BMP、ICO 的判斷跟 .github/scripts/image-meta.cjs 的 isBmp／isIco 一樣嚴（文字檔開頭剛好是 BM、資料檔開頭是 00 00 01 00 不算圖片） */
-function isBmp(b) { if (b.length < 26 || b[0] !== 0x42 || b[1] !== 0x4d) return false; const off = b.readUInt32LE(10), dib = b.readUInt32LE(14); return b.readUInt32LE(6) === 0 && off >= 26 && off <= b.length && [12, 40, 52, 56, 64, 108, 124].includes(dib) }
+/* 第九輪審查③：BMP、ICO 的判斷跟 .github/scripts/image-meta.cjs 的 isBmp／isIco 逐字相同（測試會核對；第十四輪審查②）、一樣嚴（文字檔開頭剛好是 BM、資料檔開頭是 00 00 01 00 不算圖片） */
+function isBmp(b) {
+  if (b.length < 26 || b[0] !== 0x42 || b[1] !== 0x4d) return false;
+  const off = b.readUInt32LE(10), dib = b.readUInt32LE(14);
+  return b.readUInt32LE(6) === 0 && off >= 26 && off <= b.length && [12, 40, 52, 56, 64, 108, 124].includes(dib);
+}
 function isIco(b) {
   if (b.length < 22 || b[0] !== 0 || b[1] !== 0 || !(b[2] === 1 || b[2] === 2) || b[3] !== 0) return false;
   const n = b.readUInt16LE(4); if (n < 1 || n > 256 || 6 + 16 * n > b.length) return false;
@@ -106,12 +110,9 @@ const MARK = /oss-scan:\s*allow/;
 /* 第十二輪審查②：標記行要是正常的一行才算——不超過 300 字、中間沒有單獨的 \r（只用 \r 換行的檔整個算一行，一筆標記就能蓋掉整個檔） */
 const MARK_MAX = 300;
 const markLine = (t) => t.length <= MARK_MAX && !/\r(?!$)/.test(t) && MARK.test(t);
-/* 個資規則：行內標記不略過（第十二輪審查②，比照高風險）；整檔雜湊只給圖片副檔名的檔（第十二輪審查①） */
+/* 個資規則：行內標記不略過（第十二輪審查②，比照高風險）；整檔雜湊（fileSha256）一律不收，只認 file＋那一筆的 sha256（開發者決定⑤，第十四輪審查①） */
 const PERSONAL = ["email", "phone-tw", "tw-id"];
 const IMG_EXT = /\.(?:jpe?g|png|webp|gif|bmp|tiff?|heic|heif|avif|ico|cur|psd|jxl|jp2|j2k)$/i;
-/* 第十三輪審查①：個資的命中前後各 48 字，看得懂的字（英數符號、中日文）佔六成以上＝像一般文字，不是壓縮資料湊出來的誤報，整檔雜湊不放行 */
-const CTX = 48;
-const textLike = (s, i, n) => { const w = s.slice(Math.max(0, i - CTX), i) + s.slice(i + n, i + n + CTX); if (w.length < 8) return true; let k = 0; for (const c of w) if (/[\x21-\x7e\u3000-\u9fff\uff00-\uffef]/.test(c)) k++; return k / w.length >= 0.6 };
 
 const mask = (s, isEmail) => {
   if (isEmail) { const [u, d] = s.split("@"); return u[0] + "***@" + d }
@@ -180,19 +181,24 @@ function scan(dir, opts = {}) {
   const fileSha = new Map();
   /* 第九輪審查①（開發者決定 4）：圖片只能用整張圖的 fileSha256 放行；沒寫 fileSha256 的放行項目對圖片不算數 */
   const imgFiles = new Set();
-  const allowed = (rule, rel, match, texty) => allow.find(a => (!imgFiles.has(rel) || a.fileSha256) && (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256) && (!a.fileSha256 || (imgFiles.has(rel) && fileSha.get(rel) === a.fileSha256 && (!PERSONAL.includes(rule) || (IMG_EXT.test(rel) && !texty))))   /* 第十一輪審查①：fileSha256 只對「檔頭是圖」的檔算數，純文字檔寫了也不放行；第十二輪審查①：個資規則還要副檔名是圖（結構讀不讀得到結尾由 scan-changed 看） */);
+  /* 開發者決定⑤（2026-11-24，第十四輪審查①）：個資規則在圖片裡，只認 file＋那一筆的 sha256，不認 fileSha256（整張圖的雜湊）——
+     靠「看起來像不像文字」「結構讀不讀得到結尾」把關永遠補不完（EXIF 文字欄、不認得的區塊、像素區都藏得進去）。
+     非個資規則在圖片裡照舊只能用 fileSha256；fileSha256 只對「檔頭是圖」的檔算數（第十一輪審查①），而且只給非個資規則 */
+  const allowed = (rule, rel, match) => allow.find((a) => {
+    const isImg = imgFiles.has(rel), pii = PERSONAL.includes(rule);
+    if (isImg && pii) { if (a.fileSha256 != null || !a.file || !a.sha256) return false }
+    else if (isImg && !a.fileSha256) return false;
+    return (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256)
+      && (a.fileSha256 == null || (isImg && !pii && fileSha.get(rel) === a.fileSha256));
+  });
   const isPublic = s => !!pub && pub.some(t => t.includes(s));
   const push = (rule, rel, line, match, extra = {}) => {
-    const a = allowed(rule.id, rel, match, !!extra.texty);
+    const a = allowed(rule.id, rel, match);
     findings.push({ rule: rule.id, risk: rule.risk, what: rule.what, file: rel, line, shown: extra.shown || (rule.secret ? mask(match) : rule.email ? mask(match, true) : match.slice(0, 120)),
       public: isPublic(match), allowed: a ? a.reason || "白名單" : null, fix: rule.fix });
   };
   const files = walk(dir, dir, [], !!opts.all), seen = new Set();
-  /* 同一筆在好幾種解碼裡都找得到：只要有一種看起來像一般文字，就照一般文字算（第十三輪審查①） */
-  const seenAt = new Map();
-  const report = (rule, rel, line, match, extra = {}) => { const k = rule.id + "\n" + rel + "\n" + line + "\n" + match;
-    if (seen.has(k)) { const f = seenAt.get(k); if (extra.texty && f && f.allowed && PERSONAL.includes(rule.id)) { const a = allowed(rule.id, rel, match, true); f.allowed = a ? a.reason || "白名單" : null } return }
-    seen.add(k); push(rule, rel, line, match, extra); seenAt.set(k, findings[findings.length - 1]) };
+  const report = (rule, rel, line, match, extra = {}) => { const k = rule.id + "\n" + rel + "\n" + line + "\n" + match; if (seen.has(k)) return; seen.add(k); push(rule, rel, line, match, extra) };
   for (const f of files) {
     for (const r of NAME_RULES) if (r.re.test(f.rel)) push(r, f.rel, 0, path.basename(f.rel), { shown: path.basename(f.rel) });
     const name = path.basename(f.rel);
@@ -216,7 +222,7 @@ function scan(dir, opts = {}) {
         /* 第五輪審查②：行內標記只略過中、低風險，高風險照擋。第六輪審查②：比對到的字跨了幾行，每一行都要有標記才略過（\s 會吃掉換行，機密放下一行就漏）；
            第六輪審查③：檔頭是圖片的檔不認標記（圖片只能用整張圖 sha256 放行） */
         if (r.risk !== "high" && !PERSONAL.includes(r.id) && !img) { const l2 = lineOf(m.index + Math.max(0, match.length - 1)); let all = true; for (let q = ln; q <= l2; q++) if (!markLine(lineText(q))) { all = false; break } if (all) continue }   /* 第十二輪審查②：個資規則不認標記；標記行有長度上限、不准夾單獨的 \r */
-        report(r, f.rel, ln, match, { texty: textLike(t, m.index, match.length) });
+        report(r, f.rel, ln, match);
       }
     }
     for (const k of known) {
@@ -238,7 +244,7 @@ function summary(res) {
     alreadyPublic: live.filter(f => f.public).length, failing: by("high").length };
 }
 
-module.exports = { textLike, PERSONAL, IMG_EXT, MARK_MAX, markLine, imgFormat, scan, summary, knownSecrets, loadPublic, asText, textsOf, MARK, IMG_HEAD, RULES, NAME_RULES };
+module.exports = { PERSONAL, IMG_EXT, MARK_MAX, markLine, imgFormat, scan, summary, knownSecrets, loadPublic, asText, textsOf, MARK, IMG_HEAD, RULES, NAME_RULES };
 
 if (require.main === module) {
   const argv = process.argv.slice(2), opt = k => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };

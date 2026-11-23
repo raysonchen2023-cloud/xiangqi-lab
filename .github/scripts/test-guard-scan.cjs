@@ -303,19 +303,28 @@ test("第三輪①：檔頭像圖片（BM、PNG、GIF89a、FF D8 FF DA、WEBP、
   const got = O.scan(d).findings.map((f) => f.file + " " + f.rule + " " + f.shown).sort();
   for (const w of ["a.png email s***@mail-host.com.tw", "a.png email v***@z.Xl", "a.png pem-private", "b.js email v***@z.Xl"]) assert.ok(got.some((g) => g.startsWith(w)), w + " 沒抓到：" + got.join("｜"));
   assert.ok(got.some((g) => g.startsWith("a.png phone-tw")), "圖裡被空白隔開的電話也抓");
-  const h = require("crypto").createHash("sha256").update(png).digest("hex");
-  const allow = [{ rule: "email", file: "a.png", fileSha256: h, reason: "截圖壓縮資料湊出來的" }];
-  const R = O.scan(d, { allow });
-  assert.ok(R.findings.filter((f) => f.file === "a.png" && f.rule === "email").every((f) => f.allowed), "整張圖雜湊對上就放行");
+  const sha = (x) => require("crypto").createHash("sha256").update(x).digest("hex"), h = sha(png);
+  const mails = (R, f) => R.findings.filter((x) => x.file === f && x.rule === "email");
+  /* 開發者決定⑤（第十四輪審查①）：圖片裡的個資一律不收整張圖雜湊，要 file＋那一筆的 sha256 逐筆登記 */
+  assert.ok(mails(O.scan(d, { allow: [{ rule: "email", file: "a.png", fileSha256: h, reason: "整張圖雜湊" }] }), "a.png").every((f) => !f.allowed), "決定⑤：整張圖雜湊不放個資");
+  const per = [MAIL3, SHORT].map((m) => ({ rule: "email", file: "a.png", sha256: sha(m), reason: "截圖誤報逐筆登記" }));
+  const R = O.scan(d, { allow: per });
+  assert.ok(mails(R, "a.png").length >= 2 && mails(R, "a.png").every((f) => f.allowed), "逐筆 sha256 對上就放行：" + JSON.stringify(mails(R, "a.png").map((f) => f.shown)));
+  assert.ok(mails(R, "b.js").every((f) => !f.allowed), "寫的是 a.png，b.js 同一串字不放");
   assert.ok(R.findings.some((f) => f.file === "a.png" && f.rule === "pem-private" && !f.allowed), "只放行寫到的規則");
-  fs.writeFileSync(path.join(d, "a.png"), Buffer.concat([png, Buffer.from([0])]));
-  assert.ok(O.scan(d, { allow }).findings.filter((f) => f.file === "a.png" && f.rule === "email").every((f) => !f.allowed), "圖改了一個位元組，雜湊不對就不放行");
+  assert.ok(mails(O.scan(d, { allow: per.map((a) => ({ ...a, file: undefined })) }), "a.png").every((f) => !f.allowed), "圖片的個資放行一定要寫 file");
+  assert.ok(mails(O.scan(d, { allow: per.map((a) => ({ ...a, fileSha256: h })) }), "a.png").every((f) => !f.allowed), "逐筆再加 fileSha256 也不收（個資不准用整檔雜湊）");
 });
-test("第四輪：放行清單的 fileSha256 只給圖片用、要 64 碼、要寫 file；個資規則可用 file＋fileSha256 代替 sha256；inline 沒寫 file 或寫萬用字元都不收", () => {
+test("第四輪：放行清單的 fileSha256 要 64 碼、要寫 file；個資規則（圖片也一樣）不收 fileSha256、一定要 sha256（決定⑤）；inline 沒寫 file 或寫萬用字元都不收", () => {
   const H = "a".repeat(64);
-  assert.deepEqual(SC.checkAllow({ items: [{ rule: "email", file: "src/a.png", fileSha256: H, reason: "截圖誤報" }], inline: [] }, RISKS), []);
+  for (const rule of ["email", "phone-tw", "tw-id"]) {
+    assert.ok(SC.checkAllow({ items: [{ rule, file: "src/a.png", fileSha256: H, reason: "截圖誤報" }], inline: [] }, RISKS).some((x) => /不准用整檔雜湊/.test(x)), rule + "：圖片的個資用 fileSha256 一定退（決定⑤）");
+    assert.ok(SC.checkAllow({ items: [{ rule, file: "src/a.png", sha256: H, fileSha256: H, reason: "截圖誤報" }], inline: [] }, RISKS).some((x) => /不准用整檔雜湊/.test(x)), rule + "：逐筆加整檔雜湊也退");
+    assert.deepEqual(SC.checkAllow({ items: [{ rule, file: "src/a.png", sha256: H, reason: "截圖誤報逐筆" }], inline: [] }, RISKS), [], rule + "：圖片的個資逐筆 sha256 可以");
+  }
+  assert.ok(SC.checkAllow({ items: [{ rule: "local-path", file: "src/a.png", sha256: H, reason: "非個資" }], inline: [] }, RISKS).some((x) => /只能用 fileSha256/.test(x)), "非個資規則在圖片裡照舊只能用 fileSha256");
   assert.equal(SC.checkAllow({ items: [{ rule: "local-path", file: "src/a.js", fileSha256: H, reason: "檔頭是圖的 .js" }], inline: [] }, RISKS).length, 0, "第十輪③：非個資的中風險，fileSha256 不限圖片副檔名（執行時只對檔頭是圖的檔算數，見第十一輪①的反例）");
-  assert.equal(SC.checkAllow({ items: [{ rule: "email", file: "src/a.js", fileSha256: H, reason: "檔頭是圖的 .js" }], inline: [] }, RISKS).length, 1, "第十二輪①：個資規則的 fileSha256 只給圖片副檔名");
+  assert.ok(SC.checkAllow({ items: [{ rule: "email", file: "src/a.js", fileSha256: H, reason: "檔頭是圖的 .js" }], inline: [] }, RISKS).some((x) => /不准用整檔雜湊/.test(x)), "個資規則的 fileSha256 一律退");
   assert.equal(SC.checkAllow({ items: [{ rule: "email", fileSha256: H, reason: "沒寫 file" }], inline: [] }, RISKS).length >= 1, true);
   assert.equal(SC.checkAllow({ items: [{ rule: "local-path", file: "src/a.png", fileSha256: "abc", reason: "雜湊太短" }], inline: [] }, RISKS).length, 1);
   assert.equal(SC.checkAllow({ items: [], inline: [{ sha256: H, reason: "沒寫 file" }] }, RISKS).length, 1, "inline 一定要寫 file（第四輪 M27）");
@@ -673,8 +682,8 @@ test("第十輪①：沒寫 file、只寫 rule＋match 的放行項目碰不到�
   assert.equal(scanA(dq, [{ rule: "email", file: "source/q.png.meta.txt", sha256: mh, reason: "直接寫 meta 檔名" }]).status, 1, "直接寫 .meta 檔名不算數（M15）");
 });
 test("第十輪②④：image-meta 的 sniff 和 oss-scan 的 IMG_HEAD 是同一段程式、對每個樣本結果相同；HEIC 也算圖片（不認行內標記）；長得像檔頭的文字檔不算圖片", () => {
-  const O = require(OSS), src = (f) => { const t = fs.readFileSync(f, "utf8"), i = t.indexOf("function imgFormat("); return t.slice(i, t.indexOf("\n}\n", i)) };
-  assert.equal(src(path.join(__dirname, "image-meta.cjs")), src(OSS), "兩邊的 imgFormat 要逐字相同");
+  const O = require(OSS), src = (f, fn = "imgFormat") => { const t = fs.readFileSync(f, "utf8"), i = t.indexOf("function " + fn + "("); assert.ok(i >= 0, f + " 找不到 " + fn); return t.slice(i, t.indexOf("\n}\n", i)) };
+  for (const fn of ["imgFormat", "isBmp", "isIco"]) assert.equal(src(path.join(__dirname, "image-meta.cjs"), fn), src(OSS, fn), "兩邊的 " + fn + " 要逐字相同（isBmp、isIco：第十四輪審查②）");
   const ftyp = (brand, n = 24) => { const b = Buffer.alloc(n); b.writeUInt32BE(n, 0); b.write("ftyp" + brand + "\0\0\0\0mif1" + brand, 4, "latin1"); return b };
   const texts = { jxl: "The JXL format is described here.\n", ftyp: "### ftyp box: heic and avif notes\n", riff: "RIFF1234WEBP notes about webp.\n", psd: "8BPS is the photoshop magic.\n", png: "\x89PNG is the png magic\n" };
   for (const [k, t] of Object.entries(texts)) { const b = Buffer.from(t, "latin1"); assert.equal(IM.sniff(b), null, k); assert.equal(O.IMG_HEAD(b), false, k) }
@@ -736,14 +745,23 @@ test("第十二輪①：檔頭偽裝成圖的文字檔，個資不能用整檔�
     const O = require(OSS), dd = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m12-")); made.push(dd); fs.writeFileSync(path.join(dd, "fmt.md"), b);
     assert.equal(O.scan(dd, { allow: [{ rule: "email", file: "fmt.md", fileSha256: sha(b), reason: "整檔雜湊" }] }).findings.find((f) => f.rule === "email").allowed, null, n + "：oss-scan 自己也不放（副檔名不是圖）");
   }
-  /* 副檔名是 .gif、檔頭對，但結構讀不到結尾：連「讀不懂的圖」也登記了，信箱照擋 */
+  /* 第十四輪②（M28、M27、M24）：GIF 不走到 0x3B、BMP 檔頭大小作假＝讀不懂；個資逐筆登記了，讀不懂的圖照擋 */
+  const per = (f) => ({ rule: "email", file: f, sha256: sha(MAIL3), reason: "逐筆登記" });
   const g = Buffer.concat([Buffer.from("GIF89a 這個格式的說明"), Buffer.from(body)]), d = repo(({ put }) => put("source/fake.gif", g));
-  const r = scanA(d, [{ rule: "email", file: "source/fake.gif", fileSha256: sha(g), reason: "整檔雜湊" }, { rule: "image-unreadable", file: "source/fake.gif", fileSha256: sha(g), reason: "讀不懂的圖" }]);
-  assert.equal(r.status, 1, ".gif 結構讀不到結尾：個資整檔雜湊不算數\n" + r.stdout);
-  /* .bmp：檔頭記的大小跟實際不同（後面多接一段文字）＝讀不懂，個資整檔雜湊不算數 */
+  assert.equal(IM.imageMeta(g), null, "GIF89a 後面接文字＝讀不懂（走不到 0x3B）");
+  const gok = Buffer.concat([Buffer.from("GIF89a"), Buffer.alloc(7), Buffer.from([0x3b])]);
+  assert.ok(IM.imageMeta(gok), "走得到 0x3B 的 GIF 讀得懂");
+  assert.equal(IM.imageMeta(Buffer.concat([Buffer.from("GIF89a"), Buffer.alloc(7), Buffer.from([0x21, 0xfe, 5, 0x61])])), null, "註解區塊沒收尾＝讀不懂");
+  const r = scanA(d, [per("source/fake.gif")]);
+  assert.equal(r.status, 1, ".gif 讀不懂：照擋\n" + r.stdout);
   const m = Buffer.concat([BMPH(64), Buffer.alloc(64), Buffer.from(body)]), dm = repo(({ put }) => put("source/fake.bmp", m));
-  const rm = scanA(dm, [{ rule: "email", file: "source/fake.bmp", fileSha256: sha(m), reason: "整檔雜湊" }, { rule: "image-unreadable", file: "source/fake.bmp", fileSha256: sha(m), reason: "讀不懂的圖" }]);
-  assert.equal(rm.status, 1, ".bmp 大小對不上：個資整檔雜湊不算數\n" + rm.stdout);
+  assert.equal(IM.imageMeta(m), null, "BMP 檔頭記的大小比實際小＝讀不懂");
+  const small = Buffer.concat([BMPH(64), Buffer.alloc(32)]);
+  assert.equal(IM.imageMeta(small), null, "BMP 檔頭記的大小比實際大＝讀不懂");
+  const far = Buffer.concat([BMPH(64), Buffer.alloc(64)]); far.writeUInt32LE(4096, 10);
+  assert.equal(IM.imageMeta(far), null, "BMP 像素位置超出檔案＝讀不懂");
+  const rm = scanA(dm, [per("source/fake.bmp")]);
+  assert.equal(rm.status, 1, ".bmp 大小對不上：照擋\n" + rm.stdout);
   const ok = Buffer.concat([BMPH(64), Buffer.alloc(64)]);
   assert.ok(IM.imageMeta(ok), "大小對得上的 BMP 照樣讀得懂");
 });
@@ -774,58 +792,64 @@ test("第十二輪③：沒有 BOM、以中文為主的 UTF-16（LE／BE，從�
 });
 
 /* ---- PR #68 第十三輪審查（iMac Claude 2） ---- */
-test("第十三輪①：讀得懂的圖後面接一段文字（PNG IEND／JPEG EOI／GIF 3B／WebP RIFF 之後），個資不能靠整檔雜湊放行；TIFF 等算不出結尾的格式也不行", () => {
-  const sha = (b) => require("crypto").createHash("sha256").update(b).digest("hex");
-  const rows = Array.from({ length: 40 }, (_, i) => "user" + i + "@" + "mail-host.com.tw 09" + String(10000000 + i * 7919).slice(0, 8)).join("\n") + "\n";
-  const jpg = Buffer.concat([Buffer.from([0xff, 0xd8]), seg(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])), Buffer.from([0x12, 0x34, 0xff, 0x00, 0x56, 0xff, 0xd9])]);
-  const gif = Buffer.concat([Buffer.from("GIF89a"), Buffer.alloc(7), Buffer.from([0x3b])]);
-  const imgs = { "p.png": PNGK.png(), "j.jpg": jpg, "g.gif": gif, "w.webp": webp("VP8L", Buffer.alloc(10)) };
-  for (const [n, img] of Object.entries(imgs)) {
-    assert.equal(IM.imageEnd(img), img.length, n + "：乾淨的圖，結尾＝檔案長度");
-    const b = Buffer.concat([img, Buffer.from(rows)]);
-    assert.ok(IM.imageMeta(b), n + "：後面接文字的圖照樣讀得懂（所以要另外看結尾）");
-    assert.notEqual(IM.imageEnd(b), b.length, n + "：結尾之後還有東西");
-    const d = repo(({ put }) => put("source/" + n, b));
-    const r = scanA(d, [{ rule: "email", file: "source/" + n, fileSha256: sha(b), reason: "整檔雜湊" }, { rule: "phone-tw", file: "source/" + n, fileSha256: sha(b), reason: "整檔雜湊" }]);
-    assert.equal(r.status, 1, n + "：結尾之後的個資照擋\n" + r.stdout);
-  }
-  const tif = Buffer.concat([Buffer.from("II*\0\x08\0\0\0\0\0\0\0\0\0", "latin1"), Buffer.from(rows)]);
-  assert.equal(IM.imageEnd(tif), null, "TIFF 算不出結尾");
-  const dt = repo(({ put }) => put("source/t.tif", tif));
-  assert.equal(scanA(dt, [{ rule: "email", file: "source/t.tif", fileSha256: sha(tif), reason: "整檔雜湊" }, { rule: "image-unreadable", file: "source/t.tif", fileSha256: sha(tif), reason: "讀不懂的圖" }]).status, 1, "TIFF：個資整檔雜湊不算數");
-});
-test("第十三輪①：個資前後像一般文字（PNG 區塊裡塞一整段信箱），整檔雜湊不放行；夾在壓縮資料裡的照樣可以放；圖裡的文字（zTXt）個資不靠整檔雜湊放行", () => {
-  const O = require(OSS), sha = (b) => require("crypto").createHash("sha256").update(b).digest("hex"), { chunk, png } = PNGK;
-  const rows = Array.from({ length: 10 }, (_, i) => "user" + i + "@" + "mail-host.com.tw").join(", ");
-  const b = png(chunk("prVt", Buffer.from(rows)));   /* 結構完整、結尾＝檔案長度，但文字放在自訂區塊裡 */
-  assert.equal(IM.imageEnd(b), b.length);
-  const dd = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m13-")); made.push(dd); fs.writeFileSync(path.join(dd, "a.png"), b);
-  const F = O.scan(dd, { allow: [{ rule: "email", file: "a.png", fileSha256: sha(b), reason: "整檔雜湊" }] }).findings.filter((f) => f.rule === "email");
-  assert.ok(F.length >= 10 && F.every((f) => !f.allowed), "前後是一般文字：不放行");
-  assert.equal(O.textLike("\x00\x81\xfe\x13\x9a".repeat(20) + "a" + "@" + "b.co" + "\x00\x81\xfe\x13\x9a".repeat(20), 100, 6), false, "前後是亂碼：不算一般文字");
-  assert.equal(O.textLike("x".repeat(100) + "a" + "@" + "b.co" + "y".repeat(100), 100, 6), true);
-  const z = png(chunk("zTXt", Buffer.concat([Buffer.from("Comment\0\0"), require("zlib").deflateSync(Buffer.from(rows))])));
-  const r = scanA(repo(({ put }) => put("source/z.png", z)), [{ rule: "email", file: "source/z.png", fileSha256: sha(z), reason: "整檔雜湊" }]);
-  assert.equal(r.status, 1, "zTXt 壓縮的信箱：整檔雜湊不延伸到圖裡的文字\n" + r.stdout);
-});
 test("第十三輪②：只寫 rule 的放行（非個資規則）也不收——不准整條規則全部放行", () => {
   for (const rule of ["local-path", "ntfy-topic", "password-assign"]) assert.ok(SC.checkAllow({ items: [{ rule, reason: "整條規則放行" }], inline: [] }, RISKS).some((x) => /不准整條規則全部放行/.test(x)), rule);
   assert.equal(SC.checkAllow({ items: [{ rule: "local-path", file: "src/a.js", reason: "寫了 file 就可以" }], inline: [] }, RISKS).length, 0);
 });
-test("第十三輪①：結尾之後接的是亂碼夾信箱（前後文不像文字），照樣靠「結尾＝檔案長度」擋；多種解碼裡只要有一種像文字就不放行", () => {
-  const O = require(OSS), sha = (b) => require("crypto").createHash("sha256").update(b).digest("hex"), { chunk, png } = PNGK;
-  const NZ = (n, s) => Buffer.from(Array.from({ length: n }, (_, i) => ((i * 167 + s * 61 + (i % 7) * 13) & 0xff) | 0x80));
-  const tail = Buffer.concat([NZ(64, 1), Buffer.from("\0" + MAIL3 + "\0"), NZ(64, 2)]);
-  const b = Buffer.concat([png(), tail]);
-  const dd = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m13d-")); made.push(dd); fs.writeFileSync(path.join(dd, "a.png"), b);
-  assert.ok(O.scan(dd, { allow: [{ rule: "email", file: "a.png", fileSha256: sha(b), reason: "整檔雜湊" }] }).findings.filter((f) => f.rule === "email").every((f) => f.allowed), "oss-scan 自己看前後文：像壓縮資料，會放（所以要靠 scan-changed 看結尾）");
-  const r = scanA(repo(({ put }) => put("source/a.png", b)), [{ rule: "email", file: "source/a.png", fileSha256: sha(b), reason: "整檔雜湊" }]);
-  assert.equal(r.status, 1, "結尾之後還有東西：個資整檔雜湊不算數\n" + r.stdout);
-  /* 信箱前後是 UTF-16 的文字：直接照 UTF-8 解，一半是空白（不像文字）；拿掉 NUL 那一種才看得出是一般文字 */
-  const u16 = (t) => Buffer.from(t, "utf16le");
-  const c = png(chunk("prVt", Buffer.concat([NZ(40, 3), u16("Contact list for the team, please keep private. "), Buffer.from(MAIL3), u16(" and also the backup address follows here. "), NZ(40, 4)])));
-  assert.equal(IM.imageEnd(c), c.length);
-  const d2 = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m13e-")); made.push(d2); fs.writeFileSync(path.join(d2, "c.png"), c);
-  const F = O.scan(d2, { allow: [{ rule: "email", file: "c.png", fileSha256: sha(c), reason: "整檔雜湊" }] }).findings.filter((f) => f.rule === "email");
-  assert.ok(F.length >= 1 && F.every((f) => !f.allowed), "有一種解碼像文字就不放行：" + JSON.stringify(F.map((f) => f.allowed)));
+
+/* ---- PR #68 第十四輪審查（iMac Claude 2）：開發者決定⑤＝圖片裡的個資一律不收整張圖雜湊，逐筆 file＋sha256 ---- */
+const TWID = "A" + "1" + "23456789";   /* 身分證字號格式的假資料（拼起來，測試檔本身不會被掃到） */
+const exifTiff = (text) => { const s = Buffer.from(text + "\0", "latin1"), h = Buffer.alloc(26); h.write("MM\0*", 0, "latin1"); h.writeUInt32BE(8, 4); h.writeUInt16BE(1, 8);
+  h.writeUInt16BE(0x010e, 10); h.writeUInt16BE(2, 12); h.writeUInt32BE(s.length, 14); h.writeUInt32BE(26, 18); h.writeUInt32BE(0, 22); return Buffer.concat([h, s]) };   /* IFD0 只有 ImageDescription（0x010e） */
+const hidePii = (pii) => {
+  const { chunk, png } = PNGK, NZ = (n, s) => Buffer.from(Array.from({ length: n }, (_, i) => ((i * 167 + s * 61 + (i % 7) * 13) & 0xff) | 0x80));
+  const jpeg = (...segs) => Buffer.concat([Buffer.from([0xff, 0xd8]), ...segs, seg(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])), Buffer.from([0x12, 0x34, 0xff, 0xd9])]);
+  const bmpPix = Buffer.concat([NZ(40, 1), Buffer.from(" " + pii + " "), NZ(40, 2)]), bmp = Buffer.concat([BMPH(bmpPix.length), bmpPix]);
+  const gc = Buffer.from(" " + pii + " "), gif = Buffer.concat([Buffer.from("GIF89a"), Buffer.alloc(7), Buffer.from([0x21, 0xfe, gc.length]), gc, Buffer.from([0, 0x3b])]);
+  return {
+    "png eXIf 說明欄": png(chunk("eXIf", exifTiff("Contact " + pii + " "))),
+    "png 自訂區塊 prVt（夾雜訊）": png(chunk("prVt", Buffer.concat([NZ(64, 3), Buffer.from("\0" + pii + "\0"), NZ(64, 4)]))),
+    "png 自訂區塊 UTF-16": png(chunk("prVt", Buffer.from("聯絡 " + pii + " 謝謝", "utf16le"))),
+    "png IEND 之後": Buffer.concat([png(), Buffer.from("\0" + pii + "\0")]),
+    "jpeg APP1 Exif 說明欄": jpeg(seg(0xe1, Buffer.concat([Buffer.from("Exif\0\0", "latin1"), exifTiff("Contact " + pii + " ")]))),
+    "jpeg APP4": jpeg(seg(0xe4, Buffer.from(" " + pii + " "))),
+    "webp 自訂區塊": webp("XQZZ", Buffer.from(" " + pii + " ")),
+    "bmp 像素區": bmp,
+    "gif 註解": gif,
+  };
+};
+test("第十四輪①（決定⑤）：個資藏在圖片各處（EXIF 說明欄、自訂區塊、IEND 之後、APP4、WebP、BMP 像素、GIF 註解），整張圖雜湊一律不放，逐筆 sha256 才放", () => {
+  const O = require(OSS), sha = (x) => require("crypto").createHash("sha256").update(x).digest("hex");
+  for (const [rule, pii] of [["email", MAIL3], ["phone-tw", "09" + "12345678"], ["tw-id", TWID]]) {
+    for (const [n, b] of Object.entries(hidePii(pii))) {
+      const dd = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m14-")); made.push(dd); fs.writeFileSync(path.join(dd, "a.img"), b);
+      const hits = (allow) => O.scan(dd, { allow }).findings.filter((f) => f.rule === rule);
+      assert.ok(hits([]).length >= 1, rule + "／" + n + "：要抓到");
+      assert.ok(hits([{ rule, file: "a.img", fileSha256: sha(b), reason: "整張圖雜湊" }]).every((f) => !f.allowed), rule + "／" + n + "：整張圖雜湊不放");
+      { const H = hits([{ rule, file: "a.img", sha256: sha(pii), reason: "逐筆登記" }]); assert.ok(H.every((f) => f.allowed), rule + "／" + n + "：逐筆 sha256 放行 " + JSON.stringify(H.map((f) => [f.shown, f.line, f.allowed]))) }
+      assert.ok(hits([{ rule, file: "b.img", sha256: sha(pii), reason: "別的檔" }]).every((f) => !f.allowed), rule + "／" + n + "：file 不同不放");
+    }
+  }
+  /* scan-changed：審查重跑的樣本（PNG eXIf 說明欄寫信箱、只登記一筆整張圖雜湊），清單格式就退 */
+  const b = hidePii(MAIL3)["png eXIf 說明欄"], d = repo(({ put }) => put("source/e.png", b));
+  assert.equal(scanA(d, []).status, 1, "沒登記：擋");
+  assert.equal(scanA(d, [{ rule: "email", file: "source/e.png", fileSha256: sha(b), reason: "整張圖雜湊" }]).status, 2, "整張圖雜湊：清單格式就退");
+  const z = ztxtPng("mail " + MAIL3 + " "), dz = repo(({ put }) => put("source/z.png", z));
+  assert.equal(scanA(dz, [{ rule: "email", file: "source/z.png", fileSha256: sha(z), reason: "整張圖雜湊" }]).status, 2, "zTXt 壓縮的信箱（圖裡解出來的文字）：整張圖雜湊也退");
+  /* 非個資規則照舊用整張圖雜湊（第四輪的路不受影響） */
+  const LP = "/Us" + "ers/zed.fake", p = PNGK.png(PNGK.chunk("prVt", Buffer.from(" " + LP + " "))), dp = repo(({ put }) => put("source/p.png", p));
+  assert.equal(scanA(dp, []).status, 1, "本機路徑沒登記：擋");
+  assert.equal(scanA(dp, [{ rule: "local-path", file: "source/p.png", fileSha256: sha(p), reason: "截圖誤報" }]).status, 0, "非個資：整張圖雜湊照舊放行");
+});
+test("第十四輪①（決定⑤）：圖裡解出來的文字，個資只認原圖 file＋那一筆 sha256；scan-changed 和 oss-scan 的 PERSONAL 要一樣、都有 tw-id", () => {
+  const O = require(OSS);
+  assert.deepEqual(O.PERSONAL, SC.PERSONAL, "兩支程式的個資規則要一樣（第十四輪②：M50、M51）");
+  for (const r of ["email", "phone-tw", "tw-id"]) assert.ok(SC.PERSONAL.includes(r), r);
+  /* tw-id 的行為反例：行內標記不略過、清單不寫 sha256 不收 */
+  const MK = "oss-scan" + ":allow", dd = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m14b-")); made.push(dd);
+  fs.writeFileSync(path.join(dd, "a.js"), "id=" + TWID + " // " + MK + "\n");
+  assert.equal(O.scan(dd).findings.filter((f) => f.rule === "tw-id" && !f.allowed).length, 1, "身分證字號：標記不算");
+  assert.ok(SC.checkAllow({ items: [{ rule: "tw-id", file: "src/a.js", reason: "只寫檔名" }], inline: [] }, RISKS).some((x) => /要用 sha256/.test(x)), "身分證字號：不寫 sha256 不收");
+  const d = repo(({ put }) => put("source/id.js", "id=" + TWID + "\n"));
+  assert.equal(scanA(d, []).status, 1, "改到的檔有身分證字號：擋");
 });

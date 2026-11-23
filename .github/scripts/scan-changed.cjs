@@ -22,7 +22,8 @@
 //   ⑥ 符號連結也掃：從 git 拿它存的內容（指向的路徑字串），不再用工作區的 isFile 把它濾掉
 // PR #68 第四輪審查（開發者 11/23 選「圖片全文掃、誤報用整張圖 sha256 放行」）：
 //   ② 圖裡解出來的文字（.meta 檔）裡有行內標記就擋：圖裡的文字不准用標記（壓縮的 zTXt／iTXt、分段的 GIF 註解原本都能藏）
-//   ③④ 圖片跟一般檔一樣全文掃；壓縮資料偶然湊出的中風險，放行清單寫 file（圖片的完整路徑）＋fileSha256（整張圖的雜湊）
+//   ③④ 圖片跟一般檔一樣全文掃；壓縮資料偶然湊出的中風險，放行清單寫 file（圖片的完整路徑）＋fileSha256（整張圖的雜湊）；
+//      個資規則例外：圖片裡和圖片解出來的文字裡也只認 file＋那一筆的 sha256，不認 fileSha256（開發者決定⑤，第十四輪審查①）
 //   .github/oss-allow.json 是資料、不在 base-guard 的 GUARD 清單裡（跟 test-skip-allow.json 一樣）：改它要逐行審，換回 main 版守門時用的是 PR 這一份
 // 已知限制：base64 等編碼過的機密 oss-scan 本來就認不出來；機密的字中間插控制字元（例如 \x01）或零寬字元也認不出來；
 //   zip／docx／gz 等壓縮檔裡面、影片的 GPS、檔名裡的信箱、Git LFS 指標檔指向的內容、提交歷史裡加了又刪掉的內容都不掃；
@@ -33,7 +34,7 @@
 "use strict";
 const { execFileSync, spawnSync } = require("child_process");
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
-const { imageMeta, imageEnd, sniff, KIND_ZH } = require("./image-meta.cjs");
+const { imageMeta, sniff, KIND_ZH } = require("./image-meta.cjs");
 
 /* 行內放行標記的字樣：用拼的，這支自己的說明與訊息不會被當成放行、也照常被掃 */
 const TOK = "oss-scan" + ":allow";
@@ -54,15 +55,15 @@ function checkAllow(list, risks) {
     else if (!Object.hasOwn(risks, a.rule)) bad.push(`${at}的 rule「${a.rule}」不是 oss-scan 的規則`);
     else if (risks[a.rule] === "high") bad.push(`${at}的 rule「${a.rule}」是高風險：不准放行`);
     if (!String(a.file || "").trim() && !String(a.match || "").trim() && !a.sha256 && !a.fileSha256) bad.push(at + "沒有 file、match、sha256、fileSha256：不准整條規則全部放行");
-    if (a.rule !== UNREAD && IMG_EXT.test(String(a.file || "")) && !a.fileSha256) bad.push(at + "放行的是圖片：圖片只能用 fileSha256（整張圖的雜湊）放行（第九輪審查①、開發者決定 4）");
+    if (a.rule !== UNREAD && !PERSONAL.includes(a.rule) && IMG_EXT.test(String(a.file || "")) && !a.fileSha256) bad.push(at + "放行的是圖片：非個資規則在圖片裡只能用 fileSha256（整張圖的雜湊）放行（第九輪審查①、開發者決定 4）");
     /* 第十輪審查③：檔頭是圖、副檔名不是圖的檔也要有放行的路，所以 fileSha256 不再限定圖片副檔名（整個檔的雜湊，一改就失效） */
     if (a.rule !== UNREAD && a.fileSha256 != null && (!/^[0-9a-f]{64}$/.test(String(a.fileSha256)) || !String(a.file || "").trim())) bad.push(at + "的 fileSha256 要是 64 碼小寫，而且要寫 file（完整路徑）");
-    if (PERSONAL.includes(a.rule) && !/^[0-9a-f]{64}$/.test(String(a.sha256 || "")) && !(a.fileSha256 && a.file)) bad.push(at + "是個資規則（" + a.rule + "）：要用 sha256 指定是哪一筆（圖片可用 file＋fileSha256）");
+    if (PERSONAL.includes(a.rule) && !/^[0-9a-f]{64}$/.test(String(a.sha256 || ""))) bad.push(at + "是個資規則（" + a.rule + "）：要用 sha256 指定是哪一筆（圖片也一樣，開發者決定⑤）");
     if (a.sha256 != null && !/^[0-9a-f]{64}$/.test(String(a.sha256))) bad.push(at + "的 sha256 要是 64 碼小寫");
     if (a.match != null && String(a.match).length < 6) bad.push(at + "的 match 太短（至少 6 個字）");
     if (a.file != null && (String(a.file).length < 3 || /^\/|[*?]|\\/.test(a.file))) bad.push(at + "的 file 要寫倉庫裡的完整路徑（不加開頭的 /、不用萬用字元）");
     if (String(a.reason || "").trim().length < 4) bad.push(at + "沒寫理由（reason 至少 4 個字）");
-    if (PERSONAL.includes(a.rule) && a.fileSha256 != null && !IMG_EXT.test(String(a.file || ""))) bad.push(at + "是個資規則（" + a.rule + "）：整檔雜湊（fileSha256）只給圖片副檔名的檔，其他檔要用 sha256 指定是哪一筆（第十二輪審查①）");
+    if (PERSONAL.includes(a.rule) && a.fileSha256 != null) bad.push(at + "是個資規則（" + a.rule + "）：不准用整檔雜湊（fileSha256），圖片也一樣，要用 file＋sha256 逐筆登記（開發者決定⑤，第十四輪審查①）");
     if (PERSONAL.includes(a.rule) && !String(a.file || "").trim()) bad.push(at + "是個資規則（" + a.rule + "）：一定要寫 file（不然那一筆放進任何檔都會過）");
     if (PII_RE.test(String(a.reason || ""))) bad.push(at + "的理由裡不能寫信箱或電話");
   });
@@ -155,13 +156,15 @@ for (const x of images) if (x.meta && x.meta.texts && x.meta.texts.length) {
   for (const m of markerLines(S.textsOf(t), S.MARK)) metaMarks.push({ file: x.file, ...m });   /* 第四輪審查②：圖裡的文字不准用行內標記 */
 }
 console.log(`複製 ${files.length} 個改到的檔到暫存資料夾，交給 oss-scan 掃（放行清單 ${list.items.length} 筆、行內標記登記 ${list.inline.length} 筆）`);
-/* 第十二輪審查①：個資的整檔雜湊放行，只給「副檔名是圖、檔頭是圖、結構讀得到結尾（imageMeta 不是 null）」的檔；其他的在這裡拿掉，不交給 oss-scan */
-const endOk = new Set(bufs.filter(({ buf }) => imageEnd(buf) === buf.length).map(({ file }) => file));   /* 第十三輪審查①：結構的結尾＝檔案長度（結尾之後接了東西、或算不出結尾的格式都不算） */
-const readableImg = new Set(images.filter((x) => x.meta && endOk.has(x.file)).map((x) => x.file));
-const items = list.items.filter((a) => a.rule !== UNREAD && !(PERSONAL.includes(a.rule) && a.fileSha256 && !(IMG_EXT.test(String(a.file)) && readableImg.has(a.file))));
+/* 開發者決定⑤（第十四輪審查①）：個資規則不收 fileSha256（checkAllow 已擋），這裡再保險拿掉一次 */
+const items = list.items.filter((a) => a.rule !== UNREAD && !(PERSONAL.includes(a.rule) && a.fileSha256 != null));
+/* 圖裡解出來的文字：非個資規則認「對到原圖 fileSha256」的項目；個資規則只認寫了原圖 file＋那一筆 sha256 的項目（決定⑤） */
 const metaItems = [];
-for (const a of items) if (a.fileSha256 && !PERSONAL.includes(a.rule) && metaOf.has(a.file) && shaOf.get(a.file) === a.fileSha256)   /* 第十三輪審查①：圖裡解出來的文字一定是真的文字，個資不能靠整檔雜湊放行 */
-  { const c = { ...a, file: metaOf.get(a.file) }; delete c.fileSha256; metaItems.push(c) }
+for (const a of items) {
+  if (!metaOf.has(a.file)) continue;
+  if (PERSONAL.includes(a.rule)) { if (a.sha256) metaItems.push({ ...a, file: metaOf.get(a.file) }) }
+  else if (a.fileSha256 && shaOf.get(a.file) === a.fileSha256) { const c = { ...a, file: metaOf.get(a.file) }; delete c.fileSha256; metaItems.push(c) }
+}
 const unreadOk = list.items.filter((a) => a.rule === UNREAD && shaOf.get(a.file) === a.fileSha256).map((a) => a.file);
 function runScan(dir, allowItems, tag) {
   const tmpA = out + "." + tag + ".allow.json", tmpJ = out + "." + tag + ".scan.json";
