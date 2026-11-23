@@ -19,8 +19,10 @@
      ctrl     程式檔插一個控制字元（check-www 認的 30 個全部插過，清單照改） → 程式壞掉
      bigpre   拿掉 preload.json 的 big 列的大檔（清單也拿掉）    → 開 App 要先下載的大檔缺
      capord   index.html 裡 native-bridge.js 移到 capacitor.js 前面（清單照改） → 原生橋接載入順序錯（原生能力偵測不到）
+     nohash   清單裡引擎、App 會要的檔的雜湊拿掉（只剩大小） → 要回 3：W30 大小對、內容壞的大檔抓不到
      listmiss 拿掉一個清單有、但不在上面任何名單裡的檔（3D 場景程式、場景圖、data/ 其他檔） → 那個畫面破圖或壞掉
    swap 除了頭、中、尾、隨機，另外固定測最大的兩個記了 sha1 的檔（W30：大小對、內容壞的切塊大檔）
+   home／bgm／cdnstale／cdnmiss／nohash 分層挑：首頁 items、preload big、背景音樂每個朝代各一層，每層各挑頭、中、尾＋隨機（PR #67 第八次審查）
    用法（送審）：node scripts/canary-www.js --pkg <要送審的 .ipa 或 .app> --cdn [--list <清單>] [--seed <種子>] --out <收據.json>
      --pkg 時檢查的就是包裡那份 Payload/*.app/public（.ipa 會先解開），不能再另外給 --dir（PR #67 審查：收據的包跟檢查的資料夾要是同一份）。
      沒有安裝包時可以用 --dir <www 資料夾> 先試，但那種收據 full＝false，送審不能用。
@@ -67,12 +69,17 @@ const TAG_CAP = '<script src="capacitor.js"></script>', TAG_BR = '<script src="n
 const relist = (L, f, b) => ({ ...L, [f]: [b.length, sha1_12(b)] });
 const preloadItems = (D) => (JSON.parse(fs.readFileSync(at(D, "data/preload.json"), "utf8")).items || []).map((x) => x[0]).filter((f) => fs.existsSync(at(D, f)));
 const bigItems = (D) => (JSON.parse(fs.readFileSync(at(D, "data/preload.json"), "utf8")).big || []).map((x) => x[0]);
+/* PR #67 第八次審查：分層挑檔。首頁 items、preload big、背景音樂每個朝代各自一層，每層各挑頭、中、尾＋隨機（混在一起照字母排，背景音樂幾乎挑不到） */
+const bgmEras = (D) => { const B = JSON.parse(fs.readFileSync(at(D, "data/bgm/index.json"), "utf8")); return Object.entries(B).map(([era, list]) => (Array.isArray(list) ? list : []).filter((f) => typeof f === "string" && fs.existsSync(at(D, "data/bgm/" + era + "/" + f))).map((f) => "data/bgm/" + era + "/" + f)).filter((x) => x.length) };
+const needStrata = (D) => [preloadItems(D), bigItems(D).filter((f) => fs.existsSync(at(D, f))), ...bgmEras(D)].filter((x) => x.length);
 const bgmFiles = (D) => { const B = JSON.parse(fs.readFileSync(at(D, "data/bgm/index.json"), "utf8")), o = []; for (const [era, list] of Object.entries(B)) for (const f of Array.isArray(list) ? list : []) if (typeof f === "string" && fs.existsSync(at(D, "data/bgm/" + era + "/" + f))) o.push("data/bgm/" + era + "/" + f); return o };
 
+/* cdnstale／cdnmiss 用：每一層裡、CDN 清單有記雜湊的檔（stale 還要清單也有） */
+const cdnStrata = (D, L, M, needList) => needStrata(D).map((s) => s.filter((rel) => M && Array.isArray(M[rel]) && M[rel][1] && (!needList || L[rel]) && fs.existsSync(at(D, rel)))).filter((x) => x.length);
 /* 每一種壞樣本：cands 列出所有可以弄壞的檔；break 在副本上真的弄壞（需要時回傳改過的清單）；expect 是 check-www 錯誤裡要出現的字 */
 const KINDS = {
   home: { cands: (D) => preloadItems(D), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "preload.json 列了但沒有：" + f },
-  bgm: { cands: (D) => bgmFiles(D), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "背景音樂清單有但沒有檔：" + f },
+  bgm: { cands: (D) => bgmFiles(D), strata: (D) => bgmEras(D), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "背景音樂清單有但沒有檔：" + f },
   engine: { cands: (D) => ENGINE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺引擎 " + f },
   core: { cands: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺 " + f },
   big: {
@@ -93,14 +100,14 @@ const KINDS = {
   },
   cdnstale: {
     needsCdn: true,
-    cands: (D, L, M) => { const need = new Set([...preloadItems(D), ...bgmFiles(D)]); return Object.keys(M || {}).filter((rel) => need.has(rel) && Array.isArray(M[rel]) && M[rel][1] && L[rel] && fs.existsSync(at(D, rel))).sort() },
+    cands: (D, L, M) => cdnStrata(D, L, M, true).flat(), strata: (D, L, M) => cdnStrata(D, L, M, true),
     /* 模擬 W42：包裡放的是舊副本，清單也是照舊副本產生的（所以第 4 項比不出來），只有跟 CDN 比才抓得到 */
     break: (D, f, L) => { const b = Buffer.from(fs.readFileSync(at(D, f))); b[Math.floor(b.length / 2)] ^= 0xff; rewrite(at(D, f), b); return { list: relist(L, f, b) } },
     expect: (f) => "跟 CDN 現行版不同 " + f,
   },
   cdnmiss: {
     needsCdn: true, exit: 3,
-    cands: (D, L, M) => { const need = new Set([...preloadItems(D), ...bgmFiles(D)]); return Object.keys(M || {}).filter((rel) => need.has(rel) && Array.isArray(M[rel]) && M[rel][1] && fs.existsSync(at(D, rel))).sort() },
+    cands: (D, L, M) => cdnStrata(D, L, M, false).flat(), strata: (D, L, M) => cdnStrata(D, L, M, false),
     break: (D, f, L, M) => { const M2 = { ...M }; delete M2[f]; return { cdn: M2 } },
     expect: (f) => "沒跟 CDN 比到",
   },
@@ -116,6 +123,14 @@ const KINDS = {
     always: (D, L) => { const f = CTRL.find((x) => L[x] && fs.existsSync(at(D, x))); return f ? CTRL_CH.map((c) => f + "|" + c) : [] },
     break: (D, fc, L) => { const [f, c] = fc.split("|"), b = Buffer.concat([fs.readFileSync(at(D, f)), Buffer.from([parseInt(c, 16)])]); rewrite(at(D, f), b); return { list: relist(L, f, b) } },
     expect: (fc) => { const [f, c] = fc.split("|"); return f + " 有控制字元 U+" + parseInt(c, 16).toString(16) },
+  },
+  nohash: {
+    exit: 3,
+    /* PR #67 第八次審查：清單裡引擎、App 會要的檔的雜湊被拿掉（只剩大小），要回 3 */
+    cands: (D, L) => [ENGINE, ...needStrata(D)].flat().filter((f) => L[f] && L[f][1] && fs.existsSync(at(D, f))),
+    strata: (D, L) => [ENGINE, ...needStrata(D)].map((s) => s.filter((f) => L[f] && L[f][1] && fs.existsSync(at(D, f)))).filter((x) => x.length),
+    break: (D, f, L) => ({ list: { ...L, [f]: [L[f][0], null] } }),
+    expect: (f) => "清單沒記雜湊的重要檔",
   },
   listmiss: {
     /* PR #67 第六次審查：清單有、但不在任何特定名單（首頁、背景音樂、引擎、核心、控制字元檢查的檔）裡的檔，缺了只有「少了」那一行抓得到 */
@@ -200,7 +215,8 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       for (const k of want) {
         const K = KINDS[k];
         let cands = []; try { cands = K.cands(dir, L, M) } catch (e) { cands = [] }
-        const chosen = [...new Set([...picks(cands, rand), ...(K.always ? K.always(dir, L, M) : [])])];
+        let strata = null; try { strata = K.strata ? K.strata(dir, L, M) : null } catch (e) { strata = null }
+        const chosen = [...new Set([...(strata ? strata.flatMap((s) => picks(s, rand)) : picks(cands, rand)), ...(K.always ? K.always(dir, L, M) : [])])];
         if (!chosen.length) { results.push({ kind: k, caught: false, unfit: true, why: "乾淨的樣本裡找不到可以弄壞的檔" }); continue }
         for (const f of chosen) {
           const D = path.join(base, k + "-" + results.length);

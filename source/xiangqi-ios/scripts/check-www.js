@@ -60,12 +60,16 @@ let L = null;
 try { L = JSON.parse(fs.readFileSync(LIST, "utf8")).files; if (!L || typeof L !== "object" || Array.isArray(L) || !Object.keys(L).length) throw new Error("沒有 files") }
 catch (e) { L = null; unverified.push("讀不到檔案清單 " + LIST + "（" + String(e.message).split("\n")[0] + "）：大小和內容都沒驗到（先跑 node scripts/copy-www.js，或檢查 --list 路徑）") }   /* PR #67 第五次審查：路徑打錯不能只警告、回 0 */
 if (L) {
+  const noHash = [];
   for (const [rel, [sz, h]] of Object.entries(L)) {
     files++; total += sz;
+    /* PR #67 第八次審查：清單沒記雜湊的檔只比得到大小（W30 切塊大檔大小對、內容壞就抓不到）；引擎、App 會要的檔、大於 20 MB 的檔沒記雜湊，算沒驗到 */
+    if (!h && (rel.startsWith("engine/") || need.has(rel) || sz > 20 * 1048576)) noHash.push(rel);
     if (!exists(rel)) bad.push("少了 " + rel);
     else if (size(rel) !== sz) bad.push("大小不對 " + rel);
     else if (h && crypto.createHash("sha1").update(rd(rel)).digest("hex").slice(0, 12) !== h) bad.push("內容跟清單不同 " + rel);   /* W69：清單記了 sha1 前 12 碼的檔（大檔沒記）要比內容 */
   }
+  if (noHash.length) unverified.push("清單沒記雜湊的重要檔 " + noHash.length + " 個（引擎、App 會要的、大於 20 MB；只比得到大小）：" + noHash.slice(0, 10).join("、") + (noHash.length > 10 ? "…" : ""));
 }
 
 /* 6（W42）：跟 CDN 現行版比 */
