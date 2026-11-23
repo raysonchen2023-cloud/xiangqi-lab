@@ -280,7 +280,7 @@ function CpuGame(v,practicePage,mode){
             const bk=["‹ 回"+jPlace(j),()=>goUp(jBack(j))],again=[s0?"再挑戰這一關 ›":"再下一盤 ›",()=>{shownResult=null;sel=-1;if(s0)jPlay(s0,true);else jAgain(st).then(render).catch(e=>toast(e.message))}];
             if(s0&&s0.t==="lv")return resBtns(["🎴 回到關卡 ›",()=>goUp("#/journey/"+j)]);
             /* 意見回饋 697（開發者 11/6）：園子下完一盤——換一位棋友、同一位再下一盤、回渡口（原本寫「回園子」其實回星槎） */
-            if(j==="park")return resBtns(["🔄 換一位棋友",()=>{shownResult=null;sel=-1;jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},()=>{api("/play/state").then(s=>{render(s);const r=store.get("parkNpc",null),n=r&&PARK_NPC.find(x=>x.id===r.id);if(n)toast(`🌳 ${n.name}坐了過來`)}).catch(e=>toast(e.message))},true)}],["⚔ 再下一盤（同一位）",again[1]],false,["‹ 回渡口",()=>upTo("#/port")]);
+            if(j==="park")return resBtns(["🔄 換一位棋友",()=>{shownResult=null;sel=-1;jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},()=>{api("/play/state").then(s=>{render(s);const r=store.get("parkNpc",null),n=r&&PARK_NPC.find(x=>x.id===r.id);if(n)toast(`🌳 ${n.name}坐了過來`)}).catch(e=>toast(e.message))},true)}],["⚔ 再下一盤（同一位）",again[1]],false,typeof jParkBackBtn==="function"?jParkBackBtn():["‹ 回渡口",()=>upTo("#/port")]);   /* W80：從門派前院找園子棋友下的，回門派 */
             if(win&&s0){const Ls=s0.book===2?jStages2():jStages(),i=Ls.findIndex(x=>x.id===s0.id),nx=i>=0&&i+1<Ls.length&&jOpen(Ls,i+1)?Ls[i+1]:null;
               return nx?resBtns(["📖 下一回 ›",()=>{if(nx.book===2)store.set("legBook",2);goUp(SHELF(nx.book===2?2:1),()=>nx.book===2?legendRead2(nx.n):legendRead(nx.n))}],bk):resBtns(bk)}
             /* W48 案 9「師徒復盤」（開發者 11/21）：十派掌門盤沒贏、自己下了 3 手以上——主要按鈕換成「看懂這盤最關鍵的一步」，接挑戰電腦同一套關鍵步重練（mflOpen）；不加修為、不改掌門強度 */

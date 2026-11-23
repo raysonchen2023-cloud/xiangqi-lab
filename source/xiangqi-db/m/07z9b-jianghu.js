@@ -769,7 +769,7 @@ function jhKickStart(key,c0){const k=jhKickOf(key),m=k&&OSC.MST.find(x=>x.sid===
   const P=typeof ptyGet==="function"?ptyGet():null,c=c0||(P&&P.look);
   if(!c||!P||!PTY.has(P,c)){toast(jhL("要先有修行角色：已加入隊伍的七星才能踢館","You need a training character first: only Seven Stars in your party can take a challenge"));return}
   const rl=OSC.zmRlv(zmGet(),m);store.set("zmCur",{id:m.id,rl,c,kick:key});
-  jhRetHere("inn:"+m.id);jStart("inn:"+m.id,jhKickArgs(k,m,rl),fresh=>{
+  if(typeof jhRetHere==="function")jhRetHere("inn:"+m.id);jStart("inn:"+m.id,jhKickArgs(k,m,rl),fresh=>{
     if(!fresh){try{const C=store.get("zmCur",null);if(C&&C.kick){delete C.kick;store.set("zmCur",C)}}catch(e){}}   /* 接著下原本那一盤（不是踢館的局面）：不算踢館 */
     location.hash="#/journey/play";
     if(fresh)setTimeout(()=>{try{toast(jhL(`📜 ${m.nm}：「你學的${jhSch(k.a).op}，就在這裡驗一驗。」`,`📜 ${m.en}: "Let's see your ${jhSch(k.a).op}."`))}catch(e){}},500)})}

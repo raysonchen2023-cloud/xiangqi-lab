@@ -1,83 +1,119 @@
 // W80 開局的來處（開發者 11/23：「剛剛跟門下棋友對戰，按返回後，不是回到門派，請修正類似的出入口問題」）
-//   07-legend.js 的 jRetSet／jRetOf／jRetTake／jBack／jPlace：vm 跑真的那一段（jBack0／jPlace0＝原本的目的地，這裡用假的代表）。
-//   檢查：從門派開局，返回鍵和結束視窗回門派；「再下一盤」還是回門派；之後從渡口、驛站開局，照舊回渡口、驛站；12 小時後失效；
-//   加上原始碼檢查：jStart 第一件事核對來處；對局頁頂端返回鍵先看來處；四個入口（門下棋友三種、挑戰掌門、踢館、守中宮）開局前都登記來處。
+//   vm 跑真的程式（不是比對字串）：
+//   - 07-legend.js 的 jRetSet／jRetOf／jRetTake／jParkBackBtn 和真的 jBack、jPlace 那兩行；按下園子結算視窗的返回鈕看去哪；
+//   - 07z9b 的 jhRetPlace／jhRetHere／jhMatePlay／jhKickStart、07z9-school 的 zmStart、07z9c 的 jhScrGuardStart：從原始檔抽出整個函式，
+//     用假的 jStart（會先跑真的 jRetTake）開局，檢查記下的來處；之後從渡口開局，紀錄清掉、照舊回渡口。
+//   - 02-shell 的 bkName：返回鍵的字。
+//   iMac Claude 1 審查（#76）：原本多數只比對字串，ret／jhRetHere 改成什麼都不做、記錯網址、結算改回寫死都照樣綠；這一版每一種都會紅。
 // 用法：node --test xiangqi-lab/tools/test-jret-1123.js
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");
 const ROOT = path.join(__dirname, "../..");
 const rd = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
-const LEG = rd("xiangqi-db/m/07-legend.js");
-const SEG = (() => { const a = LEG.indexOf("let JRET_ARM=null;"), b = LEG.indexOf("const jBack0="); assert.ok(a > 0 && b > a, "找得到 W80 那一段"); return LEG.slice(a, b) })();
+const LEG = rd("xiangqi-db/m/07-legend.js"), JH = rd("xiangqi-db/m/07z9b-jianghu.js"), SC = rd("xiangqi-db/m/07z9-school.js"), SR = rd("xiangqi-db/m/07z9c-screen.js"), SH = rd("xiangqi-db/m/02-shell.js"), CG = rd("xiangqi-db/m/08b-cpugame.js");
 
-function load() {
-  const mem = {}, clock = { t: 1_800_000_000_000 };
+/* 從原始碼抽出一個頂層函式（到下一個頂層宣告為止） */
+function fnSrc(src, head) {
+  const a = src.indexOf(head); assert.ok(a >= 0, "找得到 " + head);
+  const m = /\n(function |async function |const |let |\/\*|try\{|if\()/.exec(src.slice(a + 1));
+  return src.slice(a, m ? a + 1 + m.index : src.length);
+}
+/* 07-legend：W80 那一段到 jPlace 那一行結束（包含真的 jBack、jPlace） */
+const LSEG = (() => { const a = LEG.indexOf("let JRET_ARM=null;"), p = LEG.indexOf("const jPlace="), b = LEG.indexOf("\n", p); assert.ok(a > 0 && p > a && b > p); return LEG.slice(a, b) })();
+
+function world(hash) {
+  const mem = {}, clock = { t: 1_800_000_000_000 }, starts = [], ups = [];
   const c = {
     store: { get: (k, d) => (k in mem && mem[k] != null ? JSON.parse(mem[k]) : d), set: (k, v) => { mem[k] = JSON.stringify(v) } },
-    location: { hash: "#/jianghu/hall/central" },
+    location: { hash: hash || "#/jianghu/hall/central" },
     navKey: (h) => String(h || "").replace(/^#/, "").split("?")[0],
-    Date: class extends Date { static now() { return clock.t } }, JSON, String,
+    Date: class extends Date { static now() { return clock.t } }, JSON, String, Math, Object, Array, setTimeout: () => 0,
+    upTo: (h) => ups.push(h), toast() {}, CNUM: (n) => String(n),
+    jRunGet: () => null, jFindStage: () => null, jChapterHref: () => "#/shelf/1", gxtBhBack: () => "#/adventure",
+    jhL: (zh) => zh, jhSch: (s) => ({ central: { nm: "中炮門" }, horse: { nm: "起馬門" }, screen: { nm: "屏風馬門" } }[s] || null),
+    oscL: (zh) => zh,
+    INN: [{ id: "i1" }], SECRETS: [{ id: "s1" }], innLvN: () => 3, innRlv: () => null, secretLv: () => 5, parkNpcLv: () => 3, JH_MATE_KEEP_MS: 45000,
+    ptyGet: () => ({ look: "x_swordboy" }), PTY: { has: () => true }, zmGet: () => ({}), zmArgs: () => ({ human: "r" }),
+    OSC: { zmRlv: () => 0, MST: [{ id: "m1", sid: "screen" }], side: () => "r" }, jhKickOf: () => ({ a: "central", b: "screen", fen: "x" }),
+    JH_SCR_J: "jh:guard:screen", JH_SCR_GUARD: { fen: "x", turn: "b", limit: 10 },
   };
   vm.createContext(c);
-  vm.runInContext("const jBack0=j=>j===\"park\"?\"#/port\":String(j).startsWith(\"inn:\")?\"#/journey/inn\":\"#/shelf/1\";const jPlace0=j=>j===\"park\"?\"渡口\":String(j).startsWith(\"inn:\")?\"驛站\":\"石桌往事\";\n"
-    + SEG + "\n;this.T={jRetSet,jRetOf,jRetTake,jBack,jPlace};", c);
-  return { T: c.T, c, mem, clock };
+  const code = LSEG + "\n" + "let jhMateKeep=null;\n" +
+    [fnSrc(JH, "function jhRetPlace("), fnSrc(JH, "function jhRetHere("), fnSrc(JH, "function jhMatePlay("), fnSrc(JH, "function jhKickArgs("), fnSrc(JH, "function jhKickStart("),
+      fnSrc(SC, "function zmStart("), fnSrc(SR, "function jhScrGuardStart(")].join("\n") +
+    "\n;async function jStart(id,b,go){jRetTake(id);__starts.push(id);}" +
+    "\n;this.T={jRetSet,jRetOf,jRetTake,jBack,jPlace,jParkBackBtn,jhRetPlace,jhRetHere,jhMatePlay,jhKickStart,zmStart,jhScrGuardStart};";
+  c.__starts = starts;
+  vm.runInContext(code, c);
+  return { T: c.T, c, clock, starts, ups };
 }
 
-test("從門派前院找園子棋友開局：返回鍵、結束視窗「回 ○○」都回門內頁；沒登記的照舊回渡口", () => {
-  const { T, c } = load();
+test("真的 jBack／jPlace：沒有來處時照舊（園子回渡口、驛站回驛站、觀星臺等不受影響）", () => {
+  const { T } = world();
   assert.equal(T.jBack("park"), "#/port"); assert.equal(T.jPlace("park"), "渡口");
-  T.jRetSet("park", "#/jianghu/hall/central", "中炮門"); T.jRetTake("park");
+  assert.equal(T.jBack("inn:3"), "#/journey/inn"); assert.equal(T.jPlace("inn:3"), "驛站");
+  assert.equal(T.jBack("gxd:x"), "#/guanxing"); assert.equal(T.jBack("jh:guard:screen"), "#/shelf/1");
+});
+
+test("門下棋友（園子型）：在中炮門門內頁按「切磋」→ 開局前記下來處；對局頁返回、結算視窗返回鈕都回中炮門門內頁", () => {
+  const { T, c, starts, ups } = world("#/jianghu/hall/central");
+  T.jhMatePlay({ can: true, kind: "npc", id: "w15" }, "central");
+  assert.deepEqual(starts, ["park"]);
   c.location.hash = "#/journey/play";
   assert.equal(T.jBack("park"), "#/jianghu/hall/central"); assert.equal(T.jPlace("park"), "中炮門");
-  assert.equal(T.jBack("inn:3"), "#/journey/inn", "別的旅程不受影響");
+  const [label, go] = T.jParkBackBtn(); assert.equal(label, "‹ 回中炮門"); go(); assert.deepEqual(ups, ["#/jianghu/hall/central"], "結算視窗的返回鈕");
 });
 
-test("在對局頁「再下一盤」（同一個代號、沒有重新登記）：還是回門派", () => {
-  const { T, c } = load();
-  T.jRetSet("inn:7", "#/jianghu/hall/horse", "起馬門"); T.jRetTake("inn:7");
-  c.location.hash = "#/journey/play"; T.jRetTake("inn:7");
-  assert.equal(T.jBack("inn:7"), "#/jianghu/hall/horse");
+test("門下棋友（驛站型、秘境型）：回那一派的門內頁；不在門內頁時也照傳進來的派別", () => {
+  const A = world("#/jianghu/hall/horse"); A.T.jhMatePlay({ can: true, kind: "inn", id: "i1" }, "horse"); A.c.location.hash = "#/journey/play";
+  assert.equal(A.T.jBack("inn:i1"), "#/jianghu/hall/horse"); assert.equal(A.T.jPlace("inn:i1"), "起馬門");
+  const B = world("#/journey/play"); B.T.jhMatePlay({ can: true, kind: "secret", id: "s1" }, "central");
+  assert.equal(B.T.jBack("inn:s1"), "#/jianghu/hall/central");
 });
 
-test("之後從渡口或驛站自己開局（沒有登記）：紀錄清掉，照舊回渡口、驛站", () => {
-  const A = load(); A.T.jRetSet("park", "#/jianghu/hall/central", "中炮門"); A.T.jRetTake("park");
-  A.c.location.hash = "#/port"; A.T.jRetTake("park");
-  assert.equal(A.T.jBack("park"), "#/port", "同一個代號、從渡口開＝清掉");
-  const B = load(); B.T.jRetSet("park", "#/jianghu/hall/central", "中炮門"); B.T.jRetTake("park");
-  B.c.location.hash = "#/journey/inn"; B.T.jRetTake("inn:2");
-  assert.equal(B.T.jBack("park"), "#/port", "別的代號開局＝清掉");
+test("挑戰掌門、十州踢館：照開局當下所在的頁面（長卷＝十州棋館、門派修行頁＝門派修行、門內頁＝派名）", () => {
+  const A = world("#/jianghu"); A.T.zmStart({ id: "m1", pre: "" }, "x_swordboy"); A.c.location.hash = "#/journey/play";
+  assert.deepEqual([A.T.jBack("inn:m1"), A.T.jPlace("inn:m1")], ["#/jianghu", "十州棋館"]);
+  const B = world("#/school/x_swordboy"); B.T.zmStart({ id: "m1", pre: "" }, "x_swordboy"); B.c.location.hash = "#/journey/play";
+  assert.deepEqual([B.T.jBack("inn:m1"), B.T.jPlace("inn:m1")], ["#/school/x_swordboy", "門派修行"]);
+  const K = world("#/jianghu/hall/central"); K.T.jhKickStart("central>screen", "x_swordboy"); K.c.location.hash = "#/journey/play";
+  assert.deepEqual([K.T.jBack("inn:m1"), K.T.jPlace("inn:m1")], ["#/jianghu/hall/central", "中炮門"]);
+  const H = world("#/port"); H.T.zmStart({ id: "m1", pre: "" }, "x_swordboy");
+  assert.equal(H.T.jBack("inn:m1"), "#/journey/inn", "不是從十州棋館／門派頁開的不登記");
+});
+
+test("屏風馬門守中宮：對局頁返回回屏風馬門門內（原本 jh:guard: 落到石桌往事書架）", () => {
+  const { T, c } = world("#/jianghu/hall/screen"); T.jhScrGuardStart(); c.location.hash = "#/journey/play";
+  assert.deepEqual([T.jBack("jh:guard:screen"), T.jPlace("jh:guard:screen")], ["#/jianghu/hall/screen", "屏風馬門"]);
+});
+
+test("之後從渡口自己開園子棋（沒有登記）：紀錄清掉，返回鍵、結算返回鈕都照舊回渡口；對局頁「換一位棋友」（同代號）則保留", () => {
+  const { T, c, ups } = world("#/jianghu/hall/central");
+  T.jhMatePlay({ can: true, kind: "npc", id: "w15" }, "central");
+  c.location.hash = "#/journey/play"; T.jRetTake("park");
+  assert.equal(T.jBack("park"), "#/jianghu/hall/central", "對局頁再開同一個代號＝保留");
+  c.location.hash = "#/port"; T.jRetTake("park");
+  assert.equal(T.jBack("park"), "#/port"); const [l, go] = T.jParkBackBtn(); assert.equal(l, "‹ 回渡口"); go(); assert.deepEqual(ups, ["#/port"]);
 });
 
 test("紀錄 12 小時後失效；網址不是 #/ 開頭的不採用", () => {
-  const { T, clock } = load();
-  T.jRetSet("park", "#/jianghu/hall/central", "中炮門"); T.jRetTake("park");
+  const { T, clock } = world(); T.jRetSet("park", "#/jianghu/hall/central", "中炮門"); T.jRetTake("park");
   clock.t += 11 * 3600e3; assert.equal(T.jBack("park"), "#/jianghu/hall/central");
   clock.t += 2 * 3600e3; assert.equal(T.jBack("park"), "#/port");
-  const B = load(); B.T.jRetSet("park", "javascript:alert(1)", "x"); B.T.jRetTake("park"); assert.equal(B.T.jBack("park"), "#/port");
+  const B = world(); B.T.jRetSet("park", "javascript:alert(1)", "x"); B.T.jRetTake("park"); assert.equal(B.T.jBack("park"), "#/port");
 });
 
-test("〔原始碼〕jStart 第一件事核對來處；對局頁頂端返回鍵先看來處（園子原本寫死回渡口）", () => {
-  assert.match(LEG, /async function jStart\(id,b,go,force\)\{jRetTake\(id\);/);
-  const cg = rd("xiangqi-db/m/08b-cpugame.js");
-  assert.ok(cg.indexOf("jRetOf(st.journey)?\"^\"+jRetOf(st.journey).back") > 0 && cg.indexOf("jRetOf(st.journey)?\"^\"") < cg.indexOf("st.journey===\"park\"?\"^#/port\""), "先看來處，再看園子回渡口");
-});
-
-test("返回鍵的字：十州棋館、門內頁、門派修行的網址，bkName 問 jhRetPlace（門內頁寫派名「回中炮門」，不是「返回」）", () => {
-  const sh = rd("xiangqi-db/m/02-shell.js"), m = sh.match(/function bkName\(h\)\{[\s\S]*?\n  let n="";[^\n]*\n/);
-  assert.ok(m, "找得到 bkName");
-  const c = { navKey: (h) => String(h).replace(/^#/, ""), BK_NAME: [["/port", "渡口"]], usePlace: () => "", xqHubName: () => "",
-    jhRetPlace: (h) => (/hall\/central/.test(h) ? "中炮門" : /^#\/jianghu/.test(h) ? "十州棋館" : /^#\/school/.test(h) ? "門派修行" : "") };
+test("返回鍵的字：bkName 對十州棋館、門內頁、門派修行寫名字（門內頁寫派名），其他頁照舊", () => {
+  const m = SH.match(/function bkName\(h\)\{[\s\S]*?\n  let n="";[^\n]*\n/); assert.ok(m);
+  const w = world();
+  const c = { navKey: (h) => String(h).replace(/^#/, ""), BK_NAME: [["/port", "渡口"]], usePlace: () => "", xqHubName: () => "", jhRetPlace: w.T.jhRetPlace };
   vm.createContext(c); vm.runInContext(m[0] + ";this.bkName=bkName;", c);
-  assert.equal(c.bkName("#/jianghu/hall/central"), "中炮門"); assert.equal(c.bkName("#/jianghu"), "十州棋館"); assert.equal(c.bkName("#/school/x_swordboy"), "門派修行");
-  assert.equal(c.bkName("#/port"), "渡口", "其他頁照舊");
+  assert.equal(c.bkName("#/jianghu/hall/central"), "中炮門"); assert.equal(c.bkName("#/jianghu"), "十州棋館"); assert.equal(c.bkName("#/school/x"), "門派修行"); assert.equal(c.bkName("#/port"), "渡口");
 });
 
-test("〔原始碼〕四個入口開局前都登記來處：門下棋友（園子、驛站、秘境）、挑戰掌門、十州踢館、屏風馬守中宮", () => {
-  const jh = rd("xiangqi-db/m/07z9b-jianghu.js"), sc = rd("xiangqi-db/m/07z9-school.js"), sr = rd("xiangqi-db/m/07z9c-screen.js");
-  assert.match(jh, /ret\("park"\);jStart\("park"/); assert.equal((jh.match(/ret\("inn:"\+x\.id\);jStart\("inn:"\+x\.id/g) || []).length, 2, "驛站、秘境");
-  assert.match(jh, /jhMatePlay\(M,sid\)/, "互動卡把是哪一派傳進去");
-  assert.match(jh, /jhRetHere\("inn:"\+m\.id\);jStart\("inn:"\+m\.id,jhKickArgs/);
-  assert.match(sc, /jhRetHere\("inn:"\+m\.id\);[^\n]*\n  jStart\("inn:"\+m\.id,zmArgs/);
-  assert.match(sr, /jRetSet\(JH_SCR_J,"#\/jianghu\/hall\/screen"/);
+test("〔原始碼〕jStart 第一件事核對來處；對局頁頂端返回鍵先看來處；園子結算視窗用 jParkBackBtn；jBack 原本的開頭照舊（test-fb897）", () => {
+  assert.match(LEG, /async function jStart\(id,b,go,force\)\{jRetTake\(id\);/);
+  assert.ok(CG.indexOf("jRetOf(st.journey)?\"^\"+jRetOf(st.journey).back") > 0 && CG.indexOf("jRetOf(st.journey)?\"^\"") < CG.indexOf("st.journey===\"park\"?\"^#/port\""));
+  assert.match(CG, /false,typeof jParkBackBtn==="function"\?jParkBackBtn\(\):\["‹ 回渡口",\(\)=>upTo\("#\/port"\)\]\);/);
+  assert.ok(LEG.includes('const jBack=j=>String(j||"").startsWith("gx:")?"#/adventure":'));
 });
