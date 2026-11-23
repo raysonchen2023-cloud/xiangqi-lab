@@ -431,6 +431,17 @@ test("閘門（PR #66 第十一、十三次複審，端對端）：真的 check-
     const em = runReal({ dex: FULL, has: ["x"], net: emptyMan });
     assert.equal(em.status, 3, "空的 manifest＝讀不到，缺驗 3：" + em.err); assert.equal(em.report.canary.cdnUnreachable, true);
     assert.equal(onlyCdnDown(em.report), null); waive(em.report, "空的 manifest、其他全斷");
+    /* PR②（#66 第十二、十六次複審建議）：CDN 正常時的端對端。之前只在 CDN 全斷下跑過真工具，worker「拿到 200」那條路沒驗。
+       假的 CDN：每個檔都回 200、探測檔回 404，manifest 放包裡檔案的正確雜湊（深層 W42 才做得出來）。真工具要回 0、金絲雀全抓到；閘門一條都不用豁免 */
+    const s12 = (x) => crypto.createHash("sha1").update(x).digest("hex").slice(0, 12);
+    const MAN = { files: { "data/a/x.webp": [3, s12("abc")], "data/a/y.json": [2, s12("{}")], "data/gm.json": [2, s12("[]")] } };
+    const okNet = path.join(d, "ok-net.js");
+    fs.writeFileSync(okNet, "const MAN = " + JSON.stringify(MAN) + ";\nglobalThis.fetch = async (u) => { u = String(u); if (u.endsWith(\"cdn-manifest.json\")) return { ok: true, status: 200, json: async () => MAN }; if (u.includes(\"__xq_p0_canary_\")) return { ok: false, status: 404 }; return { ok: true, status: 200 } };\n");
+    const ok = runReal({ dex: FULL, has: ["x"], net: okNet });
+    assert.equal(ok.status, 0, "CDN 正常：真工具回 0：" + ok.err);
+    assert.equal(ok.report.canary.cdn404, true, "探測檔被判成 CDN 上沒有"); assert.equal(ok.report.canary.ok, true, "淺層、深層金絲雀全抓到：" + JSON.stringify(ok.report.canary.deep));
+    assert.equal(ok.report.canary.deep.w42.ok, true, "有 manifest：深層 W42 做得出來，也抓到"); assert.ok(ok.report.cdnCompared > 0, "有跟 CDN 比對過");
+    const g0 = G(put(ok.report), [], MAIN, null); assert.equal(g0.ok, true, "CDN 正常的真報告：閘門不用豁免就過：" + JSON.stringify(g0.problems || g0).slice(0, 300)); assert.equal(g0.waived.length, 0);
     /* ② 第十三次複審：原生不會補抓、只缺 JSON（正確的包；網頁程式會自己改抓 CDN）：上一輪誤擋，現在要能豁免 */
     const b = runReal({ dex: [], has: ["x", "gm"] });   /* PR②：包裡要有切塊大檔，深層 W30 才做得出來（真的候選包一定有）；缺的只有 JSON */
     assert.equal(b.status, 3, "不補抓只缺 JSON，CDN 全斷＝缺驗 3：" + b.err); assert.equal(b.report.native.cdnFallback, false);
