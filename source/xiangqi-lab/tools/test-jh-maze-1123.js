@@ -202,6 +202,31 @@ test("專屬配樂：進迷宮指定播 maze/maze_1.mp3；換到別頁（hashcha
   c.BGM.force = "guanxing/yixiang_1.mp3"; ev.hashchange(); assert.equal(c.BGM.force, "guanxing/yixiang_1.mp3", "別首指定配樂不關");
 });
 
+test("專屬配樂：出迷宮回到進去前那一首（不重新挑歌）；進去前已有別頁指定配樂時照舊交給 bgmForce(null)", () => {
+  /* 模擬 01-board 真正的行為：bgmForce 換指定曲；bgmForce(null) 會 bgmSync(true)＝重新隨機挑（這裡挑成 zheng_5）；bgmSync(false) 同朝代有曲目就不換 */
+  const mk = (bgm) => {
+    const hash = { v: "#/jianghu/maze" }, ev = {}, log = [];
+    const c = { store: { get: (k, d) => d, set() {} }, jhL: (zh) => zh, esc: String, Math, JSON, Set, Map, Number, String, Array, Object,
+      BGM: bgm, addEventListener: (n, f) => { ev[n] = f } };
+    c.bgmSync = (next) => { log.push("sync:" + next); if (next || c.BGM.era !== "classic" || !c.BGM.src) { c.BGM.era = "classic"; c.BGM.src = "data/bgm/classic/zheng_5.mp3"; c.BGM.last = 4 } };
+    c.bgmForce = (f) => { log.push("force:" + f); c.BGM.force = f || null; if (f) { c.BGM.era = "blackhole"; c.BGM.src = "data/bgm/" + f; c.BGM.last = 0 } else c.bgmSync(true) };
+    Object.defineProperty(c, "location", { get: () => ({ get hash() { return hash.v } }) });
+    vm.createContext(c); vm.runInContext(SRC, c);
+    return { c, hash, ev, log };
+  };
+  const a = mk({ force: null, era: "classic", src: "data/bgm/classic/zheng_2.mp3", last: 1 });
+  a.c.jhMzBgm(true); assert.equal(a.c.BGM.src, "data/bgm/maze/maze_1.mp3");
+  a.hash.v = "#/jianghu/hall/central"; a.ev.hashchange();
+  assert.equal(a.c.BGM.force, null);
+  assert.equal(a.c.BGM.src, "data/bgm/classic/zheng_2.mp3", "回到原本那首，不是重新挑的 zheng_5");
+  assert.equal(a.c.BGM.era, "classic"); assert.equal(a.c.BGM.last, 1);
+  assert.deepEqual(a.log.slice(1), ["sync:false"], "還原用 bgmSync(false)，不經過 bgmForce(null)");
+  a.ev.hashchange(); assert.deepEqual(a.log.slice(1), ["sync:false"], "已經還原過，再換頁不重複動作");
+  const b = mk({ force: "guanxing/yixiang_1.mp3", era: "blackhole", src: "data/bgm/guanxing/yixiang_1.mp3", last: 0 });
+  b.c.jhMzBgm(true); b.hash.v = "#/jianghu/hall/central"; b.ev.hashchange();
+  assert.deepEqual(b.log, ["force:maze/maze_1.mp3", "force:null", "sync:true"], "進去前是別頁指定配樂：不記原曲，照舊 bgmForce(null)");
+});
+
 test("〔原始碼〕07z9m-maze.js：LF、沒有控制字元、沒有行內 // 註解；m.html 有登記、排在 07z9l-halls.js 後面（包得到八派的 JhHall）", () => {
   assert.ok(!SRC.includes("\r"));
   assert.ok(!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(SRC));

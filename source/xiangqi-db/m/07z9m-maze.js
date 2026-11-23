@@ -53,7 +53,18 @@ const JH_MZ_XP=30;
 /* 專屬配樂「地底漕倉」（開發者 11/23：「找gemini製作迷宮的背景音樂，根據剛剛提到的四大回味感來製作」；聽過回「可以 非常符合我要的」）。
    Gemini lyria-3.5，約 2 分鐘可循環，只放 CDN（data/bgm/maze/maze_1.mp3）。進迷宮頁指定播這首，離開就回到朝代配樂輪播（跟觀星臺 GXD_BGM 同一種做法） */
 const JH_MZ_BGM="maze/maze_1.mp3";
-function jhMzBgm(on){try{if(typeof bgmForce!=="function"||typeof BGM==="undefined")return;if(on){if(BGM.force!==JH_MZ_BGM)bgmForce(JH_MZ_BGM)}else if(BGM.force===JH_MZ_BGM)bgmForce(null)}catch(e){}}
+/* 11/23 Windows Claude 2 預驗：bgmForce(null) 解除時會重新隨機挑歌，出迷宮從 zheng_2 變成 zheng_5。
+   改成進迷宮前記下原本那首（src／era／last），出來時還原後用 bgmSync(false) 同步＝同朝代、已有曲目就不換歌；暫存被清掉會自己重新下載。
+   進迷宮前若已經有別頁的指定配樂（BGM.force 不是空的），不記也不還原，照舊交給 bgmForce(null) */
+let JH_MZ_PREV=null;
+function jhMzBgm(on){try{if(typeof bgmForce!=="function"||typeof BGM==="undefined")return;
+  if(on){if(BGM.force!==JH_MZ_BGM){JH_MZ_PREV=!BGM.force&&BGM.src?{src:BGM.src,era:BGM.era,last:BGM.last}:null;bgmForce(JH_MZ_BGM)}return}
+  if(BGM.force!==JH_MZ_BGM)return;const p=JH_MZ_PREV;JH_MZ_PREV=null;
+  if(p&&typeof bgmSync==="function"){BGM.force=null;BGM.src=p.src;BGM.era=p.era;BGM.last=p.last;bgmSync(false)}else bgmForce(null)}catch(e){}}
+/* 11/23 開發者問 iPad mini 等尺寸是否滿版：實測各尺寸都撐滿，但 --topH 沒有人設定、一直用預設 56px，實際頂欄 59px，
+   迷宮頁多出 3px＝出現捲軸、方向鍵底部被裁。改成照 #view 實際可用高度反推（頂欄高度＋其他佔掉的），轉向、縮放時跟著重算 */
+function jhMzFit(v){try{const mz=v&&v.querySelector(".jh-mz");if(!mz||typeof getComputedStyle!=="function")return;const s=getComputedStyle(v),av=v.clientHeight-(parseFloat(s.paddingTop)||0)-(parseFloat(s.paddingBottom)||0);
+  if(av>0)mz.style.setProperty("--topH",Math.max(0,Math.round(window.innerHeight-av))+"px")}catch(e){}}
 
 /* ===== 純邏輯（測試用 vm 直接跑這一段）===== */
 function jhMzNew(){const S={W:JH_MZ_MAP[0].length,H:JH_MZ_MAP.length,seen:new Set(),lit:new Set(),bag:{gong:0,page:0,box:0},doorOpen:false,fails:{door:0,trap:0},turn:0,done:false,chests:new Set()};
@@ -154,7 +165,7 @@ function JhMaze(v){jhCss();jhMzCss();
   let T=48,camX=0,camY=0,dpr=1,path=[],walkT=0,busy=false,warned=false;
   const say=h=>{v.querySelector(".jh-mz-msg").innerHTML=h};
   const bag=()=>{v.querySelector(".jh-mz-bag").innerHTML=JH_MZ_REW.map(r=>`<span class="${S.bag[r.k]?"on":""}">${esc(jhL(r.zh,r.en))} ${S.bag[r.k]}</span>`).join("")};
-  const resize=()=>{const r=box.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1);cv.width=Math.max(1,r.width*dpr);cv.height=Math.max(1,r.height*dpr);T=Math.max(34,Math.min(64,Math.floor(r.width/8.5)))};
+  const resize=()=>{jhMzFit(v);const r=box.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1);cv.width=Math.max(1,r.width*dpr);cv.height=Math.max(1,r.height*dpr);T=Math.max(34,Math.min(64,Math.floor(r.width/8.5)))};
   const alive=()=>cv.isConnected;
   const rnd=(x,y,s)=>{const q=Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453;return q-Math.floor(q)};
   const tile=(x,y,px,py)=>{const c=S.grid[y][x];
