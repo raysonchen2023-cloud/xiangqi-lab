@@ -126,3 +126,12 @@ test("〔原始碼〕掃描流程：先開攔截、再重新載入、等首頁�
   assert.match(s, /rep\.route = summarize\(routeLog, await probeOk\(c\)\)/);
   assert.match(s, /if \(routeLog\) rep\.route = summarize\(routeLog, rep\.route\.probeOk\);/);
 });
+
+test("〔原始碼〕工具寫死的網址跟 App 一樣（App 改了網址、工具沒跟上，攔截就攔不到）；回前景等待預設超過 App 不重抓的間隔", () => {
+  const M = path.join(__dirname, "..", "..", "xiangqi-db", "m");
+  const flags = fs.readFileSync(path.join(M, "00f-flags.js"), "utf8"), util = fs.readFileSync(path.join(M, "00-util.js"), "utf8");
+  assert.equal(/XQ_FLAGS_URL="([^"]+)"/.exec(flags)[1], FLAGS_URL, "開關檔網址");
+  assert.equal(/const XQ_CDN="([^"]+)"/.exec(util)[1], CDN, "CDN 網址");
+  const gap = Number(/now-XQ_FLAGS_AT<(\d+)/.exec(flags)[1]), fg = Number(/arg\("--fg-wait", (\d+)\)/.exec(fs.readFileSync(path.join(AND, "check-flags.js"), "utf8"))[1]);
+  assert.ok(fg * 1000 > gap, `回前景等待 ${fg} 秒要超過 App 不重抓的 ${gap / 1000} 秒`);
+});
