@@ -138,6 +138,22 @@ test("返回鍵的字：bkName 對十州棋館、門內頁、門派修行寫名�
   assert.equal(c.bkName("#/school"), "開局棋路"); assert.equal(c.bkName("#/school/masters"), "十派掌門"); assert.equal(c.bkName("#/school/x_swordboy"), "劍童的門派"); assert.equal(c.bkName("#/school/x_swordboy/central_01"), "劍童・中炮門", "課程頁照 oscPlay 標題"); assert.equal(c.bkName("#/port"), "渡口");
 });
 
+test("返回鍵的去處 bkTo：前院小卡留下 ~ 紀錄、在對局頁按上一頁回到門內頁時，跳過卡片和門內頁自己，字寫「回十州棋館」（#76 第四輪審查：原本找到自己，寫回中炮門卻去 #/jianghu）", () => {
+  const w = world();
+  const c = { navKey: (h) => String(h).replace(/^#/, ""), location: { hash: "#/jianghu/hall/central" }, NAV_H: ["#/jianghu", "#/jianghu/hall/central", "~#/jianghu/hall/central"], NAV_D: 2,
+    BK_NAME: [["/port", "渡口"]], usePlace: () => "", xqHubName: () => "", jhRetPlace: w.T.jhRetPlace };
+  vm.createContext(c);
+  const nm = SH.match(/function bkName\(h\)\{[\s\S]*?\n  let n="";[^\n]*\n/); assert.ok(nm);
+  vm.runInContext(fnSrc(SH, "function bkTo(") + "\n" + nm[0] + ";this.bkTo=bkTo;this.bkName=bkName;", c);
+  assert.equal(c.bkTo(undefined), "#/jianghu"); assert.equal(c.bkName(c.bkTo(undefined)), "十州棋館");
+  c.NAV_D = 3; c.NAV_H = ["#/jianghu", "#/jianghu/hall/central", "~#/jianghu/hall/central", "#/jianghu/hall/central"];
+  assert.equal(c.bkTo(undefined), "#/jianghu", "卡片前後都是自己也一樣");
+  c.NAV_D = 1; c.NAV_H = ["#/jianghu", "#/jianghu/hall/central"]; assert.equal(c.bkTo(undefined), "#/jianghu", "沒有卡片時照舊");
+  c.NAV_D = 2; c.NAV_H = ["#/port", "#/jianghu"]; c.location.hash = "#/jianghu/hall/central"; assert.equal(c.bkTo(undefined), "#/jianghu", "上一筆不是自己就照舊用它");
+  c.NAV_D = 2; c.NAV_H = ["#/jianghu/hall/central", "~#/jianghu/hall/central"]; assert.equal(c.bkTo(undefined), "", "往回全是自己和卡片：找不到就寫「返回」");
+  assert.equal(c.bkTo("^#/port"), "#/port", "^ 開頭照舊直接用");
+});
+
 test("〔原始碼〕jStart 第一件事核對來處；對局頁頂端返回鍵先看來處；園子結算視窗用 jParkBackBtn；jBack 原本的開頭照舊（test-fb897）", () => {
   assert.match(LEG, /async function jStart\(id,b,go,force\)\{jRetTake\(id\);/);
   assert.ok(CG.indexOf("jRetOf(st.journey)?\"^\"+jRetOf(st.journey).back") > 0 && CG.indexOf("jRetOf(st.journey)?\"^\"") < CG.indexOf("st.journey===\"park\"?\"^#/port\""));

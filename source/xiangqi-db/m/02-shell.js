@@ -47,7 +47,8 @@ function icoTitle(t){const m=String(t).match(/^(\S+)\s+([\s\S]*)$/),k=m&&EMO_ICO
    字和去處又各算各的（字寫死，按下去卻是瀏覽器上一頁）。改成每次 setTop 都照「按下去真的會到哪一頁」（bkTo）重寫字（bkName），去處記在 #back 的 data-to（07w9 圖上出口也照它對字）；
    從結果視窗「📊 檢討」去的分析頁（REVIEW_BACK）直接沿用那盤棋的出口（字＋去處），一次就到，不先退回已經下完的那盤 */
 function bkTo(back){if(typeof back==="string"&&back[0]==="^")return back.slice(1);
-  if(NAV_D>0){for(let i=NAV_D-1;i>=0;i--){const x=NAV_H[i];if(typeof x!=="string")return"";if(x[0]!=="~")return x}return""}   /* goBack＝瀏覽器上一頁：卡片那一層會被 popstate 再退一格，所以找最近一筆不是卡片的 */
+  if(NAV_D>0){let me="";try{me=navKey(location.hash||"#/").split("?")[0]}catch(e){}
+    for(let i=NAV_D-1;i>=0;i--){const x=NAV_H[i];if(typeof x!=="string")return"";if(x[0]==="~")continue;if(me&&navKey(x).split("?")[0]===me)continue;return x}return""}   /* goBack＝瀏覽器上一頁：卡片那一層會被 popstate 再退一格，所以找最近一筆不是卡片的；#76 第四輪審查：也跳過跟目前這一頁相同的紀錄（前院小卡留下 ~ 再按上一頁時，原本找到自己、字寫「回中炮門」卻去 #/jianghu） */
   return typeof back==="string"?back:""}
 const BK_NAME=[["/cpuroom","雅間"],["/guanxing","觀星臺"],["/ximarket/tea","聽雨茶坊"],["/ximarket","西市"],["/adventure","星槎"],["/ship/pz","千秋殘局"],["/ship","星槎"],["/port","渡口"],["/theme","主題訓練"],["/camp","訓練營"],["/cup","千秋盃"],["/simul","車輪戰"],["/lesson","棋理體驗"],["/lab","小實驗"],["/today","今日推薦"],["/codex","百科"],["/weekly","週報"],["/feedback","信房"],["/db","棋譜庫"]];
 function bkName(h){if(!h)return"";const k=navKey(h).split("?")[0];if(k==="/")return"首頁";
