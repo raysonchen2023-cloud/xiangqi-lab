@@ -362,34 +362,64 @@ function zipOf(files) {
   end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(off, 16);
   return Buffer.concat([...locals, cd, end]);
 }
-test("閘門（PR #66 第十一次複審，端對端）：真的 check-aab-assets.js 在 CDN 全斷下寫的報告，閘門連不上就能豁免；同一份報告 viaCdn 多記、或混一筆 403，就不能", { timeout: 120000 }, () => {
+test("閘門（PR #66 第十一、十三次複審，端對端）：真的 check-aab-assets.js 在 CDN 全斷下寫的報告直接進閘門：會補抓的包、不補抓只缺 JSON 的包都能豁免；不補抓又缺媒體的包擋；同一份報告 viaCdn 多記、混一筆 403、多一筆 W21 提醒也擋", { timeout: 240000 }, () => {
   const os = require("os"), cp = require("child_process"), crypto = require("crypto");
   const sha8 = (x) => crypto.createHash("sha1").update(x).digest("hex").slice(0, 8), P = "base/assets/public/";
-  const preload = { v: "t", items: [["data/a/x.webp", 3, sha8("abc"), 1], ["data/a/y.json", 2, sha8("{}"), 1]], big: [["data/gm.json", 30 * 1024 * 1024, sha8("[]")]], pages: {} };
-  const f = { [P + "native-build.json"]: JSON.stringify({ siteVersion: V, sharedWebCommit: "0".repeat(40) }), [P + "data/preload.json"]: JSON.stringify(preload),
-    [P + "data/big-books.json"]: "[]", "base/dex/classes.dex": "dex\n035\0" + ["X-XQ-Cdn-Cache", ".parts.json", "[A-Za-z0-9._-]+", "SHA-1"].join("\0") + "\0", [P + "data/a/x.webp"]: "abc" };
-  for (const h of HOME_REQUIRED) f[P + "data/" + h] = "w";
-  const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-e2e66-")), aab = path.join(d, "t.aab"), out = path.join(d, "img.json"), down = path.join(d, "down.js");
-  try {
+  const FULL = ["X-XQ-Cdn-Cache", ".parts.json", "[A-Za-z0-9._-]+", "SHA-1"];
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-e2e66-")), down = path.join(d, "down.js");
+  fs.writeFileSync(down, "globalThis.fetch = async () => { throw new Error(\"假：CDN 全斷\") };\n");
+  const { onlyCdnDown } = require(path.join(AND, "p0-gate.js"));
+  const put = (j) => { const L = all(); L[0].json = { ...j, aabSha256: A, siteVersion: V }; return L };
+  /* 做一個假包、CDN 全斷下跑真工具，回傳 { status, report }。dex＝原生帶的特徵字串；has＝放進包的檔（x＝data/a/x.webp、y＝data/a/y.json、gm＝大檔）；big＝preload 要不要列大檔 */
+  let n = 0;
+  const runReal = ({ dex, has, big = true }) => {
+    const preload = { v: "t", items: [["data/a/x.webp", 3, sha8("abc"), 1], ["data/a/y.json", 2, sha8("{}"), 1]], big: big ? [["data/gm.json", 30 * 1024 * 1024, sha8("[]")]] : [], pages: {} };
+    const f = { [P + "native-build.json"]: JSON.stringify({ siteVersion: V, sharedWebCommit: "0".repeat(40) }), [P + "data/preload.json"]: JSON.stringify(preload),
+      [P + "data/big-books.json"]: "[]", "base/dex/classes.dex": "dex\n035\0" + dex.join("\0") + "\0" };
+    if (has.includes("x")) f[P + "data/a/x.webp"] = "abc";
+    if (has.includes("y")) f[P + "data/a/y.json"] = "{}";
+    if (has.includes("gm")) f[P + "data/gm.json"] = "[]";
+    for (const h of HOME_REQUIRED) f[P + "data/" + h] = "w";
+    const aab = path.join(d, "t" + ++n + ".aab"), out = path.join(d, "img" + n + ".json");
     fs.writeFileSync(aab, zipOf(f));
-    fs.writeFileSync(down, "globalThis.fetch = async () => { throw new Error(\"假：CDN 全斷\") };\n");
     const r = cp.spawnSync(process.execPath, ["--require", down, path.join(AND, "check-aab-assets.js"), "--aab", aab, "--cdn", "--out", out], { encoding: "utf8", timeout: 100000 });
-    assert.equal(r.status, 3, "CDN 全斷＝缺驗 3：" + (r.stderr || "").slice(0, 300));
-    const real = JSON.parse(fs.readFileSync(out, "utf8"));
-    assert.equal(real.viaCdn, 2, "假包裡有兩個檔要向 CDN 補抓"); assert.equal(real.canary.cdnUnreachable, true);
-    const { onlyCdnDown } = require(path.join(AND, "p0-gate.js"));
-    assert.equal(onlyCdnDown(real), null, "真工具的全斷報告要算「單純 CDN 連不上」");
-    const put = (j) => { const L = all(); L[0].json = { ...j, aabSha256: A, siteVersion: V }; return L };
-    const ok = G(put(real), W("P0-IMG/cdn"), MAIN, DOWN);
-    assert.equal(ok.ok, true, "閘門也連不上：可以豁免：" + JSON.stringify(ok.problems || ok).slice(0, 300)); assert.equal(ok.waived.length, 2);
-    assert.equal(G(put(real), W("P0-IMG/cdn"), MAIN, UP).ok, false, "閘門連得上：不能豁免");
-    const more = JSON.parse(JSON.stringify(real)); more.viaCdn++; more.need++;
-    assert.equal(G(put(more), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "viaCdn 多記一個（拿到 200 的被漏算）：不能豁免");
-    const f403 = JSON.parse(JSON.stringify(real)); f403.warnItems.find((w) => "st" in w).st = 403;
-    assert.equal(G(put(f403), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "混一筆 403：不能豁免");
-    const noFb = JSON.parse(JSON.stringify(real)); noFb.native.cdnFallback = false;
-    assert.equal(G(put(noFb), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "第十二次：原生不會補抓：不能豁免");
-    const w21 = JSON.parse(JSON.stringify(real)); w21.warnItems.push({ f: "data/c.webp", why: "不在安裝包裡、原生不會補抓" }); w21.warn++;
-    assert.equal(G(put(w21), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "第十二次：多一筆不帶狀態的 W21 提醒：不能豁免");
+    return { status: r.status, err: (r.stderr || "").slice(0, 300), report: fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, "utf8")) : null };
+  };
+  const waive = (rep, why) => { const g = G(put(rep), W("P0-IMG/cdn"), MAIN, DOWN); assert.equal(g.ok, true, why + "：" + JSON.stringify(g.problems || g).slice(0, 300)); assert.equal(g.waived.length, 2, why) };
+  const block = (rep, why) => assert.equal(G(put(rep), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, why);
+  try {
+    /* ① 會補抓、會接回切塊，缺一個 JSON 和一個大檔 */
+    const a = runReal({ dex: FULL, has: ["x"] });
+    assert.equal(a.status, 3, "CDN 全斷＝缺驗 3：" + a.err); assert.equal(a.report.viaCdn, 2); assert.equal(a.report.canary.cdnUnreachable, true);
+    assert.equal(onlyCdnDown(a.report), null, "真工具的全斷報告要算「單純 CDN 連不上」");
+    waive(a.report, "會補抓的包，閘門也連不上：可以豁免");
+    assert.equal(G(put(a.report), W("P0-IMG/cdn"), MAIN, UP).ok, false, "閘門連得上：不能豁免");
+    const more = JSON.parse(JSON.stringify(a.report)); more.viaCdn++; more.need++; block(more, "viaCdn 多記一個（拿到 200 的被漏算）");
+    const f403 = JSON.parse(JSON.stringify(a.report)); f403.warnItems.find((w) => "st" in w).st = 403; block(f403, "混一筆 403");
+    const w21 = JSON.parse(JSON.stringify(a.report)); w21.warnItems.push({ f: "data/c.webp", why: "不在安裝包裡、原生不會補抓" }); w21.warn++; block(w21, "多一筆不帶狀態的 W21 提醒");
+    /* 不帶狀態的提醒是媒體檔，就算同名有一筆帶狀態的缺驗也不行（只有 JSON 這類網頁程式會改抓的才算 CDN 的問題） */
+    const mNote = JSON.parse(JSON.stringify(a.report)); mNote.warnItems.find((w) => w.f === "data/a/y.json" && "st" in w).f = "data/a/y.webp";
+    mNote.warnItems.push({ f: "data/a/y.webp", why: "不在安裝包裡、原生不會補抓" }); mNote.warn++;
+    assert.match(String(onlyCdnDown(mNote)), /CDN 以外的提醒/); block(mNote, "同名的不帶狀態提醒是媒體檔");
+    /* ② 第十三次複審：原生不會補抓、只缺 JSON（正確的包；網頁程式會自己改抓 CDN）：上一輪誤擋，現在要能豁免 */
+    const b = runReal({ dex: [], has: ["x"], big: false });
+    assert.equal(b.status, 3, "不補抓只缺 JSON，CDN 全斷＝缺驗 3：" + b.err); assert.equal(b.report.native.cdnFallback, false);
+    assert.equal(onlyCdnDown(b.report), null, "不補抓只缺 JSON：算單純 CDN 連不上"); waive(b.report, "不補抓只缺 JSON 的正確包");
+    /* ③ 第十三次複審：只有接回切塊的標記、不會補抓，缺的是大的 JSON：也要能豁免 */
+    const c = runReal({ dex: [CA.PARTS_MARKER], has: ["x", "y"] });
+    assert.equal(c.status, 3, "只有標記、缺大 JSON，CDN 全斷＝缺驗 3：" + c.err); assert.equal(c.report.native.cdnFallback, false); assert.equal(c.report.native.partsJoin, true);
+    waive(c.report, "只有標記、不補抓、缺大 JSON 的正確包");
+    /* ④ 不補抓又缺媒體（W21）：工具自己就判 ✘，閘門一定擋，不會因為上面放寬而放過 */
+    const e = runReal({ dex: [], has: ["y"], big: false });
+    assert.equal(e.status, 1, "不補抓又缺媒體：工具判 ✘ 回 1：" + e.err); assert.ok(e.report.red > 0);
+    block(e.report, "不補抓又缺媒體");
+    /* 手改：缺的改成媒體檔、原生又不補抓；不帶狀態的那筆提醒拿掉，這樣擋下來的一定是媒體規則，不是「對不到缺驗的提醒」那條 */
+    const eFake = JSON.parse(JSON.stringify(b.report));
+    eFake.warnItems = eFake.warnItems.filter((w) => !(w.f === "data/a/y.json" && !("st" in w))); eFake.warn = eFake.warnItems.length;
+    eFake.warnItems.find((w) => w.f === "data/a/y.json" && "st" in w).f = "data/a/y.webp";
+    assert.match(String(onlyCdnDown(eFake)), /要補抓的檔裡有媒體檔/); block(eFake, "手改成缺的是媒體檔、原生又不補抓");
+    /* 多一筆不帶狀態、但對不到任何缺驗項目的 JSON 提醒：不是 CDN 的問題 */
+    const orphan = JSON.parse(JSON.stringify(b.report)); orphan.warnItems.push({ f: "data/z.json", why: "不在安裝包裡、原生不會補抓；網頁程式會自己改抓 CDN" }); orphan.warn++;
+    assert.match(String(onlyCdnDown(orphan)), /CDN 以外的提醒/); block(orphan, "對不到缺驗的提醒");
   } finally { fs.rmSync(d, { recursive: true, force: true }) }
 });

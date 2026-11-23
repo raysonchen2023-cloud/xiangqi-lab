@@ -24,6 +24,8 @@
 "use strict";
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const TP = require("./tool-pin.js");
+const { MEDIA } = require("./check-aab-assets.js");   /* 第十三次複審：媒體檔照破圖工具自己的規則判 */
+const PROBE_RE = /^data\/__xq_p0_canary_[0-9a-f]{12}\.webp$/;   /* 金絲雀③的探測檔（check-aab-assets.js 產生的檔名），不是真的要補抓的檔 */
 
 const TOOLS = ["P0-IMG", "P0-UPD", "P0-3D"], ANDROID_3D = ["12", "16"], ROUNDS_3D = 2;
 const WAIVABLE = ["P0-IMG/cdn", "P0-UPD/old-worker", "P0-3D/partial", "P0-3D/rounds"];
@@ -53,11 +55,19 @@ function onlyCdnDown(json) {
   if (!Array.isArray(W)) return "報告沒有逐項清單（warnItems）";
   if (json.warn !== W.length) return `warn（${json.warn}）跟逐項清單筆數（${W.length}）不一樣`;
   if (W.filter((w) => w && w.f === "cdn-manifest.json" && !("st" in w)).length !== 1) return "逐項清單裡沒有「讀不到 cdn-manifest.json」那一筆";
-  /* 第十二次複審：不帶狀態的項目只准有 manifest 那一筆；多出來的（例如 W21「不在安裝包裡、原生不會補抓」）不是 CDN 的問題 */
-  const noSt = W.filter((w) => !(w && typeof w === "object" && "st" in w) && !(w && w.f === "cdn-manifest.json"));
+  /* 第十二、十三次複審：不帶狀態的項目，除了 manifest 那一筆，只准是「同一個檔另有一筆帶狀態的缺驗、而且不是媒體檔」：
+     原生不補抓、缺的是 JSON 時，正確的工具會多寫一筆「網頁程式會自己改抓 CDN」的提醒，那一筆 CDN 全斷時也會沒確認到（第十三次：上一輪誤擋了這種正確的包）。
+     其他不帶狀態的（例如媒體檔的 W21 提醒、對不到缺驗項目的）不是 CDN 的問題 */
+  const stF = new Set(W.filter((w) => w && typeof w === "object" && "st" in w).map((w) => w.f));
+  const noSt = W.filter((w) => !(w && typeof w === "object" && "st" in w) && !(w && w.f === "cdn-manifest.json")
+    && !(w && typeof w.f === "string" && stF.has(w.f) && !MEDIA.test(w.f)));
   if (noSt.length) return `逐項清單有 CDN 以外的提醒（${noSt.slice(0, 3).map((w) => (w && w.f) || "?").join("、")}），不是單純 CDN 連不上`;
-  /* 第十二次複審：有要向 CDN 補抓的檔，原生就一定要會補抓；不會補抓時，缺的媒體檔在玩家手上就是破圖（W21），不能拿「CDN 連不上」豁免 */
-  if (json.viaCdn > 0 && !(json.native && json.native.cdnFallback === true)) return "原生不會向 CDN 補抓（native.cdnFallback 不是 true），包裡缺的檔不是 CDN 的問題";
+  /* 原生不會向 CDN 補抓時，要補抓的檔裡不能有媒體檔（探測檔除外）：缺的圖片、音樂在玩家手上就是破圖（W21），不能拿「CDN 連不上」豁免。
+     JSON 這類資料檔網頁程式會自己改抓 CDN，照樣算 CDN 的問題。沒記 native 一律不算 */
+  if (json.viaCdn > 0 && !(json.native && json.native.cdnFallback === true)) {
+    const media = W.filter((w) => w && typeof w === "object" && "st" in w && typeof w.f === "string" && !PROBE_RE.test(w.f) && MEDIA.test(w.f));
+    if (!json.native || media.length) return `原生不會向 CDN 補抓（native.cdnFallback 不是 true），要補抓的檔裡有媒體檔（${media.slice(0, 3).map((w) => w.f).join("、") || "沒記 native"}），不是 CDN 的問題`;
+  }
   const st = W.filter((w) => w && typeof w === "object" && "st" in w), bad = st.filter((w) => !DOWN_ST(w.st));
   if (bad.length) return `逐項清單有不是「連不上」的狀態（${bad.slice(0, 3).map((w) => w.f + " " + w.st).join("、")}）`;
   if (json.unknown !== st.length + 1 || json.unknown < 2) return `unknown（${json.unknown}）跟逐項清單算出來的（${st.length + 1}）不一樣，或少於 2`;

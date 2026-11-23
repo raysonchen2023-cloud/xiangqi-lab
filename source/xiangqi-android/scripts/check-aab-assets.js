@@ -213,5 +213,5 @@ function cdnCanary(probe, miss, unknown, ev = {}) {
 }
 /* 結束代碼用的金絲雀判斷（純函式）：①②一律要抓到；加 --cdn 時③要抓到，或 CDN 真的連不上（cdnUnreachable，歸缺驗 3，不算失靈）；看布林欄位，不看訊息文字 */
 function canaryExitOk(c, cdn) { return c.home === true && c.stale === true && (!cdn || c.cdn404 === true || c.cdnUnreachable === true) }
-module.exports = { exitCode, PARTS_MARKER, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk };
+module.exports = { exitCode, PARTS_MARKER, MEDIA, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk };
 if (require.main === module) main().catch(e => die(e.stack || String(e)));
