@@ -16,7 +16,7 @@
      cdnstale App 會要的檔換成舊副本、清單也照舊副本改（加 --cdn 才跑） → 包跟 CDN 現行版不同（W42）：只有跟 CDN 比才抓得到
      cdnmiss  CDN 清單拿掉一個 App 會要的檔（加 --cdn 才跑）     → 要回 3：沒跟 CDN 比到不能當驗過
      cdnfail  CDN 清單讀不到（加 --cdn 才跑）                  → 要回 3：加了 --cdn 卻沒驗到 W42
-     ctrl     程式檔插一個控制字元（7 種輪流，清單照改）         → 程式壞掉
+     ctrl     程式檔插一個控制字元（check-www 認的 30 個全部插過，清單照改） → 程式壞掉
      bigpre   拿掉 preload.json 的 big 列的大檔（清單也拿掉）    → 開 App 要先下載的大檔缺
      capord   index.html 裡 native-bridge.js 移到 capacitor.js 前面（清單照改） → 原生橋接載入順序錯（原生能力偵測不到）
      listmiss 拿掉一個清單有、但不在上面任何名單裡的檔（3D 場景程式、場景圖、data/ 其他檔） → 那個畫面破圖或壞掉
@@ -59,7 +59,8 @@ const at = (D, rel) => path.join(D, ...rel.split("/"));
 const rewrite = (p, b) => { fs.rmSync(p); fs.writeFileSync(p, b) };   /* 先刪再寫：APFS 複製或硬連結都不會改到原本那份 */
 const ENGINE = ["engine/pikafish.js", "engine/pikafish.wasm", "engine/pikafish.nnue"];
 const CORE = ["capacitor.js", "native-bridge.js", "core.js", "engine.js", "local.js", "net.js", "zh.js"];
-const CTRL_CH = ["00", "07", "08", "0b", "0c", "1b", "7f"];   /* 十六進位；\x08 是 Bash 吃掉 \\b 會產生的字元 */
+/* check-www.js 第 5 項認的每一個控制字元（\x00-\x08、\x0B、\x0C、\x0E-\x1F、\x7F，共 30 個，十六進位）；PR #67 第七次審查：不抽樣，全部都插 */
+const CTRL_CH = [...Array(32).keys(), 0x7f].filter((c) => c !== 0x09 && c !== 0x0a && c !== 0x0d).map((c) => c.toString(16).padStart(2, "0"));   /* 十六進位；\x08 是 Bash 吃掉 \\b 會產生的字元 */
 const CTRL = ["index.html", "native-bridge.js", "core.js", "engine.js", "local.js", "net.js"];   /* check-www.js 第 5 項檢查控制字元的檔 */
 const TAG_CAP = '<script src="capacitor.js"></script>', TAG_BR = '<script src="native-bridge.js"></script>';
 /* 清單照改過的檔更新（只讓要測的那一條判斷抓得到，別的判斷不會順便抓到） */
@@ -110,7 +111,7 @@ const KINDS = {
     expect: () => "讀不到 CDN 清單",
   },
   ctrl: {
-    /* PR #67 第六次審查：不只 \x01。候選是「檔｜字元」的組合，另外固定把 7 種字元各插一次到第一個檔 */
+    /* PR #67 第六、七次審查：不只 \x01。候選是「檔｜字元」的組合，另外固定把 30 個控制字元各插一次到第一個檔 */
     cands: (D, L) => CTRL.filter((f) => L[f] && fs.existsSync(at(D, f))).flatMap((f) => CTRL_CH.map((c) => f + "|" + c)),
     always: (D, L) => { const f = CTRL.find((x) => L[x] && fs.existsSync(at(D, x))); return f ? CTRL_CH.map((c) => f + "|" + c) : [] },
     break: (D, fc, L) => { const [f, c] = fc.split("|"), b = Buffer.concat([fs.readFileSync(at(D, f)), Buffer.from([parseInt(c, 16)])]); rewrite(at(D, f), b); return { list: relist(L, f, b) } },
@@ -169,7 +170,7 @@ const normSha = (b) => sha256(Buffer.from(Buffer.from(b).toString("utf8").replac
 const exitOf = (results, pass) => (pass ? 0 : results.some((x) => !x.unfit && x.caught !== true) ? 4 : 2);
 
 /* 主流程（自我測試直接呼叫）：回傳 { code, receipt } */
-function run({ dir = null, list = null, cdn = null, pkg = null, only = null, seed = null, tmp = os.tmpdir(), log = console.log, readM = readManifest, mainFile = mainFromGit }) {   /* readM、mainFile 只給自我測試換掉下載和讀 origin/main；命令列一律用真的 */
+function run({ dir = null, list = null, cdn = null, pkg = null, only = null, seed = null, tmp = os.tmpdir(), log = console.log, readM = readManifest, mainFile = mainFromGit, selfCdn = null }) {   /* readM、mainFile、selfCdn 只給自我測試換掉下載、讀 origin/main、check-www 自己的 --cdn；命令列一律用真的 */
   const unfit = (why, code = 2) => ({ code, receipt: { tool: "P0-IMG-canary", platform: "ios", unfit: true, why } });
   if (pkg && dir) return unfit("給了 --pkg 就不要再給 --dir：檢查的就是包裡那份 public");
   let P = null;
@@ -181,7 +182,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
     const L = LJ.files || {};
     const base = fs.mkdtempSync(path.join(tmp, "xq-canary-www-"));
     try {
-      const check = (d, lf, cdnArg) => cp.spawnSync(process.execPath, [CHECK, "--dir", d, "--list", lf, ...(cdnArg ? ["--cdn-manifest", cdnArg] : [])], { encoding: "utf8", maxBuffer: 256e6 });   /* 跟正式用法一樣，不加 --all（PR #67 第五次審查） */
+      const check = (d, lf, cdnArg, more = []) => cp.spawnSync(process.execPath, [CHECK, "--dir", d, "--list", lf, ...(cdnArg ? ["--cdn-manifest", cdnArg] : []), ...more], { encoding: "utf8", maxBuffer: 256e6 });   /* 跟正式用法一樣，不加 --all（PR #67 第五次審查） */
       /* CDN 清單只下載一次，乾淨的那份和每個壞樣本都用同一份，收據記下它的雜湊（PR #67 審查：分兩次下載，兩份可能不同） */
       let M = null, cdnFile = null, cdnSha = null;
       /* PR #67 第四次審查：先驗乾淨的樣本（不連 CDN），再讀 CDN。乾淨的有錯就回 2，不會被「CDN 讀不到」蓋成 3 */
@@ -191,6 +192,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       const clean = check(dir, LF, cdnFile);
       if (clean.status === 3) return unfit("乾淨的樣本沒錯，但 CDN 清單沒能比對（缺驗）：" + String(clean.stderr).split("\n")[0], 3);
       if (clean.status !== 0) return unfit("乾淨的樣本沒過 check-www.js（先修好再跑金絲雀）：" + String(clean.stderr).split("\n")[0]);
+      if (only != null && !String(only).split(",").map((s) => s.trim()).filter(Boolean).length) return unfit("--only 沒有列任何壞樣本");   /* PR #67 第七次審查：空的 --only 不能回 0 */
       const want = only ? only.split(",").map((s) => s.trim()).filter(Boolean) : Object.keys(KINDS).filter((k) => cdn || !KINDS[k].needsCdn);
       for (const k of want) { if (!KINDS[k]) return unfit("不認得的壞樣本：" + k + "（可用：" + Object.keys(KINDS).join(" ") + "）"); if (KINDS[k].needsCdn && !cdn) return unfit(k + " 要加 --cdn 才能跑") }
       const SEED = seed != null && seed !== "" ? Number(seed) >>> 0 : crypto.randomInt(2 ** 31), rand = rng(SEED);
@@ -227,6 +229,9 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       const mainCommit = fromMain("@commit");
       let releaseVersion = null; try { releaseVersion = JSON.parse(fs.readFileSync(path.join(dir, "release.json"), "utf8")).version || null } catch (e) { }
       const verBound = !!releaseVersion && releaseVersion === LJ.siteVersion;
+      /* PR #67 第七次審查：正式 CDN 時，乾淨的那份再用 check-www 自己的 --cdn 跑一次（走它自己的網址和下載），要回 0，正式指令那條路才算驗過 */
+      let cdnViaCheck = null;
+      if (OFFICIAL_CDN && cdn === OFFICIAL_CDN) { const r = (selfCdn || ((d, lf) => check(d, lf, null, ["--cdn"])))(dir, LF); cdnViaCheck = { exit: r.status, note: String(r.stderr || "").split("\n")[0].slice(0, 200) }; log((r.status === 0 ? "✔ " : "✘ ") + "check-www --cdn（自己下載正式 CDN 清單）結束代碼 " + r.status) }
       const receipt = {
         tool: "P0-IMG-canary", platform: "ios", at: new Date().toISOString(),
         sample: { dir: P ? "（安裝包裡的 public）" : path.basename(path.resolve(dir)), treeSha256: treeSha(dir), indexSha256: sha256(fs.readFileSync(path.join(dir, "index.html"))), listSha256: listSha, siteVersion: LJ.siteVersion || null, commit: LJ.commit || null, releaseVersion },
@@ -236,7 +241,8 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
         /* 工具自己算、自己寫進收據：只抓得到本機不小心改過（例如忘了切回 main）；故意偽造要靠之後的 CI 用 main 版工具重跑（Android PR③） */
         toolPins: pins,
         seed: SEED, kinds: want, results,
-        full: !only && cdn === OFFICIAL_CDN && !!P && P.kind === "ipa" && listBound && verBound && toolsBound,   /* 只認正式 CDN（第四次審查）；要 .ipa、清單是 main 那份、版號對得上（第五次審查） */
+        cdnViaCheck,
+        full: !only && !!OFFICIAL_CDN && cdn === OFFICIAL_CDN && !!cdnViaCheck && cdnViaCheck.exit === 0 && !!P && P.kind === "ipa" && listBound && verBound && toolsBound,   /* PR #67 第七次審查：讀不到網址（null）不能算正式 CDN；check-www 自己的 --cdn 也要回 0 */   /* 只認正式 CDN（第四次審查）；要 .ipa、清單是 main 那份、版號對得上（第五次審查） */
         pass: want.every((k) => results.some((x) => x.kind === k)) && results.every((x) => x.caught === true),
       };
       return { code: exitOf(results, receipt.pass), receipt };

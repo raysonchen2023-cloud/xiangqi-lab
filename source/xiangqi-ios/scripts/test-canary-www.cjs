@@ -1,6 +1,6 @@
 // iOS P0-IMG 金絲雀 canary-www.js 與 check-www.js 的自我測試（AGENTS.md「P0 出口驗證要難作假」，2026-11-23）
 //   在暫存資料夾做一個小的假 www（index.html、首頁素材、背景音樂、引擎、大檔、清單）和一份假的 CDN 清單，用真的 check-www.js 檢查：
-//   乾淨的要全過；8 種壞樣本都要被抓到；再把 check-www.js 的判斷一條一條改壞（放在副本），金絲雀要回 4（檢查失靈）。
+//   乾淨的要全過；14 種壞樣本都要被抓到；再把 check-www.js 的判斷一條一條改壞（放在副本），金絲雀要回 4（檢查失靈）。
 // 用法：node --test source/xiangqi-ios/scripts/test-canary-www.cjs
 "use strict";
 const test = require("node:test"), assert = require("node:assert/strict"), fs = require("fs"), os = require("os"), path = require("path"), crypto = require("crypto"), cp = require("child_process");
@@ -51,6 +51,7 @@ function fakeIpa(A) {
 }
 /* 假的 origin/main：清單給 listBuf，兩支工具給目前的檔（over 可以換掉其中一個），@commit 給一個假的提交 */
 const mainOf = (listBuf, over = {}) => (rel) => (rel in over ? over[rel] : rel === "@commit" ? "c0ffee" : rel.endsWith(".www-files.json") ? (typeof listBuf === "function" ? listBuf() : listBuf) : fs.readFileSync(path.join(HERE, path.basename(rel))));
+const okCdn = () => ({ status: 0, stderr: "" });   /* 假的「check-www 自己 --cdn」：回 0 */
 const runCheck = (dir, list, ...more) => cp.spawnSync(process.execPath, [CHECK, "--dir", dir, "--list", list, ...more], { encoding: "utf8" });
 const runCanary = (canary, args, o = {}) => cp.spawnSync(process.execPath, [canary, ...args], { encoding: "utf8", env: env(o) });
 
@@ -65,7 +66,7 @@ test("check-www.js：乾淨的假 www 全過；同大小換內容抓得到；--c
 });
 
 
-test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；8 種壞樣本、每類頭中尾＋一個種子挑的都被抓到；收據綁住安裝包、不會改到原本那份", () => {
+test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；14 種壞樣本、每類頭中尾＋一個種子挑的都被抓到；收據綁住安裝包、不會改到原本那份", () => {
   const { D, L, M } = fakeWww(), A = fakeApp(D), before = treeSha(A), out = path.join(tmp("xq-canaryout-"), "r.json");
   const r = runCanary(CANARY, ["--pkg", A, "--list", L, "--cdn-manifest", M, "--seed", "7", "--out", out]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -200,7 +201,7 @@ test("結束代碼：有任何一個做出來了卻沒被抓到，就回 4，不
 test("full＝true 只認正式 CDN：同一份清單從正式網址來才算，本機檔、別的網址都不算；乾淨的有錯時先回 2，不會被「CDN 讀不到」蓋成 3（PR #67 第四次審查）", () => {
   const { D, L, M } = fakeWww(), A = fakeApp(D), ipa = fakeIpa(A), txt = fs.readFileSync(M, "utf8"), quiet = () => {}, mainFile = mainOf(() => fs.readFileSync(L));
   const from = (want) => (u) => { assert.equal(u, want, "只下載指定的那個網址"); return txt };
-  let r = run({ pkg: ipa, list: L, cdn: OFFICIAL_CDN, seed: 7, readM: from(OFFICIAL_CDN), mainFile, log: quiet });
+  let r = run({ pkg: ipa, list: L, cdn: OFFICIAL_CDN, seed: 7, readM: from(OFFICIAL_CDN), mainFile, selfCdn: okCdn, log: quiet });
   assert.equal(r.code, 0); assert.equal(r.receipt.full, true, "正式 CDN＋--pkg＋沒有 --only（清單和版號也綁住，見下一項測試）");
   r = run({ pkg: ipa, list: L, cdn: M, seed: 7, readM: from(M), mainFile, log: quiet });
   assert.equal(r.code, 0); assert.equal(r.receipt.full, false, "本機清單：拿包比包，不能送審");
@@ -217,7 +218,7 @@ test("full＝true 只認正式 CDN：同一份清單從正式網址來才算，�
 
 test("送審收據要綁住倉庫的清單和包的版號、而且要 .ipa：拿包重產的清單、版號不同、.app 都不算 full（PR #67 第五次審查）", () => {
   const { D, L, M } = fakeWww(), A = fakeApp(D), ipa = fakeIpa(A), txt = fs.readFileSync(M, "utf8"), quiet = () => {};
-  const listBuf = fs.readFileSync(L), base = { list: L, cdn: OFFICIAL_CDN, seed: 7, readM: () => txt, log: quiet };
+  const listBuf = fs.readFileSync(L), base = { list: L, cdn: OFFICIAL_CDN, seed: 7, readM: () => txt, selfCdn: okCdn, log: quiet };
   let r = run({ ...base, pkg: ipa, mainFile: mainOf(listBuf) });
   assert.equal(r.code, 0, JSON.stringify(r.receipt).slice(0, 300)); assert.equal(r.receipt.full, true, ".ipa＋正式 CDN＋清單是 main 那份＋版號一樣");
   assert.equal(r.receipt.bind.listBound, true); assert.equal(r.receipt.bind.verBound, true); assert.equal(r.receipt.bind.listMainSha256, sha256(listBuf));
@@ -265,5 +266,23 @@ test("正式 CDN 網址只定義在 check-www.js 一個地方，金絲雀從那�
   const { D, L, M } = fakeWww(), out = path.join(tmp("xq-ctrlout-"), "r.json");
   const r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "ctrl", "--seed", "1", "--out", out]); assert.equal(r.status, 0, r.stdout + r.stderr);
   const got = JSON.parse(fs.readFileSync(out, "utf8")).results.map((x) => x.file.split("|")[1]);
-  for (const c of ["00", "07", "08", "0b", "0c", "1b", "7f"]) assert.ok(got.includes(c), "要插過 \\x" + c);
+  const all = [...Array(32).keys(), 127].filter((c) => ![9, 10, 13].includes(c)).map((c) => c.toString(16).padStart(2, "0"));
+  assert.equal(all.length, 30);
+  for (const c of all) assert.ok(got.includes(c), "要插過 \\x" + c + "（PR #67 第七次審查：check-www 認的每一個都要插）");
+});
+
+test("讀不到正式 CDN 網址不能算 full；check-www 自己的 --cdn 沒回 0 也不算；空的 --only 回 2（PR #67 第七次審查）", () => {
+  const { D, L, M } = fakeWww(), ipa = fakeIpa(fakeApp(D)), txt = fs.readFileSync(M, "utf8"), quiet = () => {};
+  const base = { pkg: ipa, list: L, cdn: OFFICIAL_CDN, seed: 7, readM: () => txt, mainFile: mainOf(fs.readFileSync(L)), log: quiet };
+  let r = run({ ...base, selfCdn: okCdn }); assert.equal(r.receipt.full, true); assert.deepEqual(r.receipt.cdnViaCheck, { exit: 0, note: "" });
+  r = run({ ...base, selfCdn: () => ({ status: 3, stderr: "讀不到 CDN 清單" }) }); assert.equal(r.code, 0); assert.equal(r.receipt.full, false, "check-www --cdn 回 3");
+  r = run({ ...base, selfCdn: () => ({ status: 1, stderr: "x" }) }); assert.equal(r.receipt.full, false, "check-www --cdn 回 1");
+  let called = false; r = run({ ...base, cdn: M, selfCdn: () => { called = true; return { status: 0 } } }); assert.equal(called, false, "不是正式 CDN 就不跑"); assert.equal(r.receipt.cdnViaCheck, null);
+  /* 正式網址讀不到（null）：用替身，check-www 的常數那一行換成 null */
+  const d = tmp("xq-nocdn-"); fs.writeFileSync(path.join(d, "check-www.js"), fs.readFileSync(CHECK, "utf8").replace(/^const OFFICIAL_CDN = .*$/m, "const OFFICIAL_CDN = null;")); fs.copyFileSync(CANARY, path.join(d, "canary-www.js"));
+  const C2 = require(path.join(d, "canary-www.js")); assert.equal(C2.OFFICIAL_CDN, null);
+  r = C2.run({ ...base, cdn: null, selfCdn: okCdn }); assert.equal(r.receipt.full, false, "null 不能等於 null 就算正式");
+  assert.equal(runCanary(CANARY, ["--dir", D, "--list", L, "--only", ""]).status, 2);
+  assert.equal(runCanary(CANARY, ["--dir", D, "--list", L, "--only", " , "]).status, 2);
+  assert.doesNotMatch(fs.readFileSync(CANARY, "utf8").split("module.exports")[1], /selfCdn/, "命令列不能換掉 check-www 自己的 --cdn");
 });
