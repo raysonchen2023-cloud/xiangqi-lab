@@ -32,8 +32,11 @@ const ok = (j) => ({ ok: true, json: () => Promise.resolve(j) });
 /* iMac Claude 1 11/23 審查：「讀不到維持原狀」要從「本來關著」出發才驗得到（從全開出發，清空也看不出來） */
 const CLOSED = () => ({ xqFlags: JSON.stringify({ v: 1, off: { halls8: "破圖" } }) });
 
-test("本來關著 halls8，讀到 404／500／429／丟例外：仍然關著，手機裡存的那份不變", async () => {
-  for (const r of [{ ok: false, status: 404 }, { ok: false, status: 500 }, { ok: false, status: 429 }, "throw"]) {
+test("本來關著 halls8，讀到 404／500／429（回應本身帶得出「全開」的內容）、200 但內容是 HTML（JSON 解析失敗）、丟例外：仍然關著，手機裡存的那份不變", async () => {
+  /* iMac Claude 1 複審：非 2xx 的假回應也要帶 json（內容是全開），不看 r.ok 才會被抓到；200＋HTML 要測 json() 失敗 */
+  const open = () => Promise.resolve({ v: 1, off: {} });
+  for (const r of [{ ok: false, status: 404, json: open }, { ok: false, status: 500, json: open }, { ok: false, status: 429, json: open },
+    { ok: true, status: 200, json: () => Promise.reject(new SyntaxError("Unexpected token '<'（<html>）")) }, "throw"]) {
     const st = CLOSED(), before = st.xqFlags, L = load({ store: st, next: () => r });
     await tick(); await tick(); await tick();
     assert.equal(L.calls.length, 1); assert.equal(L.c.xqFlag("halls8"), false, JSON.stringify(r));
@@ -42,7 +45,8 @@ test("本來關著 halls8，讀到 404／500／429／丟例外：仍然關著，
 });
 
 test("本來關著 halls8，讀到格式不對的清單（off 是陣列、有不合法代號、off 是 null、整份不是物件）：整份不採用，仍然關著", async () => {
-  for (const bad of [{ v: 1, off: ["halls8"] }, { v: 1, off: { "壞代號": "x" } }, { v: 1, off: { "壞代號": "x", play_pawn: "y" } }, { v: 1, off: null }, "halls8", { v: 1 }]) {
+  for (const bad of [{ v: 1, off: ["halls8"] }, { v: 1, off: { "壞代號": "x" } }, { v: 1, off: { "壞代號": "x", play_pawn: "y" } }, { v: 1, off: null }, "halls8", { v: 1 },
+    { v: 1, off: 0 }, { v: 1, off: "" }, { v: 1, off: "halls8" }, { v: 1, off: true }]) {   /* 複審：off 是非物件（字串會被拆成代號 0～5） */
     const st = CLOSED(), before = st.xqFlags, L = load({ store: st, next: () => ok(bad) });
     await tick(); await tick(); await tick();
     assert.equal(L.c.xqFlag("halls8"), false, JSON.stringify(bad)); assert.equal(L.c.xqFlag("play_pawn"), true, "不合法的整份不採用，也不會只關一部分");
@@ -55,6 +59,17 @@ test("逾時：signal 有傳進 fetch，5 秒計時器觸發後 aborted 變成 t
   const sig = L.calls[0].o.signal; assert.ok(sig, "有傳 signal"); assert.equal(sig.aborted, false);
   const t = L.timers.find((x) => x.ms === 5000); assert.ok(t); t.f(); assert.equal(sig.aborted, true);
   assert.equal(L.c.xqFlag("halls8"), false);
+});
+
+test("舊回應晚到不會蓋掉新的：沒有 AbortController 時，第一次抓（說全開）比第二次抓（說關 halls8）晚回來，結果仍以第二次為準", async () => {
+  const D = []; const L = load({ noAbort: true, next: () => new Promise((res) => D.push(res)) });
+  /* next 回傳 promise：假 fetch 會把它包成 Promise.resolve(promise)，等 D 裡的 res 被呼叫才回來 */
+  await tick(); assert.equal(L.calls.length, 1);
+  L.clock.t += 61_000; L.show("visible"); await tick(); assert.equal(L.calls.length, 2, "15 秒後不再當作抓取中，第二次照抓");
+  D[1](ok({ v: 1, off: { halls8: "x" } })); await tick(); await tick(); await tick();
+  assert.equal(L.c.xqFlag("halls8"), false);
+  D[0](ok({ v: 1, off: {} })); await tick(); await tick(); await tick();
+  assert.equal(L.c.xqFlag("halls8"), false, "晚到的舊回應不採用");
 });
 
 test("fetch 同步丟例外不會讓整支模組當掉（串接後才不會拖垮後面的模組）；沒有 AbortController、fetch 永遠不回來時，15 秒後還能再抓", async () => {

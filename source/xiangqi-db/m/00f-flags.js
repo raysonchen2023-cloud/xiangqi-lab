@@ -31,16 +31,18 @@ function xqFlagsApply(j){
    同一份規則：只能關、不能開；讀不到就維持手上那份（上一次成功的）。60 秒內不重抓，免得切來切去一直連線。 */
 /* 審查 B2、B3：整段包 try（這支跟其他模組串成同一個 script，一丟例外後面全部不跑）；
    「抓取中」記開始時間，超過 15 秒就當作已結束（沒有 AbortController 的舊 WebView，fetch 可能永遠不回來）。 */
-let XQ_FLAGS_AT=0,XQ_FLAGS_BUSY=0;
+/* 複審建議：每次抓取編號，只採用最新那一次的回應（沒有 AbortController 的舊 WebView，舊回應可能晚到、蓋掉新的） */
+let XQ_FLAGS_AT=0,XQ_FLAGS_BUSY=0,XQ_FLAGS_SEQ=0;
 function xqFlagsFetch(){
   try{
     if(typeof fetch!=="function")return;
     const now=Date.now();if(XQ_FLAGS_BUSY&&now-XQ_FLAGS_BUSY<15000)return;if(XQ_FLAGS_AT&&now-XQ_FLAGS_AT<60000)return;XQ_FLAGS_AT=now;XQ_FLAGS_BUSY=now;
+    const my=++XQ_FLAGS_SEQ;
     let ac=null;try{ac=new AbortController();setTimeout(()=>{try{ac.abort()}catch(e){}},5000)}catch(e){ac=null}
     Promise.resolve().then(()=>fetch(XQ_FLAGS_URL+"?t="+now,{cache:"no-store",mode:"cors",credentials:"omit",signal:ac?ac.signal:undefined}))
       .then(r=>r&&r.ok?r.json():null)
-      .then(j=>{if(j&&xqFlagsApply(j)){try{localStorage.setItem("xqFlags",JSON.stringify({v:j.v||1,off:XQ_FLAGS_OFF}))}catch(e){}}})
-      .catch(()=>{}).then(()=>{XQ_FLAGS_BUSY=0});
+      .then(j=>{if(my!==XQ_FLAGS_SEQ)return;if(j&&xqFlagsApply(j)){try{localStorage.setItem("xqFlags",JSON.stringify({v:j.v||1,off:XQ_FLAGS_OFF}))}catch(e){}}})
+      .catch(()=>{}).then(()=>{if(my===XQ_FLAGS_SEQ)XQ_FLAGS_BUSY=0});
   }catch(e){XQ_FLAGS_BUSY=0}
 }
 (function(){
