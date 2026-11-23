@@ -92,7 +92,8 @@ async function jhMzHero3(box,c){
   const sc=new T3.Scene();sc.add(new T3.HemisphereLight(0xFFE2B8,0x3A2C1E,1.05));const dl=new T3.DirectionalLight(0xFFC27A,.8);dl.position.set(-2,6,5);sc.add(dl);
   const root=new T3.Group();root.rotation.order="YXZ";root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
   const bx=new T3.Box3().setFromObject(B.bot),ct=bx.getCenter(new T3.Vector3()),hM=(bx.max.y-bx.min.y)||1;B.bot.position.x-=ct.x;B.bot.position.z-=ct.z;B.bot.position.y-=bx.min.y;const by=B.bot.position.y;
-  const EL=32*Math.PI/180,vh=hM*1.45,cam=new T3.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T3.Vector3(0,hM*.6,0);
+  /* 俯角 48°：地圖是從正上方看，角色太接近平視（原本 32°）會像站在畫面前面、飄在地上；拉高貼近地圖的俯視感 */
+  const EL=48*Math.PI/180,vh=hM*1.45,cam=new T3.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T3.Vector3(0,hM*.6,0);
   cam.position.set(0,tg.y+Math.sin(EL)*hM*6,Math.cos(EL)*hM*6);cam.lookAt(tg);cam.updateMatrixWorld(true);
   const ft=new T3.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,clips=B.mixer&&B.clips||null;let cur=null,yawR=0,cw=0,ch=0,t=0;
   const anim=n=>{if(!clips)return;const a=clips[n]||clips.idle;if(!a||a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};anim("idle");
@@ -252,7 +253,11 @@ function JhMaze(v){jhCss();jhMzCss();
     for(const x of jhMzSight(S))if(L[G.y*S.W+x]>.15){cx.fillStyle="rgba(200,50,35,.28)";cx.fillRect(x*T+2,G.y*T+2,T-4,T-4);cx.fillStyle="rgba(230,70,50,.7)";cx.fillRect(x*T+4,G.y*T+T/2-1.5,T-8,3)}
     if(L[G.y*S.W+G.x]>.15){const gx=G.fx*T+T/2,gy=G.y*T+T/2;cx.fillStyle="#141414";cx.beginPath();cx.ellipse(gx,gy+T*.05,T*.3,T*.36,0,0,7);cx.fill();cx.fillStyle="#2b2b2b";cx.beginPath();cx.arc(gx,gy-T*.2,T*.17,0,7);cx.fill();
       cx.fillStyle=G.stun?"#8a8a8a":"#e24a3a";cx.fillRect(gx+G.dx*T*.04-T*.09,gy-T*.23,T*.06,T*.04);cx.fillRect(gx+G.dx*T*.04+T*.03,gy-T*.23,T*.06,T*.04)}
-    const hx=P.fx*T+T/2,hy=P.fy*T+T/2;cx.fillStyle="rgba(0,0,0,.4)";cx.beginPath();cx.ellipse(hx,hy+T*.38,T*.26,T*.09,0,0,7);cx.fill();
+    /* 11/23 開發者：「腳色看起來是漂起來 請修正」：原本影子很淡（.4）又小、被身體蓋住，腳底站在格子下緣（.38）。
+       改成：3D 角色腳底站在格子中心偏下（.22），腳下一圈明顯的柔邊接地影子（比身體寬、從腳邊露出來）；立繪照舊站 .38 */
+    const hx=P.fx*T+T/2,hy=P.fy*T+T/2,ft=hy+T*(h3?.22:.38);
+    cx.save();cx.translate(hx,ft);cx.scale(1,.36);const sg=cx.createRadialGradient(0,0,0,0,0,T*.42);sg.addColorStop(0,"rgba(0,0,0,.66)");sg.addColorStop(.55,"rgba(0,0,0,.4)");sg.addColorStop(1,"rgba(0,0,0,0)");
+    cx.fillStyle=sg;cx.beginPath();cx.arc(0,0,T*.42,0,7);cx.fill();cx.restore();
     /* 3D 載好就由 3D 畫（在下面）；還沒好或載不到：立繪也一樣等速走，走路時腳下一點一點、左右晃 */
     if(!h3){const bob=pWalk?-Math.abs(Math.sin(now/95))*T*.06:Math.sin(now/220)*1.5,sw=pWalk?Math.sin(now/95)*.09:0;
       if(hero.complete&&hero.naturalWidth){const h=T*1.05,w=h*hero.width/hero.height;cx.save();cx.translate(hx,hy+T*.38);cx.rotate(sw);cx.scale(P.face<0?-1:1,1);cx.drawImage(hero,-w/2,-T*.38-h*.62+bob,w,h);cx.restore()}
@@ -261,7 +266,7 @@ function JhMaze(v){jhCss();jhMzCss();
     fx.putImageData(id,0,0);cx.imageSmoothingEnabled=true;cx.drawImage(fog,0,0,S.W*T,S.H*T);
     const gr=cx.createRadialGradient(hx,hy,T*.3,hx,hy,T*3.4);gr.addColorStop(0,"rgba(255,170,80,.14)");gr.addColorStop(1,"rgba(255,170,80,0)");cx.fillStyle=gr;cx.fillRect(hx-T*4,hy-T*4,T*8,T*8);
     cx.restore();
-    if(h3){const d=P.dir||[0,1];try{h3.draw(dt,pWalk,jhMzYaw(d[0],d[1]),hx-Math.round(camX),hy+T*.38-Math.round(camY),T*1.75)}catch(e){h3.dispose();h3=null}}
+    if(h3){const d=P.dir||[0,1];try{h3.draw(dt,pWalk,jhMzYaw(d[0],d[1]),hx-Math.round(camX),ft-Math.round(camY),T*1.75)}catch(e){h3.dispose();h3=null}}
     requestAnimationFrame(frame)};
   const act=(dx,dy)=>{if(busy||S.done)return false;if(dx||dy)S.player.dir=[dx,dy];const r=jhMzStep(S,dx,dy);
     if(r.ev==="wall"){say(esc(jhL("前面過不去。","Can't go that way.")));return false}
