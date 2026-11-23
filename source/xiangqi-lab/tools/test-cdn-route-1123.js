@@ -1,0 +1,128 @@
+// W74～W76（11/23，開發者看外部評論後選「步驟 7 移到網頁上線前」「P0 加回退與開關測項」）：
+//   CDN 三平台共用又沒分版，網頁一上線現行 App 就讀到新資料；所以要在網頁上線前，讓模擬器裡的 App 改讀這版要上線的資料。
+//   這裡驗改向工具 cdn-route.js 與 check-scenes.js 新加的參數「怎麼判」：不開模擬器、不連網、不裝 App。
+//   重點：要改向卻沒證明攔截生效（探測檔讀不到）＝測不成立 2，不能當成「新 CDN 沒問題」。
+// 用法：node --test xiangqi-lab/tools/test-cdn-route-1123.js
+"use strict";
+const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process");
+const AND = path.join(__dirname, "..", "..", "xiangqi-android", "scripts");
+const R = require(path.join(AND, "cdn-route.js"));
+const SC = path.join(AND, "check-scenes.js");
+const { finalCode, routeBadOf, routeArgError } = require(SC);
+const { decide, routeCdn, summarize, CDN, FLAGS_URL, PROBE, PROBE_BODY } = R;
+
+/* 假的 CDN 資料夾（跟 cdn-deploy --stage 一樣的結構） */
+function stage() {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-cdnroute-"));
+  fs.mkdirSync(path.join(d, "data", "home"), { recursive: true });
+  fs.writeFileSync(path.join(d, "data", "home", "a.webp"), Buffer.from([1, 2, 3, 4]));
+  fs.writeFileSync(path.join(d, "data", "home", "長卷.json"), "{\"v\":2}");
+  fs.writeFileSync(path.join(path.dirname(d), path.basename(d) + "-外面.txt"), "不該被讀到");
+  return d;
+}
+
+test("改向判斷：探測檔一律回固定內容；沒給目標就不動；網址目標保留查詢字串、不多斜線；不是 CDN 的請求不動", () => {
+  const p = decide(CDN + PROBE + "?t=1", {});
+  assert.equal(p.action, "fulfill"); assert.equal(p.body.toString(), PROBE_BODY); assert.equal(p.probe, true);
+  assert.equal(decide(CDN + "data/x.webp", {}).action, "continue", "沒給 --cdn-to（W75）＝讀正式 CDN");
+  const r = decide(CDN + "data/x.webp?v=3", { to: "https://pre.xiangqi-cdn.pages.dev" });
+  assert.deepEqual([r.action, r.url], ["redirect", "https://pre.xiangqi-cdn.pages.dev/data/x.webp?v=3"]);
+  assert.equal(decide(CDN + "data/x.webp", { to: "https://pre.example/" }).url, "https://pre.example/data/x.webp", "目標結尾有斜線也不重複");
+  assert.equal(decide("https://localhost/data/x.webp", { to: "https://pre.example/" }).action, "continue", "App 自己包裡的檔不改向");
+  assert.equal(decide("https://example.com/data/x.webp", { to: "https://pre.example/" }).action, "continue");
+});
+
+test("改向判斷：本機資料夾目標照 CDN 結構讀檔；中文檔名要解碼；找不到、跑出資料夾外都回 404（等於新 CDN 沒有這個檔）", () => {
+  const d = stage();
+  const a = decide(CDN + "data/home/a.webp", { to: d });
+  assert.deepEqual([a.action, a.status, a.type, [...a.body]], ["fulfill", 200, "image/webp", [1, 2, 3, 4]]);
+  const j = decide(CDN + "data/home/" + encodeURIComponent("長卷.json") + "?t=9", { to: d });
+  assert.equal(j.status, 200); assert.equal(j.body.toString(), "{\"v\":2}"); assert.equal(j.type, "application/json");
+  const m = decide(CDN + "data/home/b.webp", { to: d }); assert.deepEqual([m.status, m.miss], [404, "data/home/b.webp"]);
+  const out = decide(CDN + "data/..%2F..%2F" + encodeURIComponent(path.basename(d) + "-外面.txt"), { to: d });
+  assert.equal(out.status, 404, "用 ../ 跑出資料夾：不能讀到外面的檔"); assert.ok(!out.body.length);
+  assert.equal(decide(CDN + "data/home", { to: d }).status, 404, "資料夾不是檔");
+  assert.equal(decide(CDN + "data/%E0%A4%A", { to: d }).status, 400, "壞掉的網址編碼");
+});
+
+test("改向判斷：遠端開關檔（W76）可以換成指定內容、或讓它讀不到；沒給就不動；網址帶 ?t= 也認得", () => {
+  const f = decide(FLAGS_URL + "?t=123", { flags: { v: 1, off: { halls8: "W76" } } });
+  assert.equal(f.action, "fulfill"); assert.deepEqual(JSON.parse(f.body.toString()), { v: 1, off: { halls8: "W76" } });
+  assert.equal(decide(FLAGS_URL + "?t=1", { flags: "fail" }).action, "fail");
+  assert.equal(decide(FLAGS_URL + "?t=1", {}).action, "continue");
+  assert.equal(decide(FLAGS_URL.replace("main", "dev") + "?t=1", { flags: "fail" }).action, "continue", "別的分支的檔不是 App 讀的那份");
+});
+
+/* 假的 CDP：記下送出的指令，手動觸發 requestPaused */
+function fakeCdp(failOn) {
+  const sent = [], hs = [];
+  return { sent, fire: async (url, id = "r" + sent.length) => { for (const h of hs) await h({ method: "Fetch.requestPaused", params: { requestId: id, request: { url } } }) },
+    on: (h) => hs.push(h), send: async (m, p) => { sent.push([m, p]); if (failOn && m === failOn) throw new Error("假的 CDP 錯誤") } };
+}
+
+test("攔截：開 Fetch 攔 CDN（有開關時多攔開關檔）；每種處理送對的 CDP 指令；送失敗要記下來，不能吞掉", async () => {
+  const d = stage();
+  let c = fakeCdp(); let log = await routeCdn(c, { to: d });
+  assert.deepEqual(c.sent[0], ["Fetch.enable", { patterns: [{ urlPattern: CDN + "*", requestStage: "Request" }] }]);
+  await c.fire(CDN + "data/home/a.webp"); await c.fire(CDN + "data/home/zz.webp"); await c.fire(CDN + PROBE);
+  const [, ok] = c.sent[1], [, nf] = c.sent[2], [, pr] = c.sent[3];
+  assert.equal(c.sent[1][0], "Fetch.fulfillRequest"); assert.equal(ok.responseCode, 200); assert.equal(Buffer.from(ok.body, "base64").length, 4);
+  assert.ok(ok.responseHeaders.some((h) => h.name === "Access-Control-Allow-Origin" && h.value === "*"), "跨網域讀取要有 CORS 標頭，不然 App 拿不到");
+  assert.equal(nf.responseCode, 404); assert.equal(Buffer.from(pr.body, "base64").toString(), PROBE_BODY);
+  assert.deepEqual(log.map((r) => r.action), ["fulfill", "fulfill", "fulfill"]); assert.equal(log[1].miss, "data/home/zz.webp");
+  c = fakeCdp(); log = await routeCdn(c, { to: "https://pre.example/", flags: "fail" });
+  assert.equal(c.sent[0][1].patterns.length, 2); assert.equal(c.sent[0][1].patterns[1].urlPattern, FLAGS_URL + "*");
+  await c.fire(CDN + "data/a.json"); await c.fire(FLAGS_URL + "?t=5"); await c.fire("https://localhost/x.js");
+  assert.deepEqual(c.sent.slice(1).map(([m]) => m), ["Fetch.continueRequest", "Fetch.failRequest", "Fetch.continueRequest"]);
+  assert.equal(c.sent[1][1].url, "https://pre.example/data/a.json"); assert.equal(c.sent[3][1].url, undefined, "不改向的照原網址");
+  c = fakeCdp("Fetch.fulfillRequest"); log = await routeCdn(c, { to: d }); await c.fire(CDN + "data/home/a.webp");
+  assert.match(log[0].error, /假的 CDP 錯誤/);
+});
+
+test("摘要：探測檔不算進攔到的數；缺的檔去重；送 CDP 失敗的列出來；開關檔怎麼處理的也記下", () => {
+  const log = [{ url: CDN + PROBE, action: "fulfill", status: 200, probe: true }, { url: CDN + "data/a", action: "fulfill", status: 200 },
+    { url: CDN + "data/b", action: "fulfill", status: 404, miss: "data/b" }, { url: CDN + "data/b?x", action: "fulfill", status: 404, miss: "data/b" },
+    { url: CDN + "data/c", action: "redirect", to: "https://p/data/c", error: "斷了" }, { url: FLAGS_URL + "?t=1", action: "fail" }];
+  const s = summarize(log, true);
+  assert.deepEqual([s.probeOk, s.intercepted, s.redirected, s.missing, s.flags], [true, 5, 2, ["data/b"], ["fail"]]);
+  assert.equal(s.errors.length, 1);
+  assert.equal(summarize(log, false).probeOk, false); assert.equal(summarize(log, "xq-route-ok").probeOk, false, "只認 true，不認字串");
+});
+
+test("結束代碼：要改向卻沒證明攔截生效＝2（測不成立）；有紅燈照樣 1；沒改向時不受影響", () => {
+  const ok = [{ mode: "online", route: { probeOk: true } }], no = [{ mode: "online", route: { probeOk: false } }], none = [{ mode: "online" }];
+  assert.equal(routeBadOf(ok, true), false); assert.equal(routeBadOf(no, true), true); assert.equal(routeBadOf(none, true), true, "這輪沒有改向摘要＝沒證明");
+  assert.equal(routeBadOf([], true), true, "一輪都沒掃＝沒證明"); assert.equal(routeBadOf(no, false), false, "沒要改向就不看");
+  assert.equal(finalCode({ bad: 0, noStatus: false, routeBad: true }), 2); assert.equal(finalCode({ bad: 3, routeBad: true }), 1);
+  assert.equal(finalCode({ bad: 0, noStatus: false, routeBad: false }), 0); assert.equal(finalCode({ bad: 0, noStatus: false }), 0, "舊的呼叫照舊");
+});
+
+test("改向參數：只能連線輪；目標要是 https 或存在的資料夾；開關檔要有 off、兩種開關參數只能擇一", () => {
+  const d = stage(), j = path.join(d, "f.json"), bad = path.join(d, "g.json");
+  fs.writeFileSync(j, JSON.stringify({ v: 1, off: { halls8: "W76" } })); fs.writeFileSync(bad, JSON.stringify({ v: 1, off: [] }));
+  assert.equal(routeArgError({ mode: "online", cdnTo: d }), null); assert.equal(routeArgError({ mode: "online", cdnTo: "https://p/" }), null);
+  assert.match(routeArgError({ mode: "both", cdnTo: d }), /只能配 --mode online/);
+  assert.match(routeArgError({ mode: "offline", flagsFail: true }), /只能配 --mode online/);
+  assert.match(routeArgError({ mode: "online", cdnTo: "http://p/" }), /https 網址或存在的資料夾/);
+  assert.match(routeArgError({ mode: "online", cdnTo: path.join(d, "沒有") }), /https 網址或存在的資料夾/);
+  assert.match(routeArgError({ mode: "online", cdnTo: j }), /https 網址或存在的資料夾/, "給檔案不行，要資料夾");
+  assert.match(routeArgError({ mode: "online", flagsFile: j, flagsFail: true }), /擇一/);
+  assert.match(routeArgError({ mode: "online", flagsFile: bad }), /要有 "off"/);
+  assert.match(routeArgError({ mode: "online", flagsFile: path.join(d, "沒有.json") }), /讀不到或不是 JSON/);
+  assert.equal(routeArgError({ mode: "online", flagsFile: j }), null); assert.equal(routeArgError({ mode: "both" }), null);
+});
+
+test("命令列：參數不對直接結束代碼 2，不會開始掃（不用模擬器）", () => {
+  for (const a of [["--cdn-to", "https://p/"], ["--cdn-to", "https://p/", "--mode", "both"], ["--mode", "online", "--flags-fail", "--flags-file", "x.json"]]) {
+    const r = cp.spawnSync(process.execPath, [SC, ...a], { encoding: "utf8", timeout: 20000 });
+    assert.equal(r.status, 2, a.join(" ")); assert.match(r.stderr, /✘/);
+  }
+});
+
+test("〔原始碼〕掃描流程：先開攔截、再重新載入、等首頁掛好，才等預載；報告記探測結果；掃完再摘要一次", () => {
+  const s = fs.readFileSync(SC, "utf8");
+  const i = s.indexOf("routeLog = await routeCdn(c"), j = s.indexOf('await c.send("Page.reload"'), k = s.indexOf("await waitHome(c)"), l = s.indexOf("await waitPreload(c, 180000)");
+  assert.ok(i > 0 && i < j && j < k && k < l, "攔截 → 重新載入 → 等首頁 → 等預載");
+  assert.match(s, /rep\.route = summarize\(routeLog, await probeOk\(c\)\)/);
+  assert.match(s, /if \(routeLog\) rep\.route = summarize\(routeLog, rep\.route\.probeOk\);/);
+});
