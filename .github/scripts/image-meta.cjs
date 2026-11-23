@@ -169,6 +169,17 @@ function imageMeta0(buf) {
   }
   if (fmt === "tiff") { tiff(b, out); xmp(b.toString("latin1"), out); texts.push(b.toString("latin1").replace(/[^\x20-\x7e\n]+/g, " ")); return done() }
   if (fmt === "gif") {
+    /* 第十二輪審查①：GIF 要照區塊一路走到結尾（0x3B）才算讀得懂；只有 GIF89a 檔頭、後面是文字的檔＝讀不懂 */
+    const ct = (f) => (f & 0x80 ? 3 * (2 << (f & 7)) : 0), subs = (q) => { while (q < b.length && b[q] > 0) q += 1 + b[q]; return q < b.length ? q + 1 : -1 };
+    let g = 13 + ct(b[10]), ok = false;
+    while (g >= 0 && g < b.length) {
+      const c = b[g];
+      if (c === 0x3b) { ok = true; break }
+      if (c === 0x21) { g = g + 2 > b.length ? -1 : subs(g + 2); continue }
+      if (c === 0x2c) { if (g + 11 > b.length) { g = -1; break } g = subs(g + 10 + ct(b[g + 9]) + 1); continue }
+      g = -1;
+    }
+    if (!ok) return null;
     const i = b.indexOf("XMP DataXMP"); if (i >= 0) { const t = b.subarray(i).toString("utf8"); xmp(t, out); texts.push(t) }
     /* 擴充區塊 21 FE（註解）、21 01（純文字）、21 FF（應用程式）：一串子區塊（長度＋內容），長度 0 結束；子區塊接回來（第五輪審查④：原本只接 21 FE，切開放的金鑰會漏） */
     for (const lab of [0xfe, 0x01, 0xff]) for (let j = b.indexOf(Buffer.from([0x21, lab])); j >= 0; j = b.indexOf(Buffer.from([0x21, lab]), j + 2)) {
@@ -176,7 +187,7 @@ function imageMeta0(buf) {
     }
     return done();
   }
-  if (fmt === "bmp") return done();
+  if (fmt === "bmp") { if (b.readUInt32LE(2) !== b.length || b.readUInt32LE(10) > b.length) return null; return done() }   /* 第十二輪審查①：BMP 檔頭記的檔案大小要跟實際一樣、像素位置在檔裡 */
   return null;
 }
 

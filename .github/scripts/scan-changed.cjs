@@ -62,6 +62,7 @@ function checkAllow(list, risks) {
     if (a.match != null && String(a.match).length < 6) bad.push(at + "的 match 太短（至少 6 個字）");
     if (a.file != null && (String(a.file).length < 3 || /^\/|[*?]|\\/.test(a.file))) bad.push(at + "的 file 要寫倉庫裡的完整路徑（不加開頭的 /、不用萬用字元）");
     if (String(a.reason || "").trim().length < 4) bad.push(at + "沒寫理由（reason 至少 4 個字）");
+    if (PERSONAL.includes(a.rule) && a.fileSha256 != null && !IMG_EXT.test(String(a.file || ""))) bad.push(at + "是個資規則（" + a.rule + "）：整檔雜湊（fileSha256）只給圖片副檔名的檔，其他檔要用 sha256 指定是哪一筆（第十二輪審查①）");
     if (PERSONAL.includes(a.rule) && !String(a.file || "").trim()) bad.push(at + "是個資規則（" + a.rule + "）：一定要寫 file（不然那一筆放進任何檔都會過）");
     if (PII_RE.test(String(a.reason || ""))) bad.push(at + "的理由裡不能寫信箱或電話");
   });
@@ -154,7 +155,9 @@ for (const x of images) if (x.meta && x.meta.texts && x.meta.texts.length) {
   for (const m of markerLines(S.textsOf(t), S.MARK)) metaMarks.push({ file: x.file, ...m });   /* 第四輪審查②：圖裡的文字不准用行內標記 */
 }
 console.log(`複製 ${files.length} 個改到的檔到暫存資料夾，交給 oss-scan 掃（放行清單 ${list.items.length} 筆、行內標記登記 ${list.inline.length} 筆）`);
-const items = list.items.filter((a) => a.rule !== UNREAD);
+/* 第十二輪審查①：個資的整檔雜湊放行，只給「副檔名是圖、檔頭是圖、結構讀得到結尾（imageMeta 不是 null）」的檔；其他的在這裡拿掉，不交給 oss-scan */
+const readableImg = new Set(images.filter((x) => x.meta).map((x) => x.file));
+const items = list.items.filter((a) => a.rule !== UNREAD && !(PERSONAL.includes(a.rule) && a.fileSha256 && !(IMG_EXT.test(String(a.file)) && readableImg.has(a.file))));
 const metaItems = [];
 for (const a of items) if (a.fileSha256 && metaOf.has(a.file) && shaOf.get(a.file) === a.fileSha256) { const c = { ...a, file: metaOf.get(a.file) }; delete c.fileSha256; metaItems.push(c) }
 const unreadOk = list.items.filter((a) => a.rule === UNREAD && shaOf.get(a.file) === a.fileSha256).map((a) => a.file);

@@ -103,6 +103,12 @@ function textsOf(b) {
 }
 /* 行內放行標記：這一行不掃。scan-changed.cjs 用同一個判斷、同一份文字找標記要求登記（PR #68 第三輪審查②：oss-scan:\x01allow 換成空白後也算標記，所以一定要拿換過的文字比） */
 const MARK = /oss-scan:\s*allow/;
+/* 第十二輪審查②：標記行要是正常的一行才算——不超過 300 字、中間沒有單獨的 \r（只用 \r 換行的檔整個算一行，一筆標記就能蓋掉整個檔） */
+const MARK_MAX = 300;
+const markLine = (t) => t.length <= MARK_MAX && !/\r(?!$)/.test(t) && MARK.test(t);
+/* 個資規則：行內標記不略過（第十二輪審查②，比照高風險）；整檔雜湊只給圖片副檔名的檔（第十二輪審查①） */
+const PERSONAL = ["email", "phone-tw", "tw-id"];
+const IMG_EXT = /\.(?:jpe?g|png|webp|gif|bmp|tiff?|heic|heif|avif|ico|cur|psd|jxl|jp2|j2k)$/i;
 
 const mask = (s, isEmail) => {
   if (isEmail) { const [u, d] = s.split("@"); return u[0] + "***@" + d }
@@ -171,7 +177,7 @@ function scan(dir, opts = {}) {
   const fileSha = new Map();
   /* 第九輪審查①（開發者決定 4）：圖片只能用整張圖的 fileSha256 放行；沒寫 fileSha256 的放行項目對圖片不算數 */
   const imgFiles = new Set();
-  const allowed = (rule, rel, match) => allow.find(a => (!imgFiles.has(rel) || a.fileSha256) && (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256) && (!a.fileSha256 || (imgFiles.has(rel) && fileSha.get(rel) === a.fileSha256))   /* 第十一輪審查①：fileSha256 只對「檔頭是圖」的檔算數，純文字檔寫了也不放行 */);
+  const allowed = (rule, rel, match) => allow.find(a => (!imgFiles.has(rel) || a.fileSha256) && (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256) && (!a.fileSha256 || (imgFiles.has(rel) && fileSha.get(rel) === a.fileSha256 && (!PERSONAL.includes(rule) || IMG_EXT.test(rel))))   /* 第十一輪審查①：fileSha256 只對「檔頭是圖」的檔算數，純文字檔寫了也不放行；第十二輪審查①：個資規則還要副檔名是圖（結構讀不讀得到結尾由 scan-changed 看） */);
   const isPublic = s => !!pub && pub.some(t => t.includes(s));
   const push = (rule, rel, line, match, extra = {}) => {
     const a = allowed(rule.id, rel, match);
@@ -202,7 +208,7 @@ function scan(dir, opts = {}) {
         const ln = lineOf(m.index);
         /* 第五輪審查②：行內標記只略過中、低風險，高風險照擋。第六輪審查②：比對到的字跨了幾行，每一行都要有標記才略過（\s 會吃掉換行，機密放下一行就漏）；
            第六輪審查③：檔頭是圖片的檔不認標記（圖片只能用整張圖 sha256 放行） */
-        if (r.risk !== "high" && !img) { const l2 = lineOf(m.index + Math.max(0, match.length - 1)); let all = true; for (let q = ln; q <= l2; q++) if (!MARK.test(lineText(q))) { all = false; break } if (all) continue }
+        if (r.risk !== "high" && !PERSONAL.includes(r.id) && !img) { const l2 = lineOf(m.index + Math.max(0, match.length - 1)); let all = true; for (let q = ln; q <= l2; q++) if (!markLine(lineText(q))) { all = false; break } if (all) continue }   /* 第十二輪審查②：個資規則不認標記；標記行有長度上限、不准夾單獨的 \r */
         report(r, f.rel, ln, match);
       }
     }
@@ -225,7 +231,7 @@ function summary(res) {
     alreadyPublic: live.filter(f => f.public).length, failing: by("high").length };
 }
 
-module.exports = { imgFormat, scan, summary, knownSecrets, loadPublic, asText, textsOf, MARK, IMG_HEAD, RULES, NAME_RULES };
+module.exports = { PERSONAL, IMG_EXT, MARK_MAX, markLine, imgFormat, scan, summary, knownSecrets, loadPublic, asText, textsOf, MARK, IMG_HEAD, RULES, NAME_RULES };
 
 if (require.main === module) {
   const argv = process.argv.slice(2), opt = k => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };
