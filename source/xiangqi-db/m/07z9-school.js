@@ -424,6 +424,7 @@ function zmArgs(m,rl,dx){const ms=OSC.mside(m);return{human:ms==="r"?"b":"r",lev
 const zmSay=(m,s)=>oscL(`🏯 ${m.nm}：「${s}」`,`🏯 ${m.en}: "${oscT(s)}"`);
 function zmStart(m,c0){const P=typeof ptyGet==="function"?ptyGet():null,c=c0||(P&&P.look);if(!c||!P||!PTY.has(P,c)){toast(oscL("要先有修行角色：已加入隊伍的七星才能挑戰","You need a training character first: only Seven Stars in your party can challenge"));return}
   const rl=OSC.zmRlv(zmGet(),m);store.set("zmCur",{id:m.id,rl,c});
+  if(typeof jhRetHere==="function")jhRetHere("inn:"+m.id);   /* W80：從十州棋館、門內頁、門派修行頁挑戰掌門，返回鍵回原來那一頁（原本借用驛站的對局，回驛站） */
   jStart("inn:"+m.id,zmArgs(m,rl),()=>{location.hash="#/journey/play";setTimeout(()=>toast(zmSay(m,m.pre)),500)})}
 /* 再下一盤：同一位掌門、調整後的強度、同一位修行角色 */
 function zmAgainArgs(j,dx){const m=zmAct(j)&&OSC.mst(j);if(!m)return null;const C=store.get("zmCur",null),rl=OSC.zmRlv(zmGet(),m);

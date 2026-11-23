@@ -53,6 +53,7 @@ const BK_NAME=[["/cpuroom","雅間"],["/guanxing","觀星臺"],["/ximarket/tea",
 function bkName(h){if(!h)return"";const k=navKey(h).split("?")[0];if(k==="/")return"首頁";
   if(k==="/hub/learn"||k==="/hub/battle"){let n="";try{n=typeof xqHubName==="function"?xqHubName(k.slice(5)).split(" ").slice(1).join(" "):""}catch(e){}return n&&!/^(學習|對戰)$/.test(n)?n:k==="/hub/learn"?"書院":"茶樓"}   /* 書院照停靠朝代／經典世界的叫法（國子監、藏譜石窟、觀星閣…） */
   for(const[p,n]of BK_NAME)if(k===p||k.startsWith(p+"/"))return n;
+  if(/^\/(jianghu|school)(\/|$)/.test(k)){let j="";try{j=typeof jhRetPlace==="function"?jhRetPlace("#"+k):""}catch(e){}if(j)return j}   /* W80：十州棋館、門內頁（派名）、門派修行，返回鍵寫「回中炮門」而不是「返回」 */
   let n="";try{n=typeof usePlace==="function"?usePlace("#"+k):""}catch(e){}return n&&n.length<=6&&/[^\x00-\x7f]/.test(n)?n:""}
 function bkSet(B,back,bp){const h=location.hash||"#/",R=REVIEW_BACK;let to=bkTo(back);
   if(R&&R.id!=null&&navKey(h)===navKey("#/db/play/"+encodeURIComponent(R.id))){
