@@ -71,10 +71,14 @@ function rawProfile(key, text, out) {
   const i = d.indexOf("Exif\0\0"); tiff(i >= 0 ? d.subarray(i + 6) : d, out);
 }
 /* 第七輪審查④：壓縮資料不完整時也把解得出來的部分拿回來（Z_SYNC_FLUSH），不整段丟掉 */
-const inflate = (d) => { try { return zlib.inflateSync(d, { finishFlush: zlib.constants.Z_SYNC_FLUSH }) } catch (e) { return Buffer.alloc(0) } };
+/* 第八輪審查①：壓縮資料壞掉（Adler、FCHECK 錯）時不當成空的乾淨圖，丟出 BAD，imageMeta 回 null（讀不懂＝擋） */
+const BAD = new Error("壓縮資料壞掉");
+const inflate = (d) => { try { return zlib.inflateSync(d, { finishFlush: zlib.constants.Z_SYNC_FLUSH }) } catch (e) { throw BAD } };
 /* 第七輪審查②：不管放在哪個區塊、哪一段（JPEG 第一個 SOS 之後、漸進式兩次掃描之間、EOI 之後），整個檔裡找得到的 Exif 與 XMP 都看 */
 function anywhere(b, out, texts) {
   for (let i = b.indexOf("Exif\0\0"); i >= 0; i = b.indexOf("Exif\0\0", i + 6)) tiff(b.subarray(i + 6), out);
+  /* 第八輪審查③：沒有 Exif 開頭、直接接上的 TIFF（BMP 後面接 TIFF、JPEG／GIF 後面接 PNG eXIf…）也看；開頭 8 位元組是檔案本身，跳過 */
+  for (const sig of ["II*\0", "MM\0*"]) for (let i = b.indexOf(sig, 8); i >= 0; i = b.indexOf(sig, i + 4)) tiff(b.subarray(i), out);
   for (let i = b.indexOf("<x:xmpmeta"); i >= 0; i = b.indexOf("<x:xmpmeta", i + 10)) { const e = b.indexOf("</x:xmpmeta>", i), t = b.toString("utf8", i, e > i ? e + 12 : Math.min(b.length, i + 65536)); xmp(t, out); texts.push(t) }
 }
 /* JPEG APP13（Photoshop 8BIM）裡的 IPTC：1C 02 50＝By-line、1C 02 74＝Copyright、1C 02 76＝Contact */
@@ -82,7 +86,8 @@ function iptc(seg, out) { for (let i = 0; i + 3 <= seg.length; i++) if (seg[i] =
 
 /* 回傳 { format, kinds:[…], texts:[…] }；讀不懂的格式（HEIC、AVIF、不是圖片、JPEG 結構壞掉）回 null。
    texts＝圖裡解出來的文字（PNG 文字區、XMP、JPEG／GIF 註解），scan-changed 交給 oss-scan 的規則掃（PR #68 第二輪審查④：Comment 裡寫信箱也要抓到） */
-function imageMeta(buf) {
+function imageMeta(buf) { try { return imageMeta0(buf) } catch (e) { if (e === BAD) return null; throw e } }
+function imageMeta0(buf) {
   const b = Buffer.isBuffer(buf) ? buf : Buffer.from(buf), out = new Set(), fmt = sniff(b), texts = [];
   const done = () => { anywhere(b, out, texts); return { format: fmt, kinds: [...out].sort(), texts } };
   if (fmt === "jpeg") {
@@ -113,7 +118,7 @@ function imageMeta(buf) {
       const len = b.readUInt32BE(p), type = b.toString("latin1", p + 4, p + 8), d = b.subarray(p + 8, p + 8 + len);
       if (p + 12 + len > b.length) return null;   /* 第五輪審查③：區塊長度超出檔案＝結構壞掉＝讀不懂 */
       if (type === "eXIf") tiff(d.toString("latin1", 0, 6) === "Exif\0\0" ? d.subarray(6) : d, out);   /* 第六輪審查④：開頭帶 Exif\0\0 的也認（跟 WebP 一樣） */
-      else if (type === "iCCP") { const z = d.indexOf(0); texts.push(inflate(d.subarray(z + 2)).toString("latin1").replace(/[^\x20-\x7e\n]+/g, " ")) }   /* 壓縮的 ICC：解開後的描述文字交給規則掃 */
+      else if (type === "iCCP") { const z = d.indexOf(0), u = inflate(d.subarray(z + 2)); texts.push(u.toString("latin1").replace(/[^\x20-\x7e\n]+/g, " "), u.toString("latin1")) }   /* 第八輪審查②：另外留一份原文，mluc（UTF-16BE）的描述交給 textsOf 的「拿掉 NUL」解碼 */   /* 壓縮的 ICC：解開後的描述文字交給規則掃 */
       else if (type === "tEXt" || type === "zTXt" || type === "iTXt") {
         const z = d.indexOf(0), key = d.toString("latin1", 0, Math.max(0, z));
         let text = "";

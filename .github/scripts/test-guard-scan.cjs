@@ -573,3 +573,37 @@ test("第七輪④：PNG zTXt 壓縮資料不完整時，解得出來的部分�
   const png = Buffer.concat([SIG.png, chunk("IHDR", ihdr), chunk("zTXt", Buffer.concat([Buffer.from("Comment\0\0"), cut])), chunk("IDAT", zlib.deflateSync(Buffer.from([0, 0]))), chunk("IEND", Buffer.alloc(0))]);
   assert.ok(IM.imageMeta(png).texts.join(" ").includes(MAIL3));
 });
+
+/* ---- PR #68 第八輪審查（iMac Claude 2） ---- */
+const PNGK = (() => { const zlib = require("zlib"), crc = (b) => { let c, t = -1; for (const x of b) { c = (t ^ x) & 255; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t = (t >>> 8) ^ c } return (t ^ -1) >>> 0 };
+  const chunk = (type, data) => { const len = Buffer.alloc(4), td = Buffer.concat([Buffer.from(type), data]), c = Buffer.alloc(4); len.writeUInt32BE(data.length); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]) };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(1, 0); ihdr.writeUInt32BE(1, 4); ihdr[8] = 8;
+  return { zlib, chunk, png: (...c) => Buffer.concat([SIG.png, chunk("IHDR", ihdr), ...c, chunk("IDAT", zlib.deflateSync(Buffer.from([0, 0]))), chunk("IEND", Buffer.alloc(0))]) } })();
+test("第八輪①：壓縮資料壞掉（Adler 錯、FCHECK 錯）的 zTXt／iTXt／iCCP 不當成乾淨的圖——讀不懂＝擋", () => {
+  const { zlib, chunk, png } = PNGK, z = zlib.deflateSync(Buffer.from("note " + MAIL3));
+  const badAdler = Buffer.from(z); badAdler[badAdler.length - 1] ^= 0xff;
+  const badHead = Buffer.from(z); badHead[1] ^= 0x01;
+  for (const [n, d] of [["Adler", badAdler], ["FCHECK", badHead]]) {
+    for (const c of [chunk("zTXt", Buffer.concat([Buffer.from("Comment\0\0"), d])), chunk("iTXt", Buffer.concat([Buffer.from("Comment\0\x01\0\0\0"), d])), chunk("iCCP", Buffer.concat([Buffer.from("icc\0\0"), d]))])
+      assert.equal(IM.imageMeta(png(c)), null, n + " " + c.toString("latin1", 4, 8));
+  }
+  const r = scan(repo(({ put }) => put("source/z.png", png(chunk("zTXt", Buffer.concat([Buffer.from("Comment\0\0"), badAdler]))))));
+  assert.equal(r.status, 1, r.stdout); assert.match(r.stdout, /讀不懂/);
+});
+test("第八輪②：iCCP 的 mluc（UTF-16BE）描述裡的信箱照樣抓到（另留一份原文給「拿掉 NUL」的解碼）", () => {
+  const { zlib, chunk, png } = PNGK, desc = Buffer.from(" " + MAIL3 + " ", "utf16le").swap16();
+  const icc = Buffer.concat([Buffer.alloc(128), Buffer.from("mluc"), Buffer.alloc(16), desc]);
+  const p = png(chunk("iCCP", Buffer.concat([Buffer.from("icc\0\0"), zlib.deflateSync(icc)])));
+  const r = scan(repo(({ put }) => put("source/c.png", p)));
+  assert.equal(r.status, 1, r.stdout); assert.match(r.stdout, /電子郵件地址/);
+});
+test("第八輪③：沒有 Exif 開頭、直接接上的 TIFF（BMP 後接 TIFF、JPEG／GIF 後接 PNG eXIf）的 GPS 也認得出來", () => {
+  const tif = Buffer.alloc(26); tif.write("II*\0", 0, "latin1"); tif.writeUInt32LE(8, 4); tif.writeUInt16LE(1, 8); tif.writeUInt16LE(0x8825, 10); tif.writeUInt16LE(4, 12); tif.writeUInt32LE(1, 14); tif.writeUInt32LE(26, 18); tif.writeUInt32LE(0, 22);
+  const gps = Buffer.concat([tif, Buffer.from([1, 0, 2, 0, 2, 0, 2, 0, 0, 0, 0x4e, 0, 0, 0, 0, 0, 0, 0])]);
+  const bmp = Buffer.concat([Buffer.from("BM"), Buffer.alloc(60)]);
+  const seg = (m, d) => { const h = Buffer.from([0xff, m, 0, 0]); h.writeUInt16BE(d.length + 2, 2); return Buffer.concat([h, d]) };
+  const jpg = Buffer.concat([Buffer.from([0xff, 0xd8]), seg(0xda, Buffer.from([1, 1, 0, 0, 0x3f, 0])), Buffer.from([0, 0, 0xff, 0xd9])]);
+  const { chunk } = PNGK, gif = Buffer.concat([Buffer.from("GIF89a"), Buffer.alloc(7), Buffer.from([0x3b])]);
+  for (const [n, b] of [["BMP＋TIFF", Buffer.concat([bmp, gps])], ["JPEG＋PNG eXIf", Buffer.concat([jpg, chunk("eXIf", gps)])], ["GIF＋PNG eXIf", Buffer.concat([gif, chunk("eXIf", gps)])]])
+    assert.deepEqual((IM.imageMeta(b) || {}).kinds, ["gps"], n);
+});
