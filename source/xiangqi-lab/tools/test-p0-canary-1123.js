@@ -656,6 +656,55 @@ test("深層金絲雀：每一類挑頭、中、尾三個檔都要抓到；正�
   assert.equal(b.hash.ok, false, "只查第一個檔：內容被改要報警");
 });
 
+/* #84 第三輪審查①：「抓到」要同時看檔名和原因。假包放兩個在包裡的媒體、兩個包外的媒體（原生 CDN 補抓特徵弄壞後，包外的也會被判 W21） */
+function pairFiles() {
+  const P = "base/assets/public/", s8 = (s) => sha1h(s).slice(0, 8), f = goodFiles();
+  const pre = JSON.parse(f[P + "data/preload.json"]);
+  pre.items.push(["data/a/b.webp", 3, s8("bbc"), 1]); f[P + "data/a/b.webp"] = "bbc";
+  for (const n of ["o1", "o2"]) pre.items.push(["data/out/" + n + ".webp", 3, s8(n), 1]);   /* 不在包裡 */
+  f[P + "data/preload.json"] = JSON.stringify(pre);
+  return f;
+}
+test("深層金絲雀（#84 第三輪審查①）：抓到的是別的檔、或同一個檔但原因是別條，都要判沒抓到", () => {
+  const d = tree(pairFiles()), A = CA.analyzeTree(d, {}), before = snap(d);
+  assert.equal(A.R.red.length, 0, "正常包沒有 ✘：" + JSON.stringify(A.R.red));
+  const r = CA.deepCanaries(d, A, {}); for (const k of ["w21", "w30", "home", "hash"]) assert.equal(r[k].ok, true, k + "：" + JSON.stringify(r[k]));
+  /* 正式判斷局部失靈：包裡的媒體缺了不判 W21，只剩包外的（o1、o2）照判 → 拿掉檔名條件時會被「別的檔」頂替 */
+  const partial = (t, o) => { const x = CA.analyzeTree(t, o); x.R.red = x.R.red.filter((y) => !(/圖片／音樂直接破/.test(y.why) && y.f.startsWith("data/a/"))); return x };
+  const rp = CA.deepCanaries(d, A, {}, partial);
+  assert.equal(rp.w21.ok, false, "W21 只抓到包外的別的檔，不算：" + JSON.stringify(rp.w21));
+  /* 每一筆 ✘ 都記到別的檔上：四類都要判沒抓到 */
+  const otherFile = (t, o) => { const x = CA.analyzeTree(t, o); x.R.red = x.R.red.map((y) => ({ ...y, f: "data/zz/other.webp" })); return x };
+  const ro = CA.deepCanaries(d, A, {}, otherFile);
+  for (const k of ["w21", "w30", "home", "hash"]) assert.equal(ro[k].ok, false, "抓到別的檔（" + k + "）：" + JSON.stringify(ro[k]));
+  /* 同一個檔、但原因換成別類：四類都要判沒抓到（正規式改成 /./ 或拿掉原因條件時，這項會紅） */
+  const swap = (w) => /跟清單不符/.test(w) ? "首頁離線必要素材不在安裝包裡（W21）" : "安裝包裡的檔跟清單不符（SHA-1 前 8 碼 x，清單 y）：會顯示舊內容";
+  const otherWhy = (t, o) => { const x = CA.analyzeTree(t, o); x.R.red = x.R.red.map((y) => ({ ...y, why: swap(y.why) })); return x };
+  const rw = CA.deepCanaries(d, A, {}, otherWhy);
+  for (const k of ["w21", "w30", "home", "hash"]) assert.equal(rw[k].ok, false, "原因是別條（" + k + "）：" + JSON.stringify(rw[k]));
+  assert.equal(CA.deepOk(rp, false), false); assert.deepEqual(snap(d), before, "壞樣本都還原了");
+});
+
+test("深層金絲雀（#84 第三輪審查②）：manifest 有內容、但沒有一個檔對得上時，W42 不成立，金絲雀要判失靈（結束代碼 4）", () => {
+  const d = tree(goodFiles()), man = { files: { "data/nowhere/q.webp": [3, sha1h("zzz").slice(0, 12)], "data/a/x.webp": [3, "f".repeat(12)] } };
+  const A = CA.analyzeTree(d, { man });
+  const r = CA.deepCanaries(d, A, { man });
+  assert.equal(r.w42.ok, false, JSON.stringify(r.w42)); assert.ok(!r.w42.skip, "有 manifest 就不是缺驗"); assert.match(r.w42.note, /不成立/);
+  assert.equal(CA.deepOk(r, true), false);
+  assert.equal(CA.canaryExitOk({ home: true, stale: true, cdn404: true, deep: r }, true), false, "＝結束代碼 4");
+});
+
+test("深層金絲雀（#84 第三輪審查③）：W21、W30 的紅燈照出，但原生能力偵測還判成有補抓／會接回，要判沒抓到", () => {
+  const d = tree(goodFiles()), A = CA.analyzeTree(d, {});
+  const keepFb = (t, o) => { const x = CA.analyzeTree(t, o); x.native = { ...x.native, cdnFallback: true }; return x };
+  const r1 = CA.deepCanaries(d, A, {}, keepFb);
+  assert.equal(r1.w21.ok, false, "偵測失靈（cdnFallback 還是 true）：" + JSON.stringify(r1.w21)); assert.match(r1.w21.note, /原生能力偵測失靈/);
+  const keepJoin = (t, o) => { const x = CA.analyzeTree(t, o); x.native = { ...x.native, partsJoin: true }; return x };
+  const r2 = CA.deepCanaries(d, A, {}, keepJoin);
+  assert.equal(r2.w30.ok, false, "偵測失靈（partsJoin 還是 true）：" + JSON.stringify(r2.w30)); assert.match(r2.w30.note, /原生能力偵測失靈/);
+  assert.equal(r2.home.ok, true); assert.equal(r2.hash.ok, true);
+});
+
 test("〔混合〕P0-3D 星門圍城：檢查用的視角名稱 App 要認得（以前寫 iso，App 只認 top／tilt／flat，斜看情境其實一直是俯視）；開局前先選好 3D 視角", () => {
   const { siegeView } = require(path.join(AND, "check-3d.js"));
   const src = fs.readFileSync(path.join(__dirname, "..", "..", "xiangqi-db", "m", "07bhg-gatesiege.js"), "utf8");
