@@ -4,6 +4,7 @@
 //   --public  已經公開的東西（例如公開倉庫匯出的一份），掃到的字串如果在那裡也有，標「本來就公開」（不算新洩漏）
 //   --allow   白名單：[{ "rule": "email", "file": "路徑結尾", "match": "掃到的那一串字（要一模一樣）", "reason": "為什麼可以留" }]
 //             （rule、file、match 都可省略，省略＝不限；reason 必填）。某一行寫了 oss-scan:allow 也會略過那一行
+//             另可寫 sha256＝掃到那一串字的雜湊、fileSha256＝整個檔的雜湊
 //   --no-known  不比對本機的已知機密（見下）
 //   --all     什麼都不跳過（平常會跳過 .git、node_modules；scan-changed 用）
 // 已知機密比對：讀使用者資料夾的 .xiangqi-* 金鑰檔、tools/mqtt-config.json、名稱像 KEY／TOKEN／SECRET／PASS 的環境變數，
@@ -47,6 +48,7 @@ const NAME_RULES = [
 /* W69 盤點中 16（PR #68 第二輪審查①⑦）：不再用副檔名決定掃不掃（.bak、.sql、.go、沒副檔名、點開頭的檔都可能放機密），每一個檔都當文字掃——
    UTF-16（BOM 或一半是 NUL）先解碼；其餘照 UTF-8 解，控制字元（含 NUL）換成空白，長度與換行不變，所以塞 NUL、混二進位都躲不掉。
    PR #68 第三輪審查：①檔頭像圖片的檔也照樣當文字掃（圖片另外由 image-meta.cjs 查中繼資料），不然在 BM／PNG／GIF 檔頭後面接機密就躲過去了；
+   第四輪（開發者 11/23 選「圖片全文掃、誤報用整張圖 sha256 放行」）：真圖片也全文掃、不設門檻；壓縮資料偶然湊出的誤報，放行清單寫 file＋fileSha256（整個檔的雜湊）；
    ③檔裡有 NUL 時，另外多解幾種（見 textsOf），沒有 BOM 的 UTF-16、奇數長度的 UTF-16BE、UTF-32 都躲不掉。IMG_HEAD 留著給外面判斷用 */
 const IMG_HEAD = (b) => (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) || (b.length >= 8 && b[0] === 0x89 && b.toString("latin1", 1, 4) === "PNG") ||
   (b.length >= 12 && b.toString("latin1", 0, 4) === "RIFF" && b.toString("latin1", 8, 12) === "WEBP") || (b.length >= 6 && /^GIF8[79]a$/.test(b.toString("latin1", 0, 6))) ||
@@ -65,7 +67,7 @@ function asText(b) {
    ・照 UTF-16LE、UTF-16BE 各從第 0、第 1 個位元組解一次：沒有 BOM、以中文為主的 UTF-16（判斷式抓不到的那種）
    行內放行標記也是在這幾種文字裡找（scan-changed 要求登記時用同一份，見 MARK） */
 function textsOf(b) {
-  const out = [asText(b)];
+  const out = [asText(b), b.toString("utf8").replace(CTRL, " ")];   /* 第四輪審查①：有 BOM 但內容其實是 UTF-8 的檔，照 UTF-16 解會漏，所以一律也照 UTF-8 解一次 */
   if (b.indexOf(0) < 0) return out;
   out.push(Buffer.from(b.filter((x) => x !== 0)).toString("utf8").replace(CTRL, " "));
   for (const off of [0, 1]) {
@@ -74,11 +76,6 @@ function textsOf(b) {
   }
   return [...new Set(out)];
 }
-/* 真的圖片（副檔名是圖片、檔頭也是圖片）：壓縮後的像素資料會隨機湊出像信箱的短字串（一個字母＋小老鼠＋幾個字母）（倉庫裡的截圖實測 5 張會誤報）。
-   所以高風險規則與本機已知機密照全文掃；中、低風險只看連續 12 個以上可見英數符號的那一段（測過倉庫 320 張圖都不誤報）。
-   副檔名不是圖片、檔頭卻像圖片的（例如 .js 開頭放 PNG 檔頭）一律全文掃：不比 main 版鬆。圖裡的文字中繼資料由 scan-changed 解出來另外全文掃 */
-const IMG_NAME = /\.(?:jpe?g|png|webp|gif|bmp|tiff?|heic|heif|avif|ico)$/i, IMG_RUN = 12;
-const longRuns = (s) => s.replace(/[\x21-\x7e]+/g, (m) => m.length >= IMG_RUN ? m : " ".repeat(m.length));
 /* 行內放行標記：這一行不掃。scan-changed.cjs 用同一個判斷、同一份文字找標記要求登記（PR #68 第三輪審查②：oss-scan:\x01allow 換成空白後也算標記，所以一定要拿換過的文字比） */
 const MARK = /oss-scan:\s*allow/;
 
@@ -143,9 +140,11 @@ function scan(dir, opts = {}) {
   const allow = opts.allow || [], known = opts.known || [], pub = opts.publicTexts || null, findings = [];
   /* file 要跟掃描根目錄算起的路徑一模一樣（PR #68 第二輪審查⑤：寫檔名或路徑結尾，別的資料夾同名的檔也會被放行）；
      sha256＝掃到的那一串字的 SHA-256：個資（信箱、電話）用它指定是哪一筆，放行清單裡不寫個資本身；
-     match 要跟掃到的那一串字一模一樣（PR #68 第三輪審查⑦：寫一部分的話，pass:"xqapp 會連 pass:"xqapp-別的密碼 也放行） */
+     match 要跟掃到的那一串字一模一樣（PR #68 第三輪審查⑦：寫一部分的話，pass:"xqapp 會連 pass:"xqapp-別的密碼 也放行）；
+     fileSha256＝整個檔的 SHA-256（第四輪：圖片壓縮資料湊出來的誤報用它放行，圖一改雜湊就變、要重新登記） */
   const sha = (x) => require("crypto").createHash("sha256").update(String(x), "utf8").digest("hex");
-  const allowed = (rule, rel, match) => allow.find(a => (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256));
+  const fileSha = new Map();
+  const allowed = (rule, rel, match) => allow.find(a => (!a.rule || a.rule === rule) && (!a.file || rel === a.file) && (!a.match || String(match) === a.match) && (!a.sha256 || sha(match) === a.sha256) && (!a.fileSha256 || fileSha.get(rel) === a.fileSha256));
   const isPublic = s => !!pub && pub.some(t => t.includes(s));
   const push = (rule, rel, line, match, extra = {}) => {
     const a = allowed(rule.id, rel, match);
@@ -159,14 +158,14 @@ function scan(dir, opts = {}) {
     const name = path.basename(f.rel);
     const buf = fs.readFileSync(f.abs);
     /* 圖片也照樣掃（中繼資料另外交給 image-meta.cjs；scan-changed 會把圖裡解出來的文字另外放成 .meta 檔給這裡掃） */
-    const realImg = IMG_HEAD(buf) && IMG_NAME.test(f.rel);
+    fileSha.set(f.rel, require("crypto").createHash("sha256").update(buf).digest("hex"));
     for (const s of textsOf(buf)) {
-    const starts = [0], sMid = realImg ? longRuns(s) : s;
+    const starts = [0];
     for (let i = 0; i < s.length; i++) if (s.charCodeAt(i) === 10) starts.push(i + 1);
     const lineOf = idx => { let lo = 0, hi = starts.length - 1; while (lo < hi) { const m = (lo + hi + 1) >> 1; if (starts[m] <= idx) lo = m; else hi = m - 1 } return lo + 1 };
     const lineText = n => s.slice(starts[n - 1], (starts[n] || s.length + 1) - 1);
     for (const r of RULES) {
-      const t = r.risk === "high" ? s : sMid;
+      const t = s;
       r.re.lastIndex = 0; let m;
       while ((m = r.re.exec(t))) {
         const match = m[0], val = m[1] || match;

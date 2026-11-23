@@ -20,7 +20,11 @@
 //   ④ oss-scan 加 --all：暫存資料夾裡 node_modules 底下的檔也掃（都是要公開的檔）
 //   ⑤ 圖裡解出來的文字寫成不會跟倉庫裡的檔撞名的檔（撞到就加編號）
 //   ⑥ 符號連結也掃：從 git 拿它存的內容（指向的路徑字串），不再用工作區的 isFile 把它濾掉
-// 已知限制：base64 等編碼過的機密 oss-scan 本來就認不出來。
+// PR #68 第四輪審查（開發者 11/23 選「圖片全文掃、誤報用整張圖 sha256 放行」）：
+//   ② 圖裡解出來的文字（.meta 檔）裡有行內標記就擋：圖裡的文字不准用標記（壓縮的 zTXt／iTXt、分段的 GIF 註解原本都能藏）
+//   ③④ 圖片跟一般檔一樣全文掃；壓縮資料偶然湊出的中風險，放行清單寫 file（圖片的完整路徑）＋fileSha256（整張圖的雜湊）
+//   .github/oss-allow.json 是資料、不在 base-guard 的 GUARD 清單裡（跟 test-skip-allow.json 一樣）：改它要逐行審，換回 main 版守門時用的是 PR 這一份
+// 已知限制：base64 等編碼過的機密 oss-scan 本來就認不出來；機密的字中間插控制字元（例如 \x01）或零寬字元也認不出來。
 // 結束代碼：0＝沒問題；1＝有要擋的；2＝用法錯誤或放行清單格式錯
 "use strict";
 const { execFileSync, spawnSync } = require("child_process");
@@ -44,8 +48,9 @@ function checkAllow(list, risks) {
     if (!a || typeof a !== "object") { bad.push(at + "不是物件"); return }
     if (!(a.rule in risks)) bad.push(`${at}的 rule「${a.rule}」不是 oss-scan 的規則`);
     else if (risks[a.rule] === "high") bad.push(`${at}的 rule「${a.rule}」是高風險：不准放行`);
-    if (!String(a.file || "").trim() && !String(a.match || "").trim() && !a.sha256) bad.push(at + "沒有 file、match、sha256：不准整條規則全部放行");
-    if (PERSONAL.includes(a.rule) && !/^[0-9a-f]{64}$/.test(String(a.sha256 || ""))) bad.push(at + "是個資規則（" + a.rule + "）：要用 sha256 指定是哪一筆");
+    if (!String(a.file || "").trim() && !String(a.match || "").trim() && !a.sha256 && !a.fileSha256) bad.push(at + "沒有 file、match、sha256、fileSha256：不准整條規則全部放行");
+    if (a.fileSha256 != null && (!/^[0-9a-f]{64}$/.test(String(a.fileSha256)) || !IMG_EXT.test(String(a.file || "")))) bad.push(at + "的 fileSha256 要是 64 碼小寫，而且 file 要寫圖片的完整路徑（整張圖雜湊放行只給圖片用）");
+    if (PERSONAL.includes(a.rule) && !/^[0-9a-f]{64}$/.test(String(a.sha256 || "")) && !(a.fileSha256 && a.file)) bad.push(at + "是個資規則（" + a.rule + "）：要用 sha256 指定是哪一筆（圖片可用 file＋fileSha256）");
     if (a.sha256 != null && !/^[0-9a-f]{64}$/.test(String(a.sha256))) bad.push(at + "的 sha256 要是 64 碼小寫");
     if (a.match != null && String(a.match).length < 6) bad.push(at + "的 match 太短（至少 6 個字）");
     if (a.file != null && (String(a.file).length < 3 || /^\/|[*?]|\\/.test(a.file))) bad.push(at + "的 file 要寫倉庫裡的完整路徑（不加開頭的 /、不用萬用字元）");
@@ -54,6 +59,7 @@ function checkAllow(list, risks) {
   inline.forEach((a, i) => {
     const at = `inline 第 ${i + 1} 筆`;
     if (!a || !String(a.file || "").trim()) bad.push(at + "沒寫 file");
+    else if (/^\/|[*?]|\\/.test(a.file)) bad.push(at + "的 file 要寫倉庫裡的完整路徑");
     if (!/^[0-9a-f]{64}$/.test(String(a && a.sha256))) bad.push(at + "的 sha256 要是 64 碼小寫");
     if (String((a && a.reason) || "").trim().length < 4) bad.push(at + "沒寫理由（reason 至少 4 個字）");
   });
@@ -69,7 +75,7 @@ function markerLines(text, mark = MARK) {
   const out = [], seen = new Set();
   for (const t of [].concat(text)) String(t).split("\n").forEach((l, i) => {
     if (!mark.test(l)) return; const h = lineSha(l), k = i + "\n" + h; if (seen.has(k)) return; seen.add(k);
-    out.push({ line: i + 1, sha256: h, text: l.replace(/\r$/, "").trim().slice(0, 160) });
+    const full = l.replace(/\r$/, "").trim(); out.push({ line: i + 1, sha256: h, text: full.slice(0, 160), full });   /* full：沒登記時印全文（只用 \r 換行的檔整個是一行，只印前段會看不到後面藏的東西） */
   });
   return out;
 }
@@ -89,11 +95,11 @@ function imageCheck(file, buf) {
   return { file, fmt, meta: imageMeta(buf) };
 }
 /* 中風險（沒被放行）＋圖片有中繼資料或讀不懂＋沒登記的行內標記 → 要擋的清單（純函式） */
-function judge({ findings, images, unreg, attrs = [] }) {
+function judge({ findings, images, unreg, attrs = [], metaMarks = [] }) {
   const medium = (findings || []).filter((f) => f.risk === "medium" && !f.allowed);
   const meta = (images || []).filter((x) => x.meta && x.meta.kinds.length);
   const unreadable = (images || []).filter((x) => !x.meta);
-  return { medium, meta, unreadable, unreg: unreg || [], attrs, ok: !medium.length && !meta.length && !unreadable.length && !(unreg || []).length && !attrs.length };
+  return { medium, meta, unreadable, unreg: unreg || [], attrs, metaMarks, ok: !medium.length && !meta.length && !unreadable.length && !(unreg || []).length && !attrs.length && !metaMarks.length };
 }
 
 module.exports = { checkAllow, markerLines, unregistered, imageCheck, judge, lineSha, badAttrs, freeName, TOK, PERSONAL };
@@ -125,7 +131,12 @@ const images = bufs.map(({ file, buf }) => imageCheck(file, buf)).filter(Boolean
 fs.rmSync(out, { recursive: true, force: true });
 for (const { file, buf } of bufs) { const d = path.join(out, file); fs.mkdirSync(path.dirname(d), { recursive: true }); fs.writeFileSync(d, buf) }
 const taken = new Set(files.flatMap((f) => f.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))));   /* 檔和它上層的資料夾名都算用掉 */
-for (const x of images) if (x.meta && x.meta.texts && x.meta.texts.length) fs.writeFileSync(path.join(out, freeName(x.file, taken)), x.meta.texts.join("\n"));
+const metaMarks = [];
+for (const x of images) if (x.meta && x.meta.texts && x.meta.texts.length) {
+  const t = Buffer.from(x.meta.texts.join("\n"), "utf8");
+  fs.writeFileSync(path.join(out, freeName(x.file, taken)), t);
+  for (const m of markerLines(S.textsOf(t), S.MARK)) metaMarks.push({ file: x.file, ...m });   /* 第四輪審查②：圖裡的文字不准用行內標記 */
+}
 console.log(`複製 ${files.length} 個改到的檔到暫存資料夾，交給 oss-scan 掃（放行清單 ${list.items.length} 筆、行內標記登記 ${list.inline.length} 筆）`);
 const tmpA = out + ".allow.json", tmpJ = out + ".scan.json";
 fs.writeFileSync(tmpA, JSON.stringify(list.items));
@@ -136,7 +147,8 @@ if (r.status === null || findings === null) { console.log("✘ oss-scan 沒有�
 
 const marked = bufs.map(({ file, buf }) => ({ file, marks: markerLines(S.textsOf(buf), S.MARK) })).filter((x) => x.marks.length);
 const attrs = bufs.filter(({ file }) => path.basename(file) === ".gitattributes").flatMap(({ file, buf }) => badAttrs(buf.toString("utf8")).map((x) => ({ file, ...x })));
-const J = judge({ findings, images, unreg: unregistered(marked, list.inline), attrs });
+const J = judge({ findings, images, unreg: unregistered(marked, list.inline), attrs, metaMarks });
+for (const m of J.metaMarks) console.log(`  ✘ ${m.file}：圖裡的文字（中繼資料、註解）有 ${TOK}：「${m.text}」← 圖裡的文字不准用行內標記，請重新匯出不含這段文字的圖`);
 for (const a of J.attrs) console.log(`  ✘ ${a.file}:${a.line}  ${a.text}  ← working-tree-encoding／filter 會讓工作區跟倉庫的內容不同，私密掃描會被繞過：不准用`);
 
 console.log(`\n圖片中繼資料：看了 ${images.length} 張新增或修改的圖（用檔頭判斷格式）`);
@@ -146,7 +158,7 @@ const nMarks = marked.reduce((n, x) => n + x.marks.length, 0);
 if (nMarks) {
   console.log(`\n改到的檔裡有 ${nMarks} 行用了 ${TOK}（那一行整個不掃），要在 ${allowF} 的 inline 登記：`);
   for (const x of marked) for (const m of x.marks) { const reg = !J.unreg.some((u) => u.file === x.file && u.sha256 === m.sha256);
-    console.log(`  ${reg ? "△" : "✘"} ${x.file}:${m.line}  ${m.text}${reg ? "（已登記）" : `\n      ← 沒登記：在 inline 加 {"file":"${x.file}","sha256":"${m.sha256}","reason":"為什麼可以不掃"}`}`) }
+    console.log(`  ${reg ? "△" : "✘"} ${x.file}:${m.line}  ${m.text}${reg ? "（已登記）" : `\n      ← 這一行全文（${m.full.length} 字）：${JSON.stringify(m.full)}\n      ← 沒登記：在 inline 加 {"file":"${x.file}","sha256":"${m.sha256}","reason":"為什麼可以不掃"}`}`) }
 }
 if (J.medium.length) {
   console.log(`\n✘ 改到的檔有 ${J.medium.length} 筆中風險沒被放行（上面「中風險」那一段）。`);
