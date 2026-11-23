@@ -137,11 +137,14 @@ test("〔原始碼〕掃描流程：先開攔截、再重新載入、等首頁�
 const vm = require("vm"), crypto = require("crypto");
 const sha12 = (b) => crypto.createHash("sha1").update(b).digest("hex").slice(0, 12);
 /* 模擬 App 頁面：pack＝包裡有的檔；cdn＝攔截後新 CDN 回的檔（含 cdn-manifest.json）；wrap＝App 把 fetch 包成「包裡讀不到就改問 CDN」 */
-function page({ pack = {}, cdn = {}, wrap = false, subtle = true }) {
+function page({ pack = {}, cdn = {}, wrap = false, subtle = true, spa = null }) {
   const XQ_CDN = "https://xiangqi-cdn.pages.dev/", seen = [];
-  const res = (url, body) => body === undefined ? { ok: false, status: 404, url, arrayBuffer: async () => new ArrayBuffer(0), json: async () => { throw new Error("404") } }
-    : { ok: true, status: 200, url, arrayBuffer: async () => { const b = Buffer.from(body); return b.buffer.slice(b.byteOffset, b.byteOffset + b.length) }, json: async () => JSON.parse(String(body)) };
-  const raw = async (u) => { const p = String(u).split("?")[0]; seen.push(p); if (p.startsWith(XQ_CDN)) return res(p, cdn[p.slice(XQ_CDN.length)]); return res("https://localhost/" + p, pack[p]) };
+  const hdr = (t) => ({ get: (k) => String(k).toLowerCase() === "content-type" ? t : null });
+  const res = (url, body, t = "application/json") => body === undefined ? { ok: false, status: 404, url, headers: hdr("text/plain"), arrayBuffer: async () => new ArrayBuffer(0), json: async () => { throw new Error("404") } }
+    : { ok: true, status: 200, url, headers: hdr(t), arrayBuffer: async () => { const b = Buffer.from(body); return b.buffer.slice(b.byteOffset, b.byteOffset + b.length) }, json: async () => JSON.parse(String(body)) };
+  /* spa＝本機伺服器對不存在的路徑回這一頁（像單頁 App 回 index.html），狀態照樣 200 */
+  const raw = async (u) => { const p = String(u).split("?")[0]; seen.push(p); if (p.startsWith(XQ_CDN)) return res(p, cdn[p.slice(XQ_CDN.length)]);
+    if (pack[p] === undefined && spa != null) return res("https://localhost/" + p, spa, "text/html"); return res("https://localhost/" + p, pack[p]) };
   const fetch = wrap ? async (u, o) => { const r = await raw(u, o); if (!r.ok && !String(u).startsWith(XQ_CDN)) return raw(XQ_CDN + String(u).split("?")[0], o); return r } : raw;
   const ctx = { XQ_CDN, fetch, Date, Object, Array, Uint8Array, String, Math, Buffer, crypto: subtle ? crypto.webcrypto : {} };
   /* vm 裡的陣列、物件屬於另一個執行環境，轉成這邊的 JSON 再比 */
@@ -183,6 +186,24 @@ test("包外檔讀取輪：App 把 fetch 包成「包裡讀不到改問 CDN」�
   const big = { files: { "data/x.json": [3 * 1024 * 1024, "0"], "engine/e.bin": [3, "0"], "data/__xq_route_probe.txt": [11, "0"], "data/y.json": [7, sha12("{\"y\":1}")] } };
   const y = await page({ cdn: { "cdn-manifest.json": JSON.stringify(big), "data/y.json": "{\"y\":1}" } }).run();
   assert.equal(y.candidates, 1); assert.deepEqual(y.checked, ["data/y.json"]);
+});
+
+test("包外檔讀取輪（#74 Android 12 重跑）：本機伺服器對不存在的路徑回 200 的 index.html 時，要比內容，不能全判成在包裡；判成在包裡的、內容不對的都記前幾筆", async () => {
+  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}", "data/c.json": "{\"c\":3}" }, html = "<!doctype html><title>象棋千秋</title>";
+  const o = await page({ pack: { "data/a.json": F["data/a.json"] }, cdn: { "cdn-manifest.json": man(F), ...F }, spa: html }).run();
+  assert.deepEqual(o.checked.sort(), ["data/b.json", "data/c.json"], "回 index.html 的不算在包裡");
+  assert.deepEqual(o.inPack, [{ f: "data/a.json", size: 7, want: 7, type: "application/json" }]);
+  assert.equal(o.localOddCount, 2); assert.deepEqual(o.localOdd[0], { f: "data/b.json", size: Buffer.byteLength(html), want: 7, type: "text/html" });
+  assert.equal(R.judgeOutside(o).code, 0);
+  /* 沒有 crypto.subtle（只能比大小）時，回 index.html 的照樣不算在包裡：鎖住「比大小」那一條 */
+  const n = await page({ pack: { "data/a.json": F["data/a.json"] }, cdn: { "cdn-manifest.json": man(F), ...F }, spa: html, subtle: false }).run();
+  assert.deepEqual(n.checked.sort(), ["data/b.json", "data/c.json"], "只比大小也要擋下 index.html");
+  /* 包裡那份大小一樣、內容不同（舊版）：SHA-1 比得出來，當成包外去 CDN 讀 */
+  const p = await page({ pack: { "data/a.json": "{\"a\":9}" }, cdn: { "cdn-manifest.json": man({ "data/a.json": F["data/a.json"] }), "data/a.json": F["data/a.json"] } }).run();
+  assert.deepEqual(p.checked, ["data/a.json"]); assert.equal(p.localOddCount, 1);
+  /* 全部都在包裡：說明要附前幾個判成在包裡的檔，方便查 */
+  const q = await page({ pack: F, cdn: { "cdn-manifest.json": man(F), ...F } }).run();
+  assert.match(R.judgeOutside(q).why, /判成在包裡的前幾個：data\/a\.json（7 位元組、application\/json）/);
 });
 
 test("結束代碼（#74 實跑後補）：--cdn-to 沒有包外檔讀取輪、或一個包外檔都沒驗到＝2；判定 1 不算測不成立（由紅燈擋）；換開關檔卻沒攔到開關檔＝2", () => {
