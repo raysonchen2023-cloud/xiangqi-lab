@@ -657,7 +657,15 @@ function jhRetPlace(h){const k=typeof navKey==="function"?navKey(h||location.has
   if(m&&jhSch(m[1]))return jhSch(m[1]).nm;if(/^\/jianghu/.test(k))return jhL("十州棋館","Ten Prefectures");
   /* #76 第二輪審查：照各頁 setTop 的標題命名（#/school＝開局棋路、#/school/masters＝十派掌門、#/school/<角色>＝某某的門派） */
   if(k==="/school")return jhL("開局棋路","Opening Paths");if(/^\/school\/masters(\/|$)/.test(k))return jhL("十派掌門","Ten School Masters");
-  const c=(k.match(/^\/school\/([a-z_]+)/)||[])[1];if(c&&typeof PTY==="object"&&PTY&&Array.isArray(PTY.ORDER)&&PTY.ORDER.includes(c)){const nm=jhNm(c);return jhL(nm+"的門派",nm+"'s School")}
+  /* 第三輪審查：照 oscHome／oscPlay 的 setTop 分開——不在隊伍＝門派修行；還沒入派＝某某的門派；已入派＝某某的某派修行（英文只寫派名）；課程頁＝某某・某派 */
+  const sm=k.match(/^\/school\/([a-z_]+)(?:\/([a-z_]+)_\d\d)?(\/|$)/)||[],c=sm[1];
+  if(c&&typeof PTY==="object"&&PTY&&Array.isArray(PTY.ORDER)&&PTY.ORDER.includes(c)){
+    try{const P=typeof ptyGet==="function"?ptyGet():null;if(P&&typeof PTY.has==="function"&&!PTY.has(P,c))return jhL("門派修行","School Training")}catch(e){}
+    const nm=jhNm(c),Sof=id=>{try{return id&&typeof oscSchE==="function"?oscSchE(id):null}catch(e){return null}};
+    const LS=Sof(sm[2]);if(LS&&LS.nm)return jhL(nm+"・"+LS.nm,LS.nm);
+    let sid="";try{sid=typeof OSC==="object"&&OSC&&typeof OSC.act==="function"&&typeof oscGet==="function"?OSC.act(oscGet(),c):""}catch(e){}
+    const S=Sof(sid);if(S&&S.nm)return jhL(nm+"的"+S.nm+"修行",S.nm);
+    return jhL(nm+"的門派",nm+"'s School")}
   if(/^\/school/.test(k))return jhL("門派修行","School Training");return""}
 function jhRetHere(j){try{if(typeof jRetSet!=="function")return;const k=typeof navKey==="function"?navKey(location.hash):location.hash.replace(/^#/,"");
   if(!/^\/(jianghu|school)(\/|$)/.test(k))return;jRetSet(j,"#"+k,jhRetPlace("#"+k))}catch(e){}}
