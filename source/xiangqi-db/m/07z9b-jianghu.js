@@ -839,8 +839,12 @@ const jhShichen=d=>Math.floor(((d.getHours()+1)%24)/2);
 function jhCanalStop(d){return JH_CANAL[jhShichen(d||new Date())%JH_CANAL.length]}
 const jhCanalOf=sid=>JH_CANAL.find(x=>x.sid===sid)||null;
 const jhCanalDay=t=>typeof cjDay==="function"?cjDay(t):new Date(t==null?Date.now():t).toISOString().slice(0,10);
-/* 這一州的題庫：殺棋、一～三步殺、帶這一州的殺法標籤；照題號排好（挑題要穩定） */
-function jhCanalPool(items,st){return(items||[]).filter(x=>x&&x.n>=1&&x.n<=3&&Array.isArray(x.th)&&x.th.includes("殺棋")&&x.th.some(t=>st.th.includes(t))).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)}
+/* 這一州的題庫：殺棋、一～三步殺、帶這一州的殺法標籤，而且照主變（line）實際走完對方真的被將死；照題號排好（挑題要穩定）
+   2026-11-24 Pikafish 盤整 P1：「殺棋」標籤是照主變再接示範判的，gm2010-p491R1AKA3r 是保勝題（走完傌八進七黑方還有 3 步合法著）卻被當成一步殺 */
+function jhCanalMated(x){try{const C=typeof window!=="undefined"&&window.XQCore,L=x.line;if(!C||!Array.isArray(L)||L.length!==2*x.n-1)return false;let b=C.parseFen(String(x.fen).split(" ")[0]),s=x.side;
+  for(const u of L){const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4));if(!b[f]||C.sideOf(b[f])!==s||!C.legal(b,s).some(m=>m[0]===f&&m[1]===t))return false;b=C.make(b,f,t);s=C.opp(s)}
+  return C.inCheck(b,s)&&!C.legal(b,s).length}catch(e){return false}}
+function jhCanalPool(items,st){return(items||[]).filter(x=>x&&x.n>=1&&x.n<=3&&Array.isArray(x.th)&&x.th.includes("殺棋")&&x.th.some(t=>st.th.includes(t))&&jhCanalMated(x)).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)}
 function jhCanalPick(items,st,day){const L=jhCanalPool(items,st);if(!L.length)return null;const h=typeof jhWindHash==="function"?jhWindHash("canal:"+day+":"+st.sid):0;return L[h%L.length]}
 function jhCanalGet(day){let o=null;try{o=store.get("jhCanal",null)}catch(e){}const R={d:day,s:{},pick:{}};if(!o||o.d!==day||typeof o!=="object")return R;
   for(const st of JH_CANAL){const x=o.s&&o.s[st.sid];if(x&&typeof x==="object")R.s[st.sid]={t:Math.max(0,+x.t||0),p:x.p?1:0};const k=day+"/"+st.sid,q=o.pick&&o.pick[k];if(typeof q==="string"&&q.length<40)R.pick[k]=q}

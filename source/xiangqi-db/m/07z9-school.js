@@ -377,7 +377,7 @@ function oscPlay(v,c,lk){oscCss();if(typeof lsnCss==="function")lsnCss();setTabs
         if(!ok.r){setTimeout(()=>{if(here())enter(ok.n||null)},700);return}
         setTimeout(()=>{if(!here())return;const[f2,t2]=lsnSq(ok.r),c2=mv(C.notate(b,f2,t2));b=C.make(b,f2,t2);last={f:f2,t:t2};draw();note(oscL(`對方走「${c2}」。`,`The opponent plays "${c2}".`));setTimeout(()=>{if(here())enter(ok.n||null)},900)},800);return}
       const bad=N.bad&&N.bad[u];
-      if(bad){busy=true;const bb0=b,acc=[],hurt=oscL("這步會吃虧。接下來：","This move loses material. What follows: ");stat("✘ "+cn);note(hurt);acts([]);try{vibrate([20,40,20])}catch(e){}
+      if(bad){busy=true;const bb0=b,acc=[],hurt=bad.x?oscL("這步會丟子。接下來：","This move loses material. What follows: "):oscL("這步不好：對方接下來佔到便宜，你的位置變差、出子變慢。接下來：","Not a good move: the opponent gets the upper hand and your development slows. What follows: ");   /* 11/24 Pikafish 盤整 P2：37% 的吃虧著反駁線沒丟子，原本一律說「會吃虧」；沒丟子（x 空）換說法 */stat("✘ "+cn);note(hurt);acts([]);try{vibrate([20,40,20])}catch(e){}
         lsnPlay(st,[u].concat(bad.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push([tx,i%2===1]);note(hurt+acL(acc))}},()=>{if(!here())return;
           note(`${hurt}${acL(acc)}${bad.x?"\n"+oscL(`你的${pc(side,bad.x)}被吃掉了。`,`Your ${pc(side,bad.x)} gets captured.`):""}\n${Q(N)}`);acts([["back","↩",oscL("退回重想","Take it back"),()=>{b=bb0;last=null;busy=false;stat(yourMove());note(Q(N));acts(help());draw()},true]].concat(help()))});return}
       stat("✋ "+cn);note(`${N.no?oscT(N.no):oscL("這步不是這一課要練的。","That's not the move this lesson is practicing.")}\n${Q(N)}`);try{vibrate([10,30,10])}catch(e){}draw()}

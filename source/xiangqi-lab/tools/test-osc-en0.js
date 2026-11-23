@@ -51,3 +51,15 @@ test("〔原始碼〕oscT 先查單字棋子、再查 OSC_EN0、最後才用外�
   assert.match(SCH, /const oscT=s=>\{if\(!s\|\|!oscEn\(\)\)return s;if\(OSC_PC1\[s\]\)return OSC_PC1\[s\];if\(Object\.prototype\.hasOwnProperty\.call\(OSC_EN0,s\)\)return OSC_EN0\[s\];/);
   assert.match(SCH, /^const OSC_EN0=\{.*\};\s+\/\* W62：門派英譯內建（gen-osc-en0\.js 產生，勿手改）/m);
 });
+
+test("〔混合〕Pikafish 盤整 P2（11/24）走錯吃虧著：反駁線真的丟子（bad.x 有值）才說「會丟子」；沒丟子換說位置變差、出子變慢，中英都有", () => {
+  /* 取出 07z9-school 裡 hurt＝… 那一句，用假的 oscL 跑（中文、英文各一次） */
+  const m = SCH.match(/hurt=([^;]*?);/);
+  assert.ok(m, "找不到 hurt 那一句");
+  const run = (x, en) => vm.runInNewContext("(" + m[1] + ")", { bad: { x }, oscL: (zh, e) => (en ? e : zh) });
+  assert.match(run("N", false), /丟子/);
+  assert.doesNotMatch(run("", false), /丟子|吃虧/, "沒丟子不能說吃虧或丟子");
+  assert.match(run("", false), /位置變差/);
+  assert.ok(!CJK.test(run("", true)) && run("", true).length > 10, "英文：" + run("", true));
+  assert.notEqual(run("N", true), run("", true));
+});

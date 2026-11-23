@@ -12,7 +12,7 @@
      ・why 用課程的說法：錯著節點用課程原本那句；bad 選項用下面 WHY 表裡依課程寫的一句
    算盤算帳的規則：
      ・局面取自大師對局主線第 20～40 手、上一手沒有吃子、輪走方沒被將軍；分數是紅方觀點
-     ・>+150 答 r，<−150 答 b，|分數|≤60 答 =，中間的不要；三種各 10 題，每盤棋最多一題
+     ・>+150 答 r，<−150 答 b，|分數|≤60 答 =，中間的不要；最佳跟第二好差超過 100（只有一步能維持）的不要（11/24）；三種各 10 題，每盤棋最多一題
      ・子力：車 9、馬 4、炮 4.5、仕象各 2、兵 1、過河兵 2；子力差 ≥3 而且跟答案同方向寫 material，否則 position，均勢 even
    gmgames.json 很大，只放 CDN 而且切成兩塊：網站根目錄 data/ 底下沒有（或 --gm 沒指定）就照 CDN 的 gmgames.json.parts.json 下載接回、核對 sha1（只讀，不存檔）。
    用法：node xiangqi-lab/tools/screen-quiz-build.js            產生兩個檔
@@ -200,6 +200,10 @@ async function abacus(G) {
     const cp = s === "r" ? r.cp : -r.cp;
     const ans = cp > 150 ? "r" : cp < -150 ? "b" : Math.abs(cp) <= 60 ? "=" : null;
     if (!ans || have[ans] >= want[ans]) continue;
+    /* 11/24 Pikafish 盤整 P2（原 a20：黑方子力多 3 分卻答紅優，只有一步能維持，+325 對第二好 0）：最佳跟第二好差超過 100 的局面不出——
+       「誰占優」要看整個局面，不能只靠一步妙手；另外搜一次 MultiPV 2，不影響上面那次搜尋（每次搜尋前 ucinewgame） */
+    const r2 = await search("fen " + fen, 2);
+    if (r2.length >= 2 && r2[0].cp - r2[1].cp > 100) continue;
     const mat = material(bd), dm = mat.r - mat.b;
     const why = ans === "=" ? "even" : Math.abs(dm) >= 3 && (ans === "r" ? dm > 0 : dm < 0) ? "material" : "position";
     have[ans]++;

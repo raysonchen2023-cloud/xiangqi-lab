@@ -8,6 +8,7 @@
    gmgames.json 本機沒有（或 --gm 沒指定）就照 CDN 的分塊清單下載接回、核對 sha1（只讀，不存檔）。
    W73（11/23 Windows Claude 1 用 Pikafish 驗出 13 題「吃」實戰大虧）：加引擎紀錄 shijiao-engine.json（紅方觀點的分數，cp；殺棋換算成 ±30000）：
      cap＝只搜「吃這一格」的著法、alt＝只搜其他著法。答案「吃」：alt−cap ≤ 50（吃是最佳或差不多）；答案「不吃」：alt−cap ≥ 100。
+     答案「不吃」但吃了會被殺（cap ≤ −20000）的不出（11/24 盤整：原 s26 說明寫淨賠 2.5 分，其實吃了被一步殺）。
      紀錄裡沒有的候選題跳過；加 --engine（要設 PIKAFISH）才會現場算、補進紀錄。深度 20、Threads 4、Hash 256（照 Windows 的驗證）。
    用法：node xiangqi-lab/tools/shijiao-build.js --engine  用本機 Pikafish 算候選題、更新紀錄後寫回模組
          node xiangqi-lab/tools/shijiao-build.js           寫回模組
@@ -82,6 +83,7 @@ async function engJudge(E, bd, T) {
           if (!(key in ENG)) { if (!E) continue; ENG[key] = await engJudge(E, bd, T) }
           const e = ENG[key]; if (!e) continue;
           if (ans === "y" ? e.alt - e.cap > 50 : e.alt - e.cap < 100) continue;
+          if (ans === "n" && e.cap <= -20000) continue;   /* 11/24 Pikafish 盤整 P2（原 s26）：吃了會被殺——不吃的理由是殺棋、不是兌換帳，說明「淨賠幾分」會誤導，換一題 */
           got = { lv, T, r, ans, ply: i };
           break;
         }
