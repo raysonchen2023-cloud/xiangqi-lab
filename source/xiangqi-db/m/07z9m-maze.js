@@ -97,7 +97,7 @@ async function jhMzWorld3(box,c,S){
   const r=new T3.WebGLRenderer({antialias:true,powerPreference:"low-power"});r.setPixelRatio(Math.min(2,devicePixelRatio||1));if(T3.sRGBEncoding!=null)r.outputEncoding=T3.sRGBEncoding;r.setClearColor(0x000000,1);
   const cv=r.domElement;cv.className="jh-mz-3d";box.append(cv);
   const col=h=>{const k=new T3.Color(h);return k.convertSRGBToLinear?k.convertSRGBToLinear():k};
-  const sc=new T3.Scene();sc.add(new T3.AmbientLight(0xFFE6C8,.5));const key=new T3.DirectionalLight(0xFFD9A8,.6);key.position.set(-3,9,5);sc.add(key);
+  const sc=new T3.Scene(),amb=new T3.AmbientLight(0xFFE6C8,.5);sc.add(amb);const key=new T3.DirectionalLight(0xFFD9A8,.6);key.position.set(-3,9,5);sc.add(key);
   const lamp=new T3.PointLight(0xFFAA55,1.3,7,1.3);sc.add(lamp);
   const texs=[],rr=i=>{const q=Math.sin(i*127.1+11.3)*43758.5453;return q-Math.floor(q)};
   const tx=(w,h,fn)=>{const k=document.createElement("canvas");k.width=w;k.height=h;fn(k.getContext("2d"),w,h);const t=new T3.CanvasTexture(k);if(T3.sRGBEncoding!=null)t.encoding=T3.sRGBEncoding;t.anisotropy=4;texs.push(t);return t};
@@ -150,9 +150,10 @@ async function jhMzWorld3(box,c,S){
   B.bot.position.x-=ct.x;B.bot.position.z-=ct.z;B.bot.position.y-=bx.min.y;const by=B.bot.position.y;
   const wrap=new T3.Group();wrap.add(root);wrap.scale.setScalar(1.1/hM);sc.add(wrap);
   /* 牆不動（開發者 11/23：「為什麼腳色走過去的時候 牆壁也會跟著動」→ 拿掉「前方的牆變矮」）。角色走到牆後面時，被擋住的部分畫成一層淡淡的暖色剪影：
-     角色另外放在第 1 層，畫完整個場景後只畫角色一次，深度比已經畫的東西還遠（GreaterDepth）的地方才上色＝只有被擋住的部分；看得到的部分往前推一點深度，不會冒出雜點 */
-  wrap.traverse(o=>o.layers.enable(1));r.autoClear=false;
-  const sil=new T3.MeshBasicMaterial({color:col("#ffcf8a"),transparent:true,opacity:.5,depthWrite:false,depthFunc:T3.GreaterDepth,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-4});
+     角色只放在第 1 層：①先畫場景（第 0 層：牆、地、物件）②剪影：只對場景的深度比，角色比場景遠（GreaterDepth）的地方才上色＝被牆擋住的部分 ③再正常畫角色。
+     預覽站實看：原本先畫角色再畫剪影，角色自己背面被自己正面擋住也算「被擋」，整個人蓋上一層米色——所以剪影一定要在畫角色之前、只跟場景比。燈也要開第 1 層，不然角色是黑的 */
+  wrap.traverse(o=>o.layers.set(1));for(const l of[amb,key,lamp])l.layers.enable(1);r.autoClear=false;
+  const sil=new T3.MeshBasicMaterial({color:col("#ffcf8a"),transparent:true,opacity:.5,depthWrite:false,depthFunc:T3.GreaterDepth});
   const shG=new T3.PlaneGeometry(.95,.95);shG.rotateX(-Math.PI/2);const sh=new T3.Mesh(shG,new T3.MeshBasicMaterial({map:shT,transparent:true,depthWrite:false}));sh.position.y=.01;sc.add(sh);
   const clips=B.mixer&&B.clips||null;let cur=null,yawR=0,t=0,tgx=null,tgz=null,cw=0,ch=0;
   const anim=n=>{if(!clips)return;const a=clips[n]||clips.idle;if(!a||a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};anim("idle");
@@ -168,7 +169,7 @@ async function jhMzWorld3(box,c,S){
       cells.forEach(([x,y],i)=>fl.setColorAt(i,cK.setScalar(bright(L,x,y))));fl.instanceColor.needsUpdate=true;
       walls.forEach(([x,y],i)=>wl.setColorAt(i,cK.setScalar(bright(L,x,y))));wl.instanceColor.needsUpdate=true;
       for(const o of objs){const b=bright(L,o.x,o.y);o.g.visible=b>0&&o.on();if(o.g.visible)for(const m of o.mats)m.color.copy(m.userData.base).multiplyScalar(b)}
-      for(const f of flames){const on=S.lit.has(f.k);f.fm.visible=on;if(on){f.fm.scale.set(1,1.6+Math.sin(now/90+f.x)*.18,1);if(!lights[f.k]&&Object.keys(lights).length<4){const pl=new T3.PointLight(0xFFA040,.9,4.2,1.5);pl.position.set(f.x+.5,1.1,f.y+.5);sc.add(pl);lights[f.k]=pl}}}
+      for(const f of flames){const on=S.lit.has(f.k);f.fm.visible=on;if(on){f.fm.scale.set(1,1.6+Math.sin(now/90+f.x)*.18,1);if(!lights[f.k]&&Object.keys(lights).length<4){const pl=new T3.PointLight(0xFFA040,.9,4.2,1.5);pl.position.set(f.x+.5,1.1,f.y+.5);pl.layers.enable(1);sc.add(pl);lights[f.k]=pl}}}
       const gL=L[G.y*S.W+G.x]||0;gd.visible=gL>.15;gd.position.set(G.fx+.5,0,G.y+.5);gdB.rotation.y=G.dx>0?Math.PI/2:-Math.PI/2;eyeM.color.setHex(G.stun?0x8A8A8A:0xE24A3A);
       const sx=jhMzSight(S);sights.forEach((o,i)=>{const x=sx[i];o.visible=x!=null&&(L[G.y*S.W+x]||0)>.15;if(o.visible)o.position.set(x+.5,.012,G.y+.5)});
       lamp.position.set(px,1.25,pz);lamp.intensity=1.25+Math.sin(now/170)*.08+Math.sin(now/53)*.04;
@@ -176,7 +177,7 @@ async function jhMzWorld3(box,c,S){
       if(clips){anim(walk?"walk":"idle");if(walk&&cur)cur.timeScale=1.7;B.mixer.update(dt)}
       else{const ph=t*14;root.position.y=walk?Math.abs(Math.sin(ph))*hM*.04:0;root.rotation.z=walk?Math.sin(ph)*.07:0;
         if(B.legs&&B.legs.length===2)B.legs.forEach((l,i)=>l.rotation.x=walk?Math.sin(ph)*.6*(i?1:-1):0);if(B.arms&&B.arms.length===2)B.arms.forEach((a,i)=>a.rotation.x=walk?Math.sin(ph)*.5*(i?-1:1):0)}
-      B.bot.position.y=by;r.clear();r.render(sc,cam);cam.layers.set(1);sc.overrideMaterial=sil;r.render(sc,cam);sc.overrideMaterial=null;cam.layers.set(0)},
+      B.bot.position.y=by;r.clear();cam.layers.set(0);r.render(sc,cam);cam.layers.set(1);sc.overrideMaterial=sil;r.render(sc,cam);sc.overrideMaterial=null;r.render(sc,cam);cam.layers.set(0)},
     /* 點畫面：先打牆和地面（點到牆頂就是那面牆），都沒打到再算地面高度 */
     pick(x,y){const b=cv.getBoundingClientRect();if(!b.width)return null;ray.setFromCamera(new T3.Vector2((x-b.left)/b.width*2-1,-((y-b.top)/b.height)*2+1),cam);
       const hit=ray.intersectObjects([wl,fl],false)[0];if(hit&&hit.instanceId!=null){const q=(hit.object===wl?walls:cells)[hit.instanceId];if(q)return{x:q[0],y:q[1]}}
