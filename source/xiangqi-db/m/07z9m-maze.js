@@ -140,7 +140,14 @@ async function jhMzWorld3(box,c,S){
   const sights=[];for(let i=0;i<5;i++){const o=new T3.Mesh(sightG,sightM);o.position.y=.012;o.visible=false;sc.add(o);sights.push(o)}
   /* 角色：照模型實際高度縮到約 1.1 格，腳底踩在地面（y＝0），腳下接地影子 */
   const root=new T3.Group();root.rotation.order="YXZ";root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
-  const bx=new T3.Box3().setFromObject(B.bot),ct=bx.getCenter(new T3.Vector3()),hM=(bx.max.y-bx.min.y)||1;B.bot.position.x-=ct.x;B.bot.position.z-=ct.z;B.bot.position.y-=bx.min.y;const by=B.bot.position.y;
+  /* 原點對準「腳」而不是整個模型的中心（iMac Claude 1 iOS 預驗：側身時腳底和影子空了約半格——披風、武器把外框中心拉開，轉身後腳就偏離格子中心）：
+     取模型最低 8% 高度裡的頂點，x、z 平均＝兩腳中間；取不到就照舊用外框中心 */
+  const bx=new T3.Box3().setFromObject(B.bot),ct=bx.getCenter(new T3.Vector3()),hM=(bx.max.y-bx.min.y)||1;
+  try{const v=new T3.Vector3(),lim=bx.min.y+hM*.08;let sx=0,sz=0,n=0;B.bot.updateMatrixWorld(true);
+    B.bot.traverse(o=>{const p=o.isMesh&&o.geometry&&o.geometry.attributes&&o.geometry.attributes.position;if(!p)return;const st=Math.max(1,Math.floor(p.count/4000));
+      for(let i=0;i<p.count;i+=st){v.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);if(v.y<=lim){sx+=v.x;sz+=v.z;n++}}});
+    if(n>=6){ct.x=sx/n;ct.z=sz/n}}catch(e){}
+  B.bot.position.x-=ct.x;B.bot.position.z-=ct.z;B.bot.position.y-=bx.min.y;const by=B.bot.position.y;
   const wrap=new T3.Group();wrap.add(root);wrap.scale.setScalar(1.1/hM);sc.add(wrap);
   /* 牆不動（開發者 11/23：「為什麼腳色走過去的時候 牆壁也會跟著動」→ 拿掉「前方的牆變矮」）。角色走到牆後面時，被擋住的部分畫成一層淡淡的暖色剪影：
      角色另外放在第 1 層，畫完整個場景後只畫角色一次，深度比已經畫的東西還遠（GreaterDepth）的地方才上色＝只有被擋住的部分；看得到的部分往前推一點深度，不會冒出雜點 */
