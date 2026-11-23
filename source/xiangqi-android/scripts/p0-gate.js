@@ -159,6 +159,12 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
     if (t === "P0-IMG") {
       const c = json.canary || {};
       if (c.home !== true || c.stale !== true) add(`P0-IMG：金絲雀沒被抓到（拿掉首頁素材 ${c.home === true ? "✔" : "✘"}、改掉包裡檔的雜湊 ${c.stale === true ? "✔" : "✘"}）：這支破圖檢查可能失靈，結果不可信`);
+      /* 深層金絲雀（2026-11-23「壞樣本自己做、測深層判斷」，PR②）：W21、W30、首頁真的刪、內容被改，都要抓到，不能豁免 */
+      const d = c.deep || {}, dmiss = ["w21", "w30", "home", "hash"].filter((k) => !(d[k] && d[k].ok === true));
+      if (dmiss.length) add(`P0-IMG：深層金絲雀沒抓到（${dmiss.join("、")}）：這支破圖檢查的深層判斷可能失靈，結果不可信`);
+      /* W42 要 manifest 才做得出來；manifest 讀不到＝缺驗，豁免條件跟其他 CDN 缺驗一樣：單純缺驗、而且閘門自己也連不上（#66 第五次複審起） */
+      if (!(d.w42 && d.w42.ok === true)) { const p = opts.cdnProbe, gateDown = !!p && p.reachable === false;
+        add(`P0-IMG：深層金絲雀 W42（包跟 CDN 現行版不同）${d.w42 && d.w42.skip ? "沒驗（" + d.w42.skip + "）" : "沒抓到"}`, d.w42 && d.w42.skip && gateDown && imgOnlyMissing ? "P0-IMG/cdn" : null) }
       if (c.cdn404 !== true) {
         /* PR #66 第五次複審（開發者選）：豁免要靠工具以外的證據。工具壞掉時看到的跟真的斷線一樣，只在工具裡補反證補不完；
            所以只有報告說連不上（cdnUnreachable）、而且閘門自己連 CDN 也連不上（opts.cdnProbe.reachable＝false）才給豁免代碼 */
