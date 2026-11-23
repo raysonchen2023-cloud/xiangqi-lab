@@ -216,9 +216,18 @@ test("E N20-7：大師對局出處英文＝年份＋英文賽事名（翻不出�
   assert.match(run("zh", { src: { book: "特級大師對局", year: "1988", title: "全國象棋團體賽女子組" } }), /1988 全國象棋團體賽女子組/);
   if (HAS_EXT) { const K = i18nKit(true); for (const t of ["象棋甲級聯賽", "全國象棋個人錦標賽", "全國象棋團體賽女子組", "全國團體賽男子組"]) allT(K, [t]) }
 });
-test("E N20-8：privacy.md、family.md 最後核對 11 月 17 日（兩份一致；11/17 那句只在 App 版）", () => {
+/* 11/23 W80：原本寫死「11 月 17 日」，隱私說明每次補一段就要改測試。改成核對「兩份 md 的最後核對日期一樣，而且跟同一份倉庫裡 privacy.html 的最後更新日期同一天」——
+   日期換了照樣要三份一起換，比寫死日期多抓到「只改了其中一份」（例如 W80 第一版 family.md 補了功能開關清單卻沒改日期）。 */
+test("E N20-8：privacy.md、family.md 最後核對日期兩份一致，跟 privacy.html 的最後更新同一天（11/17 那句只在 App 版）", () => {
   const S = M("05-settings.js"), xqDocVar = vm.runInNewContext(between(S, "function xqDocVar(", "function xqDocBtns(") + ";xqDocVar");
-  for (const f of ["privacy.md", "family.md"]) { const a = rd("xiangqi-db/art/docs/" + f); assert.equal(a, rd("xiangqi-lab/site/data/docs/" + f)); assert.match(a, /最後核對：2026 年 11 月 17 日/, f); assert.ok(!xqDocVar(a, false).includes("Game Center"), f + " 網頁版看不到") }
+  const hd = (rd("xiangqi-lab/site/privacy.html").match(/最後更新：(2026 年 \d{1,2} 月 \d{1,2} 日)/) || [])[1];
+  assert.ok(hd, "privacy.html 找得到最後更新日期");
+  for (const f of ["privacy.md", "family.md"]) {
+    const a = rd("xiangqi-db/art/docs/" + f); assert.equal(a, rd("xiangqi-lab/site/data/docs/" + f));
+    const d = (a.match(/^最後核對：(2026 年 \d{1,2} 月 \d{1,2} 日)/m) || [])[1];
+    assert.equal(d, hd, f + " 的最後核對要跟 privacy.html 的最後更新同一天");
+    assert.ok(!xqDocVar(a, false).includes("Game Center"), f + " 網頁版看不到");
+  }
 });
 test("E N20-9：兵印的點選範圍比 44 多撐 1px（換成整數像素後也有 44×44）", () => {
   const FB = M("07s3-feedback.js"), fbp = vm.runInNewContext(between(FB, "function fbpSlotLay(", "/* 類型籤：") + ";({fbpSlotLay})");
