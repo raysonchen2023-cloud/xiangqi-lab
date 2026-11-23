@@ -1,6 +1,9 @@
 /* ---------- W72 遠端開關（開發者 11/23 選單「先做遠端開關，分版先盤點」）----------
    用途：上線後某個功能出問題時，不用重新建包、不用送審，改 GitHub 上一行設定就能把它關掉（業界叫 kill switch／feature flag）。
-   設定檔：倉庫根目錄 data/flags.json，例如 {"v":1,"off":{"halls8":"11/28 列炮門門內圖破圖，先關"}}；只列要關的，沒列＝開著。
+   設定檔：正本 source/xiangqi-db/art/flags.json，發布 PR 複製到倉庫根目錄 data/flags.json（功能 PR 不能改根目錄 data/）。
+   例如 {"v":1,"off":{"halls8":"11/28 列炮門門內圖破圖，先關"}}；只列要關的，沒列＝開著。
+   只能關、不能開：沒有「打開隱藏功能」的寫法，送審時看得到的功能就是全部（Apple 準則 2.5.2，Windows Claude 2 11/23 合規審查）。
+   兒童模式照樣抓：它只是用來關掉壞掉的功能，只下載一份公開檔，不帶任何資料（隱私政策要寫明，跟發布 PR 一起改 data/docs/privacy.md）。
    怎麼抓：
    - 一律向 raw.githubusercontent.com 讀 main 分支上的 data/flags.json：合併到 main 就生效，不用等 GitHub Pages 部署。
      網址加 ?t= 時間繞過 GitHub 的 5 分鐘邊緣快取（11/23 實測 ?t= 會 MISS），cache:no-store 繞過手機快取；回應有 Access-Control-Allow-Origin: *。

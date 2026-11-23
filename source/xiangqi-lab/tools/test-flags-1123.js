@@ -76,9 +76,11 @@ test("請求：只向 raw.githubusercontent.com 的 main 版抓、網址只帶�
   assert.ok(L.timers.some((t) => t.ms === 5000), "5 秒逾時");
 });
 
-test("〔原始碼〕倉庫根目錄 data/flags.json：合法 JSON、預設全開；m.html 在 00-util 後面、01-board 前面載入 00f；沒有行內 // 註解、LF", () => {
-  const j = JSON.parse(fs.readFileSync(path.join(ROOT, "../data/flags.json"), "utf8"));
+test("〔原始碼〕開關清單正本 art/flags.json：合法 JSON、預設全開、說明寫明只能關不能開；m.html 在 00-util 後面、01-board 前面載入 00f；沒有行內 // 註解、LF", () => {
+  const j = JSON.parse(fs.readFileSync(path.join(ROOT, "xiangqi-db/art/flags.json"), "utf8"));
   assert.equal(typeof j.off, "object"); assert.deepEqual(j.off, {}, "這版預設全部開著");
+  assert.match(j.note, /只能關掉功能，不能打開新功能/);
+  assert.equal(Object.keys(j).filter((k) => !["v", "note", "off"].includes(k)).length, 0, "沒有「打開功能」之類的其他欄位");
   const mh = fs.readFileSync(path.join(ROOT, "xiangqi-db/m.html"), "utf8"), at = (f) => mh.indexOf(`//#include m/${f}.js`);
   assert.ok(at("00-util") > 0 && at("00-util") < at("00f-flags") && at("00f-flags") < at("01-board"));
   assert.ok(!SRC.includes("\r") && !/[^:]\/\/ /.test(SRC.replace(/https?:\/\//g, "")));
