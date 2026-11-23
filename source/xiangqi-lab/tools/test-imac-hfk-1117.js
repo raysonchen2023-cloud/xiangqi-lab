@@ -21,6 +21,7 @@ const rd = p => fs.readFileSync(path.join(ROOT, alt(p)), "utf8").replace(/\r\n/g
 const M = f => rd("xiangqi-db/m/" + f);
 const between = (s, a, b, incl) => { const i = s.indexOf(a), j = s.indexOf(b, i + 1); assert.ok(i >= 0 && j > i, "切不到：" + a.slice(0, 40)); return s.slice(i, incl ? j + b.length : j) };
 const IOS = fs.existsSync(path.join(ROOT, "xiangqi-ios")) ? false : "沒有 xiangqi-ios";
+const SKIP_STORE = fs.existsSync(path.join(ROOT, "xiangqi-ios", "appstore")) ? false : "沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦）";   /* W69 盤點高 7：iOS 專案在公開倉庫裡，appstore/ 不在；讀 appstore/ 的檢查拆成獨立一項（#96 審查②） */
 const U = M("00-util.js");
 const TAP = vm.runInNewContext(between(U, "const TAP44_CSS=", ";\n").replace("const TAP44_CSS=", ""));
 
@@ -182,14 +183,18 @@ test("開關定案：問小帥的 Google AI／Gemini 兩版都拿掉（ASK_EXT_A
   assert.ok(!/按「Google」「Gemini」會打開外部網站|App 版沒有「Google AI 回答」|不顯示 Google／Gemini 按鈕/.test(P));
   assert.ok(H.includes("問小帥沒有「Google AI 回答」「問 Gemini」這兩顆") && H.includes('Ask Xiao Shuai has no "Google AI answer" or "Ask Gemini" buttons') && !/On the web, the "Google"|網頁版按「Google」/.test(H));
   assert.ok(!F.includes("「🔎 Google AI 回答」「✨ 問 Gemini」按鈕不顯示。"), "家長文件不再說「兒童模式才不顯示」");
-  if (!IOS) assert.ok(rd("xiangqi-ios/appstore/app-privacy.md").includes("問小帥的 Google／Gemini 按鈕 11/17 已經拿掉"));
+});
+test("〔原始碼〕iOS 隱私申報 app-privacy.md 也寫了問小帥的 Google／Gemini 按鈕已經拿掉", { skip: SKIP_STORE }, () => {   /* W69 盤點高 7（#96 審查②）：從上一項拆出來 */
+  assert.ok(rd("xiangqi-ios/appstore/app-privacy.md").includes("問小帥的 Google／Gemini 按鈕 11/17 已經拿掉"));
 });
 
-test("檢舉 7 天內處理：limits.md、支援頁、審核備註同一個說法；metadata 待勾項目勾掉", () => {
+test("檢舉 7 天內處理：limits.md、支援頁同一個說法（審核備註那一半拆到下一項）", () => {
   const L = rd("xiangqi-db/art/docs/limits.md"); assert.equal(L, rd("xiangqi-lab/site/data/docs/limits.md"));
   assert.ok(L.includes("- 目前沒有即時客服；開發者逐筆看，檢舉 7 天內處理。") && !L.includes("處理時間沒有保證"));
   assert.ok(rd("xiangqi-lab/src/support.html").includes("目標在 7 天內處理"));
-  if (!IOS) { const MD = rd("xiangqi-ios/appstore/metadata.md"); assert.ok(MD.includes("> ☑ 檢舉處理時限「7 天」：開發者 11/17 回覆「檢舉 7 天內可以處理」") && !MD.includes("檢舉處理時限「7 天」要開發者確認做得到")); assert.ok(MD.includes("Reports are handled within 7 days.")) }
+});
+test("〔原始碼〕App Store 審查備註 metadata.md：檢舉 7 天的待勾項目勾掉、英文也寫", { skip: SKIP_STORE }, () => {   /* W69 盤點高 7（#96 審查②）：從上一項拆出來 */
+  { const MD = rd("xiangqi-ios/appstore/metadata.md"); assert.ok(MD.includes("> ☑ 檢舉處理時限「7 天」：開發者 11/17 回覆「檢舉 7 天內可以處理」") && !MD.includes("檢舉處理時限「7 天」要開發者確認做得到")); assert.ok(MD.includes("Reports are handled within 7 days.")) }
 });
 
 test("K P2-3：被相機切到的字——石桌往事封面直排標題、開場名句、找棋子提示列讓開側邊安全區；殘篇閣說明在 .view 裡（.view 已讓開）；找棋子的提示鈕 44", () => {

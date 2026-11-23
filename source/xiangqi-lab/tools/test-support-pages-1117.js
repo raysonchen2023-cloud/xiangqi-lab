@@ -20,6 +20,7 @@ function skipMissing(t0) {
   return Object.assign(w, t0) }
 const rd = p => fs.readFileSync(path.join(ROOT, alt(p)), "utf8").replace(/\r\n/g, "\n");
 const IOS = fs.existsSync(path.join(ROOT, "xiangqi-ios")) ? false : "沒有 xiangqi-ios";
+const SKIP_STORE = fs.existsSync(path.join(ROOT, "xiangqi-ios", "appstore")) ? false : "沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦）";   /* W69 盤點高 7：iOS 專案在公開倉庫裡，appstore/ 不在；讀 appstore/ 的檢查拆成獨立一項（#96 審查②） */
 const SUP = "xiangqi-lab/src/support.html", PRI = "xiangqi-lab/src/privacy.html", MAIL = "xiangqiqianqiu.app@gmail.com";
 const BASE = "https://raysonchen2023-cloud.github.io/xiangqi-lab/";
 const text = h => h.replace(/<style>[\s\S]*?<\/style>/g, "").replace(/<[^>]+>/g, " ");
@@ -66,8 +67,10 @@ test("有聯絡信箱（可點的 mailto）、互相有連結；支援頁有四�
   for (const q of ["存檔放在哪裡？", "換手機怎麼把存檔搬過去？", "怎麼刪除我的資料？", "檢舉多久會處理？"]) assert.ok(S.includes(q), q);
   for (const q of ["Where is my save stored?", "How do I move my save to a new phone?", "How do I delete my data?", "How soon are reports handled?"]) assert.ok(S.includes(q), q);
   assert.ok(S.includes("設定 → 🎒 換手機 → 新手機・輸入轉移碼"), "換手機路徑跟 App 一致");
-  /* 檢舉時限跟審查備註同一個數字 */
-  if (!IOS) assert.ok(rd("xiangqi-ios/appstore/metadata.md").includes("Reports are handled within 7 days.") && S.includes("目標在 7 天內處理") && S.includes("within 7 days"));
+});
+test("〔原始碼〕檢舉時限跟 App Store 審查備註同一個數字（appstore/metadata.md）", { skip: SKIP_STORE }, () => {   /* W69 盤點高 7（#96 審查②）：從上一項拆出來，不再用 if 默默不驗 */
+  const S = rd(SUP);
+  assert.ok(rd("xiangqi-ios/appstore/metadata.md").includes("Reports are handled within 7 days.") && S.includes("目標在 7 天內處理") && S.includes("within 7 days"));
 });
 
 test("隱私權政策公開版：這次的修正都寫進去（需要時才抓、飛鴿規則、App 版匿名開關預設關、Game Center 和小工具看建置內容）", () => {
@@ -87,16 +90,19 @@ test("隱私權政策公開版：這次的修正都寫進去（需要時才抓�
   assert.ok(P.includes("Hung-Sheng Chen"));
 });
 
-test("三處說法一致：App 內設定的隱私卡片（07x4）、privacy.md、privacy.html、iOS app-privacy.md 都有同一句修正清單說明", () => {
+test("三處說法一致：App 內設定的隱私卡片（07x4）、privacy.md、privacy.html 都有同一句修正清單說明（iOS app-privacy.md 拆到下一項）", () => {
   const X4 = rd("xiangqi-db/m/07x4-lobbysafe.js"), nat = X4.match(/const XQ_NETWHEN_NAT="([^"]+)"/)[1];
   const fix = nat.split("。")[0] + "。";
   assert.equal(fix, "如果你送過意見回饋，App 開啟時會從 Cloudflare 下載一次修正清單和開發者回覆，讓你收到飛鴿傳書；沒送過就只在打開意見回饋時下載。");
   const P = rd(PRI).replace(/（App 裡告訴你「你回報的問題修好了」或開發者回你的信）/, "");
   assert.ok(P.includes(fix), "privacy.html");
   assert.ok(rd("xiangqi-db/art/docs/privacy.md").includes(fix), "privacy.md");
-  if (!IOS) assert.ok(rd("xiangqi-ios/appstore/app-privacy.md").includes(fix), "app-privacy.md");
   /* privacy.md 相機那句也更正了 */
   assert.ok(rd("xiangqi-db/art/docs/privacy.md").includes("相機只在「意見回饋」附圖時你選「拍照」才用"));
+});
+test("〔原始碼〕iOS 隱私申報 app-privacy.md 也有同一句修正清單說明", { skip: SKIP_STORE }, () => {   /* W69 盤點高 7（#96 審查②）：從上一項拆出來 */
+  const nat = rd("xiangqi-db/m/07x4-lobbysafe.js").match(/const XQ_NETWHEN_NAT="([^"]+)"/)[1], fix = nat.split("。")[0] + "。";
+  assert.ok(rd("xiangqi-ios/appstore/app-privacy.md").includes(fix), "app-privacy.md");
 });
 
 test("sw.js：這兩頁（含不帶 .html）直接問網路，不會被換成 App 的 index.html；App 本身照舊", () => {
@@ -111,11 +117,13 @@ test("sw.js：這兩頁（含不帶 .html）直接問網路，不會被換成 Ap
 
 test("build-site 把 src/ 整個複製進 site/（兩頁跟著進網站根目錄）；iOS 包不放這兩頁", () => {
   assert.ok(rd("xiangqi-lab/tools/build-site.js").includes("for(const f of fs.readdirSync(SRC))fs.copyFileSync(path.join(SRC,f),path.join(SITE,f));"));
-  if (!IOS) { const C = rd("xiangqi-ios/scripts/copy-www.js"); assert.ok(C.includes("/^(support|privacy)\\.html$/,"), "copy-www SKIP");
-    const re = /^(support|privacy)\.html$/; assert.ok(re.test("support.html") && re.test("privacy.html") && !re.test("data/docs/privacy.md")) }
+});
+test("〔原始碼〕iOS 包不放支援頁、隱私頁（copy-www 的 SKIP）", { skip: IOS }, () => {   /* W69 盤點高 7（#96 審查②）：從上一項拆出來；沒有 xiangqi-ios 就明列略過，run-tests 複製 iOS 後照跑 */
+  const C = rd("xiangqi-ios/scripts/copy-www.js"); assert.ok(C.includes("/^(support|privacy)\\.html$/,"), "copy-www SKIP");
+  const re = /^(support|privacy)\.html$/; assert.ok(re.test("support.html") && re.test("privacy.html") && !re.test("data/docs/privacy.md"));
 });
 
-test("metadata.md：支援網址、隱私權政策網址換成新網頁；聯絡人姓名、信箱；電話留給開發者本人填；賣家名稱", { skip: IOS }, () => {
+test("metadata.md：支援網址、隱私權政策網址換成新網頁；聯絡人姓名、信箱；電話留給開發者本人填；賣家名稱", { skip: SKIP_STORE }, () => {
   const M = rd("xiangqi-ios/appstore/metadata.md");
   assert.ok(M.includes("| 支援網址 | `" + BASE + "support.html` |"));
   assert.ok(M.includes("| 隱私權政策網址 | `" + BASE + "privacy.html` |"));
