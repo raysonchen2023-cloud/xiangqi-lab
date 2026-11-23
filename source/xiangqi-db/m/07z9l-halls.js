@@ -1,6 +1,7 @@
 /* ---------- W48 其餘八派門內頁（開發者 11/23：「剩下 8 個門派的門內圖請開始繪製」「請盡快完成這項門派任務的工作」）----------
    門內圖：xiangqi-db/park/zmhall/hall_<名>_fix.png（Gemini 出圖，本機清掉匾額、對聯、草叢像字的筆觸）→ data/zmhall/<派>.webp（只放 CDN）。
-   史學顧問審查稿：story/gemini_app/192（過宮炮第一版）、193（八派）。圖還沒上 CDN 時 JhHall 讀圖失敗會退回長卷小卡（JH_HALL_BAD），不會卡住。
+   史學顧問審查稿：story/gemini_app/192（過宮炮第一版）、193（八派；必改與建議改已照改：起馬拿掉案上馬鞍與石馬、拴馬樁改石柱；仕角炮高櫃台加柵欄；
+   反宮馬馬頭牆加青瓦、投石車改桌上模型；列炮改高架鼓、拿掉空白匾板；順炮木人樁改梅花樁、方格鹽田改煎鹽灶；飛相石象改太湖石與銅鶴）。圖還沒上 CDN 時 JhHall 讀圖失敗會退回長卷小卡（JH_HALL_BAD），不會卡住。
    這支只寫資料與入口：每派 JH_HALL（門內圖版本、掌門座位、四個地點）＋一個玩法入口（各派玩法模組開出來的 jhXxxOpen），
    不動 07z9b JhHall 本體、不動各派玩法模組。座標都是門內圖原圖像素（768×1376）。
    掌門立繪：寬 60、cut .42（藏住抱著的大棋子字），seat 量在桌子後緣（193_seats.json）；比中炮、屏風馬的 66 小一點（史學顧問 192：立繪略大）。
@@ -11,7 +12,7 @@ const JH_HALLS8={
     alt:["過宮炮門門內：門樓、紙坊前院與抄紙棚、講堂、溪邊焙紙牆與長廊橋，對岸最上面是掌門大廳","Inside the Palace-Crossing Cannon: a gatehouse, the paper-mill yard, a lecture hall, the drying wall and covered bridge by the stream, and the master's hall across the water"]},
   horse:{v:"1123",seat:[387,334],spots:{hall:[390,150],study:[390,800],gate:[390,1290]},
     play:{k:"post",at:[215,1040],zh:"🐴 拴馬樁・驛馬繞險路",en:"🐴 Hitching post · Courier's path",fn:"jhQimaOpen"},
-    alt:["起馬門門內：驛站門樓、拴馬樁與馬廄、講堂、曲折石階與石馬，最上面是掌門大廳","Inside the Horse Opening: a post-station gate, hitching posts and a stable, a lecture hall, a winding stairway with a stone horse, and the master's hall at the top"]},
+    alt:["起馬門門內：驛站門樓、石雕拴馬樁與馬廄、講堂、曲折石階與老松，最上面是掌門大廳","Inside the Horse Opening: a post-station gate, stone hitching posts and a stable, a lecture hall, a winding stairway with an old pine, and the master's hall at the top"]},
   advisor_corner:{v:"1123",seat:[401,379],spots:{hall:[392,170],study:[150,700],gate:[390,1250]},
     play:{k:"shop",at:[540,690],zh:"🏮 當鋪・算兌子",en:"🏮 Pawnshop · Count the trade",fn:"jhShijiaoOpen"},
     alt:["仕角炮門門內：水巷牌坊、花窗前院與角亭、講堂、當鋪高櫃台，最上面是掌門大廳，遠處有塔","Inside the Advisor-Corner Cannon: an archway by the canal, a yard with lattice windows and a corner pavilion, a lecture hall, a pawnshop counter, and the master's hall with a distant pagoda"]},
@@ -23,10 +24,10 @@ const JH_HALLS8={
     alt:["列炮門門內：牌坊、戲台與鼓架、講堂、山谷兩座樓閣以石橋相連，右上是掌門大廳","Inside the Opposite Cannons: an archway, a stage with a drum stand, a lecture hall, two pavilions joined by a stone bridge, and the master's hall at the upper right"]},
   same_cannon:{v:"1123",seat:[570,382],spots:{hall:[570,120],study:[610,780],gate:[480,1290]},
     play:{k:"posts",at:[220,1000],zh:"🥊 練拳木樁・搶攻算殺步",en:"🥊 Practice post · Count to mate",fn:"jhShunpaoOpen"},
-    alt:["順炮門門內：門樓、海堤邊練拳木樁、講堂、鹽田，海邊兩座並排樓閣，右邊是掌門大廳","Inside the Same-Direction Cannons: a gatehouse, practice posts by the sea wall, a lecture hall, salt pans, and two towers by the sea, the right one being the master's hall"]},
+    alt:["順炮門門內：門樓、海堤邊的梅花樁、講堂、煎鹽灶，海邊兩座並排樓閣，右邊是掌門大廳","Inside the Same-Direction Cannons: a gatehouse, training stumps by the sea wall, a lecture hall, salt-boiling stoves, and two towers by the sea, the right one being the master's hall"]},
   elephant:{v:"1123",seat:[385,467],spots:{hall:[385,250],study:[385,740],gate:[380,1300]},
     play:{k:"pavilion",at:[150,960],zh:"🏯 講經亭・築堤擺陣形",en:"🏯 Lecture pavilion · Build the formation",fn:"jhFeixiangOpen"},
-    alt:["飛相門門內：門樓、水池與池邊亭子、一對小石象、講堂，最上面是掌門大廳，遠處有塔","Inside the Flying Elephant: a gatehouse, a pond with a pavilion and two small stone elephants, a lecture hall, and the master's hall with a distant pagoda"]},
+    alt:["飛相門門內：門樓、水池與池邊亭子、太湖石與銅鶴、講堂，最上面是掌門大廳，遠處有塔","Inside the Flying Elephant: a gatehouse, a pond with a pavilion, garden rocks and bronze cranes, a lecture hall, and the master's hall with a distant pagoda"]},
   pawn:{v:"1123",seat:[384,287],spots:{hall:[390,110],study:[390,770],gate:[380,1300]},
     play:{k:"rock",at:[370,950],zh:"🪨 指路奇岩・探路猜陣勢",en:"🪨 Signpost rock · Read the path",fn:"jhXianrenOpen"},
     alt:["仙人指路門門內：月洞門、園林前院、岔路口的太湖石、講堂、水池與小橋，最上面是掌門大廳","Inside the Pawn Opening: a moon gate, a garden yard, a tall rock at the fork, a lecture hall, ponds and a small bridge, and the master's hall at the top"]}};
