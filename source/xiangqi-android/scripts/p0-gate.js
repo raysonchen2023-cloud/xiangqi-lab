@@ -44,7 +44,7 @@ const GATE_CDN = "https://xiangqi-cdn.pages.dev/";
 async function probeCdn(fetchFn = fetch, base = GATE_CDN, rnd = () => require("crypto").randomBytes(6).toString("hex")) {
   let manOk = false, manWhy = "", head = -1;
   const sig = () => (typeof AbortSignal !== "undefined" && AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined);   /* 每次最多等 15 秒 */
-  try { const r = await fetchFn(base + "cdn-manifest.json", { signal: sig() }); if (!r.ok) manWhy = "manifest HTTP " + r.status; else { const j = await r.json(); const ks = j && j.files && typeof j.files === "object" ? Object.keys(j.files).filter((k) => k.startsWith("data/")) : []; manOk = ks.length > 0; manWhy = manOk ? "manifest " + ks.length + " 個 data 檔" : "manifest 是空的或格式不對" } } catch (e) { manWhy = "manifest 連不上" }
+  try { const r = await fetchFn(base + "cdn-manifest.json", { signal: sig() }); if (!r.ok) manWhy = "manifest HTTP " + r.status; else { let j = null; try { j = await r.json() } catch (e) { manWhy = "manifest 不是合法的 JSON" } const ks = j && j.files && typeof j.files === "object" ? Object.keys(j.files).filter((k) => k.startsWith("data/")) : []; manOk = ks.length > 0; manWhy = manOk ? "manifest " + ks.length + " 個 data 檔" : j === null && manWhy ? manWhy : "manifest 是空的或格式不對" } } catch (e) { manWhy = "manifest 連不上" }
   try { head = (await fetchFn(base + "data/__xq_gate_probe_" + rnd() + ".webp", { method: "HEAD", signal: sig() })).status } catch (e) { head = -1 }
   const headOk = head === 404 || head === 410;
   return { reachable: manOk || headOk, manOk, head, at: new Date().toISOString(), detail: manWhy + "；亂數檔 HEAD " + (head === -1 ? "連不上" : head) };
@@ -83,6 +83,10 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
     if (verOf(json) !== build) add(`${key}：驗的版號是 ${verOf(json)}，不是要送審的 ${build}`);
     /* P0-IMG 缺驗（結束代碼 3）時 pass 一定是 false：歸在可豁免的 P0-IMG/cdn 那一條，不另算「沒有通過」 */
     const imgMissing = t === "P0-IMG" && json.exitCode === 3;
+    /* PR #66 第七、八次複審：「單純缺驗」才可能是 CDN 的問題：加了 --cdn、結束代碼 3、沒通過、沒有任何 ✘（redItems 空陣列、red＝0），而且真的有沒驗到的項目（unknown＞0）。
+       豁免（要加 --cdn 那條、金絲雀③）都要先滿足這個；正確的工具在探測檔沒確認到時一定是 3＋沒通過，做不出 exit 0 又連不上的報告 */
+    const imgOnlyMissing = t === "P0-IMG" && json.cdnChecked === true && json.exitCode === 3 && json.pass === false
+      && Array.isArray(json.redItems) && json.redItems.length === 0 && json.red === 0 && Number(json.unknown) > 0;
     if (json.pass !== true && !imgMissing) add(`${key}：沒有通過（pass＝${json.pass}）`);
     if ((t === "P0-UPD" || t === "P0-3D") && !(json.apkBound === true && HEX64.test(String(json.apkSha256 || ""))))
       add(`${key}：沒核對實際測的 APK 是從這個 AAB 產生的（要用 --aab-apk 跑，報告要有 apkBound＝true 與 apkSha256）`);
@@ -90,9 +94,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
       /* PR #66 第六次複審：這條也掛 P0-IMG/cdn，同樣要閘門自己也連不上 CDN 才准豁免（exit 3 可能是工具的 manifest 讀取寫壞了） */
       const p = opts.cdnProbe, gateDown = !!p && p.reachable === false;
       const why = json.cdnChecked !== true ? "" : gateDown ? `；閘門自己也連不上 CDN（${p.detail}）` : p && p.reachable === true ? `；閘門自己連得上 CDN（${p.detail}）：不能豁免` : "；閘門沒有自己探測 CDN：不能豁免";
-      /* PR #66 第七次複審：只有「缺驗」（結束代碼 3）而且沒有任何 ✘（redItems 是空陣列）才算 CDN 的問題；1、4 這些是真的有問題或工具失靈，閘門連不上也不能豁免 */
-      const onlyMissing = json.exitCode === 3 && Array.isArray(json.redItems) && json.redItems.length === 0;
-      add(`P0-IMG：要加 --cdn 且結束代碼 0（cdnChecked＝${json.cdnChecked}、exitCode＝${json.exitCode}）${why}${json.cdnChecked === true && gateDown && !onlyMissing ? "；不是單純缺驗（結束代碼 3 且沒有 ✘），不能豁免" : ""}`, json.cdnChecked === true && gateDown && onlyMissing ? "P0-IMG/cdn" : null);
+      add(`P0-IMG：要加 --cdn 且結束代碼 0（cdnChecked＝${json.cdnChecked}、exitCode＝${json.exitCode}）${why}${json.cdnChecked === true && gateDown && !imgOnlyMissing ? "；不是單純缺驗（結束代碼 3、沒通過、沒有 ✘、有沒驗到的項目），不能豁免" : ""}`, gateDown && imgOnlyMissing ? "P0-IMG/cdn" : null);
     }
     /* 金絲雀（2026-11-23，AGENTS.md「P0 出口驗證要難作假」）：工具在實跑時故意弄壞的地方要被抓到；抓不到＝工具失靈，不能豁免 */
     if (t === "P0-IMG") {
@@ -104,8 +106,9 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
         const p = opts.cdnProbe, gateDown = !!p && p.reachable === false, gateUp = !!p && p.reachable === true;
         const why = c.cdnUnreachable !== true ? "：CDN 核對可能失靈，不能豁免"
           : gateUp ? `：閘門自己連得上 CDN（${p.detail}），報告卻說連不上：工具失靈，不能豁免`
+          : !imgOnlyMissing ? "：報告不是單純缺驗（要結束代碼 3、沒通過、沒有 ✘、有沒驗到的項目），工具前後矛盾，不能豁免"
           : gateDown ? `：閘門自己也連不上 CDN（${p.detail}），沒驗到` : "：閘門沒有自己探測 CDN，不能豁免";
-        add(`P0-IMG：金絲雀③ CDN 不存在的檔沒被判成沒有（${c.cdn || "沒驗"}）${why}`, c.cdnUnreachable === true && gateDown ? "P0-IMG/cdn" : null);
+        add(`P0-IMG：金絲雀③ CDN 不存在的檔沒被判成沒有（${c.cdn || "沒驗"}）${why}`, c.cdnUnreachable === true && gateDown && imgOnlyMissing ? "P0-IMG/cdn" : null);
       }
     }
     if (t === "P0-UPD" && !(json.canary && json.canary.dialog === true)) add("P0-UPD：金絲雀（假的「有新版本」視窗）沒被抓到：這支更新檢查可能失靈，結果不可信");
@@ -134,6 +137,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
 }
 
 async function main() {
+  process.exitCode = 2;   /* PR #66 第八次複審：探測卡住、程序提早結束時不能變成 0；只有最後判定才改掉 */
   const a = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null };
   const j = process.argv.indexOf("--reports"), AAB = a("--aab"), BUILD = a("--build");
   const files = j > 0 ? process.argv.slice(j + 1).filter((x) => !x.startsWith("--")) : [];

@@ -23,7 +23,7 @@ const d3 = (sha, android) => ({ file: "3d-" + android + ".json", json: { tool: "
 /* P0-3D 金絲雀：check-3d.js --self-test 的報告（2026-11-23） */
 const c3 = (sha, android) => ({ file: "3d-canary-" + android + ".json", json: { tool: "P0-3D", selfTest: true, aabSha256: sha, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") } });
 const ok3 = (sha = A) => [
-  { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true }, toolPins: TP.pinsFor("P0-IMG") } },
+  { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true }, toolPins: TP.pinsFor("P0-IMG") } },
   { file: "upd.json", json: { tool: "P0-UPD", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") } },
   d3(sha, "12"), d3(sha, "16"), c3(sha, "12"), c3(sha, "16")];
 const has = (r, re) => r.problems.some((p) => re.test(p));
@@ -172,7 +172,7 @@ test("豁免：只認齊全、綁同一個 AAB、在可豁免清單裡的；轉�
 });
 
 test("豁免：P0-IMG 缺驗（結束代碼 3）有倉庫豁免就放行並列出；沒有就擋；不可豁免的照擋", () => {
-  const L = ok3(); Object.assign(L[0].json, { exitCode: 3, pass: false });
+  const L = ok3(); Object.assign(L[0].json, { exitCode: 3, pass: false, unknown: 2 });
   let r = G(A, V, L); assert.equal(r.ok, false); assert.ok(has(r, /P0-IMG：要加 --cdn 且結束代碼 0/)); assert.ok(!has(r, /P0-IMG：沒有通過/), "缺驗歸在可豁免那一條");
   const w = { code: "P0-IMG/cdn", aabSha256: A, reason: "CDN 維護中無法交叉核對", decidedBy: "開發者", decidedAt: "2026-11-23" };
   /* PR #66 第六次複審：缺驗的豁免要閘門自己也連不上 CDN（cdnProbe.reachable＝false）；沒探測或連得上都不放行 */
