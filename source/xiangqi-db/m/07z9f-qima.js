@@ -13,6 +13,7 @@ const JH_QIMA_LV=[
   {k:"mid",zh:"中級",en:"Medium",foe:[2,3],d:[3,4]},
   {k:"hard",zh:"高級",en:"Hard",foe:[3,5],d:[4,5]}];
 const JH_QIMA_FOE=["r","n","c","p"];   /* 黑方會擺的子：車、馬、砲、卒 */
+const JH_QIMA_CAP={r:2,n:2,c:2,p:5};   /* 每種最多幾顆（真實棋子數） */
 function jhQimaGet(){let o=null;try{o=store.get("jhQima",null)}catch(e){}o=o&&typeof o==="object"?o:{};
   return{lv:JH_QIMA_LV.some(x=>x.k===o.lv)?o.lv:"easy",d:typeof o.d==="string"?o.d.slice(0,12):""}}
 function jhQimaSet(o){try{store.set("jhQima",o)}catch(e){}}
@@ -37,7 +38,10 @@ function jhQimaMake(L,seed){const C=window.XQCore;let h=jhQimaHash("qima:"+seed)
     const free=()=>{for(let k=0;k<40;k++){const s=R()%90;if(!b[s])return s}return-1};
     const N=free();if(N<0)continue;b[N]="N";
     const nf=L.foe[0]+R()%(L.foe[1]-L.foe[0]+1);let ok=true;
-    for(let i=0;i<nf;i++){const p=JH_QIMA_FOE[R()%JH_QIMA_FOE.length];let s=free();if(s<0){ok=false;break}
+    for(let i=0;i<nf;i++){let p=JH_QIMA_FOE[R()%JH_QIMA_FOE.length];
+      /* W73（11/23 Pikafish 棋理驗證）：每顆子各自隨機挑種類，約 5% 題目出現 3～5 隻砲、3～4 隻馬或車；照真實子數，車馬砲各 ≤2、卒 ≤5，額滿就換下一種 */
+      for(let k=0;k<JH_QIMA_FOE.length&&b.filter(v=>v===p).length>=JH_QIMA_CAP[p];k++)p=JH_QIMA_FOE[(JH_QIMA_FOE.indexOf(p)+1)%JH_QIMA_FOE.length];
+      let s=free();if(s<0){ok=false;break}
       if(p==="p"&&!(s>=27&&s<=44&&(s%9)%2===0)&&!(s>=45))s=27+2*(R()%5);   /* 卒：在自己的卒林線或過了河 */
       if(b[s]){ok=false;break}b[s]=p}
     if(!ok||C.inCheck(b,"r")||C.inCheck(b,"b"))continue;
