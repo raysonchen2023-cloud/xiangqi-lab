@@ -11,11 +11,38 @@
 const fs = require("fs"), path = require("path"), cp = require("child_process");
 const TOOLS = path.join("source", "xiangqi-lab", "tools");
 
-/* 從 testkinds.js 原文抽出 CLASSIFIED 裡的檔名（不 require，免得執行到它） */
+/* 從 testkinds.js 原文取出 CLASSIFIED 裡的檔名（不 require、不執行它）。
+   2026-11-23 起不再用正規式掃原文：原本註解裡的 "test-*.js" 也算「已登記」——登記行被單行註解或區塊註解吃掉時 CI 照樣綠
+   （#74 就是：testkinds 一行註解結尾少一個 /，後面的登記整段被吃進註解；iMac Claude 2 審 #85 時發現）。
+   現在照 JavaScript 的規則逐字掃：從檔頭開始跳過字串與註解，找到「程式碼裡」（不在註解、字串裡）的 `const CLASSIFIED = new Set([`，
+   再掃到對應的 `]`，途中拿掉註解；剩下的必須是純字串陣列（JSON，允許最後一個逗號），每一項都是 test-*.js。
+   註解沒結束、字串沒結束、陣列裡有字串以外的東西（程式碼、巢狀陣列）、找不到清單：一律回 null＝讀不懂，不能當通過。 */
 function classifiedSet(src) {
-  const a = src.indexOf("const CLASSIFIED = new Set(["), b = a < 0 ? -1 : src.indexOf("]);", a);
-  if (a < 0 || b < 0) return null;
-  return new Set([...src.slice(a, b).matchAll(/"(test-[^"]+\.js)"/g)].map(m => m[1]));
+  const MARK = "const CLASSIFIED = new Set([";
+  src = String(src);
+  const n = src.length;
+  let i = 0, inArr = false, out = "";
+  while (i < n) {
+    const c = src[i], d = src[i + 1];
+    if (c === "/" && d === "/") { const e = src.indexOf("\n", i); i = e < 0 ? n : e; continue }
+    if (c === "/" && d === "*") { const e = src.indexOf("*/", i + 2); if (e < 0) return null; i = e + 2; if (inArr) out += " "; continue }
+    if (c === '"' || c === "'" || c === "`") {
+      let j = i + 1;
+      while (j < n && src[j] !== c) { if (src[j] === "\\") j++; else if (c !== "`" && src[j] === "\n") return null; j++ }
+      if (j >= n) return null;
+      if (inArr) out += src.slice(i, j + 1);
+      i = j + 1; continue;
+    }
+    if (!inArr) { if (src.startsWith(MARK, i)) { inArr = true; i += MARK.length } else i++; continue }
+    if (c === "]") {
+      let arr;
+      try { arr = JSON.parse("[" + out.replace(/,\s*$/, "") + "]") } catch (e) { return null }
+      if (!arr.every(x => typeof x === "string" && /^test-[^/\\]+\.js$/.test(x))) return null;
+      return new Set(arr);
+    }
+    out += c; i++;
+  }
+  return null;
 }
 
 /* 這個 PR 新增的測試檔（只算新加的，改名、修改不算） */
