@@ -18,7 +18,7 @@
 // PR #68 第三輪審查：
 //   ② 找行內標記用 oss-scan 的 textsOf 解出來的每一種文字、同一個判斷（MARK），所以 oss-scan:\x01allow（控制字元換成空白後也算標記）也要登記
 //   ④ oss-scan 加 --all：暫存資料夾裡 node_modules 底下的檔也掃（都是要公開的檔）
-//   ⑤ 圖裡解出來的文字寫成不會跟倉庫裡的檔撞名的檔（撞到就加編號）
+//   ⑤ 圖裡解出來的文字放在另一個資料夾掃，不會跟倉庫裡的檔撞名（第十輪起；原本是撞到就加編號）
 //   ⑥ 符號連結也掃：從 git 拿它存的內容（指向的路徑字串），不再用工作區的 isFile 把它濾掉
 // PR #68 第四輪審查（開發者 11/23 選「圖片全文掃、誤報用整張圖 sha256 放行」）：
 //   ② 圖裡解出來的文字（.meta 檔）裡有行內標記就擋：圖裡的文字不准用標記（壓縮的 zTXt／iTXt、分段的 GIF 註解原本都能藏）
@@ -55,7 +55,8 @@ function checkAllow(list, risks) {
     else if (risks[a.rule] === "high") bad.push(`${at}的 rule「${a.rule}」是高風險：不准放行`);
     if (!String(a.file || "").trim() && !String(a.match || "").trim() && !a.sha256 && !a.fileSha256) bad.push(at + "沒有 file、match、sha256、fileSha256：不准整條規則全部放行");
     if (a.rule !== UNREAD && IMG_EXT.test(String(a.file || "")) && !a.fileSha256) bad.push(at + "放行的是圖片：圖片只能用 fileSha256（整張圖的雜湊）放行（第九輪審查①、開發者決定 4）");
-    if (a.rule !== UNREAD && a.fileSha256 != null && (!/^[0-9a-f]{64}$/.test(String(a.fileSha256)) || !IMG_EXT.test(String(a.file || "")))) bad.push(at + "的 fileSha256 要是 64 碼小寫，而且 file 要寫圖片的完整路徑（整張圖雜湊放行只給圖片用）");
+    /* 第十輪審查③：檔頭是圖、副檔名不是圖的檔也要有放行的路，所以 fileSha256 不再限定圖片副檔名（整個檔的雜湊，一改就失效） */
+    if (a.rule !== UNREAD && a.fileSha256 != null && (!/^[0-9a-f]{64}$/.test(String(a.fileSha256)) || !String(a.file || "").trim())) bad.push(at + "的 fileSha256 要是 64 碼小寫，而且要寫 file（完整路徑）");
     if (PERSONAL.includes(a.rule) && !/^[0-9a-f]{64}$/.test(String(a.sha256 || "")) && !(a.fileSha256 && a.file)) bad.push(at + "是個資規則（" + a.rule + "）：要用 sha256 指定是哪一筆（圖片可用 file＋fileSha256）");
     if (a.sha256 != null && !/^[0-9a-f]{64}$/.test(String(a.sha256))) bad.push(at + "的 sha256 要是 64 碼小寫");
     if (a.match != null && String(a.match).length < 6) bad.push(at + "的 match 太短（至少 6 個字）");
@@ -93,8 +94,6 @@ function markerLines(text, mark = MARK) {
   });
   return out;
 }
-/* 暫存資料夾裡不跟別的檔撞名的名字（純函式）：taken 是已經用掉的相對路徑集合 */
-function freeName(file, taken) { let n = file + ".meta.txt", i = 1; while (taken.has(n)) n = file + ".meta-" + (i++) + ".txt"; taken.add(n); return n }
 /* 標記行有沒有登記：回傳沒登記的 [{file, line, sha256, text}]（純函式） */
 function unregistered(files, inline) {
   const ok = new Set((inline || []).map((a) => a.file + "\n" + a.sha256)), out = [];
@@ -116,7 +115,7 @@ function judge({ findings, images, unreg, attrs = [], metaMarks = [], unreadOk =
   return { medium, meta, unreadable, unreg: unreg || [], attrs, metaMarks, ok: !medium.length && !meta.length && !unreadable.length && !(unreg || []).length && !attrs.length && !metaMarks.length };
 }
 
-module.exports = { UNREAD, maskText, checkAllow, markerLines, unregistered, imageCheck, judge, lineSha, badAttrs, freeName, TOK, PERSONAL };
+module.exports = { UNREAD, maskText, checkAllow, markerLines, unregistered, imageCheck, judge, lineSha, badAttrs, TOK, PERSONAL };
 if (require.main !== module) return;
 
 const [base = "origin/main", out] = process.argv.slice(2);
@@ -144,29 +143,33 @@ const bufs = files.map((f) => ({ file: f, buf: blob(f) }));
 const images = bufs.map(({ file, buf }) => imageCheck(file, buf)).filter(Boolean);
 fs.rmSync(out, { recursive: true, force: true });
 for (const { file, buf } of bufs) { const d = path.join(out, file); fs.mkdirSync(path.dirname(d), { recursive: true }); fs.writeFileSync(d, buf) }
-const taken = new Set(files.flatMap((f) => f.split("/").map((_, i, a) => a.slice(0, i + 1).join("/"))));   /* 檔和它上層的資料夾名都算用掉 */
 const metaMarks = [], metaOf = new Map(), shaOf = new Map(bufs.map(({ file, buf }) => [file, crypto.createHash("sha256").update(buf).digest("hex")]));
+/* 第十輪審查①：圖裡解出來的文字寫到另一個資料夾（metaOut）另外掃一次，那一次只給「對到原圖 fileSha256」的放行項目；
+   清單裡其他項目（沒寫 file 的、只寫 rule＋match 的）完全碰不到圖裡的文字（開發者決定 4：圖片只能用整張圖的雜湊放行） */
+const metaOut = out + ".meta";
+fs.rmSync(metaOut, { recursive: true, force: true });
 for (const x of images) if (x.meta && x.meta.texts && x.meta.texts.length) {
-  const t = Buffer.from(x.meta.texts.join("\n"), "utf8"), nm = freeName(x.file, taken);
-  metaOf.set(x.file, nm); fs.writeFileSync(path.join(out, nm), t);
+  const t = Buffer.from(x.meta.texts.join("\n"), "utf8"), nm = x.file + ".meta.txt", d = path.join(metaOut, nm);
+  metaOf.set(x.file, nm); fs.mkdirSync(path.dirname(d), { recursive: true }); fs.writeFileSync(d, t);
   for (const m of markerLines(S.textsOf(t), S.MARK)) metaMarks.push({ file: x.file, ...m });   /* 第四輪審查②：圖裡的文字不准用行內標記 */
 }
 console.log(`複製 ${files.length} 個改到的檔到暫存資料夾，交給 oss-scan 掃（放行清單 ${list.items.length} 筆、行內標記登記 ${list.inline.length} 筆）`);
-const tmpA = out + ".allow.json", tmpJ = out + ".scan.json";
-/* 第九輪審查①：圖裡解出來的文字（.meta 檔）只認「對到原圖的 fileSha256」那幾筆：原圖改了就不再放行；
-   清單裡直接寫 .meta 檔名的、或對圖片沒寫 fileSha256 的，交給 oss-scan 前就拿掉 */
-const metaNames = new Set(metaOf.values()), items = [];
-for (const a of list.items) {
-  if (a.rule === UNREAD || metaNames.has(a.file)) continue;
-  items.push(a);
-  if (a.fileSha256 && metaOf.has(a.file) && shaOf.get(a.file) === a.fileSha256) { const c = { ...a, file: metaOf.get(a.file) }; delete c.fileSha256; items.push(c) }
-}
+const items = list.items.filter((a) => a.rule !== UNREAD);
+const metaItems = [];
+for (const a of items) if (a.fileSha256 && metaOf.has(a.file) && shaOf.get(a.file) === a.fileSha256) { const c = { ...a, file: metaOf.get(a.file) }; delete c.fileSha256; metaItems.push(c) }
 const unreadOk = list.items.filter((a) => a.rule === UNREAD && shaOf.get(a.file) === a.fileSha256).map((a) => a.file);
-fs.writeFileSync(tmpA, JSON.stringify(items));
-const r = spawnSync(process.execPath, [scanner, out, "--all", "--allow", tmpA, "--json", tmpJ], { stdio: "inherit" });
-let findings = null; try { findings = JSON.parse(fs.readFileSync(tmpJ, "utf8")).findings } catch (e) { }
-fs.rmSync(out, { recursive: true, force: true }); fs.rmSync(tmpA, { force: true }); fs.rmSync(tmpJ, { force: true });
-if (r.status === null || findings === null) { console.log("✘ oss-scan 沒有跑完或沒有寫出結果：不能當沒問題"); process.exit(1) }
+function runScan(dir, allowItems, tag) {
+  const tmpA = out + "." + tag + ".allow.json", tmpJ = out + "." + tag + ".scan.json";
+  fs.writeFileSync(tmpA, JSON.stringify(allowItems));
+  const r = spawnSync(process.execPath, [scanner, dir, "--all", "--allow", tmpA, "--json", tmpJ], { stdio: "inherit" });
+  let fd = null; try { fd = JSON.parse(fs.readFileSync(tmpJ, "utf8")).findings } catch (e) { }
+  fs.rmSync(tmpA, { force: true }); fs.rmSync(tmpJ, { force: true });
+  return { status: r.status, findings: fd };
+}
+const r1 = runScan(out, items, "files"), r2 = metaOf.size ? runScan(metaOut, metaItems, "meta") : { status: 0, findings: [] };
+fs.rmSync(out, { recursive: true, force: true }); fs.rmSync(metaOut, { recursive: true, force: true });
+if (r1.status === null || r1.findings === null || r2.status === null || r2.findings === null) { console.log("✘ oss-scan 沒有跑完或沒有寫出結果：不能當沒問題"); process.exit(1) }
+const r = { status: r1.status || r2.status }, findings = r1.findings.concat(r2.findings.map((f) => ({ ...f, file: "（圖裡的文字）" + f.file })));
 
 /* 第六輪審查③：檔頭是圖片的檔不准用行內標記（圖片只能用整張圖的 sha256 放行），有標記就跟圖裡的文字一樣擋 */
 const marked = [];

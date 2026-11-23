@@ -28,22 +28,25 @@ function isIco(b) {
   for (let i = 0; i < n; i++) { const e = 6 + 16 * i, size = b.readUInt32LE(e + 8), off = b.readUInt32LE(e + 12); if (b[e + 3] !== 0 || size < 1 || off < 6 + 16 * n || off + size > b.length) return false }
   return true;
 }
-function sniff(buf) {
-  const b = Buffer.isBuffer(buf) ? buf : Buffer.from(buf), s = (a, z) => b.toString("latin1", a, z);
-  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return "jpeg";
-  if (b.length >= 8 && b[0] === 0x89 && s(1, 4) === "PNG") return "png";
-  if (b.length >= 12 && s(0, 4) === "RIFF" && s(8, 12) === "WEBP") return "webp";
-  if (b.length >= 4 && (s(0, 4) === "II*\0" || s(0, 4) === "MM\0*")) return "tiff";
-  if (b.length >= 6 && /^GIF8[79]a$/.test(s(0, 6))) return "gif";
+/* 第十輪審查②④：看檔頭判斷是哪一種圖（image-meta.cjs 的 sniff 和 oss-scan.js 的 IMG_HEAD 用同一段，兩邊逐字相同，測試會核對）。
+   檔頭要整段對上：PNG 8 位元組簽章；WebP 的 RIFF 長度要落在檔內；PSD 要版本 1／2；JPEG XL、JPEG 2000 的盒子要 12 位元組簽章；
+   HEIF／AVIF 的 ftyp 盒子長度要合理、品牌要認得。開頭剛好寫著「The JXL」「### ftyp」「RIFF1234WEBP」的文字檔不算圖 */
+function imgFormat(b) {
+  const s = (a, z) => b.toString("latin1", a, z), at = (o, sig) => b.length >= o + sig.length && sig.every((x, i) => b[o + i] === x);
+  if (at(0, [0xff, 0xd8, 0xff])) return "jpeg";
+  if (at(0, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) return "png";
+  if (b.length >= 16 && s(0, 4) === "RIFF" && s(8, 12) === "WEBP") { const n = b.readUInt32LE(4); if (n >= 8 && n + 8 <= b.length + 1) return "webp" }
+  if (b.length >= 8 && (s(0, 4) === "II*\0" || s(0, 4) === "MM\0*")) return "tiff";
+  if (b.length >= 13 && /^GIF8[79]a$/.test(s(0, 6))) return "gif";
   if (isBmp(b)) return "bmp";
-  /* 第七輪審查①：ICO／CUR、PSD、JPEG XL、JPEG 2000 也算圖片（讀不懂＝擋，請轉成 webp／png；也不准用行內標記放行） */
   if (isIco(b)) return "ico";
-  if (b.length >= 4 && s(0, 4) === "8BPS") return "psd";
-  if ((b.length >= 2 && b[0] === 0xff && b[1] === 0x0a) || (b.length >= 12 && s(4, 8) === "JXL ")) return "jxl";
-  if (b.length >= 12 && s(4, 8) === "jP  ") return "jp2";
-  if (b.length >= 12 && s(4, 8) === "ftyp") { const brands = s(8, Math.min(b.length, 8 + 64)); if (/avi[fs]/.test(brands)) return "avif"; if (/hei[cfsx]|hev[cx]|mif1|msf1/.test(brands)) return "heif" }
+  if (b.length >= 26 && s(0, 4) === "8BPS" && b[4] === 0 && (b[5] === 1 || b[5] === 2)) return "psd";
+  if (at(0, [0xff, 0x0a]) || at(0, [0, 0, 0, 0x0c, 0x4a, 0x58, 0x4c, 0x20, 0x0d, 0x0a, 0x87, 0x0a])) return "jxl";
+  if (at(0, [0, 0, 0, 0x0c, 0x6a, 0x50, 0x20, 0x20, 0x0d, 0x0a, 0x87, 0x0a])) return "jp2";
+  if (b.length >= 16 && s(4, 8) === "ftyp") { const n = b.readUInt32BE(0); if (n >= 16 && n <= b.length && n % 4 === 0) { const brands = s(8, n); if (/avi[fs]/.test(brands)) return "avif"; if (/hei[cfsx]|hev[cx]|mif1|msf1/.test(brands)) return "heif" } }
   return null;
 }
+function sniff(buf) { return imgFormat(Buffer.isBuffer(buf) ? buf : Buffer.from(buf)) }
 
 const TAG = { 0x010f: "camera", 0x0110: "camera", 0x013b: "owner", 0x8298: "owner", 0x9c9d: "owner", 0xa430: "owner", 0xa431: "owner", 0xa435: "owner" };   /* 0x9c9d＝XPAuthor */
 const P_EXIF = 0x8769, P_GPS = 0x8825;
@@ -177,4 +180,4 @@ function imageMeta0(buf) {
 }
 
 const KIND_ZH = { gps: "拍攝地點（GPS）", camera: "相機廠牌／型號", owner: "拍攝者／著作權人／相機主人或序號", comment: "JPEG 註解" };
-module.exports = { imageMeta, sniff, KIND_ZH };
+module.exports = { imgFormat, imageMeta, sniff, KIND_ZH };

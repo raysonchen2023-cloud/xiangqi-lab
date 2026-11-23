@@ -312,7 +312,7 @@ test("第三輪①：檔頭像圖片（BM、PNG、GIF89a、FF D8 FF DA、WEBP、
 test("第四輪：放行清單的 fileSha256 只給圖片用、要 64 碼、要寫 file；個資規則可用 file＋fileSha256 代替 sha256；inline 沒寫 file 或寫萬用字元都不收", () => {
   const H = "a".repeat(64);
   assert.deepEqual(SC.checkAllow({ items: [{ rule: "email", file: "src/a.png", fileSha256: H, reason: "截圖誤報" }], inline: [] }, RISKS), []);
-  assert.equal(SC.checkAllow({ items: [{ rule: "email", file: "src/a.js", fileSha256: H, reason: "不是圖片" }], inline: [] }, RISKS).length, 1);
+  assert.equal(SC.checkAllow({ items: [{ rule: "email", file: "src/a.js", fileSha256: H, reason: "檔頭是圖的 .js" }], inline: [] }, RISKS).length, 0, "第十輪③：fileSha256 不限圖片副檔名");
   assert.equal(SC.checkAllow({ items: [{ rule: "email", fileSha256: H, reason: "沒寫 file" }], inline: [] }, RISKS).length >= 1, true);
   assert.equal(SC.checkAllow({ items: [{ rule: "local-path", file: "src/a.png", fileSha256: "abc", reason: "雜湊太短" }], inline: [] }, RISKS).length, 1);
   assert.equal(SC.checkAllow({ items: [], inline: [{ sha256: H, reason: "沒寫 file" }] }, RISKS).length, 1, "inline 一定要寫 file（第四輪 M27）");
@@ -376,8 +376,7 @@ test("第三輪④：scan-changed 連 node_modules、.git 開頭以外的資料�
   assert.equal(O.scan(d).findings.length, 0); assert.equal(O.scan(d, { all: true }).findings.length, 1);
 });
 test("第三輪⑤：圖裡解出來的文字不會蓋掉倉庫裡同名的 .meta.txt（蓋掉的話那個檔就沒掃到）", () => {
-  const taken = new Set(["a.png", "a.png.meta.txt", "a.png.meta-1.txt"]);
-  assert.equal(SC.freeName("a.png", taken), "a.png.meta-2.txt"); assert.equal(SC.freeName("b.png", taken), "b.png.meta.txt"); assert.equal(SC.freeName("b.png", taken), "b.png.meta-1.txt");
+  /* 第十輪起圖裡的文字放在另一個資料夾掃，跟倉庫裡同名的檔不會撞在一起（下面是整合測試） */
   const zlib = require("zlib"), crc = (b) => { let c, t = -1; for (const x of b) { c = (t ^ x) & 255; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t = (t >>> 8) ^ c } return (t ^ -1) >>> 0 };
   const chunk = (type, data) => { const len = Buffer.alloc(4), td = Buffer.concat([Buffer.from(type), data]), c = Buffer.alloc(4); len.writeUInt32BE(data.length); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]) };
   const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(1, 0); ihdr.writeUInt32BE(1, 4); ihdr[8] = 8;
@@ -543,7 +542,7 @@ test("第七輪⑥：倉庫裡每個檔用空的基準整倉掃，沒有未放�
 });
 test("第七輪①：ICO／CUR、PSD、JPEG XL、JPEG 2000 也算圖片——讀不懂就擋、不准用行內標記放行", () => {
   const MK = "oss-scan" + ":allow", body = Buffer.from("\nm=" + MAIL3 + " " + MK + "\n");
-  const heads = { ico: ICOH(16 + 40), cur: ICOH(16 + 40, true), psd: Buffer.from("8BPS\0\x01"), jxl: Buffer.from([0xff, 0x0a]), jxlbox: Buffer.concat([Buffer.from([0, 0, 0, 0x0c]), Buffer.from("JXL \r\n\x87\n")]), jp2: Buffer.concat([Buffer.from([0, 0, 0, 0x0c]), Buffer.from("jP  \r\n\x87\n")]) };
+  const heads = { ico: ICOH(16 + 40), cur: ICOH(16 + 40, true), psd: Buffer.from("8BPS\0\x01", "latin1"), jxl: Buffer.from([0xff, 0x0a]), jxlbox: Buffer.concat([Buffer.from([0, 0, 0, 0x0c]), Buffer.from("JXL \r\n\x87\n", "latin1")]), jp2: Buffer.concat([Buffer.from([0, 0, 0, 0x0c]), Buffer.from("jP  \r\n\x87\n", "latin1")]) };
   const O = require(OSS);
   for (const [k, h] of Object.entries(heads)) {
     const b = Buffer.concat([h, Buffer.alloc(16), body]);
@@ -652,4 +651,43 @@ test("第九輪②：行內標記的登記要檔名和那一行的雜湊都對�
   assert.equal(scanA(d, [], [{ file: "source/m.js", sha256: SC.lineSha(line), reason: "對的登記" }]).status, 0);
   assert.equal(scanA(d, [], [{ file: "source/m.js", sha256: "c".repeat(64), reason: "雜湊不對" }]).status, 1, "檔名對、雜湊不對照擋");
   assert.equal(scanA(d, [], [{ file: "source/other.js", sha256: SC.lineSha(line), reason: "檔名不對" }]).status, 1, "雜湊對、檔名不對照擋");
+});
+
+/* ---- PR #68 第十輪審查（iMac Claude 2） ---- */
+const BEARER = "Bear" + "er " + "Q".repeat(32);
+const ztxtPng = (text) => { const { zlib, chunk, png } = PNGK; return png(chunk("zTXt", Buffer.concat([Buffer.from("Comment\0\0"), zlib.deflateSync(Buffer.from(text))]))) };
+test("第十輪①：沒寫 file、只寫 rule＋match 的放行項目碰不到圖裡的文字（zTXt 壓縮的 Bearer、信箱照擋）", () => {
+  const p = ztxtPng("auth " + BEARER), d = repo(({ put }) => put("source/z.png", p));
+  assert.equal(scanA(d, [{ rule: "bearer", match: BEARER, reason: "只寫規則和字" }]).status, 1, "rule＋match 不能放行圖裡的文字");
+  const h = require("crypto").createHash("sha256").update(p).digest("hex");
+  assert.equal(scanA(d, [{ rule: "bearer", file: "source/z.png", fileSha256: h, reason: "整張圖雜湊對得上" }]).status, 0, "對到原圖雜湊才放行");
+  assert.equal(scanA(d, [{ rule: "bearer", file: "source/z.png", fileSha256: "d".repeat(64), reason: "雜湊不對" }]).status, 1, "雜湊不對照擋（M3）");
+  const mh = require("crypto").createHash("sha256").update(MAIL3).digest("hex"), q = ztxtPng("note " + MAIL3), dq = repo(({ put }) => put("source/q.png", q));
+  assert.equal(scanA(dq, [{ rule: "email", file: "source/q.png.meta.txt", sha256: mh, reason: "直接寫 meta 檔名" }]).status, 1, "直接寫 .meta 檔名不算數（M15）");
+});
+test("第十輪②④：image-meta 的 sniff 和 oss-scan 的 IMG_HEAD 是同一段程式、對每個樣本結果相同；HEIC 也算圖片（不認行內標記）；長得像檔頭的文字檔不算圖片", () => {
+  const O = require(OSS), src = (f) => { const t = fs.readFileSync(f, "utf8"), i = t.indexOf("function imgFormat("); return t.slice(i, t.indexOf("\n}\n", i)) };
+  assert.equal(src(path.join(__dirname, "image-meta.cjs")), src(OSS), "兩邊的 imgFormat 要逐字相同");
+  const ftyp = (brand, n = 24) => { const b = Buffer.alloc(n); b.writeUInt32BE(n, 0); b.write("ftyp" + brand + "\0\0\0\0mif1" + brand, 4, "latin1"); return b };
+  const texts = { jxl: "The JXL format is described here.\n", ftyp: "### ftyp box: heic and avif notes\n", riff: "RIFF1234WEBP notes about webp.\n", psd: "8BPS is the photoshop magic.\n", png: "\x89PNG is the png magic\n" };
+  for (const [k, t] of Object.entries(texts)) { const b = Buffer.from(t, "latin1"); assert.equal(IM.sniff(b), null, k); assert.equal(O.IMG_HEAD(b), false, k) }
+  const r = scan(repo(({ put }) => { for (const [k, t] of Object.entries(texts)) put("source/" + k + ".md", Buffer.from(t, "latin1")) }));
+  assert.equal(r.status, 0, "長得像檔頭的文字檔不擋（main 版也是過的）\n" + r.stdout);
+  const heic = Buffer.concat([ftyp("heic"), Buffer.from("\nm=" + MAIL3 + " " + "oss-scan" + ":allow\n")]);
+  assert.equal(IM.sniff(heic), "heif"); assert.ok(O.IMG_HEAD(heic), "HEIC 兩邊都當圖片");
+  const dd = fs.mkdtempSync(path.join(os.tmpdir(), "xq-m10-")); made.push(dd); fs.writeFileSync(path.join(dd, "a.heic"), heic);
+  assert.ok(O.scan(dd).findings.some((f) => f.rule === "email"), "HEIC 不認行內標記");
+  for (const b of [ftyp("heic"), ftyp("avif"), Buffer.concat([ICOH(40), Buffer.alloc(40)]), Buffer.concat([BMPH(4), Buffer.alloc(4)]), SIG.png, Buffer.concat([SIG.gif, Buffer.alloc(8)]), heic])
+    assert.equal(!!IM.sniff(b), O.IMG_HEAD(b), "兩邊結果相同：" + IM.sniff(b));
+});
+test("第十輪⑤：ICO 的目錄要真的落在檔內（張數、大小、位移），只有 00 00 01 00 開頭不算（M20）", () => {
+  const ok = Buffer.concat([ICOH(40), Buffer.alloc(40)]); assert.equal(IM.sniff(ok), "ico");
+  const bad = [Buffer.concat([ICOH(400), Buffer.alloc(40)]), (() => { const h = ICOH(40); h.writeUInt32LE(2, 18); return Buffer.concat([h, Buffer.alloc(40)]) })(), (() => { const h = ICOH(40); h.writeUInt16LE(0, 4); return Buffer.concat([h, Buffer.alloc(40)]) })()];
+  for (const b of bad) { assert.equal(IM.sniff(b), null); assert.equal(require(OSS).IMG_HEAD(b), false) }
+});
+test("第十輪③：檔頭是圖、副檔名不是圖的檔，中風險可以用整個檔的 fileSha256 放行", () => {
+  const b = Buffer.concat([PNGK.png(), Buffer.from("\0 m=" + MAIL3 + " \0")]), h = require("crypto").createHash("sha256").update(b).digest("hex");   /* 合法的 PNG，檔尾多接一段 */
+  const d = repo(({ put }) => put("source/thumb.bin", b));
+  assert.equal(scanA(d, []).status, 1);
+  assert.equal(scanA(d, [{ rule: "email", file: "source/thumb.bin", fileSha256: h, reason: "縮圖快取檔" }]).status, 0);
 });
