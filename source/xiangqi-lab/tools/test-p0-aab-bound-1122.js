@@ -22,10 +22,12 @@ const V = "20261122-0804";
 const d3 = (sha, android) => ({ file: "3d-" + android + ".json", json: { tool: "P0-3D", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D") } });
 /* P0-3D 金絲雀：check-3d.js --self-test 的報告（2026-11-23） */
 const c3 = (sha, android) => ({ file: "3d-canary-" + android + ".json", json: { tool: "P0-3D", selfTest: true, aabSha256: sha, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") } });
+/* W91（11/24）：產物比對報告（aab-diff.js --strict --old-code --json），合格的樣子 */
+const ad = (sha = A, o = {}) => ({ file: "aab-diff.json", json: Object.assign({ tool: "AAB-DIFF", strict: true, newSha256: sha, oldSha256: "d".repeat(64), oldCode: "26112104", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {}, canary: { home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true }, ok: true }, toolPins: TP.pinsFor("AAB-DIFF") }, o) });
 const ok3 = (sha = A) => [
   { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true, deep: { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: true } } }, toolPins: TP.pinsFor("P0-IMG") } },
   { file: "upd.json", json: { tool: "P0-UPD", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") } },
-  d3(sha, "12"), d3(sha, "16"), c3(sha, "12"), c3(sha, "16")];
+  d3(sha, "12"), d3(sha, "16"), c3(sha, "12"), c3(sha, "16"), ad(sha)];
 const has = (r, re) => r.problems.some((p) => re.test(p));
 
 test("閘門：P0-IMG、P0-UPD、P0-3D（Android 12、16）都綁在要送審的 AAB 與版號上、都通過＝可以送審", () => {

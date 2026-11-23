@@ -15,6 +15,8 @@
 //     （PR #42 審查後 Windows Claude 2 提的三欄）
 //   ・P0-3D 要同一次執行連續 2 輪全過（rounds≥2 且 roundsPassed＝rounds；W69 流程盤點第 5 項，開發者 11/23 選「連續 2 輪」）；
 //     之前失敗過的嘗試（failedBefore）照實列出，不擋但看得到
+//   ・AAB-DIFF（aab-diff.js --strict --old-code --json，對 Play 現行版；W91，2026-11-24）一份：新版雜湊＝送審 AAB、舊版寫明 versionCode 且不是同一個檔、
+//     紅項 0、沒確認的黃項 0、結束代碼 0、金絲雀（候選包自己做的四種壞樣本）都抓到；不能豁免。放行參數與確認過的黃項由 aabDiffInfo() 帶出、印在結果裡
 // 例外（W69 流程盤點第 5 項，開發者 11/23 選「寫進倉庫豁免檔」）：
 //   只有 WAIVABLE 列的四種能豁免，而且要寫在倉庫的 .github/p0-waivers.json（走 PR、iMac Claude 2 逐行審）；
 //   每筆要綁同一個 AAB 的 SHA-256、寫原因（≥4 字）、決定人、決定日期（YYYY-MM-DD）。別處轉述的決定一律不算。
@@ -27,7 +29,7 @@ const TP = require("./tool-pin.js");
 const { MEDIA, NOTE_VIA_WEB, MAN_MISS_WHY, unknownWhy, cdnCanary } = require("./check-aab-assets.js");   /* 第十三、十四次複審：媒體檔、提醒與缺驗的固定文字都照破圖工具自己的定義；所以 check-aab-assets.js 也列進閘門的自我鎖定 */
 const PROBE_RE = /^data\/__xq_p0_canary_[0-9a-f]{12}\.webp$/;   /* 金絲雀③的探測檔（check-aab-assets.js 產生的檔名），不是真的要補抓的檔 */
 
-const TOOLS = ["P0-IMG", "P0-UPD", "P0-3D"], ANDROID_3D = ["12", "16"], ROUNDS_3D = 2;
+const TOOLS = ["P0-IMG", "P0-UPD", "P0-3D", "AAB-DIFF"], ANDROID_3D = ["12", "16"], ROUNDS_3D = 2;
 const WAIVABLE = ["P0-IMG/cdn", "P0-UPD/old-worker", "P0-3D/partial", "P0-3D/rounds"];
 const HEX64 = /^[0-9a-f]{64}$/;
 const verOf = (j) => j.tool === "P0-IMG" ? j.siteVersion : j.tool === "P0-UPD" ? (j.new && j.new.build) : j.build;
@@ -120,6 +122,25 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
     const key = t === "P0-3D" ? `P0-3D${canary3d ? " 金絲雀" : ""}（Android ${av || "?"}）` : t;
     /* 工具鎖定（2026-11-23）：報告要記跑它的工具雜湊，而且要等於 origin/main 那一版；不能豁免 */
     for (const p of TP.checkPins(t, json.toolPins, mainSha)) add(`${key}：${p}`);
+    /* W91（11/24，開發者「要不要把 aab-diff 列進 P0-IMG」）：新舊 AAB 產物比對（aab-diff.js --strict --json）一份；不能豁免。
+       新版＝要送審的這個 AAB；舊版要寫明是 Play 上哪一版（--old-code）、而且不是同一個檔；--strict；紅項 0、沒確認的黃項 0、結束代碼 0；
+       金絲雀（候選包自己做的四種壞樣本）都要抓到。放行參數、確認過的黃項原樣帶出去（收據要記）。
+       保證範圍：舊版是不是真的 Play 現行版，閘門看不到 Play，只能核對報告有寫、而且跟新版不同 */
+    if (t === "AAB-DIFF") {
+      if (seen.has(key)) add(`${key} 有兩份報告（${seen.get(key)}、${file}）：只能交一份`);
+      seen.set(key, file);
+      if (!HEX64.test(String(json.newSha256 || ""))) add(`${key}：報告沒有記新版 AAB 的 SHA-256（newSha256）`);
+      else if (json.newSha256 !== aabSha) add(`${key}：比對的新版（${json.newSha256.slice(0, 12)}）不是要送審的這個 AAB（${aabSha.slice(0, 12)}）`);
+      if (!HEX64.test(String(json.oldSha256 || "")) || json.oldSha256 === aabSha) add(`${key}：舊版 AAB 的 SHA-256 沒記、或跟送審的是同一個（拿錯檔）`);
+      if (!/^\d{1,10}$/.test(String(json.oldCode || ""))) add(`${key}：沒寫舊版是 Play 上的哪一版（要用 --old-code=<versionCode> 跑）`);
+      if (json.strict !== true) add(`${key}：要用 --strict 跑（黃項沒確認也要擋）`);
+      if (!Array.isArray(json.red) || json.red.length) add(`${key}：有紅項（${Array.isArray(json.red) ? json.red.slice(0, 3).map((x) => x.f).join("、") : "沒有 red 欄位"}）：紅項不能確認、也不能豁免`);
+      if (!Array.isArray(json.yellow) || json.yellow.length) add(`${key}：有沒確認的黃項（${Array.isArray(json.yellow) ? json.yellow.slice(0, 3).map((x) => x.f).join("、") : "沒有 yellow 欄位"}）：人看過後寫進 --ack 清單再跑`);
+      if (json.exitCode !== 0 || json.pass !== true) add(`${key}：沒有通過（exitCode＝${json.exitCode}、pass＝${json.pass}）`);
+      const c = json.canary || {}, miss = ["home", "zeroJs", "jks", "yellow"].filter((k) => !(c[k] && c[k].ok === true));
+      if (miss.length || c.ok !== true) add(`${key}：金絲雀沒抓到（${miss.join("、") || "ok≠true"}）：這次比對可能失靈，結果不可信`);
+      continue;
+    }
     if (t === "P0-3D" && HEX64.test(String(json.apkSha256 || ""))) apk3d.set((canary3d ? "c" : "f") + av, json.apkSha256);
     if (canary3d) {
       /* P0-3D 金絲雀＝check-3d.js --self-test：正常那次要過、落點蓋遮罩那次要被判失敗（pass＝true 代表兩次都照預期）；跟正式報告綁同一個 AAB、版號、APK */
@@ -189,6 +210,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
   }
   if (!seen.has("P0-IMG")) add("缺 P0-IMG 的報告（缺驗不能送審）");
   if (!seen.has("P0-UPD")) add("缺 P0-UPD 的報告（缺驗不能送審）");
+  if (!seen.has("AAB-DIFF")) add("缺 AAB-DIFF 的報告（aab-diff.js 對 Play 現行版、--strict --old-code --json 跑；缺驗不能送審）");
   for (const v of ANDROID_3D) if (!seen.has(`P0-3D（Android ${v}）`)) add(`缺 Android ${v} 的 P0-3D 報告（P0 規定 Android 12 與 16 都要跑）`);
   /* PR #66 審查建議：同一個 Android 版本，金絲雀和正式報告要測同一個 APK（apkSha256 一樣） */
   for (const v of ANDROID_3D) { const f = apk3d.get("f" + v), c = apk3d.get("c" + v); if (f && c && f !== c) add(`P0-3D 金絲雀（Android ${v}）：測的 APK（${c.slice(0, 12)}）跟正式報告（${f.slice(0, 12)}）不是同一個`) }
@@ -200,6 +222,14 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
     if (w) waived.push(`${f.msg}——已豁免：${w.reason}（${w.decidedBy}，${w.decidedAt}）`); else problems.push(f.msg);
   }
   return { ok: problems.length === 0, problems, waived, notes };
+}
+
+/* W91：產物比對的摘要（舊版、放行參數、確認過的黃項），給命令列印出、收據記（不放進 gate() 的回傳，回傳格式不變） */
+function aabDiffInfo(reports) {
+  const x = (reports || []).find((r) => r && r.json && r.json.tool === "AAB-DIFF"), j = x && x.json;
+  if (!j) return null;
+  return { file: x.file, oldCode: j.oldCode || null, oldSha256: j.oldSha256 || null, args: j.args && typeof j.args === "object" ? j.args : {},
+    acked: Array.isArray(j.acked) ? j.acked.map((y) => y && y.ack) : [], allowed: Array.isArray(j.allowed) ? j.allowed.length : 0 };
 }
 
 async function main() {
@@ -241,11 +271,14 @@ async function main() {
   const r = gate(sha, BUILD, reports, fromRepo ? waivers : [], { mainSha, cdnProbe });
   console.log(`要送審的 AAB：${AAB}（版號 ${BUILD}）\n  SHA-256 ${sha}`);
   if (a("--waivers") && !fromRepo) console.log("⚠ 豁免檔不是倉庫的 .github/p0-waivers.json：沒經過逐行審，裡面的豁免一律不算");
+  const AD = aabDiffInfo(reports);
+  if (AD) { const d = AD, args = Object.entries(d.args).filter(([k]) => k !== "ack").map(([k, v]) => `--${k}=${v}`);
+    console.log(`產物比對（AAB-DIFF）：舊版 versionCode ${d.oldCode}（${String(d.oldSha256 || "").slice(0, 12)}）；放行參數 ${args.length ? args.join(" ") : "沒有"}；確認過的黃項 ${d.acked.length} 個、照參數放行 ${d.allowed} 個`) }
   for (const n of r.notes) console.log("⚠ " + n);
   for (const w of r.waived) console.log("△ " + w);
-  if (r.ok) { console.log("✔ P0-IMG、P0-UPD、P0-3D（Android 12、16）都綁在這個 AAB 與版號上、都通過" + (r.waived.length ? `（其中 ${r.waived.length} 項照倉庫豁免檔放行）` : "") + "：可以送審"); process.exit(0) }
+  if (r.ok) { console.log("✔ P0-IMG、P0-UPD、P0-3D（Android 12、16）、AAB-DIFF 都綁在這個 AAB 與版號上、都通過" + (r.waived.length ? `（其中 ${r.waived.length} 項照倉庫豁免檔放行）` : "") + "：可以送審"); process.exit(0) }
   for (const p of r.problems) console.log("✘ " + p);
   console.log("✘ 不能送審"); process.exit(1);
 }
-module.exports = { probeCdn, GATE_CDN, gate, validWaiver, onlyCdnDown, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
+module.exports = { probeCdn, GATE_CDN, gate, aabDiffInfo, validWaiver, onlyCdnDown, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
 if (require.main === module) main().catch((e) => { console.error("✘ " + (e && e.message)); process.exit(2) });

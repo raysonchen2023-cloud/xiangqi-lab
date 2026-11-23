@@ -417,3 +417,52 @@ test("〔原始碼〕aab-diff.js：LF、沒有行內 // 註解吃掉程式", () 
   assert.ok(!s.includes("\r"));
   for (const line of s.split("\n")) { const code = line.replace(/"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|\/(?:[^/\\\n]|\\.)+\/[gimsuy]*/g, ""); assert.ok(!/;\s*\/\/\s*\S/.test(code), "行內 // 註解：" + line.slice(0, 80)) }
 });
+
+/* W91（11/24）：aab-diff 接進送審閘門 */
+const W91 = Object.assign({}, BASE, { [P + "core.js"]: "var a=1;".repeat(40), [P + "data/homemap/home.webp"]: Buffer.alloc(4000, 9) });
+const idx = (o) => AD.readZipIndex(makeZip("w91-" + Math.random().toString(36).slice(2) + ".zip", o));
+
+test("W91：新增的檔不在現行包的位置（根目錄說明文件、releases/）或是驗證紀錄、證據頁 → 黃；在 data/、pikafish-src/、licenses/、根目錄程式檔 → 不報；--expect-added 放行的列在放行", () => {
+  const A = idx(W91);
+  const B = idx(Object.assign({}, W91, { [P + "AGENTS.md"]: "x".repeat(500), [P + "releases/android.md"]: "y".repeat(500), [P + "data/docs/verification-log.txt"]: "z".repeat(500),
+    [P + "data/flags.json"]: "{}", [P + "pikafish-src/full/build/build.sh"]: "echo", [P + "licenses/MIT.txt"]: "MIT", [P + "three-shim.mjs"]: "export{}" }));
+  const r = AD.diffIndex(A, B), y = r.yellow.map((x) => x.f).sort();
+  assert.deepEqual(y, [P + "AGENTS.md", P + "data/docs/verification-log.txt", P + "releases/android.md"].sort(), "只有這三個亮黃：" + y);
+  assert.equal(r.red.length, 0);
+  const r2 = AD.diffIndex(A, B, { expectAdded: new RegExp("AGENTS") });
+  assert.ok(!r2.yellow.some((x) => x.f === P + "AGENTS.md") && r2.allowed.some((x) => x.f === P + "AGENTS.md"), "放行的不算黃、但列在放行");
+  assert.ok(r2.yellow.some((x) => x.f === "（放行參數）"), "有放行就要人看");
+});
+
+test("W91 金絲雀：從候選包自己做四種壞樣本（刪首頁素材、js 縮成 0、多帶 .jks、多一個沒確認的 AGENTS.md），同一套參數判斷；參數放太寬、包裡找不到檔就判失靈", () => {
+  const A = idx(W91), B = idx(W91);
+  const c = AD.canaryRun(A, B);
+  assert.equal(c.ok, true, JSON.stringify(c));
+  assert.equal(c.home.f, P + "data/homemap/home.webp"); assert.equal(c.zeroJs.f, P + "core.js");
+  const wide = AD.canaryRun(A, B, { expectRemoved: new RegExp(".") });
+  assert.equal(wide.home.ok, false, "--expect-removed=. 放行所有拿掉的檔：刪首頁素材那個壞樣本就不紅，金絲雀要判失靈");
+  assert.equal(wide.ok, false);
+  const ackAll = AD.canaryRun(A, B, { ack: new Set([P + "AGENTS.md@5a5a5a5a:4096"]) });
+  assert.equal(ackAll.yellow.ok, false, "確認清單剛好含壞樣本的確認碼，黃項被確認掉就判失靈");
+  const bare = AD.canaryRun(idx(BASE), idx(BASE));
+  assert.equal(bare.ok, false, "包裡沒有首頁素材、沒有根目錄 js：做不出壞樣本＝失靈，不能當通過");
+  assert.equal(bare.zeroJs.f, null);
+});
+
+test("W91 報告：tool＝AAB-DIFF、strict、兩個 AAB 的 SHA-256、舊版本碼、工具雜湊、金絲雀；pass 要結束代碼 0＋--strict＋金絲雀都抓到；版本碼不是數字回 2", () => {
+  const a = makeZip("w91-old.zip", W91), b = makeZip("w91-new.zip", Object.assign({}, W91, { [P + "data/new.webp"]: Buffer.alloc(100, 1) }));
+  const out = path.join(TMP, "w91.json"), crypto = require("crypto"), sh = (f) => crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+  let c = run(a, b, "--strict", "--old-code=26112104", "--new-code=26112401", "--json=" + out);
+  assert.equal(c.status, 0, c.stdout + c.stderr);
+  let j = JSON.parse(fs.readFileSync(out, "utf8"));
+  assert.equal(j.tool, "AAB-DIFF"); assert.equal(j.strict, true); assert.equal(j.oldCode, "26112104"); assert.equal(j.newCode, "26112401");
+  assert.equal(j.oldSha256, sh(a)); assert.equal(j.newSha256, sh(b)); assert.equal(j.exitCode, 0); assert.equal(j.canary.ok, true); assert.equal(j.pass, true);
+  const TP = require(path.join(ROOT, "xiangqi-android/scripts/tool-pin.js"));
+  assert.deepEqual(j.toolPins, TP.pinsFor("AAB-DIFF"));
+  c = run(a, b, "--old-code=26112104", "--json=" + out); j = JSON.parse(fs.readFileSync(out, "utf8"));
+  assert.equal(c.status, 0); assert.equal(j.strict, false); assert.equal(j.pass, false, "沒加 --strict 不算通過");
+  const a0 = makeZip("w91-bare-a.zip", BASE), b0 = makeZip("w91-bare-b.zip", Object.assign({}, BASE, { [P + "data/new.webp"]: Buffer.alloc(100, 1) }));
+  c = run(a0, b0, "--strict", "--old-code=1", "--json=" + out); j = JSON.parse(fs.readFileSync(out, "utf8"));
+  assert.equal(c.status, 0, "結束代碼照舊只看紅黃"); assert.equal(j.canary.ok, false); assert.equal(j.pass, false, "金絲雀做不出來就不算通過");
+  assert.equal(run(a, b, "--old-code=abc").status, 2);
+});

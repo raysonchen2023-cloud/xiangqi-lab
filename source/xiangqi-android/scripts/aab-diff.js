@@ -87,6 +87,12 @@ const MEDIA_RE = /\.(webp|png|jpe?g|gif|avif|svg|glb|gltf|bin|mp3|ogg|wav|m4a|wo
 /* 每個 AAB 一定有的檔：兩包都要有，才算拿對檔。審查要改：原本兩個不相干的 zip 互比也會回 0。 */
 const AAB_MUST = ["BundleConfig.pb", "base/manifest/AndroidManifest.xml", "base/assets/public/index.html"];
 const MB = 1024 * 1024;
+/* W91（11/24）：新增的檔要在現行包本來就有的位置（照 26112401 的實際結構）；不在這些位置就亮黃。
+   補 26112301 那次漏掉的那一類：根目錄多了 AGENTS.md、releases/、驗證紀錄（W83）——不是 debug 檔、也不是金鑰，原本完全不報。 */
+const NEW_OK = /^(base\/assets\/public\/(data|engine|pikafish-src|licenses)\/|base\/assets\/public\/[^/]+\.(m?js|html?|css|json|png|svg|webp|ico)$|base\/assets\/public\/(LICENSE[^/]*|NOTICE[^/]*|NNUE-License\.md)$|base\/(dex|lib|res|manifest|root)\/|base\/[^/]+\.pb$|base\/assets\/[^/]+\.json$|BUNDLE-METADATA\/|META-INF\/|BundleConfig\.pb$)/;
+/* 在允許的位置裡、但不該進安裝包的：驗證紀錄、證據頁（W83 從 make-www 排除過；網頁版才放） */
+const NEW_SUSPECT = /^base\/assets\/public\/data\/docs\/(verification-log|evidence)[^/]*$/;
+const TOOL_PINS = require("./tool-pin.js").pinsFor("AAB-DIFF");   /* 啟動就先算：記的是實際被載入、跑這一次的那一份 */
 
 /* 比對兩份索引；opts.expectRemoved／expectAdded＝正規式（列在裡面的檔可以從新版拿掉／新增，不算紅，但會列在報告裡） */
 function diffIndex(A, B, opts = {}) {
@@ -117,6 +123,9 @@ function diffIndex(A, B, opts = {}) {
     else if (b.size === 0 && ZERO_STUB.test(n)) yellow.push({ f: n, why: "Capacitor 產生的空殼檔（本來就是 0 位元組），請人確認一次" });
     else if (b.size === 0 && (MEDIA_RE.test(n) || CODE_RE.test(n) || /^base\/assets\/public\/data\//.test(n))) red.push({ f: n, why: "新增的素材或程式檔是 0 位元組" });
     else if (b.size === 0) yellow.push({ f: n, why: "新增的檔是 0 位元組，請人確認" });
+    else if (NEW_SUSPECT.test(n) || !NEW_OK.test(n)) {
+      if (ok) allowed.push({ f: n, crc: (b.crc >>> 0).toString(16) + ":" + b.size, why: "預期新增（--expect-added）" });
+      else yellow.push({ f: n, why: NEW_SUSPECT.test(n) ? "新增驗證紀錄／證據頁進了安裝包（網頁版才放，W83），請人確認" : "新增的檔不在現行包本來就有的位置（例如根目錄多了說明文件、releases/），請人確認" }) }
     if (b.size > 20 * MB) yellow.push({ f: n, why: "新增超過 20 MB 的單檔（" + (b.size / MB).toFixed(1) + " MB）" });
   }
   if (ta > 0 && tb > ta * 1.2) yellow.push({ f: "（整包）", why: "壓縮前總大小增加 " + ((tb / ta - 1) * 100).toFixed(0) + "%（" + (ta / MB).toFixed(0) + " → " + (tb / MB).toFixed(0) + " MB）" });
@@ -141,6 +150,27 @@ function checkInputs(A, B, pathA, pathB) {
   return null;
 }
 
+/* W91 金絲雀（AGENTS.md「P0 出口驗證要難作假」：壞樣本從實際的候選包做、跟正式比對走同一條判斷路徑 diffIndex，參數與確認清單也一樣）：
+   ①刪一個首頁素材 ②把一個根目錄的 js 縮成 0 位元組 ③多帶一個 .jks——都要變紅；④多一個沒確認過的 AGENTS.md——要變黃（--strict 擋）。
+   參數放太寬（例如 --expect-removed=.）會讓①不紅，金絲雀就判失靈。回傳 { home, zeroJs, jks, yellow: {f, ok}, ok } */
+function canaryRun(A, B, opts = {}) {
+  const pick = (re) => [...B.keys()].filter((n) => A.has(n) && re.test(n) && B.get(n).size > 0).sort()[0] || null;
+  const out = {};
+  const run = (k, f, mut, where) => {
+    if (!f) { out[k] = { f: null, ok: false, why: "包裡找不到可以拿來做壞樣本的檔" }; return }
+    const B2 = new Map(B); mut(B2, f);
+    const r = diffIndex(A, B2, opts);
+    out[k] = { f, ok: r[where].some((x) => x.f === f) };
+  };
+  run("home", pick(/^base\/assets\/public\/data\/homemap\/[^/]+\.(webp|png|jpe?g)$/) || pick(/^base\/assets\/public\/data\/.+\.(webp|png|jpe?g)$/), (M, f) => M.delete(f), "red");
+  run("zeroJs", pick(/^base\/assets\/public\/[^/]+\.js$/), (M, f) => M.set(f, { size: 0, csize: 0, crc: 0 }), "red");
+  const JKS = "base/assets/public/upload-keystore.jks", AG = "base/assets/public/AGENTS.md";
+  run("jks", B.has(JKS) ? null : JKS, (M, f) => M.set(f, { size: 2048, csize: 2000, crc: 0x1234abcd }), "red");
+  run("yellow", B.has(AG) ? null : AG, (M, f) => M.set(f, { size: 4096, csize: 1500, crc: 0x5a5a5a5a }), "yellow");
+  out.ok = ["home", "zeroJs", "jks", "yellow"].every((k) => out[k].ok === true);
+  return out;
+}
+
 function renderMd(r, oldName, newName, args) {
   const given = Object.entries(args || {}).map(([k, v]) => "`--" + k + "=" + String(v).replace(/`/g, "'") + "`");
   const L = ["# 新舊 AAB 產物比對", "", "- 舊版（標準答案）：" + oldName, "- 新版（候選）：" + newName,
@@ -155,10 +185,16 @@ function renderMd(r, oldName, newName, args) {
   return L.join("\n");
 }
 
-/* 結束代碼：0＝沒有紅項；1＝有紅項（--strict 時黃項也算）；2＝沒驗到（讀不到、不是 AAB、拿錯檔、參數不對、寫不出報告） */
+/* 整個檔的 SHA-256（分塊讀，安裝包可能好幾百 MB） */
+function sha256File(f) {
+  const h = require("crypto").createHash("sha256"), fd = fs.openSync(f, "r"), b = Buffer.alloc(8 * MB);
+  try { let n; while ((n = fs.readSync(fd, b, 0, b.length, null)) > 0) h.update(b.subarray(0, n)) } finally { fs.closeSync(fd) }
+  return h.digest("hex");
+}
+/* 結束代碼：0＝沒有紅項；1＝有紅項（--strict 時黃項也算；金絲雀結果記在報告 canary 與 pass，閘門看）；2＝沒驗到（讀不到、不是 AAB、拿錯檔、參數不對、寫不出報告） */
 /* 參數：白名單（第二輪審查要改：--Strict、--strict=1、--foo=bar 原本被默默忽略）。
    不認得的、值是空的、同一個出現兩次、正規式寫錯，一律當「沒驗到」回 2。回傳 {pos, opt, strict} 或錯誤訊息字串。 */
-const ARG_VAL = ["expect-removed", "expect-added", "expect-shrunk", "json", "md", "ack"];
+const ARG_VAL = ["expect-removed", "expect-added", "expect-shrunk", "json", "md", "ack", "old-code", "new-code"];
 function parseArgs(argv) {
   const pos = [], opt = {}; let strict = false;
   for (const a of argv) {
@@ -179,6 +215,7 @@ function parseArgs(argv) {
   for (const k of ["json", "md", "ack"]) if (k in opt) for (const p of pos) if (same(opt[k], p)) return "--" + k + " 指到輸入的 AAB：" + opt[k];
   if ("json" in opt && "md" in opt && same(opt.json, opt.md)) return "--json 和 --md 指到同一個檔";
   for (const k of ["json", "md"]) if (k in opt && "ack" in opt && same(opt[k], opt.ack)) return "--" + k + " 會蓋掉 --ack 清單";
+  for (const k of ["old-code", "new-code"]) if (k in opt && !/^\d{1,10}$/.test(opt[k])) return "--" + k + " 要是 versionCode 數字：" + opt[k];   /* W91：送審閘門要知道「舊版」是 Play 上哪一版 */
   const raw = {};
   for (const k of ["expect-removed", "expect-added", "expect-shrunk"]) if (k in opt) { raw[k] = opt[k]; try { opt[k] = new RegExp(opt[k]) } catch (e) { return "--" + k + " 的正規式寫錯：" + e.message } }
   /* --ack：人看過的黃項確認碼清單，JSON 字串陣列（例如 ["base/assets/public/release.json@1a2b3c4d"]）。讀不到、格式不對一律回 2 */
@@ -193,10 +230,20 @@ if (require.main === module) {
   let A, B;
   try { A = readZipIndex(P.pos[0]); B = readZipIndex(P.pos[1]) } catch (e) { no(e.message) }
   const bad = checkInputs(A, B, P.pos[0], P.pos[1]); if (bad) no(bad);
-  const r = diffIndex(A, B, { expectRemoved: P.opt["expect-removed"], expectAdded: P.opt["expect-added"], expectShrunk: P.opt["expect-shrunk"], ack: P.opt.ack }), md = renderMd(r, P.pos[0].split(/[\\/]/).pop(), P.pos[1].split(/[\\/]/).pop(), P.raw);
-  r.args = P.raw;
+  const OPTS = { expectRemoved: P.opt["expect-removed"], expectAdded: P.opt["expect-added"], expectShrunk: P.opt["expect-shrunk"], ack: P.opt.ack };
+  const r = diffIndex(A, B, OPTS);
+  /* W91：送審閘門要的欄位——兩個 AAB 的 SHA-256（閘門核對新版＝送審的 AAB）、舊版是 Play 上哪一版（--old-code）、有沒有 --strict、
+     金絲雀（同一套參數與確認清單）、工具雜湊（跟 origin/main 比）、結束代碼 */
+  let oldSha256, newSha256;
+  try { oldSha256 = sha256File(P.pos[0]); newSha256 = sha256File(P.pos[1]) } catch (e) { no("算不出 AAB 的 SHA-256：" + e.message) }
+  /* 結束代碼照舊只看紅黃項（命令列的意思不變）；金絲雀另外記在報告，pass 要三樣都成立：結束代碼 0、--strict、金絲雀都抓到——送審閘門看 pass 與 canary */
+  const canary = canaryRun(A, B, OPTS), code = r.red.length || (P.strict && r.yellow.length) ? 1 : 0;
+  Object.assign(r, { tool: "AAB-DIFF", args: P.raw, strict: P.strict, oldName: P.pos[0].split(/[\\/]/).pop(), newName: P.pos[1].split(/[\\/]/).pop(), oldSha256, newSha256,
+    oldCode: P.opt["old-code"] || null, newCode: P.opt["new-code"] || null, canary, exitCode: code, pass: code === 0 && P.strict === true && canary.ok === true, toolPins: TOOL_PINS });
+  const md = renderMd(r, r.oldName, r.newName, P.raw) + "\n\n## 金絲雀（從這個候選包做的壞樣本，同一套參數與確認清單）：" + (canary.ok ? "✔ 都抓到" : "✘ 沒抓到，這次比對不可信") + "\n" +
+    ["home", "zeroJs", "jks", "yellow"].map((k) => "- " + { home: "刪一個首頁素材→紅", zeroJs: "一個 js 縮成 0 位元組→紅", jks: "多帶一個 .jks→紅", yellow: "多一個沒確認的 AGENTS.md→黃" }[k] + "：" + (canary[k].ok ? "✔" : "✘") + "（" + (canary[k].f || canary[k].why) + "）").join("\n");
   try { if (P.opt.json) fs.writeFileSync(P.opt.json, JSON.stringify(r, null, 1) + "\n"); if (P.opt.md) fs.writeFileSync(P.opt.md, md + "\n") } catch (e) { no("寫不出報告：" + e.message) }
   console.log(md);
-  process.exit(r.red.length || (P.strict && r.yellow.length) ? 1 : 0);
+  process.exit(code);
 }
-module.exports = { readZipIndex, diffIndex, checkInputs, renderMd, parseArgs, DEBUG_RE, DEBUG_OK, SECRET_RE, MEDIA_RE, CODE_RE, AAB_MUST };
+module.exports = { readZipIndex, diffIndex, checkInputs, renderMd, parseArgs, canaryRun, sha256File, DEBUG_RE, DEBUG_OK, SECRET_RE, MEDIA_RE, CODE_RE, AAB_MUST, NEW_OK, NEW_SUSPECT };

@@ -32,12 +32,14 @@ const miss = (L) => {
   c.deep = { ...c.deep, w42: { ok: false, skip: "沒有 CDN manifest" } };   /* PR②：manifest 讀不到時，深層的 W42 做不出來、標沒驗 */
   L[0].json.canary = c; return L };
 const upd = (o = {}) => ({ file: "upd", json: Object.assign({ tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") }, o) });
-const all = () => [img(), upd(), d3("12"), d3("16"), c3("12"), c3("16")];
+/* W91（11/24）：產物比對報告（aab-diff.js --strict --old-code --json），合格的樣子 */
+const ad = (sha = A, o = {}) => ({ file: "aab-diff.json", json: Object.assign({ tool: "AAB-DIFF", strict: true, newSha256: sha, oldSha256: "d".repeat(64), oldCode: "26112104", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {}, canary: { home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true }, ok: true }, toolPins: TP.pinsFor("AAB-DIFF") }, o) });
+const all = () => [img(), upd(), d3("12"), d3("16"), c3("12"), c3("16"), ad()];
 const has = (r, re) => r.problems.some((p) => re.test(p));
 const W = (code) => [{ code, aabSha256: A, reason: "測試用豁免", decidedBy: "開發者", decidedAt: "2026-11-23" }];
 
 test("〔原始碼〕工具鎖定：清單跟三支工具實際 require 的共用模組一致（工具改了 require 而清單沒跟上，這項會紅）", () => {
-  for (const [tool, file] of [["P0-IMG", "check-aab-assets.js"], ["P0-UPD", "check-upgrade.js"], ["P0-3D", "check-3d.js"]]) {
+  for (const [tool, file] of [["P0-IMG", "check-aab-assets.js"], ["P0-UPD", "check-upgrade.js"], ["P0-3D", "check-3d.js"], ["AAB-DIFF", "aab-diff.js"]]) {
     const reqs = [...rd(file).matchAll(/require\("\.\/([^"]+)"\)/g)].map((m) => m[1]);
     const want = [...new Set([file, ...reqs])].sort();
     assert.deepEqual([...TP.TOOL_FILES[tool]].sort(), want, tool);
@@ -719,4 +721,30 @@ test("〔原始碼〕P0-3D：模擬器還連著但卡死（adb 逾時、shell �
   const c3d = rd("check-3d.js");
   assert.match(c3d, /function responsive\(\) \{ try \{ return cp\.execFileSync\(ADB, \["-s", O\.serial, "shell", "echo", "ok"\]/);
   assert.match(c3d, /OFFLINE\.test\(String\(e\.message\)\) \|\| \/ETIMEDOUT\/\.test\(String\(e\.code \|\| e\.message\)\) \|\| !online\(\) \|\| !responsive\(\)\) throw new Unfit\(/);
+});
+
+test("W91 閘門收產物比對（AAB-DIFF）：合格的才能送審；缺報告、比的不是送審 AAB、舊版同一個檔、沒寫舊版本碼、沒 --strict、有紅項、有沒確認的黃項、沒通過、金絲雀沒抓到、交兩份、工具改過——都擋，而且不能豁免", () => {
+  const P0 = require(path.join(AND, "p0-gate.js"));
+  assert.equal(G(all()).ok, true, "合格的一份就能送審：" + G(all()).problems.join("；"));
+  const without = all().filter((r) => r.json.tool !== "AAB-DIFF");
+  assert.ok(has(G(without), /缺 AAB-DIFF 的報告/), "缺報告");
+  const bad = (o, re, why) => { const L = [...without, ad(A, o)], r = G(L); assert.equal(r.ok, false, why); assert.ok(has(r, re), why + "：" + r.problems.join("；"));
+    const all4 = ["P0-IMG/cdn", "P0-UPD/old-worker", "P0-3D/partial", "P0-3D/rounds"].map((code) => ({ code, aabSha256: A, reason: "測試用豁免", decidedBy: "開發者", decidedAt: "2026-11-24" }));
+    assert.equal(G(L, all4).ok, false, why + "：給了所有能豁免的代碼也不能放行") };
+  bad({ newSha256: "e".repeat(64) }, /比對的新版.*不是要送審的這個 AAB/, "比的不是送審 AAB");
+  bad({ newSha256: undefined }, /沒有記新版 AAB 的 SHA-256/, "沒記新版雜湊");
+  bad({ oldSha256: A }, /舊版 AAB 的 SHA-256 沒記、或跟送審的是同一個/, "舊版同一個檔");
+  bad({ oldCode: null }, /沒寫舊版是 Play 上的哪一版/, "沒寫舊版本碼");
+  bad({ strict: false }, /要用 --strict 跑/, "沒 --strict");
+  bad({ red: [{ f: "base/assets/public/data/homemap/home.webp", why: "少了" }] }, /有紅項.*home\.webp/, "有紅項");
+  bad({ yellow: [{ f: "base/assets/public/AGENTS.md", why: "黃" }] }, /有沒確認的黃項.*AGENTS\.md/, "有沒確認的黃項");
+  bad({ exitCode: 1 }, /沒有通過（exitCode＝1/, "結束代碼不是 0");
+  bad({ pass: false }, /沒有通過/, "pass 不是 true");
+  for (const k of ["home", "zeroJs", "jks", "yellow"]) bad({ canary: { home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true }, [k]: { ok: false }, ok: false } }, new RegExp("金絲雀沒抓到（" + k), "金絲雀 " + k + " 沒抓到");
+  let r = G([...all(), ad()]); assert.ok(has(r, /AAB-DIFF 有兩份報告/), "交兩份");
+  r = gate(A, V, all(), [], { mainSha: (p) => (p.endsWith("aab-diff.js") ? "f".repeat(64) : MAIN(p)) });
+  assert.ok(has(r, /AAB-DIFF：.*aab-diff\.js 跟 origin\/main 那一版不一樣/), "用改過的 aab-diff 跑的報告不算：" + r.problems.join("；"));
+  const info = P0.aabDiffInfo([...without, ad(A, { args: { "expect-shrunk": "^x$", ack: "ack.json" }, acked: [{ ack: "a@1" }], allowed: [{ f: "x" }] })]);
+  assert.deepEqual(info, { file: "aab-diff.json", oldCode: "26112104", oldSha256: "d".repeat(64), args: { "expect-shrunk": "^x$", ack: "ack.json" }, acked: ["a@1"], allowed: 1 }, "放行參數、確認過的黃項原樣帶出來（收據要記）");
+  assert.equal(P0.aabDiffInfo(without), null);
 });
