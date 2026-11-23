@@ -58,21 +58,22 @@ cp web-overlay/release.json web-overlay/native-build.json www/
 shasum -a 256 www/index.html     # 應該等於第一節的 0b3d774b…
 ```
 
-`copy-www.js` 會改寫 `scripts/.www-files.json`，變成這次複製的清單，再拿來給 `check-www.js` 用；套用覆蓋後，`index.html` 和 `release.json` 會被列為大小不符，這是預期的。（這裡講的是你自己跑 `copy-www.js` 新產生的清單；本倉庫存的 `scripts/.www-files.json` 已經改成覆蓋後的大小，見下方「已知差異」。）
+`copy-www.js` 會改寫 `scripts/.www-files.json`，變成這次複製的清單，再拿來給 `check-www.js` 用；套用覆蓋後，`index.html` 和 `release.json` 會被列為大小不符，這是預期的。（這裡講的是你自己跑 `copy-www.js` 新產生的清單；本倉庫存的 `scripts/.www-files.json` 已經改成覆蓋後的大小，見下方「已知差異」。）要和這一版的候選安裝包逐檔比對，請用倉庫裡原本那份清單（每個檔的大小，加上檔案內容的 sha1 前 12 碼；這是一般的 sha1，不是 git 的 blob id）：`git -C $W/web show HEAD:source/xiangqi-ios/scripts/.www-files.json`。
 
-送審前的 P0-IMG 檢查（2026-11-23 起，AGENTS.md「P0 出口驗證要難作假」）：用倉庫那份清單檢查要送審的 `www`，加上跟 CDN 現行版比，再跑金絲雀。
+送審前的 P0-IMG 檢查（2026-11-23 起，AGENTS.md「P0 出口驗證要難作假」）：用倉庫那份清單檢查要送審的 `www`，加上跟 CDN 現行版比，再對要送審的 `.ipa` 跑金絲雀。
 
 ```
 node scripts/check-www.js --dir www --list scripts/.www-files.json --cdn
-node scripts/canary-www.js --pkg <要送審的 .ipa 或 .app> --list scripts/.www-files.json --cdn --out <收據.json>
+node scripts/canary-www.js --pkg <要送審的 .ipa> --list scripts/.www-files.json --cdn --out <收據.json>
 ```
 
-- `check-www.js` 比對清單裡每個檔的大小；有記 sha1 的檔，內容也要一樣。加 `--cdn` 時，包裡 `data/` 的檔再跟 CDN 現行版（`cdn-manifest.json`）逐檔比，App 會要的檔不同就擋（W42）。讀不到 CDN 清單回 3（缺驗），不能當沒問題。
-- `canary-www.js` 把 `www` 複製一份（macOS 用 APFS 複製，幾秒就好），在副本上做 8 種壞樣本，每一類固定測頭、中、尾三個檔，再加一個用種子挑的（`--seed` 可以指定，收據會記下來）：拿掉首頁素材、拿掉一首背景音樂、拿掉一個引擎檔、拿掉一個核心程式、前幾大的檔只留一半、同樣大小但內容被換、`native-bridge.js` 載入順序錯、App 會要的檔換成舊副本而且清單也照舊副本改（只有跟 CDN 比才抓得到）。再用同一支 `check-www.js` 檢查，每一種都要被抓到，而且錯誤裡要有那一處的檔名和原因。
-- 結束代碼：0＝乾淨的全過、壞樣本都被抓到；4＝有壞樣本沒被抓到（檢查失靈，這一輪結果不算）；2＝測試不成立；3＝讀不到 CDN 清單（缺驗）。
+- `check-www.js` 比對清單裡每個檔的大小；有記 sha1 的檔，內容也要一樣。加 `--cdn` 時，包裡 `data/` 的檔再跟 CDN 現行版（`cdn-manifest.json`）逐檔比，App 會要的檔不同就擋（W42）。讀不到檔案清單（例如 `--list` 路徑打錯）或讀不到 CDN 清單都回 3（缺驗），不能當沒問題；要接值的參數放最後沒給值，回 1。`--all` 只影響印多少，不影響判定。
+- `canary-www.js` 把 `www` 複製一份（macOS 用 APFS 複製，幾秒就好），在副本上做 13 種壞樣本，每一類固定測頭、中、尾三個檔，再加一個用種子挑的（`--seed` 可以指定，收據會記下來）：拿掉首頁素材、拿掉一首背景音樂、拿掉一個引擎檔、拿掉一個核心程式、前幾大的檔只留一半、同樣大小但內容被換（另外固定測最大的兩個記了 sha1 的檔）、`native-bridge.js` 移到 App 程式後面、`native-bridge.js` 移到 `capacitor.js` 前面、程式檔插控制字元、拿掉 `preload.json` 的 `big` 列的大檔、App 會要的檔換成舊副本而且清單也照舊副本改（只有跟 CDN 比才抓得到）、CDN 清單少一個 App 會要的檔（要回 3）、CDN 清單讀不到（要回 3）。再用同一支 `check-www.js`、跟正式用法一樣的參數檢查，每一種都要得到預期的結束代碼，而且錯誤裡要有那一處的檔名和原因。
+- 結束代碼：0＝乾淨的全過、壞樣本都被抓到；4＝有壞樣本沒被抓到（檢查失靈，這一輪結果不算）；2＝測試不成立（含參數沒給值）；3＝讀不到 CDN 清單（缺驗）。金絲雀先驗乾淨的那份，乾淨的有錯回 2，之後才讀 CDN。
 - 給了 `--pkg`，金絲雀檢查的就是安裝包裡那份 `public`（`.ipa` 會先解開 `Payload/*.app/public`），不能再另外給 `--dir`；收據的包跟被檢查的內容一定是同一份。
-- 收據記下每一種壞樣本挑了哪個檔、種子、兩支工具的 SHA-256（CRLF 換成 LF）、`public` 的樹雜湊、安裝包的 SHA-256（`.app` 是整個資料夾的樹雜湊）。送審只收 `full: true` 的收據（給了 `--pkg`、加了 `--cdn`、沒有 `--only`）。`--cdn` 是連正式 CDN；用 `--cdn-manifest` 給本機的清單檔可以先試，但 `full` 一定是 false（本機清單可能是拿包自己算的，等於拿包比包）。金絲雀先驗乾淨的那份，乾淨的有錯回 2，之後才讀 CDN。工具雜湊是工具自己算的，只抓得到不小心改過，故意偽造要靠之後的 CI 核對。
-要和這一版的候選安裝包逐檔比對，請用倉庫裡原本那份清單（每個檔的大小，加上檔案內容的 sha1 前 12 碼；這是一般的 sha1，不是 git 的 blob id）：`git -C $W/web show HEAD:source/xiangqi-ios/scripts/.www-files.json`。
+- 收據記下每一種壞樣本挑了哪個檔、種子、兩支工具的 SHA-256（CRLF 換成 LF）、`public` 的樹雜湊、安裝包的 SHA-256、清單的 SHA-256 和 origin/main 那份清單的 SHA-256、包裡 `release.json` 的版號。
+- 送審只收 `full: true` 的收據，五個條件都要成立：`--pkg` 給的是 `.ipa`（`.app` 只有資料夾的樹雜湊，對不到送審的檔）、加了 `--cdn`（正式 CDN；`--cdn-manifest` 給的本機檔不算）、沒有 `--only`、用的清單跟 `origin/main` 的 `source/xiangqi-ios/scripts/.www-files.json` 一模一樣（拿包重產的清單不算，等於拿包比包）、清單的 `siteVersion` 跟包裡 `public/release.json` 的 `version` 一樣。要在有 `origin` 的倉庫裡跑，先 `git fetch origin main`。
+- 工具雜湊和清單雜湊都是工具自己算的，只抓得到不小心改過；故意偽造要靠之後的 CI 核對（打送審標籤前，CI 用 main 版工具和 main 的清單重算收據裡的 `toolPins`、`bind.listMainSha256`）。
 
 `web-overlay/index.html.patch` 只有原生版才需要的 6 段：
 - 原生版不用網頁的版本更新和 Service Worker（`appVer`、`xqWebUpdateOn`、`XQNet version`）。

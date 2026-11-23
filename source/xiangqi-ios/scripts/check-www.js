@@ -10,11 +10,14 @@
    用法：node scripts/check-www.js [--public] [--dir <要檢查的資料夾>] [--list <清單檔>] [--cdn | --cdn-manifest <網址或檔>] [--all]
      --public 改檢查 ios/App/App/public；--dir 指定別的資料夾（金絲雀 canary-www.js 用它檢查壞樣本）；--list 指定清單（預設 scripts/.www-files.json）；
      --cdn 讀 https://xiangqi-cdn.pages.dev/cdn-manifest.json；--cdn-manifest 指定別的網址或本機檔（自我測試用）；--all 錯誤全部印出（預設只印前 40 項）
-   結束代碼：0 沒問題；1 有問題（找不到資料夾也算）；3 沒有問題、但加了 --cdn 卻讀不到 CDN 清單（缺驗，不能當沒問題） */
+   結束代碼：0 沒問題；1 有問題（找不到資料夾、參數後面沒接值也算）；3 沒有問題、但讀不到檔案清單，或加了 --cdn 卻讀不到 CDN 清單（缺驗，不能當沒問題）
+   --all 只影響印多少，不影響判定（PR #67 第五次審查：金絲雀和正式用法的判定要一樣） */
 "use strict";
 const fs = require("fs"), path = require("path"), crypto = require("crypto"), { execFileSync } = require("child_process");
 const HERE = path.join(__dirname, "..");
 const argv = process.argv.slice(2), opt = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };
+/* PR #67 第五次審查：要接值的參數放最後、沒給值，不能悄悄退回預設 */
+for (const k of ["--dir", "--list", "--cdn-manifest"]) { const i = argv.indexOf(k); if (i >= 0 && (i + 1 >= argv.length || String(argv[i + 1]).startsWith("--"))) { console.error("✘ " + k + " 後面要接值"); process.exit(1) } }
 const ROOT = opt("--dir") ? path.resolve(opt("--dir")) : argv.includes("--public") ? path.join(HERE, "ios", "App", "App", "public") : path.join(HERE, "www");
 const bad = [], warn = [], unverified = [], need = new Set();   /* need：App 會要的檔（preload、背景音樂），第 6 項用 */
 const rd = rel => fs.readFileSync(path.join(ROOT, ...rel.split("/")));
@@ -53,15 +56,17 @@ if (exists("data/tripo_anim")) warn.push("data/tripo_anim 不該包進去");
 /* 4 */
 const LIST = opt("--list") ? path.resolve(opt("--list")) : path.join(__dirname, ".www-files.json");
 let total = 0, files = 0;
-if (fs.existsSync(LIST)) {
-  const L = JSON.parse(fs.readFileSync(LIST, "utf8")).files;
+let L = null;
+try { L = JSON.parse(fs.readFileSync(LIST, "utf8")).files; if (!L || typeof L !== "object" || Array.isArray(L) || !Object.keys(L).length) throw new Error("沒有 files") }
+catch (e) { L = null; unverified.push("讀不到檔案清單 " + LIST + "（" + String(e.message).split("\n")[0] + "）：大小和內容都沒驗到（先跑 node scripts/copy-www.js，或檢查 --list 路徑）") }   /* PR #67 第五次審查：路徑打錯不能只警告、回 0 */
+if (L) {
   for (const [rel, [sz, h]] of Object.entries(L)) {
     files++; total += sz;
     if (!exists(rel)) bad.push("少了 " + rel);
     else if (size(rel) !== sz) bad.push("大小不對 " + rel);
     else if (h && crypto.createHash("sha1").update(rd(rel)).digest("hex").slice(0, 12) !== h) bad.push("內容跟清單不同 " + rel);   /* W69：清單記了 sha1 前 12 碼的檔（大檔沒記）要比內容 */
   }
-} else warn.push("沒有 scripts/.www-files.json（先跑 node scripts/copy-www.js）");
+}
 
 /* 6（W42）：跟 CDN 現行版比 */
 const CDNM = opt("--cdn-manifest") || (argv.includes("--cdn") ? "https://xiangqi-cdn.pages.dev/cdn-manifest.json" : null);

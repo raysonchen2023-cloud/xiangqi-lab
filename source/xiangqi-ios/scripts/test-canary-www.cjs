@@ -20,7 +20,9 @@ function fakeWww() {
   put("index.html", '<!doctype html><meta charset="utf-8"><script src="capacitor.js"></script><script src="native-bridge.js"></script><script src="core.js"></script><body>象棋千秋</body>\n');
   for (const f of ["capacitor.js", "native-bridge.js", "core.js", "engine.js", "local.js", "net.js", "zh.js"]) put(f, "/* " + f + " */\nvar x = 1;\n");
   for (const n of ["han", "qin", "tang"]) put("data/home/" + n + ".webp", Buffer.alloc(200 + n.length, n.length));
-  put("data/preload.json", JSON.stringify({ items: [["data/home/han.webp", 203], ["data/home/qin.webp", 203], ["data/home/tang.webp", 204]], big: [] }));
+  put("data/preload.json", JSON.stringify({ items: [["data/home/han.webp", 203], ["data/home/qin.webp", 203], ["data/home/tang.webp", 204]], big: [["data/gmgames.json", 5000]] }));
+  put("release.json", JSON.stringify({ version: "test" }));
+  for (let i = 0; i < 40; i++) put("data/misc/m" + String(i).padStart(2, "0") + ".json", JSON.stringify({ i, pad: "x".repeat(20 + i) }));   /* 一堆小檔：swap 只靠頭中尾＋隨機，幾乎挑不到最大的那個 */   /* 包裡的版號，要跟清單的 siteVersion 一樣 */
   put("data/big-books.json", "[]");
   put("data/bgm/index.json", JSON.stringify({ han: ["zheng_1.mp3", "zheng_2.mp3"], tang: ["pipa_1.mp3", "pipa_2.mp3"] }));
   put("data/bgm/han/zheng_1.mp3", Buffer.alloc(400, 1)); put("data/bgm/han/zheng_2.mp3", Buffer.alloc(420, 2));
@@ -67,8 +69,9 @@ test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；8 �
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const R = JSON.parse(fs.readFileSync(out, "utf8"));
   assert.equal(R.pass, true); assert.equal(R.full, false, "--cdn-manifest 給的本機清單不算正式 CDN，送審不能用（PR #67 第四次審查：本機清單可能是拿包自己算的）"); assert.equal(R.seed, 7);
-  assert.deepEqual(R.kinds, ["home", "bgm", "engine", "core", "big", "swap", "bridge", "cdnstale"]);
-  for (const x of R.results) { assert.equal(x.caught, true, x.kind + " " + x.file); assert.equal(x.exit, 1, x.kind) }
+  assert.deepEqual(R.kinds, ["home", "bgm", "engine", "core", "big", "swap", "bridge", "cdnstale", "cdnmiss", "cdnfail", "ctrl", "bigpre", "capord"]);
+  for (const x of R.results) { assert.equal(x.caught, true, x.kind + " " + x.file); assert.equal(x.exit, ["cdnmiss", "cdnfail"].includes(x.kind) ? 3 : 1, x.kind) }
+  assert.ok(R.results.some((x) => x.kind === "swap" && x.file === "engine/pikafish.wasm"), "swap 固定測最大的記了 sha1 的檔（PR #67 第五次審查）");
   const files = (k) => R.results.filter((x) => x.kind === k).map((x) => x.file);
   assert.deepEqual(files("bgm").slice(0, 3), ["data/bgm/han/zheng_1.mp3", "data/bgm/han/zheng_2.mp3", "data/bgm/tang/pipa_2.mp3"], "背景音樂測頭、中、尾");
   assert.deepEqual(files("engine").slice(0, 3), ["engine/pikafish.js", "engine/pikafish.wasm", "engine/pikafish.nnue"], "三個引擎檔都測");
@@ -125,6 +128,14 @@ test("check-www.js 的判斷一條一條改壞（含只查第一個、只查 .js
     ["bridge", "else if (!(iCap < iBr && (iCore < 0 || iBr < iCore))) bad.push(", "else if (false) bad.push("],
     ["cdnstale", "    if (need.has(rel)) bad.push(", "    if (false) bad.push("],
     ["cdnstale", "const r = \"data/bgm/\" + era + \"/\" + f; need.add(r);", "const r = \"data/bgm/\" + era + \"/\" + f;"],
+    /* PR #67 第五次審查：下面這些改壞，原本的金絲雀都回 0 */
+    ["cdnmiss", "if (notCmp.length) unverified.push(", "if (false) unverified.push("],
+    ["cdnfail", '} catch (e) { unverified.push("讀不到 CDN 清單 "', '} catch (e) { warn.push("讀不到 CDN 清單 "'],
+    ["ctrl", 'if (m) bad.push(f + " 有控制字元', 'if (false) bad.push(f + " 有控制字元'],
+    ["bigpre", "for (const it of [...(P.items || []), ...(P.big || [])]) {", "for (const it of [...(P.items || [])]) {"],
+    ["capord", "else if (!(iCap < iBr && (iCore < 0 || iBr < iCore))) bad.push(", "else if (!((iCore < 0 || iBr < iCore))) bad.push("],
+    ["swap", "    else if (h && crypto", "    else if (h && size(rel) < 450 && crypto"],
+    ["home", "if (bad.length) {", "if (bad.length && ALL) {"],
   ];
   for (const [kind, from, to] of cases) for (const seed of ["1", "2", "3"]) {
     const { D, L, M } = fakeWww(), C = blindCanary(from, to);
@@ -181,14 +192,14 @@ test("結束代碼：有任何一個做出來了卻沒被抓到，就回 4，不
 });
 
 test("full＝true 只認正式 CDN：同一份清單從正式網址來才算，本機檔、別的網址都不算；乾淨的有錯時先回 2，不會被「CDN 讀不到」蓋成 3（PR #67 第四次審查）", () => {
-  const { D, L, M } = fakeWww(), A = fakeApp(D), txt = fs.readFileSync(M, "utf8"), quiet = () => {};
+  const { D, L, M } = fakeWww(), A = fakeApp(D), ipa = fakeIpa(A), txt = fs.readFileSync(M, "utf8"), quiet = () => {}, mainList = () => fs.readFileSync(L);
   const from = (want) => (u) => { assert.equal(u, want, "只下載指定的那個網址"); return txt };
-  let r = run({ pkg: A, list: L, cdn: OFFICIAL_CDN, seed: 7, readM: from(OFFICIAL_CDN), log: quiet });
-  assert.equal(r.code, 0); assert.equal(r.receipt.full, true, "正式 CDN＋--pkg＋沒有 --only");
-  r = run({ pkg: A, list: L, cdn: M, seed: 7, readM: from(M), log: quiet });
+  let r = run({ pkg: ipa, list: L, cdn: OFFICIAL_CDN, seed: 7, readM: from(OFFICIAL_CDN), mainList, log: quiet });
+  assert.equal(r.code, 0); assert.equal(r.receipt.full, true, "正式 CDN＋--pkg＋沒有 --only（清單和版號也綁住，見下一項測試）");
+  r = run({ pkg: ipa, list: L, cdn: M, seed: 7, readM: from(M), mainList, log: quiet });
   assert.equal(r.code, 0); assert.equal(r.receipt.full, false, "本機清單：拿包比包，不能送審");
   const other = "https://example.invalid/cdn-manifest.json";
-  r = run({ pkg: A, list: L, cdn: other, seed: 7, readM: from(other), log: quiet });
+  r = run({ pkg: ipa, list: L, cdn: other, seed: 7, readM: from(other), mainList, log: quiet });
   assert.equal(r.receipt.full, false, "別的網址也不算");
   assert.equal(OFFICIAL_CDN, "https://xiangqi-cdn.pages.dev/cdn-manifest.json");
   assert.doesNotMatch(fs.readFileSync(CANARY, "utf8").split("module.exports")[1], /readM/, "命令列不能換掉下載");
@@ -196,4 +207,41 @@ test("full＝true 只認正式 CDN：同一份清單從正式網址來才算，�
   fs.rmSync(path.join(A, "public", "data", "home", "qin.webp"));
   r = run({ pkg: A, list: L, cdn: OFFICIAL_CDN, readM: () => { throw new Error("斷線") }, log: quiet });
   assert.equal(r.code, 2, "乾淨的有錯先回 2"); assert.match(JSON.stringify(r.receipt || r), /乾淨的樣本沒過/);
+});
+
+test("送審收據要綁住倉庫的清單和包的版號、而且要 .ipa：拿包重產的清單、版號不同、.app 都不算 full（PR #67 第五次審查）", () => {
+  const { D, L, M } = fakeWww(), A = fakeApp(D), ipa = fakeIpa(A), txt = fs.readFileSync(M, "utf8"), quiet = () => {};
+  const listBuf = fs.readFileSync(L), base = { list: L, cdn: OFFICIAL_CDN, seed: 7, readM: () => txt, log: quiet };
+  let r = run({ ...base, pkg: ipa, mainList: () => listBuf });
+  assert.equal(r.code, 0, JSON.stringify(r.receipt).slice(0, 300)); assert.equal(r.receipt.full, true, ".ipa＋正式 CDN＋清單是 main 那份＋版號一樣");
+  assert.equal(r.receipt.bind.listBound, true); assert.equal(r.receipt.bind.verBound, true); assert.equal(r.receipt.bind.listMainSha256, sha256(listBuf));
+  r = run({ ...base, pkg: A, mainList: () => listBuf }); assert.equal(r.code, 0); assert.equal(r.receipt.full, false, ".app 的雜湊對不到送審的 .ipa");
+  r = run({ ...base, pkg: ipa, mainList: () => Buffer.from(listBuf.toString("utf8") + " ") }); assert.equal(r.receipt.full, false, "清單跟 main 不同（拿包重產）");
+  r = run({ ...base, pkg: ipa, mainList: () => null }); assert.equal(r.receipt.full, false, "讀不到 main 的清單");
+  r = run({ ...base, pkg: ipa, mainList: () => { throw new Error("沒有 git") } }); assert.equal(r.receipt.full, false, "git 出錯");
+  const LJ = JSON.parse(listBuf.toString("utf8")); LJ.siteVersion = "other"; const L2 = path.join(tmp("xq-l2-"), "l.json"); fs.writeFileSync(L2, JSON.stringify(LJ));
+  r = run({ ...base, list: L2, pkg: ipa, mainList: () => fs.readFileSync(L2) }); assert.equal(r.code, 0); assert.equal(r.receipt.full, false, "清單版號跟包裡的 release.json 不同");
+  assert.doesNotMatch(fs.readFileSync(CANARY, "utf8").split("module.exports")[1], /mainList/, "命令列不能換掉讀 main");
+});
+
+test("check-www.js：清單讀不到（--list 打錯）回 3、不是只警告；參數放最後沒給值回 1；金絲雀參數沒給值回 2（PR #67 第五次審查）", () => {
+  const { D, L, M } = fakeWww();
+  let r = runCheck(D, path.join(D, "沒有.json")); assert.equal(r.status, 3, r.stdout + r.stderr); assert.match(r.stderr, /讀不到檔案清單/);
+  const empty = path.join(tmp("xq-emptylist-"), "l.json"); fs.writeFileSync(empty, '{"files":{}}');
+  r = runCheck(D, empty); assert.equal(r.status, 3, "清單是空的也算沒驗到");
+  r = runCheck(D, L, "--cdn-manifest"); assert.equal(r.status, 1); assert.match(r.stderr, /--cdn-manifest 後面要接值/);
+  r = cp.spawnSync(process.execPath, [CHECK, "--dir", D, "--list"], { encoding: "utf8" }); assert.equal(r.status, 1); assert.match(r.stderr, /--list 後面要接值/);
+  r = runCanary(CANARY, ["--dir", D, "--list", L, "--cdn-manifest"]); assert.equal(r.status, 2); assert.match(r.stderr, /--cdn-manifest 後面要接值/);
+  r = runCanary(CANARY, ["--dir", D, "--list", L, "--seed", "--cdn"]); assert.equal(r.status, 2);
+  assert.doesNotMatch(fs.readFileSync(CANARY, "utf8"), /"--all"/, "金絲雀叫 check-www 跟正式用法一樣，不加 --all");
+});
+
+test("swap 每個種子都固定測最大的兩個記了 sha1 的檔（PR #67 第五次審查：W30 那種大小對、內容壞的大檔）", () => {
+  const { D, L, M } = fakeWww(), od = tmp("xq-swapout-");
+  for (const seed of ["1", "2", "3", "4", "5"]) {
+    const out = path.join(od, seed + ".json"), r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "swap", "--seed", seed, "--out", out]);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const got = JSON.parse(fs.readFileSync(out, "utf8")).results.map((x) => x.file);
+    for (const f of ["engine/pikafish.wasm", "data/bgm/tang/pipa_2.mp3"]) assert.ok(got.includes(f), "種子 " + seed + " 要測到 " + f + "：" + got.join(","));
+  }
 });
