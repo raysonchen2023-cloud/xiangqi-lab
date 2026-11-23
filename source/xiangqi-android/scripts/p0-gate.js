@@ -56,6 +56,9 @@ function onlyCdnDown(json) {
   const st = W.filter((w) => w && typeof w === "object" && "st" in w), bad = st.filter((w) => !DOWN_ST(w.st));
   if (bad.length) return `逐項清單有不是「連不上」的狀態（${bad.slice(0, 3).map((w) => w.f + " " + w.st).join("、")}）`;
   if (json.unknown !== st.length + 1 || json.unknown < 2) return `unknown（${json.unknown}）跟逐項清單算出來的（${st.length + 1}）不一樣，或少於 2`;
+  /* 第十一次複審：CDN 全斷時，每個要向 CDN 補抓的檔（viaCdn）加上探測檔都會沒確認到；工具少記了（例如把拿到 200 的也漏算）就對不起來 */
+  if (!Number.isInteger(json.viaCdn) || st.length !== json.viaCdn + 1) return `沒確認到的檔數（${st.length}）跟要向 CDN 補抓的檔數加探測檔（${json.viaCdn}＋1）對不起來`;
+  if (!Number.isInteger(json.need) || !Number.isInteger(json.inPack) || json.need !== json.inPack + json.viaCdn) return `need（${json.need}）不等於包裡（${json.inPack}）加向 CDN 補抓（${json.viaCdn}）`;
   if (json.cdnCompared !== 0) return `有跟 CDN 比對過（cdnCompared＝${json.cdnCompared}），manifest 是讀得到的`;
   if (!c || !DOWN_ST(c.cdnStatus) || c.ok !== false) return "金絲雀③的探測狀態不是「連不上」";
   return null;

@@ -26,7 +26,7 @@ const downItems = () => [{ f: "data/a.webp", st: -1, why: "CDN 沒確認到（�
 const miss = (L) => {
   const { cdnCanary } = require(path.join(AND, "check-aab-assets.js")), unk = downItems();
   const warnItems = [...unk, { f: "cdn-manifest.json", why: "讀不到 CDN 的 cdn-manifest.json（缺驗）" }, { f: "data/b.webp", why: "不在安裝包裡、原生不會補抓；網頁程式會自己改抓 CDN" }];
-  Object.assign(L[0].json, { exitCode: 3, pass: false, red: 0, unknown: unk.length + 1, redItems: [], warn: warnItems.length, warnItems, cdnCompared: 0 });
+  Object.assign(L[0].json, { exitCode: 3, pass: false, red: 0, unknown: unk.length + 1, redItems: [], warn: warnItems.length, warnItems, cdnCompared: 0, viaCdn: unk.length - 1, inPack: 5, need: 5 + unk.length - 1 });   /* 第十一次：viaCdn＝要向 CDN 補抓的檔（探測檔不算），need＝包裡＋補抓 */
   const c = { ...L[0].json.canary, ...cdnCanary(PROBE_F, [], unk, { ok200: 0, manOk: false }) }; c.ok = c.home === true && c.stale === true && c.cdn404 === true;
   L[0].json.canary = c; return L };
 const upd = (o = {}) => ({ file: "upd", json: Object.assign({ tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") }, o) });
@@ -299,10 +299,12 @@ test("閘門探測（PR #66 第九次複審）：manifest 正常就算連得上�
 test("閘門（PR #66 第十次複審）：從逐項清單重算；混一筆 404、200、比對過 CDN、探測狀態不是連不上、筆數對不起來，閘門連不上也不能豁免", () => {
   const { onlyCdnDown } = require(path.join(AND, "p0-gate.js"));
   assert.equal(onlyCdnDown(miss(all())[0].json), null, "正確工具在 CDN 全斷時的報告");
-  const add = (j, it) => { j.warnItems.push(it); j.warn = j.warnItems.length; if ("st" in it) j.unknown++ };
+  const add = (j, it) => { j.warnItems.push(it); j.warn = j.warnItems.length; if ("st" in it) { j.unknown++; j.viaCdn++; j.need++ } };   /* 像真的報告：多一個沒確認到的補抓檔 */
   for (const [why, f, re] of [
     ["混一筆 404（真的缺檔）", (j) => add(j, { f: "data/x.webp", st: 404 }), /不是「連不上」/], ["混一筆 200", (j) => add(j, { f: "data/x.webp", st: 200 }), /不是「連不上」/],
-    ["狀態是字串", (j) => add(j, { f: "data/x.webp", st: "-1" }), /不是「連不上」/], ["狀態 600", (j) => add(j, { f: "data/x.webp", st: 600 }), /不是「連不上」/],
+    ["狀態是字串", (j) => add(j, { f: "data/x.webp", st: "-1" }), /不是「連不上」/], ["狀態 600", (j) => add(j, { f: "data/x.webp", st: 600 }), /不是「連不上」/], ["狀態 403（第十一次）", (j) => add(j, { f: "data/x.webp", st: 403 }), /不是「連不上」/],
+    ["viaCdn 多記（第十一次：拿到 200 的漏算）", (j) => { j.viaCdn++; j.need++ }, /補抓的檔數/], ["viaCdn 不是整數", (j) => { j.viaCdn = 1.5 }, /補抓的檔數/],
+    ["need 對不起來", (j) => { j.need++ }, /need/], ["沒記 inPack", (j) => { delete j.inPack }, /need/],
     ["比對過 CDN", (j) => { j.cdnCompared = 1 }, /比對過/], ["探測狀態 200", (j) => { j.canary.cdnStatus = 200 }, /探測狀態/], ["金絲雀全過", (j) => { j.canary.ok = true }, /探測狀態/],
     ["unknown 少算", (j) => { j.unknown-- }, /unknown/], ["unknown 多算", (j) => { j.unknown++ }, /unknown/], ["warn 對不起來", (j) => { j.warn++ }, /warn/],
     ["沒有 manifest 那筆", (j) => { j.warnItems = j.warnItems.filter((w) => w.f !== "cdn-manifest.json"); j.warn = j.warnItems.length; j.unknown-- }, /cdn-manifest/],
@@ -338,4 +340,50 @@ test("〔原始碼〕閘門：自己用的 CDN 網址跟破圖工具一樣；報
   assert.match(pg, /async function main\(\) \{\n  process\.exitCode = 2;/, "PR #66 第八次複審：main 一開始就把結束代碼設成 2，探測卡住提早結束時不會變成 0");
   assert.match(pg, /json\.tool === "P0-IMG" && \(json\.exitCode !== 0 \|\| \(json\.canary && json\.canary\.cdnUnreachable === true\)\)\)\) \{ cdnProbe = await probeCdn\(\);/);
   assert.match(pg, /AbortSignal\.timeout\(15000\)/); assert.match(pg, /at: new Date\(\)\.toISOString\(\)/);
+});
+
+/* PR #66 第十一次複審：「正確的工具在 CDN 全斷時能豁免」要端對端驗，不能只靠手組的 miss()。
+   做一個假 AAB（首頁素材在、一個小檔和一個大檔不在包裡、原生會向 CDN 補抓），子程序先載入一律斷線的假 fetch，
+   跑真的 check-aab-assets.js --cdn，寫出的報告直接丟進閘門 */
+function zipOf(files) {
+  const zlib = require("zlib"), locals = [], central = []; let off = 0;
+  for (const [n, v] of Object.entries(files)) {
+    const data = Buffer.from(v), name = Buffer.from(n, "utf8"), crc = zlib.crc32(data) >>> 0;
+    const lh = Buffer.alloc(30); lh.writeUInt32LE(0x04034b50, 0); lh.writeUInt16LE(20, 4); lh.writeUInt16LE(0x0800, 6);
+    lh.writeUInt32LE(crc, 14); lh.writeUInt32LE(data.length, 18); lh.writeUInt32LE(data.length, 22); lh.writeUInt16LE(name.length, 26);
+    const ch = Buffer.alloc(46); ch.writeUInt32LE(0x02014b50, 0); ch.writeUInt16LE(20, 4); ch.writeUInt16LE(20, 6); ch.writeUInt16LE(0x0800, 8);
+    ch.writeUInt32LE(crc, 16); ch.writeUInt32LE(data.length, 20); ch.writeUInt32LE(data.length, 24); ch.writeUInt16LE(name.length, 28); ch.writeUInt32LE(off, 42);
+    locals.push(lh, name, data); central.push(ch, name); off += 30 + name.length + data.length;
+  }
+  const cd = Buffer.concat(central), end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(central.length / 2, 8); end.writeUInt16LE(central.length / 2, 10);
+  end.writeUInt32LE(cd.length, 12); end.writeUInt32LE(off, 16);
+  return Buffer.concat([...locals, cd, end]);
+}
+test("閘門（PR #66 第十一次複審，端對端）：真的 check-aab-assets.js 在 CDN 全斷下寫的報告，閘門連不上就能豁免；同一份報告 viaCdn 多記、或混一筆 403，就不能", { timeout: 120000 }, () => {
+  const os = require("os"), cp = require("child_process"), crypto = require("crypto");
+  const sha8 = (x) => crypto.createHash("sha1").update(x).digest("hex").slice(0, 8), P = "base/assets/public/";
+  const preload = { v: "t", items: [["data/a/x.webp", 3, sha8("abc"), 1], ["data/a/y.json", 2, sha8("{}"), 1]], big: [["data/gm.json", 30 * 1024 * 1024, sha8("[]")]], pages: {} };
+  const f = { [P + "native-build.json"]: JSON.stringify({ siteVersion: V, sharedWebCommit: "0".repeat(40) }), [P + "data/preload.json"]: JSON.stringify(preload),
+    [P + "data/big-books.json"]: "[]", "base/dex/classes.dex": "dex\n035\0" + ["X-XQ-Cdn-Cache", ".parts.json", "[A-Za-z0-9._-]+", "SHA-1"].join("\0") + "\0", [P + "data/a/x.webp"]: "abc" };
+  for (const h of HOME_REQUIRED) f[P + "data/" + h] = "w";
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-e2e66-")), aab = path.join(d, "t.aab"), out = path.join(d, "img.json"), down = path.join(d, "down.js");
+  try {
+    fs.writeFileSync(aab, zipOf(f));
+    fs.writeFileSync(down, "globalThis.fetch = async () => { throw new Error(\"假：CDN 全斷\") };\n");
+    const r = cp.spawnSync(process.execPath, ["--require", down, path.join(AND, "check-aab-assets.js"), "--aab", aab, "--cdn", "--out", out], { encoding: "utf8", timeout: 100000 });
+    assert.equal(r.status, 3, "CDN 全斷＝缺驗 3：" + (r.stderr || "").slice(0, 300));
+    const real = JSON.parse(fs.readFileSync(out, "utf8"));
+    assert.equal(real.viaCdn, 2, "假包裡有兩個檔要向 CDN 補抓"); assert.equal(real.canary.cdnUnreachable, true);
+    const { onlyCdnDown } = require(path.join(AND, "p0-gate.js"));
+    assert.equal(onlyCdnDown(real), null, "真工具的全斷報告要算「單純 CDN 連不上」");
+    const put = (j) => { const L = all(); L[0].json = { ...j, aabSha256: A, siteVersion: V }; return L };
+    const ok = G(put(real), W("P0-IMG/cdn"), MAIN, DOWN);
+    assert.equal(ok.ok, true, "閘門也連不上：可以豁免：" + JSON.stringify(ok.problems || ok).slice(0, 300)); assert.equal(ok.waived.length, 2);
+    assert.equal(G(put(real), W("P0-IMG/cdn"), MAIN, UP).ok, false, "閘門連得上：不能豁免");
+    const more = JSON.parse(JSON.stringify(real)); more.viaCdn++; more.need++;
+    assert.equal(G(put(more), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "viaCdn 多記一個（拿到 200 的被漏算）：不能豁免");
+    const f403 = JSON.parse(JSON.stringify(real)); f403.warnItems.find((w) => "st" in w).st = 403;
+    assert.equal(G(put(f403), W("P0-IMG/cdn"), MAIN, DOWN).ok, false, "混一筆 403：不能豁免");
+  } finally { fs.rmSync(d, { recursive: true, force: true }) }
 });
