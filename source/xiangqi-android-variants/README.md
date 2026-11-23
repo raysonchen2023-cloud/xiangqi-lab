@@ -40,9 +40,15 @@ node scripts/aab-to-apk.js --aab <上一步的 AAB> --signing <signing.propertie
 node scripts/check-aab-assets.js --aab <AAB> --cdn --out p0-img.json                         # P0-IMG（報告自己算 AAB 雜湊）
 node scripts/check-upgrade.js --old <上一版 APK> --new <第 2 步的 APK> … --aab-apk <第 2 步的 aab-apk.json> --out <資料夾>   # P0-UPD（upgrade.json）
 node scripts/check-3d.js --build <版號> --aab-apk <第 2 步的 aab-apk.json> …              # P0-3D（W67；先把第 2 步的 APK 裝到模擬器，工具會拉回手機上的 base.apk 核對；預設連跑 2 輪，兩輪都全過才算，每次嘗試記在 attempts.jsonl）
+node scripts/check-3d.js --build <版號> --aab-apk <第 2 步的 aab-apk.json> --self-test --out <另一個資料夾> …   # P0-3D 金絲雀（2026-11-23）：落點蓋遮罩要被判失敗；Android 12、16 各跑一次
 
-# 4. 送審閘門：三份報告都綁在這個 AAB 上、都通過，才能送審（例外只認倉庫 .github/p0-waivers.json，要走 PR、iMac Claude 2 逐行審；轉述的決定不算）
-node scripts/p0-gate.js --aab <AAB> --build <網頁版號> --reports p0-img.json <資料夾>/upgrade.json <P0-3D Android 12 報告> <P0-3D Android 16 報告>
+# 金絲雀與工具鎖定（2026-11-23，AGENTS.md「P0 出口驗證要難作假」）：
+#   P0-IMG 實跑時自己弄壞三處（拿掉首頁素材、改掉雜湊、問 CDN 不存在的檔），三處都要被抓到；P0-UPD 冷啟後放一個假的更新視窗，要被抓到；
+#   三支工具的報告都記 toolPins（工具與共用模組的雜湊），閘門拿去跟 origin/main 比：忘了切回 main 版、本機改了沒開 PR 就跑的報告不收。
+#   雜湊是工具自己填的，擋不住刻意偽造；那要等 CI 用 main 版工具重算（PR③，規劃中）
+# 4. 送審閘門：報告都綁在這個 AAB 上、都通過、金絲雀都抓到、工具跟 main 一樣，才能送審（例外只認倉庫 .github/p0-waivers.json，要走 PR、iMac Claude 2 逐行審；轉述的決定不算）
+node scripts/p0-gate.js --aab <AAB> --build <網頁版號> --reports p0-img.json <資料夾>/upgrade.json <P0-3D Android 12 報告> <P0-3D Android 16 報告> <P0-3D 金絲雀 Android 12> <P0-3D 金絲雀 Android 16>
+# 5. 閘門通過後，候選包裝到開發者手機，由開發者本人照「開發者 3 分鐘實機三項」看過、回「三項都好」，才能送審
 ```
 
 - `build-variant.js` 會把安裝包裡「需求清單內、跟 CDN 現行版不同」的素材換成 CDN 那份，並核對 SHA-1。W42 那 7 個舊副本，不再靠人記檔名。
