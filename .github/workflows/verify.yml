@@ -40,7 +40,7 @@ jobs:
       - name: iOS P0-3D 腳本自我檢查（防假通過的關卡還在、plist 編解碼；實跑要 macOS 模擬器，見 source/xiangqi-ios/scripts/p03d/README.md；W69①）
         run: node --test source/xiangqi-ios/scripts/p03d/test-p03d.cjs
 
-      - name: iOS P0-IMG 金絲雀自我檢查（假 www、假 .app／.ipa 做 21 種壞樣本，每類測頭中尾，都要被 check-www.js 抓到；把 check-www 的判斷改壞，金絲雀要判出失靈；AGENTS.md「P0 出口驗證要難作假」）
+      - name: iOS P0-IMG 金絲雀自我檢查（假 www、假 .app／.ipa 做 22 種壞樣本，每類測頭中尾，都要被 check-www.js 抓到；把 check-www 的判斷改壞，金絲雀要判出失靈；AGENTS.md「P0 出口驗證要難作假」）
         run: node --test source/xiangqi-ios/scripts/test-canary-www.cjs
 
       - name: 判斷模式（功能 PR／發布 PR）

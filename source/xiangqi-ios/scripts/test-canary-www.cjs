@@ -1,6 +1,6 @@
 // iOS P0-IMG 金絲雀 canary-www.js 與 check-www.js 的自我測試（AGENTS.md「P0 出口驗證要難作假」，2026-11-23）
 //   在暫存資料夾做一個小的假 www（index.html、首頁素材、背景音樂、引擎、大檔、清單）和一份假的 CDN 清單，用真的 check-www.js 檢查：
-//   乾淨的要全過；21 種壞樣本都要被抓到；再把 check-www.js 的判斷一條一條改壞（放在副本），金絲雀要回 4（檢查失靈）。
+//   乾淨的要全過；22 種壞樣本都要被抓到；再把 check-www.js 的判斷一條一條改壞（放在副本），金絲雀要回 4（檢查失靈）。
 // 用法：node --test source/xiangqi-ios/scripts/test-canary-www.cjs
 "use strict";
 const test = require("node:test"), assert = require("node:assert/strict"), fs = require("fs"), os = require("os"), path = require("path"), crypto = require("crypto"), cp = require("child_process");
@@ -84,13 +84,13 @@ test("check-www.js：乾淨的假 www 全過；同大小換內容抓得到；--c
 });
 
 
-test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；21 種壞樣本、每類頭中尾＋一個種子挑的都被抓到；收據綁住安裝包、不會改到原本那份", () => {
+test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；22 種壞樣本、每類頭中尾＋一個種子挑的都被抓到；收據綁住安裝包、不會改到原本那份", () => {
   const { D, L, M } = fakeWww(), A = fakeApp(D), before = treeSha(A), out = path.join(tmp("xq-canaryout-"), "r.json");
   const r = runCanary(CANARY, ["--pkg", A, "--list", L, "--cdn-manifest", M, "--seed", "7", "--out", out]);
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const R = JSON.parse(fs.readFileSync(out, "utf8"));
   assert.equal(R.pass, true); assert.equal(R.full, false, "--cdn-manifest 給的本機清單不算正式 CDN，送審不能用（PR #67 第四次審查：本機清單可能是拿包自己算的）"); assert.equal(R.seed, 7);
-  assert.deepEqual(R.kinds, ["home", "casehome", "bgm", "casebgm", "caselist", "engine", "core", "big", "swap", "bridge", "nocap", "nobridge", "cmtcap", "cdnstale", "cdnmiss", "cdnfail", "ctrl", "nohash", "listmiss", "bigpre", "capord"]);
+  assert.deepEqual(R.kinds, ["home", "casehome", "bgm", "casebgm", "caselist", "casedir", "engine", "core", "big", "swap", "bridge", "nocap", "nobridge", "cmtcap", "cdnstale", "cdnmiss", "cdnfail", "ctrl", "nohash", "listmiss", "bigpre", "capord"]);
   for (const x of R.results) { assert.equal(x.caught, true, x.kind + " " + x.file); assert.equal(x.exit, ["cdnmiss", "cdnfail", "nohash"].includes(x.kind) ? 3 : 1, x.kind) }
   assert.ok(R.results.some((x) => x.kind === "swap" && x.file === "engine/pikafish.nnue"), "swap 固定測最大的記了 sha1 的檔（PR #67 第五次審查）");
   const files = (k) => R.results.filter((x) => x.kind === k).map((x) => x.file);
@@ -177,7 +177,8 @@ test("check-www.js 的判斷一條一條改壞（含只查第一個、只查 .js
     ["swap", "    else if (h && crypto", '    else if (h && !rel.startsWith("data/icons/tang/") && crypto'],
     ["nocap", 'if (iCap < 0 || iBr < 0) bad.push("index.html 沒有插', 'if (false) bad.push("index.html 沒有插'],
     ["nobridge", 'if (iCap < 0 || iBr < 0) bad.push("index.html 沒有插', 'if (iCap < 0) bad.push("index.html 沒有插'],
-    ["casehome", "const exists = rel => { let d = ROOT;", "const exists = rel => fs.existsSync(path.join(ROOT, ...rel.split(\"/\"))); const _x = rel => { let d = ROOT;"],
+    /* 大小寫的改壞要在 Linux（本來就分大小寫）也失靈：改成拿目錄列表做「不分大小寫」比對，不能只換成 fs.existsSync（PR #67 第十三次審查後 CI 發現） */
+    ["casehome", "const exists = rel => { let d = ROOT;", "const exists = (rel) => { let d = ROOT; for (const seg of rel.split(\"/\")) { const s = listDir(d), m = s && [...s].find((x) => x.toLowerCase() === seg.toLowerCase()); if (!m) return false; d = path.join(d, m) } return true }; const _x = rel => { let d = ROOT;"],
     ["ctrl", "m = s.match(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/)", "m = s.slice(-64).match(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/)"],
     /* PR #67 第九次審查：只對某個目錄／某幾個檔放水 */
     ["listmiss", 'if (!exists(rel)) bad.push("少了 " + rel);', 'if (!exists(rel) && !/3d|three|GLTF/.test(rel)) bad.push("少了 " + rel);'],
@@ -188,8 +189,10 @@ test("check-www.js 的判斷一條一條改壞（含只查第一個、只查 .js
     ["ctrl", "s.match(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/)", "s.match(/[\\x01]/)"],
     ["ctrl", "s.match(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/)", "s.match(/[\\x01-\\x08]/)"],
     /* PR #67 第十二次審查：背景音樂、清單檔的大小寫判斷改回不分大小寫；HTML 註解裡的標籤也算有插 */
-    ["casebgm", 'if (!exists(r)) bad.push("背景音樂清單有但沒有檔：" + r);', 'if (!fs.existsSync(path.join(ROOT, ...r.split("/")))) bad.push("背景音樂清單有但沒有檔：" + r);'],
-    ["caselist", 'if (!exists(rel)) bad.push("少了 " + rel);', 'if (!fs.existsSync(path.join(ROOT, ...rel.split("/")))) bad.push("少了 " + rel);'],
+    ["casebgm", 'if (!exists(r)) bad.push("背景音樂清單有但沒有檔：" + r);', 'if (!((rel) => { let d = ROOT; for (const seg of rel.split("/")) { const s = listDir(d), m = s && [...s].find((x) => x.toLowerCase() === seg.toLowerCase()); if (!m) return false; d = path.join(d, m) } return true })(r)) bad.push("背景音樂清單有但沒有檔：" + r);'],
+    ["caselist", 'if (!exists(rel)) bad.push("少了 " + rel);', 'if (!((rel) => { let d = ROOT; for (const seg of rel.split("/")) { const s = listDir(d), m = s && [...s].find((x) => x.toLowerCase() === seg.toLowerCase()); if (!m) return false; d = path.join(d, m) } return true })(rel)) bad.push("少了 " + rel);'],
+    /* PR #67 第十三次審查：目錄名不分大小寫、只有最後一段（檔名）照列表比對 */
+    ["casedir", "if (!s || !s.has(seg)) return false; d = path.join(d, seg) }", "const last = seg === rel.split(\"/\").pop(), m = s && (last ? (s.has(seg) ? seg : null) : [...s].find((x) => x.toLowerCase() === seg.toLowerCase())); if (!m) return false; d = path.join(d, m) }"],
     ["cmtcap", '.toString("utf8").replace(/<!--[\\s\\S]*?-->/g, "");', '.toString("utf8");'],
   ];
   for (const [kind, from, to] of cases) for (const seed of ["1", "2", "3"]) {
@@ -493,4 +496,39 @@ test("標籤中間隔了換行（真包的寫法）也做得出 cmtcap 壞樣本
   const { D, L } = fakeWww(), p = path.join(D, "index.html"), h = fs.readFileSync(p, "utf8").replace('</script><script src="native-bridge.js">', '</script>\n<script src="native-bridge.js">');
   fs.writeFileSync(p, h); const LJ = JSON.parse(fs.readFileSync(L, "utf8")); LJ.files["index.html"] = [Buffer.byteLength(h), sha1(Buffer.from(h))]; fs.writeFileSync(L, JSON.stringify(LJ));
   const r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "cmtcap", "--seed", "1"]); assert.equal(r.status, 0, r.stdout + r.stderr); assert.match(r.stdout, /✔ cmtcap：index\.html/);
+});
+
+test("W30：大於 20 MB、記了雜湊的檔每個種子都全測（不只最大的兩個）；只對 20～30 MB 放水，金絲雀要回 4（PR #67 第十三次審查）", () => {
+  const { D, L } = fakeWww(), LJ = JSON.parse(fs.readFileSync(L, "utf8")), MB = 1048576;
+  /* 跟真包一樣：最大的兩個（nnue、gmgames）之外，還有三個 21～26 MB 的 tour-*.json */
+  const big = [["engine/pikafish.nnue", 40 * MB], ["data/gmgames.json", 33 * MB], ["data/tour-a.json", 26 * MB], ["data/tour-b.json", 24 * MB], ["data/tour-c.json", 21 * MB]];
+  for (const [rel, n] of big) { const b = Buffer.alloc(n, rel.length); fs.writeFileSync(path.join(D, ...rel.split("/")), b); LJ.files[rel] = [n, sha1(b)] }
+  fs.writeFileSync(L, JSON.stringify(LJ));
+  for (const seed of ["1", "2", "3"]) {
+    const out = path.join(tmp("xq-w30-"), "r.json"), r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "swap,nohash", "--seed", seed, "--out", out]);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const R = JSON.parse(fs.readFileSync(out, "utf8"));
+    for (const k of ["swap", "nohash"]) for (const [rel] of big) assert.ok(R.results.some((x) => x.kind === k && x.file === rel), k + "（種子 " + seed + "）要測到 " + rel);
+  }
+  for (const [kind, from, to] of [["swap", "    else if (h && crypto", "    else if (h && !(sz > 20 * 1048576 && sz < 30 * 1048576) && crypto"], ["nohash", "|| sz > 20 * 1048576)) noHash.push(rel);", "|| sz >= 30 * 1048576)) noHash.push(rel);"]]) {
+    const C = blindCanary(from, to), r = runCanary(C, ["--dir", D, "--list", L, "--only", kind, "--seed", "1"]);
+    assert.equal(r.status, 4, kind + " 只對 20～30 MB 放水：" + r.stdout + r.stderr);
+  }
+});
+
+test("check-www、canary-www：不是 -- 開頭、也不是參數值的多餘參數（-cdn、—cdn、cdn）直接報錯（PR #67 第十三次審查）", () => {
+  const { D, L } = fakeWww();
+  for (const x of ["-cdn", "—cdn", "cdn"]) {
+    const r = runCheck(D, L, x); assert.equal(r.status, 1, x + "：" + r.stdout + r.stderr); assert.match(r.stderr, /不認得的參數/);
+    assert.equal(runCanary(CANARY, ["--dir", D, "--list", L, x]).status, 2, "金絲雀 " + x);
+  }
+  assert.equal(runCheck(D, L).status, 0, "參數值（--dir、--list 後面那個）照樣認得");
+});
+
+test("casedir：目錄名改成不同大小寫，首頁素材、背景音樂、清單其他檔的目錄都測到；在 Linux 也成立（PR #67 第十三次審查）", () => {
+  const { D, L } = fakeWww(), out = path.join(tmp("xq-cdir-"), "r.json");
+  const r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "casedir", "--seed", "1", "--out", out]); assert.equal(r.status, 0, r.stdout + r.stderr);
+  const files = JSON.parse(fs.readFileSync(out, "utf8")).results.map((x) => x.file);
+  for (const t of ["p", "b", "l"]) assert.ok(files.some((f) => f.endsWith("|" + t)), "要測到 " + t + " 類目錄");
+  assert.ok(files.some((f) => f.startsWith("data/homemap|")), "首頁素材的目錄");
 });

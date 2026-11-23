@@ -18,7 +18,8 @@ const HERE = path.join(__dirname, "..");
 /* PR #67 第九次審查：認 --dir=X 這種寫法；不認得的旗標（打錯字，例如 --cnd）直接報錯，不悄悄退回預設 */
 const KNOWN = ["--public", "--dir", "--list", "--cdn", "--cdn-manifest", "--all"];
 const argv = process.argv.slice(2).flatMap((a) => { const m = /^(--[a-z-]+)=(.*)$/s.exec(a); return m ? [m[1], m[2]] : [a] });
-for (const a of argv) if (a.startsWith("--") && !KNOWN.includes(a)) { console.error("✘ 不認得的參數 " + a + "（可用：" + KNOWN.join(" ") + "）"); process.exit(1) }
+/* PR #67 第十三次審查：不是 -- 開頭、也不是 --dir／--list／--cdn-manifest 的值（例如 -cdn、—cdn、cdn）也報錯 */
+argv.forEach((a, i) => { if (a.startsWith("--") ? !KNOWN.includes(a) : !(i > 0 && ["--dir", "--list", "--cdn-manifest"].includes(argv[i - 1]))) { console.error("✘ 不認得的參數 " + a + "（可用：" + KNOWN.join(" ") + "）"); process.exit(1) } });
 const opt = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };
 /* PR #67 第五次審查：要接值的參數放最後、沒給值，不能悄悄退回預設 */
 for (const k of ["--dir", "--list", "--cdn-manifest"]) { const i = argv.indexOf(k); if (i >= 0 && (i + 1 >= argv.length || argv[i + 1] === "" || String(argv[i + 1]).startsWith("--"))) { console.error("✘ " + k + " 後面要接值"); process.exit(1) } }

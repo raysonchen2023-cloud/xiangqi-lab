@@ -42,7 +42,8 @@ const fs = require("fs"), path = require("path"), os = require("os"), crypto = r
 const VAL_FLAGS = ["--pkg", "--dir", "--list", "--cdn-manifest", "--only", "--seed", "--out"], KNOWN = [...VAL_FLAGS, "--cdn"];
 /* PR #67 第九次審查：認 --x=Y；不認得的旗標回 2 */
 const argv = process.argv.slice(2).flatMap((a) => { const m = /^(--[a-z-]+)=(.*)$/s.exec(a); return m ? [m[1], m[2]] : [a] }), opt = (k) => { const i = argv.indexOf(k); return i >= 0 ? argv[i + 1] : null };
-const unknownFlag = (a) => a.find((x) => x.startsWith("--") && !KNOWN.includes(x));
+/* PR #67 第十三次審查：不是 -- 開頭、也不是某個參數的值（-cdn、—cdn、cdn）也報錯，不悄悄忽略 */
+const unknownFlag = (a) => a.find((x, i) => x.startsWith("--") ? !KNOWN.includes(x) : !(i > 0 && VAL_FLAGS.includes(a[i - 1])));
 const missingVal = (a) => VAL_FLAGS.find((k) => { const i = a.indexOf(k); return i >= 0 && (i + 1 >= a.length || a[i + 1] === "" || String(a[i + 1]).startsWith("--")) });
 const CHECK = path.join(__dirname, "check-www.js");
 const sha256 = (b) => crypto.createHash("sha256").update(b).digest("hex");
@@ -96,7 +97,20 @@ const byDir = (list) => { const m = new Map(); for (const f of list) { const k =
 /* PR #67 第十次審查：目錄＋副檔名分層（判斷只對某種副檔名失靈，例如 .glb、.png 也抽得到） */
 const extOf = (rel) => { const m = /\.([A-Za-z0-9]+)$/.exec(rel); return m ? m[1].toLowerCase() : "" };
 const byDirExt = (list) => { const m = new Map(); for (const f of list) { const k = groupKey(f) + "|" + extOf(f); if (!m.has(k)) m.set(k, []); m.get(k).push(f) } return [...m.values()] };
-const BIG = 20 * 1048576;   /* 跟 check-www.js 第 4 項「大於 20 MB 沒記雜湊算缺驗」一樣 */
+const BIG = 20 * 1048576;
+/* casedir 的候選：每個目錄（名字裡要有英文字母才翻得了）一次。錯誤照 check-www 的順序：preload → 背景音樂 → 清單「少了」，
+   所以預期的那一行取「這個目錄底下（含子目錄）照那個順序排第一個的檔」，一定在印出來的前幾行。
+   背景音樂目錄要底下沒有首頁素材；清單目錄要底下沒有首頁素材和背景音樂（不然先出現的是別種錯誤） */
+const caseDirs = (D, L) => {
+  const pre = [...preloadItems(D), ...bigItems(D).filter((x) => fs.existsSync(at(D, x)))], bgm = bgmFiles(D), lst = Object.keys(L).filter((f) => fs.existsSync(at(D, f)));
+  const dirs = new Set(); for (const f of [...pre, ...bgm, ...lst]) { const parts = f.split("/"); for (let k = 1; k < parts.length; k++) dirs.add(parts.slice(0, k).join("/")) }
+  const under = (d, arr) => arr.find((f) => f.startsWith(d + "/")), out = [];
+  for (const d of [...dirs].sort()) {
+    if (caseFlip(d) === d) continue;
+    const p = under(d, pre), b = under(d, bgm), l = under(d, lst);
+    if (p) out.push(d + "|" + p + "|p"); else if (b) out.push(d + "|" + b + "|b"); else if (l) out.push(d + "|" + l + "|l");
+  }
+  return out };
 const needStrata = (D) => [...byDirExt(preloadItems(D)), bigItems(D).filter((f) => fs.existsSync(at(D, f))), ...bgmEras(D)].filter((x) => x.length);
 const bgmFiles = (D) => { const B = JSON.parse(fs.readFileSync(at(D, "data/bgm/index.json"), "utf8")), o = []; for (const [era, list] of Object.entries(B)) for (const f of Array.isArray(list) ? list : []) if (typeof f === "string" && fs.existsSync(at(D, "data/bgm/" + era + "/" + f))) o.push("data/bgm/" + era + "/" + f); return o };
 
@@ -114,6 +128,12 @@ const KINDS = {
     break: (D, f) => caseRename(D, f), expect: (f) => "背景音樂清單有但沒有檔：" + f },
   caselist: { batch: 30, cands: (D, L) => KINDS.listmiss.cands(D, L).filter((f) => caseFlip(f) !== f), strata: (D, L) => byDirExt(KINDS.caselist.cands(D, L)),
     break: (D, f) => caseRename(D, f), expect: (f) => "少了 " + f },
+  /* PR #67 第十三次審查：目錄名大小寫不同（iPhone 上整個目錄都缺）。候選寫成「目錄|要出現在錯誤裡的檔|哪一種錯」：
+     首頁素材所在的目錄（錯誤是 preload 那一行）、背景音樂朝代目錄（背景音樂那一行）、清單其他檔所在的目錄（少了那一行）；每個目錄取它底下照錯誤順序排第一個檔 */
+  casedir: { cands: (D, L) => caseDirs(D, L), always: (D, L) => caseDirs(D, L).filter((x) => !x.endsWith("|l")),   /* 首頁素材、背景音樂的目錄全測；清單其他目錄照分層抽 */
+    strata: (D, L) => { const c = caseDirs(D, L); return ["p", "b", "l"].map((t) => c.filter((x) => x.endsWith("|" + t))).filter((x) => x.length) },
+    break: (D, x) => { const [d] = x.split("|"), a = at(D, d), b = at(D, caseFlip(d)), t = a + ".xqtmp"; fs.renameSync(a, t); fs.renameSync(t, b) },
+    expect: (x) => { const [, f, t] = x.split("|"); return (t === "p" ? "preload.json 列了但沒有：" : t === "b" ? "背景音樂清單有但沒有檔：" : "少了 ") + f } },
   engine: { cands: (D) => ENGINE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺引擎 " + f },
   core: { cands: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), always: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺 " + f },
   big: {
@@ -125,7 +145,7 @@ const KINDS = {
     batch: 30,
     cands: (D, L) => Object.entries(L).filter(([rel, [sz, h]]) => h && sz >= 16 && rel !== "index.html" && fs.existsSync(at(D, rel))).map((x) => x[0]),
     strata: (D, L) => byDirExt(KINDS.swap.cands(D, L)),
-    always: (D, L) => Object.entries(L).filter(([rel, [sz, h]]) => h && sz >= 16 && rel !== "index.html" && fs.existsSync(at(D, rel))).sort((a, b) => b[1][0] - a[1][0] || (a[0] < b[0] ? -1 : 1)).slice(0, 2).map((x) => x[0]),   /* PR #67 第五次審查：W30 那種大檔一定要測到 */
+    always: (D, L) => Object.entries(L).filter(([rel, [sz, h]]) => h && sz >= 16 && rel !== "index.html" && fs.existsSync(at(D, rel))).sort((a, b) => b[1][0] - a[1][0] || (a[0] < b[0] ? -1 : 1)).filter((x, k) => k < 2 || x[1][0] > BIG).map((x) => x[0]),   /* PR #67 第五次審查：W30 那種大檔一定要測到 */   /* PR #67 第十三次審查：大於 20 MB、記了雜湊的檔（W30 切塊大檔）全部都測，不只最大的兩個 */
     break: (D, f) => { const b = Buffer.from(fs.readFileSync(at(D, f))); b[Math.floor(b.length / 2)] ^= 0xff; rewrite(at(D, f), b) },
     expect: (f) => "內容跟清單不同 " + f,
   },
@@ -178,6 +198,7 @@ const KINDS = {
     /* 只改清單、跟目錄無關，粗分四層就好：引擎、首頁 items、preload big、背景音樂 */
     strata: (D, L) => [ENGINE, preloadItems(D), bigItems(D), bgmFiles(D), Object.keys(L).filter((f) => L[f][0] > BIG)].map((s) => s.filter((f) => L[f] && L[f][1] && fs.existsSync(at(D, f)))).filter((x) => x.length),   /* 最後一層：大於 20 MB 的檔（不一定是 App 會要的，PR #67 第十次審查） */
     noClone: true,
+    always: (D, L) => Object.keys(L).filter((f) => L[f][0] > BIG && L[f][1] && fs.existsSync(at(D, f))),   /* PR #67 第十三次審查：大於 20 MB 那一層全測 */
     break: (D, f, L) => ({ list: { ...L, [f]: [L[f][0], null] } }),
     expect: (f) => ["清單沒記雜湊的重要檔", f],
   },
