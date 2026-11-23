@@ -77,10 +77,14 @@ const POS = ["head", "mid", "tail"];
 /* 檔中間：取中間附近的換行之後（不切斷多位元組字元） */
 const midLine = (b) => { const i = b.indexOf(10, Math.floor(b.length / 2)); return i < 0 ? Math.floor(b.length / 2) : i + 1 };
 /* 檔名大小寫翻轉：最後一段裡第一個能翻的字母 */
+/* 改成大小寫不同的同名檔（macOS 不分大小寫，先改成暫名再改回） */
+const caseRename = (D, f) => { const a = at(D, f), b = at(D, caseFlip(f)), t = a + ".xqtmp"; fs.renameSync(a, t); fs.renameSync(t, b) };
 const caseFlip = (rel) => { const i = rel.lastIndexOf("/") + 1, n = rel.slice(i), j = n.search(/[A-Za-z]/); if (j < 0) return rel; const ch = n[j], t = ch === ch.toLowerCase() ? ch.toUpperCase() : ch.toLowerCase(); return rel.slice(0, i) + n.slice(0, j) + t + n.slice(j + 1) };
 /* 錯誤裡要出現的字：要在「✘」（結束代碼 1）或「△」（結束代碼 3）開頭的那一行，⚠ 警告那一行不算（一次弄壞好幾個時，別的檔讓結束代碼變 1，這一個只出警告也不能當抓到）。
    字串＝那一行有這段；陣列＝同一行裡每一段都要有 */
-const hit = (out, exp, mark) => out.split("\n").some((l) => l.startsWith(mark) && [].concat(exp).every((e) => l.includes(e)));
+/* PR #67 第十二次審查：精確比對，後面要接行尾或分隔字元（「少了 park3d.js」不能被「少了 park3d.json」那行當成抓到；U+1 不能被 U+1f 當成抓到） */
+const hasTok = (l, e) => { for (let i = l.indexOf(e); i >= 0; i = l.indexOf(e, i + 1)) { const c = l[i + e.length]; if (c === undefined || /[\s（(、,，：:…；]/.test(c)) return true } return false };
+const hit = (out, exp, mark) => out.split("\n").some((l) => l.startsWith(mark) && [].concat(exp).every((e) => hasTok(l, e)));
 const preloadItems = (D) => (JSON.parse(fs.readFileSync(at(D, "data/preload.json"), "utf8")).items || []).map((x) => x[0]).filter((f) => fs.existsSync(at(D, f)));
 const bigItems = (D) => (JSON.parse(fs.readFileSync(at(D, "data/preload.json"), "utf8")).big || []).map((x) => x[0]);
 /* PR #67 第八次審查：分層挑檔。首頁 items、preload big、背景音樂每個朝代各自一層，每層各挑頭、中、尾＋隨機（混在一起照字母排，背景音樂幾乎挑不到） */
@@ -103,8 +107,13 @@ const KINDS = {
   home: { batch: 15, cands: (D) => preloadItems(D), strata: (D) => byDirExt(preloadItems(D)), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "preload.json 列了但沒有：" + f },
   /* PR #67 第十一次審查：檔名大小寫不同（macOS 不分大小寫，iPhone 分）。把首頁素材改名成大小寫不同的同名檔 */
   casehome: { batch: 15, cands: (D) => preloadItems(D).filter((f) => caseFlip(f) !== f), strata: (D) => byDirExt(preloadItems(D).filter((f) => caseFlip(f) !== f)),
-    break: (D, f) => { const a = at(D, f), b = at(D, caseFlip(f)), t = a + ".xqtmp"; fs.renameSync(a, t); fs.renameSync(t, b) }, expect: (f) => "preload.json 列了但沒有：" + f },
+    break: (D, f) => caseRename(D, f), expect: (f) => "preload.json 列了但沒有：" + f },
   bgm: { batch: 15, cands: (D) => bgmFiles(D), strata: (D) => bgmEras(D), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "背景音樂清單有但沒有檔：" + f },
+  /* PR #67 第十二次審查：大小寫不只首頁。背景音樂（每個朝代一層）和清單其他檔（每一層）也各自改成大小寫不同的檔名 */
+  casebgm: { batch: 15, cands: (D) => bgmFiles(D).filter((f) => caseFlip(f) !== f), strata: (D) => bgmEras(D).map((s) => s.filter((f) => caseFlip(f) !== f)).filter((x) => x.length),
+    break: (D, f) => caseRename(D, f), expect: (f) => "背景音樂清單有但沒有檔：" + f },
+  caselist: { batch: 30, cands: (D, L) => KINDS.listmiss.cands(D, L).filter((f) => caseFlip(f) !== f), strata: (D, L) => byDirExt(KINDS.caselist.cands(D, L)),
+    break: (D, f) => caseRename(D, f), expect: (f) => "少了 " + f },
   engine: { cands: (D) => ENGINE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺引擎 " + f },
   core: { cands: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), always: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺 " + f },
   big: {
@@ -130,6 +139,9 @@ const KINDS = {
     break: (D, f, L) => { const b = Buffer.from(fs.readFileSync(at(D, f), "utf8").replace(TAG_CAP, ""), "utf8"); rewrite(at(D, f), b); return { list: relist(L, f, b) } }, expect: () => "index.html 沒有插 capacitor.js／native-bridge.js" },
   nobridge: { cands: (D) => fs.readFileSync(at(D, "index.html"), "utf8").includes(TAG_BR) ? ["index.html"] : [],
     break: (D, f, L) => { const b = Buffer.from(fs.readFileSync(at(D, f), "utf8").replace(TAG_BR, ""), "utf8"); rewrite(at(D, f), b); return { list: relist(L, f, b) } }, expect: () => "index.html 沒有插 capacitor.js／native-bridge.js" },
+  /* PR #67 第十二次審查：兩個標籤包在 HTML 註解裡（看起來有插、其實不會載入） */
+  cmtcap: { cands: (D) => { const h = fs.readFileSync(at(D, "index.html"), "utf8"); return h.includes(TAG_CAP) && h.includes(TAG_BR) ? ["index.html"] : [] },
+    break: (D, f, L) => { const b = Buffer.from(fs.readFileSync(at(D, f), "utf8").replace(TAG_CAP, "<!--" + TAG_CAP + "-->").replace(TAG_BR, "<!--" + TAG_BR + "-->"), "utf8"); rewrite(at(D, f), b); return { list: relist(L, f, b) } }, expect: () => "index.html 沒有插 capacitor.js／native-bridge.js" },
   cdnstale: {
     needsCdn: true, batch: 30,
     cands: (D, L, M) => cdnStrata(D, L, M, true).flat(), strata: (D, L, M) => cdnStrata(D, L, M, true),
@@ -191,6 +203,10 @@ const KINDS = {
   },
 };
 
+/* PR #67 第十二次審查：check-www 用乾淨的環境跑，拿掉 NODE_OPTIONS 等所有 NODE_*（不然 --require 一支小程式就能把 --dir 換成好的副本） */
+const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^NODE_/i.test(k)));
+/* 金絲雀自己被動過：NODE_OPTIONS 有值，或 node 帶了參數（--require、--import、--loader…）。命令列直接跑時就回 2 */
+const runtimeTaint = (env = process.env, execArgv = process.execArgv) => { const why = []; if (String(env.NODE_OPTIONS || "").trim()) why.push("NODE_OPTIONS=" + String(env.NODE_OPTIONS).slice(0, 80)); if (execArgv.length) why.push("node 參數 " + execArgv.join(" ").slice(0, 80)); return why };
 function cloneDir(src, dst) {
   if (process.platform === "darwin") { const r = cp.spawnSync("cp", ["-cR", src, dst], { stdio: "ignore" }); if (r.status === 0) return }
   fs.cpSync(src, dst, { recursive: true });
@@ -245,7 +261,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
     const L = LJ.files || {};
     const base = fs.mkdtempSync(path.join(tmp, "xq-canary-www-"));
     try {
-      const check = (d, lf, cdnArg, more = []) => cp.spawnSync(process.execPath, [CHECK, "--dir", d, "--list", lf, ...(cdnArg ? ["--cdn-manifest", cdnArg] : []), ...more], { encoding: "utf8", maxBuffer: 256e6 });   /* 跟正式用法一樣，不加 --all（PR #67 第五次審查） */
+      const check = (d, lf, cdnArg, more = []) => cp.spawnSync(process.execPath, [CHECK, "--dir", d, "--list", lf, ...(cdnArg ? ["--cdn-manifest", cdnArg] : []), ...more], { encoding: "utf8", maxBuffer: 256e6, env: cleanEnv() });   /* 跟正式用法一樣，不加 --all（PR #67 第五次審查） */
       /* CDN 清單只下載一次，乾淨的那份和每個壞樣本都用同一份，收據記下它的雜湊（PR #67 審查：分兩次下載，兩份可能不同） */
       let M = null, cdnFile = null, cdnSha = null;
       /* PR #67 第四次審查：先驗乾淨的樣本（不連 CDN），再讀 CDN。乾淨的有錯就回 2，不會被「CDN 讀不到」蓋成 3 */
@@ -305,7 +321,9 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       const verBound = !!releaseVersion && releaseVersion === LJ.siteVersion;
       /* PR #67 第七次審查：正式 CDN 時，乾淨的那份再用 check-www 自己的 --cdn 跑一次（走它自己的網址和下載），要回 0，正式指令那條路才算驗過 */
       let cdnViaCheck = null;
-      if (OFFICIAL_CDN && cdn === OFFICIAL_CDN) { const r = (selfCdn || ((d, lf) => check(d, lf, null, ["--cdn"])))(dir, LF); cdnViaCheck = { exit: r.status, note: String(r.stderr || "").split("\n")[0].slice(0, 200) }; log((r.status === 0 ? "✔ " : "✘ ") + "check-www --cdn（自己下載正式 CDN 清單）結束代碼 " + r.status) }
+      /* PR #67 第十二次審查：只看結束代碼不夠（--cdn 網址那條路改成不比，也回 0）。要求「跟 CDN 現行版比了 N 個檔」的 N 跟本機 CDN 清單那次一樣 */
+      const cmpN = (t) => { const m = /跟 CDN 現行版比了 (\d+) 個檔/.exec(String(t || "")); return m ? Number(m[1]) : null }, wantN = cmpN(clean.stdout);
+      if (OFFICIAL_CDN && cdn === OFFICIAL_CDN) { const r = (selfCdn || ((d, lf) => check(d, lf, null, ["--cdn"])))(dir, LF, { cdnFile }); cdnViaCheck = { exit: r.status, n: cmpN(r.stdout), want: wantN, note: String(r.stderr || "").split("\n")[0].slice(0, 200) }; log((r.status === 0 && cdnViaCheck.n === wantN ? "✔ " : "✘ ") + "check-www --cdn 比了 " + cdnViaCheck.n + " 個檔（本機清單那次 " + wantN + "）；結束代碼 " + r.status) }
       const passAll = want.every((k) => results.some((x) => x.kind === k)) && results.every((x) => x.caught === true), code = exitOf(results, passAll);   /* PR #67 第九次審查：結束代碼先算好，full 要看它 */
       const receipt = {
         tool: "P0-IMG-canary", platform: "ios", at: new Date().toISOString(),
@@ -317,7 +335,8 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
         toolPins: pins,
         seed: SEED, seedFrom, kinds: want, results,
         cdnViaCheck,
-        full: passAll && code === 0 && !only && !seedGiven && !!OFFICIAL_CDN && cdn === OFFICIAL_CDN && !!cdnViaCheck && cdnViaCheck.exit === 0 && !!P && P.kind === "ipa" && listBound && verBound && toolsBound,   /* PR #67 第七次審查：讀不到網址（null）不能算正式 CDN；check-www 自己的 --cdn 也要回 0 */   /* 只認正式 CDN（第四次審查）；要 .ipa、清單是 main 那份、版號對得上（第五次審查） */
+        runtime: { node: process.version, execArgv: process.execArgv.slice(0, 40), nodeOptions: process.env.NODE_OPTIONS || null },   /* PR #67 第十二次審查：記執行環境 */
+        full: passAll && code === 0 && !only && !seedGiven && !!OFFICIAL_CDN && cdn === OFFICIAL_CDN && !!cdnViaCheck && cdnViaCheck.exit === 0 && cdnViaCheck.n != null && cdnViaCheck.n === cdnViaCheck.want && !!P && P.kind === "ipa" && listBound && verBound && toolsBound,   /* PR #67 第七次審查：讀不到網址（null）不能算正式 CDN；check-www 自己的 --cdn 也要回 0 */   /* 只認正式 CDN（第四次審查）；要 .ipa、清單是 main 那份、版號對得上（第五次審查） */
         pass: passAll, code,
       };
       return { code, receipt };
@@ -325,10 +344,12 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
   } finally { if (P && P.cleanup) fs.rmSync(P.cleanup, { recursive: true, force: true }) }
 }
 
-module.exports = { run, KINDS, toolSha, treeSha, picks, rng, exitOf, OFFICIAL_CDN, hit, caseFlip, groupKey };
+module.exports = { run, KINDS, toolSha, treeSha, picks, rng, exitOf, OFFICIAL_CDN, hit, hasTok, caseFlip, groupKey, runtimeTaint, cleanEnv };
 if (require.main === module) {
   const mv = missingVal(argv); if (mv) { console.error("✘ 測試不成立：" + mv + " 後面要接值"); process.exit(2) }
   const uf = unknownFlag(argv); if (uf) { console.error("✘ 測試不成立：不認得的參數 " + uf); process.exit(2) }
+  const tw = runtimeTaint(); if (tw.length) { console.error("✘ 測試不成立：金絲雀的執行環境被動過（" + tw.join("；") + "）。請用乾淨的 node 直接跑"); process.exit(2) }
+  if (argv.includes("--cdn") && !OFFICIAL_CDN) { console.error("✘ 測試不成立：加了 --cdn，但讀不到 check-www.js 裡的正式 CDN 網址"); process.exit(2) }   /* PR #67 第十二次審查：不能不比 CDN 就回 0 */
   const cdn = opt("--cdn-manifest") || (argv.includes("--cdn") ? OFFICIAL_CDN : null);
   const { code, receipt } = run({ dir: opt("--dir"), list: opt("--list"), cdn, pkg: opt("--pkg"), only: opt("--only"), seed: opt("--seed") });
   if (receipt.unfit) console.error((code === 3 ? "△ 缺驗：" : "✘ 測試不成立：") + receipt.why);

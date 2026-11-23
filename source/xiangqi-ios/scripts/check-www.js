@@ -34,7 +34,7 @@ const size = rel => fs.statSync(path.join(ROOT, ...rel.split("/"))).size;
 if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); }
 
 /* 1 */
-const html = rd("index.html").toString("utf8");
+const html = rd("index.html").toString("utf8").replace(/<!--[\s\S]*?-->/g, "");   /* PR #67 第十二次審查：包在 HTML 註解裡的標籤不算有插 */
 const iCap = html.indexOf('<script src="capacitor.js"></script>'), iBr = html.indexOf('<script src="native-bridge.js"></script>'), iCore = html.indexOf('<script src="core.js"></script>');
 if (iCap < 0 || iBr < 0) bad.push("index.html 沒有插 capacitor.js／native-bridge.js");
 else if (!(iCap < iBr && (iCore < 0 || iBr < iCore))) bad.push("index.html 裡 native-bridge.js 的位置不對（要在 capacitor.js 後、App 程式前）");
