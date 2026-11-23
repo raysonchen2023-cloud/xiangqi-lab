@@ -16,9 +16,10 @@
      cdnstale App 會要的檔換成舊副本、清單也照舊副本改（加 --cdn 才跑） → 包跟 CDN 現行版不同（W42）：只有跟 CDN 比才抓得到
      cdnmiss  CDN 清單拿掉一個 App 會要的檔（加 --cdn 才跑）     → 要回 3：沒跟 CDN 比到不能當驗過
      cdnfail  CDN 清單讀不到（加 --cdn 才跑）                  → 要回 3：加了 --cdn 卻沒驗到 W42
-     ctrl     程式檔插一個控制字元（清單照改）                  → 程式壞掉
+     ctrl     程式檔插一個控制字元（7 種輪流，清單照改）         → 程式壞掉
      bigpre   拿掉 preload.json 的 big 列的大檔（清單也拿掉）    → 開 App 要先下載的大檔缺
      capord   index.html 裡 native-bridge.js 移到 capacitor.js 前面（清單照改） → 原生橋接載入順序錯（原生能力偵測不到）
+     listmiss 拿掉一個清單有、但不在上面任何名單裡的檔（3D 場景程式、場景圖、data/ 其他檔） → 那個畫面破圖或壞掉
    swap 除了頭、中、尾、隨機，另外固定測最大的兩個記了 sha1 的檔（W30：大小對、內容壞的切塊大檔）
    用法（送審）：node scripts/canary-www.js --pkg <要送審的 .ipa 或 .app> --cdn [--list <清單>] [--seed <種子>] --out <收據.json>
      --pkg 時檢查的就是包裡那份 Payload/*.app/public（.ipa 會先解開），不能再另外給 --dir（PR #67 審查：收據的包跟檢查的資料夾要是同一份）。
@@ -27,7 +28,7 @@
      3 乾淨的沒錯、但加了 --cdn 卻讀不到 CDN 清單（缺驗）
    送審用的收據要 full＝true，五個條件都要成立（PR #67 第五次審查）：
      給了 --pkg 而且是 .ipa（收據的 SHA-256 才對得到送審的檔）、加了 --cdn（正式 CDN；--cdn-manifest 給的本機檔不算）、沒有 --only、
-     用的清單跟 origin/main 的 source/xiangqi-ios/scripts/.www-files.json 一模一樣（不能拿包重產清單來比包）、
+     用的清單和兩支工具都跟 origin/main 那一版一樣（不能拿包重產清單來比包，也不能用改過的工具）、
      清單的 siteVersion 跟包裡 public/release.json 的 version 一樣。
    金絲雀叫 check-www.js 的參數跟正式用法一樣（不加 --all）。 */
 "use strict";
@@ -58,11 +59,13 @@ const at = (D, rel) => path.join(D, ...rel.split("/"));
 const rewrite = (p, b) => { fs.rmSync(p); fs.writeFileSync(p, b) };   /* 先刪再寫：APFS 複製或硬連結都不會改到原本那份 */
 const ENGINE = ["engine/pikafish.js", "engine/pikafish.wasm", "engine/pikafish.nnue"];
 const CORE = ["capacitor.js", "native-bridge.js", "core.js", "engine.js", "local.js", "net.js", "zh.js"];
+const CTRL_CH = ["00", "07", "08", "0b", "0c", "1b", "7f"];   /* 十六進位；\x08 是 Bash 吃掉 \\b 會產生的字元 */
 const CTRL = ["index.html", "native-bridge.js", "core.js", "engine.js", "local.js", "net.js"];   /* check-www.js 第 5 項檢查控制字元的檔 */
 const TAG_CAP = '<script src="capacitor.js"></script>', TAG_BR = '<script src="native-bridge.js"></script>';
 /* 清單照改過的檔更新（只讓要測的那一條判斷抓得到，別的判斷不會順便抓到） */
 const relist = (L, f, b) => ({ ...L, [f]: [b.length, sha1_12(b)] });
 const preloadItems = (D) => (JSON.parse(fs.readFileSync(at(D, "data/preload.json"), "utf8")).items || []).map((x) => x[0]).filter((f) => fs.existsSync(at(D, f)));
+const bigItems = (D) => (JSON.parse(fs.readFileSync(at(D, "data/preload.json"), "utf8")).big || []).map((x) => x[0]);
 const bgmFiles = (D) => { const B = JSON.parse(fs.readFileSync(at(D, "data/bgm/index.json"), "utf8")), o = []; for (const [era, list] of Object.entries(B)) for (const f of Array.isArray(list) ? list : []) if (typeof f === "string" && fs.existsSync(at(D, "data/bgm/" + era + "/" + f))) o.push("data/bgm/" + era + "/" + f); return o };
 
 /* 每一種壞樣本：cands 列出所有可以弄壞的檔；break 在副本上真的弄壞（需要時回傳改過的清單）；expect 是 check-www 錯誤裡要出現的字 */
@@ -107,9 +110,17 @@ const KINDS = {
     expect: () => "讀不到 CDN 清單",
   },
   ctrl: {
-    cands: (D, L) => CTRL.filter((f) => L[f] && fs.existsSync(at(D, f))),
-    break: (D, f, L) => { const b = Buffer.concat([fs.readFileSync(at(D, f)), Buffer.from("\x01")]); rewrite(at(D, f), b); return { list: relist(L, f, b) } },
-    expect: (f) => f + " 有控制字元",
+    /* PR #67 第六次審查：不只 \x01。候選是「檔｜字元」的組合，另外固定把 7 種字元各插一次到第一個檔 */
+    cands: (D, L) => CTRL.filter((f) => L[f] && fs.existsSync(at(D, f))).flatMap((f) => CTRL_CH.map((c) => f + "|" + c)),
+    always: (D, L) => { const f = CTRL.find((x) => L[x] && fs.existsSync(at(D, x))); return f ? CTRL_CH.map((c) => f + "|" + c) : [] },
+    break: (D, fc, L) => { const [f, c] = fc.split("|"), b = Buffer.concat([fs.readFileSync(at(D, f)), Buffer.from([parseInt(c, 16)])]); rewrite(at(D, f), b); return { list: relist(L, f, b) } },
+    expect: (fc) => { const [f, c] = fc.split("|"); return f + " 有控制字元 U+" + parseInt(c, 16).toString(16) },
+  },
+  listmiss: {
+    /* PR #67 第六次審查：清單有、但不在任何特定名單（首頁、背景音樂、引擎、核心、控制字元檢查的檔）裡的檔，缺了只有「少了」那一行抓得到 */
+    cands: (D, L) => { const skip = new Set([...preloadItems(D), ...bigItems(D), ...bgmFiles(D), ...ENGINE, ...CORE, ...CTRL, "data/preload.json", "data/bgm/index.json", "data/big-books.json", "release.json"]); return Object.keys(L).filter((rel) => !skip.has(rel) && fs.existsSync(at(D, rel))).sort() },
+    break: (D, f) => fs.rmSync(at(D, f)),
+    expect: (f) => "少了 " + f,
   },
   bigpre: {
     cands: (D) => { const P = JSON.parse(fs.readFileSync(at(D, "data/preload.json"), "utf8")); return (P.big || []).map((x) => x[0]).filter((f) => fs.existsSync(at(D, f))) },
@@ -127,7 +138,8 @@ function cloneDir(src, dst) {
   if (process.platform === "darwin") { const r = cp.spawnSync("cp", ["-cR", src, dst], { stdio: "ignore" }); if (r.status === 0) return }
   fs.cpSync(src, dst, { recursive: true });
 }
-const OFFICIAL_CDN = "https://xiangqi-cdn.pages.dev/cdn-manifest.json";   /* 送審用（full＝true）只認這個 */
+/* 送審用（full＝true）只認正式 CDN；網址只定義在 check-www.js 一個地方，這裡從它的原始碼讀（PR #67 第六次審查：兩份網址，改了一份測不到） */
+const OFFICIAL_CDN = (() => { const m = fs.readFileSync(CHECK, "utf8").match(/^const OFFICIAL_CDN = "(https:\/\/[^"]+)";/m); return m ? m[1] : null })();
 const readManifest = (cdn) => /^https?:\/\//.test(cdn)
   ? cp.execFileSync(process.execPath, ["-e", "fetch(process.argv[1]).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(t=>process.stdout.write(t)).catch(e=>{console.error(e.message);process.exit(1)})", cdn], { encoding: "utf8", maxBuffer: 256e6, timeout: 120000, stdio: ["ignore", "pipe", "pipe"] })
   : fs.readFileSync(cdn, "utf8");
@@ -146,15 +158,18 @@ function pkgPublic(pkg, tmp) {
 
 /* 結束代碼（純函式）：全抓到 0；有任何一個「做出來了卻沒被抓到」就是 4（檢查失靈，優先，不能被「不成立」蓋掉）；其餘沒過的是 2 */
 /* origin/main 上那份清單（收據要綁住倉庫的清單，不能拿包重產）；讀不到就回 null，full 一律 false */
-function mainListFromGit() {
-  const root = path.join(__dirname, "..", "..", "..");
-  const r = cp.spawnSync("git", ["-C", root, "show", "origin/main:source/xiangqi-ios/scripts/.www-files.json"], { maxBuffer: 64e6 });
+const ROOT = path.join(__dirname, "..", "..", "..");
+function mainFromGit(rel) {
+  if (rel === "@commit") { const r = cp.spawnSync("git", ["-C", ROOT, "rev-parse", "origin/main"], { encoding: "utf8" }); return r.status === 0 ? r.stdout.trim() : null }
+  const r = cp.spawnSync("git", ["-C", ROOT, "show", "origin/main:" + rel], { maxBuffer: 64e6 });
   return r.status === 0 ? r.stdout : null;
 }
+const REL_LIST = "source/xiangqi-ios/scripts/.www-files.json", REL_CHECK = "source/xiangqi-ios/scripts/check-www.js", REL_CANARY = "source/xiangqi-ios/scripts/canary-www.js";
+const normSha = (b) => sha256(Buffer.from(Buffer.from(b).toString("utf8").replace(/\r\n/g, "\n"), "utf8"));   /* 跟 toolSha 同一種算法 */
 const exitOf = (results, pass) => (pass ? 0 : results.some((x) => !x.unfit && x.caught !== true) ? 4 : 2);
 
 /* 主流程（自我測試直接呼叫）：回傳 { code, receipt } */
-function run({ dir = null, list = null, cdn = null, pkg = null, only = null, seed = null, tmp = os.tmpdir(), log = console.log, readM = readManifest, mainList = mainListFromGit }) {   /* readM、mainList 只給自我測試換掉下載和讀 main；命令列一律用真的 */
+function run({ dir = null, list = null, cdn = null, pkg = null, only = null, seed = null, tmp = os.tmpdir(), log = console.log, readM = readManifest, mainFile = mainFromGit }) {   /* readM、mainFile 只給自我測試換掉下載和讀 origin/main；命令列一律用真的 */
   const unfit = (why, code = 2) => ({ code, receipt: { tool: "P0-IMG-canary", platform: "ios", unfit: true, why } });
   if (pkg && dir) return unfit("給了 --pkg 就不要再給 --dir：檢查的就是包裡那份 public");
   let P = null;
@@ -202,20 +217,26 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
           fs.rmSync(D, { recursive: true, force: true });
         }
       }
-      const listSha = sha256(fs.readFileSync(LF)), mainBuf = (() => { try { return mainList() } catch (e) { return null } })();
+      const fromMain = (rel) => { try { return mainFile(rel) } catch (e) { return null } };
+      const listSha = sha256(fs.readFileSync(LF)), mainBuf = fromMain(REL_LIST);
       const listMainSha256 = mainBuf ? sha256(mainBuf) : null, listBound = !!listMainSha256 && listMainSha256 === listSha;
+      /* PR #67 第六次審查：工具也要是 origin/main 那一版（自己算的，只擋不小心改過；故意偽造要靠 CI 用 main 版工具重算） */
+      const pins = { [REL_CHECK]: toolSha(CHECK), [REL_CANARY]: toolSha(__filename) };
+      const mainPins = {}; for (const rel of Object.keys(pins)) { const b = fromMain(rel); mainPins[rel] = b ? normSha(b) : null }
+      const toolsBound = Object.keys(pins).every((rel) => mainPins[rel] && mainPins[rel] === pins[rel]);
+      const mainCommit = fromMain("@commit");
       let releaseVersion = null; try { releaseVersion = JSON.parse(fs.readFileSync(path.join(dir, "release.json"), "utf8")).version || null } catch (e) { }
       const verBound = !!releaseVersion && releaseVersion === LJ.siteVersion;
       const receipt = {
         tool: "P0-IMG-canary", platform: "ios", at: new Date().toISOString(),
         sample: { dir: P ? "（安裝包裡的 public）" : path.basename(path.resolve(dir)), treeSha256: treeSha(dir), indexSha256: sha256(fs.readFileSync(path.join(dir, "index.html"))), listSha256: listSha, siteVersion: LJ.siteVersion || null, commit: LJ.commit || null, releaseVersion },
-        bind: { listMainSha256, listBound, verBound },   /* PR #67 第五次審查：清單要是 origin/main 那份、版號要跟包對得上 */
+        bind: { mainCommit: typeof mainCommit === "string" ? mainCommit : null, listMainSha256, listBound, verBound, mainToolPins: mainPins, toolsBound },   /* mainCommit：比對時本機的 origin/main 在哪一版（CI 可以看是不是最新的） */   /* PR #67 第五次審查：清單要是 origin/main 那份、版號要跟包對得上 */
         pkg: P ? { file: path.basename(pkg), kind: P.kind, sha256: P.sha256 } : null,
         cdn: cdn ? { manifest: cdn, sha256: cdnSha } : null,
         /* 工具自己算、自己寫進收據：只抓得到本機不小心改過（例如忘了切回 main）；故意偽造要靠之後的 CI 用 main 版工具重跑（Android PR③） */
-        toolPins: { "source/xiangqi-ios/scripts/check-www.js": toolSha(CHECK), "source/xiangqi-ios/scripts/canary-www.js": toolSha(__filename) },
+        toolPins: pins,
         seed: SEED, kinds: want, results,
-        full: !only && cdn === OFFICIAL_CDN && !!P && P.kind === "ipa" && listBound && verBound,   /* 只認正式 CDN（第四次審查）；要 .ipa、清單是 main 那份、版號對得上（第五次審查） */
+        full: !only && cdn === OFFICIAL_CDN && !!P && P.kind === "ipa" && listBound && verBound && toolsBound,   /* 只認正式 CDN（第四次審查）；要 .ipa、清單是 main 那份、版號對得上（第五次審查） */
         pass: want.every((k) => results.some((x) => x.kind === k)) && results.every((x) => x.caught === true),
       };
       return { code: exitOf(results, receipt.pass), receipt };
@@ -231,7 +252,7 @@ if (require.main === module) {
   if (receipt.unfit) console.error((code === 3 ? "△ 缺驗：" : "✘ 測試不成立：") + receipt.why);
   if (opt("--out")) fs.writeFileSync(opt("--out"), JSON.stringify(receipt, null, 1) + "\n");
   if (!receipt.unfit) console.log(receipt.pass
-    ? `✔ 金絲雀：${receipt.results.length} 個壞樣本（${receipt.kinds.length} 種）都被 check-www.js 抓到；種子 ${receipt.seed}` + (receipt.full ? "" : "（full＝false，送審不能用：要 --pkg .ipa、--cdn、不加 --only、清單是 origin/main 那份、版號跟包一樣）")
+    ? `✔ 金絲雀：${receipt.results.length} 個壞樣本（${receipt.kinds.length} 種）都被 check-www.js 抓到；種子 ${receipt.seed}` + (receipt.full ? "" : "（full＝false，送審不能用：要 --pkg .ipa、--cdn、不加 --only、清單和兩支工具是 origin/main 那份、版號跟包一樣）")
     : "✘ 金絲雀沒過：" + [...new Set(receipt.results.filter((x) => !x.caught).map((x) => x.kind))].join("、") + (code === 4 ? "——檢查本身失靈，這一輪的 P0-IMG 結果不可信" : ""));
   process.exit(code);
 }

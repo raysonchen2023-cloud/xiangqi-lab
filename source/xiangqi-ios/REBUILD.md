@@ -68,12 +68,12 @@ node scripts/canary-www.js --pkg <要送審的 .ipa> --list scripts/.www-files.j
 ```
 
 - `check-www.js` 比對清單裡每個檔的大小；有記 sha1 的檔，內容也要一樣。加 `--cdn` 時，包裡 `data/` 的檔再跟 CDN 現行版（`cdn-manifest.json`）逐檔比，App 會要的檔不同就擋（W42）。讀不到檔案清單（例如 `--list` 路徑打錯）或讀不到 CDN 清單都回 3（缺驗），不能當沒問題；要接值的參數放最後沒給值，回 1。`--all` 只影響印多少，不影響判定。
-- `canary-www.js` 把 `www` 複製一份（macOS 用 APFS 複製，幾秒就好），在副本上做 13 種壞樣本，每一類固定測頭、中、尾三個檔，再加一個用種子挑的（`--seed` 可以指定，收據會記下來）：拿掉首頁素材、拿掉一首背景音樂、拿掉一個引擎檔、拿掉一個核心程式、前幾大的檔只留一半、同樣大小但內容被換（另外固定測最大的兩個記了 sha1 的檔）、`native-bridge.js` 移到 App 程式後面、`native-bridge.js` 移到 `capacitor.js` 前面、程式檔插控制字元、拿掉 `preload.json` 的 `big` 列的大檔、App 會要的檔換成舊副本而且清單也照舊副本改（只有跟 CDN 比才抓得到）、CDN 清單少一個 App 會要的檔（要回 3）、CDN 清單讀不到（要回 3）。再用同一支 `check-www.js`、跟正式用法一樣的參數檢查，每一種都要得到預期的結束代碼，而且錯誤裡要有那一處的檔名和原因。
+- `canary-www.js` 把 `www` 複製一份（macOS 用 APFS 複製，幾秒就好），在副本上做 14 種壞樣本，每一類固定測頭、中、尾三個檔，再加一個用種子挑的（`--seed` 可以指定，收據會記下來）：拿掉首頁素材、拿掉一首背景音樂、拿掉一個引擎檔、拿掉一個核心程式、前幾大的檔只留一半、同樣大小但內容被換（另外固定測最大的兩個記了 sha1 的檔）、`native-bridge.js` 移到 App 程式後面、`native-bridge.js` 移到 `capacitor.js` 前面、程式檔插控制字元（7 種字元都插過）、拿掉一個清單有但不在任何特定名單裡的檔（要報「少了」）、拿掉 `preload.json` 的 `big` 列的大檔、App 會要的檔換成舊副本而且清單也照舊副本改（只有跟 CDN 比才抓得到）、CDN 清單少一個 App 會要的檔（要回 3）、CDN 清單讀不到（要回 3）。再用同一支 `check-www.js`、跟正式用法一樣的參數檢查，每一種都要得到預期的結束代碼，而且錯誤裡要有那一處的檔名和原因。
 - 結束代碼：0＝乾淨的全過、壞樣本都被抓到；4＝有壞樣本沒被抓到（檢查失靈，這一輪結果不算）；2＝測試不成立（含參數沒給值）；3＝讀不到 CDN 清單（缺驗）。金絲雀先驗乾淨的那份，乾淨的有錯回 2，之後才讀 CDN。
 - 給了 `--pkg`，金絲雀檢查的就是安裝包裡那份 `public`（`.ipa` 會先解開 `Payload/*.app/public`），不能再另外給 `--dir`；收據的包跟被檢查的內容一定是同一份。
-- 收據記下每一種壞樣本挑了哪個檔、種子、兩支工具的 SHA-256（CRLF 換成 LF）、`public` 的樹雜湊、安裝包的 SHA-256、清單的 SHA-256 和 origin/main 那份清單的 SHA-256、包裡 `release.json` 的版號。
-- 送審只收 `full: true` 的收據，五個條件都要成立：`--pkg` 給的是 `.ipa`（`.app` 只有資料夾的樹雜湊，對不到送審的檔）、加了 `--cdn`（正式 CDN；`--cdn-manifest` 給的本機檔不算）、沒有 `--only`、用的清單跟 `origin/main` 的 `source/xiangqi-ios/scripts/.www-files.json` 一模一樣（拿包重產的清單不算，等於拿包比包）、清單的 `siteVersion` 跟包裡 `public/release.json` 的 `version` 一樣。要在有 `origin` 的倉庫裡跑，先 `git fetch origin main`。
-- 工具雜湊和清單雜湊都是工具自己算的，只抓得到不小心改過；故意偽造要靠之後的 CI 核對（打送審標籤前，CI 用 main 版工具和 main 的清單重算收據裡的 `toolPins`、`bind.listMainSha256`）。
+- 收據記下每一種壞樣本挑了哪個檔、種子、兩支工具的 SHA-256（CRLF 換成 LF）、`public` 的樹雜湊、安裝包的 SHA-256、清單的 SHA-256 和 origin/main 那份清單的 SHA-256、origin/main 上兩支工具的 SHA-256、比對時本機 origin/main 的提交、包裡 `release.json` 的版號。
+- 送審只收 `full: true` 的收據，五個條件都要成立：`--pkg` 給的是 `.ipa`（`.app` 只有資料夾的樹雜湊，對不到送審的檔）、加了 `--cdn`（正式 CDN；`--cdn-manifest` 給的本機檔不算）、沒有 `--only`、用的清單和 `check-www.js`、`canary-www.js` 兩支工具都跟 `origin/main` 那一版一模一樣（拿包重產的清單、改過的工具都不算）、清單的 `siteVersion` 跟包裡 `public/release.json` 的 `version` 一樣。要在有 `origin` 的倉庫裡跑，先 `git fetch origin main`（收據的 `bind.mainCommit` 記下比對時 origin/main 在哪一版）。正式 CDN 的網址只定義在 `check-www.js` 一個地方，金絲雀從那裡讀。
+- 工具雜湊和清單雜湊都是工具自己算的，只抓得到不小心改過；故意偽造要靠之後的 CI 核對（打送審標籤前，CI 用 main 版工具和 main 的清單重算收據裡的 `toolPins`、`bind.listMainSha256`）。**這個 CI 核對還沒做（後續工單，跟 Android 的工具鎖定 CI 一起），做好之前，送審不能只認這張收據，還要照 AGENTS.md 由開發者本人看實機三項。**
 
 `web-overlay/index.html.patch` 只有原生版才需要的 6 段：
 - 原生版不用網頁的版本更新和 Service Worker（`appVer`、`xqWebUpdateOn`、`XQNet version`）。

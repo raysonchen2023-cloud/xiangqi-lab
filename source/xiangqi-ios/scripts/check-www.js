@@ -69,7 +69,8 @@ if (L) {
 }
 
 /* 6（W42）：跟 CDN 現行版比 */
-const CDNM = opt("--cdn-manifest") || (argv.includes("--cdn") ? "https://xiangqi-cdn.pages.dev/cdn-manifest.json" : null);
+const OFFICIAL_CDN = "https://xiangqi-cdn.pages.dev/cdn-manifest.json";   /* 正式 CDN 只在這裡定義一次；canary-www.js 從這一行讀（PR #67 第六次審查） */
+const CDNM = opt("--cdn-manifest") || (argv.includes("--cdn") ? OFFICIAL_CDN : null);
 let cdnN = 0; const compared = new Set();
 if (CDNM) {
   let man = null;
