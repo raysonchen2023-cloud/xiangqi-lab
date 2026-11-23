@@ -122,8 +122,9 @@ function jhMzCss(){if(document.getElementById("jhMzCss"))return;const s=document
 .jh-mz-pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,48px);gap:4px;justify-content:center;padding:8px 0 calc(8px + env(safe-area-inset-bottom));background:#140f0a}
 .jh-mz-pad button{border:1px solid #5a4630;border-radius:10px;background:#2a2016;color:#e9dfc9;font-size:20px;min-height:44px}
 .jh-mz-pad .u{grid-area:1/2}.jh-mz-pad .l{grid-area:2/1}.jh-mz-pad .w{grid-area:2/2;font-size:15px}.jh-mz-pad .r{grid-area:2/3}.jh-mz-pad .d{grid-area:3/2}
-.jh-mz-ov{position:absolute;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px;z-index:5}
-.jh-mz-card{background:#f6ecd6;color:#2a1d10;border-radius:14px;padding:14px;max-width:420px;width:100%;max-height:100%;overflow:auto}
+.jh-mz-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom));z-index:60}
+.jh-mz-card{background:#f6ecd6;color:#2a1d10;border-radius:14px;padding:14px;max-width:420px;width:100%;max-height:calc(100dvh - 24px);overflow:auto}
+.jh-mz-card svg{max-height:52dvh}
 .jh-mz-card h2{margin:0 0 6px;font-size:18px}.jh-mz-card p{margin:4px 0 8px;font-size:15px;line-height:1.5}
 .jh-mz-card svg{width:100%;height:auto;display:block;background:#e9c98f;border-radius:8px}
 .jh-mz-res{min-height:1.6em;margin:6px 0;font-size:15px}.jh-mz-res.ok{color:#1f6e3c;font-weight:700}.jh-mz-res.bad{color:#a2281d}
@@ -190,7 +191,8 @@ function JhMaze(v){jhCss();jhMzCss();
     return true};
   const tick=now=>{if(!path.length||busy||S.done||now-walkT<150)return;walkT=now;const[nx,ny]=path.shift();if(!act(nx-S.player.x,ny-S.player.y)){path=[];return}
     const lg=jhMzLight(S,S.guard.x,S.guard.y,now);if(lg>.25&&!warned){warned=true;path=[];say(jhL("<b>前面有暗匪在巡邏。</b>紅線是他看得到的地方，從他背後或趁他轉身時過去。","<b>A thief is patrolling ahead.</b> The red line is what he can see. Slip past behind him or while he turns."))}if(lg<=.25)warned=false};
-  const ov=(html)=>{const o=document.createElement("div");o.className="jh-mz-ov";o.innerHTML=`<div class="jh-mz-card" role="dialog" aria-modal="true">${html}</div>`;box.append(o);busy=true;return o};
+  /* 殘局、通關視窗蓋住整個畫面（預覽站實點：原本只蓋地圖那一塊，手機上提示鈕被擠到卡片外要捲動）；放在 .jh-mz 裡，換頁時跟著頁面一起清掉 */
+  const ov=(html)=>{const o=document.createElement("div");o.className="jh-mz-ov";o.innerHTML=`<div class="jh-mz-card" role="dialog" aria-modal="true">${html}</div>`;v.querySelector(".jh-mz").append(o);busy=true;return o};
   const shut=o=>{o.remove();busy=false};
   const puzzle=id=>{const P=JH_MZ_PUZ[id],t=jhL(P.zh[0],P.en[0]),p=jhL(P.zh[1],P.en[1]);let pcs=jhMzFen(P.fen),sel=null,won=false;
     const o=ov(`<h2>${esc(t)}</h2><p>${esc(p)}</p><div class="jh-mz-bd"></div><div class="jh-mz-res" aria-live="polite">${esc(jhL("點紅方的棋子，再點要走到的位置。","Tap a red piece, then tap where it goes."))}</div>
