@@ -41,6 +41,7 @@ const CLASSIFIED = new Set([
   "test-android-build.js",   /* 11/13 第 15 輪 F3、F4 Android debug APK 編譯＋可重現檢查 repro-check.js、建置與工具鏈紀錄（行為 9、混合 2、原始碼 1）；11/13 Service Worker 標頭修法正式採用（混合 +1、原始碼 +1） */
   "test-aab-assets-check-1121.js",   /* 11/21 W41① 送審前安裝包內容檢查 xiangqi-android/scripts/check-aab-assets.js（封測 P0-IMG：W21 缺素材、W30 切塊大檔接不回、舊檔；行為 6） */
   "test-p0-aab-bound-1122.js",   /* 11/22 W69 流程盤點第 3 項：P0 證據綁住送審 AAB（p0-gate 三份報告同一個 AAB 雜湊、P0-IMG 要 --cdn 且 0、P0-UPD 不准 --no-old-worker）、包裡素材跟 CDN 現行版交叉核對、建包只換清單內舊副本、簽章密碼不上命令列、建包腳本 --home-art 必填；PR #42 審查：版號要等於送審版號、P0-3D Android 12／16 各一份且完整跑、已知問題清單用倉庫那份（行為 7、原始碼 1） */
+  "test-p0-canary-1123.js",   /* 11/23 AGENTS.md「P0 出口驗證要難作假」：P0 工具鎖定 tool-pin.js（報告記工具雜湊、閘門比 origin/main）、三項金絲雀（破圖拿掉首頁素材／改雜湊／CDN 404、更新檢查假視窗、3D 自我反測遮罩）、閘門收 Android 12／16 金絲雀；行為 21、混合 1、原始碼 4 */
   "test-app-assets-check-1122.js",   /* 11/22 W69② iOS 送審前安裝包素材檢查 xiangqi-ios/scripts/check-app-assets.js（對應 Android W41①：首頁必要素材、清單 SHA-1、缺圖與切塊大檔、跟 CDN 清單比對、.ipa；反測必紅；--gate 送審閘門沒核對 CDN 就擋、.ipa 出錯也清暫存（PR #41 審查）；行為 8、原始碼 1） */
   "test-preview-build-1121.js",   /* 11/21 W43 Cloudflare PR 預覽建置 source/preview-build.js（版號跟 sw.js 一致、刪超過 25 MB 的檔、寫 404.html；行為 5） */
   "test-device-checks-1121.js",   /* 11/21 W41②③ 升級測試 check-upgrade.js 與 44 畫面破圖掃描 check-scenes.js 的判斷規則（P0-UPD、P0-IMG；離線只算看得到的破圖；測不成立回 2；只准模擬器；更新視窗看 20 秒；行為 12、原始碼 3） */
@@ -61,6 +62,9 @@ const CLASSIFIED = new Set([
   "test-jh-shunpao-1122.js",   /* 11/22 W48-S6 順炮門「搶攻算殺步」（計步）：連將殺步數手算案例、60 題題庫用獨立搜尋重算（少一步殺不了）、示範殺法逐步重放、一輪 3 題、修為一天一次與連對數（行為 6、原始碼 1；PR #53 後改問最快幾步殺、獨立重算） */
   "test-jh-fxqm-legal-1123.js",   /* 11/23 W73 飛相、起馬題目局面合法（Pikafish 棋理驗證：飛相 36% 過河相／出九宮仕、起馬約 5% 黑子超量）：獨立合法檢查、日期模擬 */
   "test-flags-1123.js",   /* 11/23 W72 遠端開關（開發者選單「先做遠端開關，分版先盤點」）：沒列＝開、設定檔到了就關、離線用上一次的、從沒抓到就全開、格式不對不採用、請求不帶身分不走快取 */
+  "test-jret-1123.js",   /* 11/23 W80 開局的來處：從門派開的棋局返回門派（門下棋友、挑戰掌門、踢館、守中宮）；再下一盤仍回門派、從渡口驛站開局照舊、12 小時失效 */
+  "test-core-perft-1123.js",   /* 11/23 W79 主規則 Perft 對 Pikafish（16 個局面 1～3 層）＋左右鏡射、紅黑互換不變式＋走一步再退回 */
+  "test-aab-diff-1123.js",   /* 11/23 W79 新舊 AAB 產物比對（開發者選單）：讀 zip 中央目錄、少檔／變 0 位元組／多 debug 檔是紅、暴增是黃、讀不到結束代碼 2 */
   "test-jh-qima-1122.js",   /* 11/22 W48 起馬門「驛馬繞險路」（找路，193 第一批）：傌照真走法（蹩馬腿、不吃子）、險格＝黑方不動能直接吃到、最短安全路線、三級出題（黑子數、步數、起終點安全、沒被將軍、同一天固定）、每天一次修為（行為 5、原始碼 1） */
   "test-jh-halls8-1123.js",   /* W48 其餘八派門內頁：JH_HALL、玩法入口（m/07z9l-halls.js） */
   "test-jh-fanggong-1122.js",   /* 11/22 W48-S4 反宮馬門「活字排局陣」（開發者「門派分給三位平行做完」；選單「照主線次序才算對」）：m/07z9g-fanggong.js 課程主線取出與合法、三級出題（初中只打散黑方、高級紅黑都打散）、照主線次序判對錯並指出第幾步、走不下去指出原因、每天修為只給一次（行為 5、原始碼 1） */
