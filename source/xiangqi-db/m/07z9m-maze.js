@@ -48,6 +48,21 @@ const JH_MZ_PUZ={
   trap:{zh:["被暗匪逮住了","暗匪把你按在糧袋堆旁：「解得開這局，就放你走。」紅方先走，一步將死黑方。"],
         en:["Caught by a granary thief","The thief pins you by the grain sacks: \"Solve this and you can go.\" Red to move: checkmate in one."],
         fen:"3k5/2P1a4/9/9/9/9/9/9/9/R4K3",ans:"a0a9"}};
+/* W87a（11/24 開發者：「被暗匪抓住的聯續三題題目居然都一樣！請修正，而且都超簡單一步殺，這樣太無聊了」）：中炮門題庫，2～3 步殺、炮收尾，
+   由 xiangqi-lab/tools/maze-puzzles.js 從殘局題庫挑題、Pikafish 驗「紅方每一步唯一解、黑方應著撐最久」後寫進下面這一段（不要手改；--check 可重跑比對） */
+/* ==JH_MZ_POOL:JH_MZ_POOL_CENTRAL== */
+const JH_MZ_POOL_CENTRAL={door:[
+{"id":"jc112c7","zh":["石門機關：炮的殺法","門上刻著一座拋石車。紅方先走，3 步將死黑方，門就會開。提示：炮要隔一個子才打得到。"],"en":["Stone door: a cannon's mate","A catapult is carved on the door. Red to move: checkmate in 3 and the door opens. Hint: a cannon needs one piece to jump over."],"fen":"6b2/3PP2C1/b2k5/9/9/9/9/9/9/4K4","line":["h8f8","a7c5","f8f9","c5a7","f9d9"]},
+{"id":"lk039c4","zh":["石門機關：炮的殺法","門上刻著一座拋石車。紅方先走，3 步將死黑方，門就會開。提示：炮要隔一個子才打得到。"],"en":["Stone door: a cannon's mate","A catapult is carved on the door. Red to move: checkmate in 3 and the door opens. Hint: a cannon needs one piece to jump over."],"fen":"3k1aRPr/4nC1n1/4b4/6C2/4N4/9/9/4p4/2r1p1p2/5K3","line":["g9f9","h8f9","g6g9","f9d8","g9i9"]},
+{"id":"lk055c9","zh":["石門機關：炮的殺法","門上刻著一座拋石車。紅方先走，3 步將死黑方，門就會開。提示：炮要隔一個子才打得到。"],"en":["Stone door: a cannon's mate","A catapult is carved on the door. Red to move: checkmate in 3 and the door opens. Hint: a cannon needs one piece to jump over."],"fen":"2bk1ab2/4a1N2/4c4/9/4P3C/4N4/3C5/4p4/2rp1p3/4K4","line":["e5d5","e8d7","d5c5","d7e8","i5d5"]}],
+trap:[
+{"id":"lk140c5","zh":["被暗匪逮住了","暗匪把你按在糧袋堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a granary thief","The thief pins you by the grain sacks: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"c1ba5/4k1N2/3a1R3/9/2b6/9/4C4/9/2p1p4/1p1K5","line":["g8e7","e8d8","f7f8","d9e8","e3d3"]},
+{"id":"lk151c4","zh":["被暗匪逮住了","暗匪把你按在糧袋堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a granary thief","The thief pins you by the grain sacks: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"4P4/7NC/3k3C1/9/2b3p2/9/1r7/9/r1p1K1n2/9","line":["h8f7","c5e7","f7e5","d7d8","h7h8"]},
+{"id":"lk179c7","zh":["被暗匪逮住了","暗匪把你按在糧袋堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a granary thief","The thief pins you by the grain sacks: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"4ca3/4aP3/3k5/4p4/4P4/1C1C5/9/9/4p1p2/5K3","line":["e5d5","d7e7","d4e4","e7d7","b4d4"]},
+{"id":"lk222","zh":["被暗匪逮住了","暗匪把你按在糧袋堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a granary thief","The thief pins you by the grain sacks: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"9/1P2a2P1/n3ka3/9/8R/1N7/5p3/9/3pp2p1/5K2C","line":["i5e5","e7d7","e5d5","d7e7","i0i7"]},
+{"id":"mr074c4","zh":["被暗匪逮住了","暗匪把你按在糧袋堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a granary thief","The thief pins you by the grain sacks: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"2b1R4/5k3/1N7/C8/c1n2r3/9/P8/9/2pp1p3/c3K4","line":["e9f9","f8f9","b7d8","f9f8","a6a8"]},
+{"id":"mr119c6","zh":["被暗匪逮住了","暗匪把你按在糧袋堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a granary thief","The thief pins you by the grain sacks: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"1P1a4C/5k3/9/5N3/5P3/C1P6/c8/4p4/2r2p3/4K1R2","line":["f6h7","f8e8","g0g8","e8e7","i9i7"]}]};
+/* ==/JH_MZ_POOL:JH_MZ_POOL_CENTRAL== */
 const JH_MZ_REW=[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"中炮譜殘頁",en:"Central Cannon manual page"},{k:"box",zh:"朱紅漆盒",en:"Vermilion lacquer box"}];
 const JH_MZ_XP=30;
 /* 專屬配樂「地底漕倉」（開發者 11/23：「找gemini製作迷宮的背景音樂，根據剛剛提到的四大回味感來製作」；聽過回「可以 非常符合我要的」）。
@@ -71,7 +86,7 @@ JH_MZ_KIND.rook={
   step(S,G){const dx=G.dx||0,dy=G.dy||0;let nx=G.x+dx,ny=G.y+dy;if(jhMzSolid(S,nx,ny)){G.dx=-dx;G.dy=-dy;nx=G.x+G.dx;ny=G.y+G.dy}if(!jhMzSolid(S,nx,ny)){G.x=nx;G.y=ny}},
   look:{body:"#151515",head:"#222222",eye:0xE24A3A}};
 /* 中炮門第一層「廢棄漕倉」：上面那幾個常數就是它的設定（測試照舊讀 JH_MZ_MAP、JH_MZ_PUZ…） */
-jhMzDef("central",{map:JH_MZ_MAP,guards:[Object.assign({kind:"rook",dy:0},JH_MZ_GUARD)],puz:JH_MZ_PUZ,jump:"S",key:"jhMaze",xpKey:"maze:1",
+jhMzDef("central",{map:JH_MZ_MAP,guards:[Object.assign({kind:"rook",dy:0},JH_MZ_GUARD)],puz:JH_MZ_PUZ,pool:JH_MZ_POOL_CENTRAL,jump:"S",key:"jhMaze",xpKey:"maze:1",
   title:["🕳 地底漕倉","🕳 Underground granary"],lvName:["地底漕倉・第一層","Underground granary · Level 1"],back:["回中炮門","Back to the Central Cannon School"],
   hall:{at:[530,395],zh:"🕳 拋石車・地底密道",en:"🕳 Catapult · Hidden passage"},
   intro:["你從拋石車底下的暗門爬下來，四周一片漆黑。<b>點地面就會走過去</b>，也可以用下面的方向鈕。走到壁燈旁邊會點亮它。","You climb down through the hatch under the catapult into pitch darkness. <b>Tap the floor to walk there</b>, or use the arrows below. Walk next to a wall lamp to light it."],
@@ -83,7 +98,8 @@ jhMzDef("central",{map:JH_MZ_MAP,guards:[Object.assign({kind:"rook",dy:0},JH_MZ_
     locked:["石門被機關鎖住了，門縫裡有條繩索往地底延伸。<b>先找到機關踏板踩下去。</b>（糧袋可以當炮架：像炮一樣，隔一個子跳過去）","The stone door is locked by a mechanism; a rope runs from the gap into the floor. <b>Find the pressure plate first.</b> (Grain sacks work as a cannon screen: jump over exactly one, like a cannon.)"],
     jump:["你踩著糧袋當炮架，一躍而過——<b>炮要隔一個子才跳得過</b>，兩袋並排就跳不過去。","You vault over the grain sack like a cannon over its screen. <b>A cannon needs exactly one piece to jump over</b>; two sacks in a row are too many."],
     plate:["喀噠一聲，踏板沉了下去，石門那邊傳來機關鬆開的聲音。<b>現在可以去解石門的殘局了。</b>","Click. The plate sinks and you hear the stone door’s mechanism unlock. <b>Now you can solve the door puzzle.</b>"],
-    done:["樓梯往下通到舊城暗渠。第二、三層之後再開。","The stairs lead down to the old city's culverts. Levels 2 and 3 open later."]}});
+    done:["樓梯往下通到舊城暗渠。第二、三層之後再開。","The stairs lead down to the old city's culverts. Levels 2 and 3 open later."],
+    spot:["<b>暗匪轉過頭來看見你了！</b>趕快離開紅線——下一步還在紅線上就會被逮住。","<b>The thief turns and spots you!</b> Get off the red line now: if you are still on it next turn, you are caught."]}});
 /* 門派的設定（沒有＝中炮門）；路由 #/jianghu/maze/<派>，舊網址 #/jianghu/maze＝中炮門 */
 const jhMzLv=sid=>JH_MZ_LV[sid]||JH_MZ_LV.central;
 const jhMzSidOf=h=>{const m=String(h||"").split("?")[0].match(/^#\/jianghu\/maze(?:\/([a-z_]+))?$/);return m?(m[1]&&JH_MZ_LV[m[1]]?m[1]:m[1]?null:"central"):null};
@@ -219,8 +235,9 @@ async function jhMzWorld3(box,c,S){
       for(const o of objs){const b=bright(L,o.x,o.y);o.g.visible=b>0&&o.on();if(o.g.visible)for(const m of o.mats)m.color.copy(m.userData.base).multiplyScalar(b)}
       for(const s of sparks){s.gm.rotation.y=now/600+s.x;s.gm.position.y=1.05+Math.sin(now/400+s.x)*.06}
       for(const f of flames){const on=S.lit.has(f.k);f.fm.visible=on;if(on){f.fm.scale.set(1,1.6+Math.sin(now/90+f.x)*.18,1);if(!lights[f.k]&&Object.keys(lights).length<4){const pl=new T3.PointLight(0xFFA040,.9,4.2,1.5);pl.position.set(f.x+.5,1.1,f.y+.5);pl.layers.enable(1);sc.add(pl);lights[f.k]=pl}}}
-      let si=0;for(const q of gds){const G=q.G,gL=L[G.y*S.W+G.x]||0;q.gd.visible=gL>.15;q.gd.position.set(G.fx+.5,0,(G.fy==null?G.y:G.fy)+.5);q.gdB.rotation.y=G.dx>0?Math.PI/2:G.dx<0?-Math.PI/2:G.dy<0?Math.PI:0;q.eyeM.color.setHex(G.stun?0x8A8A8A:q.eye);
-        for(const c of jhMzSight(S,G)){if(si>=sights.length)break;const o=sights[si++];o.visible=(L[c.y*S.W+c.x]||0)>.15;if(o.visible)o.position.set(c.x+.5,.012,c.y+.5)}}
+      let si=0;for(const q of gds){const G=q.G;q.gd.visible=true;   /* W87a：守衛在暗處也看得到（紅眼一直亮） */
+        q.gd.position.set(G.fx+.5,0,(G.fy==null?G.y:G.fy)+.5);q.gdB.rotation.y=G.dx>0?Math.PI/2:G.dx<0?-Math.PI/2:G.dy<0?Math.PI:0;q.eyeM.color.setHex(G.stun?0x8A8A8A:q.eye);
+        for(const c of jhMzSight(S,G)){if(si>=sights.length)break;const o=sights[si++];o.visible=true;o.position.set(c.x+.5,.012,c.y+.5)}   /* W87a：紅線一律畫（原本只在夠亮的格子畫，暗處被看到時玩家看不到紅線） */}
       for(;si<sights.length;si++)sights[si].visible=false;
       /* 會被推動的障礙：照目前格子重新擺（同一種字元依序對應） */
       if(dyn.length){const at={};for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const c=S.grid[y][x];if(DYN.includes(c))(at[c]||(at[c]=[])).push([x,y])}const used={};for(const o of dyn){const L2=at[o.dyn]||[],j=used[o.dyn]=(used[o.dyn]||0);used[o.dyn]++;const q2=L2[j];o.g.visible=!!q2&&bright(L,q2[0],q2[1])>0;if(q2){o.x=q2[0];o.y=q2[1];o.g.position.set(q2[0]+.5,0,q2[1]+.5)}}}
@@ -238,9 +255,10 @@ async function jhMzWorld3(box,c,S){
     dispose(){try{cv.remove()}catch(e){}try{texs.forEach(k=>k.dispose());r.dispose();r.forceContextLoss()}catch(e){}}}}
 
 /* ===== 純邏輯（測試用 vm 直接跑這一段）===== */
-/* sid＝哪一派（沒給＝中炮門）；run＝這是第幾次走（挑題用，同一層換題不重複） */
-function jhMzNew(sid,run){const lv=jhMzLv(sid),bag={};for(const r of lv.rew)bag[r.k]=0;
-  const S={lv,sid:lv.sid,W:lv.map[0].length,H:lv.map.length,seen:new Set(),lit:new Set(),bag,doorOpen:false,plate:false,got:[],fails:{door:0,trap:0},turn:0,done:false,chests:new Set(),run:Math.max(0,Math.floor(+run||0)),pick:{door:0,trap:0},pz:null};
+/* sid＝哪一派（沒給＝中炮門）；run＝這是第幾次走；ptr＝題庫指標 {door,trap}（存檔帶進來：上一輪出到哪一題，這一輪接著出，換輪第一題不會跟上一輪最後一題一樣；沒給就用 run） */
+function jhMzNew(sid,run,ptr){const lv=jhMzLv(sid),bag={};for(const r of lv.rew)bag[r.k]=0;
+  const S={lv,sid:lv.sid,W:lv.map[0].length,H:lv.map.length,seen:new Set(),lit:new Set(),bag,doorOpen:false,plate:false,got:[],fails:{door:0,trap:0},turn:0,done:false,chests:new Set(),run:Math.max(0,Math.floor(+run||0)),pick:{door:0,trap:0},cur:{},pz:null};
+  const R=S.run;S.base={door:Number.isFinite(+(ptr&&ptr.door))?Math.max(0,Math.floor(+ptr.door)):R,trap:Number.isFinite(+(ptr&&ptr.trap))?Math.max(0,Math.floor(+ptr.trap)):R};
   jhMzReset(S,true);return S}
 function jhMzReset(S,full){S.grid=S.lv.map.map(r=>r.split(""));
   for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){if(S.grid[y][x]==="@"){S.start={x,y};S.grid[y][x]="."}if(full&&S.grid[y][x]==="C")S.chests.add(y*S.W+x)}
@@ -285,7 +303,9 @@ function jhMzStep(S,dx,dy){if(S.done)return{ev:"done"};const P=S.player,nx=P.x+d
   if(jhMzCell(S,P.x,P.y)===">"){S.done=true;out.ev="finish";return out}
   if(jhMzCaught(S)){out.ev="trap";return out}
   jhMzGuardStep(S);
-  if(jhMzCaught(S))out.ev="trap";
+  /* W87a（開發者：「玩家沒有走到暗匪那邊 就會觸發被暗匪抓住」）：守衛走這一步（轉身、往前）之後才看到玩家，先提醒（spot），不直接抓——
+     玩家下一步還留在視線裡（或原地等）才抓；守衛直接走到玩家那一格照樣抓。自己走進視線照舊直接抓（上面那一行） */
+  if(jhMzCaught(S)){const G=S.caughtBy;if(G&&G.x===P.x&&G.y===P.y)out.ev="trap";else{S.caughtBy=null;out.ev="spot"}}
   return out}
 /* 點地面自動走：只走看過的格子；終點可以是石門（走到門前開殘局） */
 function jhMzPath(S,tx,ty){const P=S.player,K=(x,y)=>y*S.W+x,isDoor=(x,y)=>jhMzCell(S,x,y)==="D";
@@ -296,7 +316,14 @@ function jhMzPath(S,tx,ty){const P=S.player,K=(x,y)=>y*S.W+x,isDoor=(x,y)=>jhMzC
   if(!prev.has(K(tx,ty)))return null;const o=[];let cur=[tx,ty];while(cur&&!(cur[0]===P.x&&cur[1]===P.y)){o.unshift(cur);cur=prev.get(K(cur[0],cur[1]))}return o}
 /* 殘局：走一步。回傳 ok（解開）、bad（不是答案）、back（陷阱錯第 4 次，拖回入口） */
 /* W87：這一題是哪一題——有題庫（pool[id]）就照「第幾次走＋這一層換過幾題」輪著挑（同一層換題不重複，題庫夠大才不重複），沒有就用固定題 puz[id] */
-function jhMzPuz(S,id){const L=S.lv.pool&&S.lv.pool[id];if(Array.isArray(L)&&L.length)return L[((S.run||0)+((S.pick&&S.pick[id])||0))%L.length];return S.lv.puz[id]||null}
+function jhMzPuz(S,id){const L=S.lv.pool&&S.lv.pool[id];if(Array.isArray(L)&&L.length){const i=S.cur&&Number.isInteger(S.cur[id])?S.cur[id]:((S.base&&S.base[id])||0)+((S.pick&&S.pick[id])||0);return L[i%L.length]}return S.lv.puz[id]||null}
+/* W87a（開發者：「被暗匪抓住的聯續三題題目居然都一樣」）：每一次遇到（被抓、碰石門）開始時才定這一次出哪一題，指標往後推一格——
+   同一次答錯重來還是同一題；下一次被抓換下一題；題庫有 N 題時連續 N 次都不一樣。回傳下一輪該從哪裡接（存檔用） */
+function jhMzEncounter(S,id){if(!S.cur)S.cur={};S.cur[id]=((S.base&&S.base[id])||0)+((S.pick&&S.pick[id])||0);S.pick[id]=(S.pick[id]||0)+1;S.pz=null;
+  return{door:(S.base.door||0)+(S.pick.door||0),trap:(S.base.trap||0)+(S.pick.trap||0)}}
+/* 題庫指標的存檔（跟 jhMzGet 的通關紀錄分開放，舊存檔格式不變） */
+function jhMzPtrGet(sid){let o=null;try{o=store.get(jhMzLv(sid).key+"Ptr",null)}catch(e){}o=o&&typeof o==="object"?o:{};const n=v=>Number.isFinite(+v)&&+v>=0?Math.floor(+v):0;return{door:n(o.door),trap:n(o.trap)}}
+function jhMzPtrSet(sid,p){try{store.set(jhMzLv(sid).key+"Ptr",{door:p.door,trap:p.trap})}catch(e){}}
 /* 這一題的著法序列：line＝[紅,黑,紅,…]（多步殺，最後一步是紅方將死）；只有 ans＝一步殺 */
 const jhMzLine=P=>P?(Array.isArray(P.line)&&P.line.length?P.line:[P.ans]):[];
 /* W87：多步殺一步一步走——走對了、還沒將死回 next（S.pz 記到第幾手，對方照 line 應一步）；最後一步走對回 ok；
@@ -305,10 +332,10 @@ function jhMzTry(S,id,mv){const P=jhMzPuz(S,id);if(!P)return"bad";const L=jhMzLi
   if(mv===L[i]){if(i+1>=L.length){S.pz=null;return"ok"}S.pz={id,i:i+2};return"next"}
   S.pz=null;S.fails[id]=(S.fails[id]||0)+1;return id==="trap"&&S.fails.trap>=4?"back":"bad"}
 function jhMzSolved(S,id){S.pz=null;if(id==="door"){jhMzOpenDoor(S);return}
-  const G=S.caughtBy||S.guard,P=S.player;S.caughtBy=null;S.fails.trap=0;S.pick.trap=(S.pick.trap||0)+1;if(!G)return;G.stun=4;
+  const G=S.caughtBy||S.guard,P=S.player;S.caughtBy=null;S.fails.trap=0;if(S.cur)delete S.cur.trap;if(!G)return;G.stun=4;
   if(G.x===P.x&&G.y===P.y){if(G.dy&&!G.dx)G.y=Math.max(1,Math.min(S.H-2,G.y+(P.y<S.H/2?3:-3)));else G.x=Math.max(1,Math.min(S.W-2,G.x+(P.x<7?3:-3)))}}
 /* 拖回入口（W71b）：最後撿到的那件被暗匪搶走、丟回原來的箱子（箱子重新出現，可以再去撿；不會永久不見，對兒童友善）；回傳被丟回的獎勵代號（沒有＝""） */
-function jhMzCaughtBack(S){S.fails.trap=0;S.pz=null;S.caughtBy=null;S.pick.trap=(S.pick.trap||0)+1;let lost="";const g=S.got&&S.got.pop();if(g){S.bag[g.r]=Math.max(0,(S.bag[g.r]||0)-1);S.chests.add(g.k);lost=g.r}jhMzReset(S,false);return lost}
+function jhMzCaughtBack(S){S.fails.trap=0;S.pz=null;S.caughtBy=null;if(S.cur)delete S.cur.trap;let lost="";const g=S.got&&S.got.pop();if(g){S.bag[g.r]=Math.max(0,(S.bag[g.r]||0)-1);S.chests.add(g.k);lost=g.r}jhMzReset(S,false);return lost}
 
 /* ===== 存檔：第一次走完、最佳步數、累計箱子 ===== */
 /* W87：每一派各存一份（鍵照該派設定；中炮門照舊 jhMaze，舊存檔不用搬） */
@@ -343,6 +370,14 @@ const JH_MZ_PN={r:{K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵"},b:{k
 function jhMzFen(f){const b=[];f.split("/").forEach((row,r)=>{let c=0;for(const ch of row){if(/\d/.test(ch))c+=+ch;else{b.push({p:ch,r,c});c++}}});return b}
 function jhMzSq(u){return{c:"abcdefghi".indexOf(u[0]),r:9-(+u[1])}}
 /* 點的兩格（盤面第 r 列、第 c 行，r=0 是上面黑方那一邊）換成著法字串，例如 {c:0,r:9}→{c:0,r:0} 是 "a0a9"。#83 審查：抽出來測（原本寫在點擊裡，算錯玩家永遠解不開） */
+/* W87a（11/24 開發者 iPhone 截圖：「棋盤少了L型標誌兵和炮的位置」）：殘局小棋盤的格線——10 條橫線、9 條直線（河界斷開）、兩個九宮斜線、
+   4 個炮位與 10 個兵位的 L 型記號（第 0、8 路只畫朝內那一半）、河界寫「楚河　漢界」。Z＝格寬，ox、oy＝左上角 */
+function jhMzGrid(Z,ox,oy){const L=(x1,y1,x2,y2)=>`<line x1="${ox+x1*Z}" y1="${oy+y1*Z}" x2="${ox+x2*Z}" y2="${oy+y2*Z}" stroke="#5a3a1a" stroke-width="1.3"/>`;let s="";
+  for(let r=0;r<10;r++)s+=L(0,r,8,r);for(let c=0;c<9;c++)s+=c===0||c===8?L(c,0,c,9):L(c,0,c,4)+L(c,5,c,9);s+=L(3,0,5,2)+L(5,0,3,2)+L(3,7,5,9)+L(5,7,3,9);
+  const MK=(c,r)=>{const g=Z*.1,l=Z*.2,x=ox+c*Z,y=oy+r*Z;let t="";for(const dx of[-1,1]){if((c===0&&dx<0)||(c===8&&dx>0))continue;for(const dy of[-1,1])t+=`<path class="mk" d="M${x+dx*g} ${y+dy*(g+l)}V${y+dy*g}H${x+dx*(g+l)}" fill="none" stroke="#5a3a1a" stroke-width="1.3"/>`}return t};
+  for(const[c,r]of[[1,2],[7,2],[1,7],[7,7]])s+=MK(c,r);for(const r of[3,6])for(const c of[0,2,4,6,8])s+=MK(c,r);
+  const ty=oy+4.5*Z+Z*.17;s+=`<text x="${ox+2*Z}" y="${ty}" text-anchor="middle" font-size="${Z*.42|0}" fill="#7a5a34" pointer-events="none">${esc(jhL("楚河","Chu River"))}</text><text x="${ox+6*Z}" y="${ty}" text-anchor="middle" font-size="${Z*.42|0}" fill="#7a5a34" pointer-events="none">${esc(jhL("漢界","Han Border"))}</text>`;
+  return s}
 function jhMzMv(a,b){return"abcdefghi"[a.c]+(9-a.r)+"abcdefghi"[b.c]+(9-b.r)}
 
 /* W87：sid＝哪一派（路由 #/jianghu/maze/<派> 帶進來；沒有＝中炮門） */
@@ -350,7 +385,7 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
   if(!jhMzOn()){location.hash=HALL;return{}}
   setTop(jhL(LV.title[0],LV.title[1]),"^"+HALL);if(typeof setTabs==="function")setTabs(false);
   v.className="view";document.body.classList.add("jh-on");
-  const S=jhMzNew(LV.sid,jhMzGet(LV.sid).clear),c0=typeof jhLook==="function"&&jhLook()||"x_swordboy";
+  const S=jhMzNew(LV.sid,jhMzGet(LV.sid).clear,jhMzPtrGet(LV.sid)),c0=typeof jhLook==="function"&&jhLook()||"x_swordboy";
   v.innerHTML=`<div class="jh-mz"><div class="jh-mz-cv"><canvas aria-label="${esc(jhL("地底漕倉地圖：點地面走過去","Granary map: tap the floor to walk"))}"></canvas></div>
     <div class="jh-mz-msg" aria-live="polite"></div><div class="jh-mz-bag"></div>
     <div class="jh-mz-pad">${[["u","▲",jhL("往上","Up")],["l","◀",jhL("往左","Left")],["w",jhL("等","Wait"),jhL("原地等一回合","Wait one turn")],["r","▶",jhL("往右","Right")],["d","▼",jhL("往下","Down")]].map(([k,t,a])=>`<button type="button" class="${k}" data-k="${k}" aria-label="${esc(a)}">${esc(t)}</button>`).join("")}</div></div>`;
@@ -406,8 +441,8 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
     const L=new Float32Array(S.W*S.H);for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const q=jhMzLight(S,x,y,now);L[y*S.W+x]=q;if(q>.12)S.seen.add(y*S.W+x)}
     if(h3){cx.restore();const d=P.dir||[0,1];try{h3.draw(dt,now,L,pWalk,jhMzYaw(d[0],d[1]))}catch(e){h3.dispose();h3=null;cv.style.opacity=""}requestAnimationFrame(frame);return}
     for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++)if(S.seen.has(y*S.W+x))tile(x,y,x*T,y*T);
-    for(const G of S.guards){for(const q of jhMzSight(S,G))if(L[q.y*S.W+q.x]>.15){cx.fillStyle="rgba(200,50,35,.28)";cx.fillRect(q.x*T+2,q.y*T+2,T-4,T-4);cx.fillStyle="rgba(230,70,50,.7)";cx.fillRect(q.x*T+4,q.y*T+T/2-1.5,T-8,3)}
-    if(L[G.y*S.W+G.x]>.15){const gx=G.fx*T+T/2,gy=(G.fy==null?G.y:G.fy)*T+T/2;cx.fillStyle="#141414";cx.beginPath();cx.ellipse(gx,gy+T*.05,T*.3,T*.36,0,0,7);cx.fill();cx.fillStyle="#2b2b2b";cx.beginPath();cx.arc(gx,gy-T*.2,T*.17,0,7);cx.fill();
+    for(const G of S.guards){for(const q of jhMzSight(S,G)){cx.fillStyle="rgba(200,50,35,.28)";cx.fillRect(q.x*T+2,q.y*T+2,T-4,T-4);cx.fillStyle="rgba(230,70,50,.7)";cx.fillRect(q.x*T+4,q.y*T+T/2-1.5,T-8,3)}
+    {const gx=G.fx*T+T/2,gy=(G.fy==null?G.y:G.fy)*T+T/2;cx.fillStyle="#141414";cx.beginPath();cx.ellipse(gx,gy+T*.05,T*.3,T*.36,0,0,7);cx.fill();cx.fillStyle="#2b2b2b";cx.beginPath();cx.arc(gx,gy-T*.2,T*.17,0,7);cx.fill();
       cx.fillStyle=G.stun?"#8a8a8a":"#e24a3a";cx.fillRect(gx+G.dx*T*.04-T*.09,gy-T*.23,T*.06,T*.04);cx.fillRect(gx+G.dx*T*.04+T*.03,gy-T*.23,T*.06,T*.04)}}
     /* 平面版（3D 載不起來時）：立繪腳下一圈明顯的柔邊接地影子（開發者 11/23「腳色看起來是漂起來」） */
     const hx=P.fx*T+T/2,hy=P.fy*T+T/2,ft=hy+T*.38;
@@ -433,6 +468,7 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
     if(r.chest){const w=S.lv.rew.find(x=>x.k===r.chest);say(jhL(`打開箱子：得到 <b>${esc(w.zh)}</b>。`,`You open a chest: <b>${esc(w.en)}</b>.`));bag()}
     if(r.ev==="finish"){path=[];finish();return false}
     if(r.ev==="trap"){path=[];puzzle("trap");return false}
+    if(r.ev==="spot"){path=[];held=null;say(ZS("spot")||jhL("<b>被看到了！</b>守衛轉過來看見你，<b>趕快離開紅線</b>，下一步還在紅線上就會被抓。","<b>Spotted!</b> The guard turned and sees you. <b>Get off the red line now</b>: if you are still on it next turn, you are caught."));return false}
     return true};
   /* 上一格快走到了才踏下一格：點地面排好的路，或按住的方向 */
   const tick=now=>{if(busy||S.done||moving())return;let m=null;if(path.length){const[nx,ny]=path.shift();m=[nx-S.player.x,ny-S.player.y]}else if(held)m=held;if(!m)return;
@@ -442,16 +478,15 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
   const ov=(html)=>{const o=document.createElement("div");o.className="jh-mz-ov";o.innerHTML=`<div class="jh-mz-card" role="dialog" aria-modal="true">${html}</div>`;v.querySelector(".jh-mz").append(o);busy=true;return o};
   const shut=o=>{o.remove();busy=false};
   /* W87：題目照該派題庫挑（jhMzPuz）；多步殺一步一步走：走對、還沒將死＝棋盤上照解答走黑方那一步、再換玩家；走錯＝回到開局重來。提示點亮的是「現在」該走的那一步 */
-  const puzzle=id=>{const P=jhMzPuz(S,id);if(!P)return;const L=jhMzLine(P),N=(L.length+1)>>1,t=jhL(P.zh[0],P.en[0]),p=jhL(P.zh[1],P.en[1]);let pcs=jhMzFen(P.fen),sel=null,won=false,last=null;S.pz=null;
+  const puzzle=id=>{jhMzPtrSet(LV.sid,jhMzEncounter(S,id));const P=jhMzPuz(S,id);if(!P)return;const L=jhMzLine(P),N=(L.length+1)>>1,t=jhL(P.zh[0],P.en[0]),p=jhL(P.zh[1],P.en[1]);let pcs=jhMzFen(P.fen),sel=null,won=false,last=null;S.pz=null;
     const o=ov(`<h2>${esc(t)}</h2><p>${esc(p)}</p>${N>1?`<p class="muted">${esc(jhL(`紅方先走，${N} 步殺：每一步都要將軍或逼著對方，黑方會照最頑強的方式應。`,`Red to move: mate in ${N}. Black answers with the toughest defence.`))}</p>`:""}<div class="jh-mz-bd"></div><div class="jh-mz-res" aria-live="polite">${esc(jhL("點紅方的棋子，再點要走到的位置。","Tap a red piece, then tap where it goes."))}</div>
       <div class="jh-mz-row"><button type="button" data-a="hint">${esc(jhL(HELP[0]+"的提示",HELP[1]+"'s hint"))}</button>${id==="door"?`<button type="button" data-a="back">${esc(jhL("先退開","Step back"))}</button>`:""}</div>`);
     const res=(m,c)=>{const e=o.querySelector(".jh-mz-res");e.textContent=m;e.className="jh-mz-res "+(c||"")};
     const now=()=>L[S.pz&&S.pz.id===id?S.pz.i:0]||L[0];
     const apply=mv=>{const a=jhMzSq(mv.slice(0,2)),b=jhMzSq(mv.slice(2));pcs=pcs.filter(x=>!(x.c===b.c&&x.r===b.r));const me=pcs.find(x=>x.c===a.c&&x.r===a.r);if(me){me.c=b.c;me.r=b.r}last=[a,b]};
     const restart=()=>{pcs=jhMzFen(P.fen);last=null};
-    const draw=()=>{const Z=40,ox=24,oy=24,Wd=ox*2+Z*8,Hd=oy*2+Z*9,L2=(x1,y1,x2,y2)=>`<line x1="${ox+x1*Z}" y1="${oy+y1*Z}" x2="${ox+x2*Z}" y2="${oy+y2*Z}" stroke="#5a3a1a" stroke-width="1.3"/>`;
-      let s=`<svg viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="${esc(jhL("象棋殘局","Xiangqi puzzle"))}">`;for(let r=0;r<10;r++)s+=L2(0,r,8,r);for(let c=0;c<9;c++)s+=c===0||c===8?L2(c,0,c,9):L2(c,0,c,4)+L2(c,5,c,9);
-      s+=L2(3,0,5,2)+L2(5,0,3,2)+L2(3,7,5,9)+L2(5,7,3,9);const hint=(S.fails[id]||0)>=3&&!won,mv=now(),a=jhMzSq(mv.slice(0,2)),b=jhMzSq(mv.slice(2));
+    const draw=()=>{const Z=40,ox=24,oy=24,Wd=ox*2+Z*8,Hd=oy*2+Z*9;
+      let s=`<svg viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="${esc(jhL("象棋殘局","Xiangqi puzzle"))}">`+jhMzGrid(Z,ox,oy);const hint=(S.fails[id]||0)>=3&&!won,mv=now(),a=jhMzSq(mv.slice(0,2)),b=jhMzSq(mv.slice(2));
       for(let r=0;r<10;r++)for(let c=0;c<9;c++)s+=`<rect x="${ox+c*Z-Z/2}" y="${oy+r*Z-Z/2}" width="${Z}" height="${Z}" fill="transparent" data-c="${c}" data-r="${r}"/>`;
       if(last)for(const q of last)s+=`<rect x="${ox+q.c*Z-Z/2+3}" y="${oy+q.r*Z-Z/2+3}" width="${Z-6}" height="${Z-6}" fill="none" stroke="#c9a466" stroke-width="2" stroke-dasharray="4 3" pointer-events="none"/>`;
       if(hint)s+=`<circle cx="${ox+b.c*Z}" cy="${oy+b.r*Z}" r="8" fill="#3f8f5f" pointer-events="none"/>`;
@@ -477,7 +512,7 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
       <p>${esc(jhL(`這次帶出來：${S.lv.rew.map(r=>r.zh+" "+S.bag[r.k]).join("、")}；走了 ${S.turn} 步。`,`Brought out: ${S.lv.rew.map(r=>r.en+" "+S.bag[r.k]).join(", ")}; ${S.turn} steps.`))}</p>
       ${R.first?`<p><b>${esc(jhL(`第一次走完：修為 +${S.lv.xp}`,`First clear: +${S.lv.xp} XP`))}</b></p>`:`<p>${esc(jhL(`最佳：${R.G.best} 步`,`Best: ${R.G.best} steps`))}</p>`}
       <div class="jh-mz-row"><button type="button" data-a="again">${esc(jhL("再走一次","Play again"))}</button><button type="button" class="main" data-a="out">${esc(jhL(LV.back[0],LV.back[1]))}</button></div>`);
-    o.querySelector('[data-a="again"]').onclick=()=>{shut(o);const n=jhMzNew(LV.sid,R.G.clear);Object.assign(S,n);bag();say(intro)};
+    o.querySelector('[data-a="again"]').onclick=()=>{shut(o);const n=jhMzNew(LV.sid,R.G.clear,jhMzPtrGet(LV.sid));Object.assign(S,n);bag();say(intro)};
     o.querySelector('[data-a="out"]').onclick=()=>{shut(o);upTo(HALL)}};
   cv.addEventListener("click",e=>{if(busy||S.done)return;const r=cv.getBoundingClientRect(),q=h3?h3.pick(e.clientX,e.clientY):{x:Math.floor((e.clientX-r.left+camX)/T),y:Math.floor((e.clientY-r.top+camY)/T)};if(!q)return;const x=q.x,y=q.y;
     if(x===S.player.x&&y===S.player.y)return;if(!S.seen.has(y*S.W+x)){say(jhL("那裡還是一片黑，<b>先走近一點照亮它</b>。","It's still pitch dark there. <b>Get closer to light it up.</b>"));return}
