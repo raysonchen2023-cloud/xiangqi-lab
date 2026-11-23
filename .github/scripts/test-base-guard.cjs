@@ -4,7 +4,7 @@
 // 用法：node --test .github/scripts/test-base-guard.cjs
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), os = require("os"), path = require("path"), cp = require("child_process");
-const { GUARD, isGuard, guardChanged, STEPS, restore, modeArgs, modeOf, finalCode, runGuard, classifiedOnly, TK_PATH } = require("./base-guard.cjs");
+const { GUARD, isGuard, guardChanged, STEPS, restore, modeArgs, modeOf, finalCode, runGuard, classifiedOnly, TK_PATH, ASSERT_DIR } = require("./base-guard.cjs");
 const NL = String.fromCharCode(10), NUL = String.fromCharCode(0);
 
 test("哪些算判斷紅綠的程式：.github/scripts 全部、run-tests、check-build、testkinds、verify-all、make-evidence、oss-scan、release-sync-check、release-verify、pikafish-verify", () => {
@@ -123,7 +123,7 @@ test("主流程：改到守門就換回、照 main 版 ci-mode 判斷模式；�
   const F = fake({ files: [".github/scripts/check-test-skips.cjs", ".github/scripts/new.cjs", "source/app.js"], fail: ["check-test-skips.cjs base-verify.txt"] });
   assert.equal(runGuard({ ...F, headRef: "w69/x" }), 1, "略過稽核換回 main 版後沒過，要紅燈");
   assert.equal(F.wrote[".github/scripts/check-test-skips.cjs"], "main 版 .github/scripts/check-test-skips.cjs");
-  assert.deepEqual(F.removed, [".github/scripts/new.cjs"]);
+  assert.deepEqual(F.removed, [".github/scripts/new.cjs", ASSERT_DIR], "換回時拿掉新檔；跑之前清掉這次程序自己的斷言計數資料夾（走注入的 fsx，PR #69 審查）");
   assert.deepEqual(F.calls[0], ["node", ".github/scripts/ci-mode.cjs", "w69/x", "pull_request"], "事件名稱一律 pull_request");
   assert.ok(F.calls.some((c) => c.join(" ").includes("guard-release-files.cjs")), "功能模式要跑功能守門");
   const ok = fake({ files: ["source/run-tests.js"] });
@@ -243,10 +243,19 @@ test("斷言計數資料夾每個程序自己一份：同一台電腦上兩個�
     const a = dirOf(), b = dirOf();
     assert.notEqual(a, b, "兩個程序的資料夾要不一樣");
     for (const d of [a, b]) assert.equal(path.dirname(d), path.resolve(T), "放在 RUNNER_TEMP（或系統暫存）底下");
-    /* 另一個程序正在用的資料夾：跑一次 runGuard（會清自己那一份）之後還在 */
-    fs.mkdirSync(a, { recursive: true }); fs.writeFileSync(path.join(a, "test-x.js.json"), "[]");
-    const F = fake({ files: ["source/run-tests.js"] });
-    runGuard({ ...F, headRef: "w69/x" });
-    assert.ok(fs.existsSync(path.join(a, "test-x.js.json")), "別的程序的斷言計數不能被清掉");
   } finally { fs.rmSync(T, { recursive: true, force: true }) }
+});
+
+test("自我測試跑 runGuard 不碰真的暫存資料夾：別的程序正在用的計數還在，刪除只走注入的 fsx（PR #69 審查）", () => {
+  /* 別的程序的資料夾建在跟本程序 ASSERT_DIR 同一層（真的會撞到的位置） */
+  const parent = path.dirname(ASSERT_DIR), other = path.join(parent, "base-assert-count-99999-other" + process.pid);
+  const list = () => { try { return fs.readdirSync(parent).filter((n) => n.startsWith("base-assert-count")).sort() } catch (e) { return [] } };
+  try {
+    fs.mkdirSync(other, { recursive: true }); fs.writeFileSync(path.join(other, "test-x.js.json"), "[]");
+    const before = list(), F = fake({ files: ["source/run-tests.js"] });
+    runGuard({ ...F, headRef: "w69/x" });
+    assert.ok(fs.existsSync(path.join(other, "test-x.js.json")), "別的程序的斷言計數不能被清掉");
+    assert.deepEqual(list(), before, "真的 fs 上沒有任何 base-assert-count* 被刪");
+    assert.deepEqual(F.removed, [ASSERT_DIR], "只透過注入的 fsx 清自己這一份");
+  } finally { fs.rmSync(other, { recursive: true, force: true }) }
 });

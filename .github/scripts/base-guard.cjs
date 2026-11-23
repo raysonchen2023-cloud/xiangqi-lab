@@ -130,7 +130,7 @@ function runGuard({ base = "origin/main", headRef = "", git, spawn, fsx = fs, lo
   const mode = modeOf(spawn("node", modeArgs(headRef)).stdout);
   log("模式（main 版 ci-mode.cjs 判斷）：" + mode);
   const results = [];
-  try { fs.rmSync(ASSERT_DIR, { recursive: true, force: true }) } catch (e) { }   /* 清掉這次程序自己的斷言計數資料夾（工作區外，不是要換回的檔，所以用真的 fs）；名稱每個程序不同，碰不到別人正在用的 */
+  try { fsx.rmSync(ASSERT_DIR, { recursive: true, force: true }) } catch (e) { }   /* 清掉這次程序自己的斷言計數資料夾；走注入的 fsx（PR #69 審查：自我測試用假的 fs，碰不到真的暫存資料夾）。名稱每個程序不同，碰不到別人正在用的 */
   for (const [name, cmd] of STEPS(base, mode)) {
     const r = spawn(cmd[0], cmd.slice(1), { inherit: true, env: assertEnv() });
     results.push({ name, status: r.status });
