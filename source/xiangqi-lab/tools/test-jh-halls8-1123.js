@@ -11,12 +11,15 @@ const SIDS = ["cross_palace", "horse", "advisor_corner", "palace_horse", "opposi
 const MOD = { jhGongOpen: "07z9d-gongpao", jhQimaOpen: "07z9f-qima", jhShijiaoOpen: "07z9e-shijiao", jhFanggongOpen: "07z9g-fanggong",
   jhLiepaoOpen: "07z9h-liepao", jhShunpaoOpen: "07z9i-shunpao", jhFeixiangOpen: "07z9j-feixiang", jhXianrenOpen: "07z9k-xianren" };
 
-/* 最小的假 DOM：門內頁 P 底下有圖、四個地點標籤 */
+/* 最小的假 DOM：門內頁 P 底下有圖、地點標籤。
+   iMac Claude 1 11/23 審查：照 07z9b 的 spot()——資料裡沒有座標的地點就不畫按鈕（原本固定塞四顆，八派少了 yard 也看不出來）。
+   八派照 JH_HALLS8 的 spots；中炮、屏風馬用 07z9b 自己的四個地點。 */
+const H8 = (() => { const c = {}; vm.createContext(c); vm.runInContext(SRC + "\n;this.H=JH_HALLS8;", c); return c.H })();
 function el(tag) { return { tag, dataset: {}, style: {}, children: [], className: "", innerHTML: "", alt: "" } }
 function page(sid) {
   const P = el("div"), img = el("img");
   P.children.push(img);
-  for (const k of ["hall", "study", "yard", "gate"]) { const b = el("button"); b.className = "shp-spot jh-hall-spot"; b.dataset.k = k; P.children.push(b) }
+  for (const k of ["hall", "study", "yard", "gate"].filter((k) => !H8[sid] || H8[sid].spots[k])) { const b = el("button"); b.className = "shp-spot jh-hall-spot"; b.dataset.k = k; P.children.push(b) }
   const note = el("p"); note.className = "jh-windnote jh-hall-note"; P.children.push(note);
   P.querySelector = (q) => {
     if (q === "img") return img;
@@ -50,12 +53,23 @@ function load(o = {}) {
 test("W72 代號表 flags-codes.json 跟程式一致：halls8＋八派各一個 play_<派>，入口鍵跟 JH_HALLS8 的 play.k 相同；每個代號真的會關掉東西", () => {
   const T = JSON.parse(rd("xiangqi-lab/tools/flags-codes.json")), { c } = load();
   const codes = T.codes.map((x) => x.code).sort();
+  assert.ok(T.codes.find((x) => x.code === "halls8").check.length >= 2, "halls8 寫了關掉後怎麼確認");
+  assert.match(T.playCheck, /\.jh-hall-spot\[data-k=/, "play_<派> 寫了關掉後怎麼確認（選擇器）");
+  for (const x of T.codes.filter((y) => y.sid)) assert.ok(x.entry && x.spot, x.code + " 寫了管哪個入口");
   assert.deepEqual(codes, ["halls8", ...SIDS.map((s) => "play_" + s)].sort());
   for (const x of T.codes.filter((y) => y.sid)) {
     assert.equal(x.code, "play_" + x.sid); assert.equal(c.JH_HALLS8[x.sid].play.k, x.spot, x.sid + " 入口鍵");
     const L = load({ flags: { off: [x.code] } }), p = page(x.sid); L.c.JhHall(p.v, x.sid);
     assert.equal(p.P.querySelector(`.jh-hall-spot[data-k="${x.spot}"]`), null, x.code + " 關掉後入口不見");
   }
+});
+
+test("W72 遠端開關讀取出錯（xqFlag 丟例外）時一律開著：門內頁、八派入口照常（讀錯不能把功能關掉）", () => {
+  const { c, wrapped } = load({ flags: { off: [] } });
+  c.xqFlag = () => { throw new Error("讀錯") };
+  const p = page("pawn"); c.location.hash = "#/jianghu/hall/pawn"; c.JhHall(p.v, "pawn");
+  assert.ok(wrapped.includes("pawn"), "門內頁照常畫"); assert.ok(p.P.querySelector('.jh-hall-spot[data-k="rock"]'), "玩法入口照放");
+  assert.equal(c.location.hash, "#/jianghu/hall/pawn");
 });
 
 test("W72 遠端開關：halls8 關掉＝八派都進不了門內（小卡不顯示走進山門、直接打網址退回長卷）；中炮、屏風馬不受影響", () => {
@@ -87,8 +101,13 @@ test("八派都有 JH_HALL：版本、座位、裁切（藏住棋子字）、四
   for (const sid of SIDS) {
     const H = c.JH_HALL[sid]; assert.ok(H, sid);
     assert.match(H.v, /^\d{4}$/); assert.equal(H.w, 60, sid + " 立繪寬 60（史學顧問 192：略大）"); assert.ok(H.cut >= 0.42 && H.cut < 0.45, sid + " 裁切要藏住棋子字");
-    for (const k of ["hall", "study", "gate"]) assert.ok(H.spots[k], sid + " 少 " + k);
+    assert.deepEqual(Object.keys(H.spots).sort(), ["gate", "hall", "study", "yard"], sid + " 四個地點：大廳、講堂、前院（門下棋友）、山門（07z9b 沒座標就不畫）");
     assert.equal(Object.keys(H.extra).length, 1, sid + " 一個玩法入口");
+    /* 標籤不互相蓋住：每個標籤以座標為中心、約 160×40（原圖像素） */
+    const L = [...Object.entries(H.spots), ...Object.entries(H.extra)];
+    for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
+      const [a, b] = [L[i][1], L[j][1]]; assert.ok(Math.abs(a[0] - b[0]) >= 160 || Math.abs(a[1] - b[1]) >= 40, sid + " 標籤重疊：" + L[i][0] + "／" + L[j][0]);
+    }
     for (const p of [H.seat, ...Object.values(H.spots), ...Object.values(H.extra)]) assert.ok(p[0] > 0 && p[0] < 768 && p[1] > 0 && p[1] < 1376, sid + " 座標在圖內：" + p);
   }
   assert.deepEqual(Object.keys(c.JH_HALL.central), ["v"], "中炮門不動"); assert.deepEqual(Object.keys(c.JH_HALL.screen), ["v"], "屏風馬門不動");
