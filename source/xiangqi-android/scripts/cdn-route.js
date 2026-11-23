@@ -81,4 +81,47 @@ function summarize(log, probe) {
     flags: real.filter((r) => r.url.startsWith(FLAGS_URL)).map((r) => r.action) };
 }
 
-module.exports = { decide, routeCdn, probeOk, summarize, CDN, FLAGS_URL, PROBE, PROBE_BODY, PROBE_JS };
+/* ===== W74 包外檔讀取輪（#74 Android 12 實跑後補，iMac Claude 2 2026-11-23）=====
+   現行 App 只在「包裡讀不到」時才向 CDN 補抓；0643 mini 包把 44 個畫面要用的檔都包了，掃畫面時一個 CDN 請求都沒有，
+   改向到空資料夾也照樣 0 破圖：光掃畫面驗不到「現行 App 讀新 CDN」。所以 --cdn-to 時，掃完畫面在 App 頁面裡再跑一輪：
+     1. 經由攔截讀新 CDN 的 cdn-manifest.json（讀不到＝現行 App 要補抓的檔全都會失敗＝紅燈）；
+     2. 從清單挑 data/ 底下、2 MB 以內的檔，平均分散地試；包裡讀得到（回應不是從 CDN 來的）就跳過，只留包外才有的；
+     3. 包外的檔經由攔截從 XQ_CDN 讀：狀態、大小、SHA-1（清單記的前幾碼）都要對得上，最多驗 OUTSIDE_MAX 個。
+   「包裡讀得到」用回應網址判斷：App 要是把 fetch 包成「讀不到改問 CDN」，回應網址會是 CDN 的，照樣算包外。 */
+const OUTSIDE_MAX = 30, OUTSIDE_PROBES = 800, OUTSIDE_SIZE = 2 * 1024 * 1024;
+const OUTSIDE_JS = (n = OUTSIDE_MAX) => `(async () => {
+  const out = { manifest: null, candidates: 0, probed: 0, checked: [], bad: [], hash: typeof crypto === "object" && !!crypto.subtle };
+  let man;
+  try { const r = await fetch(XQ_CDN + "cdn-manifest.json?t=" + Date.now(), { cache: "no-store" }); out.manifest = r.status; if (!r.ok) return out; man = await r.json() }
+  catch (e) { out.manifest = "讀不到：" + e.message; return out }
+  const files = Object.entries((man && man.files) || {}).filter(([f, v]) => f.startsWith("data/") && f.indexOf("__xq_") < 0 && Array.isArray(v) && v[0] > 0 && v[0] <= ${OUTSIDE_SIZE}).sort((a, b) => a[0] < b[0] ? -1 : 1);
+  out.candidates = files.length;
+  const hex = (b) => Array.from(new Uint8Array(b)).map((x) => x.toString(16).padStart(2, "0")).join("");
+  const step = Math.max(1, Math.floor(files.length / ${OUTSIDE_PROBES}));
+  for (let i = 0; i < files.length; i += step) {
+    if (out.checked.length + out.bad.length >= ${n} || out.probed >= ${OUTSIDE_PROBES}) break;
+    const [f, v] = files[i]; out.probed++;
+    let local = false;
+    try { const r = await fetch(f + "?xqlocal=" + Date.now(), { cache: "no-store" }); local = r.ok && String(r.url).indexOf(XQ_CDN) !== 0 } catch (e) { }
+    if (local) continue;
+    try {
+      const r = await fetch(XQ_CDN + f + "?t=" + Date.now(), { cache: "no-store" });
+      if (!r.ok) { out.bad.push({ f, why: "狀態 " + r.status }); continue }
+      const b = await r.arrayBuffer();
+      if (b.byteLength !== v[0]) { out.bad.push({ f, why: "大小 " + b.byteLength + "，清單 " + v[0] }); continue }
+      if (out.hash && v[1]) { const h = hex(await crypto.subtle.digest("SHA-1", b)); if (!h.startsWith(String(v[1]))) { out.bad.push({ f, why: "SHA-1 " + h.slice(0, 12) + "，清單 " + v[1] }); continue } }
+      out.checked.push(f);
+    } catch (e) { out.bad.push({ f, why: "讀不到：" + e.message }) }
+  }
+  return out;
+})()`;
+/* 包外檔讀取輪的判定（純函式）：清單讀不到或有檔不對＝1（現行 App 讀新 CDN 會壞）；一個包外檔都沒驗到＝2（驗不到）；其餘＝0 */
+function judgeOutside(o) {
+  if (!o || typeof o !== "object" || o.error) return { code: 2, why: "包外檔讀取輪沒有跑出結果" + (o && o.error ? "（" + o.error + "）" : "") };
+  if (o.manifest !== 200) return { code: 1, why: `新 CDN 的 cdn-manifest.json 讀不到（${o.manifest}）：現行 App 要向 CDN 補抓的檔都會失敗` };
+  if (Array.isArray(o.bad) && o.bad.length) return { code: 1, why: `${o.bad.length} 個包外才有的檔從新 CDN 讀不到或內容不對：` + o.bad.slice(0, 5).map((b) => `${b.f}（${b.why}）`).join("、") };
+  if (!Array.isArray(o.checked) || !o.checked.length) return { code: 2, why: `找不到包外才有的檔（清單 ${o.candidates} 個、試了 ${o.probed} 個都在包裡）：驗不到現行 App 經由 CDN 讀資料` };
+  return { code: 0, why: `${o.checked.length} 個包外才有的檔都從新 CDN 讀到，大小${o.hash ? "和 SHA-1 " : ""}都跟清單對得上` + (o.hash ? "" : "（這台沒有 crypto.subtle，只比大小）") };
+}
+
+module.exports = { decide, routeCdn, probeOk, summarize, judgeOutside, OUTSIDE_JS, OUTSIDE_MAX, OUTSIDE_PROBES, CDN, FLAGS_URL, PROBE, PROBE_BODY, PROBE_JS };

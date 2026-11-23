@@ -124,7 +124,76 @@ test("〔原始碼〕掃描流程：先開攔截、再重新載入、等首頁�
   const i = s.indexOf("routeLog = await routeCdn(c"), j = s.indexOf('await c.send("Page.reload"'), k = s.indexOf("await waitHome(c)"), l = s.indexOf("await waitPreload(c, 180000)");
   assert.ok(i > 0 && i < j && j < k && k < l, "攔截 → 重新載入 → 等首頁 → 等預載");
   assert.match(s, /rep\.route = summarize\(routeLog, await probeOk\(c\)\)/);
-  assert.match(s, /if \(routeLog\) rep\.route = summarize\(routeLog, rep\.route\.probeOk\);/);
+  assert.match(s, /if \(routeLog\) \{ rep\.route = summarize\(routeLog, rep\.route\.probeOk\);/);
+  /* #74 Android 12 實跑後補：--cdn-to 時掃完畫面要跑包外檔讀取輪；判成 1 要進紅燈清單 */
+  const o = s.indexOf("outside = await c.ev(OUTSIDE_JS())"), cl = s.indexOf("c.close();\n  rep.badRoutes");
+  assert.ok(o > l && o < cl, "包外檔讀取輪在掃完畫面之後、關掉連線之前");
+  assert.match(s, /if \(routeLog && O\.cdnTo\) \{ try \{ outside = await c\.ev\(OUTSIDE_JS\(\)\) \}/);
+  assert.match(s, /outsideJudge\.code === 1\) rep\.badRoutes\.push\(/);
+  assert.match(s, /routeBadOf\(R\.sweeps, O\.routing && \{ cdnTo: O\.cdnTo, flags: !!\(O\.flagsFile \|\| O\.flagsFail\) \}\)/);
+});
+
+/* ---- #74 Android 12 實跑後補（iMac Claude 2，2026-11-23）：現行 App 只在包裡讀不到才補抓，光掃畫面可能一個 CDN 請求都沒有 ---- */
+const vm = require("vm"), crypto = require("crypto");
+const sha12 = (b) => crypto.createHash("sha1").update(b).digest("hex").slice(0, 12);
+/* 模擬 App 頁面：pack＝包裡有的檔；cdn＝攔截後新 CDN 回的檔（含 cdn-manifest.json）；wrap＝App 把 fetch 包成「包裡讀不到就改問 CDN」 */
+function page({ pack = {}, cdn = {}, wrap = false, subtle = true }) {
+  const XQ_CDN = "https://xiangqi-cdn.pages.dev/", seen = [];
+  const res = (url, body) => body === undefined ? { ok: false, status: 404, url, arrayBuffer: async () => new ArrayBuffer(0), json: async () => { throw new Error("404") } }
+    : { ok: true, status: 200, url, arrayBuffer: async () => { const b = Buffer.from(body); return b.buffer.slice(b.byteOffset, b.byteOffset + b.length) }, json: async () => JSON.parse(String(body)) };
+  const raw = async (u) => { const p = String(u).split("?")[0]; seen.push(p); if (p.startsWith(XQ_CDN)) return res(p, cdn[p.slice(XQ_CDN.length)]); return res("https://localhost/" + p, pack[p]) };
+  const fetch = wrap ? async (u, o) => { const r = await raw(u, o); if (!r.ok && !String(u).startsWith(XQ_CDN)) return raw(XQ_CDN + String(u).split("?")[0], o); return r } : raw;
+  const ctx = { XQ_CDN, fetch, Date, Object, Array, Uint8Array, String, Math, Buffer, crypto: subtle ? crypto.webcrypto : {} };
+  /* vm 裡的陣列、物件屬於另一個執行環境，轉成這邊的 JSON 再比 */
+  return { run: async () => JSON.parse(JSON.stringify(await vm.runInNewContext(R.OUTSIDE_JS(), ctx))), seen };
+}
+const man = (files) => JSON.stringify({ files: Object.fromEntries(Object.entries(files).map(([f, b]) => [f, [Buffer.byteLength(b), sha12(b)]])) });
+
+test("包外檔讀取輪：包裡有的跳過、包外的經由 CDN 讀，大小和 SHA-1 都對才算驗到；判定 0", async () => {
+  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}", "data/c.webp": "ccc", "data/d.json": "{\"d\":4}" };
+  const p = page({ pack: { "data/a.json": F["data/a.json"], "data/c.webp": F["data/c.webp"] }, cdn: { "cdn-manifest.json": man(F), ...F } });
+  const o = await p.run();
+  assert.equal(o.manifest, 200); assert.deepEqual(o.checked.sort(), ["data/b.json", "data/d.json"]); assert.deepEqual(o.bad, []); assert.equal(o.hash, true);
+  assert.deepEqual(R.judgeOutside(o), { code: 0, why: "2 個包外才有的檔都從新 CDN 讀到，大小和 SHA-1 都跟清單對得上" });
+  assert.ok(!p.seen.includes("https://xiangqi-cdn.pages.dev/data/a.json"), "包裡有的不去 CDN 讀");
+});
+
+test("包外檔讀取輪（反測必紅）：改向到空資料夾（清單 404）、包外檔讀不到、內容或大小不對＝1；全部都在包裡＝2；跑不起來＝2", async () => {
+  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}" };
+  let o = await page({ cdn: {} }).run();
+  assert.equal(o.manifest, 404); assert.equal(R.judgeOutside(o).code, 1, "空資料夾一定要回 1，才證明 App 經由攔截讀資料"); assert.match(R.judgeOutside(o).why, /cdn-manifest\.json 讀不到/);
+  o = await page({ cdn: { "cdn-manifest.json": man(F), "data/a.json": F["data/a.json"] } }).run();
+  assert.equal(R.judgeOutside(o).code, 1); assert.match(R.judgeOutside(o).why, /data\/b\.json（狀態 404）/);
+  o = await page({ cdn: { "cdn-manifest.json": man(F), "data/a.json": F["data/a.json"], "data/b.json": "{\"b\":3}" } }).run();
+  assert.equal(R.judgeOutside(o).code, 1, "同樣大小、內容不同：SHA-1 抓得到"); assert.match(R.judgeOutside(o).why, /data\/b\.json（SHA-1 /);
+  o = await page({ cdn: { "cdn-manifest.json": man(F), "data/a.json": F["data/a.json"], "data/b.json": "{\"b\":22}" } }).run();
+  assert.match(R.judgeOutside(o).why, /data\/b\.json（大小 8，清單 7）/);
+  o = await page({ pack: F, cdn: { "cdn-manifest.json": man(F), ...F } }).run();
+  assert.deepEqual(o.checked, []); assert.equal(R.judgeOutside(o).code, 2, "全部都在包裡＝驗不到"); assert.match(R.judgeOutside(o).why, /找不到包外才有的檔/);
+  for (const x of [null, undefined, "x", { error: "逾時" }]) assert.equal(R.judgeOutside(x).code, 2, JSON.stringify(x));
+});
+
+test("包外檔讀取輪：App 把 fetch 包成「包裡讀不到改問 CDN」時，照樣認得出包外的檔；沒有 crypto.subtle 時只比大小、照實寫出來", async () => {
+  const F = { "data/a.json": "{\"a\":1}", "data/b.json": "{\"b\":2}" };
+  const o = await page({ pack: { "data/a.json": F["data/a.json"] }, cdn: { "cdn-manifest.json": man(F), ...F }, wrap: true }).run();
+  assert.deepEqual(o.checked, ["data/b.json"], "回應網址是 CDN 的＝包外");
+  const n = await page({ cdn: { "cdn-manifest.json": man(F), ...F }, subtle: false }).run();
+  assert.equal(n.hash, false); assert.equal(n.checked.length, 2); assert.match(R.judgeOutside(n).why, /只比大小/);
+  /* 只挑 data/ 底下、2 MB 以內，探測檔不算 */
+  const big = { files: { "data/x.json": [3 * 1024 * 1024, "0"], "engine/e.bin": [3, "0"], "data/__xq_route_probe.txt": [11, "0"], "data/y.json": [7, sha12("{\"y\":1}")] } };
+  const y = await page({ cdn: { "cdn-manifest.json": JSON.stringify(big), "data/y.json": "{\"y\":1}" } }).run();
+  assert.equal(y.candidates, 1); assert.deepEqual(y.checked, ["data/y.json"]);
+});
+
+test("結束代碼（#74 實跑後補）：--cdn-to 沒有包外檔讀取輪、或一個包外檔都沒驗到＝2；判定 1 不算測不成立（由紅燈擋）；換開關檔卻沒攔到開關檔＝2", () => {
+  const s = (route) => [{ mode: "online", route: { probeOk: true, ...route } }], cdn = { cdnTo: "https://x/" }, fl = { flags: true };
+  assert.equal(routeBadOf(s({}), cdn), true, "沒有包外檔讀取輪");
+  assert.equal(routeBadOf(s({ outside: { manifest: 200, checked: [], bad: [], candidates: 3, probed: 3 } }), cdn), true, "一個都沒驗到");
+  assert.equal(routeBadOf(s({ outside: { error: "逾時" } }), cdn), true);
+  assert.equal(routeBadOf(s({ outside: { manifest: 200, checked: ["data/b.json"], bad: [] } }), cdn), false);
+  assert.equal(routeBadOf(s({ outside: { manifest: 404 } }), cdn), false, "判定 1 由紅燈擋，不是測不成立");
+  assert.equal(routeBadOf(s({ flags: [] }), fl), true, "開關檔一次都沒攔到"); assert.equal(routeBadOf(s({ flags: ["fulfill"] }), fl), false);
+  assert.equal(routeBadOf(s({}), true), false, "舊的呼叫（只給 true）照舊只看探測檔");
 });
 
 test("〔原始碼〕工具寫死的網址跟 App 一樣（App 改了網址、工具沒跟上，攔截就攔不到）；回前景等待預設超過 App 不重抓的間隔", () => {

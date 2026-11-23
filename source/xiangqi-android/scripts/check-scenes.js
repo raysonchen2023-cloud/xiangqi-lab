@@ -18,7 +18,7 @@ const fs = require("fs"), path = require("path"), cp = require("child_process");
 const { connect } = require("./cdp.js");
 const { setupPlayer, waitPreload } = require("./player-state.js");
 const { checkDevice } = require("./device-guard.js");
-const { routeCdn, probeOk, summarize } = require("./cdn-route.js");
+const { routeCdn, probeOk, summarize, judgeOutside, OUTSIDE_JS } = require("./cdn-route.js");
 
 const arg = (k, d = null) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d };
 const O = { apk: arg("--apk"), serial: arg("--serial", "emulator-5580"), mode: arg("--mode", "both"), out: path.resolve(arg("--out", "scene-check")),
@@ -88,8 +88,16 @@ const net = on => {
 
 /* 整輪的結束代碼：有紅燈＝1；沒紅燈但拿不到讀取狀態碼（讀取失敗檢查沒做）、或要改向卻沒證明攔截生效（routeBad）＝2 測不成立；其餘＝0 */
 function finalCode({ bad, noStatus, routeBad }) { return bad ? 1 : noStatus || routeBad ? 2 : 0 }
-/* W74～W76：有要改向時，每一輪都要有改向摘要，而且探測檔讀得到；少一輪就是沒證明，測不成立 */
-function routeBadOf(sweeps, routing) { return !!routing && (!sweeps.length || sweeps.some(s => !s.route || s.route.probeOk !== true)) }
+/* W74～W76：有要改向時，每一輪都要有改向摘要，而且探測檔讀得到；少一輪就是沒證明，測不成立。
+   #74 Android 12 實跑後補（routing 給物件時）：--cdn-to 要有包外檔讀取輪、而且至少驗到一個包外才有的檔（現行 App 只在包裡讀不到才補抓，光掃畫面可能一個 CDN 請求都沒有）；
+   換開關檔時，開關檔的請求至少要攔到一次 */
+function routeBadOf(sweeps, routing) {
+  if (!routing) return false;
+  if (!sweeps.length) return true;
+  return sweeps.some(s => !s.route || s.route.probeOk !== true
+    || (routing.cdnTo && !(s.route.outside && judgeOutside(s.route.outside).code !== 2))
+    || (routing.flags && !(Array.isArray(s.route.flags) && s.route.flags.length)));
+}
 /* 首頁掛好了沒（重新載入之後用） */
 async function waitHome(c, ms = 60000) {
   for (let t = 0; t < ms; t += 1000) { try { if (await c.ev('typeof route==="function"&&Boolean(document.querySelector(".home-page"))')) return true } catch (e) { } await sleep(1000) }
@@ -138,9 +146,15 @@ async function sweep(mode) {
     rep.routes.push(row);
     console.log(`[${mode === "online" ? "連線" : "離線"}] ${r.padEnd(10)} 圖 ${row.images ?? "-"}｜破 ${(row.broken || []).length}｜背景破 ${(row.bgBroken || []).length}｜讀取失敗 ${fails}${mode === "offline" && fails ? "（提醒）" : ""}${row.error ? "｜錯誤 " + row.error : ""}${row.bad ? "  ✘" : row.warn ? "  △" : ""}`);
   }
-  if (routeLog) rep.route = summarize(routeLog, rep.route.probeOk);   /* 掃完再算一次，把 44 個畫面期間攔到的也算進去 */
+  /* W74：包外檔讀取輪（掃畫面時現行 App 可能一個 CDN 請求都沒發，要另外證明讀得到新 CDN 上包外才有的檔） */
+  let outside = null;
+  if (routeLog && O.cdnTo) { try { outside = await c.ev(OUTSIDE_JS()) } catch (e) { outside = { error: String(e.message || e).slice(0, 160) } } }
+  const sweepIntercepted = routeLog ? summarize(routeLog, true).intercepted : 0;
+  if (routeLog) { rep.route = summarize(routeLog, rep.route.probeOk); rep.route.sweepIntercepted = sweepIntercepted }   /* 掃完再算一次，把 44 個畫面期間攔到的也算進去 */
+  if (outside) { rep.route.outside = outside; rep.route.outsideJudge = judgeOutside(outside); console.log(`包外檔讀取輪：${rep.route.outsideJudge.code === 0 ? "✔" : rep.route.outsideJudge.code === 1 ? "✘" : "△"} ${rep.route.outsideJudge.why}（掃畫面時攔到 ${sweepIntercepted} 個 CDN 請求）`) }
   c.close();
   rep.badRoutes = rep.routes.filter(r => r.bad).map(r => r.route);
+  if (rep.route && rep.route.outsideJudge && rep.route.outsideJudge.code === 1) rep.badRoutes.push("包外檔：" + rep.route.outsideJudge.why);
   /* PR #12 審查：讀取狀態碼（responseStatus）要 Chrome 109 以上；WebView 91 這類舊版拿不到，讀取失敗會被看成沒事 → 標記出來，最後當成測不成立 */
   rep.statusOk = rep.routes.filter(r => !r.error).every(r => r.statusOk !== false);
   rep.warnRoutes = rep.routes.filter(r => !r.bad && r.warn).map(r => r.route);
@@ -170,9 +184,13 @@ async function main() {
   R.finishedAt = new Date().toISOString();
   const bad = R.sweeps.flatMap(s => s.badRoutes.map(r => (s.mode === "online" ? "連線 " : "離線 ") + r));
   const warn = R.sweeps.flatMap(s => (s.warnRoutes || []).map(r => "離線 " + r));
-  const noStatus = noStatusOf(R.sweeps), routeBad = routeBadOf(R.sweeps, O.routing);
+  const noStatus = noStatusOf(R.sweeps), routeBad = routeBadOf(R.sweeps, O.routing && { cdnTo: O.cdnTo, flags: !!(O.flagsFile || O.flagsFail) });
   R.result = bad.length ? "不通過" : noStatus || routeBad ? "測不成立" : "通過"; R.warnRoutes = warn; R.statusOk = !noStatus; if (O.routing) R.routeOk = !routeBad; save();
-  if (!bad.length && routeBad) { console.log("△ 測不成立：要改向，可是探測檔讀不到（CDP 攔截沒接上），看到的還是正式 CDN，不能當成 W74／W76 通過"); process.exit(2) }
+  if (!bad.length && routeBad) {
+    const why = R.sweeps.map(s => !s.route || s.route.probeOk !== true ? "探測檔讀不到（CDP 攔截沒接上），看到的還是正式 CDN"
+      : s.route.outsideJudge && s.route.outsideJudge.code === 2 ? s.route.outsideJudge.why
+      : O.cdnTo && !s.route.outside ? "沒有跑包外檔讀取輪" : "開關檔的請求一次都沒攔到").join("；") || "一輪都沒掃";
+    console.log("△ 測不成立：" + why + "。不能當成 W74／W76 通過"); process.exit(2) }
   if (finalCode({ bad: bad.length, noStatus }) === 2) { console.log("△ 測不成立：這台的 WebView 太舊，拿不到讀取狀態碼（要 Chrome 109 以上），讀取失敗檢查沒有做。看得到的破圖已檢查、沒有發現；請換新一點的模擬器再跑"); process.exit(2) }
   console.log(bad.length ? `✘ 不能送審：${bad.length} 個畫面有破圖或讀取失敗（${bad.join("、")}）`
     : `✔ 破圖掃描通過：${R.sweeps.map(s => (s.mode === "online" ? "連線" : "離線") + " " + s.routes.length + " 個畫面").join("、")}看得到的圖都沒有破（${R.sweeps[0] && R.sweeps[0].build}）`);
