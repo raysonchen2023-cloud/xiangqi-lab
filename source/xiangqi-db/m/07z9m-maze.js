@@ -92,7 +92,8 @@ async function jhMzHero3(box,c){
   const sc=new T3.Scene();sc.add(new T3.HemisphereLight(0xFFE2B8,0x3A2C1E,1.05));const dl=new T3.DirectionalLight(0xFFC27A,.8);dl.position.set(-2,6,5);sc.add(dl);
   const root=new T3.Group();root.rotation.order="YXZ";root.add(B.bot);sc.add(root);root.updateMatrixWorld(true);
   const bx=new T3.Box3().setFromObject(B.bot),ct=bx.getCenter(new T3.Vector3()),hM=(bx.max.y-bx.min.y)||1;B.bot.position.x-=ct.x;B.bot.position.z-=ct.z;B.bot.position.y-=bx.min.y;const by=B.bot.position.y;
-  const EL=32*Math.PI/180,vh=hM*1.45,cam=new T3.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T3.Vector3(0,hM*.6,0);
+  /* 俯角 48°：地圖是從正上方看，角色太接近平視（原本 32°）會像站在畫面前面、飄在地上；拉高貼近地圖的俯視感 */
+  const EL=48*Math.PI/180,vh=hM*1.45,cam=new T3.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T3.Vector3(0,hM*.6,0);
   cam.position.set(0,tg.y+Math.sin(EL)*hM*6,Math.cos(EL)*hM*6);cam.lookAt(tg);cam.updateMatrixWorld(true);
   const ft=new T3.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,clips=B.mixer&&B.clips||null;let cur=null,yawR=0,cw=0,ch=0,t=0;
   const anim=n=>{if(!clips)return;const a=clips[n]||clips.idle;if(!a||a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};anim("idle");
@@ -214,13 +215,27 @@ function JhMaze(v){jhCss();jhMzCss();
   const resize=()=>{jhMzFit(v);const r=box.getBoundingClientRect();dpr=Math.min(2,window.devicePixelRatio||1);cv.width=Math.max(1,r.width*dpr);cv.height=Math.max(1,r.height*dpr);T=Math.max(34,Math.min(64,Math.floor(r.width/8.5)))};
   const alive=()=>cv.isConnected;
   const rnd=(x,y,s)=>{const q=Math.sin(x*127.1+y*311.7+s*74.7)*43758.5453;return q-Math.floor(q)};
-  const tile=(x,y,px,py)=>{const c=S.grid[y][x];
-    if(c==="#"){cx.fillStyle="#241d17";cx.fillRect(px,py,T,T);cx.fillStyle="#2f261e";for(let i=0;i<2;i++){const yy=py+i*T/2,off=(y+i)%2?T/2:0;for(let j=-1;j<2;j++)cx.fillRect(px+off+j*T+2,yy+2,T-4,T/2-4)}
-      cx.fillStyle="rgba(0,0,0,.35)";cx.fillRect(px,py+T-5,T,5);return}
-    const g=58+rnd(x,y,1)*14;cx.fillStyle=`rgb(${g},${g*.82|0},${g*.62|0})`;cx.fillRect(px,py,T,T);
-    cx.fillStyle="rgba(0,0,0,.18)";if(rnd(x,y,2)>.6)cx.fillRect(px+rnd(x,y,3)*T*.6,py+rnd(x,y,4)*T*.6,T*.25,T*.12);
-    cx.strokeStyle="rgba(0,0,0,.25)";cx.lineWidth=1;cx.strokeRect(px+.5,py+.5,T-1,T-1);
-    if(c==="S")for(const[a,b,s]of[[.3,.62,.3],[.7,.62,.3],[.5,.36,.28]]){cx.fillStyle="#8a6a3e";cx.beginPath();cx.ellipse(px+a*T,py+b*T,s*T,s*T*.78,0,0,7);cx.fill();cx.strokeStyle="#4e3a1f";cx.lineWidth=1.5;cx.stroke()}
+  /* 11/23 開發者：「地底迷宮的圖太難分別是可以走得或是不能走 請修正配色或是其他方式」。原本牆 #241d17、地面約 #3d3226，都是暗棕、在燈光邊緣幾乎一樣。改成：
+     ・可以走的地面＝亮的暖色夯土石板（約 #9a7f5d），石板縫明顯；
+     ・牆＝深灰褐的牆頂＋朝走道那一面畫出很深的「牆面」（下面是地面的那一格，牆頂與牆面交界一條受光邊），看起來是凸起來的石牆；
+     ・牆腳在地面上投一道影子（地面上方或左右是牆），地面像一條凹下去的路；
+     ・糧袋（擋路）堆滿一格、袋口紮繩、下緣有影子，不像散在地上可以踩過去的小東西；石門本來就擋，照舊。
+     記憶裡（走過、現在燈照不到）的地方霧稍微淡一點（.86→.8），走過的路跟牆分得出來。 */
+  const tile=(x,y,px,py)=>{const c=S.grid[y][x],up=jhMzCell(S,x,y-1),dn=jhMzCell(S,x,y+1),lf=jhMzCell(S,x-1,y),rt=jhMzCell(S,x+1,y),isW=k=>k===undefined||k==="#";
+    if(c==="#"){cx.save();cx.beginPath();cx.rect(px,py,T,T);cx.clip();cx.fillStyle="#3b342d";cx.fillRect(px,py,T,T);cx.fillStyle="#463e35";
+      for(let i=0;i<2;i++){const yy=py+i*T/2,off=(y+i)%2?T/2:0;for(let j=-1;j<2;j++)cx.fillRect(px+off+j*T+2,yy+2,T-4,T/2-4)}
+      if(!isW(dn)){const fh=T*.4,fy=py+T-fh;cx.fillStyle="#161009";cx.fillRect(px,fy,T,fh);cx.fillStyle="#241910";for(let j=0;j<3;j++)cx.fillRect(px+j*T/3+2,fy+fh*.45,T/3-4,2);
+        cx.fillStyle="#7c6c58";cx.fillRect(px,fy-2,T,2)}
+      cx.restore();return}
+    /* 糧袋那格不鋪亮地面、改深色底（Windows Claude 2 預驗 #91：地面調亮後糧袋對地面對比 2.24→1.13，像能撿的東西；深底讓米色麻袋跳出來、看得出是一堆擋路的） */
+    const r1=rnd(x,y,1),R=150+r1*16|0;cx.fillStyle=c==="S"?"#2a2018":`rgb(${R},${R*.83|0},${R*.6|0})`;cx.fillRect(px,py,T,T);
+    cx.strokeStyle="rgba(70,48,24,.5)";cx.lineWidth=1.5;cx.strokeRect(px+.75,py+.75,T-1.5,T-1.5);
+    if(rnd(x,y,2)>.55){cx.strokeStyle="rgba(70,48,24,.35)";cx.lineWidth=1;cx.beginPath();const sx=px+T*(.25+rnd(x,y,3)*.5);cx.moveTo(sx,py+2);cx.lineTo(sx+T*.08,py+T*.5);cx.stroke()}
+    if(isW(up)){const gd=cx.createLinearGradient(0,py,0,py+T*.32);gd.addColorStop(0,"rgba(0,0,0,.5)");gd.addColorStop(1,"rgba(0,0,0,0)");cx.fillStyle=gd;cx.fillRect(px,py,T,T*.32)}
+    if(isW(lf)){cx.fillStyle="rgba(0,0,0,.25)";cx.fillRect(px,py,T*.1,T)}if(isW(rt)){cx.fillStyle="rgba(0,0,0,.25)";cx.fillRect(px+T*.9,py,T*.1,T)}
+    if(c==="S"){cx.fillStyle="rgba(0,0,0,.4)";cx.beginPath();cx.ellipse(px+T*.5,py+T*.9,T*.46,T*.1,0,0,7);cx.fill();
+      for(const[a,b,s]of[[.27,.66,.27],[.73,.66,.27],[.5,.68,.28],[.36,.36,.25],[.64,.36,.25]]){cx.fillStyle="#b08850";cx.beginPath();cx.ellipse(px+a*T,py+b*T,s*T,s*T*.8,0,0,7);cx.fill();cx.strokeStyle="#3e2a12";cx.lineWidth=1.8;cx.stroke();
+        cx.strokeStyle="#5a3c18";cx.lineWidth=1.2;cx.beginPath();cx.moveTo(px+(a-s*.35)*T,py+(b-s*.45)*T);cx.lineTo(px+(a+s*.35)*T,py+(b-s*.45)*T);cx.stroke()}}
     if(c==="T"){const on=S.lit.has(y*S.W+x);cx.fillStyle="#3a2c1e";cx.fillRect(px+T*.42,py+T*.2,T*.16,T*.5);
       if(on){const f=1+Math.sin(performance.now()/90+x)*.12;cx.fillStyle="#ffcf6a";cx.beginPath();cx.ellipse(px+T*.5,py+T*.17,T*.12*f,T*.2*f,0,0,7);cx.fill();cx.fillStyle="#ff8a2a";cx.beginPath();cx.ellipse(px+T*.5,py+T*.2,T*.07,T*.12,0,0,7);cx.fill()}
       else{cx.fillStyle="#1a140f";cx.beginPath();cx.arc(px+T*.5,py+T*.2,T*.09,0,7);cx.fill()}}
@@ -238,16 +253,21 @@ function JhMaze(v){jhCss();jhMzCss();
     for(const x of jhMzSight(S))if(L[G.y*S.W+x]>.15){cx.fillStyle="rgba(200,50,35,.28)";cx.fillRect(x*T+2,G.y*T+2,T-4,T-4);cx.fillStyle="rgba(230,70,50,.7)";cx.fillRect(x*T+4,G.y*T+T/2-1.5,T-8,3)}
     if(L[G.y*S.W+G.x]>.15){const gx=G.fx*T+T/2,gy=G.y*T+T/2;cx.fillStyle="#141414";cx.beginPath();cx.ellipse(gx,gy+T*.05,T*.3,T*.36,0,0,7);cx.fill();cx.fillStyle="#2b2b2b";cx.beginPath();cx.arc(gx,gy-T*.2,T*.17,0,7);cx.fill();
       cx.fillStyle=G.stun?"#8a8a8a":"#e24a3a";cx.fillRect(gx+G.dx*T*.04-T*.09,gy-T*.23,T*.06,T*.04);cx.fillRect(gx+G.dx*T*.04+T*.03,gy-T*.23,T*.06,T*.04)}
-    const hx=P.fx*T+T/2,hy=P.fy*T+T/2;cx.fillStyle="rgba(0,0,0,.4)";cx.beginPath();cx.ellipse(hx,hy+T*.38,T*.26,T*.09,0,0,7);cx.fill();
+    /* 11/23 開發者：「腳色看起來是漂起來 請修正」：原本影子很淡（.4）又小、被身體蓋住，腳底站在格子下緣（.38）。
+       改成：3D 角色腳底站在格子中心偏下（.22），腳下一圈明顯的柔邊接地影子（比身體寬、從腳邊露出來）；立繪照舊站 .38 */
+    const hx=P.fx*T+T/2,hy=P.fy*T+T/2,ft=hy+T*(h3?.22:.38);
+    /* 預覽站量：影子半徑 .42 格時跟披風一樣寬、上下只有 12px，幾乎全被身體蓋住 → 放大到 .55 格、往下挪一點，左右和腳下都露得出來 */
+    cx.save();cx.translate(hx,ft+T*.04);cx.scale(1,.4);const sg=cx.createRadialGradient(0,0,0,0,0,T*.55);sg.addColorStop(0,"rgba(0,0,0,.72)");sg.addColorStop(.5,"rgba(0,0,0,.45)");sg.addColorStop(1,"rgba(0,0,0,0)");
+    cx.fillStyle=sg;cx.beginPath();cx.arc(0,0,T*.55,0,7);cx.fill();cx.restore();
     /* 3D 載好就由 3D 畫（在下面）；還沒好或載不到：立繪也一樣等速走，走路時腳下一點一點、左右晃 */
     if(!h3){const bob=pWalk?-Math.abs(Math.sin(now/95))*T*.06:Math.sin(now/220)*1.5,sw=pWalk?Math.sin(now/95)*.09:0;
       if(hero.complete&&hero.naturalWidth){const h=T*1.05,w=h*hero.width/hero.height;cx.save();cx.translate(hx,hy+T*.38);cx.rotate(sw);cx.scale(P.face<0?-1:1,1);cx.drawImage(hero,-w/2,-T*.38-h*.62+bob,w,h);cx.restore()}
       else{cx.fillStyle="#e8b75a";cx.beginPath();cx.arc(hx,hy-T*.05+bob,T*.24,0,7);cx.fill()}}
-    const id=fx.createImageData(S.W,S.H);for(let i=0;i<S.W*S.H;i++){const q=L[i],a=!S.seen.has(i)?1:q<.12?.86:Math.max(0,1-q*.95);id.data[i*4+3]=Math.round(a*255)}
+    const id=fx.createImageData(S.W,S.H);for(let i=0;i<S.W*S.H;i++){const q=L[i],a=!S.seen.has(i)?1:q<.12?.8:Math.max(0,1-q*.95);id.data[i*4+3]=Math.round(a*255)}
     fx.putImageData(id,0,0);cx.imageSmoothingEnabled=true;cx.drawImage(fog,0,0,S.W*T,S.H*T);
     const gr=cx.createRadialGradient(hx,hy,T*.3,hx,hy,T*3.4);gr.addColorStop(0,"rgba(255,170,80,.14)");gr.addColorStop(1,"rgba(255,170,80,0)");cx.fillStyle=gr;cx.fillRect(hx-T*4,hy-T*4,T*8,T*8);
     cx.restore();
-    if(h3){const d=P.dir||[0,1];try{h3.draw(dt,pWalk,jhMzYaw(d[0],d[1]),hx-Math.round(camX),hy+T*.38-Math.round(camY),T*1.75)}catch(e){h3.dispose();h3=null}}
+    if(h3){const d=P.dir||[0,1];try{h3.draw(dt,pWalk,jhMzYaw(d[0],d[1]),hx-Math.round(camX),ft-Math.round(camY),T*1.75)}catch(e){h3.dispose();h3=null}}
     requestAnimationFrame(frame)};
   const act=(dx,dy)=>{if(busy||S.done)return false;if(dx||dy)S.player.dir=[dx,dy];const r=jhMzStep(S,dx,dy);
     if(r.ev==="wall"){say(esc(jhL("前面過不去。","Can't go that way.")));return false}
