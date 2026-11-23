@@ -20,9 +20,13 @@
      bigpre   拿掉 preload.json 的 big 列的大檔（清單也拿掉）    → 開 App 要先下載的大檔缺
      capord   index.html 裡 native-bridge.js 移到 capacitor.js 前面（清單照改） → 原生橋接載入順序錯（原生能力偵測不到）
      nohash   清單裡引擎、App 會要的檔的雜湊拿掉（只剩大小） → 要回 3：W30 大小對、內容壞的大檔抓不到
+     casehome 首頁素材改名成大小寫不同的同名檔 → iPhone 分大小寫，實機缺圖
+     nocap／nobridge index.html 拿掉 capacitor.js／native-bridge.js 標籤 → 原生能力偵測不到
      listmiss 拿掉一個清單有、但不在上面任何名單裡的檔（3D 場景程式、場景圖、data/ 其他檔） → 那個畫面破圖或壞掉
    swap 除了頭、中、尾、隨機，另外固定測最大的兩個記了 sha1 的檔（W30：大小對、內容壞的切塊大檔）
-   home／bgm／cdnstale／cdnmiss／nohash／listmiss 分層挑：全部候選挑頭、中、尾＋隨機，每一層（首頁照目錄、preload big、背景音樂每個朝代、listmiss 照目錄）再隨機挑 1 個（PR #67 第八、九次審查）
+   分層（PR #67 第八～十一次審查）：全部候選挑頭、中、尾＋隨機，另外每一層（完整父目錄＋副檔名；背景音樂照朝代）都挑 1 個，不抽樣；
+     檔多的壞樣本一次弄壞好幾個（同一份副本），每個檔的錯誤都要出現在 ✘／△ 那一行（⚠ 警告不算）
+   種子：有安裝包時由「安裝包 SHA-256＋origin/main 提交」推出來；給了 --seed 的收據不算送審用
    用法（送審）：node scripts/canary-www.js --pkg <要送審的 .ipa 或 .app> --cdn [--list <清單>] [--seed <種子>] --out <收據.json>
      --pkg 時檢查的就是包裡那份 Payload/*.app/public（.ipa 會先解開），不能再另外給 --dir（PR #67 審查：收據的包跟檢查的資料夾要是同一份）。
      沒有安裝包時可以用 --dir <www 資料夾> 先試，但那種收據 full＝false，送審不能用。
@@ -69,26 +73,38 @@ const CTRL = ["index.html", "native-bridge.js", "core.js", "engine.js", "local.j
 const TAG_CAP = '<script src="capacitor.js"></script>', TAG_BR = '<script src="native-bridge.js"></script>';
 /* 清單照改過的檔更新（只讓要測的那一條判斷抓得到，別的判斷不會順便抓到） */
 const relist = (L, f, b) => ({ ...L, [f]: [b.length, sha1_12(b)] });
+const POS = ["head", "mid", "tail"];
+/* 檔中間：取中間附近的換行之後（不切斷多位元組字元） */
+const midLine = (b) => { const i = b.indexOf(10, Math.floor(b.length / 2)); return i < 0 ? Math.floor(b.length / 2) : i + 1 };
+/* 檔名大小寫翻轉：最後一段裡第一個能翻的字母 */
+const caseFlip = (rel) => { const i = rel.lastIndexOf("/") + 1, n = rel.slice(i), j = n.search(/[A-Za-z]/); if (j < 0) return rel; const ch = n[j], t = ch === ch.toLowerCase() ? ch.toUpperCase() : ch.toLowerCase(); return rel.slice(0, i) + n.slice(0, j) + t + n.slice(j + 1) };
+/* 錯誤裡要出現的字：要在「✘」（結束代碼 1）或「△」（結束代碼 3）開頭的那一行，⚠ 警告那一行不算（一次弄壞好幾個時，別的檔讓結束代碼變 1，這一個只出警告也不能當抓到）。
+   字串＝那一行有這段；陣列＝同一行裡每一段都要有 */
+const hit = (out, exp, mark) => out.split("\n").some((l) => l.startsWith(mark) && [].concat(exp).every((e) => l.includes(e)));
 const preloadItems = (D) => (JSON.parse(fs.readFileSync(at(D, "data/preload.json"), "utf8")).items || []).map((x) => x[0]).filter((f) => fs.existsSync(at(D, f)));
 const bigItems = (D) => (JSON.parse(fs.readFileSync(at(D, "data/preload.json"), "utf8")).big || []).map((x) => x[0]);
 /* PR #67 第八次審查：分層挑檔。首頁 items、preload big、背景音樂每個朝代各自一層，每層各挑頭、中、尾＋隨機（混在一起照字母排，背景音樂幾乎挑不到） */
 const bgmEras = (D) => { const B = JSON.parse(fs.readFileSync(at(D, "data/bgm/index.json"), "utf8")); return Object.entries(B).map(([era, list]) => (Array.isArray(list) ? list : []).filter((f) => typeof f === "string" && fs.existsSync(at(D, "data/bgm/" + era + "/" + f))).map((f) => "data/bgm/" + era + "/" + f)).filter((x) => x.length) };
 /* PR #67 第九次審查：首頁 items 再照目錄分層（data/homemap/ 和 data/icons/ 各一層），只對某個目錄放水也抓得到 */
-const groupKey = (rel) => { const s = rel.split("/"); return s.length <= 1 ? "(根目錄)" : s[0] === "data" && s.length > 2 ? s[0] + "/" + s[1] : s[0] };
+/* PR #67 第十一次審查：分層用「完整父目錄」（data/pset/ming/、data/icons/tang/ 這種三層目錄也各自一層），不再只到前兩層 */
+const groupKey = (rel) => { const i = rel.lastIndexOf("/"); return i < 0 ? "(根目錄)" : rel.slice(0, i) };
 const byDir = (list) => { const m = new Map(); for (const f of list) { const k = groupKey(f); if (!m.has(k)) m.set(k, []); m.get(k).push(f) } return [...m.values()] };
 /* PR #67 第十次審查：目錄＋副檔名分層（判斷只對某種副檔名失靈，例如 .glb、.png 也抽得到） */
 const extOf = (rel) => { const m = /\.([A-Za-z0-9]+)$/.exec(rel); return m ? m[1].toLowerCase() : "" };
 const byDirExt = (list) => { const m = new Map(); for (const f of list) { const k = groupKey(f) + "|" + extOf(f); if (!m.has(k)) m.set(k, []); m.get(k).push(f) } return [...m.values()] };
 const BIG = 20 * 1048576;   /* 跟 check-www.js 第 4 項「大於 20 MB 沒記雜湊算缺驗」一樣 */
-const needStrata = (D) => [...byDir(preloadItems(D)), bigItems(D).filter((f) => fs.existsSync(at(D, f))), ...bgmEras(D)].filter((x) => x.length);
+const needStrata = (D) => [...byDirExt(preloadItems(D)), bigItems(D).filter((f) => fs.existsSync(at(D, f))), ...bgmEras(D)].filter((x) => x.length);
 const bgmFiles = (D) => { const B = JSON.parse(fs.readFileSync(at(D, "data/bgm/index.json"), "utf8")), o = []; for (const [era, list] of Object.entries(B)) for (const f of Array.isArray(list) ? list : []) if (typeof f === "string" && fs.existsSync(at(D, "data/bgm/" + era + "/" + f))) o.push("data/bgm/" + era + "/" + f); return o };
 
 /* cdnstale／cdnmiss 用：每一層裡、CDN 清單有記雜湊的檔（stale 還要清單也有） */
 const cdnStrata = (D, L, M, needList) => needStrata(D).map((s) => s.filter((rel) => M && Array.isArray(M[rel]) && M[rel][1] && (!needList || L[rel]) && fs.existsSync(at(D, rel)))).filter((x) => x.length);
 /* 每一種壞樣本：cands 列出所有可以弄壞的檔；break 在副本上真的弄壞（需要時回傳改過的清單）；expect 是 check-www 錯誤裡要出現的字 */
 const KINDS = {
-  home: { cands: (D) => preloadItems(D), strata: (D) => byDirExt(preloadItems(D)), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "preload.json 列了但沒有：" + f },
-  bgm: { cands: (D) => bgmFiles(D), strata: (D) => bgmEras(D), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "背景音樂清單有但沒有檔：" + f },
+  home: { batch: 15, cands: (D) => preloadItems(D), strata: (D) => byDirExt(preloadItems(D)), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "preload.json 列了但沒有：" + f },
+  /* PR #67 第十一次審查：檔名大小寫不同（macOS 不分大小寫，iPhone 分）。把首頁素材改名成大小寫不同的同名檔 */
+  casehome: { batch: 15, cands: (D) => preloadItems(D).filter((f) => caseFlip(f) !== f), strata: (D) => byDirExt(preloadItems(D).filter((f) => caseFlip(f) !== f)),
+    break: (D, f) => { const a = at(D, f), b = at(D, caseFlip(f)), t = a + ".xqtmp"; fs.renameSync(a, t); fs.renameSync(t, b) }, expect: (f) => "preload.json 列了但沒有：" + f },
+  bgm: { batch: 15, cands: (D) => bgmFiles(D), strata: (D) => bgmEras(D), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "背景音樂清單有但沒有檔：" + f },
   engine: { cands: (D) => ENGINE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺引擎 " + f },
   core: { cands: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), always: (D) => CORE.filter((f) => fs.existsSync(at(D, f))), break: (D, f) => fs.rmSync(at(D, f)), expect: (f) => "缺 " + f },
   big: {
@@ -97,6 +113,7 @@ const KINDS = {
     expect: (f) => "大小不對 " + f,
   },
   swap: {
+    batch: 30,
     cands: (D, L) => Object.entries(L).filter(([rel, [sz, h]]) => h && sz >= 16 && rel !== "index.html" && fs.existsSync(at(D, rel))).map((x) => x[0]),
     strata: (D, L) => byDirExt(KINDS.swap.cands(D, L)),
     always: (D, L) => Object.entries(L).filter(([rel, [sz, h]]) => h && sz >= 16 && rel !== "index.html" && fs.existsSync(at(D, rel))).sort((a, b) => b[1][0] - a[1][0] || (a[0] < b[0] ? -1 : 1)).slice(0, 2).map((x) => x[0]),   /* PR #67 第五次審查：W30 那種大檔一定要測到 */
@@ -108,18 +125,23 @@ const KINDS = {
     break: (D, f) => { const tag = '<script src="native-bridge.js"></script>'; let h = fs.readFileSync(at(D, f), "utf8").replace(tag, ""); h = h.replace('<script src="core.js"></script>', '<script src="core.js"></script>' + tag); rewrite(at(D, f), Buffer.from(h, "utf8")) },
     expect: () => "index.html 裡 native-bridge.js 的位置不對",
   },
+  /* PR #67 第十一次審查：拿掉 capacitor.js、native-bridge.js 的標籤（原生能力偵測不到） */
+  nocap: { cands: (D) => fs.readFileSync(at(D, "index.html"), "utf8").includes(TAG_CAP) ? ["index.html"] : [],
+    break: (D, f, L) => { const b = Buffer.from(fs.readFileSync(at(D, f), "utf8").replace(TAG_CAP, ""), "utf8"); rewrite(at(D, f), b); return { list: relist(L, f, b) } }, expect: () => "index.html 沒有插 capacitor.js／native-bridge.js" },
+  nobridge: { cands: (D) => fs.readFileSync(at(D, "index.html"), "utf8").includes(TAG_BR) ? ["index.html"] : [],
+    break: (D, f, L) => { const b = Buffer.from(fs.readFileSync(at(D, f), "utf8").replace(TAG_BR, ""), "utf8"); rewrite(at(D, f), b); return { list: relist(L, f, b) } }, expect: () => "index.html 沒有插 capacitor.js／native-bridge.js" },
   cdnstale: {
-    needsCdn: true,
+    needsCdn: true, batch: 30,
     cands: (D, L, M) => cdnStrata(D, L, M, true).flat(), strata: (D, L, M) => cdnStrata(D, L, M, true),
     /* 模擬 W42：包裡放的是舊副本，清單也是照舊副本產生的（所以第 4 項比不出來），只有跟 CDN 比才抓得到 */
     break: (D, f, L) => { const b = Buffer.from(fs.readFileSync(at(D, f))); b[Math.floor(b.length / 2)] ^= 0xff; rewrite(at(D, f), b); return { list: relist(L, f, b) } },
     expect: (f) => "跟 CDN 現行版不同 " + f,
   },
   cdnmiss: {
-    needsCdn: true, exit: 3, noClone: true,
+    needsCdn: true, exit: 3, noClone: true, batch: 8,
     cands: (D, L, M) => cdnStrata(D, L, M, false).flat(), strata: (D, L, M) => cdnStrata(D, L, M, false),
     break: (D, f, L, M) => { const M2 = { ...M }; delete M2[f]; return { cdn: M2 } },
-    expect: (f) => "沒跟 CDN 比到",
+    expect: (f) => ["沒跟 CDN 比到", f],   /* 同一行要有那個檔名（一次弄壞好幾個，錯誤列前 10 個） */
   },
   cdnfail: {
     needsCdn: true, exit: 3, noClone: true,
@@ -129,27 +151,30 @@ const KINDS = {
   },
   ctrl: {
     /* PR #67 第六、七次審查：不只 \x01。候選是「檔｜字元」的組合，另外固定把 30 個控制字元各插一次到第一個檔 */
-    cands: (D, L) => CTRL.filter((f) => L[f] && fs.existsSync(at(D, f))).flatMap((f) => CTRL_CH.map((c) => f + "|" + c)),
+    cands: (D, L) => CTRL.filter((f) => L[f] && fs.existsSync(at(D, f))).flatMap((f) => CTRL_CH.flatMap((c) => POS.map((p) => f + "|" + c + "|" + p))),
     /* 第一個檔把 30 個控制字元都插一次；其他每一支程式檔也各固定插一個（PR #67 第十次審查：只抽樣時，少查某一支抽不到） */
-    always: (D, L) => { const fs6 = CTRL.filter((x) => L[x] && fs.existsSync(at(D, x))); return fs6.length ? [...CTRL_CH.map((c) => fs6[0] + "|" + c), ...fs6.slice(1).map((f) => f + "|01")] : [] },
-    break: (D, fc, L) => { const [f, c] = fc.split("|"), b = Buffer.concat([fs.readFileSync(at(D, f)), Buffer.from([parseInt(c, 16)])]); rewrite(at(D, f), b); return { list: relist(L, f, b) } },
+    /* PR #67 第十一次審查：插在檔頭、檔中、檔尾三個位置（判斷只看檔尾的改壞也抓得到）；第一支 30 個字元輪流三個位置，其他每支三個位置各插一次 */
+    always: (D, L) => { const fs6 = CTRL.filter((x) => L[x] && fs.existsSync(at(D, x))); return fs6.length ? [...CTRL_CH.map((c, i) => fs6[0] + "|" + c + "|" + POS[i % 3]), ...fs6.slice(1).flatMap((f) => POS.map((p) => f + "|01|" + p))] : [] },
+    break: (D, fc, L) => { const [f, c, p] = fc.split("|"), o = fs.readFileSync(at(D, f)), x = Buffer.from([parseInt(c, 16)]), k = p === "head" ? 0 : p === "mid" ? midLine(o) : o.length;
+      const b = Buffer.concat([o.subarray(0, k), x, o.subarray(k)]); rewrite(at(D, f), b); return { list: relist(L, f, b) } },
     expect: (fc) => { const [f, c] = fc.split("|"); return f + " 有控制字元 U+" + parseInt(c, 16).toString(16) },
   },
   nohash: {
-    exit: 3,
+    exit: 3, batch: 8,
     /* PR #67 第八次審查：清單裡引擎、App 會要的檔的雜湊被拿掉（只剩大小），要回 3 */
     cands: (D, L) => [ENGINE, ...needStrata(D)].flat().filter((f) => L[f] && L[f][1] && fs.existsSync(at(D, f))),
     /* 只改清單、跟目錄無關，粗分四層就好：引擎、首頁 items、preload big、背景音樂 */
     strata: (D, L) => [ENGINE, preloadItems(D), bigItems(D), bgmFiles(D), Object.keys(L).filter((f) => L[f][0] > BIG)].map((s) => s.filter((f) => L[f] && L[f][1] && fs.existsSync(at(D, f)))).filter((x) => x.length),   /* 最後一層：大於 20 MB 的檔（不一定是 App 會要的，PR #67 第十次審查） */
     noClone: true,
     break: (D, f, L) => ({ list: { ...L, [f]: [L[f][0], null] } }),
-    expect: (f) => "清單沒記雜湊的重要檔",
+    expect: (f) => ["清單沒記雜湊的重要檔", f],
   },
   listmiss: {
     /* PR #67 第六次審查：清單有、但不在任何特定名單（首頁、背景音樂、引擎、核心、控制字元檢查的檔）裡的檔，缺了只有「少了」那一行抓得到 */
     cands: (D, L) => { const skip = new Set([...preloadItems(D), ...bigItems(D), ...bgmFiles(D), ...ENGINE, ...CORE, ...CTRL, "data/preload.json", "data/bgm/index.json", "data/big-books.json", "release.json"]); return Object.keys(L).filter((rel) => !skip.has(rel) && fs.existsSync(at(D, rel))).sort() },
     /* PR #67 第九次審查：照目錄分層；根目錄的程式檔（3D 場景程式等）每次全部都測 */
-    strata: (D, L) => byDir(KINDS.listmiss.cands(D, L)),
+    batch: 30,
+    strata: (D, L) => byDirExt(KINDS.listmiss.cands(D, L)),
     always: (D, L) => KINDS.listmiss.cands(D, L).filter((rel) => !rel.includes("/") && /\.(m?js)$/.test(rel)),
     break: (D, f) => fs.rmSync(at(D, f)),
     expect: (f) => "少了 " + f,
@@ -234,40 +259,48 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       const want = only ? only.split(",").map((s) => s.trim()).filter(Boolean) : Object.keys(KINDS).filter((k) => cdn || !KINDS[k].needsCdn);
       for (const k of want) { if (!KINDS[k]) return unfit("不認得的壞樣本：" + k + "（可用：" + Object.keys(KINDS).join(" ") + "）"); if (KINDS[k].needsCdn && !cdn) return unfit(k + " 要加 --cdn 才能跑") }
       if (seed != null && seed !== "" && !/^\d+$/.test(String(seed))) return unfit("--seed 要是非負整數：" + seed);   /* PR #67 第九次審查：--seed abc 不能悄悄變 0 */
-      const SEED = seed != null && seed !== "" ? Number(seed) >>> 0 : crypto.randomInt(2 ** 31), rand = rng(SEED);
+      const fromMain = (rel) => { try { return mainFile(rel) } catch (e) { return null } };
+      const mainCommit = fromMain("@commit");
+      /* PR #67 第十一次審查：送審用的種子不能自己挑。有安裝包時由「安裝包 SHA-256＋比對時的 origin/main 提交」推出來；給了 --seed 的收據一律不算送審用 */
+      const seedGiven = seed != null && seed !== "", seedFrom = seedGiven ? "given" : P ? "pkg+mainCommit" : "random";
+      const SEED = seedGiven ? Number(seed) >>> 0 : P ? parseInt(sha256(P.sha256 + "|" + (typeof mainCommit === "string" ? mainCommit : "")).slice(0, 8), 16) >>> 0 : crypto.randomInt(2 ** 31), rand = rng(SEED);
       const results = [];
       for (const k of want) {
         const K = KINDS[k];
         let cands = []; try { cands = K.cands(dir, L, M) } catch (e) { cands = [] }
         let strata = null; try { strata = K.strata ? K.strata(dir, L, M) : null } catch (e) { strata = null }
-        /* 分層時：全部候選照舊挑頭、中、尾＋隨機，每一層再隨機挑 1 個（每層都挑頭中尾，真包要 1400 多個樣本、跑 50 分鐘） */
+        /* 分層時：全部候選挑頭、中、尾＋隨機，另外每一層（完整父目錄＋副檔名）都挑 1 個——不再抽樣（PR #67 第十一次審查：只抽樣，檢查只對某目錄、某副檔名失靈時九成抽不到）。
+           檔多的壞樣本一次弄壞好幾個（batch），每個檔的錯誤都要出現；這樣每一層都測到，跑 check-www 的次數也不會暴增 */
         const chosen = [...new Set([...picks(cands, rand), ...(strata ? strata.filter((s) => s.length).map((s) => s[Math.floor(rand() * s.length)]) : []), ...(K.always ? K.always(dir, L, M) : [])])];
         if (!chosen.length) { results.push({ kind: k, caught: false, unfit: true, why: "乾淨的樣本裡找不到可以弄壞的檔" }); continue }
-        for (const f of chosen) {
-          const D = K.noClone ? dir : path.join(base, k + "-" + results.length);   /* 只改清單或 CDN 清單的壞樣本不動檔案，不用複製整份 */
-          let lf = LF, cf = cdnFile;
+        const size = K.batch || 1;
+        for (let bi = 0; bi < chosen.length; bi += size) {
+          const group = chosen.slice(bi, bi + size), tag = k + "-" + results.length;
+          const D = K.noClone ? dir : path.join(base, tag);   /* 只改清單或 CDN 清單的壞樣本不動檔案，不用複製整份 */
+          let lf = LF, cf = cdnFile, Lc = L, Mc = M, cdnPath = null;
           try {
-            if (!K.noClone) cloneDir(dir, D); const B = K.break(D, f, L, M) || {};
-            if (B.list) { lf = path.join(base, k + "-" + results.length + "-list.json"); fs.writeFileSync(lf, JSON.stringify({ ...LJ, files: B.list })) }
-            if (B.cdn) { cf = path.join(base, k + "-" + results.length + "-cdn.json"); fs.writeFileSync(cf, JSON.stringify({ files: B.cdn })) }
-            if (B.cdnPath) cf = B.cdnPath;
+            if (!K.noClone) cloneDir(dir, D);
+            for (const f of group) { const B = K.break(D, f, Lc, Mc) || {}; if (B.list) Lc = B.list; if (B.cdn) Mc = B.cdn; if (B.cdnPath) cdnPath = B.cdnPath }
+            if (Lc !== L) { lf = path.join(base, tag + "-list.json"); fs.writeFileSync(lf, JSON.stringify({ ...LJ, files: Lc })) }
+            if (Mc !== M) { cf = path.join(base, tag + "-cdn.json"); fs.writeFileSync(cf, JSON.stringify({ files: Mc })) }
+            if (cdnPath) cf = cdnPath;
           }
-          catch (e) { results.push({ kind: k, file: f, caught: false, unfit: true, why: "做壞樣本失敗：" + e.message }); continue }
-          const r = check(D, lf, cf), out = String(r.stdout) + String(r.stderr), exp = K.expect(f), want = K.exit || 1;
-          const caught = r.status === want && out.includes(exp);
-          results.push({ kind: k, file: f, candidates: cands.length, expect: exp, exit: r.status, caught });
-          log((caught ? "✔ " : "✘ ") + k + "：" + f + "（候選 " + cands.length + " 個）" + (caught ? " 被抓到" : " 沒被抓到（結束代碼 " + r.status + "，錯誤裡" + (out.includes(exp) ? "有" : "沒有") + "「" + exp + "」）"));
+          catch (e) { for (const f of group) results.push({ kind: k, file: f, caught: false, unfit: true, why: "做壞樣本失敗：" + e.message }); if (!K.noClone) fs.rmSync(D, { recursive: true, force: true }); continue }
+          const r = check(D, lf, cf), out = String(r.stdout) + String(r.stderr), want = K.exit || 1;
+          for (const f of group) {
+            const exp = K.expect(f), seen = hit(out, exp, want === 3 ? "△" : "✘"), caught = r.status === want && seen;
+            results.push({ kind: k, file: f, candidates: cands.length, batch: group.length, expect: exp, exit: r.status, caught });
+            log((caught ? "✔ " : "✘ ") + k + "：" + f + "（候選 " + cands.length + " 個" + (group.length > 1 ? "，同一份副本弄壞 " + group.length + " 個" : "") + "）" + (caught ? " 被抓到" : " 沒被抓到（結束代碼 " + r.status + "，錯誤裡" + (seen ? "有" : "沒有") + "「" + [].concat(exp).join("…") + "」）"));
+          }
           if (!K.noClone) fs.rmSync(D, { recursive: true, force: true });
         }
       }
-      const fromMain = (rel) => { try { return mainFile(rel) } catch (e) { return null } };
       const listSha = sha256(fs.readFileSync(LF)), mainBuf = fromMain(REL_LIST);
       const listMainSha256 = mainBuf ? sha256(mainBuf) : null, listBound = !!listMainSha256 && listMainSha256 === listSha;
       /* PR #67 第六次審查：工具也要是 origin/main 那一版（自己算的，只擋不小心改過；故意偽造要靠 CI 用 main 版工具重算） */
       const pins = { [REL_CHECK]: toolSha(CHECK), [REL_CANARY]: toolSha(__filename) };
       const mainPins = {}; for (const rel of Object.keys(pins)) { const b = fromMain(rel); mainPins[rel] = b ? normSha(b) : null }
       const toolsBound = Object.keys(pins).every((rel) => mainPins[rel] && mainPins[rel] === pins[rel]);
-      const mainCommit = fromMain("@commit");
       let releaseVersion = null; try { releaseVersion = JSON.parse(fs.readFileSync(path.join(dir, "release.json"), "utf8")).version || null } catch (e) { }
       const verBound = !!releaseVersion && releaseVersion === LJ.siteVersion;
       /* PR #67 第七次審查：正式 CDN 時，乾淨的那份再用 check-www 自己的 --cdn 跑一次（走它自己的網址和下載），要回 0，正式指令那條路才算驗過 */
@@ -282,9 +315,9 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
         cdn: cdn ? { manifest: cdn, sha256: cdnSha } : null,
         /* 工具自己算、自己寫進收據：只抓得到本機不小心改過（例如忘了切回 main）；故意偽造要靠之後的 CI 用 main 版工具重跑（Android PR③） */
         toolPins: pins,
-        seed: SEED, kinds: want, results,
+        seed: SEED, seedFrom, kinds: want, results,
         cdnViaCheck,
-        full: passAll && code === 0 && !only && !!OFFICIAL_CDN && cdn === OFFICIAL_CDN && !!cdnViaCheck && cdnViaCheck.exit === 0 && !!P && P.kind === "ipa" && listBound && verBound && toolsBound,   /* PR #67 第七次審查：讀不到網址（null）不能算正式 CDN；check-www 自己的 --cdn 也要回 0 */   /* 只認正式 CDN（第四次審查）；要 .ipa、清單是 main 那份、版號對得上（第五次審查） */
+        full: passAll && code === 0 && !only && !seedGiven && !!OFFICIAL_CDN && cdn === OFFICIAL_CDN && !!cdnViaCheck && cdnViaCheck.exit === 0 && !!P && P.kind === "ipa" && listBound && verBound && toolsBound,   /* PR #67 第七次審查：讀不到網址（null）不能算正式 CDN；check-www 自己的 --cdn 也要回 0 */   /* 只認正式 CDN（第四次審查）；要 .ipa、清單是 main 那份、版號對得上（第五次審查） */
         pass: passAll, code,
       };
       return { code, receipt };
@@ -292,7 +325,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
   } finally { if (P && P.cleanup) fs.rmSync(P.cleanup, { recursive: true, force: true }) }
 }
 
-module.exports = { run, KINDS, toolSha, treeSha, picks, rng, exitOf, OFFICIAL_CDN };
+module.exports = { run, KINDS, toolSha, treeSha, picks, rng, exitOf, OFFICIAL_CDN, hit, caseFlip, groupKey };
 if (require.main === module) {
   const mv = missingVal(argv); if (mv) { console.error("✘ 測試不成立：" + mv + " 後面要接值"); process.exit(2) }
   const uf = unknownFlag(argv); if (uf) { console.error("✘ 測試不成立：不認得的參數 " + uf); process.exit(2) }

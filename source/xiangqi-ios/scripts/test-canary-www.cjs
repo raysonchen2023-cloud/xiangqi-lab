@@ -25,6 +25,9 @@ function fakeWww() {
   /* PR #67 第九次審查：首頁素材分在好幾個目錄（真包有 data/homemap/、data/icons/…），根目錄也有 3D 場景程式；homemap 放在 items 前段，不分層的話頭、中、尾都挑不到 */
   for (let i = 0; i < 12; i++) { const r = "data/homemap/m" + String(i).padStart(2, "0") + ".webp"; put(r, Buffer.alloc(170 + i, 30 + i)); homeX.push([r, 170 + i]) }
   for (let i = 0; i < 60; i++) { const r = "data/home/x" + String(i).padStart(2, "0") + ".webp"; put(r, Buffer.alloc(100 + i, 100 + i)); homeX.push([r, 100 + i]) }
+  /* PR #67 第十一次審查：三層目錄（data/pset/<朝代>/、data/icons/<朝代>/），而且同一個目錄裡混著 .png、.svg */
+  for (const era of ["han", "ming", "tang"]) for (let i = 0; i < 8; i++) { const ext = i === 3 ? "png" : i === 5 ? "svg" : "webp", r = "data/pset/" + era + "/p" + i + "." + ext; put(r, Buffer.alloc(90 + i, era.length * 7 + i)); homeX.push([r, 90 + i]) }
+  for (const era of ["han", "tang"]) for (let i = 0; i < 10; i++) put("data/icons/" + era + "/i" + i + ".webp", Buffer.alloc(110 + i, era.length * 3 + i));
   /* PR #67 第十次審查：零星的副檔名（首頁有 2 張 .png、場景目錄有 2 個 .glb 混在一堆 .webp 裡、音效 .wav） */
   for (const n of ["p1", "p2"]) { const r = "data/home/" + n + ".png"; put(r, Buffer.alloc(150, n.length + 40)); homeX.splice(30, 0, [r, 150]) }
   for (let i = 0; i < 20; i++) put("data/scene/s" + String(i).padStart(2, "0") + ".webp", Buffer.alloc(120 + i, 60 + i));
@@ -86,7 +89,7 @@ test("canary-www.js：--pkg 給 .app，檢查的就是包裡那份 public；15 �
   assert.equal(r.status, 0, r.stdout + r.stderr);
   const R = JSON.parse(fs.readFileSync(out, "utf8"));
   assert.equal(R.pass, true); assert.equal(R.full, false, "--cdn-manifest 給的本機清單不算正式 CDN，送審不能用（PR #67 第四次審查：本機清單可能是拿包自己算的）"); assert.equal(R.seed, 7);
-  assert.deepEqual(R.kinds, ["home", "bgm", "engine", "core", "big", "swap", "bridge", "cdnstale", "cdnmiss", "cdnfail", "ctrl", "nohash", "listmiss", "bigpre", "capord"]);
+  assert.deepEqual(R.kinds, ["home", "casehome", "bgm", "engine", "core", "big", "swap", "bridge", "nocap", "nobridge", "cdnstale", "cdnmiss", "cdnfail", "ctrl", "nohash", "listmiss", "bigpre", "capord"]);
   for (const x of R.results) { assert.equal(x.caught, true, x.kind + " " + x.file); assert.equal(x.exit, ["cdnmiss", "cdnfail", "nohash"].includes(x.kind) ? 3 : 1, x.kind) }
   assert.ok(R.results.some((x) => x.kind === "swap" && x.file === "engine/pikafish.nnue"), "swap 固定測最大的記了 sha1 的檔（PR #67 第五次審查）");
   const files = (k) => R.results.filter((x) => x.kind === k).map((x) => x.file);
@@ -166,6 +169,15 @@ test("check-www.js 的判斷一條一條改壞（含只查第一個、只查 .js
     ["cdnmiss", "n++; need.add(it[0]);", "n++; if ((P.items || []).includes(it)) need.add(it[0]);"],
     ["cdnmiss", "const r = \"data/bgm/\" + era + \"/\" + f; need.add(r);", "const r = \"data/bgm/\" + era + \"/\" + f;"],
     ["nohash", "if (noHash.length) unverified.push(", "if (false) unverified.push("],
+    /* PR #67 第十一次審查：只對某個三層目錄、某種副檔名失靈；capacitor 標籤；大小寫；控制字元只看檔尾 */
+    ["cdnstale", "    if (need.has(rel)) bad.push(", '    if (need.has(rel) && !rel.endsWith(".png")) bad.push('],
+    ["cdnstale", "    if (need.has(rel)) bad.push(", '    if (need.has(rel) && !rel.startsWith("data/pset/ming/")) bad.push('],
+    ["home", 'if (!exists(it[0])) bad.push("preload.json 列了但沒有：" + it[0]);', 'if (!exists(it[0]) && !it[0].startsWith("data/pset/ming/")) bad.push("preload.json 列了但沒有：" + it[0]);'],
+    ["swap", "    else if (h && crypto", '    else if (h && !rel.startsWith("data/icons/tang/") && crypto'],
+    ["nocap", 'if (iCap < 0 || iBr < 0) bad.push("index.html 沒有插', 'if (false) bad.push("index.html 沒有插'],
+    ["nobridge", 'if (iCap < 0 || iBr < 0) bad.push("index.html 沒有插', 'if (iCap < 0) bad.push("index.html 沒有插'],
+    ["casehome", "const exists = rel => { let d = ROOT;", "const exists = rel => fs.existsSync(path.join(ROOT, ...rel.split(\"/\"))); const _x = rel => { let d = ROOT;"],
+    ["ctrl", "m = s.match(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/)", "m = s.slice(-64).match(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]/)"],
     /* PR #67 第九次審查：只對某個目錄／某幾個檔放水 */
     ["listmiss", 'if (!exists(rel)) bad.push("少了 " + rel);', 'if (!exists(rel) && !/3d|three|GLTF/.test(rel)) bad.push("少了 " + rel);'],
     ["listmiss", 'if (!exists(rel)) bad.push("少了 " + rel);', 'if (!exists(rel) && !rel.startsWith("data/misc/")) bad.push("少了 " + rel);'],
@@ -232,7 +244,7 @@ test("結束代碼：有任何一個做出來了卻沒被抓到，就回 4，不
 test("full＝true 只認正式 CDN：同一份清單從正式網址來才算，本機檔、別的網址都不算；乾淨的有錯時先回 2，不會被「CDN 讀不到」蓋成 3（PR #67 第四次審查）", () => {
   const { D, L, M } = fakeWww(), A = fakeApp(D), ipa = fakeIpa(A), txt = fs.readFileSync(M, "utf8"), quiet = () => {}, mainFile = mainOf(() => fs.readFileSync(L));
   const from = (want) => (u) => { assert.equal(u, want, "只下載指定的那個網址"); return txt };
-  let r = run({ pkg: ipa, list: L, cdn: OFFICIAL_CDN, seed: 7, readM: from(OFFICIAL_CDN), mainFile, selfCdn: okCdn, log: quiet });
+  let r = run({ pkg: ipa, list: L, cdn: OFFICIAL_CDN, readM: from(OFFICIAL_CDN), mainFile, selfCdn: okCdn, log: quiet });
   assert.equal(r.code, 0); assert.equal(r.receipt.full, true, "正式 CDN＋--pkg＋沒有 --only（清單和版號也綁住，見下一項測試）");
   r = run({ pkg: ipa, list: L, cdn: M, seed: 7, readM: from(M), mainFile, log: quiet });
   assert.equal(r.code, 0); assert.equal(r.receipt.full, false, "本機清單：拿包比包，不能送審");
@@ -249,7 +261,7 @@ test("full＝true 只認正式 CDN：同一份清單從正式網址來才算，�
 
 test("送審收據要綁住倉庫的清單和包的版號、而且要 .ipa：拿包重產的清單、版號不同、.app 都不算 full（PR #67 第五次審查）", () => {
   const { D, L, M } = fakeWww(), A = fakeApp(D), ipa = fakeIpa(A), txt = fs.readFileSync(M, "utf8"), quiet = () => {};
-  const listBuf = fs.readFileSync(L), base = { list: L, cdn: OFFICIAL_CDN, seed: 7, readM: () => txt, selfCdn: okCdn, log: quiet };
+  const listBuf = fs.readFileSync(L), base = { list: L, cdn: OFFICIAL_CDN, readM: () => txt, selfCdn: okCdn, log: quiet };
   let r = run({ ...base, pkg: ipa, mainFile: mainOf(listBuf) });
   assert.equal(r.code, 0, JSON.stringify(r.receipt).slice(0, 300)); assert.equal(r.receipt.full, true, ".ipa＋正式 CDN＋清單是 main 那份＋版號一樣");
   assert.equal(r.receipt.bind.listBound, true); assert.equal(r.receipt.bind.verBound, true); assert.equal(r.receipt.bind.listMainSha256, sha256(listBuf));
@@ -304,7 +316,7 @@ test("正式 CDN 網址只定義在 check-www.js 一個地方，金絲雀從那�
 
 test("讀不到正式 CDN 網址不能算 full；check-www 自己的 --cdn 沒回 0 也不算；空的 --only 回 2（PR #67 第七次審查）", () => {
   const { D, L, M } = fakeWww(), ipa = fakeIpa(fakeApp(D)), txt = fs.readFileSync(M, "utf8"), quiet = () => {};
-  const base = { pkg: ipa, list: L, cdn: OFFICIAL_CDN, seed: 7, readM: () => txt, mainFile: mainOf(fs.readFileSync(L)), log: quiet };
+  const base = { pkg: ipa, list: L, cdn: OFFICIAL_CDN, readM: () => txt, mainFile: mainOf(fs.readFileSync(L)), log: quiet };
   let r = run({ ...base, selfCdn: okCdn }); assert.equal(r.receipt.full, true); assert.deepEqual(r.receipt.cdnViaCheck, { exit: 0, note: "" });
   r = run({ ...base, selfCdn: () => ({ status: 3, stderr: "讀不到 CDN 清單" }) }); assert.equal(r.code, 0); assert.equal(r.receipt.full, false, "check-www --cdn 回 3");
   r = run({ ...base, selfCdn: () => ({ status: 1, stderr: "x" }) }); assert.equal(r.receipt.full, false, "check-www --cdn 回 1");
@@ -327,7 +339,7 @@ test("check-www.js：清單沒記雜湊的引擎、App 會要的檔、大於 20 
 
 test("回 4（檢查失靈）或回 2（找不到可弄壞的檔）時 full 一定是 false；收據記結束代碼（PR #67 第九次審查）", () => {
   const { D, L, M } = fakeWww(), ipa = fakeIpa(fakeApp(D)), txt = fs.readFileSync(M, "utf8"), quiet = () => {};
-  const base = { pkg: ipa, list: L, cdn: OFFICIAL_CDN, seed: 7, readM: () => txt, mainFile: mainOf(fs.readFileSync(L)), selfCdn: okCdn, log: quiet };
+  const base = { pkg: ipa, list: L, cdn: OFFICIAL_CDN, readM: () => txt, mainFile: mainOf(fs.readFileSync(L)), selfCdn: okCdn, log: quiet };
   let r = run(base); assert.equal(r.code, 0); assert.equal(r.receipt.full, true); assert.equal(r.receipt.code, 0);
   /* 回 4：check-www 的首頁判斷改壞（替身），工具雜湊另外給替身那份，其他條件都成立 */
   const d = tmp("xq-blind4-"), src = fs.readFileSync(CHECK, "utf8").replace('if (!exists(it[0])) bad.push("preload.json 列了但沒有：" + it[0]);', "if (false) {}");
@@ -390,4 +402,36 @@ test("nohash 也測「大於 20 MB、不是 App 會要的檔」：check-www 把�
   const C = blindCanary('if (!h && (rel.startsWith("engine/") || need.has(rel) || sz > 20 * 1048576)) noHash.push(rel);', 'if (!h && (rel.startsWith("engine/") || need.has(rel))) noHash.push(rel);');
   r = runCanary(C, ["--dir", D, "--list", L2, "--only", "nohash", "--seed", "1"]); assert.equal(r.status, 4, r.stdout + r.stderr);
   assert.ok(fs.existsSync(path.join(D, "data", "huge", "pack.bin")) && fs.statSync(path.join(D, "data", "huge", "pack.bin")).size === big.length, "nohash 不複製也不改原本那份");
+});
+
+test("送審用的種子不能自己挑：有安裝包時由安裝包雜湊＋origin/main 提交推出來，重跑一樣；給了 --seed 的收據不算送審用（PR #67 第十一次審查）", () => {
+  const { D, L, M } = fakeWww(), ipa = fakeIpa(fakeApp(D)), txt = fs.readFileSync(M, "utf8"), quiet = () => {};
+  const base = { pkg: ipa, list: L, cdn: OFFICIAL_CDN, readM: () => txt, mainFile: mainOf(fs.readFileSync(L)), selfCdn: okCdn, log: quiet };
+  const a = run(base), b = run(base);
+  assert.equal(a.receipt.full, true); assert.equal(a.receipt.seedFrom, "pkg+mainCommit");
+  const want = parseInt(sha256(sha256(fs.readFileSync(ipa)) + "|c0ffee").slice(0, 8), 16) >>> 0;
+  assert.equal(a.receipt.seed, want, "種子＝安裝包 SHA-256＋origin/main 提交推出來的"); assert.equal(b.receipt.seed, a.receipt.seed, "重跑一樣");
+  const g = run({ ...base, seed: 7 }); assert.equal(g.code, 0); assert.equal(g.receipt.seedFrom, "given"); assert.equal(g.receipt.full, false, "自己給 --seed 不算送審用");
+  assert.equal(run({ ...base, seed: String(want) }).receipt.full, false, "就算給的剛好是推出來的那個也不算");
+});
+
+test("每一層（完整父目錄＋副檔名）都測到：三層目錄、零星副檔名每個種子都測到（PR #67 第十一次審查）", () => {
+  const { D, L, M } = fakeWww(), od = tmp("xq-allstrata-");
+  for (const seed of ["1", "2", "3"]) {
+    const out = path.join(od, seed + ".json"), r = runCanary(CANARY, ["--dir", D, "--list", L, "--cdn-manifest", M, "--only", "home,cdnstale,cdnmiss,swap,casehome", "--seed", seed, "--out", out]);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    const R = JSON.parse(fs.readFileSync(out, "utf8")).results, f = (k) => R.filter((x) => x.kind === k).map((x) => x.file);
+    for (const k of ["home", "cdnstale", "cdnmiss", "casehome"]) for (const [pre, ext] of [["data/pset/ming/", ".png"], ["data/pset/ming/", ".svg"], ["data/pset/tang/", ".webp"], ["data/home/", ".png"]]) assert.ok(f(k).some((x) => x.startsWith(pre) && x.endsWith(ext)), "種子 " + seed + "：" + k + " 要測到 " + pre + "*" + ext);
+    for (const pre of ["data/icons/han/", "data/icons/tang/", "data/pset/ming/"]) assert.ok(f("swap").some((x) => x.startsWith(pre)), "種子 " + seed + "：swap 要測到 " + pre);
+    assert.ok(R.some((x) => x.batch > 1), "檔多的壞樣本一次弄壞好幾個");
+  }
+});
+
+test("一次弄壞好幾個時，只出警告的那一個不能當成抓到（要在 ✘／△ 那一行）", () => {
+  const { hit } = require("./canary-www.js");
+  const out = "⚠ 清單外的檔跟 CDN 現行版不同 data/bgm/a.mp3（…）\n✘ 跟 CDN 現行版不同 data/home/b.webp（…）";
+  assert.equal(hit(out, "跟 CDN 現行版不同 data/bgm/a.mp3", "✘"), false);
+  assert.equal(hit(out, "跟 CDN 現行版不同 data/home/b.webp", "✘"), true);
+  assert.equal(hit("△ 清單沒記雜湊的重要檔 2 個：x、y", ["清單沒記雜湊的重要檔", "y"], "△"), true);
+  assert.equal(hit("△ 清單沒記雜湊的重要檔 2 個：x、y", ["清單沒記雜湊的重要檔", "z"], "△"), false);
 });
