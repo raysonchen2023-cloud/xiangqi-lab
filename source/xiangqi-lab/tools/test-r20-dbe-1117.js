@@ -220,16 +220,19 @@ test("E N20-7：大師對局出處英文＝年份＋英文賽事名（翻不出�
    日期換了照樣要三份一起換，比寫死日期多抓到「只改了其中一份」（例如 W80 第一版 family.md 補了功能開關清單卻沒改日期）。 */
 test("E N20-8：privacy.md、family.md 最後核對日期兩份一致，跟 privacy.html 的最後更新同一天（11/17 那句只在 App 版）", () => {
   const S = M("05-settings.js"), xqDocVar = vm.runInNewContext(between(S, "function xqDocVar(", "function xqDocBtns(") + ";xqDocVar");
-  const hd = (rd("xiangqi-lab/site/privacy.html").match(/最後更新：(2026 年 \d{1,2} 月 \d{1,2} 日)/) || [])[1];
+  const hd = (rd("xiangqi-lab/site/privacy.html").match(/最後更新：(\d{4} 年 \d{1,2} 月 \d{1,2} 日)/) || [])[1];
   assert.ok(hd, "privacy.html 找得到最後更新日期");
   /* #79 審查：三份一起改成更早或寫錯的日期（例如 2026 年 1 月 1 日）也會一致——加下限：不早於原本寫死的 11 月 17 日；上限：不晚於今天（臺灣時間） */
-  const ymd = (s) => { const m = /^(\d{4}) 年 (\d{1,2}) 月 (\d{1,2}) 日$/.exec(s); assert.ok(m, "日期格式：" + s); return +m[1] * 10000 + +m[2] * 100 + +m[3] };
+  /* 第二輪審查：日期要真的存在（11 月 31 日、11 月 99 日不算）——換成 Date 再換回年月日，三個值都要一樣；年份不寫死，明年照樣成立 */
+  const ymd = (s) => { const m = /^(\d{4}) 年 (\d{1,2}) 月 (\d{1,2}) 日$/.exec(s); assert.ok(m, "日期格式：" + s);
+    const y = +m[1], mo = +m[2], d = +m[3], t = new Date(Date.UTC(y, mo - 1, d));
+    assert.ok(t.getUTCFullYear() === y && t.getUTCMonth() === mo - 1 && t.getUTCDate() === d, "日期不存在：" + s); return y * 10000 + mo * 100 + d };
   const tw = new Date(Date.now() + 8 * 3600e3), today = tw.getUTCFullYear() * 10000 + (tw.getUTCMonth() + 1) * 100 + tw.getUTCDate();
   assert.ok(ymd(hd) >= 20261117, "最後更新不早於 2026 年 11 月 17 日：" + hd);
   assert.ok(ymd(hd) <= today, "最後更新不晚於今天（臺灣時間）：" + hd);
   for (const f of ["privacy.md", "family.md"]) {
     const a = rd("xiangqi-db/art/docs/" + f); assert.equal(a, rd("xiangqi-lab/site/data/docs/" + f));
-    const d = (a.match(/^最後核對：(2026 年 \d{1,2} 月 \d{1,2} 日)/m) || [])[1];
+    const d = (a.match(/^最後核對：(\d{4} 年 \d{1,2} 月 \d{1,2} 日)/m) || [])[1];
     assert.equal(d, hd, f + " 的最後核對要跟 privacy.html 的最後更新同一天");
     assert.ok(!xqDocVar(a, false).includes("Game Center"), f + " 網頁版看不到");
   }
