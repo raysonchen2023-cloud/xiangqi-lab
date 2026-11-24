@@ -582,3 +582,51 @@ test("仙人指路：連續被逮不會出同一題；開石門照第幾次走�
   const S2 = c.jhMzNew("pawn", 1, p); c.jhMzEncounter(S2, "trap"); assert.notEqual(c.jhMzPuz(S2, "trap").fen, seen[N - 1], "換一輪的第一題不跟上一輪最後一題一樣");
   assert.ok(c.JH_MZ_LV.pawn && c.JH_MZ_LV.pawn.hall, "有門內頁入口");
 });
+
+/* ---------- W87b 暗門（H）與碑刻、殘簡、文書（L）（m/07z9m-lore.js，iMac Claude 1）---------- */
+const LORE_SRC = fs.readFileSync(path.join(ROOT, "xiangqi-db", "m", "07z9m-lore.js"), "utf8");
+function loadL() {
+  const mem = {}, c = {
+    store: { get: (k, d) => (k in mem ? JSON.parse(mem[k]) : d), set: (k, v) => { mem[k] = JSON.stringify(v) } },
+    jhL: (zh) => zh, esc: (s) => String(s), addXP() {}, xqFlag: () => true, Math, JSON, Set, Map, Number, String, Array, Object, Float32Array, Date,
+  };
+  c.location = { hash: "" };
+  const MAP = ["#########", "#@..H..>#", "#.#####.#", "#.L...L.#", "#########"];
+  vm.createContext(c);
+  vm.runInContext(SRC + "\n" + LORE_SRC + `;jhMzDef("lt",{map:${JSON.stringify(MAP)},guards:[],lore:[{id:"a1",kind:"stele",title:["倉廒防潮","Keeping granaries dry"],body:["碑上刻著…","The stele reads…"],src:"測試"}]});
+    this.JH_MZ_LV=JH_MZ_LV;this.JH_MZ_OBJ=JH_MZ_OBJ;this.JH_MZ_TILE=JH_MZ_TILE;`, c);
+  return { c, mem };
+}
+const loreS = (c) => { const S = c.jhMzNew("lt"); for (let i = 0; i < S.W * S.H; i++) S.seen.add(i); return S };
+
+test("暗門 H：擋路、擋視線；朝它走第一次只提醒（不算回合、不開），第二次推開變成地面，之後走得過去", () => {
+  const { c } = loadL(), S = loreS(c); S.player.x = 3; S.player.y = 1; const t0 = S.turn;
+  const e1 = c.jhMzStep(S, 1, 0); assert.equal(e1.ev, "bump"); assert.match(e1.msg[0], /空空的/); assert.equal(S.turn, t0, "不算回合"); assert.equal(S.grid[1][4], "H", "還沒開");
+  const e2 = c.jhMzStep(S, 1, 0); assert.equal(e2.ev, "secret"); assert.equal(S.grid[1][4], ".", "推開了"); assert.equal(S.player.x, 3, "推門這一下人沒動");
+  assert.equal(c.jhMzStep(S, 1, 0).ev, "move"); assert.equal(S.player.x, 4, "之後走得過去");
+  const T = loreS(c); assert.ok(c.jhMzSolid(T, 4, 1) && c.jhMzOpaque(T, 4, 1), "沒開的暗門擋路也擋視線");
+  assert.ok(!c.jhMzLos(T, 3, 1, 5, 1), "視線穿不過暗門");
+});
+
+test("碑刻 L：擋路；朝它走就跳卡片講一段歷史，第一次讀記進收藏 jhMzLore（每派分開、不重複記）；沒寫內容的用通用的話", () => {
+  const { c, mem } = loadL(), S = loreS(c); S.player.x = 3; S.player.y = 3;
+  const e = c.jhMzStep(S, -1, 0); assert.equal(e.ev, "lore"); assert.equal(e.id, "a1"); assert.ok(e.first);
+  assert.match(e.card.title[0], /碑刻・倉廒防潮/); assert.match(e.card.body[0], /碑上刻著/); assert.match(e.card.body[0], /出處：測試/); assert.ok(e.msg, "第一次有收進收藏的提示");
+  assert.equal(S.player.x, 3, "碑擋路，人沒動"); assert.equal(S.grid[3][2], "L", "碑還在");
+  assert.deepEqual(Object.keys(JSON.parse(mem.jhMzLore).lt), ["a1"]);
+  const again = c.jhMzStep(S, -1, 0); assert.equal(again.first, false, "再讀不重複記"); assert.equal(again.msg, null); assert.ok(again.card, "照樣跳卡片");
+  S.player.x = 5; const d = c.jhMzStep(S, 1, 0); assert.equal(d.id, "l1", "第二塊沒寫內容：照順序給 l1"); assert.match(d.card.body[0], /看不清/);
+  assert.deepEqual(Object.keys(c.jhMzLoreSeen("lt")).sort(), ["a1", "l1"]); assert.equal(Object.keys(c.jhMzLoreSeen("central")).length, 0, "別派沒記");
+});
+
+test("包住每一派：已經登記的（中炮門）和之後才登記的都包；原本的 onStep 照樣會被呼叫；H、L 都進 solid，H 進 opaque", () => {
+  const { c } = loadL();
+  for (const sid of ["central", "lt"]) { const lv = c.JH_MZ_LV[sid]; assert.ok(lv._lore, sid); assert.ok(/H/.test(lv.solid) && /L/.test(lv.solid) && /H/.test(lv.opaque) && !/L/.test(lv.opaque), sid) }
+  let called = 0; c.jhMzDef("lt2", { map: ["#####", "#@Q>#", "#####"], guards: [], solid: "#Q", onStep: (S, dx, dy, ch) => (ch === "Q" ? (called++, { ev: "wall" }) : null) });
+  const S = c.jhMzNew("lt2"); assert.equal(c.jhMzStep(S, 1, 0).ev, "wall"); assert.equal(called, 1, "原本的 onStep 照樣被呼叫");
+  assert.equal(typeof c.JH_MZ_OBJ.H, "function"); assert.equal(typeof c.JH_MZ_OBJ.L, "function"); assert.equal(typeof c.JH_MZ_TILE.L, "function");
+});
+
+test("收藏讀檔容錯：存了奇怪的值（陣列、字串、null）都當作空的，不會壞", () => {
+  for (const bad of [[], "x", null, 3]) { const { c, mem } = loadL(); mem.jhMzLore = JSON.stringify(bad); assert.equal(Object.keys(c.jhMzLoreSeen("lt")).length, 0); const S = loreS(c); S.player.x = 3; S.player.y = 3; assert.equal(c.jhMzStep(S, -1, 0).first, true) }
+});
