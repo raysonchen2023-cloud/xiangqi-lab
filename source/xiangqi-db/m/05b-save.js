@@ -52,6 +52,7 @@ JOURNEY_KEYS.push("m_opSeen");   /* 11/17 晚開場順序（07stq 檔尾 stqXu*�
 JOURNEY_KEYS.push("m_xsmStall");   /* 11/16 開發者（西市四攤，07xsm-ximarket.js）：xsmStall＝找棋子（這一副找到第幾顆、湊齊幾副、哪天找過）、老槐樹下今天是誰來、見過了沒、小禮收了沒。另外加一行，不動上面清單的字（好幾支測試比對清單結尾） */
 JOURNEY_KEYS.push("m_zm","m_zmCur");   /* 11/18 開發者（十派掌門，07z9-school.js）：zm＝各掌門目前強度、各角色對各掌門的勝和負；zmCur＝這一盤是哪位掌門、哪位角色（帳號第一次贏的修為去重在 oscClaim） */
 JOURNEY_KEYS.push("m_osc");   /* 11/18 開發者（開局門派，07z9-school.js）：osc＝每位七星的門派、各課進度、看過提示／示範、三階段完成時間（跟旅程走；修為去重的 oscClaim 是帳號層，不在這裡） */
+JOURNEY_KEYS.push("m_secMs","m_secMsDay","m_secAll");   /* W96（11/24）：散佚手稿張數、今天撿了幾張、雲河尋訪錄集滿的保底發過沒（07-legend.js） */
 JOURNEY_KEYS.push("m_jhKick");   /* 11/22 開發者（W45② 十州踢館令，07z9b-jianghu.js）：jhKick＝各組踢館第一次破陣的時間、局號、哪位角色（帳號第一次破陣的修為去重在 oscClaim 的 kick:A>B） */
 JOURNEY_KEYS.push("m_jhScreen");   /* 11/22 開發者（W48 屏風馬門門內，07z9c-screen.js）：jhScreen＝雙馬守中宮第一次過關與最多守幾步、挑錯著與算帳今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhGong");   /* 11/22 開發者（W48 過宮炮門「宣紙蓋子位」，07z9d-gongpao.js）：jhGong＝上次選的難度、今天領過修為的日子、一輪最多記對幾題 */
@@ -62,6 +63,7 @@ JOURNEY_KEYS.push("m_jhShijiao");   /* 11/22 開發者（W48 仕角炮門「當�
 JOURNEY_KEYS.push("m_jhFanggong");   /* 11/22 開發者（W48-S4 反宮馬門「活字排局陣」，07z9g-fanggong.js）：jhFanggong＝上次選的難度、今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhLiepao");   /* 11/22 開發者（W48-S5 列炮門「擊板記譜局」，07z9h-liepao.js）：jhLiepao＝上次選的難度、今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhFeixiang");   /* 11/22 開發者（W48-S8 飛相門「築堤擺陣形」，07z9j-feixiang.js）：jhFeixiang＝上次選的難度、今天領過修為的日子 */
+JOURNEY_KEYS.push("m_jhGateSeen");   /* 11/24 W104 十州棋館晚明轉場（07z9n-jhgate.js）：jhGateSeen＝第一次看過的時間（之後旁白換成「十州棋局再開」）；新旅程重新算 */
 JOURNEY_KEYS.push("m_jhXianren");   /* 11/22 開發者（W48-S7 仙人指路門「探路猜陣勢」，07z9k-xianren.js）：jhXianren＝上次選的難度、今天領過修為的日子、累計答對題數（揚州園林探路紀錄） */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
@@ -590,7 +592,13 @@ setTimeout(saveFixChar,0);
    彙整：node xiangqi-lab/tools/stuck-report.js。同一頁 3 分鐘沒動先送一包 live:1，收資料的分頁會即時跳一行。
    關法：設定 → 隱私「📍 匿名記錄卡住的地方」（store stkOff）；家長關閉線上大廳時本來就連不上大廳、不會送。開發者模式不記（測試機、本機例外，加 test:1） */
 const STK={sid:"",t0:Date.now(),p:[],e:[],pg:"",h:"",pgT:Date.now(),act:Date.now(),idle:-1,live:0,taps:[],rageAt:0,errN:0,miss:{}};
-function stkOn(){try{return!store.get("stkOff",false)&&!navigator.webdriver&&(!(typeof DEVMODE==="function"&&DEVMODE())||fnTest())}catch(e){return false}}
+/* 開發者 11/24（手機收到「電腦玩家在首頁 3 分鐘沒動」「殘局程式出錯」，查出是我們自己的 iPad 模擬器、本機測試分頁、Android 模擬器）：「開工單從程式上擋」。
+   測試流量一律不記、不送：網頁版只有正式站（APP_HOME 的網址）才送——本機、區網、預覽站都不送；開了測試房（xq_netRoot）不送；
+   原生 App 在模擬器不送（iOS 模擬器由 XQBridgeViewController 在識別字串加 XQSim/1；Android 模擬器的機型是 sdk_gphone…／Android SDK built for…）。真機照舊 */
+function stkTestEnv(){try{if(localStorage.getItem("xq_netRoot")!=null)return true;const ua=String(navigator.userAgent||""),nat=typeof xqNat==="function"?xqNat():!!window.XQ_NATIVE;
+  if(nat)return/XQSim\/|sdk_gphone|Android SDK built for|\bEmulator\b/i.test(ua);
+  return String(location.origin||"")!==new URL(typeof APP_HOME==="string"?APP_HOME:"https://raysonchen2023-cloud.github.io/").origin}catch(e){return true}}
+function stkOn(){try{return!store.get("stkOff",false)&&!navigator.webdriver&&!stkTestEnv()&&(!(typeof DEVMODE==="function"&&DEVMODE())||fnTest())}catch(e){return false}}
 const stkSec=()=>Math.round((Date.now()-STK.t0)/1000);
 /* usePlace 沒對照的頁會回英文路徑，補常見的中文名 */
 const STK_PN={feedback:"意見回饋",lobby:"線上大廳",pvp:"同桌對弈",cpu:"挑戰電腦",camp:"新手訓練營",hub:"書院／茶樓",settings:"設定",db:"棋譜庫",quiz:"測驗",guess:"猜著法",me:"我的角色",today:"今日推薦",stats:"戰績",openings:"開局",redo:"錯棋重練",terms:"規則碑林",canju:"殘局",cup:"千秋盃",cpuroom:"練功房",arena:"擂台",theme:"主題練習",gm:"大師對局",simul:"車輪戰"};
