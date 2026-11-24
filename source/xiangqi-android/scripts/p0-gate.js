@@ -151,6 +151,10 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
         if (RE.red.length) add(`${key}：閘門重算有紅項（${RE.red.slice(0, 3).map((x) => x.f).join("、")}）：紅項不能確認、也不能豁免`);
         if (RE.yellow.length) add(`${key}：閘門重算有沒確認的黃項（${RE.yellow.slice(0, 3).map((x) => x.f + "@" + x.ack.split("@").pop()).join("、")}）：人看過後寫進 --ack 清單`);
         if (!RE.canaryOk) add(`${key}：閘門重算的金絲雀沒抓到：這次的放行參數可能太寬，或比對失靈`);
+        /* #102 第四輪複審：四種金絲雀逐項核對（不只看總結的 canaryOk） */
+        for (const k of ["home", "zeroJs", "jks", "yellow"]) if (!RE.canary || !RE.canary[k] || RE.canary[k].ok !== true) add(`${key}：閘門重算的金絲雀「${k}」沒抓到`);
+        /* #102 第四輪複審：新舊兩包幾乎一樣（不到 3 個檔不同；正常發版至少 index.html、sw.js、manifest 都會變），舊包可能是從候選包改出來的 */
+        if (!Number.isInteger(RE.changed) || RE.changed < 3) add(`${key}：新舊兩包只差 ${RE.changed} 個檔：舊包可能不是 Play 上的那一包，請用從 Play 下載或封存的原檔`);
       }
       if (json.strict !== true) add(`${key}：要用 --strict 跑（黃項沒確認也要擋）`);
       if (!Array.isArray(json.red) || json.red.length) add(`${key}：有紅項（${Array.isArray(json.red) ? json.red.slice(0, 3).map((x) => x.f).join("、") : "沒有 red 欄位"}）：紅項不能確認、也不能豁免`);
@@ -259,7 +263,8 @@ function recomputeFromFiles(AD, oldPath, newPath, args, ack) {
   /* #102 第三輪複審（中）：兩包 manifest 裡實際的 versionCode（讀不到記原因，閘門會擋） */
   let oldCode = null, newCode = null, codeErr = null;
   try { oldCode = AD.versionCodeOf(oldPath, A); newCode = AD.versionCodeOf(newPath, B) } catch (e) { codeErr = e && e.message }
-  return Object.assign(recomputeDiff(AD, A, B, args, ack), { oldSha256: AD.sha256File(oldPath), newSha256: AD.sha256File(newPath), oldCode, newCode, codeErr });
+  let changed = 0; for (const [k, v] of B) { const o = A.get(k); if (!o || o.size !== v.size || o.crc !== v.crc) changed++ } for (const k of A.keys()) if (!B.has(k)) changed++;
+  return Object.assign(recomputeDiff(AD, A, B, args, ack), { oldSha256: AD.sha256File(oldPath), newSha256: AD.sha256File(newPath), oldCode, newCode, codeErr, changed });
 }
 /* #102 第三輪複審（中）：main 的串接抽出來測——--old-aab＝舊版、--aab＝新版（順序不能反）、確認清單只用閘門自己收的 --ack（不用報告裡寫的）、
    放行參數照報告記的。任何一步不對丟例外（main 結束代碼 2）。o＝{ AD, oldPath, aabPath, ackPath, reports } */
@@ -293,6 +298,8 @@ async function main() {
   const j = process.argv.indexOf("--reports"), AAB = a("--aab"), BUILD = a("--build");
   const files = j > 0 ? process.argv.slice(j + 1).filter((x) => !x.startsWith("--")) : [];
   if (!AAB || !BUILD || !files.length) { console.error("用法：node scripts/p0-gate.js --aab <要送審的.aab> --build <網頁版號 YYYYMMDD-HHMM> --old-aab <Play 現行版.aab> [--ack <確認清單.json>] [--diff-receipt <收據.json>] [--waivers <檔>] --reports <報告…>"); process.exit(2) }
+  /* #102 第四輪複審（低）：收據不准指到輸入檔（--aab、--old-aab、--ack、報告），不然會把要送審的 AAB 蓋掉 */
+  if (a("--diff-receipt")) { const rp = path.resolve(a("--diff-receipt")), ins = [AAB, a("--old-aab"), a("--ack"), ...files].filter(Boolean).map((f) => path.resolve(f)); if (ins.some((f) => f.toLowerCase() === rp.toLowerCase())) { console.error("✘ --diff-receipt 不能指到輸入檔（" + rp + "）"); process.exit(2) } }
   if (!/^\d{8}-\d{4}$/.test(BUILD)) { console.error("✘ --build 要是網頁版號（YYYYMMDD-HHMM）"); process.exit(2) }
   if (!fs.existsSync(AAB)) { console.error("✘ 找不到 AAB：" + AAB); process.exit(2) }
   /* 豁免檔：預設倉庫 .github/p0-waivers.json（scripts 在 source/xiangqi-android/scripts）；指定了卻讀不到或格式錯＝用法錯誤 */

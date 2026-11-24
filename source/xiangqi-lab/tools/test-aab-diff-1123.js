@@ -445,6 +445,7 @@ test("W91 金絲雀：從候選包自己做四種壞樣本（刪首頁素材、j
   assert.ok(!A.has(c.yellow.f) && !B.has(c.yellow.f) && !A.has(c.jks.f) && !B.has(c.jks.f), "#102 審查①：壞樣本的檔名新舊兩包都沒有");
   const ackAll = AD.canaryRun(A, B, { ack: new Set([c.yellow.f + "@5a5a5a5a:4096"]) });
   assert.equal(ackAll.yellow.ok, false, "確認清單剛好含壞樣本的確認碼，黃項被確認掉就判失靈");
+  assert.equal(ackAll.ok, false, "#102 第四輪複審：第④種失靈，總結也要是失靈（out.ok 要看四種）");
   const bare = AD.canaryRun(idx(BASE), idx(BASE));
   assert.equal(bare.ok, false, "包裡沒有首頁素材、沒有根目錄 js：做不出壞樣本＝失靈，不能當通過");
   assert.equal(bare.zeroJs.f, null);
@@ -507,22 +508,32 @@ test("#102 複審：閘門從兩個檔重算（recomputeFromFiles）——新版
 
 /* ---------- #102 第三輪複審（iMac Claude 1 的新代理人）：閘門讀兩包 manifest 裡實際的 versionCode；main 的串接抽成 prepareDiff，用真 zip 測 ---------- */
 /* 假 manifest：照 aapt2 protobuf 的樣子，屬性名稱 versionCode 後面接字串值（中間夾幾個欄位位元組） */
-const MF = (code, extra = "") => Buffer.concat([Buffer.from([0x0a, 0x08]), Buffer.from("manifest"), Buffer.from([0x1a, 0x0b]), Buffer.from("versionCode"), Buffer.from([0x22, 0x08]), Buffer.from(String(code)), Buffer.from(extra)]);
+/* 假 manifest：照 aapt2 的 protobuf 結構（XmlNode.element → XmlElement.name＝manifest、attribute＝XmlAttribute{name, value 字串, compiled_item.prim.int_decimal_value}） */
+const pbV = (n) => { const o = []; n = n >>> 0; do { let b = n & 127; n = Math.floor(n / 128); if (n) b |= 128; o.push(b) } while (n); return Buffer.from(o) };
+const pbL = (f, b) => { b = Buffer.isBuffer(b) ? b : Buffer.from(String(b)); return Buffer.concat([pbV(f * 8 + 2), pbV(b.length), b]) };
+const pbI = (f, n) => Buffer.concat([pbV(f * 8), pbV(n)]);
+const ATTR = (name, str, num) => pbL(4, Buffer.concat([pbL(1, "http://schemas.android.com/apk/res/android"), pbL(2, name), pbL(3, str), num == null ? Buffer.alloc(0) : pbL(6, pbL(7, pbI(6, num)))]));
+const MFX = (...attrs) => pbL(1, Buffer.concat([pbL(3, "manifest"), ...attrs]));
+const MF = (code, str = String(code)) => MFX(ATTR("versionCode", str, code), ATTR("versionName", "0528"));
 const W91V = (code, more = {}) => Object.assign({}, W91, { "base/manifest/AndroidManifest.xml": MF(code) }, more);
-test("#102 第三輪：versionCodeOf 讀 manifest 的 versionCode；versionCodeMajor 不算；兩個不同值、找不到都丟例外（不猜）；readEntry 核對大小與 CRC", () => {
+test("#102 第三、四輪：versionCodeOf 照 protobuf 讀編譯過的整數；字串跟整數不一致（只改字串的假舊包）、空字串、abc、0x10、前導 0、11 位數都丟例外；versionCodeMajor 不算；兩個 versionCode、沒有整數、找不到也丟例外；readEntry 核對 CRC", () => {
+  const z = (n, mf) => makeZip("vc-" + n + ".zip", W91V(0, { "base/manifest/AndroidManifest.xml": mf }));
   assert.equal(AD.versionCodeOf(makeZip("vc-1.zip", W91V(26112401))), 26112401);
-  const major = Buffer.concat([Buffer.from("versionCodeMajor"), Buffer.from([0x22, 0x01]), Buffer.from("7"), MF(26112301)]);
-  assert.equal(AD.versionCodeOf(makeZip("vc-2.zip", W91V(0, { "base/manifest/AndroidManifest.xml": major }))), 26112301, "versionCodeMajor 的 7 不算");
-  const two = Buffer.concat([MF(26112301), MF(26112401)]);
-  assert.throws(() => AD.versionCodeOf(makeZip("vc-3.zip", W91V(0, { "base/manifest/AndroidManifest.xml": two }))), /不只一個值/);
-  assert.throws(() => AD.versionCodeOf(makeZip("vc-4.zip", W91)), /找不到 versionCode/, "<manifest/> 沒有 versionCode");
+  assert.throws(() => AD.versionCodeOf(z("atk", MF(26112401, "26112301"))), /不一致/, "代理人的攻擊：字串改成 26112301、整數照舊 26112401");
+  for (const [k, s] of [["e", ""], ["abc", "abc"], ["hex", "0x10"], ["lead0", "026112401"], ["11", "26112401000"]]) assert.throws(() => AD.versionCodeOf(z(k, MF(26112401, s))), /不一致/, "字串「" + s + "」");
+  assert.equal(AD.versionCodeOf(z("major", MFX(ATTR("versionCodeMajor", "7", 7), ATTR("versionCode", "26112301", 26112301)))), 26112301, "versionCodeMajor 不算");
+  assert.throws(() => AD.versionCodeOf(z("two", MFX(ATTR("versionCode", "1", 1), ATTR("versionCode", "2", 2)))), /2 個 versionCode/);
+  assert.throws(() => AD.versionCodeOf(z("noint", MFX(ATTR("versionCode", "26112401", null)))), /沒有編譯過的整數/);
+  assert.throws(() => AD.versionCodeOf(z("none", MFX(ATTR("versionName", "x", null)))), /找不到 versionCode/);
+  assert.throws(() => AD.versionCodeOf(z("raw", Buffer.from("versionCode\x22\x0826112401"))), /protobuf|根/, "不是 protobuf 的字串搜尋寫法不收");
+  assert.throws(() => AD.versionCodeOf(makeZip("vc-4.zip", W91)), /protobuf|根/, "<manifest/> 文字檔");
   const f = makeZip("vc-5.zip", W91V(26112401)), b = fs.readFileSync(f), i = b.indexOf(Buffer.from("26112401")); b[i] = 0x39; fs.writeFileSync(f, b);
   assert.throws(() => AD.versionCodeOf(f), /CRC/, "內容被改過、CRC 對不起來");
 });
 
 test("#102 第三輪：prepareDiff（main 的串接）——舊＝--old-aab、新＝--aab、版本碼從兩包 manifest 讀；確認清單只用閘門收的 --ack；缺檔、ack 格式錯丟例外；閘門擋假舊包、假版本碼、缺雜湊", () => {
   const G = require(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js")), crypto = require("crypto"), sh = (f) => crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
-  const old = makeZip("pd-old.zip", W91V(26112301)), neu = makeZip("pd-new.zip", W91V(26112401, { [P + "AGENTS.md"]: "x" }));
+  const old = makeZip("pd-old.zip", W91V(26112301)), neu = makeZip("pd-new.zip", W91V(26112401, { [P + "AGENTS.md"]: "x", [P + "index.html"]: "<html>v2", [P + "core.js"]: "var a=2;".repeat(40) }));
   const rep = (o = {}) => ({ file: "aab-diff.json", json: Object.assign({ tool: "AAB-DIFF", strict: true, newSha256: sh(neu), oldSha256: sh(old), oldCode: "26112301", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {} }, o) });
   let re = G.prepareDiff({ oldPath: old, aabPath: neu, reports: [rep()] });
   assert.deepEqual([re.oldCode, re.newCode, re.oldSha256, re.newSha256], [26112301, 26112401, sh(old), sh(neu)], "版本碼、雜湊都照兩個檔實際的");
@@ -560,4 +571,20 @@ test("#102 第三輪：aab-diff 命令列的 --old-code／--new-code 跟 manifes
   assert.deepEqual([j.oldCodeManifest, j.newCodeManifest], [26112301, 26112401]);
   c = run(a, b, "--strict", "--old-code=20000000", "--new-code=26112401"); assert.equal(c.status, 2); assert.match(c.stderr, /--old-code=20000000 跟 AAB manifest 裡的 versionCode（26112301）不一樣/);
   c = run(a, b, "--strict", "--old-code=26112301", "--new-code=99999999"); assert.equal(c.status, 2);
+});
+
+test("#102 第四輪：閘門逐項核對四種金絲雀（總結說都抓到、但第④種沒抓到也擋）；新舊兩包不到 3 個檔不同就擋；--diff-receipt 指到輸入檔結束代碼 2", () => {
+  const G = require(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js")), A = "a".repeat(64), D = "d".repeat(64);
+  const rep = { file: "aab-diff.json", json: { tool: "AAB-DIFF", strict: true, newSha256: A, oldSha256: D, oldCode: "26112301", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {} } };
+  const RE = (o = {}) => Object.assign({ red: [], yellow: [], acked: [], allowed: 0, canaryOk: true, canary: { ok: true, home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true } }, newSha256: A, oldSha256: D, oldCode: 26112301, newCode: 26112401, changed: 40 }, o);
+  const PB = (re) => G.gate(A, "20261124-0528", [rep], [], { mainSha: () => "", diffRe: re }).problems.filter((p) => /^AAB-DIFF：/.test(p) && !/工具雜湊|toolPins|金絲雀沒抓到（home/.test(p));
+  assert.deepEqual(PB(RE()), [], "全部正常");
+  assert.ok(PB(RE({ canary: { ok: true, home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: false } } })).some((p) => /金絲雀「yellow」沒抓到/.test(p)), "第④種失靈：就算總結 canaryOk 是 true 也擋");
+  assert.ok(PB(RE({ canary: undefined })).some((p) => /金絲雀「home」沒抓到/.test(p)), "沒有逐項結果也擋");
+  for (const n of [0, 1, 2]) assert.ok(PB(RE({ changed: n })).some((p) => new RegExp("只差 " + n + " 個檔").test(p)), "只差 " + n + " 個檔");
+  assert.ok(PB(RE({ changed: undefined })).some((p) => /只差/.test(p)), "沒算變動檔數也擋");
+  const old = makeZip("rc-old.zip", W91V(26112301)), neu = makeZip("rc-new.zip", W91V(26112401, { [P + "index.html"]: "<html>v2", [P + "core.js"]: "var a=3;" }));
+  const re = G.recomputeFromFiles(AD, old, neu, {}, new Set()); assert.equal(re.changed, 3, "manifest、index.html、core.js 三個檔不同");
+  const r = cp.spawnSync(process.execPath, [path.join(ROOT, "xiangqi-android/scripts/p0-gate.js"), "--aab", neu, "--build", "20261124-0528", "--diff-receipt", neu, "--reports", neu], { encoding: "utf8" });
+  assert.equal(r.status, 2); assert.match(r.stderr, /--diff-receipt 不能指到輸入檔/); assert.ok(fs.statSync(neu).size > 1000, "AAB 沒被蓋掉");
 });

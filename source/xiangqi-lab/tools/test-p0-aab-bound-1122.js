@@ -18,7 +18,7 @@ const TP = require(path.join(AND, "tool-pin.js"));
 const MAIN = (p) => TP.normSha(fs.readFileSync(path.join(AND, path.basename(p))));
 /* #102：閘門自己重算產物比對的結果（合格的樣子：沒有紅、沒有沒確認的黃、金絲雀都抓到）；舊版雜湊跟報告記的一樣 */
 /* #102 第三輪複審：重算結果一定帶兩包的雜湊與 manifest 裡實際的 versionCode（從檔案重算時 recomputeFromFiles 會填），跟假報告 ad() 一致 */
-const OLDSHA = "d".repeat(64), OKRE = { red: [], yellow: [], acked: [], allowed: 0, canaryOk: true, newSha256: "a".repeat(64), oldSha256: OLDSHA, oldCode: 26112104, newCode: 26112401 };
+const OLDSHA = "d".repeat(64), OKRE = { red: [], yellow: [], acked: [], allowed: 0, canaryOk: true, newSha256: "a".repeat(64), oldSha256: OLDSHA, oldCode: 26112104, newCode: 26112401, canary: { ok: true, home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true } }, changed: 99 };
 const G = (a, b, c, w) => gate(a, b, c, w, { mainSha: MAIN, diffRe: Object.assign({}, OKRE, { newSha256: a }), oldSha: OLDSHA });
 const A = "a".repeat(64), B = "b".repeat(64), K = "c".repeat(64);
 const V = "20261122-0804";

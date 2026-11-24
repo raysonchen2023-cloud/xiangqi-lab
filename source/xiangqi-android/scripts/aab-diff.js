@@ -77,17 +77,37 @@ function readEntry(file, idx, name) {
   } finally { fs.closeSync(fd) }
 }
 function crc32(buf) { let c, crc = 0xffffffff; for (let i = 0; i < buf.length; i++) { c = (crc ^ buf[i]) & 0xff; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; crc = (crc >>> 8) ^ c } return (crc ^ 0xffffffff) >>> 0 }
-/* AAB 的 base/manifest/AndroidManifest.xml 是 aapt2 的 protobuf 格式：屬性名稱 "versionCode" 後面跟著字串值（十進位數字）。
-   找第一個 versionCode，往後 64 位元組內第一串數字就是值；找不到或出現兩個不一樣的值就丟例外（不猜） */
+/* AAB 的 base/manifest/AndroidManifest.xml 是 aapt2 的 protobuf（Resources.proto 的 XmlNode）。#102 第四輪複審：照結構讀，不用字串搜尋——
+   XmlNode.element(1) → XmlElement（name(3)＝"manifest"）的 attribute(4) → XmlAttribute：name(2)＝"versionCode"、value(3)＝字串、
+   compiled_item(6) → Item.prim(7) → Primitive.int_decimal_value(6)（Android 安裝時真正用的整數）。
+   要求：根元素是 manifest、只有一個 versionCode 屬性、有編譯過的整數、字串欄位是純十進位而且跟整數相等；任何一項不對就丟例外（不猜） */
+function pbFields(buf) {
+  const out = []; let i = 0;
+  const vint = () => { let v = 0, m = 1, x; do { if (i >= buf.length) throw new Error("manifest 的 protobuf 截斷"); x = buf[i++]; v += (x & 127) * m; m *= 128 } while (x & 128); return v };
+  while (i < buf.length) { const tag = vint(), f = Math.floor(tag / 8), w = tag % 8;
+    if (w === 0) out.push({ f, w, v: vint() });
+    else if (w === 2) { const n = vint(); if (i + n > buf.length) throw new Error("manifest 的 protobuf 長度不對"); out.push({ f, w, b: buf.subarray(i, i + n) }); i += n }
+    else if (w === 1) { i += 8; out.push({ f, w }) } else if (w === 5) { i += 4; out.push({ f, w }) }
+    else throw new Error("manifest 的 protobuf 有不認得的欄位型別 " + w) }
+  if (i !== buf.length) throw new Error("manifest 的 protobuf 長度不對");
+  return out;
+}
+const pbOne = (F, f) => F.filter((x) => x.f === f);
 function versionCodeOf(file, idx) {
-  const m = readEntry(file, idx || readZipIndex(file), "base/manifest/AndroidManifest.xml"), key = Buffer.from("versionCode"), vals = new Set();
-  for (let i = m.indexOf(key); i >= 0; i = m.indexOf(key, i + 1)) {
-    if (m[i + key.length] >= 0x41 && m[i + key.length] <= 0x7a) continue;   /* versionCodeMajor 之類的別的屬性 */
-    const t = m.subarray(i + key.length, i + key.length + 64).toString("latin1").match(/(?<![0-9])([1-9][0-9]{0,9})(?![0-9])/);
-    if (t) vals.add(t[1]);
-  }
-  if (vals.size !== 1) throw new Error(vals.size ? "manifest 裡的 versionCode 不只一個值：" + [...vals].join("、") : "manifest 裡找不到 versionCode");
-  return +[...vals][0];
+  const m = readEntry(file, idx || readZipIndex(file), "base/manifest/AndroidManifest.xml");
+  const el = pbOne(pbFields(m), 1); if (el.length !== 1 || !el[0].b) throw new Error("manifest 的根節點不是元素");
+  const E = pbFields(el[0].b), nm = pbOne(E, 3)[0]; if (!nm || nm.b.toString("utf8") !== "manifest") throw new Error("manifest 的根元素不是 <manifest>");
+  const vc = pbOne(E, 4).map((a) => pbFields(a.b)).filter((A) => { const n = pbOne(A, 2)[0]; return n && n.b && n.b.toString("utf8") === "versionCode" });
+  if (vc.length !== 1) throw new Error(vc.length ? "manifest 有 " + vc.length + " 個 versionCode 屬性" : "manifest 裡找不到 versionCode");
+  const A = vc[0], sv = pbOne(A, 3)[0], ci = pbOne(A, 6)[0];
+  if (!ci || !ci.b) throw new Error("versionCode 沒有編譯過的整數（compiled_item）");
+  const pr = pbOne(pbFields(ci.b), 7)[0]; if (!pr || !pr.b) throw new Error("versionCode 的 compiled_item 不是基本型別");
+  const iv = pbOne(pbFields(pr.b), 6); if (iv.length !== 1) throw new Error("versionCode 不是十進位整數（int_decimal_value）");
+  const n = iv[0].v > 0x7fffffff ? iv[0].v - 0x100000000 : iv[0].v;
+  if (!(n >= 1 && n <= 2100000000)) throw new Error("versionCode 的整數不合理：" + n);
+  const str = sv && sv.b ? sv.b.toString("utf8") : "";
+  if (!/^[1-9][0-9]{0,9}$/.test(str) || +str !== n) throw new Error("versionCode 的字串（" + JSON.stringify(str) + "）跟編譯過的整數（" + n + "）不一致：manifest 可能被改過");
+  return n;
 }
 
 /* debug／開發用的檔（第五輪審查補 .pdb、編輯器與 AI 工具設定、.github/、coverage/、output/、test-*.js、包在裡面的 apk／aab／zip） */
