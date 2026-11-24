@@ -121,3 +121,10 @@ test("W87b 中炮門接上像素材質（地面、牆側；牆頂照舊程式畫
   const c = load(), lv = vm.runInContext("JH_MZ_LV", c).central;
   assert.deepEqual(JSON.parse(JSON.stringify(lv.tex)), { floor: "data/maze/tex/central_floor.webp", side: "data/maze/tex/central_wall.webp" });
 });
+
+test("中炮門碑刻文書 3 件（照 #108 的格式）：種類、中英標題與內文、出處寫明遊戲整理或虛構的部分", () => {
+  const c = load(), L = vm.runInContext("JH_MZ_LV", c).central.lore;
+  assert.equal(L.length, 3); assert.equal(new Set(L.map((x) => x.id)).size, 3);
+  for (const x of L) { assert.ok(["stele", "slip", "doc"].includes(x.kind)); for (const k of ["title", "body"]) { assert.ok(x[k][0] && x[k][1]); assert.ok(!/[一-鿿]/.test(x[k][1]), x.id + " 英文沒有中文字") } assert.ok(/遊戲/.test(x.src), x.id + " 出處寫明遊戲的部分") }
+  assert.ok(!/鐵扦|天工開物/.test(JSON.stringify(L)), "複核：查不到原文的鐵扦、對不上的天工開物出處都拿掉");
+});

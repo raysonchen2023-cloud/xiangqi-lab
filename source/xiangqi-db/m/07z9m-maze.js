@@ -89,6 +89,17 @@ JH_MZ_KIND.rook={
 jhMzDef("central",{map:JH_MZ_MAP,guards:[Object.assign({kind:"rook",dy:0},JH_MZ_GUARD)],puz:JH_MZ_PUZ,pool:JH_MZ_POOL_CENTRAL,jump:"S",key:"jhMaze",xpKey:"maze:1",
   /* W87b 像素材質（11/24 開發者選「重出」的新版：Gemini 直接畫像素、48 色、無損 webp，Windows Claude 2 出圖）：只放 CDN（data/maze/tex/），載不到就用程式畫的；牆頂照舊程式畫 */
   tex:{floor:"data/maze/tex/central_floor.webp",side:"data/maze/tex/central_wall.webp"},
+  /* 碑刻文書（11/24 Gemini 查史料、iMac Claude 1 複核，Windows Claude 1 照複核改寫；出處照實寫哪些是史料、哪些是遊戲整理）。
+     中炮門地圖改成有 L 的迷路版之前不會出現（#108 的 07z9m-lore.js 照 L 的順序對應） */
+  lore:[{id:"cc1",kind:"doc",title:["常盈倉收糧告示","Notice from the Changying Granary"],
+      body:["告示寫著淮安常盈倉收漕糧的規矩：糧船到倉，驗糧的官員先看米糧乾不乾、有沒有摻沙土雜質；受潮或成色不好的退回去重曬、重碾，合格的才准進倉。","The notice sets out how the Changying Granary in Huai'an took in tribute grain: when a grain boat arrived, officials first checked whether the grain was dry and free of sand. Damp or poor grain was sent back to be dried or milled again; only good grain went into the granary."],
+      src:"常盈倉是明代淮安的漕運轉運倉；驗收細節是遊戲依明代漕規概括，告示本身是遊戲虛構"},
+    {id:"cc2",kind:"stele",title:["倉廒防潮碑","Stele on keeping granaries dry"],
+      body:["碑上記著修倉的做法：倉底墊高、鋪木板，板下留空讓風通過；糧堆四周鋪蘆蓆、塞糠粃，擋住地氣和老鼠，漕糧才能久放不壞。","The stele records how granaries were kept: raise the floor, lay planks with an air gap beneath, and line the grain heaps with reed mats packed with chaff to keep out ground damp and rats, so the grain would keep for years."],
+      src:"明代官倉常見的防潮做法；碑文是遊戲整理改寫，不是特定碑刻的原文"},
+    {id:"cc3",kind:"slip",title:["監守自盜律","The law on stealing what you guard"],
+      body:["殘簡抄著《大明律》的條文：看守倉庫的人偷盜錢糧，不分主犯從犯，合計贓物定罪，還要在右小臂刺上字；偷得多的，可以判死罪。","The slip copies an article of the Great Ming Code: a granary keeper who stole money or grain was judged on the total taken, leader and helpers alike, and had words tattooed on the right forearm; a large theft could mean death."],
+      src:"《大明律・刑律・賊盜》「監守自盜倉庫錢糧」條；文字是遊戲改寫"}],
   title:["🕳 地底漕倉","🕳 Underground granary"],lvName:["地底漕倉・第一層","Underground granary · Level 1"],back:["回中炮門","Back to the Central Cannon School"],
   hall:{at:[530,395],zh:"🕳 拋石車・地底密道",en:"🕳 Catapult · Hidden passage"},
   intro:["你從拋石車底下的暗門爬下來，四周一片漆黑。<b>點地面就會走過去</b>，也可以用下面的方向鈕。走到壁燈旁邊會點亮它。","You climb down through the hatch under the catapult into pitch darkness. <b>Tap the floor to walk there</b>, or use the arrows below. Walk next to a wall lamp to light it."],
