@@ -450,7 +450,7 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
   return{}}
 /* ---------- 駐地小卡：拜師／繼續修行、挑戰掌門、這一派的棋友 ---------- */
 function jhSheet(sid){if(typeof sheet!=="function"||typeof OSC==="undefined")return;const S=jhSch(sid),m=OSC.MST.find(x=>x.sid===sid),c=jhLook(),o=typeof oscGet==="function"?oscGet():null,act=c&&o?OSC.act(o,c):"";
-  const mates=Object.values(OSC.NPC).filter(x=>x[0]===sid).map(x=>jhT(x[2])).slice(0,5),inHall=location.hash==="#/jianghu/hall/"+sid;   /* 已經在門內就不再顯示「走進山門」 */
+  const mates=Object.entries(OSC.NPC).filter(([k,x])=>x[0]===sid&&oscNpcShown(k)).map(([k,x])=>jhT(x[2])).slice(0,5),inHall=location.hash==="#/jianghu/hall/"+sid;   /* 已經在門內就不再顯示「走進山門」 */
   sheet(`${S.nm}`,b=>{b.innerHTML=`<div class="jh-card">${m?`<img src="data/npc/${m.id}.webp" alt="" onerror="this.remove()">`:""}<div class="tx">
       ${m?`<b>${esc(jhL(m.nm,m.en))}</b><p class="muted">${esc(jhL(S.nm+"掌門","Master of the "+S.nm))}</p><p>${esc(jhL("「"+m.say+"」",'"'+jhT(m.say)+'"'))}</p>`:""}
       <p class="muted">${esc(jhL(`慣用${S.op}：${S.say}`,`Plays ${S.op}: ${S.say}`))}</p>${mates.length?`<p class="muted">${esc(jhL("門下棋友：","Players of this school: ")+mates.join(jhL("、",", ")))}</p>`:""}</div></div>
@@ -586,10 +586,10 @@ const JH_HALL_BAD=new Set();   /* 這次開 App 讀圖失敗過的派：小卡�
 const jhHallPc=([x,y])=>`left:${(x/JH_HALL_W*100).toFixed(2)}%;top:${(y/JH_HALL_H*100).toFixed(2)}%`;
 /* 門下棋友在哪裡找得到：驛站（inn:）、園子（npc:）、秘境（secret:） */
 function jhHallMates(sid){if(typeof OSC==="undefined")return[];const P={inn:jhL("驛站","Post Inn"),npc:jhL("園子","the Park"),secret:jhL("秘境","a hidden place")};
-  return Object.entries(OSC.NPC).filter(([k,x])=>x[0]===sid).map(([k,x])=>({k,nm:jhT(x[2]),at:P[k.split(":")[0]]||""}))}
+  return Object.entries(OSC.NPC).filter(([k,x])=>x[0]===sid&&oscNpcShown(k)).map(([k,x])=>({k,nm:jhT(x[2]),at:P[k.split(":")[0]]||""}))}   /* 11/24：秘境人物找到過才列（oscNpcShown），打聽提示跟著這份 */
 function jhHallYard(sid){const S=jhSch(sid),L=jhHallMates(sid);
   sheet(jhL(`${S.nm}・前院`,`${S.nm} · Front yard`),b=>{b.innerHTML=`<p class="muted">${esc(jhL("門下棋友平常不在山門裡，分散在各處下棋：","The school's players are usually out playing elsewhere:"))}</p>
-    ${L.length?`<ul class="jh-mates">${L.map(x=>`<li><b>${esc(x.nm)}</b><span class="muted">${esc(x.at)}</span></li>`).join("")}</ul>`:`<p class="muted">${esc(jhL("這一派目前沒有登記的門人。","No players are listed for this school yet."))}</p>`}
+    ${L.length?`<ul class="jh-mates">${L.map(x=>`<li><b>${esc(x.nm)}</b><span class="muted">${esc(x.at)}</span></li>`).join("")}</ul>`:`<p class="muted">${esc(jhL("這一派的門下棋友你還沒遇到過；在驛站、園子遇到，或在秘境找到他們之後，就會列在這裡。","You haven't met any of this school's players yet. Once you meet them at the Post Inn or the Park, or find them in a hidden place, they will be listed here."))}</p>`}
     ${typeof jhIntelHTML==="function"&&OSC.MST.find(x=>x.sid===sid)?jhIntelHTML(sid,OSC.MST.find(x=>x.sid===sid),L.map(x=>x.nm)):""}`})}
 function jhHallStudy(sid){const c=jhLook(),o=typeof oscGet==="function"?oscGet():null,act=c&&o?OSC.act(o,c):"";
   if(!c){toast(jhL("開始旅程、有了隊伍以後才能拜師。","Start a journey and form a party first."));return}
