@@ -673,7 +673,7 @@ test("parseSubMs 直接比回傳值：1 秒～1 小時取整數、不到 1 秒�
 
 test("命令列出錯一律不回 1：暫存資料夾不存在回 2、--out 寫不進去回 2、檢查失靈加上 --out 壞掉照樣回 4（#136 審查①）", () => {
   const { D, L } = fakeWww(), gone = path.join(tmp("xq-gone-"), "沒有這個資料夾");
-  let r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"], { TMPDIR: gone });
+  let r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"], { TMPDIR: gone, TEMP: gone, TMP: gone });
   assert.equal(r.status, 2, "暫存資料夾不存在要回 2：" + r.stdout + r.stderr); assert.match(r.stderr, /測試不成立/);
   r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1", "--out", path.join(gone, "r.json")]);
   assert.equal(r.status, 2, "全過但收據寫不進去要回 2：" + r.stdout + r.stderr); assert.match(r.stderr, /收據寫不進/);
