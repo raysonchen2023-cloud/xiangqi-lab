@@ -130,17 +130,120 @@ const KINDS = {
   spInstall: { break: (R) => edit(R, "scripts/install-native.js", rep('const BASE_CLASSES = ["XQSpeechPlugin"];', 'const BASE_CLASSES = [];')), expect: "install-native.js：預設就複製 XQSpeechPlugin" },
   spCopy: { break: (R) => { if (!edit(R, "ios/App/App/" + SP, (s) => s + "\n// 只改這一份\n")) throw new Error("ios/App/App 沒有 " + SP) }, expect: "XQSpeechPlugin.swift 兩份相同" },
   board: { break: (R) => editRepo(R, BOARD, repAll('N.has("XQSpeech")', 'N.has("XQS")')), expect: "01-board.js：原生版有 XQSpeech 就用它" },
+  /* ===== #135 審查①②③：子條件、單一字、沒打到的判斷，各自一個「只有它抓得到」的壞樣本（自我測試的子條件改壞清單逐條對應） ===== */
+  /* 伺服器 */
+  whoamiTake: { break: both(SRV, repIn("private func handleWhoami(", "takeAnswer(for: challenge)", "takeAnswer(for:challenge)")), expect: "whoami 只回這次考題的答案" },
+  estOneBlock: { break: both(SRV, rep("            if verifyNow(timeout: 2.0) { return .verified }\n", "")), expect: "establish 一定經過 verifyNow" },
+  estTickFunc: { break: both(SRV, rep("private func establishNow() -> Outcome {", "private func establishNow() -> Outcome {\n        func `verifyNow`(timeout: TimeInterval) -> Bool { return true }")), expect: "establish 一定經過 verifyNow" },
+  estNoReturn: { break: both(SRV, (s) => { const i = s.indexOf("private func establishNow()"), j = s.indexOf("xqLog(\"驗證通過", i), k = s.indexOf("return .verified", j); if (i < 0 || j < 0 || k < 0) throw new Error("找不到第二個 if 區塊"); return s.slice(0, k) + "_ = 0" + s.slice(k + "return .verified".length) }), expect: "establish 一定經過 verifyNow" },
+  estElseAfter: { break: both(SRV, rep("if verifyNow(timeout: 2.0) { return .verified }", "if verifyNow(timeout: 2.0) { return .verified } else { xqLog(\"x\") }")), expect: "establish 一定經過 verifyNow" },
+  estFuncTwice: { break: both(SRV, beforeEnd("    private func verifyNow(timeout: Double, xq: Int) -> Bool { return true }")), expect: "establish 一定經過 verifyNow" },
+  srcCancel: { break: both(SRV, repAll("conn.cancel(); return", "conn.cancel();return")), expect: "accept() 仍檢查來源位址" },
+  leftoverRead: { break: both(SRV, rep("readRequest(conn, buffer: rest)", "readRequest(conn, buffer:rest)")), expect: "leftover 位元組修正還在" },
+  /* 畫面 */
+  lvpLoad: { break: both(VC, (s) => beforeEnd("    private func xqGo() { loadWebView() }")(repIn("private func loadVerifiedPage()", "self.loadWebView()", "self.xqGo()")(s))), expect: "loadWebView() 只在 loadVerifiedPage 裡" },
+  vbLoad: { break: both(VC, rep("            loadVerifiedPage()\n            return\n        }", "            return\n        }\n        loadVerifiedPage()")), expect: "只有驗證通過（outcome == .verified）才呼叫 loadVerifiedPage" },
+  vbRunning: { break: both(VC, (s) => repIn("@objc private func retryTapped()", "phase = .starting", "phase = .starting\n        if false { phase = .running }")(rep("            phase = .running\n            removeCover()", "            removeCover()")(s))), expect: "只有驗證通過才進 running" },
+  loadFile: { break: both(VC, inFunc("override func viewDidLoad()", "webView?.loadFileURL(URL(fileURLWithPath: \"/\"), allowingReadAccessTo: URL(fileURLWithPath: \"/\"))")), expect: "畫面沒有其他直接載入網頁的地方" },
+  loadReq: { break: both(VC, inFunc("override func viewDidLoad()", "if let req = Optional(URLRequest(url: URL(fileURLWithPath: \"/\"))) { webView?.load(req) }")), expect: "畫面沒有其他直接載入網頁的地方" },
+  showRetry: { break: both(VC, beforeEnd("    private func showRetry() { }")), expect: "沒有一直重跳的提示視窗" },
+  failedPhase: { break: both(VC, rep("        phase = .failed\n        showCover", "        phase=.failed\n        showCover")), expect: "自動重試有上限" },
+  zhBusy: { break: both(VC, rep("另一個 App 占用了", "另一個App占用了")), expect: "錯誤畫面中英文都有" },
+  zhGuide: { break: both(VC, rep("請關閉其他 App", "請關閉其他App")), expect: "錯誤畫面有處理方式" },
+  noDiskCache: { break: both(VC, rep("[WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache]", "[WKWebsiteDataTypeMemoryCache]")), expect: "載入前只清 HTTP 快取" },
+  clearIDB: { break: both(VC, rep("[WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache]", "[WKWebsiteDataTypeDiskCache, WKWebsiteDataTypeMemoryCache, WKWebsiteDataTypeIndexedDBDatabases]")), expect: "載入前只清 HTTP 快取" },
+  onBroken: { break: both(VC, repAll("XQLoopbackServer.shared.onBroken", "XQLoopbackServer.shared.onBreak")), expect: "回前景／監聽壞掉會重驗" },
+  fgFlag: { break: both(VC, rep("if self.phase == .running { self.foregroundRecheck = true }", "if self.phase == .running {self.foregroundRecheck = true}")), expect: "回前景重驗通過時 console 印一行" },
+  installSrv: { break: (R) => edit(R, "scripts/install-native.js", repAll('"XQLoopbackServer.swift"', '"XQLoopbackSrv.swift"')), expect: "install-native.js 會複製兩支 Swift" },
+  /* 外掛（Game Center、小工具資料） */
+  gcClass: { break: both(GC, rep("XQGameCenterPlugin: CAPPlugin, CAPBridgedPlugin, GKGameCenterControllerDelegate", "XQGameCenterPlugin: CAPPlugin, GKGameCenterControllerDelegate, CAPBridgedPlugin")), expect: "XQGameCenterPlugin：@objc 名稱和 CAPPlugin" },
+  wdIdent: { break: both(WD, rep('public let identifier = "XQWidgetDataPlugin"', 'public let identifier = "XQWidgetData"')), expect: "XQWidgetDataPlugin：identifier" },
+  wdListedNoFunc: { break: both(WD, rep('CAPPluginMethod(name: "status", returnType: CAPPluginReturnPromise)', 'CAPPluginMethod(name: "status", returnType: CAPPluginReturnPromise),\n        CAPPluginMethod(name: "xqExtra", returnType: CAPPluginReturnPromise)')), expect: "XQWidgetDataPlugin：pluginMethods" },
+  wdWebNone: { break: (R) => editRepo(R, GCWEB, repAll('gcnCall("XQWidgetData",', 'gcnCall( "XQWidgetData",')), expect: "07gc-native.js 呼叫 XQWidgetData 的方法" },
+  wdReq: { break: both(WD, beforeEnd("    func xqReq() { _ = URLRequest(url: URL(fileURLWithPath: \"/\")) }")), expect: WD + "：沒有網路程式" },
+  wdCtrl: { break: both(WD, (s) => s + "\n// \u0002\n"), expect: WD + " 沒有控制字元" },
+  gcAuth: { break: both(GC, repAll("authenticateHandler", "authHandler")), expect: "開 App 不主動跳登入畫面" },
+  gcPresent: { break: both(GC, beforeEnd("    func xqShow(_ viewController: UIViewController) { bridge?.viewController?.present( viewController, animated: true) }")), expect: "開 App 不主動跳登入畫面" },
+  gcKeep: { break: both(GC, repAll("self.loginVC = viewController", "self.loginVC=viewController")), expect: "開 App 不主動跳登入畫面" },
+  gcPid: { break: both(GC, beforeEnd("    func xqA() -> String { return GKLocalPlayer.local.playerID }")), expect: "不讀、不回傳玩家 ID 或暱稱" },
+  gcTeam: { break: both(GC, beforeEnd("    func xqB() -> String { return GKLocalPlayer.local.teamPlayerID }")), expect: "不讀、不回傳玩家 ID 或暱稱" },
+  gcName: { break: both(GC, beforeEnd("    func xqC() -> String { return GKLocalPlayer.local.displayName }")), expect: "不讀、不回傳玩家 ID 或暱稱" },
+  gcAlias: { break: both(GC, beforeEnd("    func xqD() -> String { return GKLocalPlayer.local.alias }")), expect: "不讀、不回傳玩家 ID 或暱稱" },
+  wdBox: { break: both(WD, repAll("forSecurityApplicationGroupIdentifier", "forSecurityApplicationGroupID")), expect: "XQWidgetData：寫 App Group 後請小工具重畫" },
+  wdData: { break: both(WD, rep('hasPrefix("data/")', 'hasPrefix("data")')), expect: "XQWidgetData：圖只收安裝包 data/" },
+  /* 小工具 */
+  widgetBundle: { break: (R) => edit(R, WG + "XQTodayWidget.swift", rep("struct XQWidgetBundle: WidgetBundle", "struct XQWidgetBundle : WidgetBundle")), expect: "小工具：有 @main、小中兩種尺寸" },
+  widgetOpen: { break: (R) => edit(R, WG + "XQTodayWidget.swift", rep(".widgetURL(XQWidgetConfig.openURL)", ".widgetURL( XQWidgetConfig.openURL)")), expect: "小工具：點了開" },
+  widgetReq: { break: (R) => edit(R, WG + "XQTodayWidget.swift", beforeEnd("    func xqReq() { _ = URLRequest(url: URL(fileURLWithPath: \"/\")) }")), expect: "小工具：沒有網路程式" },
+  widgetJpg: { break: (R) => edit(R, WG + "XQTodayWidget.swift", rep('imageFile = "today.jpg"', 'imageFile = "today.png"')), expect: "小工具和 XQWidgetData 的檔名一樣：imageFile" },
+  wdDataFile: { break: both(WD, rep('dataFile = "today.json"', 'dataFile  = "today.json"')), expect: "小工具和 XQWidgetData 的檔名一樣：dataFile" },
+  groupMissing: { break: (R) => edit(R, WG + "XQTodayWidget.entitlements", rep("<string>group.com.raysonchen.xiangqiqianqiu.shared</string>", "<string></string>")), expect: "App Group 四處一樣" },
+  groupExtra: { break: (R) => edit(R, "native/ios/App.entitlements", rep("<string>group.com.raysonchen.xiangqiqianqiu.shared</string>", "<string>group.com.raysonchen.xiangqiqianqiu.shared</string>\n\t\t<string>group.com.raysonchen.other</string>")), expect: "App Group 四處一樣" },
+  /* 07gc 網頁 */
+  webSchemeRe: { break: (R) => editRepo(R, GCWEB, rep("xqqianqiu:\\/\\/", "xqqianqiu:[\\/]{2}")), expect: "07gc-native.js 收" },
+  webXhr: { break: (R) => editRepo(R, GCWEB, (s) => s + "\n;new XMLHttpRequest();\n"), expect: "07gc-native.js 不連網、不送資料" },
+  webBeacon: { break: (R) => editRepo(R, GCWEB, (s) => s + "\n;navigator.sendBeacon(\"/x\");\n"), expect: "07gc-native.js 不連網、不送資料" },
+  webSocket: { break: (R) => editRepo(R, GCWEB, (s) => s + "\n;new WebSocket(\"wss://x\");\n"), expect: "07gc-native.js 不連網、不送資料" },
+  webXQNet: { break: (R) => editRepo(R, GCWEB, (s) => s + "\n;XQNet.send({});\n"), expect: "07gc-native.js 不連網、不送資料" },
+  webIRT: { break: (R) => editRepo(R, GCWEB, (s) => s + "\n;shareIRT({});\n"), expect: "07gc-native.js 不連網、不送資料" },
+  /* install-native.js --gc-widget */
+  instGcFile: { break: (R) => edit(R, "scripts/install-native.js", repAll('"XQGameCenterPlugin.swift"', '"XQGameCenter.swift"')), expect: "install-native.js --gc-widget" },
+  instWdFile: { break: (R) => edit(R, "scripts/install-native.js", repAll('"XQWidgetDataPlugin.swift"', '"XQWidgetData.swift"')), expect: "install-native.js --gc-widget" },
+  instClasses: { break: (R) => edit(R, "scripts/install-native.js", repAll('"XQGameCenterPlugin", "XQWidgetDataPlugin"', '"XQGameCenterPlugin","XQWidgetDataPlugin"')), expect: "install-native.js --gc-widget" },
+  instScheme: { break: (R) => edit(R, "scripts/install-native.js", rep('const URL_SCHEME = "xqqianqiu"', 'const URL_SCHEME="xqqianqiu"')), expect: "install-native.js --gc-widget" },
+  /* 註冊 */
+  regSuper: { break: both(VC, rep("super.capacitorDidLoad()", "super.capacitorDidLoad( )")), expect: "capacitorDidLoad() 直接註冊 XQSpeechPlugin" },
+  regLoop: { break: both(VC, rep('for name in ["XQGameCenterPlugin", "XQWidgetDataPlugin"]', 'for name in ["XQGameCenterPlugin","XQWidgetDataPlugin"]')), expect: "Game Center、小工具有編進 App 才註冊" },
+  regInit: { break: both(VC, rep("registerPluginInstance(type.init())", "registerPluginInstance(type .init())")), expect: "Game Center、小工具有編進 App 才註冊" },
+  regThird: { break: both(VC, inFunc("override func viewDidLoad()", "bridge?.registerPluginInstance(XQSpeechPlugin())")), expect: "只在 capacitorDidLoad 註冊這兩處" },
+  /* 語音 */
+  spClass: { break: both(SP, rep("class XQSpeechPlugin: CAPPlugin, CAPBridgedPlugin", "class XQSpeechPlugin: CAPPlugin,CAPBridgedPlugin")), expect: "XQSpeech：@objc 名稱、identifier、jsName" },
+  spIdent: { break: both(SP, rep('public let identifier = "XQSpeechPlugin"', 'public let identifier = "XQSpeech"')), expect: "XQSpeech：@objc 名稱、identifier、jsName" },
+  spJs: { break: both(SP, rep('public let jsName = "XQSpeech"', 'public let jsName = "XQSpeak"')), expect: "XQSpeech：@objc 名稱、identifier、jsName" },
+  spNoFunc: { break: both(SP, rep("@objc func isAvailable(", "@objc public func isAvailable(")), expect: "XQSpeech：speak、stop、isAvailable" },
+  spExtraFunc: { break: both(SP, beforeEnd("    @objc func xqExtra(_ call: CAPPluginCall) { call.resolve() }")), expect: "XQSpeech：speak、stop、isAvailable" },
+  spQueue: { break: both(SP, rep('DispatchQueue(label: "xq.speech"', 'DispatchQueue(label: "xq.speak"')), expect: "XQSpeech：先回傳" },
+  spLate: { break: both(SP, (s) => { const a = s.indexOf("@objc func speak("), b = s.indexOf("@objc func stop("), t = "        call.resolve([\"ok\": true])\n", i = s.indexOf(t, a); if (a < 0 || b < 0 || i < 0 || i > b) throw new Error("找不到 speak 的先回傳"); const s2 = s.slice(0, i) + s.slice(i + t.length), b2 = s2.indexOf("@objc func stop("), e = s2.lastIndexOf("    }", b2); return s2.slice(0, e) + "        call.resolve([\"ok\": true])\n" + s2.slice(e) }), expect: "XQSpeech：先回傳" },
+  spSpeakU: { break: both(SP, rep("s.speak(u)", "s.speak( u)")), expect: "XQSpeech：先回傳" },
+  spMainSync: { break: both(SP, beforeEnd("    func xqM1() { DispatchQueue.main.sync { } }")), expect: "XQSpeech：沒有任何工作丟回主執行緒" },
+  spMainAsync: { break: both(SP, beforeEnd("    func xqM2() { OperationQueue.main.async { } }")), expect: "XQSpeech：沒有任何工作丟回主執行緒" },
+  spMainActor: { break: both(SP, beforeEnd("    @MainActor func xqM3() { }")), expect: "XQSpeech：沒有任何工作丟回主執行緒" },
+  spWarmZh: { break: both(SP, (s) => { const i = s.indexOf("work.asyncAfter(deadline:"), j = s.indexOf('voice(for: "zh")', i); if (i < 0 || j < 0) throw new Error("找不到預熱"); return s.slice(0, j) + 'voice(for: "en")' + s.slice(j + 'voice(for: "zh")'.length) }), expect: "XQSpeech：App 啟動後在背景佇列先初始化" },
+  spWarmCode: { break: both(SP, (s) => repAll("work.asyncAfter(", "work .asyncAfter(")(s).replace("    @objc func speak(", "    // work.asyncAfter(deadline: .now() + 2.0) { ensureSynth(); voice(for: \"zh\") }\n    @objc func speak(")), expect: "XQSpeech：App 啟動後在背景佇列先初始化" },
+  spVoice: { break: both(SP, rep("AVSpeechSynthesisVoice(language: w)", "AVSpeechSynthesisVoice(language:w)")), expect: "XQSpeech：語言" },
+  spEn: { break: both(SP, rep('["en-US", "en-GB", "en"]', '["en-US", "en-GB"]')), expect: "XQSpeech：語言" },
+  spSilent: { break: both(SP, rep("guard let v = self.voice(for: key) else { return }", "guard let v = self.voice(for: key) else {return}")), expect: "XQSpeech：語言" },
+  spAppSession: { break: both(SP, rep("usesApplicationAudioSession = true", "usesApplicationAudioSession=true")), expect: "XQSpeech：AVAudioSession 用 .ambient" },
+  spCatLate: { break: both(SP, rep('    public let jsName = "XQSpeech"', '    public let jsName = "XQSpeech"\n    @objc func speak(_ xq: Int) { }')), expect: "XQSpeech：音訊類別只在外掛載入時設一次" },
+  spBgNote: { break: both(SP, repAll("UIApplication.didEnterBackgroundNotification", "UIApplication.willResignActiveNotification")), expect: "XQSpeech：進背景 stopSpeaking" },
+  spRec: { break: both(SP, beforeEnd("    func xqP1() { AVAudioSession.sharedInstance().requestRecordPermission { _ in } }")), expect: "XQSpeech：不要權限、沒有網路程式" },
+  spCam: { break: both(SP, beforeEnd("    func xqP2() { _ = AVCaptureDevice.authorizationStatus(for: .audio) }")), expect: "XQSpeech：不要權限、沒有網路程式" },
+  spAuth: { break: both(SP, beforeEnd("    func xqP3() { SFSpeechRecognizer.requestAuthorization { _ in } }")), expect: "XQSpeech：不要權限、沒有網路程式" },
+  spReq: { break: both(SP, beforeEnd("    func xqP4() { _ = URLRequest(url: URL(fileURLWithPath: \"/\")) }")), expect: "XQSpeech：不要權限、沒有網路程式" },
+  spInstFiles: { break: (R) => edit(R, "scripts/install-native.js", rep('{ name: "XQSpeechPlugin.swift", type: "sourcecode.swift", phase: "Sources" }', '{ name: "XQSpeechPlugin.swift", type: "sourcecode.swift", phase: "Sources", xq: 1 }')), expect: "install-native.js：預設就複製 XQSpeechPlugin" },
+  spInstConcat: { break: (R) => edit(R, "scripts/install-native.js", (s) => s + "\n// cfg.packageClassList = list.concat(OURS)\n"), expect: "install-native.js：預設就複製 XQSpeechPlugin" },
+  spInstFilter: { break: (R) => edit(R, "scripts/install-native.js", rep("cfg.packageClassList = list.filter(c => !OURS.includes(c));", "cfg.packageClassList = list.filter((c) => !OURS.includes(c));")), expect: "install-native.js：預設就複製 XQSpeechPlugin" },
+  spPkgList: { break: (R) => fs.writeFileSync(path.join(R, "source", "xiangqi-ios", "ios", "App", "App", "capacitor.config.json"), JSON.stringify({ packageClassList: ["XQSpeechPlugin"] })), expect: "packageClassList 沒有 XQSpeechPlugin" },
+  spPkgDup: { break: (R) => fs.writeFileSync(path.join(R, "source", "xiangqi-ios", "ios", "App", "App", "capacitor.config.json"), JSON.stringify({ packageClassList: ["CAPCameraPlugin", "CAPCameraPlugin"] })), expect: "packageClassList 沒有 XQSpeechPlugin" },
+  boardSpeak: { break: (R) => editRepo(R, BOARD, rep('.speak({text:', '.speak({ text:')), expect: "01-board.js：原生版有 XQSpeech 就用它" },
+  /* 控制字元：check-native 認的 30 個字元（\x00-\x08、\x0B、\x0C、\x0E-\x1F、\x7F），兩份伺服器程式各插一個，每個字元一個壞樣本（照 canary-www 的做法） */
+  ...Object.fromEntries([...Array(32).keys(), 127].filter((c) => ![9, 10, 13].includes(c)).map((c) => ["ctrl" + c.toString(16).padStart(2, "0"), { break: both(SRV, (s) => s + "\n// " + String.fromCharCode(c) + "\n"), expect: SRV + " 沒有控制字元" }])),
   /* install-native.js 要複製兩支 Swift */
   install: { break: (R) => edit(R, "scripts/install-native.js", rep('"XQBridgeViewController.swift"', '"XQBridgeVC.swift"')), expect: "install-native.js 會複製兩支 Swift" },
 };
 
 function copyTree(R) {
   const dst = path.join(R, "source", "xiangqi-ios");
-  fs.cpSync(IOS, dst, { recursive: true, filter: (src) => !/[\\/]node_modules([\\/]|$)/.test(path.relative(IOS, src)) && !/[\\/](Pods|DerivedData|build)([\\/]|$)/.test(path.relative(IOS, src)) });
+  /* #135 審查⑤：path.relative 算出來沒有前導斜線，最上層的 node_modules、build 原本排除不到；ios/App/App/public（網頁副本，幾百 MB）check-native 不讀，也排除 */
+  const SKIP = /(^|[\\/])(node_modules|Pods|DerivedData|build)([\\/]|$)|^ios[\\/]App[\\/]App[\\/]public([\\/]|$)/;
+  fs.cpSync(IOS, dst, { recursive: true, filter: (src) => !SKIP.test(path.relative(IOS, src)) });
   for (const f of WEBFILES) { const a = path.join(REPO, ...f.split("/")); if (fs.existsSync(a)) { const b = path.join(R, ...f.split("/")); fs.mkdirSync(path.dirname(b), { recursive: true }); fs.copyFileSync(a, b) } }
   /* node_modules 裡的 Capacitor 檔（有才複製，check-native 找不到只會警告） */
-  const cap = path.join(IOS, "node_modules", "@capacitor", "ios", "Capacitor", "Capacitor", "CAPBridgeViewController.swift");
-  if (fs.existsSync(cap)) { const b = path.join(dst, "node_modules", "@capacitor", "ios", "Capacitor", "Capacitor", "CAPBridgeViewController.swift"); fs.mkdirSync(path.dirname(b), { recursive: true }); fs.copyFileSync(cap, b) }
+  /* check-native 讀這兩支：CAPBridgeViewController.swift（viewDidLoad、loadView）和 CapacitorBridge.swift（registerPluginInstance）；有才複製 */
+  for (const f of ["CAPBridgeViewController.swift", "CapacitorBridge.swift"]) {
+    const cap = path.join(IOS, "node_modules", "@capacitor", "ios", "Capacitor", "Capacitor", f);
+    if (fs.existsSync(cap)) { const b = path.join(dst, "node_modules", "@capacitor", "ios", "Capacitor", "Capacitor", f); fs.mkdirSync(path.dirname(b), { recursive: true }); fs.copyFileSync(cap, b) }
+  }
 }
 const exitOf = (results, pass) => (pass ? 0 : results.some((x) => !x.unfit && x.caught !== true) ? 4 : 2);
 
