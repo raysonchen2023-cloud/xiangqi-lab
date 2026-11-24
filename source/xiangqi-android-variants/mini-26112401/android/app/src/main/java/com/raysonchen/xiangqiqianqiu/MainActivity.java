@@ -107,6 +107,7 @@ public class MainActivity extends BridgeActivity {
             bridge.setWebViewClient(new XQWebViewClient(bridge));
             installServiceWorkerClient(bridge);
             installNativeBridge(bridge.getWebView());
+            XQBackHandler.install(this, bridge);   /* W100：返回鍵先交給網頁回上一頁，首頁才收到背景（變體覆蓋 MainActivity 時也要有這一行） */
         }
     }
 
