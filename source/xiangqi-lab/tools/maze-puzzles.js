@@ -23,10 +23,14 @@ const ARGS = {
   n: String(arg("--n", "2,3")).split(",").map(Number), maxPieces: +arg("--max-pieces", "16"), door: +arg("--door", "3"), trap: +arg("--trap", "6"), depth: +arg("--depth", "20"),
   tDoor: [arg("--title-door", "石門機關：炮的殺法"), arg("--title-door-en", "Stone door: a cannon's mate")],
   dDoor: [arg("--desc-door", "門上刻著一座拋石車。紅方先走，{n} 步將死黑方，門就會開。提示：炮要隔一個子才打得到。"), arg("--desc-door-en", "A catapult is carved on the door. Red to move: checkmate in {n} and the door opens. Hint: a cannon needs one piece to jump over.")],
+  exclude: String(arg("--exclude", "")).split(",").filter(Boolean), minRed: arg("--min-red", ""), preferRed: arg("--prefer-red", ""),
   tTrap: [arg("--title-trap", "被暗匪逮住了"), arg("--title-trap-en", "Caught by a granary thief")],
   dTrap: [arg("--desc-trap", "暗匪把你按在糧袋堆旁：「解得開這局，就放你走。」紅方先走，{n} 步將死黑方。"), arg("--desc-trap-en", "The thief pins you by the grain sacks: \"Solve this and you can go.\" Red to move: checkmate in {n}.")],
 };
 const CHECK = process.argv.includes("--check"), GAMES = process.argv.includes("--allow-games");
+/* --exclude <題庫名,…>：別派已經用掉的題（從 --out 檔裡那幾段讀 id）不再收，九派之間不重複；--min-red C2＝紅方開局至少要有 2 個 C（只收雙炮題）；--prefer-red C2＝雙炮題排前面先取，不夠再補其他題 */
+const redHas = (x, spec) => { const m = spec.match(/^([KABNRCP])(\d+)$/); if (!m) throw new Error("--min-red 要寫成 C2 這種格式"); return board0(x).filter((p) => p === m[1]).length >= +m[2] };
+const minRedOk = (x) => !ARGS.minRed || redHas(x, ARGS.minRed), pref = (x) => (ARGS.preferRed && redHas(x, ARGS.preferRed) ? 0 : 1);
 const isGame = (x) => !x.src || !x.src.book || /特級大師|對局|實戰/.test(String(x.src.book));
 const sq = (u) => [C.parseSq(u.slice(0, 2)), C.parseSq(u.slice(2, 4))];
 const uci = (f, t) => C.iccs ? C.iccs(f, t) : "abcdefghi"[f % 9] + (9 - ((f / 9) | 0)) + "abcdefghi"[t % 9] + (9 - ((t / 9) | 0));
@@ -67,7 +71,12 @@ async function verify(E, x) {
 
 (async () => {
   const D = JSON.parse(fs.readFileSync(path.join(SITE, "data", "canju", "canju-set.json"), "utf8"));
-  const cand = D.items.filter((x) => x && x.side === "r" && ARGS.n.includes(x.n) && mated(x) && lastPiece(x) === ARGS.mate && board0(x).filter(Boolean).length <= ARGS.maxPieces && (GAMES || !isGame(x)))
+  /* --exclude 寫「檔案:題庫名」（例如 xiangqi-db/m/07z9m-maze.js:JH_MZ_POOL_CENTRAL），可以用逗號列好幾個 */
+  const EX = new Set();
+  for (const e of ARGS.exclude) { const i = e.lastIndexOf(":"), f = e.slice(0, i), nm = e.slice(i + 1), T = i > 0 && fs.existsSync(path.resolve(ROOT, f)) ? fs.readFileSync(path.resolve(ROOT, f), "utf8") : "";
+    const a = T.indexOf(`/* ==JH_MZ_POOL:${nm}== */`), b = T.indexOf(`/* ==/JH_MZ_POOL:${nm}== */`); if (a < 0 || b < a) { console.log(`✘ --exclude ${e}：找不到那個檔或那一段`); process.exit(1) } for (const m of T.slice(a, b).matchAll(/"id":"([^"]+)"/g)) EX.add(m[1]) }
+  if (EX.size) console.log(`排除別派已用的 ${EX.size} 題`);
+  const cand = D.items.filter((x) => x && !EX.has(x.id) && minRedOk(x) && x.side === "r" && ARGS.n.includes(x.n) && mated(x) && lastPiece(x) === ARGS.mate && board0(x).filter(Boolean).length <= ARGS.maxPieces && (GAMES || !isGame(x)))
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   console.log(`候選 ${cand.length} 題（${ARGS.n.join("、")} 步殺、${ARGS.mate} 收尾、子數 ≤ ${ARGS.maxPieces}、${GAMES ? "含實戰對局" : "只收古譜"}）`);
   const E = process.env.PIKAFISH && !CHECK ? await require("./zm-engine.js").engine() : null;
@@ -75,7 +84,7 @@ async function verify(E, x) {
   for (const x of cand) { const r = await verify(E, x); if (!r) continue; console.log((r.ok ? "✔ " : "✘ ") + x.id + " " + x.n + " 步" + (r.ok ? "" : "：" + r.why)); if (r.ok) ok.push(x) }
   if (E) { E.quit(); const o = {}; for (const k of Object.keys(ENG).sort()) o[k] = ENG[k]; fs.writeFileSync(ENG_F, JSON.stringify(o, null, 0).replace(/\},"/g, "},\n\"") + "\n") }
   /* 石門取步數多的、陷阱取剩下的；同一題不重複 */
-  const byN = [...ok].sort((a, b) => b.n - a.n || (a.id < b.id ? -1 : 1)), door = byN.slice(0, ARGS.door), used = new Set(door.map((x) => x.id)), trap = ok.filter((x) => !used.has(x.id)).slice(0, ARGS.trap);
+  const ok2 = [...ok].sort((a, b) => pref(a) - pref(b)), byN = [...ok2].sort((a, b) => pref(a) - pref(b) || b.n - a.n || (a.id < b.id ? -1 : 1)), door = byN.slice(0, ARGS.door), used = new Set(door.map((x) => x.id)), trap = ok2.filter((x) => !used.has(x.id)).slice(0, ARGS.trap);
   if (door.length < ARGS.door || trap.length < ARGS.trap) { console.log(`✘ 題目不夠：石門 ${door.length}／${ARGS.door}、陷阱 ${trap.length}／${ARGS.trap}`); process.exit(1) }
   const fill = (t, n) => t.split("{n}").join(String(n));
   const item = (x, T, Dd) => ({ id: x.id, src: { book: x.src.book, title: x.src.title || "" }, zh: [T[0], fill(Dd[0], x.n)], en: [T[1], fill(Dd[1], x.n)], fen: String(x.fen).split(" ")[0], line: x.line });
