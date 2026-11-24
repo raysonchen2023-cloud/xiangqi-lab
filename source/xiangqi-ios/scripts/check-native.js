@@ -116,9 +116,25 @@ check(tk.includes("challenges.removeValue(forKey: c)"), "考題查過就作廢�
 const hw = body(srvCode, "private func handleWhoami(") || "";
 check(hw.includes("takeAnswer(for: challenge)") && hw.includes("let a = answer"), "whoami 只回這次考題的答案");
 const est = body(srvCode, "private func establishNow()") || "";
-/* 11/23 iOS 金絲雀：只數 verifyNow( 的次數，寫成「true || verifyNow(…)」就繞過了。每一個 verifyNow( 都要是「if verifyNow(timeout: 秒) {」，回 verified 的次數不能比它多 */
-const vIf = (est.match(/if verifyNow\(timeout: [\d.]+\) \{/g) || []).length;
-check(count(est, "verifyNow(") >= 2 && vIf === count(est, "verifyNow(") && count(est, "return .verified") >= 1 && count(est, "return .verified") <= vIf, "establish 一定經過 verifyNow 才回 verified");
+/* 11/23 iOS 金絲雀：只數 verifyNow( 的次數，寫成「true || verifyNow(…)」就繞過了。
+   #127 審查（Windows Claude 2，新代理人 23 種改法）：只數次數也擋不住「return .verified 搬到 if 外面、else、guard、case」和「在 establishNow 裡另宣告一個 verifyNow 蓋掉」。改成比對結構：
+   ① verifyNow 這個字（\b 邊界，中間夾空白、註解都算）只能以「if verifyNow(timeout: 秒) {」出現，至少 2 次；
+   ② 每個這種 if 區塊裡都要有 return .verified，區塊後面不能接 else；
+   ③ 把這些 if 區塊整段拿掉後，establishNow 剩下的文字不能再有 .verified；
+   ④ establishNow 裡不能宣告 func verifyNow，整份伺服器程式也只能有一個 func verifyNow */
+const vBlocks = [], vIfRe = /\bif\s+verifyNow\(timeout:\s*[\d.]+\)\s*\{/g;
+for (let m; (m = vIfRe.exec(est));) {
+  const open = m.index + m[0].length - 1; let d = 0, close = -1;
+  for (let j = open; j < est.length; j++) { if (est[j] === "{") d++; else if (est[j] === "}") { d--; if (d === 0) { close = j; break } } }
+  vBlocks.push({ start: m.index, end: close < 0 ? est.length : close + 1, inner: close < 0 ? "" : est.slice(open + 1, close) });
+}
+const vRest = vBlocks.reduceRight((t, b) => t.slice(0, b.start) + " " + t.slice(b.end), est);
+const vTok = (est.match(/\bverifyNow\b/g) || []).length;
+check(vBlocks.length >= 2 && vTok === vBlocks.length
+  && vBlocks.every((b) => /\breturn\s+\.verified\b/.test(b.inner) && !/^\s*else\b/.test(est.slice(b.end)))
+  && !/\.verified\b/.test(vRest)
+  && !/\bfunc\s+verifyNow\b/.test(est) && (srvCode.match(/\bfunc\s+verifyNow\b/g) || []).length === 1,
+  "establish 一定經過 verifyNow 才回 verified");
 check(!/return \.verified/.test(srvCode.replace(est, "")), "verified 只會從 establishNow 回");
 const sl = body(srvCode, "private func startListening(") || "";
 check(/if exact == \.inUse \{\s*return \.inUse\s*\}/.test(sl), "位址被占用時不改綁萬用位址");
