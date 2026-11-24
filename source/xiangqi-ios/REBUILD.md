@@ -147,7 +147,7 @@ node scripts/canary-native.js --out <收據.json>
 
 - `check-native.js` 是原生碼的原始碼比對檢查：兩份 Swift 要一樣、埠號 47821、本機伺服器的一次性考題驗證、驗證通過才載入畫面、外掛不連網、不讀玩家 ID 等等。
 - `canary-native.js` 把 `source/xiangqi-ios`（不含 `node_modules`、`build`、`Pods`、`DerivedData`、`ios/App/App/public`）和 check-native 會讀的兩支網頁檔（`07gc-native.js`、`01-board.js`）整份複製到暫存資料夾；有 `node_modules/@capacitor/ios` 的話，另外只複製 check-native 讀的 `CAPBridgeViewController.swift`、`CapacitorBridge.swift`。在副本上一次改壞一處，再用複製過去、內容一模一樣的 `check-native.js` 檢查。
-  - 一共 228 種壞樣本，每一種都要被判失敗（結束代碼 1），而且錯誤裡要有那一條判斷的字。
+  - 一共 246 種壞樣本，每一種都要被判失敗（結束代碼 1），而且錯誤裡要有那一條判斷的字。
   - **每個子條件、每個字都有自己的壞樣本**（#135 審查）：一條判斷裡用 `&&` 接起來的每一段、正規式裡用 `|` 列的每一個字，各做一個「只有它抓得到」的壞樣本；控制字元照 canary-www 的做法，30 個字元各插一次。
   - 乾淨的副本要全過。
   - 會改到兩份 Swift 的壞樣本，`native/ios` 和 `ios/App/App` 兩份一起改，只讓要測的那一條判斷抓得到。
@@ -157,12 +157,17 @@ node scripts/canary-native.js --out <收據.json>
   - 2：測試不成立，例如乾淨的副本就沒過、壞樣本做不出來、參數錯。
 - 自我測試 `test-canary-native.cjs`：
   - 壞樣本的名稱清單寫死在測試裡，少一種、多一種都紅；
-  - 把 `check-native.js` 的每一條判斷逐一改成恆真，對應的壞樣本都要回 4（確切 135 條）；
-  - **子條件改壞清單**（寫死 135 條）：每一條只拿掉一個子條件或正規式裡的一個字，指定的壞樣本要回 4；
+  - 把 `check-native.js` 的每一條判斷逐一改成恆真，對應的壞樣本都要回 4（確切 153 條）；
+  - **子條件改壞清單**（寫死 142 條）：每一條只拿掉一個子條件或正規式裡的一個字，指定的壞樣本要回 4；
   - 訊息是組出來的幾條（兩份相同、括號沒收尾、控制字元、外掛不連網、install-native、establish 退回舊寫法）另外測。
 - **沒辦法單獨測的子條件**（跟別條重疊，或在程式碼裡出不來），寫在自我測試的 `REDUNDANT` 清單和原因裡，例如：
   - 網路判斷裡的 `https?://`：check-native 先用 `swiftCode` 把字串換成空白、`//` 又是註解開頭，程式碼裡出不來；
   - 「establishNow 裡不能宣告 func verifyNow」：任何宣告都會多一個 `verifyNow` 字，先被「verifyNow 字數＝if 區塊數」抓到。
 - 要有 `node_modules/@capacitor/ios` 或外掛已裝進 Xcode 專案才會跑的判斷（Capacitor 的 viewDidLoad、loadWebView、capacitorDidLoad、registerPluginInstance；packageClassList 列了 Game Center／小工具、Info.plist 的網址、pbxproj 登記了卻缺檔、外掛兩份相同）：CI 和一般的倉庫副本裡只會出警告，金絲雀在副本裡做一份合格的假 Capacitor 檔、假的「已裝進 Xcode」狀態，再各弄壞一處來測（#135 複審④）。
 - 2026-11-23 做金絲雀時發現一個缺口：check-native 判斷「establish 一定經過 verifyNow」原本只數 `verifyNow(` 出現幾次，寫成 `true || verifyNow(…)` 就繞過了。#127 改成比對結構：`verifyNow` 只能以 `if verifyNow(timeout: 秒) {` 出現至少兩次、每個區塊裡要 `return .verified` 而且不接 `else`、合格區塊以外整份不能有 `.verified`、整份只有一個 `func verifyNow`。
-- 還沒擋到：`verifyNow` 本體直接 `return true`（要先改 check-native，另開依序合併的 PR）。
+- #142 起，check-native 把驗證用到的四段程式（`verifyNow`、`issueChallenge`、`randomHex`、`XQFlag`）去掉註解、壓掉空白後比 sha256 前 16 碼（`PINS`），簽章在原文和程式碼裡都要剛好一處、不能在 `#if` 裡、不准 `extension XQLoopbackServer`、四個名字只宣告一次。`verifyNow` 本體直接 `return true`、三元式、死碼、網址藏註解、XQFlag 恆真、考題固定答案這些繞法，金絲雀各有一個壞樣本（`vn…`）。**要正當修改這四段時，要在計分規則 PR 裡一起更新 `PINS`。**
+- 還沒擋到（另開工單）：`verifySession` 換成假的 URLProtocol、全域覆寫 `==`、`origin` 改指向、`dropChallenge` 不作廢、whoami 不看 `originOK`。
+- 子程序時限：金絲雀叫 `check-native.js` 最多 120 秒，卡住判「測試不成立」（回 2）；`XQ_CANARY_SUB_MS` 只給自我測試縮短用。
+- 收據另外記 `origin/main` 上兩支工具的雜湊（`mainToolPins`）和提交（`mainCommit`），拿不到就是 null，給之後 CI 的工具鎖定核對。
+- 不認得的參數（不是 `--` 開頭、也不是 `--only`／`--out` 後面的值）回 2，不再默默忽略。
+- **Windows 取出時要用 LF**（`git config core.autocrlf false` 再取出）。金絲雀改檔前會先把 CRLF 換成 LF，但其他工具不一定會；用 autocrlf 取出的副本，有些比對會對不上。CI 和 iMac 是 LF，不受影響。
