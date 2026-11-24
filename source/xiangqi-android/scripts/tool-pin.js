@@ -17,7 +17,7 @@ const TOOL_FILES = {
   "P0-IMG": ["check-aab-assets.js", "bundle-home-assets.js", "tool-pin.js"],
   "P0-UPD": ["check-upgrade.js", "apk-bind.js", "cdp.js", "device-guard.js", "tool-pin.js"],
   "P0-3D": ["check-3d.js", "apk-bind.js", "cdp.js", "device-guard.js", "repo-pin.js", "tool-pin.js"],
-  "AAB-DIFF": ["aab-diff.js", "tool-pin.js"],   /* W91（11/24）：新舊 AAB 產物比對接進送審閘門 */
+  "AAB-DIFF": ["aab-diff.js", "bundle-home-assets.js", "tool-pin.js"],   /* W91（11/24）：新舊 AAB 產物比對接進送審閘門；#102 第十輪起首頁硬規則用 bundle-home-assets.js 的 required 名單，一起鎖 */
 };
 const HEX64 = /^[0-9a-f]{64}$/;
 

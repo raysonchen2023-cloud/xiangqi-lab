@@ -143,6 +143,10 @@ const NEW_OK = /^(base\/assets\/public\/(data|engine|pikafish-src|licenses)\/|ba
 /* #102 審查②：證據圖在 data/docs/evidence/ 子資料夾裡、檔名大小寫不同也要抓；審查建議⑥：AGENTS.md、CLAUDE.md、releases/ 不論在哪一層都不該進包 */
 /* #102 第九輪複審（高）：首頁素材（data/homemap/ 底下）比照金鑰檔：拿掉、大幅縮小一律紅，任何放行參數都不放過 */
 const HOME_RE = /^base\/assets\/public\/data\/homemap\//;
+/* #102 第十輪複審（高）：只認 homemap/ 漏了 P0-IMG 首頁離線必要素材名單上的另外 52 張（各朝代的 icons 三張、canying 一張）。
+   改成 homemap/ 底下，或在 bundle-home-assets.js 的 required 名單上（跟 P0-IMG 同一份；工具鎖定 AAB-DIFF 也鎖這支，名單被改小會被擋） */
+const HOME_REQUIRED = new Set(require("./bundle-home-assets.js").required.map((r) => "base/assets/public/data/" + r));
+const isHome = (n) => HOME_RE.test(n) || HOME_REQUIRED.has(n);
 const NEW_SUSPECT =/(^|\/)data\/docs\/(verification-log[^/]*|evidence([^/]*|\/.*))$|(^|\/)(AGENTS|CLAUDE)\.md$|(^|\/)releases\//i;
 const TOOL_PINS = require("./tool-pin.js").pinsFor("AAB-DIFF");   /* 啟動就先算：記的是實際被載入、跑這一次的那一份 */
 
@@ -158,13 +162,13 @@ function diffIndex(A, B, opts = {}) {
     ta += a.size; const b = B.get(n);
     /* #102 第九輪複審（高）：首頁素材比照金鑰檔，拿掉一律紅，--expect-removed 放不過（原本只靠金絲雀，而金絲雀只測排序第一的那張，窄的參數就避開了）。
        舊版帶著、新版拿掉的說明文件類是好事：不算紅，列在「照規則不算」給人看 */
-    if (!b) { info.removed++; if (HOME_RE.test(n)) red.push({ f: n, why: "新版少了首頁素材（舊版 " + a.size + " 位元組；首頁素材任何放行參數都不放過）" }); else if (NEW_SUSPECT.test(n)) noted.push({ f: n, why: "拿掉了不該進安裝包的說明文件或驗證紀錄（舊版帶著）" }); else if (opts.expectRemoved && opts.expectRemoved.test(n)) allowed.push({ f: n, crc: "removed:" + (a.crc >>> 0).toString(16), why: "預期拿掉（--expect-removed）" }); else red.push({ f: n, why: "新版少了這個檔（舊版 " + a.size + " 位元組）" }); continue }
+    if (!b) { info.removed++; if (isHome(n)) red.push({ f: n, why: "新版少了首頁素材（舊版 " + a.size + " 位元組；首頁素材任何放行參數都不放過）" }); else if (NEW_SUSPECT.test(n)) noted.push({ f: n, why: "拿掉了不該進安裝包的說明文件或驗證紀錄（舊版帶著）" }); else if (opts.expectRemoved && opts.expectRemoved.test(n)) allowed.push({ f: n, crc: "removed:" + (a.crc >>> 0).toString(16), why: "預期拿掉（--expect-removed）" }); else red.push({ f: n, why: "新版少了這個檔（舊版 " + a.size + " 位元組）" }); continue }
     if (a.crc === b.crc && a.size === b.size) { info.same++; continue }
     info.changed++;
     if (a.size > 0 && b.size === 0) red.push({ f: n, why: "原本有內容（" + a.size + " 位元組），新版變成 0 位元組" });
     else if (!SHRINK_SKIP.test(n) && a.size >= (CODE_RE.test(n) || MEDIA_RE.test(n) ? SHRINK_MIN_CODE : SHRINK_MIN) && b.size < a.size * SHRINK_CODE) {   /* 第三輪審查：套到整包。第四輪審查：只看比例，不用「小於 1 KB」的絕對門檻（1098→1000 位元組原本誤報紅） */
       const pct = Math.round(b.size / a.size * 100), hard = b.size < a.size * SHRINK_RED || CODE_RE.test(n);
-      if (HOME_RE.test(n)) red.push({ f: n, why: "首頁素材大幅縮小（" + a.size + " → " + b.size + " 位元組，剩 " + pct + "%），可能被換成壞圖或 LFS 指標檔（首頁素材任何放行參數都不放過）" });
+      if (isHome(n)) red.push({ f: n, why: "首頁素材大幅縮小（" + a.size + " → " + b.size + " 位元組，剩 " + pct + "%），可能被換成壞圖或 LFS 指標檔（首頁素材任何放行參數都不放過）" });
       else if (opts.expectShrunk && opts.expectShrunk.test(n)) allowed.push({ f: n, crc: (b.crc >>> 0).toString(16) + ":" + b.size, why: "預期大幅縮小（--expect-shrunk）：" + a.size + " → " + b.size + " 位元組（" + pct + "%）" });
       else if (hard) red.push({ f: n, why: "大幅縮小（" + a.size + " → " + b.size + " 位元組，剩 " + pct + "%），可能被截斷、換成壞圖或指標檔" });
       else yellow.push({ f: n, why: "縮小到 " + pct + "%（" + a.size + " → " + b.size + " 位元組），請人確認" }) }
@@ -235,7 +239,7 @@ function canaryRun(A, B, opts = {}) {
      shrink：把一張首頁素材縮成 131 位元組，必須紅；debug：多帶一個新的 .map，必須紅。--expect-shrunk／--expect-added 只要蓋到首頁素材或 debug 檔，金絲雀就失靈、報告 pass:false */
   /* #102 第九輪：首頁素材改由硬規則擋（HOME_RE，任何放行參數都不放過），上面的 home 金絲雀證明那條硬規則還活著。
      shrink、media 改挑「非首頁」的素材，測的是放太寬的參數：--expect-shrunk／--expect-removed 只要蓋到一般素材（例如寫成 .、data/），就失靈 */
-  const pickMedia = () => pick(/^base\/assets\/public\/data\/(?!homemap\/).+\.(webp|png|jpe?g)$/);
+  const pickMedia = () => [...B.keys()].filter((n) => A.has(n) && /^base\/assets\/public\/data\/.+\.(webp|png|jpe?g)$/.test(n) && !isHome(n) && B.get(n).size > 0).sort()[0] || null;   /* #102 第十輪：避開整份首頁必要素材名單，不只 homemap/ */
   run("shrink", pickMedia(), (M, f) => M.set(f, { size: 131, csize: 131, crc: 0x7f13ab01 }), "red");
   run("media", pickMedia(), (M, f) => M.delete(f), "red");
   run("debug", fresh("base/assets/public/canary-debug-", ".js.map"), (M, f) => M.set(f, { size: 5120, csize: 1400, crc: 0x3c3c3c3c }), "red");

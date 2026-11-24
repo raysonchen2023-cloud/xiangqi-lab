@@ -459,6 +459,27 @@ test("#102 第九輪：首頁素材比照金鑰檔——拿掉、大幅縮小一
   const r3 = AD.diffIndex(A, idx(park), { expectRemoved: new RegExp("data/park/a[.]webp$") });
   assert.equal(r3.red.length, 0); assert.ok(r3.allowed.some((x) => x.f === P + "data/park/a.webp"), "非首頁素材照舊可以放行");
 });
+test("#102 第十輪：首頁硬規則用 P0-IMG 的首頁離線必要素材名單（bundle-home-assets.js required）——homemap 以外的 icons、canying 拿掉或縮小也放不過；名單外的 icons 照舊可以放行", () => {
+  const REQ = require(path.join(ROOT, "xiangqi-android/scripts/bundle-home-assets.js")).required;
+  assert.ok(REQ.includes("icons/qin/feedback.webp") && REQ.includes("canying/ming.webp"), "名單上有各朝代的 icons、canying");
+  assert.equal(REQ.filter((r) => !r.startsWith("homemap/")).length, 52, "homemap 以外 52 張（13 朝代 × 4）");
+  const H3 = Object.assign({}, W91, { [P + "data/icons/qin/feedback.webp"]: Buffer.alloc(4000, 1), [P + "data/canying/ming.webp"]: Buffer.alloc(4000, 2), [P + "data/icons/qin/other.webp"]: Buffer.alloc(4000, 3) }), A = idx(H3);
+  const lost = Object.assign({}, H3); delete lost[P + "data/icons/qin/feedback.webp"];
+  const r1 = AD.diffIndex(A, idx(lost), { expectRemoved: new RegExp("icons/qin/feedback[.]webp$") });
+  assert.ok(r1.red.some((x) => x.f === P + "data/icons/qin/feedback.webp" && /首頁素材任何放行參數都不放過/.test(x.why)), "名單上的 icons 拿掉，窄參數放不過"); assert.equal(r1.allowed.length, 0);
+  const sm = Object.assign({}, H3, { [P + "data/canying/ming.webp"]: "version https://git-lfs.github.com/spec/v1" });
+  const r2 = AD.diffIndex(A, idx(sm), { expectShrunk: new RegExp("canying/") });
+  assert.ok(r2.red.some((x) => x.f === P + "data/canying/ming.webp" && /首頁素材大幅縮小/.test(x.why)), "名單上的 canying 換成指標檔，窄參數放不過");
+  const o3 = Object.assign({}, H3); delete o3[P + "data/icons/qin/other.webp"];
+  const r3 = AD.diffIndex(A, idx(o3), { expectRemoved: new RegExp("icons/qin/other[.]webp$") });
+  assert.equal(r3.red.length, 0, "名單外的 icons 照舊可以放行"); assert.ok(r3.allowed.some((x) => x.f === P + "data/icons/qin/other.webp"));
+  const c = AD.canaryRun(A, A);
+  assert.ok(![c.media.f, c.shrink.f].some((f) => REQ.includes(String(f).replace(P + "data/", ""))), "media、shrink 金絲雀避開整份名單：" + c.media.f);
+});
+test("#102 第十輪：工具鎖定 AAB-DIFF 也鎖 bundle-home-assets.js（首頁硬規則的名單被改小會被擋）", () => {
+  const TP = require(path.join(ROOT, "xiangqi-android/scripts/tool-pin.js")), pins = TP.pinsFor("AAB-DIFF");
+  assert.ok(Object.keys(pins).some((k) => /bundle-home-assets\.js$/.test(k)), JSON.stringify(Object.keys(pins)));
+});
 
 test("W91 金絲雀：從候選包自己做四種壞樣本（刪首頁素材、js 縮成 0、多帶 .jks、多一個沒確認的 AGENTS.md），同一套參數判斷；參數放太寬、包裡找不到檔就判失靈", () => {
   const A = idx(W91), B = idx(W91);
@@ -521,7 +542,7 @@ test("#102 審查①：舊版帶著 AGENTS.md、新版正確拿掉（照參數�
 });
 
 test("#102 審查②＋建議⑥＋第九輪：證據資料夾 data/docs/evidence/、檔名大小寫不同、不論在哪一層的 AGENTS.md、CLAUDE.md、releases/ 都紅（第九輪起從黃改紅）", () => {
-  const A = idx(W91), extra = ["data/docs/evidence/01_a.png", "data/docs/Verification-Log.txt", "data/docs/EVIDENCE.md", "data/AGENTS.md", "data/x/releases/a.md"];
+  const A = idx(W91), extra = ["data/docs/evidence/01_a.png", "data/docs/Verification-Log.txt", "data/docs/EVIDENCE.md", "data/AGENTS.md", "data/x/releases/a.md", "data/CLAUDE.md", "data/x/claude.md"];   /* #102 第十輪：補 CLAUDE.md（大小寫不分） */
   const B0 = Object.assign({}, W91); for (const f of extra) B0[P + f] = "z".repeat(200); B0["base/root/AGENTS.md"] = "z".repeat(200);
   const y = new Set(AD.diffIndex(A, idx(B0)).red.map((x) => x.f));
   for (const f of extra) assert.ok(y.has(P + f), f + " 要紅");
@@ -584,9 +605,11 @@ test("#102 第三輪：prepareDiff（main 的串接）——舊＝--old-aab、�
   assert.deepEqual([re.oldCode, re.newCode, re.oldSha256, re.newSha256], [26112301, 26112401, sh(old), sh(neu)], "版本碼、雜湊都照兩個檔實際的");
   assert.equal(re.yellow.length, 1, "多一個 NOTES-dev.md：黃項（沒給 --ack；第九輪起 AGENTS.md 是紅，改用一般說明檔）");
   const ackOfReport = re.yellow[0].ack;
-  re = G.prepareDiff({ oldPath: old, aabPath: neu, reports: [rep({ acked: [ackOfReport], args: { ack: "x.json" } })] });
-  assert.equal(re.yellow.length, 1, "報告自己寫的確認清單不算：還是黃項");
+  /* #102 第十輪：報告的 acked 用真報告的形狀（物件陣列 {f, why, ack}），args.ack 指到一份真的、含確認碼的清單檔——原本用字串陣列和不存在的檔名，閘門真的去讀報告也不會對上，守不住 */
   const ackF = path.join(TMP, "pd-ack.json"); fs.writeFileSync(ackF, JSON.stringify([ackOfReport]));
+  const y0 = re.yellow[0];
+  re = G.prepareDiff({ oldPath: old, aabPath: neu, reports: [rep({ acked: [{ f: y0.f, why: y0.why, ack: ackOfReport }], args: { ack: ackF } })] });
+  assert.equal(re.yellow.length, 1, "報告自己寫的確認清單（真報告形狀、清單檔真的存在）不算：還是黃項");
   re = G.prepareDiff({ oldPath: old, aabPath: neu, ackPath: ackF, reports: [rep()] }); assert.equal(re.yellow.length, 0, "閘門收的 --ack 才算");
   fs.writeFileSync(ackF, "{}"); assert.throws(() => G.prepareDiff({ oldPath: old, aabPath: neu, ackPath: ackF, reports: [rep()] }), /--ack/);
   assert.throws(() => G.prepareDiff({ oldPath: path.join(TMP, "nope.zip"), aabPath: neu, reports: [rep()] }), /找不到 --old-aab/);
