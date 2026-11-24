@@ -500,10 +500,35 @@ function innSheet(v){setTimeout(innDrop,1200);const I=xpInfo(),Sx=jSecrets(),nx=
 /* 意見回饋 327：石桌往事的棋（雲河棋路、驛站、公園）自己留一盤，跟朝代擂台、挑戰電腦互不干擾 */
 /* 意見回饋 588（開發者：路人看起來都是 Lv1，要照修為調整才有挑戰性）：每 3 級修為升一級（Lv3＝第 2 級電腦，最高第 8 級），再照最近輸贏微調：贏了下一位強一點、輸了弱一點（最多上下 2 級） */
 const parkLv=()=>Math.max(1,Math.min(8,1+Math.floor(xpInfo().L/3)+(store.get("parkAdj",0)||0)));
-function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("gx:")){const g=typeof gxGet==="function"?gxGet(String(j).slice(3)):null;return"幻譜星門・"+(g?g.t:"第十四顆")}if(String(j).startsWith("bh:"))return"黑洞・星樞棋局";if(String(j).startsWith("bt:")){const c=typeof battleCardJ==="function"?battleCardJ(j):null;return"古戰場・"+(c?c.name:"讓子對弈")}if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j)||(typeof igAct==="function"?igAct(j):null);return x?"驛站・"+x.name:"驛站"}
+function jName(j){if(!j)return"石桌往事";if(j==="park")return"園子";if(String(j).startsWith("gx:")){const g=typeof gxGet==="function"?gxGet(String(j).slice(3)):null;return"幻譜星門・"+(g?g.t:"第十四顆")}if(String(j).startsWith("bh:"))return"黑洞・星樞棋局";if(String(j).startsWith("bt:")){const c=typeof battleCardJ==="function"?battleCardJ(j):null;return"古戰場・"+(c?c.name:"讓子對弈")}if(String(j).startsWith("char:")){const c=JCHAR[String(j).slice(5)];return c?"大廳・"+c.name:"大廳"}if(/^inn:zm_/.test(String(j))&&typeof zmAct==="function"&&zmAct(j)){const m=OSC.mst(j),S=typeof oscSchE==="function"?oscSchE(m.sid):null,L=typeof oscL==="function"?oscL:(a=>a);return L((S?S.nm:"挑戰")+"掌門・"+m.nm,(S?S.nm+" master":"School master")+" · "+(m.en||m.nm))}if(String(j).startsWith("inn:")){const x=INN.concat(SECRETS).find(z=>"inn:"+z.id===j)||(typeof igAct==="function"?igAct(j):null);return x?"驛站・"+x.name:"驛站"}
   const s=jFindStage(j);return s?(s.book===2?"紙譜新局・":ROAD_NAME+"・")+s.name:ROAD_NAME}
-const jBack=j=>String(j||"").startsWith("gx:")?"#/adventure":String(j||"").startsWith("gxd:")?"#/guanxing":String(j||"").startsWith("bh:")?(typeof gxtBhBack==="function"?gxtBhBack(j):"#/adventure"):String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();   /* 11/16 開發者：gxd:＝觀星臺的今日異象、自由擺陣（07gxd-daily.js），返回鈕回觀星臺（jPlace 叫「觀星臺」） */
-const jPlace=j=>String(j||"").startsWith("gx:")?"幻譜星門":String(j||"").startsWith("gxd:")?"觀星臺":String(j||"").startsWith("bh:")?"星槎":String(j||"").startsWith("bt:")?"古戰場":j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
+/* W80 開局的來處（開發者 11/23：「剛剛跟門下棋友對戰，按返回後，不是回到門派，請修正類似的出入口問題」）：
+   門派前院的門下棋友、挑戰掌門、十州踢館、屏風馬守中宮，都借用園子（park）、驛站（inn:）或自己的旅程代號開局，
+   返回目的地原本寫死在 jBack／jPlace（園子回渡口、驛站回驛站、jh:guard: 落到書架），所以從門派進去，返回卻回到別處。
+   做法：開局前呼叫 jRetSet(旅程代號, 來處網址, 來處名稱)，jStart 開頭核對（jRetTake）：
+   - 剛剛為這個代號登記過的＝保留；
+   - 在對局頁按「再下一盤」之類、代號跟紀錄一樣的＝保留（jAgain 不經過 jStart，這裡是保險）；
+   - 其他（從渡口、驛站等別處開局）一律清掉，所以平常去園子、驛站下棋照舊回原處。
+   jBack／jPlace／對局頁頂端返回鍵（08b）／園子結算的「‹ 回渡口」（jParkBackBtn）都先看 jRetOf；12 小時後紀錄失效。
+   iMac Claude 1 審查（#76）：jBack／jPlace 不改名、不包一層（test-fb897 逐字比對原本的開頭），來處判斷插在園子、驛站分支前面。 */
+let JRET_ARM=null;
+/* W81（#76 第五輪審查建議 2，開發者 11/23「#76的兩個問題請找人來修」）：來處紀錄原本只有一格（"jRet"），
+   先開掌門局沒下完、再到門內按門下棋友時，jRetSet 在 jStart 跳「繼續那一盤／放棄，開新的」之前就把掌門局的來處蓋掉，
+   選「⏳ 繼續那一盤」回到掌門局，結算就寫「回驛站」。改成依開局代號分開存（"jRets"＝{代號:紀錄}），每一盤記自己的來處；
+   jRetTake 只清這個代號那一筆；選「放棄，開新的」時，被放棄那一盤的紀錄一起清掉。舊版那一格讀不到就當沒有。12 小時後失效 */
+function jRetAll(){try{const m=store.get("jRets",null);return m&&typeof m==="object"&&!Array.isArray(m)?m:{}}catch(e){return{}}}
+function jRetSet(j,back,place){try{const m=jRetAll(),now=Date.now();for(const k of Object.keys(m))if(!m[k]||!(now-m[k].t<12*3600e3))delete m[k];
+  m[String(j)]={j:String(j),back:String(back),place:String(place||"").slice(0,80),t:now};store.set("jRets",m)}catch(e){}JRET_ARM=String(j)}
+function jRetDrop(j){try{const m=jRetAll();if(m[String(j)]){delete m[String(j)];store.set("jRets",m)}}catch(e){}}
+/* #76 第二輪審查：名稱在顯示時用網址當場算（英文派名不截斷、中途換語言也跟著變）；算不出來才用開局當下存的 */
+function jRetName(r){if(!r)return"";try{const n=typeof jhRetPlace==="function"?jhRetPlace(r.back):"";if(n)return n}catch(e){}return r.place||""}
+function jRetOf(j){try{const r=jRetAll()[String(j)];if(r&&r.j===String(j)&&Date.now()-r.t<12*3600e3&&/^#\//.test(r.back))return r}catch(e){}return null}
+function jRetTake(id){const a=JRET_ARM;JRET_ARM=null;try{if(!jRetAll()[String(id)])return;if(a===String(id))return;
+  if(typeof navKey==="function"&&navKey(location.hash)==="/journey/play")return;jRetDrop(id)}catch(e){}}
+/* 園子結算視窗的返回鈕（08b）：有來處就「‹ 回中炮門」回門內頁，沒有就照舊「‹ 回渡口」。upTo＝回那一層 */
+function jParkBackBtn(){const r=jRetOf("park");return r?["‹ 回"+(jRetName(r)||"門派"),()=>upTo(r.back)]:["‹ 回渡口",()=>upTo("#/port")]}
+const jBack=j=>String(j||"").startsWith("gx:")?"#/adventure":String(j||"").startsWith("gxd:")?"#/guanxing":String(j||"").startsWith("bh:")?(typeof gxtBhBack==="function"?gxtBhBack(j):"#/adventure"):String(j||"").startsWith("bt:")?"#/battle":String(j||"").startsWith("char:")?"#/lobby":jRetOf(j)?jRetOf(j).back:j==="park"?"#/port":String(j||"").startsWith("inn:")?"#/journey/inn":(()=>{const R=jRunGet(j);if(R&&!R.done)return"#/journey/"+j;const s=jFindStage(j);return s?jChapterHref(s):"#/shelf/1"})();   /* 11/16 開發者：gxd:＝觀星臺的今日異象、自由擺陣（07gxd-daily.js），返回鈕回觀星臺（jPlace 叫「觀星臺」） */
+const jPlace=j=>String(j||"").startsWith("gx:")?"幻譜星門":String(j||"").startsWith("gxd:")?"觀星臺":String(j||"").startsWith("bh:")?"星槎":String(j||"").startsWith("bt:")?"古戰場":jRetName(jRetOf(j))?jRetName(jRetOf(j)):j==="park"?"渡口":String(j||"").startsWith("inn:")?"驛站":String(j||"").startsWith("char:")?"大廳":(()=>{const s=jFindStage(j);return s?"第"+CNUM(s.n)+"回":"石桌往事"})();   /* 意見回饋 735：章回棋路併進書的目錄，回到書 */
 /* 11/17 Windows 測試員 D P3-2：開新局時「石桌往事還有一盤沒下完」也用在觀星臺（今日異象、自由擺陣 gxd:）、星門圍城／黑洞（bh:）、幻譜星門（gx:）、古戰場（bt:）的局——
    這些局跟石桌往事共用同一格（/play 的 journey），一次只留一盤是真的，但不是石桌往事的局就不要寫石桌往事。字照「手上那一盤」是哪一類換。
    回合數：原本 Math.ceil(手數/2)，紅黑各走一步（2 手）還寫「第 1 回合」；改成「正要下的那一步在第幾回合」＝Math.floor(手數/2)+1（紅先），
@@ -514,10 +539,11 @@ function jSlotMsg(j,n,nm){j=String(j||"");const r=jRnd(n),q="「"+(nm||"這盤�
   if(!k)return{em:"🪨",h:"石桌往事還有一盤沒下完",p:q+"石桌往事一次只留一盤，開新的，那一盤就不留了。"};
   return{em:/^bt:/.test(j)?"⚔":"🌌",h:k+"還有一盤沒下完",p:q+"這一盤跟新的這一局用同一張棋桌，一次只留一盤；開新的，那一盤就不留了。"}}
 /* 意見回饋 413：石桌往事只留一盤（雲河棋路、驛站、園子、守關共用一格）。要開的跟手上那盤不是同一個對手時先問，不會悄悄蓋掉；同一個對手就接著下；force＝重下這一盤 */
-async function jStart(id,b,go,force){let st;try{st=await api("/play/state")}catch(e){toast(e.message);return}
+async function jStart(id,b,go,force){jRetTake(id);let st;try{st=await api("/play/state")}catch(e){toast(e.message);return}
   const cur=st.journey&&!st.result&&st.moves&&st.moves.length?{journey:st.journey,n:st.moves.length}:null,o=(st.others||[]).find(z=>z.kind==="journey");let g=cur||(o?{journey:o.journey,n:o.n}:null);
   if(g&&typeof rsFinGame==="function"&&rsFinGame(rsJId(st)))g=null;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：「撐過 N 步」已經過關的那盤，不問、直接開新的 */
-  const fresh=async()=>{try{store.set("cpuRanked",false);const ez=id==="park"&&typeof qqParkEasy==="function"?qqParkEasy():null;   /* 贖回攔路棋客押走的東西：那一盤低一級（07h-qqev.js） */const s=await api("/play/new",{...b,dx:typeof diffDx==="function"?diffDx():0,...(ez||{})});if(id==="park")parkNpcNew(s.id,ez?ez.level:b.level);   /* 意見回饋 675：照航行難度加減幾段（園子、驛站、秘境棋友、章回棋路對弈關都從這裡開） */store.set("jPending",id==="park"?null:{id,game:s.id});go(true)}catch(e){toast(e.message)}};
+  const fresh=async()=>{try{if(g&&String(g.journey)!==String(id))jRetDrop(g.journey);   /* W81：開新局會蓋掉手上那一盤（共用同一張棋桌），那一盤的來處紀錄一起清掉 */
+    store.set("cpuRanked",false);const ez=id==="park"&&typeof qqParkEasy==="function"?qqParkEasy():null;   /* 贖回攔路棋客押走的東西：那一盤低一級（07h-qqev.js） */const s=await api("/play/new",{...b,dx:typeof diffDx==="function"?diffDx():0,...(ez||{})});if(id==="park")parkNpcNew(s.id,ez?ez.level:b.level);   /* 意見回饋 675：照航行難度加減幾段（園子、驛站、秘境棋友、章回棋路對弈關都從這裡開） */store.set("jPending",id==="park"?null:{id,game:s.id});go(true)}catch(e){toast(e.message)}};
   if(force||!g)return fresh();
   if(g.journey===id)return go(false);
   {const M=jSlotMsg(g.journey,g.n,jName(g.journey));modal(`<div class="em">${M.em}</div><h2>${esc(M.h)}</h2><p class="muted">${esc(M.p)}</p>`,

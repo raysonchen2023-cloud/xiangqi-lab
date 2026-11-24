@@ -13,48 +13,54 @@ const { staleVsCdn } = require(path.join(AND, "check-aab-assets.js"));
 const { cdnStale } = require(path.join(AND, "build-variant.js"));
 const { readSigning, buildApksArgs } = require(path.join(AND, "aab-to-apk.js"));
 const AB = require(path.join(AND, "apk-bind.js"));
+const TP = require(path.join(AND, "tool-pin.js"));
+/* 2026-11-23 工具鎖定：假報告記的是目前這一份工具的雜湊；假的 origin/main 也回同一份（等於工具沒改過） */
+const MAIN = (p) => TP.normSha(fs.readFileSync(path.join(AND, path.basename(p))));
+const G = (a, b, c, w) => gate(a, b, c, w, { mainSha: MAIN });
 const A = "a".repeat(64), B = "b".repeat(64), K = "c".repeat(64);
 const V = "20261122-0804";
-const d3 = (sha, android) => ({ file: "3d-" + android + ".json", json: { tool: "P0-3D", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true } } });
+const d3 = (sha, android) => ({ file: "3d-" + android + ".json", json: { tool: "P0-3D", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D") } });
+/* P0-3D 金絲雀：check-3d.js --self-test 的報告（2026-11-23） */
+const c3 = (sha, android) => ({ file: "3d-canary-" + android + ".json", json: { tool: "P0-3D", selfTest: true, aabSha256: sha, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") } });
 const ok3 = (sha = A) => [
-  { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V } },
-  { file: "upd.json", json: { tool: "P0-UPD", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V } } },
-  d3(sha, "12"), d3(sha, "16")];
+  { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true, deep: { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: true } } }, toolPins: TP.pinsFor("P0-IMG") } },
+  { file: "upd.json", json: { tool: "P0-UPD", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") } },
+  d3(sha, "12"), d3(sha, "16"), c3(sha, "12"), c3(sha, "16")];
 const has = (r, re) => r.problems.some((p) => re.test(p));
 
 test("閘門：P0-IMG、P0-UPD、P0-3D（Android 12、16）都綁在要送審的 AAB 與版號上、都通過＝可以送審", () => {
-  assert.deepEqual(gate(A, V, ok3()), { ok: true, problems: [], waived: [], notes: [] });
+  assert.deepEqual(G(A, V, ok3()), { ok: true, problems: [], waived: [], notes: [] });
 });
 
 test("閘門（反測必紅）：驗的是另一個 AAB、少一份、沒記雜湊、沒通過、交兩份、壞 JSON——都不能送審", () => {
-  let r = gate(A, V, ok3(B)); assert.equal(r.ok, false); assert.equal(r.problems.filter((p) => /另一個 AAB/.test(p)).length, 4);
-  r = gate(A, V, ok3().slice(0, 3)); assert.equal(r.ok, false); assert.ok(has(r, /缺 Android 16 的 P0-3D/), "P0-3D 只交 Android 12 不行");
-  r = gate(A, V, ok3().slice(1)); assert.ok(has(r, /缺 P0-IMG/));
-  const L = ok3(); delete L[2].json.aabSha256; r = gate(A, V, L); assert.ok(has(r, /沒有記 AAB 的 SHA-256/));
-  const M = ok3(); M[0].json.pass = false; r = gate(A, V, M); assert.ok(has(r, /P0-IMG：沒有通過/));
-  r = gate(A, V, [...ok3(), ok3()[2]]); assert.ok(has(r, /P0-3D（Android 12） 有兩份報告/), "同一項交兩份不行（挑過的那份）");
-  r = gate(A, V, [{ file: "x.json", json: null }, ...ok3()]); assert.ok(has(r, /讀不到 JSON/));
+  let r = G(A, V, ok3(B)); assert.equal(r.ok, false); assert.equal(r.problems.filter((p) => /另一個 AAB/.test(p)).length, 4);
+  r = G(A, V, ok3().slice(0, 3)); assert.equal(r.ok, false); assert.ok(has(r, /缺 Android 16 的 P0-3D/), "P0-3D 只交 Android 12 不行");
+  r = G(A, V, ok3().slice(1)); assert.ok(has(r, /缺 P0-IMG/));
+  const L = ok3(); delete L[2].json.aabSha256; r = G(A, V, L); assert.ok(has(r, /沒有記 AAB 的 SHA-256/));
+  const M = ok3(); M[0].json.pass = false; r = G(A, V, M); assert.ok(has(r, /P0-IMG：沒有通過/));
+  r = G(A, V, [...ok3(), ok3()[2]]); assert.ok(has(r, /P0-3D（Android 12） 有兩份報告/), "同一項交兩份不行（挑過的那份）");
+  r = G(A, V, [{ file: "x.json", json: null }, ...ok3()]); assert.ok(has(r, /讀不到 JSON/));
 });
 
 test("閘門：每份的版號都要等於送審版號（P0-IMG siteVersion、P0-UPD new.build、P0-3D build）", () => {
-  const r = gate(A, "20261123-0900", ok3());
-  assert.equal(r.problems.filter((p) => /不是要送審的 20261123-0900/.test(p)).length, 4);
+  const r = G(A, "20261123-0900", ok3());
+  assert.equal(r.problems.filter((p) => /不是要送審的 20261123-0900/.test(p)).length, 6, "4 份正式報告＋2 份 P0-3D 金絲雀（2026-11-23）都要擋");
 });
 
 test("閘門：P0-IMG 要 --cdn 且 0；P0-UPD 不能 --no-old-worker；P0-3D 要完整跑、已知問題清單要用倉庫那份（PR #42 審查）", () => {
-  let L = ok3(); L[0].json.cdnChecked = false; assert.ok(has(gate(A, V, L), /要加 --cdn/));
-  L = ok3(); L[0].json.exitCode = 3; assert.ok(has(gate(A, V, L), /要加 --cdn 且結束代碼 0/));
-  L = ok3(); L[1].json.oldWorker = false; assert.ok(has(gate(A, V, L), /--no-old-worker/));
-  L = ok3(); L[3].json.full = false; assert.ok(has(gate(A, V, L), /P0-3D（Android 16）：不是完整跑/));
-  L = ok3(); L[2].json.knownFile = { fromRepo: false }; assert.ok(has(gate(A, V, L), /P0-3D（Android 12）：已知問題清單不是倉庫的/));
-  L = ok3(); delete L[2].json.knownFile; assert.ok(has(gate(A, V, L), /已知問題清單不是倉庫的/));
+  let L = ok3(); L[0].json.cdnChecked = false; assert.ok(has(G(A, V, L), /要加 --cdn/));
+  L = ok3(); L[0].json.exitCode = 3; assert.ok(has(G(A, V, L), /要加 --cdn 且結束代碼 0/));
+  L = ok3(); L[1].json.oldWorker = false; assert.ok(has(G(A, V, L), /--no-old-worker/));
+  L = ok3(); L[3].json.full = false; assert.ok(has(G(A, V, L), /P0-3D（Android 16）：不是完整跑/));
+  L = ok3(); L[2].json.knownFile = { fromRepo: false }; assert.ok(has(G(A, V, L), /P0-3D（Android 12）：已知問題清單不是倉庫的/));
+  L = ok3(); delete L[2].json.knownFile; assert.ok(has(G(A, V, L), /已知問題清單不是倉庫的/));
 });
 
 test("閘門（PR #44 審查）：P0-UPD、P0-3D 要核對過實際測的 APK（apkBound＋apkSha256）；只照抄 AAB 雜湊的不收", () => {
-  let L = ok3(); delete L[1].json.apkBound; assert.ok(has(gate(A, V, L), /P0-UPD：沒核對實際測的 APK/));
-  L = ok3(); L[2].json.apkBound = "true"; assert.ok(has(gate(A, V, L), /P0-3D（Android 12）：沒核對實際測的 APK/), "字串 true 不算");
-  L = ok3(); delete L[3].json.apkSha256; assert.ok(has(gate(A, V, L), /P0-3D（Android 16）：沒核對實際測的 APK/));
-  L = ok3(); delete L[0].json.apkBound; assert.equal(gate(A, V, L).ok, true, "P0-IMG 直接檢查 AAB，不需要 apkBound");
+  let L = ok3(); delete L[1].json.apkBound; assert.ok(has(G(A, V, L), /P0-UPD：沒核對實際測的 APK/));
+  L = ok3(); L[2].json.apkBound = "true"; assert.ok(has(G(A, V, L), /P0-3D（Android 12）：沒核對實際測的 APK/), "字串 true 不算");
+  L = ok3(); delete L[3].json.apkSha256; assert.ok(has(G(A, V, L), /P0-3D（Android 16）：沒核對實際測的 APK/));
+  L = ok3(); delete L[0].json.apkBound; assert.equal(G(A, V, L).ok, true, "P0-IMG 直接檢查 AAB，不需要 apkBound");
 });
 
 test("apk-bind：實際 APK 的 SHA-256 要等於 aab-apk.json 記的 apkSha256；不符、格式錯、檔案讀不到都不成立", () => {
@@ -131,15 +137,15 @@ test("〔原始碼〕三支 P0 工具的報告都帶 tool／aabSha256／pass；�
 
 /* ===== W69 流程盤點第 5 項（11/23）：P0-3D 同一次連續 2 輪全過、嘗試紀錄、倉庫豁免檔 ===== */
 test("閘門：P0-3D 要同一次執行連續 2 輪全過（只跑 1 輪、第 2 輪沒過、沒寫 rounds 的都不收）", () => {
-  let L = ok3(); L[2].json.rounds = 1; L[2].json.roundsPassed = 1; assert.ok(has(gate(A, V, L), /P0-3D（Android 12）：要同一次執行連續 2 輪全過/));
-  L = ok3(); L[3].json.roundsPassed = 1; assert.ok(has(gate(A, V, L), /P0-3D（Android 16）：要同一次執行連續 2 輪全過/));
-  L = ok3(); delete L[2].json.rounds; delete L[2].json.roundsPassed; assert.ok(has(gate(A, V, L), /連續 2 輪/));
-  L = ok3(); L[2].json.rounds = 3; L[2].json.roundsPassed = 3; assert.equal(gate(A, V, L).ok, true, "跑 3 輪全過也行");
+  let L = ok3(); L[2].json.rounds = 1; L[2].json.roundsPassed = 1; assert.ok(has(G(A, V, L), /P0-3D（Android 12）：要同一次執行連續 2 輪全過/));
+  L = ok3(); L[3].json.roundsPassed = 1; assert.ok(has(G(A, V, L), /P0-3D（Android 16）：要同一次執行連續 2 輪全過/));
+  L = ok3(); delete L[2].json.rounds; delete L[2].json.roundsPassed; assert.ok(has(G(A, V, L), /連續 2 輪/));
+  L = ok3(); L[2].json.rounds = 3; L[2].json.roundsPassed = 3; assert.equal(G(A, V, L).ok, true, "跑 3 輪全過也行");
 });
 
 test("閘門：之前失敗過的嘗試照實列出（notes），不擋", () => {
   const L = ok3(); L[2].json.failedBefore = 2; L[2].json.attempt = 3;
-  const r = gate(A, V, L); assert.equal(r.ok, true); assert.deepEqual(r.notes, ["P0-3D（Android 12）：這個 AAB 之前失敗過 2 次（這份是第 3 次嘗試）"]);
+  const r = G(A, V, L); assert.equal(r.ok, true); assert.deepEqual(r.notes, ["P0-3D（Android 12）：這個 AAB 之前失敗過 2 次（這份是第 3 次嘗試）"]);
 });
 
 test("check-3d：每一輪都要全過；嘗試紀錄只算同一個 AAB＋同一個 Android 版本", () => {
@@ -166,20 +172,25 @@ test("豁免：只認齊全、綁同一個 AAB、在可豁免清單裡的；轉�
 });
 
 test("豁免：P0-IMG 缺驗（結束代碼 3）有倉庫豁免就放行並列出；沒有就擋；不可豁免的照擋", () => {
-  const L = ok3(); Object.assign(L[0].json, { exitCode: 3, pass: false });
-  let r = gate(A, V, L); assert.equal(r.ok, false); assert.ok(has(r, /P0-IMG：要加 --cdn 且結束代碼 0/)); assert.ok(!has(r, /P0-IMG：沒有通過/), "缺驗歸在可豁免那一條");
+  const L = ok3(); Object.assign(L[0].json, { exitCode: 3, pass: false, unknown: 2, warn: 2, cdnCompared: 0, viaCdn: 0, inPack: 1, need: 1, warnItems: [{ f: "data/__xq_p0_canary_0123456789ab.webp", st: -1, why: "CDN 沒確認到（連不上，請稍後重跑 --cdn）" }, { f: "cdn-manifest.json", why: "讀不到 CDN 的 cdn-manifest.json，沒能核對包裡的檔是不是 CDN 現行版（缺驗）" }] });
+  L[0].json.canary = { ...L[0].json.canary, cdn404: false, cdnUnreachable: true, cdnStatus: -1, ok: false, cdn: "沒確認到（CDN 連不上或暫時出錯，沒拿到 HTTP 狀態）", homeFile: "data/homemap/home_classic.webp", staleFile: "data/a/x.webp", deep: { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: false, skip: "沒有 CDN manifest" } } };   /* 第九、十次複審：CDN 全斷時的真報告（逐項清單） */
+  let r = G(A, V, L); assert.equal(r.ok, false); assert.ok(has(r, /P0-IMG：要加 --cdn 且結束代碼 0/)); assert.ok(!has(r, /P0-IMG：沒有通過/), "缺驗歸在可豁免那一條");
   const w = { code: "P0-IMG/cdn", aabSha256: A, reason: "CDN 維護中無法交叉核對", decidedBy: "開發者", decidedAt: "2026-11-23" };
-  r = gate(A, V, L, [w]); assert.equal(r.ok, true); assert.equal(r.waived.length, 1); assert.match(r.waived[0], /已豁免：CDN 維護中/);
-  r = gate(A, V, L, [{ ...w, aabSha256: B }]); assert.equal(r.ok, false, "綁別的 AAB 的豁免不算");
+  /* PR #66 第六次複審：缺驗的豁免要閘門自己也連不上 CDN（cdnProbe.reachable＝false）；沒探測或連得上都不放行 */
+  r = G(A, V, L, [w]); assert.equal(r.ok, false, "閘門沒自己探測 CDN：不放行");
+  const DOWN = { reachable: false, detail: "假：閘門也連不上" };
+  r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: DOWN }); assert.equal(r.ok, true); assert.equal(r.waived.length, 3, "CDN 全斷的真報告：「要加 --cdn」、金絲雀③、深層 W42 沒驗三條都掛 P0-IMG/cdn"); assert.match(r.waived[0], /已豁免：CDN 維護中/);
+  r = gate(A, V, L, [w], { mainSha: MAIN, cdnProbe: { reachable: true, detail: "假：連得上" } }); assert.equal(r.ok, false, "閘門連得上：不放行");
+  r = gate(A, V, L, [{ ...w, aabSha256: B }], { mainSha: MAIN, cdnProbe: DOWN }); assert.equal(r.ok, false, "綁別的 AAB 的豁免不算");
   const M = ok3(); M[0].json.pass = false; M[0].json.exitCode = 1;
-  r = gate(A, V, M, [w]); assert.ok(has(r, /P0-IMG：沒有通過/), "真的沒過（結束代碼 1）不能豁免");
-  const N = ok3(B); r = gate(A, V, N, [w, { ...w, code: "P0-3D/rounds" }]); assert.equal(r.problems.filter((p) => /另一個 AAB/.test(p)).length, 4, "AAB 不符不能豁免");
+  r = G(A, V, M, [w]); assert.ok(has(r, /P0-IMG：沒有通過/), "真的沒過（結束代碼 1）不能豁免");
+  const N = ok3(B); r = G(A, V, N, [w, { ...w, code: "P0-3D/rounds" }]); assert.equal(r.problems.filter((p) => /另一個 AAB/.test(p)).length, 4, "AAB 不符不能豁免");
 });
 
 test("豁免：P0-3D 的豁免可以只針對一個 Android 版本", () => {
   const L = ok3(); L[2].json.rounds = 1; L[2].json.roundsPassed = 1; L[3].json.rounds = 1; L[3].json.roundsPassed = 1;
   const w = { code: "P0-3D/rounds", android: "12", aabSha256: A, reason: "Android 12 模擬器第二輪逾時", decidedBy: "開發者", decidedAt: "2026-11-23" };
-  const r = gate(A, V, L, [w]);
+  const r = G(A, V, L, [w]);
   assert.equal(r.waived.length, 1); assert.ok(has(r, /P0-3D（Android 16）：要同一次執行連續 2 輪/)); assert.ok(!has(r, /P0-3D（Android 12）：要同一次執行連續 2 輪/));
 });
 
@@ -187,7 +198,7 @@ test("〔原始碼〕check-3d 預設跑 2 輪、每次嘗試都寫 attempts.json
   const c3 = rd("check-3d.js"), pg = rd("p0-gate.js");
   assert.match(c3, /rounds: Number\(arg\("--rounds", 2\)\)/); assert.match(c3, /fs\.appendFileSync\(AF, JSON\.stringify\(/); assert.match(c3, /if \(!roundPass\(RR\)\) break;/);
   assert.match(c3, /\}\)\(\)\.catch\(\(e\) => \{ logAttempt\(\{ pass: false, unfit: e instanceof Unfit/, "環境不成立、例外結束也寫嘗試紀錄（PR #58 審查）");
-  assert.match(pg, /const r = gate\(sha, BUILD, reports, fromRepo \? waivers : \[\]\);/);
+  assert.match(pg, /const r = gate\(sha, BUILD, reports, fromRepo \? waivers : \[\], \{ mainSha, cdnProbe \}\);/);
   const WF = [path.join(__dirname, "..", "..", "..", ".github", "p0-waivers.json"), path.join(__dirname, "..", "site", ".github", "p0-waivers.json")].find((f) => fs.existsSync(f));
   assert.ok(WF, "倉庫有 .github/p0-waivers.json");
   const wj = JSON.parse(fs.readFileSync(WF, "utf8")); assert.ok(Array.isArray(wj.items));

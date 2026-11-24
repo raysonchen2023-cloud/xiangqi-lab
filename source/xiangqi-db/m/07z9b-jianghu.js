@@ -651,17 +651,36 @@ function jhMateTip(sid,M){const S=jhSch(sid);return jhL(`我們${S.nm}講究${S.
 function jhMateIntel(sid,M){const m=OSC.MST.find(x=>x.sid===sid);if(!m)return"";
   if(typeof jhIntelOn==="function"&&jhIntelOn(sid)){const T=jhSch(jhIntelSch(sid));return jhL(`悄悄告訴你：掌門${m.nm}今天打算走${T.op}。`,`Between us: Master ${m.en} plans to play ${T.op} today.`)}
   return jhL(`掌門今天的打算？贏我一盤，我就告訴你。`,`The master's plan today? Beat me in a game and I'll tell you.`)}
-function jhMatePlay(M){if(!M||!M.can)return;
+/* W80 開局來處（07-legend jRetSet）：從十州棋館、門內頁、門派修行頁開的棋局，返回鍵回到原來那一頁。
+   jhRetPlace＝那一頁的名字（返回鍵、結束視窗「回 ○○」用）；jhRetHere＝照開局當下所在的頁面登記。 */
+function jhRetPlace(h){const k=typeof navKey==="function"?navKey(h||location.hash):String(h||location.hash).replace(/^#/,""),m=k.match(/^\/jianghu\/hall\/([a-z_]+)/);
+  if(m&&jhSch(m[1]))return jhSch(m[1]).nm;if(/^\/jianghu/.test(k))return jhL("十州棋館","Ten Prefectures");
+  /* #76 第二輪審查：照各頁 setTop 的標題命名（#/school＝開局棋路、#/school/masters＝十派掌門、#/school/<角色>＝某某的門派） */
+  if(k==="/school")return jhL("開局棋路","Opening Paths");if(/^\/school\/masters(\/|$)/.test(k))return jhL("十派掌門","Ten School Masters");
+  /* 第三輪審查：照 oscHome／oscPlay 的 setTop 分開——不在隊伍＝門派修行；還沒入派＝某某的門派；已入派＝某某的某派修行（英文只寫派名）；課程頁＝某某・某派 */
+  const sm=k.match(/^\/school\/([a-z_]+)(?:\/([a-z_]+)_\d\d)?(\/|$)/)||[],c=sm[1];
+  if(c&&typeof PTY==="object"&&PTY&&Array.isArray(PTY.ORDER)&&PTY.ORDER.includes(c)){
+    try{const P=typeof ptyGet==="function"?ptyGet():null;if(P&&typeof PTY.has==="function"&&!PTY.has(P,c))return jhL("門派修行","School Training")}catch(e){}
+    const nm=jhNm(c),Sof=id=>{try{return id&&typeof oscSchE==="function"?oscSchE(id):null}catch(e){return null}};
+    const LS=Sof(sm[2]);if(LS&&LS.nm)return jhL(nm+"・"+LS.nm,LS.nm);
+    let sid="";try{sid=typeof OSC==="object"&&OSC&&typeof OSC.act==="function"&&typeof oscGet==="function"?OSC.act(oscGet(),c):""}catch(e){}
+    const S=Sof(sid);if(S&&S.nm)return jhL(nm+"的"+S.nm+"修行",S.nm);
+    return jhL(nm+"的門派",nm+"'s School")}
+  if(/^\/school/.test(k))return jhL("門派修行","School Training");return""}
+function jhRetHere(j){try{if(typeof jRetSet!=="function")return;const k=typeof navKey==="function"?navKey(location.hash):location.hash.replace(/^#/,"");
+  if(!/^\/(jianghu|school)(\/|$)/.test(k))return;jRetSet(j,"#"+k,jhRetPlace("#"+k))}catch(e){}}
+function jhMatePlay(M,sid){if(!M||!M.can)return;
+  const ret=j=>{try{if(sid&&typeof jRetSet==="function")jRetSet(j,"#/jianghu/hall/"+sid,jhSch(sid).nm);else jhRetHere(j)}catch(e){}};
   /* PR #21 審查（iMac，兩輪）：jStart 不一定會呼叫 parkNpcNew——已有沒下完的園子棋直接接續、選單按取消、API 出錯時，指定會留著、蓋掉之後的園子抽人與攔路棋客；
      但別的旅程沒下完時 jStart 只跳選單就 return，玩家之後按「放棄，開新的」才抽人，不能在 jStart 結束時就清。
      所以：用掉就清（parkNpcNew 包裝裡）＋45 秒內才算數＋到期由計時器清（只清同一次的指定） */
   if(M.kind==="npc"){const K={id:M.id,t:Date.now()};jhMateKeep=K;setTimeout(()=>{if(jhMateKeep===K)jhMateKeep=null},JH_MATE_KEEP_MS);const lv=typeof parkNpcLv==="function"?parkNpcLv():3;
-    jStart("park",{human:"r",level:lv,journey:"park"},()=>{location.hash="#/journey/play"});return}
+    ret("park");jStart("park",{human:"r",level:lv,journey:"park"},()=>{location.hash="#/journey/play"});return}
   if(M.kind==="inn"){const x=INN.find(z=>z.id===M.id);if(!x)return;const lv=typeof innLvN==="function"?innLvN(x):3,rl=typeof innRlv==="function"?innRlv(x):null;
     if(rl!=null)store.set("innCur",{id:x.id,rl});
-    jStart("inn:"+x.id,rl==null?{human:"r",level:lv,journey:"inn:"+x.id}:{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:"inn:"+x.id},()=>{location.hash="#/journey/play"});return}
+    ret("inn:"+x.id);jStart("inn:"+x.id,rl==null?{human:"r",level:lv,journey:"inn:"+x.id}:{human:"r",level:Math.max(1,Math.min(6,1+Math.floor(rl/3))),rlv:rl,journey:"inn:"+x.id},()=>{location.hash="#/journey/play"});return}
   if(M.kind==="secret"){const x=SECRETS.find(z=>z.id===M.id);if(!x)return;const lv=typeof secretLv==="function"?secretLv(x):5;
-    jStart("inn:"+x.id,{human:"r",level:lv,journey:"inn:"+x.id},()=>{location.hash="#/journey/play"})}}
+    ret("inn:"+x.id);jStart("inn:"+x.id,{human:"r",level:lv,journey:"inn:"+x.id},()=>{location.hash="#/journey/play"})}}
 /* 互動卡 */
 function jhMateCard(sid,k){const M=jhMateInfo(k);if(!M)return;let i=0;
   sheet(`${M.nm}`,b=>{const say=t=>{const p=b.querySelector("#jhMateSay");if(p)p.textContent=t};
@@ -674,7 +693,7 @@ function jhMateCard(sid,k){const M=jhMateInfo(k);if(!M)return;let i=0;
     q("#jhMTalk").onclick=()=>{if(!M.lines.length)return;i=(i+1)%M.lines.length;say(M.lines[i])};
     q("#jhMTip").onclick=()=>say(jhMateTip(sid,M));
     q("#jhMIntel").onclick=()=>say(jhMateIntel(sid,M));
-    if(q("#jhMPlay"))q("#jhMPlay").onclick=()=>{try{closeSheet()}catch(e){}jhMatePlay(M)}})}
+    if(q("#jhMPlay"))q("#jhMPlay").onclick=()=>{try{closeSheet()}catch(e){}jhMatePlay(M,sid)}})}
 /* 包住 06-cpu 的 parkNpcNew：從前院點「切磋一盤」時，指定這位園子棋友坐下（只用一次） */
 try{if(typeof parkNpcNew==="function"&&!parkNpcNew.jhMate){const p0=parkNpcNew;parkNpcNew=function(game,lv,keep){const K=jhMateKeep;jhMateKeep=null;const k=K&&Date.now()-K.t<JH_MATE_KEEP_MS?K.id:null;return p0.call(this,game,lv,keep||k)};parkNpcNew.jhMate=1}}catch(e){}
 /* 前院站人：在 JhHall 畫完之後補上（JhHall 本身不動） */
@@ -762,7 +781,7 @@ function jhKickStart(key,c0){const k=jhKickOf(key),m=k&&OSC.MST.find(x=>x.sid===
   const P=typeof ptyGet==="function"?ptyGet():null,c=c0||(P&&P.look);
   if(!c||!P||!PTY.has(P,c)){toast(jhL("要先有修行角色：已加入隊伍的七星才能踢館","You need a training character first: only Seven Stars in your party can take a challenge"));return}
   const rl=OSC.zmRlv(zmGet(),m);store.set("zmCur",{id:m.id,rl,c,kick:key});
-  jStart("inn:"+m.id,jhKickArgs(k,m,rl),fresh=>{
+  if(typeof jhRetHere==="function")jhRetHere("inn:"+m.id);jStart("inn:"+m.id,jhKickArgs(k,m,rl),fresh=>{
     if(!fresh){try{const C=store.get("zmCur",null);if(C&&C.kick){delete C.kick;store.set("zmCur",C)}}catch(e){}}   /* 接著下原本那一盤（不是踢館的局面）：不算踢館 */
     location.hash="#/journey/play";
     if(fresh)setTimeout(()=>{try{toast(jhL(`📜 ${m.nm}：「你學的${jhSch(k.a).op}，就在這裡驗一驗。」`,`📜 ${m.en}: "Let's see your ${jhSch(k.a).op}."`))}catch(e){}},500)})}
@@ -820,8 +839,12 @@ const jhShichen=d=>Math.floor(((d.getHours()+1)%24)/2);
 function jhCanalStop(d){return JH_CANAL[jhShichen(d||new Date())%JH_CANAL.length]}
 const jhCanalOf=sid=>JH_CANAL.find(x=>x.sid===sid)||null;
 const jhCanalDay=t=>typeof cjDay==="function"?cjDay(t):new Date(t==null?Date.now():t).toISOString().slice(0,10);
-/* 這一州的題庫：殺棋、一～三步殺、帶這一州的殺法標籤；照題號排好（挑題要穩定） */
-function jhCanalPool(items,st){return(items||[]).filter(x=>x&&x.n>=1&&x.n<=3&&Array.isArray(x.th)&&x.th.includes("殺棋")&&x.th.some(t=>st.th.includes(t))).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)}
+/* 這一州的題庫：殺棋、一～三步殺、帶這一州的殺法標籤，而且照主變（line）實際走完對方真的被將死；照題號排好（挑題要穩定）
+   2026-11-24 Pikafish 盤整 P1：「殺棋」標籤是照主變再接示範判的，gm2010-p491R1AKA3r 是保勝題（走完傌八進七黑方還有 3 步合法著）卻被當成一步殺 */
+function jhCanalMated(x){try{const C=typeof window!=="undefined"&&window.XQCore,L=x.line;if(!C||!Array.isArray(L)||L.length!==2*x.n-1)return false;let b=C.parseFen(String(x.fen).split(" ")[0]),s=x.side;
+  for(const u of L){const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4));if(!b[f]||C.sideOf(b[f])!==s||!C.legal(b,s).some(m=>m[0]===f&&m[1]===t))return false;b=C.make(b,f,t);s=C.opp(s)}
+  return C.inCheck(b,s)&&!C.legal(b,s).length}catch(e){return false}}
+function jhCanalPool(items,st){return(items||[]).filter(x=>x&&x.n>=1&&x.n<=3&&Array.isArray(x.th)&&x.th.includes("殺棋")&&x.th.some(t=>st.th.includes(t))&&jhCanalMated(x)).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)}
 function jhCanalPick(items,st,day){const L=jhCanalPool(items,st);if(!L.length)return null;const h=typeof jhWindHash==="function"?jhWindHash("canal:"+day+":"+st.sid):0;return L[h%L.length]}
 function jhCanalGet(day){let o=null;try{o=store.get("jhCanal",null)}catch(e){}const R={d:day,s:{},pick:{}};if(!o||o.d!==day||typeof o!=="object")return R;
   for(const st of JH_CANAL){const x=o.s&&o.s[st.sid];if(x&&typeof x==="object")R.s[st.sid]={t:Math.max(0,+x.t||0),p:x.p?1:0};const k=day+"/"+st.sid,q=o.pick&&o.pick[k];if(typeof q==="string"&&q.length<40)R.pick[k]=q}

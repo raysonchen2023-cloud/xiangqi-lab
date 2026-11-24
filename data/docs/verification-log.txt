@@ -1,24 +1,24 @@
 《象棋千秋》可重現驗證紀錄（verify-all.js）
 ========================================
-執行時間：2026-11-22T00:04:33.141Z（UTC）＝ 2026-11-22 08:04:33（臺灣時間）
-執行編號：local-20261122T000433Z-2860
-Node.js：v24.20.0；作業系統：win32 10.0.26300 x64
+執行時間：2026-11-23T21:39:42.316Z（UTC）＝ 2026-11-24 05:39:42（臺灣時間）
+執行編號：gh-45271832586-1
+Node.js：v24.22.3；作業系統：linux 7.0.0-1016-aws x64
 倉庫資料夾：<倉庫資料夾>
-倉庫 commit：70a6b913c7fecd9159d5f80e389881deb739d636
-release.json：版本 20261122-0804、html c80365ce9fd8、sw ca6aef96a177
+倉庫 commit：53548ab12440237efb25e88d72167aff383b0c1c
+release.json：版本 20261124-0528、html f13fa589a027、sw 442b1e970bf4
 verify-all.js SHA-256：c3e0e7688daaa79d547dfaa77c6a6a6d9c94e5f391bd80972d4d1cf1c8a5f060
 
 成品 SHA-256（SHA-1 前 12 碼）：
-  index.html  4fab4668bb6842995fb6ed5c680dc21ec43eab8b7e918de5fc75c7433feeaa4a  (c80365ce9fd8)
-  sw.js  31bda0e8743104dbba70493de34c06579bd2699cd7eb8e3aa0fb94b9551eaf53  (ca6aef96a177)
-  release.json  911beb8ea65ae6ea60085dd3364050d60f1b72c3c70d1c6d1f6e27568077f834  (7a9b3997c4f2)
+  index.html  b5b84755a90a7f4ea1bb8c06c2c1c015e493c46a9f00c3e76dbf5cee333cc5cd  (f13fa589a027)
+  sw.js  89855de02b0cae6def2ec6538ceabb1a3044bf01180dee1a7b3c3ece90a4512f  (442b1e970bf4)
+  release.json  7192c112ac13397690e9aa8bd3f5d5289c10a81c6725b1261afb7ded82da0399  (1a977e8c0592)
   core.js  fdaea59621ff94d664218f14c1a11b9abe0d4566da7d3e45733caf34fa7a50d3  (972b7ec035c7)
   engine.js  689fc0dbed0381923ebcba7c8556e887cc8ae7849e550ff1c89a0bcd87fbf135  (5e3dfe849644)
   engine/pikafish.wasm  7fb6fc805a36ced6a55626a9513b7dda821b0bbb5e830fa17f120f1550a9a331  (d568cded4f5b)
   engine/pikafish.js  dd5498bfb76381598d453a612d74e5e1955835452324c4d0b962a64fb44438f7  (77eca54d3204)
   engine/pikafish.nnue  7d13d73569a9b571ba0eb20cf1596247bc2a42738967e61afef6482b231e900e  (3a043e259a72)
-source/ 資料夾：696 個檔，樹雜湊 SHA-256 a39f2ce326074173b4b818ce1c89e1c3a8bccdb5023ded28c9816030be4cef32
-Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-256 489173747f8de4abec4f9dda704538fecb24af4c02f294e57b8f7ead857ad738
+source/ 資料夾：784 個檔，樹雜湊 SHA-256 1a7ea820639a3079b1734f072665a03e78660d9f4b567595d4d1450738017840
+Pikafish 建置紀錄：<倉庫資料夾>/pikafish-src/build-record.json  SHA-256 489173747f8de4abec4f9dda704538fecb24af4c02f294e57b8f7ead857ad738
 （樹雜湊＝每個檔「相對路徑＋NUL＋SHA-256＋換行」照路徑排序後再算 SHA-256）
 
 ----------------------------------------
@@ -26,26 +26,26 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
 指令（在倉庫資料夾執行）：node source/check-build.js
 工具 SHA-256：8e5202037f127d5039faf7f195a3286103d71ba1a128801cbb6dfcc12a1aa381
 輸出：
-  ✔ 一致：<倉庫資料夾>\index.html 就是這份原始碼組出來的（忽略授權聲明、版本號、整包大小）
+  ✔ 一致：<倉庫資料夾>/index.html 就是這份原始碼組出來的（忽略授權聲明、版本號、整包大小）
 ----------------------------------------
-第 2 步 release-verify：通過（結束代碼 0，0.1 秒）
+第 2 步 release-verify：通過（結束代碼 0，0.0 秒）
 指令（在倉庫資料夾執行）：node source/xiangqi-lab/tools/release-verify.js --dir .
 工具 SHA-256：4874be00c4f2fce8b777204299e23339abf56c472ee57bc2e603a5edaaf00e78
 輸出：
   成品核對：<倉庫資料夾>
-    ✔ release.json：版本 20261122-0804、html c80365ce9fd8、sw ca6aef96a177（檢查時間 2026-11-22T00:04:26.095Z）
-    ✔ index.html SHA-1 前 12 碼 c80365ce9fd8，跟 release.json 一致
-    ✔ sw.js SHA-1 前 12 碼 ca6aef96a177，跟 release.json 一致
-    ✔ 版本號：index.html 20261122-0804、sw.js 20261122-0804、release.json 20261122-0804，三個一樣
+    ✔ release.json：版本 20261124-0528、html f13fa589a027、sw 442b1e970bf4（檢查時間 2026-11-23T21:29:46.359Z）
+    ✔ index.html SHA-1 前 12 碼 f13fa589a027，跟 release.json 一致
+    ✔ sw.js SHA-1 前 12 碼 442b1e970bf4，跟 release.json 一致
+    ✔ 版本號：index.html 20261124-0528、sw.js 20261124-0528、release.json 20261124-0528，三個一樣
   
   ✔ index.html、sw.js 跟 release.json 一致
 ----------------------------------------
-第 3 步 pikafish-verify：通過（結束代碼 0，0.1 秒）
+第 3 步 pikafish-verify：通過（結束代碼 0，0.0 秒）
 指令（在倉庫資料夾執行）：node source/xiangqi-lab/tools/pikafish-verify.js --dir . --record pikafish-src/build-record.json
 工具 SHA-256：da3a10677bdf0be32998e22fa6010bdc29055893678bd6553b224cb681fedc7c
 輸出：
   Pikafish 網頁版核對：<倉庫資料夾>
-  建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json
+  建置紀錄：<倉庫資料夾>/pikafish-src/build-record.json
     ✔ 引擎、載入程式、改過的 uci.cpp、建置腳本、GPL 授權全文都在
     ✔ WebAssembly 第 1 版，11 個區段、匯出 20 個
     ✔ WebAssembly.Module 編譯通過（只驗證、不執行）
@@ -64,9 +64,9 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   
   ✔ 全部符合（△ 是照實列出的缺口，不算失敗）
 ----------------------------------------
-第 4 步 run-tests：通過（結束代碼 0，158.7 秒）
+第 4 步 run-tests：通過（結束代碼 0，384.0 秒）
 指令（在倉庫資料夾執行）：node source/run-tests.js
-工具 SHA-256：8bb3d8506adec7c119e694a0620858ecf79d366ccc43368454192fce41f824b9
+工具 SHA-256：4703a18636b515baa163819ba44bd73b8cd4a5c0fa3b92d2b1b637b2aab9b8f1
 輸出：
   測試三類統計（實際跑過；格式＝通過／項數，略過的另外標、不算通過）
   檔案	行為	混合	原始碼	待分類
@@ -74,10 +74,13 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-a11y-emoji.js	4/4	0/0	1/1	0/0
   test-a11y.js	11/11	2/2	3/3	0/0
   test-aab-assets-check-1121.js	8/8	0/0	0/0	0/0
+  test-aab-diff-1123.js	40/40	0/0	1/1	0/0
   test-ai-think.js	6/6	0/0	2/2	0/0
   test-analysis-cases.js	38/38	0/0	0/0	0/0
-  test-android-build.js	12/12	4/4	3/3	0/0
+  test-android-build.js	12/12	5/5	4/4	0/0
   test-android-oldwebview.js	6/6	0/0	1/1	0/0
+  test-android-roadmap.js	9/9	1/1	0/1（略過 1）	0/0
+  test-app-assets-check-1122.js	8/8	0/0	1/1	0/0
   test-asian-rules.js	30/30	0/0	0/0	0/0
   test-askbot-city.js	3/3	1/1	1/1	0/0
   test-bh-drift-raid-1115.js	7/7	0/0	1/1	0/0
@@ -100,8 +103,10 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-blitz.js	14/14	1/1	3/3	0/0
   test-cap-crop-1117.js	0/0	0/0	0/0	4/4
   test-cdn-svg-1117.js	0/0	0/0	0/0	4/4
+  test-check-3d-1122.js	13/13	0/0	0/0	0/0
   test-clock-pv.js	43/43	0/0	0/0	0/0
   test-colorblind.js	10/10	0/0	4/4	0/0
+  test-core-perft-1123.js	18/18	0/0	0/0	0/0
   test-cpuroom-copy.js	0/0	7/7	2/2	0/0
   test-daynight-1117.js	0/0	0/0	0/0	6/8（略過 2）
   test-device-checks-1121.js	11/11	0/0	3/3	0/0
@@ -124,6 +129,9 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-fdroid-evidence.js	8/9（略過 1）	0/0	1/1	0/0
   test-figview-ghost-1115.js	5/5	0/0	2/2	0/0
   test-film-tap-1118.js	0/0	0/0	0/0	3/3
+  test-flags-1123.js	14/14	0/0	1/1	0/0
+  test-focus-modes.js	15/15	0/0	2/2	0/0
+  test-foss-audit.js	7/7	0/0	1/1	0/0
   test-gate-siege-3d.js	19/19	3/3	3/3	0/0
   test-gate-siege.js	37/37	1/1	2/2	0/0
   test-gc-native-1117.js	0/0	0/0	0/0	21/21
@@ -156,7 +164,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-icon-gap-1117.js	0/0	0/0	0/0	1/4（略過 3）
   test-imac-g1514.js	0/0	0/0	0/0	8/10（略過 2）
   test-imac-h1514.js	0/0	0/0	0/0	3/4（略過 1）
-  test-imac-hfk-1117.js	0/0	0/0	0/0	17/21（略過 4）
+  test-imac-hfk-1117.js	0/0	0/0	0/0	18/21（略過 3）
   test-imac-i1757.js	0/0	0/0	0/0	6/8（略過 2）
   test-imac-j1757.js	0/0	0/0	0/0	5/6（略過 1）
   test-imac-v1514.js	0/0	0/0	0/0	7/8（略過 1）
@@ -164,11 +172,24 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-ios-capsync-1118.js	0/0	0/0	0/0	0/2（略過 2）
   test-ios-native-1116.js	0/0	0/0	0/0	6/6
   test-ipad-fill.js	9/9	0/0	1/1	0/0
-  test-jh-canal-1122.js	7/7	0/1（略過 1）	1/1	0/0
+  test-jh-canal-1122.js	8/8	0/1（略過 1）	2/2	0/0
   test-jh-fade-1118.js	0/0	0/0	0/0	2/2
-  test-jh-kick-1122.js	11/11	0/0	1/1	0/0
+  test-jh-fanggong-1122.js	6/6	0/0	1/1	0/0
+  test-jh-feixiang-1122.js	6/6	0/0	1/1	0/0
+  test-jh-fxqm-legal-1123.js	3/3	0/0	0/0	0/0
+  test-jh-gong-1122.js	5/5	0/0	1/1	0/0
+  test-jh-halls8-1123.js	8/8	0/0	1/1	0/0
+  test-jh-kick-1122.js	11/11	0/0	2/2	0/0
+  test-jh-liepao-1122.js	5/5	0/0	1/1	0/0
+  test-jh-maze-1123.js	24/24	0/0	1/1	0/0
+  test-jh-qima-1122.js	5/5	0/0	1/1	0/0
+  test-jh-screen-1122.js	13/13	1/1	1/1	0/0
+  test-jh-shunpao-1122.js	7/7	0/0	1/1	0/0
+  test-jh-xianren-1122.js	6/6	0/0	1/1	0/0
+  test-jh-zm-engine-1123.js	5/5	0/0	1/1	0/0
   test-jianghu-1118.js	0/0	0/0	0/0	12/13（略過 1）
   test-jianghu-wind-1121.js	9/9	0/0	2/2	0/0
+  test-jret-1123.js	13/13	0/0	1/1	0/0
   test-land3d.js	2/2	0/0	1/1	0/0
   test-lang-default-1117.js	0/0	0/0	0/0	4/7（略過 3）
   test-layout-r16.js	5/5	1/1	5/5	0/0
@@ -186,16 +207,22 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-n33-warm-1118.js	0/0	0/0	0/0	3/3
   test-name-safe.js	12/12	0/0	4/4	0/0
   test-net-chaos.js	5/5	0/0	0/0	0/0
+  test-net-failover-1122.js	6/6	0/0	1/1	0/0
   test-net-guard.js	4/4	0/0	0/0	0/0
+  test-net-link.js	15/15	0/0	1/1	0/0
+  test-net-linksig.js	10/10	0/0	1/1	0/0
   test-net-reconnect.js	16/16	0/0	0/0	0/0
+  test-net-sign.js	12/12	0/0	1/1	0/0
   test-net-start.js	4/4	0/0	0/0	0/0
   test-netfetch-1117.js	0/0	0/0	0/0	10/10
   test-newjourney-entry-1116.js	4/4	0/0	2/2	0/0
   test-noscore.js	0/0	0/0	0/0	10/14（略過 4）
   test-opening-order-1117.js	0/0	0/0	0/0	21/21
   test-osc-en-1118.js	0/0	0/0	0/0	0/1（略過 1）
-  test-osc-en0.js	3/3	0/0	1/1	0/0
+  test-osc-en0.js	3/3	1/1	1/1	0/0
   test-oss-scan.js	7/7	0/0	0/0	0/0
+  test-p0-aab-bound-1122.js	16/16	0/0	3/3	0/0
+  test-p0-canary-1123.js	36/36	2/2	6/6	0/0
   test-p0-regress.js	12/12	0/0	1/1	0/0
   test-park-firstflat.js	8/8	0/0	1/1	0/0
   test-park-garden-1115.js	1/1	1/1	2/2	0/0
@@ -207,6 +234,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-park3d-ghostptr-1116.js	0/0	0/0	0/0	5/5
   test-park3d-power.js	16/16	0/0	1/1	0/0
   test-park3d-river-1116.js	2/2	0/0	0/0	0/0
+  test-park3d-stack-1122.js	5/5	0/0	2/2	0/0
   test-park3d-tap.js	12/12	0/0	0/0	0/0
   test-party-battle.js	7/7	0/0	1/1	0/0
   test-party-core.js	16/16	0/0	2/2	0/0
@@ -257,9 +285,9 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-r38-1118.js	0/0	0/0	0/0	4/4
   test-r39-1118.js	0/0	0/0	0/0	6/6
   test-r4-1117.js	0/0	0/0	0/0	49/49
-  test-r40-1118.js	0/0	0/0	0/0	5/5
+  test-r40-1118.js	0/0	0/0	0/0	4/5（略過 1）
   test-raid-label-1116.js	1/1	0/0	0/0	0/0
-  test-redblue-public.js	29/29	0/0	1/1	0/0
+  test-redblue-public.js	33/33	0/0	1/1	0/0
   test-release-sync.js	9/9	0/0	0/0	0/0
   test-reload-guard.js	8/8	2/2	2/2	0/0
   test-reply-risk.js	24/24	0/0	0/0	0/0
@@ -295,14 +323,17 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-spotfit.js	8/8	0/0	0/0	0/0
   test-starter.js	6/6	3/3	4/4	0/0
   test-stats-kill.js	0/0	2/2	3/3	0/0
-  test-support-pages-1117.js	0/0	0/0	0/0	2/9（略過 7）
+  test-support-pages-1117.js	0/0	0/0	0/0	4/9（略過 5）
   test-sw-offline.js	0/0	0/0	2/2	0/0
   test-td-orbit.js	1/1	0/0	3/3	0/0
   test-telemetry.js	12/12	0/0	2/2	0/0
+  test-threat-weaknet.js	12/12	0/0	4/4	0/0
   test-toast-pass-1117.js	0/0	0/0	0/0	3/3
   test-touch-fixes.js	5/5	2/2	5/5	0/0
   test-ui-1113.js	5/5	0/0	0/0	0/0
+  test-ui-redundancy.js	8/8	1/1	9/9	0/0
   test-upd-notitle-1116.js	0/0	0/0	0/0	3/3
+  test-varengine.js	20/20	0/0	0/0	0/0
   test-verify-daily.js	9/9	0/0	1/1	0/0
   test-visit-place-1117.js	0/0	0/0	0/0	6/6
   test-watcher-sway-1115.js	0/0	0/0	3/3	0/0
@@ -318,15 +349,18 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
   test-xsm-counter-1116.js	0/0	0/0	0/0	10/11（略過 1）
   test-xsm-dark.js	0/0	0/0	0/0	15/15
   test-xsm-stalls-1116.js	0/0	0/0	0/0	11/12（略過 1）
-  test-zm-hall-1121.js	19/20（略過 1）	0/0	5/5	0/0
+  test-zm-hall-1121.js	19/20（略過 1）	0/0	6/6	0/0
   test-zm-intel-1121.js	5/5	0/0	3/3	0/0
   test-zm-medallion-1118.js	0/0	0/0	0/0	3/5（略過 2）
-  合計	1294/1301（略過 7）	74/76（略過 2）	214/219（略過 5）	903/1037（略過 134）
+  test-zm-screen-data-1122.js	7/7	0/0	1/1	0/0
+  test-zm-shijiao-1122.js	9/9	0/0	0/0	0/0
+  合計	1685/1692（略過 7）	81/83（略過 2）	265/271（略過 6）	905/1037（略過 132）
   
-  交接單引用：行為 1294/1301（略過 7）、混合 74/76（略過 2）、原始碼比對 214/219（略過 5）、待分類 903/1037（略過 134），共 2633 項。
+  交接單引用：行為 1685/1692（略過 7）、混合 81/83（略過 2）、原始碼比對 265/271（略過 6）、待分類 905/1037（略過 132），共 3083 項。
   待分類的檔：test-bh-loading-1117.js、test-bh-sg-bgm-1116.js、test-bh-sg-bgm-1117b.js、test-bhfx.js、test-bhtd-combo.js、test-bhtd-r2.js、test-bhtd-rules.js、test-bhtl.js、test-bhx-allstars-1116.js、test-bhx-hold-1116.js、test-bhx-refit-1118.js、test-bhx-resume-1116.js、test-bhx-skip-1116.js、test-cap-crop-1117.js、test-cdn-svg-1117.js、test-daynight-1117.js、test-dgl.js、test-eng-over-1116.js、test-extra-bgm-1116.js、test-film-tap-1118.js、test-gc-native-1117.js、test-ghost-game-1116.js、test-grw-lv-1117.js、test-gsv-rules-1117.js、test-gxd-daily-1116.js、test-gxt-exit-1117.js、test-gxt-where-1117.js、test-home-c1-tap-1117.js、test-home-pano.js、test-i18n-ext-1117.js、test-i18n-select-1117.js、test-i18n-story.js、test-icon-gap-1117.js、test-imac-g1514.js、test-imac-h1514.js、test-imac-hfk-1117.js、test-imac-i1757.js、test-imac-j1757.js、test-imac-v1514.js、test-inst-stq-1117.js、test-ios-capsync-1118.js、test-ios-native-1116.js、test-jh-fade-1118.js、test-jianghu-1118.js、test-lang-default-1117.js、test-mnq-at-1117.js、test-mnq-skipall-1117.js、test-n33-warm-1118.js、test-netfetch-1117.js、test-noscore.js、test-opening-order-1117.js、test-osc-en-1118.js、test-park3d-capbase.js、test-park3d-ghostptr-1116.js、test-pjc-joincut-1116.js、test-port-yz-color-1116.js、test-pty-events-1116.js、test-pty-hint-wait-1117.js、test-pty-join-1117.js、test-pvp-faceoff-1121.js、test-r11-1117.js、test-r17-qa.js、test-r18-1117.js、test-r19-1117.js、test-r20-1117.js、test-r20-dbe-1117.js、test-r21-1117.js、test-r22-1117.js、test-r23-1117.js、test-r24-1117.js、test-r25-1117.js、test-r26-1117.js、test-r27-1117.js、test-r28-1117.js、test-r29b-1117.js、test-r29d-1117.js、test-r29e-1117.js、test-r30-1118.js、test-r31-1118.js、test-r32-1118.js、test-r33-1118.js、test-r34-1118.js、test-r35-1118.js、test-r36-1118.js、test-r37-1118.js、test-r38-1118.js、test-r39-1118.js、test-r4-1117.js、test-r40-1118.js、test-review-e-1117.js、test-season-card-1117.js、test-season-queue-1117.js、test-season-say-1117.js、test-sg2-def-1117b.js、test-sg2-drift-result-1117.js、test-sg2-edge-1117b.js、test-sg2-hud-1117.js、test-sg2-layout-1117b.js、test-sg2-premove-1117.js、test-sg2-select-1117.js、test-sg2-title-1117b.js、test-siege2-local.js、test-siege2.js、test-sitemap-places-1116.js、test-slot-msg-1117.js、test-support-pages-1117.js、test-toast-pass-1117.js、test-upd-notitle-1116.js、test-visit-place-1117.js、test-winter-scenes-1117.js、test-xsm-counter-1116.js、test-xsm-dark.js、test-xsm-stalls-1116.js、test-zm-medallion-1118.js
-  四欄合計：通過 2485、失敗 0、略過 148、預期失敗 0（其中預期失敗卻通過 0）；三類項數合計 2633（含略過），預期失敗另計。
+  四欄合計：通過 2936、失敗 0、略過 147、預期失敗 0（其中預期失敗卻通過 0）；三類項數合計 3083（含略過），預期失敗另計。
   略過的項目（這個環境跑不了、沒有執行，不算通過）：
+    ﹣ test-android-roadmap.js：〔原始碼〕11/13 0452 驗證紀錄：4 步全過、沒有使用者資料夾路徑或 CR（0452 驗證紀錄只在開發者電腦的 opensource-stage/，公開副本沒有）
     ﹣ test-bh-sg-bgm-1116.js：配樂檔 bh_6～10 與新曲名都在（配樂只放 CDN）（沒有 data/bgm/blackhole 配樂與新曲名（只放 CDN，公開副本沒有））
     ﹣ test-bhfx.js：④ 載入量：一般首頁不載 bossfx3d.js、不預載 data/bhtd；素材都放在 art/bhtd（build-site 複製到 data/bhtd）（要讀只在開發者電腦的素材 art/bhtd（魔王模型、特效圖只放 CDN；公開副本沒有，開發者電腦上照跑））
     ﹣ test-daynight-1117.js：冬季圖、長卷都在（換季只是換哪一張，沒有新圖要畫）；載不到有退路（沒有季節首頁圖（只放 CDN，公開副本沒有））
@@ -378,7 +412,6 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
     ﹣ test-imac-h1514.js：H P2（準則 2.3）：商店描述照畫面寫 18 級（新手～專3・全力），不再寫「入門到大師共八個難度」；其他數字對過（沒有 xiangqi-ios）
     ﹣ test-imac-hfk-1117.js：K P2-5：全站地圖、今日推薦、棋理頁不再寫「小實驗：」；英文同步；功能（網址）不動（沒有 xiangqi-db/i18n-en.json（只放 CDN））
     ﹣ test-imac-hfk-1117.js：K P3-4：原生包不放 source/（App 內沒有地方讀本機 source/，GPL 原始碼連到公開倉庫）（沒有 xiangqi-ios）
-    ﹣ test-imac-hfk-1117.js：開關定案：問小帥的 Google AI／Gemini 兩版都拿掉（ASK_EXT_AI_WEB＝false）、古譜講解只給開發者（AN_LLM_WEB＝false）；說明文件不再分 App 版和網頁版（沒有 xiangqi-lab/src/privacy.html（公開副本不含））
     ﹣ test-imac-hfk-1117.js：檢舉 7 天內處理：limits.md、支援頁、審核備註同一個說法；metadata 待勾項目勾掉（沒有 xiangqi-lab/src/support.html（公開副本不含））
     ﹣ test-imac-i1757.js：素材授權四項：圖片只寫工具、音樂照 Google 生成式 AI 條款（不做相似度檢查）、大師小傳畫面標出處、Pikafish 完整原始碼包已整理；「資料補齊中」拿掉（公開副本沒有這個檔：data/gmbios.json）
     ﹣ test-imac-i1757.js：I P2：英文誤譯（家長設定「分」→ min、存好 → Save）、音效圖鑑與換手機說明、3D 泡泡、驛路文牒字太小、官印英文直排、首頁頂欄英文換行、狀態列跟著畫面亮暗（沒有 xiangqi-db/i18n-en.json（只放 CDN））
@@ -456,6 +489,7 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
     ﹣ test-r35-1118.js：N33-1 射線：真的棋子人模型（x_bing、x_shuai 有骨架、擺過姿勢；xs_zu 黑卒沒骨架）每條射線結果相同，而且快很多（沒有模型檔＝略過）（沒有模型檔（只在 CDN））
     ﹣ test-r37-1118.js：真實模型＋墨線開著：每條射線新舊結果相同；每一面牌子 glyPzCalc＝改之前 mk 的算法（x_bing、x_shuai、xs_zu、x_wood 全格掃；黑洞巨盤 15 種棋子人兩面都比）（沒有模型原檔或 src（只在開發者電腦上；公開副本不含））
     ﹣ test-r37-1118.js：先算好的深度 glydepth.json：跟現在的模型檔（SHA-1）、bot3d 程式、牌子參數重算出來的一模一樣（tools/gly-depth.js --check）；黑洞巨盤 15 種兩面都在（沒有模型原檔或 src（只在開發者電腦上；公開副本不含））
+    ﹣ test-r40-1118.js：快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡；暖機 WS 那段 11/18 第 36 輪又改過，不比）（沒有 1010 快照（只在這台電腦的暫存區））
     ﹣ test-review-e-1117.js：8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（沒有 xiangqi-ios（公開副本不含））
     ﹣ test-review-e-1117.js：10 原生設定：loggingBehavior＝none、CFBundleLocalizations 有 en、CAPACITOR_DEBUG 只在 Debug 設定檔（沒有 xiangqi-ios（公開副本不含））
     ﹣ test-review-e-1117.js：11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（沒有 xiangqi-ios（公開副本不含））
@@ -464,8 +498,6 @@ Pikafish 建置紀錄：<倉庫資料夾>\pikafish-src\build-record.json  SHA-25
     ﹣ test-support-pages-1117.js：沒有開發用字：test-*.js、網頁版用的欄位、測試項數、只在 App 裡看得懂的「見第 N 項」（沒有 xiangqi-lab/src/support.html（公開副本不含））
     ﹣ test-support-pages-1117.js：不載入任何外部資源：沒有 script、外部樣式、圖片、字型、iframe、CSS url()／@import；favicon 用 data:（沒有 xiangqi-lab/src/support.html（公開副本不含））
     ﹣ test-support-pages-1117.js：有聯絡信箱（可點的 mailto）、互相有連結；支援頁有四個常見問題（沒有 xiangqi-lab/src/support.html（公開副本不含））
-    ﹣ test-support-pages-1117.js：隱私權政策公開版：這次的修正都寫進去（需要時才抓、飛鴿規則、App 版匿名開關預設關、Game Center 和小工具看建置內容）（沒有 xiangqi-lab/src/privacy.html（公開副本不含））
-    ﹣ test-support-pages-1117.js：三處說法一致：App 內設定的隱私卡片（07x4）、privacy.md、privacy.html、iOS app-privacy.md 都有同一句修正清單說明（沒有 xiangqi-lab/src/privacy.html（公開副本不含））
     ﹣ test-support-pages-1117.js：metadata.md：支援網址、隱私權政策網址換成新網頁；聯絡人姓名、信箱；電話留給開發者本人填；賣家名稱（沒有 xiangqi-ios）
     ﹣ test-winter-scenes-1117.js：7 個檔都在（art 來源、site/data、iOS www 三處內容一樣）、尺寸跟原圖一樣；原圖沒動（沒有 xiangqi-db/art 原圖和 xiangqi-ios（公開副本不含；三處比對只在開發者電腦跑））
     ﹣ test-winter-scenes-1117.js：preload.json：7 張都在、大小和內容指紋對，版本 v 照全部項目重算（手機看到新指紋才會下載）（沒有 xiangqi-lab/site/data/ximarket/xm_day_winter.webp（公開副本不含））

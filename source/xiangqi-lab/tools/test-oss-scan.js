@@ -67,12 +67,12 @@ test("佔位字、範例信箱、中文值不誤報", () => {
 });
 
 test("白名單：rule＋file＋match 對上的略過、記下理由；行內 oss-scan:allow 也略過；summary 不算進風險", () => {
-  const d = fake({ "lib/a.js": SECRETS["email"] + "\n" + SECRETS["phone-tw"] + "\n", "lib/b.js": SECRETS["google-api-key"] + " // oss-scan:allow 測試資料\n" });
+  const d = fake({ "lib/a.js": SECRETS["email"] + "\n" + SECRETS["phone-tw"] + "\n", "lib/b.js": SECRETS["ntfy-topic"] + " // oss-scan:allow 測試資料\n" });   /* 標記只略過中、低風險（PR #68 第五輪審查②；高風險照擋的反例在 .github/scripts/test-guard-scan.cjs） */
   try {
-    const allow = [{ rule: "email", file: "lib/a.js", match: "gmail.com", reason: "第三方作者信箱" }];
+    const allow = [{ rule: "email", file: "lib/a.js", match: "some" + "one@" + "gmail.com", reason: "第三方作者信箱" }];   /* match 寫完整的那一串字（PR #68 第三輪審查⑦起只認一模一樣；只寫一部分不放行的反例在 .github/scripts/test-guard-scan.cjs） */
     const R = OS.scan(d, { allow }), S = OS.summary(R);
     const e = R.findings.find(f => f.rule === "email"); assert.equal(e.allowed, "第三方作者信箱");
-    assert.ok(!R.findings.some(f => f.rule === "google-api-key"), "行內 allow 整行略過");
+    assert.ok(!R.findings.some(f => f.rule === "ntfy-topic"), "行內 allow 略過那一行的中風險");
     assert.equal(S.medium, 1, "只剩電話"); assert.equal(S.allowed, 1); assert.equal(S.high, 0);
     const R2 = OS.scan(d, { allow: [{ rule: "email", file: "lib/zzz.js", reason: "別的檔" }] });
     assert.equal(R2.findings.find(f => f.rule === "email").allowed, null, "檔名對不上就不略過");
@@ -107,7 +107,8 @@ test("--public：已公開的資料夾裡也有的字串標「本來就公開」
   } finally { clean(d); clean(pub) }
 });
 
-test("二進位檔不掃內容、.git 與 node_modules 跳過", () => {
-  const d = fake({ "img.png": Buffer.concat([Buffer.from([0, 1, 2]), Buffer.from(SECRETS["google-api-key"])]), ".git/config": SECRETS["url-credentials"], "node_modules/x/i.js": SECRETS["aws-key"] });
-  try { const R = OS.scan(d); assert.deepEqual(R.findings, []); assert.equal(R.files, 1) } finally { clean(d) }
+test("檔頭是 PNG、後面接金鑰的檔照樣抓到；平常 .git 與 node_modules 跳過（PR #68 第三輪審查①：原本「檔頭像圖片就不掃」比 main 版鬆；真的 .png 圖片也要掃、--all 不跳過的反例在 .github/scripts/test-guard-scan.cjs）", () => {
+  const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+  const d = fake({ "img.js": Buffer.concat([PNG, Buffer.from(SECRETS["google-api-key"])]), ".git/config": SECRETS["url-credentials"], "node_modules/x/i.js": SECRETS["aws-key"] });
+  try { const R = OS.scan(d); assert.deepEqual(R.findings.map(f => f.file + " " + f.rule), ["img.js google-api-key"], "檔頭是 PNG 也要抓到"); assert.equal(R.files, 1) } finally { clean(d) }
 });

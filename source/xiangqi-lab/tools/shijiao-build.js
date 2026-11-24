@@ -6,7 +6,12 @@
    難度：高級＝互吃 3～4 步且帳裡有炮或車；中級＝2～3 步且帳裡有過河兵或仕象；初級＝1～2 步的其餘。
    每級 20 題：吃 10、不吃 10（初級「吃」裡一步就吃完、對方吃不回的最多 4 題）。
    gmgames.json 本機沒有（或 --gm 沒指定）就照 CDN 的分塊清單下載接回、核對 sha1（只讀，不存檔）。
-   用法：node xiangqi-lab/tools/shijiao-build.js           寫回模組
+   W73（11/23 Windows Claude 1 用 Pikafish 驗出 13 題「吃」實戰大虧）：加引擎紀錄 shijiao-engine.json（紅方觀點的分數，cp；殺棋換算成 ±30000）：
+     cap＝只搜「吃這一格」的著法、alt＝只搜其他著法。答案「吃」：alt−cap ≤ 50（吃是最佳或差不多）；答案「不吃」：alt−cap ≥ 100。
+     答案「不吃」但吃了會被殺（cap ≤ −20000）的不出（11/24 盤整：原 s26 說明寫淨賠 2.5 分，其實吃了被一步殺）。
+     紀錄裡沒有的候選題跳過；加 --engine（要設 PIKAFISH）才會現場算、補進紀錄。深度 20、Threads 4、Hash 256（照 Windows 的驗證）。
+   用法：node xiangqi-lab/tools/shijiao-build.js --engine  用本機 Pikafish 算候選題、更新紀錄後寫回模組
+         node xiangqi-lab/tools/shijiao-build.js           寫回模組
          node xiangqi-lab/tools/shijiao-build.js --check   重跑一次，跟模組裡現在的題庫逐字比對，不一樣就結束碼 1 */
 "use strict";
 const fs = require("fs"), path = require("path"), vm = require("vm"), crypto = require("crypto");
@@ -42,7 +47,18 @@ function level(r) {
   if (n <= 2) return 1;
   return 0;
 }
+const ENG_F = path.join(__dirname, "shijiao-engine.json"), USE_ENG = process.argv.includes("--engine");
+const ENG = fs.existsSync(ENG_F) ? JSON.parse(fs.readFileSync(ENG_F, "utf8")) : {};
+const sc = (x) => x.mate != null ? (x.mate > 0 ? 30000 - x.mate : -30000 - x.mate) : x.cp;
+/* 引擎：吃這一格（所有吃到 T 的著法）跟其他著法各搜一次，回傳紅方觀點的分數 */
+async function engJudge(E, bd, T) {
+  const L = C.legal(bd, "r"), capM = L.filter(([, t]) => t === T).map(([f, t]) => uci(f) + uci(t)), altM = L.filter(([, t]) => t !== T).map(([f, t]) => uci(f) + uci(t));
+  if (!capM.length || !altM.length) return null;
+  const fen = C.fen(bd).split(" ")[0], a = await E.analyse(fen, "r", { depth: 20, searchmoves: capM }), b = await E.analyse(fen, "r", { depth: 20, searchmoves: altM });
+  return { cap: sc(a), alt: sc(b) };
+}
 (async () => {
+  const E = USE_ENG ? await require("./zm-engine.js").engine() : null;
   const G = await loadGm(), N = G.length;
   const want = { 1: { y: 10, n: 10 }, 2: { y: 10, n: 10 }, 3: { y: 10, n: 10 } }, have = { 1: { y: 0, n: 0, y1: 0 }, 2: { y: 0, n: 0 }, 3: { y: 0, n: 0 } }, out = [];
   const seen = new Set(), pair = {};   /* pair：每一級同一種「誰吃誰」（第一步吃子方＋被吃的子）最多 3 題（PR #37 審查②：中級原本一半是兵吃卒） */
@@ -63,6 +79,11 @@ function level(r) {
           if (!lv || have[lv][ans] >= want[lv][ans]) continue;
           if (lv === 1 && ans === "y" && r.pv.length === 1 && have[1].y1 >= 4) continue;
           if ((pair[pairKey(lv, r)] || 0) >= 3) continue;
+          const key = C.fen(bd, "r") + "|" + T;   /* W73：引擎條件 */
+          if (!(key in ENG)) { if (!E) continue; ENG[key] = await engJudge(E, bd, T) }
+          const e = ENG[key]; if (!e) continue;
+          if (ans === "y" ? e.alt - e.cap > 50 : e.alt - e.cap < 100) continue;
+          if (ans === "n" && e.cap <= -20000) continue;   /* 11/24 Pikafish 盤整 P2（原 s26）：吃了會被殺——不吃的理由是殺棋、不是兌換帳，說明「淨賠幾分」會誤導，換一題 */
           got = { lv, T, r, ans, ply: i };
           break;
         }
@@ -78,6 +99,7 @@ function level(r) {
     have[lv][ans]++; if (lv === 1 && ans === "y" && r.pv.length === 1) have[1].y1++;
     out.push({ lv, fen: C.fen(bd, "r") + " - - 0 1", t: T, ans, v: r.v, pv: r.pv.map((x) => uci(x.f) + uci(x.t)), src: "gm" + gi + "@" + ply });
   }
+  if (E) { E.quit(); const o = {}; for (const k of Object.keys(ENG).sort()) o[k] = ENG[k]; fs.writeFileSync(ENG_F, JSON.stringify(o, null, 0).replace(/,"/g, ",\n\"") + "\n"); console.log("引擎紀錄：" + Object.keys(o).length + " 盤") }
   if (!full()) { console.log("✘ 題目湊不齊：" + JSON.stringify(have)); process.exit(1) }
   /* 依難度排、同難度照找到的順序；id 依序編 */
   out.sort((x, y) => x.lv - y.lv);

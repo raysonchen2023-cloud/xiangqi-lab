@@ -53,6 +53,8 @@ function jhXrMake(lines,L,seed){const pool=lines;if(!pool.length)return null;let
     const opts=[ans.cat,...ss,...dd];
     for(let k=opts.length-1;k>0;k--){const j=jhXrIdx(R(),k+1);[opts[k],opts[j]]=[opts[j],opts[k]]}
     const ref={};for(const c of opts)ref[c]=(lines.find(x=>x.cat===c&&x.side===ans.side)||{}).mv||[];
+    /* 11/24 Pikafish 盤整 P2：第 8 課（卒底炮）和第 12 課（另一側跳馬）黑方兩步一樣、只差順序，最後盤面相同，同時當選項分不出來——黑方著法（不論順序）一樣的不能同時出 */
+    const bk=m=>jhXrBlack(m).slice().sort().join(" "),keys=opts.map(c=>c===ans.cat?bk(ans.mv):bk(ref[c]));if(new Set(keys).size<keys.length)continue;
     return{mv:ans.mv,cat:ans.cat,side:ans.side,opts,ref,seed}}
   return null}
 function jhXrRound(lines,L,day){const o=[],seen=new Set();for(let i=0;i<12&&o.length<3;i++){const q=jhXrMake(lines,L,day+":"+L.k+":"+i);if(q&&!seen.has(q.cat)){seen.add(q.cat);o.push(q)}}return o}   /* 一輪三題的答案各是不同的布局 */

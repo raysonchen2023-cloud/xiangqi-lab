@@ -18,9 +18,12 @@ const jhFgHash=s=>{let h=2166136261;for(const c of String(s)){h^=c.charCodeAt(0)
 /* FNV 低位元混得不夠：先打散再取高位元（同 07z9e 的經驗） */
 const jhFgIdx=(h,n)=>{h^=h>>>16;h=Math.imul(h,0x45d9f3b);h^=h>>>16;h=Math.imul(h,0x45d9f3b);h^=h>>>16;return Math.floor((h>>>0)/4294967296*n)};
 const jhFgDay=()=>typeof jhWindDay==="function"?jhWindDay(new Date()):new Date().toISOString().slice(0,10);
-/* 課程主線：每個例題 pre ＋ 一路照提示著法（h）與回應（r）走到底；去掉重複 */
+/* W73（11/23 Windows Claude 1 用 Pikafish 驗出）：palace_horse_06 例題 b 的前置步序「炮二平五 砲8平6 傌二進三…」第 2 手就漏中卒
+   （紅方炮五進四吃掉後 +402），玩家不該照這條背；課程資料在 data/（網站成品，要走發布 PR），這裡先不出這條 */
+const JH_FG_SKIP=new Set(["palace_horse_06/b"]);
+/* 課程主線：每個例題 pre ＋ 一路照提示著法（h）與回應（r）走到底；去掉重複；JH_FG_SKIP 列的例題不出 */
 function jhFgLines(D){const out=[],seen=new Set();
-  for(const L of (D&&D.lessons)||[])for(const ex of L.ex||[]){const mv=[...(ex.pre||[])];let n=ex.root;
+  for(const L of (D&&D.lessons)||[])for(const ex of L.ex||[]){if(JH_FG_SKIP.has(L.id+"/"+ex.id))continue;const mv=[...(ex.pre||[])];let n=ex.root;
     while(n){if(n.k==="mv"&&n.ok&&n.ok[n.h]){const o=n.ok[n.h];mv.push(n.h);if(o.r)mv.push(o.r);n=o.n}else n=n.n}
     const k=mv.join(" ");if(mv.length&&!seen.has(k)){seen.add(k);out.push(mv)}}
   return out}
@@ -28,14 +31,17 @@ function jhFgLines(D){const out=[],seen=new Set();
 function jhFgWalk(seq){const C=window.XQCore;let b=C.parseFen(C.START.split(" ")[0]);const nt=[];
   for(const u of seq){const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4));nt.push(C.notate(b,f,t));b=C.make(b,f,t)}return{nt,b}}
 /* 出一題：照種子挑一條夠長的主線，取前 n 步；要打散的步（只黑方＝奇數步，或全部）洗牌成活字，洗完不能跟原本一樣 */
-function jhFgMake(lines,L,seed){const C=window.XQCore,pool=lines.filter(x=>x.length>=L.n);if(!pool.length)return null;
+/* 11/24 Pikafish 盤整 P2：初級 42 條主線只有 10 種前 6 步（17 條一模一樣），一輪 3 題常重複——先照「前 n 步」去重，同一輪也不出一樣的（avoid） */
+function jhFgPool(lines,n,avoid){const seen=new Set(),pool=[];for(const l of lines){if(l.length<n)continue;const k=l.slice(0,n).join(" ");if(!seen.has(k)){seen.add(k);pool.push(l)}}
+  const rest=avoid&&avoid.size?pool.filter(l=>!avoid.has(l.slice(0,n).join(" "))):pool;return rest.length?rest:pool}
+function jhFgMake(lines,L,seed,avoid){const C=window.XQCore,pool=jhFgPool(lines,L.n,avoid);if(!pool.length)return null;
   const line=pool[jhFgIdx(jhFgHash("fg:"+seed),pool.length)],seq=line.slice(0,L.n),{nt}=jhFgWalk(seq);
   const slots=seq.map((u,i)=>L.both||i%2===1?i:-1).filter(i=>i>=0);
   let cards=slots.map(i=>({u:seq[i],nt:nt[i],side:i%2?"b":"r"}));
   for(let k=cards.length-1;k>0;k--){const j=jhFgIdx(jhFgHash(seed+"|"+k),k+1);[cards[k],cards[j]]=[cards[j],cards[k]]}
   if(cards.every((c,i)=>c.u===seq[slots[i]]))cards.push(cards.shift());   /* 洗完跟原本一樣就轉一格 */
   return{seq,nt,slots,cards,seed}}
-function jhFgRound(lines,L,day){const o=[];for(let i=0;i<3;i++){const q=jhFgMake(lines,L,day+":"+L.k+":"+i);if(q)o.push(q)}return o}
+function jhFgRound(lines,L,day){const o=[],used=new Set();for(let i=0;i<3;i++){const q=jhFgMake(lines,L,day+":"+L.k+":"+i,used);if(q){o.push(q);used.add(q.seq.join(" "))}}return o}
 /* 照玩家排的順序走：ans＝完整 n 步（固定的步＋玩家排的活字）。回傳 {ok, step, why}；全部走完再比局面 */
 function jhFgCheck(q,ans){const C=window.XQCore,NM=C.NAMES;let b=C.parseFen(C.START.split(" ")[0]),s="r";
   for(let i=0;i<ans.length;i++){const u=ans[i],f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4)),p=b[f],want=q.nt[q.seq.indexOf(u)]||u;

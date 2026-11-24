@@ -46,6 +46,7 @@ function jhScrCn(mv){try{const C=window.XQCore;let b=C.parseFen(C.START.split(" 
     for(const u of mv.split(" ")){const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4)),cn=C.notate(b,f,t);o.push(typeof oscEn==="function"&&oscEn()&&typeof i18nWxf==="function"?(i18nWxf(cn)||cn):cn);b=C.make(b,f,t)}
     return o.join(" ")}catch(e){return mv}}
 function jhScrGuardStart(){if(typeof jStart!=="function")return;const lv=typeof parkNpcLv==="function"?parkNpcLv():3;
+  if(typeof jRetSet==="function")jRetSet(JH_SCR_J,"#/jianghu/hall/screen",typeof jhSch==="function"&&jhSch("screen")?jhSch("screen").nm:"屏風馬門");   /* W80：對局頁的返回鍵回屏風馬門門內（原本 jh:guard: 落到石桌往事書架） */
   jStart(JH_SCR_J,{human:"b",level:lv,journey:JH_SCR_J,lv:{fen:JH_SCR_GUARD.fen,turn:JH_SCR_GUARD.turn}},fresh=>{
     const P=store.get("jPending",null);if(P&&P.id===JH_SCR_J&&!P.jhg){P.jhg={limit:JH_SCR_GUARD.limit};store.set("jPending",P)}
     location.hash="#/journey/play";
@@ -111,7 +112,7 @@ async function jhScrErrata(i0){const L=await jhScrLoad("errata");if(!L){toast(jh
     bd=Board(tap);$("#jhEb").append(bd.svg);
     $("#jhEp").onclick=()=>{if(stage===0&&n>0){n--;show()}};$("#jhEx").onclick=()=>{if(stage===0&&n<q.mv.length){n++;show()}};
     $("#jhEk").onclick=()=>{if(stage!==0)return;if(n-1===q.wrong){stage=1;$("#jhEa").style.display="none";$("#jhEq").textContent=jhL("找到了！這一步之前，換你替她走一步更好的。","Found it! Now play the better move in her place.");say(jhL("點黑方的子，再點要去的地方。","Tap a black piece, then where it should go."));show()}
-      else say(n%2?jhL("這一步沒問題，再找找。","That move is fine. Keep looking."):jhL("這是紅方走的，要找黑方（學童）的那一步。","That's Red's move. Find Black's (the pupil's) slip."))};
+      else say(n===0?jhL("還沒走棋，先按 › 往下看。","No move shown yet. Tap › to step forward."):n%2?jhL("這是紅方走的，要找黑方（學童）的那一步。","That's Red's move. Find Black's (the pupil's) slip."):jhL("這一步沒問題，再找找。","That move is fine. Keep looking."))};   /* 2026-11-24 Pikafish 盤整 P1：mv[n-1] 是剛顯示的那手、mv[0] 是紅方，n 奇數＝紅方那手（原本兩句寫反） */
     $("#jhEnew").onclick=()=>{try{closeSheet()}catch(e){}setTimeout(()=>jhScrErrata(i+1+jhScrHash(Date.now())%Math.max(1,L.length-1)),250)};
     show()})}
 function jhScrCn1(mv,n){try{const C=window.XQCore,p=jhScrBoardAt(mv,n-1),u=mv[n-1],cn=C.notate(p.b,C.parseSq(u.slice(0,2)),C.parseSq(u.slice(2,4)));return typeof oscEn==="function"&&oscEn()&&typeof i18nWxf==="function"?(i18nWxf(cn)||cn):cn}catch(e){return mv[n-1]}}

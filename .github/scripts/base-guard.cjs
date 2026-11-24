@@ -53,8 +53,12 @@ function classifiedOnly(baseSrc, prSrc, addedTests) {
 
 /* 斷言次數（W69 第 10 項）：每一步都帶這組環境變數，完整驗證時 assert-count.cjs（換回後是 main 版）記下每項測試的斷言次數；
    資料夾用絕對路徑，跟 verify.yml 一樣放在工作區外的暫存資料夾 */
-const ASSERT_DIR = path.resolve(process.env.RUNNER_TEMP || require("os").tmpdir(), "base-assert-count");
+/* 每次執行一個自己的資料夾（程序編號＋時間）：同一台電腦上別人同時跑 base-guard 或 .github 自我測試，不會互相清掉計數（本機實際撞過：記到 285／2737）。CI 的 runner 本來就隔離 */
+const ASSERT_DIR = path.resolve(process.env.RUNNER_TEMP || require("os").tmpdir(), "base-assert-count-" + process.pid + "-" + Date.now().toString(36));
 const assertEnv = () => ({ ...process.env, XQ_ASSERT_DIR: ASSERT_DIR, NODE_OPTIONS: ((process.env.NODE_OPTIONS || "") + " --require " + path.resolve(".github/scripts/assert-count.cjs")).trim() });
+/* 私密掃描補強（scan-changed）的暫存資料夾：每個程序一份（PR #68 審查⑤：基準版守門也要跑這一步，跟 verify.yml 兩種模式一樣） */
+const SCAN_TMP = path.resolve(process.env.RUNNER_TEMP || require("os").tmpdir(), "base-scan-changed-" + process.pid);
+const SCAN_STEP = (base) => ["私密掃描補強", ["node", ".github/scripts/scan-changed.cjs", base, SCAN_TMP]];
 /* 要跑的檢查：跟 verify.yml 同一組（換回 main 版之後）；mode 由 main 版的 ci-mode.cjs 判斷（發布 PR 本來就會改網站檔，要跑發布那一組） */
 const STEPS = (base, mode) => mode === "release" ? [
   ["完整驗證（全套）", ["node", "source/xiangqi-lab/tools/verify-all.js", "--out", "base-verify.txt", "--tally-out", "base-tally.json"]],
@@ -72,6 +76,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["iOS 原生檢查", ["node", "source/xiangqi-ios/scripts/check-native.js"]],   /* PR #45：跟 verify.yml 同一步 */
   ["iOS P0-3D 腳本自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/p03d/test-p03d.cjs"]],
   ["iOS P0-IMG 金絲雀自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/test-canary-www.cjs"]],   /* 跟 verify.yml 同一步 */
+  SCAN_STEP(base),
 ] : [
   ["假略過檢查", ["node", ".github/scripts/check-fake-skip.cjs"]],
   ["功能 PR 守門", ["node", ".github/scripts/guard-release-files.cjs", base]],
@@ -83,6 +88,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["0 項檢查", ["node", ".github/scripts/check-test-empty.cjs", "base-tally.json"]],   /* W69 流程盤點第 18 項：0 項的檔、沒跑到的檔都紅燈 */
   ["新測試要分類", ["node", ".github/scripts/check-test-classified.cjs", base]],
   ["私密掃描", ["node", "source/xiangqi-lab/tools/oss-scan.js", "source"]],
+  SCAN_STEP(base),
   ["iOS 原生檢查", ["node", "source/xiangqi-ios/scripts/check-native.js"]],   /* PR #45：跟 verify.yml 同一步 */
   ["iOS P0-3D 腳本自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/p03d/test-p03d.cjs"]],
   ["iOS P0-IMG 金絲雀自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/test-canary-www.cjs"]],   /* 跟 verify.yml 同一步 */
@@ -132,12 +138,13 @@ function runGuard({ base = "origin/main", headRef = "", git, spawn, fsx = fs, lo
   const mode = modeOf(spawn("node", modeArgs(headRef)).stdout);
   log("模式（main 版 ci-mode.cjs 判斷）：" + mode);
   const results = [];
-  try { fs.rmSync(ASSERT_DIR, { recursive: true, force: true }) } catch (e) { }   /* 清掉上一次留下的斷言計數（工作區外的暫存資料夾，不是要換回的檔，所以用真的 fs），免得舊資料讓檢查誤判通過 */
+  try { fsx.rmSync(ASSERT_DIR, { recursive: true, force: true }) } catch (e) { }   /* 清掉這次程序自己的斷言計數資料夾；走注入的 fsx（PR #69 審查：自我測試用假的 fs，碰不到真的暫存資料夾）。名稱每個程序不同，碰不到別人正在用的 */
   for (const [name, cmd] of STEPS(base, mode)) {
     const r = spawn(cmd[0], cmd.slice(1), { inherit: true, env: assertEnv() });
     results.push({ name, status: r.status });
     log((r.status === 0 ? "✔ " : "✘ ") + "基準版：" + name + (r.status === 0 ? "" : "（結束代碼 " + r.status + "）"));
   }
+  try { fsx.rmSync(ASSERT_DIR, { recursive: true, force: true }) } catch (e) { }   /* 跑完清掉自己這一份，不在暫存區留一堆（PR #69 複審建議） */
   const code = finalCode(results);
   log(code ? `✘ 換回 main 版的守門後有 ${results.filter((r) => r.status !== 0).length} 步沒過：這個 PR 放寬或改壞了守門，要開發者看過` : "✔ 換回 main 版的守門也全過");
   return code;

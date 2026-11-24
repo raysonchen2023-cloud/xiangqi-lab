@@ -5,7 +5,7 @@
    局面：殘局題庫（07c-canju 的 cjData，data/canju/canju-set.json）裡子數合的局面，優先挑盤上有炮的（扣「過宮炮」）；同一天、同一級固定那三題。
    核對：同一種子（例如兩顆紅兵）位置互換也算對；放錯的亮出原本的位置。
    修為：一輪 3 題全對，每天 +10（只給一次）。不扣修為、不改棋局。
-   門內頁的入口（長廊橋旁晾紙架）等過宮炮門的門內圖出好再接；這裡先提供 jhGongOpen()。 */
+   門內頁的入口（長廊橋旁焙紙牆；史學顧問 192：宣紙是貼焙牆烘乾，不是吊竿晾）由 07z9l-halls.js 接，這裡提供 jhGongOpen()。 */
 const JH_GONG_LV=[
   {k:"easy",zh:"初級",en:"Easy",n:[6,8],sec:8,take:3,flash:true},
   {k:"mid",zh:"中級",en:"Medium",n:[9,12],sec:6,take:4,flash:false},
@@ -43,7 +43,7 @@ async function jhGongOpen(lv0){const G=jhGongGet(),L=JH_GONG_LV.find(x=>x.k===(l
   const pool=jhGongPool(D&&D.items,L),Q=jhGongRound(pool,L,jhGongDay());
   if(!Q.length){toast(jhL("棋譜還沒載好，等一下再試。","The positions haven't loaded yet. Try again shortly."));return}
   G.lv=L.k;jhGongSet(G);const C=window.XQCore;let qi=0,right=0,timers=[];
-  sheet(jhL("📜 晾紙架・宣紙蓋子位","📜 Paper rack · Paper memory"),b=>{
+  sheet(jhL("📜 焙紙牆・宣紙蓋子位","📜 Drying wall · Paper memory"),b=>{
     b.innerHTML=`<p class="muted">${esc(jhL("黎疏桐：「宣紙蓋下來前看清紙紋，把記住的棋子放回原位，可別放錯格！」","Li Shutong: \"Study the board before the paper falls, then put each piece back where it was!\""))}</p>
       <div class="jh-gp-lv">${JH_GONG_LV.map(x=>`<button class="btn ${x.k===L.k?"":"ghost"}" data-lv="${x.k}">${esc(jhL(x.zh,x.en))}</button>`).join("")}</div>
       <p id="jhGq" class="jh-gp-q"></p><div class="jh-gp-wrap"><div id="jhGb" class="jh-scr-bd jh-gp-bd"></div><div class="jh-gp-paper" id="jhGp"></div></div>
