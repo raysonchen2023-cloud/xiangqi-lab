@@ -42,23 +42,52 @@ function readZipIndex(file) {
     const out = new Map(); let p = 0;
     for (let i = 0; i < count; i++) {
       if (cd.readUInt32LE(p) !== 0x02014b50) throw new Error("中央目錄第 " + (i + 1) + " 筆格式不對");
-      const crc = cd.readUInt32LE(p + 16); let csize = cd.readUInt32LE(p + 20), size = cd.readUInt32LE(p + 24);
+      const crc = cd.readUInt32LE(p + 16); let csize = cd.readUInt32LE(p + 20), size = cd.readUInt32LE(p + 24), off = cd.readUInt32LE(p + 42);
       const nl = cd.readUInt16LE(p + 28), xl = cd.readUInt16LE(p + 30), cl = cd.readUInt16LE(p + 32);
       const name = cd.toString("utf8", p + 46, p + 46 + nl);
-      if (size === 0xffffffff || csize === 0xffffffff) {   /* ZIP64 額外欄位 0x0001：依序放「超過上限的」原始大小、壓縮大小 */
+      if (size === 0xffffffff || csize === 0xffffffff || off === 0xffffffff) {   /* ZIP64 額外欄位 0x0001：依序放「超過上限的」原始大小、壓縮大小 */
         let q = p + 46 + nl; const end = q + xl;
         while (q + 4 <= end) {
           const id = cd.readUInt16LE(q), len = cd.readUInt16LE(q + 2);
-          if (id === 0x0001) { let r = q + 4; if (size === 0xffffffff) { size = Number(cd.readBigUInt64LE(r)); r += 8 } if (csize === 0xffffffff) csize = Number(cd.readBigUInt64LE(r)); break }
+          if (id === 0x0001) { let r = q + 4; if (size === 0xffffffff) { size = Number(cd.readBigUInt64LE(r)); r += 8 } if (csize === 0xffffffff) { csize = Number(cd.readBigUInt64LE(r)); r += 8 } if (off === 0xffffffff) off = Number(cd.readBigUInt64LE(r)); break }
           q += 4 + len;
         }
       }
-      if (!name.endsWith("/")) { if (out.has(name)) throw new Error("zip 裡有重複的檔名（第五輪審查：原本會默默合併）：" + name); out.set(name, { size, csize, crc }) }
+      if (!name.endsWith("/")) { if (out.has(name)) throw new Error("zip 裡有重複的檔名（第五輪審查：原本會默默合併）：" + name); out.set(name, { size, csize, crc, off }) }
       p += 46 + nl + xl + cl;
     }
     if (!out.size) throw new Error("zip 裡沒有任何檔案");
     return out;
   } finally { fs.closeSync(fd) }
+}
+
+/* #102 第三輪複審（中）：讀 zip 裡的一個檔（照中央目錄記的本地檔頭位移；只支援不壓縮與 deflate），解壓後核對大小與 CRC，不合就丟例外 */
+function readEntry(file, idx, name) {
+  const e = idx.get(name); if (!e || typeof e.off !== "number") throw new Error("zip 裡沒有 " + name);
+  const fd = fs.openSync(file, "r");
+  try {
+    const h = Buffer.alloc(30); fs.readSync(fd, h, 0, 30, e.off);
+    if (h.readUInt32LE(0) !== 0x04034b50) throw new Error(name + " 的本地檔頭格式不對");
+    const method = h.readUInt16LE(8), start = e.off + 30 + h.readUInt16LE(26) + h.readUInt16LE(28), raw = Buffer.alloc(e.csize);
+    fs.readSync(fd, raw, 0, e.csize, start);
+    const out = method === 0 ? raw : method === 8 ? require("zlib").inflateRawSync(raw) : null;
+    if (!out) throw new Error(name + " 用了不支援的壓縮方式 " + method);
+    if (out.length !== e.size || crc32(out) !== e.crc) throw new Error(name + " 解出來的大小或 CRC 跟中央目錄不合");
+    return out;
+  } finally { fs.closeSync(fd) }
+}
+function crc32(buf) { let c, crc = 0xffffffff; for (let i = 0; i < buf.length; i++) { c = (crc ^ buf[i]) & 0xff; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; crc = (crc >>> 8) ^ c } return (crc ^ 0xffffffff) >>> 0 }
+/* AAB 的 base/manifest/AndroidManifest.xml 是 aapt2 的 protobuf 格式：屬性名稱 "versionCode" 後面跟著字串值（十進位數字）。
+   找第一個 versionCode，往後 64 位元組內第一串數字就是值；找不到或出現兩個不一樣的值就丟例外（不猜） */
+function versionCodeOf(file, idx) {
+  const m = readEntry(file, idx || readZipIndex(file), "base/manifest/AndroidManifest.xml"), key = Buffer.from("versionCode"), vals = new Set();
+  for (let i = m.indexOf(key); i >= 0; i = m.indexOf(key, i + 1)) {
+    if (m[i + key.length] >= 0x41 && m[i + key.length] <= 0x7a) continue;   /* versionCodeMajor 之類的別的屬性 */
+    const t = m.subarray(i + key.length, i + key.length + 64).toString("latin1").match(/(?<![0-9])([1-9][0-9]{0,9})(?![0-9])/);
+    if (t) vals.add(t[1]);
+  }
+  if (vals.size !== 1) throw new Error(vals.size ? "manifest 裡的 versionCode 不只一個值：" + [...vals].join("、") : "manifest 裡找不到 versionCode");
+  return +[...vals][0];
 }
 
 /* debug／開發用的檔（第五輪審查補 .pdb、編輯器與 AI 工具設定、.github/、coverage/、output/、test-*.js、包在裡面的 apk／aab／zip） */
@@ -237,16 +266,19 @@ if (require.main === module) {
   const r = diffIndex(A, B, OPTS);
   /* W91：送審閘門要的欄位——兩個 AAB 的 SHA-256（閘門核對新版＝送審的 AAB）、舊版是 Play 上哪一版（--old-code）、有沒有 --strict、
      金絲雀（同一套參數與確認清單）、工具雜湊（跟 origin/main 比）、結束代碼 */
+  /* #102 第三輪複審（中）：兩包 manifest 裡實際的 versionCode；讀得到又跟 --old-code／--new-code 不一樣就不驗（結束代碼 2）。送審閘門另外自己讀、自己比 */
+  const vc = (f, I) => { try { return versionCodeOf(f, I) } catch (e) { return null } }, oldCodeManifest = vc(P.pos[0], A), newCodeManifest = vc(P.pos[1], B);
+  for (const [k, v] of [["old-code", oldCodeManifest], ["new-code", newCodeManifest]]) if (P.opt[k] && v !== null && +P.opt[k] !== v) no("--" + k + "=" + P.opt[k] + " 跟 AAB manifest 裡的 versionCode（" + v + "）不一樣");
   let oldSha256, newSha256;
   try { oldSha256 = sha256File(P.pos[0]); newSha256 = sha256File(P.pos[1]) } catch (e) { no("算不出 AAB 的 SHA-256：" + e.message) }
   /* 結束代碼照舊只看紅黃項（命令列的意思不變）；金絲雀另外記在報告，pass 要三樣都成立：結束代碼 0、--strict、金絲雀都抓到——送審閘門看 pass 與 canary */
   const canary = canaryRun(A, B, OPTS), code = r.red.length || (P.strict && r.yellow.length) ? 1 : 0;
   Object.assign(r, { tool: "AAB-DIFF", args: P.raw, strict: P.strict, oldName: P.pos[0].split(/[\\/]/).pop(), newName: P.pos[1].split(/[\\/]/).pop(), oldSha256, newSha256,
-    oldCode: P.opt["old-code"] || null, newCode: P.opt["new-code"] || null, canary, exitCode: code, pass: code === 0 && P.strict === true && canary.ok === true, toolPins: TOOL_PINS });
+    oldCode: P.opt["old-code"] || null, newCode: P.opt["new-code"] || null, oldCodeManifest, newCodeManifest, canary, exitCode: code, pass: code === 0 && P.strict === true && canary.ok === true, toolPins: TOOL_PINS });
   const md = renderMd(r, r.oldName, r.newName, P.raw) + "\n\n## 金絲雀（從這個候選包做的壞樣本，同一套參數與確認清單）：" + (canary.ok ? "✔ 都抓到" : "✘ 沒抓到，這次比對不可信") + "\n" +
     ["home", "zeroJs", "jks", "yellow"].map((k) => "- " + { home: "刪一個首頁素材→紅", zeroJs: "一個 js 縮成 0 位元組→紅", jks: "多帶一個 .jks→紅", yellow: "多一個沒確認的 AGENTS.md→黃" }[k] + "：" + (canary[k].ok ? "✔" : "✘") + "（" + (canary[k].f || canary[k].why) + "）").join("\n");
   try { if (P.opt.json) fs.writeFileSync(P.opt.json, JSON.stringify(r, null, 1) + "\n"); if (P.opt.md) fs.writeFileSync(P.opt.md, md + "\n") } catch (e) { no("寫不出報告：" + e.message) }
   console.log(md);
   process.exit(code);
 }
-module.exports = { readZipIndex, diffIndex, checkInputs, renderMd, parseArgs, canaryRun, sha256File, DEBUG_RE, DEBUG_OK, SECRET_RE, MEDIA_RE, CODE_RE, AAB_MUST, NEW_OK, NEW_SUSPECT };
+module.exports = { readEntry, versionCodeOf, readZipIndex, diffIndex, checkInputs, renderMd, parseArgs, canaryRun, sha256File, DEBUG_RE, DEBUG_OK, SECRET_RE, MEDIA_RE, CODE_RE, AAB_MUST, NEW_OK, NEW_SUSPECT };

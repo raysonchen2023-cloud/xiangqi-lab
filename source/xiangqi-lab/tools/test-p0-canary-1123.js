@@ -14,7 +14,9 @@ const { required: HOME_REQUIRED } = require(path.join(AND, "bundle-home-assets.j
 const A = "a".repeat(64), K = "c".repeat(64), V = "20261123-0900";
 const MAIN = (p) => TP.normSha(fs.readFileSync(path.join(AND, path.basename(p))));
 /* #102：閘門自己重算產物比對的結果（合格的樣子：沒有紅、沒有沒確認的黃、金絲雀都抓到）；舊版雜湊跟報告記的一樣 */
-const OKRE = { red: [], yellow: [], acked: [], allowed: 0, canaryOk: true }, OLDSHA = "d".repeat(64);
+/* #102 第三輪複審：重算結果一定帶兩包的雜湊與 manifest 裡實際的 versionCode（從檔案重算時 recomputeFromFiles 會填），跟假報告 ad() 一致 */
+const OLDSHA = "d".repeat(64), OKRE = { red: [], yellow: [], acked: [], allowed: 0, canaryOk: true, newSha256: "a".repeat(64), oldSha256: OLDSHA, oldCode: 26112104, newCode: 26112401 };
+const FILE = (re, old = OLDSHA) => re && Object.assign({ newSha256: "a".repeat(64), oldSha256: old, oldCode: 26112104, newCode: 26112401 }, re);
 const G = (reps, w = [], mainSha = MAIN, cdnProbe = null, diffRe = OKRE) => gate(A, V, reps, w, { mainSha, cdnProbe, diffRe, oldSha: OLDSHA });
 const DOWN = { reachable: false, detail: "假：閘門也連不上" }, UP = { reachable: true, detail: "假：閘門連得上" };
 const d3 = (android, o = {}) => ({ file: "3d-" + android, json: Object.assign({ tool: "P0-3D", aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D") }, o) });
@@ -757,7 +759,7 @@ test("#102 審查建議①：閘門自己重算產物比對——報告手改成
   const base = { "BundleConfig.pb": [10, 1], "base/manifest/AndroidManifest.xml": [20, 2], [P + "index.html"]: [300, 3], [P + "core.js"]: [900, 4], [P + "data/homemap/home.webp"]: [4000, 5] };
   const Aidx = M(base), ok = P0.recomputeDiff(AD, Aidx, M(base), {}, new Set());
   assert.equal(ok.red.length + ok.yellow.length, 0); assert.equal(ok.canaryOk, true, JSON.stringify(ok.canary));
-  const g = (re, o = {}, oldSha = OLDSHA) => gate(A, V, [...all().filter((r) => r.json.tool !== "AAB-DIFF"), ad(A, o)], [], { mainSha: MAIN, diffRe: re, oldSha });
+  const g = (re, o = {}, oldSha = OLDSHA) => gate(A, V, [...all().filter((r) => r.json.tool !== "AAB-DIFF"), ad(A, o)], [], { mainSha: MAIN, diffRe: FILE(re, oldSha), oldSha });
   assert.equal(g(ok).ok, true, g(ok).problems.join("；"));
   const lost = Object.assign({}, base); delete lost[P + "data/homemap/home.webp"];
   let r = g(P0.recomputeDiff(AD, Aidx, M(lost), {}, new Set()), { red: [], pass: true, exitCode: 0 });

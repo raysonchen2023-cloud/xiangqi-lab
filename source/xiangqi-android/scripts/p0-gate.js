@@ -139,7 +139,15 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
       const RE = opts.diffRe;
       if (!RE) add(`${key}：閘門沒有自己重算產物比對（要給 --old-aab <Play 現行版.aab>，確認清單用 --ack）：不能只信報告`);
       else {
-        if (opts.oldSha && json.oldSha256 !== opts.oldSha) add(`${key}：報告比的舊版（${String(json.oldSha256 || "").slice(0, 12)}）不是 --old-aab 這一包（${opts.oldSha.slice(0, 12)}）`);
+        /* #102 第三輪複審（中）：缺值不放行——重算一定要帶兩包的雜湊與 manifest 裡實際的 versionCode；新版＝送審這包、舊版＝報告比的那包、兩個版本碼跟報告一樣、新的比舊的大 */
+        if (!HEX64.test(String(RE.newSha256 || "")) || RE.newSha256 !== aabSha) add(`${key}：閘門重算的新版（${String(RE.newSha256 || "沒有").slice(0, 12)}）不是要送審的這個 AAB`);
+        if (!HEX64.test(String(RE.oldSha256 || "")) || json.oldSha256 !== RE.oldSha256) add(`${key}：報告比的舊版（${String(json.oldSha256 || "").slice(0, 12)}）不是 --old-aab 這一包（${String(RE.oldSha256 || "沒有").slice(0, 12)}）`);
+        if (!Number.isInteger(RE.oldCode) || !Number.isInteger(RE.newCode)) add(`${key}：讀不到兩包 manifest 裡的 versionCode（${RE.codeErr || "沒有"}）：不能確定舊版真的是 Play 上那一版`);
+        else {
+          if (String(RE.oldCode) !== String(json.oldCode)) add(`${key}：--old-aab 這一包 manifest 的 versionCode 是 ${RE.oldCode}，報告寫 ${json.oldCode}`);
+          if (String(RE.newCode) !== String(json.newCode)) add(`${key}：送審 AAB manifest 的 versionCode 是 ${RE.newCode}，報告寫 ${json.newCode}`);
+          if (RE.newCode <= RE.oldCode) add(`${key}：送審 AAB 的 versionCode（${RE.newCode}）沒有比 --old-aab 那一包（${RE.oldCode}）大：舊包可能是從候選包改出來的`);
+        }
         if (RE.red.length) add(`${key}：閘門重算有紅項（${RE.red.slice(0, 3).map((x) => x.f).join("、")}）：紅項不能確認、也不能豁免`);
         if (RE.yellow.length) add(`${key}：閘門重算有沒確認的黃項（${RE.yellow.slice(0, 3).map((x) => x.f + "@" + x.ack.split("@").pop()).join("、")}）：人看過後寫進 --ack 清單`);
         if (!RE.canaryOk) add(`${key}：閘門重算的金絲雀沒抓到：這次的放行參數可能太寬，或比對失靈`);
@@ -248,7 +256,20 @@ function recomputeDiff(AD, A, B, args, ack) {
 function recomputeFromFiles(AD, oldPath, newPath, args, ack) {
   const A = AD.readZipIndex(oldPath), B = AD.readZipIndex(newPath), bad = AD.checkInputs(A, B, oldPath, newPath);
   if (bad) throw new Error("產物比對沒驗到：" + bad);
-  return Object.assign(recomputeDiff(AD, A, B, args, ack), { oldSha256: AD.sha256File(oldPath), newSha256: AD.sha256File(newPath) });
+  /* #102 第三輪複審（中）：兩包 manifest 裡實際的 versionCode（讀不到記原因，閘門會擋） */
+  let oldCode = null, newCode = null, codeErr = null;
+  try { oldCode = AD.versionCodeOf(oldPath, A); newCode = AD.versionCodeOf(newPath, B) } catch (e) { codeErr = e && e.message }
+  return Object.assign(recomputeDiff(AD, A, B, args, ack), { oldSha256: AD.sha256File(oldPath), newSha256: AD.sha256File(newPath), oldCode, newCode, codeErr });
+}
+/* #102 第三輪複審（中）：main 的串接抽出來測——--old-aab＝舊版、--aab＝新版（順序不能反）、確認清單只用閘門自己收的 --ack（不用報告裡寫的）、
+   放行參數照報告記的。任何一步不對丟例外（main 結束代碼 2）。o＝{ AD, oldPath, aabPath, ackPath, reports } */
+function prepareDiff(o) {
+  if (!o.oldPath) return null;
+  if (!fs.existsSync(o.oldPath)) throw new Error("找不到 --old-aab：" + o.oldPath);
+  let ack = new Set();
+  if (o.ackPath) { let j; try { j = JSON.parse(fs.readFileSync(o.ackPath, "utf8")) } catch (e) { j = null } if (!Array.isArray(j) || !j.every((x) => typeof x === "string")) throw new Error("--ack 清單讀不到或格式不對（要是確認碼字串的陣列）：" + o.ackPath); ack = new Set(j) }
+  const rep = (o.reports || []).find(({ json }) => json && json.tool === "AAB-DIFF");
+  return recomputeFromFiles(o.AD || require("./aab-diff.js"), o.oldPath, o.aabPath, rep && rep.json && rep.json.args, ack);
 }
 /* #102 審查④：收據（JSON）——送審 AAB、舊版、放行參數原樣、確認過的黃項確認碼逐筆、工具雜湊。閘門通過才寫 */
 function aabDiffReceipt(aabSha, reports, re) {
@@ -304,12 +325,9 @@ async function main() {
   if (reports.some(({ json }) => json && json.tool === "P0-IMG" && (json.exitCode !== 0 || (json.canary && json.canary.cdnUnreachable === true)))) { cdnProbe = await probeCdn(); console.log(`閘門自己探測 CDN：${cdnProbe.reachable ? "連得上" : "連不上"}（${cdnProbe.detail}）`) }
   /* #102 審查建議①：產物比對由閘門自己重算（--old-aab＝Play 現行版、--ack＝人寫的確認清單）；放行參數照報告記的 */
   let diffRe = null, oldSha = null;
-  const OLD = a("--old-aab"), ACK = a("--ack"), adRep = reports.find(({ json }) => json && json.tool === "AAB-DIFF");
+  const OLD = a("--old-aab"), ACK = a("--ack");
   if (OLD) {
-    if (!fs.existsSync(OLD)) { console.error("✘ 找不到 --old-aab：" + OLD); process.exit(2) }
-    let ack = new Set();
-    if (ACK) { try { const j = JSON.parse(fs.readFileSync(ACK, "utf8")); if (!Array.isArray(j) || !j.every((x) => typeof x === "string")) throw 0; ack = new Set(j) } catch (e) { console.error("✘ --ack 清單讀不到或格式不對（要是確認碼字串的陣列）：" + ACK); process.exit(2) } }
-    try { diffRe = recomputeFromFiles(require("./aab-diff.js"), OLD, AAB, adRep && adRep.json && adRep.json.args, ack); oldSha = diffRe.oldSha256 }
+    try { diffRe = prepareDiff({ oldPath: OLD, aabPath: AAB, ackPath: ACK, reports }); oldSha = diffRe.oldSha256 }
     catch (e) { console.error("✘ 閘門重算產物比對失敗：" + (e && e.message)); process.exit(2) }
   }
   const r = gate(sha, BUILD, reports, fromRepo ? waivers : [], { mainSha, cdnProbe, diffRe, oldSha });
@@ -327,5 +345,5 @@ async function main() {
   for (const p of r.problems) console.log("✘ " + p);
   console.log("✘ 不能送審"); process.exit(1);
 }
-module.exports = { probeCdn, GATE_CDN, gate, aabDiffInfo, recomputeDiff, recomputeFromFiles, aabDiffReceipt, validWaiver, onlyCdnDown, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
+module.exports = { probeCdn, GATE_CDN, gate, aabDiffInfo, recomputeDiff, recomputeFromFiles, prepareDiff, aabDiffReceipt, validWaiver, onlyCdnDown, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
 if (require.main === module) main().catch((e) => { console.error("✘ " + (e && e.message)); process.exit(2) });

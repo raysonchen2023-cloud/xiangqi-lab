@@ -504,3 +504,60 @@ test("#102 複審：閘門從兩個檔重算（recomputeFromFiles）——新版
   assert.throws(() => G.recomputeFromFiles(AD, withComment, neu, {}, new Set()), /一模一樣/, "只差 zip 註解：每個檔都一樣，多半拿錯檔");
   assert.throws(() => G.recomputeFromFiles(AD, makeZip("rf-x.zip", { "README.md": "a" }), neu, {}, new Set()), /不是 AAB/, "不是 AAB");
 });
+
+/* ---------- #102 第三輪複審（iMac Claude 1 的新代理人）：閘門讀兩包 manifest 裡實際的 versionCode；main 的串接抽成 prepareDiff，用真 zip 測 ---------- */
+/* 假 manifest：照 aapt2 protobuf 的樣子，屬性名稱 versionCode 後面接字串值（中間夾幾個欄位位元組） */
+const MF = (code, extra = "") => Buffer.concat([Buffer.from([0x0a, 0x08]), Buffer.from("manifest"), Buffer.from([0x1a, 0x0b]), Buffer.from("versionCode"), Buffer.from([0x22, 0x08]), Buffer.from(String(code)), Buffer.from(extra)]);
+const W91V = (code, more = {}) => Object.assign({}, W91, { "base/manifest/AndroidManifest.xml": MF(code) }, more);
+test("#102 第三輪：versionCodeOf 讀 manifest 的 versionCode；versionCodeMajor 不算；兩個不同值、找不到都丟例外（不猜）；readEntry 核對大小與 CRC", () => {
+  assert.equal(AD.versionCodeOf(makeZip("vc-1.zip", W91V(26112401))), 26112401);
+  const major = Buffer.concat([Buffer.from("versionCodeMajor"), Buffer.from([0x22, 0x01]), Buffer.from("7"), MF(26112301)]);
+  assert.equal(AD.versionCodeOf(makeZip("vc-2.zip", W91V(0, { "base/manifest/AndroidManifest.xml": major }))), 26112301, "versionCodeMajor 的 7 不算");
+  const two = Buffer.concat([MF(26112301), MF(26112401)]);
+  assert.throws(() => AD.versionCodeOf(makeZip("vc-3.zip", W91V(0, { "base/manifest/AndroidManifest.xml": two }))), /不只一個值/);
+  assert.throws(() => AD.versionCodeOf(makeZip("vc-4.zip", W91)), /找不到 versionCode/, "<manifest/> 沒有 versionCode");
+  const f = makeZip("vc-5.zip", W91V(26112401)), b = fs.readFileSync(f), i = b.indexOf(Buffer.from("26112401")); b[i] = 0x39; fs.writeFileSync(f, b);
+  assert.throws(() => AD.versionCodeOf(f), /CRC/, "內容被改過、CRC 對不起來");
+});
+
+test("#102 第三輪：prepareDiff（main 的串接）——舊＝--old-aab、新＝--aab、版本碼從兩包 manifest 讀；確認清單只用閘門收的 --ack；缺檔、ack 格式錯丟例外；閘門擋假舊包、假版本碼、缺雜湊", () => {
+  const G = require(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js")), crypto = require("crypto"), sh = (f) => crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+  const old = makeZip("pd-old.zip", W91V(26112301)), neu = makeZip("pd-new.zip", W91V(26112401, { [P + "AGENTS.md"]: "x" }));
+  const rep = (o = {}) => ({ file: "aab-diff.json", json: Object.assign({ tool: "AAB-DIFF", strict: true, newSha256: sh(neu), oldSha256: sh(old), oldCode: "26112301", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {} }, o) });
+  let re = G.prepareDiff({ oldPath: old, aabPath: neu, reports: [rep()] });
+  assert.deepEqual([re.oldCode, re.newCode, re.oldSha256, re.newSha256], [26112301, 26112401, sh(old), sh(neu)], "版本碼、雜湊都照兩個檔實際的");
+  assert.equal(re.yellow.length, 1, "多一個 AGENTS.md：黃項（沒給 --ack）");
+  const ackOfReport = re.yellow[0].ack;
+  re = G.prepareDiff({ oldPath: old, aabPath: neu, reports: [rep({ acked: [ackOfReport], args: { ack: "x.json" } })] });
+  assert.equal(re.yellow.length, 1, "報告自己寫的確認清單不算：還是黃項");
+  const ackF = path.join(TMP, "pd-ack.json"); fs.writeFileSync(ackF, JSON.stringify([ackOfReport]));
+  re = G.prepareDiff({ oldPath: old, aabPath: neu, ackPath: ackF, reports: [rep()] }); assert.equal(re.yellow.length, 0, "閘門收的 --ack 才算");
+  fs.writeFileSync(ackF, "{}"); assert.throws(() => G.prepareDiff({ oldPath: old, aabPath: neu, ackPath: ackF, reports: [rep()] }), /--ack/);
+  assert.throws(() => G.prepareDiff({ oldPath: path.join(TMP, "nope.zip"), aabPath: neu, reports: [rep()] }), /找不到 --old-aab/);
+  assert.equal(G.prepareDiff({ aabPath: neu, reports: [] }), null, "沒給 --old-aab：不重算（閘門會擋「沒有自己重算」）");
+  /* 把重算結果交給閘門裡 AAB-DIFF 那一段，只看那一段的問題 */
+  const problems = (r, R) => G.gate(sh(neu), "20261124-0528", [R || rep()], [], { mainSha: () => "", diffRe: r }).problems.filter((p) => /^AAB-DIFF：/.test(p) && !/工具雜湊|toolPins|金絲雀沒抓到（home/.test(p));   /* 只看閘門重算那幾條；假報告沒帶 toolPins、canary，那兩條不算 */
+  const good = G.prepareDiff({ oldPath: old, aabPath: neu, ackPath: (fs.writeFileSync(ackF, JSON.stringify([ackOfReport])), ackF), reports: [rep()] });
+  assert.deepEqual(problems(good).filter((p) => /versionCode|舊版|新版|重算/.test(p)), [], "正常：版本碼、雜湊都對得上：" + problems(good).join("；"));
+  /* 代理人實跑的攻擊 1：從候選包改出來的假舊包（版本碼跟候選包一樣） */
+  const fake = makeZip("pd-fake.zip", W91V(26112401, { [P + "index.html"]: "<html><!-- 改一行 -->" }));
+  const rf = G.prepareDiff({ oldPath: fake, aabPath: neu, ackPath: ackF, reports: [rep({ oldSha256: sh(fake) })] });
+  assert.ok(problems(rf, rep({ oldSha256: sh(fake) })).some((p) => /manifest 的 versionCode 是 26112401，報告寫 26112301/.test(p)), "假舊包：版本碼跟報告不符");
+  assert.ok(problems(rf, rep({ oldSha256: sh(fake), oldCode: "26112401", newCode: "26112402" })).some((p) => /沒有比 --old-aab 那一包（26112401）大/.test(p)), "就算報告照假包寫，新版不比舊版大也擋");
+  /* 攻擊 2：報告的版本碼改成假的 */
+  assert.ok(problems(good, rep({ oldCode: "20000000", newCode: "99999999" })).filter((p) => /manifest 的 versionCode/.test(p)).length === 2, "假的 oldCode、newCode 都擋");
+  /* 缺值不放行：沒有雜湊、沒有版本碼（讀不到 manifest）、新版雜湊不是送審這包 */
+  for (const [k, re2] of [["newSha256", { newSha256: undefined }], ["oldSha256", { oldSha256: undefined }], ["codes", { oldCode: null, newCode: null, codeErr: "讀不到" }], ["別包", { newSha256: "e".repeat(64) }]])
+    assert.ok(problems(Object.assign({}, good, re2)).length > 0, "缺 " + k + " 要擋");
+  const noMf = G.recomputeFromFiles(AD, makeZip("pd-nomf-old.zip", W91), makeZip("pd-nomf-new.zip", W91V(0, { [P + "core.js"]: "var b=2;" })), {}, new Set());
+  assert.ok(noMf.codeErr && noMf.oldCode === null, "manifest 讀不到版本碼：記原因、不猜");
+});
+
+test("#102 第三輪：aab-diff 命令列的 --old-code／--new-code 跟 manifest 讀到的不一樣就不驗（結束代碼 2）；一樣就照常，報告記下 manifest 讀到的", () => {
+  const a = makeZip("cl-old.zip", W91V(26112301)), b = makeZip("cl-new.zip", W91V(26112401)), out = path.join(TMP, "cl.json");
+  let c = run(a, b, "--strict", "--old-code=26112301", "--new-code=26112401", "--json=" + out);
+  assert.equal(c.status, 0, c.stdout + c.stderr); const j = JSON.parse(fs.readFileSync(out, "utf8"));
+  assert.deepEqual([j.oldCodeManifest, j.newCodeManifest], [26112301, 26112401]);
+  c = run(a, b, "--strict", "--old-code=20000000", "--new-code=26112401"); assert.equal(c.status, 2); assert.match(c.stderr, /--old-code=20000000 跟 AAB manifest 裡的 versionCode（26112301）不一樣/);
+  c = run(a, b, "--strict", "--old-code=26112301", "--new-code=99999999"); assert.equal(c.status, 2);
+});
