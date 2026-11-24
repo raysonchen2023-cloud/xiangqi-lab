@@ -1694,16 +1694,20 @@ function i18nHintOnce(){try{if(i18nSuggest()!=="en"||store.get("langHint",false)
 if(typeof document!=="undefined"&&document.body)i18nBoot();
 /* 11/17 iMac 測試員 I P3-3：簡體只轉字形（OpenCC 台灣→大陸是逐字），用詞還是臺灣的（服务器寫成「伺服器」、屏幕寫成「萤幕」、反馈寫成「回馈」…）。
    zh.js（xiangqi-lab/src）先把整個畫面逐字轉成簡體；這裡在後面再補一層「兩岸用詞」：只在簡體模式、只換下面這些「轉完字以後的簡體寫法」，長的詞先換。
-   只放電腦、網路、App 介面的用詞；不放單字、不放棋的術語（車馬炮、將軍、殘局、棋譜…都不在表裡）；「資料」只換「資料庫／資料檔／資料夾／匿名資料」這幾個確定是 data 的詞。 */
+   只放電腦、網路、App 介面的用詞；不放單字（例外：OpenCC 轉出來的罕見棋子字「㐷」「伡」，見表末）、不放棋的術語（車馬炮、將軍、殘局、棋譜…都不在表裡）；「資料」只換「資料庫／資料檔／資料夾／匿名資料」這幾個確定是 data 的詞。 */
 const ZH_CN_WORDS=[["意见回馈","意见反馈"],["伺服器","服务器"],["萤幕","屏幕"],["回馈","反馈"],["珐瑯","珐琅"],["影片","视频"],["软体","软件"],["硬体","硬件"],["行动网路","移动网络"],["网路","网络"],   /* zh-lint-ok：簡體模式的兩岸用詞對照表（本來就是簡體） */
   ["预设值","默认值"],["预设","默认"],["登入","登录"],["程式","程序"],["讯息","信息"],["档案","文件"],["匿名资料","匿名数据"],["资料库","数据库"],["资料档","数据文件"],["资料夹","文件夹"],   /* zh-lint-ok */
   ["介面","界面"],["支援","支持"],["设定","设置"],["帐号","账号"],["视窗","窗口"],["搜寻","搜索"],["选单","菜单"],["图示","图标"],["记忆体","内存"],["字型","字体"],["解析度","分辨率"],   /* zh-lint-ok */
   ["连结","链接"],["列印","打印"],["品质","质量"],["滑鼠","鼠标"],["线上","在线"],["储存空间","存储空间"],["储存","保存"],["简讯","短信"],["捷径","快捷方式"],["部落格","博客"],["使用者","用户"],   /* zh-lint-ok */
+  ["方向钮","方向按钮"],   /* zh-lint-ok */
+  /* 11/24 開發者問「英文和簡體都能正常轉換嗎」：OpenCC 把紅方的「傌」轉成擴充 A 區的罕見字「㐷」、「俥」轉成「伡」——手機常沒有字型（顯示方塊），記譜「傌八進七」變「㐷八进七」。
+     大陸習慣紅黑都寫「马」「车」（马八进七、车一平二），只換這兩個罕見字，其他棋子照 OpenCC（帅、将、马、车、炮、砲、兵、卒都正常） */
+  ["㐷","马"],["伡","车"],   /* zh-lint-ok */
   ["汇出","导出"],["汇入","导入"],["最佳化","优化"]];   /* zh-lint-ok */
 function zhCnWords(s){s=String(s==null?"":s);for(const[a,b]of ZH_CN_WORDS)if(s.includes(a))s=s.split(a).join(b);return s}
 (function(){try{if(typeof window==="undefined"||typeof document==="undefined"||!window.XQ_ZH||typeof XQ_ZH.mode!=="function"||XQ_ZH.mode()!=="cn")return;
-  const AT=["placeholder","aria-label","title"],fix=n=>{const t=n.nodeValue;if(!t||!/[一-鿿]/.test(t))return;const u=zhCnWords(t);if(u!==t)n.nodeValue=u};
-  const el=e=>{for(const a of AT){const v=e.getAttribute&&e.getAttribute(a);if(v&&/[一-鿿]/.test(v)){const u=zhCnWords(v);if(u!==v)e.setAttribute(a,u)}}};
+  const AT=["placeholder","aria-label","title"],fix=n=>{const t=n.nodeValue;if(!t||!/[㐀-鿿]/.test(t))return;const u=zhCnWords(t);if(u!==t)n.nodeValue=u};
+  const el=e=>{for(const a of AT){const v=e.getAttribute&&e.getAttribute(a);if(v&&/[㐀-鿿]/.test(v)){const u=zhCnWords(v);if(u!==v)e.setAttribute(a,u)}}};
   const walk=r=>{if(!r)return;if(r.nodeType===3){fix(r);return}if(r.nodeType!==1||/^(SCRIPT|STYLE|TEXTAREA)$/.test(r.tagName))return;el(r);r.querySelectorAll&&r.querySelectorAll("[placeholder],[aria-label],[title]").forEach(el);
     const w=document.createTreeWalker(r,NodeFilter.SHOW_TEXT);let n;while((n=w.nextNode()))fix(n)};
   const go=()=>{walk(document.body);new MutationObserver(ms=>{for(const m of ms){if(m.type==="characterData")fix(m.target);else if(m.type==="attributes")el(m.target);else m.addedNodes.forEach(walk)}}).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:AT});

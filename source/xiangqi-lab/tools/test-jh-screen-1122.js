@@ -158,6 +158,18 @@ test("對局頁頂欄名稱：守中宮另外寫，其他照原本", () => {
   assert.equal(R.jName("park"), "原本:park");
 });
 
+test("〔混合〕Pikafish 盤整 P1（11/24）挑錯著：按「就是這步」但不是錯的那手時，停在紅方那手（n 奇數）要說「這是紅方走的」、黑方那手說「沒問題」、還沒走說先往下看", () => {
+  /* 取出 07z9c 裡按「就是這步」答錯時的那一句（三元式），用假的 jhL 跑：n＝目前顯示到第幾手，mv[n-1] 是剛顯示的那手、mv[0] 是紅方 */
+  const m = SRC.match(/else say\((n[=%][^;]*?)\)\};/);
+  assert.ok(m, "找不到挑錯著答錯那一句");
+  const say = vm.runInNewContext("(n)=>(" + m[1] + ")", { jhL: (zh) => zh });
+  assert.match(say(1), /紅方走的/, "第 1 手是紅方");
+  assert.match(say(3), /紅方走的/, "第 3 手是紅方");
+  assert.match(say(2), /沒問題/, "第 2 手是黑方（不是錯的那手）");
+  assert.match(say(4), /沒問題/);
+  assert.match(say(0), /還沒走棋/);
+});
+
 test("挑錯著、算帳每天只給一次修為 +10（換日再給）", () => {
   const { R, calls, mem } = load();
   assert.equal(R.jhScrDayXP("de", "女塾課堂"), 10);

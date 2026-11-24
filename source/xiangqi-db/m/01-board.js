@@ -564,6 +564,9 @@ const ERA_ARROW={qin:{k:"spear",c:"#1E1E1E"},han:{k:"spear",c:"#B3241B"},sanguo:
 /* 意見回饋 361、399：Gemini 畫的朝代整套棋子＋棋盤底板（data/pset/<朝代>/，tools/pieces_slice.py 切的）；有的朝代就用，平面棋盤和公園 3D 都用 */
 /* 意見回饋 438、439：清單先內建（跟 data/pset/eras.json 一樣），一打開就知道哪些朝代有整套圖；之前要等 eras.json 下載完，第一次畫的平面棋盤會先用程式畫的棋盤和棋子，之後也不會換 */
 let PSET=new Set(["classic","han","ming","nanbei","qin","qing","sanguo","song","sui","tang","weijin","wudai","yuan"]);fetch("data/pset/eras.json").then(r=>r.ok?r.json():null).then(a=>{if(Array.isArray(a)&&a.length)PSET=new Set(a)}).catch(()=>{});
+/* W94b（11/24，#119 預驗：朝代圖片棋子組的字畫在圖裡，zh.js 轉不到）：簡體模式下，整顆是圖的朝代棋子（data/pset）和朝代字形（GLY，繁體字的外框）都不用，
+   改用朝代棋子底圖＋文字（文字由 zh.js 轉成马、车、帅…）；沒有底圖的照一般立體棋子。繁體模式不變 */
+const zhCnPc=()=>{try{return typeof XQ_ZH!=="undefined"&&!!XQ_ZH&&typeof XQ_ZH.mode==="function"&&XQ_ZH.mode()==="cn"}catch(e){return false}};
 const PSET_RECT=[-45,-52.5,650,725];
 /* 意見回饋 501：唐朝的立體棋盤金框特別寬（中間木板只佔 15%～85%），共用的位置會讓棋子壓到金框上——唐朝放大一點，讓中間木板對準棋格 */
 const PSET_RECT_K={tang:[-114,-127.6,788,875]};const psetRect=k=>PSET_RECT_K[k]||PSET_RECT;
@@ -719,17 +722,17 @@ function Board(onTap,onSwipe){
     if(store.get("hiCon",false)||HTp){const hc=s==="r"?(HTp?"#A30000":"#C8102E"):"#111111",inv=s!=="r";   /* 回饋 848（色盲高對比）：黑子改成黑底白字（紅子照舊白底紅字），紅綠色盲不用分紅黑也看得出是哪一方 */
       g.append(el("circle",{cx:x,cy:yt,r:28.5,fill:inv?"#111111":"#FFFFFF",stroke:inv?"#FFFFFF":hc,"stroke-width":inv?2:4}));if(inv)g.append(el("circle",{cx:x,cy:yt,r:29.5,fill:"none",stroke:"#111111","stroke-width":1.5}));g.append(el("circle",{cx:x,cy:yt,r:22.5,fill:"none",stroke:inv?"#FFFFFF":hc,"stroke-width":1.6}));
       g.append(txt(inv?"#FFFFFF":hc,2,{"font-size":35,"font-family":"\"Noto Sans TC\",\"PingFang TC\",\"Microsoft JhengHei\",sans-serif"}));if(up)g.append(el("circle",{cx:x,cy:yt,r:31,fill:"none",stroke:T.mv,"stroke-width":4}));return g}   /* 高對比棋子 */
-    if(curPK&&PSET.has(curPK)){g.append(el("image",{href:(typeof chdPieceHref==="function"&&chdPieceHref(s,p,lastO))||`data/pset/${curPK}/${s}${p.toUpperCase()}.webp`,x:x-30,y:yt-30,width:60,height:60}));   /* 意見回饋 399：整顆棋子（字已經畫在上面）的朝代圖 */
+    if(curPK&&PSET.has(curPK)&&!zhCnPc()){g.append(el("image",{href:(typeof chdPieceHref==="function"&&chdPieceHref(s,p,lastO))||`data/pset/${curPK}/${s}${p.toUpperCase()}.webp`,x:x-30,y:yt-30,width:60,height:60}));   /* 意見回饋 399：整顆棋子（字已經畫在上面）的朝代圖 */
       if(up)g.append(el("circle",{cx:x,cy:yt,r:29,fill:"none",stroke:T.mv,"stroke-width":4}));return g}
     // 朝代棋子底圖（使用者用 Gemini 做的，data/pieces/<朝代>-r/b.webp）：立體樣式才用；字的顏色依底色，再描一圈反差邊
     if(PS==="3d"&&curPK&&PIECE_INK[curPK]){const ink=PIECE_INK[curPK][s],lt=lum(ink)>.5;
       g.append(el("image",{href:`data/pieces/${curPK}-${s}.webp`,x:x-28.5,y:yt-28.5,width:57,height:57}));
       if(up)g.append(el("circle",{cx:x,cy:yt,r:28,fill:"none",stroke:T.mv,"stroke-width":4}));
-      const gp=GLY[curPK]&&GLY[curPK][ch],halo=lt?"#000000b0":"#ffffffc0";
+      const cnT=zhCnPc(),gp=!cnT&&GLY[curPK]&&GLY[curPK][ch],halo=lt?"#000000b0":"#ffffffc0";
       if(gp){const k=.31,gb=GLY_BOLD[curPK]||0,tf=`translate(${x-50*k},${yt-50*k}) scale(${k})`;
         g.append(el("path",{d:gp,transform:tf,fill:ink,stroke:halo,"stroke-width":(3+gb)/k,"stroke-linejoin":"round"}));
         g.append(el("path",{d:gp,transform:tf,fill:ink,stroke:gb?ink:"none","stroke-width":gb/k,"stroke-linejoin":"round"}));return g}
-      needGly(curPK,reGly);
+      if(!cnT)needGly(curPK,reGly);
       g.append(txt(ink,0,{stroke:halo,"stroke-width":3,"paint-order":"stroke","stroke-linejoin":"round"}));return g}
     if(PS==="3d"){   // 立體：實木厚棋子
       const H=7;

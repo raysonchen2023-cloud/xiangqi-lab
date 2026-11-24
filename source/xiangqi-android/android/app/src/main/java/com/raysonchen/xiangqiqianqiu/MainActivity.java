@@ -51,8 +51,35 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        purgeServiceWorkerRegistrations(getDataDir());   // 要在 super.onCreate 建立 WebView 之前
         registerPlugin(XQSpeechPlugin.class);   // 要在 super.onCreate 之前註冊，Bridge 建立時才會載入
         super.onCreate(savedInstanceState);
+    }
+
+    /**
+     * W88（11/24 P0-UPD）：從 1740 那一代（≤26111817，網頁版留下 Service Worker）升級，第一次冷啟舊 Worker 還在接管、顯示舊版，
+     * 要第二次冷啟才好（Play 現行 26112104 也一樣）。頁面裡的 RETIRE_PWA_JS 是在「已經被舊 Worker 接管的頁面」裡登出再 reload，
+     * 跟舊 Worker 交棒有時間差。原生版從來不用 Service Worker（RETIRE_PWA_JS 也擋掉 register），所以在 WebView 啟動之前，
+     * 直接刪掉 WebView 的 Service Worker 註冊資料（Database、ScriptCache）：沒有註冊，第一個文件就由 App 本機檔回應。
+     * 不刪 CacheStorage（素材、引擎快取還要用）；舊的 xqlab-app- 程式快取照舊由 RETIRE_PWA_JS 清。沒有這個資料夾（新安裝）就什麼都不做。
+     */
+    static int purgeServiceWorkerRegistrations(java.io.File dataDir) {
+        int n = 0;
+        try {
+            java.io.File sw = new java.io.File(dataDir, "app_webview/Default/Service Worker");
+            for (String sub : new String[] {"Database", "ScriptCache"}) n += deleteTree(new java.io.File(sw, sub));
+        } catch (RuntimeException e) {
+            Logger.error("XQ", "清除舊 Service Worker 註冊失敗（改由頁面裡的 RETIRE_PWA_JS 清）", e);
+        }
+        return n;
+    }
+
+    static int deleteTree(java.io.File f) {
+        if (!f.exists()) return 0;
+        int n = 0;
+        java.io.File[] kids = f.isDirectory() ? f.listFiles() : null;
+        if (kids != null) for (java.io.File k : kids) n += deleteTree(k);
+        return f.delete() ? n + 1 : n;
     }
 
     @Override
@@ -66,6 +93,7 @@ public class MainActivity extends BridgeActivity {
             bridge.setWebViewClient(new XQWebViewClient(bridge));
             installServiceWorkerClient(bridge);
             installNativeBridge(bridge.getWebView());
+            XQBackHandler.install(this, bridge);   /* W100：返回鍵先交給網頁回上一頁，首頁才收到背景（變體覆蓋 MainActivity 時也要有這一行） */
             bridge.getWebView().stopLoading();
             bridge.getWebView().loadUrl(bridge.getAppUrl());
         }

@@ -6,6 +6,36 @@
 - **原生原始碼**：在 `source/xiangqi-android/`（共用建置鏈）加上 `source/xiangqi-android-variants/<版本>/`（該版差異）。組法見[變體說明](../source/xiangqi-android-variants/README.md)。
 - 之後每次送審，送出前先在公開倉庫打 tag `android-<versionCode>`，並在這張表加一列。App 內的原始碼連結會改成指向該版的 tag（併入下一個發布版）。
   - **怎麼打（W69 流程盤點中 14，2026-11-23 起）：** 候選包通過 P0 閘門（`p0-gate.js` 全過）、送審前，建包的人跑：先把這一版的變體資料夾（含 `VARIANT-MANIFEST.json`）合併進 main，再跑 `gh workflow run tag-native.yml --ref main -f platform=android -f build=<versionCode> -f web=<網頁版號> -f variant_commit=<那個 main 提交，40 碼> -f pkg_sha256=<AAB 的 SHA-256>`。由 GitHub Actions 打在 `web-<網頁版號>` 的提交（網頁跟 AAB 一樣），並核對變體清單的 `webCommit`、`siteVersion`；變體提交與 AAB 雜湊寫進標籤說明。同號不覆寫。iOS 一樣，`platform=ios`、`build=<build>`、`pkg_sha256` 填 IPA 的雜湊。版本標籤受規則集保護，不准改、不准刪；打錯只能換新的建置號。
+  - **產物比對也是送審閘門的一項（W91，2026-11-24 起）：** `p0-gate.js` 除了 P0-IMG、P0-UPD、P0-3D，還要收一份 `aab-diff.js` 的報告，缺了、或任一項不符就不能送審，也不能豁免。跑法（在 `source/xiangqi-android`）：
+    ```
+    node scripts/aab-diff.js <Play 現行版.aab> <要送審的.aab> --strict --old-code=<Play 現行版的 versionCode> --new-code=<這一版的 versionCode> [--expect-removed=… --expect-added=… --expect-shrunk=…] [--ack=<確認清單.json>] --json=aab-diff.json --md=aab-diff.md
+    node scripts/p0-gate.js --aab <要送審的.aab> --build <網頁版號> --old-aab <Play 現行版.aab> [--ack <確認清單.json>] --diff-receipt aab-diff-receipt.json --reports img.json upd.json 3d-12.json 3d-16.json 3d-canary-12.json 3d-canary-16.json aab-diff.json
+    ```
+    - 閘門核對：新版雜湊＝要送審的 AAB、舊版寫明 versionCode 而且不是同一個檔、新版 versionCode 比舊版大、用 `--strict` 跑、`aab-diff.js` 跟 origin/main 那一版一樣（工具鎖定）。
+    - **閘門自己重算（#102 起）：** 閘門用 `--old-aab` 那一包和送審的 AAB，自己用（跟 main 一樣的）`aab-diff.js` 重算紅黃項與金絲雀，不信報告裡的紅黃與 pass；報告比的舊版也要是 `--old-aab` 這一包。確認清單用閘門自己收的 `--ack`（人寫的那份）；放行參數照報告記的。舊版是不是真的 Play 現行版，閘門看不到 Play，只能核對報告有寫；跑的人要從 Play Console「所有應用程式套件」確認。
+    - **版本碼（#102 第三、四輪）：** 閘門照 protobuf 結構讀兩包 manifest 裡 Android 真正用的整數（compiled_item），字串欄位要是純十進位而且跟整數相等，不然擋；新舊版本碼都要跟報告一樣，新的要比舊的大。新舊兩包不到 3 個檔不同也擋（正常發版 index.html、sw.js、manifest 都會變）。七種金絲雀逐項核對（第九輪起）。
+    - **還擋不了的（#102 第六輪照實寫）：** 做一包假的「舊版」其實不難：從真的舊版拿出 manifest 等原檔，放進一個改過的包，版本碼、字串和整數就都對得上，再多改幾個檔就過了「變動不到 3 個檔」那一條。閘門現在只能確認新舊兩包彼此一致，**確認不了舊包真的是 Play 上那一包**。真正的防線是 W91c：把 `--old-aab` 的 SHA-256 綁到公開倉庫 `android-<oldCode>` 標籤記的 `pkg_sha256`。在那之前，舊版一律用從 Play 下載、或建包當時封存的原檔，跑的人要自己核對。
+    - **硬規則（任何放行參數、確認清單都放不過，#102 第九輪起）：**
+      - 可能含金鑰的檔（`.jks`、`.env` 等）：帶著就紅。
+      - 首頁素材：`data/homemap/` 底下，或在 P0-IMG 首頁離線必要素材名單上（`bundle-home-assets.js` 的 `required`，含各朝代的 icons、canying；#102 第十輪起）。拿掉、大幅縮小（例如換成 Git LFS 指標檔）就紅。工具鎖定 AAB-DIFF 也鎖 `bundle-home-assets.js`，名單被改小會被擋。
+      - 驗證紀錄、證據頁（含 `data/docs/evidence/` 子資料夾，大小寫不分）、任何一層的 `AGENTS.md`、`CLAUDE.md`、`releases/`：新版帶著就紅，不管舊版有沒有（26112301 漏的就是舊版本來就帶著的這一類）。舊版帶著、新版拿掉的不算紅，列在報告「照規則不算」那一節，不用寫放行參數。
+      - 新增的 debug 檔（`.map`、`.log` 等；只有 `BUNDLE-METADATA/` 和 GPL 重建紀錄 `build.log` 不算）：紅。
+      - **週四候選包要注意：** 網頁發布檔如果還帶著上面那類說明文件，候選包會直接紅，要先拿掉再建包。現行 26112401 帶著 `data/docs/evidence.md`（網頁版的「✅ 自動測試紀錄」頁，589 KB）。原生版設定頁本來就不開這份（`05-settings.js` 的 `XQDOC_NATOK` 白名單沒有它，11/17 App Store 審查定的），所以**它不該進安裝包**：週四建包的變體設定 `webRemove` 要加上 `data/docs/evidence.md`（26112401 只拿掉 `data/docs/evidence/` 資料夾）。拿掉後產物比對會把它列在「照規則不算」，不用寫放行參數。
+    - 黃項：人看過後把報告裡的確認碼寫進 `--ack` 清單再跑（aab-diff 與閘門用同一份）；紅項不能確認。新增的檔不在現行包本來就有的位置（例如根目錄多了其他說明檔）算黃。
+    - 金絲雀：`aab-diff.js` 每次都從這個候選包自己做七種壞樣本，用同一套參數與確認清單判斷，少一種沒抓到，報告就 `pass: false`，閘門也逐項核對、擋下。七種分兩類：
+      - **證明硬規則還活著**（放行參數動不了，應該永遠抓到）：刪一個首頁素材（home）、多帶一個 `.jks`（jks）、多帶一個 `.map`（debug）。
+      - **偵測放太寬的參數**（參數蓋到一般素材或一般檔就失靈）：刪一張非首頁素材（media，對 `--expect-removed`）、把一張非首頁素材縮成 131 位元組（shrink，對 `--expect-shrunk`）、多一個沒確認的根目錄說明檔（yellow，對 `--expect-added` 和確認清單）、把一個 js 縮成 0 位元組（zeroJs）。
+      - 新增檔的那幾種，檔名新舊兩包都沒有。
+    - **還擋不了的（#102 複審照實寫）：** 一般素材（非首頁）用「窄的」參數放行，例如只放行某一張公園圖大幅縮小或拿掉；那張圖如果真的壞了，硬規則和金絲雀都看不出來。所以放行參數一律原樣印在閘門輸出與收據裡，參數的鍵名和值、檔名、確認碼裡的換行等控制字元會印成 `\u000a` 這種跳脫字元。**送審前要有人看過「放行」那一節**，不能只看金絲雀通過。
+    - **第十輪複審指出、這個 PR 不修的（照實寫，開成後續工單 W91d）：**
+      - 首頁素材縮小到原本的 60% 以上（還沒到「大幅縮小」）只算黃，確認後就過。
+      - 舊版本來就帶著的 debug 類檔，新版繼續帶，不報（只檢查新增的 debug 檔）。
+      - 說明文件的檔名變體（例如 `AGENTS.bak.md`、`agents-notes.md`）不在黑名單裡，不報。
+      - 程式檔截到 1 位元組（不是 0），配窄的 `--expect-shrunk` 能放行。
+      - 舊版是不是真的 Play 上那一包：要等 W91c 把 `--old-aab` 的 SHA-256 綁到 `android-<oldCode>` 標籤。
+      前兩項 P0-IMG 本來就有第二道防線（逐項核對首頁必要素材與雜湊）。
+    - 確認清單只用閘門自己收的 `--ack`；報告裡記的 ack 不算數。
+    - 閘門會印出舊版 versionCode、放行參數、重算結果，確認過的黃項確認碼逐筆印出；通過時寫出 `--diff-receipt` 收據 JSON（送審 AAB、舊版、新版版本碼、放行參數原樣、確認碼逐筆、工具雜湊），送審收據附這份。
 
 | versionCode | versionName | 種類 | 網頁基底 | 原生原始碼 | 對應程度 |
 |---|---|---|---|---|---|

@@ -100,6 +100,17 @@ test("題庫：60 題、每級 20 題吃不吃各 10、id 依序、局面不重�
   }
 });
 
+test("引擎紀錄（shijiao-engine.json，Pikafish 深度 20）：每題都有；吃＝吃跟最佳差不多、不吃＝吃了明顯較差但不是被殺（11/24 盤整 P2：原 s26 吃了被一步殺，說明卻寫淨賠 2.5 分）", () => {
+  const ENG = JSON.parse(fs.readFileSync(path.join(__dirname, "shijiao-engine.json"), "utf8"));
+  for (const q of M.JH_SJ_Q) {
+    const e = ENG[q.fen.replace(/ - - 0 1$/, "") + "|" + q.t];
+    assert.ok(e, q.id + " 沒有引擎紀錄");
+    if (q.ans === "y") assert.ok(e.alt - e.cap <= 50, q.id + " 吃比最佳差太多 " + (e.alt - e.cap));
+    else { assert.ok(e.alt - e.cap >= 100, q.id + " 不吃的理由不夠 " + (e.alt - e.cap)); assert.ok(e.cap > -20000, q.id + " 吃了會被殺：不吃的理由是殺棋、不是兌換帳") }
+  }
+  assert.ok(!M.JH_SJ_Q.some((q) => q.fen.startsWith("1nbaka3/9/4b1n1c/p1C1p3p/3P2c2/9/P7P/N3C1N2/4A4/2B1KAB2 ") && q.t === 22), "原 s26 不能再出");
+});
+
 test("答錯說明指出哪一步沒算到；一輪 3 題同一級不重複", () => {
   for (const q of M.JH_SJ_Q) {
     const w = M.jhSjWhy(q, q.ans === "y" ? "n" : "y");

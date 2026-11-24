@@ -31,19 +31,24 @@ function jhFgLines(D){const out=[],seen=new Set();
 function jhFgWalk(seq){const C=window.XQCore;let b=C.parseFen(C.START.split(" ")[0]);const nt=[];
   for(const u of seq){const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4));nt.push(C.notate(b,f,t));b=C.make(b,f,t)}return{nt,b}}
 /* 出一題：照種子挑一條夠長的主線，取前 n 步；要打散的步（只黑方＝奇數步，或全部）洗牌成活字，洗完不能跟原本一樣 */
-function jhFgMake(lines,L,seed){const C=window.XQCore,pool=lines.filter(x=>x.length>=L.n);if(!pool.length)return null;
+/* 11/24 Pikafish 盤整 P2：初級 42 條主線只有 10 種前 6 步（17 條一模一樣），一輪 3 題常重複——先照「前 n 步」去重，同一輪也不出一樣的（avoid） */
+function jhFgPool(lines,n,avoid){const seen=new Set(),pool=[];for(const l of lines){if(l.length<n)continue;const k=l.slice(0,n).join(" ");if(!seen.has(k)){seen.add(k);pool.push(l)}}
+  const rest=avoid&&avoid.size?pool.filter(l=>!avoid.has(l.slice(0,n).join(" "))):pool;return rest.length?rest:pool}
+function jhFgMake(lines,L,seed,avoid){const C=window.XQCore,pool=jhFgPool(lines,L.n,avoid);if(!pool.length)return null;
   const line=pool[jhFgIdx(jhFgHash("fg:"+seed),pool.length)],seq=line.slice(0,L.n),{nt}=jhFgWalk(seq);
   const slots=seq.map((u,i)=>L.both||i%2===1?i:-1).filter(i=>i>=0);
   let cards=slots.map(i=>({u:seq[i],nt:nt[i],side:i%2?"b":"r"}));
   for(let k=cards.length-1;k>0;k--){const j=jhFgIdx(jhFgHash(seed+"|"+k),k+1);[cards[k],cards[j]]=[cards[j],cards[k]]}
   if(cards.every((c,i)=>c.u===seq[slots[i]]))cards.push(cards.shift());   /* 洗完跟原本一樣就轉一格 */
   return{seq,nt,slots,cards,seed}}
-function jhFgRound(lines,L,day){const o=[];for(let i=0;i<3;i++){const q=jhFgMake(lines,L,day+":"+L.k+":"+i);if(q)o.push(q)}return o}
+function jhFgRound(lines,L,day){const o=[],used=new Set();for(let i=0;i<3;i++){const q=jhFgMake(lines,L,day+":"+L.k+":"+i,used);if(q){o.push(q);used.add(q.seq.join(" "))}}return o}
 /* 照玩家排的順序走：ans＝完整 n 步（固定的步＋玩家排的活字）。回傳 {ok, step, why}；全部走完再比局面 */
 function jhFgCheck(q,ans){const C=window.XQCore,NM=C.NAMES;let b=C.parseFen(C.START.split(" ")[0]),s="r";
   for(let i=0;i<ans.length;i++){const u=ans[i],f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4)),p=b[f],want=q.nt[q.seq.indexOf(u)]||u;
     if(!p||C.sideOf(p)!==s)return{ok:false,step:i,why:`第 ${i+1} 步「${want}」走不下去：那一格現在沒有${s==="r"?"紅":"黑"}方的子（次序排錯了，這顆子還沒走到那裡）。`};
-    if(!C.legal(b,s).some(([x,y])=>x===f&&y===t))return{ok:false,step:i,why:`第 ${i+1} 步「${want}」走不下去：這一步現在不合法（被擋住，或走了會被將軍）。`};
+    /* W48-S4 預驗 P3（11/24 開發者「挪到送審前」）：不合法時往回找是前面哪一步走過去的子擋住——把那顆子暫時拿掉，這步就合法了，就是它；找不到（例如走了會被將軍）照舊說「被擋住，或走了會被將軍」 */
+    if(!C.legal(b,s).some(([x,y])=>x===f&&y===t)){let by="";for(let k=i-1;k>=0&&!by;k--){const d=C.parseSq(ans[k].slice(2,4));if(d===f||d===t||!b[d])continue;const b2=b.slice();b2[d]=null;if(C.legal(b2,s).some(([x,y])=>x===f&&y===t))by=`被第 ${k+1} 步「${q.nt[q.seq.indexOf(ans[k])]||ans[k]}」走過去的那顆子擋住了`}
+      return{ok:false,step:i,why:`第 ${i+1} 步「${want}」走不下去：這一步現在不合法（${by||"被擋住，或走了會被將軍"}）。`}}
     b=C.make(b,f,t);s=C.opp(s)}
   if(ans.length<q.seq.length)return{ok:null,step:ans.length,why:""};
   /* 開發者 11/22 選單「照主線次序才算對」：開局黑方的步多半換了次序也走得通、局面一樣，只看局面會變成亂排也對；這裡練的是反宮馬的步序 */

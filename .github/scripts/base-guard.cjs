@@ -20,6 +20,8 @@ const GUARD = [
   /^source\/xiangqi-lab\/tools\/(testkinds|verify-all|make-evidence|oss-scan|release-sync-check|release-verify|pikafish-verify)\.js$/,
   /^source\/xiangqi-ios\/scripts\/check-native\.js$/,   /* PR #45（W69③）：verify.yml 跑 check-native，它的結束碼決定紅綠 */
   /^source\/xiangqi-ios\/scripts\/p03d\/test-p03d\.cjs$/,   /* PR #45（W69①）：iOS P0-3D 腳本的自我檢查；換回 main 版去檢查 PR 版的 p03d.js，PR 同時放寬兩邊也擋得到 */
+  /^source\/xiangqi-ios\/scripts\/test-canary-www\.cjs$/,   /* iOS P0-IMG 金絲雀的自我檢查（2026-11-23）：換回 main 版去檢查 PR 版的 check-www.js／canary-www.js，PR 同時放寬兩邊也擋得到 */
+  /^source\/xiangqi-ios\/scripts\/test-canary-native\.cjs$/,   /* iOS 原生檢查金絲雀的自我檢查（2026-11-24）：換回 main 版去檢查 PR 版的 check-native.js／canary-native.js，PR 同時放寬兩邊也擋得到 */
 ];
 const isGuard = (f) => GUARD.some((r) => r.test(f));
 
@@ -55,6 +57,9 @@ function classifiedOnly(baseSrc, prSrc, addedTests) {
 /* 每次執行一個自己的資料夾（程序編號＋時間）：同一台電腦上別人同時跑 base-guard 或 .github 自我測試，不會互相清掉計數（本機實際撞過：記到 285／2737）。CI 的 runner 本來就隔離 */
 const ASSERT_DIR = path.resolve(process.env.RUNNER_TEMP || require("os").tmpdir(), "base-assert-count-" + process.pid + "-" + Date.now().toString(36));
 const assertEnv = () => ({ ...process.env, XQ_ASSERT_DIR: ASSERT_DIR, NODE_OPTIONS: ((process.env.NODE_OPTIONS || "") + " --require " + path.resolve(".github/scripts/assert-count.cjs")).trim() });
+/* 私密掃描補強（scan-changed）的暫存資料夾：每個程序一份（PR #68 審查⑤：基準版守門也要跑這一步，跟 verify.yml 兩種模式一樣） */
+const SCAN_TMP = path.resolve(process.env.RUNNER_TEMP || require("os").tmpdir(), "base-scan-changed-" + process.pid);
+const SCAN_STEP = (base) => ["私密掃描補強", ["node", ".github/scripts/scan-changed.cjs", base, SCAN_TMP]];
 /* 要跑的檢查：跟 verify.yml 同一組（換回 main 版之後）；mode 由 main 版的 ci-mode.cjs 判斷（發布 PR 本來就會改網站檔，要跑發布那一組） */
 const STEPS = (base, mode) => mode === "release" ? [
   ["完整驗證（全套）", ["node", "source/xiangqi-lab/tools/verify-all.js", "--out", "base-verify.txt", "--tally-out", "base-tally.json"]],
@@ -71,6 +76,9 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["新測試要分類", ["node", ".github/scripts/check-test-classified.cjs", base]],
   ["iOS 原生檢查", ["node", "source/xiangqi-ios/scripts/check-native.js"]],   /* PR #45：跟 verify.yml 同一步 */
   ["iOS P0-3D 腳本自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/p03d/test-p03d.cjs"]],
+  ["iOS P0-IMG 金絲雀自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/test-canary-www.cjs"]],   /* 跟 verify.yml 同一步 */
+  ["iOS 原生檢查金絲雀自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/test-canary-native.cjs"]],   /* 跟 verify.yml 同一步 */
+  SCAN_STEP(base),
 ] : [
   ["假略過檢查", ["node", ".github/scripts/check-fake-skip.cjs"]],
   ["功能 PR 守門", ["node", ".github/scripts/guard-release-files.cjs", base]],
@@ -82,8 +90,11 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["0 項檢查", ["node", ".github/scripts/check-test-empty.cjs", "base-tally.json"]],   /* W69 流程盤點第 18 項：0 項的檔、沒跑到的檔都紅燈 */
   ["新測試要分類", ["node", ".github/scripts/check-test-classified.cjs", base]],
   ["私密掃描", ["node", "source/xiangqi-lab/tools/oss-scan.js", "source"]],
+  SCAN_STEP(base),
   ["iOS 原生檢查", ["node", "source/xiangqi-ios/scripts/check-native.js"]],   /* PR #45：跟 verify.yml 同一步 */
   ["iOS P0-3D 腳本自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/p03d/test-p03d.cjs"]],
+  ["iOS P0-IMG 金絲雀自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/test-canary-www.cjs"]],   /* 跟 verify.yml 同一步 */
+  ["iOS 原生檢查金絲雀自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/test-canary-native.cjs"]],   /* 跟 verify.yml 同一步 */
 ];
 
 /* 把 PR 改到的守門程式換回基準版：基準版沒有的（PR 新加的守門）先拿掉。show(f) 回傳基準版內容或 null */

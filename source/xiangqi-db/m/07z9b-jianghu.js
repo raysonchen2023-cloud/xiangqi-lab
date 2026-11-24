@@ -449,8 +449,10 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
   try{if(typeof oscEn==="function"&&oscEn()&&!(typeof I18N_EXN!=="undefined"&&I18N_EXN>0)){const H0=location.hash,re=()=>{document.removeEventListener("xq-i18n-ext",re);if(wrap.isConnected&&location.hash===H0)Jianghu(v)};document.addEventListener("xq-i18n-ext",re)}}catch(e){}
   return{}}
 /* ---------- 駐地小卡：拜師／繼續修行、挑戰掌門、這一派的棋友 ---------- */
+/* 掌門小卡的「門下棋友：」：這一派的門人（秘境人物要找到過才列，oscNpcShown），最多 5 位（#107 再審：抽出來才測得到行為） */
+function jhSheetMates(sid){return Object.entries(OSC.NPC).filter(([k,x])=>x[0]===sid&&oscNpcShown(k)).map(([k,x])=>jhT(x[2])).slice(0,5)}
 function jhSheet(sid){if(typeof sheet!=="function"||typeof OSC==="undefined")return;const S=jhSch(sid),m=OSC.MST.find(x=>x.sid===sid),c=jhLook(),o=typeof oscGet==="function"?oscGet():null,act=c&&o?OSC.act(o,c):"";
-  const mates=Object.values(OSC.NPC).filter(x=>x[0]===sid).map(x=>jhT(x[2])).slice(0,5),inHall=location.hash==="#/jianghu/hall/"+sid;   /* 已經在門內就不再顯示「走進山門」 */
+  const mates=jhSheetMates(sid),inHall=location.hash==="#/jianghu/hall/"+sid;   /* 已經在門內就不再顯示「走進山門」 */
   sheet(`${S.nm}`,b=>{b.innerHTML=`<div class="jh-card">${m?`<img src="data/npc/${m.id}.webp" alt="" onerror="this.remove()">`:""}<div class="tx">
       ${m?`<b>${esc(jhL(m.nm,m.en))}</b><p class="muted">${esc(jhL(S.nm+"掌門","Master of the "+S.nm))}</p><p>${esc(jhL("「"+m.say+"」",'"'+jhT(m.say)+'"'))}</p>`:""}
       <p class="muted">${esc(jhL(`慣用${S.op}：${S.say}`,`Plays ${S.op}: ${S.say}`))}</p>${mates.length?`<p class="muted">${esc(jhL("門下棋友：","Players of this school: ")+mates.join(jhL("、",", ")))}</p>`:""}</div></div>
@@ -586,10 +588,10 @@ const JH_HALL_BAD=new Set();   /* 這次開 App 讀圖失敗過的派：小卡�
 const jhHallPc=([x,y])=>`left:${(x/JH_HALL_W*100).toFixed(2)}%;top:${(y/JH_HALL_H*100).toFixed(2)}%`;
 /* 門下棋友在哪裡找得到：驛站（inn:）、園子（npc:）、秘境（secret:） */
 function jhHallMates(sid){if(typeof OSC==="undefined")return[];const P={inn:jhL("驛站","Post Inn"),npc:jhL("園子","the Park"),secret:jhL("秘境","a hidden place")};
-  return Object.entries(OSC.NPC).filter(([k,x])=>x[0]===sid).map(([k,x])=>({k,nm:jhT(x[2]),at:P[k.split(":")[0]]||""}))}
+  return Object.entries(OSC.NPC).filter(([k,x])=>x[0]===sid&&oscNpcShown(k)).map(([k,x])=>({k,nm:jhT(x[2]),at:P[k.split(":")[0]]||""}))}   /* 11/24：秘境人物找到過才列（oscNpcShown），打聽提示跟著這份 */
 function jhHallYard(sid){const S=jhSch(sid),L=jhHallMates(sid);
   sheet(jhL(`${S.nm}・前院`,`${S.nm} · Front yard`),b=>{b.innerHTML=`<p class="muted">${esc(jhL("門下棋友平常不在山門裡，分散在各處下棋：","The school's players are usually out playing elsewhere:"))}</p>
-    ${L.length?`<ul class="jh-mates">${L.map(x=>`<li><b>${esc(x.nm)}</b><span class="muted">${esc(x.at)}</span></li>`).join("")}</ul>`:`<p class="muted">${esc(jhL("這一派目前沒有登記的門人。","No players are listed for this school yet."))}</p>`}
+    ${L.length?`<ul class="jh-mates">${L.map(x=>`<li><b>${esc(x.nm)}</b><span class="muted">${esc(x.at)}</span></li>`).join("")}</ul>`:`<p class="muted">${esc(jhL("這一派的門下棋友你還沒遇到過；在驛站、園子遇到，或在秘境找到他們之後，就會列在這裡。","You haven't met any of this school's players yet. Once you meet them at the Post Inn or the Park, or find them in a hidden place, they will be listed here."))}</p>`}
     ${typeof jhIntelHTML==="function"&&OSC.MST.find(x=>x.sid===sid)?jhIntelHTML(sid,OSC.MST.find(x=>x.sid===sid),L.map(x=>x.nm)):""}`})}
 function jhHallStudy(sid){const c=jhLook(),o=typeof oscGet==="function"?oscGet():null,act=c&&o?OSC.act(o,c):"";
   if(!c){toast(jhL("開始旅程、有了隊伍以後才能拜師。","Start a journey and form a party first."));return}
@@ -626,7 +628,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
      💬 聊聊：園子棋友用 07d NPC_BOND 的閒聊與文化小知識，驛站、秘境人物用自己那句話；每點一次換一句
      📖 請教本門棋路：用門人的口吻講這一派開局的要點（OSC 的 op、say）
      🔍 打聽掌門：今天打聽到了就照實說（案 4 情報）；還沒有就說「贏我一盤就告訴你」
-     ⚔ 切磋一盤：園子棋友指定由他坐下（包住 06-cpu parkNpcNew 的 keep），驛站旅人照驛站原本的開法；秘境人物要在秘境遇過才能下
+     ⚔ 切磋一盤：園子棋友指定由他坐下（包住 06-cpu parkNpcNew 的 keep），驛站旅人照驛站原本的開法；秘境人物要先在秘境找到他才會站到前院（11/24 起，沒找到的不出現）
    不加修為、不改強度與棋局；贏了照案 4 規則解鎖情報（journeyGameEnd 包裝本來就會判斷）。 */
 JH_HALL.central.mates=[[296,1150],[472,1150]];   /* 11/22 第 7 版：站在碼頭平台、靠石階底端，左右對稱；前院標籤在石階上，不壓到人頭；左右拉開到 296／472，兩個五字名牌在 375 寬手機上也不相碰。
    PR #22 審查後開發者決定（iMac 轉達）：前院最多只站 2 位——站位只留兩格（jhHallMatesDraw 照格數畫）；門人超過 2 位時照 jhMatesShown 的排序每天換一批（能切磋的優先，其餘照每日雜湊）。 */
@@ -641,7 +643,9 @@ function jhMateInfo(k){if(typeof OSC==="undefined")return null;const x=OSC.NPC[k
     if(n&&n.say)lines.push(n.say);if(B){(B.l||[]).forEach(s=>lines.push(s));(B.c||[]).forEach(s=>lines.push(s))}can=!!n}
   else if(kind==="inn"){const n=typeof INN!=="undefined"?INN.find(z=>z.id===id):null;if(n&&n.say)lines.push(n.say);can=!!n}
   else if(kind==="secret"){const n=typeof SECRETS!=="undefined"?SECRETS.find(z=>z.id===id):null;if(n){if(n.say)lines.push(String(n.say).replace(/^「|」$/g,""));if(n.who)lines.push(n.who)}
-    let met=false;try{met=typeof jSecrets==="function"&&!!jSecrets()[id]}catch(e){}can=!!n&&met;if(n&&!met)why=jhL("要先在秘境遇到他，才能切磋。","You need to meet them in a hidden place first.")}
+    /* 11/24 開發者 iPhone 實機（劉伯溫）：「我已經遇到了 為何不能切磋 這設定不合理 請修正」→「我希望要現在秘境遇到才能出現在門下棋友那邊 不然都不能看到」。
+       秘境人物：還沒在秘境找到他＝不站前院、門下棋友名單也沒有（jhMatesOf 濾掉）；找到之後才出現，出現了就能切磋，不再出現「要先在秘境遇到他」這種擋人的提示 */
+    let met=false;try{met=typeof jSecrets==="function"&&!!jSecrets()[id]}catch(e){}if(!met)return null;can=!!n}
   return{k,kind,id,sid:x[0],nm:jhT(x[2]),at,img:kind==="npc"?`data/npc/${id}.webp`:`data/actors/${id}.webp`,lines:lines.map(s=>jhT(s)),can,why}}
 function jhMatesOf(sid){if(typeof OSC==="undefined")return[];return Object.keys(OSC.NPC).filter(k=>OSC.NPC[k][0]===sid).map(jhMateInfo).filter(Boolean)}
 /* 前院站誰：可以下的優先（園子、驛站），其次秘境；每天換一批（同一天固定） */
@@ -839,8 +843,12 @@ const jhShichen=d=>Math.floor(((d.getHours()+1)%24)/2);
 function jhCanalStop(d){return JH_CANAL[jhShichen(d||new Date())%JH_CANAL.length]}
 const jhCanalOf=sid=>JH_CANAL.find(x=>x.sid===sid)||null;
 const jhCanalDay=t=>typeof cjDay==="function"?cjDay(t):new Date(t==null?Date.now():t).toISOString().slice(0,10);
-/* 這一州的題庫：殺棋、一～三步殺、帶這一州的殺法標籤；照題號排好（挑題要穩定） */
-function jhCanalPool(items,st){return(items||[]).filter(x=>x&&x.n>=1&&x.n<=3&&Array.isArray(x.th)&&x.th.includes("殺棋")&&x.th.some(t=>st.th.includes(t))).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)}
+/* 這一州的題庫：殺棋、一～三步殺、帶這一州的殺法標籤，而且照主變（line）實際走完對方真的被將死；照題號排好（挑題要穩定）
+   2026-11-24 Pikafish 盤整 P1：「殺棋」標籤是照主變再接示範判的，gm2010-p491R1AKA3r 是保勝題（走完傌八進七黑方還有 3 步合法著）卻被當成一步殺 */
+function jhCanalMated(x){try{const C=typeof window!=="undefined"&&window.XQCore,L=x.line;if(!C||!Array.isArray(L)||L.length!==2*x.n-1)return false;let b=C.parseFen(String(x.fen).split(" ")[0]),s=x.side;
+  for(const u of L){const f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4));if(!b[f]||C.sideOf(b[f])!==s||!C.legal(b,s).some(m=>m[0]===f&&m[1]===t))return false;b=C.make(b,f,t);s=C.opp(s)}
+  return C.inCheck(b,s)&&!C.legal(b,s).length}catch(e){return false}}
+function jhCanalPool(items,st){return(items||[]).filter(x=>x&&x.n>=1&&x.n<=3&&Array.isArray(x.th)&&x.th.includes("殺棋")&&x.th.some(t=>st.th.includes(t))&&jhCanalMated(x)).sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)}
 function jhCanalPick(items,st,day){const L=jhCanalPool(items,st);if(!L.length)return null;const h=typeof jhWindHash==="function"?jhWindHash("canal:"+day+":"+st.sid):0;return L[h%L.length]}
 function jhCanalGet(day){let o=null;try{o=store.get("jhCanal",null)}catch(e){}const R={d:day,s:{},pick:{}};if(!o||o.d!==day||typeof o!=="object")return R;
   for(const st of JH_CANAL){const x=o.s&&o.s[st.sid];if(x&&typeof x==="object")R.s[st.sid]={t:Math.max(0,+x.t||0),p:x.p?1:0};const k=day+"/"+st.sid,q=o.pick&&o.pick[k];if(typeof q==="string"&&q.length<40)R.pick[k]=q}
