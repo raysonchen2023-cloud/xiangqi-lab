@@ -1,6 +1,6 @@
 "use strict";
 /* 開發者 11/24「開工單從程式上擋」：測試流量（本機、區網、預覽站、測試房、模擬器）不記、不送卡住紀錄；正式站和真機照舊。
-   用 vm 跑 m/05b-save.js 真的 stkTestEnv／stkOn；iOS 模擬器的 XQSim/1 標記看 XQBridgeViewController.swift（兩份一樣）。 */
+   用 vm 跑 m/05b-save.js 真的 stkTestEnv／stkOn；iOS 模擬器的 XQSim/1 標記見檔尾說明。 */
 const test = require("node:test"), assert = require("node:assert"), fs = require("fs"), path = require("path"), vm = require("vm");
 const ROOT = path.join(__dirname, "..", "..");
 const SAVE = fs.readFileSync(path.join(ROOT, "xiangqi-db", "m", "05b-save.js"), "utf8");
@@ -27,8 +27,5 @@ test("原生 App：真機送；iOS 模擬器（XQSim/1）、Android 模擬器（
   assert.equal(load({ origin: "https://localhost", nat: true, ua: and("Pixel 9") }).stkOn(), true, "Android 真機照舊送");
   for (const m of ["sdk_gphone64_arm64", "sdk_gphone64_x86_64", "Android SDK built for x86"]) assert.equal(load({ origin: "https://localhost", nat: true, ua: and(m) }).stkOn(), false, m + " 不送");
 });
-test("〔原始碼〕iOS 模擬器在識別字串加 XQSim/1（只在模擬器，兩份 Swift 一樣）", () => {
-  const a = fs.readFileSync(path.join(ROOT, "xiangqi-ios", "native", "ios", "XQBridgeViewController.swift"), "utf8"), b = fs.readFileSync(path.join(ROOT, "xiangqi-ios", "ios", "App", "App", "XQBridgeViewController.swift"), "utf8");
-  assert.equal(a, b);
-  assert.match(a, /#if targetEnvironment\(simulator\)\n[^\n]*\n\s*descriptor\.appendedUserAgentString = \(descriptor\.appendedUserAgentString \?\? "XQQianqiuApp\/1"\) \+ " XQSim\/1"\n\s*#endif/);
-});
+/* iOS 模擬器在識別字串加 XQSim/1 那一段（XQBridgeViewController.swift）不在這裡測：CI 的 run-tests 只抄 source/xiangqi-lab 等，xiangqi-ios 不在暫存資料夾；
+   兩份 Swift 一致由 check-native.js 把關，XQSim/1 由 iOS 預驗實看（UA 結尾 XQQianqiuApp/1 XQSim/1、stkOn() false） */
