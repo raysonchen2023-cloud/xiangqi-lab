@@ -136,6 +136,48 @@ check(vBlocks.length >= 2 && vTok === vBlocks.length
   && !/\bfunc\s+verifyNow\b/.test(est) && (srvCode.match(/\bfunc\s+verifyNow\b/g) || []).length === 1,
   "establish 一定經過 verifyNow 才回 verified");
 check(!/return \.verified/.test(srvCode.replace(est, "")), "verified 只會從 establishNow 回");
+/* #127、#135、#142 審查（Windows Claude 2）：establish 只確認「一定經過 verifyNow」，verifyNow 本體寫成 return true 也會過；
+   #142 第一版用「必要字串＋return 開頭的字」拼湊，三元式、死碼、網址放註解、拿掉 host／port 都繞得過。改成**鎖住驗證用到的四段程式**：
+   verifyNow、issueChallenge、randomHex（考題和答案的亂數來源）、XQFlag（裝結果的旗標），各自去掉註解、壓掉所有空白後比 sha256 前 16 碼。
+   任何改動都會紅；真的要改這四段，要在計分規則 PR 裡一起更新下面的雜湊（審查者看得到改了什麼） */
+function stripComments(src) {   /* 去掉行註解和區塊註解（區塊可巢狀），雙引號字串裡的照留 */
+  let o = "", i = 0, q = null;
+  while (i < src.length) {
+    const c = src[i], n = src[i + 1];
+    if (q) { o += c; if (c === "\\") { o += n || ""; i += 2; continue } if (c === q) q = null; i++; continue }
+    if (c === "\"") { q = c; o += c; i++; continue }
+    if (c === "/" && n === "/") { while (i < src.length && src[i] !== "\n") i++; continue }
+    if (c === "/" && n === "*") { let d = 0; while (i < src.length) { if (src[i] === "/" && src[i + 1] === "*") { d++; i += 2; continue } if (src[i] === "*" && src[i + 1] === "/") { d--; i += 2; if (!d) break; continue } i++ } continue }
+    o += c; i++;
+  }
+  return o;
+}
+const srvNC = stripComments(srv), pinOf = (sig) => { const b = body(srvNC, sig); return b == null ? null : sha(b.replace(/\s+/g, "")).slice(0, 16) };
+const PINS = {
+  "private func verifyNow(timeout: TimeInterval) -> Bool": "941fa6c241a05fb2",
+  "private func issueChallenge() -> (challenge: String, answer: String)": "8425608f62ee03b5",
+  "private static func randomHex(byteCount: Int) -> String": "34264236ae65312e",
+  "fileprivate final class XQFlag: @unchecked Sendable": "55977411f211d262",
+};
+/* #142 複審（Windows Claude 2，新代理人）：鎖住的那份要是「真的」那份，旁邊也不能另放一份同名的。
+   ① 四段的簽章在去註解的原文、swiftCode 斷詞後的程式碼裡都要剛好一處（字串、原始字串裡放一份假的就不只一處）；
+   ② 鎖住的段落不能在 #if 裡（前面的 #if 和 #endif 要配平）；
+   ③ native/ios、ios/App/App 所有 Swift 都不能有 extension XQLoopbackServer；四個名字只能宣告一次，XQFlag 整個專案只能宣告一次（巢狀、typealias 都算） */
+const nameOf = (sig) => sig.replace(/^(private |fileprivate )*(static )?(final )?(func |class )/, "").split("(")[0].split(":")[0];
+const pinBad = [];
+for (const [sig, h] of Object.entries(PINS)) {
+  const n = nameOf(sig), at = srvCode.indexOf(sig), pre = at < 0 ? "" : srvCode.slice(0, at);
+  if (count(srvNC, sig) !== 1 || count(srvCode, sig) !== 1) { pinBad.push(n + "（簽章要剛好一處）"); continue }
+  if ((pre.match(/#if\b/g) || []).length !== (pre.match(/#endif\b/g) || []).length) { pinBad.push(n + "（不能放在 #if 裡）"); continue }
+  if (pinOf(sig) !== h) pinBad.push(n + "（內容改過了）");
+}
+const swiftAll = [SRC, APP].flatMap((d) => fs.existsSync(d) ? fs.readdirSync(d).filter((f) => f.endsWith(".swift")).map((f) => ({ f: path.relative(HERE, path.join(d, f)), c: swiftCode(rd(path.join(d, f)), f) })) : []);
+const extAt = swiftAll.filter((x) => /\bextension\s+XQLoopbackServer\b/.test(x.c)).map((x) => x.f);
+if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、") + "）");
+for (const [n, re] of [["verifyNow", /\bfunc\s+verifyNow\b/g], ["issueChallenge", /\bfunc\s+issueChallenge\b/g], ["randomHex", /\bfunc\s+randomHex\b/g]]) if ((srvCode.match(re) || []).length !== 1) pinBad.push(n + "（宣告不只一次）");
+const flagDecl = swiftAll.filter((x) => x.f.startsWith("native")).reduce((t, x) => t + (x.c.match(/\b(class|struct|enum|actor|protocol|typealias)\s+XQFlag\b/g) || []).length, 0);
+if (flagDecl !== 1) pinBad.push("XQFlag（整個專案要剛好宣告一次，現在 " + flagDecl + " 次）");
+check(pinBad.length === 0, "verifyNow 真的去問 whoami、比對這題的答案才回通過（verifyNow、issueChallenge、randomHex、XQFlag 跟鎖住的版本一樣）" + (pinBad.length ? "：" + pinBad.join("、") + "。如果是刻意改這四段，要在計分規則 PR 裡一起更新 check-native.js 的 PINS" : ""));
 const sl = body(srvCode, "private func startListening(") || "";
 check(/if exact == \.inUse \{\s*return \.inUse\s*\}/.test(sl), "位址被占用時不改綁萬用位址");
 check(srvCode.includes("EADDRINUSE"), "有判斷 EADDRINUSE");
