@@ -263,6 +263,8 @@ function oscRowHTML(c){try{const o=oscGet(),sid=OSC.act(o,c),S=sid&&oscSchE(sid)
 function oscNpcShown(k){const[kind,id]=String(k||"").split(":");if(kind!=="secret")return true;try{return typeof jSecrets==="function"&&!!jSecrets()[id]}catch(e){return false}}
 /* 門派的 who（「、」串起來的名字，例如「常遇春、少年女將軍」）：裡面還沒在秘境找到的秘境人物拿掉（#107 再審：總覽「代表棋友」、修行頁「師友」都印 who） */
 function oscWhoShown(who){const hide=new Set(Object.entries(OSC.NPC).filter(([k])=>k.startsWith("secret:")&&!oscNpcShown(k)).map(([k,x])=>x[2]));return String(who||"").split("、").filter(n=>n&&!hide.has(n))}
+/* 總覽「代表棋友」要顯示的名字：先用中文 who 濾（英文版的 who 已經翻好、用逗號串，濾不到），再逐一翻譯（#107 第三次複審） */
+function oscWhoNames(who){return oscWhoShown(who).map(oscT)}
 /* 修行頁「師友」：who（濾過）＋這一派其他門人（濾過、不跟 who 重複，最多 4 位）；回傳 [中文句, 英文句]，沒有人時不留「以及」 */
 function oscFellows(sid){const who=OSC.sch(sid).who,W=oscWhoShown(who),M=Object.entries(OSC.NPC).filter(([k,x])=>x[0]===sid&&oscNpcShown(k)).map(([k,x])=>x[2]).filter(n=>!who.includes(n)).slice(0,4),A=W.concat(M);return A.length?[`師友：${A.join("、")}。`,`Fellow players: ${A.map(oscT).join(", ")}.`]:["師友：還沒遇到這一派的門人。","Fellow players: you haven't met anyone from this school yet."]}
 function oscNpcHTML(key,era){const x=OSC.NPC[key];if(!x)return"";oscCss();const S=oscSchE(x[0]),S2=oscSchE(x[1]);
@@ -298,7 +300,7 @@ function oscOverview(v){oscCss();setTop(oscL("🏯 開局棋路","🏯 Opening P
   const P=typeof ptyGet==="function"?ptyGet():null,me=P?P.look:"";
   const draw=()=>{const o=oscGet(),L=OSC.SCH.filter(s=>!tag||s.tag.includes(tag)),open=L.filter(s=>OSC.isOpen(s.id)),soon=L.filter(s=>!OSC.isOpen(s.id)),mn=me?esc(oscNmE(me)):"";
     const card=s0=>{const s=oscSchE(s0.id),on=OSC.isOpen(s.id),mine=me&&OSC.act(o,me)===s.id,rc=me&&OSC.REC[me]&&OSC.REC[me].includes(s.id);
-      return`<div class="card osc-sc">${oscSym(s.id)}<div class="tx"><b>${esc(s.nm)}</b><span class="osc-op">${esc(s.op)}</span><p>${esc(s.say)}</p>${oscWhoShown(s.who).length?`<div class="osc-who">${oscL("代表棋友：","Known players: ")}${esc(oscWhoShown(s.who).join(oscL("、",", ")))}</div>`:""}
+      return`<div class="card osc-sc">${oscSym(s.id)}<div class="tx"><b>${esc(s.nm)}</b><span class="osc-op">${esc(s.op)}</span><p>${esc(s.say)}</p>${oscWhoNames(s0.who).length?`<div class="osc-who">${oscL("代表棋友：","Known players: ")}${esc(oscWhoNames(s0.who).join(oscL("、",", ")))}</div>`:""}
         <div>${s.tag.map(t=>`<span class="osc-tag">${esc(oscT("想"+t))}</span>`).join("")}${rc?`<span class="osc-tag osc-rec">${oscL(`${mn}推薦`,`${mn} recommends`)}</span>`:""}</div>
         ${on&&me?`<div class="osc-row"><button class="btn${mine?"":" ghost"}" data-sid="${s.id}">${mine?oscL(`繼續${mn}的修行`,`Continue ${mn}'s training`):oscL(`${mn}加入並練習`,`${mn} joins and practices`)}</button></div>`:on?"":`<p class="osc-sub">${oscL("準備中：課程備妥後才開放入派。","Coming soon: you can join once the lessons are ready.")}</p>`}</div></div>`};
     v.innerHTML=`<div class="pad osc"><p class="osc-sub">${oscL("門派用真實的開局命名。已加入隊伍的七星可以各自拜師、各自練；一般對局不受影響，不用先入派。","Schools are named after real openings. Each of the Seven Stars in your party can join a school and train on their own. Normal games aren't affected, and you don't need to join first.")}</p>

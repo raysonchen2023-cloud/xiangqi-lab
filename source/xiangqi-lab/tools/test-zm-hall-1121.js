@@ -139,6 +139,13 @@ test("切磋一盤：園子棋友指定由他坐下（只用一次）；驛站�
   assert.equal(calls.jstart.length, 2, "沒遇過的秘境人物不開局");
   const M2 = loadMates({ jSecrets: () => ({ liuji: 1 }) }); M2.c.R.jhMatePlay(M2.c.R.jhMateInfo("secret:liuji"));
   assert.deepEqual(M2.calls.jstart, ["inn:liuji"], "在秘境找到過的，前院切磋會開局");
+  const M3 = loadMates({ jSecrets: () => ({ liuji: 1 }), SECRETS: [] }), gone = M3.c.R.jhMateInfo("secret:liuji");
+  assert.ok(gone && gone.can === false, "找到過但秘境資料被拿掉：出現但不能下"); M3.c.R.jhMatePlay(gone);
+  assert.deepEqual(M3.calls.jstart, [], "不能下的不開局（can=false 那道守門）");
+  /* 園子棋友的開局那條路不再查資料，只靠 can 擋：找一位不在園子名單（PARK_NPC）裡的園子門人 */
+  const M4 = loadMates(), kNpc = Object.keys(M4.c.OSC.NPC).find((k) => k.startsWith("npc:") && !["w15_yuan_archer", "niao"].includes(k.slice(4)));
+  assert.ok(kNpc, "測試資料要有不在園子名單裡的園子門人"); const off = M4.c.R.jhMateInfo(kNpc);
+  assert.equal(off.can, false, "不在園子名單：不能下"); M4.c.R.jhMatePlay(off); assert.deepEqual(M4.calls.jstart, [], "不能下的園子門人不開局（只靠 can 擋）");
 });
 
 test("〔原始碼〕前院門人：站位在原圖範圍內、立繪大小合理；JhHall 與 parkNpcNew 的包裝只做一次", () => {
@@ -385,9 +392,9 @@ test("11/24 開發者：沒在秘境找到的秘境人物，前院清單、打�
 /* #107 再審（iMac Claude 2）：門派的 who 欄位、掌門小卡、修行頁「師友」——用真的函式跑行為，不只比對原始碼 */
 function loadWho(sec, opts = {}) {
   const fn = (src, name) => src.match(new RegExp("^function " + name + "\\(.*$", "m"))[0];
-  const c = { jhT: (s) => s, oscT: (s) => s, jSecrets: opts.throws ? () => { throw new Error("壞掉") } : () => sec };
+  const c = { jhT: (s) => s, oscT: opts.en ? (s) => "EN:" + s : (s) => s, jSecrets: opts.throws ? () => { throw new Error("壞掉") } : () => sec };
   vm.createContext(c);
-  vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + ["oscNpcShown", "oscWhoShown", "oscFellows"].map((n) => fn(OS, n)).join("\n") + "\n" + fn(JH, "jhSheetMates"), c);
+  vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + ["oscNpcShown", "oscWhoShown", "oscWhoNames", "oscFellows"].map((n) => fn(OS, n)).join("\n") + "\n" + fn(JH, "jhSheetMates"), c);
   return c;
 }
 test("#107 再審：門派 who 裡的秘境人物（常遇春、施耐庵、王冕…）沒找到就不印；總覽、師友、掌門小卡都照這個規則", () => {
@@ -405,7 +412,11 @@ test("#107 再審：門派 who 裡的秘境人物（常遇春、施耐庵、王�
   }
   const all = {}; for (const k of Object.keys(none.OSC.NPC)) if (k.startsWith("secret:")) all[k.slice(7)] = 1;
   const met = loadWho(all); assert.ok(SCH.some((s) => met.jhSheetMates(s.id).length > none.jhSheetMates(s.id).length), "全部找到過時掌門小卡會多出秘境人物");
-  assert.match(OS, /\$\{oscWhoShown\(s\.who\)\.length\?/, "門派總覽「代表棋友」用 oscWhoShown");
+  assert.match(OS, /\$\{oscWhoNames\(s0\.who\)\.length\?/, "門派總覽「代表棋友」用中文 who（s0）經 oscWhoNames 濾再翻");
+  const en = loadWho({}, { en: true }), enMet = loadWho({ changyuchun: 1 }, { en: true });
+  assert.ok(!en.oscWhoNames(sc.who).includes("EN:常遇春"), "英文版：沒找到的常遇春也不列");
+  assert.ok(en.oscWhoNames(sc.who).every((n) => n.startsWith("EN:")), "英文版：照樣翻譯");
+  assert.ok(enMet.oscWhoNames(sc.who).includes("EN:常遇春"), "英文版：找到過照列");
 });
 test("#107 再審：oscNpcShown 讀存檔出錯時當作沒找到（不列），不會把秘境人物全放出來", () => {
   const c = loadWho({}, { throws: true }), k = Object.keys(c.OSC.NPC).find((x) => x.startsWith("secret:"));
