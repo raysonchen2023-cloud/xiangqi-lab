@@ -28,8 +28,8 @@ function jhgCss(){if(document.getElementById("jhgCss"))return;const s=document.c
 .jhg.out{opacity:0}
 .jhg-bg{position:absolute;inset:0;background:center top/cover no-repeat;transform:scale(1.1) translateY(-3%);animation:jhgPush ${JH_GATE_MS}ms cubic-bezier(.3,0,.4,1) forwards}
 @keyframes jhgPush{to{transform:none}}
-.jhg-board{position:absolute;left:16%;width:68%;top:3%;transform:perspective(620px) rotateX(56deg);transform-origin:50% 0;filter:drop-shadow(0 0 2px rgba(255,226,150,.9));opacity:.85}
-.jhg-board line{stroke:#f6dd96;stroke-width:.34;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:jhgLine .45s ease-out forwards}
+.jhg-board{position:absolute;left:27%;width:46%;top:2.5%;transform:perspective(560px) rotateX(58deg);transform-origin:50% 0;filter:drop-shadow(0 0 1.5px rgba(255,226,150,.8));opacity:.5}
+.jhg-board line{stroke:#f6dd96;stroke-width:.24;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;animation:jhgLine .45s ease-out forwards}
 @keyframes jhgLine{to{stroke-dashoffset:0}}
 .jhg-say,.jhg-title{position:absolute;left:0;right:0;text-align:center;color:#fff6dc;font-family:var(--serif,serif);font-weight:900;text-shadow:0 2px 10px #000,0 0 22px rgba(0,0,0,.85);opacity:0;pointer-events:none;padding:0 16px}
 .jhg-say{top:41%;font-size:24px;letter-spacing:.16em;animation:jhgSay 1.6s .35s ease forwards}
