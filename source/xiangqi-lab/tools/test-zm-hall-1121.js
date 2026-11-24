@@ -95,15 +95,16 @@ test("前院門人：園子棋友用閒聊與小知識、能下；秘境人物�
   const a = R.jhMateInfo("npc:w15_yuan_archer");
   assert.equal(a.kind, "npc"); assert.equal(a.img, "data/npc/w15_yuan_archer.webp"); assert.equal(a.can, true); assert.equal(a.at, "園子");
   assert.deepEqual([...a.lines], ["百步穿楊。", "拉弓要穩。", "蒙古騎兵擅長騎射。"]);
-  const s = R.jhMateInfo("secret:liuji");
-  assert.equal(s.img, "data/actors/liuji.webp"); assert.equal(s.can, true, "11/24 開發者：前院一律能切磋"); assert.match(s.why, /還沒在秘境找到他/, "還沒找到就提醒：見面禮要在秘境找到他才送");
+  /* 11/24 開發者：「我希望要現在秘境遇到才能出現在門下棋友那邊 不然都不能看到」——還沒在秘境找到的秘境人物不出現（不是「出現了卻不能下」） */
+  assert.equal(R.jhMateInfo("secret:liuji"), null, "還沒在秘境找到：不出現");
+  assert.ok(!R.jhMatesOf("central").some((m) => m.k === "secret:liuji"), "門下棋友名單也沒有他");
+  const s = loadMates({ jSecrets: () => ({ liuji: 1 }) }).c.R.jhMateInfo("secret:liuji");
+  assert.equal(s.img, "data/actors/liuji.webp"); assert.equal(s.can, true, "找到之後出現、能切磋"); assert.equal(s.why, "", "不再有「要先在秘境遇到他」的提示");
   assert.equal(s.lines[0], "運籌帷幄。", "秘境台詞去掉外層引號");
   const t = R.jhMateInfo("inn:tea");
   assert.equal(t.at, "驛站"); assert.equal(t.can, true);
   const met = loadMates({ jSecrets: () => ({ liuji: 1 }) }).c.R.jhMateInfo("secret:liuji");
-  assert.equal(met.can, true, "遇過就能下"); assert.equal(met.why, "", "找到過就不用提醒");
-  const gone = loadMates({ SECRETS: [] }).c.R.jhMateInfo("secret:liuji");
-  assert.equal(gone.can, false, "秘境資料裡沒有這個人（被拿掉）就不能下");
+  assert.equal(met.can, true, "遇過就能下");
 });
 
 test("前院站誰：能下的排前面；同一天固定；最多站設定的人數", () => {
@@ -133,7 +134,9 @@ test("切磋一盤：園子棋友指定由他坐下（只用一次）；驛站�
   R.jhMatePlay(R.jhMateInfo("inn:tea"));
   assert.equal(calls.jstart[1], "inn:tea");
   R.jhMatePlay(R.jhMateInfo("secret:liuji"));
-  assert.equal(calls.jstart[2], "inn:liuji", "11/24：還沒在秘境找到的秘境人物，前院也能切磋（照驛站的開法）");
+  assert.equal(calls.jstart.length, 2, "沒遇過的秘境人物不開局");
+  const M2 = loadMates({ jSecrets: () => ({ liuji: 1 }) }); M2.c.R.jhMatePlay(M2.c.R.jhMateInfo("secret:liuji"));
+  assert.deepEqual(M2.calls.jstart, ["inn:liuji"], "在秘境找到過的，前院切磋會開局");
 });
 
 test("〔原始碼〕前院門人：站位在原圖範圍內、立繪大小合理；JhHall 與 parkNpcNew 的包裝只做一次", () => {
@@ -184,8 +187,9 @@ test("PR #21 審查（反向對照補測）：外部傳進來的指定（例如�
 });
 
 test("PR #21 再審（反向對照補測）：前院能下的優先——就算不能下的那位雜湊排在前面", () => {
-  /* 讓秘境人物（不能下）的雜湊比較小：沒有「能下的優先」時他會排第一。11/24 起秘境人物前院也能下，所以把他的秘境資料拿掉，讓他變成「不能下」的那一位 */
-  const { c } = loadMates({ jhWindHash: (s) => (s.includes("secret:") ? 0 : 999), SECRETS: [] });
+  /* 讓秘境人物（不能下）的雜湊比較小：沒有「能下的優先」時他會排第一 */
+  /* 11/24 起沒找到的秘境人物不出現，所以讓劉基「找到過、但秘境資料被拿掉」，當那位出現了卻不能下的人 */
+  const { c } = loadMates({ jhWindHash: (s) => (s.includes("secret:") ? 0 : 999), jSecrets: () => ({ liuji: 1 }), SECRETS: [] });
   const L = c.R.jhMatesShown("central", 3, new Date(2026, 10, 21));
   assert.equal(L[0].can, true, "第一位要是能下的：" + L[0].k);
   assert.equal(L[L.length - 1].k, "secret:liuji", "不能下的排最後");
@@ -216,17 +220,17 @@ test("PR #22 審查：門人 3 位以上時前院只畫 2 位；同一天固定�
   const n = R.JH_HALL.central.mates.length;
   assert.equal(n, 2, "站位只留兩格");
   assert.match(JH, /jhMatesShown\(sid,H\.mates\.length\)/, "畫幾位照站位格數");
-  const AL = R.jhMatesOf("central"); assert.ok(AL.length >= 3 && AL.every((m) => m.can), "測試資料：3 位以上、全部都能切磋（11/24 起秘境的劉基也能切磋，所以是 4 位）");
+  assert.equal(R.jhMatesOf("central").filter((m) => m.can).length, 3, "測試資料：3 位都能切磋");
   const seen = new Set(), combos = new Set();
   for (let i = 0; i < 30; i++) {
     const L = R.jhMatesShown("central", n, new Date(2026, 10, 1 + i, 9)), k = L.map((m) => m.k);
     assert.equal(L.length, 2, "只站 2 位");
-    assert.ok(L.every((m) => m.can), "能切磋的優先");
+    assert.ok(L.every((m) => m.can), "能切磋的優先，秘境沒遇過的劉伯溫不會擠進來");
     assert.deepEqual(k, R.jhMatesShown("central", n, new Date(2026, 10, 1 + i, 21)).map((m) => m.k), "同一天早晚一樣");
     k.forEach((x) => seen.add(x)); combos.add(k.slice().sort().join("|"));
   }
   assert.ok(combos.size >= 2, "30 天裡至少換過一批：" + [...combos].join("；"));
-  assert.equal(seen.size, AL.length, "能切磋的都輪得到（11/24 起秘境的劉伯溫也會站到前院）：" + [...seen].join("、"));
+  assert.equal(seen.size, 3, "3 位都輪得到：" + [...seen].join("、"));
 });
 
 test("PR #22 審查：只有兩位時左右對稱站（前兩個站位對中軸 384 對稱、同一高度）", () => {
@@ -354,8 +358,10 @@ test("〔原始碼〕11/22 開發者「怎麼會坐在桌子上」→ 中炮門�
   assert.match(JHs, /\(H\.cut\?`;clip-path:inset\(0 0 \$\{H\.cut\*100\}% 0\);-webkit-clip-path:/, "JhHall 照 cut 裁");
 });
 
-test("11/24 開發者實機（劉伯溫「我已經遇到了 為何不能切磋」）：前院跟秘境人物切磋不再擋；但秘境勝場與見面禮照舊要在秘境找到他才算（找人的收集不被跳過）", () => {
-  const LG = fs.readFileSync(path.join(ROOT, "xiangqi-db", "m", "07-legend.js"), "utf8");
-  assert.match(LG, /if\(x\.who&&jSecrets\(\)\[x\.id\]\)\{const W=store\.get\("secretWins"/, "秘境勝場、見面禮要先在秘境找到他");
-  assert.ok(!/要先在秘境遇到他，才能切磋/.test(HALL), "前院不再寫「要先在秘境遇到他，才能切磋」");
+test("11/24 開發者實機（劉伯溫）：前院不再寫「要先在秘境遇到他，才能切磋」——沒找到的不站前院，找到的直接能下", () => {
+  assert.ok(!/要先在秘境遇到他，才能切磋/.test(HALL));
+  const shown = loadMates().c.R.jhMatesShown("central", 3, new Date(2026, 10, 24));
+  assert.ok(shown.every((m) => m.k !== "secret:liuji"), "沒找到：前院看不到");
+  const met = loadMates({ jSecrets: () => ({ liuji: 1 }), jhWindHash: (s) => (s.includes("secret:") ? 0 : 999) }).c.R.jhMatesShown("central", 3, new Date(2026, 10, 24));
+  assert.ok(met.some((m) => m.k === "secret:liuji" && m.can), "找到之後：前院站得到他，而且能切磋");
 });

@@ -649,7 +649,7 @@ function journeyGameEnd(st){if(!st||!st.result)return;try{if(typeof qqParkEnd===
       if(st.result.w===st.human)A[x.id]=Math.min(B[1],rl+1);else if(st.result.w)A[x.id]=Math.max(B[0],rl-1);store.set("innAdj",A)}
     const TK=typeof innTalk==="function"?innTalk(x):{win:"承讓了，下次再來！",lose:"好棋！佩服。",draw:"承讓了，下次再來！"};   /* 意見回饋 826 追加：旅人、秘境棋友各說自己的話（07m3-opptalk.js） */
     if(st.result.w===st.human){const xp=x.who?secretXP(x):innXP(rl);addXP(xp,"驛站","inn:"+st.id);setTimeout(()=>toast(`${x.ic} ${x.name}：「${TK.lose}」`),1500);
-      if(x.who&&jSecrets()[x.id]){const W=store.get("secretWins",{});W[x.id]=(W[x.id]||0)+1;store.set("secretWins",W);setTimeout(()=>secretGift(x,st.id),7000)}}   /* 11/24：門派前院也能跟秘境人物切磋；還沒在秘境找到他就不記秘境勝場、不送見面禮（找人的收集照舊要去秘境） */
+      if(x.who){const W=store.get("secretWins",{});W[x.id]=(W[x.id]||0)+1;store.set("secretWins",W);setTimeout(()=>secretGift(x,st.id),7000)}}
     else setTimeout(()=>toast(`${x.ic} ${x.name}：「${st.result.w?TK.win:TK.draw}」`),1500);return}
   if(P.lvp){const R=jRunGet(P.id),L=P.lvp,me=st.human,won=st.result.w===me,lost=!!st.result.w&&st.result.w!==me,n=st.moves.filter(m=>m.by===me).length;
     const ok=L.goal==="survive"||L.goal==="draw"?!lost:won,over=ok&&L.limit&&L.goal!=="survive"&&n>L.limit;
