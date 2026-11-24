@@ -629,3 +629,32 @@ test("〔原始碼〕#102 第五輪：main 的串接——prepareDiff 參數照�
   assert.ok(M.includes("const r = gate(sha, BUILD, reports, fromRepo ? waivers : [], { mainSha, cdnProbe, diffRe, oldSha });"), "重算結果原樣交給閘門");
   assert.ok(M.includes('放行參數 ${args.length ? args.join(" ") : "沒有"}'), "印出放行參數");
 });
+
+/* #102 第六輪複審（iMac Claude 1 的新代理人）：main 的串接要真的跑一次——在暫存資料夾搭一個 git 倉庫（origin/main 指向自己，工具鎖定讀得到），
+   執行 p0-gate.js 本身：壞候選（新版少了首頁圖）＋報告手改成「沒有紅項、通過」，閘門要自己重算出紅項、印出放行參數，而且不能通過。
+   main 若在 prepareDiff 之後清空紅項、改成不印放行參數、新舊讀反，這項都會紅 */
+test("#102 第六輪：端到端真跑 p0-gate.js——壞候選＋假報告，閘門自己重算出紅項（首頁圖）、印放行參數、不通過；重算結果深凍結改不動", () => {
+  const G = require(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js")), crypto = require("crypto"), sh = (f) => crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+  const T = fs.mkdtempSync(path.join(os.tmpdir(), "p0e2e-")), SD = path.join(T, "source", "xiangqi-android", "scripts");
+  fs.cpSync(path.join(ROOT, "xiangqi-android", "scripts"), SD, { recursive: true });
+  const git = (...a) => cp.execFileSync("git", ["-C", T, ...a], { stdio: ["ignore", "pipe", "pipe"] }).toString();
+  git("init", "-q"); git("checkout", "-q", "-b", "main"); git("-c", "user.name=t", "-c", "user.email=t@t", "add", "-A"); git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "e2e");
+  git("remote", "add", "origin", T); git("fetch", "-q", "origin");
+  const old = makeZip("e2e-old.zip", W91V(26112301)), lost = Object.assign({}, W91V(26112401, { [P + "index.html"]: "<html>v2", [P + "core.js"]: "var a=9;".repeat(40) }));
+  delete lost[P + "data/homemap/home.webp"]; const bad = makeZip("e2e-bad.zip", lost);
+  const TP = require(path.join(SD, "tool-pin.js")), rep = path.join(TMP, "e2e-report.json");
+  fs.writeFileSync(rep, JSON.stringify({ tool: "AAB-DIFF", strict: true, newSha256: sh(bad), oldSha256: sh(old), oldCode: "26112301", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {}, canary: { ok: true }, toolPins: TP.pinsFor("AAB-DIFF") }));
+  const r = cp.spawnSync(process.execPath, [path.join(SD, "p0-gate.js"), "--aab", bad, "--build", "20261124-0528", "--old-aab", old, "--reports", rep], { encoding: "utf8", cwd: T, timeout: 120000 });
+  const out = r.stdout + r.stderr;
+  assert.notEqual(r.status, 0, "壞候選不能通過：" + out.slice(-400));
+  assert.match(out, /閘門重算有紅項（[^）]*homemap\/home\.webp/, "閘門自己重算出首頁圖的紅項（報告寫沒有紅項也一樣）");
+  assert.match(out, /放行參數 沒有/, "印出放行參數");
+  assert.doesNotMatch(out, /不是要送審的這個 AAB|不是 --old-aab 這一包/, "新舊沒有讀反");
+  assert.doesNotMatch(out, /工具雜湊|跟 origin\/main 不一樣/, "端到端環境的工具鎖定是對的（不然這項測不到東西）");
+  /* 深凍結：prepareDiff 的結果改不動 */
+  const re = G.prepareDiff({ oldPath: old, aabPath: bad, reports: [] });
+  assert.ok(Object.isFrozen(re) && Object.isFrozen(re.red) && Object.isFrozen(re.canary));
+  assert.throws(() => { "use strict"; re.red.length = 0 }); assert.throws(() => { "use strict"; re.canaryOk = false });
+  assert.ok(re.red.length > 0, "紅項還在");
+  fs.rmSync(T, { recursive: true, force: true });
+});

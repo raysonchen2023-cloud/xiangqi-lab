@@ -274,8 +274,10 @@ function prepareDiff(o) {
   let ack = new Set();
   if (o.ackPath) { let j; try { j = JSON.parse(fs.readFileSync(o.ackPath, "utf8")) } catch (e) { j = null } if (!Array.isArray(j) || !j.every((x) => typeof x === "string")) throw new Error("--ack 清單讀不到或格式不對（要是確認碼字串的陣列）：" + o.ackPath); ack = new Set(j) }
   const rep = (o.reports || []).find(({ json }) => json && json.tool === "AAB-DIFF");
-  return recomputeFromFiles(o.AD || require("./aab-diff.js"), o.oldPath, o.aabPath, rep && rep.json && rep.json.args, ack);
+  /* #102 第六輪複審：回傳前深凍結——之後誰想清空 red／yellow、改 canaryOk 都改不動（嚴格模式丟錯、一般模式無效） */
+  return deepFreeze(recomputeFromFiles(o.AD || require("./aab-diff.js"), o.oldPath, o.aabPath, rep && rep.json && rep.json.args, ack));
 }
+function deepFreeze(x) { if (x && typeof x === "object" && !Object.isFrozen(x)) { Object.freeze(x); for (const k of Object.keys(x)) deepFreeze(x[k]) } return x }
 /* #102 審查④：收據（JSON）——送審 AAB、舊版、放行參數原樣、確認過的黃項確認碼逐筆、工具雜湊。閘門通過才寫 */
 function aabDiffReceipt(aabSha, reports, re) {
   const x = (reports || []).find((r) => r && r.json && r.json.tool === "AAB-DIFF"), j = x && x.json;
@@ -355,5 +357,5 @@ async function main() {
   for (const p of r.problems) console.log("✘ " + p);
   console.log("✘ 不能送審"); process.exit(1);
 }
-module.exports = { probeCdn, GATE_CDN, gate, aabDiffInfo, recomputeDiff, recomputeFromFiles, prepareDiff, aabDiffReceipt, validWaiver, onlyCdnDown, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
+module.exports = { probeCdn, GATE_CDN, gate, aabDiffInfo, recomputeDiff, recomputeFromFiles, prepareDiff, deepFreeze, aabDiffReceipt, validWaiver, onlyCdnDown, TOOLS, ANDROID_3D, ROUNDS_3D, WAIVABLE };
 if (require.main === module) main().catch((e) => { console.error("✘ " + (e && e.message)); process.exit(2) });
