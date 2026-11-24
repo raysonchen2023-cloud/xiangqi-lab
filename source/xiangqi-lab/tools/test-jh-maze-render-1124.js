@@ -41,7 +41,7 @@ test("像素材質：載得到就換上，最近點取樣（不糊）、不做 m
   assert.equal(TL({}, "x.webp", mat2, []), false, "沒有 TextureLoader（舊版 three）不載");
 });
 
-test("斜俯視：鏡頭水平轉 45 度、俯角 35～40 度；方向鈕的斜箭頭跟畫面上的方向一致（北＝右上、東＝右下、南＝左下、西＝左上）", () => {
+test("〔混合〕斜俯視：鏡頭水平轉 45 度、俯角 35～40 度；方向鈕的斜箭頭跟畫面上的方向一致（北＝右上、東＝右下、南＝左下、西＝左上）", () => {
   const c = load(), ISO = R(c, "JH_MZ_ISO"), PAD = JSON.parse(JSON.stringify(R(c, "JH_MZ_PADG")));
   assert.ok(Math.abs(ISO.yaw - Math.PI / 4) < 1e-9); const el = ISO.el * 180 / Math.PI; assert.ok(el >= 35 && el <= 40, "俯角 " + el);
   /* 鏡頭在目標的 (sin yaw, ·, cos yaw) 方向往回看：畫面往上＝往鏡頭前方（-sin, -cos），畫面往右＝前方轉 90 度 */
@@ -70,7 +70,7 @@ test("#105 審查建議：jhMzNew 的 ptr 傳 null、數字不會出錯（當沒
   assert.deepEqual({ ...c.jhMzPtrGet("central") }, { door: 0, trap: 2 }, "存檔 1e20 歸 0");
 });
 
-test("〔原始碼〕解殺題 kind:\"defend\"（飛相門，iMac Claude 1）：不顯示「N 步殺」那行；答對預設「解圍了！」、答錯「這步解不了圍」；派別 say 照舊優先", () => {
+test("〔混合〕解殺題 kind:\"defend\"（飛相門，iMac Claude 1）：不顯示「N 步殺」那行；答對預設「解圍了！」、答錯「這步解不了圍」；派別 say 照舊優先", () => {
   assert.ok(SRC.includes('DEF=P.kind==="defend"'));
   assert.ok(SRC.includes('${N>1&&!DEF?`<p class="muted">'), "解殺題不寫幾步殺");
   assert.ok(SRC.includes('res(ZS(id)||(DEF?jhL("解圍了！","Threat stopped!"):jhL("將死！","Checkmate!")),"ok");'), "派別 say 優先，沒寫才用預設");
@@ -101,7 +101,7 @@ test("〔原始碼〕W97：提示只亮要動的子（不畫綠點）、答錯 3
   assert.ok(SRC.includes("這一趟免費 1 次") && SRC.includes("點門派貢獻"));
 });
 
-test("〔原始碼〕W99 暗匪殘局可以逃跑但先講清楚代價（開發者 11/24「講清楚＋加逃跑鈕」）：只有被抓的殘局有逃跑鈕和說明；卡片內確認（不用 confirm）；返回手勢、頁首返回、回首頁都先確認；關掉殘局時清掉多推的紀錄；石門的先退開照舊", () => {
+test("〔混合〕W99 暗匪殘局可以逃跑但先講清楚代價（開發者 11/24「講清楚＋加逃跑鈕」）：只有被抓的殘局有逃跑鈕和說明；卡片內確認（不用 confirm）；返回手勢、頁首返回、回首頁都先確認；關掉殘局時清掉多推的紀錄；石門的先退開照舊", () => {
   const J = SRC.slice(SRC.indexOf("function JhMaze("));
   assert.ok(J.includes('${id==="trap"?`<div class="jh-mz-esc">${escIdle()}</div>`:""}'), "只有被抓的殘局放逃跑區");
   assert.ok(J.includes('if(id==="trap"){trapO=o;escPush();escBind()}'), "被抓時推一筆紀錄");
@@ -129,7 +129,7 @@ test("中炮門碑刻文書 3 件（照 #108 的格式）：種類、中英標�
   assert.ok(!/鐵扦|天工開物/.test(JSON.stringify(L)), "複核：查不到原文的鐵扦、對不上的天工開物出處都拿掉");
 });
 
-test("〔原始碼〕W99 預驗建議：解開後、解錯 4 次要被拖回入口時，卡片上的逃跑鈕拿掉；中炮門三件碑刻 L 放在原本是牆的格子（擋路、擋光照舊）", () => {
+test("〔混合〕W99 預驗建議：解開後、解錯 4 次要被拖回入口時，卡片上的逃跑鈕拿掉；中炮門三件碑刻 L 放在原本是牆的格子（擋路、擋光照舊）", () => {
   assert.ok(SRC.includes('if(got==="ok"){won=true;{const eb=o.querySelector(".jh-mz-esc");if(eb)eb.remove()}'));
   assert.ok(SRC.includes('if(got==="back"){{const eb=o.querySelector(".jh-mz-esc");if(eb)eb.remove()}'));
   const c = load(), lv = vm.runInContext("JH_MZ_LV", c).central, M = lv.map;
