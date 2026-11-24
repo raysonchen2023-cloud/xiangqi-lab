@@ -64,6 +64,10 @@ final class XQBridgeViewController: CAPBridgeViewController {
         let server = XQLoopbackServer.shared
         server.configure(root: descriptor.appLocation)
         descriptor.serverURL = server.origin
+        #if targetEnvironment(simulator)
+        // 開發者 11/24「開工單從程式上擋」：模擬器裡的 App 在識別字串多帶 XQSim/1，網頁的卡住紀錄（m/05b-save.js stkTestEnv）看到就不送；真機不變
+        descriptor.appendedUserAgentString = (descriptor.appendedUserAgentString ?? "XQQianqiuApp/1") + " XQSim/1"
+        #endif
         NSLog("[XQ] 網頁來源：%@（本機伺服器驗證通過才載入）", server.origin)
         return descriptor
     }

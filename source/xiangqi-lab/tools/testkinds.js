@@ -21,6 +21,8 @@ const CLASSIFIED = new Set([
   "test-osc-fellows-en-1124.js",   /* 11/24 #107 審查後續：修行頁英文「師友」句 oscFellows(sid)[1]——沒找到的秘境人物不列、名單跟中文一一對應並翻譯、全空用英文空句（m/07z9-school.js；行為 2） */
   "test-osc-err-pace-1124.js",   /* 11/24 開發者截圖（看懂失誤）「棋子動太快，玩家看不清楚」：lsnPlay 加節奏參數；修行課常見錯法先停 1.2 秒、每步 1.6 秒、可重看，走錯後反駁每步 1.4 秒；其他課照舊（m/07z7-lesson.js、m/07z9-school.js；行為 3、原始碼 1） */
   "test-jh-maze-fall-1124.js",   /* 11/24 開發者「做一個掉入迷宮的轉場」：從大廳進迷宮才播、該派牆面材質（同源載不到改 CDN）、標題卡、1.2 秒落地／2.4 秒收掉、點一下跳過、減少動態只淡入標題（m/07z9m-fall.js；行為 5） */
+  "test-stk-testenv-1124.js",   /* 11/24 開發者「開工單從程式上擋」：測試流量（本機、區網、預覽站、測試房、iOS／Android 模擬器）不送卡住紀錄，正式站與真機照舊（m/05b-save.js stkTestEnv、XQBridgeViewController XQSim/1；行為 2、原始碼 1） */
+  "test-stk-testenv-1124.js",   /* 11/24 開發者「開工單從程式上擋」：測試流量（本機、區網、預覽站、測試房、iOS／Android 模擬器）不送卡住紀錄，正式站與真機照舊（m/05b-save.js stkTestEnv、XQBridgeViewController XQSim/1；行為 2） */
   "test-newjourney-entry-1116.js",   /* 11/16 開發者「目前已經沒辦法新的旅程了嗎 假設有其他玩家想重玩的話 應該還是要跟存檔讀檔的格子」：存檔與讀檔面板最下面補一顆不管幾格有存檔都在的「開始新的旅程」，開選格頁（m/05b-save.js saveList）（行為 4、原始碼 2；11/16 加「回開頭畫面」） */
   "test-xiu-scene-1116.js",   /* 11/16 開發者「找gemini繪製環景圖 關於這一頁，按照天文專家的判斷」：二十八宿星圖頁改滿版圖＋程式畫的二十八宿 */
   "test-weather-align-1116.js",   /* 11/16 開發者「這邊的天氣錯了，要跟首頁對齊天氣」：雲河的地方（船艙、驛站、航線圖、甲板）跟首頁同一個天氣地區 */
