@@ -185,6 +185,8 @@ test("原始碼：07fl 排版前先問 scwSync、安全區照條目；07w7、07w
   const LB = SCW["lobbymap/lobby_classic"].fx; assert.equal(LB.lamps.length, 44, "大廳 44 盞燈（燈是線上玩家，不能少）"); assert.equal(LB.tables.length, 8);
   for (const [x, y, f, g] of LB.lamps) { assert.ok(x >= 0 && x <= 100 && y >= 0 && y <= 100 && (f === 1 || f === 2) && (g === 0 || g === 1)); if (g) assert.ok(y + (f === 2 ? 10.5 : 7.5) <= 100, "人影腳底在圖內") }
   assert.equal(SCW["hubmap/learn_classic"].fx.cy.length, 3, "藏譜石窟三個朝代殘影");
+  assert.equal(SCW["hubmap/battle_classic"].fx.cy.length, 3, "雲弈閣三個朝代殘影");
+  for (const k of ["hubmap/learn_classic", "hubmap/battle_classic"]) for (const [, x, y, w] of SCW[k].fx.cy) assert.ok(x > 0 && x < 100 && y >= 8 && w > 0, k + " 殘影上緣留 8% 以上（中心定位，太上面會被頂欄切掉）");
   assert.equal(SCW["canjumap/canju_day_classic"].fx.ves.length, 3, "殘局三個茶具");
   const i7 = H.indexOf("//#include m/07sw-scenewide.js"), iy = H.indexOf("//#include m/07y8-redomap.js"), ifl = H.indexOf("//#include m/07fl-fill.js");
   assert.ok(i7 > iy && i7 < ifl, "07sw 在 07y8 後、07fl 前");
