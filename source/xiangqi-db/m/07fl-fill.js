@@ -71,6 +71,7 @@ function xflCss(){if(document.getElementById("xflCss"))return;const s=document.c
 #xflBg{position:fixed;z-index:-1;overflow:hidden;pointer-events:none;contain:strict;background:#1b1714}
 #xflBg>i{position:absolute;inset:-7%;background:center/cover no-repeat;filter:blur(18px) brightness(.68) saturate(.92)}
 #xflBg>b{position:absolute;background:center/100% 100% no-repeat;display:none}
+#view.xfw-on .shp-page.cq{box-shadow:none!important}
 #view.xfl-bgon{background:none!important}
 #view.xfl-clip{overflow:hidden!important}
 #view.xfl-port .shp-page.cq.xfl-nar{box-shadow:0 0 22px rgba(20,12,6,.45)}
@@ -79,8 +80,8 @@ function xflCss(){if(document.getElementById("xflCss"))return;const s=document.c
 #view.xfl-hmw .shp-page .hm-slogan{top:calc(var(--xflT,0px) + var(--hmSlT,1.4%))}`;document.head.append(s)}
 /* ③ 模糊底：蓋住 #view 的範圍；圖換了（日夜、季節、雨雪）跟著換 */
 function xflBg(V,P,on){let B=document.getElementById("xflBg");
-  if(!on||!V||!P){if(B)B.hidden=true;if(V)V.classList.remove("xfl-bgon");return}
-  const im=P.querySelector(":scope>img"),src=im&&(im.currentSrc||im.src);if(!src){if(B)B.hidden=true;return}
+  if(!on||!V||!P){if(B)B.hidden=true;if(V)V.classList.remove("xfl-bgon","xfw-on");return}
+  const im=P.querySelector(":scope>img"),src=im&&(im.currentSrc||im.src);if(!src){if(B)B.hidden=true;V.classList.remove("xfw-on");return}
   xflCss();if(!B){B=document.createElement("div");B.id="xflBg";B.setAttribute("aria-hidden","true");B.append(document.createElement("i"),document.createElement("b"));(V.parentNode||document.body).append(B)}
   if(B.dataset.u!==src){B.firstChild.style.backgroundImage='url("'+src.replace(/"/g,"%22")+'")';B.dataset.u=src}
   const r=V.getBoundingClientRect();Object.assign(B.style,{left:Math.round(r.left)+"px",top:Math.round(r.top)+"px",width:Math.round(r.width)+"px",height:Math.round(V.clientHeight)+"px"});B.hidden=false;B._P=P;V.classList.add("xfl-bgon");
@@ -89,6 +90,7 @@ function xflBg(V,P,on){let B=document.getElementById("xflBg");
 /* W107：有寬版延伸圖的場景，在模糊底上鋪清楚的寬圖（只在 r07-fit 等高置中時；手機橫放 r07-side、直向填滿都不鋪） */
 function xfwLay(V,B,im,src){let S=B.querySelector(":scope>b");if(!S){S=document.createElement("b");B.append(S)}
   const k=V.classList.contains("r07-fit")&&!V.classList.contains("xfl-port")?xfwKey(src):"",pl=k?xfwPlan(im.getBoundingClientRect(),B.getBoundingClientRect(),XFW[k]):null;
+  V.classList.toggle("xfw-on",!!pl);   /* 鋪寬圖時拿掉原圖框的陰影，不然接縫會多一條暗帶（iPad 模擬器 11/25 實測） */
   if(!pl){S.style.display="none";return}
   const u=xfwSrc(k);if(S.dataset.u!==u){S.style.backgroundImage='url("'+u+'")';S.dataset.u=u}
   Object.assign(S.style,{display:"block",left:pl.left+"px",top:pl.top+"px",width:pl.width+"px",height:pl.height+"px"})}

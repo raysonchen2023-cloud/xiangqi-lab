@@ -45,6 +45,10 @@ test("原始碼：只在 r07-fit（等高置中）而且不是 xfl-port 時鋪�
   assert.match(SRC, /B\.append\(document\.createElement\("i"\),document\.createElement\("b"\)\)/);
   assert.match(SRC, /#xflBg>b\{position:absolute;background:center\/100% 100% no-repeat;display:none\}/);
   assert.match(SRC, /B\.hidden=false;B\._P=P;V\.classList\.add\("xfl-bgon"\);\n  xfwLay\(V,B,im,src\);/);
+  // 鋪寬圖時原圖框不能有陰影（接縫會多一條暗帶）；不鋪、模糊底關掉時要拿掉這個 class
+  assert.match(SRC, /#view\.xfw-on \.shp-page\.cq\{box-shadow:none!important\}/);
+  assert.match(SRC, /V\.classList\.toggle\("xfw-on",!!pl\);/);
+  assert.match(SRC, /V\.classList\.remove\("xfl-bgon","xfw-on"\)/);
   // 登記表裡的每一張，比例要合理（16:10 左右），寬圖檔要在倉庫裡（圖到齊才登記）
   for (const [k, ar] of Object.entries(XFW)) {
     assert.ok(ar > 1.3 && ar < 2.4, k + " 的比例 " + ar);
