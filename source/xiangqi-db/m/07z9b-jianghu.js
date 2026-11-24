@@ -449,8 +449,10 @@ function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures
   try{if(typeof oscEn==="function"&&oscEn()&&!(typeof I18N_EXN!=="undefined"&&I18N_EXN>0)){const H0=location.hash,re=()=>{document.removeEventListener("xq-i18n-ext",re);if(wrap.isConnected&&location.hash===H0)Jianghu(v)};document.addEventListener("xq-i18n-ext",re)}}catch(e){}
   return{}}
 /* ---------- 駐地小卡：拜師／繼續修行、挑戰掌門、這一派的棋友 ---------- */
+/* 掌門小卡的「門下棋友：」：這一派的門人（秘境人物要找到過才列，oscNpcShown），最多 5 位（#107 再審：抽出來才測得到行為） */
+function jhSheetMates(sid){return Object.entries(OSC.NPC).filter(([k,x])=>x[0]===sid&&oscNpcShown(k)).map(([k,x])=>jhT(x[2])).slice(0,5)}
 function jhSheet(sid){if(typeof sheet!=="function"||typeof OSC==="undefined")return;const S=jhSch(sid),m=OSC.MST.find(x=>x.sid===sid),c=jhLook(),o=typeof oscGet==="function"?oscGet():null,act=c&&o?OSC.act(o,c):"";
-  const mates=Object.entries(OSC.NPC).filter(([k,x])=>x[0]===sid&&oscNpcShown(k)).map(([k,x])=>jhT(x[2])).slice(0,5),inHall=location.hash==="#/jianghu/hall/"+sid;   /* 已經在門內就不再顯示「走進山門」 */
+  const mates=jhSheetMates(sid),inHall=location.hash==="#/jianghu/hall/"+sid;   /* 已經在門內就不再顯示「走進山門」 */
   sheet(`${S.nm}`,b=>{b.innerHTML=`<div class="jh-card">${m?`<img src="data/npc/${m.id}.webp" alt="" onerror="this.remove()">`:""}<div class="tx">
       ${m?`<b>${esc(jhL(m.nm,m.en))}</b><p class="muted">${esc(jhL(S.nm+"掌門","Master of the "+S.nm))}</p><p>${esc(jhL("「"+m.say+"」",'"'+jhT(m.say)+'"'))}</p>`:""}
       <p class="muted">${esc(jhL(`慣用${S.op}：${S.say}`,`Plays ${S.op}: ${S.say}`))}</p>${mates.length?`<p class="muted">${esc(jhL("門下棋友：","Players of this school: ")+mates.join(jhL("、",", ")))}</p>`:""}</div></div>
