@@ -585,8 +585,9 @@ function boardBG(T,eR,eD,u,flip,imgK){
     +`<linearGradient id="sdT${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>`
     +`<linearGradient id="sdL${u}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".2"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>`
     // 棋子用：落影（徑向漸層，不用 filter，手機上比較省）、側邊、頂面隆起、倒角亮邊、反光
-    /* W108（11/25 玩家回饋「選中的棋子加一點高光或光暈，快棋時比較清楚」，開發者排在送審前）：選中光暈，主題強調色 T.mv；中心會被棋子蓋住，看得到的是外圈 */
-    +`<radialGradient id="psel${u}"><stop offset=".55" stop-color="${T.mv}" stop-opacity=".55"/><stop offset=".78" stop-color="${T.mv}" stop-opacity=".22"/><stop offset="1" stop-color="${T.mv}" stop-opacity="0"/></radialGradient>`
+    /* W108（11/25 玩家回饋「選中的棋子加一點高光或光暈，快棋時比較清楚」，開發者排在送審前）：選中光暈用暖金色（固定，不跟主題強調色 T.mv：
+       預覽站實測 T.mv＝#2F6B4F 這類深色畫出來像一圈影子，不像發光；選中棋子的邊緣本來就有 T.mv 外框，光暈只負責「亮起來」）。中心會被棋子蓋住，看得到的是外圈 */
+    +`<radialGradient id="psel${u}"><stop offset=".55" stop-color="#FFE7A0" stop-opacity=".85"/><stop offset=".78" stop-color="#FFD25E" stop-opacity=".45"/><stop offset="1" stop-color="#FFD25E" stop-opacity="0"/></radialGradient>`
     +`<radialGradient id="psh${u}"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset=".6" stop-color="#000" stop-opacity=".32"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>`
     +`<linearGradient id="pside${u}" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#9A6633"/><stop offset=".8" stop-color="#6E4219"/><stop offset="1" stop-color="#4A2A0E"/></linearGradient>`
     +`<radialGradient id="p3d${u}" cx=".42" cy=".34" r=".72"><stop offset="0" stop-color="#FFF7E6"/><stop offset=".5" stop-color="#F3DDB4"/><stop offset=".86" stop-color="#DDB57E"/><stop offset="1" stop-color="#B98A50"/></radialGradient>`
