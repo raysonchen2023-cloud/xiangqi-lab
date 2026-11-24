@@ -79,6 +79,7 @@ const CLASSIFIED = new Set([
   "test-jh-halls8-1123.js",   /* W48 其餘八派門內頁：JH_HALL、玩法入口（m/07z9l-halls.js） */
   "test-jh-maze-1123.js",   /* 11/23 W71 中炮門地底迷宮第一層（m/07z9m-maze.js）：vm 跑真的走路、暗匪、光、殘局判斷；兩題殘局用 core.js 獨立重算唯一一步殺 */
   "test-jh-maze-render-1124.js",   /* 11/24 W87c 迷宮回味感：vm 跑閃爍、材質載入（假 three）、斜向方向鈕、W97 提示限次、ptr 防呆、迷路版地圖 BFS；斜俯視、W99 逃跑的介面用原始碼比對（標〔原始碼〕〔混合〕） */
+  "test-jh-maze-sack-1124.js",   /* 11/24 W71e① 迷宮：撞到跳不過的糧袋（兩袋並排、後面是牆或石門）回傳 block:"jump"，畫面說「炮只能隔一個子跳」；一般牆不帶、跳得過的照跳（vm 跑 m/07z9m-maze.js；行為 3） */
   "test-android-back-1124.js",   /* 11/24 W100 Android 返回鍵先交給網頁回上一頁：BACK_JS 用 vm 實跑（行為 1）；XQBackHandler、共用版與 mini-26112401 的 MainActivity、變體雜湊（原始碼 2） */
   "test-jh-fanggong-1122.js",   /* 11/22 W48-S4 反宮馬門「活字排局陣」（開發者「門派分給三位平行做完」；選單「照主線次序才算對」）：m/07z9g-fanggong.js 課程主線取出與合法、三級出題（初中只打散黑方、高級紅黑都打散）、照主線次序判對錯並指出第幾步、走不下去指出原因、每天修為只給一次（行為 5、原始碼 1） */
   "test-jh-zm-engine-1123.js",   /* 11/23 W73 順炮、仕角炮、反宮馬棋理修正（Windows Claude 1 用 Pikafish 驗出）：順炮 90 題局面合法（獨立檢查子數、九宮、仕相兵、照面）、引擎最短殺等於答案；仕角炮 60 題引擎條件（吃差 50 cp 內／不吃好 100 cp 以上）、13 題舊題不在；反宮馬 palace_horse_06 例題 b 不出（行為 5、原始碼 1） */
