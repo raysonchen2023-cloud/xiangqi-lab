@@ -183,7 +183,10 @@ test("乾淨的全過、每一種壞樣本都被 check-native.js 抓到；收據
   assert.deepEqual(R.kinds, Object.keys(KINDS));
   for (const x of R.results) { assert.equal(x.caught, true, x.kind); assert.equal(x.exit, 1, x.kind) }
   assert.equal(R.toolPins["source/xiangqi-ios/scripts/check-native.js"], toolSha(CHECK));
-  assert.deepEqual(Object.keys(KINDS), EXPECTED_KINDS, "壞樣本清單要跟測試裡寫死的一樣（#135 審查④）");
+  /* W69 β（#143 拆分計畫第二步）：寫死的清單「只能增加」。完全相等會讓 guard-base 結構性紅燈：它把這支換回 main 版、canary-native.js 用 PR 版，
+     任何新增壞樣本的 PR 換回後都對不上（#144 第八輪 guard-base 實際發生）。改成：寫死的每一個都要在、順序不變（不能刪、不能改名、不能換位置），新的只能接在後面或插在中間 */
+  const kinds = Object.keys(KINDS); let at = -1;
+  for (const k of EXPECTED_KINDS) { const j = kinds.indexOf(k); assert.ok(j > at, "壞樣本清單要包含測試裡寫死的每一個、順序不變（#135 審查④；W69 β 改成只能增加）：" + k); at = j }
 });
 
 /* check-native 裡每一條「check(條件, "訊息…")」：找到訊息裡有某個壞樣本 expect 的那一行，把條件改成恆真 */
@@ -206,7 +209,7 @@ test("check-native.js 每一條判斷改成恆真，對應的壞樣本都要回 
   }
   fs.writeFileSync(check, orig);
   console.log("盲測：" + tried + " 條判斷改成恆真，都判出失靈");
-  assert.equal(tried, BLIND_N, "盲測的條數要跟寫死的一樣（#135 審查④：原本是「至少」）");
+  assert.ok(tried >= BLIND_N, "盲測的條數不能比寫死的少（#135 審查④；W69 β：新增壞樣本會讓條數變多，只能增加）：" + tried + " < " + BLIND_N);
 });
 
 test("子條件改壞清單：每一條只拿掉一個子條件或一個字，指定的壞樣本要回 4；重疊清單的原文還在（#135 審查①②③）", () => {
