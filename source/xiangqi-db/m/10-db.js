@@ -411,6 +411,8 @@ function Viewer(v,c,id){
         :`${FREE.base+FREE.cur}. ${PLAYER[m.by]} ${m.cn}`+(m.tags&&m.tags.length?`【${m.tags.join("、")}】`:"")+(g&&g.q&&g.q!=="—"?`　${g.q}`:"")
          +(g&&g.q&&g.q!=="正著"&&g.q!=="妙著"&&g.bc?`\nPikafish 認為更好的是：${g.bc}`:"")}
     else if(KM)note.textContent=typeof tmxEn==="function"&&tmxEn()?mkNoteEn(KM,mvArrowName(),pendLine()):mkNote(KM)+pendLine();   /* T01 關鍵步模式 */
+    /* W89 掌門覆盤：關鍵步模式在說明框上面放主修門派掌門（沒拜師是隨行夥伴）的一句話；離開關鍵步就拿掉 */
+    if(typeof mntCard==="function")try{mntCard(note,KM&&!FREE?KM.q:"",KM&&!FREE?KM.m.cn:"")}catch(e){}
     else{const ck=owner(line,ply)+"_"+ply,g=ply>0&&gradeOf(ply),
         rk=g&&(g.q==="失著"||g.q==="敗著")&&typeof mflRisk==="function"?mflRisk(boardAt(line,ply-1),moverAt(ply),s[ply-1],g):"";   /* ChatGPT 評審 11/11：失著的具體後果（只在分析線支持時） */
       {const nt=([ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",ply>0?gradeNote(g,boardAt(line,ply-1)):"",rk?"⚠ "+rk:""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":""))+pendLine();note.textContent=typeof tmxEn==="function"&&tmxEn()?dbNoteLines(nt):nt}}

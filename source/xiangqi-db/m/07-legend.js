@@ -252,7 +252,8 @@ function Profile(v){setTop("🎒 棋童資料","#/adventure");setTabs(true,"#/")
       pageList(b,B2.boards.slice().reverse(),sl=>`<div class="bgrid">${sl.map(card).join("")}</div>`,b=>b.querySelectorAll("[data-ex]").forEach(x=>x.onclick=()=>rareExchange(x.dataset.ex,()=>Me(v))))});
     else if(k==="r")sheet(`📜 棋譜（${B2.records.length}）`,b=>{if(!B2.records.length){b.innerHTML='<p class="muted" style="text-align:center">還沒有</p>';return}
       pageList(b,B2.records.slice().reverse(),sl=>`<div class="items" style="padding:0">${sl.map(x=>`<button class="item" data-rc="${x.uid}"><span class="lb">${TIMG(`data/treasure/record_${x.rare?"rare":"normal"}.webp`,"📜")}</span><span class="tx"><b>${esc(recTitle(x.name))}</b><span>${(g=>g.i?"💡 有心得・":g.r?"✔ 讀過・":"")(studyGet()[studyKey(x)]||{})}${esc(x.from)}</span></span><span class="muted">›</span></button>`).join("")}</div>`,b=>{b.querySelectorAll("[data-rc]").forEach(y=>y.onclick=()=>{const x=bag().records.find(z=>z.uid===y.dataset.rc);if(!x)return;studyOpen(x,{back:()=>openC("r"),ret:"#/adventure"})})})});
-    else sheet(`🤝 秘境棋友（${Object.keys(S2).length}／${SECRETS.length}）`,b=>{b.innerHTML=`<div class="items" style="padding:0">${SECRETS.map(x=>S2[x.id]?`<button class="item" data-sb="${x.id}"><span class="lb" style="font-size:22px">${secIc(x)}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc((SECRET_BIO[x.id]||{}).y||"")}・贏過 ${(store.get("secretWins",{})[x.id]||0)} 盤</span></span><span class="muted">›</span></button>`:`<div class="item" style="opacity:.5"><span class="lb">❔</span><span class="tx"><b>尚未相遇</b></span></div>`).join("")}</div>`;b.querySelectorAll("[data-sb]").forEach(y=>y.onclick=()=>{const x=SECRETS.find(z=>z.id===y.dataset.sb);if(x)secretSheet(x)})})};
+    else sheet(`🤝 秘境棋友（${Object.keys(S2).length}／${SECRETS.length}）`,b=>{const rw=secAllReward(),nF=Object.keys(S2).length,all=nF>=SECRETS.length,ms=secMsN(),C2=secretClues();b.innerHTML=`${secAllNote(rw)}<div class="card" style="line-height:1.7;font-size:14px;margin-bottom:8px"><b>📜 雲河尋訪錄 ${nF}／${SECRETS.length}</b><div style="height:8px;border-radius:4px;background:#e8dcc4;margin:6px 0"><div style="height:8px;border-radius:4px;background:#b3261e;width:${Math.round(nF*100/SECRETS.length)}%"></div></div>${all?(store.get("secAll",0)?"六位都找到了，拓本已經送到你的棋盤收藏。":""):`六位集滿，送全遊戲只有一件的「${esc(SEC_ALL_BOARD)}」。`}${all?"":`<br>📝 散佚手稿 ${ms}／${SEC_MS_NEED}：在園子裡點東西有機會撿到，贏施耐庵一盤一定給一張；湊滿 ${SEC_MS_NEED} 張換一條線索。${ms>=SEC_MS_NEED?`<br><button class="btn" id="secMsUse" style="width:100%;margin-top:6px">用 ${SEC_MS_NEED} 張手稿換一條線索</button>`:""}`}</div><div class="items" style="padding:0">${SECRETS.map(x=>S2[x.id]?`<button class="item" data-sb="${x.id}"><span class="lb" style="font-size:22px">${secIc(x)}</span><span class="tx"><b>${esc(x.name)}</b><span>${esc((SECRET_BIO[x.id]||{}).y||"")}・贏過 ${(store.get("secretWins",{})[x.id]||0)} 盤</span></span><span class="muted">›</span></button>`:`<div class="item" style="opacity:${C2[x.id]?.85:.5}"><span class="lb">❔</span><span class="tx"><b>尚未相遇</b>${C2[x.id]&&clueText(x)?`<span>🗝 ${esc(clueText(x))}</span>`:""}</span></div>`).join("")}</div>`;b.querySelectorAll("[data-sb]").forEach(y=>y.onclick=()=>{const x=SECRETS.find(z=>z.id===y.dataset.sb);if(x)secretSheet(x)});
+      {const u=b.querySelector("#secMsUse");if(u)u.onclick=()=>{const t=secMsUse();if(!t)return toast("換不了：秘境棋友都找到了");vibrate([15,30,15]);sheet("📝 手稿上寫的地方",c=>{c.innerHTML=`<p style="line-height:1.9;font-size:16px">三張手稿拼起來，是一段沒寫完的故事。故事裡有人說：「${esc(clueText(t))}，就找得到我。」</p><p class=\"muted\">線索也會記在驛站的秘境棋友清單裡。</p>`})}}})};
   v.querySelectorAll(".circles [data-c]").forEach(b=>b.onclick=()=>{vibrate(5);openC(b.dataset.c)});
   (v.querySelector("#pXP")||{}).onclick=xpSheet;(v.querySelector("#pUndo")||{}).onclick=xpSheet;
   return{}}
@@ -368,8 +369,26 @@ function secretSpots(){let m=store.get("secretSpots",null);if(m&&SECRETS.every(x
   store.set("secretSpots",m);return m}
 const secretHint=x=>{const z=secretSpots()[x.id];return`聽說${parkName(z.era)}裡，${SPOT_OBJ[z.k]}附近常有人在等……`};
 const jSecrets=()=>store.get("secrets",{});
-function secretFind(era,k){const M=secretSpots(),x=SECRETS.find(z=>M[z.id]&&M[z.id].era===era&&M[z.id].k===k);if(!x||jSecrets()[x.id])return false;const S=jSecrets();S[x.id]=Date.now();store.set("secrets",S);vibrate([20,40,60]);
-  sheet(`🗝 發現秘境棋友：${x.name}`,b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">${esc(x.found.replace("{spot}",SPOT_OBJ[k]))}</p><p class="muted">${esc(x.say)}</p><p class="muted" style="font-size:13px">${esc(x.name)}：${esc(x.who)}</p><button class="btn" id="sgo" style="width:100%">🏮 走去驛站找他</button>`;b.querySelector("#sgo").onclick=()=>{closeSheet();walk("inn",()=>{if(/^#\/(journey\/play|arena)/.test(location.hash))navReplace("#/journey/inn");else location.hash="#/journey/inn"})}});return true}   /* 意見回饋 697：跟園子上方的 🏮 一樣走步行小卡；園子、擂台跟驛站是同一層，用 replace 不疊上一頁 */
+/* ===== W96（11/24 開發者：「對玩家來說，找到秘境棋友有什麼好處。不就是個電腦玩家，一點吸引力都沒有」→ Gemini 文案 198，照推薦先做第一組）=====
+   ① 雲河尋訪錄：秘境棋友清單上顯示收集進度；六位集滿保證送全遊戲只有一件的「雲河鎮石桌殘局拓本」（已經有拓本的改送 3 枚將令）。
+   ② 施耐庵的散佚手稿：在園子點錯物件（那裡沒有秘境棋友）有 20% 機會撿到一張手稿，每天最多 3 張；贏施耐庵一盤必掉一張；
+      湊滿 3 張換一條精準線索（直接說哪個朝代的園子、哪個物件），用法跟將令換的線索一樣。秘境棋友都找到了就不再掉 */
+const SEC_MS_NEED=3,SEC_MS_P=.2,SEC_MS_DAY=3,SEC_ALL_BOARD="雲河鎮石桌殘局拓本";
+const secMsN=()=>{const n=store.get("secMs",0);return Number.isInteger(n)&&n>=0?n:0};
+const secDay=t=>{const d=new Date(t==null?Date.now():t);return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate()};
+/* 點錯物件撿手稿：rnd＝0～1 的亂數（測試可以帶），now＝時間；撿到回傳現在幾張，沒撿到回 0 */
+function secMsTry(rnd,now){const S=jSecrets();if(SECRETS.every(x=>S[x.id]))return 0;const d=secDay(now),D=store.get("secMsDay",{}),n=D&&D.d===d?(+D.n||0):0;
+  if(n>=SEC_MS_DAY||(rnd==null?Math.random():rnd)>=SEC_MS_P)return 0;store.set("secMsDay",{d,n:n+1});const m=secMsN()+1;store.set("secMs",m);return m}
+/* 用 3 張手稿換一條線索：優先給還沒有線索的那一位；回傳那位秘境棋友，換不了回 null */
+function secMsUse(){const n=secMsN();if(n<SEC_MS_NEED)return null;const S=jSecrets(),C=secretClues(),t=SECRETS.find(z=>!S[z.id]&&!C[z.id])||SECRETS.find(z=>!S[z.id]);if(!t)return null;
+  store.set("secMs",n-SEC_MS_NEED);const C2=secretClues();C2[t.id]=Date.now();store.set("secretClue",C2);return t}
+/* 六位集滿的保底：只發一次；沒有拓本就送拓本，已經有了改送 3 枚將令。回傳 {rare:true}／{ling:3}，沒集滿或發過回 null */
+function secAllReward(){const S=jSecrets();if(!SECRETS.every(x=>S[x.id])||store.get("secAll",0))return null;store.set("secAll",Date.now());const B=bag();
+  if(!B.boards.some(z=>z.rarity==="rare")){B.boards.push({uid:"b"+Date.now().toString(36),rarity:"rare",from:"雲河尋訪錄",at:Date.now(),name:SEC_ALL_BOARD});bagSave(B);return{rare:true}}
+  lingN();lingAdd(3);return{ling:3}}
+const secAllNote=r=>r?(r.rare?`<p style="line-height:1.8"><b>📜 雲河尋訪錄六位集滿！</b>石桌邊的老人從懷裡拿出一張泛黃的紙：「${esc(SEC_ALL_BOARD)}——整個雲河只有這一件，交給你了。」</p>`:'<p style="line-height:1.8"><b>📜 雲河尋訪錄六位集滿！</b>拓本你早就有了，改送 3 枚將令。</p>'):"";
+function secretFind(era,k){const M=secretSpots(),x=SECRETS.find(z=>M[z.id]&&M[z.id].era===era&&M[z.id].k===k);if(!x||jSecrets()[x.id]){const m=secMsTry();if(m)setTimeout(()=>toast(`📝 ${SPOT_OBJ[k]||"這裡"}邊上掉了一張沾了墨的手稿，像是誰寫故事寫到一半掉的（散佚手稿 ${m} 張，湊滿 ${SEC_MS_NEED} 張可以換一條秘境棋友的線索）`),400);return false}const S=jSecrets();S[x.id]=Date.now();store.set("secrets",S);vibrate([20,40,60]);const AR=secAllReward();
+  sheet(`🗝 發現秘境棋友：${x.name}`,b=>{b.innerHTML=`<p style="line-height:1.9;font-size:16px">${esc(x.found.replace("{spot}",SPOT_OBJ[k]))}</p><p class="muted">${esc(x.say)}</p><p class="muted" style="font-size:13px">${esc(x.name)}：${esc(x.who)}</p>${secAllNote(AR)}<p class="muted" style="font-size:13px">📜 雲河尋訪錄 ${Object.keys(jSecrets()).length}／${SECRETS.length}${Object.keys(jSecrets()).length<SECRETS.length?`（六位集滿送「${esc(SEC_ALL_BOARD)}」）`:""}</p><button class="btn" id="sgo" style="width:100%">🏮 走去驛站找他</button>`;b.querySelector("#sgo").onclick=()=>{closeSheet();walk("inn",()=>{if(/^#\/(journey\/play|arena)/.test(location.hash))navReplace("#/journey/inn");else location.hash="#/journey/inn"})}});return true}   /* 意見回饋 697：跟園子上方的 🏮 一樣走步行小卡；園子、擂台跟驛站是同一層，用 replace 不疊上一頁 */
 /* 秘境棋友送棋盤：這盤賽後評等 S 才送；稀有 12%（整個故事只有一件：雲河鎮石桌殘局的拓本）、一般 58%、損壞 30% */
 async function secretGift(x,gid){const K=store.get("giftGames",{});if(K[gid])return;let st=null;try{st=await api("/play/state")}catch(e){return}if(!st||st.id!==gid)return;
   let R=null;try{R=gameReport(window.XQCore.parseFen(window.XQCore.START),st.moves).sides[st.human]}catch(e){}
@@ -649,7 +668,8 @@ function journeyGameEnd(st){if(!st||!st.result)return;try{if(typeof qqParkEnd===
       if(st.result.w===st.human)A[x.id]=Math.min(B[1],rl+1);else if(st.result.w)A[x.id]=Math.max(B[0],rl-1);store.set("innAdj",A)}
     const TK=typeof innTalk==="function"?innTalk(x):{win:"承讓了，下次再來！",lose:"好棋！佩服。",draw:"承讓了，下次再來！"};   /* 意見回饋 826 追加：旅人、秘境棋友各說自己的話（07m3-opptalk.js） */
     if(st.result.w===st.human){const xp=x.who?secretXP(x):innXP(rl);addXP(xp,"驛站","inn:"+st.id);setTimeout(()=>toast(`${x.ic} ${x.name}：「${TK.lose}」`),1500);
-      if(x.who){const W=store.get("secretWins",{});W[x.id]=(W[x.id]||0)+1;store.set("secretWins",W);setTimeout(()=>secretGift(x,st.id),7000)}}
+      if(x.who){const W=store.get("secretWins",{});W[x.id]=(W[x.id]||0)+1;store.set("secretWins",W);if(x.id==="shinaian"&&!SECRETS.every(z=>jSecrets()[z.id])){const m=secMsN()+1;store.set("secMs",m);setTimeout(()=>toast(`📝 施耐庵塞給你一張手稿：「這一回寫的是別人藏身的地方，你拿去吧。」（散佚手稿 ${m} 張）`),4000)}   /* W96：贏施耐庵必掉一張手稿 */
+      setTimeout(()=>secretGift(x,st.id),7000)}}
     else setTimeout(()=>toast(`${x.ic} ${x.name}：「${st.result.w?TK.win:TK.draw}」`),1500);return}
   if(P.lvp){const R=jRunGet(P.id),L=P.lvp,me=st.human,won=st.result.w===me,lost=!!st.result.w&&st.result.w!==me,n=st.moves.filter(m=>m.by===me).length;
     const ok=L.goal==="survive"||L.goal==="draw"?!lost:won,over=ok&&L.limit&&L.goal!=="survive"&&n>L.limit;
@@ -711,7 +731,12 @@ function jPuzzle(v,s){setTop(s.demo?"🧠 練一題・"+s.tag:s.theme?"🧠 "+s.
     if(fresh.length<(s.count||5)){seen.clear();fresh=pool.slice()}
     while(Q.length<(s.count||5)&&fresh.length)Q.push(fresh.splice(Math.floor(Math.random()*fresh.length),1)[0]);
     for(const q of Q)seen.add(String(q.id));SEEN[s.id]=[...seen].slice(-400);store.set("jpSeen",SEEN);jpSave()}
-    v.className="view fixed";v.innerHTML=`<div class="status" id="qh" style="margin-top:6px"></div><div class="boardbox" id="bbox"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap"></div><div style="flex:1"></div><div class="actions" id="acts"></div>`;
+    /* 開發者 11/24 截圖（主題訓練・殺棋答錯後）「底下的資訊能不用 scrollbar 就能看到所有資訊嗎」：說明（.note，flex:1）跟下面撐開用的空白 div（原本也是 flex:1）平分剩下的高度，
+       說明只拿到一半就出捲軸、下面卻空一大塊。空白 div 改成 flex-grow .001：剩下的高度幾乎都給說明；說明有上限時（新手課 .camp-lv 34vh），多的才給空白 div，按鈕列照樣貼底。
+       iMac Claude 2 預驗（iPhone 18 Pro 874pt）：說明拿到全部剩下的高度還差約 44pt（下一題那列 114pt）→ 說明改 flex:1 1 auto（照內容要高度）、棋盤 flex-shrink:8：
+       放不下時先讓棋盤縮（最小 120px，.view.fixed .boardbox），縮到底才輪到說明捲。
+       第二輪（iMac Claude 2：還差 2px）：flex-shrink 照「係數×原本高度」分攤，說明 1×173 也被分到一點 → 說明的 flex-shrink 改 .01，幾乎全由棋盤縮 */
+    v.className="view fixed";v.innerHTML=`<div class="status" id="qh" style="margin-top:6px"></div><div class="boardbox" id="bbox" style="flex-shrink:8"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap;flex:1 .01 auto"></div><div style="flex:.001 1 0"></div><div class="actions" id="acts"></div>`;
     v.querySelector("#bbox").append(bd.svg);
     if(s.demo&&!Q.length){v.querySelector("#note").textContent="這個棋理目前沒有題目，先回去吧。";actionBar(v.querySelector("#acts"),[["back","‹","回去",()=>goBack(mflDemoBack()),true]]);return}
     if(s.demo)mflIntro();else show()})();   /* G01 示範：先看棋理再出題 */
