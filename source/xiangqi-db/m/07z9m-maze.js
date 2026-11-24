@@ -328,7 +328,7 @@ function jhMzStep(S,dx,dy){if(S.done)return{ev:"done"};const P=S.player,nx=P.x+d
   /* W87：該派自己的機關（例如推箱子）先判斷；回傳事件就照它（它自己負責移動與算回合），null＝照下面預設走 */
   if(typeof S.lv.onStep==="function"&&(dx||dy)){const h=S.lv.onStep(S,dx,dy,c);if(h)return h}
   /* 糧袋當炮架：往糧袋走、糧袋後面那一格走得進去，就像炮一樣「隔一個子」跳過去（算一步）；兩袋並排、後面是牆或石門都跳不過（W87：跳得過的字元照該派 jump 設定，中炮門是 S） */
-  if(dx||dy){if(c&&S.lv.jump.includes(c)&&!jhMzSolid(S,nx+dx,ny+dy)){P.x=nx+dx;P.y=ny+dy;P.jump=1;out.ev="jump"}else if(jhMzSolid(S,nx,ny))return{ev:"wall"};else{P.x=nx;P.y=ny}}
+  if(dx||dy){if(c&&S.lv.jump.includes(c)&&!jhMzSolid(S,nx+dx,ny+dy)){P.x=nx+dx;P.y=ny+dy;P.jump=1;out.ev="jump"}else if(jhMzSolid(S,nx,ny))return c&&S.lv.jump.includes(c)?{ev:"wall",block:"jump"}:{ev:"wall"};   /* W71e①：撞到跳不過的糧袋，畫面改說「炮只能隔一個子跳」 */else{P.x=nx;P.y=ny}}
   S.turn++;
   for(const[a,b]of[[0,0],[1,0],[-1,0],[0,1],[0,-1]]){const x=P.x+a,y=P.y+b;if(jhMzCell(S,x,y)==="T"&&!S.lit.has(y*S.W+x)){S.lit.add(y*S.W+x);out.torch=true}}
   const k=P.y*S.W+P.x;
@@ -518,7 +518,7 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
     if(r.msg)say(jhL(r.msg[0],r.msg[1]));
     if(r.card&&r.card.title&&r.card.body){path=[];held=null;card(r.card);return false}
     if((dx||dy)&&S.player.x===x0&&S.player.y===y0&&!["wall","door","locked","trap","spot","finish","done"].includes(r.ev)){path=[];held=null;return false}
-    if(r.ev==="wall"){say(esc(jhL("前面過不去。","Can't go that way.")));return false}
+    if(r.ev==="wall"){say(esc(r.block==="jump"?jhL("炮只能隔一個子跳：這袋糧後面還有東西擋著（另一袋、牆或石門），跳不過去。","A cannon jumps over exactly one piece: something is right behind this sack (another sack, a wall or the stone door), so you can't jump it."):jhL("前面過不去。","Can't go that way.")));return false}
     if(r.ev==="door"){path=[];puzzle("door");return false}
     if(r.ev==="locked"){path=[];say(ZS("locked"));return false}
     if(r.ev==="jump")say(ZS("jump"));
