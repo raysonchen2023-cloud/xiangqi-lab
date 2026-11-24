@@ -621,7 +621,8 @@ test("碑刻 L：擋路；朝它走就跳卡片講一段歷史，第一次讀記
 
 test("包住每一派：已經登記的（中炮門）和之後才登記的都包；原本的 onStep 照樣會被呼叫；H、L 都進 solid，H 進 opaque", () => {
   const { c } = loadL();
-  for (const sid of ["central", "lt"]) { const lv = c.JH_MZ_LV[sid]; assert.ok(lv._lore, sid); assert.ok(/H/.test(lv.solid) && /L/.test(lv.solid) && /H/.test(lv.opaque) && !/L/.test(lv.opaque), sid) }
+  for (const sid of ["central", "lt"]) { const lv = c.JH_MZ_LV[sid]; assert.ok(lv._lore, sid); assert.ok(/H/.test(lv.solid) && /L/.test(lv.solid) && /H/.test(lv.opaque), sid) }
+  assert.ok(!/L/.test(c.JH_MZ_LV.lt.opaque), "沒特別設定的派：碑不擋視線（中炮門 #110 刻意讓碑擋視線，照該派自己的設定，lore.js 不改）");
   let called = 0; c.jhMzDef("lt2", { map: ["#####", "#@Q>#", "#####"], guards: [], solid: "#Q", onStep: (S, dx, dy, ch) => (ch === "Q" ? (called++, { ev: "wall" }) : null) });
   const S = c.jhMzNew("lt2"); assert.equal(c.jhMzStep(S, 1, 0).ev, "wall"); assert.equal(called, 1, "原本的 onStep 照樣被呼叫");
   assert.equal(typeof c.JH_MZ_OBJ.H, "function"); assert.equal(typeof c.JH_MZ_OBJ.L, "function"); assert.equal(typeof c.JH_MZ_TILE.L, "function");
@@ -629,4 +630,16 @@ test("包住每一派：已經登記的（中炮門）和之後才登記的都�
 
 test("收藏讀檔容錯：存了奇怪的值（陣列、字串、null）都當作空的，不會壞", () => {
   for (const bad of [[], "x", null, 3]) { const { c, mem } = loadL(); mem.jhMzLore = JSON.stringify(bad); assert.equal(Object.keys(c.jhMzLoreSeen("lt")).length, 0); const S = loreS(c); S.player.x = 3; S.player.y = 3; assert.equal(c.jhMzStep(S, -1, 0).first, true) }
+});
+
+test("暗門 H（#115 審查後續）：被拖回入口（jhMzReset 不是全新）後，推開過的暗門維持打開；沒推開的照樣要推兩次、提示照舊；全新開局清掉紀錄", () => {
+  const { c } = loadL(), S = loreS(c); S.player.x = 3; S.player.y = 1;
+  c.jhMzStep(S, 1, 0); c.jhMzStep(S, 1, 0); assert.equal(S.grid[1][4], ".", "推開了");
+  c.jhMzReset(S, false); assert.equal(S.grid[1][4], ".", "拖回入口：找到的暗門還開著");
+  const T = loreS(c); T.player.x = 3; T.player.y = 1;
+  assert.equal(c.jhMzStep(T, 1, 0).ev, "bump"); c.jhMzReset(T, false); T.player.x = 3; T.player.y = 1;
+  assert.equal(T.grid[1][4], "H", "只推過一次的暗門，拖回入口後還是關著");
+  assert.equal(c.jhMzStep(T, 1, 0).ev, "secret", "推過一次的紀錄留著：再推一次就開（跟拖回之前一樣）");
+  c.jhMzReset(T, true); T.player.x = 3; T.player.y = 1; assert.equal(T.grid[1][4], "H", "全新開局：暗門關上"); assert.deepEqual(Object.keys(T.hBump).length, 0); assert.equal(T.hOpen.length, 0);
+  assert.equal(c.jhMzStep(T, 1, 0).ev, "bump", "全新開局：第一次推照樣只提醒");
 });

@@ -33,6 +33,10 @@ function jhMzLoreWrap(lv){if(!lv||lv._lore)return;const prev=lv.onStep;
   if(!lv.solid.includes("H"))lv.solid+="H";if(!lv.solid.includes("L"))lv.solid+="L";if(!lv.opaque.includes("H"))lv.opaque+="H";
   lv.onStep=(S,dx,dy,c)=>jhMzLoreStep(S,dx,dy,c,prev);lv._lore=1}
 for(const k of Object.keys(JH_MZ_LV))jhMzLoreWrap(JH_MZ_LV[k]);
+/* #115 審查（新代理人）：錯 4 次被拖回入口時，共用的 jhMzReset 照地圖重建格子，推開的暗門又關上，但 hBump 還記著「推過一次」——再推一下就開、提示不見了。
+   改成：被拖回入口（不是全新開局）時，已經找到的暗門維持打開（玩家記得路）；全新開局才清掉推過、開過的紀錄 */
+try{if(typeof jhMzReset==="function"&&!jhMzReset.lore){const r0=jhMzReset;jhMzReset=function(S,full){const v=r0(S,full);
+  if(S){if(full){S.hBump={};S.hOpen=[]}else for(const k of S.hOpen||[]){const y=Math.floor(k/S.W),x=k%S.W;if(S.grid[y]&&S.grid[y][x]==="H")S.grid[y][x]="."}}return v};jhMzReset.lore=1}}catch(e){}
 /* 之後才登記的派也包到（jhMzDef 包一層） */
 try{if(typeof jhMzDef==="function"&&!jhMzDef.lore){const d0=jhMzDef;jhMzDef=function(sid,o){const lv=d0(sid,o);jhMzLoreWrap(lv);return lv};jhMzDef.lore=1}}catch(e){}
 /* 3D 外觀：暗門畫成跟牆同色調的方塊（開了就不畫）；碑刻是一塊立著的灰石板加底座 */
