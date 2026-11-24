@@ -365,6 +365,15 @@ function jhMzCaughtBack(S){S.fails.trap=0;S.pz=null;S.caughtBy=null;if(S.cur)del
 /* W87：每一派各存一份（鍵照該派設定；中炮門照舊 jhMaze，舊存檔不用搬） */
 function jhMzGet(sid){const lv=jhMzLv(sid);let o=null;try{o=store.get(lv.key,null)}catch(e){}o=o&&typeof o==="object"?o:{};
   const n=v=>Number.isFinite(+v)&&+v>=0?Math.floor(+v):0,R={clear:n(o.clear),best:n(o.best)};for(const r of lv.rew)R[r.k]=n(o[r.k]);return R}
+/* W97（11/24 開發者選單「每趟免費 1 次、之後花貢獻」）：掌門提示——走一趟迷宮第一次免費，之後每次花 1 點門派貢獻（先扣存檔裡的，不夠再扣這一趟撿到的）；
+   沒有「門派貢獻」這種獎勵的門派就只有免費那一次。提示只亮「要動哪顆子」、不亮落點；答錯 3 次不再自動亮 */
+const JH_MZ_HINT_COST=1;
+function jhMzMerit(S){const has=S.lv.rew.some(r=>r.k==="gong");return has?jhMzGet(S.sid).gong+(S.bag.gong||0):0}
+function jhMzHintCost(S){return S.hintUsed?JH_MZ_HINT_COST:0}
+function jhMzUseHint(S){if(!S.hintUsed){S.hintUsed=true;return{ok:true,cost:0}}
+  const have=jhMzMerit(S);if(have<JH_MZ_HINT_COST)return{ok:false,need:JH_MZ_HINT_COST,have};
+  let left=JH_MZ_HINT_COST;const G=jhMzGet(S.sid),a=Math.min(left,G.gong);if(a){G.gong-=a;left-=a;try{store.set(S.lv.key,G)}catch(e){}}if(left)S.bag.gong-=left;
+  return{ok:true,cost:JH_MZ_HINT_COST}}
 function jhMzSave(S){const lv=S.lv,G=jhMzGet(lv.sid),first=!G.clear;G.clear++;G.best=G.best?Math.min(G.best,S.turn):S.turn;for(const r of lv.rew)G[r.k]+=S.bag[r.k]||0;
   try{store.set(lv.key,G)}catch(e){}
   if(first&&typeof addXP==="function")try{addXP(lv.xp,jhL(lv.lvName[0],lv.lvName[1]),lv.xpKey)}catch(e){}
@@ -513,7 +522,7 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
   const shut=o=>{o.remove();busy=false};
   /* W87c（飛相門解殺題，iMac Claude 1 寫題）：題目 kind:"defend"＝解殺題——紅方找唯一一步解圍，不是殺棋：不顯示「N 步殺」那行，答對說「解圍了」、答錯說「解不了圍」（派別的 say.door／say.trap 照舊優先）
      W87：題目照該派題庫挑（jhMzPuz）；多步殺一步一步走：走對、還沒將死＝棋盤上照解答走黑方那一步、再換玩家；走錯＝回到開局重來。提示點亮的是「現在」該走的那一步 */
-  const puzzle=id=>{jhMzPtrSet(LV.sid,jhMzEncounter(S,id));const P=jhMzPuz(S,id);if(!P)return;const L=jhMzLine(P),N=(L.length+1)>>1,DEF=P.kind==="defend",t=jhL(P.zh[0],P.en[0]),p=jhL(P.zh[1],P.en[1]);let pcs=jhMzFen(P.fen),sel=null,won=false,last=null;S.pz=null;
+  const puzzle=id=>{S.hintOn=null;jhMzPtrSet(LV.sid,jhMzEncounter(S,id));const P=jhMzPuz(S,id);if(!P)return;const L=jhMzLine(P),N=(L.length+1)>>1,DEF=P.kind==="defend",t=jhL(P.zh[0],P.en[0]),p=jhL(P.zh[1],P.en[1]);let pcs=jhMzFen(P.fen),sel=null,won=false,last=null;S.pz=null;
     const o=ov(`<h2>${esc(t)}</h2><p>${esc(p)}</p>${N>1&&!DEF?`<p class="muted">${esc(jhL(`紅方先走，${N} 步殺：每一步都要將軍或逼著對方，黑方會照最頑強的方式應。`,`Red to move: mate in ${N}. Black answers with the toughest defence.`))}</p>`:""}<div class="jh-mz-bd"></div><div class="jh-mz-res" aria-live="polite">${esc(jhL("點紅方的棋子，再點要走到的位置。","Tap a red piece, then tap where it goes."))}</div>
       <div class="jh-mz-row"><button type="button" data-a="hint">${esc(jhL(HELP[0]+"的提示",HELP[1]+"'s hint"))}</button>${id==="door"?`<button type="button" data-a="back">${esc(jhL("先退開","Step back"))}</button>`:""}</div>`);
     const res=(m,c)=>{const e=o.querySelector(".jh-mz-res");e.textContent=m;e.className="jh-mz-res "+(c||"")};
@@ -521,10 +530,9 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
     const apply=mv=>{const a=jhMzSq(mv.slice(0,2)),b=jhMzSq(mv.slice(2));pcs=pcs.filter(x=>!(x.c===b.c&&x.r===b.r));const me=pcs.find(x=>x.c===a.c&&x.r===a.r);if(me){me.c=b.c;me.r=b.r}last=[a,b]};
     const restart=()=>{pcs=jhMzFen(P.fen);last=null};
     const draw=()=>{const Z=40,ox=24,oy=24,Wd=ox*2+Z*8,Hd=oy*2+Z*9;
-      let s=`<svg viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="${esc(jhL("象棋殘局","Xiangqi puzzle"))}">`+jhMzGrid(Z,ox,oy);const hint=(S.fails[id]||0)>=3&&!won,mv=now(),a=jhMzSq(mv.slice(0,2)),b=jhMzSq(mv.slice(2));
+      let s=`<svg viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="${esc(jhL("象棋殘局","Xiangqi puzzle"))}">`+jhMzGrid(Z,ox,oy);const hint=S.hintOn===id&&!won,mv=now(),a=jhMzSq(mv.slice(0,2)),b=jhMzSq(mv.slice(2));
       for(let r=0;r<10;r++)for(let c=0;c<9;c++)s+=`<rect x="${ox+c*Z-Z/2}" y="${oy+r*Z-Z/2}" width="${Z}" height="${Z}" fill="transparent" data-c="${c}" data-r="${r}"/>`;
       if(last)for(const q of last)s+=`<rect x="${ox+q.c*Z-Z/2+3}" y="${oy+q.r*Z-Z/2+3}" width="${Z-6}" height="${Z-6}" fill="none" stroke="#c9a466" stroke-width="2" stroke-dasharray="4 3" pointer-events="none"/>`;
-      if(hint)s+=`<circle cx="${ox+b.c*Z}" cy="${oy+b.r*Z}" r="8" fill="#3f8f5f" pointer-events="none"/>`;
       for(const q of pcs){const red=q.p===q.p.toUpperCase(),ch=red?JH_MZ_PN.r[q.p]:JH_MZ_PN.b[q.p],on=sel&&sel.r===q.r&&sel.c===q.c,hi=hint&&q.r===a.r&&q.c===a.c;
         s+=`<g data-c="${q.c}" data-r="${q.r}"><circle cx="${ox+q.c*Z}" cy="${oy+q.r*Z}" r="17" fill="#f3e3c0" stroke="${on?"#2a7":hi?"#3f8f5f":red?"#b3261e":"#222"}" stroke-width="${on||hi?4:2}"/><text x="${ox+q.c*Z}" y="${oy+q.r*Z+6.5}" text-anchor="middle" font-size="19" font-weight="900" fill="${red?"#b3261e":"#1a1a1a"}" pointer-events="none">${ch}</text></g>`}
       const bd=o.querySelector(".jh-mz-bd");bd.innerHTML=s+"</svg>";bd.querySelectorAll("[data-c]").forEach(el=>el.addEventListener("click",ev=>{ev.stopPropagation();pick(+el.dataset.c,+el.dataset.r)}))};
@@ -532,15 +540,17 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
     const pick=(c,r)=>{if(won)return;const q=pcs.find(x=>x.c===c&&x.r===r);if(q&&q.p===q.p.toUpperCase()){sel={c,r};draw();return}
       if(!sel){res(jhL("先點一顆紅方的棋子。","Tap a red piece first."));return}
       const mv=jhMzMv(sel,{c,r}),got=jhMzTry(S,id,mv);sel=null;
-      if(got==="next"){apply(mv);apply(L[S.pz.i-1]);draw();const left=(L.length-S.pz.i+1)>>1;res(jhL(`走對了。黑方應了一步（虛線框），還要 ${left} 步殺。`,`Good. Black replied (dashed squares); mate in ${left} more.`),"ok");return}
+      if(got==="next"){S.hintOn=null;if(typeof hl==="function")hl();apply(mv);apply(L[S.pz.i-1]);draw();const left=(L.length-S.pz.i+1)>>1;res(jhL(`走對了。黑方應了一步（虛線框），還要 ${left} 步殺。`,`Good. Black replied (dashed squares); mate in ${left} more.`),"ok");return}
       if(got==="ok"){won=true;apply(mv);draw();
         res(ZS(id)||(DEF?jhL("解圍了！","Threat stopped!"):jhL("將死！","Checkmate!")),"ok");
         const b=row(`<button type="button" class="main">${esc(jhL("繼續","Continue"))}</button>`).querySelector("button");b.onclick=()=>{shut(o);jhMzSolved(S,id);say(ZS(id==="door"?"open":"dazed"))};b.focus();return}
       restart();draw();const card=o.querySelector(".jh-mz-card");card.classList.remove("jh-mz-shake");void card.offsetWidth;card.classList.add("jh-mz-shake");
       if(got==="back"){res(ZS("dragged"),"bad");
         row(`<button type="button" class="main">${esc(jhL("回到入口","Back to the entrance"))}</button>`).querySelector("button").onclick=()=>{shut(o);const lost=jhMzCaughtBack(S),w=S.lv.rew.find(x=>x.k===lost);bag();say((w?jhL(`<b>${esc(w.zh)}</b>被丟回箱子裡了，再去拿一次。`,`Your <b>${esc(w.en)}</b> was tossed back into its chest. Go get it again.`):"")+ZS("retry"))};return}
-      res((S.fails[id]||0)>=3?jhL(`這步不對，從頭再來。${HELP[0]}把該動的子點亮了。`,`Not that one; start over. ${HELP[1]} lights up the piece to move.`):jhL(N>1?"這步不對，從頭再來。":DEF?"這步解不了圍，黑方下一步還是殺得到，再想想。":"這步沒有將死黑方，再想想。",N>1?"Not that one; start over.":DEF?"That doesn't stop the threat. Black still mates next move. Think again.":"That doesn't checkmate Black. Think again."),"bad")};
-    o.querySelector('[data-a="hint"]').onclick=()=>{S.fails[id]=Math.max(S.fails[id]||0,3);draw();res(jhL(`${HELP[0]}：「看亮起來的那顆子，走到綠點。」`,`${HELP[1]}: "Move the highlighted piece to the green dot."`))};
+      res((S.fails[id]||0)>=3&&S.hintOn!==id?jhL(`這步不對，從頭再來。卡住了可以請${HELP[0]}提示。`,`Not that one; start over. Stuck? Ask ${HELP[1]} for a hint.`):jhL(N>1?"這步不對，從頭再來。":DEF?"這步解不了圍，黑方下一步還是殺得到，再想想。":"這步沒有將死黑方，再想想。",N>1?"Not that one; start over.":DEF?"That doesn't stop the threat. Black still mates next move. Think again.":"That doesn't checkmate Black. Think again."),"bad")};
+    const hb=o.querySelector('[data-a="hint"]'),hl=()=>{const c=jhMzHintCost(S);hb.textContent=S.hintOn===id?jhL(HELP[0]+"已經提示了",HELP[1]+" has given a hint"):jhL(`${HELP[0]}的提示（${c?`${c} 點門派貢獻`:"這一趟免費 1 次"}）`,`${HELP[1]}'s hint (${c?`${c} school merit`:"1 free this run"})`);hb.disabled=S.hintOn===id};hl();
+    hb.onclick=()=>{if(S.hintOn===id)return;const u=jhMzUseHint(S);if(!u.ok){res(jhL(`門派貢獻不夠：還要 ${u.need} 點，你有 ${u.have} 點。在迷宮的箱子裡撿得到。`,`Not enough school merit: you need ${u.need} and have ${u.have}. You can find it in the chests.`),"bad");return}
+      S.hintOn=id;if(u.cost)bag();draw();hl();res(jhL(`${HELP[0]}：「這一步，動亮起來的那顆子。走到哪裡，你自己想。」`,`${HELP[1]}: "This move, use the highlighted piece. Where it goes is up to you."`))};
     const bk=o.querySelector('[data-a="back"]');if(bk)bk.onclick=()=>{S.pz=null;shut(o)};draw()};
   const finish=()=>{const R=jhMzSave(S);const o=ov(`<h2>${esc(jhL("第一層走完了","Level 1 cleared"))}</h2>
       <p>${esc(ZS("done")||jhL("第二、三層之後再開。","Levels 2 and 3 open later."))}</p>

@@ -80,3 +80,23 @@ test("〔原始碼〕解殺題 kind:\"defend\"（飛相門，iMac Claude 1）：
   const S = c.jhMzNew("deftest", 0); c.jhMzEncounter(S, "door");
   assert.equal(c.jhMzTry(S, "door", "a0a1"), "bad"); assert.equal(c.jhMzTry(S, "door", "c0e2"), "ok", "一手就解開");
 });
+
+test("W97 掌門提示（開發者 11/24「每趟免費 1 次、之後花貢獻」）：每趟第一次免費；之後每次 1 點門派貢獻，先扣存檔、不夠再扣這趟撿到的；不夠就不給並說還差多少；新的一趟又免費一次", () => {
+  const mem = { jhMaze: JSON.stringify({ clear: 1, best: 30, gong: 1, page: 0, box: 0 }) }, c = load(mem);
+  const S = c.jhMzNew("central", 0); S.bag.gong = 1;
+  assert.equal(c.jhMzHintCost(S), 0); assert.deepEqual({ ...c.jhMzUseHint(S) }, { ok: true, cost: 0 }, "第一次免費");
+  assert.equal(c.jhMzHintCost(S), 1); assert.equal(c.jhMzMerit(S), 2, "存檔 1＋這趟 1");
+  assert.deepEqual({ ...c.jhMzUseHint(S) }, { ok: true, cost: 1 }); assert.equal(JSON.parse(mem.jhMaze).gong, 0, "先扣存檔"); assert.equal(S.bag.gong, 1);
+  assert.deepEqual({ ...c.jhMzUseHint(S) }, { ok: true, cost: 1 }); assert.equal(S.bag.gong, 0, "存檔沒了再扣這趟撿的");
+  assert.deepEqual({ ...c.jhMzUseHint(S) }, { ok: false, need: 1, have: 0 }, "不夠：不給、說還差多少");
+  const T = c.jhMzNew("central", 1); assert.deepEqual({ ...c.jhMzUseHint(T) }, { ok: true, cost: 0 }, "新的一趟又免費一次");
+  vm.runInContext('jhMzDef("nogong",{map:["#####","#@.>#","#####"],guards:[],pool:{},rew:[{k:"page",zh:"頁",en:"p"}]});', c);
+  const N = c.jhMzNew("nogong", 0); c.jhMzUseHint(N); assert.equal(c.jhMzMerit(N), 0); assert.equal(c.jhMzUseHint(N).ok, false, "沒有門派貢獻的門派只有免費那一次");
+});
+
+test("〔原始碼〕W97：提示只亮要動的子（不畫綠點）、答錯 3 次不再自動亮；按鈕寫這次要不要花貢獻；走對一步、換一題都要重新提示", () => {
+  assert.ok(SRC.includes("const hint=S.hintOn===id&&!won,") && !SRC.includes("const hint=(S.fails[id]||0)>=3"), "提示看有沒有按，不看答錯次數");
+  assert.ok(!/fill="#3f8f5f"/.test(SRC), "不畫落點綠點");
+  assert.ok(SRC.includes("const puzzle=id=>{S.hintOn=null;") && SRC.includes('if(got==="next"){S.hintOn=null;'), "換題、走對一步都清掉");
+  assert.ok(SRC.includes("這一趟免費 1 次") && SRC.includes("點門派貢獻"));
+});
