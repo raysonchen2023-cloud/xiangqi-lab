@@ -260,6 +260,8 @@ function oscRowHTML(c){try{const o=oscGet(),sid=OSC.act(o,c),S=sid&&oscSchE(sid)
    棋友的門派是棋風資料，不是玩家的入派；下一盤照原本的動線（小卡原本那顆按鈕）。宋以前朝代的棋友加一句：棋路是在星槎石桌學到的今天的下法 ===== */
 /* 11/24 開發者：「我希望要現在秘境遇到才能出現在門下棋友那邊 不然都不能看到」——秘境人物要在秘境找到過（jSecrets，secretFind 記的）才列出來；驛站、園子的門人照舊。
    門下棋友出現的地方（掌門小卡、前院清單與打聽提示、前院站位、修行頁的師友）都用這個判斷 */
+/* 11/24 開發者「看懂失誤這盤進來後棋子動太快了，玩家看不清楚」：修行課自動播的錯著放慢（lsnPlay 的 opt）。常見錯法：先停 1.2 秒、每步 1.6 秒；自己走錯後的反駁：每步 1.4 秒 */
+const OSC_ERR_PACE={first:1200,gap:1600,end:700},OSC_BAD_PACE={gap:1400,end:600};
 function oscNpcShown(k){const[kind,id]=String(k||"").split(":");if(kind!=="secret")return true;try{return typeof jSecrets==="function"&&!!jSecrets()[id]}catch(e){return false}}
 /* 門派的 who（「、」串起來的名字，例如「常遇春、少年女將軍」）：裡面還沒在秘境找到的秘境人物拿掉（#107 再審：總覽「代表棋友」、修行頁「師友」都印 who） */
 function oscWhoShown(who){const hide=new Set(Object.entries(OSC.NPC).filter(([k])=>k.startsWith("secret:")&&!oscNpcShown(k)).map(([k,x])=>x[2]));return String(who||"").split("、").filter(n=>n&&!hide.has(n))}
@@ -375,8 +377,10 @@ function oscPlay(v,c,lk){oscCss();if(typeof lsnCss==="function")lsnCss();setTabs
           else{btn.classList.add("no");note(`✘ ${x[2]?oscT(x[2]):oscL("再想想。","Think again.")}\n${Q(N)}`)}});return}
       if(N.k==="err"){stat(oscL("常見錯法","Common mistake"));busy=true;const[f,t]=lsnSq(N.bad),cn=mv(C.notate(b,f,t)),acc=[];note(oscL(`先看一步常見的錯著：「${cn}」`,`First, a common mistake: "${cn}"`));acts([]);
         const after=()=>oscL(`錯著「${cn}」之後：${acL(acc)}`,`After the mistake "${cn}": ${acL(acc)}`);   /* 11/18 測試員驗 1545（P3）：後續原本整串標「對方：馬7進5 炮八平五 馬2進3」，裡面混了自己的著法；改成每步標誰走（lsnPlay 的 i：錯著是 1，偶數＝對方、奇數＝自己；acc 存 [著法, 是不是自己]，acL 加上誰走） */
-        const bb0=b;lsnPlay(st,[N.bad].concat(N.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push([tx,i%2===1]);note(after())}},()=>{if(!here())return;
-          note(`${after()}${N.x?"\n"+oscL(`你的${pc(side,N.x)}丟了。`,`You lose your ${pc(side,N.x)}.`):""}\n${oscT(N.w)}`);acts([["back","↩",oscL("回到錯著前，換你改","Go back and fix it"),()=>{b=bb0;last=null;enter(N.n)},true]])});return}
+        /* 11/24 開發者截圖（第 3 課・看懂失誤）「進來後棋子動太快了，玩家看不清楚」：先停 1.2 秒看清起始局面，每步 1.6 秒，播完可以「重看一次」 */
+        const bb0=b,play=()=>{acc.length=0;b=bb0;last=null;draw();note(oscL(`先看一步常見的錯著：「${cn}」`,`First, a common mistake: "${cn}"`));acts([]);
+          lsnPlay(st,[N.bad].concat(N.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push([tx,i%2===1]);note(after())}},()=>{if(!here())return;
+          note(`${after()}${N.x?"\n"+oscL(`你的${pc(side,N.x)}丟了。`,`You lose your ${pc(side,N.x)}.`):""}\n${oscT(N.w)}`);acts([["replay","⟲",oscL("重看一次","Watch again"),play],["back","↩",oscL("回到錯著前，換你改","Go back and fix it"),()=>{b=bb0;last=null;enter(N.n)},true]])},OSC_ERR_PACE)};play();return}
       stat(yourMove());note(Q(N));acts(help());draw()}
     function tap(x){if(busy||!node||node.k!=="mv")return;const Lg=C.legal(b,side);if(sel>=0&&Lg.some(([f,t])=>f===sel&&t===x)){const u=C.iccs(sel,x);sel=-1;return move(u)}
       const mine=x>=0&&!!b[x]&&C.sideOf(b[x])===side;if(sel>=0&&!mine&&typeof lsnWhyNot==="function"){const w=lsnWhyNot(b,sel,x);if(w){sel=-1;draw();note(`✋ ${oscT(w)}\n${Q(node)}`);return}}
@@ -388,7 +392,7 @@ function oscPlay(v,c,lk){oscCss();if(typeof lsnCss==="function")lsnCss();setTabs
       const bad=N.bad&&N.bad[u];
       if(bad){busy=true;const bb0=b,acc=[],hurt=bad.x?oscL("這步會丟子。接下來：","This move loses material. What follows: "):oscL("這步不好：對方接下來佔到便宜，你的位置變差、出子變慢。接下來：","Not a good move: the opponent gets the upper hand and your development slows. What follows: ");   /* 11/24 Pikafish 盤整 P2：37% 的吃虧著反駁線沒丟子，原本一律說「會吃虧」；沒丟子（x 空）換說法 */stat("✘ "+cn);note(hurt);acts([]);try{vibrate([20,40,20])}catch(e){}
         lsnPlay(st,[u].concat(bad.l||[]),bb0,(bb,mv1,tx,cap,i)=>{b=bb;last=mv1;draw();if(i>1){acc.push([tx,i%2===1]);note(hurt+acL(acc))}},()=>{if(!here())return;
-          note(`${hurt}${acL(acc)}${bad.x?"\n"+oscL(`你的${pc(side,bad.x)}被吃掉了。`,`Your ${pc(side,bad.x)} gets captured.`):""}\n${Q(N)}`);acts([["back","↩",oscL("退回重想","Take it back"),()=>{b=bb0;last=null;busy=false;stat(yourMove());note(Q(N));acts(help());draw()},true]].concat(help()))});return}
+          note(`${hurt}${acL(acc)}${bad.x?"\n"+oscL(`你的${pc(side,bad.x)}被吃掉了。`,`Your ${pc(side,bad.x)} gets captured.`):""}\n${Q(N)}`);acts([["back","↩",oscL("退回重想","Take it back"),()=>{b=bb0;last=null;busy=false;stat(yourMove());note(Q(N));acts(help());draw()},true]].concat(help()))},OSC_BAD_PACE);return}
       stat("✋ "+cn);note(`${N.no?oscT(N.no):oscL("這步不是這一課要練的。","That's not the move this lesson is practicing.")}\n${Q(N)}`);try{vibrate([10,30,10])}catch(e){}draw()}
     function hint(){if(busy||!node||node.k!=="mv")return;flag("h");over=[{f:lsnSq(node.h)[0],t:lsnSq(node.h)[1],c:"#2E7D32"}];sel=-1;stat(oscL("💡 提示","💡 Hint"));note(`${oscL("💡 可以試試箭頭這一步（不只這一步，符合目標的好棋都算）。","💡 Try the move shown by the arrow (other good moves that fit the goal also count).")}\n${Q(node)}`);draw()}
     function demo(){if(busy||!node||node.k!=="mv")return;flag("dm");move(node.h,true)}
