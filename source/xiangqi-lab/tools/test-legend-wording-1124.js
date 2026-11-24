@@ -2,8 +2,9 @@
 /* 開發者 11/24 實機截圖（石桌往事・第二回）：「她去掰」看不懂。正本改放 source/xiangqi-db/park-legend.json（build-site.js 會複製到 site/data/），
    改成「她想把孩子的手指一根一根扳開…把那顆棋子攥得更緊」。這裡守住：正本是合法 JSON、新句子在、舊句子不在、除了這一句跟網站上的 data/park-legend.json 一模一樣（發布時才換過去） */
 const test = require("node:test"), assert = require("node:assert"), fs = require("fs"), path = require("path");
+/* 正本跟其他測試一樣從 tools/../../xiangqi-db 找（CI 的 run-tests 只把 source/ 底下抄到暫存資料夾）；網站上那份在倉庫根目錄 data/，有才比 */
+const SRC = fs.readFileSync(path.join(__dirname, "..", "..", "xiangqi-db", "park-legend.json"), "utf8");
 const ROOT = path.join(__dirname, "..", "..", "..");
-const SRC = fs.readFileSync(path.join(ROOT, "source", "xiangqi-db", "park-legend.json"), "utf8");
 /* 成對的 [舊, 新]：第二回正文一句，加上「桌子底下」三題記盤題的 ask（Windows Claude 1 11/24：開發者以為第 4 步問的是黑車——棋盤上同名的子好幾顆，改成寫明是哪一步吃掉的那顆；答案不動） */
 const PAIRS = [
   ["她去掰，孩子醒了，哇地哭起來，攥得更緊。", "她想把孩子的手指一根一根扳開，孩子醒了，哇地哭起來，把那顆棋子攥得更緊。"],
