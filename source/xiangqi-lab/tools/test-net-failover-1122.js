@@ -1,4 +1,4 @@
-// W53（11/22，App 審查 P-5「只有 IPv6 的網路」）：大廳連線「連不上就換下一個網址」（src/net.js 的 URLS、urlI、mqNext、mqRemember）
+// W53（11/22，App 審查 P-5「只有 IPv6 的網路」）：大廳連線「連不上就換下一個網址」（src/net.js 的 URLS、urlI、mqNext；開 App 一律從主伺服器開始，#146 審查拿掉了 mqRemember）
 //   主伺服器只有 IPv4；備援入口 MQ.alt 要開發者授權建好有 IPv6 的端點才會填。11/24 開發者授權 Cloudflare 轉送，MQ.alt 填了 Worker xq-lobby-v6 一個入口。
 //   這裡用測試房的 xq_mqtt.urls 放兩個假網址，假 MQTT 伺服器＋假時鐘，vm 載入真正的 src/net.js；不連任何伺服器、不開瀏覽器。
 // 用法：node --test xiangqi-lab/tools/test-net-failover-1122.js
