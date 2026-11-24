@@ -84,6 +84,8 @@ trap:[
 /* ==/JH_MZ_POOL:JH_MZ_POOL_CROSS== */
 jhMzDef("cross_palace",{map:JH_MZ_CROSS_MAP,guards:JH_MZ_CROSS_GUARDS,pool:JH_MZ_POOL_CROSS,screen:"Z",
   puz:{door:JH_MZ_POOL_CROSS.door[0],trap:JH_MZ_POOL_CROSS.trap[0]},solid:"#DZLH",opaque:"#DLH",jump:"",
+  /* W87b 像素材質（Windows Claude 2 出圖，新版）：只放 CDN；#110 之前的版本不認得 tex，會照舊用程式畫的 */
+  tex:{floor:"data/maze/tex/cross_palace_floor.webp",side:"data/maze/tex/cross_palace_wall.webp"},
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"過宮炮譜殘頁",en:"Palace Cannon manual page"},{k:"box",zh:"宣紙水墨棋子",en:"Ink-on-paper chess pieces"}],
   title:["📜 焙紙暗房","📜 Paper-drying vault"],lvName:["焙紙暗房・第一層","Paper-drying vault · Level 1"],back:["回過宮炮門","Back to the Palace Cannon School"],
   hall:{at:[560,1180],zh:"📜 焙紙牆・暗門",en:"📜 Drying wall · Hidden door"},

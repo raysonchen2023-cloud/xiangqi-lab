@@ -29,6 +29,7 @@ test("登記：過宮炮門有登記、路由 #/jianghu/maze/cross_palace；護�
   assert.ok(lv.solid.includes("Z") && !lv.opaque.includes("Z"), "紙架擋路、透光");
   for (const ch of "LH") assert.ok(lv.solid.includes(ch) && lv.opaque.includes(ch), ch + " 擋路也擋光");
   assert.equal(lv.jump, "", "這一派不能跳");
+  assert.deepEqual(JSON.parse(JSON.stringify(lv.tex)), { floor: "data/maze/tex/cross_palace_floor.webp", side: "data/maze/tex/cross_palace_wall.webp" }, "像素材質路徑");
 });
 
 test("炮的視線：中間剛好隔一座紙架才看得到；中間空的看不到；隔兩座看不到；紙架後最多 3 格；牆擋住就停；四個方向都算", () => {
