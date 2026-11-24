@@ -7,9 +7,18 @@ const HERE = __dirname, IOS = path.join(HERE, ".."), REPO = path.join(IOS, "..",
 const CHECK = path.join(HERE, "check-native.js"), CANARY = path.join(HERE, "canary-native.js");
 const { KINDS, exitOf, toolSha, run } = require("./canary-native.js");
 /* #135 審查④：壞樣本名稱寫死（不從受測程式取）；W69 β 改成只能增加：少一種、改名、換順序都會紅，新增照樣綠 */
-const EXPECTED_KINDS = ["copyDiff","port","whoami","rng","challenge","oneTime","whoamiAnswer","establish","establishIf","establishElse","establishGuard","establishCase","establishLocalFunc","establishHelper","verifiedElsewhere","inUse","eaddrinuse","acceptLocalOnly","loopback","sourceCheck","leftover","superVDL","runCheck","loadTwice","phaseGate","loadUnverified","runningUnverified","directLoad","halfSecond","alert","retryDelays","retryCap","manualRetry","bilingual","guidance","keepSave","foreground","brace","ctrl","gcNetwork","gcPlayerId","gcLogin","wdPath","fgLog","gcObjc","gcJsName","gcMethods","gcWebCall","wdReload","widgetMain","widgetURL","widgetNet","widgetCtrl","widgetFile","appGroup","gcEntitle","widgetPlist","webScheme","webNet","installGc","regSpeech","regGuarded","regOther","spObjc","spMethods","spOrder","spMain","spWarm","spLang","spAmbient","spOnce","spBg","spNet","spCtrl","spInstall","spCopy","board","whoamiTake","estOneBlock","estTickFunc","estCallAs","estNoReturn","estElseAfter","estFuncTwice","srcCancel","leftoverRead","lvpLoad","vbLoad","vbRunning","loadFile","loadReq","showRetry","failedPhase","zhBusy","zhGuide","noDiskCache","clearIDB","onBroken","fgFlag","installSrv","gcClass","wdIdent","wdListedNoFunc","wdWebNone","wdReq","wdCtrl","gcAuth","gcPresent","gcKeep","gcPid","gcTeam","gcName","gcAlias","wdBox","wdData","widgetBundle","widgetOpen","widgetReq","widgetJpg","wdDataFile","groupMissing","groupExtra","webSchemeRe","webXhr","webBeacon","webSocket","webXQNet","webIRT","instGcFile","instWdFile","instClasses","instScheme","regSuper","regLoop","regInit","regThird","spClass","spIdent","spJs","spNoFunc","spExtraFunc","spQueue","spLate","spSpeakU","spMainSync","spMainAsync","spMainActor","spWarmZh","spWarmCode","spVoice","spEn","spSilent","spAppSession","spCatLate","spBgNote","spRec","spCam","spAuth","spReq","spInstFiles","spInstConcat","spInstFilter","spPkgList","spPkgDup","boardSpeak","ctrl00","ctrl01","ctrl02","ctrl03","ctrl04","ctrl05","ctrl06","ctrl07","ctrl08","ctrl0b","ctrl0c","ctrl0e","ctrl0f","ctrl10","ctrl11","ctrl12","ctrl13","ctrl14","ctrl15","ctrl16","ctrl17","ctrl18","ctrl19","ctrl1a","ctrl1b","ctrl1c","ctrl1d","ctrl1e","ctrl1f","ctrl7f","estOrTrue","estOrMid","wdObjc","wdClass","gcIdent","wdJs","gcCtrl","wdNet","gcReq","ctrlVC","regPlugin","groupMissWD","groupMissWidget","groupMissApp","groupExtraWD","groupExtraWidget","groupExtraWidgetEnt","braceBad","strOpen","strEOF","wdJpg","vbMissing","halfAfter","capVDL","capLoadWV","capDidLoad","capRegInst","pbxMissing","pkgGc","pkgWd","pkgGcDup","infoScheme","gcCopyDiff","install"];
+const EXPECTED_KINDS = ["copyDiff","port","whoami","rng","challenge","oneTime","whoamiAnswer","establish","establishIf","establishElse","establishGuard","establishCase","establishLocalFunc","establishHelper","verifiedElsewhere","inUse","eaddrinuse","acceptLocalOnly","loopback","sourceCheck","leftover","superVDL","runCheck","loadTwice","phaseGate","loadUnverified","runningUnverified","directLoad","halfSecond","alert","retryDelays","retryCap","manualRetry","bilingual","guidance","keepSave","foreground","brace","ctrl","gcNetwork","gcPlayerId","gcLogin","wdPath","fgLog","gcObjc","gcJsName","gcMethods","gcWebCall","wdReload","widgetMain","widgetURL","widgetNet","widgetCtrl","widgetFile","appGroup","gcEntitle","widgetPlist","webScheme","webNet","installGc","regSpeech","regGuarded","regOther","spObjc","spMethods","spOrder","spMain","spWarm","spLang","spAmbient","spOnce","spBg","spNet","spCtrl","spInstall","spCopy","board","whoamiTake","estOneBlock","estTickFunc","estCallAs","vnRawTriple","vnTickFalse","oddTriple","oddTick","oddRegex","oddRaw","oddSubdir","oddCommentClose","odd2028","odd2029","odd0085","oddTrailComment","oddVc","estNoReturn","estElseAfter","estFuncTwice","srcCancel","leftoverRead","lvpLoad","vbLoad","vbRunning","loadFile","loadReq","showRetry","failedPhase","zhBusy","zhGuide","noDiskCache","clearIDB","onBroken","fgFlag","installSrv","gcClass","wdIdent","wdListedNoFunc","wdWebNone","wdReq","wdCtrl","gcAuth","gcPresent","gcKeep","gcPid","gcTeam","gcName","gcAlias","wdBox","wdData","widgetBundle","widgetOpen","widgetReq","widgetJpg","wdDataFile","groupMissing","groupExtra","webSchemeRe","webXhr","webBeacon","webSocket","webXQNet","webIRT","instGcFile","instWdFile","instClasses","instScheme","regSuper","regLoop","regInit","regThird","spClass","spIdent","spJs","spNoFunc","spExtraFunc","spQueue","spLate","spSpeakU","spMainSync","spMainAsync","spMainActor","spWarmZh","spWarmCode","spVoice","spEn","spSilent","spAppSession","spCatLate","spBgNote","spRec","spCam","spAuth","spReq","spInstFiles","spInstConcat","spInstFilter","spPkgList","spPkgDup","boardSpeak","ctrl00","ctrl01","ctrl02","ctrl03","ctrl04","ctrl05","ctrl06","ctrl07","ctrl08","ctrl0b","ctrl0c","ctrl0e","ctrl0f","ctrl10","ctrl11","ctrl12","ctrl13","ctrl14","ctrl15","ctrl16","ctrl17","ctrl18","ctrl19","ctrl1a","ctrl1b","ctrl1c","ctrl1d","ctrl1e","ctrl1f","ctrl7f","estOrTrue","estOrMid","wdObjc","wdClass","gcIdent","wdJs","gcCtrl","wdNet","gcReq","ctrlVC","regPlugin","groupMissWD","groupMissWidget","groupMissApp","groupExtraWD","groupExtraWidget","groupExtraWidgetEnt","braceBad","strOpen","strEOF","wdJpg","vbMissing","halfAfter","capVDL","capLoadWV","capDidLoad","capRegInst","pbxMissing","pkgGc","pkgWd","pkgGcDup","infoScheme","gcCopyDiff","install"];
 /* #135 審查①②③：check-native.js 的子條件改壞清單（寫死）。每一條只拿掉一個子條件或正規式裡的一個字，指定的壞樣本要回 4 */
 const MUT = [
+  ["看不懂就拒絕：含 */ 的 // 行不豁免", " && !l.includes(\"*/\")", "", "oddCommentClose"],
+  ["看不懂就拒絕：只豁免以 // 開頭的行", ".filter((l) => !(/^\\s*\\/\\//.test(l) && ", ".filter((l) => !(/\\/\\//.test(l) && ", "oddTrailComment"],
+  ["看不懂就拒絕：特殊換行字元（整份原文，不經過豁免）", "if (ODD_NL.test(raw)) odd.push", "if (false) odd.push", "odd0085"],
+  ["看不懂就拒絕：子資料夾也要遞迴","e.isDirectory() ? (/^(Pods|build|DerivedData|node_modules)$/.test(e.name) ? [] : swWalk(path.join(d, e.name)))","e.isDirectory() ? []","oddSubdir"],
+  ["看不懂就拒絕：每一份 Swift", "for (const f of [...swWalk(SRC), ...swWalk(APP)])", "for (const f of [path.join(SRC, \"XQLoopbackServer.swift\")])", "oddVc"],
+  ["看不懂就拒絕：多行字串", "[/\"\"\"/, ", "[/(?!)/, ", "oddTriple"],
+  ["看不懂就拒絕：反引號", "[/`/, ", "[/(?!)/, ", "oddTick"],
+  ["看不懂就拒絕：#/ 正規式", "[/#+\\//, ", "[/(?!)/, ", "oddRegex"],
+  ["看不懂就拒絕：原始字串", "[/(^|[^\"])#+\"/m, ", "[/(?!)/, ", "oddRaw"],
   ["一次性考題：issueChallenge","check(/func issueChallenge\\(\\)/.test(srvCode) && ","check(true && ","challenge"],
   ["whoami：takeAnswer(for: challenge)","check(hw.includes(\"takeAnswer(for: challenge)\") && ","check(true && ","whoamiTake"],
   ["whoami：let a = answer","&& hw.includes(\"let a = answer\"), \"whoami",", \"whoami","whoamiAnswer"],
@@ -160,7 +169,7 @@ const REDUNDANT = [
 ];
 /* #135 審查④：盲測（每條判斷整條改成恆真）只能增加：總條數不能比 BLIND_N 少，而且 BLIND_KINDS 寫死的每一種都要還在盲測裡
    （#148 審查①：只比總數的話，拆掉一條判斷再補一種照抄的壞樣本，總數不變、保護卻少了一條） */
-const BLIND_N = 135;
+const BLIND_N = 148;   /* #144：135 → 148，壞樣本對應到判斷變多（只能增加） */
 const BLIND_KINDS = ["port", "whoami", "rng", "challenge", "oneTime", "whoamiAnswer", "verifiedElsewhere", "inUse", "eaddrinuse", "acceptLocalOnly", "loopback", "sourceCheck", "leftover", "superVDL", "runCheck", "loadTwice", "phaseGate", "loadUnverified", "runningUnverified", "directLoad", "halfSecond", "alert", "retryDelays", "retryCap", "manualRetry", "bilingual", "guidance", "keepSave", "foreground", "gcPlayerId", "gcLogin", "wdPath", "fgLog", "wdReload", "widgetMain", "widgetURL", "widgetNet", "widgetCtrl", "appGroup", "gcEntitle", "widgetPlist", "regSpeech", "regGuarded", "regOther", "spObjc", "spMethods", "spOrder", "spMain", "spWarm", "spLang", "spAmbient", "spOnce", "spBg", "spNet", "spCtrl", "spInstall", "spCopy", "whoamiTake", "srcCancel", "leftoverRead", "lvpLoad", "vbLoad", "vbRunning", "loadFile", "loadReq", "showRetry", "failedPhase", "zhBusy", "zhGuide", "noDiskCache", "clearIDB", "onBroken", "fgFlag", "installSrv", "gcAuth", "gcPresent", "gcKeep", "gcPid", "gcTeam", "gcName", "gcAlias", "wdBox", "wdData", "widgetBundle", "widgetOpen", "widgetReq", "groupMissing", "groupExtra", "regSuper", "regLoop", "regInit", "regThird", "spClass", "spIdent", "spJs", "spNoFunc", "spExtraFunc", "spQueue", "spLate", "spSpeakU", "spMainSync", "spMainAsync", "spMainActor", "spWarmZh", "spWarmCode", "spVoice", "spEn", "spSilent", "spAppSession", "spCatLate", "spBgNote", "spRec", "spCam", "spAuth", "spReq", "spInstFiles", "spInstConcat", "spInstFilter", "spPkgList", "spPkgDup", "regPlugin", "groupMissWD", "groupMissWidget", "groupMissApp", "groupExtraWD", "groupExtraWidget", "groupExtraWidgetEnt", "vbMissing", "halfAfter", "capVDL", "capLoadWV", "pkgGc", "pkgWd", "pkgGcDup", "install"];
 const made = [];
 test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }) });
@@ -217,7 +226,7 @@ test("check-native.js 每一條判斷改成恆真，對應的壞樣本都要回 
 
 test("子條件改壞清單：每一條只拿掉一個子條件或一個字，指定的壞樣本要回 4；重疊清單的原文還在（#135 審查①②③）", () => {
   const { canary, check } = repoCopy(), orig = fs.readFileSync(check, "utf8");
-  assert.equal(MUT.length, 135); assert.equal(REDUNDANT.length, 9);
+  assert.equal(MUT.length, 144); assert.equal(REDUNDANT.length, 9);
   for (const [name, from, to, kind] of MUT) {
     assert.equal(orig.split(from).length - 1, 1, name + "：要改的原文在 check-native.js 裡要剛好一處");
     assert.ok(KINDS[kind], name + "：指定的壞樣本 " + kind + " 要存在");
@@ -246,6 +255,38 @@ test("訊息是組出來的那幾條也測：兩份相同、括號沒收尾、�
     assert.equal(r.status, 4, k + " 改壞後金絲雀要回 4：" + r.stdout + r.stderr);
   }
   fs.writeFileSync(check, orig);
+});
+
+test("check-native 的 swiftCode 斷詞：keep 模式照 Swift 規則認原始字串、多行字串、內插、巢狀註解（#143 審查：自寫的 stripComments 被 #\"\\\"# 騙過）", () => {
+  const src = fs.readFileSync(CHECK, "utf8"), a = src.indexOf("function swiftCode("), b = src.indexOf("\n/* 取出 code 裡");
+  const bad = [], swiftCode = new Function("bad", src.slice(a, b) + "\nreturn swiftCode;")(bad);
+  const K = (s) => swiftCode(s, "t.swift", true).replace(/\s+/g, " ").trim(), C = (s) => swiftCode(s, "t.swift").replace(/\s+/g, " ").trim();
+  /* 審查者的 B：#"\"# 是一個完整的原始字串（內容是一個反斜線），後面的 "//" 是字串，不是註解 */
+  assert.equal(K('let a = #"\\"#; let b = "//"; func f() { return 1 }'), 'let a = #"\\"#; let b = "//"; func f() { return 1 }');
+  assert.equal(C('let a = #"\\"#; let b = "//"; func f() { return 1 }'), 'let a = ""; let b = ""; func f() { return 1 }');
+  /* # 數要配對：##"…"# 不收尾，##"…"## 才收 */
+  assert.equal(K('let a = ##"x "# y"##; g()'), 'let a = ##"x "# y"##; g()');
+  /* 多行字串（含 #""" … """#）和 \( ) 內插 */
+  assert.equal(K('let a = """\nhi \\(n + 1) "x"\n"""; h()'), 'let a = """ hi \\(n + 1) "x" """; h()');
+  assert.equal(K('let a = #"""\nq """ \\#(m)\n"""#; k()'), 'let a = #""" q """ \\#(m) """#; k()');
+  assert.equal(C('let a = "x \\(f(1)) y"'), 'let a = "(f(1))"');
+  /* 巢狀區塊註解、行註解都拿掉；註解裡的引號不影響 */
+  assert.equal(K('a /* b /* " */ c */ d // "e\nz'), "a d z");
+  /* #144 審查：9 個以上 # 的原始字串（原本只往後看 8 個字元）、擴充正規式 #/…/#（裡面的引號、// 不是字串、不是註解）、多行字串裡的 //、一般跳脫 */
+  const h9 = "#".repeat(9);
+  assert.equal(C("let a = " + h9 + '"x "' + "#".repeat(8) + ' y // z"' + h9 + "; g()"), 'let a = ""; g()');   /* #144 第二輪審查③：K 模式原樣輸出分不出對錯，改用 C 模式 */
+  assert.equal(C('if #available(iOS 16.0, *) { _ = #/x"//# }; f()'), 'if #available(iOS 16.0, *) { _ = "" }; f()');
+  assert.equal(K('_ = ##/a/# "b"/##; f()'), '_ = ##/a/# "b"/##; f()');
+  assert.equal(K('let a = """\n// 不是註解 /* 也不是\n"""; f()'), 'let a = """ // 不是註解 /* 也不是 """; f()');
+  assert.equal(K('let a = "a\\"b\\\\"; f() // x'), 'let a = "a\\"b\\\\"; f()');
+  /* #144 複審：反引號識別字裡的 "、//、/*、#endif 都不是字串、註解、條件編譯；`名字` 跟 名字 同一個識別字 */
+  assert.equal(K('let `xa"` = 0; let xs = "//"; func f() { return 1 }'), 'let _rawid_ = 0; let xs = "//"; func f() { return 1 }');
+  assert.equal(C('let `xw//` = 0; func f() { return 1 }'), "let _rawid_ = 0; func f() { return 1 }");
+  assert.equal(C('let `xb/*` = 0; g() /* c */ h()'), "let _rawid_ = 0; g() h()");
+  assert.equal(C('#if false\nlet `xz #endif` = 0\nf()\n#endif'), "#if false let _rawid_ = 0 f() #endif");
+  assert.equal(C('private func `verifyNow`(timeout: T) -> Bool { true }'), "private func verifyNow(timeout: T) -> Bool { true }");
+  assert.equal(C('let a = `false`; let b = `x`'), "let a = _rawid_; let b = x");   /* #144 第二輪審查②：關鍵字不還原 */
+  assert.deepEqual(bad, [], "keep 模式不回報錯誤");
 });
 
 test("測試不成立回 2：不認得的壞樣本、空的 --only、不認得的參數、參數沒給值、乾淨的副本就沒過", () => {
