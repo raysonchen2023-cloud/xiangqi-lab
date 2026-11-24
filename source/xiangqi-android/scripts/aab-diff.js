@@ -141,7 +141,9 @@ const MB = 1024 * 1024;
 const NEW_OK = /^(base\/assets\/public\/(data|engine|pikafish-src|licenses)\/|base\/assets\/public\/[^/]+\.(m?js|html?|css|json|png|svg|webp|ico)$|base\/assets\/public\/(LICENSE[^/]*|NOTICE[^/]*|NNUE-License\.md)$|base\/(dex|lib|res|manifest|root)\/|base\/[^/]+\.pb$|base\/assets\/[^/]+\.json$|BUNDLE-METADATA\/|META-INF\/|BundleConfig\.pb$)/;
 /* 在允許的位置裡、但不該進安裝包的：驗證紀錄、證據頁（W83 從 make-www 排除過；網頁版才放） */
 /* #102 審查②：證據圖在 data/docs/evidence/ 子資料夾裡、檔名大小寫不同也要抓；審查建議⑥：AGENTS.md、CLAUDE.md、releases/ 不論在哪一層都不該進包 */
-const NEW_SUSPECT = /(^|\/)data\/docs\/(verification-log[^/]*|evidence([^/]*|\/.*))$|(^|\/)(AGENTS|CLAUDE)\.md$|(^|\/)releases\//i;
+/* #102 第九輪複審（高）：首頁素材（data/homemap/ 底下）比照金鑰檔：拿掉、大幅縮小一律紅，任何放行參數都不放過 */
+const HOME_RE = /^base\/assets\/public\/data\/homemap\//;
+const NEW_SUSPECT =/(^|\/)data\/docs\/(verification-log[^/]*|evidence([^/]*|\/.*))$|(^|\/)(AGENTS|CLAUDE)\.md$|(^|\/)releases\//i;
 const TOOL_PINS = require("./tool-pin.js").pinsFor("AAB-DIFF");   /* 啟動就先算：記的是實際被載入、跑這一次的那一份 */
 
 /* 比對兩份索引；opts.expectRemoved／expectAdded＝正規式（列在裡面的檔可以從新版拿掉／新增，不算紅，但會列在報告裡） */
@@ -149,15 +151,21 @@ function diffIndex(A, B, opts = {}) {
   const red = [], yellow = [], allowed = [], noted = [], info = { removed: 0, added: 0, changed: 0, same: 0 };
   let ta = 0, tb = 0;
   for (const n of B.keys()) if (SECRET_RE.test(n)) red.push({ f: n, why: (A.has(n) ? "新版還帶著" : "新版多了") + "可能含金鑰／帳號／本機設定的檔（任何放行參數、確認清單都不放過）" });
+  /* #102 第九輪複審（中）：說明文件、驗證紀錄、證據頁、releases/ 原本只看「新增」的——舊版本來就帶著、新版繼續帶就完全不報（26112301 漏的就是這一類），
+     新增的配窄的 --expect-added 也能放行。改成新版每個檔都看，帶著就紅，任何放行參數、確認清單都不放過 */
+    else if (NEW_SUSPECT.test(n)) red.push({ f: n, why: (A.has(n) ? "新版還帶著" : "新版多了") + "驗證紀錄、證據頁、說明文件或 releases/（網頁版或倉庫才放，不能進安裝包；任何放行參數都不放過）" });
   for (const [n, a] of A) {
     ta += a.size; const b = B.get(n);
-    if (!b) { info.removed++; if (opts.expectRemoved && opts.expectRemoved.test(n)) allowed.push({ f: n, crc: "removed:" + (a.crc >>> 0).toString(16), why: "預期拿掉（--expect-removed）" }); else red.push({ f: n, why: "新版少了這個檔（舊版 " + a.size + " 位元組）" }); continue }
+    /* #102 第九輪複審（高）：首頁素材比照金鑰檔，拿掉一律紅，--expect-removed 放不過（原本只靠金絲雀，而金絲雀只測排序第一的那張，窄的參數就避開了）。
+       舊版帶著、新版拿掉的說明文件類是好事：不算紅，列在「照規則不算」給人看 */
+    if (!b) { info.removed++; if (HOME_RE.test(n)) red.push({ f: n, why: "新版少了首頁素材（舊版 " + a.size + " 位元組；首頁素材任何放行參數都不放過）" }); else if (NEW_SUSPECT.test(n)) noted.push({ f: n, why: "拿掉了不該進安裝包的說明文件或驗證紀錄（舊版帶著）" }); else if (opts.expectRemoved && opts.expectRemoved.test(n)) allowed.push({ f: n, crc: "removed:" + (a.crc >>> 0).toString(16), why: "預期拿掉（--expect-removed）" }); else red.push({ f: n, why: "新版少了這個檔（舊版 " + a.size + " 位元組）" }); continue }
     if (a.crc === b.crc && a.size === b.size) { info.same++; continue }
     info.changed++;
     if (a.size > 0 && b.size === 0) red.push({ f: n, why: "原本有內容（" + a.size + " 位元組），新版變成 0 位元組" });
     else if (!SHRINK_SKIP.test(n) && a.size >= (CODE_RE.test(n) || MEDIA_RE.test(n) ? SHRINK_MIN_CODE : SHRINK_MIN) && b.size < a.size * SHRINK_CODE) {   /* 第三輪審查：套到整包。第四輪審查：只看比例，不用「小於 1 KB」的絕對門檻（1098→1000 位元組原本誤報紅） */
       const pct = Math.round(b.size / a.size * 100), hard = b.size < a.size * SHRINK_RED || CODE_RE.test(n);
-      if (opts.expectShrunk && opts.expectShrunk.test(n)) allowed.push({ f: n, crc: (b.crc >>> 0).toString(16) + ":" + b.size, why: "預期大幅縮小（--expect-shrunk）：" + a.size + " → " + b.size + " 位元組（" + pct + "%）" });
+      if (HOME_RE.test(n)) red.push({ f: n, why: "首頁素材大幅縮小（" + a.size + " → " + b.size + " 位元組，剩 " + pct + "%），可能被換成壞圖或 LFS 指標檔（首頁素材任何放行參數都不放過）" });
+      else if (opts.expectShrunk && opts.expectShrunk.test(n)) allowed.push({ f: n, crc: (b.crc >>> 0).toString(16) + ":" + b.size, why: "預期大幅縮小（--expect-shrunk）：" + a.size + " → " + b.size + " 位元組（" + pct + "%）" });
       else if (hard) red.push({ f: n, why: "大幅縮小（" + a.size + " → " + b.size + " 位元組，剩 " + pct + "%），可能被截斷、換成壞圖或指標檔" });
       else yellow.push({ f: n, why: "縮小到 " + pct + "%（" + a.size + " → " + b.size + " 位元組），請人確認" }) }
     else if (!SHRINK_SKIP.test(n) && FIXED_BIN.test(n) && b.size !== a.size) yellow.push({ f: n, why: "建置時不會變的引擎／3D 檔大小變了（" + a.size + " → " + b.size + " 位元組），請人確認" });
@@ -169,13 +177,14 @@ function diffIndex(A, B, opts = {}) {
     info.added++;
     const ok = opts.expectAdded && opts.expectAdded.test(n);
     if (SECRET_RE.test(n)) { /* 上面已經對新版每個檔判紅 */ }
-    else if (DEBUG_RE.test(n)) { if (DEBUG_OK.test(n)) noted.push({ f: n, why: "照規則不算 debug（建置工具的檔或 GPL 重建紀錄）" }); else if (ok) allowed.push({ f: n, crc: (b.crc >>> 0).toString(16) + ":" + b.size, why: "預期新增（--expect-added）" }); else red.push({ f: n, why: "新版多了 debug／開發用的檔" }) }
+    else if (DEBUG_RE.test(n)) { if (DEBUG_OK.test(n)) noted.push({ f: n, why: "照規則不算 debug（建置工具的檔或 GPL 重建紀錄）" }); else red.push({ f: n, why: "新版多了 debug／開發用的檔（任何放行參數都不放過）" }) }   /* #102 第九輪複審（中）：原本配窄的 --expect-added（例如 data/core.js.map）就能放行；只有 DEBUG_OK 列的才免 */
     else if (b.size === 0 && ZERO_STUB.test(n)) yellow.push({ f: n, why: "Capacitor 產生的空殼檔（本來就是 0 位元組），請人確認一次" });
     else if (b.size === 0 && (MEDIA_RE.test(n) || CODE_RE.test(n) || /^base\/assets\/public\/data\//.test(n))) red.push({ f: n, why: "新增的素材或程式檔是 0 位元組" });
     else if (b.size === 0) yellow.push({ f: n, why: "新增的檔是 0 位元組，請人確認" });
-    else if (NEW_SUSPECT.test(n) || !NEW_OK.test(n)) {
+    else if (NEW_SUSPECT.test(n)) { /* 上面已經對新版每個檔判紅（#102 第九輪） */ }
+    else if (!NEW_OK.test(n)) {
       if (ok) allowed.push({ f: n, crc: (b.crc >>> 0).toString(16) + ":" + b.size, why: "預期新增（--expect-added）" });
-      else yellow.push({ f: n, why: NEW_SUSPECT.test(n) ? "新增驗證紀錄、證據頁、說明文件或 releases/ 進了安裝包（網頁版或倉庫才放，W83），請人確認" :"新增的檔不在現行包本來就有的位置（例如根目錄多了說明文件、releases/），請人確認" }) }
+      else yellow.push({ f: n, why: "新增的檔不在現行包本來就有的位置（例如根目錄多了說明文件、releases/），請人確認" }) }
     if (b.size > 20 * MB) yellow.push({ f: n, why: "新增超過 20 MB 的單檔（" + (b.size / MB).toFixed(1) + " MB）" });
   }
   if (ta > 0 && tb > ta * 1.2) yellow.push({ f: "（整包）", why: "壓縮前總大小增加 " + ((tb / ta - 1) * 100).toFixed(0) + "%（" + (ta / MB).toFixed(0) + " → " + (tb / MB).toFixed(0) + " MB）" });
@@ -203,7 +212,7 @@ function checkInputs(A, B, pathA, pathB) {
 /* W91 金絲雀（AGENTS.md「P0 出口驗證要難作假」：壞樣本從實際的候選包做、跟正式比對走同一條判斷路徑 diffIndex，參數與確認清單也一樣）：
    ①刪一個首頁素材 ②把一個根目錄的 js 縮成 0 位元組 ③多帶一個 .jks——都要變紅；④多一個沒確認過的 AGENTS.md——要變黃（--strict 擋）。
    參數放太寬（例如 --expect-removed=.）會讓①不紅，金絲雀就判失靈。回傳 { home, zeroJs, jks, yellow: {f, ok}, ok } */
-const CANARY_KINDS = ["home", "zeroJs", "jks", "yellow", "shrink", "debug"];
+const CANARY_KINDS = ["home", "zeroJs", "jks", "yellow", "shrink", "debug", "media"];
 function canaryRun(A, B, opts = {}) {
   const pick = (re) => [...B.keys()].filter((n) => A.has(n) && re.test(n) && B.get(n).size > 0).sort()[0] || null;
   const out = {};
@@ -224,7 +233,11 @@ function canaryRun(A, B, opts = {}) {
   run("yellow", fresh("base/assets/public/AGENTS-canary-", ".md"), (M, f) => M.set(f, { size: 4096, csize: 1500, crc: 0x5a5a5a5a }), "yellow");
   /* #102 第八輪複審（中）：前四種都沒走「縮小」和「新增 debug 檔」這兩條放行路徑。--expect-shrunk=. 加一筆確認，首頁圖換成 Git LFS 指標檔（約 130 位元組，封測出過的 P0）也能過。
      shrink：把一張首頁素材縮成 131 位元組，必須紅；debug：多帶一個新的 .map，必須紅。--expect-shrunk／--expect-added 只要蓋到首頁素材或 debug 檔，金絲雀就失靈、報告 pass:false */
-  run("shrink", pick(/^base\/assets\/public\/data\/homemap\/[^/]+\.(webp|png|jpe?g)$/) || pick(/^base\/assets\/public\/data\/.+\.(webp|png|jpe?g)$/), (M, f) => M.set(f, { size: 131, csize: 131, crc: 0x7f13ab01 }), "red");
+  /* #102 第九輪：首頁素材改由硬規則擋（HOME_RE，任何放行參數都不放過），上面的 home 金絲雀證明那條硬規則還活著。
+     shrink、media 改挑「非首頁」的素材，測的是放太寬的參數：--expect-shrunk／--expect-removed 只要蓋到一般素材（例如寫成 .、data/），就失靈 */
+  const pickMedia = () => pick(/^base\/assets\/public\/data\/(?!homemap\/).+\.(webp|png|jpe?g)$/);
+  run("shrink", pickMedia(), (M, f) => M.set(f, { size: 131, csize: 131, crc: 0x7f13ab01 }), "red");
+  run("media", pickMedia(), (M, f) => M.delete(f), "red");
   run("debug", fresh("base/assets/public/canary-debug-", ".js.map"), (M, f) => M.set(f, { size: 5120, csize: 1400, crc: 0x3c3c3c3c }), "red");
   out.ok = CANARY_KINDS.every((k) => out[k].ok === true);
   return out;
@@ -303,7 +316,7 @@ if (require.main === module) {
   Object.assign(r, { tool: "AAB-DIFF", args: P.raw, strict: P.strict, oldName: P.pos[0].split(/[\\/]/).pop(), newName: P.pos[1].split(/[\\/]/).pop(), oldSha256, newSha256,
     oldCode: P.opt["old-code"] || null, newCode: P.opt["new-code"] || null, oldCodeManifest, newCodeManifest, canary, exitCode: code, pass: code === 0 && P.strict === true && canary.ok === true, toolPins: TOOL_PINS });
   const md = renderMd(r, r.oldName, r.newName, P.raw) + "\n\n## 金絲雀（從這個候選包做的壞樣本，同一套參數與確認清單）：" + (canary.ok ? "✔ 都抓到" : "✘ 沒抓到，這次比對不可信") + "\n" +
-    CANARY_KINDS.map((k) => "- " + { home: "刪一個首頁素材→紅", zeroJs: "一個 js 縮成 0 位元組→紅", jks: "多帶一個 .jks→紅", yellow: "多一個沒確認的 AGENTS.md→黃", shrink: "一張首頁素材縮成 131 位元組（像 LFS 指標檔）→紅", debug: "多帶一個 .map→紅" }[k] + "：" + (canary[k].ok ? "✔" : "✘") + "（" + (canary[k].f || canary[k].why) + "）").join("\n");
+    CANARY_KINDS.map((k) => "- " + { home: "刪一個首頁素材→紅", zeroJs: "一個 js 縮成 0 位元組→紅", jks: "多帶一個 .jks→紅", yellow: "多一個沒確認的 AGENTS.md→黃", shrink: "一張非首頁素材縮成 131 位元組（像 LFS 指標檔）→紅", debug: "多帶一個 .map→紅", media: "刪一張非首頁素材→紅" }[k] + "：" + (canary[k].ok ? "✔" : "✘") + "（" + (canary[k].f || canary[k].why) + "）").join("\n");
   try { if (P.opt.json) fs.writeFileSync(P.opt.json, JSON.stringify(r, null, 1) + "\n"); if (P.opt.md) fs.writeFileSync(P.opt.md, md + "\n") } catch (e) { no("寫不出報告：" + e.message) }
   console.log(md);
   process.exit(code);

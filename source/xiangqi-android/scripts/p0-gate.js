@@ -26,8 +26,8 @@
 "use strict";
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 /* #102 第八輪複審：AAB-DIFF 金絲雀要逐項核對的種類，閘門自己寫死（不讀 aab-diff.js 匯出的名單：那邊少一種，閘門不能跟著放寬）。
-   shrink（首頁素材縮成 LFS 指標檔那麼小）、debug（多帶 .map）是第八輪補的：--expect-shrunk／--expect-added 蓋到首頁素材或 debug 檔就會失靈 */
-const GATE_CANARY_KINDS = ["home", "zeroJs", "jks", "yellow", "shrink", "debug"];
+   shrink（非首頁素材縮成 LFS 指標檔那麼小）、debug（多帶 .map）第八輪補，media（刪非首頁素材）第九輪補；首頁素材、debug 檔第九輪起改由 aab-diff 的硬規則擋 */
+const GATE_CANARY_KINDS = ["home", "zeroJs", "jks", "yellow", "shrink", "debug", "media"];
 const TP = require("./tool-pin.js");
 const { MEDIA, NOTE_VIA_WEB, MAN_MISS_WHY, unknownWhy, cdnCanary } = require("./check-aab-assets.js");   /* 第十三、十四次複審：媒體檔、提醒與缺驗的固定文字都照破圖工具自己的定義；所以 check-aab-assets.js 也列進閘門的自我鎖定 */
 const PROBE_RE = /^data\/__xq_p0_canary_[0-9a-f]{12}\.webp$/;   /* 金絲雀③的探測檔（check-aab-assets.js 產生的檔名），不是真的要補抓的檔 */
@@ -113,7 +113,7 @@ async function probeCdn(fetchFn = fetch, base = GATE_CDN, rnd = () => require("c
 /* opts.mainSha(路徑)＝origin/main 那一版去掉 CR 的 SHA-256（tool-pin.js 的 normSha）；沒給＝讀不到 main，每份報告都過不了工具鎖定 */
 function gate(aabSha, build, reports, waivers = [], opts = {}) {
   const found = [], notes = [], seen = new Map();
-  const add = (msg, code = null, android = null) => found.push({ msg, code, android });
+  const add = (msg, code = null, android = null) => found.push({ msg: argShow(msg), code, android });   /* #102 第九輪：問題訊息裡的檔名、確認碼來自報告或安裝包，印出前跳脫控制字元 */
   const mainSha = typeof opts.mainSha === "function" ? opts.mainSha : () => null;
   const apk3d = new Map();   /* "f12"／"c12" → apkSha256 */
   for (const { file, json } of reports) {
@@ -154,7 +154,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
         if (RE.red.length) add(`${key}：閘門重算有紅項（${RE.red.slice(0, 3).map((x) => x.f).join("、")}）：紅項不能確認、也不能豁免`);
         if (RE.yellow.length) add(`${key}：閘門重算有沒確認的黃項（${RE.yellow.slice(0, 3).map((x) => x.f + "@" + x.ack.split("@").pop()).join("、")}）：人看過後寫進 --ack 清單`);
         if (!RE.canaryOk) add(`${key}：閘門重算的金絲雀沒抓到：這次的放行參數可能太寬，或比對失靈`);
-        /* #102 第四輪複審：金絲雀逐項核對（不只看總結的 canaryOk）；第八輪起六種，見 GATE_CANARY_KINDS */
+        /* #102 第四輪複審：金絲雀逐項核對（不只看總結的 canaryOk）；第九輪起七種，見 GATE_CANARY_KINDS */
         for (const k of GATE_CANARY_KINDS) { const c = RE.canary && RE.canary[k]; if (!c || c.ok !== true || typeof c.f !== "string" || !c.f || typeof c.hit !== "string" || !c.hit) add(`${key}：閘門重算的金絲雀「${k}」沒抓到（要有壞樣本檔名和比對抓到的原因）`) }
         /* #102 第四輪複審：新舊兩包幾乎一樣（不到 3 個檔不同；正常發版至少 index.html、sw.js、manifest 都會變），舊包可能是從候選包改出來的 */
         if (!Number.isInteger(RE.changed) || RE.changed < 3) add(`${key}：新舊兩包只差 ${RE.changed} 個檔：舊包可能不是 Play 上的那一包，請用從 Play 下載或封存的原檔`);
@@ -355,11 +355,11 @@ async function main() {
   if (a("--waivers") && !fromRepo) console.log("⚠ 豁免檔不是倉庫的 .github/p0-waivers.json：沒經過逐行審，裡面的豁免一律不算");
   const AD = aabDiffInfo(reports);
   /* #102 第八輪複審（不擋，照做）：參數值裡的換行、控制字元轉成 \uXXXX 再印，不能用換行偽造一行看起來像通過的輸出 */
-  if (AD) { const d = AD, args = Object.entries(d.args).filter(([k]) => k !== "ack").map(([k, v]) => `--${k}=${argShow(v)}`);
-    console.log(`產物比對（AAB-DIFF）：舊版 versionCode ${d.oldCode}（${String(d.oldSha256 || "").slice(0, 12)}）；放行參數 ${args.length ? args.join(" ") : "沒有"}；${diffRe ? `閘門重算：紅 ${diffRe.red.length}、沒確認的黃 ${diffRe.yellow.length}、金絲雀${diffRe.canaryOk ? "都抓到" : "沒抓到"}、照參數放行 ${diffRe.allowed} 個` : "閘門沒有重算（沒給 --old-aab）"}`);
-    if (diffRe) for (const k of diffRe.acked) console.log("  確認過的黃項：" + k) }
-  for (const n of r.notes) console.log("⚠ " + n);
-  for (const w of r.waived) console.log("△ " + w);
+  if (AD) { const d = AD, args = Object.entries(d.args).filter(([k]) => k !== "ack").map(([k, v]) => `--${argShow(k)}=${argShow(v)}`);
+    console.log(argShow(`產物比對（AAB-DIFF）：舊版 versionCode ${d.oldCode}（${String(d.oldSha256 || "").slice(0, 12)}）；放行參數 ${args.length ? args.join(" ") : "沒有"}；${diffRe ? `閘門重算：紅 ${diffRe.red.length}、沒確認的黃 ${diffRe.yellow.length}、金絲雀${diffRe.canaryOk ? "都抓到" : "沒抓到"}、照參數放行 ${diffRe.allowed} 個` : "閘門沒有重算（沒給 --old-aab）"}`));
+    if (diffRe) for (const k of diffRe.acked) console.log("  確認過的黃項：" + argShow(k)) }
+  for (const n of r.notes) console.log("⚠ " + argShow(n));
+  for (const w of r.waived) console.log("△ " + argShow(w));
   /* #102 審查④：通過時寫出產物比對的收據 JSON（--diff-receipt） */
   /* #102 第五輪複審：收據用 flag "wx" 寫——檔案已經存在就不寫（符號連結、硬連結、豁免檔、AAB 都蓋不掉）；要重跑先把舊收據刪掉 */
   if (r.ok && a("--diff-receipt")) { try { fs.writeFileSync(a("--diff-receipt"), JSON.stringify(aabDiffReceipt(sha, reports, diffRe), null, 1) + "\n", { flag: "wx" }); console.log("收據：" + a("--diff-receipt")) } catch (e) { console.error("✘ 寫不出收據：" + e.message); process.exit(2) } }
