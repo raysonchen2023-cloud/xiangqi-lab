@@ -42,23 +42,72 @@ function readZipIndex(file) {
     const out = new Map(); let p = 0;
     for (let i = 0; i < count; i++) {
       if (cd.readUInt32LE(p) !== 0x02014b50) throw new Error("中央目錄第 " + (i + 1) + " 筆格式不對");
-      const crc = cd.readUInt32LE(p + 16); let csize = cd.readUInt32LE(p + 20), size = cd.readUInt32LE(p + 24);
+      const crc = cd.readUInt32LE(p + 16); let csize = cd.readUInt32LE(p + 20), size = cd.readUInt32LE(p + 24), off = cd.readUInt32LE(p + 42);
       const nl = cd.readUInt16LE(p + 28), xl = cd.readUInt16LE(p + 30), cl = cd.readUInt16LE(p + 32);
       const name = cd.toString("utf8", p + 46, p + 46 + nl);
-      if (size === 0xffffffff || csize === 0xffffffff) {   /* ZIP64 額外欄位 0x0001：依序放「超過上限的」原始大小、壓縮大小 */
+      if (size === 0xffffffff || csize === 0xffffffff || off === 0xffffffff) {   /* ZIP64 額外欄位 0x0001：依序放「超過上限的」原始大小、壓縮大小 */
         let q = p + 46 + nl; const end = q + xl;
         while (q + 4 <= end) {
           const id = cd.readUInt16LE(q), len = cd.readUInt16LE(q + 2);
-          if (id === 0x0001) { let r = q + 4; if (size === 0xffffffff) { size = Number(cd.readBigUInt64LE(r)); r += 8 } if (csize === 0xffffffff) csize = Number(cd.readBigUInt64LE(r)); break }
+          if (id === 0x0001) { let r = q + 4; if (size === 0xffffffff) { size = Number(cd.readBigUInt64LE(r)); r += 8 } if (csize === 0xffffffff) { csize = Number(cd.readBigUInt64LE(r)); r += 8 } if (off === 0xffffffff) off = Number(cd.readBigUInt64LE(r)); break }
           q += 4 + len;
         }
       }
-      if (!name.endsWith("/")) { if (out.has(name)) throw new Error("zip 裡有重複的檔名（第五輪審查：原本會默默合併）：" + name); out.set(name, { size, csize, crc }) }
+      if (!name.endsWith("/")) { if (out.has(name)) throw new Error("zip 裡有重複的檔名（第五輪審查：原本會默默合併）：" + name); out.set(name, { size, csize, crc, off }) }
       p += 46 + nl + xl + cl;
     }
     if (!out.size) throw new Error("zip 裡沒有任何檔案");
     return out;
   } finally { fs.closeSync(fd) }
+}
+
+/* #102 第三輪複審（中）：讀 zip 裡的一個檔（照中央目錄記的本地檔頭位移；只支援不壓縮與 deflate），解壓後核對大小與 CRC，不合就丟例外 */
+function readEntry(file, idx, name) {
+  const e = idx.get(name); if (!e || typeof e.off !== "number") throw new Error("zip 裡沒有 " + name);
+  const fd = fs.openSync(file, "r");
+  try {
+    const h = Buffer.alloc(30); fs.readSync(fd, h, 0, 30, e.off);
+    if (h.readUInt32LE(0) !== 0x04034b50) throw new Error(name + " 的本地檔頭格式不對");
+    const method = h.readUInt16LE(8), start = e.off + 30 + h.readUInt16LE(26) + h.readUInt16LE(28), raw = Buffer.alloc(e.csize);
+    fs.readSync(fd, raw, 0, e.csize, start);
+    const out = method === 0 ? raw : method === 8 ? require("zlib").inflateRawSync(raw) : null;
+    if (!out) throw new Error(name + " 用了不支援的壓縮方式 " + method);
+    if (out.length !== e.size || crc32(out) !== e.crc) throw new Error(name + " 解出來的大小或 CRC 跟中央目錄不合");
+    return out;
+  } finally { fs.closeSync(fd) }
+}
+function crc32(buf) { let c, crc = 0xffffffff; for (let i = 0; i < buf.length; i++) { c = (crc ^ buf[i]) & 0xff; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; crc = (crc >>> 8) ^ c } return (crc ^ 0xffffffff) >>> 0 }
+/* AAB 的 base/manifest/AndroidManifest.xml 是 aapt2 的 protobuf（Resources.proto 的 XmlNode）。#102 第四輪複審：照結構讀，不用字串搜尋——
+   XmlNode.element(1) → XmlElement（name(3)＝"manifest"）的 attribute(4) → XmlAttribute：name(2)＝"versionCode"、value(3)＝字串、
+   compiled_item(6) → Item.prim(7) → Primitive.int_decimal_value(6)（Android 安裝時真正用的整數）。
+   要求：根元素是 manifest、只有一個 versionCode 屬性、有編譯過的整數、字串欄位是純十進位而且跟整數相等；任何一項不對就丟例外（不猜） */
+function pbFields(buf) {
+  const out = []; let i = 0;
+  const vint = () => { let v = 0, m = 1, x; do { if (i >= buf.length) throw new Error("manifest 的 protobuf 截斷"); x = buf[i++]; v += (x & 127) * m; m *= 128 } while (x & 128); return v };
+  while (i < buf.length) { const tag = vint(), f = Math.floor(tag / 8), w = tag % 8;
+    if (w === 0) out.push({ f, w, v: vint() });
+    else if (w === 2) { const n = vint(); if (i + n > buf.length) throw new Error("manifest 的 protobuf 長度不對"); out.push({ f, w, b: buf.subarray(i, i + n) }); i += n }
+    else if (w === 1) { i += 8; out.push({ f, w }) } else if (w === 5) { i += 4; out.push({ f, w }) }
+    else throw new Error("manifest 的 protobuf 有不認得的欄位型別 " + w) }
+  if (i !== buf.length) throw new Error("manifest 的 protobuf 長度不對");
+  return out;
+}
+const pbOne = (F, f) => F.filter((x) => x.f === f);
+function versionCodeOf(file, idx) {
+  const m = readEntry(file, idx || readZipIndex(file), "base/manifest/AndroidManifest.xml");
+  const el = pbOne(pbFields(m), 1); if (el.length !== 1 || !el[0].b) throw new Error("manifest 的根節點不是元素");
+  const E = pbFields(el[0].b), nm = pbOne(E, 3)[0]; if (!nm || nm.b.toString("utf8") !== "manifest") throw new Error("manifest 的根元素不是 <manifest>");
+  const vc = pbOne(E, 4).map((a) => pbFields(a.b)).filter((A) => { const n = pbOne(A, 2)[0]; return n && n.b && n.b.toString("utf8") === "versionCode" });
+  if (vc.length !== 1) throw new Error(vc.length ? "manifest 有 " + vc.length + " 個 versionCode 屬性" : "manifest 裡找不到 versionCode");
+  const A = vc[0], sv = pbOne(A, 3)[0], ci = pbOne(A, 6)[0];
+  if (!ci || !ci.b) throw new Error("versionCode 沒有編譯過的整數（compiled_item）");
+  const pr = pbOne(pbFields(ci.b), 7)[0]; if (!pr || !pr.b) throw new Error("versionCode 的 compiled_item 不是基本型別");
+  const iv = pbOne(pbFields(pr.b), 6); if (iv.length !== 1) throw new Error("versionCode 不是十進位整數（int_decimal_value）");
+  const n = iv[0].v > 0x7fffffff ? iv[0].v - 0x100000000 : iv[0].v;
+  if (!(n >= 1 && n <= 2100000000)) throw new Error("versionCode 的整數不合理：" + n);
+  const str = sv && sv.b ? sv.b.toString("utf8") : "";
+  if (!/^[1-9][0-9]{0,9}$/.test(str) || +str !== n) throw new Error("versionCode 的字串（" + JSON.stringify(str) + "）跟編譯過的整數（" + n + "）不一致：manifest 可能被改過");
+  return n;
 }
 
 /* debug／開發用的檔（第五輪審查補 .pdb、編輯器與 AI 工具設定、.github/、coverage/、output/、test-*.js、包在裡面的 apk／aab／zip） */
@@ -87,21 +136,40 @@ const MEDIA_RE = /\.(webp|png|jpe?g|gif|avif|svg|glb|gltf|bin|mp3|ogg|wav|m4a|wo
 /* 每個 AAB 一定有的檔：兩包都要有，才算拿對檔。審查要改：原本兩個不相干的 zip 互比也會回 0。 */
 const AAB_MUST = ["BundleConfig.pb", "base/manifest/AndroidManifest.xml", "base/assets/public/index.html"];
 const MB = 1024 * 1024;
+/* W91（11/24）：新增的檔要在現行包本來就有的位置（照 26112401 的實際結構）；不在這些位置就亮黃。
+   補 26112301 那次漏掉的那一類：根目錄多了 AGENTS.md、releases/、驗證紀錄（W83）——不是 debug 檔、也不是金鑰，原本完全不報。 */
+const NEW_OK = /^(base\/assets\/public\/(data|engine|pikafish-src|licenses)\/|base\/assets\/public\/[^/]+\.(m?js|html?|css|json|png|svg|webp|ico)$|base\/assets\/public\/(LICENSE[^/]*|NOTICE[^/]*|NNUE-License\.md)$|base\/(dex|lib|res|manifest|root)\/|base\/[^/]+\.pb$|base\/assets\/[^/]+\.json$|BUNDLE-METADATA\/|META-INF\/|BundleConfig\.pb$)/;
+/* 在允許的位置裡、但不該進安裝包的：驗證紀錄、證據頁（W83 從 make-www 排除過；網頁版才放） */
+/* #102 審查②：證據圖在 data/docs/evidence/ 子資料夾裡、檔名大小寫不同也要抓；審查建議⑥：AGENTS.md、CLAUDE.md、releases/ 不論在哪一層都不該進包 */
+/* #102 第九輪複審（高）：首頁素材（data/homemap/ 底下）比照金鑰檔：拿掉、大幅縮小一律紅，任何放行參數都不放過 */
+const HOME_RE = /^base\/assets\/public\/data\/homemap\//;
+/* #102 第十輪複審（高）：只認 homemap/ 漏了 P0-IMG 首頁離線必要素材名單上的另外 52 張（各朝代的 icons 三張、canying 一張）。
+   改成 homemap/ 底下，或在 bundle-home-assets.js 的 required 名單上（跟 P0-IMG 同一份；工具鎖定 AAB-DIFF 也鎖這支，名單被改小會被擋） */
+const HOME_REQUIRED = new Set(require("./bundle-home-assets.js").required.map((r) => "base/assets/public/data/" + r));
+const isHome = (n) => HOME_RE.test(n) || HOME_REQUIRED.has(n);
+const NEW_SUSPECT =/(^|\/)data\/docs\/(verification-log[^/]*|evidence([^/]*|\/.*))$|(^|\/)(AGENTS|CLAUDE)\.md$|(^|\/)releases\//i;
+const TOOL_PINS = require("./tool-pin.js").pinsFor("AAB-DIFF");   /* 啟動就先算：記的是實際被載入、跑這一次的那一份 */
 
 /* 比對兩份索引；opts.expectRemoved／expectAdded＝正規式（列在裡面的檔可以從新版拿掉／新增，不算紅，但會列在報告裡） */
 function diffIndex(A, B, opts = {}) {
   const red = [], yellow = [], allowed = [], noted = [], info = { removed: 0, added: 0, changed: 0, same: 0 };
   let ta = 0, tb = 0;
   for (const n of B.keys()) if (SECRET_RE.test(n)) red.push({ f: n, why: (A.has(n) ? "新版還帶著" : "新版多了") + "可能含金鑰／帳號／本機設定的檔（任何放行參數、確認清單都不放過）" });
+  /* #102 第九輪複審（中）：說明文件、驗證紀錄、證據頁、releases/ 原本只看「新增」的——舊版本來就帶著、新版繼續帶就完全不報（26112301 漏的就是這一類），
+     新增的配窄的 --expect-added 也能放行。改成新版每個檔都看，帶著就紅，任何放行參數、確認清單都不放過 */
+    else if (NEW_SUSPECT.test(n)) red.push({ f: n, why: (A.has(n) ? "新版還帶著" : "新版多了") + "驗證紀錄、證據頁、說明文件或 releases/（網頁版或倉庫才放，不能進安裝包；任何放行參數都不放過）" });
   for (const [n, a] of A) {
     ta += a.size; const b = B.get(n);
-    if (!b) { info.removed++; if (opts.expectRemoved && opts.expectRemoved.test(n)) allowed.push({ f: n, crc: "removed:" + (a.crc >>> 0).toString(16), why: "預期拿掉（--expect-removed）" }); else red.push({ f: n, why: "新版少了這個檔（舊版 " + a.size + " 位元組）" }); continue }
+    /* #102 第九輪複審（高）：首頁素材比照金鑰檔，拿掉一律紅，--expect-removed 放不過（原本只靠金絲雀，而金絲雀只測排序第一的那張，窄的參數就避開了）。
+       舊版帶著、新版拿掉的說明文件類是好事：不算紅，列在「照規則不算」給人看 */
+    if (!b) { info.removed++; if (isHome(n)) red.push({ f: n, why: "新版少了首頁素材（舊版 " + a.size + " 位元組；首頁素材任何放行參數都不放過）" }); else if (NEW_SUSPECT.test(n)) noted.push({ f: n, why: "拿掉了不該進安裝包的說明文件或驗證紀錄（舊版帶著）" }); else if (opts.expectRemoved && opts.expectRemoved.test(n)) allowed.push({ f: n, crc: "removed:" + (a.crc >>> 0).toString(16), why: "預期拿掉（--expect-removed）" }); else red.push({ f: n, why: "新版少了這個檔（舊版 " + a.size + " 位元組）" }); continue }
     if (a.crc === b.crc && a.size === b.size) { info.same++; continue }
     info.changed++;
     if (a.size > 0 && b.size === 0) red.push({ f: n, why: "原本有內容（" + a.size + " 位元組），新版變成 0 位元組" });
     else if (!SHRINK_SKIP.test(n) && a.size >= (CODE_RE.test(n) || MEDIA_RE.test(n) ? SHRINK_MIN_CODE : SHRINK_MIN) && b.size < a.size * SHRINK_CODE) {   /* 第三輪審查：套到整包。第四輪審查：只看比例，不用「小於 1 KB」的絕對門檻（1098→1000 位元組原本誤報紅） */
       const pct = Math.round(b.size / a.size * 100), hard = b.size < a.size * SHRINK_RED || CODE_RE.test(n);
-      if (opts.expectShrunk && opts.expectShrunk.test(n)) allowed.push({ f: n, crc: (b.crc >>> 0).toString(16) + ":" + b.size, why: "預期大幅縮小（--expect-shrunk）：" + a.size + " → " + b.size + " 位元組（" + pct + "%）" });
+      if (isHome(n)) red.push({ f: n, why: "首頁素材大幅縮小（" + a.size + " → " + b.size + " 位元組，剩 " + pct + "%），可能被換成壞圖或 LFS 指標檔（首頁素材任何放行參數都不放過）" });
+      else if (opts.expectShrunk && opts.expectShrunk.test(n)) allowed.push({ f: n, crc: (b.crc >>> 0).toString(16) + ":" + b.size, why: "預期大幅縮小（--expect-shrunk）：" + a.size + " → " + b.size + " 位元組（" + pct + "%）" });
       else if (hard) red.push({ f: n, why: "大幅縮小（" + a.size + " → " + b.size + " 位元組，剩 " + pct + "%），可能被截斷、換成壞圖或指標檔" });
       else yellow.push({ f: n, why: "縮小到 " + pct + "%（" + a.size + " → " + b.size + " 位元組），請人確認" }) }
     else if (!SHRINK_SKIP.test(n) && FIXED_BIN.test(n) && b.size !== a.size) yellow.push({ f: n, why: "建置時不會變的引擎／3D 檔大小變了（" + a.size + " → " + b.size + " 位元組），請人確認" });
@@ -113,10 +181,14 @@ function diffIndex(A, B, opts = {}) {
     info.added++;
     const ok = opts.expectAdded && opts.expectAdded.test(n);
     if (SECRET_RE.test(n)) { /* 上面已經對新版每個檔判紅 */ }
-    else if (DEBUG_RE.test(n)) { if (DEBUG_OK.test(n)) noted.push({ f: n, why: "照規則不算 debug（建置工具的檔或 GPL 重建紀錄）" }); else if (ok) allowed.push({ f: n, crc: (b.crc >>> 0).toString(16) + ":" + b.size, why: "預期新增（--expect-added）" }); else red.push({ f: n, why: "新版多了 debug／開發用的檔" }) }
+    else if (DEBUG_RE.test(n)) { if (DEBUG_OK.test(n)) noted.push({ f: n, why: "照規則不算 debug（建置工具的檔或 GPL 重建紀錄）" }); else red.push({ f: n, why: "新版多了 debug／開發用的檔（任何放行參數都不放過）" }) }   /* #102 第九輪複審（中）：原本配窄的 --expect-added（例如 data/core.js.map）就能放行；只有 DEBUG_OK 列的才免 */
     else if (b.size === 0 && ZERO_STUB.test(n)) yellow.push({ f: n, why: "Capacitor 產生的空殼檔（本來就是 0 位元組），請人確認一次" });
     else if (b.size === 0 && (MEDIA_RE.test(n) || CODE_RE.test(n) || /^base\/assets\/public\/data\//.test(n))) red.push({ f: n, why: "新增的素材或程式檔是 0 位元組" });
     else if (b.size === 0) yellow.push({ f: n, why: "新增的檔是 0 位元組，請人確認" });
+    else if (NEW_SUSPECT.test(n)) { /* 上面已經對新版每個檔判紅（#102 第九輪） */ }
+    else if (!NEW_OK.test(n)) {
+      if (ok) allowed.push({ f: n, crc: (b.crc >>> 0).toString(16) + ":" + b.size, why: "預期新增（--expect-added）" });
+      else yellow.push({ f: n, why: "新增的檔不在現行包本來就有的位置（例如根目錄多了說明文件、releases/），請人確認" }) }
     if (b.size > 20 * MB) yellow.push({ f: n, why: "新增超過 20 MB 的單檔（" + (b.size / MB).toFixed(1) + " MB）" });
   }
   if (ta > 0 && tb > ta * 1.2) yellow.push({ f: "（整包）", why: "壓縮前總大小增加 " + ((tb / ta - 1) * 100).toFixed(0) + "%（" + (ta / MB).toFixed(0) + " → " + (tb / MB).toFixed(0) + " MB）" });
@@ -141,6 +213,40 @@ function checkInputs(A, B, pathA, pathB) {
   return null;
 }
 
+/* W91 金絲雀（AGENTS.md「P0 出口驗證要難作假」：壞樣本從實際的候選包做、跟正式比對走同一條判斷路徑 diffIndex，參數與確認清單也一樣）：
+   ①刪一個首頁素材 ②把一個根目錄的 js 縮成 0 位元組 ③多帶一個 .jks——都要變紅；④多一個沒確認過的 AGENTS.md——要變黃（--strict 擋）。
+   參數放太寬（例如 --expect-removed=.）會讓①不紅，金絲雀就判失靈。回傳 { home, zeroJs, jks, yellow: {f, ok}, ok } */
+const CANARY_KINDS = ["home", "zeroJs", "jks", "yellow", "shrink", "debug", "media"];
+function canaryRun(A, B, opts = {}) {
+  const pick = (re) => [...B.keys()].filter((n) => A.has(n) && re.test(n) && B.get(n).size > 0).sort()[0] || null;
+  const out = {};
+  const run = (k, f, mut, where) => {
+    if (!f) { out[k] = { f: null, ok: false, why: "包裡找不到可以拿來做壞樣本的檔" }; return }
+    const B2 = new Map(B); mut(B2, f);
+    const r = diffIndex(A, B2, opts);
+    /* #102 第五輪複審：每種金絲雀記下比對真的抓到的那一項的原因（hit），閘門要看得到，不只看 ok */
+    const h = r[where].find((x) => x.f === f);
+    out[k] = { f, ok: !!h, hit: h ? String(h.why || where) : null };
+  };
+  run("home", pick(/^base\/assets\/public\/data\/homemap\/[^/]+\.(webp|png|jpe?g)$/) || pick(/^base\/assets\/public\/data\/.+\.(webp|png|jpe?g)$/), (M, f) => M.delete(f), "red");
+  run("zeroJs", pick(/^base\/assets\/public\/[^/]+\.js$/), (M, f) => M.set(f, { size: 0, csize: 0, crc: 0 }), "red");
+  /* #102 審查①：壞樣本的檔名要新舊兩包都沒有（原本寫死 AGENTS.md：舊版帶著、新版正確拿掉時，放回去算「內容改變」不算「新增」，金絲雀誤判失靈）。
+     檔名後綴照新版整份清單算（同一個包每次一樣、可重現），撞名就再換 */
+  const z = require("zlib"), tag = (z.crc32([...B.keys()].sort().join("\n")) >>> 0).toString(16), fresh = (pre, ext) => { for (let i = 0; i < 50; i++) { const f = pre + tag + (i ? "-" + i : "") + ext; if (!A.has(f) && !B.has(f)) return f } return null };
+  run("jks", fresh("base/assets/public/upload-canary-", ".jks"), (M, f) => M.set(f, { size: 2048, csize: 2000, crc: 0x1234abcd }), "red");
+  run("yellow", fresh("base/assets/public/AGENTS-canary-", ".md"), (M, f) => M.set(f, { size: 4096, csize: 1500, crc: 0x5a5a5a5a }), "yellow");
+  /* #102 第八輪複審（中）：前四種都沒走「縮小」和「新增 debug 檔」這兩條放行路徑。--expect-shrunk=. 加一筆確認，首頁圖換成 Git LFS 指標檔（約 130 位元組，封測出過的 P0）也能過。
+     shrink：把一張首頁素材縮成 131 位元組，必須紅；debug：多帶一個新的 .map，必須紅。--expect-shrunk／--expect-added 只要蓋到首頁素材或 debug 檔，金絲雀就失靈、報告 pass:false */
+  /* #102 第九輪：首頁素材改由硬規則擋（HOME_RE，任何放行參數都不放過），上面的 home 金絲雀證明那條硬規則還活著。
+     shrink、media 改挑「非首頁」的素材，測的是放太寬的參數：--expect-shrunk／--expect-removed 只要蓋到一般素材（例如寫成 .、data/），就失靈 */
+  const pickMedia = () => [...B.keys()].filter((n) => A.has(n) && /^base\/assets\/public\/data\/.+\.(webp|png|jpe?g)$/.test(n) && !isHome(n) && B.get(n).size > 0).sort()[0] || null;   /* #102 第十輪：避開整份首頁必要素材名單，不只 homemap/ */
+  run("shrink", pickMedia(), (M, f) => M.set(f, { size: 131, csize: 131, crc: 0x7f13ab01 }), "red");
+  run("media", pickMedia(), (M, f) => M.delete(f), "red");
+  run("debug", fresh("base/assets/public/canary-debug-", ".js.map"), (M, f) => M.set(f, { size: 5120, csize: 1400, crc: 0x3c3c3c3c }), "red");
+  out.ok = CANARY_KINDS.every((k) => out[k].ok === true);
+  return out;
+}
+
 function renderMd(r, oldName, newName, args) {
   const given = Object.entries(args || {}).map(([k, v]) => "`--" + k + "=" + String(v).replace(/`/g, "'") + "`");
   const L = ["# 新舊 AAB 產物比對", "", "- 舊版（標準答案）：" + oldName, "- 新版（候選）：" + newName,
@@ -155,10 +261,16 @@ function renderMd(r, oldName, newName, args) {
   return L.join("\n");
 }
 
-/* 結束代碼：0＝沒有紅項；1＝有紅項（--strict 時黃項也算）；2＝沒驗到（讀不到、不是 AAB、拿錯檔、參數不對、寫不出報告） */
+/* 整個檔的 SHA-256（分塊讀，安裝包可能好幾百 MB） */
+function sha256File(f) {
+  const h = require("crypto").createHash("sha256"), fd = fs.openSync(f, "r"), b = Buffer.alloc(8 * MB);
+  try { let n; while ((n = fs.readSync(fd, b, 0, b.length, null)) > 0) h.update(b.subarray(0, n)) } finally { fs.closeSync(fd) }
+  return h.digest("hex");
+}
+/* 結束代碼：0＝沒有紅項；1＝有紅項（--strict 時黃項也算；金絲雀結果記在報告 canary 與 pass，閘門看）；2＝沒驗到（讀不到、不是 AAB、拿錯檔、參數不對、寫不出報告） */
 /* 參數：白名單（第二輪審查要改：--Strict、--strict=1、--foo=bar 原本被默默忽略）。
    不認得的、值是空的、同一個出現兩次、正規式寫錯，一律當「沒驗到」回 2。回傳 {pos, opt, strict} 或錯誤訊息字串。 */
-const ARG_VAL = ["expect-removed", "expect-added", "expect-shrunk", "json", "md", "ack"];
+const ARG_VAL = ["expect-removed", "expect-added", "expect-shrunk", "json", "md", "ack", "old-code", "new-code"];
 function parseArgs(argv) {
   const pos = [], opt = {}; let strict = false;
   for (const a of argv) {
@@ -179,6 +291,7 @@ function parseArgs(argv) {
   for (const k of ["json", "md", "ack"]) if (k in opt) for (const p of pos) if (same(opt[k], p)) return "--" + k + " 指到輸入的 AAB：" + opt[k];
   if ("json" in opt && "md" in opt && same(opt.json, opt.md)) return "--json 和 --md 指到同一個檔";
   for (const k of ["json", "md"]) if (k in opt && "ack" in opt && same(opt[k], opt.ack)) return "--" + k + " 會蓋掉 --ack 清單";
+  for (const k of ["old-code", "new-code"]) if (k in opt && !/^\d{1,10}$/.test(opt[k])) return "--" + k + " 要是 versionCode 數字：" + opt[k];   /* W91：送審閘門要知道「舊版」是 Play 上哪一版 */
   const raw = {};
   for (const k of ["expect-removed", "expect-added", "expect-shrunk"]) if (k in opt) { raw[k] = opt[k]; try { opt[k] = new RegExp(opt[k]) } catch (e) { return "--" + k + " 的正規式寫錯：" + e.message } }
   /* --ack：人看過的黃項確認碼清單，JSON 字串陣列（例如 ["base/assets/public/release.json@1a2b3c4d"]）。讀不到、格式不對一律回 2 */
@@ -193,10 +306,23 @@ if (require.main === module) {
   let A, B;
   try { A = readZipIndex(P.pos[0]); B = readZipIndex(P.pos[1]) } catch (e) { no(e.message) }
   const bad = checkInputs(A, B, P.pos[0], P.pos[1]); if (bad) no(bad);
-  const r = diffIndex(A, B, { expectRemoved: P.opt["expect-removed"], expectAdded: P.opt["expect-added"], expectShrunk: P.opt["expect-shrunk"], ack: P.opt.ack }), md = renderMd(r, P.pos[0].split(/[\\/]/).pop(), P.pos[1].split(/[\\/]/).pop(), P.raw);
-  r.args = P.raw;
+  const OPTS = { expectRemoved: P.opt["expect-removed"], expectAdded: P.opt["expect-added"], expectShrunk: P.opt["expect-shrunk"], ack: P.opt.ack };
+  const r = diffIndex(A, B, OPTS);
+  /* W91：送審閘門要的欄位——兩個 AAB 的 SHA-256（閘門核對新版＝送審的 AAB）、舊版是 Play 上哪一版（--old-code）、有沒有 --strict、
+     金絲雀（同一套參數與確認清單）、工具雜湊（跟 origin/main 比）、結束代碼 */
+  /* #102 第三輪複審（中）：兩包 manifest 裡實際的 versionCode；讀得到又跟 --old-code／--new-code 不一樣就不驗（結束代碼 2）。送審閘門另外自己讀、自己比 */
+  const vc = (f, I) => { try { return versionCodeOf(f, I) } catch (e) { return null } }, oldCodeManifest = vc(P.pos[0], A), newCodeManifest = vc(P.pos[1], B);
+  for (const [k, v] of [["old-code", oldCodeManifest], ["new-code", newCodeManifest]]) if (P.opt[k] && v !== null && +P.opt[k] !== v) no("--" + k + "=" + P.opt[k] + " 跟 AAB manifest 裡的 versionCode（" + v + "）不一樣");
+  let oldSha256, newSha256;
+  try { oldSha256 = sha256File(P.pos[0]); newSha256 = sha256File(P.pos[1]) } catch (e) { no("算不出 AAB 的 SHA-256：" + e.message) }
+  /* 結束代碼照舊只看紅黃項（命令列的意思不變）；金絲雀另外記在報告，pass 要三樣都成立：結束代碼 0、--strict、金絲雀都抓到——送審閘門看 pass 與 canary */
+  const canary = canaryRun(A, B, OPTS), code = r.red.length || (P.strict && r.yellow.length) ? 1 : 0;
+  Object.assign(r, { tool: "AAB-DIFF", args: P.raw, strict: P.strict, oldName: P.pos[0].split(/[\\/]/).pop(), newName: P.pos[1].split(/[\\/]/).pop(), oldSha256, newSha256,
+    oldCode: P.opt["old-code"] || null, newCode: P.opt["new-code"] || null, oldCodeManifest, newCodeManifest, canary, exitCode: code, pass: code === 0 && P.strict === true && canary.ok === true, toolPins: TOOL_PINS });
+  const md = renderMd(r, r.oldName, r.newName, P.raw) + "\n\n## 金絲雀（從這個候選包做的壞樣本，同一套參數與確認清單）：" + (canary.ok ? "✔ 都抓到" : "✘ 沒抓到，這次比對不可信") + "\n" +
+    CANARY_KINDS.map((k) => "- " + { home: "刪一個首頁素材→紅", zeroJs: "一個 js 縮成 0 位元組→紅", jks: "多帶一個 .jks→紅", yellow: "多一個沒確認的 AGENTS.md→黃", shrink: "一張非首頁素材縮成 131 位元組（像 LFS 指標檔）→紅", debug: "多帶一個 .map→紅", media: "刪一張非首頁素材→紅" }[k] + "：" + (canary[k].ok ? "✔" : "✘") + "（" + (canary[k].f || canary[k].why) + "）").join("\n");
   try { if (P.opt.json) fs.writeFileSync(P.opt.json, JSON.stringify(r, null, 1) + "\n"); if (P.opt.md) fs.writeFileSync(P.opt.md, md + "\n") } catch (e) { no("寫不出報告：" + e.message) }
   console.log(md);
-  process.exit(r.red.length || (P.strict && r.yellow.length) ? 1 : 0);
+  process.exit(code);
 }
-module.exports = { readZipIndex, diffIndex, checkInputs, renderMd, parseArgs, DEBUG_RE, DEBUG_OK, SECRET_RE, MEDIA_RE, CODE_RE, AAB_MUST };
+module.exports = { CANARY_KINDS, readEntry, versionCodeOf, readZipIndex, diffIndex, checkInputs, renderMd, parseArgs, canaryRun, sha256File, DEBUG_RE, DEBUG_OK, SECRET_RE, MEDIA_RE, CODE_RE, AAB_MUST, NEW_OK, NEW_SUSPECT };

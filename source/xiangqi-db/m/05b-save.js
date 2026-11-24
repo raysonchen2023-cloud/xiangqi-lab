@@ -52,6 +52,7 @@ JOURNEY_KEYS.push("m_opSeen");   /* 11/17 晚開場順序（07stq 檔尾 stqXu*�
 JOURNEY_KEYS.push("m_xsmStall");   /* 11/16 開發者（西市四攤，07xsm-ximarket.js）：xsmStall＝找棋子（這一副找到第幾顆、湊齊幾副、哪天找過）、老槐樹下今天是誰來、見過了沒、小禮收了沒。另外加一行，不動上面清單的字（好幾支測試比對清單結尾） */
 JOURNEY_KEYS.push("m_zm","m_zmCur");   /* 11/18 開發者（十派掌門，07z9-school.js）：zm＝各掌門目前強度、各角色對各掌門的勝和負；zmCur＝這一盤是哪位掌門、哪位角色（帳號第一次贏的修為去重在 oscClaim） */
 JOURNEY_KEYS.push("m_osc");   /* 11/18 開發者（開局門派，07z9-school.js）：osc＝每位七星的門派、各課進度、看過提示／示範、三階段完成時間（跟旅程走；修為去重的 oscClaim 是帳號層，不在這裡） */
+JOURNEY_KEYS.push("m_secMs","m_secMsDay","m_secAll");   /* W96（11/24）：散佚手稿張數、今天撿了幾張、雲河尋訪錄集滿的保底發過沒（07-legend.js） */
 JOURNEY_KEYS.push("m_jhKick");   /* 11/22 開發者（W45② 十州踢館令，07z9b-jianghu.js）：jhKick＝各組踢館第一次破陣的時間、局號、哪位角色（帳號第一次破陣的修為去重在 oscClaim 的 kick:A>B） */
 JOURNEY_KEYS.push("m_jhScreen");   /* 11/22 開發者（W48 屏風馬門門內，07z9c-screen.js）：jhScreen＝雙馬守中宮第一次過關與最多守幾步、挑錯著與算帳今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhGong");   /* 11/22 開發者（W48 過宮炮門「宣紙蓋子位」，07z9d-gongpao.js）：jhGong＝上次選的難度、今天領過修為的日子、一輪最多記對幾題 */
@@ -62,6 +63,7 @@ JOURNEY_KEYS.push("m_jhShijiao");   /* 11/22 開發者（W48 仕角炮門「當�
 JOURNEY_KEYS.push("m_jhFanggong");   /* 11/22 開發者（W48-S4 反宮馬門「活字排局陣」，07z9g-fanggong.js）：jhFanggong＝上次選的難度、今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhLiepao");   /* 11/22 開發者（W48-S5 列炮門「擊板記譜局」，07z9h-liepao.js）：jhLiepao＝上次選的難度、今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhFeixiang");   /* 11/22 開發者（W48-S8 飛相門「築堤擺陣形」，07z9j-feixiang.js）：jhFeixiang＝上次選的難度、今天領過修為的日子 */
+JOURNEY_KEYS.push("m_jhGateSeen");   /* 11/24 W104 十州棋館晚明轉場（07z9n-jhgate.js）：jhGateSeen＝第一次看過的時間（之後旁白換成「十州棋局再開」）；新旅程重新算 */
 JOURNEY_KEYS.push("m_jhXianren");   /* 11/22 開發者（W48-S7 仙人指路門「探路猜陣勢」，07z9k-xianren.js）：jhXianren＝上次選的難度、今天領過修為的日子、累計答對題數（揚州園林探路紀錄） */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
