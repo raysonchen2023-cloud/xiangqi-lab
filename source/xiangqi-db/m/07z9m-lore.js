@@ -5,6 +5,7 @@
      H＝暗門：看起來跟牆一樣，擋路、擋視線；朝它走第一次只說「牆好像是空心的」，再走一次就推開變成地面（不算回合）。
      L＝碑刻、殘簡、文書：擋路；朝它走就讀到一段歷史（卡片），記進收藏 jhMzLore（每派各自記、只記第一次）；同一件再讀照樣跳卡片，不重複記。
        內容寫在各派 jhMzDef 的 lore:[{id,kind,title:[zh,en],body:[zh,en],src}]，照地圖上 L 由上到下、由左到右的順序對應；沒寫的用一句通用的話代替。
+   處理順序：先 H、L，其他字元才交給該派自己的 onStep（例如飛相的推箱子），所以各派不要再用 H、L 當自己的字元。
    事件照共用程式的約定回傳 {ev, msg:[zh,en]} 或 {ev, card:{title,body}}（畫面上顯示 msg、開卡片由共用程式處理）。 */
 const JH_MZ_LORE_KEY="jhMzLore";
 const JH_MZ_LORE_KIND={stele:["碑刻","Stele"],slip:["殘簡","Bamboo slip"],doc:["文書","Document"]};
