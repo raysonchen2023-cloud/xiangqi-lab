@@ -264,7 +264,8 @@ const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([k
 const runtimeTaint = (env = process.env, execArgv = process.execArgv) => { const why = []; if (String(env.NODE_OPTIONS || "").trim()) why.push("NODE_OPTIONS=" + String(env.NODE_OPTIONS).slice(0, 80)); if (execArgv.length) why.push("node 參數 " + execArgv.join(" ").slice(0, 80)); return why };
 /* 子程序時限（2026-11-24：CI 的金絲雀自我檢查偶爾卡住 40 分鐘被取消，擋住所有 PR）。
    卡住一律判「測試不成立」（回 2），不會當成通過、也不會誤判成檢查失靈；XQ_CANARY_SUB_MS 只給自我測試縮短時限用（縮短只會讓結果變成不成立） */
-const SUB_MS = Math.max(1000, Number(process.env.XQ_CANARY_SUB_MS) || 300000);
+/* #113 審查②：Infinity、負數、非數字、超過 1 小時都不能讓 spawnSync 丟 ERR_OUT_OF_RANGE（回 1）——不是 1 秒～1 小時的正數一律用預設 300 秒 */
+const SUB_MS = ((n) => (Number.isFinite(n) && n >= 1000 && n <= 3600000 ? Math.floor(n) : n > 0 && n < 1000 ? 1000 : 300000))(Number(process.env.XQ_CANARY_SUB_MS));
 const SUB = { timeout: SUB_MS, killSignal: "SIGKILL" };
 const timedOut = (r) => !!(r && r.error && r.error.code === "ETIMEDOUT");
 function cloneDir(src, dst) {
@@ -416,7 +417,9 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       let cdnViaCheck = null;
       /* PR #67 第十二次審查：只看結束代碼不夠（--cdn 網址那條路改成不比，也回 0）。要求「跟 CDN 現行版比了 N 個檔」的 N 跟本機 CDN 清單那次一樣 */
       const cmpN = (t) => { const m = /跟 CDN 現行版比了 (\d+) 個檔/.exec(String(t || "")); return m ? Number(m[1]) : null }, wantN = cmpN(clean.stdout);
-      if (OFFICIAL_CDN && cdn === OFFICIAL_CDN) { const V = shape(); let r; try { cloneDir(dir, V); const lfV = path.join(boxOf(V), "list.json"), cfV = path.join(boxOf(V), "cdn-manifest.json"); fs.writeFileSync(lfV, JSON.stringify({ ...LJ, files: L })); fs.writeFileSync(cfV, JSON.stringify({ ...(Mobj || {}), files: M })); r = (selfCdn || ((d, lf) => check(d, lf, null, ["--cdn"])))(V, lfV, { cdnFile: cfV }) } finally { drop(V) }   /* 第十七次審查②：--cdn 那次也用自己的新副本 */ cdnViaCheck = { exit: r.status, n: cmpN(r.stdout), want: wantN, note: String(r.stderr || "").split("\n")[0].slice(0, 200) }; log((r.status === 0 && cdnViaCheck.n === wantN ? "✔ " : "✘ ") + "check-www --cdn 比了 " + cdnViaCheck.n + " 個檔（本機清單那次 " + wantN + "）；結束代碼 " + r.status) }
+      if (OFFICIAL_CDN && cdn === OFFICIAL_CDN) { const V = shape(); let r; try { cloneDir(dir, V); const lfV = path.join(boxOf(V), "list.json"), cfV = path.join(boxOf(V), "cdn-manifest.json"); fs.writeFileSync(lfV, JSON.stringify({ ...LJ, files: L })); fs.writeFileSync(cfV, JSON.stringify({ ...(Mobj || {}), files: M })); r = (selfCdn || ((d, lf) => check(d, lf, null, ["--cdn"])))(V, lfV, { cdnFile: cfV }) } finally { drop(V) }   /* 第十七次審查②：--cdn 那次也用自己的新副本 */
+        if (timedOut(r)) { results.push({ kind: "(正式 CDN)", file: "check-www --cdn", caught: false, unfit: true, why: hung(r) }); log("✘ check-www --cdn：" + hung(r)) }   /* #113 審查③：正式 --cdn 那次卡住也判不成立（回 2），不會只記成 exit null */
+        cdnViaCheck = { exit: r.status, n: cmpN(r.stdout), want: wantN, note: String(r.stderr || "").split("\n")[0].slice(0, 200) }; log((r.status === 0 && cdnViaCheck.n === wantN ? "✔ " : "✘ ") + "check-www --cdn 比了 " + cdnViaCheck.n + " 個檔（本機清單那次 " + wantN + "）；結束代碼 " + r.status) }
       const passAll = want.every((k) => results.some((x) => x.kind === k)) && results.every((x) => x.caught === true), code = exitOf(results, passAll);   /* PR #67 第九次審查：結束代碼先算好，full 要看它 */
       const receipt = {
         tool: "P0-IMG-canary", platform: "ios", at: new Date().toISOString(),
