@@ -81,3 +81,17 @@ test("用真的 site/opencc-t2cn.js：畫布與 SVG 的紅子都是马、车", a
   assert.deepEqual([...L.drawn], ["马八进七", "车一平二"]);
   assert.deepEqual(L.svgText(), ["马", "车", "帅"]);
 });
+
+/* #119 預驗（Windows Claude 2）：朝代圖片棋子組（data/pset）的字畫在圖裡，簡體模式要改用「底圖＋文字」 */
+const BOARD = fs.readFileSync(path.join(__dirname, "..", "..", "xiangqi-db", "m", "01-board.js"), "utf8");
+const CPU = fs.readFileSync(path.join(__dirname, "..", "..", "xiangqi-db", "m", "06-cpu.js"), "utf8");
+test("〔混合〕簡體模式判斷 zhCnPc：XQ_ZH 是 cn 才是；沒有 XQ_ZH、mode 壞掉都當繁體", () => {
+  const line = BOARD.match(/^const zhCnPc=.*$/m); assert.ok(line, "01-board.js 有 zhCnPc");
+  const run = (XQ) => { const c = XQ === undefined ? {} : { XQ_ZH: XQ }; vm.createContext(c); vm.runInContext(line[0] + ";this.f=zhCnPc;", c); return c.f() };
+  assert.equal(run({ mode: () => "cn" }), true); assert.equal(run({ mode: () => "tw" }), false);
+  assert.equal(run(undefined), false); assert.equal(run({ mode: () => { throw new Error("x") } }), false); assert.equal(run(null), false);
+  assert.match(BOARD, /if\(curPK&&PSET\.has\(curPK\)&&!zhCnPc\(\)\)\{g\.append\(el\("image"/, "平面棋盤：簡體模式不用整顆圖的朝代棋子");
+  assert.match(BOARD, /const cnT=zhCnPc\(\),gp=!cnT&&GLY\[curPK\]/, "平面棋盤：簡體模式不用繁體字形外框，改畫文字");
+  assert.match(CPU, /ps=!!pk&&PSET\.has\(pk\)&&!hc&&!cnT/, "3D 公園：簡體模式不貼整顆圖");
+  assert.match(CPU, /gly:cnT\?null:GLY\[k\]/, "3D 公園：簡體模式不用繁體字形");
+});

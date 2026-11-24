@@ -17,6 +17,7 @@ const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 const CLASSIFIED = new Set([
   "test-devmode-native-1124.js",   /* 11/24 D1 送審前（App Store 2.3.1）：原生 App 一律不是開發者模式，存檔帶來的 devMode 不生效；手機網頁、電腦網頁照舊（m/02-shell.js DEVMODE；行為 3） */
   "test-zh-canvas-1124.js",   /* 11/24 W94b 簡體模式：平面棋盤（SVG）與畫布（3D 棋子貼圖、河界）上的字也轉簡體，紅子寫「马」「车」不變罕見字（src/zh.js；行為 5） */
+  "test-zh-canvas-1124.js",   /* 11/24 W94b 簡體模式：平面棋盤（SVG）與畫布（3D 棋子貼圖、河界）上的字也轉簡體，紅子寫「马」「车」不變罕見字（src/zh.js；朝代圖片棋子組改底圖＋文字：m/01-board.js、m/06-cpu.js；行為 5、混合 1） */
   "test-newjourney-entry-1116.js",   /* 11/16 開發者「目前已經沒辦法新的旅程了嗎 假設有其他玩家想重玩的話 應該還是要跟存檔讀檔的格子」：存檔與讀檔面板最下面補一顆不管幾格有存檔都在的「開始新的旅程」，開選格頁（m/05b-save.js saveList）（行為 4、原始碼 2；11/16 加「回開頭畫面」） */
   "test-xiu-scene-1116.js",   /* 11/16 開發者「找gemini繪製環景圖 關於這一頁，按照天文專家的判斷」：二十八宿星圖頁改滿版圖＋程式畫的二十八宿 */
   "test-weather-align-1116.js",   /* 11/16 開發者「這邊的天氣錯了，要跟首頁對齊天氣」：雲河的地方（船艙、驛站、航線圖、甲板）跟首頁同一個天氣地區 */
