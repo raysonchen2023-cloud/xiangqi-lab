@@ -512,45 +512,44 @@ const pmv = (B, [f, t]) => { const n = B.slice(); n[t] = n[f]; n[f] = null; retu
 const pMated = (B) => C.inCheck(B, "b") && C.legal(B, "b").length === 0;
 const pMates = (B) => C.legal(B, "r").filter((m) => pMated(pmv(B, m)));
 
-test("仙人指路題庫：開石門 3 題以上、被逮 5 題以上、局面都不一樣；每題都是「紅方先走、兩步將死」，第一步只有一種、照解答走完最後一步也只有一種，而且用兵將死（core.js 重算）", () => {
+test("仙人指路題庫：開石門 3 題以上、被逮 5 題以上、局面不重複；每題都出自古譜（記書名、局名）；照主變走每一手合法、走完將死、最後一步用兵，開局沒有一步殺、最後一步只有一種殺法（core.js 重算；每步唯一由出題工具用 Pikafish 驗）", () => {
   const P = loadP().JH_MZ_PAWN_POOL;
   assert.ok(P.door.length >= 3, "開石門至少 3 題"); assert.ok(P.trap.length >= 5, "被逮至少 5 題");
   const all = P.door.concat(P.trap); assert.equal(new Set(all.map((x) => x.fen)).size, all.length, "局面不重複");
   for (const Q of all) {
-    const B = C.parseFen(Q.fen).slice(0, 90), id = Q.zh[0];
+    const id = Q.id || Q.zh[0];
+    assert.ok(Q.src && /^(橘中秘|爛柯神機|適情雅趣|夢入神機|淵深海闊|心武殘編|梅花譜)$/.test(Q.src.book) && Q.src.title, id + " 要記古譜出處");
+    let B = C.parseFen(Q.fen).slice(0, 90);
     assert.equal(B.filter((p) => p === "K").length, 1, id); assert.equal(B.filter((p) => p === "k").length, 1, id);
-    assert.ok(!C.inCheck(B, "b") && !C.inCheck(B, "r"), id + " 開局雙方都沒被將");
-    assert.equal(Q.line.length, 3, id + " 兩步殺＝紅、黑、紅三手");
-    assert.equal(pMates(B).length, 0, id + " 不能一步就將死（那就不是兩步殺）");
-    /* 兩步殺的第一步：每一種黑方應著之後紅方都有一步殺 */
-    const wins = C.legal(B, "r").filter((m) => { const B1 = pmv(B, m); if (C.inCheck(B1, "r")) return false; const R = C.legal(B1, "b"); return R.length > 0 && R.every((r) => pMates(pmv(B1, r)).length > 0) });
-    assert.deepEqual(wins.map(toIccs), [Q.line[0]], id + " 第一步只有解答這一種");
-    const B1 = pmv(B, wins[0]), rep = C.legal(B1, "b").find((r) => toIccs(r) === Q.line[1]);
-    assert.ok(rep, id + " 黑方的應著是合法著法");
-    const B2 = pmv(B1, rep), fin = pMates(B2);
-    assert.deepEqual(fin.map(toIccs), [Q.line[2]], id + " 最後一步只有解答這一種將死");
-    assert.equal(B2[fin[0][0]], "P", id + " 最後一步用兵將死（兵卒的殺法）");
+    assert.ok(!C.inCheck(B, "b"), id + " 開局黑方沒被將（紅方先走才合理；紅方被將、第一手解將是古譜常見的）");
+    assert.equal(pMates(B).length, 0, id + " 不能一步就將死");
+    assert.equal(Q.line.length % 2, 1, id + " 紅方收尾（紅、黑、紅…）");
+    Q.line.forEach((u, k) => { const side = k % 2 ? "b" : "r", m = C.legal(B, side).find((x) => toIccs(x) === u); assert.ok(m, `${id} 第 ${k + 1} 手 ${u} 要合法`);
+      if (k === Q.line.length - 1) { assert.deepEqual(pMates(B).map(toIccs), [u], id + " 最後一步只有這一種將死"); assert.equal(B[m[0]], "P", id + " 最後一步用兵將死") }
+      B = pmv(B, m) });
+    assert.ok(pMated(B), id + " 走完將死");
   }
 });
 
-test("仙人指路題庫改壞：第一步換成別的合法著法，重算就對不上（重算真的有在比）", () => {
-  const Q = loadP().JH_MZ_PAWN_POOL.trap[0], B = C.parseFen(Q.fen).slice(0, 90);
-  const other = C.legal(B, "r").map(toIccs).find((m) => m !== Q.line[0]);
-  const B1 = pmv(B, C.legal(B, "r").find((m) => toIccs(m) === other));
-  const R = C.legal(B1, "b"); assert.ok(R.length === 0 || !R.every((r) => pMates(pmv(B1, r)).length > 0), "別的第一步不是兩步殺");
+test("仙人指路題庫改壞：最後一步換成別的合法著法，重算就不是將死（重算真的有在比）", () => {
+  const Q = loadP().JH_MZ_PAWN_POOL.trap[0]; let B = C.parseFen(Q.fen).slice(0, 90);
+  for (let k = 0; k < Q.line.length - 1; k++) B = pmv(B, C.legal(B, k % 2 ? "b" : "r").find((x) => toIccs(x) === Q.line[k]));
+  const other = C.legal(B, "r").find((x) => toIccs(x) !== Q.line[Q.line.length - 1]); assert.ok(other && !pMated(pmv(B, other)));
 });
 
 test("仙人指路地圖：每行一樣寬、外框是牆；一個起點、一道石門、一座樓梯、一個踏板、三個箱子、四盞以上壁燈、一條橫貫的河；從起點走得到踏板、三個箱子和石門旁邊", () => {
   const c = loadP(), M = c.JH_MZ_PAWN_MAP, W = M[0].length, cnt = (ch) => M.join("").split(ch).length - 1;
   for (const r of M) { assert.equal(r.length, W); assert.ok(r[0] === "#" && r[W - 1] === "#") }
   assert.ok(/^#+$/.test(M[0]) && /^#+$/.test(M[M.length - 1]));
-  assert.deepEqual([cnt("@"), cnt("D"), cnt(">"), cnt("P"), cnt("C")], [1, 1, 1, 1, 3]); assert.ok(cnt("T") >= 4); assert.ok(cnt("R") >= 20, "很多太湖石");
+  assert.deepEqual([cnt("@"), cnt("D"), cnt(">"), cnt("P"), cnt("C")], [1, 1, 1, 1, 3]); assert.ok(cnt("T") >= 4); assert.ok(cnt("R") >= 10, "很多太湖石"); assert.ok(cnt("H") >= 1, "至少一道暗門"); assert.equal(cnt("L"), 3, "三件碑刻文書");
   for (const y of c.JH_MZ_PAWN_RIVER) assert.ok(/^#~+#$/.test(M[y]), "河整行橫貫");
   const S = c.jhMzNew("pawn"), D = new Set([S.start.y * W + S.start.x]), q = [[S.start.x, S.start.y]];
   while (q.length) { const [x, y] = q.shift(); for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + a, ny = y + b, k = ny * W + nx; if (D.has(k) || c.jhMzSolid(S, nx, ny) || M[ny][nx] === ">") continue; D.add(k); q.push([nx, ny]) } }
   const at = (ch) => { const o = []; M.forEach((r, y) => [...r].forEach((v, x) => { if (v === ch) o.push(y * W + x) })); return o };
   assert.ok(at("P").every((k) => D.has(k)), "走得到踏板"); assert.ok(at("C").every((k) => D.has(k)), "走得到三個箱子");
   const [d] = at("D"); assert.ok([1, -1, W, -W].some((o) => D.has(d + o)), "走得到石門旁邊");
+  for (const k of at("H")) { const x = k % W, y = (k - x) / W; assert.ok(c.jhMzSolid(S, x, y) && c.jhMzOpaque(S, x, y), "暗門擋路也擋視線（沒推開前）") }
+  for (const k of at("L")) { const x = k % W, y = (k - x) / W; assert.ok(c.jhMzSolid(S, x, y) && !c.jhMzOpaque(S, x, y), "碑刻擋路、不擋視線") }
 });
 
 test("太湖石：擋路（走不進去、撞到不算回合）但不擋視線——兵卒隔著石頭照樣看得到", () => {
@@ -569,7 +568,7 @@ test("兵卒守衛：沒過河只往前一步、前面擋住就原地等（不�
   const x0 = G.x, y0 = G.y; K.step(S, G); assert.deepEqual([G.x, G.y], [x0, y0 + 1], "沒過河：往前一步");
   S.grid[G.y + 1][G.x] = "R"; K.step(S, G); assert.deepEqual([G.x, G.y], [x0, y0 + 1], "前面擋住就原地等，不往回走也不橫走");
   assert.ok(K.sight(S, G).every((q) => q.x === G.x && q.y > G.y), "沒過河只看正前方");
-  S.grid[G.y + 1][G.x] = "."; G.y = R[1] + 1; G.x = 7; G.dx = 1; K.step(S, G); assert.deepEqual([G.x, G.y], [8, R[1] + 1], "過了河：往面向那一側走一步");
+  S.grid[G.y + 1][G.x] = "."; G.y = R[1] + 1; G.x = 4; G.dx = 1; K.step(S, G); assert.deepEqual([G.x, G.y], [5, R[1] + 1], "過了河：往面向那一側走一步（第 5 路正前方是通道）");
   const sg = K.sight(S, G); assert.ok(sg.some((q) => q.y === G.y && q.x > G.x), "看得到面向的那一側"); assert.ok(sg.some((q) => q.x === G.x && q.y > G.y), "也看得到正前方");
   G.x = S.W - 2; K.step(S, G); assert.equal(G.dx, -1, "碰到牆就掉頭"); assert.equal(G.x, S.W - 3);
   for (let i = 0; i < 40; i++) { K.step(S, G); assert.ok(G.y >= R[1] + 1, "過了河不會再往回走") }

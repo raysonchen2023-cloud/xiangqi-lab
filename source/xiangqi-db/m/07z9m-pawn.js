@@ -6,33 +6,32 @@
      ・地圖中段一條河（~）：人走得過，兵卒照「過河」改走法；
      ・兵卒守衛（JH_MZ_KIND.pawn）：沒過河只能往前一步一步走、只看得到正前方；過了河就改成左右來回巡，看得到正前方和面向的那一側；
        前面被擋住（沒過河）就原地等，不會往回走（兵不回頭）；
-     ・殘局：兵卒的殺法，全部是「紅方先走、兩步將死」，第一步、最後一步都只有一種走法；最後一步一律用兵將死。
-       題目由 core.js 窮舉產生並驗證（每一種紅方走法、每一種黑方應著都試過；暫存工具不進倉庫），測試另外用 core.js 獨立重算。
-       之後 Windows Claude 1 的 Pikafish 出題工具好了，再用 Pikafish 複核一次。
+     ・殘局：古譜裡兵卒收尾的殺法（開發者 11/24：「你也可以從古譜找題目 比較可靠 古譜+pikafish」），全部「紅方先走、3 步將死」，每題記出處；
+       Pikafish 驗紅方每步唯一、黑方應著撐最久，測試另外用 core.js 獨立重算（照主變走完將死、最後一步用兵）。
      ・同一層的題目照 jhMzPuz 輪換：開石門 3 題、被逮 5 題，連續被逮不會出同一題。 */
 const JH_MZ_PAWN_MAP=[
 "###############",
 "#####.>.#######",
 "#####...#######",
 "######D########",
-"#T...........T#",
-"#..R.R...R.R..#",
-"#.R.....R..C..#",
-"#....R.R....R.#",
-"#.R....P...R..#",
-"#.R....R....R.#",
+"#T.....#.....T#",
+"#.R..R.#.R..R.#",
+"#..R...#...R..#",
+"#.R....H....R.#",
+"#..R..P#.R..C.#",
+"#.R....#L...R.#",
 "#T.....R.....T#",
 "#~~~~~~~~~~~~~#",
 "#~~~~~~~~~~~~~#",
 "#.............#",
-"#..R..R.R..R..#",
-"#.R.........R.#",
-"#C...R...R....#",
-"#..R...R...R..#",
-"#.R..R...R..C.#",
-"#.....R.R.....#",
-"#T...........T#",
-"#......@......#",
+"#.###.###.###.#",
+"#.#L..#C..#...#",
+"#.#.###.#.#.#.#",
+"#...#...#...#.#",
+"###.#.#####.#.#",
+"#C..#.H.L#..R.#",
+"#...#.####...T#",
+"#T....@.......#",
 "###############"];
 /* 兵卒：黑方的兵往下（dy=1）走；river＝河的兩行（y 在這兩行之間或之後＝過河） */
 const JH_MZ_PAWN_RIVER=[11,12];
@@ -60,28 +59,23 @@ JH_MZ_TILE.R=(cx,px,py,T)=>{cx.fillStyle="rgba(0,0,0,.35)";cx.beginPath();cx.ell
   cx.fillStyle="#8f9a9a";cx.strokeStyle="#3f4848";cx.lineWidth=1.8;cx.beginPath();cx.moveTo(px+T*.22,py+T*.85);cx.lineTo(px+T*.3,py+T*.4);cx.lineTo(px+T*.45,py+T*.18);cx.lineTo(px+T*.62,py+T*.3);cx.lineTo(px+T*.78,py+T*.55);cx.lineTo(px+T*.72,py+T*.85);cx.closePath();cx.fill();cx.stroke();
   cx.fillStyle="#3f4848";for(const[a,b,r]of[[.45,.45,.07],[.6,.62,.05]]){cx.beginPath();cx.arc(px+a*T,py+b*T,r*T,0,7);cx.fill()}};
 JH_MZ_TILE["~"]=(cx,px,py,T)=>{cx.fillStyle="#4f7f8c";cx.fillRect(px,py,T,T);cx.strokeStyle="rgba(220,240,245,.5)";cx.lineWidth=1.4;cx.beginPath();cx.moveTo(px+T*.15,py+T*.4);cx.quadraticCurveTo(px+T*.35,py+T*.3,px+T*.55,py+T*.4);cx.moveTo(px+T*.45,py+T*.7);cx.quadraticCurveTo(px+T*.65,py+T*.6,px+T*.85,py+T*.7);cx.stroke()};
-/* 殘局題庫：全部「紅方先走、兩步將死」；line＝[紅,黑,紅]，第一步、最後一步都只有一種殺法，最後一步用兵將死（core.js 窮舉驗證，測試獨立重算） */
-const JH_MZ_PAWN_POOL={
-  door:[
-    {zh:["石門機關：車兵聯手","石門上刻著一隊過河的兵。紅方先走，兩步將死黑方，門就會開。"],en:["Stone door: rook and pawns","A file of pawns that have crossed the river is carved on the door. Red to move: mate in two and the door opens."],
-     fen:"4R4/3k5/b4P3/9/3P5/9/9/p2K5/9/9",line:["d5d6","a7c5","d6d7"]},
-    {zh:["石門機關：炮護兵進","炮在後面撐著，兵一步一步逼上去。紅方先走，兩步將死黑方。"],en:["Stone door: the cannon backs the pawn","The cannon covers from behind while the pawn pushes in. Red to move: mate in two."],
-     fen:"2b1k1P2/C8/3P5/9/2P6/9/9/5K3/2p6/9",line:["d7d8","c9a7","g9f9"]},
-    {zh:["石門機關：馬後兵","馬守住將的退路，兵上去收網。紅方先走，兩步將死黑方。"],en:["Stone door: the pawn behind the horse","The horse cuts off the king's escape and a pawn closes in. Red to move: mate in two."],
-     fen:"3k2b2/1PP6/3a5/5N3/9/9/9/4K4/9/9",line:["c8c9","d9d8","b8c8"]}],
-  trap:[
-    {zh:["被兵卒圍住了","兵卒把你圍在太湖石間：「下得贏這局，就放你走。」紅方先走，兩步將死黑方。"],en:["Surrounded by pawn guards","The pawn guards hem you in among the lake rocks: \"Win this and you can go.\" Red to move: mate in two."],
-     fen:"5k3/4P4/b5P2/9/9/9/9/9/5K3/9",line:["g7f7","a7c5","f7f8"]},
-    {zh:["被兵卒圍住了：雙兵鎖喉","兩個兵貼著九宮，將已經沒地方走。紅方先走，兩步將死黑方。"],en:["Surrounded: two pawns at the throat","Two pawns press against the palace and the king has nowhere to go. Red to move: mate in two."],
-     fen:"6P2/5k3/b2P1a3/5P3/9/9/1p7/9/9/4K4",line:["d7e7","f7e8","e7e8"]},
-    {zh:["被兵卒圍住了：兵臨城下","三個兵擠在九宮門口。紅方先走，兩步將死黑方。"],en:["Surrounded: pawns at the gate","Three pawns crowd the palace gate. Red to move: mate in two."],
-     fen:"3k1P3/1P7/3a1a2b/8P/9/9/7p1/9/9/4K4",line:["f9e9","d9d8","b8c8"]},
-    {zh:["被兵卒圍住了：炮打兵追","炮先叫將，兵跟上去收尾。紅方先走，兩步將死黑方。"],en:["Surrounded: cannon fires, pawn follows","The cannon checks first and a pawn finishes it. Red to move: mate in two."],
-     fen:"4k1P2/3P5/5a3/1C4P2/9/9/9/9/9/3K5",line:["b6b9","f7e8","d8d9"]},
-    {zh:["被兵卒圍住了：馬引兵入","馬在角上看著，兵從旁邊鑽進去。紅方先走，兩步將死黑方。"],en:["Surrounded: the horse lets the pawn in","The horse watches from the corner as a pawn slips in. Red to move: mate in two."],
-     fen:"8N/5P3/3k1P2b/4P4/9/9/9/9/9/4K4",line:["f8e8","i7g5","e6d6"]}]};
+/* 殘局題庫：古譜（橘中秘、爛柯神機）裡兵收尾的 3 步殺，Windows Claude 1 的出題工具 maze-puzzles.js 挑題、Pikafish（深度 20）驗證紅方每步唯一、黑方應著撐最久；
+   標記中間那一段由工具產生（--check 可以重跑比對），標題、說明照仙人指路的兵卒守衛改過字 */
+/* ==JH_MZ_POOL:JH_MZ_POOL_PAWN== */
+const JH_MZ_POOL_PAWN={door:[
+{"id": "jc108c8", "src": {"book": "橘中秘", "title": "炮兵能勝士象全"}, "zh": ["石門機關：兵卒的殺法", "石門上刻著一隊過河的兵。紅方先走，3 步將死黑方，門就會開。提示：兵過了河就能橫著走。"], "en": ["Stone door: a soldier's mate", "A file of soldiers that have crossed the river is carved on the door. Red to move: checkmate in 3 and the door opens. Hint: once across the river, a soldier can move sideways."], "fen": "3ak4/4aP3/b3b4/9/9/9/2C6/9/4K4/9", "line": ["c3e3", "a7c5", "e1f1", "c5a7", "f8f9"]},
+{"id": "lk035c4", "src": {"book": "爛柯神機", "title": "獨具爐錘"}, "zh": ["石門機關：兵卒的殺法", "石門上刻著一隊過河的兵。紅方先走，3 步將死黑方，門就會開。提示：兵過了河就能橫著走。"], "en": ["Stone door: a soldier's mate", "A file of soldiers that have crossed the river is carved on the door. Red to move: checkmate in 3 and the door opens. Hint: once across the river, a soldier can move sideways."], "fen": "3k3C1/1P4P2/4bN2b/4P4/9/9/9/5p3/3cp4/3p1K3", "line": ["f7g9", "d9d8", "b8c8", "d8d7", "e6d6"]},
+{"id": "lk058c5", "src": {"book": "爛柯神機", "title": "海底藏珍"}, "zh": ["石門機關：兵卒的殺法", "石門上刻著一隊過河的兵。紅方先走，3 步將死黑方，門就會開。提示：兵過了河就能橫著走。"], "en": ["Stone door: a soldier's mate", "A file of soldiers that have crossed the river is carved on the door. Red to move: checkmate in 3 and the door opens. Hint: once across the river, a soldier can move sideways."], "fen": "9/4aR3/2Nak4/2p2P3/9/9/9/3K2p1B/1p1r5/2p2p3", "line": ["d2d1", "b1c1", "d1d2", "c0b0", "f6e6"]}],
+trap:[
+{"id": "lk104c4", "src": {"book": "爛柯神機", "title": "馬首是瞻"}, "zh": ["被兵卒圍住了", "兵卒把你圍在太湖石間：「這局解得開，就放你過去。」紅方先走，3 步將死黑方。"], "en": ["Surrounded by pawn guards", "The pawn guards hem you in among the lake rocks: \"Solve this and you may pass.\" Red to move: checkmate in 3."], "fen": "4k1c2/2P1a1n2/b3P4/3r5/9/6BC1/4P4/9/4C1p2/r2p1K3", "line": ["e7e8", "e9d9", "h4h9", "g8e9", "e8e9"]},
+{"id": "lk137c6", "src": {"book": "爛柯神機", "title": "巧用連環-(連環形)"}, "zh": ["被兵卒圍住了", "兵卒把你圍在太湖石間：「這局解得開，就放你過去。」紅方先走，3 步將死黑方。"], "en": ["Surrounded by pawn guards", "The pawn guards hem you in among the lake rocks: \"Solve this and you may pass.\" Red to move: checkmate in 3."], "fen": "9/4k4/3R1P3/6p2/2P6/4n4/3C1p3/2p3r2/3p1p3/4K4", "line": ["d7e7", "e8d8", "c5d5", "e4d6", "d5d6"]},
+{"id": "lk141c5", "src": {"book": "爛柯神機", "title": "屈乘假道"}, "zh": ["被兵卒圍住了", "兵卒把你圍在太湖石間：「這局解得開，就放你過去。」紅方先走，3 步將死黑方。"], "en": ["Surrounded by pawn guards", "The pawn guards hem you in among the lake rocks: \"Solve this and you may pass.\" Red to move: checkmate in 3."], "fen": "C1bak4/3R5/5cr2/9/4P4/9/9/9/2r1p4/3K5", "line": ["d8d9", "e9e8", "d9d8", "e8e7", "e5e6"]},
+{"id": "lk172c7", "src": {"book": "爛柯神機", "title": "送往迎來"}, "zh": ["被兵卒圍住了", "兵卒把你圍在太湖石間：「這局解得開，就放你過去。」紅方先走，3 步將死黑方。"], "en": ["Surrounded by pawn guards", "The pawn guards hem you in among the lake rocks: \"Solve this and you may pass.\" Red to move: checkmate in 3."], "fen": "3P2P2/4nk1P1/b8/9/2b1P4/9/7N1/9/2p1pr3/3K3C1", "line": ["h8g8", "f8f7", "h3g5", "f7e7", "e5e6"]},
+{"id": "lk182c5", "src": {"book": "爛柯神機", "title": "脫帽露頂"}, "zh": ["被兵卒圍住了", "兵卒把你圍在太湖石間：「這局解得開，就放你過去。」紅方先走，3 步將死黑方。"], "en": ["Surrounded by pawn guards", "The pawn guards hem you in among the lake rocks: \"Solve this and you may pass.\" Red to move: checkmate in 3."], "fen": "6Nc1/2PP1k3/4N2n1/9/9/9/9/3p5/2rp1r3/4K4", "line": ["e7g6", "f8f9", "g6h8", "f9f8", "d8e8"]}]};
+/* ==/JH_MZ_POOL:JH_MZ_POOL_PAWN== */
+const JH_MZ_PAWN_POOL=JH_MZ_POOL_PAWN;
 jhMzDef("pawn",{map:JH_MZ_PAWN_MAP,guards:JH_MZ_PAWN_GUARDS,river:JH_MZ_PAWN_RIVER,pool:JH_MZ_PAWN_POOL,
-  puz:{door:JH_MZ_PAWN_POOL.door[0],trap:JH_MZ_PAWN_POOL.trap[0]},solid:"#DR",opaque:"#D",jump:"",
+  puz:{door:JH_MZ_PAWN_POOL.door[0],trap:JH_MZ_PAWN_POOL.trap[0]},solid:"#DRHL",opaque:"#DH",jump:"",
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"仙人指路譜殘頁",en:"Immortal Points the Way manual page"},{k:"box",zh:"青瓷棋罐",en:"Celadon piece jar"}],
   title:["🪨 太湖石陣","🪨 Lake-rock maze"],lvName:["太湖石陣・第一層","Lake-rock maze · Level 1"],back:["回仙人指路門","Back to the Immortal Points the Way School"],
   hall:{at:[560,930],zh:"🪨 太湖石・石陣入口",en:"🪨 Lake rock · Maze entrance"},
