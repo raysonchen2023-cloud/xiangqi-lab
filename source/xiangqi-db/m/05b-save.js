@@ -52,6 +52,7 @@ JOURNEY_KEYS.push("m_opSeen");   /* 11/17 晚開場順序（07stq 檔尾 stqXu*�
 JOURNEY_KEYS.push("m_xsmStall");   /* 11/16 開發者（西市四攤，07xsm-ximarket.js）：xsmStall＝找棋子（這一副找到第幾顆、湊齊幾副、哪天找過）、老槐樹下今天是誰來、見過了沒、小禮收了沒。另外加一行，不動上面清單的字（好幾支測試比對清單結尾） */
 JOURNEY_KEYS.push("m_zm","m_zmCur");   /* 11/18 開發者（十派掌門，07z9-school.js）：zm＝各掌門目前強度、各角色對各掌門的勝和負；zmCur＝這一盤是哪位掌門、哪位角色（帳號第一次贏的修為去重在 oscClaim） */
 JOURNEY_KEYS.push("m_osc");   /* 11/18 開發者（開局門派，07z9-school.js）：osc＝每位七星的門派、各課進度、看過提示／示範、三階段完成時間（跟旅程走；修為去重的 oscClaim 是帳號層，不在這裡） */
+JOURNEY_KEYS.push("m_secMs","m_secMsDay","m_secAll");   /* W96（11/24）：散佚手稿張數、今天撿了幾張、雲河尋訪錄集滿的保底發過沒（07-legend.js） */
 JOURNEY_KEYS.push("m_jhKick");   /* 11/22 開發者（W45② 十州踢館令，07z9b-jianghu.js）：jhKick＝各組踢館第一次破陣的時間、局號、哪位角色（帳號第一次破陣的修為去重在 oscClaim 的 kick:A>B） */
 JOURNEY_KEYS.push("m_jhScreen");   /* 11/22 開發者（W48 屏風馬門門內，07z9c-screen.js）：jhScreen＝雙馬守中宮第一次過關與最多守幾步、挑錯著與算帳今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhGong");   /* 11/22 開發者（W48 過宮炮門「宣紙蓋子位」，07z9d-gongpao.js）：jhGong＝上次選的難度、今天領過修為的日子、一輪最多記對幾題 */
