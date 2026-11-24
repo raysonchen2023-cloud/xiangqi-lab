@@ -71,7 +71,7 @@ node scripts/canary-www.js --pkg <要送審的 .ipa> --list scripts/.www-files.j
 - `check-www.js` 比對清單裡每個檔的大小；有記 sha1 的檔，內容也要一樣。加 `--cdn` 時，包裡 `data/` 的檔再跟 CDN 現行版（`cdn-manifest.json`）逐檔比，App 會要的檔不同就擋（W42）。讀不到檔案清單（例如 `--list` 路徑打錯）或讀不到 CDN 清單都回 3（缺驗），不能當沒問題；要接值的參數放最後沒給值、或給了空值，回 1；也認 `--dir=X` 這種寫法；不認得的參數（打錯字，例如 `--cnd`）回 1。`--all` 只影響印多少，不影響判定。檔名大小寫要完全一樣（macOS 預設不分大小寫，iPhone 分），用目錄列表比對。
 - `canary-www.js` 把 `www` 複製一份（macOS 用 APFS 複製，幾秒就好），在副本上做 27 種壞樣本，每一類固定測頭、中、尾三個檔，再加一個用種子挑的；全部候選挑頭、中、尾＋隨機，另外每一層（完整父目錄＋副檔名，例如 data/pset/ming/ 的 .png 自己一層；背景音樂照朝代）都挑 1 個，不抽樣；檔多的壞樣本一次在同一份副本弄壞好幾個，每個檔的錯誤都要出現在 ✘／△ 那一行；根目錄的程式檔、7 支核心程式每次全部都測；控制字元第一支程式檔 30 個全插、其他每支各插一個；nohash 另外測大於 20 MB 的檔。只改清單的壞樣本（nohash、cdnmiss、cdnfail）不複製整份 www（`--seed` 可以指定，收據會記下來）：拿掉首頁素材、拿掉一首背景音樂、拿掉一個引擎檔、拿掉一個核心程式、前幾大的檔只留一半、同樣大小但內容被換（另外固定測最大的兩個記了 sha1 的檔）、`native-bridge.js` 移到 App 程式後面、`native-bridge.js` 移到 `capacitor.js` 前面、程式檔插控制字元（check-www 認的 30 個控制字元都插過，插在檔頭、檔中、檔尾）、首頁素材改成大小寫不同的檔名、拿掉 capacitor.js／native-bridge.js 標籤、清單裡重要檔的雜湊拿掉（要回 3）、拿掉一個清單有但不在任何特定名單裡的檔（要報「少了」）、拿掉 `preload.json` 的 `big` 列的大檔、App 會要的檔換成舊副本而且清單也照舊副本改（只有跟 CDN 比才抓得到）、CDN 清單少一個 App 會要的檔（要回 3）、CDN 清單讀不到（要回 3）。再用同一支 `check-www.js`、跟正式用法一樣的參數檢查，每一種都要得到預期的結束代碼，而且錯誤裡要有那一處的檔名和原因。
 - 結束代碼：0＝乾淨的全過、壞樣本都被抓到；4＝有壞樣本沒被抓到（檢查失靈，這一輪結果不算）；2＝測試不成立（含參數沒給值，以及 `check-www.js` 卡住超過時限）；3＝讀不到 CDN 清單（缺驗）。金絲雀先驗乾淨的那份，乾淨的有錯回 2，之後才讀 CDN。
-- 子程序時限：金絲雀叫的每個子程序（`cp`、`unzip`、`git`、`check-www.js`）最多 300 秒，超過就殺掉。乾淨的那次、任何一個壞樣本、乾淨重跑或正式 `--cdn` 那次卡住，都判「測試不成立」（回 2），收據寫明哪一次卡住；但只要有一個壞樣本是真的沒被抓到，照樣回 4，不會被卡住蓋掉。`XQ_CANARY_SUB_MS` 只給自我測試縮短時限用，不是 1 秒～1 小時的值一律退回 300 秒。
+- 子程序時限：金絲雀叫的每個子程序（`cp`、`unzip`、`git`、`check-www.js`）最多 300 秒，超過就殺掉。乾淨的那次、任何一個壞樣本、乾淨重跑或正式 `--cdn` 那次卡住，都判「測試不成立」（回 2），收據寫明哪一次卡住；但只要有一個壞樣本是真的沒被抓到，照樣回 4，不會被卡住蓋掉。`XQ_CANARY_SUB_MS` 只給自我測試縮短時限用：1 秒～1 小時之間取整數，大於 0 但不到 1 秒的拉到 1 秒，其他（沒給、0、負數、文字、Infinity、超過 1 小時）一律用 300 秒。金絲雀執行時出了沒預料到的錯（例如暫存資料夾不存在），也回 2；`--out` 的收據寫不進去時，原本全過的降成 2，失靈的 4 照樣是 4。
 - 給了 `--pkg`，金絲雀檢查的就是安裝包裡那份 `public`（`.ipa` 會先解開 `Payload/*.app/public`），不能再另外給 `--dir`；收據的包跟被檢查的內容一定是同一份。
 - 收據記下每一種壞樣本挑了哪個檔、種子、兩支工具的 SHA-256（CRLF 換成 LF）、`public` 的樹雜湊、安裝包的 SHA-256、清單的 SHA-256 和 origin/main 那份清單的 SHA-256、origin/main 上兩支工具的 SHA-256、比對時本機 origin/main 的提交、包裡 `release.json` 的版號。
 - `.ipa` 會整包解開（不靠萬用字元），解完核對 public 底下的檔數跟 zip 目錄一樣；zip 裡有重複的檔名項目就回 2。`--seed` 要是非負整數。
@@ -138,3 +138,31 @@ xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -de
 ## 六、不在這裡的東西
 
 簽章憑證、描述檔、Apple 帳號與 Team ID、Xcode 個人設定（xcuserdata）、建置產物（DerivedData、`ios/App/App/public/`、`www/`、`node_modules/`）。
+
+## 原生檢查的金絲雀（2026-11-23 起，AGENTS.md「P0 出口驗證要難作假」）
+
+```
+node scripts/canary-native.js --out <收據.json>
+```
+
+- `check-native.js` 是原生碼的原始碼比對檢查：兩份 Swift 要一樣、埠號 47821、本機伺服器的一次性考題驗證、驗證通過才載入畫面、外掛不連網、不讀玩家 ID 等等。
+- `canary-native.js` 把 `source/xiangqi-ios`（不含 `node_modules`、`build`、`Pods`、`DerivedData`、`ios/App/App/public`）和 check-native 會讀的兩支網頁檔（`07gc-native.js`、`01-board.js`）整份複製到暫存資料夾；有 `node_modules/@capacitor/ios` 的話，另外只複製 check-native 讀的 `CAPBridgeViewController.swift`、`CapacitorBridge.swift`。在副本上一次改壞一處，再用複製過去、內容一模一樣的 `check-native.js` 檢查。
+  - 一共 228 種壞樣本，每一種都要被判失敗（結束代碼 1），而且錯誤裡要有那一條判斷的字。
+  - **每個子條件、每個字都有自己的壞樣本**（#135 審查）：一條判斷裡用 `&&` 接起來的每一段、正規式裡用 `|` 列的每一個字，各做一個「只有它抓得到」的壞樣本；控制字元照 canary-www 的做法，30 個字元各插一次。
+  - 乾淨的副本要全過。
+  - 會改到兩份 Swift 的壞樣本，`native/ios` 和 `ios/App/App` 兩份一起改，只讓要測的那一條判斷抓得到。
+- 結束代碼：
+  - 0：壞樣本全部抓到；
+  - 4：有壞樣本沒被抓到，代表 check-native 本身失靈，這一輪的結果不可信；
+  - 2：測試不成立，例如乾淨的副本就沒過、壞樣本做不出來、參數錯。
+- 自我測試 `test-canary-native.cjs`：
+  - 壞樣本的名稱清單寫死在測試裡，少一種、多一種都紅；
+  - 把 `check-native.js` 的每一條判斷逐一改成恆真，對應的壞樣本都要回 4（確切 135 條）；
+  - **子條件改壞清單**（寫死 135 條）：每一條只拿掉一個子條件或正規式裡的一個字，指定的壞樣本要回 4；
+  - 訊息是組出來的幾條（兩份相同、括號沒收尾、控制字元、外掛不連網、install-native、establish 退回舊寫法）另外測。
+- **沒辦法單獨測的子條件**（跟別條重疊，或在程式碼裡出不來），寫在自我測試的 `REDUNDANT` 清單和原因裡，例如：
+  - 網路判斷裡的 `https?://`：check-native 先用 `swiftCode` 把字串換成空白、`//` 又是註解開頭，程式碼裡出不來；
+  - 「establishNow 裡不能宣告 func verifyNow」：任何宣告都會多一個 `verifyNow` 字，先被「verifyNow 字數＝if 區塊數」抓到。
+- 要有 `node_modules/@capacitor/ios` 或外掛已裝進 Xcode 專案才會跑的判斷（Capacitor 的 viewDidLoad、loadWebView、capacitorDidLoad、registerPluginInstance；packageClassList 列了 Game Center／小工具、Info.plist 的網址、pbxproj 登記了卻缺檔、外掛兩份相同）：CI 和一般的倉庫副本裡只會出警告，金絲雀在副本裡做一份合格的假 Capacitor 檔、假的「已裝進 Xcode」狀態，再各弄壞一處來測（#135 複審④）。
+- 2026-11-23 做金絲雀時發現一個缺口：check-native 判斷「establish 一定經過 verifyNow」原本只數 `verifyNow(` 出現幾次，寫成 `true || verifyNow(…)` 就繞過了。#127 改成比對結構：`verifyNow` 只能以 `if verifyNow(timeout: 秒) {` 出現至少兩次、每個區塊裡要 `return .verified` 而且不接 `else`、合格區塊以外整份不能有 `.verified`、整份只有一個 `func verifyNow`。
+- 還沒擋到：`verifyNow` 本體直接 `return true`（要先改 check-native，另開依序合併的 PR）。
