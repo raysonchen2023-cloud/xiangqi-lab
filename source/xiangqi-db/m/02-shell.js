@@ -373,9 +373,12 @@ const NATIVE_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(/Macintosh/.test
 const NATIVE_OLDWV=NATIVE_IOS?"電腦棋手沒有啟動成功，請把 App 完全關掉再重新開啟；若一直失敗，請更新 iOS 或聯絡我們":"這支手機的 Android System WebView 版本太舊，電腦棋手無法運作；請到 Play 商店更新「Android System WebView」或「Chrome」";   /* 11/17 App Store 審查（指南 2.3.10）：iOS 原生 App 萬一沒有跨來源隔離，說 iOS 的話，不提 Android、Play 商店 */
 if(OFF&&/XQQianqiuApp\//.test(navigator.userAgent)&&(!self.crossOriginIsolated||typeof SharedArrayBuffer==="undefined")){
   if(window.XQEngine){const no=()=>Promise.reject(new Error(NATIVE_OLDWV));XQEngine.load=no;XQEngine.search=no;XQEngine.prefetch=no}
+  /* W92（11/24 Windows Claude 2 在 Android 16 模擬器 WebView 133 上發現）：Pikafish 是多執行緒版、要 SharedArrayBuffer，舊 WebView 沒有就載不起來。
+     改成對局時先請備用的 Magellan（varengine，純 JS、不要多執行緒）走棋（local.js 看 XQ_ENG_FALLBACK）；棋力較弱，提示與棋局分析照舊要更新才能用 */
+  try{window.XQ_ENG_FALLBACK=1}catch(e){}
   const wv=(navigator.userAgent.match(/Chrome\/([\d.]+)/)||[])[1]||"",mute=store.get("oldWvMute","")===wv;let tries=0;
   const show=()=>{if(document.querySelector("#preov,.modal,#sheet.show")&&++tries<30)return setTimeout(show,3000);if(mute){toast("⚠ "+NATIVE_OLDWV);return}
-    modal(`<div class="em">📱</div><h2>${NATIVE_IOS?"電腦棋手沒有啟動成功":"電腦棋手需要更新手機元件"}</h2><p style="text-align:left">${esc(NATIVE_OLDWV)}。</p><p class="muted" style="text-align:left">${NATIVE_IOS?"聯絡方式在設定房間「🔒 系統・隱私・家長」的「📮 聯絡與支援」。":"更新好以後，把 App 完全關掉再打開就能用。"}<br>現在照樣能用：同桌對弈（兩人在這支手機輪流下）、殘局、古譜與大師對局、測驗、線上對弈。<br>${NATIVE_IOS?"要等電腦棋手啟動成功才能用":"要等更新才能用"}：挑戰電腦、擂台、棋局分析與提示。</p>${wv&&!NATIVE_IOS?`<p class="muted">目前的 WebView 版本：${esc(wv)}</p>`:""}`,[["知道了",null],["這個版本不再跳出",()=>store.set("oldWvMute",wv),true]])};
+    modal(`<div class="em">📱</div><h2>${NATIVE_IOS?"電腦棋手沒有啟動成功":"電腦棋手需要更新手機元件"}</h2><p style="text-align:left">${esc(NATIVE_OLDWV)}。</p><p class="muted" style="text-align:left">${NATIVE_IOS?"聯絡方式在設定房間「🔒 系統・隱私・家長」的「📮 聯絡與支援」。":"更新好以後，把 App 完全關掉再打開就能用。"}<br>現在照樣能用：同桌對弈（兩人在這支手機輪流下）、殘局、古譜與大師對局、測驗、線上對弈；挑戰電腦先改用備用的簡易棋手陪你下（棋力比較弱）。<br>${NATIVE_IOS?"要等電腦棋手啟動成功才能用":"要等更新才能用"}：完整棋力的電腦棋手、擂台、棋局分析與提示。</p>${wv&&!NATIVE_IOS?`<p class="muted">目前的 WebView 版本：${esc(wv)}</p>`:""}`,[["知道了",null],["這個版本不再跳出",()=>store.set("oldWvMute",wv),true]])};
   setTimeout(show,2500)}
 if(OFF&&window.XQEngine){let bar=null;const NAT=typeof xqNat==="function"&&xqNat();
   XQEngine.onProgress((got,total)=>{if(!bar){keepAwake("engine",()=>!!bar);bar=document.createElement("div");bar.className="toast";if(/^#[/](cpu|arena|pvp|quiz|watch|journey[/]play|redo[/]play|legend)([/]|$)/.test(location.hash))bar.style.display="none";   /* QA P2-6：下棋、讀故事時不蓋引擎下載進度 */
@@ -569,7 +572,9 @@ if(OFF&&window.XQNet){XQNet.start();
 // ================= 分享：讓別的手機也裝象棋千秋 =================
 const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
 // 開發者模式：電腦網頁一律是；手機要在 設定→進階 自己打開。掃過電腦 QR code 的玩家也只是玩家，看不到「電腦」相關的字
-const DEVMODE=()=>!OFF||!!store.get("devMode",false);
+/* D1（App Store 2.3.1 隱藏功能；開發者選「原生版關掉」）：原生 App（iOS、Android）一律不是開發者模式——設定頁早就沒有開關（OFF&&!setNat()），
+   但「換手機」搬存檔時若帶來 devMode:true 還是會生效（測試台、全部解鎖試玩都靠它），所以原生版直接不看存檔。手機網頁照舊可以登入打開 */
+const DEVMODE=()=>!OFF||(!(typeof setNat==="function"&&setNat())&&!!store.get("devMode",false));
 /* 11/16 開發者「除了意見回饋欄的按鈕，其他都要讓開發者的視角和玩家一樣，要看開發者的內容要到開發者測試台」（選單：測試台加總開關、本機也跟玩家一樣、自我檢查提示收進測試台紀錄）：
    DEVMODE 只管意見回饋管理、測試台入口和玩家看不到的差別（不送匿名資料等）；會改變畫面的特例改看開發者測試台（07dv）的兩個開關，預設都關＝跟玩家一樣。
    DEVUNLOCK＝「🔓 全部解鎖試玩」（觀星臺、西市、第二集、星門圍城全部關卡、故事預覽、下架的章…）；DEVTOOLS＝「🛠 頁面上顯示開發者小工具」；devNote＝自我檢查沒過時記一筆（測試台「自我檢查紀錄」，最多 30 筆） */
