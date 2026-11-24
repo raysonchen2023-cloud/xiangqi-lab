@@ -7,9 +7,8 @@
        它看得到的＝下一步能飛到的田字落點（地上畫紅）；玩家站在落點上就被逮，跟象棋「被相吃」一樣。象眼塞住的那個方向就沒有威脅。
      ・考箱 X：玩家往箱子走、箱子後面是空地，就把箱子推過去（算一步）；推去塞住象眼，相就飛不過來。箱子不能推進水裡、牆裡、別的箱子。
      ・殘局：開發者 11/24「如果有些沒有收尾的棋 例如相 那就換個其他方式設計 不要硬做出錯誤的」——相不能殺將，所以改出「解殺題」：
-       黑方下一步就要將死紅方，紅方只有一步解得了圍。開石門的題目一律是「飛相解殺」，被逮的題目是仕、炮解殺。
-       題目由 core.js 窮舉產生（紅方所有著法逐一試：只有解答那一步走了以後黑方一步殺不了），測試另外用 core.js 獨立重算；
-       Windows Claude 1 用 Pikafish 深度 22 複核（W95），不合格的換題。kind:"defend" 讓殘局視窗把「將死」的說法換成「解圍」（#110）。 */
+       黑方下一步就要將死紅方，紅方只有一步解得了圍。開石門的題目一律是「飛相解殺」，被逮的題目是補相、補仕、車回防。
+       題目取自大師實戰對局、Pikafish 深度 22 驗過（見下方題庫說明），測試另外用 core.js 獨立重算。kind:"defend" 讓殘局視窗把「將死」的說法換成「解圍」（#110）。 */
 const JH_MZ_ELE_MAP=[
 "###############",
 "#####.>.#######",
@@ -57,26 +56,22 @@ if(!JH_MZ_OBJ.W)JH_MZ_OBJ.W=H=>{const{T3,mesh,lam}=H,g=new T3.Group();g.add(mesh
 if(!JH_MZ_TILE.X)JH_MZ_TILE.X=(cx,px,py,T)=>{cx.fillStyle="#6b4a2a";cx.fillRect(px+T*.18,py+T*.22,T*.64,T*.56);cx.strokeStyle="#2e1f12";cx.lineWidth=2;cx.strokeRect(px+T*.18,py+T*.22,T*.64,T*.56);
   cx.beginPath();cx.moveTo(px+T*.18,py+T*.22);cx.lineTo(px+T*.82,py+T*.78);cx.moveTo(px+T*.82,py+T*.22);cx.lineTo(px+T*.18,py+T*.78);cx.stroke()};
 if(!JH_MZ_TILE.W)JH_MZ_TILE.W=(cx,px,py,T)=>{cx.fillStyle="#3f6670";cx.fillRect(px,py,T,T);cx.strokeStyle="rgba(210,235,240,.45)";cx.lineWidth=1.3;cx.beginPath();cx.moveTo(px+T*.15,py+T*.45);cx.quadraticCurveTo(px+T*.35,py+T*.35,px+T*.55,py+T*.45);cx.moveTo(px+T*.4,py+T*.72);cx.quadraticCurveTo(px+T*.6,py+T*.62,px+T*.85,py+T*.72);cx.stroke()};
-/* 殘局題庫：解殺題（kind:"defend"）。line 只有一手＝紅方唯一能解圍的那一步。core.js 窮舉產生，Pikafish 複核前先用 */
+/* 殘局題庫：解殺題（kind:"defend"），line 只有一手＝紅方唯一能解圍的那一步。
+   題源（Windows Claude 1，W95）：31,531 局大師對局主線、112 萬個紅方該走的局面，core.js 初篩後用 Pikafish 深度 22 複驗：
+   紅方不動黑方有殺；解答以外每一手黑方 3 步內殺；解答之後黑方 5 步內殺不了、而且 cp ≥ -300（解完圍局面還下得下去）。
+   開石門 3 題都是動相；被逮 5 題是補相、補仕、車回防。古譜殘局多半是殺題、掃不到合格的解殺題，所以用大師實戰對局，src 記對局名、年份、第幾手。
+   第一次 core.js 窮舉出的 8 題，Pikafish 判解答之後 2～8 步照樣被殺，已全部換掉。 */
 const JH_MZ_ELE_POOL={
   door:[
-    {kind:"defend",zh:["石門機關：飛相解殺","門上刻著一頭石象。黑方下一步就要將死紅方——紅方先走，找出唯一一步解圍的走法，門就會開。提示：相走田字，象眼塞住就飛不過去。"],en:["Stone door: the elephant saves the king","A stone elephant is carved on the door. Black threatens mate next move. Red to move: find the only move that stops it and the door opens. Hint: an elephant moves two squares diagonally and is blocked if the square between is occupied."],
-     fen:"4k4/9/9/9/9/2r3B2/n7c/4BK3/9/2n2A3",line:["e2c4"]},
-    {kind:"defend",zh:["石門機關：飛相解殺","黑方下一步就要將死紅方。紅方先走，找出唯一一步解圍的走法。"],en:["Stone door: the elephant saves the king","Black threatens mate next move. Red to move: find the only move that stops it."],
-     fen:"9/9/4k4/9/n2r5/9/9/B2A5/1c3K3/2B6",line:["c0e2"]},
-    {kind:"defend",zh:["石門機關：飛相解殺","黑方下一步就要將死紅方。紅方先走，找出唯一一步解圍的走法。"],en:["Stone door: the elephant saves the king","Black threatens mate next move. Red to move: find the only move that stops it."],
-     fen:"9/9/4k4/9/9/2B3B2/c4p2r/9/4A1p2/3A1K3",line:["c4e2"]}],
+    {"kind": "defend", "zh": ["石門機關：飛相解殺", "門上刻著一頭石象。黑方下一步就要將死紅方——紅方先走，找出唯一一步解圍的走法，門就會開。提示：相走田字，象眼塞住就飛不過去。"], "en": ["Stone door: the elephant saves the king", "A stone elephant is carved on the door. Black threatens mate next move. Red to move: find the only move that stops it and the door opens. Hint: an elephant moves two squares diagonally and is blocked if the square between is occupied."], "fen": "5k3/2N1a4/9/3P4c/9/5CB2/5p3/3A5/4AK1n1/9", "line": ["g4i2"], "src": {"book": "大師對局", "title": "中院杭州分院-王天一-勝-龍江棋牌中心-郝繼超", "year": 2018, "ply": 152}, "verify": {"engine": "Pikafish", "depth": 22, "after": {"cp": 128}}},
+    {"kind": "defend", "zh": ["石門機關：飛相解殺", "黑方下一步就要將死紅方。紅方先走，找出唯一一步解圍的走法。"], "en": ["Stone door: the elephant saves the king", "Black threatens mate next move. Red to move: find the only move that stops it."], "fen": "2bakab1C/9/4cc3/pC1r2p2/2p3P2/9/P3P3P/9/1n2AR3/2BAK1R2", "line": ["c0e2"], "src": {"book": "大師對局", "title": "1999年-11月10日莊玉庭先勝尚威-鎮江市", "year": 1999, "ply": 50}, "verify": {"engine": "Pikafish", "depth": 22, "after": {"cp": 234}}},
+    {"kind": "defend", "zh": ["石門機關：飛相解殺", "黑方下一步就要將死紅方。紅方先走，找出唯一一步解圍的走法。"], "en": ["Stone door: the elephant saves the king", "Black threatens mate next move. Red to move: find the only move that stops it."], "fen": "4k4/2P3P2/3a1a3/8N/5c3/3p5/9/9/3K5/6B2", "line": ["g0e2"], "src": {"book": "大師對局", "title": "13-輪-6場-1臺-廣東碧桂園-許國義-先勝-杭州協會-郭鳳達", "year": 2016, "ply": 174}, "verify": {"engine": "Pikafish", "depth": 22, "after": {"cp": 9}}}],
   trap:[
-    {kind:"defend",zh:["被巡場的相攔住了","巡場的相把你堵在號舍前：「解得了這一局，就放你過去。」黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"],en:["Stopped by the patrolling elephant","The patrolling elephant blocks you at the exam cells: \"Save this game and you may pass.\" Black threatens mate next move. Red to move: find the only defence."],
-     fen:"4k4/9/9/7C1/9/9/2n6/2p2K2B/4r4/9",line:["h6h3"]},
-    {kind:"defend",zh:["被巡場的相攔住了","黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"],en:["Stopped by the patrolling elephant","Black threatens mate next move. Red to move: find the only defence."],
-     fen:"4k4/9/9/5C3/9/3r5/3n5/3K4B/9/3n2B2",line:["f6f3"]},
-    {kind:"defend",zh:["被巡場的相攔住了","黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"],en:["Stopped by the patrolling elephant","Black threatens mate next move. Red to move: find the only defence."],
-     fen:"9/9/5k3/9/6r2/9/8C/B8/5c1c1/4K4",line:["i3g3"]},
-    {kind:"defend",zh:["被巡場的相攔住了","黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"],en:["Stopped by the patrolling elephant","Black threatens mate next move. Red to move: find the only defence."],
-     fen:"4k4/9/9/9/9/9/4p4/5K2C/3r5/2BAr1c2",line:["d0e1"]},
-    {kind:"defend",zh:["被巡場的相攔住了","黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"],en:["Stopped by the patrolling elephant","Black threatens mate next move. Red to move: find the only defence."],
-     fen:"9/2Ck5/9/9/6c2/9/3r5/4BA3/8r/4K4",line:["f2e1"]}]};
+    {"kind": "defend", "zh": ["被巡場的相攔住了", "巡場的相把你堵在號舍前：「解得了這一局，就放你過去。」黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍——補相、補仕、車馬回防都有可能。"], "en": ["Stopped by the patrolling elephant", "The patrolling elephant blocks you at the exam cells: \"Save this game and you may pass.\" Black threatens mate next move. Red to move: find the only defence. It might be an elephant, an advisor, or a piece coming back to defend."], "fen": "2baka3/9/2n1b1n2/p3p1C1p/9/2R2NP2/P1P1P3P/4B1C1R/Nr7/1cBcK4", "line": ["e2g0"], "src": {"book": "大師對局", "title": "第02輪-北京-雲南1-第01臺-唐丹-先勝-趙冠芳", "year": 2011, "ply": 36}, "verify": {"engine": "Pikafish", "depth": 22, "after": {"cp": -64}}},
+    {"kind": "defend", "zh": ["被巡場的相攔住了", "黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"], "en": ["Stopped by the patrolling elephant", "Black threatens mate next move. Red to move: find the only defence."], "fen": "2ba1kb2/4a4/2c1c1n2/p4NR1p/5rC2/2P6/P5p1P/4B4/4A2N1/2BAK4", "line": ["c0a2"], "src": {"book": "大師對局", "title": "第02輪-第05臺-上海隊-謝靖-先和-大連隊-趙金成", "year": 2013, "ply": 50}, "verify": {"engine": "Pikafish", "depth": 22, "after": {"cp": -23}}},
+    {"kind": "defend", "zh": ["被巡場的相攔住了", "黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"], "en": ["Stopped by the patrolling elephant", "Black threatens mate next move. Red to move: find the only defence."], "fen": "4kab2/4a4/6c2/p8/4P1R1p/9/P3R3P/4B3N/3r5/2rAKAB2", "line": ["f0e1"], "src": {"book": "大師對局", "title": "吉林-陶漢明-勝-河北-申鵬", "year": 2005, "ply": 52}, "verify": {"engine": "Pikafish", "depth": 22, "after": {"cp": 125}}},
+    {"kind": "defend", "zh": ["被巡場的相攔住了", "黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"], "en": ["Stopped by the patrolling elephant", "Black threatens mate next move. Red to move: find the only defence."], "fen": "9/4ak3/4Na3/3R5/9/2P6/9/2pA1A3/3K5/4r4", "line": ["d2e1"], "src": {"book": "大師對局", "title": "廣東-許銀川-勝-開灤-宋國強", "year": 2005, "ply": 132}, "verify": {"engine": "Pikafish", "depth": 22, "after": {"cp": 0}}},
+    {"kind": "defend", "zh": ["被巡場的相攔住了", "黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"], "en": ["Stopped by the patrolling elephant", "Black threatens mate next move. Red to move: find the only defence."], "fen": "3k1ab2/4a4/9/C5p2/5r3/6P2/Pn2c4/C3B2R1/4A4/2BAK4", "line": ["h2f2"], "src": {"book": "大師對局", "title": "1-輪-1臺-5局-北方隊-趙國榮-先和-南方隊-鄭惟桐", "year": 2016, "ply": 56}, "verify": {"engine": "Pikafish", "depth": 22, "after": {"cp": 0}}}]};
 jhMzDef("elephant",{map:JH_MZ_ELE_MAP,guards:JH_MZ_ELE_GUARDS,pool:JH_MZ_ELE_POOL,puz:{door:JH_MZ_ELE_POOL.door[0],trap:JH_MZ_ELE_POOL.trap[0]},
   solid:"#DXHL",opaque:"#DH",jump:"",dyn:"X",onStep:jhMzElePush,
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"飛相譜殘頁",en:"Elephant Opening manual page"},{k:"box",zh:"考籃",en:"Examination basket"}],
