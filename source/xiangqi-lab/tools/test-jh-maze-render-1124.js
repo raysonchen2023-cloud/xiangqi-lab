@@ -135,5 +135,31 @@ test("〔混合〕W99 預驗建議：解開後、解錯 4 次要被拖回入口�
   const c = load(), lv = vm.runInContext("JH_MZ_LV", c).central, M = lv.map;
   assert.equal(M.join("").split("L").length - 1, lv.lore.length, "L 的數目＝碑刻件數");
   assert.ok(lv.solid.includes("L") && lv.opaque.includes("L"), "L 擋路也擋光（跟原本的牆一樣）");
-  M.forEach((r, y) => [...r].forEach((ch, x) => { if (ch !== "L") return; assert.ok([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => (M[y + dy] || "")[x + dx] === "."), "碑刻 (" + x + "," + y + ") 旁邊站得到") }));
+  M.forEach((r, y) => [...r].forEach((ch, x) => { if (ch !== "L") return; assert.ok([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => ".H".includes((M[y + dy] || "")[x + dx] || "#")), "碑刻 (" + x + "," + y + ") 旁邊是地面或暗門（暗門後那塊要先推開暗門）") }));
+});
+
+test("中炮門迷路版（開發者 11/24「把中炮門地圖整張改成迷路版延到送審之前」）：第 13～20 列彎繞、死路至少 6 處、兩處糧袋跳躍捷徑；暗門 H 後面藏一塊碑刻（開了才站得到）；石門、踏板、暗匪廊道、起點不動", () => {
+  const c = load(), lv = vm.runInContext("JH_MZ_LV", c).central, M = lv.map, W = M[0].length, S = c.jhMzNew("central", 0);
+  /* BFS：照 jhMzStep 的規則（擋路照 lv.solid、糧袋隔一個跳），openH＝暗門當成已推開；石門當走得到（碰得到就好） */
+  const reach = (openH) => { const seen = new Set([S.start.y * W + S.start.x]), q = [[S.start.x, S.start.y]];
+    while (q.length) { const [x, y] = q.shift(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { let nx = x + dx, ny = y + dy; const ch = (M[ny] || "")[nx];
+        if (ch === undefined) continue; if (ch === "S") { const nx2 = nx + dx, ny2 = ny + dy, c2 = (M[ny2] || "")[nx2]; if (c2 === undefined || lv.solid.includes(c2) && !(openH && c2 === "H")) continue; nx = nx2; ny = ny2 }
+        else if (lv.solid.includes(ch) && ch !== "D" && !(openH && ch === "H")) continue;
+        const k = ny * W + nx; if (seen.has(k)) continue; seen.add(k); if ((M[ny] || "")[nx] !== "D") q.push([nx, ny]) } }
+    return seen };
+  const noH = reach(false), all = reach(true), pos = (ch) => { const o = []; M.forEach((r, y) => [...r].forEach((v, x) => v === ch && o.push([x, y]))); return o };
+  for (const ch of "CDP") for (const [x, y] of pos(ch)) assert.ok(noH.has(y * W + x), ch + " (" + x + "," + y + ") 不開暗門也走得到");
+  assert.deepEqual(pos("H"), [[12, 14]], "一道暗門");
+  const near = (set, [x, y]) => [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => set.has((y + dy) * W + x + dx));
+  const Ls = pos("L"); assert.equal(Ls.length, 3); assert.equal(lv.lore.length, 3);
+  assert.deepEqual(Ls.filter((p) => !near(noH, p)), [[11, 14]], "只有暗門後那一塊要先推開暗門才站得到");
+  for (const p of Ls) assert.ok(near(all, p), "開了暗門，三塊都站得到");
+  assert.equal(lv.lore[1].id, "cc3", "暗門後那塊是《大明律》那一件（照 L 由上到下對應）");
+  let dead = 0; for (let y = 13; y <= 20; y++) for (let x = 0; x < W; x++) { if (M[y][x] !== "." || !noH.has(y * W + x)) continue; if ([[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => !lv.solid.includes((M[y + dy] || "#")[x + dx] || "#")).length === 1) dead++ }
+  assert.ok(dead >= 6, "第 13～20 列死路至少 6 處：" + dead);
+  const sacks = pos("S").filter(([, y]) => y >= 13 && y <= 20); assert.ok(sacks.length >= 2, "中段有糧袋跳躍捷徑");
+  for (const [x, y] of sacks) assert.ok([[0, 1], [1, 0]].some(([dx, dy]) => !lv.solid.includes(M[y - dy][x - dx]) && !lv.solid.includes(M[y + dy][x + dx])), "糧袋 (" + x + "," + y + ") 兩邊站得到、跳得過");
+  assert.ok(lv.solid.includes("H") && lv.opaque.includes("H"), "暗門沒推開前跟牆一樣");
+  /* 不動的部分 */
+  assert.equal(M[4][6], "D"); assert.deepEqual([M[9][8], M[10][8]], ["S", "P"]); assert.equal(M[12], "#C...........C#"); assert.equal(M[23], "#.....@.......#"); assert.equal(M[21][6], "#");
 });
