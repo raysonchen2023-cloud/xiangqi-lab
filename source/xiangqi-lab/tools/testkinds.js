@@ -116,6 +116,7 @@ const CLASSIFIED = new Set([
   "test-ui-1113.js",   /* 11/13 hspx：看我的棋力沒反應（P0）、toast 換行規矩、幻影台詞、漂浮畫卷 */
   "test-home-wide.js",   /* 11/13 首頁接 iPad 寬版圖 home_p34／home_l1610：挑圖、退回原圖、座標表、走路節點、網址版本、cover 填滿（07z HMW、07fl xflCover；行為 8、混合 1） */
   "test-ipad-fill.js",   /* 11/13 遊戲畫面都要滿版：iPad／Duo 直向填滿寬度、橫向兩側模糊底（07fl；行為 8、原始碼 1） */
+  "test-ipad-wide-ext.js",   /* W107 iPad 橫向場景寬版延伸圖：模糊底上鋪清楚的寬圖、等高中心對齊原圖（07fl；行為 2、原始碼 1） */
   "test-engine-timeout.js",   /* 11/12 開發者截圖「思考有點久」：引擎沒回應不再永遠等 */
   "test-ai-levels.js",   /* 11/12 第 10 輪 F3：電腦對手透明頁（行為 2、混合 3、原始碼 2） */
   "test-land3d.js", "test-bhmate.js", "test-docs-md.js", "test-net-chaos.js", "test-park3d-bench.js", "test-save-file.js", "test-story0.js",   /* 11/12 晚上逐項分類（第 8 輪證據頁） */

@@ -54,9 +54,23 @@ function xflItems(P,pr){const out=[];if(!pr||!pr.height)return out;
     const r=e.getBoundingClientRect();if(r.width<2||r.height<2)continue;const dy=+(e.dataset&&e.dataset.spfY)||0,c=(r.top-dy+r.height/2-pr.top)/pr.height;if(c<-0.05||c>1.05)continue;out.push({c,h:r.height})}
   return out}
 const xflKey=L=>L.map(q=>q.c.toFixed(2)).sort().join(",");
+/* ---------- W107 場景寬版延伸圖（11/25 開發者：「在ipad無法滿版 就要重畫支援ipad」；第一批只畫基本版）----------
+   iPad 橫向（r07-fit：直式場景圖等高置中）兩側原本是同一張圖放大模糊（③）。有延伸圖的場景，在模糊底上面再鋪一層清楚的寬圖：
+   寬圖＝原圖（768×1376）原封不動放在正中間、左右往外補畫（2400×1376；iPad 11 吋橫向約 1.63:1、13 吋約 1.45:1 都蓋得滿）。這層跟原圖「等高、中心對齊」，所以接縫在原圖的左右邊上，
+   原圖照舊畫在最上面，入口標籤、可點區、走路節點、各場景的座標表都不用動。iPad 直向（xfl-port 填滿寬度）左右沒有空隙，用不到。
+   只登記「原圖」本身（例如 cpuroom/cpuroom_day）；季節、晨昏、朝代變體檔名不同，查不到就照舊只有模糊底。寬圖載不到也一樣（模糊底在下面）。
+   圖到齊才登記進 XFW（key＝data/ 之後、去掉 .webp 的路徑，值＝寬圖的寬÷高）；檔名 <key>_wide.webp。純計算 xfwKey／xfwPlan 測試：xiangqi-lab/tools/test-ipad-wide-ext.js */
+const XFW_IMGV="1125";   /* 寬圖的版本：同檔名換圖時改掉，手機才會重抓 */
+const XFW={};
+const xfwKey=src=>{const m=/(?:^|\/)data\/([^?#]+)\.webp(?:[?#]|$)/.exec(src||"");return m&&XFW[m[1]]>0?m[1]:""};
+const xfwSrc=k=>"data/"+k+"_wide.webp?v="+XFW_IMGV;
+/* im、b：原圖和模糊底的 getBoundingClientRect；ar：寬圖寬÷高。回傳清楚那層在模糊底裡的 left/top/width/height（px），等高、中心對齊原圖 */
+function xfwPlan(im,b,ar){if(!(im&&b&&im.height>0&&im.width>0&&ar>0))return null;const h=im.height,w=h*ar;
+  return{left:Math.round(im.left-b.left+im.width/2-w/2),top:Math.round(im.top-b.top),width:Math.round(w),height:Math.round(h)}}
 function xflCss(){if(document.getElementById("xflCss"))return;const s=document.createElement("style");s.id="xflCss";s.textContent=`
 #xflBg{position:fixed;z-index:-1;overflow:hidden;pointer-events:none;contain:strict;background:#1b1714}
 #xflBg>i{position:absolute;inset:-7%;background:center/cover no-repeat;filter:blur(18px) brightness(.68) saturate(.92)}
+#xflBg>b{position:absolute;background:center/100% 100% no-repeat;display:none}
 #view.xfl-bgon{background:none!important}
 #view.xfl-clip{overflow:hidden!important}
 #view.xfl-port .shp-page.cq.xfl-nar{box-shadow:0 0 22px rgba(20,12,6,.45)}
@@ -67,10 +81,17 @@ function xflCss(){if(document.getElementById("xflCss"))return;const s=document.c
 function xflBg(V,P,on){let B=document.getElementById("xflBg");
   if(!on||!V||!P){if(B)B.hidden=true;if(V)V.classList.remove("xfl-bgon");return}
   const im=P.querySelector(":scope>img"),src=im&&(im.currentSrc||im.src);if(!src){if(B)B.hidden=true;return}
-  xflCss();if(!B){B=document.createElement("div");B.id="xflBg";B.setAttribute("aria-hidden","true");B.append(document.createElement("i"));(V.parentNode||document.body).append(B)}
+  xflCss();if(!B){B=document.createElement("div");B.id="xflBg";B.setAttribute("aria-hidden","true");B.append(document.createElement("i"),document.createElement("b"));(V.parentNode||document.body).append(B)}
   if(B.dataset.u!==src){B.firstChild.style.backgroundImage='url("'+src.replace(/"/g,"%22")+'")';B.dataset.u=src}
   const r=V.getBoundingClientRect();Object.assign(B.style,{left:Math.round(r.left)+"px",top:Math.round(r.top)+"px",width:Math.round(r.width)+"px",height:Math.round(V.clientHeight)+"px"});B.hidden=false;B._P=P;V.classList.add("xfl-bgon");
+  xfwLay(V,B,im,src);
   if(!im.dataset.xflL){im.dataset.xflL="1";im.addEventListener("load",()=>{const b=document.getElementById("xflBg");if(im.isConnected&&b&&!b.hidden)xflBg(V,P,true)})}}
+/* W107：有寬版延伸圖的場景，在模糊底上鋪清楚的寬圖（只在 r07-fit 等高置中時；手機橫放 r07-side、直向填滿都不鋪） */
+function xfwLay(V,B,im,src){let S=B.querySelector(":scope>b");if(!S){S=document.createElement("b");B.append(S)}
+  const k=V.classList.contains("r07-fit")&&!V.classList.contains("xfl-port")?xfwKey(src):"",pl=k?xfwPlan(im.getBoundingClientRect(),B.getBoundingClientRect(),XFW[k]):null;
+  if(!pl){S.style.display="none";return}
+  const u=xfwSrc(k);if(S.dataset.u!==u){S.style.backgroundImage='url("'+u+'")';S.dataset.u=u}
+  Object.assign(S.style,{display:"block",left:pl.left+"px",top:pl.top+"px",width:pl.width+"px",height:pl.height+"px"})}
 /* 還原 ① 的裁切（每次重排前先還原，再照新的畫面大小算） */
 function xflClear(V,P){if(V)V.classList.remove("xfl-port","xfl-clip","xfl-hmw");if(P){if(P.dataset.xflMt!=null){P.style.marginTop=P.dataset.xflMt;delete P.dataset.xflMt}P.style.removeProperty("--xflT");P.classList.remove("xfl-nar")}}
 /* 07sp 用：直向填滿時「看得到的範圍」（client 座標）；其他情況回傳 null（照原本量整張圖） */
