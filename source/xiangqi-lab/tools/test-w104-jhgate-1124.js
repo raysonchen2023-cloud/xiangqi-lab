@@ -48,7 +48,7 @@ test("星線棋盤是標準象棋盤：9 條直線、10 條橫線，中間 7 條
 });
 test("〔原始碼〕包住 Jianghu（不改 07z9b）：頂欄換成萬曆江淮；只在 #/jianghu 本頁播；圖載到才播、換頁就收；m.html 排在 07z9b 之後、迷宮之前；看過的記號跟著旅程存檔", () => {
   assert.match(SRC, /try\{if\(typeof Jianghu==="function"&&!Jianghu\.jhGate\)\{const j0=Jianghu;Jianghu=function\(v\)\{const r=j0\.apply\(this,arguments\);/);
-  assert.ok(SRC.includes('setTop(jhL("🗺 萬曆江淮・十州棋館","🗺 Ten Prefectures · Wanli Era"),"#/")'));
+  assert.ok(SRC.includes('setTop(jhL("🗺 萬曆江淮・十州棋館","🗺 Ten Prefectures"),"#/")'));
   assert.ok(SRC.includes('if(jhgWant(V,era)&&/^#\\/jianghu\\/?$/.test(String(location.hash).split("?")[0])){JHG_DONE=V.n;const here=location.hash;'));
   assert.ok(SRC.includes("jhgLoad(src=>{if(location.hash!==here)return;"), "圖載到時已經換頁就不播");
   assert.ok(SRC.includes('o.addEventListener("click",end);addEventListener("hashchange",end);'), "點一下、換頁都收掉");

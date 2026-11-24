@@ -7,7 +7,7 @@
      - 大字旁白：第一次「星槎泊入晚明江淮」，之後「十州棋局再開」；接著大字標題「萬曆江淮・十州棋館」；約 3.4 秒淡出。不加說明小字（只有角落「點一下跳過」）。
    點一下跳過；系統開「減少動態」只淡入標題（約 1.1 秒）。
    不播：停靠明朝（簡單淡入就好）、從十州棋館自己的頁（門內頁、地底迷宮、門派修行）回來、重新整理或直接開網址、轉場圖 1.2 秒內載不到。
-   地圖頂欄改成「萬曆江淮・十州棋館」。這支包住 Jianghu（不改 07z9b-jianghu.js），要排在它後面、07z9m-maze.js 前面。 */
+   地圖頂欄改成「萬曆江淮・十州棋館」（英文頂欄照舊 Ten Prefectures：#138 預驗，加上 Wanli Era 在 375 寬折成兩行）。這支包住 Jianghu（不改 07z9b-jianghu.js），要排在它後面、07z9m-maze.js 前面。 */
 const JH_GATE_IMG="data/jhgate/ming.webp",JH_GATE_MS=3400,JH_GATE_RM_MS=1100,JH_GATE_LOAD_MS=1200;
 /* 記「上一頁」：跟 07z9m-fall.js 同一個做法——路由的 hashchange 比這支先登記，Jianghu 被叫的時候這支的 hashchange 可能還沒跑。
    自己記最近兩個網址（last、prev）和第幾次換頁（n）：last 已經是目前這頁＝這支先跑過，來源是 prev；還不是＝來源就是 last。同一次換頁只播一次 */
@@ -56,7 +56,7 @@ function jhgLoad(cb){let over=false,cdn=false;const im=new Image(),t=setTimeout(
   im.src=JH_GATE_IMG}
 /* 包住 Jianghu：頂欄換成萬曆江淮；照上面的條件決定要不要播 */
 try{if(typeof Jianghu==="function"&&!Jianghu.jhGate){const j0=Jianghu;Jianghu=function(v){const r=j0.apply(this,arguments);
-  try{if(/^#\/jianghu\/?$/.test(String(location.hash).split("?")[0])&&typeof setTop==="function")setTop(jhL("🗺 萬曆江淮・十州棋館","🗺 Ten Prefectures · Wanli Era"),"#/")}catch(e){}
+  try{if(/^#\/jianghu\/?$/.test(String(location.hash).split("?")[0])&&typeof setTop==="function")setTop(jhL("🗺 萬曆江淮・十州棋館","🗺 Ten Prefectures"),"#/")}catch(e){}
   try{const V=jhgVisit();let era="classic";try{era=store.get("era","classic")}catch(e){}
     if(jhgWant(V,era)&&/^#\/jianghu\/?$/.test(String(location.hash).split("?")[0])){JHG_DONE=V.n;const here=location.hash;
       jhgLoad(src=>{if(location.hash!==here)return;let first=true;try{first=!store.get("jhGateSeen",0);store.set("jhGateSeen",Date.now())}catch(e){}jhgPlay(src,first)})}}catch(e){}
