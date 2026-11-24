@@ -100,3 +100,19 @@ test("〔原始碼〕W97：提示只亮要動的子（不畫綠點）、答錯 3
   assert.ok(SRC.includes("const puzzle=id=>{S.hintOn=null;") && SRC.includes('if(got==="next"){S.hintOn=null;'), "換題、走對一步都清掉");
   assert.ok(SRC.includes("這一趟免費 1 次") && SRC.includes("點門派貢獻"));
 });
+
+test("〔原始碼〕W99 暗匪殘局可以逃跑但先講清楚代價（開發者 11/24「講清楚＋加逃跑鈕」）：只有被抓的殘局有逃跑鈕和說明；卡片內確認（不用 confirm）；返回手勢、頁首返回、回首頁都先確認；關掉殘局時清掉多推的紀錄；石門的先退開照舊", () => {
+  const J = SRC.slice(SRC.indexOf("function JhMaze("));
+  assert.ok(J.includes('${id==="trap"?`<div class="jh-mz-esc">${escIdle()}</div>`:""}'), "只有被抓的殘局放逃跑區");
+  assert.ok(J.includes('if(id==="trap"){trapO=o;escPush();escBind()}'), "被抓時推一筆紀錄");
+  assert.ok(J.includes("這一層撿到的東西會全部丟掉，下次從入口重來") && J.includes("You can also run away, but you lose everything you picked up on this level"), "中英文說明代價");
+  assert.ok(J.includes("逃跑（放棄這一層）") && J.includes("Run away (give up this level)") && J.includes("確定要逃跑嗎？") && J.includes("留下來解題"));
+  assert.ok(!/\bconfirm\(/.test(J) && !/陣亡/.test(J), "不用 confirm()、不寫陣亡");
+  assert.ok(J.includes("const shut=o=>{if(o===trapO){trapO=null;escPop()}o.remove();busy=false};"), "解開、被拖回入口時清掉多推的那筆紀錄");
+  assert.ok(J.includes("const onPop=()=>{if(!alive()){off();return}if(escIgn){escIgn=false;return}if(trapO){escPush();escAsk()}};"), "返回手勢先確認，並把紀錄補回去");
+  assert.ok(J.includes("closest('#back,[data-home=\"1\"]')") && J.includes('document.addEventListener("click",onHome,true)') && J.includes('document.removeEventListener("click",onHome,true)'), "頁首返回、回首頁鍵在捕獲階段先攔");
+  assert.ok(J.includes('box.querySelector(\'[data-a="esc-yes"]\').onclick=()=>{trapO=null;o.remove();busy=false;escPop();setTimeout(()=>upTo(HALL),80)};'), "確定逃跑才回門內頁");
+  assert.ok(J.includes('const bk=o.querySelector(\'[data-a="back"]\');if(bk)bk.onclick=()=>{S.pz=null;shut(o)};'), "石門的先退開照舊");
+  /* 迷宮只在走完一層才存檔：逃跑後重新進來是 jhMzNew 整層重來（背包歸零） */
+  const c = load(), S = c.jhMzNew("central", 0); S.bag.gong = 2; const T = c.jhMzNew("central", 0); assert.equal(T.bag.gong, 0, "重新進來背包是空的");
+});

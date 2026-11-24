@@ -393,6 +393,7 @@ function jhMzCss(){if(document.getElementById("jhMzCss"))return;const s=document
 .jh-mz.iso .jh-mz-pad .u{grid-area:1/3}.jh-mz.iso .jh-mz-pad .r{grid-area:3/3}.jh-mz.iso .jh-mz-pad .d{grid-area:3/1}.jh-mz.iso .jh-mz-pad .l{grid-area:1/1}
 .jh-mz-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom));z-index:60}
 .jh-mz-lore{line-height:1.65;margin:8px 0 12px;font-size:15px}
+.jh-mz-esc{margin-top:10px;border-top:1px dashed #b9a27a;padding-top:8px}.jh-mz-esc p{margin:0 0 6px;line-height:1.6;font-size:14px}.jh-mz-esc>button{width:100%}
 .jh-mz-card{background:#f6ecd6;color:#2a1d10;border-radius:14px;padding:14px;max-width:420px;width:100%;max-height:calc(100dvh - 24px);overflow:auto}
 .jh-mz-card svg{max-height:52dvh}
 .jh-mz-card h2{margin:0 0 6px;font-size:18px}.jh-mz-card p{margin:4px 0 8px;font-size:15px;line-height:1.5}
@@ -519,12 +520,25 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
     const lg=Math.max(0,...S.guards.map(G=>jhMzLight(S,G.x,G.y,now)));if(lg>.25&&!warned){warned=true;path=[];say(jhL(S.lv.warn[0],S.lv.warn[1]))}if(lg<=.25)warned=false};
   /* 殘局、通關視窗蓋住整個畫面（預覽站實點：原本只蓋地圖那一塊，手機上提示鈕被擠到卡片外要捲動）；放在 .jh-mz 裡，換頁時跟著頁面一起清掉 */
   const ov=(html)=>{const o=document.createElement("div");o.className="jh-mz-ov";o.innerHTML=`<div class="jh-mz-card" role="dialog" aria-modal="true">${html}</div>`;v.querySelector(".jh-mz").append(o);busy=true;return o};
-  const shut=o=>{o.remove();busy=false};
+  /* W99（11/24 開發者選單「講清楚＋加逃跑鈕」）：被抓的殘局可以逃跑，但要先講清楚代價——這一層撿到的東西全部丟掉、下次從入口重來（迷宮只在走完一層時存檔）。
+     殘局開著時多推一筆瀏覽紀錄，Android 返回手勢、瀏覽器上一頁會先停在這裡、跳確認；頁首返回鍵、回首頁鍵也一樣先確認。確認都在卡片裡，不跳瀏覽器的確認對話框 */
+  let trapO=null,escIgn=false;
+  const escPush=()=>{try{const d=(typeof NAV_D==="number"?NAV_D:0)+1;history.pushState({d,jhMzEsc:1},"",location.href);if(typeof NAV_D==="number")NAV_D=d}catch(e){}};
+  const escPop=()=>{try{if(history.state&&history.state.jhMzEsc){escIgn=true;history.back()}}catch(e){}};
+  const escIdle=()=>`<p class="muted">${esc(jhL("解開這一局才能脫身。也可以逃跑，但這一層撿到的東西會全部丟掉，下次從入口重來。","Solve this to get free. You can also run away, but you lose everything you picked up on this level and start again from the entrance."))}</p><button type="button" data-a="esc">${esc(jhL("逃跑（放棄這一層）","Run away (give up this level)"))}</button>`;
+  const escBind=()=>{const box=trapO&&trapO.querySelector(".jh-mz-esc");if(!box)return;const b=box.querySelector('[data-a="esc"]');if(b)b.onclick=escAsk};
+  function escAsk(){const o=trapO,box=o&&o.querySelector(".jh-mz-esc");if(!box)return;
+    box.innerHTML=`<p><b>${esc(jhL("確定要逃跑嗎？","Run away?"))}</b> ${esc(jhL("這一層撿到的東西會全部丟掉，下次從入口重來。","You will lose everything you picked up on this level and start again from the entrance."))}</p><div class="jh-mz-row"><button type="button" class="main" data-a="esc-no">${esc(jhL("留下來解題","Stay and solve it"))}</button><button type="button" data-a="esc-yes">${esc(jhL("確定逃跑","Run away"))}</button></div>`;
+    box.querySelector('[data-a="esc-no"]').onclick=()=>{box.innerHTML=escIdle();escBind()};
+    box.querySelector('[data-a="esc-yes"]').onclick=()=>{trapO=null;o.remove();busy=false;escPop();setTimeout(()=>upTo(HALL),80)};
+    const n=box.querySelector('[data-a="esc-no"]');if(n)n.focus()}
+  const shut=o=>{if(o===trapO){trapO=null;escPop()}o.remove();busy=false};
   /* W87c（飛相門解殺題，iMac Claude 1 寫題）：題目 kind:"defend"＝解殺題——紅方找唯一一步解圍，不是殺棋：不顯示「N 步殺」那行，答對說「解圍了」、答錯說「解不了圍」（派別的 say.door／say.trap 照舊優先）
      W87：題目照該派題庫挑（jhMzPuz）；多步殺一步一步走：走對、還沒將死＝棋盤上照解答走黑方那一步、再換玩家；走錯＝回到開局重來。提示點亮的是「現在」該走的那一步 */
   const puzzle=id=>{S.hintOn=null;jhMzPtrSet(LV.sid,jhMzEncounter(S,id));const P=jhMzPuz(S,id);if(!P)return;const L=jhMzLine(P),N=(L.length+1)>>1,DEF=P.kind==="defend",t=jhL(P.zh[0],P.en[0]),p=jhL(P.zh[1],P.en[1]);let pcs=jhMzFen(P.fen),sel=null,won=false,last=null;S.pz=null;
     const o=ov(`<h2>${esc(t)}</h2><p>${esc(p)}</p>${N>1&&!DEF?`<p class="muted">${esc(jhL(`紅方先走，${N} 步殺：每一步都要將軍或逼著對方，黑方會照最頑強的方式應。`,`Red to move: mate in ${N}. Black answers with the toughest defence.`))}</p>`:""}<div class="jh-mz-bd"></div><div class="jh-mz-res" aria-live="polite">${esc(jhL("點紅方的棋子，再點要走到的位置。","Tap a red piece, then tap where it goes."))}</div>
-      <div class="jh-mz-row"><button type="button" data-a="hint">${esc(jhL(HELP[0]+"的提示",HELP[1]+"'s hint"))}</button>${id==="door"?`<button type="button" data-a="back">${esc(jhL("先退開","Step back"))}</button>`:""}</div>`);
+      <div class="jh-mz-row"><button type="button" data-a="hint">${esc(jhL(HELP[0]+"的提示",HELP[1]+"'s hint"))}</button>${id==="door"?`<button type="button" data-a="back">${esc(jhL("先退開","Step back"))}</button>`:""}</div>${id==="trap"?`<div class="jh-mz-esc">${escIdle()}</div>`:""}`);
+    if(id==="trap"){trapO=o;escPush();escBind()}
     const res=(m,c)=>{const e=o.querySelector(".jh-mz-res");e.textContent=m;e.className="jh-mz-res "+(c||"")};
     const now=()=>L[S.pz&&S.pz.id===id?S.pz.i:0]||L[0];
     const apply=mv=>{const a=jhMzSq(mv.slice(0,2)),b=jhMzSq(mv.slice(2));pcs=pcs.filter(x=>!(x.c===b.c&&x.r===b.r));const me=pcs.find(x=>x.c===a.c&&x.r===a.r);if(me){me.c=b.c;me.r=b.r}last=[a,b]};
@@ -571,11 +585,13 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
     const up=()=>{if(held===m)held=null};for(const n of["pointerup","pointercancel","lostpointercapture"])b.addEventListener(n,up);
     b.addEventListener("click",()=>{if(pd){pd=false;return}go(m);held=null});b.addEventListener("contextmenu",e=>e.preventDefault())});
   const keys={ArrowUp:DIR.u,ArrowDown:DIR.d,ArrowLeft:DIR.l,ArrowRight:DIR.r};
-  const off=()=>{document.removeEventListener("keydown",onKey);document.removeEventListener("keyup",onKeyUp);window.removeEventListener("resize",resize);window.removeEventListener("blur",onBlur)};
+  const onPop=()=>{if(!alive()){off();return}if(escIgn){escIgn=false;return}if(trapO){escPush();escAsk()}};
+  const onHome=e=>{if(!trapO||!alive())return;const t=e.target&&e.target.closest&&e.target.closest('#back,[data-home="1"]');if(!t)return;e.preventDefault();e.stopImmediatePropagation();escAsk()};
+  const off=()=>{window.removeEventListener("popstate",onPop);document.removeEventListener("click",onHome,true);document.removeEventListener("keydown",onKey);document.removeEventListener("keyup",onKeyUp);window.removeEventListener("resize",resize);window.removeEventListener("blur",onBlur)};
   const onKey=e=>{if(!alive()){off();return}if(busy)return;const m=keys[e.key];if(m){e.preventDefault();if(!e.repeat)go(m)}};
   const onKeyUp=e=>{if(!alive()){off();return}const m=keys[e.key];if(m&&held===m)held=null};
   const onBlur=()=>{held=null};
-  document.addEventListener("keydown",onKey);document.addEventListener("keyup",onKeyUp);window.addEventListener("resize",resize);window.addEventListener("blur",onBlur);
+  window.addEventListener("popstate",onPop);document.addEventListener("click",onHome,true);document.addEventListener("keydown",onKey);document.addEventListener("keyup",onKeyUp);window.addEventListener("resize",resize);window.addEventListener("blur",onBlur);
   const intro=jhL(LV.intro[0],LV.intro[1]);
   bag();say(intro);requestAnimationFrame(()=>{resize();requestAnimationFrame(frame)});
   /* 從門內頁按入口進來走的是 jhGo（先蓋上淡出遮罩再換頁），目的頁要自己淡出；直接開網址時沒有遮罩，呼叫也沒關係 */
