@@ -34,7 +34,7 @@ const SCW={
     safe:{l:.12,r:.12,t:.05,b:.10},
     walk:{W:2560,H:1600,el:40,h:[.126,95,.004],look0:[51,62],home:"home",N:{home:[50,97],altar:[50,93],rgt:[80,92]},E:"home-altar altar-rgt",
       HS:{ex2S0:["altar",51,62,"bow"],ex2S1:["altar",51,62,"bow"],ex2S2:["altar",51,62,"bow"],ex2Book:["rgt",81,60,"idle"]}},
-    fx:{boardQ:[[201,122],[682,195],[682,666],[201,707]]}},
+    fx:{boardQ:[[200,118],[680,207],[680,668],[200,703]]}},   /* 四角由 Windows Claude 1 在原檔上用細格線量（紙面＝框的內側） */
   /* 挑戰電腦（07z5）經典世界白天：output/w107-ipad/l1610/cpuroom/。沒有走路路網；fx：掌櫃幻影（下緣離圖底、寬，都是圖的 %，照椅背高度換算）、名牌上緣、說明卡上緣和左右留白（圖變寬，卡片不拉滿） */
   "cpuroom/cpuroom_day_classic":{ready:true,f:"cpuroom/cpuroom_day_classic_l1610",w:2560,h:1600,
     S:{crRank:[26,30],crScroll:[74,34],crBlind:[84,47],crRankT:[15,50],crFree:[86,61],crRed:[34,68],crGo:[49,74],crBlack:[65,69]},exit:[50,96],
