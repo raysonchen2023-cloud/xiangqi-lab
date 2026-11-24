@@ -1,5 +1,5 @@
 // W53（11/22，App 審查 P-5「只有 IPv6 的網路」）：大廳連線「連不上就換下一個網址」（src/net.js 的 URLS、urlI、mqNext、mqRemember）
-//   主伺服器只有 IPv4；備援入口 MQ.alt 要開發者授權建好有 IPv6 的端點才會填，現在是空的＝行為跟以前一樣。
+//   主伺服器只有 IPv4；備援入口 MQ.alt 要開發者授權建好有 IPv6 的端點才會填。11/24 開發者授權 Cloudflare 轉送，MQ.alt 填了 Worker xq-lobby-v6 一個入口。
 //   這裡用測試房的 xq_mqtt.urls 放兩個假網址，假 MQTT 伺服器＋假時鐘，vm 載入真正的 src/net.js；不連任何伺服器、不開瀏覽器。
 // 用法：node --test xiangqi-lab/tools/test-net-failover-1122.js
 "use strict";
@@ -20,15 +20,29 @@ function gate(S, B) {
   return { urls, blocked };
 }
 
-test("沒設備援（正式版現況，MQ.alt 是空的）：每次都連主網址，連不上也不亂換", async () => {
+test("只有一個網址（沒設備援）：每次都連那個網址，連不上也不亂換", async () => {
+  /* 11/24 起正式版 MQ.alt 有 Cloudflare 轉送入口；「只有一個網址」改用測試房只給一個網址來驗，驗的行為不變 */
   const { S, B } = world(), g = gate(S, B);
   B.up = false;
-  const P = phone(S, B, { id: "aaaa1111", name: "甲" });
+  const P = phone(S, B, { id: "aaaa1111", name: "甲", storage: cfg([A]) });
   P.net.start(); await S.run(20000);
   assert.ok(g.urls.length >= 2, "有重試：" + g.urls.length);
   assert.equal(new Set(g.urls).size, 1, "只有一個網址：" + [...new Set(g.urls)].join("、"));
   B.up = true; await S.run(70000);
   assert.equal(P.net.status(), "up", "伺服器恢復後連得上");
+  noErrors(S);
+});
+
+test("正式版設定（不是測試房）：主伺服器連不上時，下一次改連 Cloudflare 轉送入口並記住（W53，11/24 開發者授權）", async () => {
+  const MAIN = "wss://d23f1132.ala.asia-southeast1.emqxsl.com:8084/mqtt", CF = "wss://xq-lobby-v6.preview-w36.workers.dev/mqtt";
+  const { S, B } = world(), g = gate(S, B), st = store();
+  g.blocked.add(MAIN);
+  const P = phone(S, B, { id: "aaaa1111", name: "甲", storage: st });
+  P.net.start(); await S.run(15000);
+  assert.equal(g.urls[0], MAIN, "先試主伺服器：" + g.urls.join(" → "));
+  assert.equal(g.urls[1], CF, "連不上就換 Cloudflare 入口：" + g.urls.join(" → "));
+  assert.equal(P.net.status(), "up", "備援連得上");
+  assert.equal(st.getItem("xq_mqUrl"), CF, "記住連上的網址");
   noErrors(S);
 });
 
@@ -92,8 +106,9 @@ test("記住的網址已經不在清單裡（例如備援被拿掉）：從主�
   noErrors(S);
 });
 
-test("〔原始碼〕正式版的備援清單 MQ.alt 現在是空的（建 IPv6 端點要開發者授權）；多網址設定只在測試房（xq_mqtt.urls）生效", () => {
-  assert.match(NET_SRC, /const MQ=\{[^}]*,alt:\[\]\};/, "MQ.alt 要是空陣列，填網址前要開發者授權");
+test("〔原始碼〕正式版的備援清單 MQ.alt 只有開發者 11/24 授權的 Cloudflare 轉送入口；多網址設定只在測試房（xq_mqtt.urls）生效", () => {
+  /* 11/24 開發者授權 Cloudflare 轉送（W53）：MQ.alt 只能是這一個入口；要加別的網址，照舊先問開發者 */
+  assert.match(NET_SRC, /const MQ=\{[^}]*,alt:\["wss:\/\/xq-lobby-v6\.preview-w36\.workers\.dev\/mqtt"\]\};/, "MQ.alt 只能是開發者 11/24 授權的 Cloudflare 轉送入口");
   assert.match(NET_SRC, /if\(\/\^xqlab-test-\/\.test\(ROOT\)\)try\{const t=JSON\.parse\(localStorage\.getItem\("xq_mqtt"\)\|\|"null"\);[\s\S]{0,300}if\(t&&Array\.isArray\(t\.urls\)\)/, "urls 只在測試房的區塊裡讀");
   assert.match(NET_SRC, /cli\.ondown=was=>\{cli=null;if\(!was\)mqNext\(\);/, "只有「沒連上就斷」才換網址");
 });

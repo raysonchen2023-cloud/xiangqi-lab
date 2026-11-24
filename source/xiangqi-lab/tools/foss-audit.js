@@ -49,6 +49,7 @@ const HOSTS = [
   [/^broker\.emqx\.io$/, "線上大廳 MQTT 的備用伺服器（EMQX 公開免費伺服器；非自由網路服務）", "net"],
   [/emqxsl\.com$|emqx/, "線上大廳 MQTT（開發者租用的 EMQX Cloud，新加坡；非自由網路服務）", "net"],
   [/^xiangqi-cdn\.pages\.dev$/, "圖片和大檔（開發者自己的 Cloudflare Pages）", "own"],
+  [/^xq-lobby-v6\.preview-w36\.workers\.dev$/, "線上大廳 MQTT 的 IPv6 備援入口（W53：開發者自己的 Cloudflare Worker，只把 /mqtt 轉送到上面的 EMQX；原始碼 tools/mq-alt-worker/）", "own"],
   [/^raysonchen2023-cloud\.github\.io$/, "網站本身（GitHub Pages）", "own"],
   [/^raw\.githubusercontent\.com$/, "遠端開關清單（W72：讀本倉庫 main 上的 data/flags.json，只能關功能、不帶玩家資料）", "own"],
   [/^(script|docs)\.google\.com$/, "意見回饋（Google 表單；非自由網路服務）", "net"],

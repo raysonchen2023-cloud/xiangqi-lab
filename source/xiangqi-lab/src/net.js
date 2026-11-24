@@ -23,9 +23,10 @@ var XQNet=(function(){
      帳密會跟著 App 程式公開，所以這裡只能放「權限最小」的帳號（只准用 xqlab-… 開頭的頻道）。
      測試房間（xq_netRoot 有設）可以在 localStorage 的 xq_mqtt 放 {"url":"wss://…","user":"…","pass":"…"}，先用測試房間試新伺服器；正式大廳不看 xq_mqtt */
   /* host 留空＝照舊用公開伺服器 broker.emqx.io；填了 host（EMQX Serverless 總覽頁的 Address，例如 xxxxxxxx.ala.us-east-1.emqxsl.com）就連 wss://host:port/path。user／pass 放給 App 用的那組帳號（xqapp） */
-  const MQ={host:"d23f1132.ala.asia-southeast1.emqxsl.com",port:8084,path:"/mqtt",user:"xqapp",pass:"xqapp12345678",alt:[]};   /* 開發者 11/9「可以切換私人伺服器了」：EMQX Serverless（xiangqi-lobby，新加坡）；xqapp 是公開帳號，權限只准 +/v1/…（不能發 sys、cup/state、cup/hall、cal、ctl/ack、c/） */
+  const MQ={host:"d23f1132.ala.asia-southeast1.emqxsl.com",port:8084,path:"/mqtt",user:"xqapp",pass:"xqapp12345678",alt:["wss://xq-lobby-v6.preview-w36.workers.dev/mqtt"]};   /* 開發者 11/9「可以切換私人伺服器了」：EMQX Serverless（xiangqi-lobby，新加坡）；xqapp 是公開帳號，權限只准 +/v1/…（不能發 sys、cup/state、cup/hall、cal、ctl/ack、c/） */
   /* W53（11/22，App 審查 P-5「只有 IPv6 的網路」）：主伺服器只有 IPv4（DNS 只有 A 紀錄），審查用的 DNS64／NAT64 網路理論上連得上但沒實測。
      MQ.alt＝備援入口（要有 IPv6 的網址，例如經 Cloudflare 轉送；建端點要開發者授權帳號操作，建好前留空＝跟以前一模一樣只連主伺服器）。
+     11/24 開發者授權「Cloudflare 轉送」：Worker xq-lobby-v6（原始碼 xiangqi-lab/tools/mq-alt-worker/，只轉 /mqtt 的 WebSocket 到 EMQX 8084，其他一律 404；有 IPv6）。
      連不上（還沒登入就斷）就換下一個網址；連上了記住是哪一個（xq_mqUrl），下次開 App 先試它。帳號照舊用 MQ 的 xqapp */
   const mqUrlOk=u=>typeof u==="string"&&/^wss?:\/\/[\w.:\[\]-]+(\/[\w./-]*)?$/.test(u);
   const URLS=[MQ.host?"wss://"+MQ.host+":"+MQ.port+MQ.path:"wss://broker.emqx.io:8084/mqtt",...(MQ.alt||[]).filter(mqUrlOk)];
