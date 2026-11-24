@@ -21,6 +21,7 @@ const GUARD = [
   /^source\/xiangqi-ios\/scripts\/check-native\.js$/,   /* PR #45（W69③）：verify.yml 跑 check-native，它的結束碼決定紅綠 */
   /^source\/xiangqi-ios\/scripts\/p03d\/test-p03d\.cjs$/,   /* PR #45（W69①）：iOS P0-3D 腳本的自我檢查；換回 main 版去檢查 PR 版的 p03d.js，PR 同時放寬兩邊也擋得到 */
   /^source\/xiangqi-ios\/scripts\/test-canary-www\.cjs$/,   /* iOS P0-IMG 金絲雀的自我檢查（2026-11-23）：換回 main 版去檢查 PR 版的 check-www.js／canary-www.js，PR 同時放寬兩邊也擋得到 */
+  /^source\/xiangqi-ios\/scripts\/test-canary-native\.cjs$/,   /* iOS 原生檢查金絲雀的自我檢查（2026-11-24）：換回 main 版去檢查 PR 版的 check-native.js／canary-native.js，PR 同時放寬兩邊也擋得到 */
 ];
 const isGuard = (f) => GUARD.some((r) => r.test(f));
 
@@ -76,6 +77,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["iOS 原生檢查", ["node", "source/xiangqi-ios/scripts/check-native.js"]],   /* PR #45：跟 verify.yml 同一步 */
   ["iOS P0-3D 腳本自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/p03d/test-p03d.cjs"]],
   ["iOS P0-IMG 金絲雀自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/test-canary-www.cjs"]],   /* 跟 verify.yml 同一步 */
+  ["iOS 原生檢查金絲雀自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/test-canary-native.cjs"]],   /* 跟 verify.yml 同一步 */
   SCAN_STEP(base),
 ] : [
   ["假略過檢查", ["node", ".github/scripts/check-fake-skip.cjs"]],
@@ -92,6 +94,7 @@ const STEPS = (base, mode) => mode === "release" ? [
   ["iOS 原生檢查", ["node", "source/xiangqi-ios/scripts/check-native.js"]],   /* PR #45：跟 verify.yml 同一步 */
   ["iOS P0-3D 腳本自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/p03d/test-p03d.cjs"]],
   ["iOS P0-IMG 金絲雀自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/test-canary-www.cjs"]],   /* 跟 verify.yml 同一步 */
+  ["iOS 原生檢查金絲雀自我檢查", ["node", "--test", "source/xiangqi-ios/scripts/test-canary-native.cjs"]],   /* 跟 verify.yml 同一步 */
 ];
 
 /* 把 PR 改到的守門程式換回基準版：基準版沒有的（PR 新加的守門）先拿掉。show(f) 回傳基準版內容或 null */

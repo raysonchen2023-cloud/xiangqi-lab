@@ -43,6 +43,9 @@ jobs:
       - name: iOS P0-IMG 金絲雀自我檢查（假 www、假 .app／.ipa 做 27 種壞樣本，每類測頭中尾，都要被 check-www.js 抓到；把 check-www 的判斷改壞，金絲雀要判出失靈；AGENTS.md「P0 出口驗證要難作假」）
         run: node --test source/xiangqi-ios/scripts/test-canary-www.cjs
 
+      - name: iOS 原生檢查金絲雀自我檢查（假專案做 70 多種壞樣本，都要被 check-native.js 抓到；把 check-native 的判斷一條一條改成恆真，金絲雀要判出失靈；AGENTS.md「P0 出口驗證要難作假」）
+        run: node --test source/xiangqi-ios/scripts/test-canary-native.cjs
+
       - name: 判斷模式（功能 PR／發布 PR）
         id: mode
         env:
