@@ -496,3 +496,89 @@ test("W87a 中炮門題目出自古譜（開發者 11/24：「你也可以從古
     assert.ok(!/特級大師|對局|實戰/.test(P.src.book), P.id + " 不是古譜：" + P.src.book);
   }
 });
+
+/* ---------- W87 仙人指路第一層「太湖石陣」（m/07z9m-pawn.js，iMac Claude 1）---------- */
+const PAWN_SRC = fs.readFileSync(path.join(ROOT, "xiangqi-db", "m", "07z9m-pawn.js"), "utf8");
+function loadP() {
+  const mem = {}, c = {
+    store: { get: (k, d) => (k in mem ? JSON.parse(mem[k]) : d), set: (k, v) => { mem[k] = JSON.stringify(v) } },
+    jhL: (zh) => zh, esc: (s) => String(s), addXP() {}, xqFlag: () => true, Math, JSON, Set, Map, Number, String, Array, Object, Float32Array,
+  };
+  c.location = { hash: "" };
+  vm.createContext(c); vm.runInContext(SRC + "\n" + PAWN_SRC + ";this.JH_MZ_PAWN_POOL=JH_MZ_PAWN_POOL;this.JH_MZ_PAWN_MAP=JH_MZ_PAWN_MAP;this.JH_MZ_PAWN_RIVER=JH_MZ_PAWN_RIVER;this.JH_MZ_LV=JH_MZ_LV;this.JH_MZ_KIND=JH_MZ_KIND;", c);
+  return c;
+}
+const pmv = (B, [f, t]) => { const n = B.slice(); n[t] = n[f]; n[f] = null; return n };
+const pMated = (B) => C.inCheck(B, "b") && C.legal(B, "b").length === 0;
+const pMates = (B) => C.legal(B, "r").filter((m) => pMated(pmv(B, m)));
+
+test("仙人指路題庫：開石門 3 題以上、被逮 5 題以上、局面不重複；每題都出自古譜（記書名、局名）；照主變走每一手合法、走完將死、最後一步用兵，開局沒有一步殺、最後一步只有一種殺法（core.js 重算；每步唯一由出題工具用 Pikafish 驗）", () => {
+  const P = loadP().JH_MZ_PAWN_POOL;
+  assert.ok(P.door.length >= 3, "開石門至少 3 題"); assert.ok(P.trap.length >= 5, "被逮至少 5 題");
+  const all = P.door.concat(P.trap); assert.equal(new Set(all.map((x) => x.fen)).size, all.length, "局面不重複");
+  for (const Q of all) {
+    const id = Q.id || Q.zh[0];
+    assert.ok(Q.src && /^(橘中秘|爛柯神機|適情雅趣|夢入神機|淵深海闊|心武殘編|梅花譜)$/.test(Q.src.book) && Q.src.title, id + " 要記古譜出處");
+    let B = C.parseFen(Q.fen).slice(0, 90);
+    assert.equal(B.filter((p) => p === "K").length, 1, id); assert.equal(B.filter((p) => p === "k").length, 1, id);
+    assert.ok(!C.inCheck(B, "b"), id + " 開局黑方沒被將（紅方先走才合理；紅方被將、第一手解將是古譜常見的）");
+    assert.equal(pMates(B).length, 0, id + " 不能一步就將死");
+    assert.equal(Q.line.length % 2, 1, id + " 紅方收尾（紅、黑、紅…）");
+    Q.line.forEach((u, k) => { const side = k % 2 ? "b" : "r", m = C.legal(B, side).find((x) => toIccs(x) === u); assert.ok(m, `${id} 第 ${k + 1} 手 ${u} 要合法`);
+      if (k === Q.line.length - 1) { assert.deepEqual(pMates(B).map(toIccs), [u], id + " 最後一步只有這一種將死"); assert.equal(B[m[0]], "P", id + " 最後一步用兵將死") }
+      B = pmv(B, m) });
+    assert.ok(pMated(B), id + " 走完將死");
+  }
+});
+
+test("仙人指路題庫改壞：最後一步換成別的合法著法，重算就不是將死（重算真的有在比）", () => {
+  const Q = loadP().JH_MZ_PAWN_POOL.trap[0]; let B = C.parseFen(Q.fen).slice(0, 90);
+  for (let k = 0; k < Q.line.length - 1; k++) B = pmv(B, C.legal(B, k % 2 ? "b" : "r").find((x) => toIccs(x) === Q.line[k]));
+  const other = C.legal(B, "r").find((x) => toIccs(x) !== Q.line[Q.line.length - 1]); assert.ok(other && !pMated(pmv(B, other)));
+});
+
+test("仙人指路地圖：每行一樣寬、外框是牆；一個起點、一道石門、一座樓梯、一個踏板、三個箱子、四盞以上壁燈、一條橫貫的河；從起點走得到踏板、三個箱子和石門旁邊", () => {
+  const c = loadP(), M = c.JH_MZ_PAWN_MAP, W = M[0].length, cnt = (ch) => M.join("").split(ch).length - 1;
+  for (const r of M) { assert.equal(r.length, W); assert.ok(r[0] === "#" && r[W - 1] === "#") }
+  assert.ok(/^#+$/.test(M[0]) && /^#+$/.test(M[M.length - 1]));
+  assert.deepEqual([cnt("@"), cnt("D"), cnt(">"), cnt("P"), cnt("C")], [1, 1, 1, 1, 3]); assert.ok(cnt("T") >= 4); assert.ok(cnt("R") >= 10, "很多太湖石"); assert.ok(cnt("H") >= 1, "至少一道暗門"); assert.equal(cnt("L"), 3, "三件碑刻文書");
+  for (const y of c.JH_MZ_PAWN_RIVER) assert.ok(/^#~+#$/.test(M[y]), "河整行橫貫");
+  const S = c.jhMzNew("pawn"), D = new Set([S.start.y * W + S.start.x]), q = [[S.start.x, S.start.y]];
+  while (q.length) { const [x, y] = q.shift(); for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + a, ny = y + b, k = ny * W + nx; if (D.has(k) || c.jhMzSolid(S, nx, ny) || M[ny][nx] === ">") continue; D.add(k); q.push([nx, ny]) } }
+  const at = (ch) => { const o = []; M.forEach((r, y) => [...r].forEach((v, x) => { if (v === ch) o.push(y * W + x) })); return o };
+  assert.ok(at("P").every((k) => D.has(k)), "走得到踏板"); assert.ok(at("C").every((k) => D.has(k)), "走得到三個箱子");
+  const [d] = at("D"); assert.ok([1, -1, W, -W].some((o) => D.has(d + o)), "走得到石門旁邊");
+  for (const k of at("H")) { const x = k % W, y = (k - x) / W; assert.ok(c.jhMzSolid(S, x, y) && c.jhMzOpaque(S, x, y), "暗門擋路也擋視線（沒推開前）") }
+  for (const k of at("L")) { const x = k % W, y = (k - x) / W; assert.ok(c.jhMzSolid(S, x, y) && !c.jhMzOpaque(S, x, y), "碑刻擋路、不擋視線") }
+});
+
+test("太湖石：擋路（走不進去、撞到不算回合）但不擋視線——兵卒隔著石頭照樣看得到", () => {
+  const c = loadP(), S = c.jhMzNew("pawn"); S.guards.forEach((G) => (G.stun = 99));
+  S.grid[20][8] = "R"; S.player.x = 7; S.player.y = 20; const t0 = S.turn;
+  assert.equal(c.jhMzStep(S, 1, 0).ev, "wall", "走不進太湖石"); assert.equal(S.turn, t0, "撞石頭不算回合");
+  const T = c.jhMzNew("pawn"), G = T.guards[0]; G.x = 7; G.y = 14; G.dy = 1; G.dx = 0;
+  T.grid[15][7] = "R"; T.grid[16][7] = "."; T.player.x = 7; T.player.y = 16;
+  assert.ok(c.jhMzSight(T, G).some((q) => q.x === 7 && q.y === 16), "隔著太湖石看得到");
+  assert.ok(c.jhMzCaught(T), "躲在石頭後面也會被逮");
+  T.grid[15][7] = "#"; assert.ok(!c.jhMzSight(T, G).some((q) => q.y === 16), "牆照樣擋視線");
+});
+
+test("兵卒守衛：沒過河只往前一步、前面擋住就原地等（不回頭）、只看正前方；過了河改左右來回，看得到正前方和面向的那一側", () => {
+  const c = loadP(), S = c.jhMzNew("pawn"), G = S.guards[0], R = c.JH_MZ_PAWN_RIVER, K = c.JH_MZ_KIND.pawn;
+  const x0 = G.x, y0 = G.y; K.step(S, G); assert.deepEqual([G.x, G.y], [x0, y0 + 1], "沒過河：往前一步");
+  S.grid[G.y + 1][G.x] = "R"; K.step(S, G); assert.deepEqual([G.x, G.y], [x0, y0 + 1], "前面擋住就原地等，不往回走也不橫走");
+  assert.ok(K.sight(S, G).every((q) => q.x === G.x && q.y > G.y), "沒過河只看正前方");
+  S.grid[G.y + 1][G.x] = "."; G.y = R[1] + 1; G.x = 4; G.dx = 1; K.step(S, G); assert.deepEqual([G.x, G.y], [5, R[1] + 1], "過了河：往面向那一側走一步（第 5 路正前方是通道）");
+  const sg = K.sight(S, G); assert.ok(sg.some((q) => q.y === G.y && q.x > G.x), "看得到面向的那一側"); assert.ok(sg.some((q) => q.x === G.x && q.y > G.y), "也看得到正前方");
+  G.x = S.W - 2; K.step(S, G); assert.equal(G.dx, -1, "碰到牆就掉頭"); assert.equal(G.x, S.W - 3);
+  for (let i = 0; i < 40; i++) { K.step(S, G); assert.ok(G.y >= R[1] + 1, "過了河不會再往回走") }
+});
+
+test("仙人指路：連續被逮不會出同一題；開石門照第幾次走換題；路由 #/jianghu/maze/pawn 認得", () => {
+  /* #105 起：被逮那一刻才定題（jhMzEncounter），指標接著上一輪 */
+  const c = loadP(), N = c.JH_MZ_PAWN_POOL.trap.length, S = c.jhMzNew("pawn", 0), seen = []; let p = null;
+  for (let i = 0; i < N; i++) { p = c.jhMzEncounter(S, "trap"); seen.push(c.jhMzPuz(S, "trap").fen); c.jhMzSolved(S, "trap") }
+  assert.equal(new Set(seen).size, N, "一輪被逮 " + N + " 次，" + N + " 題都不一樣");
+  const S2 = c.jhMzNew("pawn", 1, p); c.jhMzEncounter(S2, "trap"); assert.notEqual(c.jhMzPuz(S2, "trap").fen, seen[N - 1], "換一輪的第一題不跟上一輪最後一題一樣");
+  assert.ok(c.JH_MZ_LV.pawn && c.JH_MZ_LV.pawn.hall, "有門內頁入口");
+});
