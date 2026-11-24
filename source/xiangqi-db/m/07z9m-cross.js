@@ -86,6 +86,17 @@ jhMzDef("cross_palace",{map:JH_MZ_CROSS_MAP,guards:JH_MZ_CROSS_GUARDS,pool:JH_MZ
   puz:{door:JH_MZ_POOL_CROSS.door[0],trap:JH_MZ_POOL_CROSS.trap[0]},solid:"#DZLH",opaque:"#DLH",jump:"",
   /* W87b 像素材質（Windows Claude 2 出圖，新版）：只放 CDN；#110 之前的版本不認得 tex，會照舊用程式畫的 */
   tex:{floor:"data/maze/tex/cross_palace_floor.webp",side:"data/maze/tex/cross_palace_wall.webp"},
+  /* 碑刻文書（11/24 Gemini 查史料、iMac Claude 1 複核，Windows Claude 1 照複核改寫）：順序＝地圖上 L 由上到下、由左到右（#108 的 07z9m-lore.js 照這個順序對應）。
+     出處照實寫：哪些是史料記載、哪些是遊戲整理或虛構 */
+  lore:[{id:"cp1",kind:"stele",title:["焙牆控火訣","Rules for the drying wall"],
+      body:["碑上刻著焙紙的訣竅：砌兩道磚牆，中間夾著燒火的巷道，把牆面燒得溫熱；匠人用軟刷把濕紙一張張貼上牆烘乾。火太旺，紙會焦脆；火太弱，紙乾不了，全靠多年的手感。","The stele records how paper was dried: two brick walls with a fire lane between them kept the wall faces warm, and craftsmen brushed the wet sheets onto the wall one by one. Too hot and the paper turns brittle; too cool and it never dries. It all came down to years of feel."],
+      src:"宋應星《天工開物・殺青》記載用夾牆焙紙的做法；碑文是遊戲改寫，不是原文"},
+    {id:"cp2",kind:"doc",title:["涇縣宣紙","Xuan paper of Jingxian"],
+      body:["文書寫著涇縣（明代屬寧國府）出的好紙：潔白細密，久藏不容易蟲蛀，文人拿來寫字作畫。「宣紙」這個名字，唐代張彥遠的《歷代名畫記》裡就已經出現。","The document describes the fine paper of Jingxian (part of Ningguo Prefecture in the Ming): white, fine and slow to be eaten by insects, it was what scholars wrote and painted on. The name \"Xuan paper\" already appears in Zhang Yanyuan's Tang-dynasty Records of Famous Painters."],
+      src:"張彥遠《歷代名畫記》提到宣紙；涇縣明代屬寧國府；文書本身是遊戲虛構"},
+    {id:"cp3",kind:"slip",title:["汲古閣購紙帳","A paper ledger from the Jigu Pavilion"],
+      body:["殘帳記著常熟汲古閣主人毛晉買紙印書的帳目。他刻印的書多用江西產的厚竹紙；相傳「毛邊紙」這個名字就是從他來的。","The ledger records paper bought by Mao Jin, owner of the Jigu Pavilion in Changshu, for printing books. He mostly used thick bamboo paper from Jiangxi, and tradition says the name \"maobian paper\" comes from him."],
+      src:"葉德輝《書林清話》記毛晉向江西訂紙；毛邊紙得名於毛晉是相傳；帳目是遊戲虛構"}],
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"過宮炮譜殘頁",en:"Palace Cannon manual page"},{k:"box",zh:"宣紙水墨棋子",en:"Ink-on-paper chess pieces"}],
   title:["📜 焙紙暗房","📜 Paper-drying vault"],lvName:["焙紙暗房・第一層","Paper-drying vault · Level 1"],back:["回過宮炮門","Back to the Palace Cannon School"],
   hall:{at:[560,1180],zh:"📜 焙紙牆・暗門",en:"📜 Drying wall · Hidden door"},

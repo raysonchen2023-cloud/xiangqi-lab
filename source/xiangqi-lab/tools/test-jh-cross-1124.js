@@ -120,3 +120,15 @@ test("〔原始碼〕07z9m-cross.js：LF、沒有控制字元、沒有行內 // 
   const H = fs.readFileSync(path.join(ROOT, "xiangqi-db", "m.html"), "utf8"), a = H.indexOf("//#include m/07z9m-maze.js"), b = H.indexOf("//#include m/07z9m-cross.js");
   assert.ok(a > 0 && b > a);
 });
+
+test("碑刻文書（照 #108 的格式）：3 件對應地圖上 3 個 L；每件有種類（碑刻／殘簡／文書）、中英標題與內文、出處；出處寫明哪些是遊戲整理或虛構；毛邊紙一說標「相傳」、涇縣寫寧國府", () => {
+  const c = load(), lv = LV(c), L = lv.lore, nL = lv.map.join("").split("L").length - 1;
+  assert.equal(L.length, nL, "件數＝地圖上 L 的數目");
+  assert.equal(new Set(L.map((x) => x.id)).size, L.length, "id 不重複");
+  for (const x of L) {
+    assert.ok(["stele", "slip", "doc"].includes(x.kind), x.id + " 種類");
+    for (const k of ["title", "body"]) { assert.equal(x[k].length, 2); assert.ok(x[k][0] && x[k][1], x.id + " " + k + " 中英都有"); assert.ok(!/[一-鿿]/.test(x[k][1]), x.id + " 英文沒有中文字") }
+    assert.ok(x.src && /遊戲/.test(x.src), x.id + " 出處寫明遊戲的部分");
+  }
+  const all = JSON.stringify(L); assert.ok(/相傳/.test(L[2].body[0]), "毛邊紙一說標相傳"); assert.ok(/寧國府/.test(all) && !/徽州/.test(all), "涇縣明代屬寧國府，不寫徽州");
+});
