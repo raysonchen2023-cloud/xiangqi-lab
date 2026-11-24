@@ -64,7 +64,9 @@ test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在
   const pct = (xy, n) => { assert.ok(Array.isArray(xy) && xy.length === 2 && xy.every(v => v >= 0 && v <= 100), n + "：" + JSON.stringify(xy)) };
   const keys = Object.keys(SCW); assert.ok(keys.length >= 2, "錯棋重練、棋力測驗都登記了");
   for (const k of keys) {
-    const e = SCW[k]; assert.equal(e.f, k + "_l1610", k); assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.match(k, /_classic$/, "先只做經典世界");
+    const e = SCW[k]; assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.match(k, /_classic(_[a-z_]+)?$/, "只做經典世界");
+    if (e.base) { assert.ok(SCW[e.base], k + " 的基準條目"); assert.equal(e.S, SCW[e.base].S, k + " 座標跟基準共用"); assert.match(e.f, /_l1610$/); continue }
+    assert.equal(e.f, k + "_l1610", k);
     for (const id in e.S) pct(e.S[id], k + " " + id); pct(e.exit, k + " 出口");
     for (const s of ["l", "r", "t", "b"]) assert.ok(e.safe[s] >= 0 && e.safe[s] < .3);
     if (!e.walk) continue;   // 沒有走路角色的頁（挑戰電腦）
@@ -78,6 +80,16 @@ test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在
   const T = SCW["todaymap/today_day_classic"].fx; assert.equal(T.notes.length, 5, "今日推薦五張告示紙");
   for (const q of T.notes) { assert.equal(q.length, 4); for (const [x, y] of q) assert.ok(x >= 0 && x <= 2560 && y >= 0 && y <= 1600) }
   for (const xy of [T.term, T.seal, T.censer.slice(0, 2), ...T.eave]) assert.ok(xy[0] >= 0 && xy[0] <= 2560 && xy[1] >= 0 && xy[1] <= 1600);
+  // 季節、夜景：對戰、學習各 9 個變體（夏季對到原圖的橫式圖）
+  for (const h of ["battle", "learn"]) {
+    const B = "hubmap/" + h + "_classic";
+    for (const q of ["night", "spring", "spring_night", "summer", "summer_night", "autumn", "autumn_night", "winter", "winter_night"]) assert.ok(SCW[B + "_" + q], B + "_" + q);
+    assert.equal(SCW[B + "_summer"].f, B + "_l1610", "夏季＝原圖的橫式圖"); assert.equal(SCW[B + "_summer_night"].f, B + "_night_l1610");
+    assert.equal(SCW[B + "_winter"].f, B + "_winter_l1610"); assert.equal(SCW[B + "_winter"].walk, SCW[B].walk, "走路共用");
+  }
+  assert.equal(scwKey("data/hubmap/battle_classic_winter.webp?v=0700"), "hubmap/battle_classic_winter"); assert.ok(scwEntry("hubmap/battle_classic_winter"), "冬季對戰查得到橫式圖");
+  const base = src => /hubmap\/battle/.test(src) ? { k: "battle", re: /hubmap\/battle/, m: "semi", rg: "s" } : null;
+  assert.equal(scwSw7("data/hubmap/battle_classic_winter_l1610.webp", base).k, "battle", "季節橫式圖的天氣照對戰頁");
   const q = SCW["exammap/exam_day_classic"].fx.boardQ; assert.equal(q.length, 4, "題名榜四角");
   for (const [x, y] of q) assert.ok(x >= 0 && x <= 2560 && y >= 0 && y <= 1600, "題名榜是橫式圖像素");
   assert.ok(q[0][0] < q[1][0] && q[3][0] < q[2][0] && q[0][1] < q[3][1] && q[1][1] < q[2][1], "左上、右上、右下、左下的順序");
