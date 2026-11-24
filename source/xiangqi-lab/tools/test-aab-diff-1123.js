@@ -630,31 +630,68 @@ test("〔原始碼〕#102 第五輪：main 的串接——prepareDiff 參數照�
   assert.ok(M.includes('放行參數 ${args.length ? args.join(" ") : "沒有"}'), "印出放行參數");
 });
 
-/* #102 第六輪複審（iMac Claude 1 的新代理人）：main 的串接要真的跑一次——在暫存資料夾搭一個 git 倉庫（origin/main 指向自己，工具鎖定讀得到），
-   執行 p0-gate.js 本身：壞候選（新版少了首頁圖）＋報告手改成「沒有紅項、通過」，閘門要自己重算出紅項、印出放行參數，而且不能通過。
-   main 若在 prepareDiff 之後清空紅項、改成不印放行參數、新舊讀反，這項都會紅 */
-test("#102 第六輪：端到端真跑 p0-gate.js——壞候選＋假報告，閘門自己重算出紅項（首頁圖）、印放行參數、不通過；重算結果深凍結改不動", () => {
-  const G = require(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js")), crypto = require("crypto"), sh = (f) => crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+/* #102 第六、七輪複審（iMac Claude 1 的新代理人）：main 的串接要真的跑——在暫存資料夾搭一個 git 倉庫（origin/main 指向自己，工具鎖定讀得到），
+   執行 p0-gate.js 本身，配齊 P0-IMG、P0-UPD、P0-3D（12、16）與金絲雀、產物比對的報告。不靠比對原始碼字串：
+   main 在 gate 之前用任何寫法換掉、清空重算結果（解構賦值、換新物件），或不印、亂印放行參數、不寫收據，下面某一種情況就會紅 */
+function e2eRun({ oldF, newF, args = {}, ack = null, extra = [] }) {
+  const crypto = require("crypto"), sh = (f) => crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
   const T = fs.mkdtempSync(path.join(os.tmpdir(), "p0e2e-")), SD = path.join(T, "source", "xiangqi-android", "scripts");
   fs.cpSync(path.join(ROOT, "xiangqi-android", "scripts"), SD, { recursive: true });
   const git = (...a) => cp.execFileSync("git", ["-C", T, ...a], { stdio: ["ignore", "pipe", "pipe"] }).toString();
   git("init", "-q"); git("checkout", "-q", "-b", "main"); git("-c", "user.name=t", "-c", "user.email=t@t", "add", "-A"); git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q", "-m", "e2e");
   git("remote", "add", "origin", T); git("fetch", "-q", "origin");
-  const old = makeZip("e2e-old.zip", W91V(26112301)), lost = Object.assign({}, W91V(26112401, { [P + "index.html"]: "<html>v2", [P + "core.js"]: "var a=9;".repeat(40) }));
-  delete lost[P + "data/homemap/home.webp"]; const bad = makeZip("e2e-bad.zip", lost);
-  const TP = require(path.join(SD, "tool-pin.js")), rep = path.join(TMP, "e2e-report.json");
-  fs.writeFileSync(rep, JSON.stringify({ tool: "AAB-DIFF", strict: true, newSha256: sh(bad), oldSha256: sh(old), oldCode: "26112301", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {}, canary: { ok: true }, toolPins: TP.pinsFor("AAB-DIFF") }));
-  const r = cp.spawnSync(process.execPath, [path.join(SD, "p0-gate.js"), "--aab", bad, "--build", "20261124-0528", "--old-aab", old, "--reports", rep], { encoding: "utf8", cwd: T, timeout: 120000 });
-  const out = r.stdout + r.stderr;
-  assert.notEqual(r.status, 0, "壞候選不能通過：" + out.slice(-400));
-  assert.match(out, /閘門重算有紅項（[^）]*homemap\/home\.webp/, "閘門自己重算出首頁圖的紅項（報告寫沒有紅項也一樣）");
-  assert.match(out, /放行參數 沒有/, "印出放行參數");
-  assert.doesNotMatch(out, /不是要送審的這個 AAB|不是 --old-aab 這一包/, "新舊沒有讀反");
-  assert.doesNotMatch(out, /工具雜湊|跟 origin\/main 不一樣/, "端到端環境的工具鎖定是對的（不然這項測不到東西）");
-  /* 深凍結：prepareDiff 的結果改不動 */
-  const re = G.prepareDiff({ oldPath: old, aabPath: bad, reports: [] });
-  assert.ok(Object.isFrozen(re) && Object.isFrozen(re.red) && Object.isFrozen(re.canary));
-  assert.throws(() => { "use strict"; re.red.length = 0 }); assert.throws(() => { "use strict"; re.canaryOk = false });
-  assert.ok(re.red.length > 0, "紅項還在");
+  const TP = require(path.join(SD, "tool-pin.js")), A = sh(newF), K = "c".repeat(64), V = "20261124-0528", RD = path.join(T, "rep");
+  fs.mkdirSync(RD);
+  const reps = {
+    "img.json": { tool: "P0-IMG", aabSha256: A, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true, deep: { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: true } } }, toolPins: TP.pinsFor("P0-IMG") },
+    "upd.json": { tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") },
+    "aab-diff.json": { tool: "AAB-DIFF", strict: true, newSha256: A, oldSha256: sh(oldF), oldCode: "26112301", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args, canary: { ok: true, home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true } }, toolPins: TP.pinsFor("AAB-DIFF") },
+  };
+  for (const an of ["12", "16"]) {
+    reps["3d-" + an + ".json"] = { tool: "P0-3D", aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android: an, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D") };
+    reps["3d-canary-" + an + ".json"] = { tool: "P0-3D", selfTest: true, aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android: an, full: false, toolPins: TP.pinsFor("P0-3D") };
+  }
+  for (const [n, j] of Object.entries(reps)) fs.writeFileSync(path.join(RD, n), JSON.stringify(j));
+  const rc = path.join(T, "receipt.json"), argv = [path.join(SD, "p0-gate.js"), "--aab", newF, "--build", V, "--old-aab", oldF, "--diff-receipt", rc, ...extra];
+  if (ack) { const af = path.join(T, "ack.json"); fs.writeFileSync(af, JSON.stringify(ack)); argv.push("--ack", af) }
+  argv.push("--reports", ...Object.keys(reps).map((n) => path.join(RD, n)));
+  const r = cp.spawnSync(process.execPath, argv, { encoding: "utf8", cwd: T, timeout: 120000 }), out = r.stdout + r.stderr;
+  const sum = /閘門重算：紅 (\d+)、沒確認的黃 (\d+)、金絲雀(都抓到|沒抓到)、照參數放行 (\d+) 個/.exec(out);
+  const res = { status: r.status, out, sum: sum ? { red: +sum[1], yellow: +sum[2], canary: sum[3], allowed: +sum[4] } : null, receipt: fs.existsSync(rc) ? JSON.parse(fs.readFileSync(rc, "utf8")) : null, A, oldSha: sh(oldF) };
   fs.rmSync(T, { recursive: true, force: true });
+  return res;
+}
+test("#102 第六、七輪：端到端真跑 p0-gate.js——好包（帶非空的 --expect-removed）通過、逐字印放行參數、寫出完整收據；三種壞包（少首頁圖＋假報告、多一個沒確認的文件、--expect-removed=.）都擋", () => {
+  const G = require(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js"));
+  const old = makeZip("e2e-old.zip", W91V(26112301)), base = W91V(26112401, { [P + "index.html"]: "<html>v2", [P + "core.js"]: "var a=9;".repeat(40) });
+  /* 好包：照預期拿掉一張公園圖，報告的放行參數寫 --expect-removed */
+  const goodM = Object.assign({}, base); delete goodM[P + "data/park/a.webp"]; const good = makeZip("e2e-good.zip", goodM), RX = "data/park/a\\.webp$";
+  /* 放行參數本身也是黃項（要人看過、寫進 --ack）；確認碼照閘門同一支程式算，人寫的清單就是這幾筆 */
+  const ACK = G.recomputeFromFiles(AD, old, good, { "expect-removed": RX }, new Set()).yellow.map((y) => y.ack);
+  assert.ok(ACK.length >= 1 && ACK.every((k) => /@/.test(k)), "放行參數要人確認：" + ACK.join("、"));
+  const g = e2eRun({ oldF: old, newF: good, args: { "expect-removed": RX }, ack: ACK });
+  assert.equal(g.status, 0, "好包要通過：" + g.out.split("\n").filter((l) => /✘|⚠|問題|不能/.test(l)).join(" ／ ").slice(0, 900));
+  assert.deepEqual(g.sum, { red: 0, yellow: 0, canary: "都抓到", allowed: 1 });
+  assert.ok(g.out.includes("放行參數 --expect-removed=" + RX), "逐字印出放行參數");
+  assert.ok(g.receipt, "通過時寫出收據");
+  assert.equal(g.receipt.tool, "AAB-DIFF"); assert.equal(g.receipt.aabSha256, g.A); assert.equal(g.receipt.oldSha256, g.oldSha); assert.equal(g.receipt.oldCode, "26112301"); assert.equal(g.receipt.newCode, "26112401");
+  assert.deepEqual(g.receipt.args, { "expect-removed": RX }); assert.equal(g.receipt.allowed, 1); assert.equal(g.receipt.recomputed, true); assert.ok(g.receipt.toolPins);
+  /* 壞包一：少了首頁圖，報告手改成沒有紅項 */
+  const lost = Object.assign({}, base); delete lost[P + "data/homemap/home.webp"];
+  const b1 = e2eRun({ oldF: old, newF: makeZip("e2e-bad1.zip", lost) });
+  assert.notEqual(b1.status, 0); assert.ok(b1.sum && b1.sum.red >= 1, "閘門重算出紅項：" + JSON.stringify(b1.sum)); assert.match(b1.out, /閘門重算有紅項（[^）]*homemap\/home\.webp/); assert.equal(b1.receipt, null, "沒通過不寫收據");
+  assert.doesNotMatch(b1.out, /不是要送審的這個 AAB|不是 --old-aab 這一包|工具雜湊|跟 origin\/main 不一樣/, "新舊沒讀反、工具鎖定正確（不然測不到東西）");
+  /* 壞包二：多一個沒確認的說明文件（報告寫沒有黃項） */
+  const b2 = e2eRun({ oldF: old, newF: makeZip("e2e-bad2.zip", Object.assign({}, base, { [P + "NOTES-dev.md"]: "內部筆記" })) });
+  assert.notEqual(b2.status, 0); assert.ok(b2.sum && b2.sum.yellow >= 1, "閘門重算出沒確認的黃項：" + JSON.stringify(b2.sum)); assert.match(b2.out, /閘門重算有沒確認的黃項（[^）]*NOTES-dev\.md/);
+  /* 壞包三：放行參數寫成全部放行（--expect-removed=.），金絲雀要失靈 */
+  const b3 = e2eRun({ oldF: old, newF: good, args: { "expect-removed": "." } });
+  assert.notEqual(b3.status, 0); assert.ok(b3.sum && b3.sum.canary === "沒抓到", "金絲雀失靈：" + JSON.stringify(b3.sum)); assert.match(b3.out, /閘門重算的金絲雀沒抓到/); assert.ok(b3.out.includes("放行參數 --expect-removed=."));
+  /* 收據必填 */
+  const r = cp.spawnSync(process.execPath, [path.join(ROOT, "xiangqi-android/scripts/p0-gate.js"), "--aab", good, "--build", "20261124-0528", "--reports", good], { encoding: "utf8" });
+  assert.equal(r.status, 2); assert.match(r.stderr, /要給 --diff-receipt/);
+  /* 深凍結：prepareDiff 的結果改不動 */
+  const re = G.prepareDiff({ oldPath: old, aabPath: makeZip("e2e-bad1b.zip", lost), reports: [] });
+  assert.ok(Object.isFrozen(re) && Object.isFrozen(re.red) && Object.isFrozen(re.canary));
+  assert.throws(() => { "use strict"; re.red.length = 0 }); assert.ok(re.red.length > 0);
 });

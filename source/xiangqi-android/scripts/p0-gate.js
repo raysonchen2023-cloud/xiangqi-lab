@@ -299,6 +299,8 @@ async function main() {
   const a = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null };
   const j = process.argv.indexOf("--reports"), AAB = a("--aab"), BUILD = a("--build");
   const files = j > 0 ? process.argv.slice(j + 1).filter((x) => !x.startsWith("--")) : [];
+  /* #102 第七輪複審：收據必填——沒給就不驗（結束代碼 2），不然通過了也沒有東西附進送審收據 */
+  if (AAB && BUILD && files.length && !a("--diff-receipt")) { console.error("✘ 要給 --diff-receipt <收據.json>：閘門通過時把產物比對的收據寫在這裡，送審收據要附"); process.exit(2) }
   if (!AAB || !BUILD || !files.length) { console.error("用法：node scripts/p0-gate.js --aab <要送審的.aab> --build <網頁版號 YYYYMMDD-HHMM> --old-aab <Play 現行版.aab> [--ack <確認清單.json>] [--diff-receipt <收據.json>] [--waivers <檔>] --reports <報告…>"); process.exit(2) }
   /* #102 第四輪複審（低）：收據不准指到輸入檔（--aab、--old-aab、--ack、報告），不然會把要送審的 AAB 蓋掉 */
   if (a("--diff-receipt")) { const rp = path.resolve(a("--diff-receipt")), ins = [AAB, a("--old-aab"), a("--ack"), ...files].filter(Boolean).map((f) => path.resolve(f)); if (ins.some((f) => f.toLowerCase() === rp.toLowerCase())) { console.error("✘ --diff-receipt 不能指到輸入檔（" + rp + "）"); process.exit(2) }
