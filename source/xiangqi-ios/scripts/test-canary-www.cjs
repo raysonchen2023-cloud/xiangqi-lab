@@ -7,8 +7,12 @@ const test = require("node:test"), assert = require("node:assert/strict"), fs = 
 const HERE = __dirname, CHECK = path.join(HERE, "check-www.js"), CANARY = path.join(HERE, "canary-www.js");
 const { toolSha, treeSha, picks, rng, run, OFFICIAL_CDN, KINDS, hit, runtimeTaint, cleanEnv } = require("./canary-www.js");
 /* 2026-11-24：CI 上這支偶爾卡住 40 分鐘被取消、擋住所有 PR。每個子程序最多 4 分鐘，卡住就讓那一項失敗、寫出卡在哪個指令，不要拖到整個工作被取消 */
-const spawnT = (cmd, args, o = {}) => { const r = cp.spawnSync(cmd, args, { timeout: 240000, killSignal: "SIGKILL", ...o });
-  if (r.error && r.error.code === "ETIMEDOUT") throw new Error("子程序超過 240 秒沒結束（卡住）：" + [cmd, ...args].map(String).join(" ").slice(0, 300)); return r };
+/* #113 審查（不擋）：另加整支測試的總時限 20 分鐘——每個子程序都沒超過 4 分鐘、但加起來拖很久時，也會在 CI 取消前先失敗、寫出卡在哪 */
+const T_ALL = Date.now(), ALL_MS = 20 * 60000;
+const spawnT = (cmd, args, o = {}) => { const left = ALL_MS - (Date.now() - T_ALL), lim = Math.min(240000, left); const what = [cmd, ...args].map(String).join(" ").slice(0, 300);
+  if (lim <= 0) throw new Error("整支測試超過 20 分鐘，不再開新的子程序：" + what);
+  const r = cp.spawnSync(cmd, args, { timeout: lim, killSignal: "SIGKILL", ...o });
+  if (r.error && r.error.code === "ETIMEDOUT") throw new Error((lim < 240000 ? "整支測試的 20 分鐘用完了，" : "") + "子程序超過 " + Math.round(lim / 1000) + " 秒沒結束（卡住）：" + what); return r };
 const made = [];
 test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }) });
 const tmp = (p) => { const d = fs.mkdtempSync(path.join(os.tmpdir(), p)); made.push(d); return d };
@@ -75,7 +79,8 @@ const mainOf = (listBuf, over = {}) => (rel) => (rel in over ? over[rel] : rel =
 const okCdn = (d, lf, ctx) => spawnT(process.execPath, [CHECK, "--dir", d, "--list", lf, "--cdn-manifest", ctx.cdnFile], { encoding: "utf8" });
 const runCheck = (dir, list, ...more) => spawnT(process.execPath, [CHECK, "--dir", dir, "--list", list, ...more], { encoding: "utf8" });
 /* PR #67 第十六次審查①：base-guard 每一步都帶 NODE_OPTIONS=--require assert-count.cjs；叫金絲雀時預設拿掉（只有測「環境被動過」那一項自己帶），不然在 guard-base 會回 2 */
-const runCanary = (canary, args, o = {}) => spawnT(process.execPath, [canary, ...args], { encoding: "utf8", env: env({ NODE_OPTIONS: null, ...o }) });
+/* #113 審查（不擋）：金絲雀自己的子程序時限預設 120 秒，比外層 spawnT 的 240 秒短——卡住時由金絲雀先判「不成立」、留下收據，不是被外層直接殺掉 */
+const runCanary = (canary, args, o = {}) => spawnT(process.execPath, [canary, ...args], { encoding: "utf8", env: env({ NODE_OPTIONS: null, XQ_CANARY_SUB_MS: "120000", ...o }) });
 
 test("check-www.js：乾淨的假 www 全過；同大小換內容抓得到；--cdn 時 App 會要的檔跟 CDN 現行版不同會擋；讀不到 CDN 清單回 3（缺驗）", () => {
   const { D, L, M } = fakeWww();
@@ -514,8 +519,9 @@ test("標籤中間隔了換行（真包的寫法）也做得出 cmtcap 壞樣本
 test("W30：大於 20 MB、記了雜湊的檔每個種子都全測（不只最大的兩個）；只對 20～30 MB 放水，金絲雀要回 4（PR #67 第十三次審查）", () => {
   const { D, L } = fakeWww(), LJ = JSON.parse(fs.readFileSync(L, "utf8")), MB = 1048576;
   /* 跟真包一樣：最大的兩個（nnue、gmgames）之外，還有三個 21～26 MB 的 tour-*.json */
-  /* 2026-11-24：原本 5 個 21～40 MB（共 144 MB），Linux 上整份複製一次金絲雀就超過 4 分鐘、CI 偶爾被取消。
-     縮成 4 個剛好超過 20 MB 的檔：最大的兩個之外還有兩個 tour，照樣測得到「不只最大的兩個」 */
+  /* 2026-11-24：原本 5 個 21～40 MB（共 144 MB）。CI 有三次在這支測試卡到 40 分鐘被取消，但同一段平常只跑約 10 秒（舊版 CI 紀錄 10.1 秒），
+     所以卡住是偶發的、根因還沒查明，不是「檔太大一定超時」（#113 審查④更正）。縮成 4 個剛好超過 20 MB 的檔只是減輕負擔；
+     真正防止拖垮 CI 的是子程序時限（金絲雀的 XQ_CANARY_SUB_MS、這支的 spawnT）。最大的兩個之外還有兩個 tour，照樣測得到「不只最大的兩個」 */
   const big = [["engine/pikafish.nnue", 22.5 * MB], ["data/gmgames.json", 22 * MB], ["data/tour-a.json", 21.5 * MB], ["data/tour-b.json", 21 * MB]];
   for (const [rel, n] of big) { const b = Buffer.alloc(n, rel.length); fs.writeFileSync(path.join(D, ...rel.split("/")), b); LJ.files[rel] = [n, sha1(b)] }
   fs.writeFileSync(L, JSON.stringify(LJ));
@@ -631,10 +637,43 @@ test("check-www 卡住時，金絲雀判「測試不成立」（回 2）、寫�
   const C = blindCanary('if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); }', 'if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); } for (;;) {}');
   const t0 = Date.now(), r = runCanary(C, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"], { XQ_CANARY_SUB_MS: "3000" });
   assert.equal(r.status, 2, r.stdout + r.stderr); assert.match(r.stderr, /超過 3 秒沒結束（卡住）/); assert.ok(Date.now() - t0 < 60000, "時限要生效");
-  /* 只有壞樣本那幾次卡住（乾淨的那次正常）：那幾個壞樣本判不成立，整體回 2，不是 0 也不是 4 */
-  const mark = path.join(tmp("xq-hang-"), "n");
-  const C2 = blindCanary('if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); }', 'if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); } { const M = ' + JSON.stringify(mark) + '; const n = fs.existsSync(M) ? +fs.readFileSync(M, "utf8") : 0; fs.writeFileSync(M, String(n + 1)); if (n >= 1) for (;;) {} }');
-  const r2 = runCanary(C2, ["--dir", D, "--list", L, "--only", "mani", "--seed", "1"], { XQ_CANARY_SUB_MS: "3000" });
-  assert.equal(r2.status, 2, r2.stdout + r2.stderr); assert.match(r2.stdout + r2.stderr, /卡住/);
+  /* #113 審查①：原本的條件 n >= 1 卡住的其實是乾淨的那次（第 2 次叫 check-www），壞樣本、乾淨重跑卡住那兩段都沒測到。
+     check-www 被叫的順序：第 0 次乾淨的預先檢查、第 1 次乾淨的正式檢查、第 2 次「乾淨重跑（中間）」（只有一種壞樣本時排在它前面）、
+     第 3 次起是壞樣本、最後一次是「乾淨重跑（最後）」。用計數讓指定的那幾次卡住或放水，各自確認判定 */
+  const nth = (body) => { const mark = path.join(tmp("xq-hang-"), "n");
+    return blindCanary('if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); }', 'if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); } { const M = ' + JSON.stringify(mark) + '; const n = fs.existsSync(M) ? +fs.readFileSync(M, "utf8") : 0; fs.writeFileSync(M, String(n + 1)); ' + body + ' }') };
+  const go = (C, tag) => { const out = path.join(tmp("xq-hang-out-"), "r.json"), r = runCanary(C, ["--dir", D, "--list", L, "--only", "mani", "--seed", "1", "--out", out], { XQ_CANARY_SUB_MS: "3000" });
+    assert.ok(fs.existsSync(out), tag + "：要留下收據 " + r.stdout + r.stderr); return { r, R: JSON.parse(fs.readFileSync(out, "utf8")) } };
+  const hungOf = (R) => R.results.filter((x) => x.unfit && /卡住/.test(x.why || ""));
+  /* (a) 只有第一個壞樣本卡住：那一個判不成立，其他照常被抓到，乾淨重跑兩次都過，整體回 2（拿掉 canary-www.js 壞樣本那段的 timedOut 判斷會變成 4） */
+  let { r: ra, R: Ra } = go(nth("if (n === 3) for (;;) {}"), "壞樣本卡住");
+  assert.equal(ra.status, 2, "壞樣本卡住要回 2：" + ra.stdout + ra.stderr); assert.equal(Ra.code, 2);
+  assert.ok(hungOf(Ra).length >= 1 && hungOf(Ra).every((x) => x.kind === "mani"), "卡住的是壞樣本：" + JSON.stringify(Ra.results));
+  assert.ok(Ra.results.filter((x) => x.kind === "(乾淨重跑)").every((x) => x.caught === true), "乾淨重跑要照常通過");
+  assert.ok(Ra.results.some((x) => x.kind === "mani" && x.caught === true), "其他壞樣本照常被抓到（確認真的走到壞樣本那段）");
+  /* (b) 只有「乾淨重跑（中間）」卡住：那一次判不成立，整體回 2（拿掉 cleanAgain 的 timedOut 判斷會變成 4） */
+  let { r: rb, R: Rb } = go(nth("if (n === 2) for (;;) {}"), "乾淨重跑卡住");
+  assert.equal(rb.status, 2, "乾淨重跑卡住要回 2：" + rb.stdout + rb.stderr); assert.equal(Rb.code, 2);
+  assert.deepEqual(hungOf(Rb).map((x) => x.kind + "|" + x.file), ["(乾淨重跑)|中間"], "卡住的是中間那次乾淨重跑：" + JSON.stringify(Rb.results));
+  assert.ok(Rb.results.filter((x) => x.kind === "mani").every((x) => x.caught === true), "壞樣本照常被抓到");
+  /* (c) 第一個壞樣本沒被抓到（假裝沒問題、回 0），之後全部卡住：有一個真的沒抓到，要回 4（檢查失靈），不能被卡住蓋成 2 */
+  let { r: rc, R: Rc } = go(nth("if (n === 3) process.exit(0); if (n >= 4) for (;;) {}"), "沒抓到＋其他卡住");
+  assert.equal(rc.status, 4, "一個沒抓到＋其他卡住要回 4：" + rc.stdout + rc.stderr); assert.equal(Rc.code, 4);
+  assert.ok(Rc.results.some((x) => x.kind === "mani" && !x.unfit && x.caught === false), "要有一個真的沒抓到");
+  assert.ok(hungOf(Rc).length >= 1, "其他的要判卡住：" + JSON.stringify(Rc.results));
   const src = fs.readFileSync(CANARY, "utf8"); for (const k of ['cp.spawnSync("cp"', 'cp.spawnSync("unzip", ["-Z1"', 'cp.spawnSync("unzip", ["-q"', 'cp.spawnSync("git"', 'cp.spawnSync(process.execPath, [CHECK']) assert.match(src.slice(src.indexOf(k), src.indexOf(k) + 400), /\.\.\.SUB/, k + " 要有時限");
+});
+
+test("XQ_CANARY_SUB_MS 給 Infinity、負數、文字、超過 1 小時都退回預設，不會讓金絲雀回 1；正式 --cdn 那次卡住也判不成立（#113 審查②③）", () => {
+  const { D, L, M } = fakeWww();
+  for (const v of ["Infinity", "-5", "abc", "99999999999"]) {
+    const r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"], { XQ_CANARY_SUB_MS: v });
+    assert.equal(r.status, 0, "XQ_CANARY_SUB_MS=" + v + " 要照常跑完：" + r.stdout + r.stderr); assert.doesNotMatch(r.stderr, /ERR_OUT_OF_RANGE/);
+  }
+  const ipa = fakeIpa(fakeApp(D)), txt = fs.readFileSync(M, "utf8"), quiet = () => {};
+  const base = { pkg: ipa, list: L, cdn: OFFICIAL_CDN, readM: () => txt, mainFile: mainOf(fs.readFileSync(L)), log: quiet, only: "home", seed: "1" };
+  let r = run({ ...base, selfCdn: okCdn }); assert.equal(r.code, 0, "對照：正式 --cdn 正常時回 0");
+  r = run({ ...base, selfCdn: () => ({ status: null, stdout: "", stderr: "", error: Object.assign(new Error("spawnSync node ETIMEDOUT"), { code: "ETIMEDOUT" }) }) });
+  assert.equal(r.code, 2, "正式 --cdn 那次卡住要回 2：" + JSON.stringify(r.receipt.results.slice(-2)));
+  assert.equal(r.receipt.full, false); assert.ok(r.receipt.results.some((x) => x.kind === "(正式 CDN)" && x.unfit && /卡住/.test(x.why)), "收據要寫明正式 --cdn 卡住");
 });
