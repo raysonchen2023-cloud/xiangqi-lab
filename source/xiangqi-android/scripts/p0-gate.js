@@ -152,7 +152,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
         if (RE.yellow.length) add(`${key}：閘門重算有沒確認的黃項（${RE.yellow.slice(0, 3).map((x) => x.f + "@" + x.ack.split("@").pop()).join("、")}）：人看過後寫進 --ack 清單`);
         if (!RE.canaryOk) add(`${key}：閘門重算的金絲雀沒抓到：這次的放行參數可能太寬，或比對失靈`);
         /* #102 第四輪複審：四種金絲雀逐項核對（不只看總結的 canaryOk） */
-        for (const k of ["home", "zeroJs", "jks", "yellow"]) if (!RE.canary || !RE.canary[k] || RE.canary[k].ok !== true) add(`${key}：閘門重算的金絲雀「${k}」沒抓到`);
+        for (const k of ["home", "zeroJs", "jks", "yellow"]) { const c = RE.canary && RE.canary[k]; if (!c || c.ok !== true || typeof c.f !== "string" || !c.f || typeof c.hit !== "string" || !c.hit) add(`${key}：閘門重算的金絲雀「${k}」沒抓到（要有壞樣本檔名和比對抓到的原因）`) }
         /* #102 第四輪複審：新舊兩包幾乎一樣（不到 3 個檔不同；正常發版至少 index.html、sw.js、manifest 都會變），舊包可能是從候選包改出來的 */
         if (!Number.isInteger(RE.changed) || RE.changed < 3) add(`${key}：新舊兩包只差 ${RE.changed} 個檔：舊包可能不是 Play 上的那一包，請用從 Play 下載或封存的原檔`);
       }
@@ -299,7 +299,9 @@ async function main() {
   const files = j > 0 ? process.argv.slice(j + 1).filter((x) => !x.startsWith("--")) : [];
   if (!AAB || !BUILD || !files.length) { console.error("用法：node scripts/p0-gate.js --aab <要送審的.aab> --build <網頁版號 YYYYMMDD-HHMM> --old-aab <Play 現行版.aab> [--ack <確認清單.json>] [--diff-receipt <收據.json>] [--waivers <檔>] --reports <報告…>"); process.exit(2) }
   /* #102 第四輪複審（低）：收據不准指到輸入檔（--aab、--old-aab、--ack、報告），不然會把要送審的 AAB 蓋掉 */
-  if (a("--diff-receipt")) { const rp = path.resolve(a("--diff-receipt")), ins = [AAB, a("--old-aab"), a("--ack"), ...files].filter(Boolean).map((f) => path.resolve(f)); if (ins.some((f) => f.toLowerCase() === rp.toLowerCase())) { console.error("✘ --diff-receipt 不能指到輸入檔（" + rp + "）"); process.exit(2) } }
+  if (a("--diff-receipt")) { const rp = path.resolve(a("--diff-receipt")), ins = [AAB, a("--old-aab"), a("--ack"), ...files].filter(Boolean).map((f) => path.resolve(f)); if (ins.some((f) => f.toLowerCase() === rp.toLowerCase())) { console.error("✘ --diff-receipt 不能指到輸入檔（" + rp + "）"); process.exit(2) }
+    /* #102 第五輪複審：收據路徑上已經有東西（一般檔、符號連結、指到 AAB 的硬連結）就不寫，一開始就擋（lstat 不跟著連結走） */
+    let ex = false; try { fs.lstatSync(rp); ex = true } catch (e) {} if (ex) { console.error("✘ --diff-receipt 的位置已經有檔案（" + rp + "）：收據只寫新檔，要重跑先刪掉舊的"); process.exit(2) } }
   if (!/^\d{8}-\d{4}$/.test(BUILD)) { console.error("✘ --build 要是網頁版號（YYYYMMDD-HHMM）"); process.exit(2) }
   if (!fs.existsSync(AAB)) { console.error("✘ 找不到 AAB：" + AAB); process.exit(2) }
   /* 豁免檔：預設倉庫 .github/p0-waivers.json（scripts 在 source/xiangqi-android/scripts）；指定了卻讀不到或格式錯＝用法錯誤 */
@@ -347,7 +349,8 @@ async function main() {
   for (const n of r.notes) console.log("⚠ " + n);
   for (const w of r.waived) console.log("△ " + w);
   /* #102 審查④：通過時寫出產物比對的收據 JSON（--diff-receipt） */
-  if (r.ok && a("--diff-receipt")) { try { fs.writeFileSync(a("--diff-receipt"), JSON.stringify(aabDiffReceipt(sha, reports, diffRe), null, 1) + "\n"); console.log("收據：" + a("--diff-receipt")) } catch (e) { console.error("✘ 寫不出收據：" + e.message); process.exit(2) } }
+  /* #102 第五輪複審：收據用 flag "wx" 寫——檔案已經存在就不寫（符號連結、硬連結、豁免檔、AAB 都蓋不掉）；要重跑先把舊收據刪掉 */
+  if (r.ok && a("--diff-receipt")) { try { fs.writeFileSync(a("--diff-receipt"), JSON.stringify(aabDiffReceipt(sha, reports, diffRe), null, 1) + "\n", { flag: "wx" }); console.log("收據：" + a("--diff-receipt")) } catch (e) { console.error("✘ 寫不出收據：" + e.message); process.exit(2) } }
   if (r.ok) { console.log("✔ P0-IMG、P0-UPD、P0-3D（Android 12、16）、AAB-DIFF 都綁在這個 AAB 與版號上、都通過" + (r.waived.length ? `（其中 ${r.waived.length} 項照倉庫豁免檔放行）` : "") + "：可以送審"); process.exit(0) }
   for (const p of r.problems) console.log("✘ " + p);
   console.log("✘ 不能送審"); process.exit(1);

@@ -576,10 +576,10 @@ test("#102 第三輪：aab-diff 命令列的 --old-code／--new-code 跟 manifes
 test("#102 第四輪：閘門逐項核對四種金絲雀（總結說都抓到、但第④種沒抓到也擋）；新舊兩包不到 3 個檔不同就擋；--diff-receipt 指到輸入檔結束代碼 2", () => {
   const G = require(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js")), A = "a".repeat(64), D = "d".repeat(64);
   const rep = { file: "aab-diff.json", json: { tool: "AAB-DIFF", strict: true, newSha256: A, oldSha256: D, oldCode: "26112301", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {} } };
-  const RE = (o = {}) => Object.assign({ red: [], yellow: [], acked: [], allowed: 0, canaryOk: true, canary: { ok: true, home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true } }, newSha256: A, oldSha256: D, oldCode: 26112301, newCode: 26112401, changed: 40 }, o);
+  const RE = (o = {}) => Object.assign({ red: [], yellow: [], acked: [], allowed: 0, canaryOk: true, canary: { ok: true, home: { ok: true, f: "h.webp", hit: "拿掉" }, zeroJs: { ok: true, f: "a.js", hit: "0 位元組" }, jks: { ok: true, f: "x.jks", hit: "金鑰" }, yellow: { ok: true, f: "A.md", hit: "不在" } }, newSha256: A, oldSha256: D, oldCode: 26112301, newCode: 26112401, changed: 40 }, o);
   const PB = (re) => G.gate(A, "20261124-0528", [rep], [], { mainSha: () => "", diffRe: re }).problems.filter((p) => /^AAB-DIFF：/.test(p) && !/工具雜湊|toolPins|金絲雀沒抓到（home/.test(p));
   assert.deepEqual(PB(RE()), [], "全部正常");
-  assert.ok(PB(RE({ canary: { ok: true, home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: false } } })).some((p) => /金絲雀「yellow」沒抓到/.test(p)), "第④種失靈：就算總結 canaryOk 是 true 也擋");
+  assert.ok(PB(RE({ canary: { ok: true, home: { ok: true, f: "h.webp", hit: "拿掉" }, zeroJs: { ok: true, f: "a.js", hit: "0 位元組" }, jks: { ok: true, f: "x.jks", hit: "金鑰" }, yellow: { ok: false, f: "A.md", hit: null } } })).some((p) => /金絲雀「yellow」沒抓到/.test(p)), "第④種失靈：就算總結 canaryOk 是 true 也擋");
   assert.ok(PB(RE({ canary: undefined })).some((p) => /金絲雀「home」沒抓到/.test(p)), "沒有逐項結果也擋");
   for (const n of [0, 1, 2]) assert.ok(PB(RE({ changed: n })).some((p) => new RegExp("只差 " + n + " 個檔").test(p)), "只差 " + n + " 個檔");
   assert.ok(PB(RE({ changed: undefined })).some((p) => /只差/.test(p)), "沒算變動檔數也擋");
@@ -587,4 +587,45 @@ test("#102 第四輪：閘門逐項核對四種金絲雀（總結說都抓到、
   const re = G.recomputeFromFiles(AD, old, neu, {}, new Set()); assert.equal(re.changed, 3, "manifest、index.html、core.js 三個檔不同");
   const r = cp.spawnSync(process.execPath, [path.join(ROOT, "xiangqi-android/scripts/p0-gate.js"), "--aab", neu, "--build", "20261124-0528", "--diff-receipt", neu, "--reports", neu], { encoding: "utf8" });
   assert.equal(r.status, 2); assert.match(r.stderr, /--diff-receipt 不能指到輸入檔/); assert.ok(fs.statSync(neu).size > 1000, "AAB 沒被蓋掉");
+});
+
+test("#102 第五輪：四種金絲雀各自要有壞樣本檔名和比對抓到的原因（hit），而且跟 diffIndex 獨立重算一致；閘門少了 f 或 hit 就擋", () => {
+  const A = new Map(Object.entries(W91).filter(([k]) => !k.endsWith("/")).map(([k, v]) => { const b = Buffer.isBuffer(v) ? v : Buffer.from(String(v)); return [k, { size: b.length, csize: b.length, crc: zlib.crc32(b) }] }));
+  const c = AD.canaryRun(A, new Map(A), {});
+  const want = { home: ["red", (M, f) => M.delete(f)], zeroJs: ["red", (M, f) => M.set(f, { size: 0, csize: 0, crc: 0 })], jks: ["red", (M, f) => M.set(f, { size: 2048, csize: 2000, crc: 0x1234abcd })], yellow: ["yellow", (M, f) => M.set(f, { size: 4096, csize: 1500, crc: 0x5a5a5a5a })] };
+  for (const [k, [where, mut]] of Object.entries(want)) {
+    assert.equal(c[k].ok, true, k); assert.equal(typeof c[k].f, "string", k + " 有壞樣本檔名"); assert.equal(typeof c[k].hit, "string", k + " 有抓到的原因");
+    const B2 = new Map(A); mut(B2, c[k].f); const h = AD.diffIndex(A, B2, {})[where].find((x) => x.f === c[k].f);
+    assert.ok(h, k + "：獨立重算也抓得到"); assert.equal(c[k].hit, h.why, k + "：原因跟獨立重算一樣（不是寫死的 ok）");
+  }
+  assert.ok(/.jks$/.test(c.jks.f) && /金鑰/.test(c.jks.hit)); assert.ok(/.js$/.test(c.zeroJs.f) && /0 位元組/.test(c.zeroJs.hit)); assert.ok(/homemap/.test(c.home.f));
+  assert.equal(AD.canaryRun(A, new Map(A), { expectRemoved: /./ }).home.ok, false, "home 被放行參數蓋掉時要失靈");
+  const G = require(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js")), A64 = "a".repeat(64), D64 = "d".repeat(64);
+  const rep = { file: "aab-diff.json", json: { tool: "AAB-DIFF", strict: true, newSha256: A64, oldSha256: D64, oldCode: "26112301", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {} } };
+  const base = { red: [], yellow: [], acked: [], allowed: 0, canaryOk: true, newSha256: A64, oldSha256: D64, oldCode: 26112301, newCode: 26112401, changed: 40 };
+  const PB = (can) => G.gate(A64, "20261124-0528", [rep], [], { mainSha: () => "", diffRe: Object.assign({}, base, { canary: can }) }).problems.filter((p) => /金絲雀「/.test(p));
+  assert.deepEqual(PB(c), [], "真的金絲雀結果：不擋");
+  for (const k of ["home", "zeroJs", "jks", "yellow"]) {
+    assert.ok(PB(Object.assign({}, c, { [k]: { ok: true } })).some((p) => p.includes("「" + k + "」")), k + "：只寫 ok:true、沒有檔名和原因，擋");
+    assert.ok(PB(Object.assign({}, c, { [k]: Object.assign({}, c[k], { hit: "" }) })).some((p) => p.includes("「" + k + "」")), k + "：原因是空的，擋");
+  }
+});
+
+test("#102 第五輪：收據位置已經有檔案（一般檔、指到 AAB 的硬連結）就在一開始結束代碼 2，AAB 不會被蓋掉；寫收據用 flag wx", () => {
+  const neu = makeZip("rx-new.zip", W91V(26112401)), size = fs.statSync(neu).size, hl = path.join(TMP, "rx-hardlink.json");
+  try { fs.unlinkSync(hl) } catch (e) {} fs.linkSync(neu, hl);
+  const run2 = (rc) => cp.spawnSync(process.execPath, [path.join(ROOT, "xiangqi-android/scripts/p0-gate.js"), "--aab", neu, "--build", "20261124-0528", "--diff-receipt", rc, "--reports", neu], { encoding: "utf8" });
+  let r = run2(hl); assert.equal(r.status, 2); assert.match(r.stderr, /已經有檔案/); assert.equal(fs.statSync(neu).size, size, "硬連結指到的 AAB 沒被蓋掉");
+  const ex = path.join(TMP, "rx-exists.json"); fs.writeFileSync(ex, "{}"); r = run2(ex); assert.equal(r.status, 2); assert.equal(fs.readFileSync(ex, "utf8"), "{}");
+  const SRC = fs.readFileSync(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js"), "utf8");
+  assert.ok(SRC.includes('JSON.stringify(aabDiffReceipt(sha, reports, diffRe), null, 1) + "\\n", { flag: "wx" })'), "寫收據用 wx：就算檢查之後才冒出檔案也不蓋");
+});
+
+test("〔原始碼〕#102 第五輪：main 的串接——prepareDiff 參數照順序、重算結果原樣交給閘門（沒有改 red／yellow）、印出放行參數", () => {
+  const SRC = fs.readFileSync(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js"), "utf8"), M = SRC.slice(SRC.indexOf("async function main()"));
+  assert.ok(M.includes("diffRe = prepareDiff({ oldPath: OLD, aabPath: AAB, ackPath: ACK, reports })"), "舊＝--old-aab、新＝--aab、確認清單＝--ack");
+  assert.ok(!/diffRe\.(red|yellow|acked|canary|canaryOk|changed|oldCode|newCode|oldSha256|newSha256)\s*=[^=]/.test(M), "main 沒有改寫重算結果");
+  assert.deepEqual((M.match(/diffRe\s*=[^=>][^\n]{0,14}/g) || []), ["diffRe = null, oldSha =", "diffRe = prepareDiff({ "], "main 裡 diffRe 只有宣告和 prepareDiff 兩次指定，沒有換成別的東西");
+  assert.ok(M.includes("const r = gate(sha, BUILD, reports, fromRepo ? waivers : [], { mainSha, cdnProbe, diffRe, oldSha });"), "重算結果原樣交給閘門");
+  assert.ok(M.includes('放行參數 ${args.length ? args.join(" ") : "沒有"}'), "印出放行參數");
 });

@@ -210,7 +210,9 @@ function canaryRun(A, B, opts = {}) {
     if (!f) { out[k] = { f: null, ok: false, why: "包裡找不到可以拿來做壞樣本的檔" }; return }
     const B2 = new Map(B); mut(B2, f);
     const r = diffIndex(A, B2, opts);
-    out[k] = { f, ok: r[where].some((x) => x.f === f) };
+    /* #102 第五輪複審：每種金絲雀記下比對真的抓到的那一項的原因（hit），閘門要看得到，不只看 ok */
+    const h = r[where].find((x) => x.f === f);
+    out[k] = { f, ok: !!h, hit: h ? String(h.why || where) : null };
   };
   run("home", pick(/^base\/assets\/public\/data\/homemap\/[^/]+\.(webp|png|jpe?g)$/) || pick(/^base\/assets\/public\/data\/.+\.(webp|png|jpe?g)$/), (M, f) => M.delete(f), "red");
   run("zeroJs", pick(/^base\/assets\/public\/[^/]+\.js$/), (M, f) => M.set(f, { size: 0, csize: 0, crc: 0 }), "red");
