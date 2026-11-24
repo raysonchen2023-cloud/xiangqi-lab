@@ -569,7 +569,9 @@ if(OFF&&window.XQNet){XQNet.start();
 // ================= 分享：讓別的手機也裝象棋千秋 =================
 const APP_HOME="https://raysonchen2023-cloud.github.io/xiangqi-lab/";
 // 開發者模式：電腦網頁一律是；手機要在 設定→進階 自己打開。掃過電腦 QR code 的玩家也只是玩家，看不到「電腦」相關的字
-const DEVMODE=()=>!OFF||!!store.get("devMode",false);
+/* D1（App Store 2.3.1 隱藏功能；開發者選「原生版關掉」）：原生 App（iOS、Android）一律不是開發者模式——設定頁早就沒有開關（OFF&&!setNat()），
+   但「換手機」搬存檔時若帶來 devMode:true 還是會生效（測試台、全部解鎖試玩都靠它），所以原生版直接不看存檔。手機網頁照舊可以登入打開 */
+const DEVMODE=()=>!OFF||(!(typeof setNat==="function"&&setNat())&&!!store.get("devMode",false));
 /* 11/16 開發者「除了意見回饋欄的按鈕，其他都要讓開發者的視角和玩家一樣，要看開發者的內容要到開發者測試台」（選單：測試台加總開關、本機也跟玩家一樣、自我檢查提示收進測試台紀錄）：
    DEVMODE 只管意見回饋管理、測試台入口和玩家看不到的差別（不送匿名資料等）；會改變畫面的特例改看開發者測試台（07dv）的兩個開關，預設都關＝跟玩家一樣。
    DEVUNLOCK＝「🔓 全部解鎖試玩」（觀星臺、西市、第二集、星門圍城全部關卡、故事預覽、下架的章…）；DEVTOOLS＝「🛠 頁面上顯示開發者小工具」；devNote＝自我檢查沒過時記一筆（測試台「自我檢查紀錄」，最多 30 筆） */
