@@ -276,8 +276,8 @@ function parkLook0(){const k=store.get("era","classic"),e=curEra(),tk=store.get(
     imgK=tk==="auto"&&e?e.k:(!e&&tk==="wood3d"?"classic":null),pk=e?e.k:(tk==="wood3d"?"classic":null),bk=imgK&&BOARD_IMG[imgK]?imgK:null;
   // 字形晚到（第一次切到這個朝代）：拿上一次的參數重畫公園棋盤，棋子字面才會換成朝代字形（之前這裡什麼都沒做，要等走下一步才換）
   if(GLY_ERAS.has(k)&&!GLY[k])needGly(k,()=>{try{const a=PARK&&PARK.last;if(a&&GLY[k]&&store.get("era","classic")===k){a.ex.look=parkLook();PARK.v.draw(a.board,a.o,a.ex)}}catch(e){}});
-  const hi=!!store.get("hiCon",false)||(typeof axmHct==="function"&&!!axmHct()),cb=!!store.get("cbMode",false),hc=hi||cb,ps=!!pk&&PSET.has(pk)&&!hc,pb=psetBoard(imgK);   /* 11/12 無障礙：高對比主題的園子棋盤也用高對比棋子；11/13 第 12 輪：色弱模式也用（黑子黑底白字），cb 另外讓 3D 的上一步改朱橘、電腦建議改藍色虛線框（park3d.js PKCB） */return{k,hc,hi,cb,pset:ps?`data/pset/${pk}/`:null,img:pb?`data/pset/${imgK}/board.webp`:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:pb?psetRect(imgK):bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
-    pieces:PS==="3d"&&pk&&PIECE_INK[pk]?{r:`data/pieces/${pk}-r.webp`,b:`data/pieces/${pk}-b.webp`}:null,ink:pk&&PIECE_INK[pk]||null,gly:GLY[k]||null,bold:GLY_BOLD[k]||0}}
+  const hi=!!store.get("hiCon",false)||(typeof axmHct==="function"&&!!axmHct()),cb=!!store.get("cbMode",false),hc=hi||cb,cnT=typeof zhCnPc==="function"&&zhCnPc(),ps=!!pk&&PSET.has(pk)&&!hc&&!cnT,pb=psetBoard(imgK);   /* 11/12 無障礙：高對比主題的園子棋盤也用高對比棋子；11/13 第 12 輪：色弱模式也用（黑子黑底白字），cb 另外讓 3D 的上一步改朱橘、電腦建議改藍色虛線框（park3d.js PKCB） */return{k,hc,hi,cb,pset:ps?`data/pset/${pk}/`:null,img:pb?`data/pset/${imgK}/board.webp`:bk?`data/boards/${BOARD_IMG_FILE[bk]||bk}.webp`:null,rect:pb?psetRect(imgK):bk?BOARD_IMG[bk]:null,grid:T&&T.grid||"#3A1D0A",
+    pieces:PS==="3d"&&pk&&PIECE_INK[pk]?{r:`data/pieces/${pk}-r.webp`,b:`data/pieces/${pk}-b.webp`}:null,ink:pk&&PIECE_INK[pk]||null,gly:cnT?null:GLY[k]||null,bold:GLY_BOLD[k]||0}}   /* W94b：簡體模式不用整顆圖的棋子和繁體字形，3D 改畫文字（畫布 fillText 由 zh.js 轉簡體） */
 /* 意見回饋 334：錯棋重練一律用棋盤模式（PARK_OFF），不改玩家原本的公園設定 */
 let PARK=null,PARK_LOADING=null,PARK_OFF=false,PARK_J=null,PARK_LK=false;   /* PARK_LK：這盤是朝代擂台，專注棋盤模式也留在園子 3D */
 /* 進園子時「開局」特效等過場（入口圖＋名言）收掉才播；公園還沒建好就先等，最多 12 秒 */

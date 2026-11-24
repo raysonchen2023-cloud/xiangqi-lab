@@ -15,6 +15,16 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-devmode-native-1124.js",   /* 11/24 D1 送審前（App Store 2.3.1）：原生 App 一律不是開發者模式，存檔帶來的 devMode 不生效；手機網頁、電腦網頁照舊（m/02-shell.js DEVMODE；行為 3） */
+  "test-zh-canvas-1124.js",   /* 11/24 W94b 簡體模式：平面棋盤（SVG）與畫布（3D 棋子貼圖、河界）上的字也轉簡體，紅子寫「马」「车」不變罕見字（src/zh.js；行為 5） */
+  "test-zh-canvas-1124.js",   /* 11/24 W94b 簡體模式：平面棋盤（SVG）與畫布（3D 棋子貼圖、河界）上的字也轉簡體，紅子寫「马」「车」不變罕見字（src/zh.js；朝代圖片棋子組改底圖＋文字：m/01-board.js、m/06-cpu.js；行為 5、混合 1） */
+  "test-osc-fellows-en-1124.js",   /* 11/24 #107 審查後續：修行頁英文「師友」句 oscFellows(sid)[1]——沒找到的秘境人物不列、名單跟中文一一對應並翻譯、全空用英文空句（m/07z9-school.js；行為 2） */
+  "test-osc-err-pace-1124.js",   /* 11/24 開發者截圖（看懂失誤）「棋子動太快，玩家看不清楚」：lsnPlay 加節奏參數；修行課常見錯法先停 1.2 秒、每步 1.6 秒、可重看，走錯後反駁每步 1.4 秒；其他課照舊（m/07z7-lesson.js、m/07z9-school.js；行為 3、原始碼 1） */
+  "test-jh-maze-fall-1124.js",   /* 11/24 開發者「做一個掉入迷宮的轉場」：從大廳進迷宮才播、該派牆面材質（同源載不到改 CDN）、標題卡、1.2 秒落地／2.4 秒收掉、點一下跳過、減少動態只淡入標題（m/07z9m-fall.js；行為 5） */
+  "test-stk-testenv-1124.js",   /* 11/24 開發者「開工單從程式上擋」：測試流量（本機、區網、預覽站、測試房、iOS／Android 模擬器）不送卡住紀錄，正式站與真機照舊（m/05b-save.js stkTestEnv、XQBridgeViewController XQSim/1；行為 2、原始碼 1） */
+  "test-stk-testenv-1124.js",   /* 11/24 開發者「開工單從程式上擋」：測試流量（本機、區網、預覽站、測試房、iOS／Android 模擬器）不送卡住紀錄，正式站與真機照舊（m/05b-save.js stkTestEnv、XQBridgeViewController XQSim/1；行為 2） */
+  "test-legend-wording-1124.js",   /* 11/24 開發者截圖：石桌往事第二回「她去掰」看不懂，改寫；正本放 source/xiangqi-db/park-legend.json（混合 1） */
+  "test-legend-wording-1124.js",   /* 11/24 開發者截圖：石桌往事第二回「她去掰」和三題記盤題（第 4、7、10 步，寫明是哪一步吃掉的那顆）改寫；正本放 source/xiangqi-db/park-legend.json（混合 1） */
   "test-newjourney-entry-1116.js",   /* 11/16 開發者「目前已經沒辦法新的旅程了嗎 假設有其他玩家想重玩的話 應該還是要跟存檔讀檔的格子」：存檔與讀檔面板最下面補一顆不管幾格有存檔都在的「開始新的旅程」，開選格頁（m/05b-save.js saveList）（行為 4、原始碼 2；11/16 加「回開頭畫面」） */
   "test-xiu-scene-1116.js",   /* 11/16 開發者「找gemini繪製環景圖 關於這一頁，按照天文專家的判斷」：二十八宿星圖頁改滿版圖＋程式畫的二十八宿 */
   "test-weather-align-1116.js",   /* 11/16 開發者「這邊的天氣錯了，要跟首頁對齊天氣」：雲河的地方（船艙、驛站、航線圖、甲板）跟首頁同一個天氣地區 */
@@ -67,6 +77,7 @@ const CLASSIFIED = new Set([
   "test-jh-halls8-1123.js",   /* W48 其餘八派門內頁：JH_HALL、玩法入口（m/07z9l-halls.js） */
   "test-jh-maze-1123.js",   /* 11/23 W71 中炮門地底迷宮第一層（m/07z9m-maze.js）：vm 跑真的走路、暗匪、光、殘局判斷；兩題殘局用 core.js 獨立重算唯一一步殺 */
   "test-jh-maze-render-1124.js",   /* 11/24 W87c 迷宮回味感：vm 跑閃爍、材質載入（假 three）、斜向方向鈕、W97 提示限次、ptr 防呆、迷路版地圖 BFS；斜俯視、W99 逃跑的介面用原始碼比對（標〔原始碼〕〔混合〕） */
+  "test-android-back-1124.js",   /* 11/24 W100 Android 返回鍵先交給網頁回上一頁：BACK_JS 用 vm 實跑（行為 1）；XQBackHandler、共用版與 mini-26112401 的 MainActivity、變體雜湊（原始碼 2） */
   "test-jh-fanggong-1122.js",   /* 11/22 W48-S4 反宮馬門「活字排局陣」（開發者「門派分給三位平行做完」；選單「照主線次序才算對」）：m/07z9g-fanggong.js 課程主線取出與合法、三級出題（初中只打散黑方、高級紅黑都打散）、照主線次序判對錯並指出第幾步、走不下去指出原因、每天修為只給一次（行為 5、原始碼 1） */
   "test-jh-zm-engine-1123.js",   /* 11/23 W73 順炮、仕角炮、反宮馬棋理修正（Windows Claude 1 用 Pikafish 驗出）：順炮 90 題局面合法（獨立檢查子數、九宮、仕相兵、照面）、引擎最短殺等於答案；仕角炮 60 題引擎條件（吃差 50 cp 內／不吃好 100 cp 以上）、13 題舊題不在；反宮馬 palace_horse_06 例題 b 不出（行為 5、原始碼 1） */
   "test-jh-liepao-1122.js",   /* 11/22 W48-S5 列炮門「擊板記譜局」（開發者「門派分給三位平行做完」）：m/07z9h-liepao.js 課程主線取出與合法、三級步數 4／6／8 與分段 3～4 步、同一輪 3 題開頭不同、判一步分「動錯子／落點錯」、每天修為只給一次（行為 5、原始碼 1） */
@@ -162,6 +173,11 @@ const CLASSIFIED = new Set([
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
   "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
   "test-jh-cross-1124.js",   /* 11/24 W87 過宮炮地底迷宮（m/07z9m-cross.js）：vm 跑炮型護院視線、走法、地圖 BFS 與不被看到的路線搜尋、碑刻；題庫用 core.js 獨立重算 */
+  "test-w101-first-move-1124.js",   /* 11/24 W101 開發者截圖「還沒切到棋盤，掌門就先落子了」：電腦先手的第一步等棋盤真的看得到（3D 建好、開場封面 pk-veil 收掉）再走（src/local.js）〔混合：等待時間 vm 行為 2（含慢機器封面 23 秒）、接線與就緒判斷、park3d 訊號原始碼 2〕 */
+  "test-secret-friends-1124.js",   /* 11/24 W96 秘境棋友吸引力第一組：vm 跑 07-legend.js 的尋訪錄集滿保底、散佚手稿撿拾與換線索；畫面接線用原始碼比對（標〔原始碼〕） */
+  "test-w92-oldwv-fallback-1124.js",   /* 11/24 W92 舊 WebView 沒有多執行緒時對局改用 Magellan：vm 跑 02-shell 降級那一段；local.js 那一行用原始碼比對（標〔原始碼〕） */
+  "test-w104-jhgate-1124.js",   /* 11/24 W104 開發者選 ChatGPT 場景盤點 K：十州棋館晚明轉場（m/07z9n-jhgate.js）；在明朝只用簡單淡入〔混合：播不播、文字、星線棋盤格數 vm 行為 3、包裝與載入順序原始碼 1〕 */
+  "test-w102-master-gate-1124.js",   /* 11/24 W102 開發者選「改成中炮門的場景」＋ChatGPT 場景盤點 A、B、L：掌門局封面改門派場景（m/07z9-school.js zmGate／zmPlace），驛站旅人、秘境棋友、門下棋友改園子封面與英文（08b-cpugame.js cgGardenGate）〔混合：vm 行為 6、接線原始碼 1〕 */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */
