@@ -89,7 +89,8 @@ function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.
   if(YZ_NOLIST_ON){pad.classList.add("yz-nolist");if(YZ_MORE_ON)pg.insertAdjacentHTML("beforeend",'<button class="yz-more" id="yzMore" aria-label="其他入口：羈絆、棋史卡冊、輿圖、消寒圖、點將台、走去園子和擂台">☰ 其他</button>')}
   const on=(q,fn)=>{const e=pg.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
   on("#yzTr",()=>yzPick(v,INN.map(x=>x.id).concat(typeof igIds==="function"?igIds(k):[]),"🏮 路過的旅人","驛站裡都是路過的旅人，找誰下都可以、下幾次都可以。"));
-  on("#yzSec",()=>yzPick(v,SECRETS.map(x=>x.id),"🗝 秘境棋友",`找到 ${Object.keys(Sx).length}／${SECRETS.length} 位。還沒找到的藏在各朝代的園子裡；點將台可以用將令換線索。`));
+  on("#yzSec",()=>{const rw=typeof secAllReward==="function"?secAllReward():null;if(rw)setTimeout(()=>sheet("📜 雲河尋訪錄",b=>{b.innerHTML=secAllNote(rw)}),400);   /* W96：更新前就找齊六位的老玩家，打開清單時補發拓本（secAllReward 自己防重複） */
+    const nS=Object.keys(Sx).length;yzPick(v,SECRETS.map(x=>x.id),"🗝 秘境棋友",nS>=SECRETS.length?`六位都找到了，找誰下都可以。`:`找到 ${nS}／${SECRETS.length} 位。還沒找到的藏在各朝代的園子裡；點將台可以用將令換線索。`)});
   on("#yzMail",()=>yzMail(k));on("#yzLing",()=>{if(YZ_NOLIST_ON&&pad.classList.contains("yz-nolist"))return yzLing();const L=v.querySelector("#lingBox");if(L)L.scrollIntoView({behavior:"smooth",block:"start"})});on("#yzMore",()=>yzMore(v,k,pad));on("#yzSight",()=>yzSight(k));
   pg.querySelectorAll("[data-yze]").forEach(b=>b.onclick=()=>{const e=b.dataset.yze;vibrate(5);if(eraLocked(e)){toast(eraLockMsg(e));return}shipGoTo(e,()=>route())});
   shpFit(v)}
