@@ -87,6 +87,8 @@ JH_MZ_KIND.rook={
   look:{body:"#151515",head:"#222222",eye:0xE24A3A}};
 /* 中炮門第一層「廢棄漕倉」：上面那幾個常數就是它的設定（測試照舊讀 JH_MZ_MAP、JH_MZ_PUZ…） */
 jhMzDef("central",{map:JH_MZ_MAP,guards:[Object.assign({kind:"rook",dy:0},JH_MZ_GUARD)],puz:JH_MZ_PUZ,pool:JH_MZ_POOL_CENTRAL,jump:"S",key:"jhMaze",xpKey:"maze:1",
+  /* W87b 像素材質（11/24 開發者選「重出」的新版：Gemini 直接畫像素、48 色、無損 webp，Windows Claude 2 出圖）：只放 CDN（data/maze/tex/），載不到就用程式畫的；牆頂照舊程式畫 */
+  tex:{floor:"data/maze/tex/central_floor.webp",side:"data/maze/tex/central_wall.webp"},
   title:["🕳 地底漕倉","🕳 Underground granary"],lvName:["地底漕倉・第一層","Underground granary · Level 1"],back:["回中炮門","Back to the Central Cannon School"],
   hall:{at:[530,395],zh:"🕳 拋石車・地底密道",en:"🕳 Catapult · Hidden passage"},
   intro:["你從拋石車底下的暗門爬下來，四周一片漆黑。<b>點地面就會走過去</b>，也可以用下面的方向鈕。走到壁燈旁邊會點亮它。","You climb down through the hatch under the catapult into pitch darkness. <b>Tap the floor to walk there</b>, or use the arrows below. Walk next to a wall lamp to light it."],

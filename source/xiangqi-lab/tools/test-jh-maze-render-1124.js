@@ -116,3 +116,8 @@ test("〔原始碼〕W99 暗匪殘局可以逃跑但先講清楚代價（開發�
   /* 迷宮只在走完一層才存檔：逃跑後重新進來是 jhMzNew 整層重來（背包歸零） */
   const c = load(), S = c.jhMzNew("central", 0); S.bag.gong = 2; const T = c.jhMzNew("central", 0); assert.equal(T.bag.gong, 0, "重新進來背包是空的");
 });
+
+test("W87b 中炮門接上像素材質（地面、牆側；牆頂照舊程式畫），路徑在 data/maze/tex/（只放 CDN）", () => {
+  const c = load(), lv = vm.runInContext("JH_MZ_LV", c).central;
+  assert.deepEqual(JSON.parse(JSON.stringify(lv.tex)), { floor: "data/maze/tex/central_floor.webp", side: "data/maze/tex/central_wall.webp" });
+});
