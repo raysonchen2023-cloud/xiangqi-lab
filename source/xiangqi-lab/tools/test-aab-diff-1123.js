@@ -450,6 +450,20 @@ test("W91 金絲雀：從候選包自己做四種壞樣本（刪首頁素材、j
   assert.equal(bare.ok, false, "包裡沒有首頁素材、沒有根目錄 js：做不出壞樣本＝失靈，不能當通過");
   assert.equal(bare.zeroJs.f, null);
 });
+test("#102 第八輪：第五、六種金絲雀——首頁素材縮成 131 位元組（像 Git LFS 指標檔）要紅、多帶一個 .map 要紅；--expect-shrunk／--expect-added 放太寬就失靈", () => {
+  const A = idx(W91), B = idx(W91), c = AD.canaryRun(A, B);
+  assert.deepEqual([...AD.CANARY_KINDS], ["home", "zeroJs", "jks", "yellow", "shrink", "debug"]);
+  assert.equal(c.ok, true, JSON.stringify(c));
+  assert.equal(c.shrink.f, P + "data/homemap/home.webp"); assert.match(c.shrink.hit, /大幅縮小（4000 → 131/);
+  assert.match(c.debug.f, /^base\/assets\/public\/canary-debug-[0-9a-f]+\.js\.map$/); assert.ok(!A.has(c.debug.f) && !B.has(c.debug.f), "壞樣本檔名新舊兩包都沒有");
+  const sh = AD.canaryRun(A, B, { expectShrunk: new RegExp(".") });
+  assert.equal(sh.shrink.ok, false, "--expect-shrunk=.：首頁圖換成指標檔也被放行，金絲雀要失靈（第八輪代理人實跑出的漏洞）"); assert.equal(sh.ok, false);
+  assert.equal(AD.canaryRun(A, B, { expectShrunk: new RegExp("homemap/") }).ok, false, "只要蓋到首頁素材就失靈");
+  assert.equal(AD.canaryRun(A, B, { expectShrunk: new RegExp("data/park/a[.]webp$") }).ok, true, "窄的放行參數不影響");
+  const ad = AD.canaryRun(A, B, { expectAdded: new RegExp(".") });
+  assert.equal(ad.debug.ok, false, "--expect-added=.：多帶 debug 檔也被放行，金絲雀要失靈"); assert.equal(ad.ok, false);
+  assert.equal(AD.canaryRun(A, B, { expectAdded: new RegExp("[.]map$") }).ok, false);
+});
 
 test("W91 報告：tool＝AAB-DIFF、strict、兩個 AAB 的 SHA-256、舊版本碼、工具雜湊、金絲雀；pass 要結束代碼 0＋--strict＋金絲雀都抓到；版本碼不是數字回 2", () => {
   const a = makeZip("w91-old.zip", W91), b = makeZip("w91-new.zip", Object.assign({}, W91, { [P + "data/new.webp"]: Buffer.alloc(100, 1) }));
@@ -576,7 +590,7 @@ test("#102 第三輪：aab-diff 命令列的 --old-code／--new-code 跟 manifes
 test("#102 第四輪：閘門逐項核對四種金絲雀（總結說都抓到、但第④種沒抓到也擋）；新舊兩包不到 3 個檔不同就擋；--diff-receipt 指到輸入檔結束代碼 2", () => {
   const G = require(path.join(ROOT, "xiangqi-android/scripts/p0-gate.js")), A = "a".repeat(64), D = "d".repeat(64);
   const rep = { file: "aab-diff.json", json: { tool: "AAB-DIFF", strict: true, newSha256: A, oldSha256: D, oldCode: "26112301", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {} } };
-  const RE = (o = {}) => Object.assign({ red: [], yellow: [], acked: [], allowed: 0, canaryOk: true, canary: { ok: true, home: { ok: true, f: "h.webp", hit: "拿掉" }, zeroJs: { ok: true, f: "a.js", hit: "0 位元組" }, jks: { ok: true, f: "x.jks", hit: "金鑰" }, yellow: { ok: true, f: "A.md", hit: "不在" } }, newSha256: A, oldSha256: D, oldCode: 26112301, newCode: 26112401, changed: 40 }, o);
+  const RE = (o = {}) => Object.assign({ red: [], yellow: [], acked: [], allowed: 0, canaryOk: true, canary: { ok: true, home: { ok: true, f: "h.webp", hit: "拿掉" }, zeroJs: { ok: true, f: "a.js", hit: "0 位元組" }, jks: { ok: true, f: "x.jks", hit: "金鑰" }, yellow: { ok: true, f: "A.md", hit: "不在" }, shrink: { ok: true, f: "h.webp", hit: "大幅縮小" }, debug: { ok: true, f: "c.js.map", hit: "debug" } }, newSha256: A, oldSha256: D, oldCode: 26112301, newCode: 26112401, changed: 40 }, o);
   const PB = (re) => G.gate(A, "20261124-0528", [rep], [], { mainSha: () => "", diffRe: re }).problems.filter((p) => /^AAB-DIFF：/.test(p) && !/工具雜湊|toolPins|金絲雀沒抓到（home/.test(p));
   assert.deepEqual(PB(RE()), [], "全部正常");
   assert.ok(PB(RE({ canary: { ok: true, home: { ok: true, f: "h.webp", hit: "拿掉" }, zeroJs: { ok: true, f: "a.js", hit: "0 位元組" }, jks: { ok: true, f: "x.jks", hit: "金鑰" }, yellow: { ok: false, f: "A.md", hit: null } } })).some((p) => /金絲雀「yellow」沒抓到/.test(p)), "第④種失靈：就算總結 canaryOk 是 true 也擋");
@@ -645,7 +659,7 @@ function e2eRun({ oldF, newF, args = {}, ack = null, extra = [] }) {
   const reps = {
     "img.json": { tool: "P0-IMG", aabSha256: A, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true, deep: { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: true } } }, toolPins: TP.pinsFor("P0-IMG") },
     "upd.json": { tool: "P0-UPD", aabSha256: A, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") },
-    "aab-diff.json": { tool: "AAB-DIFF", strict: true, newSha256: A, oldSha256: sh(oldF), oldCode: "26112301", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args, canary: { ok: true, home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true } }, toolPins: TP.pinsFor("AAB-DIFF") },
+    "aab-diff.json": { tool: "AAB-DIFF", strict: true, newSha256: A, oldSha256: sh(oldF), oldCode: "26112301", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args, canary: { ok: true, home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true }, shrink: { ok: true }, debug: { ok: true } }, toolPins: TP.pinsFor("AAB-DIFF") },
   };
   for (const an of ["12", "16"]) {
     reps["3d-" + an + ".json"] = { tool: "P0-3D", aabSha256: A, apkSha256: K, apkBound: true, pass: true, build: V, android: an, full: true, rounds: 2, roundsPassed: 2, knownFile: { fromRepo: true }, toolPins: TP.pinsFor("P0-3D") };
@@ -666,16 +680,21 @@ test("#102 第六、七輪：端到端真跑 p0-gate.js——好包（帶非空�
   const old = makeZip("e2e-old.zip", W91V(26112301)), base = W91V(26112401, { [P + "index.html"]: "<html>v2", [P + "core.js"]: "var a=9;".repeat(40) });
   /* 好包：照預期拿掉一張公園圖，報告的放行參數寫 --expect-removed */
   const goodM = Object.assign({}, base); delete goodM[P + "data/park/a.webp"]; const good = makeZip("e2e-good.zip", goodM), RX = "data/park/a\\.webp$";
+  /* #102 第八輪（中）：好包三種放行參數都帶非空值（窄的、不會蓋到首頁素材或 debug 檔），三種都要逐字印出、收據 args 三種都對上 */
+  const GA = { "expect-removed": RX, "expect-shrunk": "data/park/b\\.webp$", "expect-added": "data/park/c\\.webp$" };
   /* 放行參數本身也是黃項（要人看過、寫進 --ack）；確認碼照閘門同一支程式算，人寫的清單就是這幾筆 */
-  const ACK = G.recomputeFromFiles(AD, old, good, { "expect-removed": RX }, new Set()).yellow.map((y) => y.ack);
+  const ACK = G.recomputeFromFiles(AD, old, good, GA, new Set()).yellow.map((y) => y.ack);
   assert.ok(ACK.length >= 1 && ACK.every((k) => /@/.test(k)), "放行參數要人確認：" + ACK.join("、"));
-  const g = e2eRun({ oldF: old, newF: good, args: { "expect-removed": RX }, ack: ACK });
+  const g = e2eRun({ oldF: old, newF: good, args: GA, ack: ACK });
   assert.equal(g.status, 0, "好包要通過：" + g.out.split("\n").filter((l) => /✘|⚠|問題|不能/.test(l)).join(" ／ ").slice(0, 900));
   assert.deepEqual(g.sum, { red: 0, yellow: 0, canary: "都抓到", allowed: 1 });
-  assert.ok(g.out.includes("放行參數 --expect-removed=" + RX), "逐字印出放行參數");
+  for (const [k, v] of Object.entries(GA)) assert.ok(g.out.includes("--" + k + "=" + v), "逐字印出放行參數 --" + k);
   assert.ok(g.receipt, "通過時寫出收據");
   assert.equal(g.receipt.tool, "AAB-DIFF"); assert.equal(g.receipt.aabSha256, g.A); assert.equal(g.receipt.oldSha256, g.oldSha); assert.equal(g.receipt.oldCode, "26112301"); assert.equal(g.receipt.newCode, "26112401");
-  assert.deepEqual(g.receipt.args, { "expect-removed": RX }); assert.equal(g.receipt.allowed, 1); assert.equal(g.receipt.recomputed, true); assert.ok(g.receipt.toolPins);
+  assert.deepEqual(g.receipt.args, GA); assert.equal(g.receipt.allowed, 1); assert.equal(g.receipt.recomputed, true); assert.ok(g.receipt.toolPins);
+  /* #102 第八輪（不擋，照做）：收據另外記閘門自己的 aab-diff.js、p0-gate.js 雜湊 */
+  const shf = (f) => require("crypto").createHash("sha256").update(fs.readFileSync(path.join(ROOT, "xiangqi-android/scripts", f))).digest("hex");
+  assert.deepEqual(g.receipt.gatePins, { "aab-diff.js": shf("aab-diff.js"), "p0-gate.js": shf("p0-gate.js") });
   /* 壞包一：少了首頁圖，報告手改成沒有紅項 */
   const lost = Object.assign({}, base); delete lost[P + "data/homemap/home.webp"];
   const b1 = e2eRun({ oldF: old, newF: makeZip("e2e-bad1.zip", lost) });
@@ -687,6 +706,24 @@ test("#102 第六、七輪：端到端真跑 p0-gate.js——好包（帶非空�
   /* 壞包三：放行參數寫成全部放行（--expect-removed=.），金絲雀要失靈 */
   const b3 = e2eRun({ oldF: old, newF: good, args: { "expect-removed": "." } });
   assert.notEqual(b3.status, 0); assert.ok(b3.sum && b3.sum.canary === "沒抓到", "金絲雀失靈：" + JSON.stringify(b3.sum)); assert.match(b3.out, /閘門重算的金絲雀沒抓到/); assert.ok(b3.out.includes("放行參數 --expect-removed=."));
+  /* 壞包四（#102 第八輪代理人實跑的漏洞）：首頁圖換成 131 位元組（像 Git LFS 指標檔），--expect-shrunk=. 加上把黃項全確認掉——金絲雀 shrink 要失靈、閘門擋 */
+  const lfsM = Object.assign({}, goodM, { [P + "data/homemap/home.webp"]: "version https://git-lfs.github.com/spec/v1\noid sha256:" + "0".repeat(64) + "\nsize 279784\n" });
+  const lfs = makeZip("e2e-bad4.zip", lfsM), LA = { "expect-removed": RX, "expect-shrunk": "." };
+  assert.ok(fs.statSync(lfs).size > 0 && Buffer.byteLength(lfsM[P + "data/homemap/home.webp"]) < 140, "壞樣本像 LFS 指標檔（約 130 位元組）");
+  const b4 = e2eRun({ oldF: old, newF: lfs, args: LA, ack: G.recomputeFromFiles(AD, old, lfs, LA, new Set()).yellow.map((y) => y.ack) });
+  assert.notEqual(b4.status, 0, "LFS 指標檔＋--expect-shrunk=. 不能送審"); assert.ok(b4.sum && b4.sum.red === 0 && b4.sum.yellow === 0, "紅黃都被放行或確認掉了（這正是漏洞的樣子）：" + JSON.stringify(b4.sum));
+  assert.equal(b4.sum.canary, "沒抓到"); assert.match(b4.out, /金絲雀「shrink」沒抓到/); assert.equal(b4.receipt, null);
+  /* 情境五（#102 第八輪，低）：確認清單只用閘門自己收的 --ack——報告的 args 偷塞一份真的、含確認碼的清單，閘門沒給 --ack，要擋 */
+  const ackF = path.join(os.tmpdir(), "p0e2e-sneak-ack-" + process.pid + ".json"); fs.writeFileSync(ackF, JSON.stringify(ACK));
+  try {
+    const b5 = e2eRun({ oldF: old, newF: good, args: Object.assign({}, GA, { ack: ackF }) });
+    assert.notEqual(b5.status, 0, "報告裡的 ack 不算數"); assert.ok(b5.sum && b5.sum.yellow >= 1, "放行參數那個黃項沒人確認：" + JSON.stringify(b5.sum)); assert.equal(b5.receipt, null);
+  } finally { fs.rmSync(ackF, { force: true }) }
+  /* 情境六（#102 第八輪，不擋，照做）：參數值塞換行偽造一行「✔ 可以送審」——印出時要轉成跳脫字元，輸出裡不能多出那一行 */
+  const BS = String.fromCharCode(92), NL = "\n", fake = RX + NL + "✔ 可以送審";
+  const b6 = e2eRun({ oldF: old, newF: good, args: { "expect-removed": fake } });
+  assert.notEqual(b6.status, 0); assert.ok(b6.out.includes("--expect-removed=" + RX + BS + "u000a✔ 可以送審"), "換行印成跳脫字元");
+  assert.ok(!b6.out.split(NL).some((l) => l.trim() === "✔ 可以送審"), "輸出裡沒有一行單獨的「✔ 可以送審」");
   /* 收據必填 */
   const r = cp.spawnSync(process.execPath, [path.join(ROOT, "xiangqi-android/scripts/p0-gate.js"), "--aab", good, "--build", "20261124-0528", "--reports", good], { encoding: "utf8" });
   assert.equal(r.status, 2); assert.match(r.stderr, /要給 --diff-receipt/);

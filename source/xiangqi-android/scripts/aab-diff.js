@@ -203,6 +203,7 @@ function checkInputs(A, B, pathA, pathB) {
 /* W91 金絲雀（AGENTS.md「P0 出口驗證要難作假」：壞樣本從實際的候選包做、跟正式比對走同一條判斷路徑 diffIndex，參數與確認清單也一樣）：
    ①刪一個首頁素材 ②把一個根目錄的 js 縮成 0 位元組 ③多帶一個 .jks——都要變紅；④多一個沒確認過的 AGENTS.md——要變黃（--strict 擋）。
    參數放太寬（例如 --expect-removed=.）會讓①不紅，金絲雀就判失靈。回傳 { home, zeroJs, jks, yellow: {f, ok}, ok } */
+const CANARY_KINDS = ["home", "zeroJs", "jks", "yellow", "shrink", "debug"];
 function canaryRun(A, B, opts = {}) {
   const pick = (re) => [...B.keys()].filter((n) => A.has(n) && re.test(n) && B.get(n).size > 0).sort()[0] || null;
   const out = {};
@@ -221,7 +222,11 @@ function canaryRun(A, B, opts = {}) {
   const z = require("zlib"), tag = (z.crc32([...B.keys()].sort().join("\n")) >>> 0).toString(16), fresh = (pre, ext) => { for (let i = 0; i < 50; i++) { const f = pre + tag + (i ? "-" + i : "") + ext; if (!A.has(f) && !B.has(f)) return f } return null };
   run("jks", fresh("base/assets/public/upload-canary-", ".jks"), (M, f) => M.set(f, { size: 2048, csize: 2000, crc: 0x1234abcd }), "red");
   run("yellow", fresh("base/assets/public/AGENTS-canary-", ".md"), (M, f) => M.set(f, { size: 4096, csize: 1500, crc: 0x5a5a5a5a }), "yellow");
-  out.ok = ["home", "zeroJs", "jks", "yellow"].every((k) => out[k].ok === true);
+  /* #102 第八輪複審（中）：前四種都沒走「縮小」和「新增 debug 檔」這兩條放行路徑。--expect-shrunk=. 加一筆確認，首頁圖換成 Git LFS 指標檔（約 130 位元組，封測出過的 P0）也能過。
+     shrink：把一張首頁素材縮成 131 位元組，必須紅；debug：多帶一個新的 .map，必須紅。--expect-shrunk／--expect-added 只要蓋到首頁素材或 debug 檔，金絲雀就失靈、報告 pass:false */
+  run("shrink", pick(/^base\/assets\/public\/data\/homemap\/[^/]+\.(webp|png|jpe?g)$/) || pick(/^base\/assets\/public\/data\/.+\.(webp|png|jpe?g)$/), (M, f) => M.set(f, { size: 131, csize: 131, crc: 0x7f13ab01 }), "red");
+  run("debug", fresh("base/assets/public/canary-debug-", ".js.map"), (M, f) => M.set(f, { size: 5120, csize: 1400, crc: 0x3c3c3c3c }), "red");
+  out.ok = CANARY_KINDS.every((k) => out[k].ok === true);
   return out;
 }
 
@@ -298,9 +303,9 @@ if (require.main === module) {
   Object.assign(r, { tool: "AAB-DIFF", args: P.raw, strict: P.strict, oldName: P.pos[0].split(/[\\/]/).pop(), newName: P.pos[1].split(/[\\/]/).pop(), oldSha256, newSha256,
     oldCode: P.opt["old-code"] || null, newCode: P.opt["new-code"] || null, oldCodeManifest, newCodeManifest, canary, exitCode: code, pass: code === 0 && P.strict === true && canary.ok === true, toolPins: TOOL_PINS });
   const md = renderMd(r, r.oldName, r.newName, P.raw) + "\n\n## 金絲雀（從這個候選包做的壞樣本，同一套參數與確認清單）：" + (canary.ok ? "✔ 都抓到" : "✘ 沒抓到，這次比對不可信") + "\n" +
-    ["home", "zeroJs", "jks", "yellow"].map((k) => "- " + { home: "刪一個首頁素材→紅", zeroJs: "一個 js 縮成 0 位元組→紅", jks: "多帶一個 .jks→紅", yellow: "多一個沒確認的 AGENTS.md→黃" }[k] + "：" + (canary[k].ok ? "✔" : "✘") + "（" + (canary[k].f || canary[k].why) + "）").join("\n");
+    CANARY_KINDS.map((k) => "- " + { home: "刪一個首頁素材→紅", zeroJs: "一個 js 縮成 0 位元組→紅", jks: "多帶一個 .jks→紅", yellow: "多一個沒確認的 AGENTS.md→黃", shrink: "一張首頁素材縮成 131 位元組（像 LFS 指標檔）→紅", debug: "多帶一個 .map→紅" }[k] + "：" + (canary[k].ok ? "✔" : "✘") + "（" + (canary[k].f || canary[k].why) + "）").join("\n");
   try { if (P.opt.json) fs.writeFileSync(P.opt.json, JSON.stringify(r, null, 1) + "\n"); if (P.opt.md) fs.writeFileSync(P.opt.md, md + "\n") } catch (e) { no("寫不出報告：" + e.message) }
   console.log(md);
   process.exit(code);
 }
-module.exports = { readEntry, versionCodeOf, readZipIndex, diffIndex, checkInputs, renderMd, parseArgs, canaryRun, sha256File, DEBUG_RE, DEBUG_OK, SECRET_RE, MEDIA_RE, CODE_RE, AAB_MUST, NEW_OK, NEW_SUSPECT };
+module.exports = { CANARY_KINDS, readEntry, versionCodeOf, readZipIndex, diffIndex, checkInputs, renderMd, parseArgs, canaryRun, sha256File, DEBUG_RE, DEBUG_OK, SECRET_RE, MEDIA_RE, CODE_RE, AAB_MUST, NEW_OK, NEW_SUSPECT };

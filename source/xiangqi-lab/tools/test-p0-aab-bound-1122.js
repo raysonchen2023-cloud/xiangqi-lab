@@ -18,7 +18,7 @@ const TP = require(path.join(AND, "tool-pin.js"));
 const MAIN = (p) => TP.normSha(fs.readFileSync(path.join(AND, path.basename(p))));
 /* #102：閘門自己重算產物比對的結果（合格的樣子：沒有紅、沒有沒確認的黃、金絲雀都抓到）；舊版雜湊跟報告記的一樣 */
 /* #102 第三輪複審：重算結果一定帶兩包的雜湊與 manifest 裡實際的 versionCode（從檔案重算時 recomputeFromFiles 會填），跟假報告 ad() 一致 */
-const OLDSHA = "d".repeat(64), OKRE = { red: [], yellow: [], acked: [], allowed: 0, canaryOk: true, newSha256: "a".repeat(64), oldSha256: OLDSHA, oldCode: 26112104, newCode: 26112401, canary: { ok: true, home: { ok: true, f: "h.webp", hit: "拿掉" }, zeroJs: { ok: true, f: "a.js", hit: "0 位元組" }, jks: { ok: true, f: "x.jks", hit: "金鑰" }, yellow: { ok: true, f: "A.md", hit: "不在" } }, changed: 99 };
+const OLDSHA = "d".repeat(64), OKRE = { red: [], yellow: [], acked: [], allowed: 0, canaryOk: true, newSha256: "a".repeat(64), oldSha256: OLDSHA, oldCode: 26112104, newCode: 26112401, canary: { ok: true, home: { ok: true, f: "h.webp", hit: "拿掉" }, zeroJs: { ok: true, f: "a.js", hit: "0 位元組" }, jks: { ok: true, f: "x.jks", hit: "金鑰" }, yellow: { ok: true, f: "A.md", hit: "不在" }, shrink: { ok: true, f: "h.webp", hit: "大幅縮小" }, debug: { ok: true, f: "c.js.map", hit: "debug" } }, changed: 99 };
 const G = (a, b, c, w) => gate(a, b, c, w, { mainSha: MAIN, diffRe: Object.assign({}, OKRE, { newSha256: a }), oldSha: OLDSHA });
 const A = "a".repeat(64), B = "b".repeat(64), K = "c".repeat(64);
 const V = "20261122-0804";
@@ -26,7 +26,7 @@ const d3 = (sha, android) => ({ file: "3d-" + android + ".json", json: { tool: "
 /* P0-3D 金絲雀：check-3d.js --self-test 的報告（2026-11-23） */
 const c3 = (sha, android) => ({ file: "3d-canary-" + android + ".json", json: { tool: "P0-3D", selfTest: true, aabSha256: sha, apkSha256: K, apkBound: true, pass: true, build: V, android, full: false, toolPins: TP.pinsFor("P0-3D") } });
 /* W91（11/24）：產物比對報告（aab-diff.js --strict --old-code --json），合格的樣子 */
-const ad = (sha = A, o = {}) => ({ file: "aab-diff.json", json: Object.assign({ tool: "AAB-DIFF", strict: true, newSha256: sha, oldSha256: "d".repeat(64), oldCode: "26112104", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {}, canary: { home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true }, ok: true }, toolPins: TP.pinsFor("AAB-DIFF") }, o) });
+const ad = (sha = A, o = {}) => ({ file: "aab-diff.json", json: Object.assign({ tool: "AAB-DIFF", strict: true, newSha256: sha, oldSha256: "d".repeat(64), oldCode: "26112104", newCode: "26112401", red: [], yellow: [], acked: [], allowed: [], exitCode: 0, pass: true, args: {}, canary: { home: { ok: true }, zeroJs: { ok: true }, jks: { ok: true }, yellow: { ok: true }, shrink: { ok: true }, debug: { ok: true }, ok: true }, toolPins: TP.pinsFor("AAB-DIFF") }, o) });
 const ok3 = (sha = A) => [
   { file: "img.json", json: { tool: "P0-IMG", aabSha256: sha, pass: true, cdnChecked: true, exitCode: 0, siteVersion: V, red: 0, unknown: 0, redItems: [], canary: { home: true, stale: true, cdn404: true, ok: true, deep: { w21: { ok: true }, w30: { ok: true }, home: { ok: true }, hash: { ok: true }, w42: { ok: true } } }, toolPins: TP.pinsFor("P0-IMG") } },
   { file: "upd.json", json: { tool: "P0-UPD", aabSha256: sha, apkSha256: K, apkBound: true, pass: true, oldWorker: true, new: { build: V }, canary: { dialog: true }, toolPins: TP.pinsFor("P0-UPD") } },

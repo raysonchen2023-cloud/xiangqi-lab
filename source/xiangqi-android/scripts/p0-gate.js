@@ -25,6 +25,9 @@
 // 結束代碼：0＝可以送審；1＝不行（列出原因）；2＝用法錯誤
 "use strict";
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
+/* #102 第八輪複審：AAB-DIFF 金絲雀要逐項核對的種類，閘門自己寫死（不讀 aab-diff.js 匯出的名單：那邊少一種，閘門不能跟著放寬）。
+   shrink（首頁素材縮成 LFS 指標檔那麼小）、debug（多帶 .map）是第八輪補的：--expect-shrunk／--expect-added 蓋到首頁素材或 debug 檔就會失靈 */
+const GATE_CANARY_KINDS = ["home", "zeroJs", "jks", "yellow", "shrink", "debug"];
 const TP = require("./tool-pin.js");
 const { MEDIA, NOTE_VIA_WEB, MAN_MISS_WHY, unknownWhy, cdnCanary } = require("./check-aab-assets.js");   /* 第十三、十四次複審：媒體檔、提醒與缺驗的固定文字都照破圖工具自己的定義；所以 check-aab-assets.js 也列進閘門的自我鎖定 */
 const PROBE_RE = /^data\/__xq_p0_canary_[0-9a-f]{12}\.webp$/;   /* 金絲雀③的探測檔（check-aab-assets.js 產生的檔名），不是真的要補抓的檔 */
@@ -151,8 +154,8 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
         if (RE.red.length) add(`${key}：閘門重算有紅項（${RE.red.slice(0, 3).map((x) => x.f).join("、")}）：紅項不能確認、也不能豁免`);
         if (RE.yellow.length) add(`${key}：閘門重算有沒確認的黃項（${RE.yellow.slice(0, 3).map((x) => x.f + "@" + x.ack.split("@").pop()).join("、")}）：人看過後寫進 --ack 清單`);
         if (!RE.canaryOk) add(`${key}：閘門重算的金絲雀沒抓到：這次的放行參數可能太寬，或比對失靈`);
-        /* #102 第四輪複審：四種金絲雀逐項核對（不只看總結的 canaryOk） */
-        for (const k of ["home", "zeroJs", "jks", "yellow"]) { const c = RE.canary && RE.canary[k]; if (!c || c.ok !== true || typeof c.f !== "string" || !c.f || typeof c.hit !== "string" || !c.hit) add(`${key}：閘門重算的金絲雀「${k}」沒抓到（要有壞樣本檔名和比對抓到的原因）`) }
+        /* #102 第四輪複審：金絲雀逐項核對（不只看總結的 canaryOk）；第八輪起六種，見 GATE_CANARY_KINDS */
+        for (const k of GATE_CANARY_KINDS) { const c = RE.canary && RE.canary[k]; if (!c || c.ok !== true || typeof c.f !== "string" || !c.f || typeof c.hit !== "string" || !c.hit) add(`${key}：閘門重算的金絲雀「${k}」沒抓到（要有壞樣本檔名和比對抓到的原因）`) }
         /* #102 第四輪複審：新舊兩包幾乎一樣（不到 3 個檔不同；正常發版至少 index.html、sw.js、manifest 都會變），舊包可能是從候選包改出來的 */
         if (!Number.isInteger(RE.changed) || RE.changed < 3) add(`${key}：新舊兩包只差 ${RE.changed} 個檔：舊包可能不是 Play 上的那一包，請用從 Play 下載或封存的原檔`);
       }
@@ -160,7 +163,7 @@ function gate(aabSha, build, reports, waivers = [], opts = {}) {
       if (!Array.isArray(json.red) || json.red.length) add(`${key}：有紅項（${Array.isArray(json.red) ? json.red.slice(0, 3).map((x) => x.f).join("、") : "沒有 red 欄位"}）：紅項不能確認、也不能豁免`);
       if (!Array.isArray(json.yellow) || json.yellow.length) add(`${key}：有沒確認的黃項（${Array.isArray(json.yellow) ? json.yellow.slice(0, 3).map((x) => x.f).join("、") : "沒有 yellow 欄位"}）：人看過後寫進 --ack 清單再跑`);
       if (json.exitCode !== 0 || json.pass !== true) add(`${key}：沒有通過（exitCode＝${json.exitCode}、pass＝${json.pass}）`);
-      const c = json.canary || {}, miss = ["home", "zeroJs", "jks", "yellow"].filter((k) => !(c[k] && c[k].ok === true));
+      const c = json.canary || {}, miss = GATE_CANARY_KINDS.filter((k) => !(c[k] && c[k].ok === true));
       if (miss.length || c.ok !== true) add(`${key}：金絲雀沒抓到（${miss.join("、") || "ok≠true"}）：這次比對可能失靈，結果不可信`);
       continue;
     }
@@ -284,8 +287,12 @@ function aabDiffReceipt(aabSha, reports, re) {
   if (!j) return null;
   const args = {}; for (const k of ["expect-removed", "expect-added", "expect-shrunk"]) if (j.args && typeof j.args[k] === "string") args[k] = j.args[k];
   return { tool: "AAB-DIFF", aabSha256: aabSha, oldCode: j.oldCode || null, newCode: j.newCode || null, oldSha256: j.oldSha256 || null, args,
-    acked: re ? re.acked.slice() : [], allowed: re ? re.allowed : null, recomputed: !!re, toolPins: j.toolPins || null };
+    acked: re ? re.acked.slice() : [], allowed: re ? re.allowed : null, recomputed: !!re, toolPins: j.toolPins || null, gatePins: gatePins() };
 }
+/* #102 第八輪複審（不擋，照做）：收據的 toolPins 是報告抄來的；另外記閘門自己重算時用的 aab-diff.js、p0-gate.js 的 SHA-256 */
+function gatePins() { const o = {}; for (const f of ["aab-diff.js", "p0-gate.js"]) { try { o[f] = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, f))).digest("hex") } catch (e) { o[f] = null } } return o }
+const ARG_CTL = new RegExp("[\\x00-\\x1f\\x7f\\u2028\\u2029]", "g");
+const argShow = (v) => String(v).replace(ARG_CTL, (c) => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0"));
 /* W91：產物比對的摘要（舊版、放行參數、確認過的黃項），給命令列印出、收據記（不放進 gate() 的回傳，回傳格式不變） */
 function aabDiffInfo(reports) {
   const x = (reports || []).find((r) => r && r.json && r.json.tool === "AAB-DIFF"), j = x && x.json;
@@ -301,7 +308,7 @@ async function main() {
   const files = j > 0 ? process.argv.slice(j + 1).filter((x) => !x.startsWith("--")) : [];
   /* #102 第七輪複審：收據必填——沒給就不驗（結束代碼 2），不然通過了也沒有東西附進送審收據 */
   if (AAB && BUILD && files.length && !a("--diff-receipt")) { console.error("✘ 要給 --diff-receipt <收據.json>：閘門通過時把產物比對的收據寫在這裡，送審收據要附"); process.exit(2) }
-  if (!AAB || !BUILD || !files.length) { console.error("用法：node scripts/p0-gate.js --aab <要送審的.aab> --build <網頁版號 YYYYMMDD-HHMM> --old-aab <Play 現行版.aab> [--ack <確認清單.json>] [--diff-receipt <收據.json>] [--waivers <檔>] --reports <報告…>"); process.exit(2) }
+  if (!AAB || !BUILD || !files.length) { console.error("用法：node scripts/p0-gate.js --aab <要送審的.aab> --build <網頁版號 YYYYMMDD-HHMM> --old-aab <Play 現行版.aab> [--ack <確認清單.json>] --diff-receipt <收據.json> [--waivers <檔>] --reports <報告…>"); process.exit(2) }
   /* #102 第四輪複審（低）：收據不准指到輸入檔（--aab、--old-aab、--ack、報告），不然會把要送審的 AAB 蓋掉 */
   if (a("--diff-receipt")) { const rp = path.resolve(a("--diff-receipt")), ins = [AAB, a("--old-aab"), a("--ack"), ...files].filter(Boolean).map((f) => path.resolve(f)); if (ins.some((f) => f.toLowerCase() === rp.toLowerCase())) { console.error("✘ --diff-receipt 不能指到輸入檔（" + rp + "）"); process.exit(2) }
     /* #102 第五輪複審：收據路徑上已經有東西（一般檔、符號連結、指到 AAB 的硬連結）就不寫，一開始就擋（lstat 不跟著連結走） */
@@ -347,7 +354,8 @@ async function main() {
   console.log(`要送審的 AAB：${AAB}（版號 ${BUILD}）\n  SHA-256 ${sha}`);
   if (a("--waivers") && !fromRepo) console.log("⚠ 豁免檔不是倉庫的 .github/p0-waivers.json：沒經過逐行審，裡面的豁免一律不算");
   const AD = aabDiffInfo(reports);
-  if (AD) { const d = AD, args = Object.entries(d.args).filter(([k]) => k !== "ack").map(([k, v]) => `--${k}=${v}`);
+  /* #102 第八輪複審（不擋，照做）：參數值裡的換行、控制字元轉成 \uXXXX 再印，不能用換行偽造一行看起來像通過的輸出 */
+  if (AD) { const d = AD, args = Object.entries(d.args).filter(([k]) => k !== "ack").map(([k, v]) => `--${k}=${argShow(v)}`);
     console.log(`產物比對（AAB-DIFF）：舊版 versionCode ${d.oldCode}（${String(d.oldSha256 || "").slice(0, 12)}）；放行參數 ${args.length ? args.join(" ") : "沒有"}；${diffRe ? `閘門重算：紅 ${diffRe.red.length}、沒確認的黃 ${diffRe.yellow.length}、金絲雀${diffRe.canaryOk ? "都抓到" : "沒抓到"}、照參數放行 ${diffRe.allowed} 個` : "閘門沒有重算（沒給 --old-aab）"}`);
     if (diffRe) for (const k of diffRe.acked) console.log("  確認過的黃項：" + k) }
   for (const n of r.notes) console.log("⚠ " + n);
