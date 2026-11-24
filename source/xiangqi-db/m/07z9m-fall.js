@@ -60,9 +60,12 @@ function jhFallPlay(lv,opt){opt=opt||{};jhFallCss();const rm=opt.rm!=null?opt.rm
   const tm=[];let done=false;
   const end=()=>{if(done)return;done=true;for(const t of tm)clearTimeout(t);removeEventListener("hashchange",end);o.classList.add("out");setTimeout(()=>{try{o.remove()}catch(e){}},420)};
   o.addEventListener("click",end);addEventListener("hashchange",end);
-  if(rm){tm.push(setTimeout(()=>o.classList.add("card"),20));tm.push(setTimeout(end,JH_FALL_RM_MS))}
-  else{tm.push(setTimeout(()=>{o.classList.add("land");try{if(typeof vibrate==="function")vibrate(25)}catch(e){}},1200));
-    tm.push(setTimeout(()=>o.classList.add("card"),1300));tm.push(setTimeout(end,JH_FALL_MS))}
+  /* 一段接一段：每段等上一段真的發生後才起算（Windows Claude 1 #129 Android 預驗：迷宮剛建好時主執行緒忙，三個計時器都從開頭算會擠在一起觸發，標題卡只停 0.25 秒看不到名字）。
+     正常：1.2 秒落地 → 0.1 秒後標題卡 → 標題卡停 1.1 秒才淡出；減少動態：標題卡停 0.88 秒 */
+  const at=(ms,f)=>{if(done)return;tm.push(setTimeout(()=>{if(!done)f()},ms))};
+  if(rm)at(20,()=>{o.classList.add("card");at(JH_FALL_RM_MS-20,end)});
+  else at(1200,()=>{o.classList.add("land");try{if(typeof vibrate==="function")vibrate(25)}catch(e){}
+    at(100,()=>{o.classList.add("card");at(JH_FALL_MS-1300,end)})})
   document.body.append(o);return o}
 /* 包住 JhMaze：從大廳進來才播（播完就清掉來源，同一次不重播） */
 try{if(typeof JhMaze==="function"&&!JhMaze.jhFall){const m0=JhMaze;JhMaze=function(v,sid){const r=m0.apply(this,arguments);

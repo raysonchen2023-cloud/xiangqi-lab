@@ -5,7 +5,7 @@ const test = require("node:test"), assert = require("node:assert"), fs = require
 const SRC = fs.readFileSync(path.join(__dirname, "..", "..", "xiangqi-db", "m", "07z9m-fall.js"), "utf8");
 
 function mk(o = {}) {
-  const timers = [], listeners = {}, appended = [], imgs = [];
+  const clock = { now: 0 }, timers = [], listeners = {}, appended = [], imgs = [];
   const el = (tag) => {
     const e = { tagName: tag, className: "", style: { props: {}, setProperty(k, v) { this.props[k] = v } }, attrs: {}, children: [], isConnected: false, listeners: {}, dataset: {},
       classList: { add: (...c) => { e.className = (e.className + " " + c.join(" ")).trim() }, contains: (c) => e.className.split(" ").includes(c) },
@@ -16,7 +16,7 @@ function mk(o = {}) {
   };
   const c = {
     document: { getElementById: () => null, createElement: el, head: { append() {} }, body: { append: (e) => { e.isConnected = true; appended.push(e) } } },
-    setTimeout: (f, ms) => { timers.push({ f, ms }); return timers.length }, clearTimeout: (i) => { if (timers[i - 1]) timers[i - 1].f = null },
+    setTimeout: (f, ms) => { timers.push({ f, ms, at: clock.now + ms }); return timers.length }, clearTimeout: (i) => { if (timers[i - 1]) timers[i - 1].f = null },
     addEventListener: (t, f) => { (listeners[t] = listeners[t] || []).push(f) }, removeEventListener: (t, f) => { listeners[t] = (listeners[t] || []).filter((g) => g !== f) },
     Image: function () { const im = { dataset: {}, set src(v) { im._src = v; imgs.push(im) }, get src() { return im._src } }; return im },
     location: { href: "http://x/index.html" + (o.start || "#/"), get hash() { const i = this.href.indexOf("#"); return i < 0 ? "" : this.href.slice(i) } }, window: {}, jhL: (zh, en) => (o.en ? en : zh), esc: (s) => String(s), vibrate: () => {}, XQ_CDN: "https://cdn.example/",
@@ -26,7 +26,8 @@ function mk(o = {}) {
   c.window = c; c.window.matchMedia = () => ({ matches: !!o.rm });
   vm.createContext(c); vm.runInContext(SRC, c);
   const fire = (t, e) => (listeners[t] || []).slice().forEach((f) => f(e || {}));
-  const run = (upto) => { for (const t of timers.slice().sort((a, b) => a.ms - b.ms)) if (t.f && t.ms <= upto) { const f = t.f; t.f = null; f() } };
+  /* 假時鐘：每個計時器記「排定時的時間＋延遲」；run(upto) 照時間先後一個個跑到 upto（跑的時候會排出新的計時器，也一起算） */
+  const run = (upto) => { for (;;) { const t = timers.filter((x) => x.f && x.at <= upto).sort((a, b) => a.at - b.at)[0]; if (!t) break; clock.now = t.at; const f = t.f; t.f = null; f() } clock.now = Math.max(clock.now, upto) };
   /* 換頁：真的順序是路由的 hashchange 先跑（裡面叫 JhMaze），這支的後跑；也測反過來 */
   const nav = (h, order = "router-first") => { const old = c.location.href; c.location.href = "http://x/index.html" + h; const e = { oldURL: old, newURL: c.location.href };
     if (order === "router-first") { if (/^#\/jianghu\/maze/.test(h)) c.JhMaze({}, "central"); fire("hashchange", e) } else { fire("hashchange", e); if (/^#\/jianghu\/maze/.test(h)) c.JhMaze({}, "central") } };
@@ -74,4 +75,15 @@ test("減少動態：不捲、不震，只淡入淡出標題，0.9 秒收掉", (
   const T = mk({ rm: true }); const o = T.c.jhFallPlay(T.c.jhMzLv("central"));
   assert.ok(o.classList.contains("rm")); T.run(899); assert.ok(o.classList.contains("card")); assert.ok(!o.classList.contains("land"), "不震");
   T.run(900); assert.ok(o.classList.contains("out"));
+});
+
+test("主執行緒忙、第一段晚觸發時，標題卡照樣停 1.1 秒（每段等上一段真的發生才起算；Windows Claude 1 #129 Android 預驗 P2）", () => {
+  for (const rm of [false, true]) {
+    const T = mk({ rm }); const o = T.c.jhFallPlay(T.c.jhMzLv("central"));
+    T.timers[0].at += 900;   /* 迷宮剛建好、主執行緒忙：第一個計時器晚 0.9 秒才跑 */
+    let cardAt = -1, outAt = -1;
+    for (let t = 0; t <= 6000; t += 10) { T.run(t); if (cardAt < 0 && o.classList.contains("card")) cardAt = t; if (outAt < 0 && o.classList.contains("out")) { outAt = t; break } }
+    assert.ok(cardAt > 0 && outAt > 0, (rm ? "減少動態" : "正常") + "：有標題卡、有收掉");
+    assert.ok(outAt - cardAt >= (rm ? 860 : 1090), (rm ? "減少動態" : "正常") + "：標題卡停了 " + (outAt - cardAt) + " 毫秒");
+  }
 });
