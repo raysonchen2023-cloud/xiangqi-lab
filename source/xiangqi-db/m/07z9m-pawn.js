@@ -81,8 +81,24 @@ trap:[
 {"id":"lk182c5","src":{"book":"爛柯神機","title":"脫帽露頂"},"zh":["被兵卒圍住了","兵卒把你圍在太湖石間：「這局解得開，就放你過去。」紅方先走，3 步將死黑方。"],"en":["Surrounded by pawn guards","The pawn guards hem you in among the lake rocks: \"Solve this and you may pass.\" Red to move: checkmate in 3."],"fen":"6Nc1/2PP1k3/4N2n1/9/9/9/9/3p5/2rp1r3/4K4","line":["e7g6","f8f9","g6h8","f9f8","d8e8"]}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_PAWN== */
 const JH_MZ_PAWN_POOL=JH_MZ_POOL_PAWN;
+/* 碑刻、殘簡、文書（m/07z9m-lore.js 讀 lore，照地圖上 L 由上到下對應）：Gemini 11/24 寫的初稿，iMac Claude 1 依史學複核修正——出處改杜綰《雲林石譜》、
+   「瘦皺漏透」照實寫成清代鄭板橋題畫時歸給米芾。title／body 是遊戲整理的白話，src 是查得到的史料 */
+const JH_MZ_PAWN_LORE=[
+  {id:"tl1",kind:"slip",title:["水下採石記","Raising stones from the lake"],
+   body:["殘簡上抄著採石的苦差：石工帶著錘鑿潛入深水，看準形狀奇巧的石頭才下鑿，再用粗索綑好，船上架起木架絞盤，把太湖石從湖底一點一點拉出水面。",
+     "Masons dove into deep water with hammer and chisel, cut only the strangest stones, bound them with thick ropes, and winched them up from the lakebed on frames built atop large boats."],
+   src:"杜綰《雲林石譜》・太湖石"},
+  {id:"tl2",kind:"doc",title:["花石綱運石牒","The Flower-and-Rock Convoys"],
+   body:["文書記著北宋徽宗年間的「花石綱」：朱勔在江南搜羅奇石，造大船運往汴京。船過之處，遇水門、橋梁太低，城牆太窄，竟拆橋鑿城而過，沿途百姓苦不堪言。",
+     "Under Emperor Huizong, Zhu Mian gathered rare stones across the south and shipped them to Kaifeng. Where water gates, bridges or city walls stood in the way, they were torn down so the boats could pass."],
+   src:"《宋史・佞幸傳・朱勔》"},
+  {id:"tl3",kind:"stele",title:["瘦皺漏透","Thin, wrinkled, pierced, open"],
+   body:["石上刻著品石四字：瘦、皺、漏、透。北宋米芾愛石成癡，傳說曾對奇石下拜；這四個字則是清代鄭板橋題畫時說「米元章論石」，後人便都歸給米芾。",
+     "Four words for judging stones: thin, wrinkled, pierced, open. Mi Fu of the Northern Song was said to bow to strange rocks; the four words come from a Qing painting inscription by Zheng Banqiao that credits them to Mi Fu."],
+   src:"《宋史・文苑傳・米芾》；鄭燮題畫石"}];
 jhMzDef("pawn",{map:JH_MZ_PAWN_MAP,guards:JH_MZ_PAWN_GUARDS,river:JH_MZ_PAWN_RIVER,pool:JH_MZ_PAWN_POOL,
   puz:{door:JH_MZ_PAWN_POOL.door[0],trap:JH_MZ_PAWN_POOL.trap[0]},solid:"#DRHL",opaque:"#DH",jump:"",
+  tex:{floor:"data/maze/tex/pawn_floor.webp",side:"data/maze/tex/pawn_wall.webp"},lore:JH_MZ_PAWN_LORE,   /* 像素材質（11/24 新版，發布時上 CDN）；碑刻內容 */
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"仙人指路譜殘頁",en:"Immortal Points the Way manual page"},{k:"box",zh:"青瓷棋罐",en:"Celadon piece jar"}],
   title:["🪨 太湖石陣","🪨 Lake-rock maze"],lvName:["太湖石陣・第一層","Lake-rock maze · Level 1"],back:["回仙人指路門","Back to the Immortal Points the Way School"],
   hall:{at:[560,860],zh:"🪨 太湖石・石陣入口",en:"🪨 Lake rock · Maze entrance"},

@@ -72,8 +72,24 @@ const JH_MZ_ELE_POOL={
     {"kind": "defend", "zh": ["被巡場的相攔住了", "黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"], "en": ["Stopped by the patrolling elephant", "Black threatens mate next move. Red to move: find the only defence."], "fen": "4kab2/4a4/6c2/p8/4P1R1p/9/P3R3P/4B3N/3r5/2rAKAB2", "line": ["f0e1"], "src": {"book": "大師對局", "title": "吉林-陶漢明-勝-河北-申鵬", "year": 2005, "ply": 52}, "verify": {"engine": "Pikafish", "depth": 22, "after": {"cp": 125}}},
     {"kind": "defend", "zh": ["被巡場的相攔住了", "黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"], "en": ["Stopped by the patrolling elephant", "Black threatens mate next move. Red to move: find the only defence."], "fen": "9/4ak3/4Na3/3R5/9/2P6/9/2pA1A3/3K5/4r4", "line": ["d2e1"], "src": {"book": "大師對局", "title": "廣東-許銀川-勝-開灤-宋國強", "year": 2005, "ply": 132}, "verify": {"engine": "Pikafish", "depth": 22, "after": {"cp": 0}}},
     {"kind": "defend", "zh": ["被巡場的相攔住了", "黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"], "en": ["Stopped by the patrolling elephant", "Black threatens mate next move. Red to move: find the only defence."], "fen": "3k1ab2/4a4/9/C5p2/5r3/6P2/Pn2c4/C3B2R1/4A4/2BAK4", "line": ["h2f2"], "src": {"book": "大師對局", "title": "1-輪-1臺-5局-北方隊-趙國榮-先和-南方隊-鄭惟桐", "year": 2016, "ply": 56}, "verify": {"engine": "Pikafish", "depth": 22, "after": {"cp": 0}}}]};
+/* 碑刻、殘簡、文書（m/07z9m-lore.js 讀 lore，照地圖上 L 由上到下對應）：Gemini 11/24 初稿，iMac Claude 1 依史學複核修正——號舍、搜檢寫明是明清／清代制度；
+   搜檢拿掉沒根據的「割鞋底」改「衣服鞋襪只准單層」；天順七年貢院火災拿掉「大門緊鎖」。title／body 是遊戲整理的白話，src 是查得到的史料 */
+const JH_MZ_ELE_LORE=[
+  {id:"kp1",kind:"doc",title:["貢院號舍圖","Plan of the exam cells"],
+   body:["文書畫著明清貢院的號舍：一間寬約三尺、深約四尺，沒有門。牆上兩道磚托架兩塊木板，白天一高一低當桌椅寫卷，夜裡拼平了，考生就蜷在上面過夜。",
+     "Exam cells in Ming and Qing examination halls were about three feet wide and four deep, with no door. Two boards on brick ledges served as desk and seat by day, and were laid flat as a bed at night."],
+   src:"《清稗類鈔・考試類》"},
+  {id:"kp2",kind:"slip",title:["入場搜檢條規","Search rules at the gate"],
+   body:["殘簡抄著清代入場搜檢的規矩：衣服鞋襪只准單層，硯台不許太厚，筆管要鏤空，糕餅都得切開，防的是夾帶小抄。查出夾帶的，要枷號示眾。",
+     "Qing rules for entering the exam: clothes and shoes single-layered only, inkstones not too thick, brush handles hollowed, cakes cut open, all to stop hidden notes. Anyone caught was put in the cangue for all to see."],
+   src:"《欽定科場條例》搜檢；《清史稿・選舉志》"},
+  {id:"kp3",kind:"stele",title:["天順貢院大火","The Tianshun exam-hall fire"],
+   body:["碑上記著明英宗天順七年（1463）會試，貢院失火，舉子死了九十多人。朝廷下詔收葬死者，會試改到秋天重考。",
+     "In 1463, during the metropolitan exam, the examination hall in Beijing caught fire and more than ninety candidates died. The court had them buried and held the exam again that autumn."],
+   src:"《明史・五行志》；《明英宗實錄》"}];
 jhMzDef("elephant",{map:JH_MZ_ELE_MAP,guards:JH_MZ_ELE_GUARDS,pool:JH_MZ_ELE_POOL,puz:{door:JH_MZ_ELE_POOL.door[0],trap:JH_MZ_ELE_POOL.trap[0]},
   solid:"#DXHL",opaque:"#DH",jump:"",dyn:"X",onStep:jhMzElePush,
+  tex:{floor:"data/maze/tex/elephant_floor.webp",side:"data/maze/tex/elephant_wall.webp"},lore:JH_MZ_ELE_LORE,   /* 像素材質（11/24 新版，發布時上 CDN）；碑刻內容 */
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"飛相譜殘頁",en:"Elephant Opening manual page"},{k:"box",zh:"考籃",en:"Examination basket"}],
   title:["🐘 水淹考棚","🐘 Flooded exam halls"],lvName:["水淹考棚・第一層","Flooded exam halls · Level 1"],back:["回飛相門","Back to the Elephant Opening School"],
   hall:{at:[560,860],zh:"🐘 考棚・地底號舍",en:"🐘 Exam halls · Underground cells"},
