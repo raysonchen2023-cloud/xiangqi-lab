@@ -60,19 +60,24 @@ test("錯棋重練條目：座標都在圖內、走路的邊和小動作都接�
   for (const [x, y] of e.sw7.sky[0]) assert.ok(x >= 0 && x <= e.w && y >= 0 && y <= e.h, "天氣範圍是橫式圖像素");
 });
 
-test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在圖內、走路的邊和小動作接得到節點、每個入口都有角色走過去", () => {
+test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在圖內、走路的邊和小動作接得到節點、每個入口都有角色走過去（有走路角色的頁）", () => {
   const pct = (xy, n) => { assert.ok(Array.isArray(xy) && xy.length === 2 && xy.every(v => v >= 0 && v <= 100), n + "：" + JSON.stringify(xy)) };
   const keys = Object.keys(SCW); assert.ok(keys.length >= 2, "錯棋重練、棋力測驗都登記了");
   for (const k of keys) {
     const e = SCW[k]; assert.equal(e.f, k + "_l1610", k); assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.match(k, /_classic$/, "先只做經典世界");
     for (const id in e.S) pct(e.S[id], k + " " + id); pct(e.exit, k + " 出口");
     for (const s of ["l", "r", "t", "b"]) assert.ok(e.safe[s] >= 0 && e.safe[s] < .3);
-    const N = e.walk.N; assert.equal(e.walk.W, 2560); assert.equal(e.walk.H, 1600); assert.ok(N[e.walk.home]);
+    if (!e.walk) continue;   // 沒有走路角色的頁（挑戰電腦）
+    const N = e.walk.N; assert.equal(e.walk.W, 2560); assert.equal(e.walk.H, 1600); assert.ok(N[e.walk.home || "home"]);
     for (const n in N) pct(N[n], k + " 節點 " + n);
     for (const ed of e.walk.E.split(" ")) { const [a, b] = ed.split("-"); assert.ok(N[a] && N[b], k + " 邊 " + ed) }
+    if (!e.walk.HS) continue;   // 小動作由各頁自己算（今日推薦照告示紙的位置）
     for (const [id, h] of Object.entries(e.walk.HS)) { assert.ok(N[h[0]], k + " " + id); pct([h[1], h[2]], k + " " + id + " 看的位置") }
     assert.deepEqual(Object.keys(e.walk.HS).sort(), Object.keys(e.S).sort(), k + " 每個入口都有角色走過去的設定");
   }
+  const T = SCW["todaymap/today_day_classic"].fx; assert.equal(T.notes.length, 5, "今日推薦五張告示紙");
+  for (const q of T.notes) { assert.equal(q.length, 4); for (const [x, y] of q) assert.ok(x >= 0 && x <= 2560 && y >= 0 && y <= 1600) }
+  for (const xy of [T.term, T.seal, T.censer.slice(0, 2), ...T.eave]) assert.ok(xy[0] >= 0 && xy[0] <= 2560 && xy[1] >= 0 && xy[1] <= 1600);
   const b = SCW["exammap/exam_day_classic"].fx.board; assert.ok(b[0] >= 0 && b[2] <= 2560 && b[1] >= 0 && b[3] <= 1600 && b[0] < b[2] && b[1] < b[3], "題名榜是橫式圖像素");
 });
 
@@ -153,6 +158,15 @@ test("原始碼：07fl 排版前先問 scwSync、安全區照條目；07w7、07w
   assert.match(Y9, /pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\}/); assert.match(Y9, /<img src="\$\{pre\.src\}"/);
   assert.match(Y9, /ids:\["ex2S0","ex2S1","ex2S2","ex2Book"\],pfx:"ex2",cfg0:cfg,apply:brd/);
   assert.match(Y9, /shwPage\(v,cfgNow,"ex2"\)/);
+  const Z5 = M("m/07z5-cpuroom.js"), CR = vm.runInContext("SCW['cpuroom/cpuroom_day_classic']", C0);
+  assert.match(Z5, /pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\}/); assert.match(Z5, /<img src="\$\{pre\.src\}" alt="茶坊深處/);
+  assert.match(Z5, /scwMount\(P,\{key:scwKey\(src\),src0:src,ids:Object\.keys\(CR_SPOT\),apply:lay\}\)/);
+  assert.deepEqual(Object.keys(CR.S).sort(), vm.runInContext("Object.keys", C0)(JSON.parse(Z5.match(/const CR_SPOT=(\{[^}]*\})/)[1].replace(/(\w+):/g, '"$1":'))).sort(), "挑戰電腦八個入口都有橫式座標");
+  const Y5 = M("m/07y5-todaymap.js");
+  assert.match(Y5, /const TD_GM0=\{W:768,H:1376,notes:TD_NOTES,eave:TD_EAVE,censer:TD_CENSER,term:TD_TERM_AT,seal:\[560,690\]\}/, "原圖照舊用原本的像素");
+  assert.match(Y5, /const tdPc=\(x,y\)=>\[x\/TD_GM\.W\*100,y\/TD_GM\.H\*100\]/);
+  assert.ok(!/\/7\.68|\/13\.76/.test(Y5), "今日推薦不再寫死原圖尺寸");
+  assert.match(Y5, /scwMount\(P,\{key:scwKey\(src\),src0:src,ids:\[\],apply:/);
   const i7 = H.indexOf("//#include m/07sw-scenewide.js"), iy = H.indexOf("//#include m/07y8-redomap.js"), ifl = H.indexOf("//#include m/07fl-fill.js");
   assert.ok(i7 > iy && i7 < ifl, "07sw 在 07y8 後、07fl 前");
 });
