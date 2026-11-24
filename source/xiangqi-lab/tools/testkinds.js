@@ -23,6 +23,7 @@ const CLASSIFIED = new Set([
   "test-jh-maze-fall-1124.js",   /* 11/24 開發者「做一個掉入迷宮的轉場」：從大廳進迷宮才播、該派牆面材質（同源載不到改 CDN）、標題卡、1.2 秒落地／2.4 秒收掉、點一下跳過、減少動態只淡入標題（m/07z9m-fall.js；行為 5） */
   "test-stk-testenv-1124.js",   /* 11/24 開發者「開工單從程式上擋」：測試流量（本機、區網、預覽站、測試房、iOS／Android 模擬器）不送卡住紀錄，正式站與真機照舊（m/05b-save.js stkTestEnv、XQBridgeViewController XQSim/1；行為 2、原始碼 1） */
   "test-stk-testenv-1124.js",   /* 11/24 開發者「開工單從程式上擋」：測試流量（本機、區網、預覽站、測試房、iOS／Android 模擬器）不送卡住紀錄，正式站與真機照舊（m/05b-save.js stkTestEnv、XQBridgeViewController XQSim/1；行為 2） */
+  "test-jh-maze-lore-content-1124.js",   /* 11/24 兵卒、飛相迷宮的碑刻內容與像素材質：件數跟地圖 L 一致、中英文齊、走過去讀得到、順序對（m/07z9m-pawn.js、07z9m-elephant.js；行為，每派 1 項） */
   "test-legend-wording-1124.js",   /* 11/24 開發者截圖：石桌往事第二回「她去掰」看不懂，改寫；正本放 source/xiangqi-db/park-legend.json（混合 1） */
   "test-legend-wording-1124.js",   /* 11/24 開發者截圖：石桌往事第二回「她去掰」和三題記盤題（第 4、7、10 步，寫明是哪一步吃掉的那顆）改寫；正本放 source/xiangqi-db/park-legend.json（混合 1） */
   "test-newjourney-entry-1116.js",   /* 11/16 開發者「目前已經沒辦法新的旅程了嗎 假設有其他玩家想重玩的話 應該還是要跟存檔讀檔的格子」：存檔與讀檔面板最下面補一顆不管幾格有存檔都在的「開始新的旅程」，開選格頁（m/05b-save.js saveList）（行為 4、原始碼 2；11/16 加「回開頭畫面」） */
