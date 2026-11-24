@@ -49,7 +49,54 @@ const SCW={
     walk:{W:2560,H:1600,N:{home:[50,96],mid:[48,89],brd:[50,82]},E:"home-mid mid-brd"},
     fx:{notes:[[[763,654],[920,654],[920,900],[763,900]],[[986,652],[1140,652],[1140,905],[982,905]],[[1212,656],[1368,656],[1368,906],[1210,906]],[[1448,657],[1600,657],[1600,906],[1450,906]],[[1666,662],[1820,662],[1822,904],[1668,904]]],
       eave:[[717,518],[1882,518]],censer:[2163,1236,64,20],term:[1280,590],seal:[1760,940]},
-    sw7:{sky:[[[0,0],[2560,0],[2560,1152],[0,1152]]],fg:[[[538,300],[2074,300],[2074,1270],[538,1270]]],tr:null}}};
+    sw7:{sky:[[[0,0],[2560,0],[2560,1152],[0,1152]]],fg:[[[538,300],[2074,300],[2074,1270],[538,1270]]],tr:null}},
+  /* 一盞茶殘局（07c2）經典世界白天：output/w107-ipad/l1610/canjumap/。fx：ves 同 CJM_VES 格式（像素）、spout 壺嘴熱氣（像素）、tag 標籤（%：一口放白杯左邊、一盞放黑盞下方，上方是茶筅、茶碾）、leaf 落葉（%）。
+     走路：石茶桌斜放，桌面四角、桌面高度對應、兩個跳點、五樣茶具的障礙；地面路線都在桌腳、凳子前面。朝代組（weijin、tang）沒有橫式圖，照舊原圖 */
+  "canjumap/canju_day_classic":{ready:true,f:"canjumap/canju_day_classic_l1610",w:2560,h:1600,
+    S:{},exit:[14,92],
+    safe:{l:.12,r:.12,t:.05,b:.10},
+    walk:{W:2560,H:1600,N:{home:[50,97],mid:[45,93],tbl:[33,93],tl2:[17,94],tt:[66,72]},E:"home-mid mid-tbl tbl-tl2",T:{tt:"tea"},
+      TB:{tea:{poly:[[35,47.7],[80,58.4],[69,78.1],[20.5,62.9]],hy:[63,81,1],hops:[["mid",[46,71]],["tl2",[25,63]]],
+        ob:[[[37,47],[40.5,47],[40.5,57],[37,57]],[[40.5,45],[55.5,45],[55.5,59],[40.5,59]],[[47.5,57],[57.5,57],[57.5,69.6],[47.5,69.6]],[[36,61],[42,61],[42,68],[36,68]],[[60.5,44],[70.5,44],[70.5,66.4],[60.5,66.4]]]}}},
+    fx:{ves:[["sip",998,1011,64,20,998,1037,179,115],["cup",1336,934,108,26,1336,998,282,218],["pot",1677,730,31,10,1677,896,256,358]],spout:[1562,742],
+      tag:{sip:[32,64],cup:[52,73],pot:[66,40]},leaf:[28,62]},
+    sw7:{sky:[[[0,0],[2560,0],[2560,420],[0,420]]],fg:[[[0,0],[780,0],[780,120],[0,120]],[[480,0],[640,0],[640,700],[480,700]]],tr:null}},
+  /* 對戰分頁（07y 雲弈閣）經典世界、白天、沒有季節的那一張：output/w107-ipad/l1610/hubmap/battle。季節、夜景變體沒有橫式圖，照舊原圖。
+     走路：從右下前門台階經門洞（隱身）進中庭，主樓右側樓梯上二樓迴廊到左邊；鼓台從樓梯底沿門樓後方過去，原本沒有入口的 hbCar 改站鼓台。
+     身高照原本的函式，下限 48.2 改成 34（二樓迴廊在 y 34～40）。fx.fw 千秋盃結束的煙火（%）。朝代殘影這頁沒量，橫式圖上先不放 */
+  "hubmap/battle_classic":{ready:true,f:"hubmap/battle_classic_l1610",w:2560,h:1600,
+    S:{hbCup:[52,10],hbSimul:[20,37.6],hbNet:[54,58.4],hbCpu:[15,70.4],hbPvp:[72,62]},exit:[85,92],
+    safe:{l:.12,r:.12,t:.05,b:.10},
+    walk:{W:2560,H:1600,h:y=>.07+(Math.max(y,34)-64)*.0007,look0:[50,95],hide:[[66,77,57,72]],
+      N:{home:[77,90],th:[72,75],arena:[60,63],n:[54,59],bt:[40,55],tlb:[33,64],cpu:[31,72],drum:[78,49],sf:[66,48.8],s1:[64.5,40],st:[61,34.4],gal:[52,35.2],stage:[43,36],wing:[20,40]},
+      E:"home-th th-arena arena-n n-bt bt-tlb tlb-cpu n-sf sf-drum sf-s1 s1-st st-gal gal-stage stage-wing",
+      HS:{hbNet:["n",54,55,"bow"],hbCpu:["cpu",15,66,"bow"],hbCup:["stage",52,15,"bow"],hbSimul:["wing",20,34,"bow"],hbPvp:["th",72,60,"bow"],hbCar:["drum",80,40,"wave"]}},
+    fx:{fw:[[64,7],[74,5],[84,9],[70,12],[58,6]]},
+    sw7:{sky:[[[0,0],[2560,0],[2560,320],[0,320]]],fg:null,tr:null}},
+  /* 學習分頁（07y 藏譜石窟）經典世界、白天、沒有季節的那一張：output/w107-ipad/l1610/hubmap/learn，取代 HUB_CL_SPOTS.learn、SHW_HUB_CL.learn。
+     走路：大卷軸上中庭，進殿門（隱身）從頂上拱洞出來；戰績站木人樁平台抬頭看書塔（書塔底是書堆斜坡站不住）。fx.cy 朝代殘影 [朝代, 左%, 上%, 寬%]，只放天空 */
+  "hubmap/learn_classic":{ready:true,f:"hubmap/learn_classic_l1610",w:2560,h:1600,
+    S:{hbGuess:[50,15.2],hbDb:[50,28],hbQuiz:[50,44.8],hbTerms:[48,75.2],hbStats:[20,26.4],hbCamp:[19,49.6],hbCanju:[15,71.2],hbOpen:[77,25.6],hbTheme:[80,44.8],hbRedo:[77,69.6]},exit:[86,92],
+    safe:{l:.12,r:.12,t:.05,b:.10},
+    walk:{W:2560,H:1600,h:[.033,29,.0007],look0:[50,99],hide:[[43,57,22,45]],
+      N:{home:[50,92],g:[50,82],c:[50,64],t1:[50,59],exam:[50,53.6],door:[50,47],hb:[50,22.4],guess:[50,20],lc:[37,61],camp:[22,60],canju:[24,82],rc:[64,61],open:[70,60],theme:[82,60],redo:[68,70]},
+      E:"home-g g-c c-t1 t1-exam exam-door door-hb hb-guess t1-lc lc-camp g-canju t1-rc rc-open open-theme rc-redo",
+      HS:{hbTerms:["g",48,75,"bow"],hbCamp:["camp",19,50,"wave"],hbCanju:["canju",15,71,"bow"],hbRedo:["redo",77,69,"wave"],hbTheme:["theme",80,45,"wave"],hbQuiz:["exam",50,45,"bow"],hbStats:["camp",20,27,"wave"],hbOpen:["open",77,26,"wave"],hbGuess:["guess",50,15,"wave"],hbDb:["door",50,28,"bow"]}},
+    fx:{cy:[["tang",10,9,6],["wudai",36,8,7],["song",84,9,9]]},   /* 殘影以中心定位，量到的上 2～3% 會被頂欄切掉一半；11/25 模擬器上看過往下移到 8～9%（還在天空，不壓書塔、書架） */
+    sw7:{sky:[[[0,0],[2560,0],[2560,256],[0,256]]],fg:null,tr:null}},
+  /* 線上大廳（07x2 千燈天井）經典世界白天：output/w107-ipad/l1610/lobbymap。都是 %（sw7.sky 是像素）。
+     燈是功能（亮燈＝線上玩家，點了看玩家），44 盞照 LM_[[14,32.3,2,1],[19,31.1,2,1],[24,29.8,2,1],[29,28.5,2,1],[71,28.5,2,1],[76,29.8,2,1],[81,31.1,2,1],[86,32.3,2,1],[40,22.3,2,1],[45,22.3,2,1],[50,22.3,2,1],[55,22.3,2,1],[60,22.3,2,1],[36,19,2,0],[64,19,2,0],[33,25,2,0],[67,25,2,0],[40,17,2,0],[60,17,2,0],[34,39.2,1,0],[38,39.2,1,0],[42,39.2,1,0],[46,39.2,1,0],[50,39.2,1,0],[54,39.2,1,0],[58,39.2,1,0],[62,39.2,1,0],[66,39.2,1,0],[14,45.8,1,0],[19,44.6,1,0],[24,43.3,1,0],[29,42.0,1,0],[71,42.0,1,0],[76,43.3,1,0],[81,44.6,1,0],[86,45.8,1,0],[20,58,1,1],[24,54,1,1],[28,51,1,1],[80,58,1,1],[76,54,1,1],[72,51,1,1],[37,47,1,1],[63,47,1,1]] 格式 [左%, 上%, 層, 剪影]，新圖沒畫燈籠，燈照樣由程式畫；人影的 top 是腳底（translate -100%），
+     二樓 y+10.5、地面柱燈 y+7.5 照舊。棋桌 8 張、鑼（中心、直徑＝圖寬 %）、「＋N 人」「更多棋局」、清靜提示。
+     fx.k＝棋桌、燈、人影、聲波的寬度倍數（原本照直圖寬度定的，橫式圖寬很多，11/25 模擬器上看定）。身高照原本的函式，下限 53 改成樓梯腳 58 */
+  "lobbymap/lobby_classic":{ready:true,f:"lobbymap/lobby_classic_l1610",w:2560,h:1600,
+    S:{lmGong:[51.5,55],lmList:[87,22],lmAi:[14,30]},exit:[14,92],
+    safe:{l:.12,r:.12,t:.05,b:.10},
+    walk:{W:2560,H:1600,h:y=>.06+(Math.max(y,58)-80)*.0008,look0:[50,60],
+      N:{home:[50,96],g:[50,86],l0:[26,76],l1:[24,60],ai:[20,54],r0:[74,76],r1:[72,62],sgn:[76,58],s0:[70,58],s1:[68,43],st:[65.5,31],gal:[60,31],stage:[52,31]},
+      E:"home-g g-l0 l0-l1 l1-ai g-r0 r0-r1 r1-sgn r1-s0 s0-s1 s1-st st-gal gal-stage",
+      HS:{lmGong:["g",51.5,66,"cheer"],lmList:["sgn",87,22,"bow"],lmAi:["ai",14,30,"bow"]}},
+    fx:{k:.38,gong:{x:51.5,y:65.6,d:6.2},tables:[[32,64],[40,64],[60,64],[68,64],[32,74],[40,74],[60,74],[68,74]],lamps:[[14,32.3,2,1],[19,31.1,2,1],[24,29.8,2,1],[29,28.5,2,1],[71,28.5,2,1],[76,29.8,2,1],[81,31.1,2,1],[86,32.3,2,1],[40,22.3,2,1],[45,22.3,2,1],[50,22.3,2,1],[55,22.3,2,1],[60,22.3,2,1],[36,19,2,0],[64,19,2,0],[33,25,2,0],[67,25,2,0],[40,17,2,0],[60,17,2,0],[34,39.2,1,0],[38,39.2,1,0],[42,39.2,1,0],[46,39.2,1,0],[50,39.2,1,0],[54,39.2,1,0],[58,39.2,1,0],[62,39.2,1,0],[66,39.2,1,0],[14,45.8,1,0],[19,44.6,1,0],[24,43.3,1,0],[29,42.0,1,0],[71,42.0,1,0],[76,43.3,1,0],[81,44.6,1,0],[86,45.8,1,0],[20,58,1,1],[24,54,1,1],[28,51,1,1],[80,58,1,1],[76,54,1,1],[72,51,1,1],[37,47,1,1],[63,47,1,1]],more:{people:[87,33],games:[60,93]},quiet:[50,78]},
+    sw7:{sky:[[[768,0],[1843,0],[1843,128],[768,128]]],fg:null,tr:null}}};
 const SCW_BAD={};   /* 這次開 App 載不到的橫式圖（鍵＝原圖鍵），退回原圖不再試 */
 /* 圖網址 → 鍵（data/ 之後、不含 .webp 和 ?v=） */
 const scwKey=src=>{const m=/(?:^|\/)data\/([^?#]+?)\.webp(?:[?#]|$)/.exec(src||"");return m?m[1]:""};
@@ -89,7 +136,7 @@ function scwWalkCfg(o,e){const c0=o.cfg0||{};if(!e||!e.walk)return c0;const H={}
 function scwWalk(P,e){const o=P._scw;if(!o||!o.cfg0)return;const key=e?"l":"";if((P._scwW||"")===key)return;P._scwW=key;const cfg=scwWalkCfg(o,e);try{if(o.onCfg)o.onCfg(cfg)}catch(x){}
   if(!P.dataset.shw)return;const V=P.parentNode;if(!V)return;
   P.querySelectorAll(":scope>.shw,:scope>.shw-me,:scope>.shw-hint,:scope>.shw-say,:scope>.shw-menu").forEach(x=>x.remove());delete P.dataset.shw;P.classList.remove("shw-iso");
-  try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(V,cfg,o.pfx)}catch(x){}}
+  try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON){shwPage(V,cfg,o.pfx);if(o.onWalk)o.onWalk(cfg)}}catch(x){}}   /* onWalk：重掛之後各頁要補的（07y 的隱身範圍 hbHide） */
 /* 07fl 包的 r07Wide 每次排版前問這裡：沒掛＝null；比例跨過門檻＝原地換掉、回 "wait"（圖載好會再排一次）；用橫式圖＝"l1610"；原圖＝null（照原本排） */
 function scwSync(V,P){const o=P&&P._scw;if(!o||!V)return null;const k=scwPick(V,P,o.key),cur=P.dataset.scw||"";
   if(k!==cur){scwSet(P,k);return"wait"}
@@ -98,6 +145,8 @@ function scwSync(V,P){const o=P&&P._scw;if(!o||!V)return null;const k=scwPick(V,
 function scwM3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
   return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${x0},${y0},0,1)`}
+/* 橫式圖網址 → 它的條目（07y 朝代殘影這種「照圖網址找座標」的共用表用；不是登記表裡的回 null） */
+function scwByF(src){const f=scwKey(src);if(!f)return null;for(const k in SCW)if(SCW[k].f===f)return SCW[k];return null}
 const scwSafe=P=>{const e=scwCur(P);return e&&e.safe||null};
 /* 07w7 sw7Page 遇到橫式圖：不是登記表裡的（例如首頁 home_l1610）回 undefined，照原本找；是的話條目有 sw7 用它，沒有就不下雨雪 */
 function scwSw7(src,base){const f=scwKey(src);if(!f)return undefined;for(const key in SCW){const e=SCW[key];if(e.f!==f)continue;const o=base("data/"+key+".webp");if(!o)return null;

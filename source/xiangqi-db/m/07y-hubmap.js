@@ -157,14 +157,17 @@ function hbFxBattle(P,img){let ph="";try{const S=window.XQNet&&XQNet.cup&&XQNet.
   if(alt&&!hbIsCl()){const im=new Image();im.onload=()=>{if(img.isConnected)img.src=im.src};im.src="data/hubmap/"+hbImg(alt,"battle")+".webp?v="+HB_IMGV}   /* 換圖前先載好，載不到就留原圖 */
   const fx=P.querySelector(".hb-fx");if(!fx)return;
   if(alt==="battle_curtain")fx.insertAdjacentHTML("beforeend",HUB_LAMP.battle.map(p=>`<i class="hb-lamp on" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
-  if(ph==="done")fx.insertAdjacentHTML("beforeend",[[64,14,0],[81,11,-.9],[95,15,-1.7],[72,18,-.4],[57,12,-2.2]].map(([x,y,d])=>`<i class="hb-fw" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join(""))}
+  if(ph==="done")fx.insertAdjacentHTML("beforeend",HB_FW.map(([x,y,d])=>`<i class="hb-fw" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join(""));hbFwPlace(P)}
+/* 千秋盃結束的煙火（原圖 %）；W107-L 橫式圖照條目 fx.fw 擺 */
+const HB_FW=[[64,14,0],[81,11,-.9],[95,15,-1.7],[72,18,-.4],[57,12,-2.2]];
+function hbFwPlace(P){const e=typeof scwCur==="function"?scwCur(P):null,F=e&&e.fx&&e.fx.fw;P.querySelectorAll(".hb-fw").forEach((f,i)=>{const p=F&&F[i]||HB_FW[i];if(p){f.style.left=p[0]+"%";f.style.top=p[1]+"%"}})}
 /* 開發者 11/11 選 ChatGPT 13 號方案 1「快下 vs 選場」：首頁大按鈕是「快速對局」、橋上石桌是「同桌對弈」（11/12 統一名稱）；
    茶肆這頁上方原本有一條常駐說明，11/12 UI 冗餘盤查第 4 項拿掉、改成第一次進來的短暫提示（hbBtlTip）。入口不加小字（開發者 11/11：畫面太雜；場景標籤一律只放大字） */
 function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D||!home||v.querySelector(".hub-page"))return;hbCss();
   const fresh=!store.get("campSeen",false)&&!Object.keys(campStars()).length&&!Object.keys(store.get("record",{})).length&&!(typeof tsmProgNow==="function"&&tsmProgNow().any);
   const CL=hbIsCl()&&HUB_CL_SPOTS[hub],sp=D.spots.map(([id,sel,x,y])=>{const c=hbCard(v,sel);if(CL&&CL[id])[x,y]=CL[id];return c?{id,c,x,y}:null}).filter(Boolean);
-  const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq hub-page"><img src="data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}" alt="${esc(D.cap)}" onerror="this.onerror=null;this.src=this.src.replace('_night.','.')"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||hbFirstHot(o.id,fresh)?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbEraWord(hbTitle(o.c)))}</b></button>`).join("")}</div>`;
+  const d=document.createElement("div"),src=`data/hubmap/${hbImg(D.img,hub)}.webp?v=${HB_IMGV}`,pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};   /* W107-L：iPad 橫向有專用橫式圖（07sw SCW）就一開始載那張 */
+  d.innerHTML=`<div class="shp-page cq hub-page${pre.k?" scw-l":""}"${pre.k?` data-scw="${pre.k}"`:""}><img src="${pre.src}" alt="${esc(D.cap)}" onerror="this.onerror=null;this.src=this.src.replace('_night.','.')"><div class="hb-fx" aria-hidden="true"></div>${sp.map(o=>`<button class="shp-spot${hbHot(o.c)||hbFirstHot(o.id,fresh)?" hot":""}" id="${o.id}" style="left:${o.x}%;top:${o.y}%"><b>${esc(hbEraWord(hbTitle(o.c)))}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");
   for(const o of sp){const b=P.querySelector("#"+o.id);if(!b)continue;b.onclick=()=>o.c.click();
     const upd=()=>{if(!b.isConnected){mo.disconnect();return}const h=hbHot(o.c)||hbFirstHot(o.id,fresh);if(b.classList.contains("hot")!==h)b.classList.toggle("hot",h)};
@@ -172,7 +175,10 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
   try{(hub==="learn"?hbFxLearn:hbFxBattle)(P,P.querySelector(":scope>img"))}catch(e){}
   if(hub==="battle")hbBtlTip();
   if(typeof shpFit==="function")shpFit(v);
-  try{const SW=hbIsCl()&&SHW_HUB_CL[hub]||SHW_HUB[hub];if(typeof shwPage==="function"&&SHIP_WALK_ON&&SW){shwPage(v,Object.assign({},SHW_PG0,SW),"hub:"+hub+(SW===SHW_HUB[hub]?"":":cl"));hbHide(P,SW.hide)}}catch(e){}
+  try{const SW=hbIsCl()&&SHW_HUB_CL[hub]||SHW_HUB[hub],pfx="hub:"+hub+(SW===SHW_HUB[hub]?"":":cl");let cfg=SW?Object.assign({},SHW_PG0,SW):null;
+    /* W107-L：交給 07sw 換圖、入口、出口、走路節點；換圖後煙火換位置、重掛走路角色後照新的隱身範圍 */
+    if(typeof scwMount==="function"&&cfg){const o={key:scwKey(src),src0:src,ids:sp.map(x=>x.id),pfx,cfg0:cfg,apply:()=>hbFwPlace(P),onWalk:c=>hbHide(P,c.hide)};scwMount(P,o);if(pre.k){cfg=scwWalkCfg(o,scwCur(P));P._scwW="l"}hbFwPlace(P)}
+    if(typeof shwPage==="function"&&SHIP_WALK_ON&&cfg){shwPage(v,cfg,pfx);hbHide(P,cfg.hide)}}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HUB_MAP_ON&&(hub==="learn"||hub==="battle"))hubMap(v,hub)}catch(e){}return r}}
 
@@ -192,10 +198,12 @@ function cyCss(){if(document.getElementById("cyCss"))return;const s=document.cre
 @keyframes cyF{0%,100%{margin-top:0}50%{margin-top:-.6%}}@media (prefers-reduced-motion:reduce){.cy{animation:none}}`;document.head.append(s)}
 function cyPage(src){return/homemap\/home_classic/.test(src)?"home":/hubmap\/battle_classic/.test(src)?"battle":/hubmap\/learn_classic/.test(src)?"learn":/libmap\/lib_classic/.test(src)?"lib":""}
 function cyMount(P,img){const src=img.getAttribute("src")||"",pg=cyPage(src),nt=/_night/.test(src);let L=P.querySelector(":scope>.cy-l");
-  if(!pg||!(typeof hbIsCl==="function"&&hbIsCl())){if(L)L.remove();return}
-  const key=pg+"|"+nt;if(L&&L.dataset.k===key)return;cyCss();
+  /* W107-L：iPad 橫向專用橫式圖（07sw）照條目 fx.cy 擺；條目沒給的頁（對戰）橫式圖上先不放 */
+  const lw=/_l1610\.webp/.test(src),E=lw&&typeof scwByF==="function"?scwByF(src):null,SPL=E&&E.fx&&E.fx.cy||null;
+  if(!pg||!(typeof hbIsCl==="function"&&hbIsCl())||(lw&&!SPL)){if(L)L.remove();return}
+  const key=pg+"|"+nt+(lw?"|l":"");if(L&&L.dataset.k===key)return;cyCss();
   if(!L){L=document.createElement("div");L.className="cy-l";img.after(L)}L.dataset.k=key;L.classList.toggle("nt",nt);
-  L.innerHTML=CY_SPOT[pg].map(([e,x,y,w],i)=>{let ln=false;try{ln=typeof shipLearned==="function"&&shipLearned(e)}catch(x){}
+  L.innerHTML=(SPL||CY_SPOT[pg]).map(([e,x,y,w],i)=>{let ln=false;try{ln=typeof shipLearned==="function"&&shipLearned(e)}catch(x){}
     return`<button class="cy${ln?" ln":""}" data-cy="${e}" style="left:${x}%;top:${y}%;width:${w}%;animation-delay:${-i*1.7}s" aria-label="${esc(CY_NM[e])}"><img src="data/canying/${e}.webp?v=${CY_V}" alt=""></button>`}).join("");
   L.querySelectorAll("[data-cy]").forEach(b=>b.onclick=ev=>{ev.stopPropagation();const e=b.dataset.cy,ln=b.classList.contains("ln");let nm=e;try{nm=eraLabel(e)}catch(x){}
     toast(`🏯 ${nm}的殘影・${CY_NM[e]}：${ln?"這一站學會了，殘影清楚起來了":"在雲河裡學會這一站，殘影就會變清楚"}`)})}

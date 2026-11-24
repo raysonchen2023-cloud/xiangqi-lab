@@ -73,7 +73,7 @@ test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在
     for (const ed of e.walk.E.split(" ")) { const [a, b] = ed.split("-"); assert.ok(N[a] && N[b], k + " 邊 " + ed) }
     if (!e.walk.HS) continue;   // 小動作由各頁自己算（今日推薦照告示紙的位置）
     for (const [id, h] of Object.entries(e.walk.HS)) { assert.ok(N[h[0]], k + " " + id); pct([h[1], h[2]], k + " " + id + " 看的位置") }
-    assert.deepEqual(Object.keys(e.walk.HS).sort(), Object.keys(e.S).sort(), k + " 每個入口都有角色走過去的設定");
+    for (const id in e.S) assert.ok(e.walk.HS[id], k + " " + id + " 有角色走過去的設定");   // 多出來的小動作可以（對戰的 hbCar 站鼓台）
   }
   const T = SCW["todaymap/today_day_classic"].fx; assert.equal(T.notes.length, 5, "今日推薦五張告示紙");
   for (const q of T.notes) { assert.equal(q.length, 4); for (const [x, y] of q) assert.ok(x >= 0 && x <= 2560 && y >= 0 && y <= 1600) }
@@ -175,6 +175,17 @@ test("原始碼：07fl 排版前先問 scwSync、安全區照條目；07w7、07w
   assert.match(Y5, /const tdPc=\(x,y\)=>\[x\/TD_GM\.W\*100,y\/TD_GM\.H\*100\]/);
   assert.ok(!/\/7\.68|\/13\.76/.test(Y5), "今日推薦不再寫死原圖尺寸");
   assert.match(Y5, /scwMount\(P,\{key:scwKey\(src\),src0:src,ids:\[\],apply:/);
+  // 殘局、對戰、學習、大廳
+  const C2 = M("m/07c2-canjumap.js"), YH = M("m/07y-hubmap.js"), X2 = M("m/07x2-lobbymap.js");
+  for (const [n, S] of [["07c2", C2], ["07y", YH], ["07x2", X2]]) { assert.match(S, /scwPre\(v,src\)/, n + " 開頁先選圖"); assert.match(S, /scwMount\(P,/, n + " 交給 07sw") }
+  assert.match(C2, /scwMount\(P,\{key:scwKey\(src\),src0:src,ids:\[\],apply:render\}\)/, "殘局換圖後整組重畫");
+  assert.match(YH, /onWalk:c=>hbHide\(P,c\.hide\)/, "對戰、學習重掛走路角色後照新的隱身範圍");
+  assert.match(YH, /const lw=\/_l1610\\\.webp\/\.test\(src\),E=lw&&typeof scwByF==="function"\?scwByF\(src\):null/, "朝代殘影照橫式條目");
+  assert.match(X2, /function lmFar\(s,used,G\)/); assert.match(X2, /gap:44\/pw\*100/, "橫式圖的亮燈間距照螢幕 44px");
+  const LB = SCW["lobbymap/lobby_classic"].fx; assert.equal(LB.lamps.length, 44, "大廳 44 盞燈（燈是線上玩家，不能少）"); assert.equal(LB.tables.length, 8);
+  for (const [x, y, f, g] of LB.lamps) { assert.ok(x >= 0 && x <= 100 && y >= 0 && y <= 100 && (f === 1 || f === 2) && (g === 0 || g === 1)); if (g) assert.ok(y + (f === 2 ? 10.5 : 7.5) <= 100, "人影腳底在圖內") }
+  assert.equal(SCW["hubmap/learn_classic"].fx.cy.length, 3, "藏譜石窟三個朝代殘影");
+  assert.equal(SCW["canjumap/canju_day_classic"].fx.ves.length, 3, "殘局三個茶具");
   const i7 = H.indexOf("//#include m/07sw-scenewide.js"), iy = H.indexOf("//#include m/07y8-redomap.js"), ifl = H.indexOf("//#include m/07fl-fill.js");
   assert.ok(i7 > iy && i7 < ifl, "07sw 在 07y8 後、07fl 前");
 });
