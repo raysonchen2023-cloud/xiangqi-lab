@@ -161,3 +161,21 @@ test("07s4-passmap（禁改檔）的改動寫在 reps-next.json，以線上 pub.
   for (const [a, b] of R) { assert.equal(h.split(a).length - 1, 1, a.slice(0, 50)); h = h.replace(a, () => b) }
   const loc = M("07s4-passmap.js"), i = loc.indexOf("const hqDark=()=>{"); assert.ok(h.includes(loc.slice(i, loc.indexOf("\n", i))), "套完後跟本機 07s4 的 hqDark 一樣");
 });
+
+/* 11/24 開發者手機截圖：錯棋重練經典版沒有竹竿、「練會了」「全部」位置怪 → 經典版日夜補畫竹竿晾架，竹竿層打開、照新圖重定座標 */
+test("錯棋重練經典版：竹竿層不再藏起來；日夜各一組竹竿座標（在 768×1376 原圖內、左低右高照新圖）；「練會了」在橫竿正上方、「全部」在地板上；圖換了版號", () => {
+  const S = M("07y8-redomap.js");
+  assert.ok(!/\.rd2-cl \.rd2-pole\{display:none\}/.test(S) && !/\.rd2-cl \.rd2-pond,\.rd2-cl \.rd2-pole/.test(S), "經典版不再藏竹竿層");
+  assert.match(S, /\.rd2-cl \.rd2-pond\{display:none\}/, "洗墨池照樣只在原版");
+  const m = S.match(/const RD2_CL=(\{.*?\});/); assert.ok(m, "有經典版座標 RD2_CL");
+  const CL = vm.runInNewContext("(" + m[1] + ")");
+  for (const k of ["day", "night"]) {
+    const [[x0, y0], [x1, y1]] = CL[k].pole, [ox, oy] = CL[k].ok;
+    for (const [x, y] of [[x0, y0], [x1, y1], [ox, oy]]) assert.ok(x >= 0 && x <= 768 && y >= 0 && y <= 1376, k + " 在原圖內");
+    assert.ok(x0 < x1 && y0 < y1, k + " 橫竿從左上斜到右下（照新圖）");
+    assert.ok(ox > x0 && ox < x1, k + " 練會了在兩根直竹之間"); const yb = y0 + (y1 - y0) * (ox - x0) / (x1 - x0); assert.ok(oy < yb && yb - oy < 140, k + " 練會了在橫竿正上方不遠");
+  }
+  assert.ok(CL.all[1] > 1100, "全部移到地板（不再浮在窗板上）");
+  assert.match(S, /RD2_CL\[dk\?"night":"day"\]\.pole:RD2_POLE/, "晾冊頁照經典版的竹竿");
+  assert.match(S, /const RD2_IMGV="(\d+)"/); assert.notEqual(S.match(/const RD2_IMGV="(\d+)"/)[1], "2380", "換了圖就換版號");
+});

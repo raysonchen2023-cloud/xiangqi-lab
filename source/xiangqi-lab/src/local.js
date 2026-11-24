@@ -533,10 +533,26 @@ var XQ=(function(){
   const TP=THINKPACE(C,HP,CPU_MIN_MS),cpuPace=()=>{try{if(JSON.parse(localStorage.getItem("m_blitz"))===true)return"fast"}catch(e){}try{return JSON.parse(localStorage.getItem("m_cpuPace"))==="fast"?"fast":"real"}catch(e){return"real"}};
   /* 11/13 晚開發者「iPad 卡在第一盤棋，對方一直思考中」：引擎啟動或下載卡住時 search 永遠不回，playBusy 一直是真、連按新局也卡。
      每一步加總時限（引擎還沒載好 3 分鐘，含第一次下載 48 MB；載好之後 60 秒），逾時就把引擎整個重來（XQEngine.abort），幾秒後自動再想 */
+  /* W101（11/24 開發者截圖：中炮門掌門局「還沒切到棋盤，掌門就先落子了」）：電腦先手的第一步，等玩家真的看得到棋盤再走。
+     3D 園子開場有名言封面（park3d.js，停 5～9 秒，這段期間 <html> 掛著 pk-veil）；掌門照門派棋路 0.9 秒就落子，玩家看到棋盤時第一步早就走完了。
+     playFirstWait(t0,now,ready)：至少等 0.6 秒；之後棋盤真的看得到（boardReady）才走，看不到就每 0.3 秒再看，最多 20 秒（萬一一直不就緒也不會卡住）。回傳還要等幾毫秒，0＝可以走。
+     boardReady：對局頁的 #bbox 顯示出來；3D 開著（parkOn）時還要 3D 園子建好（.park3d），而且封面收掉（<html> 沒有 pk-veil）。
+       預覽站實測：只看 pk-veil 不夠——封面在開局 0.8 秒才掛上，那之前看起來「沒有封面」，第一步照樣 0.98 秒就走了
+     #134 Android 預驗（Windows Claude 2）：軟體繪圖的模擬器封面停了 23 秒，超過 20 秒上限，掌門又在封面還在時落子——慢的手機也可能這樣。
+       所以封面還在（veil）時另算：最多等 90 秒（封面一定會收掉：reveal 或 destroy 都會拿掉 pk-veil，90 秒只是保險）；20 秒上限只管棋盤沒出現、3D 沒建好這類卡住的情況 */
+  const FIRST_SETTLE=600,FIRST_MAX=20000,FIRST_VEIL_MAX=90000;
+  function playFirstWait(t0,now,ready,veil){const d=now-t0;if(veil&&d<FIRST_VEIL_MAX)return 300;if(d>=FIRST_MAX)return 0;if(d<FIRST_SETTLE)return FIRST_SETTLE-d;return ready?0:300}
+  const veilOn=()=>{try{return typeof document!=="undefined"&&!!document.documentElement&&document.documentElement.classList.contains("pk-veil")}catch(e){return false}};
+  const boardReady=()=>{try{if(typeof document==="undefined"||!document.documentElement)return true;if(document.documentElement.classList.contains("pk-veil"))return false;
+      const hb=document.querySelector("#bbox");if(!hb||!hb.offsetParent)return false;
+      if(typeof parkOn==="function"&&parkOn()){const k=[...document.querySelectorAll(".park3d")].some(e=>e.style.display!=="none"&&e.isConnected);if(!k)return false}
+      return true}catch(e){return true}};
+  let FIRST={id:null,t0:0};
   const engTmo=()=>typeof XQEngine!=="undefined"&&XQEngine.ready?60000:180000;
   const engRace=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>{const e=new Error("ENG_TIMEOUT");e.tmo=1;j(e)},ms))]);
   async function playEngine(){
     if(!P||P.result||P.turn===P.human||playBusy)return;
+    if(!P.moves.length){if(FIRST.id!==P.id)FIRST={id:P.id,t0:Date.now()};const w=playFirstWait(FIRST.t0,Date.now(),boardReady(),veilOn());if(w){setTimeout(playEngine,w);return}}   /* W101：電腦先手，等開場封面收掉再走第一步 */
     {const nk=npcKeyOf(P,localStorage);if(nk&&P.moves.length<NPCB_MAX&&P.npcOut!==1){playBusy=true;const id=P.id,n=P.moves.length;let pk=null;   /* 棋友棋路：照表走（見上面 npcBookPick） */
       try{const B=await npcBookLoad();if(P&&P.id===id&&P.moves.length===n&&!P.result&&P.turn!==P.human){if(P.npcOrd==null)P.npcOrd=/^inn:zm_/.test(nk)?zmLeanOrd(nk):(Math.random()<.75?0:1);pk=npcBookPick(B,NPC_SCH[nk],P.board,P.turn,P.npcOrd,Math.random);if(!pk&&B)P.npcOut=1}}catch(e){}
       if(pk){setTimeout(()=>{try{if(P&&P.id===id&&P.moves.length===n&&!P.result&&P.turn!==P.human){const f=parseSq(pk.u.slice(0,2)),t=parseSq(pk.u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0}}}finally{playBusy=false;setTimeout(playEngine,0)}},900);return}
@@ -553,6 +569,11 @@ var XQ=(function(){
         {const w=900-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;if(!mv)return;playApply(mv[0],mv[1]);playMsg="";engFail=0;return}
       if(engOver(P.board,P.turn)){const vm=await varMove(P,lv);if(!P||P.id!==id||P.moves.length!==n||P.result)return;   /* 11/16 開發者選單「接 XQVar＋調權重」：Pikafish 不收的局面改請 Magellan（src/varengine.js＝XQVar，背景執行緒）算；算不出來才停下說明 */
         const vf=vm?parseSq(vm.slice(0,2)):-1,vt=vm?parseSq(vm.slice(2,4)):-1;if(!vm||!legal(P.board,P.turn).some(([a,b])=>a===vf&&b===vt)){P.engOver=1;playMsg="⚠ "+ENG_OVER_MSG;return}   /* 不送 Pikafish、不重試（finally 看 P.engOver） */
+        {const w=900-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;delete P.engOver;playApply(vf,vt);playMsg="";engFail=0;return}
+      /* W92（11/24 Windows Claude 2 在 Android 16 模擬器 WebView 133 發現）：舊 WebView 沒有多執行緒，Pikafish 載不起來（02-shell 設 XQ_ENG_FALLBACK）→ 改請備用的 Magellan 走；
+         照上面「棋子數超過」那一段的做法，算不出來才停下說明（後面接 02-shell 分平台的那句，iOS 不提 Play 商店） */
+      if(!P.td&&window.XQ_ENG_FALLBACK){const vm=await varMove(P,lv);if(!P||P.id!==id||P.moves.length!==n||P.result)return;
+        const vf=vm?parseSq(vm.slice(0,2)):-1,vt=vm?parseSq(vm.slice(2,4)):-1;if(!vm||!legal(P.board,P.turn).some(([a,b])=>a===vf&&b===vt)){P.engOver=1;playMsg="⚠ 備用的簡易棋手這一步算不出來。"+(typeof NATIVE_OLDWV==="string"?NATIVE_OLDWV:"");return}
         {const w=900-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;delete P.engOver;playApply(vf,vt);playMsg="";engFail=0;return}
       if(P.td&&window.XQ_TD){const TD=window.XQ_TD.engine(P,C),r=await engRace(XQEngine.search(engPos(),{depth:TD.depth,searchmoves:TD.sm},TD.mpv),engTmo()),mv=window.XQ_TD.pick(r,TD,Math.random);   /* 黑洞陣地塔防：星樞推算 N 步＋失誤率；被定身的子不走（敵方沒別步可走時照常走） */
         {const w=1100-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;

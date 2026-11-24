@@ -7,10 +7,13 @@
    香篆爐：有該複習的就點著；沒有就照「離下次複習還有幾天」畫煙的長短。角色走到書案前揮手；全部練會時在竹竿前歡呼。
    開關 REDO_MAP_ON；圖片網址帶 RD2_IMGV；前綴 rd2。包一層 Redo */
 const REDO_MAP_ON=true;
-const RD2_IMGV="2380";
+const RD2_IMGV="2411";   /* 11/24 經典版日夜兩張補畫竹竿晾架（Gemini；開發者看過選「可以」），換版號讓手機抓新圖 */
 /* 圖上的位置（像素 768×1376） */
 const RD2_BOOK=[355,905],RD2_STACK=[178,898],RD2_CENSER=[572,930],RD2_ALL=[640,1000];
 const RD2_POLE=[[512,480],[702,400]];   /* 竹竿兩端（左柱、右柱綁繩處） */
+/* 11/24 開發者手機截圖（經典版）：「原本會有個類似曬衣架在學會了那邊」「這一頁的 練會了 全部 這兩個排版和位置我比較覺得怪，其他朝代有曬清頁的竹竿比較有意境」→
+   經典版日夜兩張補畫了竹竿晾架（位置照新圖量：兩根直竹綁繩處），冊頁照樣晾上去；「練會了」放在橫竿正上方，「全部」移到右下地板，不再浮在窗板上 */
+const RD2_CL={day:{pole:[[412,565],[685,620]],ok:[548,505]},night:{pole:[[392,600],[692,670]],ok:[542,540]},all:[600,1235]};
 const RD2_POND="polygon(10.4% 23.3%,95.7% 21.8%,95.7% 42.5%,78.1% 46.5%,67.7% 51.2%,59.2% 54.1%,10.4% 46.5%)";
 const SHW_RD2={el:40,h:[.1,92,.003],look0:[46,66],home:"home",N:{home:[52,97],desk:[46,91],mid:[72,92],rail:[86,82]},E:"home-desk desk-mid mid-rail home-mid",
   HS:{rd2Book:["desk",46,66,"wave"],rd2Stack:["desk",23,65,"wave"],rd2Pole:["rail",80,32,"wave"],rd2All:["mid",83,72,"idle"]}};
@@ -19,7 +22,7 @@ const rd2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours()
 function rd2Css(){if(document.getElementById("rd2Css"))return;const s=document.createElement("style");s.id="rd2Css";s.textContent=`
 .rd2-page{margin:0 0 6px}
 .rd2-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-.rd2-pond{position:absolute;inset:0;clip-path:${RD2_POND};-webkit-clip-path:${RD2_POND}}.rd2-cl .rd2-pond,.rd2-cl .rd2-pole{display:none}
+.rd2-pond{position:absolute;inset:0;clip-path:${RD2_POND};-webkit-clip-path:${RD2_POND}}.rd2-cl .rd2-pond{display:none}
 .rd2-ink{position:absolute;inset:0;background:radial-gradient(ellipse 46% 18% at 53% 38%,rgba(28,24,22,.62),rgba(28,24,22,.36) 55%,rgba(28,24,22,0) 100%);transition:opacity 1.2s}   /* 11/10 開發者截圖：iPhone 上 multiply 不作用，池面變成一大塊硬邊深灰；改成中間濃、往池邊淡開，不靠混色 */
 .rd2-clear{position:absolute;inset:0;background:linear-gradient(115deg,rgba(150,205,215,0),rgba(185,228,236,.6) 45%,rgba(150,205,215,0) 60%);mix-blend-mode:screen;background-size:220% 100%;animation:rd2Glint 4.5s ease-in-out infinite}
 @keyframes rd2Glint{0%{background-position:120% 0}100%{background-position:-20% 0}}
@@ -54,7 +57,7 @@ function rd2Wrap(v,R){if(!REDO_MAP_ON||!v.querySelector("#rf"))return R;rd2Css()
   const sp=(id,x,y,t,cl)=>{const[a,b]=rd2Pc(x,y);return`<button class="shp-spot rd2-tag${cl?" "+cl:""}" id="${id}" style="left:${a}%;top:${b}%"><b>${t}</b></button>`};
   P.innerHTML=`<img src="${src}" alt="${cl?"雲海邊的書案":"洗墨池邊的臨水書案"}">
     <div class="rd2-fx" aria-hidden="true"><div class="rd2-pond">${rd2Season()}</div><div class="rd2-stack"></div><div class="rd2-pole"></div><div class="rd2-ctxt"></div><div class="rd2-cen"></div></div>
-    ${sp("rd2Book",RD2_BOOK[0],RD2_BOOK[1]-70,"📅 該複習")}${sp("rd2Stack",RD2_STACK[0]-20,RD2_STACK[1]-75,"還沒練會")}${sp("rd2Pole",610,370,"✅ 練會了")}${sp("rd2All",RD2_ALL[0],RD2_ALL[1],"全部","rd2-small")}`;
+    ${sp("rd2Book",RD2_BOOK[0],RD2_BOOK[1]-70,"📅 該複習")}${sp("rd2Stack",RD2_STACK[0]-20,RD2_STACK[1]-75,"還沒練會")}${sp("rd2Pole",...(cl?RD2_CL[dk?"night":"day"].ok:[610,370]),"✅ 練會了")}${sp("rd2All",...(cl?RD2_CL.all:RD2_ALL),"全部","rd2-small")}`;
   v.insertBefore(P,v.firstChild);
   const rf=v.querySelector("#rf"),cnt=()=>{const o={};rf.querySelectorAll("[data-k]").forEach(b=>{const m=b.textContent.match(/(\d+)\s*$/);o[b.dataset.k]=m?+m[1]:0});return o};
   /* 回饋 833（開發者 11/9：四頁也改成一對一）：點圖上的東西＝按原本的篩選鈕，面板只看那一份清單，標題換成入口名（照 832 我的戰績的做法）。
@@ -73,7 +76,7 @@ function rd2Wrap(v,R){if(!REDO_MAP_ON||!v.querySelector("#rf"))return R;rd2Css()
     /* 案角疊冊：還沒練會的題數，最多疊 8 本 */
     const nS=Math.min(8,c.todo||0);fx.querySelector(".rd2-stack").innerHTML=Array.from({length:nS},(_,i)=>{const[x,y]=rd2Pc(RD2_STACK[0]+(i%2?2:-1),RD2_STACK[1]-i*5.5);return`<img class="rd2-bk" src="data/redomap/rd_book.webp?v=${RD2_IMGV}" alt="" style="left:${x}%;top:${y}%">`}).join("");
     /* 竹竿晾冊頁：練會的題數，最多 9 張；每張由程式畫一個朱圈 */
-    const nP=Math.min(9,c.ok||0),[[x0,y0],[x1,y1]]=RD2_POLE;fx.querySelector(".rd2-pole").innerHTML=Array.from({length:nP},(_,i)=>{const f=(i+.7)/9.4,x=x0+(x1-x0)*f,y=y0+(y1-y0)*f,[a,b]=rd2Pc(x,y-3);return`<span class="rd2-pg" style="left:${a}%;top:${b}%;--r:${(i%3-1)*3}deg;--d:-${(i*.7%4).toFixed(1)}s"><img src="data/redomap/rd_page.webp?v=${RD2_IMGV}" alt="" style="width:100%;display:block"><i></i></span>`}).join("");
+    const nP=Math.min(9,c.ok||0),[[x0,y0],[x1,y1]]=cl?RD2_CL[dk?"night":"day"].pole:RD2_POLE;fx.querySelector(".rd2-pole").innerHTML=Array.from({length:nP},(_,i)=>{const f=(i+.7)/9.4,x=x0+(x1-x0)*f,y=y0+(y1-y0)*f,[a,b]=rd2Pc(x,y-3);return`<span class="rd2-pg" style="left:${a}%;top:${b}%;--r:${(i%3-1)*3}deg;--d:-${(i*.7%4).toFixed(1)}s"><img src="data/redomap/rd_page.webp?v=${RD2_IMGV}" alt="" style="width:100%;display:block"><i></i></span>`}).join("");
     /* 攤開的冊子上直寫今天要複習幾題 */
     const[tx,ty]=rd2Pc(RD2_BOOK[0]+14,RD2_BOOK[1]-2);fx.querySelector(".rd2-ctxt").innerHTML=`<span class="rd2-txt" style="left:${tx}%;top:${ty}%">${c.due?`今日複習<b>${c.due}</b>題`:"今日無課"}</span>`;
     /* 香篆爐：該複習＝點著；否則煙的長短＝離下次複習幾天 */

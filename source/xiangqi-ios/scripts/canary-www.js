@@ -264,7 +264,10 @@ const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([k
 const runtimeTaint = (env = process.env, execArgv = process.execArgv) => { const why = []; if (String(env.NODE_OPTIONS || "").trim()) why.push("NODE_OPTIONS=" + String(env.NODE_OPTIONS).slice(0, 80)); if (execArgv.length) why.push("node 參數 " + execArgv.join(" ").slice(0, 80)); return why };
 /* 子程序時限（2026-11-24：CI 的金絲雀自我檢查偶爾卡住 40 分鐘被取消，擋住所有 PR）。
    卡住一律判「測試不成立」（回 2），不會當成通過、也不會誤判成檢查失靈；XQ_CANARY_SUB_MS 只給自我測試縮短時限用（縮短只會讓結果變成不成立） */
-const SUB_MS = Math.max(1000, Number(process.env.XQ_CANARY_SUB_MS) || 300000);
+/* #113 審查②：Infinity、負數、非數字、超過 1 小時都不能讓 spawnSync 丟 ERR_OUT_OF_RANGE（回 1），規則見下一段（#136 審查：舊註解寫「一律 300 秒」跟程式不符，刪掉） */
+/* #114 審查（不擋）：解析抽成函式並匯出，自我測試直接比回傳值。規則：1 秒～1 小時之間取整數；大於 0 但不到 1 秒的拉到 1 秒；其他（沒給、0、負數、文字、Infinity、超過 1 小時）用預設 300 秒 */
+const parseSubMs = (v) => { const n = Number(v); return Number.isFinite(n) && n >= 1000 && n <= 3600000 ? Math.floor(n) : Number.isFinite(n) && n > 0 && n < 1000 ? 1000 : 300000 };
+const SUB_MS = parseSubMs(process.env.XQ_CANARY_SUB_MS);
 const SUB = { timeout: SUB_MS, killSignal: "SIGKILL" };
 const timedOut = (r) => !!(r && r.error && r.error.code === "ETIMEDOUT");
 function cloneDir(src, dst) {
@@ -416,7 +419,9 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       let cdnViaCheck = null;
       /* PR #67 第十二次審查：只看結束代碼不夠（--cdn 網址那條路改成不比，也回 0）。要求「跟 CDN 現行版比了 N 個檔」的 N 跟本機 CDN 清單那次一樣 */
       const cmpN = (t) => { const m = /跟 CDN 現行版比了 (\d+) 個檔/.exec(String(t || "")); return m ? Number(m[1]) : null }, wantN = cmpN(clean.stdout);
-      if (OFFICIAL_CDN && cdn === OFFICIAL_CDN) { const V = shape(); let r; try { cloneDir(dir, V); const lfV = path.join(boxOf(V), "list.json"), cfV = path.join(boxOf(V), "cdn-manifest.json"); fs.writeFileSync(lfV, JSON.stringify({ ...LJ, files: L })); fs.writeFileSync(cfV, JSON.stringify({ ...(Mobj || {}), files: M })); r = (selfCdn || ((d, lf) => check(d, lf, null, ["--cdn"])))(V, lfV, { cdnFile: cfV }) } finally { drop(V) }   /* 第十七次審查②：--cdn 那次也用自己的新副本 */ cdnViaCheck = { exit: r.status, n: cmpN(r.stdout), want: wantN, note: String(r.stderr || "").split("\n")[0].slice(0, 200) }; log((r.status === 0 && cdnViaCheck.n === wantN ? "✔ " : "✘ ") + "check-www --cdn 比了 " + cdnViaCheck.n + " 個檔（本機清單那次 " + wantN + "）；結束代碼 " + r.status) }
+      if (OFFICIAL_CDN && cdn === OFFICIAL_CDN) { const V = shape(); let r; try { cloneDir(dir, V); const lfV = path.join(boxOf(V), "list.json"), cfV = path.join(boxOf(V), "cdn-manifest.json"); fs.writeFileSync(lfV, JSON.stringify({ ...LJ, files: L })); fs.writeFileSync(cfV, JSON.stringify({ ...(Mobj || {}), files: M })); r = (selfCdn || ((d, lf) => check(d, lf, null, ["--cdn"])))(V, lfV, { cdnFile: cfV }) } finally { drop(V) }   /* 第十七次審查②：--cdn 那次也用自己的新副本 */
+        if (timedOut(r)) { results.push({ kind: "(正式 CDN)", file: "check-www --cdn", caught: false, unfit: true, why: hung(r) }); log("✘ check-www --cdn：" + hung(r)) }   /* #113 審查③：正式 --cdn 那次卡住也判不成立（回 2），不會只記成 exit null */
+        cdnViaCheck = { exit: r.status, n: cmpN(r.stdout), want: wantN, note: String(r.stderr || "").split("\n")[0].slice(0, 200) }; log((r.status === 0 && cdnViaCheck.n === wantN ? "✔ " : "✘ ") + "check-www --cdn 比了 " + cdnViaCheck.n + " 個檔（本機清單那次 " + wantN + "）；結束代碼 " + r.status) }
       const passAll = want.every((k) => results.some((x) => x.kind === k)) && results.every((x) => x.caught === true), code = exitOf(results, passAll);   /* PR #67 第九次審查：結束代碼先算好，full 要看它 */
       const receipt = {
         tool: "P0-IMG-canary", platform: "ios", at: new Date().toISOString(),
@@ -437,18 +442,23 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
   } finally { if (P && P.cleanup) fs.rmSync(P.cleanup, { recursive: true, force: true }) }
 }
 
-module.exports = { run, KINDS, toolSha, treeSha, picks, rng, exitOf, OFFICIAL_CDN, hit, hasTok, caseFlip, groupKey, runtimeTaint, cleanEnv };
+module.exports = { run, parseSubMs, KINDS, toolSha, treeSha, picks, rng, exitOf, OFFICIAL_CDN, hit, hasTok, caseFlip, groupKey, runtimeTaint, cleanEnv };
 if (require.main === module) {
   const mv = missingVal(argv); if (mv) { console.error("✘ 測試不成立：" + mv + " 後面要接值"); process.exit(2) }
   const uf = unknownFlag(argv); if (uf) { console.error("✘ 測試不成立：不認得的參數 " + uf); process.exit(2) }
   const tw = runtimeTaint(); if (tw.length) { console.error("✘ 測試不成立：金絲雀的執行環境被動過（" + tw.join("；") + "）。請用乾淨的 node 直接跑"); process.exit(2) }
   if (argv.includes("--cdn") && !OFFICIAL_CDN) { console.error("✘ 測試不成立：加了 --cdn，但讀不到 check-www.js 裡的正式 CDN 網址"); process.exit(2) }   /* PR #67 第十二次審查：不能不比 CDN 就回 0 */
   const cdn = opt("--cdn-manifest") || (argv.includes("--cdn") ? OFFICIAL_CDN : null);
-  const { code, receipt } = run({ dir: opt("--dir"), list: opt("--list"), cdn, pkg: opt("--pkg"), only: opt("--only"), seed: opt("--seed") });
+  /* #67 審查剩下的低優先：run() 丟出沒預料到的例外時，不能讓 node 印堆疊後回 1（看起來像「檢查有錯」），一律判測試不成立（回 2） */
+  let out; try { out = run({ dir: opt("--dir"), list: opt("--list"), cdn, pkg: opt("--pkg"), only: opt("--only"), seed: opt("--seed") }) }
+  catch (e) { console.error("✘ 測試不成立：金絲雀執行時出錯（" + String(e && e.message || e).split("\n")[0].slice(0, 200) + "）"); process.exit(2) }
+  const { code, receipt } = out;
   if (receipt.unfit) console.error((code === 3 ? "△ 缺驗：" : "✘ 測試不成立：") + receipt.why);
-  if (opt("--out")) fs.writeFileSync(opt("--out"), JSON.stringify(receipt, null, 1) + "\n");
+  /* #136 審查①：寫收據也在保護範圍內。--out 的資料夾不存在、寫不進去時：原本會丟例外回 1。改成：結果是 0（全過）就降成 2——收據沒寫成，送審不能用；4、3、2 保持原碼，不能讓「檢查失靈」被寫檔失敗蓋掉 */
+  let outErr = null; if (opt("--out")) { try { fs.writeFileSync(opt("--out"), JSON.stringify(receipt, null, 1) + "\n") } catch (e) { outErr = String(e && e.message || e).split("\n")[0].slice(0, 200) } }
+  if (outErr) console.error("✘ 測試不成立：收據寫不進 " + opt("--out") + "（" + outErr + "）");
   if (!receipt.unfit) console.log(receipt.pass
     ? `✔ 金絲雀：${receipt.results.length} 個壞樣本（${receipt.kinds.length} 種）都被 check-www.js 抓到；種子 ${receipt.seed}` + (receipt.full ? "" : "（full＝false，送審不能用：要 --pkg .ipa、--cdn、不加 --only、清單和兩支工具是 origin/main 那份、版號跟包一樣）")
     : "✘ 金絲雀沒過：" + [...new Set(receipt.results.filter((x) => !x.caught).map((x) => x.kind))].join("、") + (code === 4 ? "——檢查本身失靈，這一輪的 P0-IMG 結果不可信" : ""));
-  process.exit(code);
+  process.exit(outErr && code === 0 ? 2 : code);
 }
