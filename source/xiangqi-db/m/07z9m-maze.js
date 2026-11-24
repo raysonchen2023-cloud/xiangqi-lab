@@ -165,9 +165,12 @@ const jhMzRM=()=>{try{return!!(window.matchMedia&&matchMedia("(prefers-reduced-m
 function jhMzFlick(now,seed,rm){if(rm)return 1;const h=i=>{const q=Math.sin(i*127.1+seed*311.7)*43758.5453;return q-Math.floor(q)};
   const k=Math.floor(now/180+seed*13),r=h(k),dip=r<.04?.55:r<.1?.8:1;return dip*(1+Math.sin(now/170+seed)*.05+Math.sin(now/53+seed*2)*.03)}
 /* 像素材質：lv.tex＝{floor, side, top}（網址）；載得到就換上（最近點取樣、不做 mipmap、一格對應整張圖一次），載不到就留著程式畫的那張 */
-function jhMzTexLoad(T3,url,mat,texs){if(!url||!T3||!T3.TextureLoader||!mat)return false;
+/* W106（11/24 iMac Claude 2 預驗 #139 發現）：TextureLoader 用不掛在頁面上的 img 載圖，沒有 service worker 的網頁版走不到 00-util 的 CDN 補抓，
+   材質還沒進網站時一律退回程式畫的磚紋。比照 #129 掉入迷宮轉場：同源載不到，就改向 XQ_CDN＋xqCdnRel 要一次（cdn＝1 是第二次，不再重試） */
+function jhMzTexLoad(T3,url,mat,texs,cdn){if(!url||!T3||!T3.TextureLoader||!mat)return false;
+  const retry=()=>{if(cdn)return;try{const r=typeof xqCdnRel==="function"&&xqCdnRel(url);if(r&&typeof XQ_CDN==="string")jhMzTexLoad(T3,XQ_CDN+r,mat,texs,1)}catch(e){}};
   try{new T3.TextureLoader().load(url,t=>{t.magFilter=T3.NearestFilter;t.minFilter=T3.NearestFilter;t.generateMipmaps=false;if(t.wrapS!=null){t.wrapS=t.wrapT=T3.ClampToEdgeWrapping}if(t.repeat&&t.repeat.set)t.repeat.set(1,1);
-    if(T3.sRGBEncoding!=null)t.encoding=T3.sRGBEncoding;const old=mat.map;mat.map=t;mat.needsUpdate=true;if(texs)texs.push(t);if(old&&old.dispose&&(!texs||!texs.includes(old)))old.dispose()},undefined,()=>{})}catch(e){return false}return true}
+    if(T3.sRGBEncoding!=null)t.encoding=T3.sRGBEncoding;const old=mat.map;mat.map=t;mat.needsUpdate=true;if(texs)texs.push(t);if(old&&old.dispose&&(!texs||!texs.includes(old)))old.dispose()},undefined,retry)}catch(e){return false}return true}
 async function jhMzWorld3(box,c,S){
   if(typeof loadScript!=="function")throw 0;const off=typeof OFF!=="undefined"&&OFF;
   await loadScript(off?"three.min.js":"/m/three.min.js");await loadScript((off?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));
