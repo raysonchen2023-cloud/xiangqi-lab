@@ -53,3 +53,20 @@ test("〔原始碼〕畫面接線：點錯物件撿手稿的提示、找到時�
   assert.ok(SRC.includes("線索也會記在驛站的秘境棋友清單裡"), "說法跟實際一樣（驛站清單會顯示線索）");
   assert.ok(SAVE.includes('JOURNEY_KEYS.push("m_secMs","m_secMsDay","m_secAll");'), "新存檔鍵跟著存檔走");
 });
+
+/* Windows Claude 2 預驗（#125）：更新前就找齊六位的老玩家不會再經過 secretFind 那一刻，要在打開清單時補發；兩份清單都看得到線索；6／6 時說明不再叫人去找 */
+test("〔原始碼〕老玩家補發拓本：「我的角色」與驛站兩份秘境棋友清單打開時都呼叫 secAllReward（它自己防重複）；我的角色清單顯示線索；驛站 6／6 改說明", () => {
+  const YZ = fs.readFileSync(path.join(ROOT, "xiangqi-db", "m", "07m-yizhan.js"), "utf8");
+  assert.match(SRC, /b=>\{const rw=secAllReward\(\),nF=Object\.keys\(S2\)\.length[^`]*`\$\{secAllNote\(rw\)\}<div class="card"/, "我的角色清單打開就補發並顯示");
+  assert.match(SRC, /<b>尚未相遇<\/b>\$\{C2\[x\.id\]&&clueText\(x\)\?`<span>🗝 \$\{esc\(clueText\(x\)\)\}<\/span>`:""\}/, "我的角色清單顯示換到的線索");
+  const ys = YZ.slice(YZ.indexOf('on("#yzSec"'), YZ.indexOf('on("#yzMail"'));
+  assert.match(ys, /secAllReward\(\)/, "驛站清單打開就補發"); assert.match(ys, /secAllNote\(rw\)/);
+  assert.match(ys, /nS>=SECRETS\.length\?`六位都找到了/, "6／6 不再寫還沒找到的藏在園子裡");
+});
+test("老玩家補發：存檔已經六位都找到、還沒領過 → 第一次給拓本，第二次回 null；已經有稀有棋盤的改給 3 枚將令", () => {
+  const { c, get } = load({ secrets: JSON.stringify(ALL) });
+  const r1 = c.secAllReward(); assert.ok(r1 && r1.rare); assert.equal(c.secAllReward(), null, "防重複");
+  assert.equal(get("bag").boards.filter((z) => z.rarity === "rare").length, 1);
+  const L = load({ secrets: JSON.stringify(ALL), bag: JSON.stringify({ boards: [{ rarity: "rare" }] }) });
+  assert.deepEqual(JSON.parse(JSON.stringify(L.c.secAllReward())), { ling: 3 }); assert.equal(L.get("lingN"), 3);
+});
