@@ -138,6 +138,20 @@ const jhMzYaw=(dx,dy)=>Math.atan2(dx,dy);
      ・黑暗照舊：每一格亮多少照 jhMzLight（手上的燈半徑約 3 格、牆擋光、點亮的壁燈），沒看過的全黑、走過的留淡淡的輪廓；
        手上的燈另外是一盞暖色點光源、點亮的壁燈各一盞，讓牆面有明暗。
    玩法、回合、殘局、存檔一行都不動；點地面用射線找到點的是哪一格。3D 載不起來（沒有 WebGL、three 載不到）照舊畫平面版（配色＋立繪）。 */
+/* ===== W87c 回味感（開發者 11/24：「禮拜四先換像素材質」「45 度斜俯視」「油燈快熄時會閃」）===== */
+/* 斜俯視：鏡頭從東南方往西北看（水平轉 45 度）、俯角 38 度，正交投影（遠近一樣大，格子是菱形） */
+const JH_MZ_ISO={yaw:Math.PI/4,el:38*Math.PI/180};
+/* 方向鈕的字：[鍵, 平面版, 斜俯視]——北（往上）在畫面右上、東在右下、南在左下、西在左上 */
+const JH_MZ_PADG=[["u","▲","↗"],["r","▶","↘"],["d","▼","↙"],["l","◀","↖"]];
+/* 減少動態：系統設定「減少動態」打開就不閃、火苗不晃 */
+const jhMzRM=()=>{try{return!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)}catch(e){return false}};
+/* 燈火亮度倍率（1 左右）：細細的不規則晃動，偶爾暗一下（約每 180ms 抽一次，4% 機率暗到 .55、6% 機率暗到 .8）；seed＝哪一盞燈（各閃各的）；rm＝減少動態，固定 1 */
+function jhMzFlick(now,seed,rm){if(rm)return 1;const h=i=>{const q=Math.sin(i*127.1+seed*311.7)*43758.5453;return q-Math.floor(q)};
+  const k=Math.floor(now/180+seed*13),r=h(k),dip=r<.04?.55:r<.1?.8:1;return dip*(1+Math.sin(now/170+seed)*.05+Math.sin(now/53+seed*2)*.03)}
+/* 像素材質：lv.tex＝{floor, side, top}（網址）；載得到就換上（最近點取樣、不做 mipmap、一格對應整張圖一次），載不到就留著程式畫的那張 */
+function jhMzTexLoad(T3,url,mat,texs){if(!url||!T3||!T3.TextureLoader||!mat)return false;
+  try{new T3.TextureLoader().load(url,t=>{t.magFilter=T3.NearestFilter;t.minFilter=T3.NearestFilter;t.generateMipmaps=false;if(t.wrapS!=null){t.wrapS=t.wrapT=T3.ClampToEdgeWrapping}if(t.repeat&&t.repeat.set)t.repeat.set(1,1);
+    if(T3.sRGBEncoding!=null)t.encoding=T3.sRGBEncoding;const old=mat.map;mat.map=t;mat.needsUpdate=true;if(texs)texs.push(t);if(old&&old.dispose&&(!texs||!texs.includes(old)))old.dispose()},undefined,()=>{})}catch(e){return false}return true}
 async function jhMzWorld3(box,c,S){
   if(typeof loadScript!=="function")throw 0;const off=typeof OFF!=="undefined"&&OFF;
   await loadScript(off?"three.min.js":"/m/three.min.js");await loadScript((off?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));
@@ -166,6 +180,7 @@ async function jhMzWorld3(box,c,S){
   cells.forEach(([x,y],i)=>{m4.makeTranslation(x+.5,0,y+.5);fl.setMatrixAt(i,m4);fl.setColorAt(i,cK.setRGB(0,0,0))});sc.add(fl);
   const wg=new T3.BoxGeometry(1,WH,1);wg.translate(0,WH/2,0);
   const side=new T3.MeshLambertMaterial({map:brickT}),topM=new T3.MeshLambertMaterial({map:topT});
+  const flM=fl.material,TX=S.lv.tex||{};jhMzTexLoad(T3,TX.floor,flM,texs);jhMzTexLoad(T3,TX.side,side,texs);jhMzTexLoad(T3,TX.top,topM,texs);
   const wl=new T3.InstancedMesh(wg,[side,side,topM,side,side,side],walls.length);
   walls.forEach(([x,y],i)=>{m4.makeTranslation(x+.5,0,y+.5);wl.setMatrixAt(i,m4);wl.setColorAt(i,cK.setRGB(0,0,0))});sc.add(wl);
   /* 物件：材質記下原色，每一格照亮度乘上去；on()＝現在還在不在（箱子撿走、門開了就不畫） */
@@ -220,28 +235,29 @@ async function jhMzWorld3(box,c,S){
   const shG=new T3.PlaneGeometry(.95,.95);shG.rotateX(-Math.PI/2);const sh=new T3.Mesh(shG,new T3.MeshBasicMaterial({map:shT,transparent:true,depthWrite:false}));sh.position.y=.01;sc.add(sh);
   const clips=B.mixer&&B.clips||null;let cur=null,yawR=0,t=0,tgx=null,tgz=null,cw=0,ch=0;
   const anim=n=>{if(!clips)return;const a=clips[n]||clips.idle;if(!a||a===cur)return;a.reset().fadeIn(n==="idle"?.25:.12).play();if(cur)cur.fadeOut(.15);cur=a};anim("idle");
-  const FOV=42,EL=64*Math.PI/180,TAN=Math.tan(FOV*Math.PI/360),cam=new T3.PerspectiveCamera(FOV,1,.1,80);
+  /* W87c：正交斜俯視（JH_MZ_ISO）；看得到幾格照原本的「手機至少寬 7.6 格、每格約 72px」 */
+  const RM=jhMzRM(),EL=JH_MZ_ISO.el,YW=JH_MZ_ISO.yaw,cam=new T3.OrthographicCamera(-5,5,5,-5,.1,120);
   const ray=new T3.Raycaster(),gp=new T3.Plane(new T3.Vector3(0,1,0),0);
   const bright=(L,x,y)=>{const i=y*S.W+x;if(x<0||y<0||x>=S.W||y>=S.H||!S.seen.has(i))return 0;const q=L[i];return q<.12?.26:Math.min(1.05,.26+q*.85)};
   return{
     draw(dt,now,L,walk,yaw){t+=dt;const w=box.clientWidth,h=box.clientHeight;if(!w||!h)return;
-      if(w!==cw||h!==ch){cw=w;ch=h;r.setSize(w,h);cam.aspect=w/h;cam.updateProjectionMatrix()}
+      if(w!==cw||h!==ch){cw=w;ch=h;r.setSize(w,h);const asp=w/h,hh=Math.max(Math.max(7.6,w/72)/(2*asp),Math.max(6.4,h/72)*Math.sin(EL)/2);cam.left=-hh*asp;cam.right=hh*asp;cam.top=hh;cam.bottom=-hh;cam.updateProjectionMatrix()}
       const P=S.player,px=P.fx+.5,pz=P.fy+.5;
       if(tgx===null||Math.hypot(px-tgx,pz-tgz)>3){tgx=px;tgz=pz}else{const k=Math.min(1,dt*7);tgx+=(px-tgx)*k;tgz+=(pz-tgz)*k}
       /* 看得到幾格：手機至少寬 7.6、高 6.4 格；大螢幕照「每格約 72px」放寬（Windows Claude 2 預驗 #92：平板寬鏡頭太近、只看到約 6×5 格） */
-      const Wt=Math.max(7.6,w/72),Ht=Math.max(6.4,h/72),D=Math.max(Wt/(2*TAN*cam.aspect),Ht/(2*TAN));cam.position.set(tgx,D*Math.sin(EL),tgz+D*Math.cos(EL));cam.lookAt(tgx,0,tgz);
+      const D=40;cam.position.set(tgx+D*Math.cos(EL)*Math.sin(YW),D*Math.sin(EL),tgz+D*Math.cos(EL)*Math.cos(YW));cam.lookAt(tgx,0,tgz);
       cells.forEach(([x,y],i)=>fl.setColorAt(i,cK.setScalar(bright(L,x,y))));fl.instanceColor.needsUpdate=true;
       walls.forEach(([x,y],i)=>wl.setColorAt(i,cK.setScalar(bright(L,x,y))));wl.instanceColor.needsUpdate=true;
       for(const o of objs){const b=bright(L,o.x,o.y);o.g.visible=b>0&&o.on();if(o.g.visible)for(const m of o.mats)m.color.copy(m.userData.base).multiplyScalar(b)}
       for(const s of sparks){s.gm.rotation.y=now/600+s.x;s.gm.position.y=1.05+Math.sin(now/400+s.x)*.06}
-      for(const f of flames){const on=S.lit.has(f.k);f.fm.visible=on;if(on){f.fm.scale.set(1,1.6+Math.sin(now/90+f.x)*.18,1);if(!lights[f.k]&&Object.keys(lights).length<4){const pl=new T3.PointLight(0xFFA040,.9,4.2,1.5);pl.position.set(f.x+.5,1.1,f.y+.5);pl.layers.enable(1);sc.add(pl);lights[f.k]=pl}}}
+      for(const f of flames){const on=S.lit.has(f.k);f.fm.visible=on;if(on){const fk=jhMzFlick(now,f.k,RM);f.fm.scale.set(fk,(RM?1.6:1.6+Math.sin(now/90+f.x)*.18)*fk,fk);if(!lights[f.k]&&Object.keys(lights).length<4){const pl=new T3.PointLight(0xFFA040,.9,4.2,1.5);pl.position.set(f.x+.5,1.1,f.y+.5);pl.layers.enable(1);sc.add(pl);lights[f.k]=pl}if(lights[f.k])lights[f.k].intensity=.9*fk}}
       let si=0;for(const q of gds){const G=q.G;q.gd.visible=true;   /* W87a：守衛在暗處也看得到（紅眼一直亮） */
         q.gd.position.set(G.fx+.5,0,(G.fy==null?G.y:G.fy)+.5);q.gdB.rotation.y=G.dx>0?Math.PI/2:G.dx<0?-Math.PI/2:G.dy<0?Math.PI:0;q.eyeM.color.setHex(G.stun?0x8A8A8A:q.eye);
         for(const c of jhMzSight(S,G)){if(si>=sights.length)break;const o=sights[si++];o.visible=true;o.position.set(c.x+.5,.012,c.y+.5)}   /* W87a：紅線一律畫（原本只在夠亮的格子畫，暗處被看到時玩家看不到紅線） */}
       for(;si<sights.length;si++)sights[si].visible=false;
       /* 會被推動的障礙：照目前格子重新擺（同一種字元依序對應） */
       if(dyn.length){const at={};for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const c=S.grid[y][x];if(DYN.includes(c))(at[c]||(at[c]=[])).push([x,y])}const used={};for(const o of dyn){const L2=at[o.dyn]||[],j=used[o.dyn]=(used[o.dyn]||0);used[o.dyn]++;const q2=L2[j];o.g.visible=!!q2&&bright(L,q2[0],q2[1])>0;if(q2){o.x=q2[0];o.y=q2[1];o.g.position.set(q2[0]+.5,0,q2[1]+.5)}}}
-      lamp.position.set(px,1.25,pz);lamp.intensity=1.25+Math.sin(now/170)*.08+Math.sin(now/53)*.04;
+      lamp.position.set(px,1.25,pz);lamp.intensity=1.25*jhMzFlick(now,-1,RM);   /* W87c：手上燈火也會偶爾暗一下（減少動態固定） */
       let dw=yaw-yawR;while(dw>Math.PI)dw-=Math.PI*2;while(dw<-Math.PI)dw+=Math.PI*2;yawR+=dw*Math.min(1,dt*(walk?16:9));root.rotation.y=yawR;const jd=Math.hypot(P.x-P.fx,P.y-P.fy);if(P.jump&&jd<.01)P.jump=0;wrap.position.set(px,P.jump?Math.sin(Math.PI*(1-Math.min(1,jd/2)))*.55:0,pz);sh.position.set(px,.01,pz);
       for(const o of objs)if(o.plate){o.plate.userData.base.copy(col(S.plate?"#d9a441":"#8a6a3a"));o.g.position.y=S.plate?-.02:0}
       if(clips){anim(walk?"walk":"idle");if(walk&&cur)cur.timeScale=1.7;B.mixer.update(dt)}
@@ -258,7 +274,8 @@ async function jhMzWorld3(box,c,S){
 /* sid＝哪一派（沒給＝中炮門）；run＝這是第幾次走；ptr＝題庫指標 {door,trap}（存檔帶進來：上一輪出到哪一題，這一輪接著出，換輪第一題不會跟上一輪最後一題一樣；沒給就用 run） */
 function jhMzNew(sid,run,ptr){const lv=jhMzLv(sid),bag={};for(const r of lv.rew)bag[r.k]=0;
   const S={lv,sid:lv.sid,W:lv.map[0].length,H:lv.map.length,seen:new Set(),lit:new Set(),bag,doorOpen:false,plate:false,got:[],fails:{door:0,trap:0},turn:0,done:false,chests:new Set(),run:Math.max(0,Math.floor(+run||0)),pick:{door:0,trap:0},cur:{},pz:null};
-  const R=S.run;S.base={door:Number.isFinite(+(ptr&&ptr.door))?Math.max(0,Math.floor(+ptr.door)):R,trap:Number.isFinite(+(ptr&&ptr.trap))?Math.max(0,Math.floor(+ptr.trap)):R};
+  /* #105 審查建議：ptr 不是物件（null、數字）就當沒給；超過 1e6 的指標當壞值（加 1 會被精度吃掉、一直出同一題） */
+  const R=S.run,pp=ptr&&typeof ptr==="object"?ptr:{},okp=v=>v!=null&&v!==""&&Number.isFinite(+v)&&+v>=0&&+v<1e6;S.base={door:okp(pp.door)?Math.floor(+pp.door):R,trap:okp(pp.trap)?Math.floor(+pp.trap):R};
   jhMzReset(S,true);return S}
 function jhMzReset(S,full){S.grid=S.lv.map.map(r=>r.split(""));
   for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){if(S.grid[y][x]==="@"){S.start={x,y};S.grid[y][x]="."}if(full&&S.grid[y][x]==="C")S.chests.add(y*S.W+x)}
@@ -311,7 +328,7 @@ function jhMzStep(S,dx,dy){if(S.done)return{ev:"done"};const P=S.player,nx=P.x+d
   let held=false;(S.guards||[]).forEach((G,i)=>{const b=pre[i];if(G.stun>0||!b||b.saw)return;if(G.x===P.x&&G.y===P.y&&(b.x!==P.x||b.y!==P.y)){G.x=b.x;G.y=b.y;held=true}});
   if(held){S.caughtBy=null;out.ev="spot";return out}
   /* W87a（開發者：「玩家沒有走到暗匪那邊 就會觸發被暗匪抓住」）：守衛走這一步（轉身、往前）之後才看到玩家，先提醒（spot），不直接抓——
-     玩家下一步還留在視線裡（或原地等）才抓；守衛直接走到玩家那一格照樣抓。自己走進視線照舊直接抓（上面那一行） */
+     玩家下一步還留在視線裡（或原地等）才抓；守衛走之前就看得到玩家、這一步走到玩家那一格才直接抓（看不到的話見上面：只轉身、給提醒）。自己走進視線照舊直接抓（上面那一行） */
   if(jhMzCaught(S)){const G=S.caughtBy;if(G&&G.x===P.x&&G.y===P.y)out.ev="trap";else{S.caughtBy=null;out.ev="spot"}}
   return out}
 /* 點地面自動走：只走看過的格子；終點可以是石門（走到門前開殘局） */
@@ -329,7 +346,7 @@ function jhMzPuz(S,id){const L=S.lv.pool&&S.lv.pool[id];if(Array.isArray(L)&&L.l
 function jhMzEncounter(S,id){if(!S.cur)S.cur={};S.cur[id]=((S.base&&S.base[id])||0)+((S.pick&&S.pick[id])||0);S.pick[id]=(S.pick[id]||0)+1;S.pz=null;
   return{door:(S.base.door||0)+(S.pick.door||0),trap:(S.base.trap||0)+(S.pick.trap||0)}}
 /* 題庫指標的存檔（跟 jhMzGet 的通關紀錄分開放，舊存檔格式不變） */
-function jhMzPtrGet(sid){let o=null;try{o=store.get(jhMzLv(sid).key+"Ptr",null)}catch(e){}o=o&&typeof o==="object"?o:{};const n=v=>Number.isFinite(+v)&&+v>=0?Math.floor(+v):0;return{door:n(o.door),trap:n(o.trap)}}
+function jhMzPtrGet(sid){let o=null;try{o=store.get(jhMzLv(sid).key+"Ptr",null)}catch(e){}o=o&&typeof o==="object"?o:{};const n=v=>Number.isFinite(+v)&&+v>=0&&+v<1e6?Math.floor(+v):0;return{door:n(o.door),trap:n(o.trap)}}   /* 超過 1e6 歸 0（#105 審查建議） */
 function jhMzPtrSet(sid,p){try{store.set(jhMzLv(sid).key+"Ptr",{door:p.door,trap:p.trap})}catch(e){}}
 /* 這一題的著法序列：line＝[紅,黑,紅,…]（多步殺，最後一步是紅方將死）；只有 ans＝一步殺 */
 const jhMzLine=P=>P?(Array.isArray(P.line)&&P.line.length?P.line:[P.ans]):[];
@@ -364,7 +381,9 @@ function jhMzCss(){if(document.getElementById("jhMzCss"))return;const s=document
 .jh-mz-pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,48px);gap:4px;justify-content:center;padding:8px 0 calc(8px + env(safe-area-inset-bottom));background:#140f0a}
 .jh-mz-pad button{border:1px solid #5a4630;border-radius:10px;background:#2a2016;color:#e9dfc9;font-size:20px;min-height:44px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.jh-mz-pad button:active{background:#3a2c1e}
 .jh-mz-pad .u{grid-area:1/2}.jh-mz-pad .l{grid-area:2/1}.jh-mz-pad .w{grid-area:2/2;font-size:15px}.jh-mz-pad .r{grid-area:2/3}.jh-mz-pad .d{grid-area:3/2}
+.jh-mz.iso .jh-mz-pad .u{grid-area:1/3}.jh-mz.iso .jh-mz-pad .r{grid-area:3/3}.jh-mz.iso .jh-mz-pad .d{grid-area:3/1}.jh-mz.iso .jh-mz-pad .l{grid-area:1/1}
 .jh-mz-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom));z-index:60}
+.jh-mz-lore{line-height:1.65;margin:8px 0 12px;font-size:15px}
 .jh-mz-card{background:#f6ecd6;color:#2a1d10;border-radius:14px;padding:14px;max-width:420px;width:100%;max-height:calc(100dvh - 24px);overflow:auto}
 .jh-mz-card svg{max-height:52dvh}
 .jh-mz-card h2{margin:0 0 6px;font-size:18px}.jh-mz-card p{margin:4px 0 8px;font-size:15px;line-height:1.5}
@@ -400,7 +419,9 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
   const hero=new Image();hero.src=`data/xs/prev_${c0}.webp`;
   let T=48,camX=0,camY=0,dpr=1,path=[],busy=false,warned=false,held=null,h3=null,lastT=0,pWalk=false;
   /* 3D 迷宮（h3）：載好之前（或載不到）畫平面版＋立繪；載好後平面畫布藏起來（透明，但照舊收點選） */
-  jhMzWorld3(box,c0,S).then(w=>{if(alive()){h3=w;cv.style.opacity="0"}else w.dispose()}).catch(()=>{});
+  /* W87c：3D 是斜俯視，畫面上地圖的「北」在右上；方向鈕跟著擺到四個斜角、箭頭改成斜的（平面版照舊上下左右） */
+  const isoPad=on=>{const m=v.querySelector(".jh-mz");if(m)m.classList.toggle("iso",!!on);for(const[k,a,b]of JH_MZ_PADG){const e=v.querySelector('.jh-mz-pad [data-k="'+k+'"]');if(e)e.textContent=on?b:a}};
+  jhMzWorld3(box,c0,S).then(w=>{if(alive()){h3=w;cv.style.opacity="0";isoPad(true)}else w.dispose()}).catch(()=>{});
   /* 畫面上還在走（離目標格超過 0.12 格）＝還不能踏下一格；剩一點點就先接下一格，連著走不停頓 */
   const moving=()=>{const P=S.player;return Math.hypot(P.x-P.fx,P.y-P.fy)>.12};
   const say=h=>{v.querySelector(".jh-mz-msg").innerHTML=h};
@@ -446,7 +467,7 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
     camX+=(P.fx*T+T/2-vw/2-camX)*.2;camY+=(P.fy*T+T/2-vh/2-camY)*.2;
     cx.setTransform(dpr,0,0,dpr,0,0);cx.fillStyle="#000";cx.fillRect(0,0,vw,vh);cx.save();cx.translate(-Math.round(camX),-Math.round(camY));
     const L=new Float32Array(S.W*S.H);for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const q=jhMzLight(S,x,y,now);L[y*S.W+x]=q;if(q>.12)S.seen.add(y*S.W+x)}
-    if(h3){cx.restore();const d=P.dir||[0,1];try{h3.draw(dt,now,L,pWalk,jhMzYaw(d[0],d[1]))}catch(e){h3.dispose();h3=null;cv.style.opacity=""}requestAnimationFrame(frame);return}
+    if(h3){cx.restore();const d=P.dir||[0,1];try{h3.draw(dt,now,L,pWalk,jhMzYaw(d[0],d[1]))}catch(e){h3.dispose();h3=null;cv.style.opacity="";isoPad(false)}requestAnimationFrame(frame);return}
     for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++)if(S.seen.has(y*S.W+x))tile(x,y,x*T,y*T);
     for(const G of S.guards){for(const q of jhMzSight(S,G)){cx.fillStyle="rgba(200,50,35,.28)";cx.fillRect(q.x*T+2,q.y*T+2,T-4,T-4);cx.fillStyle="rgba(230,70,50,.7)";cx.fillRect(q.x*T+4,q.y*T+T/2-1.5,T-8,3)}
     {const gx=G.fx*T+T/2,gy=(G.fy==null?G.y:G.fy)*T+T/2;cx.fillStyle="#141414";cx.beginPath();cx.ellipse(gx,gy+T*.05,T*.3,T*.36,0,0,7);cx.fill();cx.fillStyle="#2b2b2b";cx.beginPath();cx.arc(gx,gy-T*.2,T*.17,0,7);cx.fill();
@@ -465,7 +486,13 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
     const gr=cx.createRadialGradient(hx,hy,T*.3,hx,hy,T*3.4);gr.addColorStop(0,"rgba(255,170,80,.14)");gr.addColorStop(1,"rgba(255,170,80,0)");cx.fillStyle=gr;cx.fillRect(hx-T*4,hy-T*4,T*8,T*8);
     cx.restore();
     requestAnimationFrame(frame)};
-  const act=(dx,dy)=>{if(busy||S.done)return false;if(dx||dy)S.player.dir=[dx,dy];const r=jhMzStep(S,dx,dy);
+  /* W87c：別的檔（例如 m/07z9m-lore.js 的暗門、碑刻）用 onStep 回傳的事件，可以多帶 msg:[zh,en]（照 say 顯示）、card:{title:[zh,en],body:[zh,en]}（開一張卡片）；
+     ev 不認得的照一般走一步處理；走了卻沒動（撞到暗門、碑刻）就停下自動走與按住 */
+  const card=c=>{const o=ov(`<h2>${esc(jhL(c.title[0],c.title[1]))}</h2><div class="jh-mz-lore">${jhL(c.body[0],c.body[1])}</div><div class="jh-mz-row"><button type="button" class="main" data-a="ok">${esc(jhL("收好","Keep it"))}</button></div>`);o.querySelector('[data-a="ok"]').onclick=()=>shut(o)};
+  const act=(dx,dy)=>{if(busy||S.done)return false;if(dx||dy)S.player.dir=[dx,dy];const x0=S.player.x,y0=S.player.y,r=jhMzStep(S,dx,dy);
+    if(r.msg)say(jhL(r.msg[0],r.msg[1]));
+    if(r.card&&r.card.title&&r.card.body){path=[];held=null;card(r.card);return false}
+    if((dx||dy)&&S.player.x===x0&&S.player.y===y0&&!["wall","door","locked","trap","spot","finish","done"].includes(r.ev)){path=[];held=null;return false}
     if(r.ev==="wall"){say(esc(jhL("前面過不去。","Can't go that way.")));return false}
     if(r.ev==="door"){path=[];puzzle("door");return false}
     if(r.ev==="locked"){path=[];say(ZS("locked"));return false}
