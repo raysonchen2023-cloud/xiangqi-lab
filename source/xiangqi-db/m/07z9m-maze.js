@@ -28,15 +28,15 @@ const JH_MZ_MAP=[
 "######.#P######",
 "######.########",
 "#C...........C#",
-"#.###.###.###.#",
+"#.#L#.###.###.#",
 "#.#T......#...#",
 "#.#.SS.S..#.#.#",
 "#...S...T...#.#",
-"###.#####.###.#",
+"###.##L##.###.#",
 "#.....#.....#.#",
 "#.S.#.#.#.S...#",
 "#...#...#.....#",
-"###.#####.#####",
+"###.#####.##L##",
 "#T.........T..#",
 "#.....@.......#",
 "###############"];
@@ -87,6 +87,8 @@ JH_MZ_KIND.rook={
   look:{body:"#151515",head:"#222222",eye:0xE24A3A}};
 /* 中炮門第一層「廢棄漕倉」：上面那幾個常數就是它的設定（測試照舊讀 JH_MZ_MAP、JH_MZ_PUZ…） */
 jhMzDef("central",{map:JH_MZ_MAP,guards:[Object.assign({kind:"rook",dy:0},JH_MZ_GUARD)],puz:JH_MZ_PUZ,pool:JH_MZ_POOL_CENTRAL,jump:"S",key:"jhMaze",xpKey:"maze:1",
+  /* W87：三件碑刻 L 放在原本是牆的格子（擋路、擋光照舊跟牆一樣，走法、視線都不變）；整張改迷路版排在禮拜四送審之後 */
+  solid:"#SDL",opaque:"#DL",
   /* W87b 像素材質（11/24 開發者選「重出」的新版：Gemini 直接畫像素、48 色、無損 webp，Windows Claude 2 出圖）：只放 CDN（data/maze/tex/），載不到就用程式畫的；牆頂照舊程式畫 */
   tex:{floor:"data/maze/tex/central_floor.webp",side:"data/maze/tex/central_wall.webp"},
   /* 碑刻文書（11/24 Gemini 查史料、iMac Claude 1 複核，Windows Claude 1 照複核改寫；出處照實寫哪些是史料、哪些是遊戲整理）。
@@ -568,11 +570,12 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
       if(!sel){res(jhL("先點一顆紅方的棋子。","Tap a red piece first."));return}
       const mv=jhMzMv(sel,{c,r}),got=jhMzTry(S,id,mv);sel=null;
       if(got==="next"){S.hintOn=null;if(typeof hl==="function")hl();apply(mv);apply(L[S.pz.i-1]);draw();const left=(L.length-S.pz.i+1)>>1;res(jhL(`走對了。黑方應了一步（虛線框），還要 ${left} 步殺。`,`Good. Black replied (dashed squares); mate in ${left} more.`),"ok");return}
-      if(got==="ok"){won=true;apply(mv);draw();
+      if(got==="ok"){won=true;{const eb=o.querySelector(".jh-mz-esc");if(eb)eb.remove()}   /* W99 預驗建議：解開了就不留逃跑鈕（誤按白丟整層） */
+        apply(mv);draw();
         res(ZS(id)||(DEF?jhL("解圍了！","Threat stopped!"):jhL("將死！","Checkmate!")),"ok");
         const b=row(`<button type="button" class="main">${esc(jhL("繼續","Continue"))}</button>`).querySelector("button");b.onclick=()=>{shut(o);jhMzSolved(S,id);say(ZS(id==="door"?"open":"dazed"))};b.focus();return}
       restart();draw();const card=o.querySelector(".jh-mz-card");card.classList.remove("jh-mz-shake");void card.offsetWidth;card.classList.add("jh-mz-shake");
-      if(got==="back"){res(ZS("dragged"),"bad");
+      if(got==="back"){{const eb=o.querySelector(".jh-mz-esc");if(eb)eb.remove()}res(ZS("dragged"),"bad");
         row(`<button type="button" class="main">${esc(jhL("回到入口","Back to the entrance"))}</button>`).querySelector("button").onclick=()=>{shut(o);const lost=jhMzCaughtBack(S),w=S.lv.rew.find(x=>x.k===lost);bag();say((w?jhL(`<b>${esc(w.zh)}</b>被丟回箱子裡了，再去拿一次。`,`Your <b>${esc(w.en)}</b> was tossed back into its chest. Go get it again.`):"")+ZS("retry"))};return}
       res((S.fails[id]||0)>=3&&S.hintOn!==id?jhL(`這步不對，從頭再來。卡住了可以請${HELP[0]}提示。`,`Not that one; start over. Stuck? Ask ${HELP[1]} for a hint.`):jhL(N>1?"這步不對，從頭再來。":DEF?"這步解不了圍，黑方下一步還是殺得到，再想想。":"這步沒有將死黑方，再想想。",N>1?"Not that one; start over.":DEF?"That doesn't stop the threat. Black still mates next move. Think again.":"That doesn't checkmate Black. Think again."),"bad")};
     const hb=o.querySelector('[data-a="hint"]'),hl=()=>{const c=jhMzHintCost(S);hb.textContent=S.hintOn===id?jhL(HELP[0]+"已經提示了",HELP[1]+" has given a hint"):jhL(`${HELP[0]}的提示（${c?`${c} 點門派貢獻`:"這一趟免費 1 次"}）`,`${HELP[1]}'s hint (${c?`${c} school merit`:"1 free this run"})`);hb.disabled=S.hintOn===id};hl();

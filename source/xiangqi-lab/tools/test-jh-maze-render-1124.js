@@ -128,3 +128,12 @@ test("中炮門碑刻文書 3 件（照 #108 的格式）：種類、中英標�
   for (const x of L) { assert.ok(["stele", "slip", "doc"].includes(x.kind)); for (const k of ["title", "body"]) { assert.ok(x[k][0] && x[k][1]); assert.ok(!/[一-鿿]/.test(x[k][1]), x.id + " 英文沒有中文字") } assert.ok(/遊戲/.test(x.src), x.id + " 出處寫明遊戲的部分") }
   assert.ok(!/鐵扦|天工開物/.test(JSON.stringify(L)), "複核：查不到原文的鐵扦、對不上的天工開物出處都拿掉");
 });
+
+test("〔原始碼〕W99 預驗建議：解開後、解錯 4 次要被拖回入口時，卡片上的逃跑鈕拿掉；中炮門三件碑刻 L 放在原本是牆的格子（擋路、擋光照舊）", () => {
+  assert.ok(SRC.includes('if(got==="ok"){won=true;{const eb=o.querySelector(".jh-mz-esc");if(eb)eb.remove()}'));
+  assert.ok(SRC.includes('if(got==="back"){{const eb=o.querySelector(".jh-mz-esc");if(eb)eb.remove()}'));
+  const c = load(), lv = vm.runInContext("JH_MZ_LV", c).central, M = lv.map;
+  assert.equal(M.join("").split("L").length - 1, lv.lore.length, "L 的數目＝碑刻件數");
+  assert.ok(lv.solid.includes("L") && lv.opaque.includes("L"), "L 擋路也擋光（跟原本的牆一樣）");
+  M.forEach((r, y) => [...r].forEach((ch, x) => { if (ch !== "L") return; assert.ok([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => (M[y + dy] || "")[x + dx] === "."), "碑刻 (" + x + "," + y + ") 旁邊站得到") }));
+});
