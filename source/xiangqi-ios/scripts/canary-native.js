@@ -44,6 +44,20 @@ const beforeEnd = (code) => (s) => { const i = s.lastIndexOf("}"); return s.slic
 const SRV = "XQLoopbackServer.swift", VC = "XQBridgeViewController.swift", GC = "XQGameCenterPlugin.swift", WD = "XQWidgetDataPlugin.swift", SP = "XQSpeechPlugin.swift", WG = "native/ios-widget/";
 const GCWEB = "source/xiangqi-db/m/07gc-native.js", BOARD = "source/xiangqi-db/m/01-board.js";
 
+/* 副本裡的路徑（相對 source/xiangqi-ios） */
+const iosp = (R, f) => path.join(R, "source", "xiangqi-ios", ...f.split("/"));
+/* #135 複審④：要有 node_modules/@capacitor/ios 才跑的判斷——在副本裡做一份「合格」的假 Capacitor，再照參數弄壞一處 */
+function capFake(R, o = {}) {
+  const d = iosp(R, "node_modules/@capacitor/ios/Capacitor/Capacitor"); fs.mkdirSync(d, { recursive: true });
+  fs.writeFileSync(path.join(d, "CAPBridgeViewController.swift"), "open class CAPBridgeViewController: UIViewController {\n    override open func loadView() {\n        " + (o.lv || "capacitorBridge = CapacitorBridge(x)\n        capacitorDidLoad()") + "\n    }\n    override open func viewDidLoad() {\n        " + (o.vdl || "super.viewDidLoad()\n        loadWebView()") + "\n    }\n    " + (o.lwv || "public final func loadWebView() {}") + "\n    open func capacitorDidLoad() {}\n}\n");
+  fs.writeFileSync(path.join(d, "CapacitorBridge.swift"), "open class CapacitorBridge {\n    " + (o.reg || "public func registerPluginInstance(_ pluginInstance: CAPPlugin) {}") + "\n}\n");
+}
+/* #135 複審④：Game Center／小工具「已裝進 Xcode」才跑的判斷——pbxproj 登記兩支外掛、把外掛複製進 ios/App/App、Info.plist 加網址 */
+function gcInstalled(R) {
+  fs.appendFileSync(iosp(R, "ios/App/App.xcodeproj/project.pbxproj"), "\n/* XQGameCenterPlugin.swift */\n/* XQWidgetDataPlugin.swift */\n");
+  for (const f of [GC, WD]) fs.copyFileSync(iosp(R, "native/ios/" + f), iosp(R, "ios/App/App/" + f));
+  const ip = iosp(R, "ios/App/App/Info.plist"), s = fs.readFileSync(ip, "utf8"); if (!s.includes("<string>xqqianqiu</string>")) fs.writeFileSync(ip, s.replace("</dict>\n</plist>", "\t<key>XQScheme</key>\n\t<string>xqqianqiu</string>\n</dict>\n</plist>"));
+}
 /* 每一個壞樣本：break 在副本上弄壞一處；expect 是 check-native 錯誤（✘ 那一行）裡要出現的字 */
 const KINDS = {
   /* 1. 兩份一樣 */
@@ -228,6 +242,44 @@ const KINDS = {
   boardSpeak: { break: (R) => editRepo(R, BOARD, rep('.speak({text:', '.speak({ text:')), expect: "01-board.js：原生版有 XQSpeech 就用它" },
   /* 控制字元：check-native 認的 30 個字元（\x00-\x08、\x0B、\x0C、\x0E-\x1F、\x7F），兩份伺服器程式各插一個，每個字元一個壞樣本（照 canary-www 的做法） */
   ...Object.fromEntries([...Array(32).keys(), 127].filter((c) => ![9, 10, 13].includes(c)).map((c) => ["ctrl" + c.toString(16).padStart(2, "0"), { break: both(SRV, (s) => s + "\n// " + String.fromCharCode(c) + "\n"), expect: SRV + " 沒有控制字元" }])),
+  /* ===== #135 複審（第二輪）：放寬 30 種裡漏掉的 21 種，各補壞樣本 ===== */
+  /* ① if verifyNow(…) 後面再接條件 */
+  estOrTrue: { break: both(SRV, rep("if verifyNow(timeout: 2.0) { return .verified }", "if verifyNow(timeout: 0.5) || true { return .verified }")), expect: "establish 一定經過 verifyNow" },
+  estOrMid: { break: both(SRV, rep("if verifyNow(timeout: 2.0) { return .verified }", "if verifyNow(timeout: 2.0) == false || true { return .verified }")), expect: "establish 一定經過 verifyNow" },
+  /* ② 外掛迴圈：兩支外掛各一個 */
+  wdObjc: { break: both(WD, rep("@objc(XQWidgetDataPlugin)", "@objc(XQWD)")), expect: "XQWidgetDataPlugin：@objc 名稱和 CAPPlugin" },
+  wdClass: { break: both(WD, rep("XQWidgetDataPlugin: CAPPlugin, CAPBridgedPlugin", "XQWidgetDataPlugin: CAPPlugin,CAPBridgedPlugin")), expect: "XQWidgetDataPlugin：@objc 名稱和 CAPPlugin" },
+  gcIdent: { break: both(GC, rep('public let identifier = "XQGameCenterPlugin"', 'public let identifier = "XQGameCenter"')), expect: "XQGameCenterPlugin：identifier" },
+  wdJs: { break: both(WD, rep('public let jsName = "XQWidgetData"', 'public let jsName = "XQWD"')), expect: "XQWidgetDataPlugin：identifier" },
+  gcCtrl: { break: both(GC, (s) => s + "\n// \u0003\n"), expect: GC + " 沒有控制字元" },
+  wdNet: { break: both(WD, beforeEnd("    func xqSend() { _ = URLSession.shared }")), expect: WD + "：沒有網路程式" },
+  gcReq: { break: both(GC, beforeEnd("    func xqReq() { _ = URLRequest(url: URL(fileURLWithPath: \"/\")) }")), expect: GC + "：沒有網路程式" },
+  /* ③ 其他子條件 */
+  ctrlVC: { break: both(VC, (s) => s + "\n// \u0004\n"), expect: VC + " 沒有控制字元" },
+  regPlugin: { break: both(VC, inFunc("override func viewDidLoad()", "bridge?.registerPlugin(XQSpeechPlugin.self)")), expect: "只在 capacitorDidLoad 註冊這兩處" },
+  groupMissWD: { break: both(WD, rep('static let appGroup = "group.com.raysonchen.xiangqiqianqiu.shared"', 'static let appGroup = ""')), expect: "App Group 四處一樣" },
+  groupMissWidget: { break: (R) => edit(R, WG + "XQTodayWidget.swift", rep('static let appGroup = "group.com.raysonchen.xiangqiqianqiu.shared"', 'static let appGroup = ""')), expect: "App Group 四處一樣" },
+  groupMissApp: { break: (R) => edit(R, "native/ios/App.entitlements", rep("<string>group.com.raysonchen.xiangqiqianqiu.shared</string>", "<string></string>")), expect: "App Group 四處一樣" },
+  groupExtraWD: { break: both(WD, (s) => s + "\n// group.com.raysonchen.other\n"), expect: "App Group 四處一樣" },
+  groupExtraWidget: { break: (R) => edit(R, WG + "XQTodayWidget.swift", (s) => s + "\n// group.com.raysonchen.other\n"), expect: "App Group 四處一樣" },
+  groupExtraWidgetEnt: { break: (R) => edit(R, WG + "XQTodayWidget.entitlements", rep("<string>group.com.raysonchen.xiangqiqianqiu.shared</string>", "<string>group.com.raysonchen.xiangqiqianqiu.shared</string>\n\t\t<string>group.com.raysonchen.other</string>")), expect: "App Group 四處一樣" },
+  braceBad: { break: both(VC, (s) => s + "\n)\n"), expect: "括號不配對" },
+  strOpen: { break: both(SRV, (s) => s + "\nlet xqS = \"abc\n"), expect: "字串沒有收尾" },
+  strEOF: { break: both(SRV, (s) => s + "\nlet xqS = \"\"\"\nabc\n"), expect: "字串到檔尾還沒收尾" },
+  wdJpg: { break: both(WD, rep('imageFile = "today.jpg"', 'imageFile  = "today.jpg"')), expect: "小工具和 XQWidgetData 的檔名一樣：imageFile" },
+  vbMissing: { break: both(VC, rep("if outcome == .verified {", "if outcome == XQLoopbackServer.Outcome.verified {")), expect: "只有驗證通過（outcome == .verified）才呼叫 loadVerifiedPage" },
+  halfAfter: { break: both(VC, inFunc("override func viewDidLoad()", "DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { }")), expect: "沒有 0.5 秒的重跳" },
+  /* ④ 要有 node_modules 或已裝進 Xcode 才跑的判斷：在副本裡做假檔 */
+  capVDL: { break: (R) => capFake(R, { vdl: "super.viewDidLoad()\n        xqExtra()\n        loadWebView()" }), expect: "Capacitor 的 viewDidLoad 只有" },
+  capLoadWV: { break: (R) => capFake(R, { lwv: "func loadWebView() {}" }), expect: "Capacitor 的 loadWebView() 子類別叫得到" },
+  capDidLoad: { break: (R) => capFake(R, { lv: "capacitorBridge = CapacitorBridge(x)\n        xqOther()" }), expect: "Capacitor（node_modules）：loadView 建好 bridge 就呼叫 capacitorDidLoad" },
+  capRegInst: { break: (R) => capFake(R, { reg: "public func registerPlugin(_ pluginInstance: CAPPlugin) {}" }), expect: "Capacitor（node_modules）：loadView 建好 bridge 就呼叫 capacitorDidLoad" },
+  pbxMissing: { break: (R) => edit(R, "ios/App/App.xcodeproj/project.pbxproj", (s) => s + "\n/* XQGameCenterPlugin.swift */\n"), expect: "pbxproj 已登記 XQGameCenterPlugin.swift" },
+  pkgGc: { break: (R) => { gcInstalled(R); fs.writeFileSync(iosp(R, "ios/App/App/capacitor.config.json"), JSON.stringify({ packageClassList: ["XQGameCenterPlugin"] })) }, expect: "packageClassList 沒有 XQGameCenterPlugin、XQWidgetDataPlugin" },
+  pkgWd: { break: (R) => { gcInstalled(R); fs.writeFileSync(iosp(R, "ios/App/App/capacitor.config.json"), JSON.stringify({ packageClassList: ["XQWidgetDataPlugin"] })) }, expect: "packageClassList 沒有 XQGameCenterPlugin、XQWidgetDataPlugin" },
+  pkgGcDup: { break: (R) => { gcInstalled(R); fs.writeFileSync(iosp(R, "ios/App/App/capacitor.config.json"), JSON.stringify({ packageClassList: ["CAPCameraPlugin", "CAPCameraPlugin"] })) }, expect: "packageClassList 沒有 XQGameCenterPlugin、XQWidgetDataPlugin" },
+  infoScheme: { break: (R) => { gcInstalled(R); const ip = iosp(R, "ios/App/App/Info.plist"); fs.writeFileSync(ip, fs.readFileSync(ip, "utf8").split("<string>xqqianqiu</string>").join("<string>xqqianqiu2</string>")) }, expect: "Info.plist 有網址 xqqianqiu://" },
+  gcCopyDiff: { break: (R) => { gcInstalled(R); fs.appendFileSync(iosp(R, "ios/App/App/" + GC), "\n// 只改這一份\n") }, expect: GC + " 兩份相同" },
   /* install-native.js 要複製兩支 Swift */
   install: { break: (R) => edit(R, "scripts/install-native.js", rep('"XQBridgeViewController.swift"', '"XQBridgeVC.swift"')), expect: "install-native.js 會複製兩支 Swift" },
 };
