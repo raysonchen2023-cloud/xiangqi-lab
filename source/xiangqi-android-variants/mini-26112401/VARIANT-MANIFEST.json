@@ -16,12 +16,12 @@
   "closed-test-mini",
   "cdn-fallback-split-parts",
   "purge-sw-registrations-before-webview",
-  "retire-old-app-cache-without-migration-page"
+  "retire-old-app-cache-without-migration-page", "android-back-to-web-history"
  ],
  "native": {
   "android/app/build.gradle": "23f05d0573ed09817991130afcd87ea3af0b3d39087ac7658a170e732186b801",
   "android/app/src/main/assets/capacitor.config.json": "d13eedae7e03645771f70893e739c3fba13b5cac95137ed8bab8c0786357e971",
-  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/MainActivity.java": "b47650422ca3b69888497e153a6db4a7381132cb66ca878d35943f543282a98d",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/MainActivity.java": "b4b5e0c862a46bdb823087d1fcfb060f5b84e04fe8ba159b08116792b0bdf010",
   "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQCdnFallback.java": "65c7b44113f4a17e5c23665754fbf889bbc4ea6fca34b44a29218a9c1c15e476",
   "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQWebViewClient.java": "6b88b5d8e624f049f9ae061e136df4fd0f9e320e3978122d6bd9002a4165dd7b",
   "android/settings.gradle": "d21530a3cc825c432fb616556ab36a226c4e8ffbc839a5c0f7d3f164e54454fa"
