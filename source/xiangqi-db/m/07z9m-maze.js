@@ -285,7 +285,9 @@ const jhMzKind=G=>JH_MZ_KIND[G&&G.kind]||JH_MZ_KIND.rook;
 function jhMzSight(S,G){G=G||S.guard;if(!G||G.stun>0)return[];return jhMzKind(G).sight(S,G)}
 function jhMzGuardStep(S){for(const G of S.guards||[]){if(G.stun>0){G.stun--;continue}jhMzKind(G).step(S,G)}}
 /* 被逮到：任何一個沒暈的守衛跟玩家同一格、或看得到玩家；逮到的那一個記在 S.caughtBy（解開陷阱時暈的是它） */
-function jhMzCaught(S){const P=S.player;for(const G of S.guards||[]){if(G.stun>0)continue;if((G.x===P.x&&G.y===P.y)||jhMzSight(S,G).some(q=>q.x===P.x&&q.y===P.y)){S.caughtBy=G;return true}}return false}
+/* #105 審查建議：多個守衛時先找「站在玩家那格」的，再找看得到的（不然第一個只是看到、第二個已經踩到玩家時會判成 spot） */
+function jhMzCaught(S){const P=S.player,L=(S.guards||[]).filter(G=>!(G.stun>0));
+  const on=L.find(G=>G.x===P.x&&G.y===P.y)||L.find(G=>jhMzSight(S,G).some(q=>q.x===P.x&&q.y===P.y));if(on){S.caughtBy=on;return true}return false}
 /* 走一步（dx,dy＝0,0 是原地等一回合）。回傳事件：wall 撞牆不算回合；door 碰到石門（開殘局）；finish 走到樓梯；trap 被暗匪逮到；move 一般 */
 function jhMzStep(S,dx,dy){if(S.done)return{ev:"done"};const P=S.player,nx=P.x+dx,ny=P.y+dy,c=jhMzCell(S,nx,ny),out={ev:"move",torch:false,chest:""};
   if(dx)P.face=dx;
@@ -302,7 +304,12 @@ function jhMzStep(S,dx,dy){if(S.done)return{ev:"done"};const P=S.player,nx=P.x+d
   if(jhMzCell(S,P.x,P.y)==="P"&&!S.plate){S.plate=true;out.plate=true}
   if(jhMzCell(S,P.x,P.y)===">"){S.done=true;out.ev="finish";return out}
   if(jhMzCaught(S)){out.ev="trap";return out}
+  /* #105 審查（iMac Claude 1 的新代理人）：守衛碰牆掉頭、正好走到玩家那格時，掉頭前地上沒有紅線，玩家沒有預警就被抓。
+     改成：守衛這一步會踩到玩家、而且走之前看不到玩家（沒有紅線），這一回合只轉身、不前進（保留新朝向），給 spot；下一回合玩家還在紅線上才抓 */
+  const pre=(S.guards||[]).map(G=>({x:G.x,y:G.y,saw:G.stun>0?false:jhMzSight(S,G).some(q=>q.x===P.x&&q.y===P.y)}));
   jhMzGuardStep(S);
+  let held=false;(S.guards||[]).forEach((G,i)=>{const b=pre[i];if(G.stun>0||!b||b.saw)return;if(G.x===P.x&&G.y===P.y&&(b.x!==P.x||b.y!==P.y)){G.x=b.x;G.y=b.y;held=true}});
+  if(held){S.caughtBy=null;out.ev="spot";return out}
   /* W87a（開發者：「玩家沒有走到暗匪那邊 就會觸發被暗匪抓住」）：守衛走這一步（轉身、往前）之後才看到玩家，先提醒（spot），不直接抓——
      玩家下一步還留在視線裡（或原地等）才抓；守衛直接走到玩家那一格照樣抓。自己走進視線照舊直接抓（上面那一行） */
   if(jhMzCaught(S)){const G=S.caughtBy;if(G&&G.x===P.x&&G.y===P.y)out.ev="trap";else{S.caughtBy=null;out.ev="spot"}}

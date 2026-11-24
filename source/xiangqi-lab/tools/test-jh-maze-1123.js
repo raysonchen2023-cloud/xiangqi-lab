@@ -370,7 +370,12 @@ test("W87／W87a 題庫輪換：每一次遇到（被抓、碰門）開始時才
   c.jhMzCaughtBack(S); p = c.jhMzEncounter(S, "trap"); assert.equal(c.jhMzPuz(S, "trap").en[0], "t1", "兩題輪回來");
   assert.deepEqual({ ...p }, { door: 0, trap: 3 }, "回傳下一輪從哪裡接");
   const T = c.jhMzNew("testsch", 0, p); c.jhMzEncounter(T, "trap"); assert.equal(c.jhMzPuz(T, "trap").en[0], "t2", "換輪接著上一輪：上一輪最後是 t1，這一輪第一題是 t2");
-  assert.ok(c.JH_MZ_PUZ.door, "固定題還在（題庫空的門派照用）");
+  /* #105 審查（要改 2）：題庫空的門派照用固定題——另外定一個 pool:{} 的門派驗 jhMzPuz 的退路 */
+  vm.runInContext('jhMzDef("nopool",{map:["#####","#@.>#","#####"],guards:[],pool:{},puz:{door:{zh:["固","x"],en:["fixed-door","x"],fen:"4k4/9/9/9/9/9/9/9/9/4K4",ans:"a0a1"},trap:{zh:["固","x"],en:["fixed-trap","x"],fen:"4k4/9/9/9/9/9/9/9/9/4K4",ans:"a0a1"}}});', c);
+  const N = c.jhMzNew("nopool", 0), LVN = vm.runInContext("JH_MZ_LV", c).nopool;
+  assert.equal(c.jhMzPuz(N, "door"), LVN.puz.door, "沒有題庫：石門用固定題"); assert.equal(c.jhMzPuz(N, "trap"), LVN.puz.trap, "沒有題庫：陷阱用固定題");
+  c.jhMzSolved(N, "door"); assert.equal(c.jhMzPuz(c.jhMzNew("nopool", 3), "door"), LVN.puz.door, "再走幾次也還是固定題");
+  assert.equal(c.jhMzPuz(c.jhMzNew("central", 5), "door").fen !== undefined, true, "中炮門有題庫，照題庫出題");
 });
 
 test("W87 存檔分開：每一派存自己的鍵、修為照自己的 xp 與代號；中炮門照舊存 jhMaze（舊存檔不用搬）；獎勵照該派的 rew", () => {
@@ -439,6 +444,33 @@ test("W87a 暗匪轉身才看到玩家：先提醒（spot）不直接抓；下�
   assert.notEqual(c.jhMzStep(S2, 0, -1).ev, "trap", "離開紅線就沒事");
   const S3 = c.jhMzNew(); S3.guard.x = 5; S3.guard.y = 12; S3.guard.dx = 1; at(S3, 6, 11); assert.equal(c.jhMzStep(S3, 0, 1).ev, "trap", "自己走進紅線照舊直接抓");
   const S4 = c.jhMzNew(); S4.guard.x = 8; S4.guard.y = 12; S4.guard.dx = 1; at(S4, 9, 11); S4.grid[13][9] = "#"; assert.equal(c.jhMzStep(S4, 0, 1).ev, "trap", "走到暗匪正前方一格：照舊直接抓（在視線裡）");
+});
+
+test("#105 審查（要改 1）：暗匪碰牆掉頭、這一步正好會踩到背後的玩家——掉頭前地上沒有紅線，所以這一回合只轉身、給提醒（spot），下一回合還在紅線上才抓", () => {
+  const { c } = load(), at = (S, x, y) => { S.player.x = x; S.player.y = y; S.player.fx = x; S.player.fy = y };
+  /* 代理人找到的例子：暗匪在 (13,12) 朝右（右邊是牆），玩家在 (12,12) */
+  const S = c.jhMzNew(); S.guard.x = 13; S.guard.y = 12; S.guard.dx = 1; at(S, 12, 12);
+  assert.equal(c.jhMzSight(S, S.guard).length, 0, "掉頭前面向牆，沒有紅線");
+  const r = c.jhMzStep(S, 0, 0); assert.equal(r.ev, "spot", "原地等：暗匪只轉身、先提醒"); assert.deepEqual([S.guard.x, S.guard.dx], [13, -1], "位置不動、朝向換成往左");
+  assert.equal(c.jhMzStep(S, 0, 0).ev, "trap", "提醒後還站在紅線上：抓");
+  const S2 = c.jhMzNew(); S2.guard.x = 13; S2.guard.y = 12; S2.guard.dx = 1; at(S2, 11, 12);
+  assert.equal(c.jhMzStep(S2, 1, 0).ev, "spot", "從 (11,12) 走到 (12,12)：一樣先提醒"); assert.deepEqual([S2.guard.x, S2.guard.y], [13, 12]);
+  /* 窮舉：第 12 列每個位置、兩種朝向，玩家在第 12 列每一格做 5 種動作；只要回 trap，就一定是「走之前玩家已經在紅線上」或「玩家自己走進暗匪那格／紅線」 */
+  let n = 0;
+  for (let gx = 1; gx <= 13; gx++) for (const gd of [1, -1]) for (let px = 1; px <= 13; px++) for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const T = c.jhMzNew(); if (T.grid[12][gx] !== "." && T.grid[12][gx] !== "C" || T.grid[12][px] === "#") continue; T.guard.x = gx; T.guard.y = 12; T.guard.dx = gd; at(T, px, 12);
+    if (c.jhMzCaught(T)) continue; T.caughtBy = null;
+    const sawBefore = (x, y) => { const U = c.jhMzNew(); U.guard.x = gx; U.guard.y = 12; U.guard.dx = gd; at(U, x, y); return c.jhMzCaught(U) };
+    const nx = px + dx, ny = 12 + dy, e = c.jhMzStep(T, dx, dy).ev; n++;
+    if (e === "trap") assert.ok(sawBefore(T.player.x, T.player.y), `暗匪 (${gx},12) 朝 ${gd}、玩家 (${px},12) 動作 ${dx},${dy}：沒有預警就被抓`);
+  }
+  assert.ok(n > 300, "窮舉的情況夠多：" + n);
+});
+
+test("#105 審查建議 1：兩個守衛時，先看有沒有守衛站在玩家那格（trap），再看視線", () => {
+  const { c } = loadF(), S = c.jhMzNew("testsch"), [A, B] = S.guards;
+  S.player.x = 6; S.player.y = 3; A.x = 6; A.y = 1; A.dy = 1; B.x = 6; B.y = 3; B.dx = 1;
+  assert.ok(c.jhMzCaught(S)); assert.equal(S.caughtBy, B, "站在玩家那格的是第二個守衛，記它（不是只看到的第一個）");
 });
 
 test("W87a 殘局小棋盤（開發者 iPhone：「棋盤少了L型標誌兵和炮的位置」）：4 個炮位、10 個兵位的 L 型記號（第 0、8 路只畫朝內那一半），河界寫楚河、漢界", () => {
