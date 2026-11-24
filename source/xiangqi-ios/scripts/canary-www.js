@@ -262,8 +262,13 @@ const KINDS = {
 const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^NODE_/i.test(k)));
 /* 金絲雀自己被動過：NODE_OPTIONS 有值，或 node 帶了參數（--require、--import、--loader…）。命令列直接跑時就回 2 */
 const runtimeTaint = (env = process.env, execArgv = process.execArgv) => { const why = []; if (String(env.NODE_OPTIONS || "").trim()) why.push("NODE_OPTIONS=" + String(env.NODE_OPTIONS).slice(0, 80)); if (execArgv.length) why.push("node 參數 " + execArgv.join(" ").slice(0, 80)); return why };
+/* 子程序時限（2026-11-24：CI 的金絲雀自我檢查偶爾卡住 40 分鐘被取消，擋住所有 PR）。
+   卡住一律判「測試不成立」（回 2），不會當成通過、也不會誤判成檢查失靈；XQ_CANARY_SUB_MS 只給自我測試縮短時限用（縮短只會讓結果變成不成立） */
+const SUB_MS = Math.max(1000, Number(process.env.XQ_CANARY_SUB_MS) || 300000);
+const SUB = { timeout: SUB_MS, killSignal: "SIGKILL" };
+const timedOut = (r) => !!(r && r.error && r.error.code === "ETIMEDOUT");
 function cloneDir(src, dst) {
-  if (process.platform === "darwin") { const r = cp.spawnSync("cp", ["-cR", src, dst], { stdio: "ignore" }); if (r.status === 0) return }
+  if (process.platform === "darwin") { const r = cp.spawnSync("cp", ["-cR", src, dst], { stdio: "ignore", ...SUB }); if (r.status === 0) return }
   fs.cpSync(src, dst, { recursive: true });
 }
 /* 送審用（full＝true）只認正式 CDN；網址只定義在 check-www.js 一個地方，這裡從它的原始碼讀（PR #67 第六次審查：兩份網址，改了一份測不到） */
@@ -280,11 +285,11 @@ function pkgPublic(pkg, tmp) {
 }
 function ipaPublic(pkg, d) {
   /* PR #67 第九次審查：整包解開（不靠萬用字元跨 /），解完核對 public 底下的檔數跟 zip 目錄一樣；同名項目重複也算解不開 */
-  const ls = cp.spawnSync("unzip", ["-Z1", pkg], { encoding: "utf8", maxBuffer: 256e6 });
+  const ls = cp.spawnSync("unzip", ["-Z1", pkg], { encoding: "utf8", maxBuffer: 256e6, ...SUB });
   if (ls.status !== 0) throw new Error("unzip 讀不了 " + pkg + " 的目錄：" + String(ls.stderr || ls.error || "").split("\n")[0]);
   const ents = String(ls.stdout).split("\n").filter((x) => /^Payload\/[^/]+\.app\/public\/.+[^/]$/.test(x));
   if (new Set(ents).size !== ents.length) throw new Error(pkg + " 裡有重複的檔名項目（" + (ents.length - new Set(ents).size) + " 筆）");
-  const r = cp.spawnSync("unzip", ["-q", "-o", pkg, "-d", d], { encoding: "utf8" });
+  const r = cp.spawnSync("unzip", ["-q", "-o", pkg, "-d", d], { encoding: "utf8", ...SUB });
   if (r.status !== 0) throw new Error("unzip 解不開 " + pkg + "：" + String(r.stderr || r.error || "").split("\n")[0]);
   const P = path.join(d, "Payload"), app = fs.existsSync(P) ? fs.readdirSync(P).filter((n) => n.endsWith(".app")) : [];
   if (app.length !== 1) throw new Error(pkg + " 的 Payload/ 裡要正好一個 .app，找到 " + app.length + " 個");
@@ -299,7 +304,7 @@ function ipaPublic(pkg, d) {
 const ROOT = path.join(__dirname, "..", "..", "..");
 /* PR #67 第十四次審查：git 不認 replace 物件（git replace 能偽造 origin/main 上的檔），也不吃呼叫者的 GIT_* 環境變數 */
 const gitEnv = () => Object.fromEntries(Object.entries(process.env).filter(([k]) => !/^GIT_/i.test(k)));
-const GIT = (args, o = {}) => cp.spawnSync("git", ["--no-replace-objects", ...args], { ...o, env: gitEnv() });
+const GIT = (args, o = {}) => cp.spawnSync("git", ["--no-replace-objects", ...args], { ...o, ...SUB, env: gitEnv() });
 /* 收據記下實際用到的 git、unzip 是哪一支（PATH 換掉時看得出來） */
 const whichBin = (n) => { for (const d of String(process.env.PATH || "").split(path.delimiter)) { const f = path.join(d, n); try { fs.accessSync(f, fs.constants.X_OK); return fs.realpathSync(f) } catch (e) { } } return null };
 function mainFromGit(rel) {
@@ -325,7 +330,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
     const base = fs.mkdtempSync(path.join(tmp, "xq-canary-www-"));
     const made = [];   /* 每次檢查各自的暫存資料夾，最後一起清 */
     try {
-      const check = (d, lf, cdnArg, more = []) => cp.spawnSync(process.execPath, [CHECK, "--dir", d, "--list", lf, ...(cdnArg ? ["--cdn-manifest", cdnArg] : []), ...more], { encoding: "utf8", maxBuffer: 256e6, env: cleanEnv() });   /* 跟正式用法一樣，不加 --all（PR #67 第五次審查） */
+      const check = (d, lf, cdnArg, more = []) => cp.spawnSync(process.execPath, [CHECK, "--dir", d, "--list", lf, ...(cdnArg ? ["--cdn-manifest", cdnArg] : []), ...more], { encoding: "utf8", maxBuffer: 256e6, env: cleanEnv(), ...SUB });   /* 跟正式用法一樣，不加 --all（PR #67 第五次審查） */
       /* CDN 清單只下載一次，乾淨的那份和每個壞樣本都用同一份，收據記下它的雜湊（PR #67 審查：分兩次下載，兩份可能不同） */
       let M = null, cdnFile = null, cdnSha = null;
       /* PR #67 第四次審查：先驗乾淨的樣本（不連 CDN），再讀 CDN。乾淨的有錯就回 2，不會被「CDN 讀不到」蓋成 3 */
@@ -344,10 +349,13 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
         return check(D, lf, cf, more);
       };
       const cleanD = shape(); cloneDir(dir, cleanD);
+      const hung = (r) => "check-www.js 超過 " + Math.round(SUB_MS / 1000) + " 秒沒結束（卡住），這一輪不算";
       const pre = runIn(cleanD, L, undefined);
+      if (timedOut(pre)) return unfit(hung(pre));
       if (pre.status !== 0) return unfit("乾淨的樣本沒過 check-www.js（先修好再跑金絲雀）：" + String(pre.stderr).split("\n")[0]);
       if (cdn) { try { const txt = readM(cdn); Mobj = JSON.parse(txt); M = Mobj.files; cdnFile = path.join(base, "cdn-manifest.json"); fs.writeFileSync(cdnFile, txt); cdnSha = sha256(Buffer.from(txt, "utf8")) } catch (e) { return unfit("金絲雀讀不到 CDN 清單：" + cdn, 3) } }
       const clean = runIn(cleanD, L, cdn ? M : undefined); drop(cleanD);   /* 乾淨的跑完就刪（第十七次審查②） */
+      if (timedOut(clean)) return unfit(hung(clean));
       if (clean.status === 3) return unfit("乾淨的樣本沒錯，但 CDN 清單沒能比對（缺驗）：" + String(clean.stderr).split("\n")[0], 3);
       if (clean.status !== 0) return unfit("乾淨的樣本沒過 check-www.js（先修好再跑金絲雀）：" + String(clean.stderr).split("\n")[0]);
       if (only != null && !String(only).split(",").map((s) => s.trim()).filter(Boolean).length) return unfit("--only 沒有列任何壞樣本");   /* PR #67 第七次審查：空的 --only 不能回 0 */
@@ -362,7 +370,7 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
       const results = [];
       /* PR #67 第十六次審查②：乾淨的那次不只最先跑——在壞樣本中間隨機一個位置、和最後，各用全新的副本再跑一次，要回 0；
          不一致代表 check-www 會看順序或環境，判成檢查失靈（4） */
-      const cleanAgain = (when) => { const C = shape(); try { cloneDir(dir, C); const r = runIn(C, L, cdn ? M : undefined); results.push({ kind: "(乾淨重跑)", file: when, exit: r.status, caught: r.status === 0 }); log((r.status === 0 ? "✔ " : "✘ ") + "乾淨的再跑一次（" + when + "）結束代碼 " + r.status) }
+      const cleanAgain = (when) => { const C = shape(); try { cloneDir(dir, C); const r = runIn(C, L, cdn ? M : undefined); if (timedOut(r)) { results.push({ kind: "(乾淨重跑)", file: when, caught: false, unfit: true, why: hung(r) }); return } results.push({ kind: "(乾淨重跑)", file: when, exit: r.status, caught: r.status === 0 }); log((r.status === 0 ? "✔ " : "✘ ") + "乾淨的再跑一次（" + when + "）結束代碼 " + r.status) }
         catch (e) { results.push({ kind: "(乾淨重跑)", file: when, caught: false, unfit: true, why: "乾淨重跑做不出來：" + e.message }) } finally { drop(C) } };   /* 第十七次審查④：例外不當掉 */
       const midAt = Math.floor(rand() * want.length);
       for (const [ki, k] of want.entries()) {
@@ -384,7 +392,9 @@ function run({ dir = null, list = null, cdn = null, pkg = null, only = null, see
             for (const f of group) { const B = K.break(D, f, Lc, Mc) || {}; if (B.list) Lc = B.list; if (B.cdn) Mc = B.cdn; if (B.cdnGone) cdnGone = true }
           }
           catch (e) { for (const f of group) results.push({ kind: k, file: f, caught: false, unfit: true, why: "做壞樣本失敗：" + e.message }); drop(D); continue }
-          const r = runIn(D, Lc, cdn ? (cdnGone ? null : Mc) : undefined), out = String(r.stdout) + String(r.stderr), want = K.exit || 1;
+          const r = runIn(D, Lc, cdn ? (cdnGone ? null : Mc) : undefined);
+          if (timedOut(r)) { for (const f of group) results.push({ kind: k, file: f, caught: false, unfit: true, why: hung(r) }); log("✘ " + k + "：" + hung(r)); drop(D); continue }
+          const out = String(r.stdout) + String(r.stderr), want = K.exit || 1;
           for (const f of group) {
             const exp = K.expect(f), seen = hit(out, exp, want === 3 ? "△" : "✘"), caught = r.status === want && seen;
             results.push({ kind: k, file: f, candidates: cands.length, batch: group.length, expect: exp, exit: r.status, caught });

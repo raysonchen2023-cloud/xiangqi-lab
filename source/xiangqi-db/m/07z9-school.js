@@ -258,6 +258,15 @@ function oscRowHTML(c){try{const o=oscGet(),sid=OSC.act(o,c),S=sid&&oscSchE(sid)
   return`<button type="button" class="pty-row" data-a="osc"><span>${oscL("門派","School")}</span><b>${S?(p=>`${esc(S.nm)}${oscL("・"," · ")}${OSC.next(o,c,sid)?`${oscPnE(sid,OSC.PART.indexOf(p))} ${OSC.count(o,c,sid,p[0],p[1])}${oscL("／","/")}${p[1]-p[0]+1}`:oscL("全部完成","All done")}`)(OSC.part(o,c,sid)):oscL("尚未加入","Not joined")}</b><i aria-hidden="true">›</i></button>`}catch(e){return""}}
 /* ===== 棋友小卡上的棋路（整併稿第九節 4）：門派・慣用開局、一句棋理、副修；「學這一派的開局」帶修行角色去入派或繼續修行。
    棋友的門派是棋風資料，不是玩家的入派；下一盤照原本的動線（小卡原本那顆按鈕）。宋以前朝代的棋友加一句：棋路是在星槎石桌學到的今天的下法 ===== */
+/* 11/24 開發者：「我希望要現在秘境遇到才能出現在門下棋友那邊 不然都不能看到」——秘境人物要在秘境找到過（jSecrets，secretFind 記的）才列出來；驛站、園子的門人照舊。
+   門下棋友出現的地方（掌門小卡、前院清單與打聽提示、前院站位、修行頁的師友）都用這個判斷 */
+function oscNpcShown(k){const[kind,id]=String(k||"").split(":");if(kind!=="secret")return true;try{return typeof jSecrets==="function"&&!!jSecrets()[id]}catch(e){return false}}
+/* 門派的 who（「、」串起來的名字，例如「常遇春、少年女將軍」）：裡面還沒在秘境找到的秘境人物拿掉（#107 再審：總覽「代表棋友」、修行頁「師友」都印 who） */
+function oscWhoShown(who){const hide=new Set(Object.entries(OSC.NPC).filter(([k])=>k.startsWith("secret:")&&!oscNpcShown(k)).map(([k,x])=>x[2]));return String(who||"").split("、").filter(n=>n&&!hide.has(n))}
+/* 總覽「代表棋友」要顯示的名字：先用中文 who 濾（英文版的 who 已經翻好、用逗號串，濾不到），再逐一翻譯（#107 第三次複審） */
+function oscWhoNames(who){return oscWhoShown(who).map(oscT)}
+/* 修行頁「師友」：who（濾過）＋這一派其他門人（濾過、不跟 who 重複，最多 4 位）；回傳 [中文句, 英文句]，沒有人時不留「以及」 */
+function oscFellows(sid){const who=OSC.sch(sid).who,W=oscWhoShown(who),M=Object.entries(OSC.NPC).filter(([k,x])=>x[0]===sid&&oscNpcShown(k)).map(([k,x])=>x[2]).filter(n=>!who.includes(n)).slice(0,4),A=W.concat(M);return A.length?[`師友：${A.join("、")}。`,`Fellow players: ${A.map(oscT).join(", ")}.`]:["師友：還沒遇到這一派的門人。","Fellow players: you haven't met anyone from this school yet."]}
 function oscNpcHTML(key,era){const x=OSC.NPC[key];if(!x)return"";oscCss();const S=oscSchE(x[0]),S2=oscSchE(x[1]);
   const old=era&&typeof ERA_PRE_XQ!=="undefined"&&ERA_PRE_XQ[era];
   return`<div class="osc-npc card osc-sc">${oscSym(S.id)}<div class="tx"><b>${esc(S.nm)}</b><span class="osc-op">${oscL(`慣用${esc(S.op)}・副修${esc(S2.nm)}`,`Plays ${esc(S.op)} · minor: ${esc(S2.nm)}`)}</span><p>${esc(S.say)}</p>${old?`<p class="osc-sub">${oscL("（棋路是在星槎石桌學到的今天的下法）","(Learned today's style at the Star Raft's stone table.)")}</p>`:""}
@@ -291,7 +300,7 @@ function oscOverview(v){oscCss();setTop(oscL("🏯 開局棋路","🏯 Opening P
   const P=typeof ptyGet==="function"?ptyGet():null,me=P?P.look:"";
   const draw=()=>{const o=oscGet(),L=OSC.SCH.filter(s=>!tag||s.tag.includes(tag)),open=L.filter(s=>OSC.isOpen(s.id)),soon=L.filter(s=>!OSC.isOpen(s.id)),mn=me?esc(oscNmE(me)):"";
     const card=s0=>{const s=oscSchE(s0.id),on=OSC.isOpen(s.id),mine=me&&OSC.act(o,me)===s.id,rc=me&&OSC.REC[me]&&OSC.REC[me].includes(s.id);
-      return`<div class="card osc-sc">${oscSym(s.id)}<div class="tx"><b>${esc(s.nm)}</b><span class="osc-op">${esc(s.op)}</span><p>${esc(s.say)}</p><div class="osc-who">${oscL("代表棋友：","Known players: ")}${esc(s.who)}</div>
+      return`<div class="card osc-sc">${oscSym(s.id)}<div class="tx"><b>${esc(s.nm)}</b><span class="osc-op">${esc(s.op)}</span><p>${esc(s.say)}</p>${oscWhoNames(s0.who).length?`<div class="osc-who">${oscL("代表棋友：","Known players: ")}${esc(oscWhoNames(s0.who).join(oscL("、",", ")))}</div>`:""}
         <div>${s.tag.map(t=>`<span class="osc-tag">${esc(oscT("想"+t))}</span>`).join("")}${rc?`<span class="osc-tag osc-rec">${oscL(`${mn}推薦`,`${mn} recommends`)}</span>`:""}</div>
         ${on&&me?`<div class="osc-row"><button class="btn${mine?"":" ghost"}" data-sid="${s.id}">${mine?oscL(`繼續${mn}的修行`,`Continue ${mn}'s training`):oscL(`${mn}加入並練習`,`${mn} joins and practices`)}</button></div>`:on?"":`<p class="osc-sub">${oscL("準備中：課程備妥後才開放入派。","Coming soon: you can join once the lessons are ready.")}</p>`}</div></div>`};
     v.innerHTML=`<div class="pad osc"><p class="osc-sub">${oscL("門派用真實的開局命名。已加入隊伍的七星可以各自拜師、各自練；一般對局不受影響，不用先入派。","Schools are named after real openings. Each of the Seven Stars in your party can join a school and train on their own. Normal games aren't affected, and you don't need to join first.")}</p>
@@ -321,9 +330,9 @@ function oscHome(v,c){oscCss();const P=typeof ptyGet==="function"?ptyGet():null;
       for(let n=a;n<=z;n++){if(n===a||OSC.stage(n,sid)!==OSC.stage(n-1,sid))if(pn==="入門")h+=`<div class="osc-sub">${esc(oscT(OSC.stage(n,sid)))}</div>`;const st=OSC.state(o,c,sid,n),cur=n===nx;
         h+=`<button type="button" class="osc-l${st==="locked"?" lk":""}${cur?" cur":""}" data-n="${n}" ${st==="locked"?'aria-disabled="true"':""}><span class="ic">${st==="passed"?"✓":st==="open"?"▶":"🔒"}</span><span class="tx">${n}${oscL("　"," ")}${esc(oscTitleE(sid,n))}<small>${esc(G(n))}${st==="passed"?oscL("・可以回看、重練"," · review or redo any time"):st==="locked"?oscL("・完成上一課才開"," · opens after the previous lesson"):""}</small></span></button>`}}
     h+=nx?`<p class="osc-goal">${oscL("這次目標：","Current goal: ")}${esc(G(nx))}</p><button class="btn" id="oscGo">${OSC.count(o,c,sid)||(R.l[OSC.lid(sid,nx)]||{}).cur?oscL("繼續這一課","Continue this lesson"):oscL("開始第一課","Start Lesson 1")}${oscL("：",": ")}${esc(oscTitleE(sid,nx))}</button>`:`<p class="osc-goal">${oscL(`三個階段 ${OSC.NL} 課都完成了。任何一課都能回去重練。`,`All ${OSC.NL} lessons in the three stages are done. You can redo any lesson.`)}</p>`;
-    const mates=Object.values(OSC.NPC).filter(x=>x[0]===sid).map(x=>x[2]).filter(n=>!OSC.sch(sid).who.includes(n)).slice(0,4);
+    const FW=oscFellows(sid);
     h+=`<div class="osc-row">${look?"":`<button class="btn ghost" id="oscLook">${oscL(`帶${esc(oscTa(c))}去拜師（設為隨行）`,`Take ${esc(oscTaE(c))} to train (set as companion)`)}</button>`}<button class="btn ghost" id="oscSw">${oscL("轉修其他派","Switch school")}</button></div>
-      <p class="osc-sub">${oscL(`師友：${esc(S.who)}，以及${esc(mates.join("、"))}。基礎課隨時能上，不用等棋友出現。`,`Fellow players: ${esc(S.who)}, and ${esc(mates.map(oscT).join(", "))}. Lessons are open any time; no need to wait for them to show up.`)}</p>
+      <p class="osc-sub">${esc(oscL(FW[0],FW[1]))}${oscL("基礎課隨時能上，不用等棋友出現。"," Lessons are open any time; no need to wait for them to show up.")}</p>
       ${zmHomeHTML(c,sid)}
       <p class="osc-free">${oscL("修行不花體力、不扣修為；錯了退回重想就好。","Training costs no stamina or XP. If you go wrong, just step back and rethink.")}</p></div>`;
     v.innerHTML=h;const go=n=>{try{vibrate(5)}catch(e){}location.hash=`#/school/${c}/${OSC.lid(sid,n)}`};
