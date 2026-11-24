@@ -8,6 +8,7 @@
      2. Pikafish（深度 --depth，預設 20）逐步核對：紅方每一步，所有合法著法裡「剩下步數內將死」的只有主變那一步（唯一解）；
         黑方每一步，主變的應著是「撐最久」的應法之一（不然題目的解答是在對方送死）；
      3. 照順序取 --door 題當石門、--trap 題當陷阱（石門優先取步數多的），寫進 --out 檔裡 /* ==JH_MZ_POOL:<名>== *\/ 那一段（const <名>={door:[…],trap:[…]}）。
+   古譜優先（開發者 11/24：「你也可以從古譜找題目 比較可靠 古譜+pikafish」）：預設只收古譜題（src.book 不是「特級大師對局」），--allow-games 才收實戰對局；每題記出處 src（書名、局名）。
    引擎結果記在 maze-puzzles-engine.json（局面＋走到第幾手 → 合格與否），沒有 PIKAFISH 時照紀錄重跑；--check 跟檔裡現在那一段逐字比對。
    用法：PIKAFISH=<pikafish 執行檔> node xiangqi-lab/tools/maze-puzzles.js --name JH_MZ_POOL_CENTRAL --out xiangqi-db/m/07z9m-maze.js --mate C --door 3 --trap 6
         --title-door "石門機關：炮的殺法" --title-trap "被暗匪逮住了" … 見下面 ARGS */
@@ -25,7 +26,8 @@ const ARGS = {
   tTrap: [arg("--title-trap", "被暗匪逮住了"), arg("--title-trap-en", "Caught by a granary thief")],
   dTrap: [arg("--desc-trap", "暗匪把你按在糧袋堆旁：「解得開這局，就放你走。」紅方先走，{n} 步將死黑方。"), arg("--desc-trap-en", "The thief pins you by the grain sacks: \"Solve this and you can go.\" Red to move: checkmate in {n}.")],
 };
-const CHECK = process.argv.includes("--check");
+const CHECK = process.argv.includes("--check"), GAMES = process.argv.includes("--allow-games");
+const isGame = (x) => !x.src || !x.src.book || /特級大師|對局|實戰/.test(String(x.src.book));
 const sq = (u) => [C.parseSq(u.slice(0, 2)), C.parseSq(u.slice(2, 4))];
 const uci = (f, t) => C.iccs ? C.iccs(f, t) : "abcdefghi"[f % 9] + (9 - ((f / 9) | 0)) + "abcdefghi"[t % 9] + (9 - ((t / 9) | 0));
 const board0 = (x) => C.parseFen(String(x.fen).split(" ")[0]);
@@ -65,9 +67,9 @@ async function verify(E, x) {
 
 (async () => {
   const D = JSON.parse(fs.readFileSync(path.join(SITE, "data", "canju", "canju-set.json"), "utf8"));
-  const cand = D.items.filter((x) => x && x.side === "r" && ARGS.n.includes(x.n) && mated(x) && lastPiece(x) === ARGS.mate && board0(x).filter(Boolean).length <= ARGS.maxPieces)
+  const cand = D.items.filter((x) => x && x.side === "r" && ARGS.n.includes(x.n) && mated(x) && lastPiece(x) === ARGS.mate && board0(x).filter(Boolean).length <= ARGS.maxPieces && (GAMES || !isGame(x)))
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  console.log(`候選 ${cand.length} 題（${ARGS.n.join("、")} 步殺、${ARGS.mate} 收尾、子數 ≤ ${ARGS.maxPieces}）`);
+  console.log(`候選 ${cand.length} 題（${ARGS.n.join("、")} 步殺、${ARGS.mate} 收尾、子數 ≤ ${ARGS.maxPieces}、${GAMES ? "含實戰對局" : "只收古譜"}）`);
   const E = process.env.PIKAFISH && !CHECK ? await require("./zm-engine.js").engine() : null;
   const ok = [];
   for (const x of cand) { const r = await verify(E, x); if (!r) continue; console.log((r.ok ? "✔ " : "✘ ") + x.id + " " + x.n + " 步" + (r.ok ? "" : "：" + r.why)); if (r.ok) ok.push(x) }
@@ -76,9 +78,9 @@ async function verify(E, x) {
   const byN = [...ok].sort((a, b) => b.n - a.n || (a.id < b.id ? -1 : 1)), door = byN.slice(0, ARGS.door), used = new Set(door.map((x) => x.id)), trap = ok.filter((x) => !used.has(x.id)).slice(0, ARGS.trap);
   if (door.length < ARGS.door || trap.length < ARGS.trap) { console.log(`✘ 題目不夠：石門 ${door.length}／${ARGS.door}、陷阱 ${trap.length}／${ARGS.trap}`); process.exit(1) }
   const fill = (t, n) => t.split("{n}").join(String(n));
-  const item = (x, T, Dd) => ({ id: x.id, zh: [T[0], fill(Dd[0], x.n)], en: [T[1], fill(Dd[1], x.n)], fen: String(x.fen).split(" ")[0], line: x.line });
+  const item = (x, T, Dd) => ({ id: x.id, src: { book: x.src.book, title: x.src.title || "" }, zh: [T[0], fill(Dd[0], x.n)], en: [T[1], fill(Dd[1], x.n)], fen: String(x.fen).split(" ")[0], line: x.line });
   const body = `const ${ARGS.name}={door:[\n${door.map((x) => JSON.stringify(item(x, ARGS.tDoor, ARGS.dDoor))).join(",\n")}],\ntrap:[\n${trap.map((x) => JSON.stringify(item(x, ARGS.tTrap, ARGS.dTrap))).join(",\n")}]};\n`;
-  const M0 = `/* ==JH_MZ_POOL:${ARGS.name}== */\n`, M1 = `/* ==/JH_MZ_POOL:${ARGS.name}== */`, OUT = path.join(ROOT, ARGS.out), SRC = fs.readFileSync(OUT, "utf8"), i0 = SRC.indexOf(M0), i1 = SRC.indexOf(M1);
+  const M0 = `/* ==JH_MZ_POOL:${ARGS.name}== */\n`, M1 = `/* ==/JH_MZ_POOL:${ARGS.name}== */`, OUT = path.resolve(ROOT, ARGS.out), SRC = fs.readFileSync(OUT, "utf8"), i0 = SRC.indexOf(M0), i1 = SRC.indexOf(M1);
   if (i0 < 0 || i1 < i0) { console.log(`✘ ${ARGS.out} 裡找不到 ${M0.trim()} 那一段`); process.exit(1) }
   const next = SRC.slice(0, i0) + M0 + body + SRC.slice(i1);
   if (CHECK) { const same = next === SRC; console.log(same ? "✔ 一樣：檔裡的題庫跟重跑結果逐字相同" : "✘ 不一樣"); process.exit(same ? 0 : 1) }

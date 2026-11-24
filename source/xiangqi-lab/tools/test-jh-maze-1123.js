@@ -456,3 +456,11 @@ test("〔原始碼〕W87a 紅線、暗匪在暗處也畫出來（開發者：「
   assert.ok(SRC.includes("const G=q.G;q.gd.visible=true;"), "3D 暗匪不看亮度");
   assert.ok(!/jhMzSight\(S,G\)\)if\(L\[/.test(SRC), "平面版紅線不看亮度");
 });
+
+test("W87a 中炮門題目出自古譜（開發者 11/24：「你也可以從古譜找題目 比較可靠 古譜+pikafish」）：每題記出處（書名、局名），不收實戰對局", () => {
+  const { c } = load(), POOL = vm.runInContext("JH_MZ_POOL_CENTRAL", c);
+  for (const P of [...POOL.door, ...POOL.trap]) {
+    assert.ok(P.src && P.src.book && P.src.title, P.id + " 要有出處");
+    assert.ok(!/特級大師|對局|實戰/.test(P.src.book), P.id + " 不是古譜：" + P.src.book);
+  }
+});
