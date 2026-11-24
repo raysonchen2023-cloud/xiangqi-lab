@@ -69,3 +69,14 @@ test("#105 審查建議：jhMzNew 的 ptr 傳 null、數字不會出錯（當沒
   assert.deepEqual({ ...c.jhMzNew("central", 3, { door: 1e20, trap: 4 }).base }, { door: 3, trap: 4 }, "1e20 當壞值");
   assert.deepEqual({ ...c.jhMzPtrGet("central") }, { door: 0, trap: 2 }, "存檔 1e20 歸 0");
 });
+
+test("〔原始碼〕解殺題 kind:\"defend\"（飛相門，iMac Claude 1）：不顯示「N 步殺」那行；答對預設「解圍了！」、答錯「這步解不了圍」；派別 say 照舊優先", () => {
+  assert.ok(SRC.includes('DEF=P.kind==="defend"'));
+  assert.ok(SRC.includes('${N>1&&!DEF?`<p class="muted">'), "解殺題不寫幾步殺");
+  assert.ok(SRC.includes('res(ZS(id)||(DEF?jhL("解圍了！","Threat stopped!"):jhL("將死！","Checkmate!")),"ok");'), "派別 say 優先，沒寫才用預設");
+  assert.ok(SRC.includes('DEF?"這步解不了圍，黑方下一步還是殺得到，再想想。"'));
+  /* 一手的解殺題照 line 比對就算解開（jhMzTry 不檢查是不是將死） */
+  const c = load(); vm.runInContext('jhMzDef("deftest",{map:["#####","#@.>#","#####"],guards:[],pool:{door:[{kind:"defend",zh:["解","x"],en:["d","x"],fen:"4k4/9/9/9/9/9/9/9/9/2B1K4",line:["c0e2"]}],trap:[]}});', c);
+  const S = c.jhMzNew("deftest", 0); c.jhMzEncounter(S, "door");
+  assert.equal(c.jhMzTry(S, "door", "a0a1"), "bad"); assert.equal(c.jhMzTry(S, "door", "c0e2"), "ok", "一手就解開");
+});
