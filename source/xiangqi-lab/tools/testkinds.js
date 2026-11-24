@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-devmode-native-1124.js",   /* 11/24 D1 送審前（App Store 2.3.1）：原生 App 一律不是開發者模式，存檔帶來的 devMode 不生效；手機網頁、電腦網頁照舊（m/02-shell.js DEVMODE；行為 3） */
   "test-newjourney-entry-1116.js",   /* 11/16 開發者「目前已經沒辦法新的旅程了嗎 假設有其他玩家想重玩的話 應該還是要跟存檔讀檔的格子」：存檔與讀檔面板最下面補一顆不管幾格有存檔都在的「開始新的旅程」，開選格頁（m/05b-save.js saveList）（行為 4、原始碼 2；11/16 加「回開頭畫面」） */
   "test-xiu-scene-1116.js",   /* 11/16 開發者「找gemini繪製環景圖 關於這一頁，按照天文專家的判斷」：二十八宿星圖頁改滿版圖＋程式畫的二十八宿 */
   "test-weather-align-1116.js",   /* 11/16 開發者「這邊的天氣錯了，要跟首頁對齊天氣」：雲河的地方（船艙、驛站、航線圖、甲板）跟首頁同一個天氣地區 */
@@ -67,6 +68,7 @@ const CLASSIFIED = new Set([
   "test-jh-halls8-1123.js",   /* W48 其餘八派門內頁：JH_HALL、玩法入口（m/07z9l-halls.js） */
   "test-jh-maze-1123.js",   /* 11/23 W71 中炮門地底迷宮第一層（m/07z9m-maze.js）：vm 跑真的走路、暗匪、光、殘局判斷；兩題殘局用 core.js 獨立重算唯一一步殺 */
   "test-jh-maze-render-1124.js",   /* 11/24 W87c 迷宮回味感：vm 跑閃爍、材質載入（假 three）、斜向方向鈕、W97 提示限次、ptr 防呆、迷路版地圖 BFS；斜俯視、W99 逃跑的介面用原始碼比對（標〔原始碼〕〔混合〕） */
+  "test-android-back-1124.js",   /* 11/24 W100 Android 返回鍵先交給網頁回上一頁：BACK_JS 用 vm 實跑（行為 1）；XQBackHandler、共用版與 mini-26112401 的 MainActivity、變體雜湊（原始碼 2） */
   "test-jh-fanggong-1122.js",   /* 11/22 W48-S4 反宮馬門「活字排局陣」（開發者「門派分給三位平行做完」；選單「照主線次序才算對」）：m/07z9g-fanggong.js 課程主線取出與合法、三級出題（初中只打散黑方、高級紅黑都打散）、照主線次序判對錯並指出第幾步、走不下去指出原因、每天修為只給一次（行為 5、原始碼 1） */
   "test-jh-zm-engine-1123.js",   /* 11/23 W73 順炮、仕角炮、反宮馬棋理修正（Windows Claude 1 用 Pikafish 驗出）：順炮 90 題局面合法（獨立檢查子數、九宮、仕相兵、照面）、引擎最短殺等於答案；仕角炮 60 題引擎條件（吃差 50 cp 內／不吃好 100 cp 以上）、13 題舊題不在；反宮馬 palace_horse_06 例題 b 不出（行為 5、原始碼 1） */
   "test-jh-liepao-1122.js",   /* 11/22 W48-S5 列炮門「擊板記譜局」（開發者「門派分給三位平行做完」）：m/07z9h-liepao.js 課程主線取出與合法、三級步數 4／6／8 與分段 3～4 步、同一輪 3 題開頭不同、判一步分「動錯子／落點錯」、每天修為只給一次（行為 5、原始碼 1） */
@@ -162,6 +164,7 @@ const CLASSIFIED = new Set([
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
   "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
   "test-jh-cross-1124.js",   /* 11/24 W87 過宮炮地底迷宮（m/07z9m-cross.js）：vm 跑炮型護院視線、走法、地圖 BFS 與不被看到的路線搜尋、碑刻；題庫用 core.js 獨立重算 */
+  "test-w92-oldwv-fallback-1124.js",   /* 11/24 W92 舊 WebView 沒有多執行緒時對局改用 Magellan：vm 跑 02-shell 降級那一段；local.js 那一行用原始碼比對（標〔原始碼〕） */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */
