@@ -60,6 +60,22 @@ test("錯棋重練條目：座標都在圖內、走路的邊和小動作都接�
   for (const [x, y] of e.sw7.sky[0]) assert.ok(x >= 0 && x <= e.w && y >= 0 && y <= e.h, "天氣範圍是橫式圖像素");
 });
 
+test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在圖內、走路的邊和小動作接得到節點、每個入口都有角色走過去", () => {
+  const pct = (xy, n) => { assert.ok(Array.isArray(xy) && xy.length === 2 && xy.every(v => v >= 0 && v <= 100), n + "：" + JSON.stringify(xy)) };
+  const keys = Object.keys(SCW); assert.ok(keys.length >= 2, "錯棋重練、棋力測驗都登記了");
+  for (const k of keys) {
+    const e = SCW[k]; assert.equal(e.f, k + "_l1610", k); assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.match(k, /_classic$/, "先只做經典世界");
+    for (const id in e.S) pct(e.S[id], k + " " + id); pct(e.exit, k + " 出口");
+    for (const s of ["l", "r", "t", "b"]) assert.ok(e.safe[s] >= 0 && e.safe[s] < .3);
+    const N = e.walk.N; assert.equal(e.walk.W, 2560); assert.equal(e.walk.H, 1600); assert.ok(N[e.walk.home]);
+    for (const n in N) pct(N[n], k + " 節點 " + n);
+    for (const ed of e.walk.E.split(" ")) { const [a, b] = ed.split("-"); assert.ok(N[a] && N[b], k + " 邊 " + ed) }
+    for (const [id, h] of Object.entries(e.walk.HS)) { assert.ok(N[h[0]], k + " " + id); pct([h[1], h[2]], k + " " + id + " 看的位置") }
+    assert.deepEqual(Object.keys(e.walk.HS).sort(), Object.keys(e.S).sort(), k + " 每個入口都有角色走過去的設定");
+  }
+  const b = SCW["exammap/exam_day_classic"].fx.board; assert.ok(b[0] >= 0 && b[2] <= 2560 && b[1] >= 0 && b[3] <= 1600 && b[0] < b[2] && b[1] < b[3], "題名榜是橫式圖像素");
+});
+
 test("07w7 天氣：登記表裡的橫式圖用自己的範圍（像素＝橫式圖），首頁 home_l1610 照原本找", () => {
   const base = src => /data\/redomap\/redo_/.test(src) ? { k: "redo", re: /data\/redomap\/redo_/, m: "semi", rg: "s", sky: [[[0, 0]]], fg: [[[1, 1]]] } : null;
   const o = scwSw7("data/redomap/redo_day_classic_l1610.webp?v=1125", base);
@@ -133,6 +149,10 @@ test("原始碼：07fl 排版前先問 scwSync、安全區照條目；07w7、07w
   assert.match(Y8, /<img src="\$\{pre\.src\}"/);
   assert.match(Y8, /ids:\["rd2Book","rd2Stack","rd2Pole","rd2All"\],pfx:"rd2"/);
   assert.match(Y8, /const nP=L\?0:/, "橫式圖不晾冊頁");
+  const Y9 = M("m/07y9-exammap.js");
+  assert.match(Y9, /pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\}/); assert.match(Y9, /<img src="\$\{pre\.src\}"/);
+  assert.match(Y9, /ids:\["ex2S0","ex2S1","ex2S2","ex2Book"\],pfx:"ex2",cfg0:cfg,apply:brd/);
+  assert.match(Y9, /shwPage\(v,cfgNow,"ex2"\)/);
   const i7 = H.indexOf("//#include m/07sw-scenewide.js"), iy = H.indexOf("//#include m/07y8-redomap.js"), ifl = H.indexOf("//#include m/07fl-fill.js");
   assert.ok(i7 > iy && i7 < ifl, "07sw 在 07y8 後、07fl 前");
 });

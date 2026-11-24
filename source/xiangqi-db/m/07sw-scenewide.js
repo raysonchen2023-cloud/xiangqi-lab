@@ -25,7 +25,15 @@ const SCW={
     walk:{W:2560,H:1600,el:40,h:[.14,96,.004],look0:[46.5,70],home:"home",N:{home:[50,97],desk:[44,95],lft:[20,88],rgt:[80,86],mid:[62,95]},E:"home-desk desk-lft home-mid mid-rgt",
       HS:{rd2Book:["desk",46.5,70,"wave"],rd2Stack:["lft",19.5,57,"wave"],rd2Pole:["rgt",84,45,"wave"],rd2All:["mid",65,78,"idle"]}},
     fx:{bookText:[51,70.4],stackBase:[19.5,54.9],stackStep:1.6,bookW:10,censer:[61.2,66.4]},
-    sw7:{m:"semi",sky:[[[512,78],[2020,78],[2020,830],[512,830]]],fg:null,tr:null}}};
+    sw7:{m:"semi",sky:[[[512,78],[2020,78],[2020,830],[512,830]]],fg:null,tr:null}},
+  /* 棋力測驗（07y9）經典世界白天：output/w107-ipad/l1610/exammap/exam_day_classic_l1610.json。S 的三份卷子是標籤位置（中間那份照原圖放高一排）；
+     fx.board＝題名榜榜面（左、上、右、下，像素 2560×1600）；這一頁 07w7 原本就歸室內，不寫天氣範圍 */
+  "exammap/exam_day_classic":{ready:true,f:"exammap/exam_day_classic_l1610",w:2560,h:1600,
+    S:{ex2S0:[40,53.6],ex2S1:[51,50],ex2S2:[61.5,53.6],ex2Book:[80.8,54.1]},exit:[14,92],
+    safe:{l:.12,r:.12,t:.05,b:.10},
+    walk:{W:2560,H:1600,el:40,h:[.126,95,.004],look0:[51,62],home:"home",N:{home:[50,97],altar:[50,93],rgt:[80,92]},E:"home-altar altar-rgt",
+      HS:{ex2S0:["altar",51,62,"bow"],ex2S1:["altar",51,62,"bow"],ex2S2:["altar",51,62,"bow"],ex2Book:["rgt",81,60,"idle"]}},
+    fx:{board:[205,123,681,696]}}};
 const SCW_BAD={};   /* 這次開 App 載不到的橫式圖（鍵＝原圖鍵），退回原圖不再試 */
 /* 圖網址 → 鍵（data/ 之後、不含 .webp 和 ?v=） */
 const scwKey=src=>{const m=/(?:^|\/)data\/([^?#]+?)\.webp(?:[?#]|$)/.exec(src||"");return m?m[1]:""};
