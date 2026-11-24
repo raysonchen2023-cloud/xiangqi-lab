@@ -8,11 +8,11 @@ App 依 GPL-3.0-or-later 授權；象棋引擎 Pikafish 是 GPL-3。這個資料
 
 | 項目 | 值 |
 | --- | --- |
-| App 內版號（`XQ_BUILD`） | `20261123-1652` |
-| 網頁基底：本倉庫的提交 | `c1ecf3fd8f9db36c936ecd607eaf66e04dfa6063`（標籤 `web-20261123-1652`） |
-| iOS 原生專案：本倉庫的提交 | `58e0de2fae0b0da7272bacfe072f6ff1529844d0`（`source/xiangqi-ios`；比網頁標籤多了 #86：iOS 包不放 `AGENTS.md`、`releases/`、`data/docs/verification-log.txt`） |
-| 重建後 `www/index.html` 的 SHA-256 | `7b8995890a4ac2beff16083dbc8705b33f7775e279efee424242a5115ff85b8c` |
-| 候選安裝包 | 2026-11-23 從標籤 `web-20261123-1652` 建（開發簽章，iOS 候選驗收中；還沒上 TestFlight 或 App Store），共 4,712 個檔。上一版 `20261122-0804` 見 [VERSIONS.md](VERSIONS.md) |
+| App 內版號（`XQ_BUILD`） | `20261124-0528` |
+| 網頁基底：本倉庫的提交 | `10a532ad54d572767681b2e95f36385ebb93b490`（標籤 `web-20261124-0528`） |
+| iOS 原生專案：本倉庫的提交 | `10a532ad54d572767681b2e95f36385ebb93b490`（跟網頁標籤同一個提交，`source/xiangqi-ios`） |
+| 重建後 `www/index.html` 的 SHA-256 | `b4e018c19c5f1c4cedcfe97e4c140775d7015c2558f23a91527ed4a3a01a70c9` |
+| 候選安裝包 | 2026-11-24 從標籤 `web-20261124-0528` 建（開發簽章，iOS 候選驗收中；還沒上 TestFlight 或 App Store），共 4,712 個檔、923.7 MB。上一版 `20261123-1652` 見 [VERSIONS.md](VERSIONS.md) |
 
 其他版本請見 [VERSIONS.md](VERSIONS.md)。
 
@@ -35,7 +35,7 @@ App 依 GPL-3.0-or-later 授權；象棋引擎 Pikafish 是 GPL-3。這個資料
 
 ```
 git clone https://github.com/raysonchen2023-cloud/xiangqi-lab.git $W/web
-git -C $W/web -c core.autocrlf=false checkout 58e0de2fae0b0da7272bacfe072f6ff1529844d0   # 原生專案用這個提交（見第一節）
+git -C $W/web -c core.autocrlf=false checkout 10a532ad54d572767681b2e95f36385ebb93b490   # 原生專案用這個提交（見第一節）
 cp -R $W/web/source/xiangqi-ios $W/ios      # 原生專案；網頁內容另外由下一步的 --ref 從標籤讀
 cd $W/ios
 npm ci
@@ -44,7 +44,7 @@ npm ci
 ### 2. 做網頁成品
 
 ```
-node scripts/copy-www.js --site $W/web --ref c1ecf3fd8f9db36c936ecd607eaf66e04dfa6063 --cdn-fetch
+node scripts/copy-www.js --site $W/web --ref 10a532ad54d572767681b2e95f36385ebb93b490 --cdn-fetch
 ```
 
 - 程式和小檔讀自 `--ref` 指定的提交（用 `git ls-tree`／`cat-file` 讀，不需要 checkout）。
@@ -56,7 +56,7 @@ node scripts/copy-www.js --site $W/web --ref c1ecf3fd8f9db36c936ecd607eaf66e04df
 ```
 patch -s www/index.html < web-overlay/index.html.patch
 cp web-overlay/release.json web-overlay/native-build.json www/
-shasum -a 256 www/index.html     # 應該等於第一節的 7b899589…
+shasum -a 256 www/index.html     # 應該等於第一節的 b4e018c1…
 ```
 
 `copy-www.js` 會改寫 `scripts/.www-files.json`，變成這次複製的清單，再拿來給 `check-www.js` 用；套用覆蓋後，`index.html` 和 `release.json` 會被列為大小不符，這是預期的。（這裡講的是你自己跑 `copy-www.js` 新產生的清單；本倉庫存的 `scripts/.www-files.json` 已經改成覆蓋後的大小，見下方「已知差異」。）要和這一版的候選安裝包逐檔比對，請用倉庫裡原本那份清單（每個檔的大小，加上檔案內容的 sha1 前 12 碼；這是一般的 sha1，不是 git 的 blob id）：`git -C $W/web show HEAD:source/xiangqi-ios/scripts/.www-files.json`。
@@ -117,6 +117,7 @@ xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -de
 
 ## 四、已知差異
 
+- 2026-11-24（`20261124-0528`）：iOS 候選包照本流程從標籤 `web-20261124-0528` 建，原生專案用同一個提交 `10a532a`（同樣用 iMac 本機的 `tools-imac/stage-from-tag.sh` 串步驟），`index.html` 是 `b4e018c1…`，共 4,712 個檔。這一版的 `web-overlay/release.json`、`native-build.json` 已換成 0528 版；`index.html.patch` 6 段照原樣套上。
 - 2026-11-23（`20261123-1652`）：iOS 候選包照本流程從標籤 `web-20261123-1652` 建，原生專案用 `58e0de2`（同樣用 iMac 本機的 `tools-imac/stage-from-tag.sh` 串步驟），`index.html` 是 `7b899589…`，共 4,712 個檔。這一版的 `web-overlay/release.json`、`native-build.json` 已換成 1652 版。
 - 2026-11-22（`20261122-0804`）：iOS 候選包直接照本流程從標籤 `web-20261122-0804` 建（iMac 本機的輔助腳本 `tools-imac/stage-from-tag.sh`，不在本倉庫；它只是把本節步驟串起來，照第三節「步驟」的指令手動做，結果相同），所以安裝包和本流程的重建結果相同：`index.html` 是 `0b3d774b…`，共 4,700 個檔；Release 實機版、Debug 模擬器版 `xcodebuild` 都成功。
 - `web-overlay/release.json`、`native-build.json` 是「這一版」iOS 包的版本清單，每一版重產：`release.json` 是標籤的網頁版 `release.json` 加上原生欄位（`html` 是套補丁後 `index.html` 的 sha1，另有 `sharedWebCommit`、`packageFiles` 的 SHA-256）；`native-build.json` 是 `copy-www.js` 產生的。0804 這份的 `bytes`（119,126,859）少算了 `--cdn-fetch` 從 CDN 換進來的檔，實際安裝內容約 962 MB；這是 `copy-www.js` 先算大小、後下載 CDN 檔造成的，下一版起已修正（`bytes`、`byDir` 會在寫檔前重算）。0804 的這份清單保留原樣，因為它就是候選包裡的那一份，改了就和安裝包不一致。`scripts/.www-files.json` 裡 `index.html`、`release.json`、`native-build.json` 這三筆已經是套用覆蓋後的大小，所以直接用本倉庫存的這份清單時，`check-www.js` 不會報大小不符（和上方「自己跑 `copy-www.js` 新產生的清單」那種情況不同）。

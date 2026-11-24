@@ -1,6 +1,6 @@
 {
- "commit": "c1ecf3fd8f9db36c936ecd607eaf66e04dfa6063",
- "siteVersion": "20261123-1652",
+ "commit": "10a532ad54d572767681b2e95f36385ebb93b490",
+ "siteVersion": "20261124-0528",
  "files": {
   "BufferGeometryUtils.mjs": [
    31122,
@@ -107,8 +107,8 @@
    "4fa6b27640b8"
   ],
   "data/bgm/titles.json": [
-   3920,
-   "cb630c2fd481"
+   3956,
+   "dff12ef21484"
   ],
   "data/big-books.json": [
    313,
@@ -283,8 +283,8 @@
    "d6eafdc5d202"
   ],
   "data/docs/evidence.md": [
-   580489,
-   "3462e5becad7"
+   589774,
+   "db74387225a7"
   ],
   "data/docs/evidence/01_首頁接著下_新手.png": [
    1050665,
@@ -328,7 +328,7 @@
   ],
   "data/docs/foss.md": [
    43140,
-   "29c71f701141"
+   "d7d54c40d34e"
   ],
   "data/docs/funnel.md": [
    6900,
@@ -963,44 +963,44 @@
    "c0483c0a5747"
   ],
   "data/opening-school/advisor_corner.json": [
-   134802,
-   "c9ceb76dc04a"
+   134762,
+   "0182340a75d7"
   ],
   "data/opening-school/central.json": [
-   124841,
-   "364808c62050"
+   120804,
+   "59c3d54bc1b5"
   ],
   "data/opening-school/cross_palace.json": [
-   130548,
-   "d356f724c372"
+   130472,
+   "3609937c4d78"
   ],
   "data/opening-school/elephant.json": [
-   145200,
-   "9fe7aab8e941"
+   138797,
+   "af4f74144861"
   ],
   "data/opening-school/horse.json": [
-   114631,
-   "f4df46746d8c"
+   114729,
+   "9a6df1e0f1a4"
   ],
   "data/opening-school/opposite_cannon.json": [
-   257895,
-   "3df2f805e234"
+   256025,
+   "230beb07ca6b"
   ],
   "data/opening-school/palace_horse.json": [
-   242131,
-   "4a3296544798"
+   241283,
+   "ff0e74b3c33a"
   ],
   "data/opening-school/pawn.json": [
-   130243,
-   "552f96e521aa"
+   130163,
+   "08980794c823"
   ],
   "data/opening-school/same_cannon.json": [
-   203322,
-   "dd8a4159975c"
+   202814,
+   "f44e12126ac1"
   ],
   "data/opening-school/screen.json": [
-   215261,
-   "d41324b911a1"
+   210364,
+   "a08f7194a5ee"
   ],
   "data/openmap/open_day.webp": [
    140176,
@@ -1979,8 +1979,8 @@
    "6ca5ae7acf07"
   ],
   "index.html": [
-   7106798,
-   "f4d8390224d7"
+   7167661,
+   "3a7ff1c971f0"
   ],
   "jsQR.min.js": [
    130594,
@@ -2603,12 +2603,12 @@
    "2d06c1f823f3"
   ],
   "release.json": [
-   5964,
-   "0bb47b4d3124"
+   5999,
+   "995f5835cff9"
   ],
   "sw.js": [
    15559,
-   "fcadf12bb1f7"
+   "442b1e970bf4"
   ],
   "three-shim.mjs": [
    2170,
@@ -7431,8 +7431,8 @@
    "25fb200fa1f9"
   ],
   "data/i18n-en.json": [
-   984653,
-   "c6592336226f"
+   986349,
+   "b02af2ec8238"
   ],
   "data/icons/classic/adventure.webp": [
    5650,
@@ -18848,7 +18848,7 @@
   ],
   "native-build.json": [
    4034,
-   "f6004c739c35"
+   "db83599e859f"
   ]
  }
 }
