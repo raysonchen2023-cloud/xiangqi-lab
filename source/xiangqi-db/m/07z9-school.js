@@ -435,7 +435,7 @@ const zmSay=(m,s)=>oscL(`🏯 ${m.nm}：「${s}」`,`🏯 ${m.en}: "${oscT(s)}"`
    掌門局借用驛站的對局（inn:zm_<派>），封面和 3D 地點標籤原本照驛站寫。改成那一派的門內圖（data/zmhall/<派>.webp，門內頁同一張）、
    「走進〇〇門」「掌門〇〇在大廳等你」；不帶朝代名言，停 2.6 秒（walk：畫面慢慢推進）。3D 環景沒有門派版，照舊用朝代園林。 */
 function zmGate(j){try{const m=zmAct(j)&&OSC.mst(j),S=m&&oscSchE(m.sid);if(!m||!S)return null;
-    return{img:["data/zmhall/"+m.sid+".webp"],icon:"🏯",title:oscL("走進"+S.nm,"Enter the "+S.nm),sub:oscL("掌門"+m.nm+"在大廳等你","Master "+(m.en||m.nm)+" is waiting in the hall"),bg:"#2b2a22",walk:2600}}catch(e){return null}}
+    return{img:["data/zmhall/"+m.sid+".webp"],icon:"🏯",title:oscL("走進"+S.nm,"Enter the "+S.nm),sub:oscL("掌門"+m.nm+"等你過招","Master "+(m.en||m.nm)+" is ready for a game"),bg:"#2b2a22",walk:2600}}catch(e){return null}}
 function zmPlace(j){try{const m=zmAct(j)&&OSC.mst(j),S=m&&oscSchE(m.sid);return m&&S?"🏯 "+S.nm:null}catch(e){return null}}
 function zmStart(m,c0){const P=typeof ptyGet==="function"?ptyGet():null,c=c0||(P&&P.look);if(!c||!P||!PTY.has(P,c)){toast(oscL("要先有修行角色：已加入隊伍的七星才能挑戰","You need a training character first: only Seven Stars in your party can challenge"));return}
   const rl=OSC.zmRlv(zmGet(),m);store.set("zmCur",{id:m.id,rl,c});
