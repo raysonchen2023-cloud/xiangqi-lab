@@ -11,24 +11,33 @@ const P3D = fs.readFileSync(path.join(ROOT, "xiangqi-lab", "src", "park3d.js"), 
 function waitFn() {
   const a = LOC.indexOf("const FIRST_SETTLE="), b = LOC.indexOf("const boardReady=", a);
   assert.ok(a > 0 && b > a, "抓得到 playFirstWait 那一段");
-  const c = {}; vm.createContext(c); vm.runInContext(LOC.slice(a, b) + ";this.f=playFirstWait;this.K=[FIRST_SETTLE,FIRST_MAX];", c);
+  const c = {}; vm.createContext(c); vm.runInContext(LOC.slice(a, b) + ";this.f=playFirstWait;this.K=[FIRST_SETTLE,FIRST_MAX,FIRST_VEIL_MAX];", c);
   return c;
 }
 
 test("playFirstWait：至少等 0.6 秒；棋盤還看不到就每 0.3 秒再看；看得到就走；最多等 20 秒", () => {
   const { f, K } = waitFn();
-  assert.deepEqual([...K], [600, 20000]);
-  assert.equal(f(0, 0, true), 600, "剛開局：就算看起來就緒也至少等 0.6 秒");
-  assert.equal(f(0, 450, false), 150);
-  assert.equal(f(0, 700, false), 300, "棋盤還看不到（3D 還沒建好、封面還在）：再等");
-  assert.equal(f(0, 8000, false), 300, "名言封面 5～9 秒都要等");
-  assert.equal(f(0, 700, true), 0, "看得到棋盤：可以走");
-  assert.equal(f(0, 20000, false), 0, "萬一一直不就緒：20 秒後照走，不會卡住");
+  assert.deepEqual([...K], [600, 20000, 90000]);
+  assert.equal(f(0, 0, true, false), 600, "剛開局：就算看起來就緒也至少等 0.6 秒");
+  assert.equal(f(0, 450, false, false), 150);
+  assert.equal(f(0, 700, false, false), 300, "棋盤還看不到（3D 還沒建好）：再等");
+  assert.equal(f(0, 8000, false, true), 300, "名言封面 5～9 秒都要等");
+  assert.equal(f(0, 700, true, false), 0, "看得到棋盤：可以走");
+  assert.equal(f(0, 20000, false, false), 0, "棋盤一直沒出現、3D 一直沒建好：20 秒後照走，不會卡住");
+});
+
+test("#134 Android 預驗：慢的機器封面停 23 秒——封面還在時不受 20 秒上限，另外最多等 90 秒", () => {
+  const { f } = waitFn();
+  assert.equal(f(0, 21700, false, true), 300, "21.7 秒封面還在（模擬器實際情況）：不能走");
+  assert.equal(f(0, 23400, true, false), 0, "23.4 秒封面收掉、看得到棋盤：走");
+  assert.equal(f(0, 89000, false, true), 300);
+  assert.equal(f(0, 90000, false, true), 0, "90 秒保險：封面萬一一直沒收掉也不會永遠不走");
+  assert.equal(f(0, 300, false, true), 300, "0.6 秒內封面就掛上：照樣等");
 });
 
 test("〔原始碼〕playEngine 一開頭、在棋友棋路與引擎之前，電腦先手（還沒走過任何一步）就照 playFirstWait 延後；就緒＝棋盤顯示、3D 建好、封面收掉", () => {
   const i = LOC.indexOf("async function playEngine(){"), body = LOC.slice(i, i + 1200);
-  const g = body.indexOf("if(!P.moves.length){if(FIRST.id!==P.id)FIRST={id:P.id,t0:Date.now()};const w=playFirstWait(FIRST.t0,Date.now(),boardReady());if(w){setTimeout(playEngine,w);return}}");
+  const g = body.indexOf("if(!P.moves.length){if(FIRST.id!==P.id)FIRST={id:P.id,t0:Date.now()};const w=playFirstWait(FIRST.t0,Date.now(),boardReady(),veilOn());if(w){setTimeout(playEngine,w);return}}");
   assert.ok(g > 0, "有延後那一行");
   assert.ok(g < body.indexOf("npcKeyOf(P,localStorage)"), "排在棋友棋路（掌門 0.9 秒落子）之前");
   assert.ok(g > body.indexOf("if(!P||P.result||P.turn===P.human||playBusy)return;"), "輪到玩家、忙碌中照舊直接回");
