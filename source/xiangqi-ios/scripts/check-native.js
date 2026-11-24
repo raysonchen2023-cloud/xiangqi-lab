@@ -132,7 +132,7 @@ const vRest = vBlocks.reduceRight((t, b) => t.slice(0, b.start) + " " + t.slice(
 const vTok = (est.match(/\bverifyNow\b/g) || []).length;
 check(vBlocks.length >= 2 && vTok === vBlocks.length
   && vBlocks.every((b) => /\breturn\s+\.verified\b/.test(b.inner) && !/^\s*else\b/.test(est.slice(b.end)))
-  && !/\.verified\b/.test(vRest)
+  && !/\.verified\b/.test(srvCode.replace(est, vRest))   /* #127 複審：不只 establishNow 剩下的部分，整份伺服器程式在合格的 if 區塊以外都不能出現 .verified（擋「private func ok() -> Outcome { .verified }」再 return ok()、Outcome.verified、static let） */
   && !/\bfunc\s+verifyNow\b/.test(est) && (srvCode.match(/\bfunc\s+verifyNow\b/g) || []).length === 1,
   "establish 一定經過 verifyNow 才回 verified");
 check(!/return \.verified/.test(srvCode.replace(est, "")), "verified 只會從 establishNow 回");
