@@ -317,7 +317,8 @@ function CpuGame(v,practicePage,mode){
       if(!k)toast("🔎 電腦分析（Pikafish）正在評這盤的每一步，馬上好…");await new Promise(z=>setTimeout(z,1200));if(rn!==ROUTE_N)return}
     if(rn!==ROUTE_N)return;
     if(r&&r.b){mflKeySet(gid,hu,r.b,lx);review(false,gid,{ply:r.b.ply-1,why:"這盤最關鍵的一步",mfl:1});return}
-    if(r&&r.all&&r.n)toast("👍 這盤沒有明顯的錯著，帶你看整盤的賽後報告");review(true,gid)}
+    if(r&&r.all&&r.n){const S=typeof mntSay==="function"?mntSay("全盤",""):null;   /* W89 掌門覆盤：沒有明顯錯著時由掌門（或夥伴）誇一句 */
+      toast(S?(typeof oscEn==="function"&&oscEn()?S.who.en+": ":S.who.nm+"：")+S.text+(typeof oscEn==="function"&&oscEn()?" No clear mistakes this game; here is the full report.":"這盤沒有明顯的錯著，帶你看整盤的賽後報告。"):"👍 這盤沒有明顯的錯著，帶你看整盤的賽後報告")}review(true,gid)}
   // 賽後報告：用這一盤自己的編號打開（意見回饋 234：以前拿存檔清單第一筆，存檔還沒寫完或順序不同時會開到別盤）
 async function review(rep,id,at){let it=null;for(let k=0;k<12&&!it;k++){try{const d=await api("/db/items?c=play");it=id?d.items.find(x=>x.id===id):d.items[0]}catch(e){}if(!it)await new Promise(r=>setTimeout(r,250))}
   if(!it)return toast("找不到這盤的存檔");if(rep)store.set("openReport","play/"+it.id);if(at)store.set("openAt",{c:"play",id:it.id,ply:at.ply,why:at.why,...(at.mfl?{mfl:1}:{})});   /* ChatGPT 改善單 T01：mfl＝關鍵步模式（10-db.js 不另跳「從第 N 步開始」的小提示） */REVIEW_BACK={id:it.id,h:location.hash};location.hash="#/db/play/"+encodeURIComponent(it.id)}   /* 意見回饋 607：記下從哪一盤去看報告，回來時不要自動開新局 */
