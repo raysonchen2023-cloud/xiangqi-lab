@@ -78,7 +78,13 @@ test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在
   const T = SCW["todaymap/today_day_classic"].fx; assert.equal(T.notes.length, 5, "今日推薦五張告示紙");
   for (const q of T.notes) { assert.equal(q.length, 4); for (const [x, y] of q) assert.ok(x >= 0 && x <= 2560 && y >= 0 && y <= 1600) }
   for (const xy of [T.term, T.seal, T.censer.slice(0, 2), ...T.eave]) assert.ok(xy[0] >= 0 && xy[0] <= 2560 && xy[1] >= 0 && xy[1] <= 1600);
-  const b = SCW["exammap/exam_day_classic"].fx.board; assert.ok(b[0] >= 0 && b[2] <= 2560 && b[1] >= 0 && b[3] <= 1600 && b[0] < b[2] && b[1] < b[3], "題名榜是橫式圖像素");
+  const q = SCW["exammap/exam_day_classic"].fx.boardQ; assert.equal(q.length, 4, "題名榜四角");
+  for (const [x, y] of q) assert.ok(x >= 0 && x <= 2560 && y >= 0 && y <= 1600, "題名榜是橫式圖像素");
+  assert.ok(q[0][0] < q[1][0] && q[3][0] < q[2][0] && q[0][1] < q[3][1] && q[1][1] < q[2][1], "左上、右上、右下、左下的順序");
+  // 四角貼圖：方塊四個角要剛好落在四角上
+  const scwM3 = vm.runInContext("scwM3", C0), m = scwM3(480, 540, q).match(/matrix3d\(([^)]*)\)/)[1].split(",").map(Number);
+  const at = (x, y) => { const X = m[0] * x + m[4] * y + m[12], Y = m[1] * x + m[5] * y + m[13], W = m[3] * x + m[7] * y + m[15]; return [X / W, Y / W] };
+  [[0, 0], [480, 0], [480, 540], [0, 540]].forEach(([x, y], i) => { const [X, Y] = at(x, y); assert.ok(Math.abs(X - q[i][0]) < .01 && Math.abs(Y - q[i][1]) < .01, "角 " + i) });
 });
 
 test("07w7 天氣：登記表裡的橫式圖用自己的範圍（像素＝橫式圖），首頁 home_l1610 照原本找", () => {
@@ -158,6 +164,8 @@ test("原始碼：07fl 排版前先問 scwSync、安全區照條目；07w7、07w
   assert.match(Y9, /pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\}/); assert.match(Y9, /<img src="\$\{pre\.src\}"/);
   assert.match(Y9, /ids:\["ex2S0","ex2S1","ex2S2","ex2Book"\],pfx:"ex2",cfg0:cfg,apply:brd/);
   assert.match(Y9, /shwPage\(v,cfgNow,"ex2"\)/);
+  assert.match(Y9, /function ex2BoardSVG\(W0,H0\)\{const W=W0\|\|558,H=H0\|\|385/, "原圖照舊 558×385");
+  assert.match(Y9, /transform:scwM3\(W0,H0,q\)/, "橫式圖的題名榜照四角貼");
   const Z5 = M("m/07z5-cpuroom.js"), CR = vm.runInContext("SCW['cpuroom/cpuroom_day_classic']", C0);
   assert.match(Z5, /pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\}/); assert.match(Z5, /<img src="\$\{pre\.src\}" alt="茶坊深處/);
   assert.match(Z5, /scwMount\(P,\{key:scwKey\(src\),src0:src,ids:Object\.keys\(CR_SPOT\),apply:lay\}\)/);

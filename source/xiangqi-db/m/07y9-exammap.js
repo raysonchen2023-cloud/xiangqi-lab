@@ -28,7 +28,7 @@ function ex2Css(){if(document.getElementById("ex2Css"))return;const s=document.c
 .ex2-paper .muted{color:#6a5640 !important}.ex2-paper .card{background:rgba(255,250,238,.55) !important}
 .ex2-paper b[style*="font-size:18px"]{color:#b23a26}`;document.head.append(s)}
 /* 十五格題名榜：級名直寫；目前那一級蓋「吾」印；80% 範圍用朱筆括號；破紀錄在印外加朱圈 */
-function ex2BoardSVG(){const W=558,H=385,n=15,cw=W/n,qt=store.get("quizTheta",null),best=store.get("quizBest",null);
+function ex2BoardSVG(W0,H0){const W=W0||558,H=H0||385,n=15,cw=W/n,qt=store.get("quizTheta",null),best=store.get("quizBest",null);
   const tier=th=>Math.max(0,Math.min(n-1,Math.round(th/.55+7)));
   let g="";for(let i=1;i<n;i++)g+=`<line x1="${(i*cw).toFixed(1)}" y1="6" x2="${(i*cw).toFixed(1)}" y2="${H-6}" stroke="rgba(60,40,24,.55)" stroke-width="1.1"/>`;
   g+=EX2_RK.map((r,i)=>`<text x="${(i*cw+cw/2).toFixed(1)}" y="26" style="writing-mode:vertical-rl;text-orientation:upright" text-anchor="start" font-size="17" font-weight="800" letter-spacing="1" fill="#2a1d12" font-family="var(--kai,serif)">${esc(r)}</text>`).join("");
@@ -53,9 +53,13 @@ function ex2Mount(v){if(!EXAM_MAP_ON||v.querySelector(".ex2-page"))return;const 
   const pad=v.querySelector(".pad");v.insertBefore(P,pad||v.firstChild);
   if(intro)for(const[id,sel]of EX2_SCROLL){const b=P.querySelector("#"+id);if(b)b.onclick=()=>{const t=v.querySelector(sel);if(t)t.click()}}
   P.querySelector("#ex2Book").onclick=()=>ex2Books();
-  /* 題名榜擺在哪：原圖照 EX2_BOARD（像素 768×1376）；橫式圖照條目 fx.board（像素＝條目 w×h） */
-  const brd=()=>{const e=typeof scwCur==="function"?scwCur(P):null,B=e&&e.fx&&e.fx.board?e.fx.board:EX2_BOARD,W=e&&e.fx&&e.fx.board?e.w:768,H=e&&e.fx&&e.fx.board?e.h:1376,[bl,bt,br,bb]=B,d=P.querySelector(".ex2-board");
-    if(d)Object.assign(d.style,{left:(bl/W*100).toFixed(2)+"%",top:(bt/H*100).toFixed(2)+"%",width:((br-bl)/W*100).toFixed(2)+"%",height:((bb-bt)/H*100).toFixed(2)+"%"})};
+  /* 題名榜擺在哪：原圖照 EX2_BOARD（長方形，像素 768×1376）；橫式圖照條目 fx.boardQ 的四角（榜在側牆上有透視，用 07sw scwM3 貼上去；方塊照榜面大約的寬高畫，字才不會被壓扁） */
+  const brd=()=>{const e=typeof scwCur==="function"?scwCur(P):null,Q=e&&e.fx&&e.fx.boardQ,d=P.querySelector(".ex2-board");if(!d)return;
+    if(Q&&typeof scwM3==="function"){const k=P.clientWidth/e.w;if(!k)return;const W0=480,H0=540,q=Q.map(([x,y])=>[x*k,y*k]);
+      if(d.dataset.q!=="1"){d.innerHTML=ex2BoardSVG(W0,H0);d.dataset.q="1"}Object.assign(d.style,{left:"0",top:"0",width:W0+"px",height:H0+"px",transformOrigin:"0 0",transform:scwM3(W0,H0,q)});return}
+    const[bl,bt,br,bb]=EX2_BOARD;if(d.dataset.q==="1"){d.innerHTML=ex2BoardSVG();delete d.dataset.q}
+    Object.assign(d.style,{left:(bl/7.68).toFixed(2)+"%",top:(bt/13.76).toFixed(2)+"%",width:((br-bl)/7.68).toFixed(2)+"%",height:((bb-bt)/13.76).toFixed(2)+"%",transformOrigin:"",transform:""})};
+  if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}brd()});ro.observe(P)}
   const cfg=Object.assign({},SHW_PG0,SHW_EX2);let cfgNow=cfg;
   if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:["ex2S0","ex2S1","ex2S2","ex2Book"],pfx:"ex2",cfg0:cfg,apply:brd};scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}}
   brd();

@@ -27,13 +27,14 @@ const SCW={
     fx:{bookText:[51,70.4],stackBase:[19.5,54.9],stackStep:1.6,bookW:10,censer:[61.2,66.4]},
     sw7:{m:"semi",sky:[[[512,78],[2020,78],[2020,830],[512,830]]],fg:null,tr:null}},
   /* 棋力測驗（07y9）經典世界白天：output/w107-ipad/l1610/exammap/exam_day_classic_l1610.json。S 的三份卷子是標籤位置（中間那份照原圖放高一排）；
-     fx.board＝題名榜榜面（左、上、右、下，像素 2560×1600）；這一頁 07w7 原本就歸室內，不寫天氣範圍 */
+     fx.boardQ＝題名榜榜面的四角（左上、右上、右下、左下，像素 2560×1600；榜在側牆上有透視，右邊比左邊短，
+     11/25 開發者截圖「左邊上面的棋力字都跑掉了」：原本當長方形擺，級名跑出框外，改成照四角貼）；這一頁 07w7 原本就歸室內，不寫天氣範圍 */
   "exammap/exam_day_classic":{ready:true,f:"exammap/exam_day_classic_l1610",w:2560,h:1600,
     S:{ex2S0:[40,53.6],ex2S1:[51,50],ex2S2:[61.5,53.6],ex2Book:[80.8,54.1]},exit:[14,92],
     safe:{l:.12,r:.12,t:.05,b:.10},
     walk:{W:2560,H:1600,el:40,h:[.126,95,.004],look0:[51,62],home:"home",N:{home:[50,97],altar:[50,93],rgt:[80,92]},E:"home-altar altar-rgt",
       HS:{ex2S0:["altar",51,62,"bow"],ex2S1:["altar",51,62,"bow"],ex2S2:["altar",51,62,"bow"],ex2Book:["rgt",81,60,"idle"]}},
-    fx:{board:[205,123,681,696]}},
+    fx:{boardQ:[[201,122],[682,195],[682,666],[201,707]]}},
   /* 挑戰電腦（07z5）經典世界白天：output/w107-ipad/l1610/cpuroom/。沒有走路路網；fx：掌櫃幻影（下緣離圖底、寬，都是圖的 %，照椅背高度換算）、名牌上緣、說明卡上緣和左右留白（圖變寬，卡片不拉滿） */
   "cpuroom/cpuroom_day_classic":{ready:true,f:"cpuroom/cpuroom_day_classic_l1610",w:2560,h:1600,
     S:{crRank:[26,30],crScroll:[74,34],crBlind:[84,47],crRankT:[15,50],crFree:[86,61],crRed:[34,68],crGo:[49,74],crBlack:[65,69]},exit:[50,96],
@@ -93,6 +94,10 @@ function scwWalk(P,e){const o=P._scw;if(!o||!o.cfg0)return;const key=e?"l":"";if
 function scwSync(V,P){const o=P&&P._scw;if(!o||!V)return null;const k=scwPick(V,P,o.key),cur=P.dataset.scw||"";
   if(k!==cur){scwSet(P,k);return"wait"}
   scwPlace(P);if(!k)return null;const im=P.querySelector(":scope>img");if(!im||!im.complete||!im.naturalWidth)return"wait";return k}
+/* 把 w×h 的方塊貼到四角 q（左上、右上、右下、左下，圖框內的 px）上的 CSS transform（transform-origin 要 0 0；跟 07y5 tdM3 同一套） */
+function scwM3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
+  const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
+  return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${x0},${y0},0,1)`}
 const scwSafe=P=>{const e=scwCur(P);return e&&e.safe||null};
 /* 07w7 sw7Page 遇到橫式圖：不是登記表裡的（例如首頁 home_l1610）回 undefined，照原本找；是的話條目有 sw7 用它，沒有就不下雨雪 */
 function scwSw7(src,base){const f=scwKey(src);if(!f)return undefined;for(const key in SCW){const e=SCW[key];if(e.f!==f)continue;const o=base("data/"+key+".webp");if(!o)return null;
