@@ -26,6 +26,7 @@ const CLASSIFIED = new Set([
   "test-jh-maze-lore-content-1124.js",   /* 11/24 兵卒、飛相迷宮的碑刻內容與像素材質：件數跟地圖 L 一致、中英文齊、走過去讀得到、順序對（m/07z9m-pawn.js、07z9m-elephant.js；行為，每派 1 項） */
   "test-legend-wording-1124.js",   /* 11/24 開發者截圖：石桌往事第二回「她去掰」看不懂，改寫；正本放 source/xiangqi-db/park-legend.json（混合 1） */
   "test-legend-wording-1124.js",   /* 11/24 開發者截圖：石桌往事第二回「她去掰」和三題記盤題（第 4、7、10 步，寫明是哪一步吃掉的那顆）改寫；正本放 source/xiangqi-db/park-legend.json（混合 1） */
+  "test-theme-note-1124.js",   /* 11/24 開發者截圖：主題訓練等對局頁的說明框不再跟空白 div 平分高度、不用捲（m/07-legend.js；原始碼 1，版面在瀏覽器量過） */
   "test-newjourney-entry-1116.js",   /* 11/16 開發者「目前已經沒辦法新的旅程了嗎 假設有其他玩家想重玩的話 應該還是要跟存檔讀檔的格子」：存檔與讀檔面板最下面補一顆不管幾格有存檔都在的「開始新的旅程」，開選格頁（m/05b-save.js saveList）（行為 4、原始碼 2；11/16 加「回開頭畫面」） */
   "test-xiu-scene-1116.js",   /* 11/16 開發者「找gemini繪製環景圖 關於這一頁，按照天文專家的判斷」：二十八宿星圖頁改滿版圖＋程式畫的二十八宿 */
   "test-weather-align-1116.js",   /* 11/16 開發者「這邊的天氣錯了，要跟首頁對齊天氣」：雲河的地方（船艙、驛站、航線圖、甲板）跟首頁同一個天氣地區 */
