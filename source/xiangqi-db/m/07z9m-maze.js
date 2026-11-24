@@ -29,14 +29,14 @@ const JH_MZ_MAP=[
 "######.########",
 "#C...........C#",
 "#.#L#.###.###.#",
-"#.#T......#...#",
-"#.#.SS.S..#.#.#",
-"#...S...T...#.#",
-"###.##L##.###.#",
-"#.....#.....#.#",
-"#.S.#.#.#.S...#",
-"#...#...#.....#",
-"###.#####.##L##",
+"#.#...#T..#LH.#",
+"#.###.###.###.#",
+"#...#...#...#.#",
+"###.#S###.#L#.#",
+"#...#.....#...#",
+"#.#.#.S.#.#.#.#",
+"#.#...#...#.#.#",
+"###.#####.#####",
 "#T.........T..#",
 "#.....@.......#",
 "###############"];
@@ -87,8 +87,9 @@ JH_MZ_KIND.rook={
   look:{body:"#151515",head:"#222222",eye:0xE24A3A}};
 /* 中炮門第一層「廢棄漕倉」：上面那幾個常數就是它的設定（測試照舊讀 JH_MZ_MAP、JH_MZ_PUZ…） */
 jhMzDef("central",{map:JH_MZ_MAP,guards:[Object.assign({kind:"rook",dy:0},JH_MZ_GUARD)],puz:JH_MZ_PUZ,pool:JH_MZ_POOL_CENTRAL,jump:"S",key:"jhMaze",xpKey:"maze:1",
-  /* W87：三件碑刻 L 放在原本是牆的格子（擋路、擋光照舊跟牆一樣，走法、視線都不變）；整張改迷路版排在禮拜四送審之後 */
-  solid:"#SDL",opaque:"#DL",
+  /* W87（11/24 開發者：「把中炮門地圖整張改成迷路版延到送審之前」）：第 13～20 列改成迷路的地窖——彎繞的岔路、好幾條死路、兩處糧袋跳躍捷徑；
+     暗門 H（14 列 12 行）後面藏一塊碑刻；三件碑刻 L 由上到下對應 lore 的順序。石門、踏板、暗匪廊道、起點這些既有測試綁住的部分都不動 */
+  solid:"#SDLH",opaque:"#DLH",
   /* W87b 像素材質（11/24 開發者選「重出」的新版：Gemini 直接畫像素、48 色、無損 webp，Windows Claude 2 出圖）：只放 CDN（data/maze/tex/），載不到就用程式畫的；牆頂照舊程式畫 */
   tex:{floor:"data/maze/tex/central_floor.webp",side:"data/maze/tex/central_wall.webp"},
   /* 碑刻文書（11/24 Gemini 查史料、iMac Claude 1 複核，Windows Claude 1 照複核改寫；出處照實寫哪些是史料、哪些是遊戲整理）。
@@ -96,12 +97,12 @@ jhMzDef("central",{map:JH_MZ_MAP,guards:[Object.assign({kind:"rook",dy:0},JH_MZ_
   lore:[{id:"cc1",kind:"doc",title:["常盈倉收糧告示","Notice from the Changying Granary"],
       body:["告示寫著淮安常盈倉收漕糧的規矩：糧船到倉，驗糧的官員先看米糧乾不乾、有沒有摻沙土雜質；受潮或成色不好的退回去重曬、重碾，合格的才准進倉。","The notice sets out how the Changying Granary in Huai'an took in tribute grain: when a grain boat arrived, officials first checked whether the grain was dry and free of sand. Damp or poor grain was sent back to be dried or milled again; only good grain went into the granary."],
       src:"常盈倉是明代淮安的漕運轉運倉；驗收細節是遊戲依明代漕規概括，告示本身是遊戲虛構"},
-    {id:"cc2",kind:"stele",title:["倉廒防潮碑","Stele on keeping granaries dry"],
-      body:["碑上記著修倉的做法：倉底墊高、鋪木板，板下留空讓風通過；糧堆四周鋪蘆蓆、塞糠粃，擋住地氣和老鼠，漕糧才能久放不壞。","The stele records how granaries were kept: raise the floor, lay planks with an air gap beneath, and line the grain heaps with reed mats packed with chaff to keep out ground damp and rats, so the grain would keep for years."],
-      src:"明代官倉常見的防潮做法；碑文是遊戲整理改寫，不是特定碑刻的原文"},
     {id:"cc3",kind:"slip",title:["監守自盜律","The law on stealing what you guard"],
       body:["殘簡抄著《大明律》的條文：看守倉庫的人偷盜錢糧，不分主犯從犯，合計贓物定罪，還要在右小臂刺上字；偷得多的，可以判死罪。","The slip copies an article of the Great Ming Code: a granary keeper who stole money or grain was judged on the total taken, leader and helpers alike, and had words tattooed on the right forearm; a large theft could mean death."],
-      src:"《大明律・刑律・賊盜》「監守自盜倉庫錢糧」條；文字是遊戲改寫"}],
+      src:"《大明律・刑律・賊盜》「監守自盜倉庫錢糧」條；文字是遊戲改寫"},
+    {id:"cc2",kind:"stele",title:["倉廒防潮碑","Stele on keeping granaries dry"],
+      body:["碑上記著修倉的做法：倉底墊高、鋪木板，板下留空讓風通過；糧堆四周鋪蘆蓆、塞糠粃，擋住地氣和老鼠，漕糧才能久放不壞。","The stele records how granaries were kept: raise the floor, lay planks with an air gap beneath, and line the grain heaps with reed mats packed with chaff to keep out ground damp and rats, so the grain would keep for years."],
+      src:"明代官倉常見的防潮做法；碑文是遊戲整理改寫，不是特定碑刻的原文"}],
   title:["🕳 地底漕倉","🕳 Underground granary"],lvName:["地底漕倉・第一層","Underground granary · Level 1"],back:["回中炮門","Back to the Central Cannon School"],
   hall:{at:[530,395],zh:"🕳 拋石車・地底密道",en:"🕳 Catapult · Hidden passage"},
   intro:["你從拋石車底下的暗門爬下來，四周一片漆黑。<b>點地面就會走過去</b>，也可以用下面的方向鈕。走到壁燈旁邊會點亮它。","You climb down through the hatch under the catapult into pitch darkness. <b>Tap the floor to walk there</b>, or use the arrows below. Walk next to a wall lamp to light it."],
@@ -164,9 +165,12 @@ const jhMzRM=()=>{try{return!!(window.matchMedia&&matchMedia("(prefers-reduced-m
 function jhMzFlick(now,seed,rm){if(rm)return 1;const h=i=>{const q=Math.sin(i*127.1+seed*311.7)*43758.5453;return q-Math.floor(q)};
   const k=Math.floor(now/180+seed*13),r=h(k),dip=r<.04?.55:r<.1?.8:1;return dip*(1+Math.sin(now/170+seed)*.05+Math.sin(now/53+seed*2)*.03)}
 /* 像素材質：lv.tex＝{floor, side, top}（網址）；載得到就換上（最近點取樣、不做 mipmap、一格對應整張圖一次），載不到就留著程式畫的那張 */
-function jhMzTexLoad(T3,url,mat,texs){if(!url||!T3||!T3.TextureLoader||!mat)return false;
+/* W106（11/24 iMac Claude 2 預驗 #139 發現）：TextureLoader 用不掛在頁面上的 img 載圖，沒有 service worker 的網頁版走不到 00-util 的 CDN 補抓，
+   材質還沒進網站時一律退回程式畫的磚紋。比照 #129 掉入迷宮轉場：同源載不到，就改向 XQ_CDN＋xqCdnRel 要一次（cdn＝1 是第二次，不再重試） */
+function jhMzTexLoad(T3,url,mat,texs,cdn){if(!url||!T3||!T3.TextureLoader||!mat)return false;
+  const retry=()=>{if(cdn)return;try{const r=typeof xqCdnRel==="function"&&xqCdnRel(url);if(r&&typeof XQ_CDN==="string")jhMzTexLoad(T3,XQ_CDN+r,mat,texs,1)}catch(e){}};
   try{new T3.TextureLoader().load(url,t=>{t.magFilter=T3.NearestFilter;t.minFilter=T3.NearestFilter;t.generateMipmaps=false;if(t.wrapS!=null){t.wrapS=t.wrapT=T3.ClampToEdgeWrapping}if(t.repeat&&t.repeat.set)t.repeat.set(1,1);
-    if(T3.sRGBEncoding!=null)t.encoding=T3.sRGBEncoding;const old=mat.map;mat.map=t;mat.needsUpdate=true;if(texs)texs.push(t);if(old&&old.dispose&&(!texs||!texs.includes(old)))old.dispose()},undefined,()=>{})}catch(e){return false}return true}
+    if(T3.sRGBEncoding!=null)t.encoding=T3.sRGBEncoding;const old=mat.map;mat.map=t;mat.needsUpdate=true;if(texs)texs.push(t);if(old&&old.dispose&&(!texs||!texs.includes(old)))old.dispose()},undefined,retry)}catch(e){return false}return true}
 async function jhMzWorld3(box,c,S){
   if(typeof loadScript!=="function")throw 0;const off=typeof OFF!=="undefined"&&OFF;
   await loadScript(off?"three.min.js":"/m/three.min.js");await loadScript((off?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));

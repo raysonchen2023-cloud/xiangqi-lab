@@ -582,3 +582,136 @@ test("仙人指路：連續被逮不會出同一題；開石門照第幾次走�
   const S2 = c.jhMzNew("pawn", 1, p); c.jhMzEncounter(S2, "trap"); assert.notEqual(c.jhMzPuz(S2, "trap").fen, seen[N - 1], "換一輪的第一題不跟上一輪最後一題一樣");
   assert.ok(c.JH_MZ_LV.pawn && c.JH_MZ_LV.pawn.hall, "有門內頁入口");
 });
+
+/* ---------- W87b 暗門（H）與碑刻、殘簡、文書（L）（m/07z9m-lore.js，iMac Claude 1）---------- */
+const LORE_SRC = fs.readFileSync(path.join(ROOT, "xiangqi-db", "m", "07z9m-lore.js"), "utf8");
+function loadL() {
+  const mem = {}, c = {
+    store: { get: (k, d) => (k in mem ? JSON.parse(mem[k]) : d), set: (k, v) => { mem[k] = JSON.stringify(v) } },
+    jhL: (zh) => zh, esc: (s) => String(s), addXP() {}, xqFlag: () => true, Math, JSON, Set, Map, Number, String, Array, Object, Float32Array, Date,
+  };
+  c.location = { hash: "" };
+  const MAP = ["#########", "#@..H..>#", "#.#####.#", "#.L...L.#", "#########"];
+  vm.createContext(c);
+  vm.runInContext(SRC + "\n" + LORE_SRC + `;jhMzDef("lt",{map:${JSON.stringify(MAP)},guards:[],lore:[{id:"a1",kind:"stele",title:["倉廒防潮","Keeping granaries dry"],body:["碑上刻著…","The stele reads…"],src:"測試"}]});
+    this.JH_MZ_LV=JH_MZ_LV;this.JH_MZ_OBJ=JH_MZ_OBJ;this.JH_MZ_TILE=JH_MZ_TILE;`, c);
+  return { c, mem };
+}
+const loreS = (c) => { const S = c.jhMzNew("lt"); for (let i = 0; i < S.W * S.H; i++) S.seen.add(i); return S };
+
+test("暗門 H：擋路、擋視線；朝它走第一次只提醒（不算回合、不開），第二次推開變成地面，之後走得過去", () => {
+  const { c } = loadL(), S = loreS(c); S.player.x = 3; S.player.y = 1; const t0 = S.turn;
+  const e1 = c.jhMzStep(S, 1, 0); assert.equal(e1.ev, "bump"); assert.match(e1.msg[0], /空空的/); assert.equal(S.turn, t0, "不算回合"); assert.equal(S.grid[1][4], "H", "還沒開");
+  const e2 = c.jhMzStep(S, 1, 0); assert.equal(e2.ev, "secret"); assert.equal(S.grid[1][4], ".", "推開了"); assert.equal(S.player.x, 3, "推門這一下人沒動");
+  assert.equal(c.jhMzStep(S, 1, 0).ev, "move"); assert.equal(S.player.x, 4, "之後走得過去");
+  const T = loreS(c); assert.ok(c.jhMzSolid(T, 4, 1) && c.jhMzOpaque(T, 4, 1), "沒開的暗門擋路也擋視線");
+  assert.ok(!c.jhMzLos(T, 3, 1, 5, 1), "視線穿不過暗門");
+});
+
+test("碑刻 L：擋路；朝它走就跳卡片講一段歷史，第一次讀記進收藏 jhMzLore（每派分開、不重複記）；沒寫內容的用通用的話", () => {
+  const { c, mem } = loadL(), S = loreS(c); S.player.x = 3; S.player.y = 3;
+  const e = c.jhMzStep(S, -1, 0); assert.equal(e.ev, "lore"); assert.equal(e.id, "a1"); assert.ok(e.first);
+  assert.match(e.card.title[0], /碑刻・倉廒防潮/); assert.match(e.card.body[0], /碑上刻著/); assert.match(e.card.body[0], /出處：測試/); assert.ok(e.msg, "第一次有收進收藏的提示");
+  assert.equal(S.player.x, 3, "碑擋路，人沒動"); assert.equal(S.grid[3][2], "L", "碑還在");
+  assert.deepEqual(Object.keys(JSON.parse(mem.jhMzLore).lt), ["a1"]);
+  const again = c.jhMzStep(S, -1, 0); assert.equal(again.first, false, "再讀不重複記"); assert.equal(again.msg, null); assert.ok(again.card, "照樣跳卡片");
+  S.player.x = 5; const d = c.jhMzStep(S, 1, 0); assert.equal(d.id, "l1", "第二塊沒寫內容：照順序給 l1"); assert.match(d.card.body[0], /看不清/);
+  assert.deepEqual(Object.keys(c.jhMzLoreSeen("lt")).sort(), ["a1", "l1"]); assert.equal(Object.keys(c.jhMzLoreSeen("central")).length, 0, "別派沒記");
+});
+
+test("包住每一派：已經登記的（中炮門）和之後才登記的都包；原本的 onStep 照樣會被呼叫；H、L 都進 solid，H 進 opaque", () => {
+  const { c } = loadL();
+  for (const sid of ["central", "lt"]) { const lv = c.JH_MZ_LV[sid]; assert.ok(lv._lore, sid); assert.ok(/H/.test(lv.solid) && /L/.test(lv.solid) && /H/.test(lv.opaque), sid) }
+  assert.ok(!/L/.test(c.JH_MZ_LV.lt.opaque), "沒特別設定的派：碑不擋視線（中炮門 #110 刻意讓碑擋視線，照該派自己的設定，lore.js 不改）");
+  let called = 0; c.jhMzDef("lt2", { map: ["#####", "#@Q>#", "#####"], guards: [], solid: "#Q", onStep: (S, dx, dy, ch) => (ch === "Q" ? (called++, { ev: "wall" }) : null) });
+  const S = c.jhMzNew("lt2"); assert.equal(c.jhMzStep(S, 1, 0).ev, "wall"); assert.equal(called, 1, "原本的 onStep 照樣被呼叫");
+  assert.equal(typeof c.JH_MZ_OBJ.H, "function"); assert.equal(typeof c.JH_MZ_OBJ.L, "function"); assert.equal(typeof c.JH_MZ_TILE.L, "function");
+});
+
+test("收藏讀檔容錯：存了奇怪的值（陣列、字串、null）都當作空的，不會壞", () => {
+  for (const bad of [[], "x", null, 3]) { const { c, mem } = loadL(); mem.jhMzLore = JSON.stringify(bad); assert.equal(Object.keys(c.jhMzLoreSeen("lt")).length, 0); const S = loreS(c); S.player.x = 3; S.player.y = 3; assert.equal(c.jhMzStep(S, -1, 0).first, true) }
+});
+
+test("暗門 H（#115 審查後續）：被拖回入口（jhMzReset 不是全新）後，推開過的暗門維持打開；沒推開的照樣要推兩次、提示照舊；全新開局清掉紀錄", () => {
+  const { c } = loadL(), S = loreS(c); S.player.x = 3; S.player.y = 1;
+  c.jhMzStep(S, 1, 0); c.jhMzStep(S, 1, 0); assert.equal(S.grid[1][4], ".", "推開了");
+  c.jhMzReset(S, false); assert.equal(S.grid[1][4], ".", "拖回入口：找到的暗門還開著");
+  const T = loreS(c); T.player.x = 3; T.player.y = 1;
+  assert.equal(c.jhMzStep(T, 1, 0).ev, "bump"); c.jhMzReset(T, false); T.player.x = 3; T.player.y = 1;
+  assert.equal(T.grid[1][4], "H", "只推過一次的暗門，拖回入口後還是關著");
+  assert.equal(c.jhMzStep(T, 1, 0).ev, "secret", "推過一次的紀錄留著：再推一次就開（跟拖回之前一樣）");
+  c.jhMzReset(T, true); T.player.x = 3; T.player.y = 1; assert.equal(T.grid[1][4], "H", "全新開局：暗門關上"); assert.deepEqual(Object.keys(T.hBump).length, 0); assert.equal(T.hOpen.length, 0);
+  assert.equal(c.jhMzStep(T, 1, 0).ev, "bump", "全新開局：第一次推照樣只提醒");
+});
+
+/* ---------- W87 飛相第一層「水淹考棚」（m/07z9m-elephant.js，iMac Claude 1）---------- */
+const ELE_SRC = fs.readFileSync(path.join(ROOT, "xiangqi-db", "m", "07z9m-elephant.js"), "utf8");
+function loadE() {
+  const mem = {}, c = {
+    store: { get: (k, d) => (k in mem ? JSON.parse(mem[k]) : d), set: (k, v) => { mem[k] = JSON.stringify(v) } },
+    jhL: (zh) => zh, esc: (s) => String(s), addXP() {}, xqFlag: () => true, Math, JSON, Set, Map, Number, String, Array, Object, Float32Array,
+  };
+  c.location = { hash: "" };
+  vm.createContext(c); vm.runInContext(SRC + "\n" + ELE_SRC + ";this.JH_MZ_ELE_POOL=JH_MZ_ELE_POOL;this.JH_MZ_ELE_MAP=JH_MZ_ELE_MAP;this.JH_MZ_KIND=JH_MZ_KIND;this.JH_MZ_LV=JH_MZ_LV;", c);
+  return c;
+}
+const eMv = (B, [f, t]) => { const n = B.slice(); n[t] = n[f]; n[f] = null; return n };
+const bMates = (B) => C.legal(B, "b").filter((m) => { const n = eMv(B, m); return C.inCheck(n, "r") && C.legal(n, "r").length === 0 });
+
+test("飛相題庫（解殺題）：開石門 3 題以上、被逮 5 題以上、kind 都是 defend、局面不重複；黑方真的有一步殺的威脅，紅方只有解答那一步解得了，開石門的一律是飛相解殺（core.js 重算）", () => {
+  const P = loadE().JH_MZ_ELE_POOL;
+  assert.ok(P.door.length >= 3 && P.trap.length >= 5);
+  const all = P.door.concat(P.trap); assert.equal(new Set(all.map((x) => x.fen)).size, all.length, "局面不重複");
+  for (const Q of all) {
+    const B = C.parseFen(Q.fen).slice(0, 90), id = Q.fen;
+    assert.equal(Q.kind, "defend", id); assert.equal(Q.line.length, 1, id + " 解殺題只有一手");
+    assert.ok(!C.inCheck(B, "r") && !C.inCheck(B, "b"), id + " 開局雙方都沒被將");
+    assert.ok(bMates(B).length > 0, id + " 紅方不動的話，黑方有一步殺（威脅是真的）");
+    assert.ok(!C.legal(B, "r").some((m) => { const n = eMv(B, m); return C.inCheck(n, "b") && C.legal(n, "b").length === 0 }), id + " 紅方不能一步反殺（那就不是解殺題）");
+    const safe = C.legal(B, "r").filter((m) => bMates(eMv(B, m)).length === 0);
+    assert.deepEqual(safe.map(toIccs), [...Q.line], id + " 只有解答這一步解得了圍");
+  }
+  for (const Q of P.door) { const B = C.parseFen(Q.fen); const f = "abcdefghi".indexOf(Q.line[0][0]) + (9 - +Q.line[0][1]) * 9; assert.equal(B[f], "B", Q.fen + " 開石門的是飛相解殺") }
+});
+
+test("飛相題庫改壞：解答換成別的合法著法，重算黑方照樣殺得到（重算真的有在比）", () => {
+  const Q = loadE().JH_MZ_ELE_POOL.door[0], B = C.parseFen(Q.fen).slice(0, 90);
+  const other = C.legal(B, "r").find((m) => toIccs(m) !== Q.line[0]); assert.ok(bMates(eMv(B, other)).length > 0);
+});
+
+test("飛相地圖：每行一樣寬、外框是牆；一個起點、石門、樓梯、踏板、三個箱子、四盞以上壁燈、積水、考箱、暗門、三件碑刻；從起點走得到踏板、箱子、石門旁邊；起點不在相的紅格上", () => {
+  const c = loadE(), M = c.JH_MZ_ELE_MAP, W = M[0].length, cnt = (ch) => M.join("").split(ch).length - 1;
+  for (const r of M) { assert.equal(r.length, W); assert.ok(r[0] === "#" && r[W - 1] === "#") }
+  assert.deepEqual([cnt("@"), cnt("D"), cnt(">"), cnt("P"), cnt("C"), cnt("L")], [1, 1, 1, 1, 3, 3]); assert.ok(cnt("T") >= 4 && cnt("W") >= 6 && cnt("X") >= 3 && cnt("H") >= 1);
+  const S = c.jhMzNew("elephant"), D = new Set([S.start.y * W + S.start.x]), q = [[S.start.x, S.start.y]];
+  while (q.length) { const [x, y] = q.shift(); for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + a, ny = y + b, k = ny * W + nx; if (D.has(k) || c.jhMzSolid(S, nx, ny) || M[ny][nx] === ">") continue; D.add(k); q.push([nx, ny]) } }
+  const at = (ch) => { const o = []; M.forEach((r, y) => [...r].forEach((v, x) => { if (v === ch) o.push(y * W + x) })); return o };
+  assert.ok(at("P").every((k) => D.has(k)) && at("C").every((k) => D.has(k)), "走得到踏板、箱子");
+  const [d] = at("D"); assert.ok([1, -1, W, -W].some((o) => D.has(d + o)), "走得到石門旁邊");
+  for (const k of at("H")) assert.ok(c.jhMzSolid(S, k % W, (k - k % W) / W) && c.jhMzOpaque(S, k % W, (k - k % W) / W), "暗門擋路擋視線");
+  assert.ok(!S.guards.some((G) => c.jhMzSight(S, G).some((p) => p.x === S.start.x && p.y === S.start.y)), "起點不在紅格上");
+});
+
+test("巡場的相：只走田字；象眼被擋就不往那邊飛；不落在水裡；看得到的＝下一步的落點，玩家站上去就被逮，塞住象眼就沒事", () => {
+  const c = loadE(), K = c.JH_MZ_KIND.elephant;
+  const S = c.jhMzNew("elephant"); S.guards = [S.guards[0]]; const G = S.guard = S.guards[0]; G.x = 6; G.y = 8; G.dx = 1; G.dy = 1;
+  for (let y = 6; y <= 12; y++) for (let x = 2; x <= 12; x++) S.grid[y][x] = ".";
+  const L0 = [...K.sight(S, G).map((p) => p.x + "," + p.y)].sort(); assert.deepEqual(L0, ["4,10", "4,6", "8,10", "8,6"], "四個田字落點");
+  for (let i = 0; i < 12; i++) { const x0 = G.x, y0 = G.y; K.step(S, G); assert.ok(Math.abs(G.x - x0) === 2 && Math.abs(G.y - y0) === 2, "每一步都是田字"); }
+  G.x = 6; G.y = 8; S.grid[9][7] = "X"; assert.ok(!K.sight(S, G).some((p) => p.x === 8 && p.y === 10), "象眼塞住：那個方向沒有威脅");
+  S.grid[9][7] = "."; S.grid[10][8] = "W"; assert.ok(!K.sight(S, G).some((p) => p.x === 8 && p.y === 10), "落點是水：相不下水");
+  S.grid[10][8] = "."; S.player.x = 8; S.player.y = 10; assert.ok(c.jhMzCaught(S), "站在落點上被逮");
+  S.grid[9][7] = "X"; assert.ok(!c.jhMzCaught(S), "塞住象眼就沒事");
+  const T = c.jhMzNew("elephant"); T.guards = [T.guards[0]]; const g = T.guard = T.guards[0]; g.x = 6; g.y = 8;
+  for (let y = 6; y <= 10; y++) for (let x = 4; x <= 8; x++) T.grid[y][x] = (x === 5 || x === 7) && (y === 7 || y === 9) ? "X" : ".";
+  K.step(T, g); assert.deepEqual([g.x, g.y], [6, 8], "四個象眼都塞住：原地不動");
+});
+
+test("推考箱：往箱子走、後面是空地就推過去（人跟著走一格、算一回合）；後面是牆、水、別的箱子、或相站著都推不動（不算回合）", () => {
+  const c = loadE(), S = c.jhMzNew("elephant"); S.guards.forEach((G) => { G.stun = 99 });
+  for (let x = 2; x <= 9; x++) S.grid[8][x] = "."; S.grid[8][4] = "X"; S.player.x = 3; S.player.y = 8; const t0 = S.turn;
+  const e = c.jhMzStep(S, 1, 0); assert.notEqual(e.ev, "wall"); assert.equal(S.grid[8][5], "X", "箱子推過去"); assert.equal(S.grid[8][4], "."); assert.equal(S.player.x, 4, "人跟著走"); assert.equal(S.turn, t0 + 1, "算一回合");
+  for (const block of ["#", "W", "X"]) { S.grid[8][6] = block; const t1 = S.turn; const r = c.jhMzStep(S, 1, 0); assert.equal(r.ev, "wall", "後面是 " + block + " 推不動"); assert.equal(S.grid[8][5], "X"); assert.equal(S.player.x, 4); assert.equal(S.turn, t1) }
+  S.grid[8][6] = "."; S.guards[0].x = 6; S.guards[0].y = 8; assert.equal(c.jhMzStep(S, 1, 0).ev, "wall", "相站在箱子後面也推不動");
+  assert.equal(c.JH_MZ_LV.elephant.dyn, "X", "考箱是會動的物件（3D 每一幀照格子擺）");
+});

@@ -64,6 +64,10 @@ final class XQBridgeViewController: CAPBridgeViewController {
         let server = XQLoopbackServer.shared
         server.configure(root: descriptor.appLocation)
         descriptor.serverURL = server.origin
+        #if targetEnvironment(simulator)
+        // 開發者 11/24「開工單從程式上擋」：模擬器裡的 App 在識別字串多帶 XQSim/1，網頁的卡住紀錄（m/05b-save.js stkTestEnv）看到就不送；真機不變
+        descriptor.appendedUserAgentString = (descriptor.appendedUserAgentString ?? "XQQianqiuApp/1") + " XQSim/1"
+        #endif
         NSLog("[XQ] 網頁來源：%@（本機伺服器驗證通過才載入）", server.origin)
         return descriptor
     }
@@ -107,6 +111,34 @@ final class XQBridgeViewController: CAPBridgeViewController {
         phase = .starting
         retryIndex = 0
         runCheck()
+    }
+
+    // MARK: - iPad 視窗控制鈕
+
+    /// B5（11/24 iMac Claude 2 的 iPad 相容模式驗收）：iPadOS 26 起，App 在 iPad 上是一個視窗，左上角有視窗控制鈕（紅黃綠三點），
+    /// 會蓋在網頁頂欄的「‹ 回…」返回鈕上（字被擋住，點那一塊可能點到視窗控制）。
+    /// iPadOS 26 的 cornerAdaptation 安全區域會讓開這種角落的系統元件：用它算出比一般安全區域多出來的高度，加進 additionalSafeAreaInsets.top，
+    /// 網頁頂欄本來就照 env(safe-area-inset-top)（m.css 的 --safeT）往下讓，所以不用改網頁。
+    /// iPhone、全螢幕的 iPad 沒有角落元件，多出來的是 0，畫面不變。算法收斂：加進去之後 cornerAdaptation 的值等於一般安全區域，差值不再變。
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        updateWindowControlsInset()
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        updateWindowControlsInset()
+    }
+
+    private func updateWindowControlsInset() {
+        guard #available(iOS 26.0, *) else { return }
+        let adapted = view.edgeInsets(for: .safeArea(cornerAdaptation: .vertical))
+        let base = view.safeAreaInsets.top - additionalSafeAreaInsets.top
+        let need = max(0, (adapted.top - base).rounded())
+        if abs(need - additionalSafeAreaInsets.top) >= 1 {
+            additionalSafeAreaInsets.top = need
+            NSLog("[XQ] 視窗控制鈕讓出頂部 %.0f pt", need)
+        }
     }
 
     // MARK: - 開伺服器＋驗證
