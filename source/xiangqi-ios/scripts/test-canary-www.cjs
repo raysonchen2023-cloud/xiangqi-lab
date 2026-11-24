@@ -6,6 +6,9 @@
 const test = require("node:test"), assert = require("node:assert/strict"), fs = require("fs"), os = require("os"), path = require("path"), crypto = require("crypto"), cp = require("child_process");
 const HERE = __dirname, CHECK = path.join(HERE, "check-www.js"), CANARY = path.join(HERE, "canary-www.js");
 const { toolSha, treeSha, picks, rng, run, OFFICIAL_CDN, KINDS, hit, runtimeTaint, cleanEnv } = require("./canary-www.js");
+/* 2026-11-24：CI 上這支偶爾卡住 40 分鐘被取消、擋住所有 PR。每個子程序最多 4 分鐘，卡住就讓那一項失敗、寫出卡在哪個指令，不要拖到整個工作被取消 */
+const spawnT = (cmd, args, o = {}) => { const r = cp.spawnSync(cmd, args, { timeout: 240000, killSignal: "SIGKILL", ...o });
+  if (r.error && r.error.code === "ETIMEDOUT") throw new Error("子程序超過 240 秒沒結束（卡住）：" + [cmd, ...args].map(String).join(" ").slice(0, 300)); return r };
 const made = [];
 test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }) });
 const tmp = (p) => { const d = fs.mkdtempSync(path.join(os.tmpdir(), p)); made.push(d); return d };
@@ -63,16 +66,16 @@ function fakeApp(D) {
 function fakeIpa(A) {
   const ipa = path.join(tmp("xq-fakeipa-"), "App.ipa");
   const py = "import os,sys,zipfile\nz=zipfile.ZipFile(sys.argv[2],'w')\nfor r,_,fs in os.walk(sys.argv[1]):\n  for f in fs:\n    p=os.path.join(r,f);z.write(p,os.path.join('Payload','App.app',os.path.relpath(p,sys.argv[1])))\nz.close()";
-  const r = cp.spawnSync("python3", ["-c", py, A, ipa], { encoding: "utf8" }); assert.equal(r.status, 0, r.stderr);
+  const r = spawnT("python3", ["-c", py, A, ipa], { encoding: "utf8" }); assert.equal(r.status, 0, r.stderr);
   return ipa;
 }
 /* 假的 origin/main：清單給 listBuf，兩支工具給目前的檔（over 可以換掉其中一個），@commit 給一個假的提交 */
 const mainOf = (listBuf, over = {}) => (rel) => (rel in over ? over[rel] : rel === "@commit" ? "c0ffee" : rel.endsWith(".www-files.json") ? (typeof listBuf === "function" ? listBuf() : listBuf) : fs.readFileSync(path.join(HERE, path.basename(rel))));
 /* 「check-www 自己 --cdn」的替身：真的跑 check-www，只把網址換成金絲雀下載好的那份本機清單（PR #67 第十二次審查：要比對「比了幾個檔」，不能只回 0） */
-const okCdn = (d, lf, ctx) => cp.spawnSync(process.execPath, [CHECK, "--dir", d, "--list", lf, "--cdn-manifest", ctx.cdnFile], { encoding: "utf8" });
-const runCheck = (dir, list, ...more) => cp.spawnSync(process.execPath, [CHECK, "--dir", dir, "--list", list, ...more], { encoding: "utf8" });
+const okCdn = (d, lf, ctx) => spawnT(process.execPath, [CHECK, "--dir", d, "--list", lf, "--cdn-manifest", ctx.cdnFile], { encoding: "utf8" });
+const runCheck = (dir, list, ...more) => spawnT(process.execPath, [CHECK, "--dir", dir, "--list", list, ...more], { encoding: "utf8" });
 /* PR #67 第十六次審查①：base-guard 每一步都帶 NODE_OPTIONS=--require assert-count.cjs；叫金絲雀時預設拿掉（只有測「環境被動過」那一項自己帶），不然在 guard-base 會回 2 */
-const runCanary = (canary, args, o = {}) => cp.spawnSync(process.execPath, [canary, ...args], { encoding: "utf8", env: env({ NODE_OPTIONS: null, ...o }) });
+const runCanary = (canary, args, o = {}) => spawnT(process.execPath, [canary, ...args], { encoding: "utf8", env: env({ NODE_OPTIONS: null, ...o }) });
 
 test("check-www.js：乾淨的假 www 全過；同大小換內容抓得到；--cdn 時 App 會要的檔跟 CDN 現行版不同會擋；讀不到 CDN 清單回 3（缺驗）", () => {
   const { D, L, M } = fakeWww();
@@ -302,7 +305,7 @@ test("check-www.js：清單讀不到（--list 打錯）回 3、不是只警告�
   const empty = path.join(tmp("xq-emptylist-"), "l.json"); fs.writeFileSync(empty, '{"files":{}}');
   r = runCheck(D, empty); assert.equal(r.status, 3, "清單是空的也算沒驗到");
   r = runCheck(D, L, "--cdn-manifest"); assert.equal(r.status, 1); assert.match(r.stderr, /--cdn-manifest 後面要接值/);
-  r = cp.spawnSync(process.execPath, [CHECK, "--dir", D, "--list"], { encoding: "utf8" }); assert.equal(r.status, 1); assert.match(r.stderr, /--list 後面要接值/);
+  r = spawnT(process.execPath, [CHECK, "--dir", D, "--list"], { encoding: "utf8" }); assert.equal(r.status, 1); assert.match(r.stderr, /--list 後面要接值/);
   r = runCanary(CANARY, ["--dir", D, "--list", L, "--cdn-manifest"]); assert.equal(r.status, 2); assert.match(r.stderr, /--cdn-manifest 後面要接值/);
   r = runCanary(CANARY, ["--dir", D, "--list", L, "--seed", "--cdn"]); assert.equal(r.status, 2);
   assert.doesNotMatch(fs.readFileSync(CANARY, "utf8"), /"--all"/, "金絲雀叫 check-www 跟正式用法一樣，不加 --all");
@@ -374,9 +377,9 @@ test("回 4（檢查失靈）或回 2（找不到可弄壞的檔）時 full 一�
 
 test("參數：--dir=X 的寫法要認；打錯的旗標報錯；--seed 不是數字回 2；大小寫要完全一樣；.ipa 有重複項目回 2（PR #67 第九次審查）", () => {
   const { D, L } = fakeWww();
-  let r = cp.spawnSync(process.execPath, [CHECK, "--dir=" + D, "--list=" + L], { encoding: "utf8" }); assert.equal(r.status, 0, r.stdout + r.stderr); assert.match(r.stdout, new RegExp("檢查 " + D.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  r = cp.spawnSync(process.execPath, [CHECK, "--dir", D, "--list", L, "--cnd"], { encoding: "utf8" }); assert.equal(r.status, 1); assert.match(r.stderr, /不認得的參數 --cnd/);
-  r = cp.spawnSync(process.execPath, [CHECK, "--dir=", "--list", L], { encoding: "utf8" }); assert.equal(r.status, 1, "--dir= 空的不能退回預設");
+  let r = spawnT(process.execPath, [CHECK, "--dir=" + D, "--list=" + L], { encoding: "utf8" }); assert.equal(r.status, 0, r.stdout + r.stderr); assert.match(r.stdout, new RegExp("檢查 " + D.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  r = spawnT(process.execPath, [CHECK, "--dir", D, "--list", L, "--cnd"], { encoding: "utf8" }); assert.equal(r.status, 1); assert.match(r.stderr, /不認得的參數 --cnd/);
+  r = spawnT(process.execPath, [CHECK, "--dir=", "--list", L], { encoding: "utf8" }); assert.equal(r.status, 1, "--dir= 空的不能退回預設");
   assert.equal(runCanary(CANARY, ["--dir", D, "--list", L, "--cnd"]).status, 2);
   assert.equal(runCanary(CANARY, ["--dir", D, "--list", L, "--seed", "abc"]).status, 2);
   assert.equal(runCanary(CANARY, ["--dir=" + D, "--list=" + L, "--only=home"]).status, 0);
@@ -386,7 +389,7 @@ test("參數：--dir=X 的寫法要認；打錯的旗標報錯；--seed 不是�
   /* .ipa 有兩筆同名項目 */
   const A = fakeApp(D), ipa = fakeIpa(A), dup = path.join(tmp("xq-dupipa-"), "d.ipa");
   const py = "import sys,zipfile\nz=zipfile.ZipFile(sys.argv[1]);o=zipfile.ZipFile(sys.argv[2],'w')\nfor i in z.infolist(): o.writestr(i, z.read(i))\ni=[x for x in z.infolist() if x.filename.endswith('public/zh.js')][0]; o.writestr(i.filename, b'/* other */')\no.close()";
-  const q = cp.spawnSync("python3", ["-W", "ignore", "-c", py, ipa, dup], { encoding: "utf8" }); assert.equal(q.status, 0, q.stderr);
+  const q = spawnT("python3", ["-W", "ignore", "-c", py, ipa, dup], { encoding: "utf8" }); assert.equal(q.status, 0, q.stderr);
   r = runCanary(CANARY, ["--pkg", dup, "--list", L, "--only", "home"]); assert.equal(r.status, 2, r.stdout + r.stderr); assert.match(r.stderr, /重複的檔名項目/);
 });
 
@@ -460,7 +463,7 @@ test("執行環境被動過（NODE_OPTIONS、node 參數）命令列回 2；chec
   fs.writeFileSync(evil, "/* 測試用 */\n");
   let r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"], { NODE_OPTIONS: "--require " + evil });
   assert.equal(r.status, 2, r.stdout + r.stderr); assert.match(r.stderr, /執行環境被動過/);
-  r = cp.spawnSync(process.execPath, ["--require", evil, CANARY, "--dir", D, "--list", L, "--only", "home", "--seed", "1"], { encoding: "utf8", env: env({ NODE_OPTIONS: null }) });
+  r = spawnT(process.execPath, ["--require", evil, CANARY, "--dir", D, "--list", L, "--only", "home", "--seed", "1"], { encoding: "utf8", env: env({ NODE_OPTIONS: null }) });
   assert.equal(r.status, 2, r.stdout + r.stderr); assert.match(r.stderr, /node 參數/);
   r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"], { NODE_OPTIONS: null });
   assert.equal(r.status, 0, r.stdout + r.stderr);
@@ -511,10 +514,12 @@ test("標籤中間隔了換行（真包的寫法）也做得出 cmtcap 壞樣本
 test("W30：大於 20 MB、記了雜湊的檔每個種子都全測（不只最大的兩個）；只對 20～30 MB 放水，金絲雀要回 4（PR #67 第十三次審查）", () => {
   const { D, L } = fakeWww(), LJ = JSON.parse(fs.readFileSync(L, "utf8")), MB = 1048576;
   /* 跟真包一樣：最大的兩個（nnue、gmgames）之外，還有三個 21～26 MB 的 tour-*.json */
-  const big = [["engine/pikafish.nnue", 40 * MB], ["data/gmgames.json", 33 * MB], ["data/tour-a.json", 26 * MB], ["data/tour-b.json", 24 * MB], ["data/tour-c.json", 21 * MB]];
+  /* 2026-11-24：原本 5 個 21～40 MB（共 144 MB），Linux 上整份複製一次金絲雀就超過 4 分鐘、CI 偶爾被取消。
+     縮成 4 個剛好超過 20 MB 的檔：最大的兩個之外還有兩個 tour，照樣測得到「不只最大的兩個」 */
+  const big = [["engine/pikafish.nnue", 22.5 * MB], ["data/gmgames.json", 22 * MB], ["data/tour-a.json", 21.5 * MB], ["data/tour-b.json", 21 * MB]];
   for (const [rel, n] of big) { const b = Buffer.alloc(n, rel.length); fs.writeFileSync(path.join(D, ...rel.split("/")), b); LJ.files[rel] = [n, sha1(b)] }
   fs.writeFileSync(L, JSON.stringify(LJ));
-  for (const seed of ["1", "2", "3"]) {
+  for (const seed of ["1", "2"]) {   /* 大檔是每次都測的固定名單，跟種子無關；兩個種子就夠 */
     const out = path.join(tmp("xq-w30-"), "r.json"), r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "swap,nohash", "--seed", seed, "--out", out]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     const R = JSON.parse(fs.readFileSync(out, "utf8"));
@@ -576,7 +581,7 @@ test("在 base-guard 的環境（NODE_OPTIONS=--require assert-count.cjs）下�
   try {
     const r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"]); assert.equal(r.status, 0, r.stdout + r.stderr);
     /* 第十七次審查⑤：同一個環境不經過 runCanary（直接帶 base-guard 的 NODE_OPTIONS）會回 2——證明 runCanary 拿掉 NODE_OPTIONS 這件事真的有作用 */
-    const raw = cp.spawnSync(process.execPath, [CANARY, "--dir", D, "--list", L, "--only", "home", "--seed", "1"], { encoding: "utf8", env: { ...process.env } });
+    const raw = spawnT(process.execPath, [CANARY, "--dir", D, "--list", L, "--only", "home", "--seed", "1"], { encoding: "utf8", env: { ...process.env } });
     assert.equal(raw.status, 2, "直接帶 assert-count 的 NODE_OPTIONS 應該被判成環境被動過：" + raw.stdout + raw.stderr);
   }
   finally { if (save === undefined) delete process.env.NODE_OPTIONS; else process.env.NODE_OPTIONS = save }
@@ -619,4 +624,17 @@ test("每次叫 check-www 的參數，除了亂數路徑以外完全一樣（清
   assert.equal(shapes.size, 1, "參數形狀要完全一樣：" + [...shapes].join(" | "));
   assert.match([...shapes][0], /list\.json/); assert.match([...shapes][0], /cdn-manifest\.json/);
   assert.ok(rows.every((x) => x.others === 0), "檢查時同一個暫存區看得到別份副本：" + JSON.stringify(rows.map((x) => x.others)));
+});
+
+test("check-www 卡住時，金絲雀判「測試不成立」（回 2）、寫明卡住，不會當成通過或檢查失靈（2026-11-24 CI 卡住 40 分鐘）", () => {
+  const { D, L } = fakeWww();
+  const C = blindCanary('if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); }', 'if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); } for (;;) {}');
+  const t0 = Date.now(), r = runCanary(C, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"], { XQ_CANARY_SUB_MS: "3000" });
+  assert.equal(r.status, 2, r.stdout + r.stderr); assert.match(r.stderr, /超過 3 秒沒結束（卡住）/); assert.ok(Date.now() - t0 < 60000, "時限要生效");
+  /* 只有壞樣本那幾次卡住（乾淨的那次正常）：那幾個壞樣本判不成立，整體回 2，不是 0 也不是 4 */
+  const mark = path.join(tmp("xq-hang-"), "n");
+  const C2 = blindCanary('if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); }', 'if (!fs.existsSync(ROOT)) { console.error("✘ 找不到 " + ROOT); process.exit(1); } { const M = ' + JSON.stringify(mark) + '; const n = fs.existsSync(M) ? +fs.readFileSync(M, "utf8") : 0; fs.writeFileSync(M, String(n + 1)); if (n >= 1) for (;;) {} }');
+  const r2 = runCanary(C2, ["--dir", D, "--list", L, "--only", "mani", "--seed", "1"], { XQ_CANARY_SUB_MS: "3000" });
+  assert.equal(r2.status, 2, r2.stdout + r2.stderr); assert.match(r2.stdout + r2.stderr, /卡住/);
+  const src = fs.readFileSync(CANARY, "utf8"); for (const k of ['cp.spawnSync("cp"', 'cp.spawnSync("unzip", ["-Z1"', 'cp.spawnSync("unzip", ["-q"', 'cp.spawnSync("git"', 'cp.spawnSync(process.execPath, [CHECK']) assert.match(src.slice(src.indexOf(k), src.indexOf(k) + 400), /\.\.\.SUB/, k + " 要有時限");
 });
