@@ -264,7 +264,7 @@ const cleanEnv = () => Object.fromEntries(Object.entries(process.env).filter(([k
 const runtimeTaint = (env = process.env, execArgv = process.execArgv) => { const why = []; if (String(env.NODE_OPTIONS || "").trim()) why.push("NODE_OPTIONS=" + String(env.NODE_OPTIONS).slice(0, 80)); if (execArgv.length) why.push("node 參數 " + execArgv.join(" ").slice(0, 80)); return why };
 /* 子程序時限（2026-11-24：CI 的金絲雀自我檢查偶爾卡住 40 分鐘被取消，擋住所有 PR）。
    卡住一律判「測試不成立」（回 2），不會當成通過、也不會誤判成檢查失靈；XQ_CANARY_SUB_MS 只給自我測試縮短時限用（縮短只會讓結果變成不成立） */
-/* #113 審查②：Infinity、負數、非數字、超過 1 小時都不能讓 spawnSync 丟 ERR_OUT_OF_RANGE（回 1）——不是 1 秒～1 小時的正數一律用預設 300 秒 */
+/* #113 審查②：Infinity、負數、非數字、超過 1 小時都不能讓 spawnSync 丟 ERR_OUT_OF_RANGE（回 1），規則見下一段（#136 審查：舊註解寫「一律 300 秒」跟程式不符，刪掉） */
 /* #114 審查（不擋）：解析抽成函式並匯出，自我測試直接比回傳值。規則：1 秒～1 小時之間取整數；大於 0 但不到 1 秒的拉到 1 秒；其他（沒給、0、負數、文字、Infinity、超過 1 小時）用預設 300 秒 */
 const parseSubMs = (v) => { const n = Number(v); return Number.isFinite(n) && n >= 1000 && n <= 3600000 ? Math.floor(n) : Number.isFinite(n) && n > 0 && n < 1000 ? 1000 : 300000 };
 const SUB_MS = parseSubMs(process.env.XQ_CANARY_SUB_MS);
@@ -454,9 +454,11 @@ if (require.main === module) {
   catch (e) { console.error("✘ 測試不成立：金絲雀執行時出錯（" + String(e && e.message || e).split("\n")[0].slice(0, 200) + "）"); process.exit(2) }
   const { code, receipt } = out;
   if (receipt.unfit) console.error((code === 3 ? "△ 缺驗：" : "✘ 測試不成立：") + receipt.why);
-  if (opt("--out")) fs.writeFileSync(opt("--out"), JSON.stringify(receipt, null, 1) + "\n");
+  /* #136 審查①：寫收據也在保護範圍內。--out 的資料夾不存在、寫不進去時：原本會丟例外回 1。改成：結果是 0（全過）就降成 2——收據沒寫成，送審不能用；4、3、2 保持原碼，不能讓「檢查失靈」被寫檔失敗蓋掉 */
+  let outErr = null; if (opt("--out")) { try { fs.writeFileSync(opt("--out"), JSON.stringify(receipt, null, 1) + "\n") } catch (e) { outErr = String(e && e.message || e).split("\n")[0].slice(0, 200) } }
+  if (outErr) console.error("✘ 測試不成立：收據寫不進 " + opt("--out") + "（" + outErr + "）");
   if (!receipt.unfit) console.log(receipt.pass
     ? `✔ 金絲雀：${receipt.results.length} 個壞樣本（${receipt.kinds.length} 種）都被 check-www.js 抓到；種子 ${receipt.seed}` + (receipt.full ? "" : "（full＝false，送審不能用：要 --pkg .ipa、--cdn、不加 --only、清單和兩支工具是 origin/main 那份、版號跟包一樣）")
     : "✘ 金絲雀沒過：" + [...new Set(receipt.results.filter((x) => !x.caught).map((x) => x.kind))].join("、") + (code === 4 ? "——檢查本身失靈，這一輪的 P0-IMG 結果不可信" : ""));
-  process.exit(code);
+  process.exit(outErr && code === 0 ? 2 : code);
 }
