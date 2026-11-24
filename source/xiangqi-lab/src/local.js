@@ -551,9 +551,13 @@ var XQ=(function(){
           const f=parseSq(u.slice(0,2)),t=parseSq(u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0;return}}}
       if(tdOwn(P)){await new Promise(z=>setTimeout(z,30));if(!P||P.id!==id||P.moves.length!==n||P.result)return;const mv=window.XQ_TD.decide(P,C);   /* 11/16 黑洞新規則：星樞照新規則自己算（易 1 步／中 2 步／難 3 步），不叫 Pikafish */
         {const w=900-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;if(!mv)return;playApply(mv[0],mv[1]);playMsg="";engFail=0;return}
-      const fb=!engOver(P.board,P.turn)&&!!window.XQ_ENG_FALLBACK;   /* W92：舊 WebView 沒有多執行緒、Pikafish 載不起來，改請 Magellan 走（02-shell 設 XQ_ENG_FALLBACK） */
-      if(engOver(P.board,P.turn)||fb){const vm=await varMove(P,lv);if(!P||P.id!==id||P.moves.length!==n||P.result)return;   /* 11/16 開發者選單「接 XQVar＋調權重」：Pikafish 不收的局面改請 Magellan（src/varengine.js＝XQVar，背景執行緒）算；算不出來才停下說明 */
-        const vf=vm?parseSq(vm.slice(0,2)):-1,vt=vm?parseSq(vm.slice(2,4)):-1;if(!vm||!legal(P.board,P.turn).some(([a,b])=>a===vf&&b===vt)){P.engOver=1;playMsg="⚠ "+(fb?"備用的簡易棋手這一步算不出來。"+(typeof NATIVE_OLDWV==="string"?NATIVE_OLDWV:""):ENG_OVER_MSG);   /* iOS 不能提 Play 商店（App Store 2.3.10），照 02-shell 分平台的那句 */return}   /* 不送 Pikafish、不重試（finally 看 P.engOver） */
+      if(engOver(P.board,P.turn)){const vm=await varMove(P,lv);if(!P||P.id!==id||P.moves.length!==n||P.result)return;   /* 11/16 開發者選單「接 XQVar＋調權重」：Pikafish 不收的局面改請 Magellan（src/varengine.js＝XQVar，背景執行緒）算；算不出來才停下說明 */
+        const vf=vm?parseSq(vm.slice(0,2)):-1,vt=vm?parseSq(vm.slice(2,4)):-1;if(!vm||!legal(P.board,P.turn).some(([a,b])=>a===vf&&b===vt)){P.engOver=1;playMsg="⚠ "+ENG_OVER_MSG;return}   /* 不送 Pikafish、不重試（finally 看 P.engOver） */
+        {const w=900-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;delete P.engOver;playApply(vf,vt);playMsg="";engFail=0;return}
+      /* W92（11/24 Windows Claude 2 在 Android 16 模擬器 WebView 133 發現）：舊 WebView 沒有多執行緒，Pikafish 載不起來（02-shell 設 XQ_ENG_FALLBACK）→ 改請備用的 Magellan 走；
+         照上面「棋子數超過」那一段的做法，算不出來才停下說明（後面接 02-shell 分平台的那句，iOS 不提 Play 商店） */
+      if(!P.td&&window.XQ_ENG_FALLBACK){const vm=await varMove(P,lv);if(!P||P.id!==id||P.moves.length!==n||P.result)return;
+        const vf=vm?parseSq(vm.slice(0,2)):-1,vt=vm?parseSq(vm.slice(2,4)):-1;if(!vm||!legal(P.board,P.turn).some(([a,b])=>a===vf&&b===vt)){P.engOver=1;playMsg="⚠ 備用的簡易棋手這一步算不出來。"+(typeof NATIVE_OLDWV==="string"?NATIVE_OLDWV:"");return}
         {const w=900-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;delete P.engOver;playApply(vf,vt);playMsg="";engFail=0;return}
       if(P.td&&window.XQ_TD){const TD=window.XQ_TD.engine(P,C),r=await engRace(XQEngine.search(engPos(),{depth:TD.depth,searchmoves:TD.sm},TD.mpv),engTmo()),mv=window.XQ_TD.pick(r,TD,Math.random);   /* 黑洞陣地塔防：星樞推算 N 步＋失誤率；被定身的子不走（敵方沒別步可走時照常走） */
         {const w=1100-(Date.now()-t0);if(w>0)await new Promise(z=>setTimeout(z,w))}if(!P||P.id!==id||P.moves.length!==n||P.result)return;

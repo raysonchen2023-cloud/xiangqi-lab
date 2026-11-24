@@ -32,8 +32,10 @@ test("隔離正常的原生 App、網頁版：不設 XQ_ENG_FALLBACK（照舊用
 });
 
 test("〔原始碼〕local.js：輪到電腦時，沒有多執行緒就跟棋子數超過一樣改請 Magellan（varMove）；算不出來時說備用棋手算不出、接平台各自的更新說明（iOS 不提 Play 商店）", () => {
-  assert.ok(LOCAL.includes("const fb=!engOver(P.board,P.turn)&&!!window.XQ_ENG_FALLBACK;"));
-  assert.ok(LOCAL.includes("if(engOver(P.board,P.turn)||fb){const vm=await varMove(P,lv);"));
-  assert.ok(LOCAL.includes('playMsg="⚠ "+(fb?"備用的簡易棋手這一步算不出來。"+(typeof NATIVE_OLDWV==="string"?NATIVE_OLDWV:""):ENG_OVER_MSG);'));
-  { const i = LOCAL.indexOf("備用的簡易棋手這一步算不出來"), line = LOCAL.slice(LOCAL.lastIndexOf("\n", i), LOCAL.indexOf("\n", i)).split("/*")[0]; assert.ok(i > 0 && !/Play 商店/.test(line), "那一行程式自己不寫 Play 商店") }
+  const i = LOCAL.indexOf("if(!P.td&&window.XQ_ENG_FALLBACK){const vm=await varMove(P,lv);");
+  assert.ok(i > 0, "沒有多執行緒時改請 Magellan（varMove）");
+  assert.ok(LOCAL.indexOf("if(engOver(P.board,P.turn)){const vm=await varMove(P,lv);") < i && i < LOCAL.indexOf("if(P.td&&window.XQ_TD){const TD=window.XQ_TD.engine(P,C)"), "在棋子數超過那一段之後、叫 Pikafish 之前（塔防 P.td 照舊）");
+  const line = LOCAL.slice(i, LOCAL.indexOf("delete P.engOver;playApply(vf,vt)", i));
+  assert.ok(line.includes('playMsg="⚠ 備用的簡易棋手這一步算不出來。"+(typeof NATIVE_OLDWV==="string"?NATIVE_OLDWV:"")'), "算不出來時的說明接 02-shell 分平台的那句");
+  assert.ok(!/Play 商店/.test(line.replace(/\/\*[\s\S]*?\*\//g, "")), "這段程式自己不寫 Play 商店（iOS 審查 2.3.10）");
 });
