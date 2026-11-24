@@ -46,7 +46,9 @@ function jhFgRound(lines,L,day){const o=[],used=new Set();for(let i=0;i<3;i++){c
 function jhFgCheck(q,ans){const C=window.XQCore,NM=C.NAMES;let b=C.parseFen(C.START.split(" ")[0]),s="r";
   for(let i=0;i<ans.length;i++){const u=ans[i],f=C.parseSq(u.slice(0,2)),t=C.parseSq(u.slice(2,4)),p=b[f],want=q.nt[q.seq.indexOf(u)]||u;
     if(!p||C.sideOf(p)!==s)return{ok:false,step:i,why:`第 ${i+1} 步「${want}」走不下去：那一格現在沒有${s==="r"?"紅":"黑"}方的子（次序排錯了，這顆子還沒走到那裡）。`};
-    if(!C.legal(b,s).some(([x,y])=>x===f&&y===t))return{ok:false,step:i,why:`第 ${i+1} 步「${want}」走不下去：這一步現在不合法（被擋住，或走了會被將軍）。`};
+    /* W48-S4 預驗 P3（11/24 開發者「挪到送審前」）：不合法時往回找是前面哪一步走過去的子擋住——把那顆子暫時拿掉，這步就合法了，就是它；找不到（例如走了會被將軍）照舊說「被擋住，或走了會被將軍」 */
+    if(!C.legal(b,s).some(([x,y])=>x===f&&y===t)){let by="";for(let k=i-1;k>=0&&!by;k--){const d=C.parseSq(ans[k].slice(2,4));if(d===f||d===t||!b[d])continue;const b2=b.slice();b2[d]=null;if(C.legal(b2,s).some(([x,y])=>x===f&&y===t))by=`被第 ${k+1} 步「${q.nt[q.seq.indexOf(ans[k])]||ans[k]}」走過去的那顆子擋住了`}
+      return{ok:false,step:i,why:`第 ${i+1} 步「${want}」走不下去：這一步現在不合法（${by||"被擋住，或走了會被將軍"}）。`}}
     b=C.make(b,f,t);s=C.opp(s)}
   if(ans.length<q.seq.length)return{ok:null,step:ans.length,why:""};
   /* 開發者 11/22 選單「照主線次序才算對」：開局黑方的步多半換了次序也走得通、局面一樣，只看局面會變成亂排也對；這裡練的是反宮馬的步序 */
