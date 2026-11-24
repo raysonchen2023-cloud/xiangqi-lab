@@ -7,12 +7,12 @@ const test = require("node:test"), assert = require("node:assert/strict"), fs = 
 const HERE = __dirname, CHECK = path.join(HERE, "check-www.js"), CANARY = path.join(HERE, "canary-www.js");
 const { toolSha, treeSha, picks, rng, run, OFFICIAL_CDN, KINDS, hit, runtimeTaint, cleanEnv } = require("./canary-www.js");
 /* 2026-11-24：CI 上這支偶爾卡住 40 分鐘被取消、擋住所有 PR。每個子程序最多 4 分鐘，卡住就讓那一項失敗、寫出卡在哪個指令，不要拖到整個工作被取消 */
-/* #113 審查（不擋）：另加整支測試的總時限 20 分鐘——每個子程序都沒超過 4 分鐘、但加起來拖很久時，也會在 CI 取消前先失敗、寫出卡在哪 */
-const T_ALL = Date.now(), ALL_MS = 20 * 60000;
+/* #113 審查（不擋）：另加整支測試的總時限（原本 20 分鐘；#114 審查：Windows 本機跑 main 版要 21 分 45 秒，餘裕不夠，改 30 分鐘（#136 審查：35 離 CI 的 40 分鐘太近），仍留 10 分鐘給 CI 收尾）——每個子程序都沒超過 4 分鐘、但加起來拖很久時，也會在 CI 取消前先失敗、寫出卡在哪 */
+const T_ALL = Date.now(), ALL_MS = 30 * 60000;
 const spawnT = (cmd, args, o = {}) => { const left = ALL_MS - (Date.now() - T_ALL), lim = Math.min(240000, left); const what = [cmd, ...args].map(String).join(" ").slice(0, 300);
-  if (lim <= 0) throw new Error("整支測試超過 20 分鐘，不再開新的子程序：" + what);
+  if (lim <= 0) throw new Error("整支測試超過 30 分鐘，不再開新的子程序：" + what);
   const r = cp.spawnSync(cmd, args, { timeout: lim, killSignal: "SIGKILL", ...o });
-  if (r.error && r.error.code === "ETIMEDOUT") throw new Error((lim < 240000 ? "整支測試的 20 分鐘用完了，" : "") + "子程序超過 " + Math.round(lim / 1000) + " 秒沒結束（卡住）：" + what); return r };
+  if (r.error && r.error.code === "ETIMEDOUT") throw new Error((lim < 240000 ? "整支測試的 30 分鐘用完了，" : "") + "子程序超過 " + Math.round(lim / 1000) + " 秒沒結束（卡住）：" + what); return r };
 const made = [];
 test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }) });
 const tmp = (p) => { const d = fs.mkdtempSync(path.join(os.tmpdir(), p)); made.push(d); return d };
@@ -662,6 +662,24 @@ test("check-www 卡住時，金絲雀判「測試不成立」（回 2）、寫�
   assert.ok(Rc.results.some((x) => x.kind === "mani" && !x.unfit && x.caught === false), "要有一個真的沒抓到");
   assert.ok(hungOf(Rc).length >= 1, "其他的要判卡住：" + JSON.stringify(Rc.results));
   const src = fs.readFileSync(CANARY, "utf8"); for (const k of ['cp.spawnSync("cp"', 'cp.spawnSync("unzip", ["-Z1"', 'cp.spawnSync("unzip", ["-q"', 'cp.spawnSync("git"', 'cp.spawnSync(process.execPath, [CHECK']) assert.match(src.slice(src.indexOf(k), src.indexOf(k) + 400), /\.\.\.SUB/, k + " 要有時限");
+});
+
+test("parseSubMs 直接比回傳值：1 秒～1 小時取整數、不到 1 秒拉到 1 秒、其他用 300 秒（#114 審查不擋：原本只看結束代碼）", () => {
+  const { parseSubMs } = require(CANARY);
+  for (const [v, want] of [["3000", 3000], ["1000", 1000], ["3600000", 3600000], ["1500.9", 1500], ["500", 1000], ["1", 1000], ["0.5", 1000],
+    [undefined, 300000], ["", 300000], ["0", 300000], ["-5", 300000], ["abc", 300000], ["Infinity", 300000], ["-Infinity", 300000], ["NaN", 300000], ["3600001", 300000], ["99999999999", 300000]])
+    assert.equal(parseSubMs(v), want, "XQ_CANARY_SUB_MS=" + JSON.stringify(v));
+});
+
+test("命令列出錯一律不回 1：暫存資料夾不存在回 2、--out 寫不進去回 2、檢查失靈加上 --out 壞掉照樣回 4（#136 審查①）", () => {
+  const { D, L } = fakeWww(), gone = path.join(tmp("xq-gone-"), "沒有這個資料夾");
+  let r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1"], { TMPDIR: gone, TEMP: gone, TMP: gone });
+  assert.equal(r.status, 2, "暫存資料夾不存在要回 2：" + r.stdout + r.stderr); assert.match(r.stderr, /測試不成立/);
+  r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "home", "--seed", "1", "--out", path.join(gone, "r.json")]);
+  assert.equal(r.status, 2, "全過但收據寫不進去要回 2：" + r.stdout + r.stderr); assert.match(r.stderr, /收據寫不進/);
+  const C = blindCanary('if (!exists(it[0])) bad.push("preload.json 列了但沒有：" + it[0]);', "if (false) {}");
+  r = runCanary(C, ["--dir", D, "--list", L, "--only", "home", "--seed", "1", "--out", path.join(gone, "r.json")]);
+  assert.equal(r.status, 4, "檢查失靈加上 --out 壞掉要保持 4：" + r.stdout + r.stderr);
 });
 
 test("XQ_CANARY_SUB_MS 給 Infinity、負數、文字、超過 1 小時都退回預設，不會讓金絲雀回 1；正式 --cdn 那次卡住也判不成立（#113 審查②③）", () => {
