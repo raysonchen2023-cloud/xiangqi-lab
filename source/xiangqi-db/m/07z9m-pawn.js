@@ -78,7 +78,7 @@ jhMzDef("pawn",{map:JH_MZ_PAWN_MAP,guards:JH_MZ_PAWN_GUARDS,river:JH_MZ_PAWN_RIV
   puz:{door:JH_MZ_PAWN_POOL.door[0],trap:JH_MZ_PAWN_POOL.trap[0]},solid:"#DRHL",opaque:"#DH",jump:"",
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"仙人指路譜殘頁",en:"Immortal Points the Way manual page"},{k:"box",zh:"青瓷棋罐",en:"Celadon piece jar"}],
   title:["🪨 太湖石陣","🪨 Lake-rock maze"],lvName:["太湖石陣・第一層","Lake-rock maze · Level 1"],back:["回仙人指路門","Back to the Immortal Points the Way School"],
-  hall:{at:[560,930],zh:"🪨 太湖石・石陣入口",en:"🪨 Lake rock · Maze entrance"},
+  hall:{at:[560,860],zh:"🪨 太湖石・石陣入口",en:"🪨 Lake rock · Maze entrance"},
   intro:["你從假山的石洞鑽下去，底下是一片漆黑的石林。<b>點地面就會走過去</b>，也可以用下面的方向鈕。走到壁燈旁邊會點亮它。","You squeeze through a hole in the rockery into a pitch-dark stone forest. <b>Tap the floor to walk there</b>, or use the arrows below. Walk next to a wall lamp to light it."],
   warn:["<b>前面有兵卒在巡邏。</b>沒過河的兵只會往前走、只看前面；過了河就左右來回、也看得到身旁。<b>太湖石擋路，但擋不住視線</b>，躲在石頭後面也會被看到。","<b>Pawn guards are on patrol.</b> Before the river a pawn only walks and looks straight ahead; after crossing it paces sideways and can see to its side too. <b>Lake rocks block your path but not their sight</b>, so hiding behind a rock won't help."],
   say:{door:["將死！兵一步一步推上去，石門往兩旁滑開。","Checkmate! The pawns push in step by step and the stone door slides apart."],trap:["將死！兵卒愣在原地，你趁機溜走。","Checkmate! The pawn guard freezes and you slip away."],
