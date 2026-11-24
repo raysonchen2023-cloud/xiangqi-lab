@@ -173,6 +173,7 @@ const CLASSIFIED = new Set([
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
   "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
   "test-jh-cross-1124.js",   /* 11/24 W87 過宮炮地底迷宮（m/07z9m-cross.js）：vm 跑炮型護院視線、走法、地圖 BFS 與不被看到的路線搜尋、碑刻；題庫用 core.js 獨立重算 */
+  "test-w101-first-move-1124.js",   /* 11/24 W101 開發者截圖「還沒切到棋盤，掌門就先落子了」：電腦先手的第一步等棋盤真的看得到（3D 建好、開場封面 pk-veil 收掉）再走（src/local.js）〔混合：等待時間 vm 行為 2（含慢機器封面 23 秒）、接線與就緒判斷、park3d 訊號原始碼 2〕 */
   "test-secret-friends-1124.js",   /* 11/24 W96 秘境棋友吸引力第一組：vm 跑 07-legend.js 的尋訪錄集滿保底、散佚手稿撿拾與換線索；畫面接線用原始碼比對（標〔原始碼〕） */
   "test-w92-oldwv-fallback-1124.js",   /* 11/24 W92 舊 WebView 沒有多執行緒時對局改用 Magellan：vm 跑 02-shell 降級那一段；local.js 那一行用原始碼比對（標〔原始碼〕） */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
