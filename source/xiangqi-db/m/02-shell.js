@@ -373,9 +373,12 @@ const NATIVE_IOS=/iPhone|iPad|iPod/.test(navigator.userAgent)||(/Macintosh/.test
 const NATIVE_OLDWV=NATIVE_IOS?"電腦棋手沒有啟動成功，請把 App 完全關掉再重新開啟；若一直失敗，請更新 iOS 或聯絡我們":"這支手機的 Android System WebView 版本太舊，電腦棋手無法運作；請到 Play 商店更新「Android System WebView」或「Chrome」";   /* 11/17 App Store 審查（指南 2.3.10）：iOS 原生 App 萬一沒有跨來源隔離，說 iOS 的話，不提 Android、Play 商店 */
 if(OFF&&/XQQianqiuApp\//.test(navigator.userAgent)&&(!self.crossOriginIsolated||typeof SharedArrayBuffer==="undefined")){
   if(window.XQEngine){const no=()=>Promise.reject(new Error(NATIVE_OLDWV));XQEngine.load=no;XQEngine.search=no;XQEngine.prefetch=no}
+  /* W92（11/24 Windows Claude 2 在 Android 16 模擬器 WebView 133 上發現）：Pikafish 是多執行緒版、要 SharedArrayBuffer，舊 WebView 沒有就載不起來。
+     改成對局時先請備用的 Magellan（varengine，純 JS、不要多執行緒）走棋（local.js 看 XQ_ENG_FALLBACK）；棋力較弱，提示與棋局分析照舊要更新才能用 */
+  try{window.XQ_ENG_FALLBACK=1}catch(e){}
   const wv=(navigator.userAgent.match(/Chrome\/([\d.]+)/)||[])[1]||"",mute=store.get("oldWvMute","")===wv;let tries=0;
   const show=()=>{if(document.querySelector("#preov,.modal,#sheet.show")&&++tries<30)return setTimeout(show,3000);if(mute){toast("⚠ "+NATIVE_OLDWV);return}
-    modal(`<div class="em">📱</div><h2>${NATIVE_IOS?"電腦棋手沒有啟動成功":"電腦棋手需要更新手機元件"}</h2><p style="text-align:left">${esc(NATIVE_OLDWV)}。</p><p class="muted" style="text-align:left">${NATIVE_IOS?"聯絡方式在設定房間「🔒 系統・隱私・家長」的「📮 聯絡與支援」。":"更新好以後，把 App 完全關掉再打開就能用。"}<br>現在照樣能用：同桌對弈（兩人在這支手機輪流下）、殘局、古譜與大師對局、測驗、線上對弈。<br>${NATIVE_IOS?"要等電腦棋手啟動成功才能用":"要等更新才能用"}：挑戰電腦、擂台、棋局分析與提示。</p>${wv&&!NATIVE_IOS?`<p class="muted">目前的 WebView 版本：${esc(wv)}</p>`:""}`,[["知道了",null],["這個版本不再跳出",()=>store.set("oldWvMute",wv),true]])};
+    modal(`<div class="em">📱</div><h2>${NATIVE_IOS?"電腦棋手沒有啟動成功":"電腦棋手需要更新手機元件"}</h2><p style="text-align:left">${esc(NATIVE_OLDWV)}。</p><p class="muted" style="text-align:left">${NATIVE_IOS?"聯絡方式在設定房間「🔒 系統・隱私・家長」的「📮 聯絡與支援」。":"更新好以後，把 App 完全關掉再打開就能用。"}<br>現在照樣能用：同桌對弈（兩人在這支手機輪流下）、殘局、古譜與大師對局、測驗、線上對弈；挑戰電腦先改用備用的簡易棋手陪你下（棋力比較弱）。<br>${NATIVE_IOS?"要等電腦棋手啟動成功才能用":"要等更新才能用"}：完整棋力的電腦棋手、擂台、棋局分析與提示。</p>${wv&&!NATIVE_IOS?`<p class="muted">目前的 WebView 版本：${esc(wv)}</p>`:""}`,[["知道了",null],["這個版本不再跳出",()=>store.set("oldWvMute",wv),true]])};
   setTimeout(show,2500)}
 if(OFF&&window.XQEngine){let bar=null;const NAT=typeof xqNat==="function"&&xqNat();
   XQEngine.onProgress((got,total)=>{if(!bar){keepAwake("engine",()=>!!bar);bar=document.createElement("div");bar.className="toast";if(/^#[/](cpu|arena|pvp|quiz|watch|journey[/]play|redo[/]play|legend)([/]|$)/.test(location.hash))bar.style.display="none";   /* QA P2-6：下棋、讀故事時不蓋引擎下載進度 */
