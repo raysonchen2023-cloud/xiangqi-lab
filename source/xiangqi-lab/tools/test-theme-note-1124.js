@@ -4,6 +4,6 @@
 const test = require("node:test"), assert = require("node:assert"), fs = require("fs"), path = require("path");
 const LG = fs.readFileSync(path.join(__dirname, "..", "..", "xiangqi-db", "m", "07-legend.js"), "utf8");
 test("〔原始碼〕對局頁（主題訓練、古戰場…共用的 boardPage）：說明 #note 後面的空白 div 是 flex-grow .001，不再跟說明平分高度", () => {
-  assert.ok(LG.includes('<div class="boardbox" id="bbox" style="flex-shrink:8"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap;flex:1 1 auto"></div><div style="flex:.001 1 0"></div>'), "說明照內容要高度、放不下先縮棋盤、空白 div 幾乎不分高度");
+  assert.ok(LG.includes('<div class="boardbox" id="bbox" style="flex-shrink:8"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap;flex:1 .01 auto"></div><div style="flex:.001 1 0"></div>'), "說明照內容要高度、放不下先縮棋盤、空白 div 幾乎不分高度");
   assert.ok(!LG.includes('<div class="note" id="note" style="white-space:pre-wrap"></div><div style="flex:1"></div>'));
 });

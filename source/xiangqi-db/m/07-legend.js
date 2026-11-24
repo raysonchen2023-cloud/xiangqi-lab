@@ -734,8 +734,9 @@ function jPuzzle(v,s){setTop(s.demo?"🧠 練一題・"+s.tag:s.theme?"🧠 "+s.
     /* 開發者 11/24 截圖（主題訓練・殺棋答錯後）「底下的資訊能不用 scrollbar 就能看到所有資訊嗎」：說明（.note，flex:1）跟下面撐開用的空白 div（原本也是 flex:1）平分剩下的高度，
        說明只拿到一半就出捲軸、下面卻空一大塊。空白 div 改成 flex-grow .001：剩下的高度幾乎都給說明；說明有上限時（新手課 .camp-lv 34vh），多的才給空白 div，按鈕列照樣貼底。
        iMac Claude 2 預驗（iPhone 18 Pro 874pt）：說明拿到全部剩下的高度還差約 44pt（下一題那列 114pt）→ 說明改 flex:1 1 auto（照內容要高度）、棋盤 flex-shrink:8：
-       放不下時先讓棋盤縮（最小 120px，.view.fixed .boardbox），縮到底才輪到說明捲 */
-    v.className="view fixed";v.innerHTML=`<div class="status" id="qh" style="margin-top:6px"></div><div class="boardbox" id="bbox" style="flex-shrink:8"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap;flex:1 1 auto"></div><div style="flex:.001 1 0"></div><div class="actions" id="acts"></div>`;
+       放不下時先讓棋盤縮（最小 120px，.view.fixed .boardbox），縮到底才輪到說明捲。
+       第二輪（iMac Claude 2：還差 2px）：flex-shrink 照「係數×原本高度」分攤，說明 1×173 也被分到一點 → 說明的 flex-shrink 改 .01，幾乎全由棋盤縮 */
+    v.className="view fixed";v.innerHTML=`<div class="status" id="qh" style="margin-top:6px"></div><div class="boardbox" id="bbox" style="flex-shrink:8"></div><div class="status" id="stat"></div><div class="note" id="note" style="white-space:pre-wrap;flex:1 .01 auto"></div><div style="flex:.001 1 0"></div><div class="actions" id="acts"></div>`;
     v.querySelector("#bbox").append(bd.svg);
     if(s.demo&&!Q.length){v.querySelector("#note").textContent="這個棋理目前沒有題目，先回去吧。";actionBar(v.querySelector("#acts"),[["back","‹","回去",()=>goBack(mflDemoBack()),true]]);return}
     if(s.demo)mflIntro();else show()})();   /* G01 示範：先看棋理再出題 */
