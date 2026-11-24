@@ -19,7 +19,7 @@ function mk(o = {}) {
     setTimeout: (f, ms) => { timers.push({ f, ms }); return timers.length }, clearTimeout: (i) => { if (timers[i - 1]) timers[i - 1].f = null },
     addEventListener: (t, f) => { (listeners[t] = listeners[t] || []).push(f) }, removeEventListener: (t, f) => { listeners[t] = (listeners[t] || []).filter((g) => g !== f) },
     Image: function () { const im = { dataset: {}, set src(v) { im._src = v; imgs.push(im) }, get src() { return im._src } }; return im },
-    location: { hash: "#/jianghu/maze" }, window: {}, jhL: (zh, en) => (o.en ? en : zh), esc: (s) => String(s), vibrate: () => {}, XQ_CDN: "https://cdn.example/",
+    location: { href: "http://x/index.html" + (o.start || "#/"), get hash() { const i = this.href.indexOf("#"); return i < 0 ? "" : this.href.slice(i) } }, window: {}, jhL: (zh, en) => (o.en ? en : zh), esc: (s) => String(s), vibrate: () => {}, XQ_CDN: "https://cdn.example/",
     xqCdnRel: (u) => (/^data\//.test(u) ? u : ""), jhMzOn: () => true, jhMzLv: (sid) => ({ sid, title: ["🕳 地底漕倉", "🕳 Underground granary"], tex: { side: "data/maze/tex/" + sid + "_wall.webp" } }),
     JhMaze: function (v, sid) { return { sid } }, Math, String, Object, Array, Number, JSON,
   };
@@ -27,15 +27,22 @@ function mk(o = {}) {
   vm.createContext(c); vm.runInContext(SRC, c);
   const fire = (t, e) => (listeners[t] || []).slice().forEach((f) => f(e || {}));
   const run = (upto) => { for (const t of timers.slice().sort((a, b) => a.ms - b.ms)) if (t.f && t.ms <= upto) { const f = t.f; t.f = null; f() } };
-  return { c, appended, timers, fire, run, imgs, listeners };
+  /* 換頁：真的順序是路由的 hashchange 先跑（裡面叫 JhMaze），這支的後跑；也測反過來 */
+  const nav = (h, order = "router-first") => { const old = c.location.href; c.location.href = "http://x/index.html" + h; const e = { oldURL: old, newURL: c.location.href };
+    if (order === "router-first") { if (/^#\/jianghu\/maze/.test(h)) c.JhMaze({}, "central"); fire("hashchange", e) } else { fire("hashchange", e); if (/^#\/jianghu\/maze/.test(h)) c.JhMaze({}, "central") } };
+  return { c, appended, timers, fire, run, imgs, listeners, nav };
 }
 
-test("從門派大廳進迷宮才播；重新整理、從別處進來不播；同一次只播一次", () => {
-  let T = mk(); T.c.JhMaze({}, "central"); assert.equal(T.appended.length, 0, "沒有上一頁（重新整理）不播");
-  T = mk(); T.fire("hashchange", { oldURL: "http://x/#/jianghu/map" }); T.c.JhMaze({}, "central"); assert.equal(T.appended.length, 0, "從江湖地圖進來不播");
-  T = mk(); T.fire("hashchange", { oldURL: "http://x/index.html#/jianghu/hall/central" }); T.c.JhMaze({}, "central");
-  assert.equal(T.appended.length, 1, "從大廳進來播"); T.c.JhMaze({}, "central"); assert.equal(T.appended.length, 1, "同一次不重播");
-  T = mk(); T.c.jhMzOn = () => false; T.fire("hashchange", { oldURL: "#/jianghu/hall/central" }); T.c.JhMaze({}, "central"); assert.equal(T.appended.length, 0, "迷宮關著不播");
+test("從門派大廳進迷宮才播（路由先跑、這支先跑兩種順序都對）；重新整理、從別處進來不播；同一次只播一次", () => {
+  for (const order of ["router-first", "fall-first"]) {
+    let T = mk({ start: "#/jianghu/maze" }); T.c.JhMaze({}, "central"); assert.equal(T.appended.length, 0, order + "：直接開在迷宮（重新整理）不播");
+    T = mk(); T.nav("#/jianghu/map", order); T.nav("#/jianghu/maze", order); assert.equal(T.appended.length, 0, order + "：從江湖地圖進來不播");
+    T = mk(); T.nav("#/jianghu/hall/central", order); T.nav("#/jianghu/maze", order);
+    assert.equal(T.appended.length, 1, order + "：從大廳進來播（#129 iMac Claude 2 預驗：路由先跑時原本不播）");
+    T.c.JhMaze({}, "central"); assert.equal(T.appended.length, 1, order + "：同一頁重畫不重播");
+    T.nav("#/jianghu/hall/central", order); T.nav("#/jianghu/maze", order); assert.equal(T.appended.length, 2, order + "：回大廳再進來，再播一次");
+    T = mk(); T.c.jhMzOn = () => false; T.nav("#/jianghu/hall/central", order); T.nav("#/jianghu/maze", order); assert.equal(T.appended.length, 0, order + "：迷宮關著不播");
+  }
 });
 
 test("播的內容：該派的牆面材質、標題卡（拿掉開頭圖示、中英文）、跳過提示；不讓讀螢幕軟體念", () => {

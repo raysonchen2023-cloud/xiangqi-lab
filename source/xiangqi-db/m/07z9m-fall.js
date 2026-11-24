@@ -7,10 +7,16 @@
    重新整理、從別處（例如網址、回上一頁）進迷宮不播；同一次進迷宮只播一次。
    這支包住 JhMaze（不改共用的 07z9m-maze.js）；之後各派都會套到，用的是該派自己的牆面材質。 */
 const JH_FALL_MS=2400,JH_FALL_RM_MS=900;
-let JH_FALL_FROM="";
-if(typeof addEventListener==="function")addEventListener("hashchange",e=>{try{JH_FALL_FROM=String(e&&e.oldURL||"")}catch(e2){}});
+/* 記「上一頁」：不能靠 hashchange 的先後——路由（02-shell）的 hashchange 比這支先登記，JhMaze 被叫的時候這支的 hashchange 還沒跑（iMac Claude 2 #129 預驗抓到）。
+   自己記最近兩個網址（last、prev）和第幾次換頁（n）：JhMaze 被叫時，last 已經是目前這頁＝這支先跑過，來源是 prev；還不是＝這支還沒跑，來源就是 last。
+   同一次換頁只播一次（JH_FALL_DONE 記播過的是第幾次換頁），重畫同一頁不重播 */
+const jhFallH=u=>{const s=String(u==null?"":u),i=s.indexOf("#");return i<0?"":s.slice(i)};
+let JH_FALL_LAST=(()=>{try{return jhFallH(location.href)}catch(e){return""}})(),JH_FALL_PREV="",JH_FALL_N=0,JH_FALL_DONE=-1;
+if(typeof addEventListener==="function")addEventListener("hashchange",e=>{try{const h=jhFallH(e&&e.newURL!=null?e.newURL:location.href);if(h!==JH_FALL_LAST){JH_FALL_PREV=JH_FALL_LAST;JH_FALL_LAST=h;JH_FALL_N++}}catch(e2){}});
+/* 這次進迷宮是從哪一頁來、是第幾次換頁 */
+function jhFallVisit(){let cur="";try{cur=jhFallH(location.href)}catch(e){}return JH_FALL_LAST===cur?{from:JH_FALL_PREV,n:JH_FALL_N}:{from:JH_FALL_LAST,n:JH_FALL_N+1}}
 /* 從大廳進迷宮才播 */
-function jhFallWant(){return/#\/jianghu\/hall\//.test(JH_FALL_FROM)}
+function jhFallWant(V){return/^#\/jianghu\/hall\//.test(V.from)&&V.n>JH_FALL_DONE}
 function jhFallRM(){try{return!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)}catch(e){return false}}
 function jhFallCss(){if(document.getElementById("jhFallCss"))return;const s=document.createElement("style");s.id="jhFallCss";s.textContent=`
 .jh-fall{position:fixed;inset:0;z-index:2147483000;background:#000;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .4s}
@@ -60,4 +66,4 @@ function jhFallPlay(lv,opt){opt=opt||{};jhFallCss();const rm=opt.rm!=null?opt.rm
   document.body.append(o);return o}
 /* 包住 JhMaze：從大廳進來才播（播完就清掉來源，同一次不重播） */
 try{if(typeof JhMaze==="function"&&!JhMaze.jhFall){const m0=JhMaze;JhMaze=function(v,sid){const r=m0.apply(this,arguments);
-  try{if(jhFallWant()&&(typeof jhMzOn!=="function"||jhMzOn())&&String(location.hash).indexOf("#/jianghu/maze")===0){JH_FALL_FROM="";jhFallPlay(jhMzLv(sid))}}catch(e){}return r};JhMaze.jhFall=1}}catch(e){}
+  try{const V=jhFallVisit();if(jhFallWant(V)&&(typeof jhMzOn!=="function"||jhMzOn())&&String(location.hash).indexOf("#/jianghu/maze")===0){JH_FALL_DONE=V.n;jhFallPlay(jhMzLv(sid))}}catch(e){}return r};JhMaze.jhFall=1}}catch(e){}
