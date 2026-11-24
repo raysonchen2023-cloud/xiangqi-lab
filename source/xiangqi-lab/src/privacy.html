@@ -60,7 +60,7 @@ section[lang=en]{margin-top:3em}
 
 <h3 id="zh-lobby">線上大廳</h3>
 <ul>
-<li>送到：開發者租用的 EMQX 雲端訊息伺服器（新加坡）。打開 App 就會連線，用來收對戰邀請和新版通知。</li>
+<li>送到：開發者租用的 EMQX 雲端訊息伺服器（新加坡）。打開 App 就會連線，用來收對戰邀請和新版通知。只有 IPv6 的網路連不到這台伺服器時，App 會改經開發者在 Cloudflare 架的轉送入口連到同一台伺服器；這時 Cloudflare 看得到你的 IP 位址和大廳訊息內容（跟 EMQX 看得到的一樣），轉送程式本身不記錄內容。</li>
 <li>內容：裝置代號、大廳顯示的名字（新玩家預設用系統給的「稱號」）、上線狀態、積分和勝負和、裝置種類、角色外觀、你自己選的城市（預設不顯示）、線上對局的棋步和結果、最近 30 盤的戰績摘要、邀請和快捷語表情，以及線上對局簽名用的公開金鑰（私鑰只在裝置裡）。</li>
 <li>聊天只能用 App 內建的快捷語，不能打字。訊息沒有端對端加密，懂技術的人有可能看到大廳上的公開內容。<b>請不要用真名當名字。</b></li>
 <li>保留：離線時上線狀態自動清掉；戰績摘要 90 天沒更新就清掉；每一盤線上對局的棋譜保留 30 天。</li>
@@ -213,7 +213,7 @@ section[lang=en]{margin-top:3em}
 
 <h3 id="en-lobby">Online lobby</h3>
 <ul>
-<li>Sent to: an EMQX cloud messaging server (Singapore) rented by the developer. The app connects when it opens, to receive game invitations and new-version notices.</li>
+<li>Sent to: an EMQX cloud messaging server (Singapore) rented by the developer. The app connects when it opens, to receive game invitations and new-version notices. If your network is IPv6-only and cannot reach that server, the app connects to the same server through a relay the developer runs on Cloudflare; Cloudflare can then see your IP address and the lobby messages (the same things EMQX sees), and the relay itself does not log their content.</li>
 <li>Contents: device ID, lobby display name (new players use a system-given title by default), online status, rating and win/loss/draw record, device type, character appearance, the city you choose to show (hidden by default), moves and results of online games, a summary of your last 30 games, invitations and preset quick messages, and the public key used to sign online games (the private key stays on the device).</li>
 <li>Chat uses built-in quick messages only; free typing isn't possible. Messages are not end-to-end encrypted, so technically skilled people could see public lobby content. <b>Please don't use your real name.</b></li>
 <li>Retention: online status is cleared when you go offline; game summaries are cleared after 90 days without updates; each online game record is kept for 30 days.</li>

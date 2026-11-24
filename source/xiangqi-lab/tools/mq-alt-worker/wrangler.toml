@@ -2,3 +2,6 @@ name = "xq-lobby-v6"
 main = "worker.js"
 compatibility_date = "2026-11-01"
 workers_dev = true
+# 部署紀錄（#146 審查建議記下版本）：
+#   2026-11-24 23:5x 第一版 9ce8955f-ce1e-4275-a971-21f3f813abfa
+#   2026-11-25 00:2x 只轉 WebSocket 必要標頭 6f09aed1-06e7-4811-b895-1d3340dda75b

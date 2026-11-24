@@ -4,11 +4,15 @@
    不是通用代理：路徑不是 /mqtt、或不是 WebSocket 升級請求，一律 404；轉送目標寫死，不看用戶端給的網址。
    計費：每條連線算 1 次請求，訊息不算、連線時間不收（Workers 免費方案每天 10 萬次）。 */
 const UPSTREAM = "https://d23f1132.ala.asia-southeast1.emqxsl.com:8084/mqtt";
+const KEEP = ["upgrade", "connection", "sec-websocket-key", "sec-websocket-version", "sec-websocket-protocol", "sec-websocket-extensions", "user-agent"];
 export default {
   async fetch(req) {
     const u = new URL(req.url);
     if (u.pathname !== "/mqtt" || (req.headers.get("Upgrade") || "").toLowerCase() !== "websocket")
       return new Response("not found", { status: 404 });
-    return fetch(UPSTREAM, { method: "GET", headers: req.headers });
+    /* 只轉 WebSocket 握手必要的標頭（#146 審查建議）：Cookie、授權等其他標頭一律不帶給 EMQX */
+    const h = new Headers();
+    for (const k of KEEP) { const v = req.headers.get(k); if (v) h.set(k, v) }
+    return fetch(UPSTREAM, { method: "GET", headers: h });
   },
 };
