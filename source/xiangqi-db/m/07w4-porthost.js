@@ -27,7 +27,8 @@ function ph4Css(){if(document.getElementById("ph4Css"))return;const s=document.c
 function ph4Who(k){try{const Ls=SHIP_LESSON[k]||{},T=SHIP_STOP[k]||{};if(shipAppr()||!Ls.open)return"";const by=shipLearned(k)&&Ls.done?Ls.doneBy:Ls.openBy;if(by==="teller")return"";
   const c=by||(T.who||[])[0]||"";if(!c||!WX_CHARS[c]||c===myChar())return"";if(typeof ptyHas==="function"&&!ptyHas(c))return"";return c}catch(e){return""}}   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：主人還沒加入就不站出來（小卡也改說書人，見 07f Port） */
 function ph4Mount(v,k){if(!PORT_HOST3D||shwRM()||!SHW_PORT_ON||!SHW_PORT[k])return false;const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.ph4)return!!(P&&P.dataset.ph4);const c=ph4Who(k);if(!c||typeof TRIPO!=="undefined"&&Object.keys(TRIPO).length&&!TRIPO[c])return false;P.dataset.ph4="1";ph4Css();
-  const C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
+  let C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
+  {const e=typeof scwCur==="function"?scwCur(P):null;if(e&&e.walk&&P._scw)C=scwWalkCfg(P._scw,e)}   /* W107-L：渡口橫式圖時，主人站位照條目的路網 */
   const box=document.createElement("div");box.className="ph4";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';
   const hit=document.createElement("button");hit.type="button";hit.className="ph4-hit";const nm=(WX_CHARS[c].nk||WX_CHARS[c].n||"");hit.setAttribute("aria-label",nm+"：聽她說話");hit.style.display="none";
   const say=document.createElement("div");say.className="ph4-say";say.setAttribute("aria-live","polite");
@@ -117,5 +118,5 @@ function ph4Pier(v,k){const A=PH4_PIER[k],P=v&&v.querySelector(".shp-page.cq");i
   b.onclick=()=>{if(typeof vibrate==="function")vibrate(5);goUp("#/adventure")};
   const z=document.createElement("button");z.type="button";z.className="ph4-pz";z.setAttribute("aria-hidden","true");z.tabIndex=-1;const e=A.N.pier;Object.assign(z.style,{left:(e[0]-9)+"%",top:(e[1]-4.5)+"%",width:"18%",height:"7%"});
   z.onclick=ev=>{ev.stopPropagation();b.click()};
-  const first=P.querySelector(".shp-spot");P.insertBefore(z,first);P.append(b)}
+  const first=P.querySelector(".shp-spot");P.insertBefore(z,first);P.append(b);if(P._portPlace)P._portPlace()}   /* W107-L：渡口橫式圖時標籤、點選區照條目（07f portScw） */
 if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){try{if(PORT_CARD_HIDE)ph4Pier(v,k)}catch(e){}const r=f0.apply(this,arguments);try{const pad=PORT_CARD_HIDE&&v&&v.querySelector(".pad.port");if(pad){ph4Css();pad.classList.add("ph4-nc")}if(!ph4Mount(v,k)&&pad)ph4Line(v,k)}catch(e){}return r}}

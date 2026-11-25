@@ -183,7 +183,9 @@ function shwPage(v,cfg,mem,gate){const P=v&&v.querySelector(".shp-page.cq");if(!
   const kOf=b=>b.id||(b.dataset.ps!=null?"ps"+b.dataset.ps:""),fd=h=>/^ps\d+$/.test(h)?P.querySelector(`[data-ps="${h.slice(2)}"]`):P.querySelector("#"+h);
   shwMount({v,cfg,root:P,frame:P,layer:P,before:P.querySelector(".shp-spot,.po-sight"),sel:".shp-spot,.po-sight",keyOf:kOf,find:fd,mem,gate})}
 const SHW_PORT_K=1.35;   /* 開發者 11/8：渡口的角色原本約圖高 3～4%，放大 1.35 倍 */
-function shwPort(v,k){if(!SHW_PORT_ON||!SHW_PORT[k])return;const C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];shwPage(v,C,"port:"+k,()=>{const P=v.querySelector(".shp-page.cq");return!!P&&!P.classList.contains("pc-run")&&!document.querySelector(".walkc")})}   /* 07p 下船過場（pc-run）、步行小卡（.walkc）播完才出現 */
+function shwPort(v,k){if(!SHW_PORT_ON||!SHW_PORT[k])return;let C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
+  {const P=v&&v.querySelector(".shp-page.cq"),e=P&&typeof scwCur==="function"?scwCur(P):null;if(e&&e.walk&&P._scw){C=scwWalkCfg(P._scw,e);P._scwW="l"}}   /* W107-L：開頁就是渡口橫式圖時用條目的路網（換圖時 07sw scwWalk 重掛） */
+  shwPage(v,C,"port:"+k,()=>{const P=v.querySelector(".shp-page.cq");return!!P&&!P.classList.contains("pc-run")&&!document.querySelector(".walkc")})}   /* 07p 下船過場（pc-run）、步行小卡（.walkc）播完才出現 */
 function shwYz(v,k){if(!SHW_YZ_ON||!SHW_YZ[k])return;shwPage(v,Object.assign({},SHW_PG0,SHW_YZ[k]),"yz:"+k,()=>!document.querySelector(".walkc"))}
 if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const r=f0.apply(this,arguments);try{shwPort(v,k)}catch(e){}return r}}
 if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.apply(this,arguments);try{shwYz(v,k)}catch(e){}return r}}

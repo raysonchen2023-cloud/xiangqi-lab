@@ -60,6 +60,7 @@ function pfxTest(gl,draw,bw,bh,base,W,H,pts){draw();const c=document.createEleme
    WebGL 畫在畫布上會蓋住底下的 img，所以貼圖改用全彩版；剛下船那段暈開上色（07p 的 .pc-run）播完才啟動，同一頁不重複建畫布 */
 const pfxImg=()=>typeof PORTF_ON!=="undefined"&&PORTF_ON&&typeof PORTF_ERAS!=="undefined"&&PORTF_ERAS.includes("classic")?"port_classic_f.webp":"port_classic.webp";
 function portFx(v,k){const P=v&&v.querySelector(".shp-page.cq");if(!P||k!=="classic"||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  if(P.dataset.scw)return;   /* W107-L：船艙動態是照直圖量的，iPad 橫式圖先不掛 */
   if(P.querySelector(".pfx-gl"))return;if(P.classList.contains("pc-run")){let n=0;const w=()=>{if(!P.isConnected)return;if(P.classList.contains("pc-run")&&n++<40)return setTimeout(w,200);portFx(v,k)};setTimeout(w,200);return}
   pfxDev(P);if(!pfxOn())return;
   const base=P.querySelector(":scope>img"),spots=[...P.querySelectorAll(".shp-spot,.po-sight")],cv=document.createElement("canvas");if(!base)return;
