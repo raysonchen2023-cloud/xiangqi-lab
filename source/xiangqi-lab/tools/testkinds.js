@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-kaiju-late-1125.js",   /* 11/25 開發者截圖：練功房下到第 5、6 步才跳出開局「紅先」特效。kaijuFx 多 ok 參數，真正要播時（含等過場的重試）再問「同一盤、還沒走子」；練功房、線上對局都帶（m/01-board.js、08b-cpugame.js、09b-preload.js）。6 項行為（vm 跑 kaijuFx）、1 項〔原始碼〕 */
   "test-devmode-native-1124.js",   /* 11/24 D1 送審前（App Store 2.3.1）：原生 App 一律不是開發者模式，存檔帶來的 devMode 不生效；手機網頁、電腦網頁照舊（m/02-shell.js DEVMODE；行為 3） */
   "test-zh-canvas-1124.js",   /* 11/24 W94b 簡體模式：平面棋盤（SVG）與畫布（3D 棋子貼圖、河界）上的字也轉簡體，紅子寫「马」「车」不變罕見字（src/zh.js；行為 5） */
   "test-zh-canvas-1124.js",   /* 11/24 W94b 簡體模式：平面棋盤（SVG）與畫布（3D 棋子貼圖、河界）上的字也轉簡體，紅子寫「马」「车」不變罕見字（src/zh.js；朝代圖片棋子組改底圖＋文字：m/01-board.js、m/06-cpu.js；行為 5、混合 1） */
