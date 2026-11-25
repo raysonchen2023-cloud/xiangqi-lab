@@ -110,7 +110,8 @@ function hbCss(){if(document.getElementById("hbCss"))return;const s=document.cre
 .hb-lamp{position:absolute;width:9%;aspect-ratio:1;margin:-4.5% 0 0 -4.5%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,226,150,.9),rgba(255,196,96,.45) 45%,rgba(255,170,60,0));mix-blend-mode:screen;opacity:0;transition:opacity .8s}
 .hb-lamp.on{opacity:1;animation:hbFlick 2.8s ease-in-out infinite alternate}.hb-lamp:nth-child(3n){animation-delay:-1.1s}.hb-lamp:nth-child(3n+1){animation-delay:-2s}
 @keyframes hbFlick{0%{opacity:.8;transform:scale(.96)}50%{opacity:1;transform:scale(1.04)}100%{opacity:.86;transform:scale(1)}}
-.hb-steam{position:absolute;width:9%;height:10%;margin:-10% 0 0 -4.5%}.hb-steam i{position:absolute;bottom:0;left:40%;width:34%;height:100%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.98),rgba(255,255,255,.55) 55%,rgba(255,255,255,0));filter:blur(1px) drop-shadow(0 0 1.5px rgba(70,60,50,.45));animation:hbSteam 3.2s ease-in infinite;opacity:0}
+.hb-steam{position:absolute;width:9%;height:10%;margin:-10% 0 0 -4.5%}
+.hb-l1610 .hb-lamp{width:3.5%;margin:-1.75% 0 0 -1.75%}.hb-l1610 .hb-steam{width:3.5%;height:6%;margin:-6% 0 0 -1.75%}.hb-steam i{position:absolute;bottom:0;left:40%;width:34%;height:100%;border-radius:50%;background:radial-gradient(closest-side,rgba(255,255,255,.98),rgba(255,255,255,.55) 55%,rgba(255,255,255,0));filter:blur(1px) drop-shadow(0 0 1.5px rgba(70,60,50,.45));animation:hbSteam 3.2s ease-in infinite;opacity:0}
 .hb-steam i:nth-child(2){left:15%;animation-delay:-1.1s}.hb-steam i:nth-child(3){left:62%;animation-delay:-2.1s}
 @keyframes hbSteam{0%{transform:translateY(40%) scaleX(.6);opacity:0}25%{opacity:.85}100%{transform:translateY(-70%) scaleX(1.4) rotate(8deg);opacity:0}}
 .hb-ink{position:absolute;inset:0;background:radial-gradient(ellipse 10.5% 4.4% at 68.5% 65.4%,rgba(28,24,22,.72),rgba(28,24,22,.42) 60%,rgba(28,24,22,0) 100%);transition:opacity 1.2s}   /* 11/10：iPhone 上 multiply 不作用，深色整塊蓋住、邊又硬；改成中間濃、往池邊淡開，不靠混色 */
@@ -144,14 +145,18 @@ async function hbRedoN(){if(HB_REDO&&Date.now()-HB_REDO.at<6e4)return HB_REDO.n;
     for(const g of gs){if(!isStdStart(g.it.board))continue;g.moves.forEach((m,i)=>{if(m.by===g.side&&QBAD.includes(qNow(m))){const d=done[g.c+"/"+g.id+"/"+(i+1)];if(!d||!d.ok||(d.due&&d.due<=now))n++}})}}catch(e){return null}
   HB_REDO={n,at:Date.now()};return n}
 function hbFxLearn(P){const fx=P.querySelector(".hb-fx");if(!fx||hbIsCl())return;
+  /* W107-L：iPad 橫向換成書院的橫式圖（07sw SCW「hubmap/learn」）時，燈、茶煙、矮几棋枰、洗墨池、墨暈照條目 fx；換圖時整組重畫（先清掉） */
+  const e=typeof scwCur==="function"?scwCur(P):null,G=e&&e.fx&&e.fx.lamp?e.fx:null;fx.innerHTML="";P.classList.toggle("hb-l1610",!!G);
+  const LAMP=G?G.lamp:HUB_LAMP.learn,STEAM=G?G.steam:HUB_STEAM,QP=G?G.qp:HUB_QP,QW=G?e.w:768,POND=G?G.pond:HUB_POND;
   let lit=0;try{lit=Object.keys(campStars()).length}catch(e){}lit=Math.max(0,Math.min(12,lit));
-  fx.insertAdjacentHTML("beforeend",HUB_LAMP.learn.map((p,i)=>`<i class="hb-lamp${i<lit?" on":""}" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
+  fx.insertAdjacentHTML("beforeend",LAMP.map((p,i)=>`<i class="hb-lamp${i<lit?" on":""}" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
   let tea=false;try{const S=cjState(),L=S.day===cjDay()?S.list:null;tea=!cjCleared(L)}catch(e){}
-  if(tea)fx.insertAdjacentHTML("beforeend",`<span class="hb-steam" style="left:${HUB_STEAM[0]}%;top:${HUB_STEAM[1]}%"><i></i><i></i><i></i></span>`);
-  try{if(typeof jz2M3==="function"){const q=document.createElement("span");q.className="hb-qp";q.innerHTML=hbQpSVG();fx.append(q);const fit=()=>{const k=P.clientWidth/768;if(!k)return;q.style.transform=jz2M3(180,200,HUB_QP.map(([x,y])=>[x*k,y*k]))};   /* 849：矮几棋枰（jz2M3＝07z2 的透視矩陣） */
+  if(tea)fx.insertAdjacentHTML("beforeend",`<span class="hb-steam" style="left:${STEAM[0]}%;top:${STEAM[1]}%"><i></i><i></i><i></i></span>`);
+  try{if(typeof jz2M3==="function"){const q=document.createElement("span");q.className="hb-qp";q.innerHTML=hbQpSVG();fx.append(q);const fit=()=>{const k=P.clientWidth/QW;if(!k)return;q.style.transform=jz2M3(180,200,QP.map(([x,y])=>[x*k,y*k]))};   /* 849：矮几棋枰（jz2M3＝07z2 的透視矩陣） */
     if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit()}}catch(e){}
-  const pond=document.createElement("span");pond.style.cssText=`position:absolute;inset:0;clip-path:${HUB_POND};-webkit-clip-path:${HUB_POND}`;fx.append(pond);
-  hbRedoN().then(n=>{if(n==null||!pond.isConnected)return;pond.innerHTML=n>0?`<i class="hb-ink" style="opacity:${Math.min(.85,.3+n*.06).toFixed(2)}"></i>`:'<i class="hb-clear"></i>'})}
+  const pond=document.createElement("span");pond.style.cssText=`position:absolute;inset:0;clip-path:${POND};-webkit-clip-path:${POND}`;fx.append(pond);
+  const inkBg=G&&G.ink?`;background:radial-gradient(ellipse 6% 3.6% at ${G.ink[0]}% ${G.ink[1]}%,rgba(28,24,22,.72),rgba(28,24,22,.42) 60%,rgba(28,24,22,0) 100%)`:"";
+  hbRedoN().then(n=>{if(n==null||!pond.isConnected)return;pond.innerHTML=n>0?`<i class="hb-ink" style="opacity:${Math.min(.85,.3+n*.06).toFixed(2)}${inkBg}"></i>`:'<i class="hb-clear"></i>'})}
 function hbFxBattle(P,img){let ph="";try{const S=window.XQNet&&XQNet.cup&&XQNet.cup();ph=S&&S.ph||""}catch(e){}
   const alt=ph==="reg"||ph==="wait"?"battle_red":ph==="ck"||ph==="play"?"battle_curtain":"";
   const lw=!!P.dataset.scw;   /* W107-L：用 iPad 橫向專用橫式圖時不換千秋盃的報名、垂簾狀態圖（那兩張是直圖，換了座標就對不上），燈也不疊；狀態圖的橫式版還沒畫 */
@@ -178,7 +183,7 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
   if(typeof shpFit==="function")shpFit(v);
   try{const SW=hbIsCl()&&SHW_HUB_CL[hub]||SHW_HUB[hub],pfx="hub:"+hub+(SW===SHW_HUB[hub]?"":":cl");let cfg=SW?Object.assign({},SHW_PG0,SW):null;
     /* W107-L：交給 07sw 換圖、入口、出口、走路節點；換圖後煙火換位置、重掛走路角色後照新的隱身範圍 */
-    if(typeof scwMount==="function"&&cfg){const o={key:scwKey(src),src0:src,ids:sp.map(x=>x.id),pfx,cfg0:cfg,apply:()=>hbFwPlace(P),onWalk:c=>hbHide(P,c.hide)};scwMount(P,o);if(pre.k){cfg=scwWalkCfg(o,scwCur(P));P._scwW="l"}hbFwPlace(P)}
+    if(typeof scwMount==="function"&&cfg){const o={key:scwKey(src),src0:src,ids:sp.map(x=>x.id),pfx,cfg0:cfg,apply:()=>{hbFwPlace(P);if(hub==="learn")try{hbFxLearn(P)}catch(x){}},onWalk:c=>hbHide(P,c.hide)};scwMount(P,o);if(pre.k){cfg=scwWalkCfg(o,scwCur(P));P._scwW="l";if(hub==="learn")try{hbFxLearn(P)}catch(x){}}hbFwPlace(P)}
     if(typeof shwPage==="function"&&SHIP_WALK_ON&&cfg){shwPage(v,cfg,pfx);hbHide(P,cfg.hide)}}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HUB_MAP_ON&&(hub==="learn"||hub==="battle"))hubMap(v,hub)}catch(e){}return r}}

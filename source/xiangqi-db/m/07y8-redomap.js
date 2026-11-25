@@ -22,8 +22,8 @@ const rd2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours()
 function rd2Css(){if(document.getElementById("rd2Css"))return;const s=document.createElement("style");s.id="rd2Css";s.textContent=`
 .rd2-page{margin:0 0 6px}
 .rd2-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-.rd2-pond{position:absolute;inset:0;clip-path:${RD2_POND};-webkit-clip-path:${RD2_POND}}.rd2-cl .rd2-pond{display:none}.scw-l .rd2-pond{display:none}
-.rd2-ink{position:absolute;inset:0;background:radial-gradient(ellipse 46% 18% at 53% 38%,rgba(28,24,22,.62),rgba(28,24,22,.36) 55%,rgba(28,24,22,0) 100%);transition:opacity 1.2s}   /* 11/10 開發者截圖：iPhone 上 multiply 不作用，池面變成一大塊硬邊深灰；改成中間濃、往池邊淡開，不靠混色 */
+.rd2-pond{position:absolute;inset:0;clip-path:${RD2_POND};-webkit-clip-path:${RD2_POND}}.rd2-cl .rd2-pond{display:none}.scw-l:not(.rd2-pondl) .rd2-pond{display:none}
+.rd2-ink{position:absolute;inset:0;background:radial-gradient(ellipse var(--rd2irx,46%) var(--rd2iry,18%) at var(--rd2ix,53%) var(--rd2iy,38%),rgba(28,24,22,.62),rgba(28,24,22,.36) 55%,rgba(28,24,22,0) 100%);transition:opacity 1.2s}   /* 11/10 開發者截圖：iPhone 上 multiply 不作用，池面變成一大塊硬邊深灰；改成中間濃、往池邊淡開，不靠混色 */
 .rd2-clear{position:absolute;inset:0;background:linear-gradient(115deg,rgba(150,205,215,0),rgba(185,228,236,.6) 45%,rgba(150,205,215,0) 60%);mix-blend-mode:screen;background-size:220% 100%;animation:rd2Glint 4.5s ease-in-out infinite}
 @keyframes rd2Glint{0%{background-position:120% 0}100%{background-position:-20% 0}}
 .rd2-season{position:absolute;inset:0;width:100%;height:100%}
@@ -76,12 +76,16 @@ function rd2Wrap(v,R){if(!REDO_MAP_ON||!v.querySelector("#rf"))return R;rd2Css()
     try{(L||rf).scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}};
   P.querySelector("#rd2Book").onclick=()=>{const c=cnt();pick(c.due?"due":"todo")};P.querySelector("#rd2Stack").onclick=()=>pick("todo");P.querySelector("#rd2Pole").onclick=()=>pick("ok");P.querySelector("#rd2All").onclick=()=>pick("all");
   /* 疊圖座標：原圖用原本的像素常數；橫式圖用條目 fx（圖的 %），寬度倍數 --rd2k＝物件在橫式圖上相對圖寬縮小多少（照物件佔圖高放大 1.4 倍換算） */
-  const geo=()=>{const e=typeof scwCur==="function"?scwCur(P):null;P.style.setProperty("--rd2k",e&&e.fx?String(Math.round((768/1376)/(e.w/e.h)*1.4*1000)/1000):"1");return e&&e.fx?e.fx:null};
+  const geo=()=>{const e=typeof scwCur==="function"?scwCur(P):null,f=e&&e.fx?Object.assign({W:e.w,H:e.h},e.fx):null;P.style.setProperty("--rd2k",f?String(Math.round((768/1376)/(e.w/e.h)*1.4*1000)/1000):"1");
+    /* 原圖版（非經典）橫式圖有洗墨池：池面照條目 clip-path、墨暈中心照條目、季節水草往下挪到新池面（W107-L，Windows Claude 1 量） */
+    P.classList.toggle("rd2-pondl",!!(f&&f.pond));const pd=P.querySelector(".rd2-pond");if(pd){pd.style.clipPath=pd.style.webkitClipPath=f&&f.pond?f.pond:"";const sv=pd.querySelector(".rd2-season");if(sv)sv.style.transform=f&&f.seasonDy?"translateY("+f.seasonDy+"%)":""}
+    for(const[n,v]of[["--rd2ix",f&&f.ink?f.ink[0]+"%":""],["--rd2iy",f&&f.ink?f.ink[1]+"%":""],["--rd2irx",f&&f.ink?"40%":""],["--rd2iry",f&&f.ink?"9%":""]])if(v)P.style.setProperty(n,v);else P.style.removeProperty(n);
+    return f};
   const draw=()=>{if(!P.isConnected)return;const c=cnt(),fx=P.querySelector(".rd2-fx"),L=geo();
     /* 案角疊冊：還沒練會的題數，最多疊 8 本 */
     const nS=Math.min(8,c.todo||0);fx.querySelector(".rd2-stack").innerHTML=Array.from({length:nS},(_,i)=>{const[x,y]=L?[(L.stackBase[0]+(i%2?.15:-.08)).toFixed(2),(L.stackBase[1]-i*L.stackStep).toFixed(2)]:rd2Pc(RD2_STACK[0]+(i%2?2:-1),RD2_STACK[1]-i*5.5);return`<img class="rd2-bk" src="data/redomap/rd_book.webp?v=${RD2_IMGV}" alt="" style="left:${x}%;top:${y}%${L?`;width:${L.bookW}%`:""}">`}).join("");
     /* 竹竿晾冊頁：練會的題數，最多 9 張；每張由程式畫一個朱圈 */
-    const nP=L?0:Math.min(9,c.ok||0),[[x0,y0],[x1,y1]]=cl?RD2_CL[dk?"night":"day"].pole:RD2_POLE;   /* 橫式圖沒有竹竿晾架（經典世界的窗景），不晾冊頁 */fx.querySelector(".rd2-pole").innerHTML=Array.from({length:nP},(_,i)=>{const f=(i+.7)/9.4,x=x0+(x1-x0)*f,y=y0+(y1-y0)*f,[a,b]=rd2Pc(x,y-3);return`<span class="rd2-pg" style="left:${a}%;top:${b}%;--r:${(i%3-1)*3}deg;--d:-${(i*.7%4).toFixed(1)}s"><img src="data/redomap/rd_page.webp?v=${RD2_IMGV}" alt="" style="width:100%;display:block"><i></i></span>`}).join("");
+    const nP=L&&!L.pole?0:Math.min(9,c.ok||0),[[x0,y0],[x1,y1]]=L&&L.pole?L.pole:cl?RD2_CL[dk?"night":"day"].pole:RD2_POLE;   /* 橫式圖：條目有竹竿（原圖版）就晾，座標是條目像素、冊頁寬照 pgW；經典版橫式圖還沒有晾架，不晾 */fx.querySelector(".rd2-pole").innerHTML=Array.from({length:nP},(_,i)=>{const f=(i+.7)/9.4,x=x0+(x1-x0)*f,y=y0+(y1-y0)*f,[a,b]=L&&L.pole?[(x/L.W*100).toFixed(2),((y-3*L.H/1376)/L.H*100).toFixed(2)]:rd2Pc(x,y-3);return`<span class="rd2-pg" style="left:${a}%;top:${b}%;${L&&L.pgW?`width:${L.pgW}%;`:""}--r:${(i%3-1)*3}deg;--d:-${(i*.7%4).toFixed(1)}s"><img src="data/redomap/rd_page.webp?v=${RD2_IMGV}" alt="" style="width:100%;display:block"><i></i></span>`}).join("");
     /* 攤開的冊子上直寫今天要複習幾題 */
     const[tx,ty]=L?L.bookText:rd2Pc(RD2_BOOK[0]+14,RD2_BOOK[1]-2);fx.querySelector(".rd2-ctxt").innerHTML=`<span class="rd2-txt" style="left:${tx}%;top:${ty}%">${c.due?`今日複習<b>${c.due}</b>題`:"今日無課"}</span>`;
     /* 香篆爐：該複習＝點著；否則煙的長短＝離下次複習幾天 */

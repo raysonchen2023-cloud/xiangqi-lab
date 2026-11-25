@@ -117,6 +117,18 @@ const SCW_ERA={"hubmap/battle_classic":["hubmap/battle",..."qin han sanguo weiji
   "todaymap/today_day_classic":["todaymap/today_day","todaymap/today_day_han","todaymap/today_day_weijin","todaymap/today_day_tang"],
   "exammap/exam_day_classic":["exammap/exam_day"]};
 for(const b in SCW_ERA){const B=SCW[b];if(!B)continue;for(const k of SCW_ERA[b])if(!SCW[k])SCW[k]=Object.assign({},B,{f:k+"_l1610",base:b})}
+/* 學習分頁原圖（書院，非經典；07y）：構圖跟經典版不同，另外量一套（output/w107-ipad/l1610/hubmap/learn_l1610.json），取代 HUB_DEF.learn、SHW_HUB.learn 和 hbFxLearn 的疊圖座標：
+   fx.lamp 十二盞燈（%）、qp 矮几棋枰四角（像素）、steam 茶煙（%）、pond 洗墨池 clip-path、ink 墨暈中心（%）。11 朝用同一套（構圖以原圖為基準重畫）。朝代殘影只在經典世界，這裡不放。
+   錯棋重練原圖（非經典；07y8）：以經典版條目為底，多了晾冊竹竿（像素）、冊頁寬（圖寬 %）、洗墨池 clip-path、墨暈中心、季節水草往下挪（Windows Claude 1 量） */
+SCW["hubmap/learn"]={ready:true,f:"hubmap/learn_l1610",w:2560,h:1600,
+    S:{"hbGuess":[50,16],"hbDb":[50,26.4],"hbQuiz":[50,46.4],"hbOpen":[61.5,53.6],"hbStats":[17.5,43.2],"hbTheme":[80,42.4],"hbCanju":[28,60.8],"hbRedo":[66.5,64],"hbTerms":[18.5,77.6],"hbCamp":[79.5,78.4]},exit:[86,92],
+    safe:{l:.12,r:.12,t:.05,b:.10},
+    walk:{W:2560,H:1600,h:[.033,29,.0007],look0:[50,99],hide:[[44,56,62,92],[42,58,26,50]],N:{"home":[50,97],"g":[50,86],"c":[50,58],"t1":[50,55.5],"exam":[50,53],"hin":[50,46],"door":[50,30],"guess":[50,21],"fl":[34,66],"tea":[28,68],"stele":[24,90],"tl":[20,52],"pond":[74,71],"sand":[67,86],"open":[61.5,57],"theme":[80,54],"pr":[77,58]},E:"home-g g-c c-t1 t1-exam exam-hin hin-door door-guess c-fl fl-tea fl-stele c-tl t1-open open-theme open-pr pr-pond pond-sand",HS:{"hbTerms":["stele",18.5,78,"bow"],"hbCamp":["sand",79.5,78,"wave"],"hbCanju":["tea",28,61,"bow"],"hbRedo":["pond",66.5,64,"wave"],"hbTheme":["theme",80,42,"wave"],"hbQuiz":["exam",50,46,"bow"],"hbStats":["tl",17.5,43,"wave"],"hbOpen":["open",61.5,54,"wave"],"hbGuess":["guess",50,16,"wave"],"hbDb":["guess",50,26,"bow"]}},
+    fx:{lamp:[[10.5,46.4],[88.7,46.4],[34.3,42.9],[42.5,42.9],[57.3,42.9],[65.7,42.9],[23.5,35.5],[83.7,42.9],[27.5,32],[71.3,32],[41.3,14.7],[58.3,14.7]],qp:[[1498,824],[1638,824],[1651,888],[1505,888]],steam:[28.5,53],pond:"polygon(61% 60.5%,70% 60%,71.5% 66.9%,62.2% 67.2%)",ink:[66,63.7]},
+    sw7:{sky:[[[0,0],[2560,0],[2560,256],[0,256]]],fg:null,tr:null}};
+for(const e of "qin han sanguo weijin nanbei sui tang wudai yuan ming qing".split(" "))SCW["hubmap/learn_"+e]=Object.assign({},SCW["hubmap/learn"],{f:"hubmap/learn_"+e+"_l1610",base:"hubmap/learn"});
+{const B=SCW["redomap/redo_day_classic"];SCW["redomap/redo_day"]=Object.assign({},B,{f:"redomap/redo_day_l1610",S:Object.assign({},B.S,{rd2Pole:[82,28]}),
+  fx:Object.assign({},B.fx,{pole:[[1958,525],[2253,584]],pgW:2.1,pond:"polygon(13% 39%,87% 34%,87% 51%,13% 51%)",ink:[50,44],seasonDy:10})})}
 const SCW_BAD={};   /* 這次開 App 載不到的橫式圖（鍵＝原圖鍵），退回原圖不再試 */
 /* 圖網址 → 鍵（data/ 之後、不含 .webp 和 ?v=） */
 const scwKey=src=>{const m=/(?:^|\/)data\/([^?#]+?)\.webp(?:[?#]|$)/.exec(src||"");return m?m[1]:""};

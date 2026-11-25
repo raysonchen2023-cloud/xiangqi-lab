@@ -32,7 +32,7 @@ test("圖網址 → 鍵；條目要 ready、或開發用開關，載不到過的
   assert.equal(scwKey("https://x.test/data/redomap/redo_day_classic_l1610.webp"), RD + "_l1610");
   assert.equal(scwKey("data/redomap/redo_day.png"), "");
   assert.ok(scwEntry(RD), "錯棋重練經典白天已登記、ready");
-  assert.equal(scwEntry("redomap/redo_day"), null, "預設世界沒有橫式圖＝原圖");
+  assert.equal(scwEntry("redomap/redo_night"), null, "夜景（預設世界）還沒有橫式圖＝原圖");
   assert.equal(scwEntry("redomap/redo_night_classic"), null, "夜景沒有橫式圖＝原圖");
   assert.equal(scwEntry("toString"), null, "原型上的名字不算");
   const C = load(), e = vm.runInContext("SCW_BAD['" + RD + "']=1;scwEntry('" + RD + "')", C);
@@ -89,7 +89,13 @@ test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在
   let n = 0; for (const [p, c] of Object.entries(ERA)) { const ks = Object.keys(SCW).filter(k => (k === p || k.startsWith(p + "_")) && !/classic/.test(k)); assert.equal(ks.length, c, p + " 朝代張數"); n += c;
     for (const k of ks) { assert.equal(SCW[k].f, k + "_l1610"); assert.match(SCW[k].base, /_classic$/) } }
   assert.equal(n, 35);
-  assert.equal(scwEntry("hubmap/learn_tang"), null, "學習朝代版還沒有座標"); assert.equal(scwEntry("redomap/redo_day"), null, "錯棋重練原圖要等洗墨池、竹竿座標");
+  // 學習原圖（書院）另一套座標、11 朝共用；錯棋重練原圖加洗墨池、晾冊竹竿
+  const LN = scwEntry("hubmap/learn"); assert.ok(LN); assert.equal(LN.fx.lamp.length, 12, "書院 12 盞燈"); assert.equal(LN.fx.qp.length, 4, "矮几棋枰四角");
+  for (const e of "qin han sanguo weijin nanbei sui tang wudai yuan ming qing".split(" ")) { const x = scwEntry("hubmap/learn_" + e); assert.ok(x, e); assert.equal(x.ready, true, e); assert.equal(x.base, "hubmap/learn"); assert.equal(x.S, LN.S) }
+  assert.equal(SCW["hubmap/learn"].S === SCW["hubmap/learn_classic"].S, false, "書院跟經典版構圖不同，座標不共用");
+  const RO = scwEntry("redomap/redo_day"); assert.ok(RO); assert.equal(RO.fx.pole.length, 2); assert.ok(RO.fx.pgW > 1 && RO.fx.pgW < 4.8, "竿子短，冊頁縮小"); assert.match(RO.fx.pond, /^polygon\(/); assert.equal(RO.fx.seasonDy, 10);
+  assert.equal(RO.fx.bookText, SCW["redomap/redo_day_classic"].fx.bookText, "書、疊冊、香爐照經典版"); assert.equal(JSON.stringify(RO.S.rd2Pole), "[82,28]");
+  assert.equal(SCW["redomap/redo_day_classic"].fx.pole, undefined, "經典版橫式還沒有晾架（等重出）");
   assert.equal(scwEntry("canjumap/canju_day_weijin").fx.ves, SCW["canjumap/canju_day_classic"].fx.ves, "殘局魏晉組用經典版橫式的茶器位置");
   // 季節、夜景：對戰、學習各 9 個變體（夏季對到原圖的橫式圖）
   for (const h of ["battle", "learn"]) {
@@ -160,7 +166,7 @@ test("換圖：iPad 橫向原地換成橫式圖、入口和出口換座標；圖
   assert.equal(scwSync(V, P), null, "這次開 App 不再試，照原圖排"); assert.equal(P.dataset.scw, "");
   const d2 = { w: 956, h: 354 }, F = fakeDom(d2); vm.runInContext("scwMount", F.ctx)(F.P, { key: RD, src0: F.img._src, ids: [] });
   assert.equal(vm.runInContext("scwSync", F.ctx)(F.V, F.P), null, "手機橫放不換");
-  const F2 = fakeDom({ w: 1180, h: 734 }); vm.runInContext("scwMount", F2.ctx)(F2.P, { key: "redomap/redo_day", src0: F2.img._src, ids: [] });
+  const F2 = fakeDom({ w: 1180, h: 734 }); vm.runInContext("scwMount", F2.ctx)(F2.P, { key: "redomap/redo_night", src0: F2.img._src, ids: [] });
   assert.equal(vm.runInContext("scwSync", F2.ctx)(F2.V, F2.P), null, "沒登記的變體不換");
 });
 
@@ -243,7 +249,6 @@ test("〔混合〕原始碼：07fl 排版前先問 scwSync、安全區照條目�
   assert.match(Y8, /const pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\}/);
   assert.match(Y8, /<img src="\$\{pre\.src\}"/);
   assert.match(Y8, /ids:\["rd2Book","rd2Stack","rd2Pole","rd2All"\],pfx:"rd2"/);
-  assert.match(Y8, /const nP=L\?0:/, "橫式圖不晾冊頁");
   const Y9 = M("m/07y9-exammap.js");
   assert.match(Y9, /pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\}/); assert.match(Y9, /<img src="\$\{pre\.src\}"/);
   assert.match(Y9, /ids:\["ex2S0","ex2S1","ex2S2","ex2Book"\],pfx:"ex2",cfg0:cfg,apply:brd/);
@@ -266,6 +271,9 @@ test("〔混合〕原始碼：07fl 排版前先問 scwSync、安全區照條目�
   assert.match(YH, /onWalk:c=>hbHide\(P,c\.hide\)/, "對戰、學習重掛走路角色後照新的隱身範圍");
   assert.match(YH, /if\(alt&&!hbIsCl\(\)&&!lw\)/, "橫式圖時不換千秋盃狀態直圖");
   assert.match(YH, /im\.onload=\(\)=>\{if\(img\.isConnected&&!P\.dataset\.scw\)img\.src=im\.src\}/, "狀態圖晚載好、已經是橫式圖時不蓋（審查 #155 第 3 項）");
+  assert.match(YH, /const LAMP=G\?G\.lamp:HUB_LAMP\.learn,STEAM=G\?G\.steam:HUB_STEAM,QP=G\?G\.qp:HUB_QP,QW=G\?e\.w:768,POND=G\?G\.pond:HUB_POND;/, "書院疊圖照條目");
+  assert.match(YH, /if\(pre\.k\)\{cfg=scwWalkCfg\(o,scwCur\(P\)\);P\._scwW="l";if\(hub==="learn"\)try\{hbFxLearn\(P\)\}catch\(x\)\{\}\}/, "開頁就是橫式圖：掛上 07sw 後再畫一次疊圖");
+  const Y8b = M("m/07y8-redomap.js"); assert.match(Y8b, /const nP=L&&!L\.pole\?0:/, "原圖版橫式圖有竹竿就晾"); assert.match(Y8b, /\.scw-l:not\(\.rd2-pondl\) \.rd2-pond\{display:none\}/, "有池面才顯示洗墨池");
   assert.match(YH, /const lw=\/_l1610\\\.webp\/\.test\(src\),E=lw&&typeof scwByF==="function"\?scwByF\(src\):null/, "朝代殘影照橫式條目");
   assert.match(X2, /function lmFar\(s,used,G\)/); assert.match(X2, /gap:44\/pw\*100/, "橫式圖的亮燈間距照螢幕 44px");
   assert.match(X2, /class="lm-fig\$\{f===2\?" f2":""\}"/); assert.match(X2, /\.scw-l \.lm-fig\.f2\{-webkit-mask-image:linear-gradient/, "橫式圖二樓人影下半部淡出");
