@@ -137,7 +137,7 @@ function scwVarList(){const L=[];
     L.push([b+"_summer",b,null,1]);L.push([b+"_summer_night",b,b+"_night_l1610"])}
   return L}
 let SCW_VAR_TODO=null;
-/* 11/25 審查 #173：照目前 main＋#155 的條目，對戰、學習、大廳、錯棋、今日、殘局、棋力測驗的變體一開就登記得到；
+/* 11/25 審查 #173：照目前 main＋#155 的條目，216 張裡 193 張一開就登記得到（實跑），其餘 23 張等日間條目進來。對戰、學習、大廳、錯棋、今日、殘局、棋力測驗的變體一開就登記得到；
    營地、千秋盃、宗師、設定、戰績、開局、術語、主題、信房、書房的日間條目在各自的 PR（#158、#159、#161、#162……），那幾支合進來以後才登記得到。
    已經有的條目（各頁自己寫的）不蓋掉；這一輪沒登記到新的就不重建清單 */
 function scwVarInit(){if(SCW_VAR_TODO===null)SCW_VAR_TODO=scwVarList();if(!SCW_VAR_TODO.length)return;
