@@ -1,6 +1,6 @@
-// W107-L 夜景、四季：Windows Claude 2 11/25 出的 215 張 iPad 橫式圖（構圖照日間、座標共用）。07sw scwVarList／scwVarInit。
-// 檢查：清單會用到的檔＝送來的 215 張（逐一寫死各類數量）；日間條目晚登記也接得上；複製的條目座標跟日間同一份、只換檔名；
-// 夏季用日間那張、夏夜用夜景那張；沒送的 3 張不登記；scwPre、scwSw7 找得到變體。
+// W107-L 夜景、四季：Windows Claude 2 11/25 出的 215 張＋Windows Claude 1 重畫、重出的 3 張，共 218 張 iPad 橫式圖（構圖照日間、座標共用）。07sw scwVarList／scwVarInit。
+// 檢查：清單會用到的檔＝送來的 218 張（逐一寫死各類數量）；日間條目晚登記也接得上；複製的條目座標跟日間同一份、只換檔名；
+// 夏季用日間那張、夏夜用夜景那張；不在清單的不登記；scwPre、scwSw7 找得到變體。
 // 用法 node --test xiangqi-lab/tools/test-w107-night-l1610.js
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");

@@ -32,7 +32,7 @@ test("圖網址 → 鍵；條目要 ready、或開發用開關，載不到過的
   assert.equal(scwKey("https://x.test/data/redomap/redo_day_classic_l1610.webp"), RD + "_l1610");
   assert.equal(scwKey("data/redomap/redo_day.png"), "");
   assert.ok(scwEntry(RD), "錯棋重練經典白天已登記、ready");
-  assert.equal(scwEntry("redomap/redo_dawn"), null, "沒列在變體清單的照舊沒有橫式圖＝原圖（夜景 218 張 11/25 到齊）");   /* 11/25 夜景、四季 215 張到了，redo_night 已有橫式圖（test-w107-night-l1610.js），改用還沒送的那張 */
+  assert.equal(scwEntry("redomap/redo_dawn"), null, "沒列在變體清單的照舊沒有橫式圖＝原圖（夜景 218 張 11/25 到齊）");   /* 11/25 夜景、四季 218 張到齊（test-w107-night-l1610.js），redo_night 等都有橫式圖了，這裡改用不在變體清單的 redo_dawn */
   assert.equal(scwEntry("redomap/redo_night_classic").f, "redomap/redo_night_classic_l1610", "11/25 起經典夜景也有橫式圖（照日間條目複製）");
   assert.equal(scwEntry("redomap/redo_dawn_classic"), null, "沒列在變體清單的照舊沒有橫式圖＝原圖");
   assert.equal(scwEntry("toString"), null, "原型上的名字不算");
