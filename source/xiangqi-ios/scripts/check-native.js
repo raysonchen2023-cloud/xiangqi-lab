@@ -206,7 +206,7 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
   const IF_OK = /^!?\s*(DEBUG|targetEnvironment\(\s*simulator\s*\))$/;
   /* #150 第三輪複審：U+FEFF 這類看不見的格式字元，pinOf 的 \s 會把它去掉，Swift 卻把它當識別字的一部分（pass<FEFF>ed 跟 passed 是兩個名字，雜湊卻一樣）；
      零寬字元、軟連字號同理。跟特殊換行字元一起，整份原文直接拒絕（不改雜湊算法，PINS 不用重算） */
-  const ODD_NL = /[\u2028\u2029\u0085\u000B\u000C\uFEFF\u200B-\u200F\u2060-\u2064\u00AD]/;   /* 第七輪審查：U+2028 這類字元 JS 跟 Swift 對「一行」的認定不同，一律不行；第八輪建議：整份原文直接檢查，不經過豁免（單獨的 \r 已被 rd() 換成換行，不用列） */
+  const ODD_NL = /[\u2028\u2029\u0085\u000B\u000C\uFEFF\u200B-\u200F\u2060-\u2064\u00AD\u0000-\u0008\u000E-\u001F\u007F]/;   /* 第四輪複審順手建議：NUL 和其他 C0 控制字元（tab、換行、CR 以外）也一律不行；單獨的 CR 已被 rd() 換成換行 */   /* 第七輪審查：U+2028 這類字元 JS 跟 Swift 對「一行」的認定不同，一律不行；第八輪建議：整份原文直接檢查，不經過豁免（單獨的 \r 已被 rd() 換成換行，不用列） */
   for (const f of [...swWalk(SRC), ...swWalk(APP)]) {
     const raw = rd(f), code = raw.split("\n").filter((l) => !(/^\s*\/\//.test(l) && !l.includes("*/"))).join("\n");   /* #144 第六輪審查：在 /＊ … ＊/ 裡、以 // 開頭又含 ＊/ 的行，＊/ 後面是真程式，不能豁免；第七輪：用 includes 不用正規式的「.」（「.」不比對 U+2028／U+2029） */
     const odd = ODD.filter(([re]) => re.test(code)).map(([, n]) => n);
@@ -254,12 +254,15 @@ check(rt.includes("retryIndex = retryDelays.count"), "手動「重試」只試�
 /* #150 第三輪複審：body() 只取第一處。用 #if DEBUG／#else 放兩份 establishNow（release 那份不經過 verifyNow），上面的檢查只看得到 DEBUG 那份。
    照 PINS 的做法：body() 拿來檢查的函式，簽章在斷詞後的程式碼裡都要剛好一處，而且不在 #if 裡（前面的 #if、#endif 要配平） */
 {
-  const BODY_SIGS = [[srvCode, "func takeAnswer(for c: String)"], [srvCode, "private func handleWhoami("], [srvCode, "private func establishNow()"], [srvCode, "private func startListening("],
-    [vcCode, "override func viewDidLoad()"], [vcCode, "private func loadVerifiedPage()"], [vcCode, "private func handle("], [vcCode, "@objc private func retryTapped()"]];
+  /* #150 第四輪複審：逐字簽章計數會被「真的那份多打一個空格、同檔另放一個替身寫一模一樣的簽章」騙過（計數數到替身、body() 也取到替身）。
+     改成在斷詞後的程式碼裡依名字計數：func <名字> 剛好一處（多打空格、換行也數得到），位置也照名字找，前面的 #if、#endif 要配平 */
+  const BODY_NAMES = [[srvCode, "takeAnswer"], [srvCode, "handleWhoami"], [srvCode, "establishNow"], [srvCode, "startListening"],
+    [vcCode, "viewDidLoad"], [vcCode, "loadVerifiedPage"], [vcCode, "handle"], [vcCode, "retryTapped"]];
   const bodyBad = [];
-  for (const [code, sig] of BODY_SIGS) {
-    const n = nameOf(sig.replace(/^@objc /, "").replace(/^override /, "")), at = code.indexOf(sig), pre = at < 0 ? "" : code.slice(0, at);
-    if (count(code, sig) !== 1) { bodyBad.push(n + "（簽章要剛好一處）"); continue }
+  for (const [code, n] of BODY_NAMES) {
+    const re = new RegExp("\\bfunc\\s+" + n + "\\b", "g"), hits = [...code.matchAll(re)];
+    if (hits.length !== 1) { bodyBad.push(n + "（要剛好一處，現在 " + hits.length + " 處）"); continue }
+    const pre = code.slice(0, hits[0].index);
     if ((pre.match(/#if\b/g) || []).length !== (pre.match(/#endif\b/g) || []).length) bodyBad.push(n + "（不能放在 #if 裡）");
   }
   check(bodyBad.length === 0, "檢查用到的函式（establishNow、handleWhoami、takeAnswer、startListening、viewDidLoad、loadVerifiedPage、handle、retryTapped）都剛好一處、不在 #if 裡" + (bodyBad.length ? "：" + bodyBad.join("、") : ""));
