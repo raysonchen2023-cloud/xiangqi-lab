@@ -526,7 +526,7 @@ const sw7SeaOf=t=>SW7_SPRING.has(t)?"sp":SW7_SUMMER.has(t)?"su":SW7_WINTER.has(t
 function sw7BoxSt(){const S=store.get("sw7Box",null)||{};S.pg=S.pg||{};S.w=S.w||{};S.u=S.u||{};S.g=S.g||[];return S}
 const sw7BoxTok=(S,e)=>Math.max(0,Math.floor((S.w[e]||0)/3)-(S.u[e]||0));
 /* #171：渡口 iPad 橫式圖 port_<朝>_f_l1610（2560×1600）的木匣（底部中心 %，Windows Claude 1 量）；寬照石桌比例縮成 6%（直圖 10%，橫式圖用 10% 比石桌大很多）。存檔的鍵照舊是 port:<朝> */
-const SW7_BOX_POS_L={port:{"qin":[19.5,62],"han":[28.5,69],"sanguo":[44,73],"weijin":[76.5,76.5],"nanbei":[67,79.5],"sui":[17.5,75],"tang":[15.5,65],"wudai":[60,56.5],"song":[18,56.5],"yuan":[42.5,61.5],"ming":[16.5,72],"qing":[64,88]}},SW7_BOX_LW=6;
+const SW7_BOX_POS_L={port:{"qin":[17,62],"han":[25,69],"sanguo":[44,73],"weijin":[77,67.5],"nanbei":[67,68.5],"sui":[16,75],"tang":[21.5,57],"wudai":[60,56.5],"song":[18,56.5],"yuan":[44,62.5],"ming":[16.5,59.5],"qing":[64,88]}},SW7_BOX_LW=6;
 function sw7BoxKey(src){let m=/data\/shipmap\/port_(\w+?)_f_l1610\.webp/.exec(src);if(m&&SW7_BOX_POS_L.port[m[1]])return["port",m[1],1];m=/data\/shipmap\/port_(\w+?)(?:_c|_f)?\.webp/.exec(src);if(m&&m[1]!=="classic"&&SW7_BOX_POS.port[m[1]])return["port",m[1]];m=/data\/yizhan\/(\w+?)(?:_c|_f)?\.webp/.exec(src);if(m&&SW7_BOX_POS.yz[m[1]])return["yz",m[1]];return null}
 /* 贏棋記到那一朝（包一層 07-legend.js 的 journeyGameEnd：先讀 jPending，古戰場 bt: 不算） */
 function sw7BoxWin(st,P){if(!st||!st.result||st.practice||st.result.w!==st.human||(st.moves||[]).length<10)return;if(P&&P.game===st.id&&String(P.id).startsWith("bt:"))return;

@@ -227,7 +227,7 @@ test("木匣：sw7BoxKey 認得橫式圖（回第 3 欄 1）、直圖照舊；�
   assert.equal(key("data/shipmap/port_classic_f_l1610.webp"), null, "經典不放木匣"); assert.equal(key("data/shipmap/port_classic_f.webp"), null);
   const L = J(vm.runInContext("SW7_BOX_POS_L.port", C));
   assert.deepEqual(Object.keys(L).sort(), ERAS.filter(e => e !== "classic").sort(), "12 朝都有");
-  assert.deepEqual(L.tang, [15.5, 65]); assert.deepEqual(L.qing, [64, 88]); assert.deepEqual(L.sanguo, [44, 73]);
+  assert.deepEqual(L.tang, [21.5, 57]); assert.deepEqual(L.qing, [64, 88]); assert.deepEqual(L.sanguo, [44, 73]);
   for (const [e, [x, y]] of Object.entries(L)) assert.ok(x > 3 && x < 97 && y > 6 && y <= 100, e + " 在圖內");
   assert.equal(vm.runInContext("SW7_BOX_LW", C), 6);
 });
@@ -244,7 +244,7 @@ test("〔混合〕sw7Box：橫式圖放橫式座標、寬 6%、元素鍵加 :l�
     const P = { querySelector: () => box, append: b => { box = b }, insertBefore: b => { box = b } }; return { R: { P, img }, get box() { return box } } };
   C.document = { createElement: () => { const b = { style: {}, dataset: {}, classList: { toggle() { }, add() { } }, setAttribute() { }, addEventListener() { }, remove() { b.gone = 1 } }; made.push(b); return b } };
   const w = mkP("data/shipmap/port_tang_f_l1610.webp?v=1125"); R("sw7Box")(w.R);
-  assert.ok(w.box, "橫式圖放木匣"); assert.equal(w.box.dataset.k, "port:tang:l"); assert.equal(w.box.style.left, "15.5%"); assert.equal(w.box.style.top, "65%"); assert.equal(w.box.style.width, "6%");
+  assert.ok(w.box, "橫式圖放木匣"); assert.equal(w.box.dataset.k, "port:tang:l"); assert.equal(w.box.style.left, "21.5%"); assert.equal(w.box.style.top, "57%"); assert.equal(w.box.style.width, "6%");
   const t = mkP("data/shipmap/port_tang_f.webp"); R("sw7Box")(t.R);
   assert.equal(t.box.dataset.k, "port:tang"); assert.equal(t.box.style.left, "24%"); assert.equal(t.box.style.width, undefined, "直圖照 CSS 的 10%");
   assert.deepEqual(Object.keys(J(store.sw7Box.pg)), ["port:tang"], "存檔的鍵兩邊都是 port:tang");
