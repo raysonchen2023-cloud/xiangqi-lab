@@ -9,6 +9,7 @@ const SRC = M("m/07sw-scenewide.js");
 function load(extra) {
   const ctx = vm.createContext(Object.assign({ setTimeout: () => 0, clearTimeout: () => { }, requestAnimationFrame: () => 0, addEventListener: () => { }, isFinite, Math, Object, String, localStorage: { getItem: () => null } }, extra || {}));
   vm.runInContext(SRC, ctx);
+  if (!(extra && extra.__noCdn)) vm.runInContext("SCW_CDN=true", ctx);   // 測座標和行為時當作圖已經上 CDN
   return ctx;
 }
 const C0 = load(), [scwKind, scwKey, scwEntry, scwSw7, SCW, SCW_BAD] = vm.runInContext("[scwKind, scwKey, scwEntry, scwSw7, SCW, SCW_BAD]", C0);
@@ -41,6 +42,9 @@ test("圖網址 → 鍵；條目要 ready、或開發用開關，載不到過的
   assert.ok(vm.runInContext("scwEntry('" + RD + "')", C2), "ready:false 只有開發用開關才用");
   const C3 = load(); vm.runInContext("SCW['" + RD + "'].ready=false", C3);
   assert.equal(vm.runInContext("scwEntry('" + RD + "')", C3), null);
+  // 審查 #155：圖還沒上 CDN（SCW_CDN=false）時正式玩家一律原圖，只有開發用開關才用
+  const C4 = load({ __noCdn: 1 }); assert.equal(vm.runInContext("SCW_CDN", C4), false, "預設還沒上 CDN"); assert.equal(vm.runInContext("scwEntry('" + RD + "')", C4), null);
+  const C5 = load({ __noCdn: 1, localStorage: { getItem: k => k === "xqScwDev" ? "1" : null } }); assert.ok(vm.runInContext("scwEntry('" + RD + "')", C5), "開發用開關照樣看得到");
 });
 
 test("錯棋重練條目：座標都在圖內、走路的邊和小動作都接得到節點、入口四個都有", () => {
@@ -120,7 +124,7 @@ test("07w7 天氣：登記表裡的橫式圖用自己的範圍（像素＝橫式
 // 假的 #view／圖框：量到的寬高由 dims 決定
 function fakeDom(dims) {
   const mk = () => { const s = new Set(); return { add: c => s.add(c), remove: c => s.delete(c), toggle: (c, on) => { on ? s.add(c) : s.delete(c) }, contains: c => s.has(c) } };
-  const img = { _src: "data/redomap/redo_day_classic.webp?v=2411", complete: false, naturalWidth: 0, onerror: null, L: [], getAttribute() { return this._src }, set src(v) { this._src = v; this.complete = false; this.naturalWidth = 0 }, get src() { return this._src }, addEventListener(t, f) { this.L.push([t, f]) } };
+  const img = { _src: "data/redomap/redo_day_classic.webp?v=2411", complete: false, naturalWidth: 0, onerror: null, onerror0: null, L: [], getAttribute() { return this._src }, set src(v) { this._src = v; this.complete = false; this.naturalWidth = 0 }, get src() { return this._src }, addEventListener(t, f) { this.L.push([t, f]) } };
   const spot = id => ({ id, dataset: {}, style: { left: "10%", top: "20%", marginLeft: "" } });
   const spots = { rd2Book: spot("rd2Book"), rd2Stack: spot("rd2Stack"), rd2Pole: spot("rd2Pole"), rd2All: spot("rd2All") }, ex = spot("ex");
   const P = { dataset: {}, classList: mk(), isConnected: true, style: { marginTop: "" }, parentNode: null, getBoundingClientRect: () => ({ top: 0 }),
@@ -158,6 +162,30 @@ test("換圖：iPad 橫向原地換成橫式圖、入口和出口換座標；圖
   assert.equal(vm.runInContext("scwSync", F.ctx)(F.V, F.P), null, "手機橫放不換");
   const F2 = fakeDom({ w: 1180, h: 734 }); vm.runInContext("scwMount", F2.ctx)(F2.P, { key: "redomap/redo_day", src0: F2.img._src, ids: [] });
   assert.equal(vm.runInContext("scwSync", F2.ctx)(F2.V, F2.P), null, "沒登記的變體不換");
+});
+
+test("審查 #155：開頁時就是橫式圖（scwPre），圖載不到要退回原圖；onerror 沒接到、scwSync 看到載完沒寬也一樣退回", () => {
+  for (const viaErr of [true, false]) {
+    const dims = { w: 1180, h: 734 }, { ctx, P, V, img, spots } = fakeDom(dims), scwPre = vm.runInContext("scwPre", ctx), scwMount = vm.runInContext("scwMount", ctx), scwSync = vm.runInContext("scwSync", ctx);
+    const src0 = img._src, pre = scwPre(V, src0); assert.equal(pre.k, "l1610"); assert.match(pre.src, /_l1610\.webp/);
+    img._src = pre.src; P.dataset.scw = pre.k;
+    const night = () => "夜景退回日景"; img.onerror = night;   // 頁面原本的 onerror（07y、07x2）
+    scwMount(P, { key: RD, src0, ids: Object.keys(spots) });
+    assert.equal(typeof img.onerror, "function"); assert.notEqual(img.onerror, night, "開頁就是橫式圖也掛上載不到退回");
+    img.complete = true; img.naturalWidth = 0;   // 404
+    if (viaErr) img.onerror(); else assert.equal(scwSync(V, P), "wait");
+    assert.equal(P.dataset.scw, "", "退回原圖"); assert.equal(img._src, src0); assert.equal(vm.runInContext("SCW_BAD['" + RD + "']", ctx), 1);
+    assert.equal(img.onerror, night, "換回原圖時還原頁面原本的 onerror");
+    img.complete = true; img.naturalWidth = 768; assert.equal(scwSync(V, P), null, "之後照原圖排，不會一直 wait");
+  }
+});
+
+test("審查 #155：手機、直向從來沒換過圖時，07sw 不動標籤和出口（不清 00-util、07w9 記的原位）", () => {
+  const { ctx, P, V, img, spots, ex } = fakeDom({ w: 402, h: 760 }), scwMount = vm.runInContext("scwMount", ctx), scwSync = vm.runInContext("scwSync", ctx);
+  ex.style.top = "calc(87% - 26px)"; ex.dataset.xqTop0 = "87%"; spots.rd2Book.dataset.ttL = "10%";
+  scwMount(P, { key: RD, src0: img._src, ids: Object.keys(spots) }); assert.equal(scwSync(V, P), null);
+  assert.equal(ex.style.top, "calc(87% - 26px)"); assert.equal(ex.dataset.xqTop0, "87%"); assert.equal(spots.rd2Book.dataset.ttL, "10%");
+  assert.equal(ex.dataset.scwL, undefined, "沒記原位");
 });
 
 test("走路設定：橫式圖換節點、邊、小動作，其他照原圖那份；原圖那份不被改到", () => {
@@ -200,6 +228,7 @@ test("原始碼：07fl 排版前先問 scwSync、安全區照條目；07w7、07w
   assert.match(C2, /scwMount\(P,\{key:scwKey\(src\),src0:src,ids:\[\],apply:render\}\)/, "殘局換圖後整組重畫");
   assert.match(YH, /onWalk:c=>hbHide\(P,c\.hide\)/, "對戰、學習重掛走路角色後照新的隱身範圍");
   assert.match(YH, /if\(alt&&!hbIsCl\(\)&&!lw\)/, "橫式圖時不換千秋盃狀態直圖");
+  assert.match(YH, /im\.onload=\(\)=>\{if\(img\.isConnected&&!P\.dataset\.scw\)img\.src=im\.src\}/, "狀態圖晚載好、已經是橫式圖時不蓋（審查 #155 第 3 項）");
   assert.match(YH, /const lw=\/_l1610\\\.webp\/\.test\(src\),E=lw&&typeof scwByF==="function"\?scwByF\(src\):null/, "朝代殘影照橫式條目");
   assert.match(X2, /function lmFar\(s,used,G\)/); assert.match(X2, /gap:44\/pw\*100/, "橫式圖的亮燈間距照螢幕 44px");
   const LB = SCW["lobbymap/lobby_classic"].fx; assert.equal(LB.lamps.length, 44, "大廳 44 盞燈（燈是線上玩家，不能少）"); assert.equal(LB.tables.length, 8);

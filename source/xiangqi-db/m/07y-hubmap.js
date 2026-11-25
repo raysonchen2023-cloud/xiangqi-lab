@@ -155,7 +155,7 @@ function hbFxLearn(P){const fx=P.querySelector(".hb-fx");if(!fx||hbIsCl())return
 function hbFxBattle(P,img){let ph="";try{const S=window.XQNet&&XQNet.cup&&XQNet.cup();ph=S&&S.ph||""}catch(e){}
   const alt=ph==="reg"||ph==="wait"?"battle_red":ph==="ck"||ph==="play"?"battle_curtain":"";
   const lw=!!P.dataset.scw;   /* W107-L：用 iPad 橫向專用橫式圖時不換千秋盃的報名、垂簾狀態圖（那兩張是直圖，換了座標就對不上），燈也不疊；狀態圖的橫式版還沒畫 */
-  if(alt&&!hbIsCl()&&!lw){const im=new Image();im.onload=()=>{if(img.isConnected)img.src=im.src};im.src="data/hubmap/"+hbImg(alt,"battle")+".webp?v="+HB_IMGV}   /* 換圖前先載好，載不到就留原圖 */
+  if(alt&&!hbIsCl()&&!lw){const im=new Image();im.onload=()=>{if(img.isConnected&&!P.dataset.scw)img.src=im.src};im.src="data/hubmap/"+hbImg(alt,"battle")+".webp?v="+HB_IMGV}   /* 換圖前先載好，載不到就留原圖 */
   const fx=P.querySelector(".hb-fx");if(!fx)return;
   if(alt==="battle_curtain"&&!lw)fx.insertAdjacentHTML("beforeend",HUB_LAMP.battle.map(p=>`<i class="hb-lamp on" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
   if(ph==="done")fx.insertAdjacentHTML("beforeend",HB_FW.map(([x,y,d])=>`<i class="hb-fw" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join(""));hbFwPlace(P)}

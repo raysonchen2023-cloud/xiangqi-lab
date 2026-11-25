@@ -14,6 +14,9 @@
    橫式圖跟首頁 home_l1610 一樣不在公開倉庫，照發布流程放上網站；網站上還沒有（404）＝退回原圖。
    純計算 scwKind／scwKey 不碰 DOM，自動測試 xiangqi-lab/tools/test-scene-wide-l1610.js 用 vm 跑 */
 const SCW_ON=true,SCW_IMGV="1125";
+/* 橫式圖上了 CDN 沒有（iMac Claude 2 審查 #155：還沒上 CDN 就開，合併後到上傳前每個寬螢幕開頁都先 404 一次）。
+   false＝正式玩家一律照舊原圖，只有開發用開關（localStorage xqScwDev=1）才用橫式圖；發布時圖上傳 CDN 的同一個 PR 改成 true */
+let SCW_CDN=false;
 const SCW_SQ=1.04,SCW_LMIN=600;   /* 跟 07z HMW_SQ、HMW_LMIN 同一點 */
 /* 錯棋重練（07y8）經典世界白天：output/w107-ipad/l1610/redomap/redo_day_classic_l1610.json（Windows Claude 1 11/25 在 2560×1600 圖上量，誤差約 ±1%）。
    座標都是圖的 %（sw7.sky 是像素）。fx：bookText 攤開冊子右頁中心（直寫今日複習）、stackBase 矮几上已畫那疊冊子的頂、stackStep 每本往上幾 % 圖高、bookW 疊的冊子寬（圖寬 %）、censer 香爐口。
@@ -118,7 +121,7 @@ const SCW_BAD={};   /* 這次開 App 載不到的橫式圖（鍵＝原圖鍵）�
 /* 圖網址 → 鍵（data/ 之後、不含 .webp 和 ?v=） */
 const scwKey=src=>{const m=/(?:^|\/)data\/([^?#]+?)\.webp(?:[?#]|$)/.exec(src||"");return m?m[1]:""};
 const scwDev=()=>{try{return localStorage.getItem("xqScwDev")==="1"}catch(e){return false}};
-function scwEntry(key){const e=SCW_ON&&key&&Object.prototype.hasOwnProperty.call(SCW,key)?SCW[key]:null;return e&&(e.ready||scwDev())&&!SCW_BAD[key]?e:null}
+function scwEntry(key){const e=SCW_ON&&key&&Object.prototype.hasOwnProperty.call(SCW,key)?SCW[key]:null;return e&&((e.ready&&SCW_CDN)||scwDev())&&!SCW_BAD[key]?e:null}
 const scwSrc=e=>"data/"+e.f+".webp?v="+SCW_IMGV;
 /* 純計算：W 可用寬、av 可用高、vw #view 寬、vh 畫面高 → "l1610"／""（原圖） */
 function scwKind(W,av,vw,vh){if(!SCW_ON||!(W>0&&av>=120))return"";return W/av>SCW_SQ&&Math.min(vw,vh)>=SCW_LMIN?"l1610":""}
@@ -130,11 +133,17 @@ const scwPick=(V,P,key)=>{const e=scwEntry(key);if(!e||!V)return"";const m=scwMe
 /* 開頁前：這一頁（原圖 src）該不該一開始就用橫式圖；回傳 {src, k} */
 function scwPre(V,src){const key=scwKey(src),k=scwPick(V,null,key);return k?{src:scwSrc(SCW[key]),k}:{src,k:""}}
 /* 各頁掛上：P＝圖框（.shp-page.cq），o={key 原圖鍵, src0 原圖網址, ids 入口標籤的 id, pfx 走路角色前綴, cfg0 原圖的走路設定, apply(e) 換圖後各頁重畫疊圖, onCfg(cfg) 換了走路設定} */
-function scwMount(P,o){if(!P||!o||!o.key)return;P._scw=o;if(P.dataset.scw==null)P.dataset.scw="";P.classList.toggle("scw-l",!!P.dataset.scw);scwPlace(P)}
+/* 載不到橫式圖：記 SCW_BAD（這次開 App 不再試），退回原圖 */
+function scwFail(P){const o=P&&P._scw;if(!o||!P.dataset.scw)return;SCW_BAD[o.key]=1;scwSet(P,"")}
+function scwMount(P,o){if(!P||!o||!o.key)return;P._scw=o;if(P.dataset.scw==null)P.dataset.scw="";P.classList.toggle("scw-l",!!P.dataset.scw);
+  /* 頁面原本的 onerror（07y、07x2：夜景載不到退回日景）記下來，換回原圖時還原；開頁就是橫式圖（scwPre）也要掛載不到退回（審查 #155 擋合併那項，照 07z:209） */
+  const im=P.querySelector(":scope>img");if(im){o.err0=im.onerror;if(P.dataset.scw){im.onerror=()=>scwFail(P);if(im.complete&&!im.naturalWidth&&im.getAttribute("src"))scwFail(P)}}
+  scwPlace(P)}
 const scwOn=P=>!!(P&&P._scw&&P.dataset.scw);
 const scwCur=P=>scwOn(P)?scwEntry(P._scw.key):null;
 /* 入口標籤、圖上出口照現在用的那張圖擺；原位記在 data-scw-l／data-scw-t（07t3 ttL、07w9 exL/exT、00-util xqTop0 是它們自己記的原位，換位置時清掉，不然會被還原回上一張圖的位置） */
-function scwPut(b,xy){if(!b)return false;if(b.dataset.scwL==null){b.dataset.scwL=b.dataset.exL!=null?b.dataset.exL:b.style.left;b.dataset.scwT=b.dataset.exT!=null?b.dataset.exT:b.style.top}
+function scwPut(b,xy){if(!b)return false;if(!xy&&b.dataset.scwL==null)return false;   /* 從來沒換過位置的不碰（手機、直向照舊，不清 00-util、07w9 記的原位；審查 #155 第 2 項） */
+  if(b.dataset.scwL==null){b.dataset.scwL=b.dataset.exL!=null?b.dataset.exL:b.style.left;b.dataset.scwT=b.dataset.exT!=null?b.dataset.exT:b.style.top}
   const L=xy?xy[0]+"%":b.dataset.scwL,T=xy?xy[1]+"%":b.dataset.scwT;if(b.dataset.scwAt===L+","+T)return false;
   b.dataset.scwAt=L+","+T;b.style.left=L;b.style.top=T;b.style.marginLeft="";delete b.dataset.ttL;delete b.dataset.exL;delete b.dataset.exT;delete b.dataset.xqTop0;return true}
 function scwPlace(P){const o=P&&P._scw;if(!o)return;const e=scwCur(P);
@@ -144,7 +153,7 @@ function scwPlace(P){const o=P&&P._scw;if(!o)return;const e=scwCur(P);
 function scwSet(P,k){const o=P&&P._scw,im=P&&P.querySelector(":scope>img");if(!o||!im)return;const e=k?scwEntry(o.key):null;if(!e)k="";
   P.dataset.scw=k;P.classList.toggle("scw-l",!!k);
   const src=k?scwSrc(e):o.src0;
-  if(im.getAttribute("src")!==src){im.onerror=()=>{if(P.dataset.scw){SCW_BAD[o.key]=1;scwSet(P,"")}};
+  if(im.getAttribute("src")!==src){im.onerror=k?()=>scwFail(P):(o.err0||null);   /* 換回原圖時還原頁面原本的 onerror（審查 #155 第 4 項） */
     im.addEventListener("load",()=>{if(!P.isConnected)return;try{if(typeof ttFill==="function")ttFill()}catch(x){}try{if(typeof spfSoon==="function")spfSoon(0)}catch(x){}},{once:true});
     im.src=src}
   scwPlace(P);try{if(o.apply)o.apply(e)}catch(x){}scwWalk(P,e)}
@@ -157,7 +166,9 @@ function scwWalk(P,e){const o=P._scw;if(!o||!o.cfg0)return;const key=e?"l":"";if
 /* 07fl 包的 r07Wide 每次排版前問這裡：沒掛＝null；比例跨過門檻＝原地換掉、回 "wait"（圖載好會再排一次）；用橫式圖＝"l1610"；原圖＝null（照原本排） */
 function scwSync(V,P){const o=P&&P._scw;if(!o||!V)return null;const k=scwPick(V,P,o.key),cur=P.dataset.scw||"";
   if(k!==cur){scwSet(P,k);return"wait"}
-  scwPlace(P);if(!k)return null;const im=P.querySelector(":scope>img");if(!im||!im.complete||!im.naturalWidth)return"wait";return k}
+  scwPlace(P);if(!k)return null;const im=P.querySelector(":scope>img");if(!im)return"wait";
+  if(im.complete&&!im.naturalWidth&&im.getAttribute("src")){scwFail(P);return"wait"}   /* 載完了卻沒有寬＝載不到（onerror 沒接到也一樣退回，不會一直等） */
+  if(!im.complete)return"wait";return k}
 /* 把 w×h 的方塊貼到四角 q（左上、右上、右下、左下，圖框內的 px）上的 CSS transform（transform-origin 要 0 0；跟 07y5 tdM3 同一套） */
 function scwM3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
