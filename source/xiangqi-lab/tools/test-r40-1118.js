@@ -106,8 +106,18 @@ test("快照跟工作區這輪改的段落一字不差（工作區另外多了�
      '{const P0=PARK,here=()=>PARK===P0&&document.body.contains(host);stillHere(700,()=>{try{if(!ex.quietMate)pv.say(`我是${BOTN()}，幫你加油！`,2.6);if(ex.oppHello)stillHere(1400,()=>{try{pv.oppSay(ex.oppHello,2.6)}catch(e){}},here)}catch(e){}},here)}}   /* 11/25 W120：小人打招呼延後才說，到時換了頁、園子重建過（PARK 換了，同下面 PARK===P0）就不說 */']
   ], w120Used = [0, 0];
   const w120Fix = l => { for (let i = 0; i < W120.length; i++) if (l.includes(W120[i][0])) { w120Used[i]++; return l.replace(W120[i][0], W120[i][1]) } return l };
-  const snapL = rd(KM("06-cpu.js")).split("\n").map(w120Fix), curL = rd(WM("06-cpu.js")).split("\n"), curS = new Set(curL), snapS = new Set(snapL);
+  /* 11/25 W121-4（真人視角：3D 手勢提示在玩家已經走子後才跳出）：06-cpu.js parkUi 的手勢提示刻意改了兩行（園子出現後玩家先碰了畫面或按了鍵，排隊中的提示就不出）。
+     做法同 W120：快照行先套用下面兩組精確替換，兩組都要剛好用到一次，不放寬其他比對 */
+  const W121 = [
+    ['{const go=()=>{if(!host.isConnected)return;if(fxBusy()||document.querySelector(".kjfx")||host.querySelector(".mh-tip.on"))return setTimeout(go,500);store.set("parkHint",true);',
+     '{let pkHU=false;const pkHT=()=>{pkHU=true},pkHO=on=>{for(const t of["pointerdown","keydown"])document[on?"addEventListener":"removeEventListener"](t,pkHT,true)};const go=()=>{if(!host.isConnected||pkHU)return pkHO(false);if(fxBusy()||document.querySelector(".kjfx")||host.querySelector(".mh-tip.on"))return setTimeout(go,500);pkHO(false);store.set("parkHint",true);'],
+    ['    if(pv.whenShown)pv.whenShown(()=>setTimeout(go,300));else setTimeout(go,1200)}',
+     '    if(pv.whenShown)pv.whenShown(()=>{pkHO(true);setTimeout(go,300)});else{pkHO(true);setTimeout(go,1200)}}   /* 11/25 W121-4（真人視角截圖：開新局馬上走子，走完第 1 步 3 秒才跳出手勢提示蓋住棋盤）：園子出現後玩家先碰了畫面或按了鍵（pkHU），還在排隊的提示就不出了，也不記 parkHint，下次進 3D 再提示 */']
+  ], w121Used = [0, 0];
+  const w121Fix = l => { for (let i = 0; i < W121.length; i++) if (l.includes(W121[i][0])) { w121Used[i]++; return l.replace(W121[i][0], W121[i][1]) } return l };
+  const snapL = rd(KM("06-cpu.js")).split("\n").map(w120Fix).map(w121Fix), curL = rd(WM("06-cpu.js")).split("\n"), curS = new Set(curL), snapS = new Set(snapL);
   assert.deepEqual(w120Used, [1, 1], "W120 的兩組替換都要剛好用到一次（快照裡各有一行）");
+  assert.deepEqual(w121Used, [1, 1], "W121 的兩組替換都要剛好用到一次（快照裡各有一行）");
   const gone = snapL.filter(l => !curS.has(l)), added = curL.filter(l => !snapS.has(l));
   assert.ok(gone.length <= 3 && gone.every(l => /\.pk2d::before\{|let b=host\.querySelector\("\.pk2d"\)|host\.append\(b\)\}$/.test(l)), "06-cpu.js 少了快照裡的行：" + gone.join(" ／ ").slice(0, 300));
   const DOCK = /dock|pkDock|controls\.|\.pk2d::before\{[^`]*\}$|^\s*\}+$|^\s*if\(on3\)\{$|const zoom=PARK|const next=host\.nextElementSibling|if\(!create\)return null|style\.position="relative";$/;

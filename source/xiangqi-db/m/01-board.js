@@ -990,13 +990,17 @@ function tmxPlainEn(q,loss,ev,by){const l=+loss,L=loss!=null&&loss!==""&&isFinit
       敗著:`A blunder. This move is worth ${a} less than the best move`}[q];if(!x)return"";
   const k=["緩著","失著","敗著"].includes(q)?tmxEvLinkEn(ev,by):"";return`"${tmxT(q)}": ${x}${k?"; "+k:""}.`}
 /* 小泡泡：指著 el（在上面放不下就放下面），ms 毫秒後或點畫面任何地方就收；成功顯示回 true */
-function tmxBub(el,html,ms){try{document.querySelectorAll(".tmx-bub").forEach(x=>x.remove());if(!el||!el.isConnected)return false;const r=el.getBoundingClientRect();if(!r.width||r.bottom<0||r.top>innerHeight)return false;
+function tmxBub(el,html,ms,av){try{document.querySelectorAll(".tmx-bub").forEach(x=>x.remove());if(!el||!el.isConnected)return false;const r=el.getBoundingClientRect();if(!r.width||r.bottom<0||r.top>innerHeight)return false;
   const b=document.createElement("div");b.className="tmx-bub";b.dataset.nomvt="1";b.setAttribute("role","status");b.innerHTML=html;document.body.append(b);
   const w=b.offsetWidth,h=b.offsetHeight,x=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2));let up=r.top-h-12>8,top=up?r.top-h-10:r.bottom+10;
   /* 評比循環第 1 輪（AI 模擬玩家第二輪問題 7）：泡泡不要蓋住狀態列（#stat「輪到你・黑方大占上風…」那一行局面句）。
      往上放會壓到它：整個移到狀態列上面（離被指的字遠了，箭頭收起來，class far）；上面放不下才改放下面。狀態列本身就是被指的那個元素時不管 */
   let far=false;try{const S=[...document.querySelectorAll("#stat")].find(s=>s.offsetParent&&!s.contains(el)&&!el.contains(s));if(S){const q=S.getBoundingClientRect(),hit=t=>t<q.bottom&&t+h>q.top&&x<q.right&&x+w>q.left;
     if(hit(top)){if(q.top-h-8>=8){top=q.top-h-8;far=true}else if(r.bottom+10+h<=innerHeight-8){up=false;top=r.bottom+10}}}}catch(e){}
+  /* W121-5（11/25 真人視角）：av＝這些區塊不能蓋（tmxFirst 自己跳出來時傳棋盤、狀態列、工具列）。蓋到就改放被指的字另一邊；兩邊都會蓋到就不跳、回 false（下次再試，評等字照樣點得開）。點了才出的泡泡不傳 av，照舊 */
+  if(av){const R=[...document.querySelectorAll(av)].filter(e=>!e.contains(el)&&!el.contains(e)).map(e=>e.getBoundingClientRect()).filter(q=>q.width&&q.height),
+    hitR=t=>t<8||t+h>innerHeight-8||R.some(q=>t<q.bottom&&t+h>q.top&&x<q.right&&x+w>q.left);
+    if(hitR(top)){const t2=up?r.bottom+10:r.top-h-10;if(hitR(t2)){b.remove();return false}up=!up;top=t2;far=false}}
   b.style.left=x+"px";b.style.top=top+"px";b.classList.add(up?"up":"dn");if(far)b.classList.add("far");b.style.setProperty("--ax",Math.max(14,Math.min(w-14,r.left+r.width/2-x))+"px");
   let t=0;const kill=()=>{clearTimeout(t);removeEventListener("pointerdown",kill,true);b.classList.add("out");setTimeout(()=>b.remove(),300)};t=setTimeout(kill,ms||6000);setTimeout(()=>{if(b.isConnected)addEventListener("pointerdown",kill,true)},60);return true}catch(e){return false}}
 addEventListener("hashchange",()=>document.querySelectorAll(".tmx-bub").forEach(x=>x.remove()));
@@ -1006,13 +1010,14 @@ function tmxStrip(box,moves,onPick){if(!box||!moves)return;const k=box.dataset.k
     if(q&&TMX_QS.includes(q.textContent)){q.dataset.tq=q.textContent;if(m.loss!=null)q.dataset.tl=m.loss;if(m.ev!=null&&isFinite(+m.ev))q.dataset.te=m.ev;else delete q.dataset.te;if(m.by)q.dataset.tb=m.by;const tr=tmxRisk(q.textContent,m);if(tr)q.dataset.tr=tr;else delete q.dataset.tr;q.setAttribute("aria-label",tmxPlain(q.textContent,m.loss,m.ev,m.by)+tr)}   /* te、tb：走完的分數、誰走的（評比循環第 1 輪：評等泡泡接一句「走完整盤誰好」） */
     if(!onPick)c.onclick=()=>tmxMove(c,m,i)});
   setTimeout(()=>{try{tmxFirst(box)}catch(e){}},400)}
+const TMX_AV="#bbox,.boardbox,#stat,#acts";   /* W121-5：評等說明自己跳出來時不能蓋的區塊（棋盤、狀態列、工具列） */
 function tmxFirst(box){if(typeof bhtlHush==="function"&&bhtlHush())return;   /* 塔防練習賽進行中先不跳（07bhtl-tdlearn.js），練完照常 */
   if(!box.isConnected||!box.offsetParent||document.querySelector(".tmx-bub")||Date.now()-TMX_T<3000)return;
   const seen=store.get("tmxSeen",[])||[],br=box.getBoundingClientRect(),on=box.querySelector(".chip.on")||box.lastElementChild,oc=on?on.getBoundingClientRect():br,cx=oc.left+oc.width/2;let best=null,bd=1e9;
   box.querySelectorAll(".q[data-tq]").forEach(q=>{if(seen.includes(q.dataset.tq))return;const r=q.getBoundingClientRect();if(!r.width||r.left<br.left-2||r.right>br.right+2)return;const d=Math.abs(r.left+r.width/2-cx);if(d<bd){bd=d;best=q}});
   if(!best)return;const g=best.dataset.tq;
   const pw=best.dataset.tl!=null&&["緩著","失著","敗著"].includes(g)&&!store.get("tmxPw",false);   /* 第一次講到「幾個兵」補一句：不是棋子數（AI 模擬玩家第二輪：小凱把兵的價值當成棋子數） */
-  if(tmxBub(best,`${esc(tmxPlain(g,best.dataset.tl,best.dataset.te,best.dataset.tb))}${best.dataset.tr?"<br>⚠ "+esc(best.dataset.tr):""}<small>${pw?esc(TMX_PW)+"<br>":""}著法條上的評等字，點一下可以再看說明</small>`,7000)){seen.push(g);store.set("tmxSeen",seen);if(pw)store.set("tmxPw",true);TMX_T=Date.now()}}
+  if(tmxBub(best,`${esc(tmxPlain(g,best.dataset.tl,best.dataset.te,best.dataset.tb))}${best.dataset.tr?"<br>⚠ "+esc(best.dataset.tr):""}<small>${pw?esc(TMX_PW)+"<br>":""}著法條上的評等字，點一下可以再看說明</small>`,7000,TMX_AV)){seen.push(g);store.set("tmxSeen",seen);if(pw)store.set("tmxPw",true);TMX_T=Date.now()}}
 /* ChatGPT 評審 11/11（失著的具體後果）：失著、敗著才講「這手讓對方下一手可以吃你的車（車8進3）」；只看分析線存的 rr（05-settings mflRisk），沒有就不說。
    著法條沒有盤面，這裡不重驗（rr 本來就是 core.js classifyRaw 用規則算的）；檢討頁說明另外帶盤面重驗 */
 function tmxRisk(q,m){try{return(q==="失著"||q==="敗著")&&m&&m.rr&&typeof mflRisk==="function"?mflRisk(null,m.by,m,m):""}catch(e){return""}}
