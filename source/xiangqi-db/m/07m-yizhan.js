@@ -49,6 +49,8 @@ if(typeof SCW!=="undefined")for(const k in YZ_L){const L=YZ_L[k];
   SCW["yizhan/"+k+"_f"]={ready:true,f:"yizhan/"+k+"_f_l1610",w:2560,h:1600,S:L.S,exit:[14,92],safe:{l:.12,r:.12,t:.05,b:.10},walk:Object.assign({W:2560,H:1600,home:"home"},L.walk)}}
 /* 換圖重掛走路時（07sw scwWalk 叫 onCfg）：橫式圖記憶名用 yzL:<朝>，原圖照舊 yz:<朝> */
 function yzOnCfg(o,k,x){o.pfx=(x&&x.W===2560?"yzL:":"yz:")+k}
+/* 開頁就是橫式圖：圖框一開始就帶 scw-l 和 data-scw（07sw scwMount 看 data-scw 決定入口照條目擺；少了它入口會照原圖 % 擺在橫式圖上）。回傳 class 後半＋屬性 */
+const yzScwTag=k=>k?` scw-l" data-scw="${k}"`:`"`;
 /* 雲河驛站圖上 12 朵小雲（左%、上%＝圓印放在那朵雲的下緣），照 park/yizhan/classic.png 量的：第一排秦漢三國魏晉、第二排南北朝隋唐五代、第三排宋元明清 */
 const YZ_ROAD={qin:[17,18],han:[40,17.5],sanguo:[64,18],weijin:[84,18.5],nanbei:[16.5,29.5],sui:[39,31],tang:[64,30],wudai:[86,32],song:[34,40.5],yuan:[46,41],ming:[65,42],qing:[88,43]};
 const YZ_SEAL={qin:"秦",han:"漢",sanguo:"三國",weijin:"晉",nanbei:"南北",sui:"隋",tang:"唐",wudai:"五代",song:"宋",yuan:"元",ming:"明",qing:"清"};
@@ -111,7 +113,7 @@ function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.
   const d=document.createElement("div");
   /* W107-L：iPad 橫向有專用橫式圖（07sw SCW，條目在上面 YZ_L）就一開始載那張；入口、景點、出口照條目 */
   const src=`data/yizhan/${k}${YZ_IMG}.webp${k==="classic"?"?v="+YZ_CLV:""}`,pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};
-  d.innerHTML=`<div class="shp-page cq yz-page${pre.k?" scw-l":""}"${pre.k?` data-scw="${pre.k}"`:""}><img src="${pre.src}" alt="${esc(innName(k))}" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='data/yizhan/${k}_c.webp'}">${road}<div class="shp-cap"><b>🏮 ${esc(innName(k))}</b><small>${sub}</small></div>${sp.map(([id,p,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${p[0]}%;top:${p[1]}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}${si?`<button class="po-sight" id="yzSight" style="left:${S.sight[0]}%;top:${S.sight[1]}%">📍 ${esc(YZ_SIGHT[k][0])}</button>`:""}</div>`;
+  d.innerHTML=`<div class="shp-page cq yz-page${yzScwTag(pre.k)}><img src="${pre.src}" alt="${esc(innName(k))}" onerror="if(!this.dataset.fb){this.dataset.fb=1;this.src='data/yizhan/${k}_c.webp'}">${road}<div class="shp-cap"><b>🏮 ${esc(innName(k))}</b><small>${sub}</small></div>${sp.map(([id,p,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${p[0]}%;top:${p[1]}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}${si?`<button class="po-sight" id="yzSight" style="left:${S.sight[0]}%;top:${S.sight[1]}%">📍 ${esc(YZ_SIGHT[k][0])}</button>`:""}</div>`;
   const pg=d.firstElementChild;v.insertBefore(pg,pad);if(typeof yzColor==="function")yzColor(pg,k);   /* 11/16 進門從水墨暈開成全彩（07p-portcolor.js） */const ab=pad.querySelector(".abn");if(ab)ab.remove();
   if(YZ_NOLIST_ON){pad.classList.add("yz-nolist");if(YZ_MORE_ON)pg.insertAdjacentHTML("beforeend",'<button class="yz-more" id="yzMore" aria-label="其他入口：羈絆、棋史卡冊、輿圖、消寒圖、點將台、走去園子和擂台">☰ 其他</button>')}
   const on=(q,fn)=>{const e=pg.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
