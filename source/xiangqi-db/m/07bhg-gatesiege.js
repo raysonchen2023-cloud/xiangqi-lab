@@ -774,7 +774,13 @@ function gsvStart(n,k,cover,sk,force,hard,diff){const C=gsvC();if(!C)return toas
   P.sk["*"]=typeof ptyPick==="function"?ptyPick(GSV.SK,sk):GSV.skPick(ck,L,sk);if(typeof SG2G!=="undefined")P.sk["*"]=[];   /* 11/16：v2 每位學會的招都能用，不用選（開局照隊伍自己算） */   /* 11/16 取消隊長：存全隊那一份；畫面上的名字、頭像＝首頁小人（ck） */P.last=n;P.lastH=hard;store.set("gsv",P);const J="bh:gs"+n+(hard?"h":"");
   const R0=store.get("bhRet",null);store.set("bhRet",{k:k||(R0&&R0.k)||store.get("era","classic"),cover:k?cover!==false:!!(R0&&R0.cover),at:Date.now(),first:false});
   jStart(J,{human:"r",lx:V.depth,journey:J,lv:{fen:GSV.startFen(n,C),turn:"r",noPerpetual:true},td:{mode:typeof SG2G!=="undefined"?SG2G.MODE:GSV.MODE,lv:n,diff,sk:P.sk["*"]}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
-    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}if(typeof SG2G==="undefined")setTimeout(()=>toast(`🌠 星門圍城・${GSV.lvName(n)}・${V.nm}（${["","易","中","難"][diff]}）`),700);{const ws=typeof ptyWoodSay==="function"?ptyWoodSay(GSV.plan(n).red.map(x=>String(x[0]).toUpperCase())):"";if(ws)setTimeout(()=>toast(ws),5200)}setTimeout(()=>toast("✦ 星樞："+V.say),3200)},!!force)}
+    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}const ok=gsvStill(J);if(typeof SG2G==="undefined")setTimeout(()=>{if(ok())toast(`🌠 星門圍城・${GSV.lvName(n)}・${V.nm}（${["","易","中","難"][diff]}）`)},700);{const ws=typeof ptyWoodSay==="function"?ptyWoodSay(GSV.plan(n).red.map(x=>String(x[0]).toUpperCase())):"";if(ws)setTimeout(()=>{if(ok())toast(ws)},5200)}setTimeout(()=>{if(ok())toast("✦ 星樞："+V.say)},3200)},!!force)}
+/* W120：開局那幾句吐司（0.7／3.2／5.2 秒後）到時先確認還在對局頁、還是這一關這一盤、還沒結束。
+   這裡剛設 location.hash，換頁（ROUTE_N 加一）要等 hashchange 才發生，不能用 stillHere 當下記；改成：網址要是 #/journey/play、GSV_ST 是這一關（J）、
+   新開的那盤（jPending 記的 game）同一盤、沒有 result；ROUTE_N 在第一次確認時記下，之後換過頁就不出 */
+function gsvStill(J){const pg=store.get("jPending",null),gid=pg&&pg.id===J&&pg.game!=null?String(pg.game):null;let rn=null;
+  return()=>{try{if(!/^#\/journey\/play/.test(location.hash||""))return false;const s=GSV_ST;if(s){if(String(s.journey)!==J||s.result)return false;if(gid&&String(s.id)!==gid)return false}
+    if(rn===null)rn=ROUTE_N;return rn===ROUTE_N}catch(e){return false}}}
 /* ---------- 對局中（07bh bhTick 叫） ---------- */
 function gsvHide(){if(typeof document==="undefined")return;document.body&&document.body.classList.remove("gsv-on","gsv-3d","gsv-v2");if(typeof sg2DockClear==="function")sg2DockClear();for(const id of["gsvEn","gsvMe","gsvOv","gsvView"]){const e=document.getElementById(id);if(e)e.remove()}GSV_TG=null;GSV_MK="";GSV_HK="";GSV_P3=0;GSV_VB=null;try{gsvViewMenu(false)}catch(e){}gsvP3Back()}   /* 第 23 輪 N23-3：離開星門圍城，玩家原本的 3D 設定回來 */   /* 11/15：頂欄「👁」視角鈕、視角小選單一起收；11/17 第 8 輪：留著重用的那顆也放掉 */
 function gsvTick(st){if(typeof document==="undefined")return;if(!gsvIs(st)||!/^#\/journey\/play/.test(location.hash||"")){if(GSV_ST||document.getElementById("gsvMe"))gsvHide();GSV_ST=null;return}

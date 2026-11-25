@@ -13,6 +13,9 @@ const rd = f => fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
 /* 11/16 開發者「先直接拿掉人間的體力靈力設定」：07dgl 用 DGL_HUMAN=false 關掉並藏起來（程式、存檔留著）。這支測的是人間體力本身的規則，載入時把開關打開照舊測；關掉以後的行為在 test-dgl-off-1116.js */
 const SRC0 = rd(path.join(M, "07dgl-stamina.js")), SRC = SRC0.replace("const DGL_HUMAN=false;", "const DGL_HUMAN=true;");
 if (SRC === SRC0) throw new Error("07dgl 找不到 const DGL_HUMAN=false;");
+/* 11/25 W120：07dgl 的延後招呼、黑洞吐司改用 00-util.js 的 stillHere（到時換頁計數 ROUTE_N、網址都沒變才做）。整個模組丟進 vm 時，從 00-util.js 抽真的那一行進來，不自己寫假版本 */
+const STILL = rd(path.join(M, "00-util.js")).split("\n").find(l => l.startsWith("function stillHere(")) || "";
+if (!STILL) throw new Error("00-util.js 找不到 function stillHere(");
 
 function loadPure() {
   const i = SRC.indexOf("#DGL-PURE-BEGIN"), j = SRC.indexOf("/* #DGL-PURE-END */");
@@ -303,7 +306,7 @@ function loadFull(st, hash) {
     store: { get: (k, d) => (k in st ? JSON.parse(JSON.stringify(st[k])) : d), set: (k, v) => { st[k] = JSON.parse(JSON.stringify(v)) } },
     addXP: (n, why, key) => { xp.push([n, why, key]); if (!st.__dup) st.xp = (+st.xp || 0) + (+n || 0) }, setTop: () => { } };   /* 11/16：真的 addXP 給了修為，累計修為就會變多（07dgl 靠這個判斷這一筆有沒有真的給）；st.__dup＝模擬同一題拿過、這次沒給 */
   ctx.navReplace = h => { ctx.location.hash = h };
-  vm.createContext(ctx); vm.runInContext(SRC + "\n;this.DGL=DGL;", ctx, { filename: "07dgl(整個模組)" });
+  vm.createContext(ctx); vm.runInContext("let ROUTE_N=0;\n" + STILL + "\n" + SRC + "\n;this.DGL=DGL;", ctx, { filename: "07dgl(整個模組)" });
   ctx.toasts = toasts; ctx.xp = xp; ctx.reg = reg; ctx.tb = tb; ctx.offAttr = () => offAttr;
   ctx.ticks = min => { for (let i = 0; i < min * 30; i++) { T += 2000; ctx.dglTick() } };
   return ctx;
@@ -352,6 +355,8 @@ test("〔原始碼〕接線：設定頁角色分頁呼叫 dglSetRow；觀星臺 
   assert.ok(rd(path.join(M, "07gxt-guanxing.js")).includes('gxtSky:()=>{if(typeof dglXiuSheet!=="function"){toast("🌌 "+GXT_OFF);return}gxtFx("sky",()=>dglXiuSheet())}'));   /* 11/16：先播右側星空的短過場（gxtFx），再開星圖 */
   assert.ok(SRC.includes('if(typeof setTop==="function"){const f0=setTop;setTop=function(){const r=f0.apply(this,arguments);try{dglLocSync(null,1)}'), "包一層 setTop");
   assert.ok(SRC.includes("在觀星臺可以點亮二十八宿星圖"), "角色卡的星芒說明");
+  assert.ok(SRC.includes("stillHere(1800,()=>{const said=dglSay(t,false);") && SRC.includes('},()=>!dglBusy(location.hash)&&!document.getElementById("dglOut")&&!document.querySelector(".walkc"))}'), "11/25 W120：下船招呼延後 1.8 秒，到時還在原頁、不在對局解題、沒退場才說");
+  assert.ok(!/setTimeout\(\(\)=>toast\(g\.n>0/.test(SRC) && SRC.includes("stillHere(1600,()=>toast(g.n>0?"), "11/25 W120：黑洞回定軌力的吐司到時還在原頁才出");
   const HTML = rd(path.join(ROOT, "xiangqi-db/m.html")), order = [...HTML.matchAll(/\/\/#include m\/([\w-]+\.js)/g)].map(m => m[1]);
   assert.ok(order.indexOf("02-shell.js") < order.indexOf("07dgl-stamina.js") && order.indexOf("07dgl-stamina.js") < order.indexOf("07w8-shichen.js"), "setTop 先包在時辰鐘之前（clkPlace 量到變窄的標題）");
   const I = rd(path.join(M, "07i18n.js")), i = I.indexOf("#I18N-PURE-BEGIN"), j = I.indexOf("/* #I18N-PURE-END */"), ctx = {}; vm.createContext(ctx);

@@ -114,9 +114,11 @@ let SEAL_FX_Q=Promise.resolve();
 function sealGoldCheck(o){o=o||{};if(!SEAL_ON)return[];const G=store.get("sealGold",{})||{},nw=[];
   for(const S of sealAll()){if(!S.gold)continue;const z=G[S.k];if(z&&z.xp)continue;G[S.k]={at:(z&&z.at)||Date.now(),xp:1};if(o.boot)G[S.k].boot=1;nw.push(S.k)}
   if(!nw.length)return nw;store.set("sealGold",G);
-  nw.forEach((k,i)=>setTimeout(()=>{try{addXP(SEAL_GOLD_XP,"鑄成金印・"+sealNm(k),"seal:gold:"+k)}catch(e){}},(o.delay||0)+600+i*500));
-  if(o.fx)nw.forEach((k,i)=>setTimeout(()=>sealGoldFx(k),(o.delay||0)+i*50));return nw}
-function sealGoldFx(k){const p=SEAL_FX_Q.then(()=>new Promise(done=>{try{sealCss();const all=sealGoldN()>=SEAL_ERAS().length,d=document.createElement("div");d.className="qsfx";d.tabIndex=0;
+  nw.forEach((k,i)=>{try{addXP(SEAL_GOLD_XP,"鑄成金印・"+sealNm(k),"seal:gold:"+k,{chipDelay:(o.delay||0)+600+i*500})}catch(e){}});   /* W120（#177 審查補）：金印記號先寫、修為原本延後才發，期間關 App 會永久少發；改成修為當下發、小標籤照舊延後 */
+  if(o.fx){const rn=ROUTE_N,h0=location.hash,here=()=>ROUTE_N===rn&&location.hash===h0;   /* W120：記號、修為照舊；全螢幕金印特效只在還在原頁時播（排隊等前一張播完時也再確認一次），換頁了改成吐司 */
+    nw.forEach((k,i)=>setTimeout(()=>{try{if(here())sealGoldFx(k,here);else sealGoldToast(k)}catch(e){}},(o.delay||0)+i*50))}return nw}
+function sealGoldToast(k){try{toast(`🏮 ${sealNm(k)}・鑄成金印！`)}catch(e){}}
+function sealGoldFx(k,ok){const p=SEAL_FX_Q.then(()=>new Promise(done=>{try{if(typeof ok==="function"&&!ok()){sealGoldToast(k);done();return}sealCss();const all=sealGoldN()>=SEAL_ERAS().length,d=document.createElement("div");d.className="qsfx";d.tabIndex=0;
     d.innerHTML=`${sealDraw(k,{fx:1})}<h2>${esc(sealNm(k))}・鑄成金印！</h2><p>${esc(eraLabel(k)==="青石園"?"船艙":eraLabel(k))}的關都過了。修為 +${SEAL_GOLD_XP}</p>${all?'<p style="color:#FFD45A;font-weight:900">🏅 13 方千秋印都是金印了！得到稱號「千秋印主」</p>':`<p>金印 ${sealGoldN()}／13 方</p>`}<small>點一下收下</small>`;
     document.body.append(d);try{d.focus({preventScroll:true})}catch(e){}try{if(typeof vibrate==="function")vibrate([20,60,40,60])}catch(e){}try{if(typeof rfxSound==="function")rfxSound(matchMedia("(prefers-reduced-motion: reduce)").matches)}catch(e){}
     let shut=false;const close=e=>{if(e){e.preventDefault();e.stopPropagation()}if(shut)return;shut=true;d.classList.add("out");setTimeout(()=>{d.remove();done()},230)};

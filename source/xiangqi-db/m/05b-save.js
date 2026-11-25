@@ -70,7 +70,7 @@ const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 開發者 11/6 修：全新玩家第一次打開，開機時就會寫進 era、jStars、playSec 這些鍵，原本的判斷會把新玩家當成舊玩家，跳出「存檔功能上線了、角色是小帥Q版」。改成只看真的玩過才會有的鍵（新手引導做完、修為、戰績、故事進度） */
 const SAVE_OLD=(()=>{try{if(localStorage.getItem("m_saveMig1")!=null)return null;return["m_onboard1","m_xp","m_record","xq_record","m_legend","m_legendGame","xq_play"].some(k=>localStorage.getItem(k)!=null)}catch(e){return null}})();
 const curSlot=()=>store.get("slotCur",0)|0,journey=()=>store.get("journey",null),slotMetaAll=()=>store.get("slotMeta",{})||{};
-let SAVE_LOCK=false,SAVE_HC=0,TITLE=null,ME_HI=null,ME_CAP=null;
+let SAVE_LOCK=false,SAVE_HC=0,TITLE=null,ME_HI=null,ME_CAP=null,PLAY_NOW=null;
 
 /* ---------- 存檔格（IndexedDB xqlab-slots／slot，鍵 1～3，值 {v,at,meta,data:{localStorage 鍵:字串}}） ---------- */
 let SLOT_DB=null;
@@ -114,11 +114,15 @@ const pickOne=a=>a&&a.length?a[Math.floor(Math.random()*a.length)]:"";
 /* 給 bot3d.js 用：me＝小名；win／lose／draw＝贏輸和的一句話（小帥、小帥妹沒有，維持原本的台詞） */
 window.XQ_MELINE=k=>{const c=myChar();if(!c)return null;if(k==="me")return WX_CHARS[c].nk||WX_CHARS[c].n;const L=WX_CHARS[c];return L&&Array.isArray(L[k])?pickOne(L[k]):null};
 /* 對局畫面每畫一次叫一次（08b-cpugame.js）：新的一盤開局說一句；你吃掉對方的子，一半機率說一句 */
-function meGameTalk(st){try{if(!st||!myChar()||typeof BOT==="undefined"||!BOT||!BOT.say)return;const L=WX_CHARS[myChar()];if(!L||!Array.isArray(st.board))return;
-  if(!st.moves.length&&!st.result&&ME_HI!==st.id){ME_HI=st.id;setTimeout(()=>{try{if(BOT&&BOT.say)BOT.say(pickOne(L.start),2.6,{auto:1})}catch(e){}},2400)}   /* 11/11 模擬玩家問題 2：對局中的閒話標成 auto，有棋盤時 bot3d 不冒泡泡 */
+/* 11/25 W120：對局頁每畫一次記下這盤（PLAY_NOW：盤號 id、旅程 j、步數 m、這一頁第一次畫到時的步數 m1、有沒有結果 r、畫的時候的換頁計數 rn）。
+   jPlayOk(rn,j,still)：jStart 開局後改網址、延後說的那句吐司或卡片，到時確認「只換過這一次頁（ROUTE_N 最多多 1：改網址後要等 hashchange 才加一，所以不能用 stillHere）、還在對局頁、畫著的是 j 那一盤、還沒結束」；still＝還要沒走過子。這一頁還沒畫好（PLAY_NOW 是上一頁的）先算成立 */
+function jPlayOk(rn,j,still){if(ROUTE_N-rn>1||!/^#\/journey\/play(\/|$|\?)/.test(location.hash||""))return false;const P=PLAY_NOW;if(!P||P.rn!==ROUTE_N)return true;return(j==null||P.j===j)&&!P.r&&(!still||P.m===P.m1)}
+function meGameTalk(st){try{if(st){const P=PLAY_NOW,m=Array.isArray(st.moves)?st.moves.length:0;PLAY_NOW={id:st.id,j:st.journey||null,m,m1:P&&P.rn===ROUTE_N&&P.id===st.id?P.m1:m,r:!!st.result,rn:ROUTE_N}}}catch(e){}
+  try{if(!st||!myChar()||typeof BOT==="undefined"||!BOT||!BOT.say)return;const L=WX_CHARS[myChar()];if(!L||!Array.isArray(st.board))return;
+  if(!st.moves.length&&!st.result&&ME_HI!==st.id){ME_HI=st.id;const gid=st.id;stillHere(2400,()=>{try{if(BOT&&BOT.say)BOT.say(pickOne(L.start),2.6,{auto:1})}catch(e){}},()=>!!ME_CAP&&ME_CAP.id===gid&&!ME_CAP.m&&!ME_CAP.r)}   /* 11/11 模擬玩家問題 2：對局中的閒話標成 auto，有棋盤時 bot3d 不冒泡泡 */
   const opp=st.human==="b"?/[A-Z]/:/[a-z]/,n=st.board.filter(p=>p&&opp.test(p)).length;
-  if(ME_CAP&&ME_CAP.id===st.id&&n<ME_CAP.n&&st.moves.length>ME_CAP.m&&!st.result&&Math.random()<.5)setTimeout(()=>{try{if(BOT&&BOT.say)BOT.say(pickOne(L.cap),1.8,{auto:1})}catch(e){}},350);
-  ME_CAP={id:st.id,n,m:st.moves.length}}catch(e){}}
+  if(ME_CAP&&ME_CAP.id===st.id&&n<ME_CAP.n&&st.moves.length>ME_CAP.m&&!st.result&&Math.random()<.5){const gid=st.id,m0=st.moves.length;stillHere(350,()=>{try{if(BOT&&BOT.say)BOT.say(pickOne(L.cap),1.8,{auto:1})}catch(e){}},()=>!!ME_CAP&&ME_CAP.id===gid&&ME_CAP.m===m0&&!ME_CAP.r)}
+  ME_CAP={id:st.id,n,m:st.moves.length,r:!!st.result}}catch(e){}}   /* 11/25 W120：開局、吃子那句延後才說；到時換了頁、換了一盤、已經走子（開局那句）或又走了一步、已經結束就不說（ME_CAP 每畫一次更新：盤號 id、步數 m、有沒有結果 r） */
 /* 園子路人打招呼時叫你的小名（雲河七星才叫；小帥、小帥妹照舊） */
 function meHi(s){try{const c=myChar();if(!c||!s)return s;const nk=WX_CHARS[c].nk||WX_CHARS[c].n;if(String(s).includes(nk)||Math.random()>=.7)return s;return nk+"，"+String(s).replace(/^「|」$/g,"")}catch(e){return s}}
 /* 驛站旅人看你一眼：依你的角色是男是女稱呼 */

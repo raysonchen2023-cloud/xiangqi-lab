@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-still-here-1125.js",   /* 11/25 W120 延遲執行稽核中、低約 40 處：m/00-util.js 共用 stillHere(ms,fn,ok)（到時還在原頁、ok 成立才做），各處接上；七星加入過場換頁時記下來到安全頁補播。5 項行為（vm 跑 stillHere）、1 項〔原始碼〕 */
   "test-delay-reward-1125.js",   /* 11/25 W119 延遲執行稽核的 4 處高風險：古戰場、千秋殘局、漕運殘局、千秋起手式的修為和珍品不再延後才發（addXP 的 chipDelay、chdGiveRelic 的 fxDelay）；鏡像關卡電腦走子比對同一盤、步數、合法（src/local.js）。3 項行為（vm 跑 addXP）、3 項〔原始碼〕 */
   "test-kaiju-late-1125.js",   /* 11/25 開發者截圖：練功房下到第 5、6 步才跳出開局「紅先」特效。kaijuFx 多 ok 參數，真正要播時（含等過場的重試）再問「同一盤、還沒走子」；練功房、線上對局都帶（m/01-board.js、08b-cpugame.js、09b-preload.js）。6 項行為（vm 跑 kaijuFx）、1 項〔原始碼〕 */
   "test-devmode-native-1124.js",   /* 11/24 D1 送審前（App Store 2.3.1）：原生 App 一律不是開發者模式，存檔帶來的 devMode 不生效；手機網頁、電腦網頁照舊（m/02-shell.js DEVMODE；行為 3） */

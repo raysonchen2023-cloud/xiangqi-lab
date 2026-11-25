@@ -241,6 +241,9 @@ function navMark(d,sh,cut){try{if(cut)NAV_H.length=Math.min(NAV_H.length,d+1);wh
 try{navMark(NAV_D,!!(history.state&&history.state.xqSheet),!NAV_OLD)}catch(e){}
 /* 意見回饋 607：每次換頁 ROUTE_N 加一（02-shell.js 的 route()）；延後顯示的視窗用它判斷畫面換了沒。REVIEW_BACK：從結果視窗按「📊 檢討」去看報告，回來時那盤不要自動開新局 */
 let ROUTE_N=0,REVIEW_BACK=null;const MODAL_Q=[];
+/* 11/25 W120（延遲執行稽核中、低）：排好晚一點才做的事，到時先確認「還在原來那一頁」（ROUTE_N、網址都沒變），ok() 再加自己的條件（同一盤、還沒走子、還沒結束…）；不成立就不做。
+   用法：stillHere(毫秒, 要做的事, 額外條件)；回傳計時器編號，可以 clearTimeout */
+function stillHere(ms,fn,ok){const rn=ROUTE_N,h=location.hash;return setTimeout(()=>{try{if(ROUTE_N!==rn||location.hash!==h)return;if(typeof ok==="function"&&!ok())return;fn()}catch(e){try{console.warn("stillHere",e)}catch(_){}}},ms)}
 /* 意見回饋 371：清單分頁，每頁 10 個（上一頁／下一頁），換頁捲回最上面 */
 function pageList(b,list,render,bind,per){per=per||10;let p=0;const N=Math.ceil(list.length/per);
   const go=()=>{b.innerHTML=render(list.slice(p*per,p*per+per))+(N>1?`<div class="row" style="justify-content:space-between;align-items:center;margin-top:12px"><button class="pill" data-pg="-1"${p?"":" disabled"}>‹ 上一頁</button><span class="muted">第 ${p+1}／${N} 頁</span><button class="pill" data-pg="1"${p<N-1?"":" disabled"}>下一頁 ›</button></div>`:"");
