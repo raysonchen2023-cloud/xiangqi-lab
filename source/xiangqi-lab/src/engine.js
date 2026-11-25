@@ -53,8 +53,11 @@ var XQEngine=(function(){
          修法：iPhone／iPad 在建立引擎模組那一刻把共享記憶體一次給到 IOS_MEM 頁（384 MB，比實測最多用到的 304 MB 多 80 MB），之後不用再加大；
          pikafish.js 自己 new WebAssembly.Memory，所以只在呼叫 PikafishModule() 這一瞬間換掉建構子、馬上換回來（執行緒拿的是同一個記憶體物件）。 */
       const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
-      const WM=WebAssembly.Memory;let mem=null;
-      if(ios)WebAssembly.Memory=function(d){if(d&&d.shared&&d.initial<IOS_MEM)d=Object.assign({},d,{initial:IOS_MEM});const x=new WM(d);if(d&&d.shared)mem=x;return x};
+      /* 退路（iMac Claude 2 審查建議）：記憶體比較小的 iPhone 要是一次建不起 384 MB 共享記憶體，退回原本的 192 MB 起跳＋固定 1 條執行緒（#181 的做法，那樣不會越界） */
+      const WM=WebAssembly.Memory;let mem=null,memFail=false;
+      if(ios)WebAssembly.Memory=function(d){
+        if(d&&d.shared&&d.initial<IOS_MEM){try{const x=new WM(Object.assign({},d,{initial:IOS_MEM}));mem=x;return x}catch(e){memFail=true;console.warn("[engine] iOS 一次建不起 "+(IOS_MEM/16)+" MB 共享記憶體，退回 1 條執行緒："+(e&&e.message||e))}}
+        const x=new WM(d);if(d&&d.shared)mem=x;return x};
       let mp;try{mp=window.PikafishModule({locateFile:f=>BASE+"engine/"+f,mainScriptUrlOrBlob:BASE+"engine/pikafish.js",
         print:onLine,printErr:()=>{},preRun:[m=>m.FS.writeFile("/pikafish.nnue",nnue)]})}finally{WebAssembly.Memory=WM}
       const m=await Promise.race([mp,new Promise((_,j)=>setTimeout(()=>j(new Error("電腦棋手啟動太久")),45000*TMO))]);
@@ -63,12 +66,12 @@ var XQEngine=(function(){
       /* 11/15 意見回饋 896（iOS 下黑洞玩一陣子整頁被系統重開）：量到進黑洞後 JS 多 120 MB、3D 貼圖約 240 MB；
          iPhone／iPad 上雜湊表 64→16 MB（App 的搜尋都很淺，16 MB 夠用），神經網路讀進引擎後把記憶體檔案系統裡那份 nnue 刪掉（約 50 MB） */
       /* 11/25：iPhone／iPad 先前暫時固定 1 條（#181）；共享記憶體改成一次給足後，iPad Air 4 實機 4 條正常，改回跟其他平台一樣 */
-      const th=Math.max(1,Math.min(4,(navigator.hardwareConcurrency||2)-1));
+      const th=memFail?1:Math.max(1,Math.min(4,(navigator.hardwareConcurrency||2)-1));
       send("setoption name Threads value "+th);send("setoption name Hash value "+(ios?16:64));
       send("isready");await untilT(l=>l==="readyok",null,20000);
       try{m.FS.unlink("/pikafish.nnue")}catch(e){}
       XQEngine.threads=th;XQEngine.memMB=mem?Math.round(mem.buffer.byteLength/1048576):0;
-      if(mem&&mem.buffer.byteLength>IOS_MEM*65536)console.warn("[engine] iOS 共享記憶體超過預先給的 "+(IOS_MEM/16)+" MB，又加大了："+XQEngine.memMB+" MB")})();
+      if(mem&&!memFail&&mem.buffer.byteLength>IOS_MEM*65536)console.warn("[engine] iOS 共享記憶體超過預先給的 "+(IOS_MEM/16)+" MB，又加大了："+XQEngine.memMB+" MB")})();
     const L=loading;L.catch(()=>{if(my===LG&&loading===L)reset()});return L}
   /* 11/13 晚：整個重來（local.js 等太久時叫）：停掉引擎、清掉卡住的排隊，下次搜尋重新啟動 */
   function abort(){LG++;reset();q=Promise.resolve();nnueP=null}
