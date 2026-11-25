@@ -12,15 +12,14 @@ function load() {
 }
 const day = (f, extra) => Object.assign({ ready: true, f, w: 2560, h: 1600, S: { a: [10, 20] }, exit: [50, 90], safe: { l: .12, r: .12, t: .05, b: .1 }, fx: { k: 1 }, sw7: { m: "semi" } }, extra || {});
 
-test("清單：會用到的檔逐類寫死，合起來 217 張（215＋重畫好的 study_night_classic、canju_night_classic）；鍵不重複；重畫失敗的 study_night 不在裡面", () => {
+test("清單：會用到的檔逐類寫死，合起來 218 張（215＋重畫、重出的 study_night_classic、canju_night_classic、study_night）全部到齊；鍵不重複", () => {
   const C = load(), L = J(vm.runInContext("scwVarList()", C)), keys = L.map(x => x[0]);
   assert.equal(new Set(keys).size, keys.length, "鍵不重複");
   const files = new Set(L.filter(x => !x[3]).map(x => x[2] ? x[2].replace(/_l1610$/, "") : x[0]));
   const by = {}; for (const f of files) { const d = f.split("/")[0]; by[d] = (by[d] || 0) + 1 }
-  assert.deepEqual(by, { campmap: 2, canjumap: 4, cupmap: 5, exammap: 2, feedback: 1, gmmap: 4, openmap: 2, redomap: 2, setmap: 2, statmap: 2, studymap: 1, termsmap: 2, thememap: 2, todaymap: 5, lobbymap: 13, hubmap: 168 });
-  assert.equal(files.size, 217); assert.ok(files.has("studymap/study_night_classic") && files.has("canjumap/canju_night_classic"), "重畫好的兩張");
-  assert.ok(!keys.includes("studymap/study_night"), "重畫失敗、沒送的 studymap/study_night");
-  assert.equal(keys.length, 217 + 48, "外加 24 組夏季、夏夜");
+  assert.deepEqual(by, { campmap: 2, canjumap: 4, cupmap: 5, exammap: 2, feedback: 1, gmmap: 4, openmap: 2, redomap: 2, setmap: 2, statmap: 2, studymap: 2, termsmap: 2, thememap: 2, todaymap: 5, lobbymap: 13, hubmap: 168 });
+  assert.equal(files.size, 218); for (const f of ["studymap/study_night_classic", "canjumap/canju_night_classic", "studymap/study_night"]) assert.ok(files.has(f), "重畫、重出的 " + f);
+  assert.equal(keys.length, 218 + 48, "外加 24 組夏季、夏夜");
 });
 
 test("日間條目晚登記也接得上：先查不到，日間那條登記後就複製一份（座標、安全區、疊圖、天氣同一份，只換檔名、記 base）", () => {
@@ -50,7 +49,7 @@ test("各類對應：夜景 <名>_night<後綴>←<名>_day<後綴>；大廳 lob
   assert.equal(E("hubmap/battle_spring").f, "hubmap/battle_spring_l1610"); assert.equal(E("hubmap/learn_spring_night").f, "hubmap/learn_spring_night_l1610");
   assert.equal(E("hubmap/learn_song_night"), null, "學習沒有宋（HB_ERAS 也沒有）"); assert.equal(E("hubmap/battle_ming_night"), null, "對戰沒有明");
   assert.equal(E("canjumap/canju_night_classic").f, "canjumap/canju_night_classic_l1610", "重畫好的殘局經典夜景照經典日間登記"); assert.equal(E("canjumap/canju_night_classic").base, "canjumap/canju_day_classic");
-  assert.equal(E("studymap/study_night"), null, "沒送的不登記");
+  assert.equal(E("studymap/study_night_dawn"), null, "不在清單的不登記");
 });
 
 test("〔混合〕scwPre 開頁就選到夜景橫式圖（iPad 橫向）；scwSw7 用夜景橫式圖網址找得到天氣條目；直向照舊原圖", () => {

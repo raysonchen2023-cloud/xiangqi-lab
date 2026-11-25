@@ -124,9 +124,9 @@ for(const b in SCW_ERA){const B=SCW[b];if(!B)continue;for(const k of SCW_ERA[b])
    ③ 對戰、學習 <名>[_朝代]_<季>[_night]（07y hbImg）← <名>[_朝代]：夏季＝原圖，_summer 用日間那張、_summer_night 用 _night 那張。
    沒送的 3 張多了燈籠、蠟燭、油燈，壓到入口：開發者選局部重畫。study_night_classic 重畫好了（Windows Claude 1 11/25 16:07，燈籠拿掉、14 個入口框核過）；
    canju_night_classic 第二次局部重畫好了（Windows Claude 1 11/25 17:59，油燈拿掉、sip／cup／pot 三個入口核過）；
-   study_night 重畫失敗（整個房間被蠟燭照成暖色），開發者 11/25 選「先不接、記成待修」（待辦 W107-D，P3），不登記，照舊用直圖 */
+   study_night 局部重畫失敗後整張重出（Windows Claude 1 11/25 18:03，月光夜色、沒有燈和蠟燭，14 個入口框核過）：218 張到齊，沒有不接的了（W107-D 結案） */
 const SCW_NIGHT={"campmap/camp":",_classic","canjumap/canju":",_classic,_tang,_weijin","cupmap/cup":",_classic,_han,_tang,_weijin","exammap/exam":",_classic","feedback/fb":"",
-  "gmmap/gm":",_classic,_han,_weijin","openmap/open":",_classic","redomap/redo":",_classic","setmap/set":",_classic","statmap/stat":",_classic","studymap/study":"_classic","termsmap/terms":",_classic",
+  "gmmap/gm":",_classic,_han,_weijin","openmap/open":",_classic","redomap/redo":",_classic","setmap/set":",_classic","statmap/stat":",_classic","studymap/study":",_classic","termsmap/terms":",_classic",
   "thememap/theme":",_classic","todaymap/today":",_classic,_han,_tang,_weijin"};
 const SCW_HB_ERAS={"hubmap/battle":"qin han sanguo weijin nanbei sui tang wudai song yuan qing","hubmap/learn":"qin han sanguo weijin nanbei sui tang wudai yuan ming qing"};
 /* 變體清單 [鍵, 日間鍵, 檔名（省略＝鍵_l1610）] */
@@ -138,7 +138,7 @@ function scwVarList(){const L=[];
     L.push([b+"_summer",b,null,1]);L.push([b+"_summer_night",b,b+"_night_l1610"])}
   return L}
 let SCW_VAR_TODO=null;
-/* 11/25 審查 #173：照目前 main＋#155 的條目，217 張裡 194 張一開就登記得到（實跑），其餘 23 張等日間條目進來。對戰、學習、大廳、錯棋、今日、殘局、棋力測驗的變體一開就登記得到；
+/* 11/25 審查 #173：照目前 main＋#155 的條目，218 張裡 194 張一開就登記得到（實算），其餘 24 張等日間條目進來。對戰、學習、大廳、錯棋、今日、殘局、棋力測驗的變體一開就登記得到；
    營地、千秋盃、宗師、設定、戰績、開局、術語、主題、信房、書房的日間條目在各自的 PR（#158、#159、#161、#162……），那幾支合進來以後才登記得到。
    已經有的條目（各頁自己寫的）不蓋掉；這一輪沒登記到新的就不重建清單 */
 function scwVarInit(){if(SCW_VAR_TODO===null)SCW_VAR_TODO=scwVarList();if(!SCW_VAR_TODO.length)return;
