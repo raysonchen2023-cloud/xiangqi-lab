@@ -100,7 +100,7 @@ test("〔原始碼〕開頁照 scwPre 選全彩圖；上色過場、風、船艙
   assert.match(W4, /P\.append\(b\);if\(P\._portPlace\)P\._portPlace\(\)\}/, "碼頭標籤晚加也照條目放");
   assert.match(W4, /if\(!at\)at=\(C\.W===2560\?null:PH4_AT\[k\]\)\|\|ph4Spot\(P,C,hFr\);/, "橫式圖不用直圖寫死的主人站位（審查 #165 第 2 項）");
   assert.match(W4, /P\._ph4L=C\.W===2560;/, "記下主人是照哪一種圖站的");
-  assert.match(F, /if\(P\.dataset\.ph4&&P\._ph4L!=null&&P\._ph4L!==!!X&&typeof ph4Mount==="function"\)\{P\.querySelectorAll\(":scope>\.ph4"\)\.forEach\(e=>e\.remove\(\)\);delete P\.dataset\.ph4;/, "轉向換了圖就重掛主人");
+  assert.match(F, /if\(P\.dataset\.ph4&&P\._ph4L!=null&&P\._ph4L!==!!X&&typeof ph4Mount==="function"\)\{P\.querySelectorAll\(":scope>\.ph4,:scope>\.ph4-hit,:scope>\.ph4-say"\)\.forEach\(e=>e\.remove\(\)\);delete P\.dataset\.ph4;/, "轉向換了圖就重掛主人");
 });
 
 // 假的元素：只做 portScwStop、pcRun 開頭會碰到的部分
@@ -227,6 +227,41 @@ test("〔混合〕轉回直向：只重掛風本身（portWindCore，不叫外�
   const c2 = vm.createContext({}); vm.runInContext("function portWindCore(v,k){return 'core:'+k}\n" + cut(PWs, "function portWind(v,k){", "}"), c2);
   assert.equal(vm.runInContext("portWind", c2)(null, "tang"), "core:tang");
   assert.match(F, /const place=\(\)=>\{[^]*?if\(P\._fxL===true&&!X\)/, "在 portScw 的 place 裡");
+});
+
+test("〔混合〕旅伴「！」：iPad 轉向時渡口主人重掛、點擊區換一顆，「！」接到新的那顆、不退回看不到的小卡；等 6 秒還沒有才退回（審查 #165 第八輪）", () => {
+  const BQ = M("m/07q-buddy.js"), src = cut(BQ, "function bdPort(v,k){", "\n  tick()}");
+  let next = null; const mkEl = (cls) => { const e = { className: cls || "", style: {}, attrs: {}, isConnected: true, setAttribute(k, x) { this.attrs[k] = x }, remove() { this.isConnected = false } }; return e };
+  const hit1 = mkEl("ph4-hit"); hit1.style.display = ""; hit1.style.left = "100px"; hit1.style.width = "40px"; hit1.style.top = "200px";
+  let curHit = hit1, cards = 0; const pad = { isConnected: true, querySelector: () => null, prepend: () => { cards++ } };
+  const P = { isConnected: true, dataset: {}, classList: { contains: () => false }, querySelector: q => q === ".ph4-hit" ? (curHit && curHit.isConnected ? curHit : null) : null, append(x) { this.mk = x } };
+  const v = { querySelector: q => q === ".shp-page.cq" ? P : q === ".pad.port" ? pad : null, addEventListener() { }, removeEventListener() { } };
+  const ctx = vm.createContext({ bdOk: () => true, bdEvent: () => ({ c: "x" }), bdSt: () => ({ ev: {} }), bdKnHere: () => "", bdCss() { }, bdNk: () => "小喵", ph4Who: () => "x", bdFace: () => "", esc: s => s,
+    document: { createElement: () => mkEl(), querySelector: () => null }, setTimeout: f => { next = f }, parseFloat });
+  vm.runInContext(src, ctx); vm.runInContext("bdPort", ctx)(v, "tang");
+  const mk = P.mk; assert.equal(mk.style.left, "120px", "「！」在第一顆點擊區上");
+  hit1.remove(); curHit = null; next(); assert.equal(cards, 0, "還在重掛：先等，不退回小卡"); assert.equal(mk.style.display, "none");
+  const hit2 = mkEl("ph4-hit"); hit2.style.display = ""; hit2.style.left = "300px"; hit2.style.width = "40px"; hit2.style.top = "100px"; curHit = hit2;
+  next(); assert.equal(mk.style.left, "320px", "接到新的點擊區上"); assert.equal(mk.style.display, ""); assert.equal(cards, 0); assert.match(hit2.attrs["aria-label"], /小喵/);
+  hit2.remove(); curHit = null; for (let i = 0; i < 14; i++) next(); assert.equal(cards, 0, "14 次（5.6 秒）還在等");
+  next(); assert.equal(cards, 1, "第 15 次（6 秒）還沒有新的才退回小卡"); assert.equal(mk.isConnected, false);
+});
+
+test("〔混合〕渡口主人載入中被轉向重掛：ph4Load 提早結束時點擊區、泡泡一起收，不留孤兒；07f 重掛時舊的點擊區、泡泡也一起拿掉（審查 #165 第八輪）", async () => {
+  const src = cut(W4, "async function ph4Load(P,box,hit,say,C,k,cid){", "\n");   // 只要開頭到第一行（載入、三個提早結束的檢查）
+  for (const at of [0, 1, 2]) {
+    const rm = [], box = { isConnected: true }, hit = { remove: () => rm.push("hit") }, say = { remove: () => rm.push("say") };
+    const ctx = vm.createContext({ OFF: true, window: {}, loadScript: () => Promise.resolve(), shwTripo: () => { if (at === 1) box.isConnected = false; return Promise.resolve() } });
+    ctx.window.THREE = {}; ctx.XQBot3D = ctx.window.XQBot3D = { figure: () => ({ glbP: Promise.resolve().then(() => { if (at === 2) box.isConnected = false }) }) };
+    ctx.WX_CHARS = { c: {} }; ctx.TRIPO = { c: 1 };
+    if (at === 0) box.isConnected = false;
+    const body = cut(W4, "async function ph4Load(P,box,hit,say,C,k,cid){", "if(!box.isConnected)return gone();\n  const EL=");
+    vm.runInContext(body.replace(/\n  const EL=$/, "\n  return '往下'}"), ctx);
+    const r = await vm.runInContext("ph4Load", ctx)({}, box, hit, say, {}, "tang", "c");
+    assert.deepEqual(rm, ["hit", "say"], "第 " + (at + 1) + " 個提早結束的地方也收掉"); assert.equal(r, undefined);
+  }
+  assert.ok(src.length > 0);
+  assert.match(F, /P\.querySelectorAll\(":scope>\.ph4,:scope>\.ph4-hit,:scope>\.ph4-say"\)\.forEach\(e=>e\.remove\(\)\);delete P\.dataset\.ph4;/, "07f 重掛時舊的一起拿掉");
 });
 
 // ---- #171：橫式圖的天氣 sw7 與四時風物匣（Windows Claude 1 量，sw7_port_l1610.json） ----

@@ -354,7 +354,7 @@ function portScw(v,k){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.queryS
     if(P._fxL===true&&!X)setTimeout(()=>{try{if(!P.isConnected||P.dataset.scw)return;if(typeof portFx==="function")portFx(v,k);if(typeof portWindCore==="function")portWindCore(v,k);   /* 只掛風本身，不叫外面那幾層包裝 */
       if(typeof pcIfx==="function")pcIfx().then(()=>{try{if(P.isConnected&&!P.dataset.scw&&typeof ifxSeen==="function")ifxSeen(img)}catch(e){}})}catch(e){}},0);P._fxL=!!X;   /* 墨粒子：開頁就是橫式圖、或上色過場中轉向時 pcSet 沒跑，fx-map 沒補上 _f 的對照，這裡補上再掛一次（審查 #165 第七輪） */
     if(P._oyL!=null&&P._oyL!==!!X&&typeof P._oyRe==="function")setTimeout(()=>{try{if(P.isConnected&&P._oyRe)P._oyRe()}catch(e){}},0);P._oyL=!!X;
-    if(P.dataset.ph4&&P._ph4L!=null&&P._ph4L!==!!X&&typeof ph4Mount==="function"){P.querySelectorAll(":scope>.ph4").forEach(e=>e.remove());delete P.dataset.ph4;const V=P.parentNode;setTimeout(()=>{try{if(P.isConnected)ph4Mount(V,k)}catch(e){}},0)}};
+    if(P.dataset.ph4&&P._ph4L!=null&&P._ph4L!==!!X&&typeof ph4Mount==="function"){P.querySelectorAll(":scope>.ph4,:scope>.ph4-hit,:scope>.ph4-say").forEach(e=>e.remove());delete P.dataset.ph4;const V=P.parentNode;setTimeout(()=>{try{if(P.isConnected)ph4Mount(V,k)}catch(e){}},0)}};
   P._portPlace=place;
   if(typeof scwMount==="function"&&typeof SHW_PORT!=="undefined"&&SHW_PORT[k]){const C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
     scwMount(P,{key:scwKey(src0),src0,ids:["poPark","poInn","poArena","poBattle","poPh"],pfx:"port:"+k,cfg0:C,apply:place});if(pre.k)P._scwW="l"}
