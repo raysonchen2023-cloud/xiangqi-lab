@@ -334,7 +334,10 @@ function portScwStop(P,img){if(typeof P._pcStop==="function")P._pcStop();if(type
 function portScw(v,k){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.querySelector(":scope>img");if(!img||typeof scwPre!=="function")return;
   const full=typeof PORTF_ON!=="undefined"&&PORTF_ON&&typeof PORTF_ERAS!=="undefined"&&PORTF_ERAS.includes(k),src0="data/shipmap/port_"+k+(full?"_f":"")+".webp",pre=scwPre(v,src0);
   if(pre.k){img.src=pre.src;P.dataset.scw=pre.k;P.classList.add("scw-l")}
-  if(!document.getElementById("portScwCss")){const st=document.createElement("style");st.id="portScwCss";st.textContent=".shp-page.scw-l .pw-gl,.shp-page.scw-l .pfx-gl,.shp-page.scw-l .shp-gldev{display:none!important}";document.head.append(st)}   /* 直向時掛好的風、WebGL，轉成橫式時藏起來 */
+  if(!document.getElementById("portScwCss")){const st=document.createElement("style");st.id="portScwCss";st.textContent=".shp-page.scw-l .pw-gl,.shp-page.scw-l .pfx-gl,.shp-page.scw-l .shp-gldev{display:none!important}.shp-page.scw-l>.shp-cap{padding-left:calc(16px + var(--pcL,0px))}";document.head.append(st)}
+  /* 4:3 iPad 橫向：07fl 把橫式圖往左推（style.marginLeft 負值）裁掉左邊，標題條照裁掉的寬度往內縮；不改 07fl（工單範圍，審查 #165 第七輪） */
+  if(window.MutationObserver&&!P._pcLmo){const fit=()=>{const ml=parseFloat(P.style.marginLeft)||0,v2=P.dataset.scw?Math.max(0,-ml)+"px":"0px";if(P.style.getPropertyValue("--pcL")!==v2)P.style.setProperty("--pcL",v2)};
+    P._pcLmo=new MutationObserver(fit);P._pcLmo.observe(P,{attributes:true,attributeFilter:["style","data-scw"]});fit()}   /* 直向時掛好的風、WebGL，轉成橫式時藏起來 */
   const place=()=>{const e=typeof scwCur==="function"?scwCur(P):null,X=e&&e.fx;
     /* 直向時開始播的上色過場、風、船艙 WebGL 都是照直圖量的：換成橫式圖就整個收掉，底圖恢復可見（審查 #165 第二輪第 1、2 項） */
     if(X)portScwStop(P,img);
@@ -345,7 +348,8 @@ function portScw(v,k){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.queryS
     /* 渡口主人（07w4）的站位只在掛上時算一次：轉向換了圖就拿掉重掛（3D 迴圈看到框不在了會自己釋放；審查 #165 第 2 項） */
     /* 07w5 偶遇（信、小人）開頁時照當時的路網找位置：轉向換了圖就叫它重放（審查 #165 第五輪） */
     /* 轉回直向：風、船艙 WebGL 只在開頁時掛，轉成橫式時 portScwStop 收掉了，這裡重掛回來（審查 #165 第六輪） */
-    if(P._fxL===true&&!X)setTimeout(()=>{try{if(!P.isConnected||P.dataset.scw)return;if(typeof portFx==="function")portFx(v,k);if(typeof portWind==="function")portWind(v,k)}catch(e){}},0);P._fxL=!!X;
+    if(P._fxL===true&&!X)setTimeout(()=>{try{if(!P.isConnected||P.dataset.scw)return;if(typeof portFx==="function")portFx(v,k);if(typeof portWindCore==="function")portWindCore(v,k);   /* 只掛風本身，不叫外面那幾層包裝 */
+      if(typeof pcIfx==="function")pcIfx().then(()=>{try{if(P.isConnected&&!P.dataset.scw&&typeof ifxSeen==="function")ifxSeen(img)}catch(e){}})}catch(e){}},0);P._fxL=!!X;   /* 墨粒子：開頁就是橫式圖、或上色過場中轉向時 pcSet 沒跑，fx-map 沒補上 _f 的對照，這裡補上再掛一次（審查 #165 第七輪） */
     if(P._oyL!=null&&P._oyL!==!!X&&typeof P._oyRe==="function")setTimeout(()=>{try{if(P.isConnected&&P._oyRe)P._oyRe()}catch(e){}},0);P._oyL=!!X;
     if(P.dataset.ph4&&P._ph4L!=null&&P._ph4L!==!!X&&typeof ph4Mount==="function"){P.querySelectorAll(":scope>.ph4").forEach(e=>e.remove());delete P.dataset.ph4;const V=P.parentNode;setTimeout(()=>{try{if(P.isConnected)ph4Mount(V,k)}catch(e){}},0)}};
   P._portPlace=place;

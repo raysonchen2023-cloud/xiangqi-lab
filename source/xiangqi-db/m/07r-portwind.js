@@ -66,7 +66,9 @@ function pwdSoil(img,d){try{const c=document.createElement("canvas");c.width=192
   const D=x.getImageData(Math.round(d[0]*1.92),Math.round(d[1]*3.44),Math.max(1,Math.round((d[2]-d[0])*1.92)),Math.max(1,Math.round((d[3]-d[1])*3.44))).data;let r=0,g=0,b=0,n=0;
   for(let i=0;i<D.length;i+=4){const R=D[i]/255,G=D[i+1]/255,B=D[i+2]/255,L=.3*R+.59*G+.11*B;if(d[4]===1||(R-B>.08&&R>=G-.02&&L>.42)){r+=R;g+=G;b+=B;n++}}
   if(n<20)return[.86,.74,.52];const k=v=>Math.min(1,v/n*1.18+.14);return[k(r),k(g),k(b)]}catch(e){return[.86,.74,.52]}}
-function portWind(v,k){const C=PWD[k],P=v&&v.querySelector(".shp-page.cq"),img=P&&P.querySelector(":scope>img");if(!C||!img)return;
+/* W107-L：轉回直向時 07f 只重掛風本身（portWindCore），不再叫外面包了 5 層的 portWind（07q 旅伴小卡、07w 走路、07w4 主人、07x 放大、07w5 偶遇），免得旅伴小卡一直多一張（審查 #165 第七輪） */
+function portWind(v,k){return portWindCore(v,k)}
+function portWindCore(v,k){const C=PWD[k],P=v&&v.querySelector(".shp-page.cq"),img=P&&P.querySelector(":scope>img");if(!C||!img)return;
   if(P.dataset.scw)return;   /* W107-L：風的範圍是照直圖量的，iPad 橫式圖先不掛（轉成橫式時 CSS 藏起來） */
   pwdDev(P);if(!pwdOn()||matchMedia("(prefers-reduced-motion: reduce)").matches||typeof pfxGl!=="function")return;
   let n=0;const wait=()=>{if(!P.isConnected)return;const ok=!P.classList.contains("pc-run")&&!document.querySelector(".walkc")&&img.complete&&img.naturalWidth;if(!ok&&n++<80){setTimeout(wait,150);return}if(ok)pwdRun(P,img,C,k)};wait()}
