@@ -154,9 +154,10 @@ function hbFxLearn(P){const fx=P.querySelector(".hb-fx");if(!fx||hbIsCl())return
   hbRedoN().then(n=>{if(n==null||!pond.isConnected)return;pond.innerHTML=n>0?`<i class="hb-ink" style="opacity:${Math.min(.85,.3+n*.06).toFixed(2)}"></i>`:'<i class="hb-clear"></i>'})}
 function hbFxBattle(P,img){let ph="";try{const S=window.XQNet&&XQNet.cup&&XQNet.cup();ph=S&&S.ph||""}catch(e){}
   const alt=ph==="reg"||ph==="wait"?"battle_red":ph==="ck"||ph==="play"?"battle_curtain":"";
-  if(alt&&!hbIsCl()){const im=new Image();im.onload=()=>{if(img.isConnected)img.src=im.src};im.src="data/hubmap/"+hbImg(alt,"battle")+".webp?v="+HB_IMGV}   /* 換圖前先載好，載不到就留原圖 */
+  const lw=!!P.dataset.scw;   /* W107-L：用 iPad 橫向專用橫式圖時不換千秋盃的報名、垂簾狀態圖（那兩張是直圖，換了座標就對不上），燈也不疊；狀態圖的橫式版還沒畫 */
+  if(alt&&!hbIsCl()&&!lw){const im=new Image();im.onload=()=>{if(img.isConnected)img.src=im.src};im.src="data/hubmap/"+hbImg(alt,"battle")+".webp?v="+HB_IMGV}   /* 換圖前先載好，載不到就留原圖 */
   const fx=P.querySelector(".hb-fx");if(!fx)return;
-  if(alt==="battle_curtain")fx.insertAdjacentHTML("beforeend",HUB_LAMP.battle.map(p=>`<i class="hb-lamp on" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
+  if(alt==="battle_curtain"&&!lw)fx.insertAdjacentHTML("beforeend",HUB_LAMP.battle.map(p=>`<i class="hb-lamp on" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
   if(ph==="done")fx.insertAdjacentHTML("beforeend",HB_FW.map(([x,y,d])=>`<i class="hb-fw" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join(""));hbFwPlace(P)}
 /* 千秋盃結束的煙火（原圖 %）；W107-L 橫式圖照條目 fx.fw 擺 */
 const HB_FW=[[64,14,0],[81,11,-.9],[95,15,-1.7],[72,18,-.4],[57,12,-2.2]];

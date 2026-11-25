@@ -103,6 +103,17 @@ const SCW={
 const SCW_SEA=["night","spring","spring_night","summer","summer_night","autumn","autumn_night","winter","winter_night"];
 for(const b of["hubmap/battle_classic","hubmap/learn_classic"]){const B=SCW[b];if(!B)continue;
   for(const q of SCW_SEA)SCW[b+"_"+q]=Object.assign({},B,{f:q==="summer"?B.f:q==="summer_night"?b+"_night_l1610":b+"_"+q+"_l1610",base:b})}
+/* 朝代日間（開發者 11/25「13個朝代都要做」「先做日間 48 張」）：Windows Claude 1 拿經典版橫式圖當構圖基準、朝代原圖當參考重畫，
+   座標沿用經典版條目；檔名＝<原圖鍵>_l1610。這裡先登記座標能沿用的 35 張（對戰、大廳各 12，挑戰電腦 3，殘局 3，今日推薦 4，棋力測驗 1）。
+   學習（書院構圖跟經典版不同，另外量一套座標）、錯棋重練原圖（要加回洗墨池、晾冊竹竿）等座標到了再接。
+   殘局魏晉、唐兩組：茶器照經典版橫式（條目有 ves，07c2 用橫式圖時就不套 CJM_VES_G）。夜景、四季之後再說 */
+const SCW_ERA={"hubmap/battle_classic":["hubmap/battle",..."qin han sanguo weijin nanbei sui tang wudai song yuan qing".split(" ").map(e=>"hubmap/battle_"+e)],
+  "lobbymap/lobby_classic":["lobbymap/lobby",..."qin han sanguo weijin nanbei sui tang wudai song yuan qing".split(" ").map(e=>"lobbymap/lobby_"+e)],
+  "cpuroom/cpuroom_day_classic":["cpuroom/cpuroom_day","cpuroom/cpuroom_day_han","cpuroom/cpuroom_day_song"],
+  "canjumap/canju_day_classic":["canjumap/canju_day","canjumap/canju_day_weijin","canjumap/canju_day_tang"],
+  "todaymap/today_day_classic":["todaymap/today_day","todaymap/today_day_han","todaymap/today_day_weijin","todaymap/today_day_tang"],
+  "exammap/exam_day_classic":["exammap/exam_day"]};
+for(const b in SCW_ERA){const B=SCW[b];if(!B)continue;for(const k of SCW_ERA[b])if(!SCW[k])SCW[k]=Object.assign({},B,{f:k+"_l1610",base:b})}
 const SCW_BAD={};   /* 這次開 App 載不到的橫式圖（鍵＝原圖鍵），退回原圖不再試 */
 /* 圖網址 → 鍵（data/ 之後、不含 .webp 和 ?v=） */
 const scwKey=src=>{const m=/(?:^|\/)data\/([^?#]+?)\.webp(?:[?#]|$)/.exec(src||"");return m?m[1]:""};

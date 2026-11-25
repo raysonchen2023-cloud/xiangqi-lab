@@ -64,7 +64,7 @@ test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在
   const pct = (xy, n) => { assert.ok(Array.isArray(xy) && xy.length === 2 && xy.every(v => v >= 0 && v <= 100), n + "：" + JSON.stringify(xy)) };
   const keys = Object.keys(SCW); assert.ok(keys.length >= 2, "錯棋重練、棋力測驗都登記了");
   for (const k of keys) {
-    const e = SCW[k]; assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.match(k, /_classic(_[a-z_]+)?$/, "只做經典世界");
+    const e = SCW[k]; assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.match(k, /^[a-z]+\/[a-z_]+$/);
     if (e.base) { assert.ok(SCW[e.base], k + " 的基準條目"); assert.equal(e.S, SCW[e.base].S, k + " 座標跟基準共用"); assert.match(e.f, /_l1610$/); continue }
     assert.equal(e.f, k + "_l1610", k);
     for (const id in e.S) pct(e.S[id], k + " " + id); pct(e.exit, k + " 出口");
@@ -80,6 +80,13 @@ test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在
   const T = SCW["todaymap/today_day_classic"].fx; assert.equal(T.notes.length, 5, "今日推薦五張告示紙");
   for (const q of T.notes) { assert.equal(q.length, 4); for (const [x, y] of q) assert.ok(x >= 0 && x <= 2560 && y >= 0 && y <= 1600) }
   for (const xy of [T.term, T.seal, T.censer.slice(0, 2), ...T.eave]) assert.ok(xy[0] >= 0 && xy[0] <= 2560 && xy[1] >= 0 && xy[1] <= 1600);
+  // 朝代日間：座標沿用經典版的 35 張；學習、錯棋重練原圖另外量，還沒登記
+  const ERA = { "hubmap/battle": 12, "lobbymap/lobby": 12, "cpuroom/cpuroom_day": 3, "canjumap/canju_day": 3, "todaymap/today_day": 4, "exammap/exam_day": 1 };
+  let n = 0; for (const [p, c] of Object.entries(ERA)) { const ks = Object.keys(SCW).filter(k => (k === p || k.startsWith(p + "_")) && !/classic/.test(k)); assert.equal(ks.length, c, p + " 朝代張數"); n += c;
+    for (const k of ks) { assert.equal(SCW[k].f, k + "_l1610"); assert.match(SCW[k].base, /_classic$/) } }
+  assert.equal(n, 35);
+  assert.equal(scwEntry("hubmap/learn_tang"), null, "學習朝代版還沒有座標"); assert.equal(scwEntry("redomap/redo_day"), null, "錯棋重練原圖要等洗墨池、竹竿座標");
+  assert.equal(scwEntry("canjumap/canju_day_weijin").fx.ves, SCW["canjumap/canju_day_classic"].fx.ves, "殘局魏晉組用經典版橫式的茶器位置");
   // 季節、夜景：對戰、學習各 9 個變體（夏季對到原圖的橫式圖）
   for (const h of ["battle", "learn"]) {
     const B = "hubmap/" + h + "_classic";
@@ -192,6 +199,7 @@ test("原始碼：07fl 排版前先問 scwSync、安全區照條目；07w7、07w
   for (const [n, S] of [["07c2", C2], ["07y", YH], ["07x2", X2]]) { assert.match(S, /scwPre\(v,src\)/, n + " 開頁先選圖"); assert.match(S, /scwMount\(P,/, n + " 交給 07sw") }
   assert.match(C2, /scwMount\(P,\{key:scwKey\(src\),src0:src,ids:\[\],apply:render\}\)/, "殘局換圖後整組重畫");
   assert.match(YH, /onWalk:c=>hbHide\(P,c\.hide\)/, "對戰、學習重掛走路角色後照新的隱身範圍");
+  assert.match(YH, /if\(alt&&!hbIsCl\(\)&&!lw\)/, "橫式圖時不換千秋盃狀態直圖");
   assert.match(YH, /const lw=\/_l1610\\\.webp\/\.test\(src\),E=lw&&typeof scwByF==="function"\?scwByF\(src\):null/, "朝代殘影照橫式條目");
   assert.match(X2, /function lmFar\(s,used,G\)/); assert.match(X2, /gap:44\/pw\*100/, "橫式圖的亮燈間距照螢幕 44px");
   const LB = SCW["lobbymap/lobby_classic"].fx; assert.equal(LB.lamps.length, 44, "大廳 44 盞燈（燈是線上玩家，不能少）"); assert.equal(LB.tables.length, 8);
