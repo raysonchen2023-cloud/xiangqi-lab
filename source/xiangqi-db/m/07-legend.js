@@ -276,11 +276,12 @@ const XP_TITLES=["棋童","棋徒","棋友","棋客","棋士","棋師","棋豪",
 function xpInfo(x){x=x==null?store.get("xp",0):x;let L=1,rest=x;while(L<100&&rest>=xpNeed(L)){rest-=xpNeed(L);L++}return{L,rest,need:L<100?xpNeed(L):0,title:XP_TITLES[Math.min(9,Math.floor((L-1)/10))],total:x}}
 function xpChip(t,big){let c=document.getElementById("xpchip");if(!c){c=document.createElement("div");c.id="xpchip";document.body.append(c)}
   c.textContent=t;c.className=big?"big":"";c.style.opacity="1";clearTimeout(xpChip.t);xpChip.t=setTimeout(()=>{c.style.opacity="0"},big?3200:1400)}
-function addXP(n,why,key){if(!n)return;
+function addXP(n,why,key,opt){if(!n)return;   /* 11/25 W119：opt.chipDelay＝修為當下就寫進存檔，只把震動和小標籤延後。原本呼叫端用 setTimeout 延後整個 addXP，延遲期間 App 被關掉，「已領」記號已寫、修為卻永遠補不回來 */
   if(key){const K=store.get("xpKeys",{});if(K[key])return;K[key]=1;const ks=Object.keys(K);if(ks.length>4000)for(const k of ks.slice(0,1000))delete K[k];store.set("xpKeys",K)}
   const today=localDay();let bonus=0;if(store.get("xpDay","")!==today){store.set("xpDay",today);bonus=20}
   const b=xpInfo(),x=b.total+n+bonus;store.set("xp",x);const a=xpInfo(x);try{if(typeof ptyOnXp==="function")ptyOnXp(n+bonus)}catch(e){}   /* 11/15 七星改版：修為加多少，全隊自動拿一半、另一半進星輝（07pty-party.js） */
-  if(a.L>b.L){vibrate([20,40,20,40,60]);xpChip(`🎉 修行升級！Lv ${a.L}・${a.title}${a.title!==b.title?"（新稱號）":""}`,true)}else xpChip(`+${n+bonus} 修為${bonus?"（今日第一次練習 +20）":""}`)}
+  const show=()=>{if(a.L>b.L){vibrate([20,40,20,40,60]);xpChip(`🎉 修行升級！Lv ${a.L}・${a.title}${a.title!==b.title?"（新稱號）":""}`,true)}else xpChip(`+${n+bonus} 修為${bonus?"（今日第一次練習 +20）":""}`)};
+  if(opt&&opt.chipDelay>0)setTimeout(show,opt.chipDelay);else show()}
 function xpSheet(){const I=xpInfo();sheet("🀄 棋道修行",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:40px;font-weight:900;font-family:var(--serif)">Lv ${I.L}</div><div style="font-size:18px"><b>${I.title}</b></div>
     ${I.need?`<div class="st-bar" style="margin:8px 0 2px"><i style="width:${Math.round(I.rest*100/I.need)}%"></i></div><div class="muted">${I.rest} / ${I.need} 修為（累積 ${I.total}）</div>`:'<div class="muted">已到最高等級</div>'}</div>
     <div style="text-align:left;font-size:14px;line-height:1.75;margin-top:14px">

@@ -878,7 +878,7 @@ function jhCanalXM(sid,day,pid){const st=jhCanalOf(sid),back=()=>"#/jianghu";if(
     next:back,nextL:()=>jhL("回十州棋館","Back to the Ten Prefectures")}}
 function jhCanalMark(sid,day,o){if(day!==jhCanalDay())return{first:false};const S=jhCanalGet(day);if(S.s[sid])return{first:false};
   S.s[sid]={t:Date.now(),p:o&&o.perfect?1:0};store.set("jhCanal",S);
-  if(typeof addXP==="function")setTimeout(()=>{try{addXP(JH_CANAL_XP,jhL("漕運殘局","Canal puzzle"),"cy:"+day+":"+sid)}catch(e){}},1600);
+  if(typeof addXP==="function")try{addXP(JH_CANAL_XP,jhL("漕運殘局","Canal puzzle"),"cy:"+day+":"+sid,{chipDelay:1600})}catch(e){}   /* W119：修為當下發，小標籤照舊 1.6 秒後 */
   return{first:true}}
 try{if(typeof cjXMode==="function"&&!cjXMode.jhCanal){const x0=cjXMode;cjXMode=function(id){const m=/^cy\/(\w+)\/(\d{4}-\d{2}-\d{2})\/(.+)$/.exec(String(id||""));if(m)return jhCanalXM(m[1],m[2],decodeURIComponent(m[3]));return x0.apply(this,arguments)};cjXMode.jhCanal=1}}catch(e){}
 const JH_CANAL_IMG="data/canal/barge.webp";
