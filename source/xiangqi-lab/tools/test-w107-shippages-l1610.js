@@ -116,6 +116,44 @@ test("〔混合〕石桌棋盤頁 #/ship/pz：iPad 橫向用橫式圖，四角�
   assert.match(F, /id="pzPage" data-scw="\$\{pzPre\.k\}"><img src="\$\{pzPre\.src\}" alt="星槎石桌"><svg class="pz-svg" viewBox="0 0 \$\{pzW\} \$\{pzH\}" style="aspect-ratio:\$\{pzW\}\/\$\{pzH\}"/);
 });
 
+test("〔混合〕石桌棋盤頁載入 00-util 真的 CDN 補抓監聽：開頁就是橫式圖、同源 404 先等 CDN 那次，CDN 也失敗才退回直圖；退回時清 cdnTry，直圖（只在 CDN）還能再去補抓（審查 #168 第二輪）", () => {
+  const U = M("m/00-util.js").split("\n"), pick = re => { const l = U.find(x => re.test(x)); assert.ok(l, String(re)); return l };
+  const SRC0 = [pick(/^const XQ_CDN=/), pick(/^function xqNat\(\)/), pick(/^const xqCdnRel=/), pick(/^addEventListener\("error"/)].join("\n");
+  const run = (cdnOk) => {
+    const C = load(true); let H = null;
+    Object.assign(C, { location: { href: "https://x.test/m/x.html", origin: "https://x.test", pathname: "/m/x.html" }, URL, navigator: { userAgent: "" }, window: {} });
+    C.addEventListener = (t, f) => { if (t === "error") H = f }; C.removeEventListener = () => { };
+    vm.runInContext(SRC0, C); assert.equal(typeof H, "function", "00-util 掛上了監聽"); const CDN = vm.runInContext("XQ_CDN", C);
+    vm.runInContext(cut(F, "const PZ_TL=", ";") + "\n" + cut(F, "const SHIP_PZ_SPOT=", ";") + "\nconst PZ_CN={K:'帥'};" + cut(F, "const pzP=", "]};") + "\n" + cut(F, "function pzSvg(fen){", '.join("")}') + "\n" + cut(F, "const PZ_L1610=", 'addEventListener("resize",rs);return pre}'), C);
+    const img = { tagName: "IMG", dataset: {}, _src: "", onerror: null, getAttribute(k) { return k === "src" ? this._src : null }, get src() { return this._src }, set src(x) { this._src = x }, get currentSrc() { return this._src } };
+    const svg = { innerHTML: "", style: {}, setAttribute() { } }, pg = fakeEl({ querySelector: q => q === ":scope>img" ? img : q === "#pzSvg" ? svg : null, querySelectorAll: () => [] });
+    const v = Object.assign({ querySelector: q => q === "#pzPage" || q === "#pzPage>img" ? (q === "#pzPage" ? pg : img) : null, isConnected: true }, stage(C, true));
+    C.addEventListener = (t, f) => { if (t === "error") H = f };   // pzScw 的 resize 不用
+    const pre = vm.runInContext("pzScw", C)(v); img._src = pre.src; pg.dataset.scw = pre.k;
+    vm.runInContext("pzMountErr", C)(v, pre);
+    assert.equal(typeof img.onerror, "function", "開頁就是橫式圖也掛上載不到退回");
+    const fire = () => { H({ target: img }); if (img.onerror) img.onerror() };   // 瀏覽器的順序：擷取監聽先，元素自己的 onerror 後
+    fire();   // 同源 404
+    assert.ok(img._src.startsWith(CDN) && /page_canju_l1610\.webp/.test(img._src), "00-util 改去 CDN 補抓：" + img._src); assert.equal(img.dataset.cdnTry, "1");
+    assert.equal(pg.dataset.scw, "l1610", "還在等 CDN，不能馬上退回（退回會蓋掉補抓）");
+    if (cdnOk) return;
+    fire();   // CDN 也 404
+    assert.equal(pg.dataset.scw, "", "CDN 也失敗才退回直圖"); assert.equal(img._src, "data/shipmap/page_canju.webp"); assert.equal(img.dataset.cdnTry, undefined, "換網址清掉 cdnTry");
+    assert.equal(vm.runInContext("SCW_BAD['shipmap/page_canju']", C), 1);
+    H({ target: img });   // 直圖同源也 404（page_canju 只在 CDN）
+    assert.ok(img._src.startsWith(CDN) && /page_canju\.webp/.test(img._src), "直圖還能去 CDN 補抓，不會破圖：" + img._src);
+  };
+  run(false); run(true);
+  assert.match(F, /\n  pzMountErr\(v,pzPre\);\n/, "ShipPz 開頁呼叫 pzMountErr");
+});
+test("〔混合〕石桌棋盤頁重開不累積 resize 監聽", () => {
+  const C = load(true), L = new Set(); C.addEventListener = (t, f) => L.add(f); C.removeEventListener = (t, f) => L.delete(f);
+  vm.runInContext(cut(F, "const PZ_TL=", ";") + "\n" + cut(F, "const SHIP_PZ_SPOT=", ";") + "\nconst PZ_CN={};" + cut(F, "const pzP=", "]};") + "\n" + cut(F, "function pzSvg(fen){", '.join("")}') + "\n" + cut(F, "const PZ_L1610=", 'addEventListener("resize",rs);return pre}'), C);
+  const v = Object.assign({ querySelector: () => null, isConnected: true }, stage(C, true));
+  for (let i = 0; i < 3; i++) vm.runInContext("pzScw", C)(v);
+  assert.equal(L.size, 1);
+});
+
 test("〔原始碼〕5 頁都掛 shpScw；m.css 橫式字級縮小", () => {
   for (const pg of ["page_sail", "page_shelf", "page_lesson", "page_bag", "page_canju"]) assert.equal((F.match(new RegExp('try\\{shpScw\\(v,"' + pg + '"\\)\\}catch\\(e\\)\\{\\}', "g")) || []).length, 1, pg);
   assert.match(CSS, /\.shp-page\.scw-l \.shl-board\{gap:\.32cqw;font-size:1\.55cqw\}/); assert.match(CSS, /\.shp-page\.scw-l \.shs-card\{padding:1\.6cqw 2\.2cqw;font-size:1\.7cqw\}/);

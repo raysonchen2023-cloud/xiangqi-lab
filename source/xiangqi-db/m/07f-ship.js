@@ -361,16 +361,23 @@ const pzVB=wide=>wide?[2560,1600]:[768,1376];
 /* 換圖：底圖、svg 的 viewBox 和比例、星光位置、已擺上的棋子（pzSvg.last）都換成 k 那一套；橫式圖載不到退回直圖（記 SCW_BAD，這次開 App 不再試） */
 function pzSet(v,k){const pg=v&&v.querySelector("#pzPage");if(!pg)return;const img=pg.querySelector(":scope>img"),svg=pg.querySelector("#pzSvg"),wide=!!k;
   pzUse(wide);pg.dataset.scw=k||"";pg.classList.toggle("scw-l",wide);const[W,H]=pzVB(wide);
-  const src=wide&&typeof scwSrc==="function"?scwSrc(SCW[PZ_KEY]):PZ_SRC0;if(img&&img.getAttribute("src")!==src){img.onerror=wide?()=>{if(typeof SCW_BAD!=="undefined")SCW_BAD[PZ_KEY]=1;pzSet(v,"")}:null;img.src=src}
+  const src=wide&&typeof scwSrc==="function"?scwSrc(SCW[PZ_KEY]):PZ_SRC0;if(img&&img.getAttribute("src")!==src){img.onerror=wide?()=>pzFail(v,img):null;if(img.dataset)delete img.dataset.cdnTry;img._scwCdn="";img.src=src}   /* 換網址就清掉 00-util 的 cdnTry，新網址載不到時它才會再去 CDN 補抓（直圖 page_canju 只在 CDN） */
   if(svg){svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.style.aspectRatio=W+"/"+H;if(svg.innerHTML&&pzSvg.last!=null)svg.innerHTML=pzSvg(pzSvg.last)}
   pg.querySelectorAll("#pzSpots .shp-spot").forEach(b=>{const p=SHIP_PZ_SPOT[+b.dataset.i];if(p&&typeof scwPut==="function")scwPut(b,p)})}   /* 走 07sw scwPut：清掉 00-util xqTop0 記的舊 top（不然轉回直向 top 又被放回橫式的值） */
+/* 橫式圖載不到（照 07sw scwFail，審查 #168 第二輪）：00-util 的擷取監聽先把 src 改成 XQ_CDN、設 cdnTry，同一次事件才輪到這裡——這時候還在等 CDN 那次，不能退回（會蓋掉補抓）；
+   記住正在等的網址，CDN 那次也失敗（同一個網址再錯一次）才記 SCW_BAD、退回直圖 */
+function pzFail(v,im){const u=String(im.getAttribute("src")||im.src||"");
+  if(im.dataset&&im.dataset.cdnTry&&typeof XQ_CDN==="string"&&u.indexOf(XQ_CDN)===0&&im._scwCdn!==u){im._scwCdn=u;return}
+  if(typeof SCW_BAD!=="undefined")SCW_BAD[PZ_KEY]=1;pzSet(v,"")}
+/* 開頁就是橫式圖：掛上載不到退回 */
+function pzMountErr(v,pre){const im=v.querySelector("#pzPage>img");if(pre.k&&im)im.onerror=()=>pzFail(v,im)}
 function pzScw(v){const pre=typeof scwPre==="function"?scwPre(v,PZ_SRC0):{src:PZ_SRC0,k:""};pzUse(!!pre.k);
   let t=0;const rs=()=>{clearTimeout(t);t=setTimeout(()=>{const pg=v.querySelector("#pzPage");if(!v.isConnected||!pg){removeEventListener("resize",rs);return}
     const k=typeof scwPick==="function"?scwPick(v,null,PZ_KEY):"";if(k!==(pg.dataset.scw||""))pzSet(v,k)},150)};
-  addEventListener("resize",rs);return pre}
+  if(v._pzRs)removeEventListener("resize",v._pzRs);v._pzRs=rs;addEventListener("resize",rs);return pre}   /* 重開這頁先拿掉上一次的監聽，不累積 */
 function ShipPz(v){setTop("♟ 千秋殘局","#/adventure");setTabs(false);v.className="view";const k=shipHere(),T=SHIP_STOP[k]||{},pzPre=pzScw(v),[pzW,pzH]=pzVB(!!pzPre.k);
   v.innerHTML=`<div class="shp-page${pzPre.k?" scw-l":""}" id="pzPage" data-scw="${pzPre.k}"><img src="${pzPre.src}" alt="星槎石桌"><svg class="pz-svg" viewBox="0 0 ${pzW} ${pzH}" style="aspect-ratio:${pzW}/${pzH}" preserveAspectRatio="xMidYMid meet" id="pzSvg"></svg><div class="shp-cap"><b>♟ 千秋殘局・${esc(shipShort(k))}</b><small id="pzCap">${esc(T.place||"")}</small></div><div id="pzSpots"></div><button class="btn pz-go" id="pzGo" style="display:none">♟ 開始下棋</button></div><div id="pzMore"></div>`;
-  {const im=v.querySelector("#pzPage>img");if(pzPre.k&&im)im.onerror=()=>{if(typeof SCW_BAD!=="undefined")SCW_BAD[PZ_KEY]=1;pzSet(v,"")}}   /* 開頁就是橫式圖：載不到退回直圖 */
+  pzMountErr(v,pzPre);
   shipBank().then(()=>{if(!v.isConnected)return;const Lz=(shipPuzzles(k)||[]).slice(0,3),B=SHIP_BANK.D.byId,sp=v.querySelector("#pzSpots"),more=v.querySelector("#pzMore"),svg=v.querySelector("#pzSvg"),cap=v.querySelector("#pzCap"),go=v.querySelector("#pzGo");
     if(!Lz.length){sp.innerHTML=`<div class="shp-pznone">🧩 這一站的千秋殘局還在準備中</div>`;return}
     sp.innerHTML=Lz.map((id,i)=>{const P=B[id]||{},r=shipRec(k,id),nm=(typeof shipSlotName==="function"?shipSlotName(k,i,P):"")||`第 ${i+1} 題`,[x,y]=SHIP_PZ_SPOT[i]||[50,50];
