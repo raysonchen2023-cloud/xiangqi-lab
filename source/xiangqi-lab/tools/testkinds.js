@@ -114,6 +114,7 @@ const CLASSIFIED = new Set([
   "test-spotfit.js",   /* 11/13 hspx 1098 場景標籤英文疊在一起、聲音提示蓋頂欄 */
   "test-engine-start.js",   /* 11/13 hspx P0 章回棋路殘局開局送錯局面給引擎（不合法著法 g3g4／c3c4、電腦卡住） */
   "test-ui-1113.js",   /* 11/13 hspx：看我的棋力沒反應（P0）、toast 換行規矩、幻影台詞、漂浮畫卷 */
+  "test-w107-shippages-l1610.js",   /* 11/25 W107-L 第 4 批：星槎船上各頁（07f 起航、書架、棋話、行囊、幻影指導局）iPad 橫向橫式圖：5 頁條目、量好的點寫死、說明卡木牌位置、shpScw、橫式字級（行為 3、原始碼 1） */
   "test-home-wide.js",   /* 11/13 首頁接 iPad 寬版圖 home_p34／home_l1610：挑圖、退回原圖、座標表、走路節點、網址版本、cover 填滿（07z HMW、07fl xflCover；行為 8、混合 1） */
   "test-ipad-fill.js",   /* 11/13 遊戲畫面都要滿版：iPad／Duo 直向填滿寬度、橫向兩側模糊底（07fl；行為 8、原始碼 1） */
   "test-w109-home-cdn.js",   /* 11/25 W109 首頁寬版圖同源 404 時先等 00-util 的 CDN 補抓、CDN 也失敗才退回原圖（07z hmwFail；載入 07z 和 00-util 真正的監聽，行為 3、〔混合〕2） */
