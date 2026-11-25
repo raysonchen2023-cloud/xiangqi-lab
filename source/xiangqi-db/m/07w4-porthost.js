@@ -58,9 +58,10 @@ function ph4Spot(P,C,hFr){const H=C.N[C.home]||[50,70],W=P.clientWidth,Hh=P.clie
   return cand.find(p=>!bad(p))||cand[0]||[H[0]+11,H[1]]}
 async function ph4Load(P,box,hit,say,C,k,cid){
   await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));
-  const T=window.THREE;if(!T||!window.XQBot3D||!XQBot3D.figure)throw 0;if(!box.isConnected)return;await shwTripo();if(!box.isConnected)return;
+  const T=window.THREE;if(!T||!window.XQBot3D||!XQBot3D.figure)throw 0;const gone=()=>{hit.remove();say.remove()};   /* 載入中被 07f 轉向重掛（框拿掉了）：點擊區、泡泡一起收，不留孤兒（審查 #165 第八輪） */
+  if(!box.isConnected)return gone();await shwTripo();if(!box.isConnected)return gone();
   const Cc=WX_CHARS[cid]||{},look=TRIPO[cid]?{p:Cc.pc||"俥",e:k,g:9,glb:`data/tripo_app/${cid}.glb`,ring:TRIPO[cid]}:null;if(!look)throw 0;
-  const B=XQBot3D.figure(look);if(!B.glbP)throw 0;await B.glbP;if(!box.isConnected)return;
+  const B=XQBot3D.figure(look);if(!B.glbP)throw 0;await B.glbP;if(!box.isConnected)return gone();
   const EL=C.el*Math.PI/180,r=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:"low-power"});r.setPixelRatio(Math.min(2,devicePixelRatio||1));if(T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;
   const cv=r.domElement,sh=box.querySelector(".sh");box.append(cv);
   const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const dl=new T.DirectionalLight(0xFFFFFF,.85);dl.position.set(-3,6,5);sc.add(dl);
