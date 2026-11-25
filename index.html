@@ -1712,7 +1712,7 @@ body.bh-field #cgStuck button{pointer-events:auto}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261126-0420";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261126-0626";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -4991,7 +4991,9 @@ let PRACT_ACT=Date.now();addEventListener("pointerdown",()=>PRACT_ACT=Date.now()
   if(!["cpu","pvp","quiz","guess","redo"].includes(r))return;const d=localDay(),m=store.get("practiceMin",{});m[d]=Math.round(((m[d]||0)+.25)*100)/100;
   const ks=Object.keys(m).sort();while(ks.length>400)delete m[ks.shift()];store.set("practiceMin",m)}catch(e){}},15000);
 /* 意見回饋 307：後台每天用大家的資料校正的參數（題目難度、各段位的成長參數），從大廳拿，不用等改版 */
-setTimeout(()=>{try{if(OFF&&window.XQNet&&XQNet.calib&&Date.now()-((store.get("calib",null)||{}).got||0)>6*36e5)XQNet.calib(8000).then(s=>{try{const x=JSON.parse(s);if(x&&x.at)store.set("calib",{...x,got:Date.now()})}catch(e){}})}catch(e){}},12000);
+/* 11/26 0420 嚴格複核（開發者選「這次一起修」）：#185 只擋了開 App 立刻連大廳，這裡開機 12 秒後拿校準資料還是會連（帶裝置代號）。
+   兒童模式或家長關掉線上大廳（02-shell 的 NET_KIDOFF）時不拿，跟隱私說明「打開 App 不連」一致；之後自己進大廳時才連 */
+setTimeout(()=>{try{if(typeof NET_KIDOFF!=="undefined"&&NET_KIDOFF)return;if(OFF&&window.XQNet&&XQNet.calib&&Date.now()-((store.get("calib",null)||{}).got||0)>6*36e5)XQNet.calib(8000).then(s=>{try{const x=JSON.parse(s);if(x&&x.at)store.set("calib",{...x,got:Date.now()})}catch(e){}})}catch(e){}},12000);
 const practiceTotal=()=>Object.values(store.get("practiceMin",{})).reduce((a,b)=>a+b,0);
 /* ================= 🧬 天賦系統 v2（意見回饋 296、297：照開發者的〈用數學模型建構棋藝「天賦系統」〉） =================
    天賦≠目前很強。把天賦拆成可以分別估計的參數 τ＝(起點 S₀、學習速率 r、天花板 A、能力剖面 θ⃗、穩定度 σ)，每一項都附不確定度。
@@ -29361,7 +29363,11 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   spot("hall",m?jhL(`🏯 掌門大廳・${m.nm}`,`🏯 Master's hall · ${m.en}`):jhL("🏯 掌門大廳","🏯 Master's hall"),()=>jhSheet(sid));
   spot("study",jhL("📖 講棋堂","📖 Lecture hall"),()=>jhHallStudy(sid));
   spot("yard",jhL("👥 前院・門下棋友","👥 Front yard"),()=>jhHallYard(sid));
-  spot("gate",jhL("‹ 搭船回十州棋館","‹ Take a boat back to the Ten Prefectures"),()=>jhGo("#/jianghu"));
+  spot("gate",jhL("‹ 搭船回十州棋館","‹ Take a boat back to the Ten Prefectures"),()=>{try{const p=NAV_D>0?NAV_H[NAV_D-1]:null;if(typeof p==="string"&&navKey(p)==="/jianghu"){history.back();return}if(typeof navReplace==="function"){navReplace("#/jianghu");return}}catch(e){}jhGo("#/jianghu")});
+  /* 11/26 開發者回報（P0）：進中炮門再搭船回十州棋館，左上角變成「回中炮門」，按了又進中炮門、再搭船又回來，「完全無法離開這個十州棋館」。
+     根因：搭船用 jhGo 往前多開一頁，十州棋館的返回鍵（瀏覽器上一頁）就指回門內頁。搭船是回上一層：上一頁就是十州棋館＝退回那一頁；
+     不是（從開局棋路、掌門頁直接進門）＝把門內頁這一筆換成十州棋館（navReplace），不往前多開。回到十州棋館後，返回鍵指的是進門之前的那一頁。
+     不用 goUp：它會往很早的紀錄找十州棋館、一次跳好幾頁，跳回去那一頁的上一頁可能又是門內頁 */
   if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("順風・修為多給","Fair wind +XP");n.title=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");P.append(n)}   /* 11/22 Windows Claude 2 查 W62 時發現：英文原句折成兩行壓到「掌門大廳」標籤；實測中文一行也會壓到。門內頁改成掌門大廳標籤正下方置中的一行小徽章（圖比螢幕寬、左右會被裁，不能放角落），完整說明在掌門小卡 */
   const ready=()=>{if(P.isConnected)jhFadeOut()};if(img.complete&&img.naturalWidth)setTimeout(ready,0);else img.onload=ready;
   setTimeout(()=>{if(f.classList.contains("on")&&P.isConnected&&img.naturalWidth)jhFadeOut()},6000);
@@ -31175,7 +31181,7 @@ async function jhMzWorld3(box,c,S){
   const brickT=tx(128,128,(g,w,h)=>{g.fillStyle="#1e1813";g.fillRect(0,0,w,h);for(let y=0;y<4;y++){const o=y%2?w/4:0;for(let x=-1;x<3;x++){const v=62+rr(y*7+x)*24|0;g.fillStyle=`rgb(${v},${v*.86|0},${v*.72|0})`;g.fillRect(o+x*w/2+3,y*h/4+3,w/2-6,h/4-6)}}});
   const topT=tx(64,64,(g,w,h)=>{g.fillStyle="#6a5e50";g.fillRect(0,0,w,h);g.fillStyle="rgba(0,0,0,.2)";for(let i=0;i<40;i++)g.fillRect(rr(i)*w,rr(i+5)*h,3,2);g.strokeStyle="rgba(170,150,118,.7)";g.lineWidth=3;g.strokeRect(1.5,1.5,w-3,h-3)});
   const shT=tx(64,64,(g,w,h)=>{const gr=g.createRadialGradient(w/2,h/2,0,w/2,h/2,w/2);gr.addColorStop(0,"rgba(0,0,0,.75)");gr.addColorStop(.55,"rgba(0,0,0,.45)");gr.addColorStop(1,"rgba(0,0,0,0)");g.fillStyle=gr;g.fillRect(0,0,w,h)});
-  const MAP=S.lv.map,DYN=S.lv.dyn||"",WH=.85,cells=[],walls=[];for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const ch=MAP[y][x];if(ch==="#")walls.push([x,y]);else if(ch!==">")cells.push([x,y])}
+  const MAP=S.lv.map,DYN=S.lv.dyn||"",WH=.85,cells=[],walls=[],doorPick=[];for(let y=0;y<S.H;y++)for(let x=0;x<S.W;x++){const ch=MAP[y][x];if(ch==="#")walls.push([x,y]);else if(ch!==">")cells.push([x,y])}
   const m4=new T3.Matrix4(),cK=new T3.Color();
   const fg=new T3.PlaneGeometry(1,1);fg.rotateX(-Math.PI/2);
   const fl=new T3.InstancedMesh(fg,new T3.MeshLambertMaterial({map:floorT}),cells.length);
@@ -31206,7 +31212,7 @@ async function jhMzWorld3(box,c,S){
       const fm=new T3.Mesh(new T3.SphereGeometry(.09,10,8),new T3.MeshBasicMaterial({color:0xFFB347}));fm.position.set(0,1.05,0);fm.scale.set(1,1.6,1);g.add(fm);flames.push({fm,k:y*S.W+x,x,y});add(g,x,y,()=>true)}
     else if(ch==="D"){const g=new T3.Group();g.add(mesh(new T3.BoxGeometry(1,WH,.3),lam("#4a3220"),0,WH/2,0));const cm=lam("#c9a466");
       const beam=mesh(new T3.BoxGeometry(.06,.62,.02),cm,0,.5,.16);beam.rotation.z=.6;g.add(beam);g.add(mesh(new T3.BoxGeometry(.5,.05,.02),cm,0,.3,.16));g.add(mesh(new T3.BoxGeometry(.05,.3,.02),cm,-.12,.42,.16));
-      add(g,x,y,()=>S.grid[y][x]==="D")}
+      add(g,x,y,()=>S.grid[y][x]==="D");doorPick.push({g,x,y})}   /* 11/26 開發者 iPad 影片：點門板顯示「走不到那裡」——門板不在點選範圍，射線穿過去打到後面的牆。門板也算進 pick */
     else if(ch==="P"){const g=new T3.Group(),pm=lam("#8a6a3a"),em=lam("#c9a466");g.add(mesh(new T3.BoxGeometry(.72,.05,.72),pm,0,.025,0));const b1=mesh(new T3.BoxGeometry(.05,.02,.4),em,0,.06,0);b1.rotation.y=.6;g.add(b1);g.add(mesh(new T3.BoxGeometry(.4,.02,.05),em,0,.06,.1));
       /* 機關踏板（W71b）：踩下去變金色、沉一點 */
       const it=add(g,x,y,()=>true);it.plate=pm}
@@ -31268,7 +31274,9 @@ async function jhMzWorld3(box,c,S){
       B.bot.position.y=by;r.clear();cam.layers.set(0);r.render(sc,cam);cam.layers.set(1);sc.overrideMaterial=sil;r.render(sc,cam);sc.overrideMaterial=null;r.render(sc,cam);cam.layers.set(0)},
     /* 點畫面：先打牆和地面（點到牆頂就是那面牆），都沒打到再算地面高度 */
     pick(x,y){const b=cv.getBoundingClientRect();if(!b.width)return null;ray.setFromCamera(new T3.Vector2((x-b.left)/b.width*2-1,-((y-b.top)/b.height)*2+1),cam);
-      const hit=ray.intersectObjects([wl,fl],false)[0];if(hit&&hit.instanceId!=null){const q=(hit.object===wl?walls:cells)[hit.instanceId];if(q)return{x:q[0],y:q[1]}}
+      const dg=doorPick.filter(d=>d.g.visible&&S.grid[d.y][d.x]==="D"),hit=ray.intersectObjects([wl,fl,...dg.map(d=>d.g)],true)[0];
+      if(hit&&hit.instanceId==null){const d=dg.find(d=>{let o=hit.object;while(o){if(o===d.g)return true;o=o.parent}return false});if(d)return{x:d.x,y:d.y}}
+      if(hit&&hit.instanceId!=null){const q=(hit.object===wl?walls:cells)[hit.instanceId];if(q)return{x:q[0],y:q[1]}}
       const p=new T3.Vector3();if(!ray.ray.intersectPlane(gp,p))return null;return{x:Math.floor(p.x),y:Math.floor(p.z)}},
     dispose(){try{cv.remove()}catch(e){}try{texs.forEach(k=>k.dispose());r.dispose();r.forceContextLoss()}catch(e){}}}}
 
@@ -31391,7 +31399,7 @@ function jhMzCss(){if(document.getElementById("jhMzCss"))return;const s=document
 .jh-mz-bag{display:flex;gap:8px;flex-wrap:wrap;padding:4px 12px;font-size:13px;color:#9b8a6e;background:#140f0a}.jh-mz-bag .on{color:#e8b75a}
 .jh-mz-pad{display:grid;grid-template-columns:repeat(3,56px);grid-template-rows:repeat(3,48px);gap:4px;justify-content:center;padding:8px 0 calc(8px + env(safe-area-inset-bottom));background:#140f0a}
 .jh-mz-pad button{border:1px solid #5a4630;border-radius:10px;background:#2a2016;color:#e9dfc9;font-size:20px;min-height:44px;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.jh-mz-pad button:active{background:#3a2c1e}
-.jh-mz-pad .u{grid-area:1/2}.jh-mz-pad .l{grid-area:2/1}.jh-mz-pad .w{grid-area:2/2;font-size:15px}.jh-mz-pad .r{grid-area:2/3}.jh-mz-pad .d{grid-area:3/2}
+.jh-mz-pad .u{grid-area:1/2}.jh-mz-pad .l{grid-area:2/1}.jh-mz-pad .r{grid-area:2/3}.jh-mz-pad .d{grid-area:3/2}
 .jh-mz.iso .jh-mz-pad .u{grid-area:1/3}.jh-mz.iso .jh-mz-pad .r{grid-area:3/3}.jh-mz.iso .jh-mz-pad .d{grid-area:3/1}.jh-mz.iso .jh-mz-pad .l{grid-area:1/1}
 .jh-mz-ov{position:fixed;inset:0;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:12px 12px calc(12px + env(safe-area-inset-bottom));z-index:60}
 .jh-mz-lore{line-height:1.65;margin:8px 0 12px;font-size:15px}
@@ -31429,7 +31437,7 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
   const S=jhMzNew(LV.sid,jhMzGet(LV.sid).clear,jhMzPtrGet(LV.sid)),c0=typeof jhLook==="function"&&jhLook()||"x_swordboy";
   v.innerHTML=`<div class="jh-mz"><div class="jh-mz-cv"><canvas aria-label="${esc(jhL("地底漕倉地圖：點地面走過去","Granary map: tap the floor to walk"))}"></canvas></div>
     <div class="jh-mz-msg" aria-live="polite"></div><div class="jh-mz-bag"></div>
-    <div class="jh-mz-pad">${[["u","▲",jhL("往上","Up")],["l","◀",jhL("往左","Left")],["w",jhL("等","Wait"),jhL("原地等一回合","Wait one turn")],["r","▶",jhL("往右","Right")],["d","▼",jhL("往下","Down")]].map(([k,t,a])=>`<button type="button" class="${k}" data-k="${k}" aria-label="${esc(a)}">${esc(t)}</button>`).join("")}</div></div>`;
+    <div class="jh-mz-pad">${[["u","▲",jhL("往上","Up")],["l","◀",jhL("往左","Left")],["r","▶",jhL("往右","Right")],["d","▼",jhL("往下","Down")]].map(([k,t,a])=>`<button type="button" class="${k}" data-k="${k}" aria-label="${esc(a)}">${esc(t)}</button>`).join("")}</div></div>`;
   const cv=v.querySelector("canvas"),cx=cv.getContext("2d"),box=v.querySelector(".jh-mz-cv"),fog=document.createElement("canvas"),fx=fog.getContext("2d");fog.width=S.W;fog.height=S.H;
   const hero=new Image();hero.src=`data/xs/prev_${c0}.webp`;
   let T=48,camX=0,camY=0,dpr=1,path=[],busy=false,warned=false,held=null,h3=null,lastT=0,pWalk=false;
@@ -31582,11 +31590,12 @@ function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/ha
   cv.addEventListener("click",e=>{if(busy||S.done)return;const r=cv.getBoundingClientRect(),q=h3?h3.pick(e.clientX,e.clientY):{x:Math.floor((e.clientX-r.left+camX)/T),y:Math.floor((e.clientY-r.top+camY)/T)};if(!q)return;const x=q.x,y=q.y;
     if(x===S.player.x&&y===S.player.y)return;if(!S.seen.has(y*S.W+x)){say(jhL("那裡還是一片黑，<b>先走近一點照亮它</b>。","It's still pitch dark there. <b>Get closer to light it up.</b>"));return}
     const p=jhMzPath(S,x,y);if(!p){say(esc(jhL("走不到那裡。","You can't get there.")));return}path=p;held=null});
-  /* 方向鈕、方向鍵：按下就走、按住一直走（每格踏到才接下一格）、放開停在下一格。鍵盤在按鈕上按 Enter／空白鍵＝走一格。「等」＝原地等一回合 */
+  /* 方向鈕、方向鍵：按下就走、按住一直走（每格踏到才接下一格）、放開停在下一格。鍵盤在按鈕上按 Enter／空白鍵＝走一格。
+     11/26 開發者看 iPad 影片問「等」是什麼意思，選「拿掉」：畫面上不再放「等」（原地等一回合）鈕；想讓暗匪先走，往旁邊走一步再走回來（每一步都算一回合）。jhMzStep(S,0,0) 規則照舊保留 */
   const DIR={u:[0,-1],d:[0,1],l:[-1,0],r:[1,0]};
   const go=m=>{path=[];held=m;if(!busy&&!S.done&&!moving()&&!act(m[0],m[1]))held=null};
   v.querySelectorAll(".jh-mz-pad button").forEach(b=>{const m=DIR[b.dataset.k];
-    if(!m){b.addEventListener("click",()=>{path=[];held=null;if(!moving())act(0,0)});return}
+    if(!m)return;
     let pd=false;b.addEventListener("pointerdown",e=>{pd=true;try{b.setPointerCapture(e.pointerId)}catch(e2){}go(m)});
     const up=()=>{if(held===m)held=null};for(const n of["pointerup","pointercancel","lostpointercapture"])b.addEventListener(n,up);
     b.addEventListener("click",()=>{if(pd){pd=false;return}go(m);held=null});b.addEventListener("contextmenu",e=>e.preventDefault())});
