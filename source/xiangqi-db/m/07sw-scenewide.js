@@ -118,6 +118,26 @@ const SCW_ERA={"hubmap/battle_classic":["hubmap/battle",..."qin han sanguo weiji
   "todaymap/today_day_classic":["todaymap/today_day","todaymap/today_day_han","todaymap/today_day_weijin","todaymap/today_day_tang"],
   "exammap/exam_day_classic":["exammap/exam_day"]};
 for(const b in SCW_ERA){const B=SCW[b];if(!B)continue;for(const k of SCW_ERA[b])if(!SCW[k])SCW[k]=Object.assign({},B,{f:k+"_l1610",base:b})}
+/* 夜景、四季（Windows Claude 2 11/25 出圖 215 張，構圖照日間的橫式圖、座標共用，輪廓比對核過）：變體鍵照日間那一條複製、只換檔名。
+   日間條目分在各頁自己的模組（07y2 營地、07y7 千秋盃、07s2 設定……），07sw 載入時還沒有，所以第一次用到時（scwEntry／scwByF／scwSw7）才登記，日間那條還沒有的下次再試。
+   ① 夜景 <名>_night<後綴> ← 日間 <名>_day<後綴>（後綴＝經典或朝代）；② 大廳 lobby<後綴>_night ← lobby<後綴>；
+   ③ 對戰、學習 <名>[_朝代]_<季>[_night]（07y hbImg）← <名>[_朝代]：夏季＝原圖，_summer 用日間那張、_summer_night 用 _night 那張。
+   沒送的 3 張（study_night_classic、study_night、canju_night_classic：多了燈籠、蠟燭、油燈，壓到入口，等開發者決定）不登記，照舊用直圖 */
+const SCW_NIGHT={"campmap/camp":",_classic","canjumap/canju":",_tang,_weijin","cupmap/cup":",_classic,_han,_tang,_weijin","exammap/exam":",_classic","feedback/fb":"",
+  "gmmap/gm":",_classic,_han,_weijin","openmap/open":",_classic","redomap/redo":",_classic","setmap/set":",_classic","statmap/stat":",_classic","termsmap/terms":",_classic",
+  "thememap/theme":",_classic","todaymap/today":",_classic,_han,_tang,_weijin"};
+const SCW_HB_ERAS={"hubmap/battle":"qin han sanguo weijin nanbei sui tang wudai song yuan qing","hubmap/learn":"qin han sanguo weijin nanbei sui tang wudai yuan ming qing"};
+/* 變體清單 [鍵, 日間鍵, 檔名（省略＝鍵_l1610）] */
+function scwVarList(){const L=[];
+  for(const p in SCW_NIGHT)for(const x of SCW_NIGHT[p].split(","))L.push([p+"_night"+x,p+"_day"+x]);
+  for(const x of["","_classic",..."qin han sanguo weijin nanbei sui tang wudai song yuan qing".split(" ").map(e=>"_"+e)])L.push(["lobbymap/lobby"+x+"_night","lobbymap/lobby"+x]);
+  for(const h in SCW_HB_ERAS)for(const b of[h,...SCW_HB_ERAS[h].split(" ").map(e=>h+"_"+e)]){
+    for(const q of["night","spring","spring_night","autumn","autumn_night","winter","winter_night"])L.push([b+"_"+q,b]);
+    L.push([b+"_summer",b,null,1]);L.push([b+"_summer_night",b,b+"_night_l1610"])}
+  return L}
+let SCW_VAR_TODO=null;
+function scwVarInit(){if(SCW_VAR_TODO===null)SCW_VAR_TODO=scwVarList();if(!SCW_VAR_TODO.length)return;
+  SCW_VAR_TODO=SCW_VAR_TODO.filter(([k,b,f,same])=>{if(SCW[k])return false;const B=SCW[b];if(!B)return true;SCW[k]=Object.assign({},B,{f:same?B.f:f||k+"_l1610",base:b});return false})}
 /* 學習分頁原圖（書院，非經典；07y）：構圖跟經典版不同，另外量一套（output/w107-ipad/l1610/hubmap/learn_l1610.json），取代 HUB_DEF.learn、SHW_HUB.learn 和 hbFxLearn 的疊圖座標：
    fx.lamp 十二盞燈（%）、qp 矮几棋枰四角（像素）、steam 茶煙（%）、pond 洗墨池 clip-path、ink 墨暈中心（%）。11 朝用同一套（構圖以原圖為基準重畫）。朝代殘影只在經典世界，這裡不放。
    錯棋重練原圖（非經典；07y8）：以經典版條目為底，多了晾冊竹竿（像素）、冊頁寬（圖寬 %）、洗墨池 clip-path、墨暈中心、季節水草往下挪（Windows Claude 1 量） */
@@ -134,7 +154,7 @@ const SCW_BAD={};   /* 這次開 App 載不到的橫式圖（鍵＝原圖鍵）�
 /* 圖網址 → 鍵（data/ 之後、不含 .webp 和 ?v=） */
 const scwKey=src=>{const m=/(?:^|\/)data\/([^?#]+?)\.webp(?:[?#]|$)/.exec(src||"");return m?m[1]:""};
 const scwDev=()=>{try{return localStorage.getItem("xqScwDev")==="1"}catch(e){return false}};
-function scwEntry(key){const e=SCW_ON&&key&&Object.prototype.hasOwnProperty.call(SCW,key)?SCW[key]:null;return e&&((e.ready&&SCW_CDN)||scwDev())&&!SCW_BAD[key]?e:null}
+function scwEntry(key){scwVarInit();const e=SCW_ON&&key&&Object.prototype.hasOwnProperty.call(SCW,key)?SCW[key]:null;return e&&((e.ready&&SCW_CDN)||scwDev())&&!SCW_BAD[key]?e:null}
 const scwSrc=e=>"data/"+e.f+".webp?v="+SCW_IMGV;
 /* 純計算：W 可用寬、av 可用高、vw #view 寬、vh 畫面高 → "l1610"／""（原圖） */
 function scwKind(W,av,vw,vh){if(!SCW_ON||!(W>0&&av>=120))return"";return W/av>SCW_SQ&&Math.min(vw,vh)>=SCW_LMIN?"l1610":""}
@@ -197,9 +217,9 @@ function scwM3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
   return`matrix3d(${a/w},${d/w},0,${g/w},${b/h},${e/h},0,${hh/h},0,0,1,0,${x0},${y0},0,1)`}
 /* 橫式圖網址 → 它的條目（07y 朝代殘影這種「照圖網址找座標」的共用表用；不是登記表裡的回 null） */
-function scwByF(src){const f=scwKey(src);if(!f)return null;for(const k in SCW)if(SCW[k].f===f)return SCW[k];return null}
+function scwByF(src){scwVarInit();const f=scwKey(src);if(!f)return null;for(const k in SCW)if(SCW[k].f===f)return SCW[k];return null}
 const scwSafe=P=>{const e=scwCur(P);return e&&e.safe||null};
 /* 07w7 sw7Page 遇到橫式圖：不是登記表裡的（例如首頁 home_l1610）回 undefined，照原本找；是的話條目有 sw7 用它，沒有就不下雨雪 */
-function scwSw7(src,base){const f=scwKey(src);if(!f)return undefined;for(const key in SCW){const e=SCW[key];if(e.f!==f)continue;const o=base("data/"+key+".webp");if(!o)return null;
+function scwSw7(src,base){scwVarInit();const f=scwKey(src);if(!f)return undefined;for(const key in SCW){const e=SCW[key];if(e.f!==f)continue;const o=base("data/"+key+".webp");if(!o)return null;
     return e.sw7?Object.assign({},o,e.sw7,{W:e.w,H:e.h}):{k:o.k,re:o.re,rg:o.rg,m:"in"}}
   return undefined}
