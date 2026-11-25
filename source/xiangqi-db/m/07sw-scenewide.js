@@ -134,7 +134,12 @@ const scwPick=(V,P,key)=>{const e=scwEntry(key);if(!e||!V)return"";const m=scwMe
 function scwPre(V,src){const key=scwKey(src),k=scwPick(V,null,key);return k?{src:scwSrc(SCW[key]),k}:{src,k:""}}
 /* 各頁掛上：P＝圖框（.shp-page.cq），o={key 原圖鍵, src0 原圖網址, ids 入口標籤的 id, pfx 走路角色前綴, cfg0 原圖的走路設定, apply(e) 換圖後各頁重畫疊圖, onCfg(cfg) 換了走路設定} */
 /* 載不到橫式圖：記 SCW_BAD（這次開 App 不再試），退回原圖 */
-function scwFail(P){const o=P&&P._scw;if(!o||!P.dataset.scw)return;SCW_BAD[o.key]=1;scwSet(P,"")}
+/* 00-util 在 window 用擷取監聽：同源圖片載不到時先把 src 改成 XQ_CDN、記 cdnTry=1，再交給這裡的 onerror。
+   這時候還在等 CDN 那次的結果，不能馬上退回（退回會把 CDN 補抓蓋掉；經典版原圖只在 CDN，同源網址又 404，cdnTry 已設就破圖）——
+   記住正在等的網址，CDN 那次也失敗（同一個網址再錯一次）才退回（iMac Claude 2 複審 #155） */
+function scwFail(P){const o=P&&P._scw;if(!o||!P.dataset.scw)return;const im=P.querySelector(":scope>img"),u=im?String(im.getAttribute("src")||im.src||""):"";
+  if(im&&im.dataset&&im.dataset.cdnTry&&typeof XQ_CDN==="string"&&u.indexOf(XQ_CDN)===0&&im._scwCdn!==u){im._scwCdn=u;return}
+  SCW_BAD[o.key]=1;scwSet(P,"")}
 function scwMount(P,o){if(!P||!o||!o.key)return;P._scw=o;if(P.dataset.scw==null)P.dataset.scw="";P.classList.toggle("scw-l",!!P.dataset.scw);
   /* 頁面原本的 onerror（07y、07x2：夜景載不到退回日景）記下來，換回原圖時還原；開頁就是橫式圖（scwPre）也要掛載不到退回（審查 #155 擋合併那項，照 07z:209） */
   const im=P.querySelector(":scope>img");if(im){o.err0=im.onerror;if(P.dataset.scw){im.onerror=()=>scwFail(P);if(im.complete&&!im.naturalWidth&&im.getAttribute("src"))scwFail(P)}}
@@ -153,7 +158,7 @@ function scwPlace(P){const o=P&&P._scw;if(!o)return;const e=scwCur(P);
 function scwSet(P,k){const o=P&&P._scw,im=P&&P.querySelector(":scope>img");if(!o||!im)return;const e=k?scwEntry(o.key):null;if(!e)k="";
   P.dataset.scw=k;P.classList.toggle("scw-l",!!k);
   const src=k?scwSrc(e):o.src0;
-  if(im.getAttribute("src")!==src){im.onerror=k?()=>scwFail(P):(o.err0||null);   /* 換回原圖時還原頁面原本的 onerror（審查 #155 第 4 項） */
+  if(im.getAttribute("src")!==src){im.onerror=k?()=>scwFail(P):(o.err0||null);if(im.dataset)delete im.dataset.cdnTry;im._scwCdn="";   /* 換網址就清掉 00-util 的 cdnTry，新網址載不到時它才會再去 CDN 補抓 */   /* 換回原圖時還原頁面原本的 onerror（審查 #155 第 4 項） */
     im.addEventListener("load",()=>{if(!P.isConnected)return;try{if(typeof ttFill==="function")ttFill()}catch(x){}try{if(typeof spfSoon==="function")spfSoon(0)}catch(x){}},{once:true});
     im.src=src}
   scwPlace(P);try{if(o.apply)o.apply(e)}catch(x){}scwWalk(P,e)}

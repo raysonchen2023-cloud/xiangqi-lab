@@ -122,16 +122,16 @@ test("07w7 天氣：登記表裡的橫式圖用自己的範圍（像素＝橫式
 });
 
 // 假的 #view／圖框：量到的寬高由 dims 決定
-function fakeDom(dims) {
+function fakeDom(dims, extra) {
   const mk = () => { const s = new Set(); return { add: c => s.add(c), remove: c => s.delete(c), toggle: (c, on) => { on ? s.add(c) : s.delete(c) }, contains: c => s.has(c) } };
-  const img = { _src: "data/redomap/redo_day_classic.webp?v=2411", complete: false, naturalWidth: 0, onerror: null, onerror0: null, L: [], getAttribute() { return this._src }, set src(v) { this._src = v; this.complete = false; this.naturalWidth = 0 }, get src() { return this._src }, addEventListener(t, f) { this.L.push([t, f]) } };
+  const img = { tagName: "IMG", dataset: {}, get currentSrc() { return this._src }, _src: "data/redomap/redo_day_classic.webp?v=2411", complete: false, naturalWidth: 0, onerror: null, onerror0: null, L: [], getAttribute() { return this._src }, set src(v) { this._src = v; this.complete = false; this.naturalWidth = 0 }, get src() { return this._src }, addEventListener(t, f) { this.L.push([t, f]) } };
   const spot = id => ({ id, dataset: {}, style: { left: "10%", top: "20%", marginLeft: "" } });
   const spots = { rd2Book: spot("rd2Book"), rd2Stack: spot("rd2Stack"), rd2Pole: spot("rd2Pole"), rd2All: spot("rd2All") }, ex = spot("ex");
   const P = { dataset: {}, classList: mk(), isConnected: true, style: { marginTop: "" }, parentNode: null, getBoundingClientRect: () => ({ top: 0 }),
     querySelector: q => q === ":scope>img" ? img : q === ":scope>.ex-spot" ? ex : spots[q.replace("#", "")] || null, querySelectorAll: () => [] };
   const V = { get clientWidth() { return dims.w }, get clientHeight() { return dims.h }, scrollTop: 0, getBoundingClientRect: () => ({ top: 0 }) };
   P.parentNode = V;
-  const ctx = load({ getComputedStyle: () => ({ paddingBottom: "0", paddingLeft: "0", paddingRight: "0" }), document: { documentElement: { get clientHeight() { return dims.h } } }, innerHeight: 0, ttFill: () => { ctx.__tt = (ctx.__tt || 0) + 1 } });
+  const ctx = load(Object.assign({ getComputedStyle: () => ({ paddingBottom: "0", paddingLeft: "0", paddingRight: "0" }), document: { documentElement: { get clientHeight() { return dims.h } } }, innerHeight: 0, ttFill: () => { ctx.__tt = (ctx.__tt || 0) + 1 } }, extra || {}));
   return { ctx, P, V, img, spots, ex };
 }
 
@@ -180,6 +180,31 @@ test("審查 #155：開頁時就是橫式圖（scwPre），圖載不到要退回
   }
 });
 
+test("審查 #155 複審：載入 00-util 真正的 CDN 補抓監聽；橫式圖同源 404 時先等 CDN 那次，CDN 也失敗才退回原圖，退回後原圖還能再去 CDN 補抓", () => {
+  const U = M("m/00-util.js").split("\n"), pick = re => { const l = U.find(x => re.test(x)); assert.ok(l, String(re)); return l };
+  const SRC0 = [pick(/^const XQ_CDN=/), pick(/^function xqNat\(\)/), pick(/^const xqCdnRel=/), pick(/^addEventListener\("error"/)].join("\n");
+  let H = null; const loc = { href: "https://x.test/m/x.html", origin: "https://x.test", pathname: "/m/x.html" };
+  const { ctx, P, V, img, spots } = fakeDom({ w: 1180, h: 734 }, { addEventListener: (t, f) => { if (t === "error") H = f }, location: loc, URL, navigator: { userAgent: "" }, window: {} });
+  vm.runInContext(SRC0, ctx); assert.equal(typeof H, "function", "00-util 掛上了監聽"); const CDN = vm.runInContext("XQ_CDN", ctx);
+  const fire = () => { H({ target: img }); if (img.onerror) img.onerror() };   // 擷取監聽先跑，再輪到元素自己的 onerror（瀏覽器的順序）
+  const scwPre = vm.runInContext("scwPre", ctx), scwMount = vm.runInContext("scwMount", ctx), scwSync = vm.runInContext("scwSync", ctx);
+  const src0 = img._src, pre = scwPre(V, src0); img._src = pre.src; P.dataset.scw = pre.k;
+  scwMount(P, { key: RD, src0, ids: Object.keys(spots) });
+  img.complete = true; img.naturalWidth = 0; fire();   // 同源 404
+  assert.ok(img._src.startsWith(CDN), "00-util 改去 CDN 補抓：" + img._src); assert.match(img._src, /_l1610\.webp/); assert.equal(img.dataset.cdnTry, "1");
+  assert.equal(P.dataset.scw, "l1610", "還在等 CDN，不能馬上退回（退回會蓋掉補抓）");
+  img.complete = false; assert.equal(scwSync(V, P), "wait", "CDN 那次還在載");
+  img.complete = true; img.naturalWidth = 0; fire();   // CDN 也 404
+  assert.equal(P.dataset.scw, "", "CDN 也失敗才退回原圖"); assert.equal(img._src, src0); assert.equal(img.dataset.cdnTry, undefined, "換網址清掉 cdnTry");
+  img.complete = true; img.naturalWidth = 0; H({ target: img });   // 原圖同源也 404（經典版原圖只在 CDN）
+  assert.ok(img._src.startsWith(CDN) && /redo_day_classic\.webp/.test(img._src), "原圖還能去 CDN 補抓，不會破圖：" + img._src);
+  // 對照：CDN 那次成功＝留在橫式圖
+  const F = fakeDom({ w: 1180, h: 734 }, { addEventListener: (t, f) => { if (t === "error") F.H = f }, location: loc, URL, navigator: { userAgent: "" }, window: {} });
+  vm.runInContext(SRC0, F.ctx); const p2 = vm.runInContext("scwPre", F.ctx)(F.V, F.img._src), s0 = F.img._src; F.img._src = p2.src; F.P.dataset.scw = p2.k;
+  vm.runInContext("scwMount", F.ctx)(F.P, { key: RD, src0: s0, ids: [] }); F.img.complete = true; F.img.naturalWidth = 0; F.H({ target: F.img }); F.img.onerror();
+  F.img.complete = true; F.img.naturalWidth = 2560; assert.equal(vm.runInContext("scwSync", F.ctx)(F.V, F.P), "l1610", "CDN 補抓成功就照橫式圖排");
+});
+
 test("審查 #155：手機、直向從來沒換過圖時，07sw 不動標籤和出口（不清 00-util、07w9 記的原位）", () => {
   const { ctx, P, V, img, spots, ex } = fakeDom({ w: 402, h: 760 }), scwMount = vm.runInContext("scwMount", ctx), scwSync = vm.runInContext("scwSync", ctx);
   ex.style.top = "calc(87% - 26px)"; ex.dataset.xqTop0 = "87%"; spots.rd2Book.dataset.ttL = "10%";
@@ -196,7 +221,7 @@ test("走路設定：橫式圖換節點、邊、小動作，其他照原圖那�
   assert.equal(scwWalkCfg({ cfg0 }, null), cfg0);
 });
 
-test("原始碼：07fl 排版前先問 scwSync、安全區照條目；07w7、07w6、07y8 接上；m.html 在 07fl 前面載入", () => {
+test("〔混合〕原始碼：07fl 排版前先問 scwSync、安全區照條目；07w7、07w6、07y8 接上；m.html 在 07fl 前面載入", () => {
   const FL = M("m/07fl-fill.js"), W7 = M("m/07w7-seasons.js"), W6 = M("m/07w6-sceneinfo.js"), Y8 = M("m/07y8-redomap.js"), H = M("m.html");
   assert.match(FL, /const sk=typeof scwSync==="function"\?scwSync\(V,P\):null;if\(sk==="wait"\)\{xflR07Off\(V\);return true\}if\(sk&&xflHmw\(V,P,nw,nh,sk,typeof scwSafe==="function"\?scwSafe\(P\):null\)\)return true/);
   assert.match(FL, /function xflHmw\(V,P,nw,nh,k,sf0\)/); assert.match(FL, /const sf=sf0\|\|\(/);
