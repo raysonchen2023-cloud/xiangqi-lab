@@ -306,7 +306,7 @@ function PvpGame(v){
     /* 意見回饋 598：對方的棋一到就輕震一下，狀態列也寫出對方走了哪一步——對方秒回時，才不會以為自己能連走兩步 */
     if(n0!=null&&lastN>n0&&seat&&seat!=="w"){const L=s.moves[s.moves.length-1];if(L&&L.by&&L.by!==seat){vibrate([15,60,15]);if(typeof pmvArrive==="function")pmvArrive()}}   /* 第 13 輪 F3：記下對方落子的時間（pmvStats 量預走反應） */if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
     if(n0!=null&&lastN===n0+1&&view==null){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
-    {const gk=NET&&window.XQNet&&XQNet.gid?XQNet.gid():null;if(NET&&gk&&!st.result&&!st.moves.length&&seat!=="w"&&KJ_LAST!==gk){KJ_LAST=gk;loadKaiju();setTimeout(()=>kaijuFx(bd.svg,"r"),parkOn()?1600:350)}}   /* 意見回饋 416：線上對戰也有開局特效（觀戰的人不播） */
+    {const gk=NET&&window.XQNet&&XQNet.gid?XQNet.gid():null;if(NET&&gk&&!st.result&&!st.moves.length&&seat!=="w"&&KJ_LAST!==gk){KJ_LAST=gk;loadKaiju();setTimeout(()=>kaijuFx(bd.svg,"r",0,()=>!!st&&!st.result&&!st.moves.length&&!!window.XQNet&&!!XQNet.gid&&XQNet.gid()===gk),parkOn()?1600:350)}}   /* 意見回饋 416：線上對戰也有開局特效（觀戰的人不播） */
     const ems=st.emotes||[];if(lastEmo==null)lastEmo=ems.reduce((m,x)=>Math.max(m,x.id),0);
     else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(x.text){const fl0=isFlip(),tp=fl0?"r":"b",pk=parkOn()&&PARK&&PARK.host===v.querySelector("#bbox");
         let said=false;if(pk){try{x.by===tp?PARK.v.oppSay(x.text,4):PARK.v.say(x.text,4);said=true}catch(e){}}if(!said)showChat(x.text,x.by===seat,(NET&&typeof lbnSeat==="function"&&lbnSeat(x.by,x.name)||x.name)||PLAYER[x.by],v.querySelector(x.by===tp?"#pTop":"#pBot"))}else if(seat&&x.by!==seat)showEmote(x.e,false)}
