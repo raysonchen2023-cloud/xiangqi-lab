@@ -208,7 +208,13 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
   for (const f of [...swWalk(SRC), ...swWalk(APP)]) {
     const raw = rd(f), code = raw.split("\n").filter((l) => !(/^\s*\/\//.test(l) && !l.includes("*/"))).join("\n");   /* #144 第六輪審查：在 /＊ … ＊/ 裡、以 // 開頭又含 ＊/ 的行，＊/ 後面是真程式，不能豁免；第七輪：用 includes 不用正規式的「.」（「.」不比對 U+2028／U+2029） */
     const odd = ODD.filter(([re]) => re.test(code)).map(([, n]) => n);
-    for (const m of code.matchAll(/^[ \t]*#(?:if|elseif)\b(.*)$/gm)) { const cond = m[1].replace(/\/\/.*$/, "").replace(/\/\*.*$/, "").trim(); if (!IF_OK.test(cond)) { odd.push("條件編譯 #if " + cond); break } }
+    /* #150 複審（iMac Claude 2，新代理人）：上一版只在行首找 #if、條件裡從 ／＊ 砍到行尾，兩種都繞得過（「#if DEBUG ／＊ x ＊／ && compiler(>=99)」、行中間的「／＊ ＊／ #if compiler(>=99)」）。
+       改成：原文任何位置的 #if／#elseif 都抓，條件裡有 ／＊ 一律拒絕；斷詞後的程式碼（註解、字串都拿掉了）再找一次 #if，條件要在白名單裡 */
+    for (const m of code.matchAll(/#(?:if|elseif)\b([^\n]*)/g)) { if (m[1].includes("/*")) { odd.push("條件編譯的條件裡有區塊註解"); break } const cond = m[1].replace(/\/\/.*$/, "").trim(); if (!IF_OK.test(cond)) { odd.push("條件編譯 #if " + cond); break } }
+    const n0 = bad.length, tok = swiftCode(raw, path.basename(f)); bad.length = n0;   /* 只拿斷詞結果，錯誤由 swiftAll 那邊回報，這裡不重複 */
+    for (const m of tok.matchAll(/#(?:if|elseif)\b([^\n]*)/g)) { const cond = m[1].trim(); if (!IF_OK.test(cond)) { odd.push("條件編譯 #if " + cond + "（斷詞後）"); break } }
+    /* #150 複審：Swift 沒有字元常值，單引號不會出現在程式碼裡；但在不成立的 #if 分支裡，Swift 把字串內插裡的 ' 當成成對的引號，斷詞卻當普通字元，兩邊對字串邊界的認定不同。斷詞後還看得到 ' 就拒絕 */
+    if (tok.includes("'")) odd.push("單引號（斷詞後的程式碼裡）");
     if (ODD_NL.test(raw)) odd.push("特殊換行字元");
     if (odd.length) pinBad.push(path.relative(HERE, f) + " 不能有 " + odd.join("、") + "（斷詞可能跟 Swift 認定不同）");
   }
