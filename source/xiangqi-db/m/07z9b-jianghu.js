@@ -585,6 +585,8 @@ const JH_HALL={
 };
 let JH_HALL_W=768,JH_HALL_H=1376;   /* W107-L：iPad 橫式圖時 jhHallUse 換成 2560×1600 */
 const JH_HALL_BAD=new Set();   /* 這次開 App 讀圖失敗過的派：小卡不再顯示「走進山門」，免得一直繞回來 */
+/* 順風小字放在這一派大廳標籤正下方：照當下那套圖（直圖 768×1376 或橫式 2560×1600）算；往下的距離直圖 46、橫式 100（兩邊在 iPad 螢幕上都約 50px；審查 #170） */
+const jhNoteAt=(n,hs)=>{if(!n||!hs)return;const dy=JH_HALL_W===768?46:100;n.style.left=(hs[0]/JH_HALL_W*100).toFixed(2)+"%";n.style.top=((hs[1]+dy)/JH_HALL_H*100).toFixed(2)+"%"};
 const jhHallPc=([x,y])=>`left:${(x/JH_HALL_W*100).toFixed(2)}%;top:${(y/JH_HALL_H*100).toFixed(2)}%`;
 /* 門下棋友在哪裡找得到：驛站（inn:）、園子（npc:）、秘境（secret:） */
 function jhHallMates(sid){if(typeof OSC==="undefined")return[];const P={inn:jhL("驛站","Post Inn"),npc:jhL("園子","the Park"),secret:jhL("秘境","a hidden place")};
@@ -614,7 +616,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   spot("study",jhL("📖 講棋堂","📖 Lecture hall"),()=>jhHallStudy(sid));
   spot("yard",jhL("👥 前院・門下棋友","👥 Front yard"),()=>jhHallYard(sid));
   spot("gate",jhL("‹ 搭船回十州棋館","‹ Take a boat back to the Ten Prefectures"),()=>jhGo("#/jianghu"));
-  if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("順風・修為多給","Fair wind +XP");n.title=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");P.append(n)}   /* 11/22 Windows Claude 2 查 W62 時發現：英文原句折成兩行壓到「掌門大廳」標籤；實測中文一行也會壓到。門內頁改成掌門大廳標籤正下方置中的一行小徽章（圖比螢幕寬、左右會被裁，不能放角落），完整說明在掌門小卡 */
+  if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("順風・修為多給","Fair wind +XP");n.title=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");jhNoteAt(n,H.spots&&H.spots.hall);P.append(n)}   /* 11/22 Windows Claude 2 查 W62 時發現：英文原句折成兩行壓到「掌門大廳」標籤；實測中文一行也會壓到。門內頁改成掌門大廳標籤正下方置中的一行小徽章（圖比螢幕寬、左右會被裁，不能放角落），完整說明在掌門小卡 */
   const ready=()=>{if(P.isConnected)jhFadeOut()};if(img.complete&&img.naturalWidth)setTimeout(ready,0);else img.onload=ready;
   setTimeout(()=>{if(f.classList.contains("on")&&P.isConnected&&img.naturalWidth)jhFadeOut()},6000);
   /* 轉向換圖：整頁重畫（座標整套換掉，包裝鏈跟著重跑）；07sw 換圖時才叫 apply */

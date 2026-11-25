@@ -62,3 +62,24 @@ test("〔原始碼〕JhHall 開頁照 scwPre 決定整套用哪一種；轉向�
   assert.match(B, /scwMount\(P,\{key:scwKey\(src0\),src0,ids:\[\],apply:\(\)=>setTimeout\(\(\)=>\{if\(P\.isConnected&&location\.hash==="#\/jianghu\/hall\/"\+sid\)JhHall\(v,sid\)\},0\)\}\);/);
   assert.match(B, /^let JH_HALL_W=768,JH_HALL_H=1376;/m); assert.match(B, /^let JH_MATE_W=54;/m);
 });
+
+test("〔混合〕順風小字：直式、橫式都放在這一派大廳標籤正下方、在圖內；八派門內頁實跑 jhHalls8Hall 不再用 768／1376 當除數（審查 #170）", () => {
+  const C = load(), R = s => vm.runInContext(s, C);
+  R(cut(B, "const jhNoteAt=", "};"));
+  R("var jhL=(a,b)=>a,esc=s=>s,jhHalls8On=()=>true;" + cut(L8, "function jhHalls8Hall(v,sid){", "P.insertBefore(b,P.querySelector(\".jh-hall-spot\"))}"));
+  const run = sid => { const n = { style: {} }, P = { querySelector: q => q === ".jh-hall-note" ? n : {} }; R("jhHalls8Hall")({ querySelector: () => P }, sid); return [parseFloat(n.style.left), parseFloat(n.style.top)] };
+  const note = sid => { const n = { style: {} }; R("jhNoteAt")(n, R("JH_HALL")[sid].spots.hall); return [parseFloat(n.style.left), parseFloat(n.style.top)] };
+  assert.deepEqual(note("central"), [50, 11.48], "直式中炮門跟原本 CSS 的 50%／11.5% 一樣");
+  const tall = {}; for (const sid of SIDS) tall[sid] = note(sid);
+  R("jhHallUse(true)");
+  for (const sid of SIDS) {
+    const [l, t] = note(sid), hs = R("JH_HALL")[sid].spots.hall;
+    assert.ok(l > 5 && l < 95 && t > 0 && t < 40, sid + " 橫式在圖內：" + l + "," + t);
+    assert.ok(t > hs[1] / 1600 * 100 + 3, sid + " 在大廳標籤下面");
+    assert.equal(l, +(hs[0] / 2560 * 100).toFixed(2), sid + " 跟大廳標籤對齊");
+  }
+  assert.deepEqual(run("horse"), note("horse"), "八派門內頁實跑跟 jhNoteAt 一樣");
+  R("jhHallUse(false)");
+  for (const sid of SIDS) assert.deepEqual(note(sid), tall[sid], sid + " 換回直式還原");
+  assert.match(B, /n\.title=jhL\([^;]*\);jhNoteAt\(n,H\.spots&&H\.spots\.hall\);P\.append\(n\)\}/, "07z9b 門內頁產生小字時就照當下的圖放");
+});
