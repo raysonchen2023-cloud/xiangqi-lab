@@ -37,6 +37,11 @@ test("座標：三扇門 3 個、景點數量跟 PORT_SIGHT 一樣、碼頭盡�
     const P = t.pier; assert.ok(P.N.pier && P.E && P.at && P.boat, k + " 碼頭盡頭"); for (const p of [P.at, P.boat, ...Object.values(P.N)]) assert.ok(inImg(p), k + " 碼頭 " + p);
   }
   assert.deepEqual(J(T.tang.spot), [[22, 62], [75, 74], [46, 54]], "唐（照 json 寫死）"); assert.deepEqual(J(T.classic.poPh), [53, 66]);
+  assert.deepEqual(J(T.han.spot), [[34, 68], [71, 78], [48, 46]], "han 門"); assert.deepEqual(J(T.han.pier.at), [20, 74]); assert.deepEqual(J(T.han.pier.boat), [14, 84]);
+  assert.deepEqual(J(T.sui.spot), [[25, 66], [86, 70], [63, 52]], "sui 門"); assert.deepEqual(J(T.sui.pier.at), [18, 84]); assert.deepEqual(J(T.sui.pier.boat), [14, 90]);
+  assert.deepEqual(J(T.song.spot), [[28, 64], [75, 82], [58, 54]], "song 門"); assert.deepEqual(J(T.song.pier.at), [16, 82]); assert.deepEqual(J(T.song.pier.boat), [10, 88]);
+  assert.deepEqual(J(T.qing.spot), [[42, 70], [74, 62], [54, 48]], "qing 門"); assert.deepEqual(J(T.qing.pier.at), [16, 86]); assert.deepEqual(J(T.qing.pier.boat), [10, 90]);
+  assert.deepEqual(J(T.classic.spot), [[24, 52], [80, 50], [52, 28]], "classic 門"); assert.deepEqual(J(T.classic.pier.at), [18, 74]); assert.deepEqual(J(T.classic.pier.boat), [12, 84]);
 });
 
 test("路網：13 朝的邊都接在節點上、從 home 走得到每個節點（含碼頭盡頭）；門、景點、上星槎都有小動作", () => {
@@ -61,6 +66,27 @@ test("明朝：home 不直接連 i1（會擦到內湖），改經石堤頂沙路
   assert.deepEqual(J(W.N.m1), [46.5, 76.5]);
 });
 
+test("走路出口（上星槎）：渡口橫式圖（路網 W＝2560）走出去上橫式圖的船，直圖照舊上 PH4_PIER 的船（審查 #165 第 1 項）", () => {
+  const ctx = vm.createContext({ SHW_EXIT_ON: true, Object, Array, String });
+  vm.runInContext(ENTRY.replace(/if\(typeof SCW!=="undefined"\)[\s\S]*$/, "") + "\n" + cut(W4, "const PH4_PIER={", "}};\n") + "\n" + "const SHW_EXITS={" + cut(WK, '"port:*":', "},") + "};\n" + cut(WK, "function shwExitCfg(o){", "X:{n,out:X.out,r:X.r}})}"), ctx);
+  const T = vm.runInContext("PORT_L1610", ctx), H = vm.runInContext("PH4_PIER", ctx), f = vm.runInContext("shwExitCfg", ctx);
+  for (const k of ["han", "tang", "classic"]) {
+    const wide = f({ mem: "port:" + k, cfg: { W: 2560, home: "home", N: Object.assign({}, T[k].walk.N, T[k].pier.N), E: "" } });
+    assert.deepEqual(J(wide.X.out), J(T[k].pier.boat), k + " 橫式圖上橫式的船");
+    const port = f({ mem: "port:" + k, cfg: { W: 768, home: "home", N: Object.assign({ home: [50, 70] }, H[k].N), E: "" } });
+    assert.deepEqual(J(port.X.out), J(H[k].boat), k + " 直圖照舊");
+  }
+  assert.notDeepEqual(J(T.han.pier.boat), J(H.han.boat), "漢的兩條船位置不同（以前橫式圖會走去直圖的船、走進水裡）");
+});
+
+test("上色過場：轉成橫式圖（圖框 data-scw 有值）時 pcSet 不換圖；直圖照舊換上全彩", () => {
+  const ctx = vm.createContext({ pcIfx: () => { } });
+  vm.runInContext(cut(PC, "function pcSet(img,src,orig){", "img.src=L[0]}"), ctx);
+  const mk = scw => ({ src: "data/shipmap/port_tang_f_l1610.webp", closest: () => ({ dataset: { scw } }) });
+  const a = mk("l1610"); vm.runInContext("pcSet", ctx)(a, ["data/shipmap/port_tang_f.webp"], "x"); assert.equal(a.src, "data/shipmap/port_tang_f_l1610.webp", "橫式圖不被換回直圖");
+  const b = mk(""); vm.runInContext("pcSet", ctx)(b, ["data/shipmap/port_tang_f.webp"], "x"); assert.equal(b.src, "data/shipmap/port_tang_f.webp");
+});
+
 test("〔原始碼〕開頁照 scwPre 選全彩圖；上色過場、風、船艙動態在橫式圖不掛（轉成橫式時藏起來）；走路、渡口主人照條目；景點、碼頭標籤走 scwPut", () => {
   assert.match(F, /src0="data\/shipmap\/port_"\+k\+\(full\?"_f":""\)\+"\.webp",pre=scwPre\(v,src0\);/);
   assert.match(F, /try\{portScw\(v,k\)\}catch\(e\)\{\}shpFit\(v\);if\(typeof portColor==="function"\)portColor\(v,k\);/, "portScw 在上色前跑");
@@ -72,4 +98,7 @@ test("〔原始碼〕開頁照 scwPre 選全彩圖；上色過場、風、船艙
   assert.match(WK, /if\(e&&e\.walk&&P\._scw\)\{C=scwWalkCfg\(P\._scw,e\);P\._scwW="l"\}/, "shwPort 用條目路網");
   assert.match(W4, /if\(e&&e\.walk&&P\._scw\)C=scwWalkCfg\(P\._scw,e\)\}/, "渡口主人站位照條目");
   assert.match(W4, /P\.append\(b\);if\(P\._portPlace\)P\._portPlace\(\)\}/, "碼頭標籤晚加也照條目放");
+  assert.match(W4, /if\(!at\)at=\(C\.W===2560\?null:PH4_AT\[k\]\)\|\|ph4Spot\(P,C,hFr\);/, "橫式圖不用直圖寫死的主人站位（審查 #165 第 2 項）");
+  assert.match(W4, /P\._ph4L=C\.W===2560;/, "記下主人是照哪一種圖站的");
+  assert.match(F, /if\(P\.dataset\.ph4&&P\._ph4L!=null&&P\._ph4L!==!!X&&typeof ph4Mount==="function"\)\{P\.querySelectorAll\(":scope>\.ph4"\)\.forEach\(e=>e\.remove\(\)\);delete P\.dataset\.ph4;/, "轉向換了圖就重掛主人");
 });

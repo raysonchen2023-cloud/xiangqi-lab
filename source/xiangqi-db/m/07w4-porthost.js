@@ -28,7 +28,7 @@ function ph4Who(k){try{const Ls=SHIP_LESSON[k]||{},T=SHIP_STOP[k]||{};if(shipApp
   const c=by||(T.who||[])[0]||"";if(!c||!WX_CHARS[c]||c===myChar())return"";if(typeof ptyHas==="function"&&!ptyHas(c))return"";return c}catch(e){return""}}   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：主人還沒加入就不站出來（小卡也改說書人，見 07f Port） */
 function ph4Mount(v,k){if(!PORT_HOST3D||shwRM()||!SHW_PORT_ON||!SHW_PORT[k])return false;const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.ph4)return!!(P&&P.dataset.ph4);const c=ph4Who(k);if(!c||typeof TRIPO!=="undefined"&&Object.keys(TRIPO).length&&!TRIPO[c])return false;P.dataset.ph4="1";ph4Css();
   let C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
-  {const e=typeof scwCur==="function"?scwCur(P):null;if(e&&e.walk&&P._scw)C=scwWalkCfg(P._scw,e)}   /* W107-L：渡口橫式圖時，主人站位照條目的路網 */
+  {const e=typeof scwCur==="function"?scwCur(P):null;if(e&&e.walk&&P._scw)C=scwWalkCfg(P._scw,e)}P._ph4L=C.W===2560;   /* W107-L：渡口橫式圖時，主人站位照條目的路網，不用直圖寫死的 PH4_AT（審查 #165 第 2 項）；記下掛的是哪一種，轉向時 07f 重掛 */
   const box=document.createElement("div");box.className="ph4";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';
   const hit=document.createElement("button");hit.type="button";hit.className="ph4-hit";const nm=(WX_CHARS[c].nk||WX_CHARS[c].n||"");hit.setAttribute("aria-label",nm+"：聽她說話");hit.style.display="none";
   const say=document.createElement("div");say.className="ph4-say";say.setAttribute("aria-live","polite");
@@ -67,7 +67,7 @@ async function ph4Load(P,box,hit,say,C,k,cid){
   const vh=hM*1.45,cam=new T.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T.Vector3(0,hM*.6,0);cam.position.set(0,tg.y+Math.sin(EL)*hM*6,Math.cos(EL)*hM*6);cam.lookAt(tg);cam.updateMatrixWorld(true);
   const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,hFr=y=>shwHt(C,y)/(Math.cos(EL)/1.45);
   let at=null,cw=0,ch=0;
-  const fit=()=>{const Iw=P.clientWidth,Ih=P.clientHeight;if(!Ih)return;if(!at)at=PH4_AT[k]||ph4Spot(P,C,hFr);const h=Math.round(hFr(at[1])*Ih),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch)}
+  const fit=()=>{const Iw=P.clientWidth,Ih=P.clientHeight;if(!Ih)return;if(!at)at=(C.W===2560?null:PH4_AT[k])||ph4Spot(P,C,hFr);const h=Math.round(hFr(at[1])*Ih),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch)}
     const x=at[0]*Iw/100,y=at[1]*Ih/100;Object.assign(cv.style,{left:(x-cw/2)+"px",top:(y-Math.round(ftF*ch))+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:(x-Math.round(ch*.17))+"px",top:(y-Math.round(ch*.05))+"px"});
     const top=y-Math.round(ftF*ch)+ch*.12;Object.assign(hit.style,{display:"",left:(x-cw*.22)+"px",top:top+"px",width:(cw*.44)+"px",height:Math.max(10,y-top)+"px"});Object.assign(say.style,{left:x+"px",top:(top-4)+"px"})};
   /* 面向：朝畫面中間偏一點，不背對人 */

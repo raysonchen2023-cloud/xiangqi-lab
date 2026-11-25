@@ -336,7 +336,9 @@ function portScw(v,k){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.queryS
     /* 景點、碼頭標籤走 07sw scwPut：會清掉 07t3 ttL 記的舊位置（不然 ttFill 又放回直圖的 %），轉回直向時還原原位 */
     P.querySelectorAll(".po-sight").forEach(b=>{const s=X&&X.sight[+b.dataset.ps];scwPut(b,s||null)});
     const A=X?X.pier:(typeof PH4_PIER!=="undefined"?PH4_PIER[k]:null),b=P.querySelector("#poBoard"),z=P.querySelector(".ph4-pz");
-    if(b)scwPut(b,X?X.pier.at:null);if(A&&z){const q=A.N.pier;z.style.left=(q[0]-9)+"%";z.style.top=(q[1]-4.5)+"%"}};
+    if(b)scwPut(b,X?X.pier.at:null);if(A&&z){const q=A.N.pier;z.style.left=(q[0]-9)+"%";z.style.top=(q[1]-4.5)+"%"}
+    /* 渡口主人（07w4）的站位只在掛上時算一次：轉向換了圖就拿掉重掛（3D 迴圈看到框不在了會自己釋放；審查 #165 第 2 項） */
+    if(P.dataset.ph4&&P._ph4L!=null&&P._ph4L!==!!X&&typeof ph4Mount==="function"){P.querySelectorAll(":scope>.ph4").forEach(e=>e.remove());delete P.dataset.ph4;const V=P.parentNode;setTimeout(()=>{try{if(P.isConnected)ph4Mount(V,k)}catch(e){}},0)}};
   P._portPlace=place;
   if(typeof scwMount==="function"&&typeof SHW_PORT!=="undefined"&&SHW_PORT[k]){const C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
     scwMount(P,{key:scwKey(src0),src0,ids:["poPark","poInn","poArena","poBattle","poPh"],pfx:"port:"+k,cfg0:C,apply:place});if(pre.k)P._scwW="l"}

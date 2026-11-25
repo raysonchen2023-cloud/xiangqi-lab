@@ -21,7 +21,7 @@ function pcCss(){if(PC.css)return;PC.css=true;const s=document.createElement("st
 @keyframes pcIn{from{opacity:0}to{opacity:1}}`;document.head.append(s)}
 function pcIfx(){try{if(typeof ifxData!=="function"||!(typeof ifxOn==="function"&&ifxOn()))return Promise.resolve();
   return ifxData().then(M=>{if(M)for(const e of PORTC_ERAS){const a=M["shipmap/port_"+e];if(a)for(const x of["_c","_f"])if(!M["shipmap/port_"+e+x])M["shipmap/port_"+e+x]=a}}).catch(()=>{})}catch(e){return Promise.resolve()}}
-function pcSet(img,src,orig){const L=[].concat(src);let i=0;img.onerror=()=>{i++;if(i<L.length)img.src=L[i];else{img.onerror=null;img.src=orig}};pcIfx();img.src=L[0]}
+function pcSet(img,src,orig){{const F=img.closest&&img.closest(".shp-page");if(F&&F.dataset.scw)return}   /* W107-L：上色過場播到一半轉成橫式圖，不要把圖換回直的（審查 #165 建議） */const L=[].concat(src);let i=0;img.onerror=()=>{i++;if(i<L.length)img.src=L[i];else{img.onerror=null;img.src=orig}};pcIfx();img.src=L[0]}
 function portColor(v,k){if(!PORTC_ON||!PORTC_ERAS.includes(k))return;const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.querySelector(":scope>img");if(!img)return;
   if(P.dataset.scw)return;   /* W107-L：iPad 橫向用全彩橫式圖（07f portScw），不跑下船上色過場；轉回直向時 07sw 換回全彩直圖 */
   const orig=img.getAttribute("src"),src="data/shipmap/port_"+k+"_c.webp",full=PORTF_ON&&PORTF_ERAS.includes(k)?"data/shipmap/port_"+k+"_f.webp":null,arr=PC.k===k&&Date.now()-PC.at<15000;PC.at=0;PC.k=null;
