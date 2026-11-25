@@ -74,7 +74,7 @@ function pwdRun(P,img,C,k){if(img.naturalWidth!==768||img.naturalHeight!==1376)r
   const cv=document.createElement("canvas");cv.className="pw-gl";cv.setAttribute("aria-hidden","true");cv.style.cssText="position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none";img.after(cv);
   let undo=()=>{};const fail=()=>{cv.remove();img.style.visibility="";undo()};
   const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/layers/"+s});
-  Promise.all(["sm_mist_ink.webp","sm_mist_fog.webp"].map(ld)).then(im=>{if(!P.isConnected||!cv.isConnected)return;if(im.some(m=>m.naturalWidth!==512||m.naturalHeight!==512))throw 0;
+  Promise.all(["sm_mist_ink.webp","sm_mist_fog.webp"].map(ld)).then(im=>{if(!P.isConnected||!cv.isConnected||P.dataset.scw)return;if(im.some(m=>m.naturalWidth!==512||m.naturalHeight!==512))throw 0;
     const G=pfxGl(cv,PFX_VS,PWD_FS,[["I",img],["Mi",im[0],1,1],["Mf",im[1],1,1]]);if(!G)throw 0;
     const{gl,u}=G,U={t:u("t"),k:u("k"),DM:u("DM"),DB:u("DB"),DS:u("DS"),DC:u("DC")},px=(x,y)=>[x*7.68,y*13.76];
     const Fv=new Float32Array(24),FT=new Float32Array(6);(C.f||[]).slice(0,6).forEach((f,i)=>{const[a,b]=px(f[0],f[1]),[c,d]=px(f[2],f[3]);Fv.set([a-3,b-3,c+4,d+4],i*4);FT[i]=f[4]==="v"?1:0});

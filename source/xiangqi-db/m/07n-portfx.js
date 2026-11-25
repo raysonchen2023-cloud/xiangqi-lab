@@ -68,7 +68,7 @@ function portFx(v,k){const P=v&&v.querySelector(".shp-page.cq");if(!P||k!=="clas
   const fail=()=>{cv.remove();P.classList.remove("pfx-on");base.style.visibility="";spots.forEach(b=>b.style.translate="")};
   if(!document.getElementById("pfxCss")){const s=document.createElement("style");s.id="pfxCss";s.textContent=".shp-page.pfx-on>.ifx{display:none}";document.head.append(s)}   /* WebGL 動態跑起來就不疊 07k-inkfx 的粒子層（兩套一起會重複閃、燈火位置對不上） */
   const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/"+s});
-  Promise.all([pfxImg(),"layers/pm1_depth.png","layers/sm_mist_ink.webp","layers/sm_mist_fog.webp","port_classic.webp"].map(ld)).then(im=>{if(!P.isConnected)return;
+  Promise.all([pfxImg(),"layers/pm1_depth.png","layers/sm_mist_ink.webp","layers/sm_mist_fog.webp","port_classic.webp"].map(ld)).then(im=>{if(!P.isConnected||!cv.isConnected||P.dataset.scw)return;   /* 素材載完前轉成橫式圖（07f portScwStop 已拿掉畫布）：不再把底圖藏起來（審查 #165 第三輪） */
     if(im.some((m,i)=>m.naturalWidth!==PFX_SZ[i][0]||m.naturalHeight!==PFX_SZ[i][1]))throw 0;
     const G=pfxGl(cv,PFX_VS,PFX_FS,[["I",im[0]],["Dp",im[1],1],["Mi",im[2],1,1],["Mf",im[3],1,1],["Og",im[4]]]);if(!G)throw 0;
     const{gl,u}=G,U={par:u("par"),bob:u("bob"),t:u("t"),k:u("k")};

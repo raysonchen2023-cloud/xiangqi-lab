@@ -138,3 +138,13 @@ test("〔混合〕上色過場：圖框已是橫式圖就不播、拿掉 pc-run�
   assert.equal(vm.runInContext("pcRun", ctx)(Q, fakeEl()), "直圖照播");
   assert.match(cut(PC, "function pcRun(", "\nconst YZC_ON"), /P\._pcStop=\(\)=>\{done=true;cancelAnimationFrame\(raf\);P\.removeEventListener\("click",skip,true\);o\.remove\(\);if\(o2\)o2\.remove\(\);/);
 });
+test("〔混合〕風、船艙動態的素材載完時：圖框已換成橫式圖、或畫布已被收掉，就不再把底圖藏起來（直向開頁、素材載到一半轉橫向；審查 #165 第三輪）", () => {
+  for (const [src, a] of [[PF, '"port_classic.webp"].map(ld)).then(im=>{'], [PW, '["sm_mist_ink.webp","sm_mist_fog.webp"].map(ld)).then(im=>{']]) {
+    const i = src.indexOf(a); assert.ok(i >= 0, a); const j = src.indexOf("return;", i); const guard = src.slice(i + a.length, j + 7);
+    const f = vm.runInContext("(P,cv)=>{" + guard + "return \"往下\"}", vm.createContext({}));
+    assert.equal(f({ isConnected: true, dataset: { scw: "" } }, { isConnected: true }), "往下", "直向照舊往下跑");
+    assert.equal(f({ isConnected: true, dataset: { scw: "l1610" } }, { isConnected: true }), undefined, "已換成橫式圖");
+    assert.equal(f({ isConnected: true, dataset: { scw: "" } }, { isConnected: false }), undefined, "畫布已被 portScwStop 拿掉");
+    assert.equal(f({ isConnected: false, dataset: { scw: "" } }, { isConnected: true }), undefined, "離開頁面");
+  }
+});
