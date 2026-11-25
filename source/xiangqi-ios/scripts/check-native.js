@@ -204,7 +204,9 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
   /* #150 審查：條件編譯只放行專案用到的兩種條件（#if DEBUG、#if targetEnvironment(simulator)）。compiler()／swift() 這類版本條件不成立時，Swift 整段略過、不斷詞，
      斷詞卻照讀，能藏程式；其他條件（自訂旗標、os()、canImport()…）專案用不到，一樣看不懂就拒絕。#elseif 也算 */
   const IF_OK = /^!?\s*(DEBUG|targetEnvironment\(\s*simulator\s*\))$/;
-  const ODD_NL = /[\u2028\u2029\u0085\u000B\u000C]/;   /* 第七輪審查：U+2028 這類字元 JS 跟 Swift 對「一行」的認定不同，一律不行；第八輪建議：整份原文直接檢查，不經過豁免（單獨的 \r 已被 rd() 換成換行，不用列） */
+  /* #150 第三輪複審：U+FEFF 這類看不見的格式字元，pinOf 的 \s 會把它去掉，Swift 卻把它當識別字的一部分（pass<FEFF>ed 跟 passed 是兩個名字，雜湊卻一樣）；
+     零寬字元、軟連字號同理。跟特殊換行字元一起，整份原文直接拒絕（不改雜湊算法，PINS 不用重算） */
+  const ODD_NL = /[\u2028\u2029\u0085\u000B\u000C\uFEFF\u200B-\u200F\u2060-\u2064\u00AD]/;   /* 第七輪審查：U+2028 這類字元 JS 跟 Swift 對「一行」的認定不同，一律不行；第八輪建議：整份原文直接檢查，不經過豁免（單獨的 \r 已被 rd() 換成換行，不用列） */
   for (const f of [...swWalk(SRC), ...swWalk(APP)]) {
     const raw = rd(f), code = raw.split("\n").filter((l) => !(/^\s*\/\//.test(l) && !l.includes("*/"))).join("\n");   /* #144 第六輪審查：在 /＊ … ＊/ 裡、以 // 開頭又含 ＊/ 的行，＊/ 後面是真程式，不能豁免；第七輪：用 includes 不用正規式的「.」（「.」不比對 U+2028／U+2029） */
     const odd = ODD.filter(([re]) => re.test(code)).map(([, n]) => n);
@@ -215,7 +217,7 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
     for (const m of tok.matchAll(/#(?:if|elseif)\b([^\n]*)/g)) { const cond = m[1].trim(); if (!IF_OK.test(cond)) { odd.push("條件編譯 #if " + cond + "（斷詞後）"); break } }
     /* #150 複審：Swift 沒有字元常值，單引號不會出現在程式碼裡；但在不成立的 #if 分支裡，Swift 把字串內插裡的 ' 當成成對的引號，斷詞卻當普通字元，兩邊對字串邊界的認定不同。斷詞後還看得到 ' 就拒絕 */
     if (tok.includes("'")) odd.push("單引號（斷詞後的程式碼裡）");
-    if (ODD_NL.test(raw)) odd.push("特殊換行字元");
+    if (ODD_NL.test(raw)) odd.push("特殊換行或看不見的字元");
     if (odd.length) pinBad.push(path.relative(HERE, f) + " 不能有 " + odd.join("、") + "（斷詞可能跟 Swift 認定不同）");
   }
 }
@@ -249,6 +251,19 @@ check(vcCode.includes("retryDelays: [TimeInterval] = [1, 2, 4]"), "自動重試 
 check(/retryIndex < retryDelays\.count/.test(hd) && /phase = \.failed/.test(hd), "自動重試有上限，用完才顯示錯誤畫面");
 const rt = body(vcCode, "@objc private func retryTapped()") || "";
 check(rt.includes("retryIndex = retryDelays.count"), "手動「重試」只試一次，不會自己連跳");
+/* #150 第三輪複審：body() 只取第一處。用 #if DEBUG／#else 放兩份 establishNow（release 那份不經過 verifyNow），上面的檢查只看得到 DEBUG 那份。
+   照 PINS 的做法：body() 拿來檢查的函式，簽章在斷詞後的程式碼裡都要剛好一處，而且不在 #if 裡（前面的 #if、#endif 要配平） */
+{
+  const BODY_SIGS = [[srvCode, "func takeAnswer(for c: String)"], [srvCode, "private func handleWhoami("], [srvCode, "private func establishNow()"], [srvCode, "private func startListening("],
+    [vcCode, "override func viewDidLoad()"], [vcCode, "private func loadVerifiedPage()"], [vcCode, "private func handle("], [vcCode, "@objc private func retryTapped()"]];
+  const bodyBad = [];
+  for (const [code, sig] of BODY_SIGS) {
+    const n = nameOf(sig.replace(/^@objc /, "").replace(/^override /, "")), at = code.indexOf(sig), pre = at < 0 ? "" : code.slice(0, at);
+    if (count(code, sig) !== 1) { bodyBad.push(n + "（簽章要剛好一處）"); continue }
+    if ((pre.match(/#if\b/g) || []).length !== (pre.match(/#endif\b/g) || []).length) bodyBad.push(n + "（不能放在 #if 裡）");
+  }
+  check(bodyBad.length === 0, "檢查用到的函式（establishNow、handleWhoami、takeAnswer、startListening、viewDidLoad、loadVerifiedPage、handle、retryTapped）都剛好一處、不在 #if 裡" + (bodyBad.length ? "：" + bodyBad.join("、") : ""));
+}
 check(vc.includes("另一個 App 占用了") && vc.includes("Another app is using"), "錯誤畫面中英文都有");
 check(vc.includes("請關閉其他 App") && vc.includes("Close other apps"), "錯誤畫面有處理方式");
 check(vcCode.includes("WKWebsiteDataTypeDiskCache") && !/WKWebsiteDataType(LocalStorage|IndexedDBDatabases)/.test(vcCode), "載入前只清 HTTP 快取，不動存檔");
