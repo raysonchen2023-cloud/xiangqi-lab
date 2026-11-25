@@ -48,7 +48,7 @@ test("轉向、改視窗大小時重算：手機寬→寬→手機寬，class �
   r.ctx.innerWidth = 375; r.ev.resize(); assert.equal(r.on(), true);
 });
 
-test("m.css：xq-ipcompat 時 #topbar 左邊留 76px，寫在檔尾、!important，蓋得過 html body.bh-field #topbar 的內距", () => {
+test("〔原始碼〕m.css：xq-ipcompat 時 #topbar 左邊留 76px，寫在檔尾、!important，蓋得過 html body.bh-field #topbar 的內距", () => {
   const rule = "html.xq-ipcompat body #topbar{padding-left:76px!important}";
   const i = CSS.lastIndexOf(rule);
   assert.ok(i > 0, "有這條規則");
