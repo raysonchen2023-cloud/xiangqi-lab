@@ -42,6 +42,17 @@ test("原地換成寬版（hmwSet）：同源 404 先等 CDN 補抓，CDN 也失
   assert.ok(img._src.startsWith(CDN) && /home\.webp/.test(img._src), "原圖還能去 CDN 補抓，不會破圖：" + img._src);
 });
 
+test("換網址清掉等待記號：CDN 補抓成功 → 轉回原圖 → 再轉回寬版 → 同源 404，還是先等 CDN，不會直接退回", () => {
+  const { P, img, fire, R } = env(), CDN = R("XQ_CDN");
+  img._src = ORIG; P.dataset.hmw = ""; P._hmSrc0 = ORIG; R("hmwSet")(P, "l1610");
+  img.complete = true; fire(); assert.ok(img._src.startsWith(CDN)); img.complete = true; img.naturalWidth = 2560;   // CDN 補抓成功
+  R("hmwSet")(P, ""); assert.equal(img._src, ORIG, "轉回原圖"); assert.equal(img.dataset.cdnTry, undefined);
+  R("hmwSet")(P, "l1610"); assert.match(img._src, /^data\/homemap\/home_l1610\.webp/, "再轉回寬版＝同源網址");
+  img.complete = true; fire();   // 同源 404
+  assert.ok(img._src.startsWith(CDN), "00-util 照樣去 CDN 補抓"); assert.equal(P.dataset.hmw, "l1610", "記號清掉了，還是先等 CDN，不會因為上次等過就直接退回");
+  assert.equal(R("HMW_BAD.l1610"), undefined);
+});
+
 test("CDN 補抓成功＝留在寬版；直版 p34 也一樣", () => {
   for (const k of ["l1610", "p34"]) {
     const { P, img, fire, R } = env(), CDN = R("XQ_CDN");
@@ -52,17 +63,17 @@ test("CDN 補抓成功＝留在寬版；直版 p34 也一樣", () => {
   }
 });
 
-test("開頁就是寬版（07z 209 行那條路）：onerror 也走 hmwFail，一樣先等 CDN", () => {
+test("〔混合〕開頁就是寬版（07z Home 開頁那條路）：onerror 也走 hmwFail，一樣先等 CDN", () => {
   assert.match(SRC_Z, /if\(hk\)\{const im1=P\.querySelector\(":scope>img"\);im1\.onerror=\(\)=>hmwFail\(P\)\}/);
   const { P, img, fire, R } = env(), CDN = R("XQ_CDN");
-  P.dataset.hmw = "l1610"; P._hmSrc0 = ORIG; img._src = R("hmwSrc")("l1610"); img.onerror = () => R("hmwFail")(P);   // 跟 209 行一樣
+  P.dataset.hmw = "l1610"; P._hmSrc0 = ORIG; img._src = R("hmwSrc")("l1610"); img.onerror = () => R("hmwFail")(P);   // 跟開頁那條路一樣
   img.complete = true; fire();
   assert.ok(img._src.startsWith(CDN)); assert.equal(P.dataset.hmw, "l1610", "開頁那條路也先等 CDN");
   img.complete = true; fire();
   assert.equal(P.dataset.hmw, ""); assert.equal(img._src, ORIG, "CDN 也失敗才退回原圖");
 });
 
-test("用原圖時（hmw 是空的）載不到：hmwFail 不做事，照舊交給 00-util 補抓；原始碼裡退回寬版只剩 hmwFail 一處", () => {
+test("〔混合〕用原圖時（hmw 是空的）載不到：hmwFail 不做事，照舊交給 00-util 補抓；原始碼裡退回寬版只剩 hmwFail 一處", () => {
   const { P, img, fire, R } = env(), CDN = R("XQ_CDN");
   P.dataset.hmw = ""; img._src = ORIG; img.onerror = () => R("hmwFail")(P);
   img.complete = true; fire();

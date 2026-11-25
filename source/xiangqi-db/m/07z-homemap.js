@@ -80,7 +80,7 @@ const HMW={p34:{f:"home_p34",w:1536,h:2048,S:HM_SPOTS_P34,sl:1.4,safe:{l:.06,r:.
   l1610:{f:"home_l1610",w:2560,h:1600,S:HM_SPOTS_L1610,sl:1.4,safe:{l:.12,r:.12,t:.05,b:.10},walk:SHW_HOMEMAP_L1610}};
 const HMW_BAD={};   /* 這次開 App 載不到的寬版（退回原圖，不再試） */
 /* W109（iMac Claude 2 審 #155 時發現，線上就有）：00-util 在 window 用擷取監聽，同源圖片載不到時先把 src 改成 XQ_CDN、記 cdnTry=1，
-   同一次事件接著輪到這裡的 onerror。以前這裡馬上退回原圖，就把 CDN 補抓蓋掉了。現在照 07sw scwFail：src 已經指向 XQ_CDN、cdnTry 剛設好時
+   同一次事件接著輪到這裡的 onerror。以前這裡馬上退回原圖，就把 CDN 補抓蓋掉了。現在（跟 PR #155 場景頁 07sw 的做法一樣）：src 已經指向 XQ_CDN、cdnTry 剛設好時
    記住正在等的網址、先不退回；CDN 那次也失敗（同一個網址再錯一次）才記 HMW_BAD、退回原圖 */
 function hmwFail(P){const kk=P&&P.dataset.hmw;if(!kk||!HMW[kk])return;const im=P.querySelector(":scope>img"),u=im?String(im.getAttribute("src")||im.src||""):"";
   if(im&&im.dataset&&im.dataset.cdnTry&&typeof XQ_CDN==="string"&&u.indexOf(XQ_CDN)===0&&im._hmwCdn!==u){im._hmwCdn=u;return}
