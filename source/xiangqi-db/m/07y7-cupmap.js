@@ -57,6 +57,17 @@ const cp2Sci=g=>Object.assign({},CP2_SCI,{it:CP2_SCI.it.filter(x=>!x.g||x.g.spli
 const SHW_CP2={el:40,h:[.085,70,.0012],look0:[50,40],home:"home",N:{home:[50,96],mid:[50,86],top:[50,78]},E:"home-mid mid-top",
   HS:{cp2Book:["top",51,57,"wave"],cp2Scr:["mid",50,42,"idle"],cp2Brd:["top",81,49,"idle"]}};
 const cp2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
+/* W107-L 第 2 批：iPad 橫向專用橫式圖（07sw SCW）。output/w107-ipad/l1610/cupmap/cup_day_classic_l1610.json（Windows Claude 1 量）；
+   原圖、漢、唐、魏晉 4 張都對齊到經典版（位移小於 0.1%），屏風、大掛板、英雄帖、燈鉤、綵球共用這一套（像素 2560×1600，跟 CP2_SCR／CP2_BRD／CP2_BOOK／CP2_LAMP／CP2_BALL 同格式）。
+   燈：json 提醒右燈（2051～2153）會蓋到大掛板右上角，照它的兩個建議一起做：燈畫小一點（寬 3.2%≈82px，CSS .scw-l .cp2-lamp）、右燈往右移到 2150。物件說明（07w6）在橫式圖時本來就不跳，台左新多的茶几先不登記 */
+const CP2_L1610={ready:true,f:"cupmap/cup_day_classic_l1610",w:2560,h:1600,
+  S:{"cp2Book":[49,53],"cp2Scr":[50,38],"cp2Brd":[76,38]},exit:[12,92],safe:{"l":0.12,"r":0.12,"t":0.05,"b":0.1},
+  walk:{W:2560,H:1600,el:40,h:[.15,95,.0035],look0:[50,40],home:"home",N:{"home":[50,95],"mid":[50,80],"top":[50,69],"brd":[73,66]},E:"home-mid mid-top top-brd",HS:{"cp2Book":["top",49,55,"wave"],"cp2Scr":["mid",50,40,"idle"],"cp2Brd":["brd",75,40,"idle"]}},
+  fx:{scr:[[[869,429],[987,419],[987,883],[869,877]],[[1069,419],[1469,419],[1469,872],[1069,872]],[[1504,421],[1651,432],[1651,877],[1504,883]]],brd:[[1766,410],[2125,394],[2106,888],[1747,856]],book:[[1226,862],[1290,862],[1290,914],[1226,914]],lamp:[[480,282],[2150,282]],ball:[1294,250]}};
+if(typeof SCW!=="undefined"){SCW["cupmap/cup_day_classic"]=CP2_L1610;for(const g of["","_han","_tang","_weijin"])SCW["cupmap/cup_day"+g]=Object.assign({},CP2_L1610,{f:"cupmap/cup_day"+g+"_l1610",base:"cupmap/cup_day_classic"})}
+/* 現在用的那張圖的座標組（橫式圖＝條目 fx、2560×1600；原圖＝原本的常數、768×1376） */
+const cp2Geo=P=>{const e=typeof scwCur==="function"?scwCur(P):null,F=e&&e.fx&&e.fx.scr?e.fx:null,W=F?e.w:768,H=F?e.h:1376;return{W,H,pc:(x,y)=>[(x/W*100).toFixed(2),(y/H*100).toFixed(2)],SCR:F?F.scr:CP2_SCR,BRD:F?F.brd:CP2_BRD,BOOK:F?F.book:CP2_BOOK,LAMP:F?F.lamp:CP2_LAMP,BALL:F?F.ball:CP2_BALL}};
+
 const cp2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function cp2M3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
@@ -73,6 +84,7 @@ function cp2Css(){if(document.getElementById("cp2Css"))return;const s=document.c
 .cp2-lamp.g-han svg,.cp2-lamp.g-weijin svg,.cp2-lamp.g-tang svg{filter:drop-shadow(0 0 6px rgba(255,200,120,.6))}
 @keyframes cp2Sway{0%,100%{transform:translate(-50%,0) rotate(-2deg)}50%{transform:translate(-50%,0) rotate(2deg)}}
 .cp2-ball{position:absolute;width:15%;transform:translate(-50%,-30%)}
+.cp2-page.scw-l .cp2-lamp{width:3.2%}.cp2-page.scw-l .cp2-ball{width:12.4%}
 .cp2-ball svg{display:block;width:100%;height:auto}
 .cp2-rain i{position:absolute;top:-4%;display:block;width:7px;height:5px;background:var(--c);animation:cp2Fall linear infinite;opacity:.95}
 .cp2-rain i.g{width:6px;height:6px;border-radius:1px;box-shadow:0 0 3px rgba(255,220,120,.8)}
@@ -125,15 +137,17 @@ function cp2Fen(g){const b=parseFen(START);for(const m of(g&&g.moves)||[]){const
   let s="";for(let r=0;r<10;r++){let e=0;for(let c=0;c<9;c++){const x=b[r*9+c];if(!x)e++;else{if(e){s+=e;e=0}s+=x}}if(e)s+=e;if(r<9)s+="/"}return s}
 function cp2Wrap(v,R){if(!CUP_MAP_ON||!window.XQNet||!v.querySelector("#cupb"))return R;cp2Css();
   const dk=cp2Dark(),grp=cp2Grp(),P=document.createElement("div");P.className="shp-page cq cp2-page"+(dk?" cp2-night":"");
-  P.innerHTML=`<img src="${cp2Img(dk,grp)}" alt="${grp==="tang"?"旗亭樓上的歌台":grp?"酒肆樓上的說唱台":"茶樓二樓的說書台"}"><div class="cp2-fx" aria-hidden="true">
+  /* W107-L：iPad 橫向有專用橫式圖（07sw）就一開始載那張；屏風、大掛板、英雄帖、燈、綵球照 cp2Geo（當下的圖），入口、走路照條目 */
+  const src=cp2Img(dk,grp),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}
+  P.innerHTML=`<img src="${pre.src}" alt="${grp==="tang"?"旗亭樓上的歌台":grp?"酒肆樓上的說唱台":"茶樓二樓的說書台"}"><div class="cp2-fx" aria-hidden="true">
       ${CP2_SCR.map((q,i)=>`<div class="cp2-q" data-q="s${i}" style="width:${i===1?300:100}px;height:${i===1?260:380}px"></div>`).join("")}
       <div class="cp2-q" data-q="b" style="width:200px;height:450px"></div><div class="cp2-q" data-q="k" style="width:120px;height:60px"></div><div class="cp2-deco"></div></div>
     <button class="shp-spot cp2-tag" id="cp2Scr" style="left:${cp2Pc(385,405)[0]}%;top:${cp2Pc(385,405)[1]}%"><b>對陣金榜</b></button>
     <button class="shp-spot cp2-tag" id="cp2Book" style="left:${cp2Pc(397,840)[0]}%;top:${cp2Pc(397,840)[1]}%"><b>英雄帖</b></button>
     <button class="shp-spot cp2-tag" id="cp2Brd" style="left:${cp2Pc(625,850)[0]}%;top:${cp2Pc(625,850)[1]}%"><b>大掛盤</b></button>`;
   v.insertBefore(P,v.firstChild);
-  const Q=k=>P.querySelector(`[data-q="${k}"]`),fit=()=>{const k=P.clientWidth/768;if(!k)return;const sc=q=>q.map(([x,y])=>[x*k,y*k]);
-    CP2_SCR.forEach((q,i)=>{Q("s"+i).style.transform=cp2M3(i===1?300:100,i===1?260:380,sc(q))});Q("b").style.transform=cp2M3(200,450,sc(CP2_BRD));Q("k").style.transform=cp2M3(120,60,sc(CP2_BOOK))};
+  const Q=k=>P.querySelector(`[data-q="${k}"]`),fit=()=>{const G=cp2Geo(P),k=P.clientWidth/G.W;if(!k)return;const sc=q=>q.map(([x,y])=>[x*k,y*k]);
+    G.SCR.forEach((q,i)=>{Q("s"+i).style.transform=cp2M3(i===1?300:100,i===1?260:380,sc(q))});Q("b").style.transform=cp2M3(200,450,sc(G.BRD));Q("k").style.transform=cp2M3(120,60,sc(G.BOOK))};
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}
   let feat="",featG=null,featAt=0;
   const draw=()=>{if(!P.isConnected)return;let S=null;try{S=XQNet.cup()}catch(e){}const me=(()=>{try{return meInfo().id}catch(e){return""}})();
@@ -162,7 +176,7 @@ function cp2Wrap(v,R){if(!CUP_MAP_ON||!window.XQNet||!v.querySelector("#cupb"))r
     paintB();
     /* 比賽日：紅紗燈、紅綵球；擂主出爐才灑紅紙屑、金箔 */
     const day=S&&["ck","play","done"].includes(S.ph),deco=P.querySelector(".cp2-deco");let h="";
-    if(day){h+=CP2_LAMP.map(([x,y])=>`<span class="cp2-lamp${grp?" g-"+grp:""}" style="left:${cp2Pc(x,y)[0]}%;top:${cp2Pc(x,y)[1]}%">${CP2_LAMPS[grp]||CP2_LAMP_SVG}</span>`).join("")+`<span class="cp2-ball" style="left:${cp2Pc(...CP2_BALL)[0]}%;top:${cp2Pc(...CP2_BALL)[1]}%">${CP2_BALL_SVG}</span>`}
+    if(day){const G=cp2Geo(P);h+=G.LAMP.map(([x,y])=>`<span class="cp2-lamp${grp?" g-"+grp:""}" style="left:${G.pc(x,y)[0]}%;top:${G.pc(x,y)[1]}%">${CP2_LAMPS[grp]||CP2_LAMP_SVG}</span>`).join("")+`<span class="cp2-ball" style="left:${G.pc(...G.BALL)[0]}%;top:${G.pc(...G.BALL)[1]}%">${CP2_BALL_SVG}</span>`}
     if(S&&S.ph==="done"&&S.champ){let r="";for(let i=0;i<34;i++){const g=i%3===0;r+=`<i class="${g?"g":""}" style="left:${(i*37)%100}%;--c:${g?"#e8c25a":"#c8402c"};animation-duration:${5+(i%5)}s;animation-delay:-${(i*.53%6).toFixed(2)}s"></i>`}h+=`<span class="cp2-rain" style="position:absolute;inset:0">${r}</span>`}
     if(deco.dataset.h!==h){deco.innerHTML=h;deco.dataset.h=h}
     const cheer=S&&["play","done"].includes(S.ph);try{const c=P._shwCfg;if(c)c.HS.cp2Scr[3]=cheer?"cheer":"idle"}catch(e){}
@@ -189,7 +203,10 @@ function cp2Wrap(v,R){if(!CUP_MAP_ON||!window.XQNet||!v.querySelector("#cupb"))r
   draw();const offs=[XQNet.on("cup",draw)],t=setInterval(draw,20000);
   const cfg=Object.assign({},SHW_PG0,SHW_CP2,{HS:Object.assign({},SHW_CP2.HS,{cp2Scr:SHW_CP2.HS.cp2Scr.slice()})});P._shwCfg=cfg;
   {let S=null;try{S=XQNet.cup()}catch(e){}if(S&&["play","done"].includes(S.ph))cfg.HS.cp2Scr[3]="cheer"}
-  if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfg,"cp2")}catch(e){}}
+  let cfgNow=cfg;
+  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:["cp2Scr","cp2Book","cp2Brd"],pfx:"cp2",cfg0:cfg,apply:draw,onCfg:x=>{P._shwCfg=x}};scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._shwCfg=cfgNow;P._scwW="l"}}   /* 換圖重畫燈、綵球、屏風（draw 會叫 fit）；比賽日的歡呼改在當下那份走路設定上 */
+  draw();
+  if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfgNow,"cp2")}catch(e){}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
   try{if(typeof sciPage==="function")sciPage(v,cp2Sci(grp))}catch(e){}
