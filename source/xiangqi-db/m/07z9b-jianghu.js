@@ -611,7 +611,11 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   spot("hall",m?jhL(`🏯 掌門大廳・${m.nm}`,`🏯 Master's hall · ${m.en}`):jhL("🏯 掌門大廳","🏯 Master's hall"),()=>jhSheet(sid));
   spot("study",jhL("📖 講棋堂","📖 Lecture hall"),()=>jhHallStudy(sid));
   spot("yard",jhL("👥 前院・門下棋友","👥 Front yard"),()=>jhHallYard(sid));
-  spot("gate",jhL("‹ 搭船回十州棋館","‹ Take a boat back to the Ten Prefectures"),()=>jhGo("#/jianghu"));
+  spot("gate",jhL("‹ 搭船回十州棋館","‹ Take a boat back to the Ten Prefectures"),()=>{try{const p=NAV_D>0?NAV_H[NAV_D-1]:null;if(typeof p==="string"&&navKey(p)==="/jianghu"){history.back();return}if(typeof navReplace==="function"){navReplace("#/jianghu");return}}catch(e){}jhGo("#/jianghu")});
+  /* 11/26 開發者回報（P0）：進中炮門再搭船回十州棋館，左上角變成「回中炮門」，按了又進中炮門、再搭船又回來，「完全無法離開這個十州棋館」。
+     根因：搭船用 jhGo 往前多開一頁，十州棋館的返回鍵（瀏覽器上一頁）就指回門內頁。搭船是回上一層：上一頁就是十州棋館＝退回那一頁；
+     不是（從開局棋路、掌門頁直接進門）＝把門內頁這一筆換成十州棋館（navReplace），不往前多開。回到十州棋館後，返回鍵指的是進門之前的那一頁。
+     不用 goUp：它會往很早的紀錄找十州棋館、一次跳好幾頁，跳回去那一頁的上一頁可能又是門內頁 */
   if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("順風・修為多給","Fair wind +XP");n.title=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");P.append(n)}   /* 11/22 Windows Claude 2 查 W62 時發現：英文原句折成兩行壓到「掌門大廳」標籤；實測中文一行也會壓到。門內頁改成掌門大廳標籤正下方置中的一行小徽章（圖比螢幕寬、左右會被裁，不能放角落），完整說明在掌門小卡 */
   const ready=()=>{if(P.isConnected)jhFadeOut()};if(img.complete&&img.naturalWidth)setTimeout(ready,0);else img.onload=ready;
   setTimeout(()=>{if(f.classList.contains("on")&&P.isConnected&&img.naturalWidth)jhFadeOut()},6000);
