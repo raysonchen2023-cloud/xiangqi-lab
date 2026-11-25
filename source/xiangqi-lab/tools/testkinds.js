@@ -118,6 +118,7 @@ const CLASSIFIED = new Set([
   "test-ipad-fill.js",   /* 11/13 遊戲畫面都要滿版：iPad／Duo 直向填滿寬度、橫向兩側模糊底（07fl；行為 8、原始碼 1） */
   "test-scene-wide-l1610.js",   /* 11/25 W107-L 場景頁 iPad 橫向專用橫式圖（07sw，第一頁錯棋重練經典白天）：選圖門檻、鍵與條目、座標範圍、天氣範圍、原地換圖與退回（含開頁就是橫式圖、00-util CDN 補抓）、手機不動標籤、走路設定；〔混合〕原始碼接線 */
   "test-w107-setmap-l1610.js",   /* 11/25 W107-L 第 1 批：設定頁（07s2）iPad 橫向橫式圖：條目、入口與走路、疊圖座標、smScene 橫式不換日夜圖且疊圖照條目（行為 6、混合 1） */
+  "test-w107-feedback-l1610.js",   /* 11/25 W107-L 第 1 批：意見回饋頁（07s3）iPad 橫向橫式圖：條目、銅匭順序、疊圖座標、走路、橫式不飛鴿（行為 5、混合 1） */
   "test-engine-timeout.js",   /* 11/12 開發者截圖「思考有點久」：引擎沒回應不再永遠等 */
   "test-ai-levels.js",   /* 11/12 第 10 輪 F3：電腦對手透明頁（行為 2、混合 3、原始碼 2） */
   "test-land3d.js", "test-bhmate.js", "test-docs-md.js", "test-net-chaos.js", "test-park3d-bench.js", "test-save-file.js", "test-story0.js",   /* 11/12 晚上逐項分類（第 8 輪證據頁） */
