@@ -1080,7 +1080,9 @@
     if(T.ColorManagement)T.ColorManagement.legacyMode=false;if(T.sRGBEncoding!=null)rd.outputEncoding=T.sRGBEncoding;if(T.SRGBColorSpace)rd.outputColorSpace=T.SRGBColorSpace;
     rd.toneMapping=T.ACESFilmicToneMapping;rd.toneMappingExposure=.98;try{ANI=rd.capabilities.getMaxAnisotropy()||8}catch(e){}
     rd.domElement.style.cssText="display:block;width:100%;height:100%";el.append(rd.domElement);
-    const hint=document.createElement("div");hint.style.cssText="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font:600 11px sans-serif;color:#fff;background:rgba(30,20,10,.45);padding:3px 10px;border-radius:99px;white-space:nowrap;pointer-events:none;transition:opacity .6s";
+    /* 11/25 W121-6（真人視角截圖 375×812）：操作提示原本貼底 8px、不換行，被左下「▦ 平面棋盤」（.pk2d，底 10px、約 44 高）、右下 ＋／－（.pzoom，底 8px、兩顆 34＋間隔 12＝80 高）和「〇〇到〇〇有多遠？」小紙條（.mh-note，底 14px）壓住只看到一半。
+       改成整行抬到這些按鈕和小紙條上面（底 96px），寬度照字長（max-content）但不超過園子寬減 24px，太長就置中換行（英文那句也看得完整）；字級、顏色、淡出時間都不變 */
+    const hint=document.createElement("div");hint.style.cssText="position:absolute;left:50%;bottom:96px;transform:translateX(-50%);font:600 11px sans-serif;color:#fff;background:rgba(30,20,10,.45);padding:3px 10px;border-radius:12px;width:max-content;max-width:calc(100% - 24px);box-sizing:border-box;text-align:center;pointer-events:none;transition:opacity .6s";
     // 意見回饋 251：載入時不是一行字，而是小帥原地走路去公園（樹和遠山往後退，看起來像在走），全部載好就淡出
     const veil=document.createElement("div");veil.style.cssText="position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font:600 14px sans-serif;color:#6b5a44;pointer-events:none;transition:opacity .35s;overflow:hidden;background:linear-gradient(#EAF1F6,#F4ECDC 70%)";
     {let ch="帥";try{const L=window.XQ_BOTLOOK&&window.XQ_BOTLOOK();if(L&&L.p)ch=L.p}catch(e){}

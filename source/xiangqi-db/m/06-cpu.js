@@ -382,10 +382,10 @@ function parkUi(host,pv){pkHitCss();let b=host.querySelector(".pkview");if(!b){b
   b.onclick=e=>{e.stopPropagation();vibrate(5);m=pkIsTop()?"flat":pv.homeView?"topfit":"top";store.set("parkView",m);try{pv.setView(m)}catch(x){}paint()}}
   /* 11/11 模擬玩家問題 8（兩個教學提示疊在棋盤上）：園子裡 park3d 自己的小紙條（.mh-tip，例如「大都到杭州有多遠？」）正開著就先等它收；
      手勢提示出來的 3.5 秒內 host 加 pk-hinting，期間冒出來的小紙條先藏著（m.css 檔尾），一次只看到一個 */
-  if(!store.get("parkHint",false)){const go=()=>{if(!host.isConnected)return;if(fxBusy()||document.querySelector(".kjfx")||host.querySelector(".mh-tip.on"))return setTimeout(go,500);store.set("parkHint",true);const h=document.createElement("div");h.className="pkhint";h.style.pointerEvents="none";h.innerHTML='<div class="pkh-hand">👆</div><b>拖曳轉身看四周</b><span>兩指捏合縮放・點兩下回到原本的角度</span>';host.append(h);host.classList.add("pk-hinting");PK_HTS=Date.now();
+  if(!store.get("parkHint",false)){let pkHU=false;const pkHT=()=>{pkHU=true},pkHO=on=>{for(const t of["pointerdown","keydown"])document[on?"addEventListener":"removeEventListener"](t,pkHT,true)};const go=()=>{if(!host.isConnected||pkHU)return pkHO(false);if(fxBusy()||document.querySelector(".kjfx")||host.querySelector(".mh-tip.on"))return setTimeout(go,500);pkHO(false);store.set("parkHint",true);const h=document.createElement("div");h.className="pkhint";h.style.pointerEvents="none";h.innerHTML='<div class="pkh-hand">👆</div><b>拖曳轉身看四周</b><span>兩指捏合縮放・點兩下回到原本的角度</span>';host.append(h);host.classList.add("pk-hinting");PK_HTS=Date.now();
       /* 11/11（AI 模擬玩家第二輪問題 5：林老師第一擊被這層吃掉）：提示層不擋點選（pointer-events:none），手指一按下就收掉提示，那一下照常傳到棋盤選子 */
       let gone=false;const out=()=>{if(gone)return;gone=true;host.removeEventListener("pointerdown",out,true);h.classList.add("out");setTimeout(()=>{h.remove();host.classList.remove("pk-hinting")},500)};host.addEventListener("pointerdown",out,true);setTimeout(out,3000)};
-    if(pv.whenShown)pv.whenShown(()=>setTimeout(go,300));else setTimeout(go,1200)}
+    if(pv.whenShown)pv.whenShown(()=>{pkHO(true);setTimeout(go,300)});else{pkHO(true);setTimeout(go,1200)}}   /* 11/25 W121-4（真人視角截圖：開新局馬上走子，走完第 1 步 3 秒才跳出手勢提示蓋住棋盤）：園子出現後玩家先碰了畫面或按了鍵（pkHU），還在排隊的提示就不出了，也不記 parkHint，下次進 3D 再提示 */
   if(typeof yuHintMaybe==="function")yuHintMaybe(host)}   /* 意見回饋 658（B 輿圖遊歷）：第一次在石桌往事的園子裡，提示地圖可以點（07e-garden2.js） */
 /* 11/10 開發者「園子熱鬧」（Gemini 62）七星打氣：每次開園子挑一位沒上場的雲河七星來看棋（同一朝的優先），3D 園子 park3d 的 CR 模組負責走位、動作、泡泡。
    台詞照各人的個性（WX_CHARS）：阿轍只走直路、燕子守江邊茶棚、花兒做煙火、小梅在驛站拐彎、方庭氣喘的少爺、城子護著少爺、溪兒跑腿往前衝 */
