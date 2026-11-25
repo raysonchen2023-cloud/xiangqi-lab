@@ -113,7 +113,7 @@ function route(){
   try{if(typeof dglRouteGate==="function"&&dglRouteGate())return}catch(e){}   /* 開發者 11/13 平日體力：定軌力用完（化墨退場）後，人間的頁先關著、回星槎歇息（m/07dgl-stamina.js） */
   try{if(typeof fcmBootGo==="function"&&fcmBootGo())return}catch(e){}   /* 評比循環第 12 輪 X10 中斷恢復：這個分頁第一次打開、網址是首頁、6 小時內在對局／解題中被打斷（切背景、關分頁）＝直接回那一盤（m/07fm-focus.js） */
   /* 意見回饋 607：換頁時把上一頁的視窗（結果視窗等）一起關掉；ROUTE_N 讓殺棋動畫後才要出來的視窗知道畫面換了 */
-  ROUTE_N++;document.querySelectorAll(".modal:not(.keep)").forEach(m=>m.remove());
+  ROUTE_N++;document.querySelectorAll(".modal:not(.keep),.kjfx").forEach(m=>m.remove());   /* W121：換頁時正在播的開局特效（.kjfx）也拿掉，不留在下一頁 */
   try{storyEraSync()}catch(e){}   /* 意見回饋 610：故事線自動換朝代 */
   closeSheet();if(screen&&screen.stop)screen.stop();screen=null;PARK_OFF=false;PARK_J=null;PARK_LK=false;
   const v=$("#view");v.className="view";v.innerHTML="";v.scrollTop=0;

@@ -2359,11 +2359,11 @@
       for(const d of pkcbPre(o,pos))markAdd(d);   /* 第 13 輪 F4：預走標記（紫色虛線框、淡色箭頭、「預」字牌）、預走走出後對方那一步灰色虛線 */
       try{CR.chkSet(typeof o.check==="number"&&o.check>=0&&board[o.check]?sideOf(board[o.check]):null)}catch(e){}
       thinking=!!ex.thinking;setOpp(ex.opp||null);try{simSync(ex.simul)}catch(e){}setMate(ex.mateLook||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";try{CR.data(ex.crowd||null,o,ex)}catch(e){}
-      if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;endT=END;
+      if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;endT=END;const mm=mood,mk=CAPKEY,endOk=()=>!stopped&&mood===mm&&CAPKEY===mk;   /* W120：隊友那句話 1.5／1.8 秒後才說；到時場景停了（stopped）、開了新的一盤（mood 清掉或 gid 換了）就不說 */
         oppRes=mood==="draw"||!b?"draw":mood===b?"win":"lose";mateRes=oppRes==="win"?"lose":oppRes==="lose"?"win":"draw";
         if(mood==="draw"){opp.setFace("flat",99);mate.setFace("flat",99);mate.say("和棋，不錯喔！",3)}
-        else if(b&&mood===b){opp.setFace("happy",99);opp.say(ex.oppWin||"我贏了！再來一盤？",3);mate.setFace("sad",99);setTimeout(()=>mate.say("下次一定贏！",2.6),1800)}
-        else if(b){opp.setFace("sad",99);opp.say(ex.oppLose||"你好厲害…",3);mate.setFace("happy",99);setTimeout(()=>mate.say("你贏了！太強了！",2.6),1500)}}
+        else if(b&&mood===b){opp.setFace("happy",99);opp.say(ex.oppWin||"我贏了！再來一盤？",3);mate.setFace("sad",99);setTimeout(()=>{if(endOk())mate.say("下次一定贏！",2.6)},1800)}
+        else if(b){opp.setFace("sad",99);opp.say(ex.oppLose||"你好厲害…",3);mate.setFace("happy",99);setTimeout(()=>{if(endOk())mate.say("你贏了！太強了！",2.6)},1500)}}
       if(!ex.result&&mood){mood=null;endT=0;opp.setFace("smile");mate.setFace("smile")}}
     // ---------- 鏡頭與互動 ----------
     let yaw=0,pitch=0,tyaw=0,tpitch=0,zoom=1,tzoom=1,W=1,H=1,flatV=false;const BILLV=new T.Vector3();   // zoom＝鏡頭到棋盤中心的距離倍數（兩指捏合）

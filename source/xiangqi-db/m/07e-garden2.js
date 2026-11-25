@@ -107,8 +107,8 @@ function yuXM(era,i){const R=YU_R[era],s=R&&R.s[i],back=yuBackHash;if(!s)return{
 /* 不看答案解開：是下一站就前進一站、修為 +15；整條走完記下來；13 條都走完 → 稱號 */
 function yuMark(era,i){const R=YU_R[era];if(!R)return null;const A=yuAll(),E=A[era]||(A[era]={n:0,at:[]}),N=R.s.length;E.at=E.at||[];let first=false,fin=false,title=false;
   if(i===(E.n||0)&&i<N){first=true;E.n=i+1;E.at[i]=Date.now();const D=yuDay();D.n++;store.set("yuDay",D);if(E.n>=N&&!E.done){E.done=Date.now();fin=true}}
-  store.set("yuRoute",A);if(first)setTimeout(()=>addXP(15,"輿圖遊歷",`yu:${era}:${i}`),1600);
-  if(fin&&!store.get("yuTitle",0)&&ARENA_ORDER.every(k=>!YU_R[k]||(A[k]&&A[k].done))){store.set("yuTitle",Date.now());setTimeout(()=>addXP(50,"行萬里路","yu:title"),3400);title=true}
+  store.set("yuRoute",A);if(first)addXP(15,"輿圖遊歷",`yu:${era}:${i}`,{chipDelay:1600});
+  if(fin&&!store.get("yuTitle",0)&&ARENA_ORDER.every(k=>!YU_R[k]||(A[k]&&A[k].done))){store.set("yuTitle",Date.now());addXP(50,"行萬里路","yu:title",{chipDelay:3400});title=true}
   return{first,fin,title,n:E.n,N}}
 function yuDoneHTML(era,i,o,ans){const R=YU_R[era],s=R.s[i],nm=esc(yuName(s));if(ans||!o)return`<p class="muted">看了答案，「${nm}」這一站還不算過關；不看答案解開才算。</p>`;
   if(!o.first)return`<p>🧭 「${nm}」之前就過關了（${esc(R.t)} ${Math.min(o.n,o.N)}／${o.N} 站）。</p>`;
@@ -195,8 +195,8 @@ function xhLantern(era){const N=xhNow(),E=PARK_INFO[era]||PARK_INFO.classic,ln=E
 function xhMark(season,i,st){const A=store.get("xhMei",{})||{},M=A[season]||(A[season]={});if(M[i])return{first:false,season};M[i]=Date.now();store.set("xhMei",A);
   if(st==="open"){const m=xhMake();m.n++;store.set("xhMake",m)}
   const b=Math.floor(i/9),bf=[0,1,2,3,4,5,6,7,8].every(k=>M[b*9+k]),cnt=Object.keys(M).length,real=season!=="dev";let title=false;
-  if(bf&&real)setTimeout(()=>addXP(10,"消寒圖",`xh:${season}:${b}`),1600);
-  if(cnt>=81){const T=store.get("xhTitle",{})||{};if(!T[season]){T[season]=Date.now();store.set("xhTitle",T);title=true;if(real)setTimeout(()=>addXP(30,"九九消寒",`xh:${season}:all`),3400)}}
+  if(bf&&real)addXP(10,"消寒圖",`xh:${season}:${b}`,{chipDelay:1600});
+  if(cnt>=81){const T=store.get("xhTitle",{})||{};if(!T[season]){T[season]=Date.now();store.set("xhTitle",T);title=true;if(real)addXP(30,"九九消寒",`xh:${season}:all`,{chipDelay:3400})}}
   return{first:true,season,b,bf,cnt,title,make:st==="open"}}
 const xhTitle=()=>Object.keys(store.get("xhTitle",{})||{}).some(k=>k!=="dev")?"九九消寒":"";
 function xhXM(season,i){const back=()=>"#/xiaohan",N=xhNow();if(N.pre)return{err:"冬至還沒到，九九消寒圖還沒開始。",back};

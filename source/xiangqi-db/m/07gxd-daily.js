@@ -74,19 +74,21 @@ async function gxdOppSetup(L,rnd,avoid){rnd=rnd||Math.random;const red={side:"r"
       if(v&&v.ok){const fen=await gxdCall("setupsToFen",red,b,"r");if(fen)return{black:b,fen,sty}}}catch(e){}}
   return null}
 /* ---------- 開局 ---------- */
+/* W120：剛改網址就排的事，換頁計數要等 hashchange 才會加，不能用 stillHere 當下記；改成到時候確認「網址還是那一頁」（j＝還是這一盤：jPending 指著它） */
+function gxdSoon(ms,re,fn,j){return setTimeout(()=>{try{if(!re.test(location.hash))return;if(j){const P=store.get("jPending",null);if(!P||P.id!==j)return}fn()}catch(e){}},ms)}
 function gxdOmenGo(D){const j="gxd:"+D.date,b=gxdArgs(D.fen,gxdLx("std"),j),nm=String(D.title||"").replace(/^今日異象：/,"");try{store.set("park3d",true)}catch(e){}
-  jStart(j,b,()=>{location.hash="#/journey/play";setTimeout(()=>toast("🌗 今日異象："+nm),600)},false)}
+  jStart(j,b,()=>{location.hash="#/journey/play";gxdSoon(600,/^#\/journey\/play/,()=>toast("🌗 今日異象："+nm),j)},false)}
 /* 11/16 開發者選單「開局前先看到」：按開戰＝先抽電腦這盤的陣（gxdFreePick）給玩家看，可以「換一種」重抽，按「確定開戰」才開局（gxdFreeStart） */
 async function gxdFreePick(L,avoid){const v=await gxdCall("validateSetup",{side:"r",pieces:L});if(!v||!v.ok){toast((v&&v.errors&&v.errors[0])||"陣還沒擺好");return null}
   const O=await gxdOppSetup(L,null,avoid);if(!O)toast("電腦這次擺不出陣，再按一次");return O}
 function gxdFreeStart(L,m,O,close){if(!O||!O.fen)return false;
   const F=gxdFreeGet();F.lay=Object.assign({},L);F.m=m;F.opp=O.black.name||"";store.set("gxdFree",F);
   const j=gxdFreeId(O.fen),b=gxdArgs(O.fen,gxdLx(m),j);if(close)close();try{store.set("park3d",true)}catch(e){}
-  jStart(j,b,()=>{location.hash="#/journey/play";setTimeout(()=>toast("🀄 電腦擺了「"+(O.black.name||"一陣")+"」"),600)},false);return true}
+  jStart(j,b,()=>{location.hash="#/journey/play";gxdSoon(600,/^#\/journey\/play/,()=>toast("🀄 電腦擺了「"+(O.black.name||"一陣")+"」"),j)},false);return true}
 /* 結果視窗的「再一盤」：同一個局面（st.start）、同一級（st.level 已是細分 1～18 級）；今日異象跨過午夜＝換今天的題 */
 function gxdAgain(st){const k=gxdKind(st.journey);
-  if(k==="omen"&&String(st.journey).slice(4)!==gxdDate()){toast("🌗 今天的異象換了");location.hash="#/guanxing";setTimeout(()=>gxdOmen(),400);return}
-  if(!st.start){location.hash="#/guanxing";setTimeout(()=>k==="free"?gxdFree():gxdOmen(),400);return}
+  if(k==="omen"&&String(st.journey).slice(4)!==gxdDate()){toast("🌗 今天的異象換了");location.hash="#/guanxing";gxdSoon(400,/^#\/guanxing$/,()=>gxdOmen());return}   /* W120：0.4 秒後還在觀星臺才開擺陣面板 */
+  if(!st.start){location.hash="#/guanxing";gxdSoon(400,/^#\/guanxing$/,()=>k==="free"?gxdFree():gxdOmen());return}
   jStart(st.journey,{human:"r",lx:st.level,journey:st.journey,lv:{fen:gxdFen(st.start),turn:"r"}},()=>{location.hash="#/journey/play"},true)}
 /* ---------- 結算（同一盤只算一次）---------- */
 function gxdSettle(st,forced){if(!gxdIs(st)||!st.id)return null;const D=store.get("gxdDone",null)||{};if(D.id===st.id)return D.r;
@@ -106,7 +108,7 @@ function gxdResultModal(st,win,draw0,XPR){const r=gxdSettle(st)||{won:win,k:gxdK
   const F=gxdFreeGet();
   modal(`<div class="em">${win?"🏆":draw0?"🤝":"💪"}</div><h2>${win?"陣成而勝":draw0?"和局":"這一陣輸了"}</h2><p class="muted">${why}・🀄 自由擺陣・${esc(gxdModeName(F.m))}（不計積分、不扣分）</p>`+
     (F.opp?`<p style="margin:6px 0 0">電腦這盤擺的是「${esc(F.opp)}」。</p>`:"")+`<p class="muted" style="margin:6px 0 0">自由擺陣一共下了 ${F.n||0} 盤、贏 ${F.w||0} 盤</p>`+(XPR||""),
-    [["同一陣再下",()=>gxdAgain(st)],["重新擺陣",()=>{location.hash="#/guanxing";setTimeout(()=>gxdFree(),400)}],home],"res")}
+    [["同一陣再下",()=>gxdAgain(st)],["重新擺陣",()=>{location.hash="#/guanxing";gxdSoon(400,/^#\/guanxing$/,()=>gxdFree())}],home],"res")}
 /* ---------- 3D：星空背景、點遠方的說明 ---------- */
 function gxdParkEx(st){if(!gxdIs(st))return null;const k=gxdKind(st.journey),om=k==="omen",nm=om?"今日異象":"自由擺陣";
   return{bg:"data/park/blackhole_360.webp",ground:"data/gxground/"+GXD_GND[gxdHash(st.journey)%GXD_GND.length]+".webp",indoor:true,era:"classic",bgName:"🔭 觀星臺・"+nm,gxd:{k},oppHello:om?GXD_TXT.hiO:GXD_TXT.hiF,quietMate:true,watchers:[],crowd:null,

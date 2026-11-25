@@ -304,7 +304,7 @@ function navPrev(){try{for(let i=NAV_D-1;i>=0;i--){const x=NAV_H[i];if(typeof x=
 const shipNav=(h,rep)=>{if(navKey(h)===navKey(location.hash))route();else if(rep)navReplace(h);else location.hash=h};   /* 已經在那一頁（例如在驛站旅人的對局頁去園子）就重畫 */
 function shipPort(k){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);walk("port",()=>{location.hash="#/port"},k==="classic"?"⚓ 下船・走進":"⚓ 放下跳板，走上")}
 function shipPark(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);store.set("park3d",true);
-  jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},()=>{shipNav("#/journey/play",rep);setTimeout(()=>{const r=store.get("parkNpc",null),n=r&&typeof PARK_NPC!=="undefined"&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`);if(k==="classic")setTimeout(()=>tellerTalk(),900)},600)})}   /* 意見回饋 674：青石園有說書人 */
+  jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},()=>{const rn=ROUTE_N;shipNav("#/journey/play",rep);setTimeout(()=>{if(!jPlayOk(rn,"park",true))return;const r=store.get("parkNpc",null),n=r&&typeof PARK_NPC!=="undefined"&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`);if(k==="classic")setTimeout(()=>{if(jPlayOk(rn,"park",true))tellerTalk()},900)},600)})}   /* 意見回饋 674：青石園有說書人 */   /* 11/25 W120：吐司、說書人卡片延後才出，到時還在對局頁、是園子這一盤、還沒走子才出（jPlayOk 在 05b-save.js） */
 function shipInn(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);walk("inn",()=>shipNav("#/journey/inn",rep))}
 function shipArena(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);if(typeof arP3On==="function")arP3On();else store.set("park3d",true);shipNav("#/arena",rep)}   /* iMac V P3-3：擂台的 3D 只算這一局（03-home-quiz arP3On） */
 

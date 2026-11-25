@@ -358,7 +358,7 @@ function checkFx(svg,label){if(!store.get("ckFx",true)||(typeof blzSkip==="funct
 let KJ_P=null,KJ_GLY=null,KJ_LAST=null;const loadKaiju=()=>KJ_P||(KJ_P=fetch("data/glyphs/kaiju.json").then(r=>r.ok?r.json():null).then(j=>KJ_GLY=j).catch(()=>{KJ_P=null}));
 /* QA P2-6、P2-9：載入畫面、朝代過場還在的時候，「開局」動畫等它們收掉再播，不疊在一起 */
 const fxBusy=()=>!!document.querySelector("#preov,.ecover");
-function kaijuFx(svg,side,k,ok){if(typeof ok==="function"&&!ok())return;   /* 11/25 開發者截圖：練功房下到第 5、6 步才跳出開局「紅先」。等過場收掉（最多 16 秒）或 3D 建好的期間，棋局已經開始走了；ok() 在真正要播時（含每次重試）再問一次「還是同一盤、還沒走子」，不是就不播。舊的呼叫沒帶 ok 照舊 */if(!store.get("opFx",true)||focusOn()||(typeof blzSkip==="function"&&blzSkip("kaiju")))return;   /* 第 12 輪 F3：快棋模式略過 */if(fxBusy()&&(k||0)<40){setTimeout(()=>kaijuFx(svg,side,(k||0)+1,ok),400);return}svg=fxHost(svg);const r=svg.getBoundingClientRect();if(!r.width)return;loadKaiju();
+function kaijuFx(svg,side,k,ok){if(typeof ok==="function"&&!ok())return;if(svg&&svg.isConnected===false)return;   /* 11/25 W121 真人視角第一輪：點「快速對局」後很快按返回，開局特效蓋在首頁上——棋盤已經不在畫面上就不播 */   /* 11/25 開發者截圖：練功房下到第 5、6 步才跳出開局「紅先」。等過場收掉（最多 16 秒）或 3D 建好的期間，棋局已經開始走了；ok() 在真正要播時（含每次重試）再問一次「還是同一盤、還沒走子」，不是就不播。舊的呼叫沒帶 ok 照舊 */if(!store.get("opFx",true)||focusOn()||(typeof blzSkip==="function"&&blzSkip("kaiju")))return;   /* 第 12 輪 F3：快棋模式略過 */if(fxBusy()&&(k||0)<40){setTimeout(()=>kaijuFx(svg,side,(k||0)+1,ok),400);return}svg=fxHost(svg);const r=svg.getBoundingClientRect();if(!r.width)return;loadKaiju();
   document.querySelectorAll(".kjfx").forEach(x=>x.remove());const P=KJ_GLY&&KJ_GLY.kaiju&&KJ_GLY.kaiju.length?KJ_GLY.kaiju:null,id="kj"+Math.random().toString(36).slice(2,7);
   const g=P?`<svg viewBox="0 0 ${(KJ_GLY.vb||[200,100]).join(" ")}"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d8"/><stop offset=".45" stop-color="#f3cf73"/><stop offset="1" stop-color="#c8902c"/></linearGradient></defs><path d="${P[Math.floor(Math.random()*P.length)]}" fill-rule="evenodd" fill="url(#${id})" stroke="#3a1a06" stroke-width=".9" paint-order="stroke"/></svg>`:"<b>開局</b>";
   const d=document.createElement("div");d.className="kjfx";d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;font-size:${Math.round(r.width*.2)}px`;
@@ -804,10 +804,12 @@ function Board(onTap,onSwipe){
     axSel=o.sel>=0?o.sel:-1;
     if(fresh&&o.anim!==false){if(!(typeof axsMove==="function"&&axsMove({to:L.t,flip,cap:!!prevB[L.t],side:sideOf(board[L.t]),me:o.me||(AXI&&!onSwipe?(flip?"b":"r"):null),ck:o.check>=0?o.check:-1,board})))moveSound(!!prevB[L.t]);if(o.check>=0)setTimeout(()=>sayCall("將軍"),120);else if(prevB[L.t])setTimeout(()=>sayCall("吃"),120)}   /* 11/12 無障礙 P16.4：聲音方位開著時，落子／吃子／對方走完／將軍／輪到你改播 11c 的有方位提示音（axsMove 回 true），沒開照舊 moveSound */
     if(fresh&&o.anim!==false&&onTap&&!onSwipe&&typeof hapMove==="function")hapMove(!!prevB[L.t],o.check,board);   /* 第 11 輪 X2 觸覺回饋：能下的棋盤走完一步震落子／吃子／將軍／將死（07hp-haptics.js）；看棋譜翻頁不震 */
+    /* W120：殺棋、將軍、吃子特效 0.2 秒後才蓋；到時棋盤 svg 要還在、這塊棋盤最後畫的局面跟現在一樣（悔棋、換盤、又走一步都會變），換了頁也不播 */
+    const fxPos=fresh&&o.fx?board.join(","):"",fxOk=()=>svg.isConnected&&!!lastBoard&&lastBoard.join(",")===fxPos;
     if(fresh&&o.fx&&o.check>=0){const ms=board[o.check]==="K"?"r":"b",mate=window.XQCore&&XQCore.legal&&XQCore.legal(board,ms).length===0;
-      if(mate)setTimeout(()=>{if(Date.now()-LAST_KFX>1500&&store.get("ckFx",true)&&!(typeof blzSkip==="function"&&blzSkip("killFx")))killFx(svg,true,"將死",o.check,flip,{side:ms==="r"?"b":"r",cap:"　"})},200);
-      else{const lab=matePattern(board,L,o.check);setTimeout(()=>checkFx(svg,lab),200)}}   // 走完棋才蓋章
-    else if(fresh&&o.fx&&prevB[L.t]){const cx=X(L.t),cy=Y(L.t);setTimeout(()=>capFx(svg,cx,cy,L.t),200)}   // 吃子（沒將軍時）：棋子落定再蓋水墨「吃」
+      if(mate)stillHere(200,()=>{if(Date.now()-LAST_KFX>1500&&store.get("ckFx",true)&&!(typeof blzSkip==="function"&&blzSkip("killFx")))killFx(svg,true,"將死",o.check,flip,{side:ms==="r"?"b":"r",cap:"　"})},fxOk);
+      else{const lab=matePattern(board,L,o.check);stillHere(200,()=>checkFx(svg,lab),fxOk)}}   /* 走完棋才蓋章 */
+    else if(fresh&&o.fx&&prevB[L.t]){const cx=X(L.t),cy=Y(L.t);stillHere(200,()=>capFx(svg,cx,cy,L.t),fxOk)}   /* 吃子（沒將軍時）：棋子落定再蓋水墨「吃」 */
     const anim=fresh&&o.anim!==false&&store.get("mvAnim",true)&&!dropNoAnim;if(fresh)dropNoAnim=false;   // 拖過去放下的棋，不用再滑一次
     const BZ=typeof blzOn==="function"&&blzOn();   /* 第 12 輪 F3 快棋模式：走子滑動 .28→.09 秒、被吃淡出 .45→.12 秒、上一步外圈 .2＋.25→.08＋.06 秒（07pm-premove.js blzTab） */
     if(anim&&prevB[L.t]){const cg=piece(prevB[L.t],L.t,0,T,PS,false);svg.append(cg);requestAnimationFrame(()=>{cg.style.transition=BZ?"opacity .12s":"opacity .45s";cg.style.opacity="0"})}

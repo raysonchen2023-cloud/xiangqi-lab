@@ -443,7 +443,7 @@ function dglMeCard(){try{if(typeof SG2G!=="undefined"&&typeof ptyStatHTML==="fun
 function dglHello(z,busy){if(z!=="land"||busy||document.getElementById("dglOut")||document.querySelector(".walkc"))return;const o=dglSt();if(o.f1)return;
   const fs=DGL.fromZ==="ship";if(!fs&&DGL.s.r>DGL_HELLO)return;o.f1=Date.now();store.set("dgl",o);
   const t=fs?"下了船，每走一會兒就要花一點定軌力；下完一盤棋、解完一題都能補回來。":"在人間走動，每過一會兒就要花一點定軌力；下完一盤棋、解完一題都能補回來。";
-  setTimeout(()=>{const said=dglSay(t,false);if(!dglFlashChip()||!said)dglFloat("hello",said?"":t)},1800)}
+  stillHere(1800,()=>{const said=dglSay(t,false);if(!dglFlashChip()||!said)dglFloat("hello",said?"":t)},()=>!dglBusy(location.hash)&&!document.getElementById("dglOut")&&!document.querySelector(".walkc"))}   /* W120：1.8 秒後還在原頁、沒進對局解題、沒退場才打招呼 */
 function dglFx(z,busy){const tired=dglTired(DGL.s.r);let v=document.getElementById("dglVig");const on=tired&&z!=="free"&&!busy&&!document.getElementById("dglOut");
   if(on&&!v){dglCss();v=document.createElement("div");v.id="dglVig";v.setAttribute("aria-hidden","true");document.body.append(v);requestAnimationFrame(()=>v.classList.add("on"))}else if(v)v.classList.toggle("on",on);
   const f=document.getElementById("dglFloat");if(DGL.s.out&&z==="ship"){if(!f||f.dataset.kind!=="rest")dglFloat("rest",`在星槎上歇息，回到 ${dglU(DGL_BACK,dglMx())} 就能再下船。`)}else if(f&&f.dataset.kind==="rest")dglFloatOff("rest")}
@@ -462,7 +462,7 @@ function dglTick(){if(!DGL_ON)return;const now=Date.now(),dt=Math.max(0,Math.min
 /* 黑洞過關：大量回復（序局、練習賽不算） */
 function dglBhEnd(st){if(!dglLive()||!st||!st.result||!st.result.w||st.result.w!==st.human)return;const j=String(st.journey||"");if(!/^bh:/.test(j)||/^bh:gs/.test(j)||j==="bh:tl"||(typeof BHX_ID!=="undefined"&&j===BHX_ID))return;
   const o=dglSt(),day=dglDay(),cap=dglBhCap(o,day,DGL_BH),g=dglGain(DGL.s,cap);if(g.n>0){dglBhUse(o,day,g.n);store.set("dgl",o)}dglPaint();   /* 11/14：一天最多靠黑洞回 DGL_BH_DAY（實際回了多少才算，滿格沒回到的不算） */
-  setTimeout(()=>toast(g.n>0?`✨ 星淵靈氣入體，旅人精神百倍！定軌力 +${dglU(g.n,dglMx())}`:cap<=0?`✨ 今天靠黑洞回的定軌力已經滿 ${dglU(DGL_BH_DAY,dglMx())} 了`:"✨ 星淵靈氣入體，旅人精神百倍！"),1600)}
+  stillHere(1600,()=>toast(g.n>0?`✨ 星淵靈氣入體，旅人精神百倍！定軌力 +${dglU(g.n,dglMx())}`:cap<=0?`✨ 今天靠黑洞回的定軌力已經滿 ${dglU(DGL_BH_DAY,dglMx())} 了`:"✨ 星淵靈氣入體，旅人精神百倍！"))}   /* W120：定軌力當下就回；吐司只在還在原頁時出 */
 /* 下完一盤（xq-result）：回 DGL_GAME。11/15 開發者選：星門圍城試玩（07bhg 對局中 body.gsv-on）不回 */
 function dglOnResult(){const now=Date.now(),long=!DGL.bt||now-DGL.bt>=DGL_GAME_MIN;DGL.done=now;DGL.bt=now;if(long&&dglLive()&&!document.body.classList.contains("gsv-on"))dglGain(DGL.s,DGL_GAME);dglPaint()}
 /* 解完一題（addXP 的解題類，同一題常有兩筆，3 秒內只算一次）、主線過關 */

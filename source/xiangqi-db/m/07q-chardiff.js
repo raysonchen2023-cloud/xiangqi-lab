@@ -204,8 +204,9 @@ function chdChalHTML(era){if(!CHD8_ON)return"";const c=chdMe();if(!c||!CHD_CHAL[
 function chdChalSet(b,era){const x=b&&b.querySelector("#chdChal");if(!x)return;chdSet(S=>{S.chal=S.chal||{};if(x.checked)S.chal[era]=1;else delete S.chal[era]})}
 const chdSealCls=e=>CHD8_ON&&chdSeal(e)?" chd-shine":"";
 function chdChalEnd(st,c,R){if(!CHD8_ON||!st.arena||!((chdSt().chal||{})[st.arena]))return;const win=!!st.result&&st.result.w===st.human,ok=win&&chdChalOk(c,R),e=st.arena;
-  setTimeout(()=>{try{if(!ok){toast(win?`⭐ 本命挑戰沒達成：${CHD_CHAL[c]}`:"⭐ 本命挑戰：要贏了才算");return}const first=!chdSeal(e);if(first)chdSet(S=>{S.seal=S.seal||{};S.seal[e]={c,at:Date.now()}});
-    chdSealFx(e);toast(`⭐ 本命挑戰達成！${typeof sealNm==="function"?sealNm(e):eraLabel(e)}${first?"多了一顆本命星":"已經有本命星了"}。${chdNk(c)}：「${(chdT(c)||{}).seal||""}」`)}catch(x){}},3000)}
+  const first=ok&&!chdSeal(e);if(first)chdSet(S=>{S.seal=S.seal||{};S.seal[e]={c,at:Date.now()}});   /* W120：本命星當下就寫進存檔（原本 3 秒後才寫，期間換頁、關掉 App 會少記），特效和吐司照舊 3 秒後、還在原頁才出 */
+  stillHere(3000,()=>{try{if(!ok){toast(win?`⭐ 本命挑戰沒達成：${CHD_CHAL[c]}`:"⭐ 本命挑戰：要贏了才算");return}
+    chdSealFx(e);toast(`⭐ 本命挑戰達成！${typeof sealNm==="function"?sealNm(e):eraLabel(e)}${first?"多了一顆本命星":"已經有本命星了"}。${chdNk(c)}：「${(chdT(c)||{}).seal||""}」`)}catch(x){}})}
 function chdSealFx(e){if(typeof sealHTML!=="function")return;chdCss();const d=document.createElement("div");d.className="stampfx chd-shine";d.innerHTML=typeof sealDraw==="function"?sealDraw(e,{fx:1}):sealHTML(e,true,true);document.body.append(d);try{vibrate([20,60,40,60])}catch(x){}setTimeout(()=>d.remove(),2800)}
 
 /* ---------- 對局結束（08b-cpugame.js CpuGame 結果處呼叫；錯棋重練不算；線上對戰不走這裡） ---------- */

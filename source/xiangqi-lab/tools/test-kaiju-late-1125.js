@@ -69,6 +69,15 @@ test("過場收掉時還沒走子：照常播（修正沒有把正常的開局�
   assert.equal(K.shown.length, 1);
 });
 
+test("W121：棋盤已經不在畫面上（換到首頁了）：就算 ok 說可以，也不播", () => {
+  const K = kit({ on: false });
+  K.svg.isConnected = false;
+  K.fx(K.svg, "r", 0, () => true);
+  assert.equal(K.shown.length, 0); assert.equal(K.timers.length, 0);
+  K.svg.isConnected = true; K.fx(K.svg, "r", 0, () => true);
+  assert.equal(K.shown.length, 1, "棋盤還在：照常播");
+});
+
 test("舊的呼叫沒帶 ok：行為跟以前一樣（沒擋住就播）", () => {
   const K = kit({ on: false });
   K.fx(K.svg, "b");
@@ -76,7 +85,9 @@ test("舊的呼叫沒帶 ok：行為跟以前一樣（沒擋住就播）", () =>
 });
 
 test("〔原始碼〕練功房、線上對局呼叫 kaijuFx 都帶 ok：同一盤、還沒走子（線上再比 gid）", () => {
-  assert.match(CPU, /kok=\(\)=>!!st&&st\.id===kid&&!st\.result&&st\.moves\.length<=klim,kj=\(\)=>kaijuFx\(bd\.svg,"r",0,kok\)/);
-  assert.match(PRE, /kaijuFx\(bd\.svg,"r",0,\(\)=>!!st&&!st\.result&&!st\.moves\.length&&!!window\.XQNet&&!!XQNet\.gid&&XQNet\.gid\(\)===gk\)/);
+  /* W121 真人視角第一輪（11/25）：點「快速對局」後很快按返回，開局特效蓋在首頁上 → 兩處 ok 另外要求還在排程時那一頁、棋盤還接在畫面上（比原本更嚴） */
+  assert.match(CPU, /krn=ROUTE_N,kh=location\.hash,kok=\(\)=>!!st&&st\.id===kid&&!st\.result&&st\.moves\.length<=klim&&ROUTE_N===krn&&location\.hash===kh&&!!bd\.svg&&bd\.svg\.isConnected,kj=\(\)=>kaijuFx\(bd\.svg,"r",0,kok\)/);
+  assert.match(PRE, /kaijuFx\(bd\.svg,"r",0,\(\(\)=>\{const krn=ROUTE_N,kh=location\.hash;return\(\)=>!!st&&!st\.result&&!st\.moves\.length&&!!window\.XQNet&&!!XQNet\.gid&&XQNet\.gid\(\)===gk&&ROUTE_N===krn&&location\.hash===kh&&!!bd\.svg&&bd\.svg\.isConnected\}\)\(\)\)/);
+  assert.match(rd("xiangqi-db/m/02-shell.js"), /ROUTE_N\+\+;document\.querySelectorAll\("\.modal:not\(\.keep\),\.kjfx"\)\.forEach\(m=>m\.remove\(\)\)/, "換頁時把正在播的開局特效也拿掉");
   assert.match(BOARD, /setTimeout\(\(\)=>kaijuFx\(svg,side,\(k\|\|0\)\+1,ok\),400\)/, "重試時把 ok 一起帶下去");
 });
