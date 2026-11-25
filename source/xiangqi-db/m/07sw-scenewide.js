@@ -122,9 +122,10 @@ for(const b in SCW_ERA){const B=SCW[b];if(!B)continue;for(const k of SCW_ERA[b])
    日間條目分在各頁自己的模組（07y2 營地、07y7 千秋盃、07s2 設定……），07sw 載入時還沒有，所以第一次用到時（scwEntry／scwByF／scwSw7）才登記，日間那條還沒有的下次再試。
    ① 夜景 <名>_night<後綴> ← 日間 <名>_day<後綴>（後綴＝經典或朝代）；② 大廳 lobby<後綴>_night ← lobby<後綴>；
    ③ 對戰、學習 <名>[_朝代]_<季>[_night]（07y hbImg）← <名>[_朝代]：夏季＝原圖，_summer 用日間那張、_summer_night 用 _night 那張。
-   沒送的 3 張（study_night_classic、study_night、canju_night_classic：多了燈籠、蠟燭、油燈，壓到入口，等開發者決定）不登記，照舊用直圖 */
+   沒送的 3 張多了燈籠、蠟燭、油燈，壓到入口：開發者選局部重畫。study_night_classic 重畫好了（Windows Claude 1 11/25 16:07，燈籠拿掉、14 個入口框核過）；
+   study_night、canju_night_classic 重畫失敗、等開發者決定，不登記，照舊用直圖 */
 const SCW_NIGHT={"campmap/camp":",_classic","canjumap/canju":",_tang,_weijin","cupmap/cup":",_classic,_han,_tang,_weijin","exammap/exam":",_classic","feedback/fb":"",
-  "gmmap/gm":",_classic,_han,_weijin","openmap/open":",_classic","redomap/redo":",_classic","setmap/set":",_classic","statmap/stat":",_classic","termsmap/terms":",_classic",
+  "gmmap/gm":",_classic,_han,_weijin","openmap/open":",_classic","redomap/redo":",_classic","setmap/set":",_classic","statmap/stat":",_classic","studymap/study":"_classic","termsmap/terms":",_classic",
   "thememap/theme":",_classic","todaymap/today":",_classic,_han,_tang,_weijin"};
 const SCW_HB_ERAS={"hubmap/battle":"qin han sanguo weijin nanbei sui tang wudai song yuan qing","hubmap/learn":"qin han sanguo weijin nanbei sui tang wudai yuan ming qing"};
 /* 變體清單 [鍵, 日間鍵, 檔名（省略＝鍵_l1610）] */

@@ -12,15 +12,15 @@ function load() {
 }
 const day = (f, extra) => Object.assign({ ready: true, f, w: 2560, h: 1600, S: { a: [10, 20] }, exit: [50, 90], safe: { l: .12, r: .12, t: .05, b: .1 }, fx: { k: 1 }, sw7: { m: "semi" } }, extra || {});
 
-test("清單：會用到的檔逐類寫死，合起來 215 張；鍵不重複；沒送的 3 張（study_night_classic、study_night、canju_night_classic）不在裡面", () => {
+test("清單：會用到的檔逐類寫死，合起來 216 張（215＋重畫好的 study_night_classic）；鍵不重複；重畫失敗的 2 張（study_night、canju_night_classic）不在裡面", () => {
   const C = load(), L = J(vm.runInContext("scwVarList()", C)), keys = L.map(x => x[0]);
   assert.equal(new Set(keys).size, keys.length, "鍵不重複");
   const files = new Set(L.filter(x => !x[3]).map(x => x[2] ? x[2].replace(/_l1610$/, "") : x[0]));
   const by = {}; for (const f of files) { const d = f.split("/")[0]; by[d] = (by[d] || 0) + 1 }
-  assert.deepEqual(by, { campmap: 2, canjumap: 3, cupmap: 5, exammap: 2, feedback: 1, gmmap: 4, openmap: 2, redomap: 2, setmap: 2, statmap: 2, termsmap: 2, thememap: 2, todaymap: 5, lobbymap: 13, hubmap: 168 });
-  assert.equal(files.size, 215);
-  for (const k of ["studymap/study_night_classic", "studymap/study_night", "canjumap/canju_night_classic"]) assert.ok(!keys.includes(k), "沒送的 " + k);
-  assert.equal(keys.length, 215 + 48, "外加 24 組夏季、夏夜");
+  assert.deepEqual(by, { campmap: 2, canjumap: 3, cupmap: 5, exammap: 2, feedback: 1, gmmap: 4, openmap: 2, redomap: 2, setmap: 2, statmap: 2, studymap: 1, termsmap: 2, thememap: 2, todaymap: 5, lobbymap: 13, hubmap: 168 });
+  assert.equal(files.size, 216); assert.ok(files.has("studymap/study_night_classic"), "重畫好的那張");
+  for (const k of ["studymap/study_night", "canjumap/canju_night_classic"]) assert.ok(!keys.includes(k), "重畫失敗、沒送的 " + k);
+  assert.equal(keys.length, 216 + 48, "外加 24 組夏季、夏夜");
 });
 
 test("日間條目晚登記也接得上：先查不到，日間那條登記後就複製一份（座標、安全區、疊圖、天氣同一份，只換檔名、記 base）", () => {
