@@ -117,6 +117,7 @@ function lmCss(){if(document.getElementById("lmCss"))return;const s=document.cre
 .lm-lp i{position:absolute;left:50%;top:100%;width:46%;height:34%;transform:translateX(-50%);border-radius:2px}
 .lm-lp.fam i{background:#e2b53e;box-shadow:0 0 3px #f2c94c}.lm-lp.story i{background:#3f8f86;box-shadow:0 0 3px #7fd1c4}
 .lm-fig{position:absolute;width:calc(3.4% * var(--lmk,1));transform:translate(-50%,-100%);pointer-events:none;opacity:.88;z-index:1}
+.scw-l .lm-fig.f2{-webkit-mask-image:linear-gradient(#000 52%,transparent 78%);mask-image:linear-gradient(#000 52%,transparent 78%)}   /* W107-L 橫式圖：二樓欄杆頂到簷下很短，人影腳底會落在欄杆上；下半部淡出，看起來像站在欄杆後面（Android 平板預驗，Windows Claude 1 建議） */
 @keyframes lmFl{from{opacity:.8}to{opacity:1}}
 .lm-lp.ink{width:calc(2.3% * var(--lmk,1));transform:translate(-50%,-4%)}.lm-lp.ink.f1{width:calc(2.6% * var(--lmk,1))}
 .lm-lp.ink svg{display:block;width:100%;height:auto;overflow:visible;--lmf:url(#lmLgOff);filter:drop-shadow(0 1px 1px rgba(40,24,12,.35))}
@@ -182,7 +183,7 @@ function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)
   lay.innerHTML=T.slice(0,8).map((t,i)=>{const[x,y]=GE.tables[i];const nm=t.l?t.l.map(p=>lbnShow(p)).join(" 對 "):"";
       const tg=t.empty?"span":"button";   /* 第 16 輪版面缺陷清零：空桌、暗燈本來就不接點選（pointer-events:none、tabindex -1），改成裝飾用的 span，不再算成按鈕（讀螢幕也不念「空著的燈」×40） */
       return`<${tg} class="lm-t${t.mine?" mine":""}${t.empty?" empty":""}" ${t.gid?`data-g="${esc(t.gid)}"`:""}${t.mine?' data-mine="1"':""} style="left:${x}%;top:${y}%;z-index:${Math.round(y)}" ${t.empty?'aria-hidden="true"':`aria-label="${esc(t.mine?"我的對局":nm+"・觀戰")}" tabindex="0"`}><img src="${LM_IMG(lmN(t.empty?"table_empty":"table_game",E))}" alt=""></${tg}>`}).join("")+
-    GE.lamps.map(([x,y,f,g],i)=>{const o=lit[i];const fig=o&&g?`<img class="lm-fig" src="${LM_IMG(FIG[i%3])}" alt="" style="left:${x}%;top:${y+(f===2?10.5:7.5)}%">`:"";
+    GE.lamps.map(([x,y,f,g],i)=>{const o=lit[i];const fig=o&&g?`<img class="lm-fig${f===2?" f2":""}" src="${LM_IMG(FIG[i%3])}" alt="" style="left:${x}%;top:${y+(f===2?10.5:7.5)}%">`:"";
       const tg=o?"button":"span";return`${fig}<${tg} class="lm-lp f${f}${GU?" gu":LM_INK_LAMP?" ink"+(PALE?" pale":""):""}${o?" on"+o.cls:""}" ${o?(o.jc?`data-jc="${esc(o.jc)}"`:`data-p="${esc(o.id)}"`):""} style="left:${x}%;top:${y}%" ${o?`aria-label="${esc(o.name)+(/ bot/.test(o.cls)?"（雲遊棋客・電腦）":"")}" tabindex="0"`:'aria-hidden="true"'}>${LM_INK_LAMP&&!GU?'<svg viewBox="0 0 20 46"><use href="#lmLamp"/></svg>':`<img src="${LM_IMG(lmN(o?"lantern_on":"lantern_off",E))}" alt="">`}${o&&/fam|story/.test(o.cls)?"<i></i>":""}</${tg}>`}).join("")+
     (XQNet.seeking&&XQNet.seeking()?`<span class="lm-wave"${GE.l?` style="left:${GE.gong.x}%;top:${GE.gong.y}%"`:""}><i></i><i></i><i></i></span>`:"")+
     (extra>0?`<button type="button" class="lm-more" data-more="p" style="left:${GE.more.people[0]}%;top:${GE.more.people[1]}%">＋${extra} 人</button>`:"")+

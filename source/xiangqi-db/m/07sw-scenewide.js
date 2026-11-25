@@ -40,9 +40,9 @@ const SCW={
     fx:{boardQ:[[200,118],[680,207],[680,668],[200,703]]}},   /* 四角由 Windows Claude 1 在原檔上用細格線量（紙面＝框的內側） */
   /* 挑戰電腦（07z5）經典世界白天：output/w107-ipad/l1610/cpuroom/。沒有走路路網；fx：掌櫃幻影（下緣離圖底、寬，都是圖的 %，照椅背高度換算）、名牌上緣、說明卡上緣和左右留白（圖變寬，卡片不拉滿） */
   "cpuroom/cpuroom_day_classic":{ready:true,f:"cpuroom/cpuroom_day_classic_l1610",w:2560,h:1600,
-    S:{crRank:[26,30],crScroll:[74,34],crBlind:[84,47],crRankT:[15,50],crFree:[86,61],crRed:[34,68],crGo:[49,74],crBlack:[65,69]},exit:[50,96],
+    S:{crRank:[26,30],crScroll:[74,34],crBlind:[84,47],crRankT:[15,50],crFree:[86,61],crRed:[34,68],crGo:[49,62],crBlack:[65,69]},exit:[14,92],   /* Android 平板預驗（Windows Claude 2）：16:9 時出口跟說明卡疊在一起、卡片下緣被裁；出口移到左下、「開始」移到茶爐上方 */
     safe:{l:.12,r:.12,t:.05,b:.10},
-    fx:{ghost:{bottom:36.8,width:20},name:{top:14},card:{top:78,left:25,right:25}}},
+    fx:{ghost:{bottom:36.8,width:20},name:{top:14},card:{top:72,left:25,right:25}}},
   /* 今日推薦（07y5）經典世界白天：output/w107-ipad/l1610/todaymap/。fx 都是像素 2560×1600：notes 五張紙四角（左上、右上、右下、左下；照原本內容槽順序）、
      eave 簷影的簷口兩端（量到的是整片屋簷 538～2074，影子會拖到柱子外的天上；11/25 模擬器上看過改成只跨板面 717～1882）、censer 香篆（中心 x、y、半徑 x、y）、term 節氣牌、seal「圓滿」印；告示的走路小動作由 07y5 照紙的位置算。
      天氣：原本 today 是全戶外（m:"out"），fg＝告示牆連屋簷擋雨雪，原圖的樹（tr）不沿用 */
@@ -142,7 +142,10 @@ function scwFail(P){const o=P&&P._scw;if(!o||!P.dataset.scw)return;const im=P.qu
   SCW_BAD[o.key]=1;scwSet(P,"")}
 function scwMount(P,o){if(!P||!o||!o.key)return;P._scw=o;if(P.dataset.scw==null)P.dataset.scw="";P.classList.toggle("scw-l",!!P.dataset.scw);
   /* 頁面原本的 onerror（07y、07x2：夜景載不到退回日景）記下來，換回原圖時還原；開頁就是橫式圖（scwPre）也要掛載不到退回（審查 #155 擋合併那項，照 07z:209） */
-  const im=P.querySelector(":scope>img");if(im){o.err0=im.onerror;if(P.dataset.scw){im.onerror=()=>scwFail(P);if(im.complete&&!im.naturalWidth&&im.getAttribute("src"))scwFail(P)}}
+  const im=P.querySelector(":scope>img");if(im){o.err0=im.onerror;if(P.dataset.scw){im.onerror=()=>scwFail(P);if(im.complete&&!im.naturalWidth&&im.getAttribute("src"))scwFail(P);
+      /* 圖還在載：07fl 第一次排版時 scwSync 回 "wait"、先照未排版顯示，圖載好要叫它再排一次（原地換圖那條路 scwSet 有掛，開頁這條以前漏了：
+         Android 平板直接開 #/canju，橫式圖放得很大、標籤照圖框 % 擺，看起來偏到左下，要等別的事觸發重排才對） */
+      if(!im.complete&&im.addEventListener)im.addEventListener("load",scwRelay(P),{once:true})}}
   scwPlace(P)}
 const scwOn=P=>!!(P&&P._scw&&P.dataset.scw);
 const scwCur=P=>scwOn(P)?scwEntry(P._scw.key):null;
@@ -154,12 +157,14 @@ function scwPut(b,xy){if(!b)return false;if(!xy&&b.dataset.scwL==null)return fal
 function scwPlace(P){const o=P&&P._scw;if(!o)return;const e=scwCur(P);
   for(const id of o.ids||[])scwPut(P.querySelector("#"+id),e&&e.S?e.S[id]:null);
   const x=P.querySelector(":scope>.ex-spot");if(x&&scwPut(x,e&&e.exit?e.exit:null)&&typeof exIn==="function")try{exIn(x)}catch(z){}}
+/* 圖載好叫 07t3 ttFill 再排一次（07fl 包的 r07Wide 會再問 scwSync） */
+const scwRelay=P=>()=>{if(!P.isConnected)return;try{if(typeof ttFill==="function")ttFill()}catch(x){}try{if(typeof spfSoon==="function")spfSoon(0)}catch(x){}};
 /* 原地換圖（k＝"l1610"／""）、換座標、各頁疊圖、走路角色 */
 function scwSet(P,k){const o=P&&P._scw,im=P&&P.querySelector(":scope>img");if(!o||!im)return;const e=k?scwEntry(o.key):null;if(!e)k="";
   P.dataset.scw=k;P.classList.toggle("scw-l",!!k);
   const src=k?scwSrc(e):o.src0;
   if(im.getAttribute("src")!==src){im.onerror=k?()=>scwFail(P):(o.err0||null);if(im.dataset)delete im.dataset.cdnTry;im._scwCdn="";   /* 換網址就清掉 00-util 的 cdnTry，新網址載不到時它才會再去 CDN 補抓 */   /* 換回原圖時還原頁面原本的 onerror（審查 #155 第 4 項） */
-    im.addEventListener("load",()=>{if(!P.isConnected)return;try{if(typeof ttFill==="function")ttFill()}catch(x){}try{if(typeof spfSoon==="function")spfSoon(0)}catch(x){}},{once:true});
+    im.addEventListener("load",scwRelay(P),{once:true});
     im.src=src}
   scwPlace(P);try{if(o.apply)o.apply(e)}catch(x){}scwWalk(P,e)}
 /* 走路角色掛的是哪一組節點（P._scwW）跟現在不同＝收掉舊的，用新的那組重掛（照 07z hmwWalk） */

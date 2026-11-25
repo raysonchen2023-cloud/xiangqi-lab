@@ -205,6 +205,18 @@ test("審查 #155 複審：載入 00-util 真正的 CDN 補抓監聽；橫式圖
   F.img.complete = true; F.img.naturalWidth = 2560; assert.equal(vm.runInContext("scwSync", F.ctx)(F.V, F.P), "l1610", "CDN 補抓成功就照橫式圖排");
 });
 
+test("Android 平板預驗：開頁就是橫式圖、圖還在載時，載好要叫 07fl 再排一次（不然停在未排版、標籤看起來偏掉）", () => {
+  const { ctx, P, V, img, spots } = fakeDom({ w: 1280, h: 714 }), scwPre = vm.runInContext("scwPre", ctx), scwMount = vm.runInContext("scwMount", ctx), scwSync = vm.runInContext("scwSync", ctx);
+  const src0 = img._src, pre = scwPre(V, src0); img._src = pre.src; P.dataset.scw = pre.k; img.complete = false;
+  scwMount(P, { key: RD, src0, ids: Object.keys(spots) });
+  assert.equal(scwSync(V, P), "wait", "圖還在載，07fl 先不排");
+  const L = img.L.filter(([t]) => t === "load"); assert.equal(L.length, 1, "掛上載好重排");
+  img.complete = true; img.naturalWidth = 2560; const t0 = ctx.__tt || 0; L[0][1]();
+  assert.equal(ctx.__tt, t0 + 1, "載好呼叫 ttFill 重排"); assert.equal(scwSync(V, P), "l1610", "重排時照橫式圖排");
+  const F = fakeDom({ w: 1280, h: 714 }); F.img.complete = true; F.img.naturalWidth = 2560; const p2 = vm.runInContext("scwPre", F.ctx)(F.V, F.img._src); F.img._src = p2.src; F.P.dataset.scw = p2.k;
+  vm.runInContext("scwMount", F.ctx)(F.P, { key: RD, src0: "x", ids: [] }); assert.equal(F.img.L.filter(([t]) => t === "load").length, 0, "已經載好（快取）就不用掛");
+});
+
 test("審查 #155：手機、直向從來沒換過圖時，07sw 不動標籤和出口（不清 00-util、07w9 記的原位）", () => {
   const { ctx, P, V, img, spots, ex } = fakeDom({ w: 402, h: 760 }), scwMount = vm.runInContext("scwMount", ctx), scwSync = vm.runInContext("scwSync", ctx);
   ex.style.top = "calc(87% - 26px)"; ex.dataset.xqTop0 = "87%"; spots.rd2Book.dataset.ttL = "10%";
@@ -256,12 +268,18 @@ test("〔混合〕原始碼：07fl 排版前先問 scwSync、安全區照條目�
   assert.match(YH, /im\.onload=\(\)=>\{if\(img\.isConnected&&!P\.dataset\.scw\)img\.src=im\.src\}/, "狀態圖晚載好、已經是橫式圖時不蓋（審查 #155 第 3 項）");
   assert.match(YH, /const lw=\/_l1610\\\.webp\/\.test\(src\),E=lw&&typeof scwByF==="function"\?scwByF\(src\):null/, "朝代殘影照橫式條目");
   assert.match(X2, /function lmFar\(s,used,G\)/); assert.match(X2, /gap:44\/pw\*100/, "橫式圖的亮燈間距照螢幕 44px");
+  assert.match(X2, /class="lm-fig\$\{f===2\?" f2":""\}"/); assert.match(X2, /\.scw-l \.lm-fig\.f2\{-webkit-mask-image:linear-gradient/, "橫式圖二樓人影下半部淡出");
+  assert.equal(JSON.stringify(SCW["cpuroom/cpuroom_day_classic"].exit), "[14,92]"); assert.equal(SCW["cpuroom/cpuroom_day_classic"].fx.card.top, 72);
   const LB = SCW["lobbymap/lobby_classic"].fx; assert.equal(LB.lamps.length, 44, "大廳 44 盞燈（燈是線上玩家，不能少）"); assert.equal(LB.tables.length, 8);
   for (const [x, y, f, g] of LB.lamps) { assert.ok(x >= 0 && x <= 100 && y >= 0 && y <= 100 && (f === 1 || f === 2) && (g === 0 || g === 1)); if (g) assert.ok(y + (f === 2 ? 10.5 : 7.5) <= 100, "人影腳底在圖內") }
   assert.equal(SCW["hubmap/learn_classic"].fx.cy.length, 3, "藏譜石窟三個朝代殘影");
   assert.equal(SCW["hubmap/battle_classic"].fx.cy.length, 3, "雲弈閣三個朝代殘影");
   for (const k of ["hubmap/learn_classic", "hubmap/battle_classic"]) for (const [, x, y, w] of SCW[k].fx.cy) assert.ok(x > 0 && x < 100 && y >= 8 && w > 0, k + " 殘影上緣留 8% 以上（中心定位，太上面會被頂欄切掉）");
   assert.equal(SCW["canjumap/canju_day_classic"].fx.ves.length, 3, "殘局三個茶具");
-  const i7 = H.indexOf("//#include m/07sw-scenewide.js"), iy = H.indexOf("//#include m/07y8-redomap.js"), ifl = H.indexOf("//#include m/07fl-fill.js");
-  assert.ok(i7 > iy && i7 < ifl, "07sw 在 07y8 後、07fl 前");
+  // 開機時 11-watch 最後一行就呼叫 route() 畫第一頁（直接開 #/cpuroom、重新整理場景頁）：07sw 要在那之前載好，
+  // 不然各頁 typeof scwPre 是 function（宣告會提早），但裡面用到的 const（scwKey、SCW）還沒初始化，整頁丟錯變空白（11/25 瀏覽器實測抓到）
+  const i7 = H.indexOf("//#include m/07sw-scenewide.js"), iu = H.indexOf("//#include m/00-util.js"), iw = H.indexOf("//#include m/11-watch.js");
+  assert.ok(i7 > iu && i7 < iw, "07sw 在 00-util 之後、11-watch（開機 route()）之前");
+  assert.match(M("m/11-watch.js"), /^route\(\);$/m, "開機的 route() 還在 11-watch");
+  for (const f of fs.readdirSync(path.join(__dirname, "../../xiangqi-db/m")).filter(f => /\.js$/.test(f) && f !== "11-watch.js")) assert.doesNotMatch(M("m/" + f), /^route\(\);$/m, f + " 也在載入時呼叫 route()，07sw 要在它前面");
 });
