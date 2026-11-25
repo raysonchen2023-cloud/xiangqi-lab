@@ -548,7 +548,10 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
   paint();const t=setInterval(paint,15000);
   return{stop:()=>{offs.forEach(f=>f());clearInterval(t);if(XQNet.seeking()&&!XQNet.active())XQNet.seek(false)}}}
 // 不管在哪個畫面都能收到邀請
-if(OFF&&window.XQNet){XQNet.start();
+/* 11/25 審核（高）：兒童模式說「資料零收集」，但這裡開 App 就連大廳（連線帶裝置代號）。家長關掉線上大廳或開兒童模式時，啟動不連；
+   直接讀存檔的 fmCfg（07m5 的 fmNetOff 這時還不能叫：它用到後面才宣告的常數，會出錯回 false）。大廳、千秋盃、觀戰在兒童模式本來就轉到說明頁 */
+const NET_KIDOFF=(()=>{try{const c=store.get("fmCfg",null)||{};return c.net===false||c.kid===true}catch(e){return false}})();
+if(OFF&&window.XQNet&&!NET_KIDOFF){XQNet.start();
   XQNet.on("version",async x=>{if(!x||!x.v)return;const a=await appVer();if(a&&x.v>a&&window.XQ_notifyNew)XQ_notifyNew(x.v,x.note||"")});
   const goGame=()=>{if(location.hash==="#/pvp")route();else location.hash="#/pvp"};
   XQNet.on("invite",x=>{vibrate([40,60,40]);

@@ -19,6 +19,7 @@ const CLASSIFIED = new Set([
   "test-eye-3d-1125.js",   /* 11/25 W121 真人視角第一輪 P3（3D）：玩家碰過畫面或按過鍵就不再跳「拖曳轉身」教學（m/06-cpu.js）、3D 操作提示抬到按鈕和小紙條上方（src/park3d.js）。7 項行為、3 項〔原始碼〕 */
   "test-censer-3d-1125.js",   /* 11/25 開發者 iPad 截圖「香爐看起來沒有平放在桌子上、會飄起來」：石桌香爐從往後仰的 2D 立牌換成 3D 青瓷三足爐（src/park3d.js censer3d），三隻腳踩桌面、不出桌緣、不進棋盤木框、白煙從香頭起 */
   "test-maze-illegal-1125.js",   /* 11/25 第 22 輪評比 P2：地底迷宮殘局點到不合棋規的位置不算答錯（m/07z9m-maze.js jhMzLegal 用 XQCore 核對），合法但不是正解才算一次 */
+  "test-kid-time-maze-1125.js",   /* 11/25 唯讀審核：兒童模式／家長關大廳啟動不連大廳（m/02-shell.js NET_KIDOFF）、切背景照算家長時間（m/05-settings.js useTick(1)）、迷宮判負後不再接受落子（m/07z9m-maze.js lost） */
   "test-still-here-1125.js",   /* 11/25 W120 延遲執行稽核中、低約 40 處：m/00-util.js 共用 stillHere(ms,fn,ok)（到時還在原頁、ok 成立才做），各處接上；七星加入過場換頁時記下來到安全頁補播。5 項行為（vm 跑 stillHere）、1 項〔原始碼〕 */
   "test-delay-reward-1125.js",   /* 11/25 W119 延遲執行稽核的 4 處高風險：古戰場、千秋殘局、漕運殘局、千秋起手式的修為和珍品不再延後才發（addXP 的 chipDelay、chdGiveRelic 的 fxDelay）；鏡像關卡電腦走子比對同一盤、步數、合法（src/local.js）。3 項行為（vm 跑 addXP）、3 項〔原始碼〕 */
   "test-kaiju-late-1125.js",   /* 11/25 開發者截圖：練功房下到第 5、6 步才跳出開局「紅先」特效。kaijuFx 多 ok 參數，真正要播時（含等過場的重試）再問「同一盤、還沒走子」；練功房、線上對局都帶（m/01-board.js、08b-cpugame.js、09b-preload.js）。6 項行為（vm 跑 kaijuFx）、1 項〔原始碼〕 */
