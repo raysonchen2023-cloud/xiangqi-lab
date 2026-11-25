@@ -83,3 +83,55 @@ test("〔混合〕順風小字：直式、橫式都放在這一派大廳標籤�
   for (const sid of SIDS) assert.deepEqual(note(sid), tall[sid], sid + " 換回直式還原");
   assert.match(B, /n\.title=jhL\([^;]*\);jhNoteAt\(n,H\.spots&&H\.spots\.hall\);P\.append\(n\)\}/, "07z9b 門內頁產生小字時就照當下的圖放");
 });
+
+test("〔混合〕jhHallUse 整個物件比對：十派 JH_HALL 的 seat／w／cut／spots／mates／extra、八派 spots／play.at、兩套走路 N／E／HS／h／look0／W／H 換過去全對，換回直式整個物件等於原值（含 screen）", () => {
+  const C = load(), R = s => vm.runInContext(s, C);
+  // 目前資料裡 cut、central 的走路 E 直橫剛好一樣：測試裡把橫式那份改成不同的值，換不換才看得出來（換的機制要鎖住，之後資料改了才不會漏）
+  R("JH_HALL_L.central.cut=0.5;JH_HALL_L.pawn.cut=0.3;JH_HALL_WALK_L.central.E+=' s1-study'");
+  const L = J(R("JH_HALL_L")), WL = J(R("JH_HALL_WALK_L"));
+  const snap = () => J(R("({H:JH_HALL,W:JH_HALL_WALK,S8:JH_HALLS8,MZ:JH_MZ_LV,w:JH_HALL_W,h:JH_HALL_H,m:JH_MATE_W})"));
+  const strip = o => { for (const sid in o.W) delete o.W[sid]._p; for (const sid in o.S8) delete o.S8[sid]._p; for (const sid in o.MZ) if (o.MZ[sid].hall) delete o.MZ[sid].hall._p; return o };
+  const before = snap();
+  R("jhHallUse(true)"); const W = snap();
+  for (const sid of SIDS) {
+    const want = Object.assign({}, before.H[sid], { seat: L[sid].seat, w: L[sid].w, cut: L[sid].cut, spots: L[sid].spots, mates: L[sid].mates, extra: L[sid].extra });
+    for (const k of ["mates", "extra"]) if (want[k] === undefined) delete want[k];
+    assert.deepEqual(W.H[sid], want, sid + " JH_HALL 整個物件");
+    if (WL[sid]) { const w = Object.assign({}, before.W[sid], WL[sid], { h: [.1, 88, .0013], look0: [50, 60], W: 2560, H: 1600 }); const got = Object.assign({}, W.W[sid]); delete got._p; assert.deepEqual(got, w, sid + " 走路整個物件") }
+    if (W.S8[sid]) { assert.deepEqual(W.S8[sid].spots, L[sid].spots, sid + " 八派 spots"); assert.deepEqual(W.S8[sid].play.at, (L[sid].extra || {})[before.S8[sid].play.k] || before.S8[sid].play.at, sid + " 八派玩法入口") }
+  }
+  assert.ok(WL.central && WL.screen, "中炮、屏風馬都有橫式走路");
+  R("jhHallUse(false)");
+  assert.deepEqual(strip(snap()), before, "換回直式：十派、走路、八派、迷宮入口整個物件等於原值");
+});
+
+test("〔混合〕JhHall 開頁實跑真的 07sw：iPad 橫向開頁用橫式圖、橫式圖載不到退回直圖（不把玩家踢回長卷）；直圖載不到才照舊退回長卷、記 JH_HALL_BAD", () => {
+  const run = (wide) => {
+    const C = load(true), R = s => vm.runInContext(s, C);
+    R(cut(B, "const jhNoteAt=", "};") + "\n" + cut(B, "const jhHallPc=", "`;") + "\nconst JH_HALL_BAD=new Set();\n" + cut(B, "function JhHall(v,sid){", "\n  return{}}"));
+    const sz = wide ? [1180, 820] : [820, 1180], els = [];
+    const mk = tag => { const e = { tagName: tag.toUpperCase(), style: {}, dataset: {}, className: "", isConnected: true, children: [], complete: false, naturalWidth: 0, _src: "",
+      getAttribute(k) { return k === "src" ? this._src : null }, get src() { return this._src }, set src(x) { this._src = x }, addEventListener() { },
+      append(...c) { this.children.push(...c) }, querySelector(q) { return q === ":scope>img" ? this.children.find(c => c.tagName === "IMG") || null : null }, classList: { _c: new Set(), add(c) { this._c.add(c) }, remove(c) { this._c.delete(c) }, toggle(c, on) { on ? this._c.add(c) : this._c.delete(c) }, contains(c) { return this._c.has(c) } } }; els.push(e); return e };
+    Object.assign(C, { localStorage: { getItem: k => k === "xqScwDev" ? "1" : null }, jhCss() { }, jhSch: () => ({ nm: "中炮門" }), setTop() { }, jhL: a => a, esc: s => s, jhFadeEl: () => ({ classList: { add() { }, remove() { }, contains() { return false } } }), jhFadeOut() { }, jhSheet() { }, jhGo() { },
+      setTimeout: f => 0, getComputedStyle: () => ({ paddingBottom: "0", paddingLeft: "0", paddingRight: "0" }), innerHeight: sz[1], location: { hash: "#/jianghu/hall/central" },
+      document: { createElement: mk, body: { classList: { add() { } } }, documentElement: { clientHeight: sz[1] } } });
+    const v = { clientWidth: sz[0], clientHeight: sz[1], scrollTop: 0, innerHTML: "", children: [], append(...c) { this.children.push(...c) }, getBoundingClientRect: () => ({ top: 0 }) };
+    R("JhHall")(v, "central");
+    const P = v.children[0], img = P.children.find(c => c.tagName === "IMG");
+    return { C, R, P, img };
+  };
+  // 橫向：開頁就是橫式圖，載不到退回直圖，玩家留在門內頁
+  let { R, P, img } = run(true);
+  assert.equal(img.src, "data/zmhall/central_l1610.webp?v=1125"); assert.equal(P.dataset.scw, "l1610");
+  img.complete = true; img.naturalWidth = 0; img.onerror();
+  assert.equal(P.dataset.scw, "", "退回直圖"); assert.equal(img.src, "data/zmhall/central.webp?v=1122");
+  assert.equal(R("location.hash"), "#/jianghu/hall/central", "沒有被踢回長卷"); assert.equal(R("JH_HALL_BAD.size"), 0);
+  assert.equal(R("SCW_BAD['zmhall/central']"), 1, "記下這張橫式圖載不到");
+  img.onerror();   // 直圖也載不到 → 照舊退回長卷
+  assert.equal(R("location.hash"), "#/jianghu"); assert.ok(R("JH_HALL_BAD.has('central')"));
+  // 直向：照舊
+  ({ R, P, img } = run(false));
+  assert.equal(img.src, "data/zmhall/central.webp?v=1122"); assert.equal(P.dataset.scw, "");
+  img.onerror(); assert.equal(R("location.hash"), "#/jianghu", "直圖載不到退回長卷"); assert.ok(R("JH_HALL_BAD.has('central')"));
+});
