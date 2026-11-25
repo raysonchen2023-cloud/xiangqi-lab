@@ -504,7 +504,9 @@ let PRACT_ACT=Date.now();addEventListener("pointerdown",()=>PRACT_ACT=Date.now()
   if(!["cpu","pvp","quiz","guess","redo"].includes(r))return;const d=localDay(),m=store.get("practiceMin",{});m[d]=Math.round(((m[d]||0)+.25)*100)/100;
   const ks=Object.keys(m).sort();while(ks.length>400)delete m[ks.shift()];store.set("practiceMin",m)}catch(e){}},15000);
 /* 意見回饋 307：後台每天用大家的資料校正的參數（題目難度、各段位的成長參數），從大廳拿，不用等改版 */
-setTimeout(()=>{try{if(OFF&&window.XQNet&&XQNet.calib&&Date.now()-((store.get("calib",null)||{}).got||0)>6*36e5)XQNet.calib(8000).then(s=>{try{const x=JSON.parse(s);if(x&&x.at)store.set("calib",{...x,got:Date.now()})}catch(e){}})}catch(e){}},12000);
+/* 11/26 0420 嚴格複核（開發者選「這次一起修」）：#185 只擋了開 App 立刻連大廳，這裡開機 12 秒後拿校準資料還是會連（帶裝置代號）。
+   兒童模式或家長關掉線上大廳（02-shell 的 NET_KIDOFF）時不拿，跟隱私說明「打開 App 不連」一致；之後自己進大廳時才連 */
+setTimeout(()=>{try{if(typeof NET_KIDOFF!=="undefined"&&NET_KIDOFF)return;if(OFF&&window.XQNet&&XQNet.calib&&Date.now()-((store.get("calib",null)||{}).got||0)>6*36e5)XQNet.calib(8000).then(s=>{try{const x=JSON.parse(s);if(x&&x.at)store.set("calib",{...x,got:Date.now()})}catch(e){}})}catch(e){}},12000);
 const practiceTotal=()=>Object.values(store.get("practiceMin",{})).reduce((a,b)=>a+b,0);
 /* ================= 🧬 天賦系統 v2（意見回饋 296、297：照開發者的〈用數學模型建構棋藝「天賦系統」〉） =================
    天賦≠目前很強。把天賦拆成可以分別估計的參數 τ＝(起點 S₀、學習速率 r、天花板 A、能力剖面 θ⃗、穩定度 σ)，每一項都附不確定度。
