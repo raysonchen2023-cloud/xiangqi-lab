@@ -344,6 +344,8 @@ function portScw(v,k){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.queryS
     if(b)scwPut(b,X?X.pier.at:null);if(A&&z){const q=A.N.pier;z.style.left=(q[0]-9)+"%";z.style.top=(q[1]-4.5)+"%"}
     /* 渡口主人（07w4）的站位只在掛上時算一次：轉向換了圖就拿掉重掛（3D 迴圈看到框不在了會自己釋放；審查 #165 第 2 項） */
     /* 07w5 偶遇（信、小人）開頁時照當時的路網找位置：轉向換了圖就叫它重放（審查 #165 第五輪） */
+    /* 轉回直向：風、船艙 WebGL 只在開頁時掛，轉成橫式時 portScwStop 收掉了，這裡重掛回來（審查 #165 第六輪） */
+    if(P._fxL===true&&!X)setTimeout(()=>{try{if(!P.isConnected||P.dataset.scw)return;if(typeof portFx==="function")portFx(v,k);if(typeof portWind==="function")portWind(v,k)}catch(e){}},0);P._fxL=!!X;
     if(P._oyL!=null&&P._oyL!==!!X&&typeof P._oyRe==="function")setTimeout(()=>{try{if(P.isConnected&&P._oyRe)P._oyRe()}catch(e){}},0);P._oyL=!!X;
     if(P.dataset.ph4&&P._ph4L!=null&&P._ph4L!==!!X&&typeof ph4Mount==="function"){P.querySelectorAll(":scope>.ph4").forEach(e=>e.remove());delete P.dataset.ph4;const V=P.parentNode;setTimeout(()=>{try{if(P.isConnected)ph4Mount(V,k)}catch(e){}},0)}};
   P._portPlace=place;

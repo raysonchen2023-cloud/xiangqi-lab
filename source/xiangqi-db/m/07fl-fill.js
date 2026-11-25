@@ -41,7 +41,7 @@ function xflHmw(V,P,nw,nh,k,sf0){const vr=V.getBoundingClientRect(),pr=P.getBoun
   const sf=sf0||(typeof HMW!=="undefined"&&HMW[k]?HMW[k].safe:null),pl=xflCover({W,av,nw,nh,off,safe:sf});if(!pl||av<120)return false;
   if(typeof r07Off==="function")xflR07Off(V);
   if(P.dataset.xflMt==null)P.dataset.xflMt=P.style.marginTop||"";
-  Object.assign(P.style,{maxWidth:"none",width:pl.w+"px",marginLeft:pl.left+"px",marginTop:(pl.top?-pl.top:0)+"px"});P.style.setProperty("--xflT",pl.top+"px");P.classList.toggle("xfl-nar",pl.gx>1);
+  Object.assign(P.style,{maxWidth:"none",width:pl.w+"px",marginLeft:pl.left+"px",marginTop:(pl.top?-pl.top:0)+"px"});P.style.setProperty("--xflT",pl.top+"px");P.style.setProperty("--xflL",Math.max(0,-pl.left)+"px");P.classList.toggle("xfl-nar",pl.gx>1);   /* --xflL：左邊裁掉幾 px（4:3 iPad 橫向時橫式圖左右會裁），標題條往內縮（審查 #165 第六輪） */
   xflCss();V.classList.add("xfl-port","xfl-hmw");P._xflKey=xflKey(xflItems(P,P.getBoundingClientRect()));
   {const ex=V.scrollHeight-V.clientHeight;if(ex<=pl.crop-pl.top+30){V.classList.add("xfl-clip");V.scrollTop=0}}
   xflBg(V,P,pl.gx>1||pl.gy>1);
@@ -61,6 +61,7 @@ function xflCss(){if(document.getElementById("xflCss"))return;const s=document.c
 #view.xfl-clip{overflow:hidden!important}
 #view.xfl-port .shp-page.cq.xfl-nar{box-shadow:0 0 22px rgba(20,12,6,.45)}
 #view.xfl-port .shp-page .shp-cap{top:var(--xflT,0px)}
+#view.xfl-hmw .shp-page .shp-cap{padding-left:calc(16px + var(--xflL,0px))}
 #view.xfl-port .shp-page .hm-slogan{top:calc(var(--xflT,0px) + 10px)}
 #view.xfl-hmw .shp-page .hm-slogan{top:calc(var(--xflT,0px) + var(--hmSlT,1.4%))}`;document.head.append(s)}
 /* ③ 模糊底：蓋住 #view 的範圍；圖換了（日夜、季節、雨雪）跟著換 */
@@ -72,7 +73,7 @@ function xflBg(V,P,on){let B=document.getElementById("xflBg");
   const r=V.getBoundingClientRect();Object.assign(B.style,{left:Math.round(r.left)+"px",top:Math.round(r.top)+"px",width:Math.round(r.width)+"px",height:Math.round(V.clientHeight)+"px"});B.hidden=false;B._P=P;V.classList.add("xfl-bgon");
   if(!im.dataset.xflL){im.dataset.xflL="1";im.addEventListener("load",()=>{const b=document.getElementById("xflBg");if(im.isConnected&&b&&!b.hidden)xflBg(V,P,true)})}}
 /* 還原 ① 的裁切（每次重排前先還原，再照新的畫面大小算） */
-function xflClear(V,P){if(V)V.classList.remove("xfl-port","xfl-clip","xfl-hmw");if(P){if(P.dataset.xflMt!=null){P.style.marginTop=P.dataset.xflMt;delete P.dataset.xflMt}P.style.removeProperty("--xflT");P.classList.remove("xfl-nar")}}
+function xflClear(V,P){if(V)V.classList.remove("xfl-port","xfl-clip","xfl-hmw");if(P){if(P.dataset.xflMt!=null){P.style.marginTop=P.dataset.xflMt;delete P.dataset.xflMt}P.style.removeProperty("--xflT");P.style.removeProperty("--xflL");P.classList.remove("xfl-nar")}}
 /* 07sp 用：直向填滿時「看得到的範圍」（client 座標）；其他情況回傳 null（照原本量整張圖） */
 function xflVis(P,pr){const V=document.getElementById("view");if(!V||!V.classList.contains("xfl-port")||!V.contains(P))return null;pr=pr||P.getBoundingClientRect();
   const vr=V.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0;return{t:Math.max(pr.top,vr.top),b:Math.min(pr.bottom,vr.top+V.clientHeight-pb)}}

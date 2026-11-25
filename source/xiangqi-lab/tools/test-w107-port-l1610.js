@@ -197,3 +197,32 @@ test("〔混合〕07w5 偶遇轉向重放：信照當下的路網重找位置；
   f(Q, null); f(Q, null); assert.equal(n, 0, "第一次和沒換都不叫"); f(Q, { sight: [] }); assert.equal(n, 1, "直→橫叫一次"); f(Q, { sight: [] }); assert.equal(n, 1); f(Q, null); assert.equal(n, 2, "橫→直再叫");
   assert.match(F, /const place=\(\)=>\{[^]*?if\(P\._oyL!=null&&P\._oyL!==!!X&&typeof P\._oyRe==="function"\)/, "在 portScw 的 place 裡");
 });
+
+test("〔混合〕4:3 iPad 橫向：07fl xflHmw 記下左邊裁掉幾 px（--xflL），標題條照它往內縮；16:10 不裁就是 0；收掉時清掉（審查 #165 第六輪）", () => {
+  const FL = M("m/07fl-fill.js"), body = FL.slice(FL.indexOf("function xflHmw(V,P,nw,nh,k,sf0){"), FL.indexOf("xflWatch(V,P);return true}") + "xflWatch(V,P);return true}".length);
+  const run = (vw, vh) => {
+    const props = {}, P = { dataset: {}, style: { setProperty: (k, v) => { props[k] = v }, removeProperty: k => { delete props[k] } }, classList: { toggle() { }, remove() { } }, getBoundingClientRect: () => ({ top: 0, width: vw }) };
+    const V = { getBoundingClientRect: () => ({ top: 0 }), scrollTop: 0, clientHeight: vh, scrollHeight: vh, classList: { add() { }, remove() { } } };
+    const ctx = vm.createContext({ getComputedStyle: () => ({ paddingBottom: "0" }), Math, xflR07Off() { }, xflCss() { }, xflKey: () => "", xflItems: () => [], xflBg() { }, xflWatch() { }, Object, parseFloat });
+    vm.runInContext(cut(FL, "function xflCover(o){", "gy:Math.max(0,Math.round(av-h))}}") + "\n" + body + "\n" + cut(FL, "function xflClear(V,P){", "P.classList.remove(\"xfl-nar\")}}"), ctx);
+    assert.equal(vm.runInContext("xflHmw", ctx)(V, P, 2560, 1600, "l1610", { l: .12, r: .12, t: .05, b: .10 }), true);
+    const L = props["--xflL"], ml = parseFloat(P.style.marginLeft); vm.runInContext("xflClear", ctx)(V, P); return { L, ml, after: props["--xflL"] };
+  };
+  const q = run(1080, 810);   // 4:3：左右會裁
+  assert.ok(parseFloat(q.L) > 0, "4:3 左邊有裁：" + q.L); assert.equal(q.L, -q.ml + "px", "--xflL＝左邊裁掉的寬度"); assert.equal(q.after, undefined, "收掉時清掉");
+  const w = run(1280, 800);   // 16:10：剛好不裁
+  assert.equal(w.L, "0px");
+  assert.match(FL, /#view\.xfl-hmw \.shp-page \.shp-cap\{padding-left:calc\(16px \+ var\(--xflL,0px\)\)\}/, "標題條照 --xflL 往內縮");
+});
+
+test("〔混合〕轉回直向：風、船艙 WebGL 重掛（只在橫→直那一次；開頁、直→直、直→橫都不叫）", () => {
+  const line = cut(F, "if(P._fxL===true&&!X)", "P._fxL=!!X;"), calls = [];
+  const ctx = vm.createContext({ setTimeout: g => g(), portFx: (v, k) => calls.push("fx:" + k), portWind: (v, k) => calls.push("wind:" + k) });
+  const f = vm.runInContext("(P,X,v,k)=>{" + line + "}", ctx), P = { isConnected: true, dataset: { scw: "" } };
+  f(P, null, {}, "classic"); assert.deepEqual(calls, [], "開頁（直）不叫");
+  f(P, null, {}, "classic"); assert.deepEqual(calls, [], "直→直不叫");
+  P.dataset.scw = "l1610"; f(P, { sight: [] }, {}, "classic"); assert.deepEqual(calls, [], "直→橫不叫");
+  P.dataset.scw = ""; f(P, null, {}, "classic"); assert.deepEqual(calls, ["fx:classic", "wind:classic"], "橫→直重掛");
+  P.dataset.scw = "l1610"; f(P, { sight: [] }, {}, "classic"); P.dataset.scw = "l1610"; f(P, null, {}, "classic"); assert.equal(calls.length, 2, "圖框還是橫式圖（例如轉回去又轉回來）就不掛");
+  assert.match(F, /const place=\(\)=>\{[^]*?if\(P\._fxL===true&&!X\)/, "在 portScw 的 place 裡");
+});
