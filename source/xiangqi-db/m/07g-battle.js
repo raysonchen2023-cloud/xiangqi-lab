@@ -398,14 +398,14 @@ function battleMark(k,i,id,o){const c=(BATTLE_CARDS[k]||[])[i];if(!c)return{firs
 /* 照戰役 id 蓋印（讓子對弈從對局頁回來時，戰役資料可能還沒載入，所以不靠位置）。07u-women.js 包這個函式做「古戰場的迴響」 */
 function battleMarkId(k,cid,id,o){const sl0=typeof sealSideOn==="function"?sealSideOn(k,"battle"):true,sealNw=()=>!sl0&&typeof sealSideOn==="function"&&sealSideOn(k,"battle"),A=battleSealsId(),E=A[k]||(A[k]={}),old=E[cid],h=o&&o.hint?1:0,first=!old;
   if(first)E[cid]=BTL_Y_ON?{at:Date.now(),h,id,c:cid}:{at:Date.now(),h,id};else if(old.h&&!h)E[cid]={...old,h:0,up:Date.now()};battleSealSave(A);
-  if(first&&typeof addXP==="function")setTimeout(()=>addXP(15,"古戰場","bt:"+(BTL_Y_ON?cid:k+":"+battleNumKey(k,cid))),1600);
+  if(first&&typeof addXP==="function")addXP(15,"古戰場","bt:"+(BTL_Y_ON?cid:k+":"+battleNumKey(k,cid)),{chipDelay:1600});
   const C=BATTLE_CARDS[k]||[],ci=C.findIndex(z=>z&&z.id===cid),c=C[ci],vo=(c&&c.vol)||1,ix=C.map((z,j)=>j).filter(j=>(C[j].vol||1)===vo),N=ix.length,n=ix.filter(j=>E[C[j].id]).length;
   let full=false,paid=false,title=false,grand=false,fullP=null;
   if(!BTL_Y_ON){
     /* 總開關關著：跟 11/8 前線上版一樣（卷一集滿＝百戰之將＋珍品＋修為 30；卷二起＝battleVol＋修為 30＋珍品；全部打下＝千古名將），只是照 id 數印 */
     const T=store.get("battleTitle",{})||{};
-    if(c&&N&&n>=N){if(vo<2){if(!T[k]){T[k]=Date.now();store.set("battleTitle",T);full=true;title=true;setTimeout(()=>addXP(30,"百戰之將","bt:title:"+k),3200)}}
-      else{const V=store.get("battleVol",{})||{},Vk=V[k]||(V[k]={});if(!Vk[vo]){Vk[vo]=Date.now();store.set("battleVol",V);full=true;setTimeout(()=>addXP(30,"古戰場・卷"+(BTL_VN[vo]||vo),"bt:vol:"+k+":"+vo),3200)}}
+    if(c&&N&&n>=N){if(vo<2){if(!T[k]){T[k]=Date.now();store.set("battleTitle",T);full=true;title=true;addXP(30,"百戰之將","bt:title:"+k,{chipDelay:3200})}}
+      else{const V=store.get("battleVol",{})||{},Vk=V[k]||(V[k]={});if(!Vk[vo]){Vk[vo]=Date.now();store.set("battleVol",V);full=true;addXP(30,"古戰場・卷"+(BTL_VN[vo]||vo),"bt:vol:"+k+":"+vo,{chipDelay:3200})}}
       if(full){paid=true;fullP=Promise.resolve(typeof cjRelic==="function"?cjRelic(k,{quiet:1}):null).catch(()=>null)}}
     if(C.length>5&&C.every(z=>E[z.id])){const Gd=store.get("battleGrand",{})||{};if(!Gd[k]){Gd[k]=Date.now();store.set("battleGrand",Gd);grand=true;if(!fullP)fullP=Promise.resolve(null)}}
     const ttl=vo<2?shipShort(k)+"・百戰之將":`${eraLabel(k)}・卷${BTL_VN[vo]||vo}`,big=grand?shipShort(k)+"・千古名將":ttl;
@@ -416,7 +416,7 @@ function battleMarkId(k,cid,id,o){const sl0=typeof sealSideOn==="function"?sealS
   /* 一卷 5 場都上線、都打下：每卷只結算一次（battleVolY）；舊版領過的次數先抵（battleVolLegacy） */
   if(c&&N>=5&&n>=N){const V=store.get("battleVolY",{})||{},Vk=V[k]||(V[k]={});if(!Vk[vo]){Vk[vo]=Date.now();store.set("battleVolY",V);full=true;
       const LG=battleLegacy(),lg=LG[k];if(lg&&(lg.n|0)>(lg.used|0)){lg.used=(lg.used|0)+1;store.set("battleVolLegacy",LG)}
-      else{paid=true;if(typeof addXP==="function")setTimeout(()=>addXP(30,"古戰場・卷"+(BTL_VN[vo]||vo),"bt:volY:"+k+":"+vo),3200);fullP=Promise.resolve(typeof cjRelic==="function"?cjRelic(k,{quiet:1}):null).catch(()=>null)}
+      else{paid=true;if(typeof addXP==="function")addXP(30,"古戰場・卷"+(BTL_VN[vo]||vo),"bt:volY:"+k+":"+vo,{chipDelay:3200});fullP=Promise.resolve(typeof cjRelic==="function"?cjRelic(k,{quiet:1}):null).catch(()=>null)}
       const T=store.get("battleTitle",{})||{};if(!T[k]){T[k]=Date.now();store.set("battleTitle",T);title=true}
       if(!fullP)fullP=Promise.resolve(null)}}
   if(C.length>=25&&C.every(z=>E[z.id])){const Gd=store.get("battleGrand",{})||{};if(!Gd[k]){Gd[k]=Date.now();store.set("battleGrand",Gd);grand=true;if(!fullP)fullP=Promise.resolve(null)}}

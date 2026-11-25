@@ -180,12 +180,13 @@ function chdOpOk(c,own){const O=own||[],B=(CHD_BM[c]||{}).pc;if(O.length<8)retur
   if(B==="P")return!!o0&&o0.p==="P"&&o0.fr===6&&o0.tr===5&&o0.fc===o0.tc&&O.slice(0,10).some(m=>m.p==="P"&&m.tr<=4);return false}
 const chdOp=c=>((chdSt().op||{})[c])||{n:0,g:[]};
 /* 送一件珍品（雲河尋根優先）；回傳 [朝代, 珍品] 或 null */
-async function chdGiveRelic(c,from){try{const R=await relicsData(),M=relicsMine(),has=(e,id)=>(M[e]||[]).includes(id),e0=chdHomeEra(c);
+async function chdGiveRelic(c,from,fxDelay){try{const R=await relicsData(),M=relicsMine(),has=(e,id)=>(M[e]||[]).includes(id),e0=chdHomeEra(c);
   let pick=(CHD_ROOT[c]||[]).find(([e,id])=>!has(e,id)&&(R[e]||[]).some(z=>z.id===id));if(!pick){const z=(R[e0]||[]).find(x=>!has(e0,x.id));if(z)pick=[e0,z.id]}if(!pick)return null;
-  const it=(R[pick[0]]||[]).find(z=>z.id===pick[1]);M[pick[0]]=(M[pick[0]]||[]).concat(pick[1]);store.set("relics",M);if(typeof relicFx==="function")relicFx(pick[0],it,{from});return[pick[0],it]}catch(e){return null}}
+  const it=(R[pick[0]]||[]).find(z=>z.id===pick[1]);M[pick[0]]=(M[pick[0]]||[]).concat(pick[1]);store.set("relics",M);if(typeof relicFx==="function"){if(fxDelay>0)setTimeout(()=>relicFx(pick[0],it,{from}),fxDelay);else relicFx(pick[0],it,{from})}return[pick[0],it]}catch(e){return null}}
 function chdOpEnd(st,c,R){if(!CHD7_ON||!CHD_OP[c]||!chdStd(st)||!chdOpOk(c,R.own))return;const id=String(st.id||Date.now());let o=chdOp(c);if(o.done||(o.g||[]).includes(id))return;
   chdSet(S=>{S.op=S.op||{};const x=S.op[c]=S.op[c]||{n:0,g:[]};x.n=(x.n||0)+1;x.g=(x.g||[]).concat(id).slice(-12);if(x.n>=CHD_OP_N)x.done=Date.now()});o=chdOp(c);const T=chdT(c)||{};
-  setTimeout(()=>{try{if(o.done){if(typeof addXP==="function")addXP(40,"起手式","op:"+c);toast(`🌟 千秋起手式「${CHD_OP[c].nm}」修成！${chdNk(c)}：「${(T.op||{}).say||""}」`);chdGiveRelic(c,"千秋起手式・"+CHD_OP[c].nm+"修成")}
+  if(o.done){try{if(typeof addXP==="function")addXP(40,"起手式","op:"+c,{chipDelay:3200})}catch(e){}chdGiveRelic(c,"千秋起手式・"+CHD_OP[c].nm+"修成",3200)}   /* W119：修成的修為、珍品當下就發（原本 3.2 秒後才發，期間關掉 App 會永久少發），特效和吐司照舊 3.2 秒後 */
+  setTimeout(()=>{try{if(o.done){toast(`🌟 千秋起手式「${CHD_OP[c].nm}」修成！${chdNk(c)}：「${(T.op||{}).say||""}」`)}
     else toast(`🌟 千秋起手式「${CHD_OP[c].nm}」${o.n}／${CHD_OP_N}`)}catch(e){}},3200)}
 
 /* ---------- 8 七星破擂（CHD8_ON）----------

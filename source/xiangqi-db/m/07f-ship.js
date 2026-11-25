@@ -258,7 +258,7 @@ function shipMark(k,id,o){const A=store.get("shipSolved",{})||{},E=A[k]||(A[k]={
   if(first)E[id]={at:Date.now(),h};else if(old.h&&!h)E[id]={at:old.at||Date.now(),h:0,up:Date.now()};store.set("shipSolved",A);try{if(first&&typeof ptyOnSolve==="function")ptyOnSolve(k,id)}catch(e){}   /* 11/15 七星改版：解開下船幫忙的那一題，他就加入（07pty-party.js） */
   const L=shipPuzzles(k)||[],n=L.filter(x=>shipRec(k,x)).length;let learned=false;
   if(L.length&&n>=L.length&&!shipLearned(k)){const M=store.get("shipLearn",{})||{};M[k]=Date.now();store.set("shipLearn",M);learned=true}
-  if(first&&typeof addXP==="function")setTimeout(()=>addXP(15,"千秋殘局",`ship:${k}:${id}`),1600);
+  if(first&&typeof addXP==="function")addXP(15,"千秋殘局",`ship:${k}:${id}`,{chipDelay:1600});   /* W119：修為當下發，小標籤照舊 1.6 秒後 */
   return{first,h,n,all:L.length,learned,stale1:shipStale1(id)}}
 function shipDoneHTML(k,o,ans,id,isX){if(ans||!o)return`<p class="muted">看了答案，這題先不算解開；之後不看答案再解一次就算。</p>`;
   const Ls=SHIP_LESSON[k]||{},W=shipWho(k,Ls.doneBy),P=id&&SHIP_BANK?SHIP_BANK.D.byId[id]:null,S=id?shipSay(k,id,P,-1):{};
