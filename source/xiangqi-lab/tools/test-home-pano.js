@@ -163,6 +163,9 @@ test("W132 鏡頭位移：手機直放、側欄模式照舊移一整屏；寬螢
   assert.ok(381 - 419 + l <= 0, "左屏外緣在外框左緣以外或剛好貼齊＝左邊沒有空白");
   assert.equal(hmpShift(1, 419, 0, 2000, false) === 0 || Object.is(hmpShift(1, 419, 0, 2000, false), -0), true, "外框夠寬、三屏都看得到：不用移");
   assert.equal(hmpShift(1, 500, 400, 600, false), -500, "最多移一整屏");
+  // #189 預驗（Windows Claude 2）：手機 390 寬時中間那屏被 07t3 補到 433、左緣 −21，要照舊移一整屏（433），不能走寬螢幕算式多移 22px
+  assert.equal(hmpShift(1, 433, -21, 390, false), -433, "手機：中間那屏比外框寬，照舊一整屏（往右）");
+  assert.equal(hmpShift(-1, 433, -21, 390, false), 433, "手機：照舊一整屏（往左）");
 });
 
 test("〔原始碼〕W132 鏡頭位移都走 hmpShift（hmpPlace、hmpCam 不再寫死 -i*w）", () => {
@@ -170,4 +173,5 @@ test("〔原始碼〕W132 鏡頭位移都走 hmpShift（hmpPlace、hmpCam 不再
   assert.match(SRC_P, /function hmpPlace\(P\)\{[^\n]*hmpOff\(P,i\)/);
   assert.match(SRC_P, /to=i\?hmpOff\(P,i\):0/);
   assert.doesNotMatch(SRC_P, /to=-i\*w/);
+  assert.match(SRC_P, /show=on&&\(l\?i>-1:i<1\)&&Math\.round\(t\?hmpOff\(P,t\):0\)!==/, "鏡頭移不動時按鈕藏起來（1440 寬）");
 });
