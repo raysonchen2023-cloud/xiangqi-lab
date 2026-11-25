@@ -47,6 +47,17 @@ const SHW_SETMAP={el:40,h:[.085,70,.0012],look0:[40,60],
     smMail:["xuan",72,75,"bow"],smNote:["xuan",67,82,"bow"],smPass:["xuan",70,79,"bow"],smPack:["xuan",50,90,"wave"]}};
 /* 棋桌上程式畫的棋盤（量圖的像素）：四個角 P00 左上、P10 左下、P11 右下、P01 右上；U 往下＝9 條直線、V 往右＝10 條橫線 */
 const SM_BOARD={q:[[354,453],[343,486],[447,486],[436,453]],mu:.07,mv:.045};   /* 史學顧問 11/8：棋盤移到羅漢床上的炕桌（set_day_v3） */
+/* W107-L：iPad 橫向專用橫式圖（07sw SCW）。座標是 output/w107-ipad/l1610/setmap/set_day_classic_l1610.json（Windows Claude 1 量）；原圖版 set_day 對齊到經典版，共用同一套。
+   fx.board 炕桌棋盤四角（像素 2560×1600，左上、左下、右下、右上，跟 SM_BOARD.q 同順序），.sm-frame、.sm-gold 照它算；fx.bag 琴囊（%；r＝旋轉角，琴在琴桌上往右下斜；Windows Claude 1 給的是大概範圍，iMac 在瀏覽器對過）；
+   fx.lamp 深色時的 3 盞燈（%：窗、香爐、書案）。橫式圖沒有夜版，深色時照舊用日間橫式圖，疊調暗層和燈。走路：前景有包袱、書箱、手札小桌、鏡桌，路線都繞開 */
+const SM_L1610={ready:true,f:"setmap/set_day_classic_l1610",w:2560,h:1600,
+  S:{"smFan":[13,22],"smWin":[50,21.6],"smBoard":[48.2,37.6],"smBrush":[68,30.4],"smKnife":[73.7,32.8],"smLock":[79.2,37.3],"smRobe":[16,50],"smTag":[10,64],"smMirror":[23.5,61.6],"smInc":[52,52.8],"smQin":[74,55.2],"smBell":[89,40],"smMail":[88.8,67.2],"smNote":[47.5,70.4],"smPass":[87.5,85.6],"smPack":[47,87.2]},exit:[14,92],
+  safe:{"l":0.12,"r":0.12,"t":0.05,"b":0.1},
+  walk:{W:2560,H:1600,el:40,h:[.12,95,.0011],look0:[50,60],home:"home",N:{"home":[62,95],"f1":[62,66],"tbl":[50,64],"f2":[33,66],"mir":[33,80],"desk":[62,50],"snd":[74,76],"xuan":[76,92]},
+    E:"home-f1 f1-tbl tbl-f2 f2-mir f1-desk f1-snd snd-xuan home-xuan",
+    HS:{"smFan":["f2",13,22,"wave"],"smWin":["tbl",50,22,"wave"],"smBoard":["tbl",48,38,"bow"],"smBrush":["desk",68,30,"wave"],"smKnife":["desk",74,33,"wave"],"smLock":["desk",79,37,"wave"],"smRobe":["mir",14.5,58,"wave"],"smTag":["mir",8,60,"wave"],"smMirror":["mir",23.5,62,"bow"],"smInc":["tbl",52,53,"bow"],"smQin":["snd",74,55,"bow"],"smBell":["snd",92,45,"wave"],"smMail":["xuan",88.8,67,"wave"],"smNote":["f1",47.5,70,"bow"],"smPass":["xuan",87.5,85,"bow"],"smPack":["home",47,87,"idle"]}},
+  fx:{board:[[1132,543],[1106,627],[1367,627],[1352,543]],bag:{l:64.6,t:53.2,w:22,h:3.6,r:16},lamp:[[50,25],[52,48],[72,32]]}};
+if(typeof SCW!=="undefined"){SCW["setmap/set_day_classic"]=SM_L1610;SCW["setmap/set_day"]=Object.assign({},SM_L1610,{f:"setmap/set_day_l1610",base:"setmap/set_day_classic"})}
 function smCss(){if(document.getElementById("smCss"))return;const s=document.createElement("style");s.id="smCss";s.textContent=`
 .set-page{margin:0 0 6px}.set-page .shp-spot{max-width:40%;padding:3px 9px;z-index:3}.set-page .shp-spot b{white-space:nowrap;font-size:13px}
 .sm-fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -75,23 +86,28 @@ function smCss(){if(document.getElementById("smCss"))return;const s=document.cre
 const smDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"&&xqNight())};   /* 11/17 第 28 輪 N28-2：有夜版圖的頁一律照實際日落（00-util xqNight，跟首頁同一個判斷）；深色主題照舊 */
 const smMute=()=>!store.get("mvSound",false)&&!store.get("voiceCall",true)&&!store.get("bgm",true);
 /* 棋盤四角雙線性內插：u 往下（0..1）、v 往右（0..1）→ 圖上像素 */
-const smAt=(u,v)=>{const[a,b,c,d]=SM_BOARD.q;return[a[0]*(1-u)*(1-v)+b[0]*u*(1-v)+c[0]*u*v+d[0]*(1-u)*v,a[1]*(1-u)*(1-v)+b[1]*u*(1-v)+c[1]*u*v+d[1]*(1-u)*v]};
-function smScene(P){const fx=P.querySelector(".sm-fx"),img=P.querySelector(":scope>img");if(!fx||!img)return;const W=768,H=1376,pc=([x,y])=>[x/W*100,y/H*100];
+const smAt=(u,v,q)=>{const[a,b,c,d]=q||SM_BOARD.q;return[a[0]*(1-u)*(1-v)+b[0]*u*(1-v)+c[0]*u*v+d[0]*(1-u)*v,a[1]*(1-u)*(1-v)+b[1]*u*(1-v)+c[1]*u*v+d[1]*(1-u)*v]};
+function smScene(P){const fx=P.querySelector(".sm-fx"),img=P.querySelector(":scope>img");if(!fx||!img)return;
+  /* W107-L：用橫式圖時棋盤、琴囊、燈照條目 fx，不換日夜圖（橫式圖只有日間；換了會把橫式圖蓋成直圖） */
+  const e=typeof scwCur==="function"?scwCur(P):null,G=e&&e.fx&&e.fx.board?e.fx:null,Q=G?G.board:SM_BOARD.q;
+  const W=G?e.w:768,H=G?e.h:1376,pc=([x,y])=>[x/W*100,y/H*100];
   const dk=smDark();let night=false;
-  if(dk){const im=new Image();im.onload=()=>{if(img.isConnected&&smDark()){img.src=im.src;night=true;const n=fx.querySelector(".sm-night");if(n)n.remove();fx.querySelectorAll(".sm-lamp").forEach(x=>x.remove())}};im.src=xqClImg(`data/setmap/set_night.webp?v=${SM_IMGV}`)}
+  if(G){}else if(dk){const im=new Image();im.onload=()=>{if(img.isConnected&&smDark()){img.src=im.src;night=true;const n=fx.querySelector(".sm-night");if(n)n.remove();fx.querySelectorAll(".sm-lamp").forEach(x=>x.remove())}};im.src=xqClImg(`data/setmap/set_night.webp?v=${SM_IMGV}`)}
   else if(!/set_day/.test(img.src))img.src=xqClImg(`data/setmap/set_day.webp?v=${SM_IMGV}`);
   let h="";
-  if(dk&&!night)h+='<i class="sm-night"></i><i class="sm-lamp" style="left:80%;top:30%"></i><i class="sm-lamp" style="left:55%;top:46%;width:22%"></i><i class="sm-lamp" style="left:56%;top:51%;width:14%"></i>';
-  if(smMute())h+='<i class="sm-bag" title="琴囊"></i>';
-  try{const e=typeof boardEraE==="function"?boardEraE():null;if(e&&e.b){const[x0,y0]=pc(SM_BOARD.q[1]),[x1]=pc(SM_BOARD.q[2]),[,y1]=pc(SM_BOARD.q[0]);
-    h+=`<i class="sm-frame" style="left:${(x0-.6).toFixed(2)}%;top:${(y1-.4).toFixed(2)}%;width:${(x1-x0+1.2).toFixed(2)}%;height:${(pc(SM_BOARD.q[1])[1]-y1+.8).toFixed(2)}%;border:3px solid ${e.b.bg[1]};background:${e.b.bg[0]}22;border-radius:2px"></i>`}}catch(err){}
+  if(dk&&!night)h+=G?'<i class="sm-night"></i>'+G.lamp.map(([x,y],i)=>`<i class="sm-lamp" style="left:${x}%;top:${y}%;width:${[10,8,5][i]||6}%"></i>`).join(""):'<i class="sm-night"></i><i class="sm-lamp" style="left:80%;top:30%"></i><i class="sm-lamp" style="left:55%;top:46%;width:22%"></i><i class="sm-lamp" style="left:56%;top:51%;width:14%"></i>';   /* 橫式圖的燈寬＝原本的寬×圖變寬的比例（約 0.35） */
+  if(smMute())h+=G&&G.bag?`<i class="sm-bag" title="琴囊" style="left:${G.bag.l}%;top:${G.bag.t}%;width:${G.bag.w}%;height:${G.bag.h}%;transform:rotate(${G.bag.r||0}deg)"></i>`:'<i class="sm-bag" title="琴囊"></i>';
+  try{const be=typeof boardEraE==="function"?boardEraE():null;if(be&&be.b){const[x0,y0]=pc(Q[1]),[x1]=pc(Q[2]),[,y1]=pc(Q[0]);
+    h+=`<i class="sm-frame" style="left:${(x0-.6).toFixed(2)}%;top:${(y1-.4).toFixed(2)}%;width:${(x1-x0+1.2).toFixed(2)}%;height:${(pc(Q[1])[1]-y1+.8).toFixed(2)}%;border:3px solid ${be.b.bg[1]};background:${be.b.bg[0]}22;border-radius:2px"></i>`}}catch(err){}
   if(store.get("hiCon",false)){const P0=[];for(const side of[[0,"k"],[9,"r"]]){const j0=side[0],dj=j0?-1:1;for(let i=0;i<9;i++)P0.push([i,j0]);P0.push([1,j0+2*dj],[7,j0+2*dj]);for(const i of[0,2,4,6,8])P0.push([i,j0+3*dj])}
-    const{mu,mv}=SM_BOARD,cw=(SM_BOARD.q[3][0]-SM_BOARD.q[0][0])*(1-2*mv)/9/W*100*.86;
-    h+=P0.map(([i,j])=>{const[x,y]=pc(smAt(mu+(1-2*mu)*i/8,mv+(1-2*mv)*j/9));return`<i class="sm-gold" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;width:${cw.toFixed(2)}%;aspect-ratio:1.25"></i>`}).join("")}
+    const{mu,mv}=SM_BOARD,cw=(Q[3][0]-Q[0][0])*(1-2*mv)/9/W*100*.86;
+    h+=P0.map(([i,j])=>{const[x,y]=pc(smAt(mu+(1-2*mu)*i/8,mv+(1-2*mv)*j/9,Q));return`<i class="sm-gold" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%;width:${cw.toFixed(2)}%;aspect-ratio:1.25"></i>`}).join("")}
   fx.innerHTML=h}
 function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySelector(".set-page"))return;smCss();smSecNm(root);
   const d=document.createElement("div");
-  d.innerHTML=`<div class="shp-page cq set-page"><img src="${xqClImg(`data/setmap/set_day.webp?v=${SM_IMGV}`)}" alt="天字客房"><div class="sm-fx" aria-hidden="true"></div>${SM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" aria-label="${esc((SM_EPT[id]||t).replace(/^[\p{Extended_Pictographic}️\s]+/u,"")||t)}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
+  /* W107-L：iPad 橫向有專用橫式圖（07sw）就一開始載那張；入口、出口、走路照條目（SM_L1610） */
+  const src=xqClImg(`data/setmap/set_day.webp?v=${SM_IMGV}`),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};
+  d.innerHTML=`<div class="shp-page cq set-page${pre.k?" scw-l":""}"${pre.k?` data-scw="${pre.k}"`:""}><img src="${pre.src}" alt="天字客房"><div class="sm-fx" aria-hidden="true"></div>${SM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" aria-label="${esc((SM_EPT[id]||t).replace(/^[\p{Extended_Pictographic}️\s]+/u,"")||t)}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,root);
   /* 宣紙畫軸：原本的設定整包搬進來（還在 v 裡面，原本綁的按鈕、paint() 都照常） */
   const dw=document.createElement("div");dw.className="sm-dw";dw.innerHTML='<div class="sm-dw-h">📜 設定<button type="button" aria-label="收起畫軸">✕</button></div><div class="sm-dw-b"></div>';
@@ -125,6 +141,8 @@ function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySele
     b.onclick=()=>{vibrate(5);if(ES&&ES.on())ES.close();open(store.get("setTab","look"),"")};tr.prepend(b)}}
   for(const[id,,,,tab,sel]of SM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;
     b.onclick=()=>{vibrate(5);if(id==="smMirror"){const f=root.querySelector("#meFig");if(f){f.click();return}}if((id==="smMail"||id==="smNote")&&typeof FEEDBACK_PAGE_ON!=="undefined"&&FEEDBACK_PAGE_ON){location.hash=id==="smMail"?"#/feedback":"#/feedback/fixes";return}if(SM_EP[id]&&epOpen(id))return;open(tab,sel)}}   /* 回饋 799：信插、手札一下直達意見回饋頁（07s3） */
+  const cfg=Object.assign({},SHW_PG0,SHW_SETMAP);let cfgNow=cfg;
+  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:SM_SPOTS.map(z=>z[0]),pfx:"set",cfg0:cfg,apply:()=>smScene(P)};scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}}
   smScene(P);
   /* 11/17 iMac I P3-11：在面板裡切「高對比主題」「螢幕報讀與鍵盤」「高對比」「專注棋盤」這類開關，有的會讓設定頁整頁重畫（11b axmHctSet 會 route()），面板跟著不見、要重點小鎖匣 →
      切之前記下是哪個器物的面板（sessionStorage smReopen），設定頁重畫完照原樣再打開；沒重畫（面板還開著）就把記號清掉 */
@@ -135,6 +153,6 @@ function setMap(v){const root=v.querySelector(".pad.home");if(!root||v.querySele
   /* 設定改了（深淺色、聲音、朝代棋盤、高對比）：畫軸開著時每次改都重畫場景 */
   root.addEventListener("click",()=>setTimeout(()=>smScene(P),80));root.addEventListener("change",()=>setTimeout(()=>smScene(P),80));
   if(typeof shpFit==="function")shpFit(v);
-  try{if(typeof shwPage==="function"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_SETMAP),"set")}catch(e){}
+  try{if(typeof shwPage==="function"&&SHIP_WALK_ON)shwPage(v,cfgNow,"set")}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Settings==="function"){const f0=Settings;Settings=function(v){const r=f0.apply(this,arguments);try{if(SETMAP_ON)setMap(v)}catch(e){}return r}}
