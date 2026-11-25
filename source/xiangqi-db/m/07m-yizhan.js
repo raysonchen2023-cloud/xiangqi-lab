@@ -50,6 +50,8 @@ if(typeof SCW!=="undefined")for(const k in YZ_L){const L=YZ_L[k];
 /* 換圖重掛走路時（07sw scwWalk 叫 onCfg）：橫式圖記憶名用 yzL:<朝>，原圖照舊 yz:<朝> */
 function yzOnCfg(o,k,x){o.pfx=(x&&x.W===2560?"yzL:":"yz:")+k}
 /* 開頁就是橫式圖：圖框一開始就帶 scw-l 和 data-scw（07sw scwMount 看 data-scw 決定入口照條目擺；少了它入口會照原圖 % 擺在橫式圖上）。回傳 class 後半＋屬性 */
+/* 掛 07sw 用的設定：key／src0 一定是原圖網址（src，不是 pre.src）——key 錯了查不到條目，src0 錯了載不到橫式圖時退不回原圖 */
+function yzScwO(k,src,cfg){const o={key:scwKey(src),src0:src,ids:["yzTr","yzSec","yzMail","yzLing","yzSight"],pfx:"yz:"+k,cfg0:cfg};o.onCfg=x=>yzOnCfg(o,k,x);return o}
 const yzScwTag=k=>k?` scw-l" data-scw="${k}"`:`"`;
 /* 雲河驛站圖上 12 朵小雲（左%、上%＝圓印放在那朵雲的下緣），照 park/yizhan/classic.png 量的：第一排秦漢三國魏晉、第二排南北朝隋唐五代、第三排宋元明清 */
 const YZ_ROAD={qin:[17,18],han:[40,17.5],sanguo:[64,18],weijin:[84,18.5],nanbei:[16.5,29.5],sui:[39,31],tang:[64,30],wudai:[86,32],song:[34,40.5],yuan:[46,41],ming:[65,42],qing:[88,43]};
@@ -123,7 +125,7 @@ function yzInn(v,k){if(!YZ_ON||!YZ_READY.has(k))return;const S=YZ_SPOT[k],pad=v.
   on("#yzMail",()=>yzMail(k));on("#yzLing",()=>{if(YZ_NOLIST_ON&&pad.classList.contains("yz-nolist"))return yzLing();const L=v.querySelector("#lingBox");if(L)L.scrollIntoView({behavior:"smooth",block:"start"})});on("#yzMore",()=>yzMore(v,k,pad));on("#yzSight",()=>yzSight(k));
   pg.querySelectorAll("[data-yze]").forEach(b=>b.onclick=()=>{const e=b.dataset.yze;vibrate(5);if(eraLocked(e)){toast(eraLockMsg(e));return}shipGoTo(e,()=>route())});
   /* W107-L：掛上 07sw（換圖、退回原圖、入口換位置）；走路設定 cfg0 跟 07w 的 shwYz 同一份。開頁就是橫式圖時這裡先照條目掛走路，07w 包的那次 shwPage 看到已掛過就略過 */
-  if(typeof scwMount==="function"&&typeof SHW_YZ!=="undefined"&&SHW_YZ[k]){const cfg=Object.assign({},SHW_PG0,SHW_YZ[k]),o={key:scwKey(src),src0:src,ids:["yzTr","yzSec","yzMail","yzLing","yzSight"],pfx:"yz:"+k,cfg0:cfg,onCfg:x=>yzOnCfg(o,k,x)};
+  if(typeof scwMount==="function"&&typeof SHW_YZ!=="undefined"&&SHW_YZ[k]){const cfg=Object.assign({},SHW_PG0,SHW_YZ[k]),o=yzScwO(k,src,cfg);
     scwMount(pg,o);if(pre.k&&scwCur(pg)){const c=scwWalkCfg(o,scwCur(pg));yzOnCfg(o,k,c);pg._scwW="l";
       try{if(typeof shwPage==="function"&&typeof SHW_YZ_ON!=="undefined"&&SHW_YZ_ON&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,c,o.pfx,()=>!document.querySelector(".walkc"))}catch(e){}}}
   shpFit(v)}

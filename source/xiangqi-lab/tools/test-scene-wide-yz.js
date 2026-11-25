@@ -79,6 +79,20 @@ test("開頁就是橫式圖：yzScwTag 讓圖框一開始就帶 data-scw，07sw 
   const o = mount(""); assert.equal(o.p.scw, null); assert.ok(!o.p.cls.includes("scw-l")); assert.equal(o.el["#yzTr"].style.left, "1%", "原圖：入口不動");
 });
 
+test("〔混合〕掛 07sw 的設定 yzScwO：key、src0 是原圖網址；開頁就是橫式圖、圖載不到時退回原圖（src0）；yzInn 用原圖 src 建它（#166 複審建議 1、2）", () => {
+  const C = load(true), mk = vm.runInContext("yzScwO", C), SRC = "data/yizhan/tang_f.webp", cfg = { home: "home" };
+  const o = mk("tang", SRC, cfg);
+  assert.equal(o.key, "yizhan/tang_f"); assert.equal(o.src0, SRC); assert.equal(o.cfg0, cfg); assert.equal(o.pfx, "yz:tang");
+  assert.deepEqual(J(o.ids), ["yzTr", "yzSec", "yzMail", "yzLing", "yzSight"]);
+  o.onCfg({ W: 2560 }); assert.equal(o.pfx, "yzL:tang", "onCfg 換記憶名");
+  /* 開頁就是橫式圖（data-scw="l1610"、img 是 l1610）、圖載完沒有寬＝載不到 → 07sw scwFail → 退回 o.src0 */
+  const img = { _src: "data/yizhan/tang_f_l1610.webp?v=1125", complete: true, naturalWidth: 0, dataset: {}, onerror: null, getAttribute(k) { return k === "src" ? this._src : null }, addEventListener() { }, set src(v) { this._src = v }, get src() { return this._src } };
+  const P = { dataset: { scw: "l1610" }, isConnected: true, classList: { toggle() { }, add() { }, contains: () => false }, querySelector: s => s === ":scope>img" ? img : null };
+  vm.runInContext("scwMount", C)(P, mk("tang", SRC, cfg));
+  assert.equal(img.src, SRC, "退回原圖"); assert.equal(P.dataset.scw, ""); assert.equal(vm.runInContext("SCW_BAD", C)["yizhan/tang_f"], 1, "這次開 App 不再試");
+  assert.match(YZ, /const src=`data\/yizhan\/\$\{k\}\$\{YZ_IMG\}\.webp[^`]*`,pre=/); assert.match(YZ, /o=yzScwO\(k,src,cfg\);/, "yzInn 用原圖 src（不是 pre.src）建設定");
+});
+
 test("載入順序：07m 比 07w 早載入，最上層碰 SHW_YZ 會碰到暫時死區——SHW_YZ 一讀就丟錯也要能載入", () => {
   /* 照 m.html 的樣子接成同一段：07sw → 07m → 後面才宣告 const SHW_YZ（07w）。最上層碰到 SHW_YZ（連 typeof 也算）就是真的暫時死區 */
   const ctx = vm.createContext({ setTimeout: () => 0, Math, Object, String, JSON, Set, localStorage: { getItem: () => null } });
@@ -106,7 +120,7 @@ test("〔原始碼〕07m 接線：開頁先量（scwPre）、圖照 pre.src、�
   assert.match(YZ, /const src=`data\/yizhan\/\$\{k\}\$\{YZ_IMG\}\.webp\$\{k==="classic"\?"\?v="\+YZ_CLV:""\}`,pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\};/);
   assert.match(YZ, /<img src="\$\{pre\.src\}"/);
   assert.match(YZ, /d\.innerHTML=`<div class="shp-page cq yz-page\$\{yzScwTag\(pre\.k\)\}>/, "開頁的圖框用 yzScwTag");
-  assert.match(YZ, /ids:\["yzTr","yzSec","yzMail","yzLing","yzSight"\],pfx:"yz:"\+k,cfg0:cfg,onCfg:x=>yzOnCfg\(o,k,x\)\}/);
+  assert.match(YZ, /function yzScwO\(k,src,cfg\)\{const o=\{key:scwKey\(src\),src0:src,ids:\["yzTr","yzSec","yzMail","yzLing","yzSight"\],pfx:"yz:"\+k,cfg0:cfg\};o\.onCfg=x=>yzOnCfg\(o,k,x\);return o\}/);
   assert.match(YZ, /scwMount\(pg,o\);if\(pre\.k&&scwCur\(pg\)\)\{const c=scwWalkCfg\(o,scwCur\(pg\)\);yzOnCfg\(o,k,c\);pg\._scwW="l";/);
   assert.match(YZ, /shwPage\(v,c,o\.pfx,\(\)=>!document\.querySelector\("\.walkc"\)\)/);
   assert.match(YZ, /\.yz-page\.scw-l \.po-sight\{font-size:2cqw;/);
