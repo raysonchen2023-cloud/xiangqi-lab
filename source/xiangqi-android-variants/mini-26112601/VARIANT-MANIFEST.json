@@ -1,0 +1,55 @@
+{
+ "schema": "xq-android-variant/1",
+ "name": "mini-26112601",
+ "kind": "封測小包（約 100 MB）",
+ "versionName": "20261126-0420-mini",
+ "versionCode": 26112601,
+ "siteVersion": "20261126-0420",
+ "webCommit": "61d7fc0c7c38b1cf478ed925e76a6366ca23a0bf",
+ "base": "source/xiangqi-android",
+ "androidNativeFixes": [
+  "retire-pwa-cache-recheck",
+  "no-cold-start-webview-prompt",
+  "local-3d-board-controls-docked",
+  "home-assets-bundled",
+  "cdn-fallback-cache",
+  "closed-test-mini",
+  "cdn-fallback-split-parts",
+  "purge-sw-registrations-before-webview",
+  "retire-old-app-cache-without-migration-page",
+  "android-back-to-web-history"
+ ],
+ "native": {
+  "android/app/build.gradle": "23f05d0573ed09817991130afcd87ea3af0b3d39087ac7658a170e732186b801",
+  "android/app/src/main/assets/capacitor.config.json": "d13eedae7e03645771f70893e739c3fba13b5cac95137ed8bab8c0786357e971",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/MainActivity.java": "b4b5e0c862a46bdb823087d1fcfb060f5b84e04fe8ba159b08116792b0bdf010",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQCdnFallback.java": "65c7b44113f4a17e5c23665754fbf889bbc4ea6fca34b44a29218a9c1c15e476",
+  "android/app/src/main/java/com/raysonchen/xiangqiqianqiu/XQWebViewClient.java": "6b88b5d8e624f049f9ae061e136df4fd0f9e320e3978122d6bd9002a4165dd7b",
+  "android/settings.gradle": "d21530a3cc825c432fb616556ab36a226c4e8ffbc839a5c0f7d3f164e54454fa"
+ },
+ "sameAsBase": 60,
+ "notInThisBuild": [
+  "android/xq_art/build.gradle",
+  "android/xq_bgm/build.gradle",
+  "android/xq_games/build.gradle",
+  "android/xq_models/build.gradle"
+ ],
+ "missing": {},
+ "webRemove": [
+  "data/docs/evidence"
+ ],
+ "webRemoveNote": "封測小包：公開證據頁不放進安裝包（26112104、26112201 都這樣建）；scripts/build-variant.js 照這個欄位拿掉",
+ "web": {
+  "index.html.patch": {
+   "sha256": "32263efce015368e5ff36a2a6253f7eb5bd28c8c5dd6c5ff484e462bb33cda14",
+   "appliesTo": "61d7fc0c7c38b1cf478ed925e76a6366ca23a0bf:index.html",
+   "hunks": 6,
+   "note": "從 mini-26112401 的補丁照 web-20261126-0420 的 index.html 重做：#185 在新版通知那行前面加了 NET_KIDOFF，前後文變了，原本第 5 段套不上。加、刪的行跟 mini-26112401 逐行相同，只換前後文與行號；原生檔（android/）跟 mini-26112401 一樣"
+  },
+  "swFrom": "source/xiangqi-android/scripts/native-sw.js（make-www.js 產生）",
+  "xq-native-migration.html": "174ac94c307c58005e524acea5aa4e2232da825a3488149f3dad57b2340a1ed9"
+ },
+ "aab": {
+  "note": "正式候選從 web-20261126-0420 建，這個變體在 tag 之後才進 main，所以用 build-variant.js --variant-from 指定 main 的這個資料夾（build-record 會記）"
+ }
+}
