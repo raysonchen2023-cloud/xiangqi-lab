@@ -64,11 +64,11 @@ test("日夜、換季換圖（xsmScwTo）：橫向白天→換成橫式圖；轉
 });
 
 test("〔原始碼〕07xsm 接線：外景、茶坊開頁先量（scwPre）、圖照 pre.src、掛 07sw（入口、apply 重擺棋子／重畫禁區）；每分鐘換圖走 xsmScwTo；找棋子照當下的藏點；橫式茶坊不畫雨", () => {
-  assert.match(XM, /const src0=xsmSrc\(nd\),pre=typeof scwPre==="function"\?scwPre\(v,src0\):\{src:src0,k:""\};/);
-  assert.match(XM, /const pre=typeof scwPre==="function"\?scwPre\(v,s0\):\{src:s0,k:""\};/);
-  assert.match(XM, /if\(typeof scwMount==="function"\)\{const o=xsmScwO\(P,src0,cfg\);\n    scwMount\(P,o\);if\(pre\.k&&scwCur\(P\)\)\{cfgNow=scwWalkCfg\(o,scwCur\(P\)\);P\._scwW="l"\}/, "外景用原圖 src0 建設定、掛 07sw（設定本身在下面實跑）");
+  assert.match(XM, /const src0=xsmSrc\(nd\),pre=xsmPre\(v,P,src0\);\n  P\.innerHTML=xsmImg\(pre,"西市：/, "外景開頁先量、圖照 pre（xsmPre、xsmImg 下面實跑）");
+  assert.match(XM, /const pre=xsmPre\(v,P,s0\);/); assert.match(XM, /P\.innerHTML=xsmImg\(pre,`聽雨茶坊：/, "茶坊也是");
+  assert.match(XM, /const cfgNow=xsmPageScw\(P,src0,pre,xsmWalkCfg\(\)\);/, "外景用原圖 src0 掛 07sw（xsmPageScw 下面實跑）");
   assert.match(XM, /scwMount\(P,\{key:scwKey\(s0\),src0:s0,ids:\["xsmDark"\],apply:nb\}\);nb\(\)/);
-  assert.match(XM, /src0=xsmSrc\(nd\),src=xsmScwTo\(P,src0\);if\(src==null\)/);
+  assert.match(XM, /src0=xsmSrc\(nd\),src=xsmCdnAs\(im,xsmScwTo\(P,src0\)\);if\(src==null\)/);
   assert.match(XM, /\{const tm=setInterval\(\(\)=>\{if\(!P\.isConnected\)\{clearInterval\(tm\);return\}xsmTeaTick\(P,im\)\},60000\)\}/, "茶坊每分鐘交給 xsmTeaTick（下面實跑）");
   assert.match(XM, /pre\.onerror=\(\)=>xsmSwapBad\(P,src,nd\);pre\.src=src\}/, "外景換圖預載失敗交給 xsmSwapBad（下面實跑）");
   assert.match(XM, /const spOf=\(\)=>xsmHideOf\(day,xsmHideTab\(P\)\),/); assert.match(XM, /if\(xsmNear\(spOf\(\),p,r\.width,r\.height\)\)\{/);
@@ -126,4 +126,46 @@ test("茶坊每分鐘（xsmTeaTick）：沒掛 07sw＝原圖網址；掛著、�
   const before = im.src; tick(P, im); assert.equal(im.src, before, "網址一樣不動"); assert.deepEqual(J(C.__set), []);
   dims.w = 820; dims.h = 1180; C.__w = false; tick(P, im);
   assert.deepEqual(J(C.__set), [""], "轉直向：交給 07sw 換回原圖"); assert.equal(im.src, before, "07sw 換的，tick 不自己動 img"); assert.equal(P.dataset.win, "");
+});
+
+/* ---- #169 複審（Windows Claude 2）第 1、2 項 ---- */
+test("開頁（xsmPre、xsmImg、xsmPageScw）實跑：橫向＝圖框帶 data-scw、圖一開始就是橫式圖、入口照條目、走路照條目、擺今天那顆棋子；直向＝原圖、入口不動", () => {
+  const C = load(true), [pre, img, ps] = vm.runInContext("[xsmPre, xsmImg, xsmPageScw]", C), SRC = "data/ximarket/xm_day.webp?v=1117", cfg = { home: "home", HS: {} };
+  const L = vm.runInContext("scwSrc(SCW['ximarket/xm_day'])", C);
+  dims.w = 1180; dims.h = 820;
+  { const cls = new Set(), im = mkImg(""), { P, el } = mkP(undefined, im, cls); let pc = 0; P._xsmPc = () => pc++;
+    const r = pre(V, P, SRC); assert.equal(r.src, L); assert.equal(P.dataset.scw, "l1610"); assert.ok(cls.has("scw-l"));
+    assert.equal(img(r, "西市"), `<img src="${L}" alt="西市">`, "圖一開始就載橫式圖"); im._src = r.src;
+    const c = ps(P, SRC, r, cfg); assert.equal(P._scw.src0, SRC, "07sw 記的是原圖"); assert.equal(P._scwW, "l");
+    assert.deepEqual(J(c.N), EXP.N, "走路照條目"); assert.equal(pc, 1, "擺今天那顆棋子");
+    for (const [id, [x, y]] of Object.entries(EXP.S)) assert.equal(el["#" + id].style.left + "," + el["#" + id].style.top, x + "%," + y + "%", id) }
+  dims.w = 820; dims.h = 1180;
+  { const cls = new Set(), im = mkImg(SRC), { P, el } = mkP(undefined, im, cls); let pc = 0; P._xsmPc = () => pc++;
+    const r = pre(V, P, SRC); assert.equal(r.src, SRC); assert.ok(!P.dataset.scw); assert.ok(!cls.has("scw-l"));
+    const c = ps(P, SRC, r, cfg); assert.equal(c, cfg, "原圖走路設定"); assert.equal(pc, 1); assert.equal(el["#xsmMusic"].style.left, "1%", "入口不動") }
+});
+
+test("00-util 補抓過 CDN 之後（cdnTry、src 是 XQ_CDN＋相對路徑）：外景 xsmSwap、茶坊 xsmTeaTick 每分鐘不會把好好的圖當壞圖；換季照 CDN 網址預載、換上", () => {
+  dims.w = 1180; dims.h = 820;
+  const C = load(true), CDN = "https://cdn.test/";
+  vm.runInContext(`this.XQ_CDN=${JSON.stringify(CDN)};this.__w=false;this.__pre=[];this.sw7WinterNow=function(){return __w};this.xqNight=function(){return false};this.sw7Kick=function(){};
+    this.Image=function(){const me=this;__pre.push(me);Object.defineProperty(me,"src",{set(u){me._u=u;(u.indexOf(XQ_CDN)===0?me.onload:me.onerror)()},get(){return me._u}})}`, C);   /* 同源都 404、只有 CDN 有圖 */
+  const [swap, tick, src] = vm.runInContext("[xsmSwap, xsmTeaTick, scwSrc]", C), SCW = vm.runInContext("SCW", C), cdnOf = u => CDN + u.split("?")[0];
+  const mount = (key, src0) => { const im = mkImg(cdnOf(src(SCW[key]))); im.dataset.cdnTry = "1"; const { P } = mkP("l1610", im, new Set(["scw-l"])); P._scw = { key, src0, ids: [] }; return { P, im } };
+  const o = mount("ximarket/xm_day", "data/ximarket/xm_day.webp?v=1117");
+  swap(o.P, true); swap(o.P, true);
+  assert.equal(C.__pre.length, 0, "網址一樣（CDN 那張）不預載"); assert.deepEqual(J(vm.runInContext("SCW_BAD", C)), {}); assert.deepEqual(J(vm.runInContext("XSM_BAD", C)), {});
+  assert.equal(o.im.src, cdnOf(src(SCW["ximarket/xm_day"])), "還是橫式圖"); assert.equal(o.P.dataset.scw, "l1610");
+  C.__w = true; swap(o.P, true);
+  assert.equal(C.__pre[0]._u, cdnOf(src(SCW["ximarket/xm_day_winter"])), "換季照 CDN 網址預載"); assert.equal(o.im.src, C.__pre[0]._u); assert.deepEqual(J(vm.runInContext("SCW_BAD", C)), {});
+  C.__w = false; const t = mount("ximarket/xm_tea", "data/ximarket/xm_tea.webp?v=1117"), t0 = t.im.src;
+  tick(t.P, t.im); assert.equal(t.im.src, t0, "茶坊：CDN 那張不動"); assert.equal(t.P.dataset.scw, "l1610");
+  C.__w = true; tick(t.P, t.im); assert.equal(t.im.src, cdnOf(src(SCW["ximarket/xm_tea_winter"])), "茶坊換季也走 CDN");
+  /* CDN 上的橫式圖也壞了才記 SCW_BAD、退回原圖 */
+  const b = mount("ximarket/xm_day", "data/ximarket/xm_day.webp?v=1117"); C.__w = false;
+  vm.runInContext("xsmSwapBad", C)(b.P, cdnOf(src(SCW["ximarket/xm_day"])), true);
+  assert.equal(vm.runInContext("SCW_BAD", C)["ximarket/xm_day"], 1); assert.deepEqual(J(vm.runInContext("XSM_BAD", C)), {});
+  /* 沒補抓過（沒有 cdnTry）照舊相對網址 */
+  const cdnAs = vm.runInContext("xsmCdnAs", C); assert.equal(cdnAs(mkImg("data/ximarket/xm_day.webp?v=1117"), "data/ximarket/xm_day_winter.webp?v=1117"), "data/ximarket/xm_day_winter.webp?v=1117");
+  assert.equal(cdnAs(o.im, null), null, "07sw 已經換好（null）照傳");
 });

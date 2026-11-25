@@ -137,6 +137,12 @@ if(typeof SCW!=="undefined"){const sf={l:.12,r:.12,t:.05,b:.10},o={ready:true,f:
   SCW["ximarket/xm_day"]=o;SCW["ximarket/xm_day_winter"]=Object.assign({},o,{f:"ximarket/xm_day_winter_l1610"});
   SCW["ximarket/xm_tea"]=t;SCW["ximarket/xm_tea_winter"]=Object.assign({},t,{f:"ximarket/xm_tea_winter_l1610"})}
 /* 現在用的那張圖的藏點、茶坊禁區（橫式圖照條目 fx，原圖照 XSM_HIDE、XSM_TEA_NOBOT） */
+/* 開頁先量（07sw scwPre）：有橫式圖就圖框帶 data-scw、scw-l，圖一開始就載那張；沒掛 07sw＝原圖。外景、茶坊共用（#169 複審第 2 項：抽出來實跑） */
+function xsmPre(v,P,src){const pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}return pre}
+const xsmImg=(pre,alt)=>`<img src="${pre.src}" alt="${alt}">`;
+/* 外景掛上 07sw（原本的 onerror 由它記下，換回原圖時還原；橫式圖載不到退回原圖）、開頁就是橫式圖時走路照條目、擺今天那顆棋子；回傳走路設定 */
+function xsmPageScw(P,src0,pre,cfg){let c=cfg;if(typeof scwMount==="function"){const o=xsmScwO(P,src0,cfg);
+    scwMount(P,o);if(pre.k&&scwCur(P)){c=scwWalkCfg(o,scwCur(P));P._scwW="l"}if(P._xsmPc)P._xsmPc()}return c}
 /* 外景掛 07sw 的設定（key、src0 用原圖網址；5 個入口；換圖時重擺今天那顆棋子）。抽出來讓測試實跑（#169 審查第 4 項） */
 function xsmScwO(P,src0,cfg){return{key:scwKey(src0),src0,ids:["xsmGift","xsmMusic","xsmTea","xsmChess","xsmVisit"],pfx:"xsm",cfg0:cfg,apply:()=>{if(P._xsmPc)P._xsmPc()}}}
 const xsmFx=P=>{const e=typeof scwCur==="function"?scwCur(P):null;return e&&e.fx||{}};
@@ -296,10 +302,13 @@ function xsmAfter(v,P){const im=P.querySelector(":scope>img");
   im.addEventListener("load",()=>{if(!P.isConnected)return;try{if(typeof ttFill==="function")ttFill()}catch(e){}try{if(typeof spfSoon==="function")spfSoon(0)}catch(e){}try{if(typeof r07HitSoon==="function")r07HitSoon()}catch(e){}});
   if(typeof shpFit==="function")shpFit(v);try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 /* 換日夜：先載好再換；載不到記下來（下次 xsmSrc 自己換另一張） */
-function xsmSwap(P,day){const im=P.querySelector(":scope>img");if(!im)return;const nd=xsmPickDay(day),src0=xsmSrc(nd),src=xsmScwTo(P,src0);if(src==null){P.dataset.day=nd?"1":"";return}if(im.getAttribute("src")===src)return;   /* W107-L：07sw 掛著時照鍵重選（夜裡沒條目＝退回原圖） */
+function xsmSwap(P,day){const im=P.querySelector(":scope>img");if(!im)return;const nd=xsmPickDay(day),src0=xsmSrc(nd),src=xsmCdnAs(im,xsmScwTo(P,src0));if(src==null){P.dataset.day=nd?"1":"";return}if(im.getAttribute("src")===src)return;   /* W107-L：07sw 掛著時照鍵重選（夜裡沒條目＝退回原圖） */
   const pre=new Image();pre.onload=()=>{if(!P.isConnected)return;P.dataset.day=nd?"1":"";im.src=src};pre.onerror=()=>xsmSwapBad(P,src,nd);pre.src=src}   /* 11/17 冬景載不到＝只記冬景那張壞了，下一分鐘換回原圖 */
+/* 00-util 補抓過 CDN 的圖（cdnTry 已設、src 已經是 XQ_CDN＋相對路徑，沒有 ?v）：要換的相對網址也換成 CDN 那一種，比對和預載都照它。
+   不然每分鐘拿相對網址比永遠不相等，預載同源 404 就把好好的圖當壞圖（#169 複審第 1 項）。src＝null（07sw 已經換好）照傳 */
+function xsmCdnAs(im,src){const u=String(im&&im.getAttribute&&im.getAttribute("src")||"");if(!src||!im.dataset||!im.dataset.cdnTry||typeof XQ_CDN!=="string"||u.indexOf(XQ_CDN)!==0||!/^data[/]/.test(src))return src;return XQ_CDN+src.split("?")[0]}
 /* 換圖時預載失敗：是 07sw 的橫式圖＝記 SCW_BAD、退回原圖（原圖沒壞，不記 XSM_BAD；#169 Windows Claude 2 審查第 1 項）；原圖才照 11/17 記 XSM_BAD */
-function xsmSwapBad(P,src,nd){const o=P&&P._scw,e=o&&P.dataset.scw&&typeof scwEntry==="function"?scwEntry(o.key):null;if(e&&scwSrc(e)===src){SCW_BAD[o.key]=1;if(P.isConnected)scwSet(P,"");return}
+function xsmSwapBad(P,src,nd){const o=P&&P._scw,e=o&&P.dataset.scw&&typeof scwEntry==="function"?scwEntry(o.key):null,w=e?scwSrc(e):"";if(w&&(w===src||(typeof XQ_CDN==="string"&&src===XQ_CDN+w.split("?")[0]))){SCW_BAD[o.key]=1;if(P.isConnected)scwSet(P,"");return}
   if(/_winter\./.test(src))XSM_BAD[xsmWk(nd)]=1;else XSM_BAD[nd?"d":"n"]=1}
 function xsmIntro(){modal(`<h3>🏮 西市</h3><p><b>${esc(XSM_TX.pos)}</b></p><p>${esc(XSM_TX.intro)}</p>`,[["逛逛西市",null]])}
 function xsmWalk(v,cfg){if(typeof shwPage!=="function"||typeof SHIP_WALK_ON==="undefined"||!SHIP_WALK_ON)return;try{shwPage(v,cfg||xsmWalkCfg(),"xsm")}catch(e){}}
@@ -310,17 +319,15 @@ function XsmPage(v,sub){try{if(xsmOpen()){if(sub==="dark"&&typeof xsdBgmOn==="fu
   xsmCss();let first=false;try{first=!store.get("xsmSeen",0);store.set("xsmSeen",1)}catch(e){}
   const day=xsmDay(),nd=xsmPickDay(day),P=document.createElement("div");P.className="shp-page cq xsm-page";P.dataset.day=nd?"1":"";
   /* W107-L：iPad 橫向有專用橫式圖（07sw SCW，條目在上面 XSM_L）就一開始載那張；入口、藏點、出口、走路照條目 */
-  const src0=xsmSrc(nd),pre=typeof scwPre==="function"?scwPre(v,src0):{src:src0,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}
-  P.innerHTML=`<img src="${pre.src}" alt="西市：市門、夯土市牆、青石路，十字路口四角是櫃坊、棋具攤、樂棚和茶坊，遠處有市樓、水池和柳樹">`+xsmBtns(XSM_SPOTS);
+  const src0=xsmSrc(nd),pre=xsmPre(v,P,src0);
+  P.innerHTML=xsmImg(pre,"西市：市門、夯土市牆、青石路，十字路口四角是櫃坊、棋具攤、樂棚和茶坊，遠處有市樓、水池和柳樹")+xsmBtns(XSM_SPOTS);
   v.append(P);xsmBind(P,XSM_SPOTS);
   try{xsmMark(P)}catch(e){}try{xsmHuntInit(v,P)}catch(e){}   /* 11/16：有禮、有人來的標籤發亮；今天那顆棋子藏到圖上 */
   const im=P.querySelector(":scope>img");
   im.onerror=()=>{const sh=P.dataset.day==="1";if(/_winter\./.test(im.getAttribute("src")||"")){XSM_BAD[xsmWk(sh)]=1;im.src=xsmSrc(sh);return}   /* 11/17 冬景載不到＝先退回同一個時辰的原圖 */
     XSM_BAD[sh?"d":"n"]=1;const n2=xsmPickDay(sh);if(n2!==sh){P.dataset.day=n2?"1":"";im.src=xsmSrc(n2)}};
   /* W107-L：掛上 07sw（原本的 onerror 由它記下，換回原圖時還原；橫式圖載不到退回原圖）；換圖時重擺今天那顆棋子 */
-  const cfg=xsmWalkCfg();let cfgNow=cfg;
-  if(typeof scwMount==="function"){const o=xsmScwO(P,src0,cfg);
-    scwMount(P,o);if(pre.k&&scwCur(P)){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}if(P._xsmPc)P._xsmPc()}
+  const cfgNow=xsmPageScw(P,src0,pre,xsmWalkCfg());
   /* 07w9 的出口晚一點才放進來：補 id（走路角色的入口代號 HS.xsmExit） */
   try{const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}const s=P.querySelector(".ex-spot");if(s&&!s.id)s.id="xsmExit"});mo.observe(P,{childList:true})}catch(e){}
   /* 每分鐘看一次：跨過日落、日出就換日夜；11/17 跨過立冬（或大寒過完）換季也換（xsmSwap 網址一樣就不動） */
@@ -333,14 +340,14 @@ function XsmPage(v,sub){try{if(xsmOpen()){if(sub==="dark"&&typeof xsdBgmOn==="fu
 /* 茶坊每分鐘：日夜記號、跨過立冬換季。07sw 掛著時照鍵重選（xsmScwTo 回 null＝07sw 已經換好）；沒掛＝原圖網址。
    #169 審查第 3 項：原本「沒掛 07sw」那段退路在 App 裡永遠跑不到，合成一條，測試改成實跑這支 */
 function xsmTeaTick(P,im){const d=xsmDay()?"1":"";if(d!==P.dataset.day)P.dataset.day=d;
-  const a=xsmSrc(false,1),s=P._scw?xsmScwTo(P,a):a;P.dataset.win=/_winter\./.test(a)?"1":"";if(s!=null&&im.getAttribute("src")!==s){im.src=s;if(typeof sw7Kick==="function")sw7Kick()}}
+  const a=xsmSrc(false,1),s=xsmCdnAs(im,P._scw?xsmScwTo(P,a):a);P.dataset.win=/_winter\./.test(a)?"1":"";if(s!=null&&im.getAttribute("src")!==s){im.src=s;if(typeof sw7Kick==="function")sw7Kick()}}
 function xsmTea(v){setTop("🍵 聽雨茶坊","#/ximarket");setTabs(true,"#/");v.className="view";
   if(!xsmOpen()){toast("🏮 西市還沒開市");navReplace("#/");return{}}
   xsmCss();const P=document.createElement("div");P.className="shp-page cq xsm-page xsm-tea";P.dataset.day=xsmDay()?"1":"";
   const s0=xsmSrc(false,1),isW=s=>/_winter\./.test(s||"");P.dataset.win=isW(s0)?"1":"";
   /* W107-L：iPad 橫向有茶坊橫式圖就一開始載那張；暗棋入口、小帥禁區照條目，雨先不畫 */
-  const pre=typeof scwPre==="function"?scwPre(v,s0):{src:s0,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}   /* 11/17 冬景：窗外是雪，XSM_RAIN 那兩塊改畫雪（CSS data-win） */
-  P.innerHTML=`<img src="${pre.src}" alt="聽雨茶坊：方桌、條凳、靠背椅，窗外${isW(s0)?"飄著雪":"下著雨"}，中間一張暗棋桌">`+
+  const pre=xsmPre(v,P,s0);   /* 11/17 冬景：窗外是雪，XSM_RAIN 那兩塊改畫雪（CSS data-win） */
+  P.innerHTML=xsmImg(pre,`聽雨茶坊：方桌、條凳、靠背椅，窗外${isW(s0)?"飄著雪":"下著雨"}，中間一張暗棋桌`)+
     XSM_RAIN.map(r=>`<i class="xsm-rain" style="left:${r[0]}%;top:${r[1]}%;width:${r[2]-r[0]}%;height:${r[3]-r[1]}%"></i>`).join("")+xsmTeaNoBot()+xsmBtns(XSM_TEA_SPOTS);
   v.append(P);xsmBind(P,XSM_TEA_SPOTS);
   const rain=()=>P.dataset.win!=="1";
