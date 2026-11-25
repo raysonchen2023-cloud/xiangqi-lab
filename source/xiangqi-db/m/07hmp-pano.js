@@ -42,6 +42,9 @@ const hmpScr=x=>x<0?-1:x>100?1:0;
 function hmpFollow(x,cur){if(!isFinite(x))return cur||0;if(x<HMP_CAM.lIn)return-1;if(x>HMP_CAM.rIn)return 1;if(cur===-1)return x>HMP_CAM.lOut?0:-1;if(cur===1)return x<HMP_CAM.rOut?0:1;return 0}
 /* 手指放開：i0 起手那一屏、dx 拖了多少 px（往右拖＝看左邊）、w 一屏寬、v 放手時的速度 px/ms → 吸附到哪一屏 */
 function hmpSnap(i0,dx,w,v){let d=0;if(w>0&&Math.abs(dx)>w*.18)d=dx>0?-1:1;else if(Math.abs(v||0)>.45&&Math.abs(dx)>16)d=v>0?-1:1;return Math.max(-1,Math.min(1,(i0||0)+d))}
+/* 11/26 W132（開發者 iPad 橫放截圖：按「›」之後右邊三分之一空白）：鏡頭要往左／右移多少 px。i 哪一屏、w 一屏寬、base 中間那屏左緣在外框裡的位置、cw 外框寬、side 07t3 側欄模式（只露出圖那一欄）。
+   手機直放（base 0、cw＝w）、側欄模式照舊移一整屏；寬螢幕置中時左右兩屏本來就露在兩旁，只移到那一屏的外緣貼齊外框，不再移過頭露出外面的空白 */
+function hmpShift(i,w,base,cw,side){if(!i||!(w>0))return 0;if(side||!(cw>0))return-i*w;const need=i>0?base+2*w-cw:w-base;return-i*Math.min(w,Math.max(0,need))}
 /* 首頁的走路座標表加上左右兩屏 */
 function hmpWalk(c){return Object.assign({},c,{xr:HMP_WALK.xr,dmax:HMP_WALK.dmax,N:Object.assign({},c.N,HMP_WALK.N),E:(c.E||"")+" "+HMP_WALK.E,HS:Object.assign({},c.HS,HMP_WALK.HS),_e:null})}
 const hmpEase=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
@@ -72,10 +75,11 @@ function hmpSet(P,k){if(!P)return;let cl=false;try{cl=typeof hbIsCl==="function"
 /* 07z homeMap 傳給 07x zmPage：放大後可以拖到左右兩屏 */
 function hmpZoomOpt(P){return{ext:()=>{if(!hmpOn(P))return null;const w=P.offsetWidth;return{l:w,r:w}}}}
 /* 鏡頭：P 的 style.left；i＝-1／0／1 */
-function hmpPlace(P){const i=hmpOn(P)?P._hmpI||0:0,w=P.offsetWidth;P.style.left=i&&w?Math.round(-i*w)+"px":"";hmpLayout(P)}
-function hmpCam(P,i,anim){if(!P||!P.isConnected)return;i=hmpOn(P)?Math.max(-1,Math.min(1,i|0)):0;const w=P.offsetWidth,to=-i*w,from=parseFloat(P.style.left)||0;P._hmpI=i;HMP_LAST=i;
+function hmpOff(P,i){const C=hmpBox(P),V=document.getElementById("view"),w=P.offsetWidth;if(!C)return-i*w;const base=P.offsetLeft-(parseFloat(P.style.left)||0);return hmpShift(i,w,base,C.clientWidth,!!(V&&V.classList.contains("r07-side")))}
+function hmpPlace(P){const i=hmpOn(P)?P._hmpI||0:0,w=P.offsetWidth,o=i&&w?Math.round(hmpOff(P,i)):0;P.style.left=o?o+"px":"";hmpLayout(P)}
+function hmpCam(P,i,anim){if(!P||!P.isConnected)return;i=hmpOn(P)?Math.max(-1,Math.min(1,i|0)):0;const w=P.offsetWidth,to=i?hmpOff(P,i):0,from=parseFloat(P.style.left)||0;P._hmpI=i;HMP_LAST=i;
   cancelAnimationFrame(P._hmpA||0);P._hmpA=0;
-  const done=()=>{P.style.left=i?Math.round(to)+"px":"";hmpNavUpd(P);try{if(typeof r07HitSoon==="function")r07HitSoon(60)}catch(e){}};
+  const done=()=>{P.style.left=i&&Math.round(to)?Math.round(to)+"px":"";hmpNavUpd(P);try{if(typeof r07HitSoon==="function")r07HitSoon(60)}catch(e){}};
   if(!anim||hmpRM()||!w||Math.abs(to-from)<1){done();return}
   const t0=performance.now(),D=HMP_MS*Math.min(1.2,Math.max(.5,Math.abs(to-from)/w));
   const st=now=>{if(!P.isConnected)return;const u=Math.min(1,(now-t0)/D);P.style.left=(from+(to-from)*hmpEase(u)).toFixed(1)+"px";if(u<1)P._hmpA=requestAnimationFrame(st);else{P._hmpA=0;done()}};P._hmpA=requestAnimationFrame(st)}

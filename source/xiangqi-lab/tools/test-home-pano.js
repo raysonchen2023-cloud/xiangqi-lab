@@ -148,3 +148,26 @@ test("〔原始碼〕11/15 開發者「西市和觀星臺交界處的背景顏�
   assert.ok(W7.includes("@keyframes sw7cl{from{transform:translateX(0)}to{transform:translateX(var(--sw7cx,-50%))}}"), "位移用變數，沒拉寬時照舊 −50%");
   assert.ok(W7.includes('R.box.style.setProperty("--sw7n",String(n))') && /on=n>1\.5/.test(W7), "不到一屏半不算拉寬（其他頁照舊）");
 });
+
+test("W132 鏡頭位移：手機直放、側欄模式照舊移一整屏；寬螢幕置中只移到那一屏外緣貼齊外框，不露出外面的空白", () => {
+  const hmpShift = R("hmpShift");
+  assert.equal(hmpShift(0, 419, 381, 1180, false), 0, "中間那屏不移");
+  assert.equal(hmpShift(1, 390, 0, 390, false), -390, "手機直放往右：照舊一整屏");
+  assert.equal(hmpShift(-1, 390, 0, 390, false), 390, "手機直放往左：照舊一整屏");
+  assert.equal(hmpShift(1, 419, 381, 1180, true), -419, "側欄模式（外框只露出圖那一欄）：照舊一整屏");
+  // 開發者 iPad 橫放 1180×820：中間那屏 419 寬、左緣 381；右屏外緣在 381＋2×419＝1219，只要再往左 39px 就貼齊外框
+  const r = hmpShift(1, 419, 381, 1180, false);
+  assert.equal(r, -39, "只移 39px");
+  assert.ok(381 + 2 * 419 + r >= 1180, "右屏外緣還在外框右緣以外或剛好貼齊＝右邊沒有空白");
+  const l = hmpShift(-1, 419, 381, 1180, false);
+  assert.ok(381 - 419 + l <= 0, "左屏外緣在外框左緣以外或剛好貼齊＝左邊沒有空白");
+  assert.equal(hmpShift(1, 419, 0, 2000, false) === 0 || Object.is(hmpShift(1, 419, 0, 2000, false), -0), true, "外框夠寬、三屏都看得到：不用移");
+  assert.equal(hmpShift(1, 500, 400, 600, false), -500, "最多移一整屏");
+});
+
+test("〔原始碼〕W132 鏡頭位移都走 hmpShift（hmpPlace、hmpCam 不再寫死 -i*w）", () => {
+  assert.match(SRC_P, /function hmpShift\(/);
+  assert.match(SRC_P, /function hmpPlace\(P\)\{[^\n]*hmpOff\(P,i\)/);
+  assert.match(SRC_P, /to=i\?hmpOff\(P,i\):0/);
+  assert.doesNotMatch(SRC_P, /to=-i\*w/);
+});
