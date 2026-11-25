@@ -79,6 +79,12 @@ const SHW_HOMEMAP_L1610={W:2560,H:1600,el:40,h:[.052,70,.0008],look0:[50,99],
 const HMW={p34:{f:"home_p34",w:1536,h:2048,S:HM_SPOTS_P34,sl:1.4,safe:{l:.06,r:.06,t:.06,b:.10},walk:SHW_HOMEMAP_P34},
   l1610:{f:"home_l1610",w:2560,h:1600,S:HM_SPOTS_L1610,sl:1.4,safe:{l:.12,r:.12,t:.05,b:.10},walk:SHW_HOMEMAP_L1610}};
 const HMW_BAD={};   /* 這次開 App 載不到的寬版（退回原圖，不再試） */
+/* W109（iMac Claude 2 審 #155 時發現，線上就有）：00-util 在 window 用擷取監聽，同源圖片載不到時先把 src 改成 XQ_CDN、記 cdnTry=1，
+   同一次事件接著輪到這裡的 onerror。以前這裡馬上退回原圖，就把 CDN 補抓蓋掉了。現在照 07sw scwFail：src 已經指向 XQ_CDN、cdnTry 剛設好時
+   記住正在等的網址、先不退回；CDN 那次也失敗（同一個網址再錯一次）才記 HMW_BAD、退回原圖 */
+function hmwFail(P){const kk=P&&P.dataset.hmw;if(!kk||!HMW[kk])return;const im=P.querySelector(":scope>img"),u=im?String(im.getAttribute("src")||im.src||""):"";
+  if(im&&im.dataset&&im.dataset.cdnTry&&typeof XQ_CDN==="string"&&u.indexOf(XQ_CDN)===0&&im._hmwCdn!==u){im._hmwCdn=u;return}
+  HMW_BAD[kk]=1;hmwSet(P,"")}
 /* 純計算：W 可用寬、av 可用高、vw #view 寬、vh 畫面高 → "p34"／"l1610"／""（原圖） */
 function hmwKind(W,av,vw,vh){if(!HMW_ON||!(W>0&&av>=120))return"";const r=W/av;
   if(r>=HMW_PORT[0]&&r<=HMW_PORT[1]&&(vw>=600||vw>av))return HMW_BAD.p34?"":"p34";   /* 回饋 889：0.85～0.89 也用直版；0.89～1.04＝原圖交給 07fl 填滿寬度 */
@@ -98,7 +104,7 @@ function hmwSet(P,k){const im=P.querySelector(":scope>img");if(!im)return;P.data
   for(const[id,x,y]of hmwSpots(k)){const b=P.querySelector("#"+id);if(!b)continue;b.style.left=x+"%";b.style.top=y+"%";delete b.dataset.ttL;b.style.marginLeft=""}   /* ttL 是 07t3 記的原位，換座標要清掉，不然會被還原回舊位置 */
   if(HMW[k])P.style.setProperty("--hmSlT",HMW[k].sl+"%");else P.style.removeProperty("--hmSlT");
   const src=!k&&P._hmSrc0?P._hmSrc0:hmwSrc(k);if(im.getAttribute("src")!==src){   /* 11/14：換回原圖＝換回這一頁原本那張（千秋時光之苑、季節／夜景變體），不是一律 home.webp（三屏長卷左右兩屏是照那張挑的） */
-    im.onerror=()=>{const kk=P.dataset.hmw;if(kk&&HMW[kk]){HMW_BAD[kk]=1;hmwSet(P,"")}};
+    im.onerror=()=>hmwFail(P);if(im.dataset)delete im.dataset.cdnTry;im._hmwCdn="";   /* 換網址就清掉 00-util 的 cdnTry，新網址載不到時它才會再去 CDN 補抓 */
     im.addEventListener("load",()=>{if(!P.isConnected)return;try{if(typeof ttFill==="function")ttFill()}catch(e){}try{if(typeof spfSoon==="function")spfSoon(0)}catch(e){}},{once:true});
     im.src=src}
   try{if(typeof hmpSet==="function")hmpSet(P,k)}catch(e){}   /* 11/14 三屏長卷：寬版圖沒有長卷，換寬版＝收掉左右兩屏；換回原圖＝有長卷就再打開（要在重掛走路角色之前） */
@@ -206,7 +212,7 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   const wv=typeof sw7HomeWx==="function"&&!hk?sw7HomeWx():"";   /* 11/14：季節／夜景變體先算好（三屏長卷要照這張挑左右兩屏） */
   d.innerHTML=`<div class="shp-page cq home-page" data-hmw="${hk}"${hk?` style="--hmSlT:${HMW[hk].sl}%"`:""}><img src="${hk?hmwSrc(hk):`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true"></div>${hmFocusOrder(hmwSpots(hk)).map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%" aria-label="${esc(id==="hmQuick"?HM_PVP_AL:hmAl(lab(id)))}"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst" aria-label="加到主畫面">📲 加到主畫面</button>':""}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");P._hmSrc0=hk?`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`:P.querySelector(":scope>img").getAttribute("src");
-  if(hk){const im1=P.querySelector(":scope>img");im1.onerror=()=>{const kk=P.dataset.hmw;if(kk&&HMW[kk]){HMW_BAD[kk]=1;hmwSet(P,"")}}}   /* 寬版載不到＝退回原圖 */if(typeof hbCss==="function")hbCss();else home.style.display="none";
+  if(hk){const im1=P.querySelector(":scope>img");im1.onerror=()=>hmwFail(P)}   /* 寬版載不到＝先等 00-util 的 CDN 補抓，CDN 也失敗才退回原圖（W109） */if(typeof hbCss==="function")hbCss();else home.style.display="none";
   try{if(typeof hmpInit==="function")hmpInit(P,hk,wv)}catch(e){}   /* 11/14 三屏長卷（07hmp-pano.js）：千秋時光之苑、原圖、這個變體有長卷＝左右各接一屏 */
   {const im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;P._hmSrc0=pre.src;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}
   if(!hk){P._hmWv=wv;const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}try{hmWvRefresh(P)}catch(e){}},60000)}   /* 11/17 第 28 輪 N28-1：首頁開著跨過入夜／天亮也換圖（hmWvRefresh） */   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
