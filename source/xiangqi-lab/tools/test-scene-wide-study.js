@@ -122,11 +122,24 @@ test("橫式圖載不到：記 SCW_BAD、退回原圖；這次開 App 不再試"
   w.img.complete = true; w.img.naturalWidth = 768; assert.equal(sync(w.V, w.P), null, "不再試");
 });
 
+test("座標照量好的 json（output/w107-ipad/l1610/studymap/study_day_classic_l1610.json）：抽幾個點寫死比對；輿圖圈照畫心寬等比放大（#159 審查建議 3）", () => {
+  const C = load(true), L = vm.runInContext("MZ_L", C), J = x => JSON.parse(JSON.stringify(x));
+  assert.deepEqual(J(L.spots.find(s => s[0] === "mzZhen")), ["mzZhen", 102, 269, 742, 858, "珍品", 422, 269, "m"]);
+  assert.deepEqual(J(L.spots.find(s => s[0] === "mzHist")), ["mzHist", 1966, 960, 2086, 1062, "棋史卡", 2026, 960, "m"]);
+  assert.deepEqual(J([L.cells[0], L.cells[11]]), [[120, 333, 256, 499], [543, 676, 684, 845]]);
+  assert.deepEqual(J([L.plum, L.yu, L.smoke, L.dot]), [[1183, 218, 1370, 768], [1638, 128, 2386, 512], [468, 384], [1434, 968]]);
+  const G = vm.runInContext("mzGeo", C)(true), k = (2386 - 1638) / (896 - 668), m = vm.runInContext("mzMap", C)([5, 13], G);
+  const r = [...m.matchAll(/r="([\d.]+)" fill="(#c0392b|#f3ead2)"/g)].map(x => [+x[1], x[2]]);
+  assert.equal(r.length, 13); for (const [v, c] of r) assert.ok(Math.abs(v - (c === "#c0392b" ? 6 : 4.5) * k) < .01, "輿圖圈等比放大：" + v);
+});
+
 test("〔混合〕07z4 接線：開頁先量（scwPre）、掛 07sw（換圖時 apply 重畫疊圖）、轉向自己再問一次；走路角色只在原圖掛；物件說明照原圖座標（07w6 遇到橫式圖自己關）", () => {
   assert.match(MZ, /const pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\};/);
   assert.match(MZ, /<img src="\$\{pre\.src\}"/);
   assert.match(MZ, /scwMount\(W,\{key:scwKey\(src\),src0:src,ids:\[\],apply:\(\)=>paint\(\)\}\)/);
   assert.match(MZ, /addEventListener\("resize",rs\)/);
+  assert.match(MZ, /const cellBg=\(\)=>\{const u=im\.currentSrc\|\|im\.getAttribute\("src"\)\|\|"";W\.querySelectorAll\("\.mz-cell"\)\.forEach\(c=>\{c\.style\.backgroundImage=`url\("\$\{u\}"\)`\}\)\};/, "亮格底圖用真的載到的那張（#159 審查建議 3）");
+  assert.match(MZ, /im\.addEventListener\("load",cellBg\);/);
   assert.match(MZ, /if\(MZ_WALK_ON&&!W\.dataset\.scw&&/);
   assert.match(MZ, /sciPage\(v,\{k:"study",nm:"書齋",W:MZ_W,H:MZ_H,/);
   assert.match(M("m/07w6-sceneinfo.js"), /const off=\(\)=>\{if\(P\.dataset\.scw\)return true;/);

@@ -57,6 +57,27 @@ test("照現在用的那張圖擺：原圖照 JZ2_*（榜面位置跟改之前 /
   assert.equal(vm.runInContext("jz2G", load(false))(fakeP(true)).W, 768, "沒開開關照原圖");
 });
 
+test("座標照量好的 json（output/w107-ipad/l1610/statmap/stat_day_classic_l1610.json）：抽幾個點寫死比對", () => {
+  const e = vm.runInContext("SCW", load(true))[KC];
+  assert.deepEqual(JSON.parse(JSON.stringify(e.fx.board)), [768, 294, 1784, 814]);
+  assert.deepEqual(JSON.parse(JSON.stringify(e.fx.table)), [[1907, 1101], [2176, 1096], [2330, 1293], [1951, 1293]]);
+  assert.deepEqual(JSON.parse(JSON.stringify(e.fx.hitTbl)), [74.5, 68, 16.5, 13]); assert.deepEqual(JSON.parse(JSON.stringify(e.fx.lamp)), [2150, 358]);
+  assert.deepEqual(JSON.parse(JSON.stringify(e.S)), { jz2Rank: [50, 16], jz2Book: [29.5, 58], jz2Scroll: [51.5, 58], jz2Tbl: [83, 66], jz2Lamp: [84, 10] });
+  assert.deepEqual(JSON.parse(JSON.stringify(e.walk.N)), { home: [50, 96], mid: [50, 90], desk: [35, 90], tbl: [63, 88] });
+});
+
+test("jz2Place 實跑：榜面和榜面熱區（第一個 .jz2-hit）同一格、棋桌熱區（第二個）照 hitTbl；原圖照舊、橫式圖照條目（#159 審查建議 1：兩個熱區對調要紅）", () => {
+  const C = load(true), place = vm.runInContext("jz2Place", C);
+  const fake = scw => { const el = () => ({ style: { cssText: "" } }), b = el(), h = [el(), el()];
+    return { P: Object.assign(fakeP(scw), { querySelector: s => s === ".jz2-board" ? b : null, querySelectorAll: s => s === ".jz2-hit" ? h : [] }), b, h } };
+  const o = fake(false); place(o.P);
+  assert.equal(o.b.style.cssText, "left:11.98%;top:25.58%;width:68.10%;height:18.17%"); assert.equal(o.h[0].style.cssText, o.b.style.cssText, "榜面熱區蓋住榜面");
+  assert.equal(o.h[1].style.cssText, "left:74.7%;top:71.5%;width:24.2%;height:7.8%", "原圖棋桌熱區照原本");
+  const l = fake(true); place(l.P);
+  assert.equal(l.b.style.cssText, "left:30.00%;top:18.38%;width:39.69%;height:32.50%"); assert.equal(l.h[0].style.cssText, l.b.style.cssText);
+  assert.equal(l.h[1].style.cssText, "left:74.5%;top:68%;width:16.5%;height:13%", "橫式圖棋桌熱區照條目");
+});
+
 test("〔混合〕07z2 接線：開頁先量（scwPre）、掛 07sw（5 個入口、走路前綴 jz2、換圖時重擺榜面熱區棋桌、重畫紗燈字）、橫式圖用條目的走路設定", () => {
   assert.match(JZ, /pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\};/);
   assert.match(JZ, /<img src="\$\{pre\.src\}"/);
