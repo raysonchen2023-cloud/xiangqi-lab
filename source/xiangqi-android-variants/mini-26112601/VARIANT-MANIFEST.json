@@ -3,7 +3,7 @@
  "name": "mini-26112601",
  "kind": "封測小包（約 100 MB）",
  "versionName": "20261126-0420-mini",
- "versionCode": 26112601,
+ "versionCode": 26112602,
  "siteVersion": "20261126-0420",
  "webCommit": "61d7fc0c7c38b1cf478ed925e76a6366ca23a0bf",
  "base": "source/xiangqi-android",
@@ -36,9 +36,10 @@
  ],
  "missing": {},
  "webRemove": [
-  "data/docs/evidence"
+  "data/docs/evidence",
+  "data/docs/evidence.md"
  ],
- "webRemoveNote": "封測小包：公開證據頁不放進安裝包（26112104、26112201 都這樣建）；scripts/build-variant.js 照這個欄位拿掉",
+ "webRemoveNote": "封測小包：公開證據頁不放進安裝包。data/docs/evidence 資料夾之外，也拿掉 data/docs/evidence.md（驗證紀錄 634 KB；aab-diff 規定證據頁、驗證紀錄不能進安裝包，任何放行參數都不放過；W91 週四變體要加的就是這個檔）；scripts/build-variant.js 照這個欄位拿掉",
  "web": {
   "index.html.patch": {
    "sha256": "32263efce015368e5ff36a2a6253f7eb5bd28c8c5dd6c5ff484e462bb33cda14",
@@ -50,6 +51,6 @@
   "xq-native-migration.html": "174ac94c307c58005e524acea5aa4e2232da825a3488149f3dad57b2340a1ed9"
  },
  "aab": {
-  "note": "正式候選從 web-20261126-0420 建，這個變體在 tag 之後才進 main，所以用 build-variant.js --variant-from 指定 main 的這個資料夾（build-record 會記）"
+  "note": "正式候選從 web-20261126-0420 建，這個變體在 tag 之後才進 main，所以用 build-variant.js --variant-from 指定 main 的這個資料夾（build-record 會記）。26112601 那包帶了 evidence.md、aab-diff 紅，作廢沒上傳；改建 26112602"
  }
 }
