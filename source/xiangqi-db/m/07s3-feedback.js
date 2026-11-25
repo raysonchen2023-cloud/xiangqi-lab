@@ -29,6 +29,8 @@ const FBP_L1610={ready:true,f:"feedback/fb_day_l1610",w:2560,h:1600,
   walk:Object.assign({W:2560,H:1600,el:40,h:[.15,96,.004],look0:[45,70],home:"home"},{"N":{"home":[22,92],"lft":[19,84],"desk":[30,96],"te":[70,96],"gui":[82,94]},"E":"home-lft home-desk desk-te te-gui","T":{},"TB":{"desk":{"poly":[[32,52],[69,52],[69,66],[25,66]],"hy":[66,94,1],"hops":[["desk",[30,64]],["te",[66,64]]],"ob":[[[52,51],[61,51],[61,57],[52,57]],[[58,58],[63,58],[63,64],[58,64]],[[62,53],[66,53],[66,58],[62,58]],[[34,54],[39,54],[39,57],[34,57]]]}},"HS":{"fbpBoard":["lft",15,25,"wave"],"fbpWrite":["desk",45,60,"bow"]}}),
   fx:{paper:{"o":[891,883],"x":[1472,883],"y":[806,1075]},slot:[["錯誤",FBP_SHENYUAN,1925,1037,"f_bug"],["建議","招諫",2099,1037,"fb_idea"],["其他","延恩",2286,1050,"f_other"]],seal:[1434,1037,57],pill:[2099,1183],jade:[922,916],slips:[[282,384,77,218],[371,384,77,192],[448,384,77,166]],slipN:[320,768],tyY:760}};
 if(typeof SCW!=="undefined")SCW["feedback/fb_day"]=FBP_L1610;
+/* 橫式圖的走路出口（記憶名 fbpL；直圖 SHW_EXITS.fbp 是直圖的 %，橫式路網也沒有 mid 節點）：照 json 建議，左下角門檻往左出去（審查 #158 第 2 項） */
+if(typeof SHW_EXITS!=="undefined"&&SHW_EXITS&&!("fbpL" in SHW_EXITS))SHW_EXITS.fbpL={at:[8,94],ln:"home lft",out:[-8,96],r:[0,86,14,100]};
 const SHW_FBP={el:40,h:[.085,70,.0012],look0:[42,60],home:"home",
   N:{home:[66,93],mid:[42,83],desk:[40,76],gui:[82,81],lft:[12,72],brd:[18,57],te:[30,64],fr2:[64,68],tb:[28,47.3]},
   E:"home-mid mid-desk mid-gui mid-lft lft-brd home-gui desk-te mid-fr2 fr2-gui",
@@ -209,13 +211,15 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋",fbpFrom()||"#/s
   const render=()=>{
     /* W107-L：iPad 橫向有專用橫式圖（07sw）就一開始載那張；信箋、銅匭、印、待送數、附件、回條照條目 fx（像素 2560×1600）。橫直切換時整頁重畫（apply），信上的字和類型留著 */
     const dk=fbpDark(),src=`data/feedback/${dk?"fb_night":"fb_day"}.webp?v=${FBP_IMGV}`,pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""},G=pre.k?FBP_L1610.fx:null;
-    const GW=G?FBP_L1610.w:768,GH=G?FBP_L1610.h:1376,pc=G?(x,y)=>[x/GW*100,y/GH*100]:fbpPc,PAPER=G?G.paper:FBP_PAPER,SLOT=G?G.slot:FBP_SLOT,SEAL=G?G.seal:FBP_SEAL,SLIPS=G?G.slips:FBP_SLIPS;
-    const[sx,sy]=pc(SEAL[0],SEAL[1]),[qx,qy]=pc(...(G?G.pill:FBP_PILL)),[jx,jy]=pc(...(G?G.jade:FBP_JADE));
-    const[nx,ny]=pc(...(G?G.slipN:FBP_SLIPN));
+    /* 座標組：w＝用橫式圖（條目 fx，2560×1600）或原圖（原本的常數，768×1376）。換圖時 place() 照新的那組原地重放，不整頁重畫（審查 #158 第 3 項：重畫會掉附件、多一筆返回紀錄、收起告示榜） */
+    const GEO=w=>{const F=w?FBP_L1610.fx:null,W=w?FBP_L1610.w:768,H=w?FBP_L1610.h:1376;return{GW:W,GH:H,pc:w?(x,y)=>[x/W*100,y/H*100]:fbpPc,PAPER:F?F.paper:FBP_PAPER,SLOT:F?F.slot:FBP_SLOT,SEAL:F?F.seal:FBP_SEAL,SLIPS:F?F.slips:FBP_SLIPS,PILL:F?F.pill:FBP_PILL,JADE:F?F.jade:FBP_JADE,SLIPN:F?F.slipN:FBP_SLIPN,TYY:F?F.tyY:520}};
+    let{GW,GH,pc,PAPER,SLOT,SEAL,SLIPS,PILL,JADE,SLIPN,TYY}=GEO(!!G);
+    const[sx,sy]=pc(SEAL[0],SEAL[1]),[qx,qy]=pc(...PILL),[jx,jy]=pc(...JADE);
+    const[nx,ny]=pc(...SLIPN);
     v.innerHTML=`<div class="shp-page cq fbp-page${pre.k?" scw-l":""}"${pre.k?` data-scw="${pre.k}"`:""}><img src="${pre.src}" alt="驛站信房"><div class="fbp-fx" aria-hidden="true"></div>
       <button type="button" class="fbp-paper" aria-label="寫信"><svg></svg><p></p></button>
       ${SLOT.map(([t,n,x,y],i)=>{const[px,py]=pc(x,y);return`<button type="button" class="fbp-slot" data-i="${i}" style="left:${px.toFixed(2)}%;top:${py.toFixed(2)}%" aria-label="${esc(n+"・"+t)}"></button>`}).join("")}
-      <div class="fbp-ty" style="top:${(pc(0,G?G.tyY:520)[1]).toFixed(2)}%">${SLOT.map(([t,n,,,ik],i)=>`<button type="button" data-i="${i}">${FBP_ICO(ik)}${esc(t)}<small>${esc(n)}</small></button>`).join("")}</div>
+      <div class="fbp-ty" style="top:${(pc(0,TYY)[1]).toFixed(2)}%">${SLOT.map(([t,n,,,ik],i)=>`<button type="button" data-i="${i}">${FBP_ICO(ik)}${esc(t)}<small>${esc(n)}</small></button>`).join("")}</div>
       <button type="button" class="fbp-seal" style="left:${sx.toFixed(2)}%;top:${sy.toFixed(2)}%;width:${(SEAL[2]*2/GW*100).toFixed(2)}%;aspect-ratio:1" aria-label="蓋印送出">兵</button>
       <div class="fbp-thumbs" style="left:${jx.toFixed(2)}%;top:${(jy+1.2).toFixed(2)}%"></div>
       <span class="fbp-q" style="left:${qx.toFixed(2)}%;top:${qy.toFixed(2)}%"></span><span class="fbp-roll" style="left:${FBP_MID[0].toFixed(2)}%;top:${FBP_MID[1].toFixed(2)}%"></span><div class="fbp-sky"></div><img class="fbp-bird" alt=""><div class="fbp-cap"></div>
@@ -286,10 +290,18 @@ function FeedbackPage(v,sub){fbpCss();setTop("💬 意見回饋",fbpFrom()||"#/s
     {const pre=fbrTake();if(pre){pick(pre.y|0);fx.value=pre.t+"\n";fx.dispatchEvent(new Event("input"));setTimeout(()=>{open(true);setTimeout(()=>{try{fx.setSelectionRange(fx.value.length,fx.value.length)}catch(e){}},320)},350)}}   /* fbr：從開發者回覆的飛鴿按「回覆開發者」進來，先帶好「回覆第 N 列」和類型 */
     paint();
     const cfg=Object.assign({},SHW_PG0,SHW_FBP);let cfgNow=cfg;
-    if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:["fbpWrite","fbpBoard"],pfx:"fbp",cfg0:cfg,apply:()=>setTimeout(()=>{if(st.stop||!v.isConnected||!/^#\/feedback/.test(location.hash))return;
-        const t=fx.value,y=ty(),pc0=pn.classList.contains("open");render();const f2=v.querySelector(".fbp-pn #fx");if(f2&&t){f2.value=t;f2.dispatchEvent(new Event("input"))}const b=v.querySelectorAll(".fbp-pn [data-y]")[y];if(b)b.click();if(pc0){const w=v.querySelector("#fbpWrite");if(w)w.click()}},0)};   /* 換圖＝整頁重畫（座標都照新圖），打到一半的字、類型、大箋開著照舊 */
+    const place=()=>{({GW,GH,pc,PAPER,SLOT,SEAL,SLIPS,PILL,JADE,SLIPN,TYY}=GEO(!!(typeof scwCur==="function"&&scwCur(P))));const put=(e,x,y)=>{if(!e)return;const[a,b]=pc(x,y);e.style.left=a.toFixed(2)+"%";e.style.top=b.toFixed(2)+"%"};
+      P.querySelectorAll(".fbp-slot").forEach(b=>{const q=SLOT[+b.dataset.i];put(b,q[2],q[3])});
+      const tyE=P.querySelector(".fbp-ty");if(tyE){tyE.style.top=pc(0,TYY)[1].toFixed(2)+"%";tyE.dataset.t0=tyE.style.top}   /* fbpHit 從 t0 起算，換圖要跟著換 */
+      const se=P.querySelector(":scope>.fbp-seal");put(se,SEAL[0],SEAL[1]);if(se)se.style.width=(SEAL[2]*2/GW*100).toFixed(2)+"%";
+      const th=P.querySelector(".fbp-thumbs"),[ja,jb]=pc(...JADE);if(th){th.style.left=ja.toFixed(2)+"%";th.style.top=(jb+1.2).toFixed(2)+"%"}
+      put(P.querySelector(".fbp-q"),...PILL);put(P.querySelector(".fbp-slipn"),...SLIPN);
+      P.querySelectorAll(".fbp-slip").forEach((e,i)=>{const[x,y,w,h]=SLIPS[i]||[];if(x==null)return;put(e,x,y);e.style.width=(w/GW*100).toFixed(2)+"%";e.style.height=(h/GH*100).toFixed(2)+"%"});
+      fit();fbpHit(P)};
+    if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:["fbpWrite","fbpBoard"],pfx:pre.k?"fbpL":"fbp",cfg0:cfg,apply:place,
+        onCfg:x=>{o.pfx=x.W===2560?"fbpL":"fbp"}};   /* 換圖重掛走路：橫式圖的出口記憶名換成 fbpL（照 #159 營地的做法） */
       scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}}
-    try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfgNow,"fbp")}catch(e){}
+    try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfgNow,pre.k?"fbpL":"fbp")}catch(e){}
     try{if(typeof exSync==="function")exSync()}catch(e){}};   /* 開發者 11/10「這一頁沒有出入口」：寄出信後整頁重畫會洗掉圖上的出口標籤（07w9 只在換頁時放），重畫完再放一次 */
   render();
   return{stop(){st.stop=true;if(st.ro)st.ro.disconnect();if(st.vv&&window.visualViewport){visualViewport.removeEventListener("resize",st.vv);visualViewport.removeEventListener("scroll",st.vv)}}}}

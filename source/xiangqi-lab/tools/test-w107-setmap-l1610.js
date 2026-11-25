@@ -63,7 +63,7 @@ test("疊圖座標：棋盤四角在圖內、左上左下右下右上；琴囊�
 });
 
 // smScene 在 vm 跑：只給它用到的全域，fx.innerHTML 收畫出來的東西
-function scene({ wide, dark, mute, hiCon, era }) {
+function scene({ wide, dark, mute, hiCon, era, onNow }) {
   const st = { hiCon: !!hiCon, mvSound: !mute, voiceCall: !mute, bgm: !mute, pageTheme: dark ? "dark" : "light" };
   const imgs = [];
   const ctx = vm.createContext({ Math, String, Array, Object, JSON,
@@ -72,6 +72,7 @@ function scene({ wide, dark, mute, hiCon, era }) {
   vm.runInContext(cut(S2, "const SM_IMGV=", ";") + "\n" + cut(S2, "const SM_BOARD=", ";") + "\n" + ENTRY.replace(/if\(typeof SCW!=="undefined"\)\{[^\n]*\}\s*$/, "") + "\n" +
     cut(S2, "const smDark=", "\n") + cut(S2, "const smMute=", "\n") + cut(S2, "const smAt=", "\n") + cut(S2, "function smScene(P){", "  fx.innerHTML=h}"), ctx);
   ctx.scwCur = P => wide ? vm.runInContext("SM_L1610", ctx) : null;
+  if (onNow) ctx.scwOn = () => onNow();
   const fx = { innerHTML: "", querySelector: () => null, querySelectorAll: () => [] };
   const img = { isConnected: true, src: "data/setmap/set_day_classic.webp?v=2300", _set: 0 };
   const img0 = img.src;
@@ -105,11 +106,21 @@ test("smScene 用橫式圖：琴囊、棋盤框、高對比描金照條目；原
   for (const [x, y] of g0) { assert.ok(x > 343 / 7.68 - 1 && x < 447 / 7.68 + 1); assert.ok(y > 453 / 13.76 - 1 && y < 486 / 13.76 + 1) }
 });
 
-test("〔混合〕原始碼：開頁照 scwPre 選圖、掛 scwMount（入口＝SM_SPOTS、apply 重畫疊圖）、走路照條目", () => {
+test("〔原始碼〕開頁照 scwPre 選圖、掛 scwMount（入口＝SM_SPOTS、apply 重畫疊圖）、走路照條目", () => {
   assert.match(S2, /const src=xqClImg\(`data\/setmap\/set_day\.webp\?v=\$\{SM_IMGV\}`\),pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\};/);
   assert.match(S2, /<img src="\$\{pre\.src\}" alt="天字客房">/);
   assert.match(S2, /const o=\{key:scwKey\(src\),src0:src,ids:SM_SPOTS\.map\(z=>z\[0\]\),pfx:"set",cfg0:cfg,apply:\(\)=>smScene\(P\)\};scwMount\(P,o\);if\(pre\.k\)\{cfgNow=scwWalkCfg\(o,scwCur\(P\)\);P\._scwW="l"\}/);
   assert.match(S2, /shwPage\(v,cfgNow,"set"\)/);
   const m = M("m.html"), i7 = m.indexOf("m/07sw-scenewide.js"), i2 = m.indexOf("m/07s2-setmap.js");
   assert.ok(i7 > 0 && i2 > i7, "07sw 在 07s2 前面載入（條目寫進 SCW）");
+});
+
+test("設定頁夜圖：開頁是原圖、深色先去載夜版；夜版載好時已經轉成橫式圖就不蓋（審查 #158 第 4 項），還是原圖就換上", () => {
+  let wideNow = false;
+  const A = scene({ wide: false, dark: true, onNow: () => wideNow });
+  assert.equal(A.imgs.length, 1); wideNow = true; A.img.src = "data/setmap/set_day_classic_l1610.webp?v=1125"; A.imgs[0].onload();
+  assert.equal(A.img.src, "data/setmap/set_day_classic_l1610.webp?v=1125", "轉成橫式圖後，晚到的夜版直圖不蓋");
+  wideNow = false;
+  const B = scene({ wide: false, dark: true, onNow: () => wideNow }); B.imgs[0].onload();
+  assert.match(B.img.src, /set_night/, "還是原圖就換上夜版");
 });

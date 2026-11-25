@@ -45,6 +45,7 @@ test("標題牌、走路小動作照原本的算法從 stele 算；在安全區�
   for (const [a, b] of Ed) { assert.ok(N.includes(a)); assert.ok(N.includes(b)) }
   for (const h of Object.values(W.HS)) assert.ok(N.includes(h[0]));
   assert.ok(E.sw7.sky.length >= 1 && E.sw7.sky[0].length >= 3, "天空範圍是多邊形的清單");
+  assert.deepEqual(JSON.parse(JSON.stringify(E.fx.leaf)), [65, 70], "竹葉在中、右碑之間的青苔上（json）");
 });
 
 test("tbGeo：橫式圖給條目的碑和 2560×1600 換算；原圖給 TB_STELE 和 768×1376", () => {
@@ -54,10 +55,13 @@ test("tbGeo：橫式圖給條目的碑和 2560×1600 換算；原圖給 TB_STELE
   assert.equal(g.ST, vm.runInContext("TB_STELE", C)); assert.deepEqual(JSON.parse(JSON.stringify(g.pc(384, 688))), [50, 50]);
 });
 
-test("〔混合〕原始碼：開頁照 scwPre 選圖；place 照 tbGeo 放青苔和碑面；拓碑動畫照 tbGeo；掛 scwMount（apply＝place）", () => {
+test("〔原始碼〕開頁照 scwPre 選圖；place 照 tbGeo 放青苔和碑面；拓碑動畫照 tbGeo；掛 scwMount（apply＝place）", () => {
   assert.match(Y4, /const src=xqClImg\(`data\/termsmap\/\$\{tb2Dark\(\)\?"terms_night":"terms_day"\}\.webp\?v=\$\{TB2_IMGV\}`\),pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\};/);
   assert.match(Y4, /<img src="\$\{pre\.src\}" alt="書院碑林">/);
-  assert.match(Y4, /const place=\(\)=>\{const\{ST,pc\}=tbGeo\(P\),at=k=>ST\.find\(s=>s\[0\]===k\);/);
+  assert.match(Y4, /const place=\(\)=>\{const\{ST,pc\}=tbGeo\(P\),at=k=>ST\.find\(s=>s\[0\]===k\),e=typeof scwCur==="function"\?scwCur\(P\):null,lf=e&&e\.fx&&e\.fx\.leaf\|\|\[70,62\],le=P\.querySelector\("\.tb-leaf"\);/, "竹葉照條目（審查 #158 第 1 項）");
+  assert.match(Y4, /pc\(x1,y1\+18\*\(ST===TB_STELE\?1:2560\/768\)\)/, "青苔下緣 18px 照圖寬換算");
+  assert.match(Y4, /scwMount\(P,o\);if\(pre\.k\)\{cfgNow=scwWalkCfg\(o,scwCur\(P\)\);P\._scwW="l"\}\}\n  place\(\);/, "掛上 07sw 後再放一次（開頁就是橫式圖時，青苔、碑面照條目）");
+  assert.doesNotMatch(Y4, /class="tb-leaf" style=/, "竹葉不在開頁時寫死位置");
   assert.match(Y4, /const rub=k=>\{const\{ST,pc\}=tbGeo\(P\),S=ST\.find\(s=>s\[0\]===k\);if\(!S\)return;/);
   assert.match(Y4, /ids:TB_STELE\.map\(s=>"tbT_"\+s\[0\]\),pfx:"tb",cfg0:cfg,apply:place\};scwMount\(P,o\);if\(pre\.k\)\{cfgNow=scwWalkCfg\(o,scwCur\(P\)\);P\._scwW="l"\}/);
   assert.match(Y4, /shwPage\(v,cfgNow,"tb"\)/);

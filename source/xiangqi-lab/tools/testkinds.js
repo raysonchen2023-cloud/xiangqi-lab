@@ -117,10 +117,10 @@ const CLASSIFIED = new Set([
   "test-home-wide.js",   /* 11/13 首頁接 iPad 寬版圖 home_p34／home_l1610：挑圖、退回原圖、座標表、走路節點、網址版本、cover 填滿（07z HMW、07fl xflCover；行為 8、混合 1） */
   "test-ipad-fill.js",   /* 11/13 遊戲畫面都要滿版：iPad／Duo 直向填滿寬度、橫向兩側模糊底（07fl；行為 8、原始碼 1） */
   "test-scene-wide-l1610.js",   /* 11/25 W107-L 場景頁 iPad 橫向專用橫式圖（07sw，第一頁錯棋重練經典白天）：選圖門檻、鍵與條目、座標範圍、天氣範圍、原地換圖與退回（含開頁就是橫式圖、00-util CDN 補抓）、手機不動標籤、走路設定；〔混合〕原始碼接線 */
-  "test-w107-setmap-l1610.js",   /* 11/25 W107-L 第 1 批：設定頁（07s2）iPad 橫向橫式圖：條目、入口與走路、疊圖座標、smScene 橫式不換日夜圖且疊圖照條目（行為 6、混合 1） */
-  "test-w107-feedback-l1610.js",   /* 11/25 W107-L 第 1 批：意見回饋頁（07s3）iPad 橫向橫式圖：條目、銅匭順序、疊圖座標、走路、橫式不飛鴿（行為 5、混合 1） */
-  "test-w107-thememap-l1610.js",   /* 11/25 W107-L 第 1 批：主題訓練頁（07y3）iPad 橫向橫式圖：條目、8 塊牌順序、小牌與小動作從 tmq 算、走路、天氣範圍（行為 4、混合 1） */
-  "test-w107-termsmap-l1610.js",   /* 11/25 W107-L 第 1 批：名詞頁（07y4）iPad 橫向橫式圖：條目、三通碑格式與順序、標題牌與小動作從 stele 算、tbGeo（行為 4、混合 1） */
+  "test-w107-setmap-l1610.js",   /* 11/25 W107-L 第 1 批：設定頁（07s2）iPad 橫向橫式圖：條目、入口與走路、疊圖座標、smScene 橫式不換日夜圖且疊圖照條目（行為 7、原始碼 1） */
+  "test-w107-feedback-l1610.js",   /* 11/25 W107-L 第 1 批：意見回饋頁（07s3）iPad 橫向橫式圖：條目、銅匭順序、疊圖座標、走路、橫式不飛鴿、座標組 GEO、出口 fbpL（行為 6、混合 1、原始碼 1） */
+  "test-w107-thememap-l1610.js",   /* 11/25 W107-L 第 1 批：主題訓練頁（07y3）iPad 橫向橫式圖：條目、8 塊牌順序、小牌與小動作從 tmq 算、走路、天氣範圍（行為 4、原始碼 1） */
+  "test-w107-termsmap-l1610.js",   /* 11/25 W107-L 第 1 批：名詞頁（07y4）iPad 橫向橫式圖：條目、三通碑格式與順序、標題牌與小動作從 stele 算、tbGeo（行為 4、原始碼 1） */
   "test-engine-timeout.js",   /* 11/12 開發者截圖「思考有點久」：引擎沒回應不再永遠等 */
   "test-ai-levels.js",   /* 11/12 第 10 輪 F3：電腦對手透明頁（行為 2、混合 3、原始碼 2） */
   "test-land3d.js", "test-bhmate.js", "test-docs-md.js", "test-net-chaos.js", "test-park3d-bench.js", "test-save-file.js", "test-story0.js",   /* 11/12 晚上逐項分類（第 8 輪證據頁） */

@@ -92,7 +92,7 @@ function smScene(P){const fx=P.querySelector(".sm-fx"),img=P.querySelector(":sco
   const e=typeof scwCur==="function"?scwCur(P):null,G=e&&e.fx&&e.fx.board?e.fx:null,Q=G?G.board:SM_BOARD.q;
   const W=G?e.w:768,H=G?e.h:1376,pc=([x,y])=>[x/W*100,y/H*100];
   const dk=smDark();let night=false;
-  if(G){}else if(dk){const im=new Image();im.onload=()=>{if(img.isConnected&&smDark()){img.src=im.src;night=true;const n=fx.querySelector(".sm-night");if(n)n.remove();fx.querySelectorAll(".sm-lamp").forEach(x=>x.remove())}};im.src=xqClImg(`data/setmap/set_night.webp?v=${SM_IMGV}`)}
+  if(G){}else if(dk){const im=new Image();im.onload=()=>{if(img.isConnected&&smDark()&&!(typeof scwOn==="function"&&scwOn(P))){img.src=im.src;night=true;const n=fx.querySelector(".sm-night");if(n)n.remove();fx.querySelectorAll(".sm-lamp").forEach(x=>x.remove())}};im.src=xqClImg(`data/setmap/set_night.webp?v=${SM_IMGV}`)}
   else if(!/set_day/.test(img.src))img.src=xqClImg(`data/setmap/set_day.webp?v=${SM_IMGV}`);
   let h="";
   if(dk&&!night)h+=G?'<i class="sm-night"></i>'+G.lamp.map(([x,y],i)=>`<i class="sm-lamp" style="left:${x}%;top:${y}%;width:${[10,8,5][i]||6}%"></i>`).join(""):'<i class="sm-night"></i><i class="sm-lamp" style="left:80%;top:30%"></i><i class="sm-lamp" style="left:55%;top:46%;width:22%"></i><i class="sm-lamp" style="left:56%;top:51%;width:14%"></i>';   /* 橫式圖的燈寬＝原本的寬×圖變寬的比例（約 0.35） */

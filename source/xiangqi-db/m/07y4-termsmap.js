@@ -17,7 +17,7 @@ const TB_L1610=(()=>{const ST=[["play","棋規",422,781,627,1126,404,594,640,768
   for(const[k,,x0,y0,x1,y1,,,,,lx,ly,nd]of ST){S["tbT_"+k]=pc(lx,ly);HS["tbT_"+k]=[nd,...pc((x0+x1)/2,(y0+y1)/2),"bow"]}
   return{ready:true,f:"termsmap/terms_day_classic_l1610",w:W,h:H,S,exit:[14,92],safe:{"l":0.12,"r":0.12,"t":0.05,"b":0.1},
     walk:{W,H,el:38,h:[.14,96,.004],look0:[50,60],home:"home",N:{"home":[50,96],"mid":[50,90],"sl":[20,84],"sm":[50,84],"sr":[78,84]},E:"home-mid mid-sl mid-sm mid-sr",HS},
-    fx:{stele:ST},sw7:{sky:[[[0,0],[2560,0],[2560,1600],[0,1600]]],fg:null}}})();
+    fx:{stele:ST,leaf:[65,70]},sw7:{sky:[[[0,0],[2560,0],[2560,1600],[0,1600]]],fg:null}}})();
 if(typeof SCW!=="undefined"){SCW["termsmap/terms_day_classic"]=TB_L1610;SCW["termsmap/terms_day"]=Object.assign({},TB_L1610,{f:"termsmap/terms_day_l1610",base:"termsmap/terms_day_classic"})}
 /* 現在用的那張圖：碑的座標和換算（橫式圖用條目，原圖照 TB_STELE、768×1376） */
 const tbGeo=P=>{const e=typeof scwCur==="function"?scwCur(P):null,G=e&&e.fx&&e.fx.stele?e:null;return G?{ST:G.fx.stele,pc:(x,y)=>[x/G.w*100,y/G.h*100]}:{ST:TB_STELE,pc:tbPc}};
@@ -74,14 +74,14 @@ function termsMap(v){if(v.querySelector(".tb-page"))return;const tabs=v.querySel
   const P=document.createElement("div");P.className="shp-page cq tb-page";const pc=tbPc;
   const leaf='<svg viewBox="-10 -10 20 20"><path d="M0-9C3-5 3 4 0 9C-3 4-3-5 0-9Z" fill="#7fa36a" stroke="rgba(50,70,40,.6)" stroke-width=".6"/></svg>';
   let fx="";for(const[k]of TB_STELE){if(!RD[k])fx+=`<span class="tb-moss" data-k="${k}"></span>`}   /* 青苔、碑面的位置交給 place（照當下的圖） */
-  fx+=`<span class="tb-leaf" style="left:70%;top:62%">${leaf}</span>`;
+  fx+=`<span class="tb-leaf">${leaf}</span>`;   /* 竹葉位置交給 place：原圖 70%,62%，橫式圖照條目 fx.leaf（中、右碑之間的青苔上；審查 #158 第 1 項） */
   /* W107-L：iPad 橫向有專用橫式圖（07sw）就一開始載那張；碑、標題牌、出口、走路照條目 */
   const src=xqClImg(`data/termsmap/${tb2Dark()?"terms_night":"terms_day"}.webp?v=${TB2_IMGV}`),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}
   P.innerHTML=`<img src="${pre.src}" alt="書院碑林"><div class="tb-fx" aria-hidden="true">${fx}</div>`+
     TB_STELE.map(([k,t])=>`<button type="button" class="tb-face" data-k="${k}" aria-label="${t}碑"></button>`).join("")+
     TB_STELE.map(([k,t,,,,,,,,,lx,ly])=>{const[a,b]=pc(lx,ly);return`<button class="shp-spot tb-tag" id="tbT_${k}" data-k="${k}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><b>${t}</b></button>`}).join("");
   v.insertBefore(P,tabs);
-  const place=()=>{const{ST,pc}=tbGeo(P),at=k=>ST.find(s=>s[0]===k);
+  const place=()=>{const{ST,pc}=tbGeo(P),at=k=>ST.find(s=>s[0]===k),e=typeof scwCur==="function"?scwCur(P):null,lf=e&&e.fx&&e.fx.leaf||[70,62],le=P.querySelector(".tb-leaf");if(le){le.style.left=lf[0]+"%";le.style.top=lf[1]+"%"}
     P.querySelectorAll(".tb-moss").forEach(m=>{const[,,x0,y0,x1,y1]=at(m.dataset.k),[a,b]=pc(x0,y1-(y1-y0)*.32),[c,d]=pc(x1,y1+18*(ST===TB_STELE?1:2560/768));Object.assign(m.style,{left:(a-1).toFixed(2)+"%",top:b.toFixed(2)+"%",width:(c-a+2).toFixed(2)+"%",height:(d-b).toFixed(2)+"%"})});
     P.querySelectorAll(".tb-face").forEach(f=>{const[,,x0,y0,x1,y1]=at(f.dataset.k),[a,b]=pc(x0,y0),[c,d]=pc(x1,y1);Object.assign(f.style,{left:a.toFixed(2)+"%",top:b.toFixed(2)+"%",width:(c-a).toFixed(2)+"%",height:(d-b).toFixed(2)+"%"})})};
   place();

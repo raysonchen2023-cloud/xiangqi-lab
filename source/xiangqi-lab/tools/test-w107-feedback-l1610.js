@@ -53,7 +53,7 @@ test("走路：邊的兩端都是節點、每個節點接得到 home；書桌桌
   assert.equal(W.W, 2560); assert.equal(W.home, "home");
 });
 
-test("飛鴿：橫式圖（data-scw 有值）不飛、回 false，照舊投進銅匭；原圖照舊往下走（不被這條擋）", () => {
+test("〔混合〕飛鴿：橫式圖（data-scw 有值）不飛、回 false，照舊投進銅匭；原圖照舊往下走（不被這條擋）", () => {
   const src = cut(S3, "function fbpFly(P,paper){", "\n");
   assert.match(src, /^function fbpFly\(P,paper\)\{if\(P&&P\.dataset&&P\.dataset\.scw\)return false;/);
   const ctx = vm.createContext({ matchMedia: () => ({ matches: true }) });   // 原圖這條用「減少動態」讓它停在下一行，證明沒被橫式那條擋
@@ -62,15 +62,39 @@ test("飛鴿：橫式圖（data-scw 有值）不飛、回 false，照舊投進�
   assert.equal(vm.runInContext("fbpFly", ctx)({ dataset: { scw: "" } }), "原圖往下");
 });
 
-test("〔混合〕原始碼：render 照 scwPre 選圖和座標、掛 scwMount（apply 整頁重畫且保留字、類型、大箋開著）、走路照條目；類型小籤橫式時往內收", () => {
+test("座標組 GEO：橫式圖用條目 fx（2560×1600、類型小籤 tyY 760），原圖用原本的常數（768×1376、520）；兩組每一欄都有", () => {
+  const src = cut(S3, "const GEO=w=>{", "TYY:F?F.tyY:520}};");
+  const ctx = vm.createContext({ Math, Object });
+  vm.runInContext(CONSTS + ENTRY + cut(S3, "const FBP_SEAL=", ";") + "\n" + cut(S3, "const FBP_SLIPS=", ";") + "\n" + cut(S3, "const fbpPc=", ";") + "\n" + src, ctx);
+  const W = vm.runInContext("GEO(true)", ctx), N = vm.runInContext("GEO(false)", ctx), F = vm.runInContext("FBP_L1610.fx", ctx);
+  assert.equal(W.GW, 2560); assert.equal(W.GH, 1600); assert.equal(W.TYY, 760); assert.equal(W.SLOT, F.slot); assert.equal(W.PAPER, F.paper); assert.equal(W.PILL, F.pill); assert.equal(W.SLIPN, F.slipN);
+  assert.deepEqual(JSON.parse(JSON.stringify(W.pc(1280, 800))), [50, 50]);
+  assert.equal(N.GW, 768); assert.equal(N.GH, 1376); assert.equal(N.TYY, 520); assert.equal(N.SLOT, vm.runInContext("FBP_SLOT", ctx)); assert.equal(N.pc, vm.runInContext("fbpPc", ctx));
+  for (const k of ["PAPER", "SLOT", "SEAL", "SLIPS", "PILL", "JADE", "SLIPN"]) { assert.ok(W[k], "橫式缺 " + k); assert.ok(N[k], "原圖缺 " + k) }
+});
+
+test("走路出口：橫式圖的記憶名 fbpL 登記自己的出口（json 建議的位置），不動直圖的 fbp", () => {
+  const ctx = vm.createContext({ SHW_EXITS: { fbp: { at: [10, 86], ln: "mid lft", out: [-8, 88], r: [0, 79, 18, 95] } } });
+  vm.runInContext(cut(S3, 'if(typeof SHW_EXITS!=="undefined"&&SHW_EXITS&&!("fbpL" in SHW_EXITS))', "};"), ctx);
+  const X = vm.runInContext("SHW_EXITS", ctx);
+  assert.deepEqual(JSON.parse(JSON.stringify(X.fbpL)), { at: [8, 94], ln: "home lft", out: [-8, 96], r: [0, 86, 14, 100] });
+  assert.deepEqual(X.fbp.at, [10, 86], "直圖的出口不動");
+  const N = vm.runInContext("FBP_L1610.walk.N", load());
+  for (const n of X.fbpL.ln.split(" ")) assert.ok(N[n], "出口接的節點在橫式路網裡：" + n);
+});
+
+test("〔原始碼〕render 照 scwPre 選圖；換圖用 place() 原地重放（不整頁重畫）；掛 scwMount（記憶名照圖換 fbp／fbpL）；類型小籤橫式時往內收", () => {
   assert.match(S3, /const dk=fbpDark\(\),src=`data\/feedback\/\$\{dk\?"fb_night":"fb_day"\}\.webp\?v=\$\{FBP_IMGV\}`,pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\},G=pre\.k\?FBP_L1610\.fx:null;/);
-  assert.match(S3, /PAPER=G\?G\.paper:FBP_PAPER,SLOT=G\?G\.slot:FBP_SLOT,SEAL=G\?G\.seal:FBP_SEAL,SLIPS=G\?G\.slips:FBP_SLIPS;/);
+  assert.match(S3, /let\{GW,GH,pc,PAPER,SLOT,SEAL,SLIPS,PILL,JADE,SLIPN,TYY\}=GEO\(!!G\);/);
   assert.match(S3, /<img src="\$\{pre\.src\}" alt="驛站信房">/);
   assert.match(S3, /const fit=\(\)=>\{const k=P\.clientWidth\/GW;if\(!k\)return;const\{o,x,y\}=PAPER,/, "箋紙照當下的圖寬算");
   assert.match(S3, /if\(!fly\)\{const sl=SLOT\[ty\(\)\],k=P\.clientWidth\/GW,\{o\}=PAPER;/, "投進銅匭照當下的座標");
-  assert.match(S3, /ids:\["fbpWrite","fbpBoard"\],pfx:"fbp",cfg0:cfg,apply:\(\)=>setTimeout\(/);
-  assert.match(S3, /const t=fx\.value,y=ty\(\),pc0=pn\.classList\.contains\("open"\);render\(\);/, "重畫前記下字、類型、大箋開著");
-  assert.match(S3, /shwPage\(v,cfgNow,"fbp"\)/);
+  assert.match(S3, /const place=\(\)=>\{\(\{GW,GH,pc,PAPER,SLOT,SEAL,SLIPS,PILL,JADE,SLIPN,TYY\}=GEO\(!!\(typeof scwCur==="function"&&scwCur\(P\)\)\)\);/, "place 照當下的圖重算");
+  for (const sel of [".fbp-slot", ".fbp-ty", ":scope>.fbp-seal", ".fbp-thumbs", ".fbp-q", ".fbp-slipn", ".fbp-slip"]) assert.ok(cut(S3, "const place=()=>{", "fit();fbpHit(P)};").includes('"' + sel + '"'), "place 重放 " + sel);
+  assert.match(S3, /tyE\.dataset\.t0=tyE\.style\.top/, "fbpHit 的起點跟著換");
+  assert.match(S3, /pfx:pre\.k\?"fbpL":"fbp",cfg0:cfg,apply:place,\s*onCfg:x=>\{o\.pfx=x\.W===2560\?"fbpL":"fbp"\}\};/);
+  assert.doesNotMatch(S3, /apply:\(\)=>setTimeout\(\(\)=>\{if\(st\.stop/, "不再整頁重畫");
+  assert.match(S3, /shwPage\(v,cfgNow,pre\.k\?"fbpL":"fbp"\)/);
   assert.match(S3, /\.fbp-page\.scw-l \.fbp-ty\{right:4%\}/);
   assert.deepEqual(S3.split("\n").filter(l => /\/7\.68|\/13\.76/.test(l)), ["const fbpPc=(x,y)=>[x/7.68,y/13.76];"], "render 裡不再寫死 768×1376（只剩 fbpPc 那一行）");
 });

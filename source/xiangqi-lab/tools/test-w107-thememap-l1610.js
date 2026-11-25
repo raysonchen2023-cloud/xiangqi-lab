@@ -57,10 +57,11 @@ test("走路：邊的兩端、小動作的站點都是節點；從 home 走得�
   assert.deepEqual([...seen].sort(), N.slice().sort());
   const [h0, y0, k] = W.h; assert.ok(h0 - (y0 - Math.min(...Object.values(W.N).map(p => p[1]))) * k > .02, "最遠的節點人物不會縮成負的");
   for (const poly of [...E.sw7.sky, ...E.sw7.fg]) for (const [x, y] of poly) assert.ok(x >= 0 && x <= 2560 && y >= 0 && y <= 1600);
+  assert.equal(E.sw7.sky.length, 2, "兩側天空"); assert.equal(E.sw7.fg.length, 3, "屋頂＋兩根近柱（json 的 fg 三塊）");
   assert.equal(vm.runInContext('scwSw7("data/thememap/theme_day_classic_l1610.webp?v=1125",s=>/thememap/.test(s)?{k:"theme",re:/x/,m:"semi",sky:[],fg:[]}:null)', C).W, 2560, "07w7 拿得到橫式圖的天氣範圍");
 });
 
-test("〔混合〕原始碼：開頁照 scwPre 選圖；fit 照當下的圖（條目或 TM_Q）放牌面和流蘇；掛 scwMount（apply＝fit）；小動作照練習狀態", () => {
+test("〔原始碼〕開頁照 scwPre 選圖；fit 照當下的圖（條目或 TM_Q）放牌面和流蘇；掛 scwMount（apply＝fit）；小動作照練習狀態", () => {
   assert.match(Y3, /const src=xqClImg\(`data\/thememap\/\$\{tmDark\(\)\?"theme_night":"theme_day"\}\.webp\?v=\$\{TM_IMGV\}`\),pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\};/);
   assert.match(Y3, /<img src="\$\{pre\.src\}" alt="演武迴廊">/);
   assert.match(Y3, /const fit=\(\)=>\{const e=typeof scwCur==="function"\?scwCur\(P\):null,G=e&&e\.fx&&e\.fx\.tmq\?e:null,Q=G\?G\.fx\.tmq:TM_Q,W=G\?G\.w:768,H=G\?G\.h:1376,k=P\.clientWidth\/W;/);
