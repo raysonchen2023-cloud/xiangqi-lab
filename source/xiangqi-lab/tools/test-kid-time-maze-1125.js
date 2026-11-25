@@ -43,6 +43,14 @@ test("家長計時：背景期間不算（回前景時從回來那一刻重新�
   assert.equal(K.data.useDay["2026-11-25"], 15000, "只有前景的 10＋5 秒");
 });
 
+test("家長計時：在背景時一般的定時記錄（不帶參數）不能記時間（#185 審查：原本這項拿掉 hidden 判斷照樣綠）", () => {
+  const K = useKit();
+  K.tick(10000); K.c.document.hidden = true; K.L.visibilitychange();   /* 前景 10 秒後切背景：記 10 秒 */
+  K.tick(15000); K.c.useTick();   /* 背景中每 15 秒的 setInterval 照跑 */
+  K.tick(15000); K.c.useTick();
+  assert.equal(K.data.useDay["2026-11-25"], 10000, "背景那 30 秒不能算進去");
+});
+
 function kidOff(cfg) {
   const a = SHELL.indexOf("const NET_KIDOFF="), b = SHELL.indexOf("\n", a);
   assert.ok(a > 0 && b > a, "抓得到 NET_KIDOFF");
@@ -55,15 +63,17 @@ test("兒童模式或家長關線上大廳：啟動時不連大廳；平常照�
   assert.equal(kidOff({ net: false }), true, "家長關線上大廳");
   assert.equal(kidOff({ kid: false, net: true }), false);
   assert.equal(kidOff(null), false, "沒設定過");
-  assert.match(SHELL, /const NET_KIDOFF=[^\n]*\nif\(OFF&&window\.XQNet&&!NET_KIDOFF\)\{XQNet\.start\(\);/, "啟動那行看 NET_KIDOFF");
+  /* #185 審查：只有 XQNet.start() 看 NET_KIDOFF；同一個區塊下一行起的事件（新版通知、邀請、配對、積分…）照常登記，家長之後打開大廳、進大廳自己連上時才收得到邀請 */
+  assert.match(SHELL, /const NET_KIDOFF=[^\n]*\nif\(OFF&&window\.XQNet\)\{if\(!NET_KIDOFF\)XQNet\.start\(\);[^\n]*\n\s*XQNet\.on\("version"/, "只擋 start，事件照常登記");
+  assert.doesNotMatch(SHELL, /if\(OFF&&window\.XQNet&&!NET_KIDOFF\)/, "不能把整段事件包進條件");
   assert.doesNotMatch(SHELL.slice(SHELL.indexOf("const NET_KIDOFF="), SHELL.indexOf("const NET_KIDOFF=") + 300), /fmNetOff\(\)/, "不能在這裡叫 fmNetOff（後面才宣告的常數，會出錯回 false）");
 });
 
 test("〔原始碼〕迷宮：判負（拖回入口）後不再接受落子、提示鈕關掉", () => {
-  assert.match(MAZE, /let pcs=jhMzFen\(P\.fen\),sel=null,won=false,lost=false,last=null;/);
-  assert.match(MAZE, /const pick=\(c,r\)=>\{if\(won\|\|lost\)return;/);
+  assert.match(MAZE, /let pcs=jhMzFen\(P\.fen\),sel=null,won=false,mzLost=false,last=null;/);
+  assert.match(MAZE, /const pick=\(c,r\)=>\{if\(won\|\|mzLost\)return;/);
   const i = MAZE.indexOf('if(got==="back"){'); assert.ok(i > 0);
   const seg = MAZE.slice(i, i + 200);
-  assert.match(seg, /^if\(got==="back"\)\{\{const eb=[^}]*\}lost=true;/, "判負那一刻（拿掉逃跑鈕後、出「回到入口」鈕前）就標 lost");
+  assert.match(seg, /^if\(got==="back"\)\{\{const eb=[^}]*\}mzLost=true;/, "判負那一刻（拿掉逃跑鈕後、出「回到入口」鈕前）就標 mzLost（不叫 lost：下面「回到入口」那段有 const lost）");
   assert.match(seg, /data-a="hint"[^;]*;if\(h\)h\.disabled=true/, "提示鈕關掉");
 });
