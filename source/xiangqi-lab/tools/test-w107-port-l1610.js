@@ -7,7 +7,7 @@ const assert = require("node:assert/strict"), test = require("node:test"), fs = 
 const M = p => fs.readFileSync(path.join(__dirname, "../../xiangqi-db", p), "utf8").replace(/\r\n/g, "\n");
 const SW = M("m/07sw-scenewide.js"), F = M("m/07f-ship.js"), WK = M("m/07w-shipwalk.js"), W4 = M("m/07w4-porthost.js"), PC = M("m/07p-portcolor.js"), PW = M("m/07r-portwind.js"), PF = M("m/07n-portfx.js");
 const cut = (src, a, b) => { const i = src.indexOf(a), j = src.indexOf(b, i); assert.ok(i >= 0 && j > i, "找不到 " + a); return src.slice(i, j + b.length) };
-const ENTRY = cut(F, "const PORT_L1610=", 'fx:{sight:T.sight||[],pier:T.pier}}}');
+const ENTRY = cut(F, "const PORT_L1610=", 'sw7:{m:"out",tr:PORT_L1610_TR[k]||null,fg:null,sky:null}}}');
 const ERAS = ["classic", "qin", "han", "sanguo", "weijin", "nanbei", "sui", "tang", "wudai", "song", "yuan", "ming", "qing"];
 const J = x => JSON.parse(JSON.stringify(x));
 function load() {
@@ -196,4 +196,59 @@ test("〔混合〕07w5 偶遇轉向重放：信照當下的路網重找位置；
   let n = 0; const Q = { isConnected: true, _oyRe: () => n++ };
   f(Q, null); f(Q, null); assert.equal(n, 0, "第一次和沒換都不叫"); f(Q, { sight: [] }); assert.equal(n, 1, "直→橫叫一次"); f(Q, { sight: [] }); assert.equal(n, 1); f(Q, null); assert.equal(n, 2, "橫→直再叫");
   assert.match(F, /const place=\(\)=>\{[^]*?if\(P\._oyL!=null&&P\._oyL!==!!X&&typeof P\._oyRe==="function"\)/, "在 portScw 的 place 裡");
+});
+
+// ---- #171：橫式圖的天氣 sw7 與四時風物匣（Windows Claude 1 量，sw7_port_l1610.json） ----
+const SW7 = M("m/07w7-seasons.js");
+function loadSw7() {
+  const C = load(); C.localStorage = { getItem: k => k === "xqScwDev" ? "1" : null };
+  vm.runInContext(cut(SW7, "const SW7_PAGES=[", 'm:"in"}];') + "\n" + cut(SW7, "function sw7Page0(src){", "return null}") + "\n" + cut(SW7, "function sw7Page(src){", "return sw7Page0(src)}"), C);
+  return C;
+}
+test("天氣：13 朝橫式圖照條目 sw7 下雨雪（m:out，不再被當成室內）、地點照直圖、W／H 2560×1600；落葉樹冠只有唐宋元明清 5 朝、用橫式圖的座標，其他朝不沿用直圖的", () => {
+  const C = loadSw7(), page = vm.runInContext("sw7Page", C), TR = J(vm.runInContext("PORT_L1610_TR", C));
+  assert.deepEqual(Object.keys(TR).sort(), ["ming", "qing", "song", "tang", "yuan"]);
+  for (const e of ERAS) {
+    const p = J(page(`data/shipmap/port_${e}_f_l1610.webp?v=1125`)), p0 = J(page(`data/shipmap/port_${e}_f.webp`));
+    assert.equal(p.m, "out", e + " 下雨雪"); assert.equal(p.rg, p0.rg, e + " 地點照直圖"); assert.equal(p.W, 2560); assert.equal(p.H, 1600);
+    if (TR[e]) { assert.deepEqual(p.tr, TR[e], e + " 樹冠用橫式座標"); for (const poly of p.tr) for (const [x, y] of poly) assert.ok(x >= 0 && x <= 2560 && y >= 0 && y <= 1600, e + " 樹冠在圖內") }
+    else assert.equal(p.tr, null, e + " 沒有樹冠（不沿用直圖 768×1376 的）");
+    assert.equal(p0.W, undefined, e + " 直圖照舊 768×1376");
+  }
+  assert.deepEqual(TR.tang[0][0], [1885, 372], "唐的樹冠照 json 寫死");
+});
+
+test("木匣：sw7BoxKey 認得橫式圖（回第 3 欄 1）、直圖照舊；橫式圖座標照 json、寬 6%；經典不放", () => {
+  const C = vm.createContext({});
+  vm.runInContext(cut(SW7, "const SW7_BOX_POS={", "}};") + "\n" + cut(SW7, "const SW7_BOX_POS_L=", ";") + "\n" + cut(SW7, "function sw7BoxKey(src){", "return null}"), C);
+  const key = vm.runInContext("sw7BoxKey", C);
+  assert.deepEqual(J(key("data/shipmap/port_tang_f_l1610.webp?v=1125")), ["port", "tang", 1]);
+  assert.deepEqual(J(key("data/shipmap/port_tang_f.webp")), ["port", "tang"]); assert.deepEqual(J(key("data/shipmap/port_tang.webp")), ["port", "tang"]);
+  assert.equal(key("data/shipmap/port_classic_f_l1610.webp"), null, "經典不放木匣"); assert.equal(key("data/shipmap/port_classic_f.webp"), null);
+  const L = J(vm.runInContext("SW7_BOX_POS_L.port", C));
+  assert.deepEqual(Object.keys(L).sort(), ERAS.filter(e => e !== "classic").sort(), "12 朝都有");
+  assert.deepEqual(L.tang, [15.5, 65]); assert.deepEqual(L.qing, [64, 88]); assert.deepEqual(L.sanguo, [44, 73]);
+  for (const [e, [x, y]] of Object.entries(L)) assert.ok(x > 3 && x < 97 && y > 6 && y <= 100, e + " 在圖內");
+  assert.equal(vm.runInContext("SW7_BOX_LW", C), 6);
+});
+
+test("〔混合〕sw7Box：橫式圖放橫式座標、寬 6%、元素鍵加 :l（轉向會換一個）；直圖照舊 10%；存檔的鍵兩邊都是 port:<朝>", () => {
+  const store = {}, made = [];
+  const C = vm.createContext({ store: { get: (k, d) => k in store ? store[k] : d, set: (k, v) => { store[k] = v } }, setTimeout() { }, toast() { }, vibrate() { } });
+  vm.runInContext(cut(SW7, "const SW7_BOX_ON=", ";") + "\n" + cut(SW7, "const SW7_BOX_POS={", "}};") + "\n" + cut(SW7, "const SW7_BOX_POS_L=", ";") + "\n" + cut(SW7, "function sw7BoxKey(src){", "return null}") + "\n" + cut(SW7, "function sw7BoxSt(){", "return S}"), C);
+  const R = s => vm.runInContext(s, C);
+  R("var sw7SeaOf=()=>\"sp\",sw7Term=()=>\"cf\",SW7_SEA=[[\"sp\"]],sw7BoxDot=()=>{},sw7BoxOpen=()=>{};");
+  const body = cut(SW7, "function sw7Box(R){", "\nfunction sw7BoxDot(");
+  R(body.slice(0, body.lastIndexOf("\nfunction")));
+  const mkP = src => { let box = null; const img = { getAttribute: () => src };
+    const P = { querySelector: () => box, append: b => { box = b }, insertBefore: b => { box = b } }; return { R: { P, img }, get box() { return box } } };
+  C.document = { createElement: () => { const b = { style: {}, dataset: {}, classList: { toggle() { }, add() { } }, setAttribute() { }, addEventListener() { }, remove() { b.gone = 1 } }; made.push(b); return b } };
+  const w = mkP("data/shipmap/port_tang_f_l1610.webp?v=1125"); R("sw7Box")(w.R);
+  assert.ok(w.box, "橫式圖放木匣"); assert.equal(w.box.dataset.k, "port:tang:l"); assert.equal(w.box.style.left, "15.5%"); assert.equal(w.box.style.top, "65%"); assert.equal(w.box.style.width, "6%");
+  const t = mkP("data/shipmap/port_tang_f.webp"); R("sw7Box")(t.R);
+  assert.equal(t.box.dataset.k, "port:tang"); assert.equal(t.box.style.left, "24%"); assert.equal(t.box.style.width, undefined, "直圖照 CSS 的 10%");
+  assert.deepEqual(Object.keys(J(store.sw7Box.pg)), ["port:tang"], "存檔的鍵兩邊都是 port:tang");
+  // 同一個圖框轉向：橫式的木匣換掉
+  const z = mkP("data/shipmap/port_tang_f.webp"); R("sw7Box")(z.R); const b0 = z.box; z.R.img.getAttribute = () => "data/shipmap/port_tang_f_l1610.webp"; R("sw7Box")(z.R);
+  assert.equal(b0.gone, 1, "舊的木匣拿掉"); assert.equal(z.box.dataset.k, "port:tang:l");
 });
