@@ -129,14 +129,16 @@ const xsmWalkCfg=()=>Object.assign({},typeof SHW_PG0!=="undefined"?SHW_PG0:{},XS
 /* W107-L 第 4 批 iPad 橫向專用圖（l1610，2560×1600；Windows Claude 1 11/25 量，output/w107-ipad/l1610/ximarket/xm_l1610.json），全部是 %：
    外景白天 xm_day、冬景 xm_day_winter 構圖相同、座標共用；茶坊 xm_tea、xm_tea_winter 共用。夜景 xm_night（和冬夜）這次沒出＝照舊原圖。
    S 入口、hide 找棋子的 13 個藏點（順序照原表的意思重找）、walk 走路（身高照茶坊門高：原圖約 14% 圖高對 .09，新圖約 16% → .10）；茶坊 nobot 是小帥不站的四塊禁區。
-   ⚠️ 新圖沒畫樂棚（掛琵琶、拍板的木架），中間畫成擺木箱的鋪子，「聽曲」先標在中間鋪子上方；要不要局部重畫加樂器架，等開發者決定。
+   中間那間 11/25 照開發者選單局部重畫成樂棚（木架掛琵琶、拍板，旁邊一面小鼓），日間、冬景都有；「聽曲」標在樂器架上方。
    茶坊窗外的雨（XSM_RAIN）是照原圖窗框量的，橫式圖先不畫（CSS）。日夜、換季每分鐘換圖（xsmSwap、茶坊的計時）照 07sw 的鍵重選：夜裡沒條目＝退回原圖 */
-const XSM_L={S:{"xsmGift":[18,38],"xsmMusic":[50,36],"xsmTea":[77,33],"xsmChess":[30,72],"xsmVisit":[86,76]},hide:[[10,21],[29,15],[51,46],[69,42],[46,53],[72,47],[35,45],[29,82],[37,85],[23,89],[55,88],[73,74],[83,81]],walk:{"h":[0.1,60,0.0007],"look0":[50,95],"N":{"home":[56,80],"c1":[52,66],"chess":[40,86],"cross":[50,58],"counter":[24,62],"music":[52,58],"tea":[70,52],"gate":[72,84],"g2":[80,92],"tree":[86,86]},"E":"home-chess home-c1 c1-cross cross-counter cross-music music-tea home-gate gate-g2 g2-tree","HS":{"xsmGift":["counter",18,40,"bow"],"xsmChess":["chess",30,74,"bow"],"xsmMusic":["music",50,40,"wave"],"xsmTea":["tea",76,35,"bow"],"xsmVisit":["tree",86,76,"wave"],"xsmExit":["gate",72,94,"wave"]}},teaS:{"xsmDark":[49,48]},nobot:[[0,0,100,50],[0,50,30,100],[70,50,100,100],[32,50,64,84]]};
+const XSM_L={S:{"xsmGift":[18,38],"xsmMusic":[44,33],"xsmTea":[77,33],"xsmChess":[30,72],"xsmVisit":[86,76]},hide:[[10,21],[29,15],[51,46],[69,42],[46,53],[72,47],[35,45],[29,82],[37,85],[23,89],[55,88],[73,74],[83,81]],walk:{"h":[0.1,60,0.0007],"look0":[50,95],"N":{"home":[56,80],"c1":[52,66],"chess":[40,86],"cross":[50,58],"counter":[24,62],"music":[47,58],"tea":[70,52],"gate":[72,84],"g2":[80,92],"tree":[86,86]},"E":"home-chess home-c1 c1-cross cross-counter cross-music music-tea home-gate gate-g2 g2-tree","HS":{"xsmGift":["counter",18,40,"bow"],"xsmChess":["chess",30,74,"bow"],"xsmMusic":["music",44,40,"wave"],"xsmTea":["tea",76,35,"bow"],"xsmVisit":["tree",86,76,"wave"],"xsmExit":["gate",72,94,"wave"]}},teaS:{"xsmDark":[49,48]},nobot:[[0,0,100,50],[0,50,30,100],[70,50,100,100],[32,50,64,84]]};
 if(typeof SCW!=="undefined"){const sf={l:.12,r:.12,t:.05,b:.10},o={ready:true,f:"ximarket/xm_day_l1610",w:2560,h:1600,S:XSM_L.S,exit:[72,92],safe:sf,walk:Object.assign({W:2560,H:1600,home:"home"},XSM_L.walk),fx:{hide:XSM_L.hide}},
     t={ready:true,f:"ximarket/xm_tea_l1610",w:2560,h:1600,S:XSM_L.teaS,safe:sf,fx:{nobot:XSM_L.nobot}};
   SCW["ximarket/xm_day"]=o;SCW["ximarket/xm_day_winter"]=Object.assign({},o,{f:"ximarket/xm_day_winter_l1610"});
   SCW["ximarket/xm_tea"]=t;SCW["ximarket/xm_tea_winter"]=Object.assign({},t,{f:"ximarket/xm_tea_winter_l1610"})}
 /* 現在用的那張圖的藏點、茶坊禁區（橫式圖照條目 fx，原圖照 XSM_HIDE、XSM_TEA_NOBOT） */
+/* 外景掛 07sw 的設定（key、src0 用原圖網址；5 個入口；換圖時重擺今天那顆棋子）。抽出來讓測試實跑（#169 審查第 4 項） */
+function xsmScwO(P,src0,cfg){return{key:scwKey(src0),src0,ids:["xsmGift","xsmMusic","xsmTea","xsmChess","xsmVisit"],pfx:"xsm",cfg0:cfg,apply:()=>{if(P._xsmPc)P._xsmPc()}}}
 const xsmFx=P=>{const e=typeof scwCur==="function"?scwCur(P):null;return e&&e.fx||{}};
 const xsmHideTab=P=>xsmFx(P).hide||XSM_HIDE;
 /* 日夜、換季要換圖時（原圖網址 src）：07sw 掛著的話更新它記的原圖，照畫面重選橫式／原圖；回傳該換成的網址，或 null＝07sw 已經換好了 */
@@ -169,7 +171,7 @@ function xsmHash(s){let h=2166136261;s=String(s);for(let i=0;i<s.length;i++){h^=
 function xsmPrevDay(day){const m=/^(\d+)-(\d+)-(\d+)$/.exec(String(day||""));if(!m)return"";const d=new Date(+m[1],+m[2]-1,+m[3]-1);return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 /* 這一天藏在哪一處（XSM_HIDE 的序號）：照日期算；跟前一天同一處就往下挪一格 */
 function xsmHideIdx(day){const n=XSM_HIDE.length,raw=d=>xsmHash("hide"+d)%n,i=raw(day),p=xsmPrevDay(day);return p&&raw(p)===i?(i+1)%n:i}
-const xsmHideOf=day=>XSM_HIDE[xsmHideIdx(day)];
+const xsmHideOf=(day,T)=>(T||XSM_HIDE)[xsmHideIdx(day)];   /* T＝現在用的那張圖的藏點表（07sw 橫式圖另一組；沒給＝原圖） */
 /* 點到的位置 p（圖上 %）離藏點 s（%）在 tol px 以內？w、h＝圖在畫面上的寬高（px） */
 const xsmNear=(s,p,w,h,tol)=>!!(s&&p)&&Math.hypot((p[0]-s[0])*w/100,(p[1]-s[1])*h/100)<=(tol==null?XSM_TOL:tol);
 /* 找棋子的進度：n＝這一副找到幾顆、sets＝湊齊幾副、day＝最後一次找到的日期、tot＝總共找到幾顆 */
@@ -295,7 +297,10 @@ function xsmAfter(v,P){const im=P.querySelector(":scope>img");
   if(typeof shpFit==="function")shpFit(v);try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 /* 換日夜：先載好再換；載不到記下來（下次 xsmSrc 自己換另一張） */
 function xsmSwap(P,day){const im=P.querySelector(":scope>img");if(!im)return;const nd=xsmPickDay(day),src0=xsmSrc(nd),src=xsmScwTo(P,src0);if(src==null){P.dataset.day=nd?"1":"";return}if(im.getAttribute("src")===src)return;   /* W107-L：07sw 掛著時照鍵重選（夜裡沒條目＝退回原圖） */
-  const pre=new Image();pre.onload=()=>{if(!P.isConnected)return;P.dataset.day=nd?"1":"";im.src=src};pre.onerror=()=>{if(/_winter\./.test(src))XSM_BAD[xsmWk(nd)]=1;else XSM_BAD[nd?"d":"n"]=1};pre.src=src}   /* 11/17 冬景載不到＝只記冬景那張壞了，下一分鐘換回原圖 */
+  const pre=new Image();pre.onload=()=>{if(!P.isConnected)return;P.dataset.day=nd?"1":"";im.src=src};pre.onerror=()=>xsmSwapBad(P,src,nd);pre.src=src}   /* 11/17 冬景載不到＝只記冬景那張壞了，下一分鐘換回原圖 */
+/* 換圖時預載失敗：是 07sw 的橫式圖＝記 SCW_BAD、退回原圖（原圖沒壞，不記 XSM_BAD；#169 Windows Claude 2 審查第 1 項）；原圖才照 11/17 記 XSM_BAD */
+function xsmSwapBad(P,src,nd){const o=P&&P._scw,e=o&&P.dataset.scw&&typeof scwEntry==="function"?scwEntry(o.key):null;if(e&&scwSrc(e)===src){SCW_BAD[o.key]=1;if(P.isConnected)scwSet(P,"");return}
+  if(/_winter\./.test(src))XSM_BAD[xsmWk(nd)]=1;else XSM_BAD[nd?"d":"n"]=1}
 function xsmIntro(){modal(`<h3>🏮 西市</h3><p><b>${esc(XSM_TX.pos)}</b></p><p>${esc(XSM_TX.intro)}</p>`,[["逛逛西市",null]])}
 function xsmWalk(v,cfg){if(typeof shwPage!=="function"||typeof SHIP_WALK_ON==="undefined"||!SHIP_WALK_ON)return;try{shwPage(v,cfg||xsmWalkCfg(),"xsm")}catch(e){}}
 function XsmPage(v,sub){try{if(xsmOpen()){if(sub==="dark"&&typeof xsdBgmOn==="function")xsdBgmOn();else xsmBgmOn()}}catch(e){}   /* 11/16 西市背景配樂（外景、茶坊、暗棋都是這一組） */
@@ -314,7 +319,7 @@ function XsmPage(v,sub){try{if(xsmOpen()){if(sub==="dark"&&typeof xsdBgmOn==="fu
     XSM_BAD[sh?"d":"n"]=1;const n2=xsmPickDay(sh);if(n2!==sh){P.dataset.day=n2?"1":"";im.src=xsmSrc(n2)}};
   /* W107-L：掛上 07sw（原本的 onerror 由它記下，換回原圖時還原；橫式圖載不到退回原圖）；換圖時重擺今天那顆棋子 */
   const cfg=xsmWalkCfg();let cfgNow=cfg;
-  if(typeof scwMount==="function"){const o={key:scwKey(src0),src0,ids:["xsmGift","xsmMusic","xsmTea","xsmChess","xsmVisit"],pfx:"xsm",cfg0:cfg,apply:()=>{if(P._xsmPc)P._xsmPc()}};
+  if(typeof scwMount==="function"){const o=xsmScwO(P,src0,cfg);
     scwMount(P,o);if(pre.k&&scwCur(P)){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}if(P._xsmPc)P._xsmPc()}
   /* 07w9 的出口晚一點才放進來：補 id（走路角色的入口代號 HS.xsmExit） */
   try{const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}const s=P.querySelector(".ex-spot");if(s&&!s.id)s.id="xsmExit"});mo.observe(P,{childList:true})}catch(e){}
@@ -325,6 +330,10 @@ function XsmPage(v,sub){try{if(xsmOpen()){if(sub==="dark"&&typeof xsdBgmOn==="fu
   xsmWalk(v,cfgNow);   /* 走路角色（3D 載不到、減少動態時 07w 不攔點選，入口照舊直接開） */
   if(first)setTimeout(()=>{if(P.isConnected)xsmIntro()},450);
   return{}}
+/* 茶坊每分鐘：日夜記號、跨過立冬換季。07sw 掛著時照鍵重選（xsmScwTo 回 null＝07sw 已經換好）；沒掛＝原圖網址。
+   #169 審查第 3 項：原本「沒掛 07sw」那段退路在 App 裡永遠跑不到，合成一條，測試改成實跑這支 */
+function xsmTeaTick(P,im){const d=xsmDay()?"1":"";if(d!==P.dataset.day)P.dataset.day=d;
+  const a=xsmSrc(false,1),s=P._scw?xsmScwTo(P,a):a;P.dataset.win=/_winter\./.test(a)?"1":"";if(s!=null&&im.getAttribute("src")!==s){im.src=s;if(typeof sw7Kick==="function")sw7Kick()}}
 function xsmTea(v){setTop("🍵 聽雨茶坊","#/ximarket");setTabs(true,"#/");v.className="view";
   if(!xsmOpen()){toast("🏮 西市還沒開市");navReplace("#/");return{}}
   xsmCss();const P=document.createElement("div");P.className="shp-page cq xsm-page xsm-tea";P.dataset.day=xsmDay()?"1":"";
@@ -341,9 +350,7 @@ function xsmTea(v){setTop("🍵 聽雨茶坊","#/ximarket");setTabs(true,"#/");v
   /* 小帥禁區照現在用的那張圖重畫（原圖照 XSM_TEA_NOBOT、橫式圖照條目 fx.nobot） */
   const nb=()=>{P.querySelectorAll(":scope>.xsm-nobot").forEach(x=>x.remove());const r=P.querySelector(".xsm-rain:last-of-type")||P.querySelector(":scope>img");r.insertAdjacentHTML("afterend",xsmTeaNoBot(P))};
   if(typeof scwMount==="function"){scwMount(P,{key:scwKey(s0),src0:s0,ids:["xsmDark"],apply:nb});nb()}
-  {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}const d=xsmDay()?"1":"";if(d!==P.dataset.day)P.dataset.day=d;
-    if(P._scw){const a=xsmSrc(false,1),t=xsmScwTo(P,a);P.dataset.win=isW(a)?"1":"";if(t!=null&&im.getAttribute("src")!==t){im.src=t;if(typeof sw7Kick==="function")sw7Kick()}return}   /* W107-L：07sw 掛著時照鍵重選 */
-    const s=xsmSrc(false,1);if(im.getAttribute("src")!==s){P.dataset.win=isW(s)?"1":"";im.src=s;if(typeof sw7Kick==="function")sw7Kick()}},60000)}   /* 11/17 跨過立冬也換季 */
+  {const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}xsmTeaTick(P,im)},60000)}   /* 11/17 跨過立冬也換季 */
   xsmAfter(v,P);
   return{}}
 /* ---------- 11/16 四攤：存檔 ---------- */
@@ -477,7 +484,7 @@ function xsmChessSheet(){xsmCss();const day=xsmToday(),S=xsmSt(),F=S.f,done=F.da
     const tk=b.querySelector("#xsmCt");if(tk)tk.onclick=()=>{vibrate(5);closeSheet();setTimeout(()=>xsmTakePc(),260)};
     b.querySelector("#xsmCb").onclick=()=>{vibrate(5);closeSheet()}})}
 /* 外景畫上今天那顆（今天還沒找到才畫）；在 v 上用捕獲先看一眼（比 07w 走路、07w6 物件說明早）：點到它 28px 內就攔下來算找到，點別處照常 */
-function xsmHuntInit(v,P){const day=xsmToday(),S=xsmSt();if(S.f.day===day||!v||!P)return;const hi=xsmHideIdx(day),spOf=()=>xsmHideTab(P)[hi],I=P.querySelector(":scope>img");if(!I)return;   /* W107-L：藏點照現在用的那張圖（橫式圖另一組） */
+function xsmHuntInit(v,P){const day=xsmToday(),S=xsmSt();if(S.f.day===day||!v||!P)return;const spOf=()=>xsmHideOf(day,xsmHideTab(P)),I=P.querySelector(":scope>img");if(!I)return;   /* W107-L：藏點照現在用的那張圖（橫式圖另一組） */
   const t=document.createElement("i");t.className="xsm-pc";t.setAttribute("aria-hidden","true");t.textContent=xsmPieceOf(S.f);P.append(t);
   P._xsmPc=()=>{if(!t.isConnected)return;const sp=spOf();t.style.left=sp[0]+"%";t.style.top=sp[1]+"%"};P._xsmPc();
   let miss=0;const on=e=>{if(!P.isConnected||!t.isConnected){v.removeEventListener("click",on,true);return}const tg=e.target;if(!tg||!P.contains(tg))return;
