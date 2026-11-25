@@ -328,11 +328,16 @@ if(typeof SCW!=="undefined")for(const k in PORT_L1610){const T=PORT_L1610[k],S={
     walk:{W:2560,H:1600,el:38,home:"home",look0:[50,60],h:PORT_L1610_H,N:Object.assign({},T.walk.N,T.pier.N),E:T.walk.E+" "+T.pier.E,HS:Object.assign({},T.walk.HS,{poBoard:["pier",T.pier.boat[0],T.pier.boat[1],"wave"]})},
     fx:{sight:T.sight||[],pier:T.pier}}}
 /* 掛上 07sw：開頁照 scwPre 選圖；換圖時重放景點、碼頭標籤和點選區（07w4 ph4Pier 晚一點才加），藏起直圖座標的風、WebGL */
+function portScwStop(P,img){if(typeof P._pcStop==="function")P._pcStop();if(typeof SPX!=="undefined"&&SPX&&SPX.el===P)SPX.el=null;
+  P.querySelectorAll(":scope>.pc-col,:scope>.pw-gl,:scope>.pfx-gl").forEach(e=>e.remove());P.classList.remove("pc-run","pc-in","pw-on","pfx-on");
+  img.style.filter="";img.style.visibility="";P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>b.style.translate="")}
 function portScw(v,k){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.querySelector(":scope>img");if(!img||typeof scwPre!=="function")return;
   const full=typeof PORTF_ON!=="undefined"&&PORTF_ON&&typeof PORTF_ERAS!=="undefined"&&PORTF_ERAS.includes(k),src0="data/shipmap/port_"+k+(full?"_f":"")+".webp",pre=scwPre(v,src0);
   if(pre.k){img.src=pre.src;P.dataset.scw=pre.k;P.classList.add("scw-l")}
   if(!document.getElementById("portScwCss")){const st=document.createElement("style");st.id="portScwCss";st.textContent=".shp-page.scw-l .pw-gl,.shp-page.scw-l .pfx-gl,.shp-page.scw-l .shp-gldev{display:none!important}";document.head.append(st)}   /* 直向時掛好的風、WebGL，轉成橫式時藏起來 */
   const place=()=>{const e=typeof scwCur==="function"?scwCur(P):null,X=e&&e.fx;
+    /* 直向時開始播的上色過場、風、船艙 WebGL 都是照直圖量的：換成橫式圖就整個收掉，底圖恢復可見（審查 #165 第二輪第 1、2 項） */
+    if(X)portScwStop(P,img);
     /* 景點、碼頭標籤走 07sw scwPut：會清掉 07t3 ttL 記的舊位置（不然 ttFill 又放回直圖的 %），轉回直向時還原原位 */
     P.querySelectorAll(".po-sight").forEach(b=>{const s=X&&X.sight[+b.dataset.ps];scwPut(b,s||null)});
     const A=X?X.pier:(typeof PH4_PIER!=="undefined"?PH4_PIER[k]:null),b=P.querySelector("#poBoard"),z=P.querySelector(".ph4-pz");

@@ -102,3 +102,39 @@ test("〔原始碼〕開頁照 scwPre 選全彩圖；上色過場、風、船艙
   assert.match(W4, /P\._ph4L=C\.W===2560;/, "記下主人是照哪一種圖站的");
   assert.match(F, /if\(P\.dataset\.ph4&&P\._ph4L!=null&&P\._ph4L!==!!X&&typeof ph4Mount==="function"\)\{P\.querySelectorAll\(":scope>\.ph4"\)\.forEach\(e=>e\.remove\(\)\);delete P\.dataset\.ph4;/, "轉向換了圖就重掛主人");
 });
+
+// 假的元素：只做 portScwStop、pcRun 開頭會碰到的部分
+function fakeEl(cls) {
+  const c = new Set(cls || []);
+  return { removed: false, style: {}, dataset: {}, isConnected: true, classList: { add: (...a) => a.forEach(x => c.add(x)), remove: (...a) => a.forEach(x => c.delete(x)), contains: x => c.has(x) }, has: x => c.has(x), remove() { this.removed = true } };
+}
+test("〔混合〕轉成橫式圖收掉直圖的動態：上色過場停播、疊層和風／WebGL 畫布拿掉、底圖恢復可見（不再 hidden、沒有灰階濾鏡）、按鈕位移清掉、SPX 放手", () => {
+  const P = fakeEl(["pc-run", "pw-on", "pfx-on", "scw-l"]), img = fakeEl(), col = fakeEl(), wind = fakeEl(), gl = fakeEl(), spot = fakeEl(), sight = fakeEl();
+  img.style.visibility = "hidden"; img.style.filter = "grayscale(1)"; spot.style.translate = "3px 2px"; sight.style.translate = "1px 1px";
+  let stopped = 0; P._pcStop = () => { stopped++ };
+  P.querySelectorAll = sel => sel.includes(".pc-col") ? [col, wind, gl] : sel.includes(".shp-spot") ? [spot, sight] : [];
+  const ctx = vm.createContext({ SPX: { el: P } });
+  vm.runInContext(cut(F, "function portScwStop(P,img){", "b.style.translate=\"\")}"), ctx);
+  vm.runInContext("portScwStop", ctx)(P, img);
+  assert.equal(stopped, 1, "上色過場停播");
+  assert.ok(col.removed && wind.removed && gl.removed, "疊層、風、WebGL 畫布拿掉");
+  for (const c of ["pc-run", "pw-on", "pfx-on"]) assert.ok(!P.has(c), "拿掉 " + c);
+  assert.ok(P.has("scw-l"), "橫式的 class 留著");
+  assert.equal(img.style.visibility, ""); assert.equal(img.style.filter, "");
+  assert.equal(spot.style.translate, ""); assert.equal(sight.style.translate, "");
+  assert.equal(vm.runInContext("SPX.el", ctx), null, "船艙動態迴圈看到 SPX.el 換掉就停");
+  // 沒有 SPX、沒有過場也不出錯
+  const P2 = fakeEl(); P2.querySelectorAll = () => [];
+  const c2 = vm.createContext({}); vm.runInContext(cut(F, "function portScwStop(P,img){", "b.style.translate=\"\")}"), c2); vm.runInContext("portScwStop", c2)(P2, fakeEl());
+  assert.match(F, /const place=\(\)=>\{const e=typeof scwCur==="function"\?scwCur\(P\):null,X=e&&e\.fx;\n[^\n]*\n\s*if\(X\)portScwStop\(P,img\);/, "place 換成橫式圖時呼叫");
+});
+test("〔混合〕上色過場：圖框已是橫式圖就不播、拿掉 pc-run；播的時候留 _pcStop 給轉向收掉（停迴圈、拿掉疊層）", () => {
+  const head = cut(PC, "function pcRun(P,img,src,orig,full){", "\n");
+  const ctx = vm.createContext({ made: 0, document: { createElement: () => { vm.runInContext("made++", ctx); return fakeEl() } } });
+  vm.runInContext(head + "return \"直圖照播\"}", ctx);
+  const P = fakeEl(["pc-run"]); P.dataset.scw = "l1610";
+  assert.equal(vm.runInContext("pcRun", ctx)(P, fakeEl()), undefined); assert.ok(!P.has("pc-run")); assert.equal(vm.runInContext("made", ctx), 0, "沒有疊上上色圖");
+  const Q = fakeEl(["pc-run"]); Q.dataset.scw = "";
+  assert.equal(vm.runInContext("pcRun", ctx)(Q, fakeEl()), "直圖照播");
+  assert.match(cut(PC, "function pcRun(", "\nconst YZC_ON"), /P\._pcStop=\(\)=>\{done=true;cancelAnimationFrame\(raf\);P\.removeEventListener\("click",skip,true\);o\.remove\(\);if\(o2\)o2\.remove\(\);/);
+});

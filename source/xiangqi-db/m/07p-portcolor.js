@@ -33,7 +33,7 @@ function portColor(v,k){if(!PORTC_ON||!PORTC_ERAS.includes(k))return;const P=v&&
   const ld=u=>new Promise(r=>{if(!u)return r(null);const i=new Image();i.decoding="async";i.onload=()=>r(u);i.onerror=()=>r(null);i.src=u});
   Promise.all([ld(src),ld(full)]).then(([c,f])=>{if(!P.isConnected||sk)return;if(!c&&!f){P.removeEventListener("click",sk0,true);P.classList.remove("pc-run");return}
     let n=0;const wait=()=>{if(!P.isConnected)return;if(document.querySelector(".walkc")&&n++<40){setTimeout(wait,100);return}setTimeout(()=>{if(sk)return;P.removeEventListener("click",sk0,true);pcRun(P,img,c||f,orig,c&&f)},350)};wait()})}   /* 回饋 835：已經點過跳過就不播 */
-function pcRun(P,img,src,orig,full){if(!P.isConnected)return;
+function pcRun(P,img,src,orig,full){if(!P.isConnected)return;if(P.dataset.scw){P.classList.remove("pc-run");return}   /* W107-L：已經換成 iPad 橫式圖就不播（過場是照直圖做的） */
   const mkO=u=>{const o=document.createElement("img");o.className="pc-col";o.alt="";o.src=u;return o};
   const o=mkO(src),o2=full?mkO(full):null;img.after(o);if(o2){o2.style.opacity="0";o.after(o2)}
   const fin_src=full||src;
@@ -44,6 +44,7 @@ function pcRun(P,img,src,orig,full){if(!P.isConnected)return;
     const fin=()=>{o.remove();if(o2)o2.remove();P.classList.remove("pc-run");P.classList.add("pc-in");setTimeout(()=>P.classList.remove("pc-in"),700)};
     img.addEventListener("load",fin,{once:true});img.addEventListener("error",fin,{once:true});pcSet(img,full?[full,src]:src,orig);if(img.complete&&img.naturalWidth&&img.getAttribute("src")===fin_src)setTimeout(fin,30)};
   const skip=e=>{e.stopPropagation();e.preventDefault();end()};P.addEventListener("click",skip,true);
+  P._pcStop=()=>{done=true;cancelAnimationFrame(raf);P.removeEventListener("click",skip,true);o.remove();if(o2)o2.remove();delete P._pcStop};   /* 07f portScwStop：播到一半轉成橫式圖，直接收掉，不等底圖換回直的 */
   const T1=1700,T2=o2?1700:0,t0=performance.now(),ease=t=>1-Math.pow(1-t,2.2),io=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
   if(mk)o.style[mk]="radial-gradient(circle at 10% 96%,#000 0%,transparent 0%)";else{o.style.filter="grayscale(1)"}
   const step=now=>{if(done)return;if(!o.isConnected){end();return}const e=now-t0,t=Math.min(1,e/T1);
