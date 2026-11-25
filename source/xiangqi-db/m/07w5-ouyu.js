@@ -200,9 +200,11 @@ function oyPage(v,k,place){if(!OUYU_ON)return;const P=v&&v.querySelector(".shp-p
   if(OY_LETTER){const env=document.createElement("button");env.type="button";env.className="oy-env";env.setAttribute("aria-label",(r.back?nm+"在等你":"有人求助")+"：點開來看");env.innerHTML=`<i aria-hidden="true"></i><b>${r.back?"有人等你":"有人求助"}</b>`;
     env.onclick=e=>{e.stopPropagation();e.preventDefault();act()};let n=0;const put=()=>{if(!P.isConnected)return;if((P.classList.contains("pc-run")||document.querySelector(".walkc"))&&++n<40)return void setTimeout(put,300);
       /* 開發者 11/10「放在場景裡，例如岸邊或樹上，放右上角很怪」：用 3D 小人的站位規則（沿著角色走得到的路、避開入口標籤和其他角色）找一個地上的點，信就擱在那裡；找不到才放右上角 */
-      let at=null;try{const C=oyCfg(place,k,P);if(C)at=oySpot(P,C,()=>.07,k)}catch(x){}
-      if(at){env.classList.add("oy-in");env.style.left=at[0]+"%";env.style.top=at[1]+"%"}P.append(env)};setTimeout(put,900);return}
-  const C=oyCfg(place,k,P);if(!C||typeof shwRM==="function"&&shwRM()||typeof XQBot3D==="undefined"&&typeof loadScript!=="function"){addCard();return}
+      const spot=()=>{let at=null;try{const C=oyCfg(place,k,P);if(C)at=oySpot(P,C,()=>.07,k)}catch(x){}
+        env.classList.toggle("oy-in",!!at);env.style.left=at?at[0]+"%":"";env.style.top=at?at[1]+"%":""};
+      spot();P.append(env);P._oyRe=()=>{if(env.isConnected)spot()}};setTimeout(put,900);return}   /* W107-L：07f 轉向換圖後叫 P._oyRe，照當下的路網重找位置（審查 #165 第五輪） */
+  let C=oyCfg(place,k,P);if(!C||typeof shwRM==="function"&&shwRM()||typeof XQBot3D==="undefined"&&typeof loadScript!=="function"){addCard();return}
+  const mount=()=>{
   const box=document.createElement("div");box.className="oy3";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';
   const hit=document.createElement("button");hit.type="button";hit.className="oy-hit";hit.style.display="none";hit.setAttribute("aria-label",nm+"：點他聽他說");
   const mk=document.createElement("div");mk.className="oy-mk";mk.textContent=ic;mk.setAttribute("aria-hidden","true");
@@ -211,7 +213,10 @@ function oyPage(v,k,place){if(!OUYU_ON)return;const P=v&&v.querySelector(".shp-p
   /* 等下船過場、步行小卡播完、07w4 主人站好以後再找位置 */
   let n=0;const go=()=>{if(!P.isConnected)return;if((P.classList.contains("pc-run")||document.querySelector(".walkc"))&&++n<40)return void setTimeout(go,300);
     oyFig(P,C,k,r.back?oyModel("hp",r.mdl):oyModel(w,r.mdl),OY_WHO[w].pc,box,hit,mk).catch(()=>{box.remove();hit.remove();mk.remove();addCard()})};
-  setTimeout(go,1400)}
+  setTimeout(go,1400);
+  /* W107-L：轉向換圖後 07f 叫這裡——收掉舊的小人（框不在了 3D 迴圈自己停），照當下的路網重掛（審查 #165 第五輪） */
+  P._oyRe=()=>{if(!box.isConnected)return;box.remove();hit.remove();mk.remove();const C2=oyCfg(place,k,P);if(!C2){addCard();return}C=C2;mount()}};
+  mount()}
 /* 晴天回報（賣花姑娘／豆花小販）：同一朝、沒下雨、不是同一天 */
 function oyBackVisit(P,k,place){const S=oySt(),B=S.hp.back;if(!B||B.era!==k||oyBuddyBusy(place,k))return null;const d=oyNow();if(oyDay(d)===B.day||oyWx(P))return null;return{w:"hp",mdl:B.mdl,back:1}}
 function oyBackOpen(r){const S=oySt(),B=S.hp.back;if(!B)return;const nm=oyName("hp",B.mdl);

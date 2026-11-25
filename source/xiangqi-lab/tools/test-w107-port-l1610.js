@@ -163,5 +163,37 @@ test("〔混合〕ph4Cfg：直圖照 SHW_PORT（身高乘 SHW_PORT_K）、橫式
   const W5 = M("m/07w5-ouyu.js");
   const oy = vm.runInContext("var SHW_YZ;" + cut(W5, "function oyCfg(place,k,P){", "catch(e){return null}}") + ";oyCfg", C);
   assert.equal(oy("port", "sui", P).W, 2560, "偶遇的信：橫式圖用條目路網"); assert.deepEqual(J(oy("port", "sui", { dataset: { scw: "" } }).N.home), [70, 80]);
-  assert.equal((W5.match(/oyCfg\(place,k,P\)/g) || []).length, 3, "定義一處、兩個呼叫處都傳 P"); assert.doesNotMatch(W5, /oyCfg\(place,k\)/);
+  assert.equal((W5.match(/oyCfg\(place,k,P\)/g) || []).length, 4, "定義一處、三個呼叫處（信、小人、轉向重掛）都傳 P"); assert.doesNotMatch(W5, /oyCfg\(place,k\)/);
+});
+
+test("〔混合〕07w5 偶遇轉向重放：信照當下的路網重找位置；3D 小人收掉舊的、照新路網重掛；07f place 只在直橫換了才叫（審查 #165 第五輪）", () => {
+  const W5 = M("m/07w5-ouyu.js"), src = cut(W5, "function oyPage(v,k,place){", "\n  mount()}");
+  const mkEl = () => { const e = { style: {}, dataset: {}, isConnected: false, children: [], className: "", _c: new Set(), setAttribute() { }, remove() { this.isConnected = false } };
+    e.classList = { add: c => e._c.add(c), remove: c => e._c.delete(c), toggle: (c, on) => on ? e._c.add(c) : e._c.delete(c), contains: c => e._c.has(c) }; return e };
+  const run = (letter) => {
+    const figs = [], P = mkEl(); P.isConnected = true;
+    P.append = (...c) => c.forEach(x => { x.isConnected = true; P.children.push(x) }); P.insertBefore = (x) => P.append(x); P.querySelector = () => null;
+    const v = { querySelector: q => q === ".shp-page.cq" ? P : null };
+    const ctx = vm.createContext({ OUYU_ON: true, OY_LETTER: letter, document: { createElement: mkEl, querySelector: () => null }, setTimeout: f => f(), requestAnimationFrame: f => f(),
+      oyBackVisit: () => null, oyRoll: () => ({ w: "x" }), oyCss() { }, oySt: () => ({}), oyName: () => "路人", OY_WHO: { x: { ic: "?", pc: 1 } }, esc: s => s, oyModel: () => "m",
+      oyCfg: (pl, k, p) => ({ W: p.dataset.scw ? 2560 : 768 }), oySpot: (p, C) => C.W === 2560 ? [44, 70] : [46, 75], XQBot3D: {}, shwRM: () => false,
+      oyFig: (p, C, k, m, pc, box) => { figs.push([C.W, box]); return Promise.resolve() } });
+    vm.runInContext(src, ctx); vm.runInContext("oyPage", ctx)(v, "tang", "port");
+    return { P, figs };
+  };
+  // 信
+  let { P } = run(true); const env = P.children.find(x => x.className === "oy-env");
+  assert.equal(env.style.left + "," + env.style.top, "46%,75%");
+  P.dataset.scw = "l1610"; P._oyRe(); assert.equal(env.style.left + "," + env.style.top, "44%,70%", "轉橫式照條目路網重放");
+  P.dataset.scw = ""; P._oyRe(); assert.equal(env.style.left, "46%", "轉回直向還原");
+  // 3D 小人
+  const R = run(false); assert.deepEqual(R.figs.map(f => f[0]), [768]); const box0 = R.figs[0][1];
+  R.P.dataset.scw = "l1610"; R.P._oyRe();
+  assert.equal(box0.isConnected, false, "舊的小人收掉（3D 迴圈看到框不在了自己停）"); assert.deepEqual(R.figs.map(f => f[0]), [768, 2560], "照新路網重掛"); assert.equal(R.figs[1][1].isConnected, true);
+  // 07f：只在直橫換了才叫
+  const line = cut(F, "if(P._oyL!=null&&P._oyL!==!!X&&", "P._oyL=!!X;");
+  const f = vm.runInContext("(P,X)=>{" + line + "}", vm.createContext({ setTimeout: g => g() }));
+  let n = 0; const Q = { isConnected: true, _oyRe: () => n++ };
+  f(Q, null); f(Q, null); assert.equal(n, 0, "第一次和沒換都不叫"); f(Q, { sight: [] }); assert.equal(n, 1, "直→橫叫一次"); f(Q, { sight: [] }); assert.equal(n, 1); f(Q, null); assert.equal(n, 2, "橫→直再叫");
+  assert.match(F, /const place=\(\)=>\{[^]*?if\(P\._oyL!=null&&P\._oyL!==!!X&&typeof P\._oyRe==="function"\)/, "在 portScw 的 place 裡");
 });
