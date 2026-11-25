@@ -123,7 +123,7 @@ for(const b in SCW_ERA){const B=SCW[b];if(!B)continue;for(const k of SCW_ERA[b])
    ① 夜景 <名>_night<後綴> ← 日間 <名>_day<後綴>（後綴＝經典或朝代）；② 大廳 lobby<後綴>_night ← lobby<後綴>；
    ③ 對戰、學習 <名>[_朝代]_<季>[_night]（07y hbImg）← <名>[_朝代]：夏季＝原圖，_summer 用日間那張、_summer_night 用 _night 那張。
    沒送的 3 張多了燈籠、蠟燭、油燈，壓到入口：開發者選局部重畫。study_night_classic 重畫好了（Windows Claude 1 11/25 16:07，燈籠拿掉、14 個入口框核過）；
-   study_night、canju_night_classic 重畫失敗、等開發者決定，不登記，照舊用直圖 */
+   study_night、canju_night_classic 重畫失敗，開發者 11/25 選「先不接、記成待修」（待辦 W107-D，P3），不登記，照舊用直圖 */
 const SCW_NIGHT={"campmap/camp":",_classic","canjumap/canju":",_tang,_weijin","cupmap/cup":",_classic,_han,_tang,_weijin","exammap/exam":",_classic","feedback/fb":"",
   "gmmap/gm":",_classic,_han,_weijin","openmap/open":",_classic","redomap/redo":",_classic","setmap/set":",_classic","statmap/stat":",_classic","studymap/study":"_classic","termsmap/terms":",_classic",
   "thememap/theme":",_classic","todaymap/today":",_classic,_han,_tang,_weijin"};
@@ -137,8 +137,12 @@ function scwVarList(){const L=[];
     L.push([b+"_summer",b,null,1]);L.push([b+"_summer_night",b,b+"_night_l1610"])}
   return L}
 let SCW_VAR_TODO=null;
+/* 11/25 審查 #173：照目前 main＋#155 的條目，對戰、學習、大廳、錯棋、今日、殘局、棋力測驗的變體一開就登記得到；
+   營地、千秋盃、宗師、設定、戰績、開局、術語、主題、信房、書房的日間條目在各自的 PR（#158、#159、#161、#162……），那幾支合進來以後才登記得到。
+   已經有的條目（各頁自己寫的）不蓋掉；這一輪沒登記到新的就不重建清單 */
 function scwVarInit(){if(SCW_VAR_TODO===null)SCW_VAR_TODO=scwVarList();if(!SCW_VAR_TODO.length)return;
-  SCW_VAR_TODO=SCW_VAR_TODO.filter(([k,b,f,same])=>{if(SCW[k])return false;const B=SCW[b];if(!B)return true;SCW[k]=Object.assign({},B,{f:same?B.f:f||k+"_l1610",base:b});return false})}
+  let n=0;for(const x of SCW_VAR_TODO){const[k,b,f,same]=x;if(SCW[k]){x.ok=1;n++;continue}const B=SCW[b];if(!B)continue;SCW[k]=Object.assign({},B,{f:same?B.f:f||k+"_l1610",base:b});x.ok=1;n++}
+  if(n)SCW_VAR_TODO=SCW_VAR_TODO.filter(x=>!x.ok)}
 /* 學習分頁原圖（書院，非經典；07y）：構圖跟經典版不同，另外量一套（output/w107-ipad/l1610/hubmap/learn_l1610.json），取代 HUB_DEF.learn、SHW_HUB.learn 和 hbFxLearn 的疊圖座標：
    fx.lamp 十二盞燈（%）、qp 矮几棋枰四角（像素）、steam 茶煙（%）、pond 洗墨池 clip-path、ink 墨暈中心（%）。11 朝用同一套（構圖以原圖為基準重畫）。朝代殘影只在經典世界，這裡不放。
    錯棋重練原圖（非經典；07y8）：以經典版條目為底，多了晾冊竹竿（像素）、冊頁寬（圖寬 %）、洗墨池 clip-path、墨暈中心、季節水草往下挪（Windows Claude 1 量） */

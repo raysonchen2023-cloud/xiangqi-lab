@@ -72,3 +72,13 @@ test("〔混合〕scwPre 開頁就選到夜景橫式圖（iPad 橫向）；scwSw
   assert.equal(w.m, "semi", "照條目的 sw7"); assert.equal(w.W, 2560);
   assert.equal(R("scwByF")("data/setmap/set_night_l1610.webp").base, "setmap/set_day");
 });
+
+test("各頁自己寫好的條目不蓋掉；登記完的不再處理（清單變短），沒新增時清單照舊", () => {
+  const C = load(), R = s => vm.runInContext(s, C);
+  R("SCW['thememap/theme_day']=" + JSON.stringify(day("thememap/theme_day_l1610")) + ";SCW['thememap/theme_night']=" + JSON.stringify(day("thememap/自己的_night", { S: { own: [1, 2] } })));
+  assert.equal(R("scwEntry")("thememap/theme_night").f, "thememap/自己的_night", "不蓋掉已有的條目"); assert.deepEqual(J(R("SCW['thememap/theme_night'].S")), { own: [1, 2] });
+  const n0 = R("SCW_VAR_TODO.length"); R("scwVarInit()"); const t0 = R("SCW_VAR_TODO");
+  R("scwVarInit()"); assert.equal(R("SCW_VAR_TODO"), t0, "沒新增：不重建清單"); assert.equal(R("SCW_VAR_TODO.length"), n0);
+  R("SCW['statmap/stat_day']=" + JSON.stringify(day("statmap/stat_day_l1610"))); R("scwVarInit()");
+  assert.equal(R("SCW_VAR_TODO.length"), n0 - 1, "登記到一張，清單少一個"); assert.ok(!R("SCW_VAR_TODO").some(x => x[0] === "statmap/stat_night"));
+});
