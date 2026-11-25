@@ -55,7 +55,7 @@ function pcRun(P,img,src,orig,full){if(!P.isConnected)return;
    每次開 App、每個驛站第一次進門播一次（sessionStorage yzcSeen），之後直接全彩；減少動態直接全彩；圖 4 秒內沒載好也直接全彩；點一下跳過（pcRun）。
    由 07m-yizhan.js 的驛站頁插好以後呼叫。開關 YZC_ON */
 const YZC_ON=true;
-function yzColor(P,k){if(!YZC_ON||!P||!P.isConnected||!k)return;const img=P.querySelector(":scope>img");if(!img)return;
+function yzColor(P,k){if(!YZC_ON||!P||!P.isConnected||!k||(P.dataset&&P.dataset.scw))return;   /* W107-L：iPad 橫向換成橫式圖（07sw）時不播：淡彩 _c 只有直式圖 */const img=P.querySelector(":scope>img");if(!img)return;
   let seen={},rm=false;try{seen=JSON.parse(sessionStorage.getItem("yzcSeen")||"{}")||{}}catch(e){}try{rm=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
   if(seen[k]||rm)return;seen[k]=1;try{sessionStorage.setItem("yzcSeen",JSON.stringify(seen))}catch(e){}
   const q=k==="classic"&&typeof YZ_CLV!=="undefined"?"?v="+YZ_CLV:"",c="data/yizhan/"+k+"_c.webp"+q,f="data/yizhan/"+k+"_f.webp"+q,orig=img.getAttribute("src");
