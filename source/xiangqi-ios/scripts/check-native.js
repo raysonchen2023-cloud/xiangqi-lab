@@ -206,7 +206,7 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
   const IF_OK = /^!?\s*(DEBUG|targetEnvironment\(\s*simulator\s*\))$/;
   /* #150 第三輪複審：U+FEFF 這類看不見的格式字元，pinOf 的 \s 會把它去掉，Swift 卻把它當識別字的一部分（pass<FEFF>ed 跟 passed 是兩個名字，雜湊卻一樣）；
      零寬字元、軟連字號同理。跟特殊換行字元一起，整份原文直接拒絕（不改雜湊算法，PINS 不用重算） */
-  const ODD_NL = /[\u2028\u2029\u0085\u000B\u000C\uFEFF\u200B-\u200F\u2060-\u2064\u00AD\u0000-\u0008\u000E-\u001F\u007F]/;   /* 第四輪複審順手建議：NUL 和其他 C0 控制字元（tab、換行、CR 以外）也一律不行；單獨的 CR 已被 rd() 換成換行 */   /* 第七輪審查：U+2028 這類字元 JS 跟 Swift 對「一行」的認定不同，一律不行；第八輪建議：整份原文直接檢查，不經過豁免（單獨的 \r 已被 rd() 換成換行，不用列） */
+  const ODD_NL = /[\u2028\u2029\u0085\u000B\u000C\uFEFF\u200B-\u200F\u2060-\u2064\u00AD\u0000-\u0008\u000E-\u001F\u007F\u202A-\u202E\u2066-\u206F]/;   /* 第五輪：雙向控制字元（U+202A～202E、U+2066～206F）也一律不行 */   /* 第四輪複審順手建議：NUL 和其他 C0 控制字元（tab、換行、CR 以外）也一律不行；單獨的 CR 已被 rd() 換成換行 */   /* 第七輪審查：U+2028 這類字元 JS 跟 Swift 對「一行」的認定不同，一律不行；第八輪建議：整份原文直接檢查，不經過豁免（單獨的 \r 已被 rd() 換成換行，不用列） */
   for (const f of [...swWalk(SRC), ...swWalk(APP)]) {
     const raw = rd(f), code = raw.split("\n").filter((l) => !(/^\s*\/\//.test(l) && !l.includes("*/"))).join("\n");   /* #144 第六輪審查：在 /＊ … ＊/ 裡、以 // 開頭又含 ＊/ 的行，＊/ 後面是真程式，不能豁免；第七輪：用 includes 不用正規式的「.」（「.」不比對 U+2028／U+2029） */
     const odd = ODD.filter(([re]) => re.test(code)).map(([, n]) => n);
@@ -217,6 +217,9 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
     for (const m of tok.matchAll(/#(?:if|elseif)\b([^\n]*)/g)) { const cond = m[1].trim(); if (!IF_OK.test(cond)) { odd.push("條件編譯 #if " + cond + "（斷詞後）"); break } }
     /* #150 複審：Swift 沒有字元常值，單引號不會出現在程式碼裡；但在不成立的 #if 分支裡，Swift 把字串內插裡的 ' 當成成對的引號，斷詞卻當普通字元，兩邊對字串邊界的認定不同。斷詞後還看得到 ' 就拒絕 */
     if (tok.includes("'")) odd.push("單引號（斷詞後的程式碼裡）");
+    /* #150 第五輪複審：U+3164（諺文填充字）、U+034F、U+FE00 這類看不見的字元，Swift 會收進識別字（「private func ㅤtakeAnswer」跟 takeAnswer 是兩個名字），
+       依名字計數、body() 都會被替身騙過。專案的 Swift 斷詞後（字串、註解都拿掉）全是 ASCII，所以出現任何非 ASCII 字元就拒絕 */
+    { const m = /[^\x00-\x7F]/.exec(tok); if (m) odd.push("斷詞後的程式碼有非 ASCII 字元（U+" + m[0].codePointAt(0).toString(16).toUpperCase().padStart(4, "0") + "）") }
     if (ODD_NL.test(raw)) odd.push("特殊換行或看不見的字元");
     if (odd.length) pinBad.push(path.relative(HERE, f) + " 不能有 " + odd.join("、") + "（斷詞可能跟 Swift 認定不同）");
   }
