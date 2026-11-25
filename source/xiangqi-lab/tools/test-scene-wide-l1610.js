@@ -32,7 +32,7 @@ test("圖網址 → 鍵；條目要 ready、或開發用開關，載不到過的
   assert.equal(scwKey("https://x.test/data/redomap/redo_day_classic_l1610.webp"), RD + "_l1610");
   assert.equal(scwKey("data/redomap/redo_day.png"), "");
   assert.ok(scwEntry(RD), "錯棋重練經典白天已登記、ready");
-  assert.equal(scwEntry("canjumap/canju_night_classic"), null, "沒送的夜景（殘局經典夜景，等局部重畫）還沒有橫式圖＝原圖");   /* 11/25 夜景、四季 215 張到了，redo_night 已有橫式圖（test-w107-night-l1610.js），改用還沒送的那張 */
+  assert.equal(scwEntry("studymap/study_night"), null, "沒送的夜景（書齋夜景，重畫失敗、待辦 W107-D）還沒有橫式圖＝原圖");   /* 11/25 夜景、四季 215 張到了，redo_night 已有橫式圖（test-w107-night-l1610.js），改用還沒送的那張 */
   assert.equal(scwEntry("redomap/redo_night_classic").f, "redomap/redo_night_classic_l1610", "11/25 起經典夜景也有橫式圖（照日間條目複製）");
   assert.equal(scwEntry("redomap/redo_dawn_classic"), null, "沒列在變體清單的照舊沒有橫式圖＝原圖");
   assert.equal(scwEntry("toString"), null, "原型上的名字不算");
@@ -167,7 +167,7 @@ test("換圖：iPad 橫向原地換成橫式圖、入口和出口換座標；圖
   assert.equal(scwSync(V, P), null, "這次開 App 不再試，照原圖排"); assert.equal(P.dataset.scw, "");
   const d2 = { w: 956, h: 354 }, F = fakeDom(d2); vm.runInContext("scwMount", F.ctx)(F.P, { key: RD, src0: F.img._src, ids: [] });
   assert.equal(vm.runInContext("scwSync", F.ctx)(F.V, F.P), null, "手機橫放不換");
-  const F2 = fakeDom({ w: 1180, h: 734 }); vm.runInContext("scwMount", F2.ctx)(F2.P, { key: "canjumap/canju_night_classic", src0: F2.img._src, ids: [] });
+  const F2 = fakeDom({ w: 1180, h: 734 }); vm.runInContext("scwMount", F2.ctx)(F2.P, { key: "studymap/study_night", src0: F2.img._src, ids: [] });
   assert.equal(vm.runInContext("scwSync", F2.ctx)(F2.V, F2.P), null, "沒登記的變體不換");
 });
 
