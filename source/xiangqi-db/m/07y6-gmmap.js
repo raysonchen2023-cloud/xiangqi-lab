@@ -20,6 +20,26 @@ const gm2Hearts=g=>g?["gh_shan","gh_yun"]:GM2_HEARTS;
 /* 牆上六軸畫心的四角（像素 768×1376；左上、右上、右下、左下） */
 const GM2_Q=[[[89,316],[176,382],[176,862],[89,911]],[[251,441],[295,477],[295,762],[251,795]],[[339,509],[363,524],[363,720],[339,735]],
   [[385,545],[397,555],[397,697],[385,705]],[[411,557],[419,564],[419,676],[411,680]],[[430,570],[436,575],[436,660],[430,662]]];
+/* W107-L 第 2 批 iPad 橫向專用圖（l1610，2560×1600；Windows Claude 1 11/25 量，output/w107-ipad/l1610/gmmap/gm_day_classic_l1610.json）：
+   新圖牆上是 7 幅（原本 6 幅），畫心照 i%（畫心款數）輪流貼；q＝畫心四角（像素，左上、右上、右下、左下）。
+   經典世界一律是 gm_day_classic（07y xqClImg 會把 _han／_weijin 換成 _classic）；預設世界：宋以後 gm_day、秦～三國 gm_day_han、魏晉～五代 gm_day_weijin。
+   原圖版對齊到經典版、共用 q；魏晉版有對齊但只有 6 個木框（另給 qWeijin）；漢版整體縮放、位移太大、對齊不可信（另給 qHan 的 7 個朱框內框，
+   入口照第三框中心、走路節點在漢版上目測：消失點偏右下約 2%）。小人身高照第三幅畫的高度比例換算（原圖約 .153 圖高、新圖約 .226）：在 sc 約 .107，
+   往消失點（約 50%）線性縮小。夜景沒有橫式圖＝照舊原圖；07w6 物件說明在橫式圖上自動關掉 */
+const GM2_QL=[[[202,357],[452,444],[452,1182],[202,1290]],[[658,527],[776,572],[776,1048],[658,1093]],[[887,617],[947,639],[947,979],[887,1001]],[[1009,667],[1045,680],[1045,941],[1009,954]],
+  [[1088,696],[1112,705],[1112,916],[1088,924]],[[1146,721],[1161,727],[1161,891],[1146,896]],[[1185,737],[1198,742],[1198,880],[1185,880]]];
+const GM2_QHAN=[[[277,223],[473,330],[470,1242],[278,1331]],[[655,431],[764,490],[765,1115],[656,1163]],[[874,555],[944,587],[946,1042],[876,1072]],[[1018,630],[1062,651],[1063,998],[1020,1015]],
+  [[1116,681],[1145,693],[1147,962],[1117,975]],[[1182,715],[1200,719],[1204,942],[1185,948]],[[1230,738],[1244,743],[1245,926],[1230,931]]];
+const GM2_QWEI=[[[216,262],[429,373],[431,1241],[219,1353]],[[666,462],[766,516],[765,1092],[667,1141]],[[891,579],[954,610],[954,1000],[892,1029]],[[1031,650],[1067,666],[1067,956],[1032,971]],
+  [[1126,699],[1148,708],[1150,920],[1127,930]],[[1186,732],[1198,734],[1201,900],[1187,906]]];
+if(typeof SCW!=="undefined"){const e={ready:true,f:"gmmap/gm_day_classic_l1610",w:2560,h:1600,S:{gm2Go:[36,49]},safe:{l:.12,r:.12,t:.05,b:.10},
+    walk:{W:2560,H:1600,el:40,h:[.107,70,.0053],look0:[48,50],home:"home",N:{home:[48,92],sc:[42,70]},E:"home-sc",HS:{gm2Go:["sc",36,50,"bow"]}},fx:{q:GM2_QL}};
+  SCW["gmmap/gm_day_classic"]=e;SCW["gmmap/gm_day"]=Object.assign({},e,{f:"gmmap/gm_day_l1610"});
+  SCW["gmmap/gm_day_weijin"]=Object.assign({},e,{f:"gmmap/gm_day_weijin_l1610",fx:{q:GM2_QWEI}});
+  SCW["gmmap/gm_day_han"]=Object.assign({},e,{f:"gmmap/gm_day_han_l1610",S:{gm2Go:[35.5,51]},fx:{q:GM2_QHAN},
+    walk:{W:2560,H:1600,el:40,h:[.107,71,.0056],look0:[52,52],home:"home",N:{home:[50,92],sc:[44,71]},E:"home-sc",HS:{gm2Go:["sc",35.5,52,"bow"]}}})}
+/* 現在用的那張圖的畫心四角：橫式圖照條目 fx.q，原圖照 GM2_Q（768×1376） */
+function gm2G(P){const e=typeof scwCur==="function"?scwCur(P):null;return e&&e.fx&&e.fx.q?{W:e.w,Q:e.fx.q}:{W:768,Q:GM2_Q}}
 const GM2_ERA=[["","全部"],["a","1950 年以前生"],["b","1950–60 年代生"],["c","1970 年代生"],["d","1980 年代以後生"]];
 /* 長廊很深（消失點約在圖高 51%）：照透視算是 (y－50.9)×0.0111，Q 版角色身形寬，縮成約七成（＝(y－50.6)×0.0075） */
 const SHW_GM2={el:40,h:[.085,61.7,.0075],look0:[48,45],home:"home",N:{home:[56,63],sc:[49,60]},E:"home-sc",HS:{gm2Go:["sc",45.7,45,"bow"]}};
@@ -117,14 +137,20 @@ function gm2Read(L){const o=(()=>{try{const g=(rdLog().o||{}).gmgames;return g?g
 const gm2Date=it=>{const d=String(it.date||"");const m=d.match(/^(\d{4})(\d{2})(\d{2})$/);return m?`${m[1]}.${+m[2]}.${+m[3]}`:d||String(it.year||"")};
 function gm2Items(){if(GM2_ITEMS)return Promise.resolve(GM2_ITEMS);return GM2_P||(GM2_P=api("/db/items?c=gmgames").then(d=>GM2_ITEMS=(d&&d.items)||[]).catch(e=>{GM2_P=null;throw e}))}
 function GmHall(v){gm2Css();setTop("🖼 特級大師","#/db");if(typeof setTabs==="function")setTabs(true,"#/db");v.className="view";
-  const dk=gm2Dark(),grp=gm2Grp(),HS=gm2Hearts(grp),P=document.createElement("div");P.className="shp-page cq gm2-page"+(dk?" gm2-night":"");v.innerHTML="";v.append(P);
+  const dk=gm2Dark(),grp=gm2Grp(),HS=gm2Hearts(grp),P=document.createElement("div");P.className="shp-page cq gm2-page"+(dk?" gm2-night":"");v.innerHTML="";
+  /* W107-L：iPad 橫向有專用橫式圖（07sw SCW，條目在上面）就一開始載那張；畫心幅數、四角照條目 fx.q，入口、走路照條目 */
+  const src=gm2Img(dk,grp),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}v.append(P);
   const pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)],ax=grp?"畫":"畫軸";
-  P.innerHTML=`<img src="${gm2Img(dk,grp)}" alt="${grp?"書閣":"崇文書閣"}二樓的畫像長廊"><div class="gm2-fx" aria-hidden="true">${GM2_Q.map((q,i)=>`<img class="gm2-wh" data-i="${i}" src="data/gmmap/${HS[i%HS.length]}.webp?v=${GM2_IMGV}" alt="">`).join("")}</div>
+  P.innerHTML=`<img src="${pre.src}" alt="${grp?"書閣":"崇文書閣"}二樓的畫像長廊"><div class="gm2-fx" aria-hidden="true"></div>
     <button class="shp-spot gm2-tagspot" id="gm2Go" style="left:${pc(351,470)[0]}%;top:${pc(351,470)[1]}%"><b>畫像長廊・往下看</b></button>`;
   const H=document.createElement("section");H.className="gm2-hall"+(dk?" dk":"")+(grp?" gm2-g-"+grp:"");H.setAttribute("aria-label","特級大師畫像長廊");v.append(H);
   H.innerHTML=`<div class="gm2-bar"><div class="gm2-tags" role="tablist">${GM2_ERA.map(([k,t])=>`<button type="button" class="gm2-tag${GM2_ST.era===k?" on":""}" data-e="${k}" role="tab" aria-selected="${GM2_ST.era===k}">${esc(t)}</button>`).join("")}</div>
     <input class="gm2-q" type="search" placeholder="找一位：名字、籍貫、頭銜" value="${esc(GM2_ST.q)}" aria-label="搜尋特級大師"><div class="gm2-cnt"></div></div><div class="gm2-grid"><p class="gm2-cnt">展開${ax}中…</p></div>`;
-  const fit=()=>{const k=P.clientWidth/768;if(!k)return;P.querySelectorAll(".gm2-wh").forEach(m=>{const q=GM2_Q[+m.dataset.i].map(([x,y])=>[x*k,y*k]);m.style.transform=gm2M3(90,200,q)})};
+  /* 畫心：幾幅照現在用的那張圖（原圖 6 幅、橫式圖 7 幅、魏晉版 6 幅），畫心照 i%（畫心款數）輪流貼；換圖時 07sw 叫 apply 重排 */
+  const hearts=()=>{const{Q}=gm2G(P),fx=P.querySelector(".gm2-fx");if(fx.children.length===Q.length)return;
+    fx.innerHTML=Q.map((q,i)=>`<img class="gm2-wh" data-i="${i}" src="data/gmmap/${HS[i%HS.length]}.webp?v=${GM2_IMGV}" alt="">`).join("")};
+  const fit=()=>{const{W,Q}=gm2G(P),k=P.clientWidth/W;if(!k)return;P.querySelectorAll(".gm2-wh").forEach(m=>{const q=Q[+m.dataset.i];if(!q)return;m.style.transform=gm2M3(90,200,q.map(([x,y])=>[x*k,y*k]))})};
+  hearts();
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit();
   /* 回饋 833（開發者 11/9：四頁也改成一對一）：這頁圖上只有「畫像長廊」一個入口，面板裡也只有畫像長廊這一塊（年代竹牌、搜尋、72 軸），所以不用藏東西，
      只把面板標題換成入口名「畫像長廊」（原本是頁名「🖼 特級大師」）。面板是 07w 的 xqSheetAuto 晚一點（0～700ms）才建的，所以點的當下才去拿；還沒建好就照舊捲過去 */
@@ -162,7 +188,9 @@ function GmHall(v){gm2Css();setTop("🖼 特級大師","#/db");if(typeof setTabs
     let any=false;try{any=!!(rdLog().o||{}).gmgames}catch(e){}
     if(any)setTimeout(()=>gm2Items().then(()=>{if(!H.isConnected)return;RD=gm2Read(L);if(!openN)draw();else grid.querySelectorAll(".gm2-ax:not(.open)").forEach(a=>{if((RD[a.dataset.n]||0)>=5&&!a.querySelector(".gm2-lan"))a.querySelector(".gm2-ht").insertAdjacentHTML("beforeend",'<span class="gm2-lan" aria-hidden="true">覽</span>')})}).catch(()=>{}),1200)})
     .catch(()=>{grid.innerHTML='<p class="gm2-cnt">讀不到特級大師的資料，請確認網路後再試</p>'});
-  if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_GM2),"gm2")}catch(e){}}
+  const cfg=Object.assign({},SHW_PG0,SHW_GM2);let cfgNow=cfg;
+  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:["gm2Go"],pfx:"gm2",cfg0:cfg,apply:()=>{hearts();fit()}};scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}hearts();fit()}
+  if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfgNow,"gm2")}catch(e){}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
   try{if(typeof sciPage==="function")sciPage(v,gm2Sci(grp))}catch(e){}
