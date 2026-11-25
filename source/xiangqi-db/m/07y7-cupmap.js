@@ -59,11 +59,11 @@ const SHW_CP2={el:40,h:[.085,70,.0012],look0:[50,40],home:"home",N:{home:[50,96]
 const cp2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
 /* W107-L 第 2 批：iPad 橫向專用橫式圖（07sw SCW）。output/w107-ipad/l1610/cupmap/cup_day_classic_l1610.json（Windows Claude 1 量）；
    原圖、漢、唐、魏晉 4 張都對齊到經典版（位移小於 0.1%），屏風、大掛板、英雄帖、燈鉤、綵球共用這一套（像素 2560×1600，跟 CP2_SCR／CP2_BRD／CP2_BOOK／CP2_LAMP／CP2_BALL 同格式）。
-   燈：json 提醒右燈（2051～2153）會蓋到大掛板右上角，照它的兩個建議一起做：燈畫小一點（寬 3.2%≈82px，CSS .scw-l .cp2-lamp）、右燈往右移到 2150。物件說明（07w6）在橫式圖時本來就不跳，台左新多的茶几先不登記 */
+   燈：json 提醒右燈（2051～2153）會蓋到大掛板右上角，燈照舊掛在帳額兩端的掛環正下方（480、2102；iMac 裁圖確認環在 x≈2100，移開就像飄在半空），改成畫小一點（寬 2.6%≈66px，CSS .scw-l .cp2-lamp）：掛環在台口橫樑上、比大掛板靠近觀眾，燈擋在掛板右上角前面是對的，只蓋到右上角約 56×43px 的留白（#162 審查第 3 項）。物件說明（07w6）在橫式圖時本來就不跳，台左新多的茶几先不登記 */
 const CP2_L1610={ready:true,f:"cupmap/cup_day_classic_l1610",w:2560,h:1600,
-  S:{"cp2Book":[49,53],"cp2Scr":[50,38],"cp2Brd":[76,38]},exit:[12,92],safe:{"l":0.12,"r":0.12,"t":0.05,"b":0.1},
+  S:{"cp2Book":[49,53],"cp2Scr":[50,38],"cp2Brd":[76,38]},exit:[14,92],safe:{"l":0.12,"r":0.12,"t":0.05,"b":0.1},
   walk:{W:2560,H:1600,el:40,h:[.15,95,.0035],look0:[50,40],home:"home",N:{"home":[50,95],"mid":[50,80],"top":[50,69],"brd":[73,66]},E:"home-mid mid-top top-brd",HS:{"cp2Book":["top",49,55,"wave"],"cp2Scr":["mid",50,40,"idle"],"cp2Brd":["brd",75,40,"idle"]}},
-  fx:{scr:[[[869,429],[987,419],[987,883],[869,877]],[[1069,419],[1469,419],[1469,872],[1069,872]],[[1504,421],[1651,432],[1651,877],[1504,883]]],brd:[[1766,410],[2125,394],[2106,888],[1747,856]],book:[[1226,862],[1290,862],[1290,914],[1226,914]],lamp:[[480,282],[2150,282]],ball:[1294,250]}};
+  fx:{scr:[[[869,429],[987,419],[987,883],[869,877]],[[1069,419],[1469,419],[1469,872],[1069,872]],[[1504,421],[1651,432],[1651,877],[1504,883]]],brd:[[1766,410],[2125,394],[2106,888],[1747,856]],book:[[1226,862],[1290,862],[1290,914],[1226,914]],lamp:[[480,282],[2102,282]],ball:[1294,250]}};
 if(typeof SCW!=="undefined"){SCW["cupmap/cup_day_classic"]=CP2_L1610;for(const g of["","_han","_tang","_weijin"])SCW["cupmap/cup_day"+g]=Object.assign({},CP2_L1610,{f:"cupmap/cup_day"+g+"_l1610",base:"cupmap/cup_day_classic"})}
 /* 現在用的那張圖的座標組（橫式圖＝條目 fx、2560×1600；原圖＝原本的常數、768×1376） */
 const cp2Geo=P=>{const e=typeof scwCur==="function"?scwCur(P):null,F=e&&e.fx&&e.fx.scr?e.fx:null,W=F?e.w:768,H=F?e.h:1376;return{W,H,pc:(x,y)=>[(x/W*100).toFixed(2),(y/H*100).toFixed(2)],SCR:F?F.scr:CP2_SCR,BRD:F?F.brd:CP2_BRD,BOOK:F?F.book:CP2_BOOK,LAMP:F?F.lamp:CP2_LAMP,BALL:F?F.ball:CP2_BALL}};
@@ -84,7 +84,7 @@ function cp2Css(){if(document.getElementById("cp2Css"))return;const s=document.c
 .cp2-lamp.g-han svg,.cp2-lamp.g-weijin svg,.cp2-lamp.g-tang svg{filter:drop-shadow(0 0 6px rgba(255,200,120,.6))}
 @keyframes cp2Sway{0%,100%{transform:translate(-50%,0) rotate(-2deg)}50%{transform:translate(-50%,0) rotate(2deg)}}
 .cp2-ball{position:absolute;width:15%;transform:translate(-50%,-30%)}
-.cp2-page.scw-l .cp2-lamp{width:3.2%}.cp2-page.scw-l .cp2-ball{width:12.4%}
+.cp2-page.scw-l .cp2-lamp{width:2.6%}.cp2-page.scw-l .cp2-ball{width:12.4%}
 .cp2-ball svg{display:block;width:100%;height:auto}
 .cp2-rain i{position:absolute;top:-4%;display:block;width:7px;height:5px;background:var(--c);animation:cp2Fall linear infinite;opacity:.95}
 .cp2-rain i.g{width:6px;height:6px;border-radius:1px;box-shadow:0 0 3px rgba(255,220,120,.8)}
@@ -204,7 +204,7 @@ function cp2Wrap(v,R){if(!CUP_MAP_ON||!window.XQNet||!v.querySelector("#cupb"))r
   const cfg=Object.assign({},SHW_PG0,SHW_CP2,{HS:Object.assign({},SHW_CP2.HS,{cp2Scr:SHW_CP2.HS.cp2Scr.slice()})});P._shwCfg=cfg;
   {let S=null;try{S=XQNet.cup()}catch(e){}if(S&&["play","done"].includes(S.ph))cfg.HS.cp2Scr[3]="cheer"}
   let cfgNow=cfg;
-  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:["cp2Scr","cp2Book","cp2Brd"],pfx:"cp2",cfg0:cfg,apply:draw,onCfg:x=>{P._shwCfg=x}};scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._shwCfg=cfgNow;P._scwW="l"}}   /* 換圖重畫燈、綵球、屏風（draw 會叫 fit）；比賽日的歡呼改在當下那份走路設定上 */
+  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:["cp2Scr","cp2Book","cp2Brd"],pfx:"cp2",cfg0:cfg,apply:draw,onCfg:x=>{P._shwCfg=x;draw()}};scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._shwCfg=cfgNow;P._scwW="l"}}   /* 換圖重畫燈、綵球、屏風（draw 會叫 fit）；換圖重掛走路時馬上照比賽階段把歡呼寫進新的那份設定（不等 20 秒的 draw；#162 審查第 2 項） */
   draw();
   if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfgNow,"cp2")}catch(e){}}
   if(typeof shpFit==="function")shpFit(v);
