@@ -15,7 +15,7 @@ const J = x => JSON.parse(JSON.stringify(x));
 const K = { cl: "gmmap/gm_day_classic", o: "gmmap/gm_day", han: "gmmap/gm_day_han", wei: "gmmap/gm_day_weijin" };
 const fakeP = key => ({ dataset: { scw: key ? "l1610" : "" }, _scw: { key: key || K.cl } });
 
-test("條目：經典版、原圖版、漢版、魏晉版四個白天鍵都登記、各自的圖；夜景沒有；SCW_CDN 還是 false＝正式玩家照舊原圖", () => {
+test("〔混合〕條目：經典版、原圖版、漢版、魏晉版四個白天鍵都登記、各自的圖；夜景沒有；SCW_CDN 還是 false＝正式玩家照舊原圖", () => {
   const C = load(true), SCW = vm.runInContext("SCW", C), ent = vm.runInContext("scwEntry", C);
   for (const [k, f] of [[K.cl, "gmmap/gm_day_classic_l1610"], [K.o, "gmmap/gm_day_l1610"], [K.han, "gmmap/gm_day_han_l1610"], [K.wei, "gmmap/gm_day_weijin_l1610"]]) {
     const e = SCW[k]; assert.ok(e && e.ready, k); assert.equal(e.f, f); assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.ok(ent(k));
@@ -56,7 +56,8 @@ test("入口與走路：入口在第三幅畫前、走路節點在圖裡、點�
     assert.ok(Math.abs(e.S.gm2Go[0] - cx) < 1 && Math.abs(e.S.gm2Go[1] - cy) < 2.5, k + " 入口在第三幅畫中間：" + e.S.gm2Go + " vs " + cx.toFixed(1) + "," + cy.toFixed(1));
     for (const [n, [x, y]] of Object.entries(w.N)) assert.ok(x > 0 && x < 100 && y > 50 && y < 100, k + " " + n + " 在地板上（消失點以下）");
     assert.ok(w.N[w.home]); for (const ed of w.E.split(" ")) { const [a, b] = ed.split("-"); assert.ok(w.N[a] && w.N[b]) }
-    assert.deepEqual(Object.keys(w.HS), Object.keys(S0.HS)); assert.ok(w.N[w.HS.gm2Go[0]]); assert.equal(w.HS.gm2Go[3], S0.HS.gm2Go[3], "動作照原本");
+    assert.deepEqual(Object.keys(w.HS), Object.keys(S0.HS)); assert.ok(w.N[w.HS.gm2Go[0]]);
+    assert.ok(e.exit && e.exit[0] < 20 && e.exit[1] > 85, k + " 出口在左下，不跟起點的小人疊在一起"); assert.equal(w.HS.gm2Go[3], S0.HS.gm2Go[3], "動作照原本");
     const [h0, y0, k1] = w.h; assert.ok(h0 > 0 && k1 > 0 && h0 + (w.N.home[1] - y0) * k1 > h0, "home 比 sc 近、比較大");
   }
   assert.equal(SCW[K.wei].walk, SCW[K.cl].walk, "魏晉版有對齊，走路共用經典版"); assert.notEqual(SCW[K.han].walk, SCW[K.cl].walk, "漢版另一套");
