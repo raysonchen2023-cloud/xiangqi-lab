@@ -257,6 +257,8 @@ test("〔混合〕sw7Box：橫式圖放橫式座標、寬 6%、元素鍵加 :l�
   // 換到經典的橫式圖：木匣移除，不放新的
   const b2 = z.box, n0 = made.length; z.R.img.getAttribute = () => "data/shipmap/port_classic_f_l1610.webp?v=1125"; R("sw7Box")(z.R);
   assert.equal(b2.gone, 1, "經典不放木匣：舊的拿掉"); assert.equal(made.length, n0, "沒有新做木匣");
+});
+
 test("〔混合〕4:3 iPad 橫向：07fl xflHmw 記下左邊裁掉幾 px（--xflL），標題條照它往內縮；16:10 不裁就是 0；收掉時清掉（審查 #165 第六輪）", () => {
   const FL = M("m/07fl-fill.js"), body = FL.slice(FL.indexOf("function xflHmw(V,P,nw,nh,k,sf0){"), FL.indexOf("xflWatch(V,P);return true}") + "xflWatch(V,P);return true}".length);
   const run = (vw, vh) => {
