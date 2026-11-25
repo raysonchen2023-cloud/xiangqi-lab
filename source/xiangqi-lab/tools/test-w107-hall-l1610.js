@@ -37,7 +37,7 @@ test("jhHallUse：換成橫式時每一套都換對；換回直式全部還原�
   assert.equal(R("JH_HALL_W"), 2560); assert.equal(R("JH_HALL_H"), 1600); assert.equal(R("JH_MATE_W"), 70);
   for (const sid of SIDS) { const H = R("JH_HALL." + sid); assert.deepEqual(J(H.seat), J(L[sid].seat), sid); assert.equal(H.w, L[sid].w); assert.deepEqual(J(H.spots), J(L[sid].spots), sid) }
   assert.deepEqual(J(R("JH_HALLS8.pawn.play.at")), [1232, 1024], "八派玩法入口照 extra[play.k]"); assert.deepEqual(J(R("JH_HALLS8.cross_palace.spots")), J(L.cross_palace.spots));
-  assert.deepEqual(J(R("JH_MZ_LV.central.hall.at")), J(R("JH_MZ_AT_L.central")), "迷宮入口換成橫式暫時值");
+  assert.deepEqual(J(R("JH_MZ_LV.central.hall.at")), J(R("JH_MZ_AT_L.central")), "迷宮入口換成橫式的位置");
   assert.equal(R("JH_HALL_WALK.central.W"), 2560); assert.deepEqual(J(R("JH_HALL_WALK.central.N.hall")), [50, 30]); assert.deepEqual(J(R("JH_HALL_WALK.screen.N.gate")), [50, 95]);
   assert.deepEqual(J(R("JH_HALL.central.mates")), J(L.central.mates));
   R("jhHallUse(false)");
@@ -47,8 +47,9 @@ test("jhHallUse：換成橫式時每一套都換對；換回直式全部還原�
   R("jhHallUse(true)"); R("jhHallUse(true)"); assert.equal(R("JH_HALL_W"), 2560, "重複叫不會亂"); R("jhHallUse(false)"); assert.deepEqual(J(R("JH_HALL.central.seat")), [387, 314]);
 });
 
-test("迷宮入口暫時值都在圖內、不跟同一派的地點和玩法入口疊在一起（相距超過 80px）", () => {
+test("迷宮入口（Windows Claude 1 補量）照量好的點寫死、都在圖內、不跟同一派的地點和玩法入口疊在一起（相距超過 80px）", () => {
   const C = load(), Z = vm.runInContext("JH_MZ_AT_L", C), L = vm.runInContext("JH_HALL_L", C);
+  assert.deepEqual(J(Z), { central: [1472, 424], pawn: [832, 1232], elephant: [1936, 544], cross_palace: [1920, 1152] });
   for (const [sid, p] of Object.entries(Z)) {
     assert.ok(p[0] > 0 && p[0] < 2560 && p[1] > 0 && p[1] < 1600, sid);
     for (const q of [...Object.values(L[sid].spots), ...Object.values(L[sid].extra || {})]) assert.ok(Math.hypot(p[0] - q[0], p[1] - q[1]) > 80, sid + " 跟 " + q + " 太近");
