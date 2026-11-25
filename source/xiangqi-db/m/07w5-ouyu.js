@@ -152,7 +152,7 @@ function oyCss(){if(document.getElementById("oyCss"))return;const s=document.cre
 const oyName=(w,mdl)=>w==="hp"&&mdl==="douhua"?"賣豆花的小販":OY_WHO[w].nm;
 const oyModel=(w,mdl)=>w==="hp"&&mdl==="douhua"?"n_douhua":OY_WHO[w].m;
 const oyBackHash=place=>place==="yz"?"#/journey/inn":"#/port";
-function oyCfg(place,k){try{if(place==="port"){if(typeof SHW_PORT==="undefined"||!SHW_PORT[k])return null;const C=shwCfg(SHW_PORT[k],typeof SHW_PSX!=="undefined"?SHW_PSX[k]:null);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];return C}
+function oyCfg(place,k,P){try{if(place==="port")return typeof ph4Cfg==="function"?ph4Cfg(P,k):null;   /* 07w4 ph4Cfg：橫式圖時用條目的路網（審查 #165 第四輪） */
   if(typeof SHW_YZ==="undefined"||!SHW_YZ[k])return null;return Object.assign({},SHW_PG0,SHW_YZ[k])}catch(e){return null}}
 /* 站位：路網上的點往右挪一點；不壓到標籤、驛路小圓印、07w4 主人、旅伴的「！」、七星來訪，也不站在 07w4 主人的固定站位、走路角色起點附近 */
 function oySpot(P,C,hFr,k){const W=P.clientWidth,Hh=P.clientHeight,q=P.getBoundingClientRect();
@@ -200,9 +200,9 @@ function oyPage(v,k,place){if(!OUYU_ON)return;const P=v&&v.querySelector(".shp-p
   if(OY_LETTER){const env=document.createElement("button");env.type="button";env.className="oy-env";env.setAttribute("aria-label",(r.back?nm+"在等你":"有人求助")+"：點開來看");env.innerHTML=`<i aria-hidden="true"></i><b>${r.back?"有人等你":"有人求助"}</b>`;
     env.onclick=e=>{e.stopPropagation();e.preventDefault();act()};let n=0;const put=()=>{if(!P.isConnected)return;if((P.classList.contains("pc-run")||document.querySelector(".walkc"))&&++n<40)return void setTimeout(put,300);
       /* 開發者 11/10「放在場景裡，例如岸邊或樹上，放右上角很怪」：用 3D 小人的站位規則（沿著角色走得到的路、避開入口標籤和其他角色）找一個地上的點，信就擱在那裡；找不到才放右上角 */
-      let at=null;try{const C=oyCfg(place,k);if(C)at=oySpot(P,C,()=>.07,k)}catch(x){}
+      let at=null;try{const C=oyCfg(place,k,P);if(C)at=oySpot(P,C,()=>.07,k)}catch(x){}
       if(at){env.classList.add("oy-in");env.style.left=at[0]+"%";env.style.top=at[1]+"%"}P.append(env)};setTimeout(put,900);return}
-  const C=oyCfg(place,k);if(!C||typeof shwRM==="function"&&shwRM()||typeof XQBot3D==="undefined"&&typeof loadScript!=="function"){addCard();return}
+  const C=oyCfg(place,k,P);if(!C||typeof shwRM==="function"&&shwRM()||typeof XQBot3D==="undefined"&&typeof loadScript!=="function"){addCard();return}
   const box=document.createElement("div");box.className="oy3";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';
   const hit=document.createElement("button");hit.type="button";hit.className="oy-hit";hit.style.display="none";hit.setAttribute("aria-label",nm+"：點他聽他說");
   const mk=document.createElement("div");mk.className="oy-mk";mk.textContent=ic;mk.setAttribute("aria-hidden","true");

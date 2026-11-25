@@ -26,9 +26,11 @@ function ph4Css(){if(document.getElementById("ph4Css"))return;const s=document.c
 /* 這一朝渡口小卡上說話的七星主人（說書人、或就是玩家自己的角色時回傳空字串） */
 function ph4Who(k){try{const Ls=SHIP_LESSON[k]||{},T=SHIP_STOP[k]||{};if(shipAppr()||!Ls.open)return"";const by=shipLearned(k)&&Ls.done?Ls.doneBy:Ls.openBy;if(by==="teller")return"";
   const c=by||(T.who||[])[0]||"";if(!c||!WX_CHARS[c]||c===myChar())return"";if(typeof ptyHas==="function"&&!ptyHas(c))return"";return c}catch(e){return""}}   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：主人還沒加入就不站出來（小卡也改說書人，見 07f Port） */
+/* 渡口路網（主人站位、泡泡、07w5 偶遇的信）：直圖照 SHW_PORT＋身高乘 SHW_PORT_K；W107-L 橫式圖時換成條目的路網（07sw scwWalkCfg），不用直圖寫死的位置（審查 #165 第 2、4 輪） */
+function ph4Cfg(P,k){if(typeof SHW_PORT==="undefined"||!SHW_PORT[k])return null;let C=shwCfg(SHW_PORT[k],typeof SHW_PSX!=="undefined"?SHW_PSX[k]:null);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
+  const e=P&&typeof scwCur==="function"?scwCur(P):null;if(e&&e.walk&&P._scw&&typeof scwWalkCfg==="function")C=scwWalkCfg(P._scw,e);return C}
 function ph4Mount(v,k){if(!PORT_HOST3D||shwRM()||!SHW_PORT_ON||!SHW_PORT[k])return false;const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.ph4)return!!(P&&P.dataset.ph4);const c=ph4Who(k);if(!c||typeof TRIPO!=="undefined"&&Object.keys(TRIPO).length&&!TRIPO[c])return false;P.dataset.ph4="1";ph4Css();
-  let C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
-  {const e=typeof scwCur==="function"?scwCur(P):null;if(e&&e.walk&&P._scw)C=scwWalkCfg(P._scw,e)}P._ph4L=C.W===2560;   /* W107-L：渡口橫式圖時，主人站位照條目的路網，不用直圖寫死的 PH4_AT（審查 #165 第 2 項）；記下掛的是哪一種，轉向時 07f 重掛 */
+  const C=ph4Cfg(P,k);P._ph4L=C.W===2560;   /* W107-L：渡口橫式圖時，主人站位照條目的路網，不用直圖寫死的 PH4_AT（審查 #165 第 2 項）；記下掛的是哪一種，轉向時 07f 重掛 */
   const box=document.createElement("div");box.className="ph4";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';
   const hit=document.createElement("button");hit.type="button";hit.className="ph4-hit";const nm=(WX_CHARS[c].nk||WX_CHARS[c].n||"");hit.setAttribute("aria-label",nm+"：聽她說話");hit.style.display="none";
   const say=document.createElement("div");say.className="ph4-say";say.setAttribute("aria-live","polite");
@@ -40,7 +42,7 @@ function ph4Card(v){const p=v&&v.querySelector(".port-say p"),b=p&&p.querySelect
 function ph4Line(v,k){if(!PORT_CARD_HIDE)return;const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.ph4l)return;const L=ph4Card(v);if(!L.t)return;P.dataset.ph4l="1";ph4Css();
   const say=document.createElement("div");say.className="ph4-say";say.setAttribute("aria-live","polite");say.innerHTML=`<b>${esc(L.n)}</b>${esc(L.t)}`;P.append(say);let n=0;
   const go=()=>{if(!say.isConnected)return;if((P.classList.contains("pc-run")||document.querySelector(".walkc")||document.hidden)&&++n<60)return void setTimeout(go,300);
-    const C=SHW_PORT[k]?shwCfg(SHW_PORT[k],SHW_PSX[k]):null,H=C&&C.N[C.home]||[50,70],Ih=P.clientHeight,Iw=P.clientWidth,hh=C?shwHt(C,H[1])*SHW_PORT_K*Ih:Ih*.06;
+    const C=ph4Cfg(P,k),H=C&&C.N[C.home]||[50,70],Ih=P.clientHeight,Iw=P.clientWidth,hh=C?shwHt(C,H[1])*Ih:Ih*.06;   /* 照當下的圖（ph4Cfg 已乘 SHW_PORT_K） */
     Object.assign(say.style,{left:(H[0]*Iw/100)+"px",top:(H[1]*Ih/100-hh-6)+"px"});say.classList.add("on");try{if(typeof shwSayFit==="function")shwSayFit(say,P,hh+say.offsetHeight+14)}catch(e){}
     setTimeout(()=>{say.classList.remove("on");setTimeout(()=>say.remove(),400)},Math.max(4000,Math.min(9000,L.t.length*170)))};
   setTimeout(go,900)}

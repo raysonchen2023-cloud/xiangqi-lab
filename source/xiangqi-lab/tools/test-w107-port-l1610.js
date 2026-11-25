@@ -96,7 +96,7 @@ test("〔原始碼〕開頁照 scwPre 選全彩圖；上色過場、風、船艙
   assert.match(F, /\.shp-page\.scw-l \.pw-gl,\.shp-page\.scw-l \.pfx-gl,\.shp-page\.scw-l \.shp-gldev\{display:none!important\}/);
   for (const [src, name] of [[PC, "portColor"], [PW, "portWind"], [PF, "portFx"]]) assert.match(cut(src, "function " + name + "(v,k){", "\n  if(P.dataset.scw)return;"), /if\(P\.dataset\.scw\)return;$/, name + " 橫式圖不掛");
   assert.match(WK, /if\(e&&e\.walk&&P\._scw\)\{C=scwWalkCfg\(P\._scw,e\);P\._scwW="l"\}/, "shwPort 用條目路網");
-  assert.match(W4, /if\(e&&e\.walk&&P\._scw\)C=scwWalkCfg\(P\._scw,e\)\}/, "渡口主人站位照條目");
+  assert.match(W4, /const C=ph4Cfg\(P,k\);P\._ph4L=C\.W===2560;/, "渡口主人站位照 ph4Cfg（橫式圖用條目）");
   assert.match(W4, /P\.append\(b\);if\(P\._portPlace\)P\._portPlace\(\)\}/, "碼頭標籤晚加也照條目放");
   assert.match(W4, /if\(!at\)at=\(C\.W===2560\?null:PH4_AT\[k\]\)\|\|ph4Spot\(P,C,hFr\);/, "橫式圖不用直圖寫死的主人站位（審查 #165 第 2 項）");
   assert.match(W4, /P\._ph4L=C\.W===2560;/, "記下主人是照哪一種圖站的");
@@ -147,4 +147,21 @@ test("〔混合〕風、船艙動態的素材載完時：圖框已換成橫式�
     assert.equal(f({ isConnected: true, dataset: { scw: "" } }, { isConnected: false }), undefined, "畫布已被 portScwStop 拿掉");
     assert.equal(f({ isConnected: false, dataset: { scw: "" } }, { isConnected: true }), undefined, "離開頁面");
   }
+});
+
+test("〔混合〕ph4Cfg：直圖照 SHW_PORT（身高乘 SHW_PORT_K）、橫式圖照條目路網（W 2560、home 照條目）；主人泡泡 ph4Line、07w5 偶遇的信 oyCfg 都走 ph4Cfg（審查 #165 第四輪）", () => {
+  const C = load(); C.localStorage = { getItem: k => k === "xqScwDev" ? "1" : null };
+  vm.runInContext("const SHW_PORT={sui:{N:{home:[70,80],a:[60,70]},E:'home-a',home:'home',h:[.1,80,.001]}},SHW_PSX={},SHW_PORT_K=1.5;function shwCfg(a){return JSON.parse(JSON.stringify(a))}\n" + cut(W4, "function ph4Cfg(P,k){", "return C}"), C);
+  const ph4Cfg = vm.runInContext("ph4Cfg", C), E = vm.runInContext("SCW['shipmap/port_sui_f']", C);
+  const tall = ph4Cfg({ dataset: { scw: "" } }, "sui");
+  assert.deepEqual(J(tall.N.home), [70, 80]); assert.deepEqual(J(tall.h), [.15000000000000002, 80, .0015], "直圖身高乘 SHW_PORT_K"); assert.equal(tall.W, undefined);
+  const P = { dataset: { scw: "l1610" }, _scw: { key: "shipmap/port_sui_f", cfg0: tall } };
+  const wide = ph4Cfg(P, "sui");
+  assert.equal(wide.W, 2560, "橫式路網"); assert.deepEqual(J(wide.N.home), J(E.walk.N.home), "home 照條目（不是直圖的 70%）"); assert.notDeepEqual(J(wide.N.home), [70, 80]);
+  assert.equal(ph4Cfg(P, "nope"), null);
+  assert.match(cut(W4, "function ph4Line(v,k){", "setTimeout(go,900)}"), /const C=ph4Cfg\(P,k\),H=C&&C\.N\[C\.home\]\|\|\[50,70\],Ih=P\.clientHeight,Iw=P\.clientWidth,hh=C\?shwHt\(C,H\[1\]\)\*Ih:Ih\*\.06;/, "泡泡照 ph4Cfg（身高已乘過，不再乘一次）");
+  const W5 = M("m/07w5-ouyu.js");
+  const oy = vm.runInContext("var SHW_YZ;" + cut(W5, "function oyCfg(place,k,P){", "catch(e){return null}}") + ";oyCfg", C);
+  assert.equal(oy("port", "sui", P).W, 2560, "偶遇的信：橫式圖用條目路網"); assert.deepEqual(J(oy("port", "sui", { dataset: { scw: "" } }).N.home), [70, 80]);
+  assert.equal((W5.match(/oyCfg\(place,k,P\)/g) || []).length, 3, "定義一處、兩個呼叫處都傳 P"); assert.doesNotMatch(W5, /oyCfg\(place,k\)/);
 });
