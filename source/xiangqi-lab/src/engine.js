@@ -38,6 +38,7 @@ var XQEngine=(function(){
   // 只下載神經網路檔存進手機（App 打開後自動在背景做），同時呼叫只會下載一次
   let nnueP=null;
   function prefetch(){return nnueP||(nnueP=fetchNnue(BASE+"engine/pikafish.nnue").finally(()=>setTimeout(()=>{nnueP=null},0)))}
+  const IOS_MEM=6144;   /* iPhone／iPad 一開始就給的共享記憶體頁數（64 KB 一頁＝384 MB），原因見 load() */
   let LG=0;   /* 11/13 晚：啟動的編號；abort 之後舊的那次啟動晚到（成功或逾時）都不准動到新的引擎 */
   function load(){
     if(loading)return loading;const my=++LG;
@@ -46,19 +47,28 @@ var XQEngine=(function(){
       const nnue=await prefetch();
       if(!window.PikafishModule)await loadScript(BASE+"engine/pikafish.js");
       /* 11/13 晚：啟動引擎、等 uciok／readyok 原本沒有時限，iPad 卡在這裡就永遠「思考中」；改成各有時限，逾時重置、拋錯讓 local.js 重試 */
-      const m=await Promise.race([window.PikafishModule({locateFile:f=>BASE+"engine/"+f,mainScriptUrlOrBlob:BASE+"engine/pikafish.js",
-        print:onLine,printErr:()=>{},preRun:[m=>m.FS.writeFile("/pikafish.nnue",nnue)]}),new Promise((_,j)=>setTimeout(()=>j(new Error("電腦棋手啟動太久")),45000*TMO))]);
+      /* 11/25 iPad 電腦不下棋的真正原因（iPad Air 4、iPadOS 18.7 實機自動實驗，同一包連跑兩輪結果一樣）：
+         引擎的共享記憶體從 192 MB 起跳、不夠再加大；開 4 條執行緒時，加大發生在別的執行緒正在算的時候，這版 WebKit 的其他執行緒看不到新的大小，
+         一碰到新加的那段就 Out of bounds memory access。實驗：4 條＋192 MB 起跳＝壞；4 條＋一開始就給 512 MB＝好（深度 23）；2 條、1 條＝好（最後都長到 304 MB）。
+         修法：iPhone／iPad 在建立引擎模組那一刻把共享記憶體一次給到 IOS_MEM 頁（384 MB，比實測最多用到的 304 MB 多 80 MB），之後不用再加大；
+         pikafish.js 自己 new WebAssembly.Memory，所以只在呼叫 PikafishModule() 這一瞬間換掉建構子、馬上換回來（執行緒拿的是同一個記憶體物件）。 */
+      const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+      const WM=WebAssembly.Memory;let mem=null;
+      if(ios)WebAssembly.Memory=function(d){if(d&&d.shared&&d.initial<IOS_MEM)d=Object.assign({},d,{initial:IOS_MEM});const x=new WM(d);if(d&&d.shared)mem=x;return x};
+      let mp;try{mp=window.PikafishModule({locateFile:f=>BASE+"engine/"+f,mainScriptUrlOrBlob:BASE+"engine/pikafish.js",
+        print:onLine,printErr:()=>{},preRun:[m=>m.FS.writeFile("/pikafish.nnue",nnue)]})}finally{WebAssembly.Memory=WM}
+      const m=await Promise.race([mp,new Promise((_,j)=>setTimeout(()=>j(new Error("電腦棋手啟動太久")),45000*TMO))]);
       if(my!==LG)throw new Error("電腦棋手已重新啟動");mod=m;
       send("uci");await untilT(l=>l==="uciok",null,20000);
       /* 11/15 意見回饋 896（iOS 下黑洞玩一陣子整頁被系統重開）：量到進黑洞後 JS 多 120 MB、3D 貼圖約 240 MB；
          iPhone／iPad 上雜湊表 64→16 MB（App 的搜尋都很淺，16 MB 夠用），神經網路讀進引擎後把記憶體檔案系統裡那份 nnue 刪掉（約 50 MB） */
-      const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
-      /* 11/25 iPad Air 4（A14、4GB）實機：多執行緒時 Pikafish wasm 一開算就 Out of bounds memory access，電腦不回棋；iPhone 相容模式也一樣，改 1 條就正常。iPhone／iPad 固定 1 條，其他照舊 */
-      const th=ios?1:Math.max(1,Math.min(4,(navigator.hardwareConcurrency||2)-1));
+      /* 11/25：iPhone／iPad 先前暫時固定 1 條（#181）；共享記憶體改成一次給足後，iPad Air 4 實機 4 條正常，改回跟其他平台一樣 */
+      const th=Math.max(1,Math.min(4,(navigator.hardwareConcurrency||2)-1));
       send("setoption name Threads value "+th);send("setoption name Hash value "+(ios?16:64));
       send("isready");await untilT(l=>l==="readyok",null,20000);
       try{m.FS.unlink("/pikafish.nnue")}catch(e){}
-      XQEngine.threads=th})();
+      XQEngine.threads=th;XQEngine.memMB=mem?Math.round(mem.buffer.byteLength/1048576):0;
+      if(mem&&mem.buffer.byteLength>IOS_MEM*65536)console.warn("[engine] iOS 共享記憶體超過預先給的 "+(IOS_MEM/16)+" MB，又加大了："+XQEngine.memMB+" MB")})();
     const L=loading;L.catch(()=>{if(my===LG&&loading===L)reset()});return L}
   /* 11/13 晚：整個重來（local.js 等太久時叫）：停掉引擎、清掉卡住的排隊，下次搜尋重新啟動 */
   function abort(){LG++;reset();q=Promise.resolve();nnueP=null}
