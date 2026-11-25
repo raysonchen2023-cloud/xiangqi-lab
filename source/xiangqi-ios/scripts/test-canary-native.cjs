@@ -6,7 +6,7 @@ const test = require("node:test"), assert = require("node:assert/strict"), fs = 
 const HERE = __dirname, IOS = path.join(HERE, ".."), REPO = path.join(IOS, "..", "..");
 const CHECK = path.join(HERE, "check-native.js"), CANARY = path.join(HERE, "canary-native.js");
 const { KINDS, exitOf, toolSha, run } = require("./canary-native.js");
-/* #135 審查④：壞樣本名稱寫死（不從受測程式取），少一種、多一種、改名都會紅 */
+/* #135 審查④：壞樣本名稱寫死（不從受測程式取）；W69 β 改成只能增加：少一種、改名、換順序都會紅，新增照樣綠 */
 const EXPECTED_KINDS = ["copyDiff","port","whoami","rng","challenge","oneTime","whoamiAnswer","establish","establishIf","establishElse","establishGuard","establishCase","establishLocalFunc","establishHelper","verifiedElsewhere","inUse","eaddrinuse","acceptLocalOnly","loopback","sourceCheck","leftover","superVDL","runCheck","loadTwice","phaseGate","loadUnverified","runningUnverified","directLoad","halfSecond","alert","retryDelays","retryCap","manualRetry","bilingual","guidance","keepSave","foreground","brace","ctrl","gcNetwork","gcPlayerId","gcLogin","wdPath","fgLog","gcObjc","gcJsName","gcMethods","gcWebCall","wdReload","widgetMain","widgetURL","widgetNet","widgetCtrl","widgetFile","appGroup","gcEntitle","widgetPlist","webScheme","webNet","installGc","regSpeech","regGuarded","regOther","spObjc","spMethods","spOrder","spMain","spWarm","spLang","spAmbient","spOnce","spBg","spNet","spCtrl","spInstall","spCopy","board","whoamiTake","estOneBlock","estTickFunc","estNoReturn","estElseAfter","estFuncTwice","srcCancel","leftoverRead","lvpLoad","vbLoad","vbRunning","loadFile","loadReq","showRetry","failedPhase","zhBusy","zhGuide","noDiskCache","clearIDB","onBroken","fgFlag","installSrv","gcClass","wdIdent","wdListedNoFunc","wdWebNone","wdReq","wdCtrl","gcAuth","gcPresent","gcKeep","gcPid","gcTeam","gcName","gcAlias","wdBox","wdData","widgetBundle","widgetOpen","widgetReq","widgetJpg","wdDataFile","groupMissing","groupExtra","webSchemeRe","webXhr","webBeacon","webSocket","webXQNet","webIRT","instGcFile","instWdFile","instClasses","instScheme","regSuper","regLoop","regInit","regThird","spClass","spIdent","spJs","spNoFunc","spExtraFunc","spQueue","spLate","spSpeakU","spMainSync","spMainAsync","spMainActor","spWarmZh","spWarmCode","spVoice","spEn","spSilent","spAppSession","spCatLate","spBgNote","spRec","spCam","spAuth","spReq","spInstFiles","spInstConcat","spInstFilter","spPkgList","spPkgDup","boardSpeak","ctrl00","ctrl01","ctrl02","ctrl03","ctrl04","ctrl05","ctrl06","ctrl07","ctrl08","ctrl0b","ctrl0c","ctrl0e","ctrl0f","ctrl10","ctrl11","ctrl12","ctrl13","ctrl14","ctrl15","ctrl16","ctrl17","ctrl18","ctrl19","ctrl1a","ctrl1b","ctrl1c","ctrl1d","ctrl1e","ctrl1f","ctrl7f","estOrTrue","estOrMid","wdObjc","wdClass","gcIdent","wdJs","gcCtrl","wdNet","gcReq","ctrlVC","regPlugin","groupMissWD","groupMissWidget","groupMissApp","groupExtraWD","groupExtraWidget","groupExtraWidgetEnt","braceBad","strOpen","strEOF","wdJpg","vbMissing","halfAfter","capVDL","capLoadWV","capDidLoad","capRegInst","pbxMissing","pkgGc","pkgWd","pkgGcDup","infoScheme","gcCopyDiff","install"];
 /* #135 審查①②③：check-native.js 的子條件改壞清單（寫死）。每一條只拿掉一個子條件或正規式裡的一個字，指定的壞樣本要回 4 */
 const MUT = [
@@ -158,8 +158,10 @@ const REDUNDANT = [
   ["語音方法：都有登記","check([\"speak\", \"stop\", \"isAvailable\"].every(n => listed.includes(n) && funcs.includes(n))","check([\"speak\", \"stop\", \"isAvailable\"].every(n => funcs.includes(n))","沒登記但有 func，「func 都有登記」一定先紅"],
   ["語音網路：http","/requestRecordPermission|AVCaptureDevice|requestAuthorization|URLSession|URLRequest|https?:\\/\\//","/requestRecordPermission|AVCaptureDevice|requestAuthorization|URLSession|URLRequest/","同上，https:// 在程式碼裡出不來"],
 ];
-/* #135 審查④：盲測（每條判斷整條改成恆真）的確切條數 */
+/* #135 審查④：盲測（每條判斷整條改成恆真）只能增加：總條數不能比 BLIND_N 少，而且 BLIND_KINDS 寫死的每一種都要還在盲測裡
+   （#148 審查①：只比總數的話，拆掉一條判斷再補一種照抄的壞樣本，總數不變、保護卻少了一條） */
 const BLIND_N = 135;
+const BLIND_KINDS = ["port", "whoami", "rng", "challenge", "oneTime", "whoamiAnswer", "verifiedElsewhere", "inUse", "eaddrinuse", "acceptLocalOnly", "loopback", "sourceCheck", "leftover", "superVDL", "runCheck", "loadTwice", "phaseGate", "loadUnverified", "runningUnverified", "directLoad", "halfSecond", "alert", "retryDelays", "retryCap", "manualRetry", "bilingual", "guidance", "keepSave", "foreground", "gcPlayerId", "gcLogin", "wdPath", "fgLog", "wdReload", "widgetMain", "widgetURL", "widgetNet", "widgetCtrl", "appGroup", "gcEntitle", "widgetPlist", "regSpeech", "regGuarded", "regOther", "spObjc", "spMethods", "spOrder", "spMain", "spWarm", "spLang", "spAmbient", "spOnce", "spBg", "spNet", "spCtrl", "spInstall", "spCopy", "whoamiTake", "srcCancel", "leftoverRead", "lvpLoad", "vbLoad", "vbRunning", "loadFile", "loadReq", "showRetry", "failedPhase", "zhBusy", "zhGuide", "noDiskCache", "clearIDB", "onBroken", "fgFlag", "installSrv", "gcAuth", "gcPresent", "gcKeep", "gcPid", "gcTeam", "gcName", "gcAlias", "wdBox", "wdData", "widgetBundle", "widgetOpen", "widgetReq", "groupMissing", "groupExtra", "regSuper", "regLoop", "regInit", "regThird", "spClass", "spIdent", "spJs", "spNoFunc", "spExtraFunc", "spQueue", "spLate", "spSpeakU", "spMainSync", "spMainAsync", "spMainActor", "spWarmZh", "spWarmCode", "spVoice", "spEn", "spSilent", "spAppSession", "spCatLate", "spBgNote", "spRec", "spCam", "spAuth", "spReq", "spInstFiles", "spInstConcat", "spInstFilter", "spPkgList", "spPkgDup", "regPlugin", "groupMissWD", "groupMissWidget", "groupMissApp", "groupExtraWD", "groupExtraWidget", "groupExtraWidgetEnt", "vbMissing", "halfAfter", "capVDL", "capLoadWV", "pkgGc", "pkgWd", "pkgGcDup", "install"];
 const made = [];
 test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }) });
 const tmp = (p) => { const d = fs.mkdtempSync(path.join(os.tmpdir(), p)); made.push(d); return d };
@@ -196,7 +198,7 @@ function blindLine(src, expect) {
 }
 test("check-native.js 每一條判斷改成恆真，對應的壞樣本都要回 4（檢查失靈），不會被當成通過", () => {
   const { canary, check } = repoCopy(), orig = fs.readFileSync(check, "utf8");
-  let tried = 0;
+  let tried = 0; const blinded = new Set();
   for (const [k, K] of Object.entries(KINDS)) {
     const idx = blindLine(orig, K.expect);
     if (!idx.length) continue;   /* 訊息是組出來的（兩份相同、沒有收尾、某檔沒有控制字元）：下一項另外測 */
@@ -205,10 +207,11 @@ test("check-native.js 每一條判斷改成恆真，對應的壞樣本都要回 
     const r = runCanary(canary, ["--only", k]);
     assert.equal(r.status, 4, k + "（" + K.expect + "）改成恆真後金絲雀要回 4：" + r.stdout + r.stderr);
     assert.match(r.stdout, /check-native 本身失靈/);
-    tried++;
+    tried++; blinded.add(k);
   }
   fs.writeFileSync(check, orig);
   console.log("盲測：" + tried + " 條判斷改成恆真，都判出失靈");
+  for (const k of BLIND_KINDS) assert.ok(blinded.has(k), "寫死要盲測的壞樣本沒有被盲測到（對應的判斷被拆掉或訊息改了；#148 審查①）：" + k);
   assert.ok(tried >= BLIND_N, "盲測的條數不能比寫死的少（#135 審查④；W69 β：新增壞樣本會讓條數變多，只能增加）：" + tried + " < " + BLIND_N);
 });
 
