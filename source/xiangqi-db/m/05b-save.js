@@ -119,7 +119,7 @@ window.XQ_MELINE=k=>{const c=myChar();if(!c)return null;if(k==="me")return WX_CH
 function jPlayOk(rn,j,still){if(ROUTE_N-rn>1||!/^#\/journey\/play(\/|$|\?)/.test(location.hash||""))return false;const P=PLAY_NOW;if(!P||P.rn!==ROUTE_N)return true;return(j==null||P.j===j)&&!P.r&&(!still||P.m===P.m1)}
 function meGameTalk(st){try{if(st){const P=PLAY_NOW,m=Array.isArray(st.moves)?st.moves.length:0;PLAY_NOW={id:st.id,j:st.journey||null,m,m1:P&&P.rn===ROUTE_N&&P.id===st.id?P.m1:m,r:!!st.result,rn:ROUTE_N}}}catch(e){}
   try{if(!st||!myChar()||typeof BOT==="undefined"||!BOT||!BOT.say)return;const L=WX_CHARS[myChar()];if(!L||!Array.isArray(st.board))return;
-  if(!st.moves.length&&!st.result&&ME_HI!==st.id){ME_HI=st.id;const gid=st.id;stillHere(2400,()=>{try{if(BOT&&BOT.say)BOT.say(pickOne(L.start),2.6,{auto:1})}catch(e){}},()=>!!ME_CAP&&ME_CAP.id===gid&&!ME_CAP.m&&!ME_CAP.r)}   /* 11/11 模擬玩家問題 2：對局中的閒話標成 auto，有棋盤時 bot3d 不冒泡泡 */
+  if(!st.moves.length&&!st.result&&ME_HI!==st.id){ME_HI=st.id;const gid=st.id,hl=st.human==="b"?1:0;stillHere(2400,()=>{try{if(BOT&&BOT.say)BOT.say(pickOne(L.start),2.6,{auto:1})}catch(e){}},()=>!!ME_CAP&&ME_CAP.id===gid&&ME_CAP.m<=hl&&!ME_CAP.r)}   /* 11/11 模擬玩家問題 2：對局中的閒話標成 auto，有棋盤時 bot3d 不冒泡泡 */
   const opp=st.human==="b"?/[A-Z]/:/[a-z]/,n=st.board.filter(p=>p&&opp.test(p)).length;
   if(ME_CAP&&ME_CAP.id===st.id&&n<ME_CAP.n&&st.moves.length>ME_CAP.m&&!st.result&&Math.random()<.5){const gid=st.id,m0=st.moves.length;stillHere(350,()=>{try{if(BOT&&BOT.say)BOT.say(pickOne(L.cap),1.8,{auto:1})}catch(e){}},()=>!!ME_CAP&&ME_CAP.id===gid&&ME_CAP.m===m0&&!ME_CAP.r)}
   ME_CAP={id:st.id,n,m:st.moves.length,r:!!st.result}}catch(e){}}   /* 11/25 W120：開局、吃子那句延後才說；到時換了頁、換了一盤、已經走子（開局那句）或又走了一步、已經結束就不說（ME_CAP 每畫一次更新：盤號 id、步數 m、有沒有結果 r） */

@@ -67,3 +67,40 @@ test("〔原始碼〕延遲稽核的中、低各處都有接上檢查", () => {
   assert.doesNotMatch(M("07q-chardiff.js"), /\},3000\)\}/, "本命挑戰的 stillHere 不要多帶第三個參數 3000");
   assert.match(rd("xiangqi-lab/src/park3d.js"), /endOk\(\)/, "park3d 隊友賽後說話先確認同一盤");
 });
+
+/* #178 審查（iMac Claude 1）：玩家執黑時電腦先走一步，開局那句、對手招呼不該因為電腦那一步被吃掉（比照 #176 的 klim：執黑容許 1 步） */
+function talkKit() {
+  const SAVE = M("05b-save.js"), a = SAVE.indexOf("function meGameTalk("), b = SAVE.indexOf("\n/* 園子路人打招呼", a);
+  assert.ok(a > 0 && b > a, "抓得到 meGameTalk");
+  const timers = [], said = [];
+  const c = {
+    ROUTE_N: 3, location: { hash: "#/play" }, console, Math: { random: () => 1 },
+    myChar: () => "x", WX_CHARS: { x: { start: ["開局了"], cap: ["吃"] } }, pickOne: a => a[0],
+    BOT: { say: t => said.push(t) },
+    setTimeout: (f, ms) => { timers.push({ f, ms }); return timers.length }
+  };
+  vm.createContext(c);
+  vm.runInContext("var PLAY_NOW=null,ME_HI=null,ME_CAP=null;" + UTIL.slice(UTIL.indexOf("function stillHere("), UTIL.indexOf("\n", UTIL.indexOf("function stillHere("))) + "\n" + SAVE.slice(a, b) + ";this.meGameTalk=meGameTalk;", c);
+  const board = Array(90).fill(null).map((_, i) => i < 16 ? "r" : i > 73 ? "R" : null);
+  return { c, timers, said, board, run: () => { const t = timers.shift(); if (t) t.f() } };
+}
+
+test("執黑：電腦先走了一步，2.4 秒後開局那句照樣說", () => {
+  const K = talkKit(), st = { id: "g1", human: "b", moves: [], board: K.board, result: null };
+  K.c.meGameTalk(st);
+  st.moves = ["h2e2"]; K.c.meGameTalk(st);                 /* 電腦先走 */
+  K.run(); assert.deepEqual(K.said, ["開局了"]);
+});
+
+test("執黑：已經走到第 2 步（玩家也走了）就不說；執紅：電腦或玩家走了一步就不說", () => {
+  const K = talkKit(), st = { id: "g2", human: "b", moves: [], board: K.board, result: null };
+  K.c.meGameTalk(st); st.moves = ["h2e2", "h9g7"]; K.c.meGameTalk(st); K.run();
+  assert.deepEqual(K.said, []);
+  const K2 = talkKit(), s2 = { id: "g3", human: "r", moves: [], board: K2.board, result: null };
+  K2.c.meGameTalk(s2); s2.moves = ["h2e2"]; K2.c.meGameTalk(s2); K2.run();
+  assert.deepEqual(K2.said, []);
+});
+
+test("〔原始碼〕練功房對手招呼：執黑容許電腦先走的那 1 步", () => {
+  assert.match(M("08b-cpugame.js"), /stillHere\(900,\(\)=>\{try\{if\(PARK&&PARK\.host===hb\)PARK\.v\.oppSay\(.*?\},\(\)=>!!st&&st\.id===g1&&st\.moves\.length<=\(st\.human==="b"\?1:0\)&&!st\.result\)/);
+});
