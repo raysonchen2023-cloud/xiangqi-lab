@@ -89,6 +89,9 @@ function swiftCode(src, name, keep) {
       if (src.startsWith(close, i)) { i += close.length; out += keep ? close : "\""; return; }
       if (!multi && src[i] === "\n") { err("字串沒有收尾"); return; }
       if (src.startsWith(esc, i)) {
+        /* #150 審查（iMac Claude 2，新代理人）：一般字串裡的「\＋換行」以前當成續行、一路吞到下一個引號；Swift 在不成立的 #if compiler() 分支裡整段略過，
+           兩邊對字串邊界的認定就不同，能把真程式藏進「字串」。單行字串本來就不能這樣寫，看不懂就拒絕 */
+        if (!multi && src[i + esc.length] === "\n") { err("字串裡有「\\＋換行」（看不懂就拒絕）"); return; }
         if (keep) out += esc;
         i += esc.length;
         if (src[i] === "(") { i++; out += "("; code(true); continue; }
@@ -197,11 +200,15 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
    整行都是 // 註解、而且不含 ＊/ 的行略過（多行字串、正規式的開頭會在別的行先被擋下，所以這種行不會落在字串裡；含 ＊/ 的可能是區塊註解的結尾，後面接真程式） */
 {
   const swWalk = (d) => !fs.existsSync(d) ? [] : fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? (/^(Pods|build|DerivedData|node_modules)$/.test(e.name) ? [] : swWalk(path.join(d, e.name))) : e.name.endsWith(".swift") ? [path.join(d, e.name)] : []);
-  const ODD = [[/"""/, "多行字串 \"\"\""], [/`/, "反引號"], [/#+\//, "#/ 正規式"], [/(^|[^"])#+"/m, "原始字串 #\"…\"#"]];
+  const ODD = [[/"""/, "多行字串 \"\"\""], [/`/, "反引號"], [/#+\//, "#/ 正規式"], [/(^|[^"])#+"/m, "原始字串 #\"…\"#"], [/\\\n/, "行尾反斜線（字串續行）"]];
+  /* #150 審查：條件編譯只放行專案用到的兩種條件（#if DEBUG、#if targetEnvironment(simulator)）。compiler()／swift() 這類版本條件不成立時，Swift 整段略過、不斷詞，
+     斷詞卻照讀，能藏程式；其他條件（自訂旗標、os()、canImport()…）專案用不到，一樣看不懂就拒絕。#elseif 也算 */
+  const IF_OK = /^!?\s*(DEBUG|targetEnvironment\(\s*simulator\s*\))$/;
   const ODD_NL = /[\u2028\u2029\u0085\u000B\u000C]/;   /* 第七輪審查：U+2028 這類字元 JS 跟 Swift 對「一行」的認定不同，一律不行；第八輪建議：整份原文直接檢查，不經過豁免（單獨的 \r 已被 rd() 換成換行，不用列） */
   for (const f of [...swWalk(SRC), ...swWalk(APP)]) {
     const raw = rd(f), code = raw.split("\n").filter((l) => !(/^\s*\/\//.test(l) && !l.includes("*/"))).join("\n");   /* #144 第六輪審查：在 /＊ … ＊/ 裡、以 // 開頭又含 ＊/ 的行，＊/ 後面是真程式，不能豁免；第七輪：用 includes 不用正規式的「.」（「.」不比對 U+2028／U+2029） */
     const odd = ODD.filter(([re]) => re.test(code)).map(([, n]) => n);
+    for (const m of code.matchAll(/^[ \t]*#(?:if|elseif)\b(.*)$/gm)) { const cond = m[1].replace(/\/\/.*$/, "").replace(/\/\*.*$/, "").trim(); if (!IF_OK.test(cond)) { odd.push("條件編譯 #if " + cond); break } }
     if (ODD_NL.test(raw)) odd.push("特殊換行字元");
     if (odd.length) pinBad.push(path.relative(HERE, f) + " 不能有 " + odd.join("、") + "（斷詞可能跟 Swift 認定不同）");
   }
