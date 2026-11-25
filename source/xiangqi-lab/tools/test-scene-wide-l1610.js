@@ -269,10 +269,11 @@ test("〔混合〕原始碼：07fl 排版前先問 scwSync、安全區照條目�
   for (const [n, S] of [["07c2", C2], ["07y", YH], ["07x2", X2]]) { assert.match(S, /scwPre\(v,src\)/, n + " 開頁先選圖"); assert.match(S, /scwMount\(P,/, n + " 交給 07sw") }
   assert.match(C2, /scwMount\(P,\{key:scwKey\(src\),src0:src,ids:\[\],apply:render\}\)/, "殘局換圖後整組重畫");
   assert.match(YH, /onWalk:c=>hbHide\(P,c\.hide\)/, "對戰、學習重掛走路角色後照新的隱身範圍");
-  assert.match(YH, /if\(alt&&!hbIsCl\(\)&&!lw\)/, "橫式圖時不換千秋盃狀態直圖");
-  assert.match(YH, /im\.onload=\(\)=>\{if\(img\.isConnected&&!P\.dataset\.scw\)img\.src=im\.src\}/, "狀態圖晚載好、已經是橫式圖時不蓋（審查 #155 第 3 項）");
+  assert.match(YH, /P\._hbAlt=alt&&!hbIsCl\(\)\?alt:"";hbCupSwap\(P\);/, "千秋盃狀態圖交給 hbCupSwap（經典世界不換）");
+  assert.match(YH, /if\(hub==="battle"\)try\{hbCupSwap\(P\);hbCupPlace\(P\)\}catch\(x\)\{\}\}/, "橫直切換後（apply）再換一次狀態圖、燈重放");
+  assert.match(YH, /if\(hub==="learn"\)try\{hbFxLearn\(P\)\}catch\(x\)\{\}if\(hub==="battle"\)try\{hbCupSwap\(P\);hbCupPlace\(P\)\}catch\(x\)\{\}\}/, "開頁就是橫式圖：掛上 07sw 後也換一次（hbFxBattle 在 scwMount 前面跑）");
   assert.match(YH, /const LAMP=G\?G\.lamp:HUB_LAMP\.learn,STEAM=G\?G\.steam:HUB_STEAM,QP=G\?G\.qp:HUB_QP,QW=G\?e\.w:768,POND=G\?G\.pond:HUB_POND;/, "書院疊圖照條目");
-  assert.match(YH, /if\(pre\.k\)\{cfg=scwWalkCfg\(o,scwCur\(P\)\);P\._scwW="l";if\(hub==="learn"\)try\{hbFxLearn\(P\)\}catch\(x\)\{\}\}/, "開頁就是橫式圖：掛上 07sw 後再畫一次疊圖");
+  assert.match(YH, /if\(pre\.k\)\{cfg=scwWalkCfg\(o,scwCur\(P\)\);P\._scwW="l";if\(hub==="learn"\)try\{hbFxLearn\(P\)\}catch\(x\)\{\}/, "開頁就是橫式圖：掛上 07sw 後再畫一次疊圖");
   const Y8b = M("m/07y8-redomap.js"); assert.match(Y8b, /const nP=L&&!L\.pole\?0:/, "原圖版橫式圖有竹竿就晾"); assert.match(Y8b, /\.scw-l:not\(\.rd2-pondl\) \.rd2-pond\{display:none\}/, "有池面才顯示洗墨池");
   assert.match(YH, /const lw=\/_l1610\\\.webp\/\.test\(src\),E=lw&&typeof scwByF==="function"\?scwByF\(src\):null/, "朝代殘影照橫式條目");
   assert.match(X2, /function lmFar\(s,used,G\)/); assert.match(X2, /gap:44\/pw\*100/, "橫式圖的亮燈間距照螢幕 44px");
@@ -290,4 +291,43 @@ test("〔混合〕原始碼：07fl 排版前先問 scwSync、安全區照條目�
   assert.ok(i7 > iu && i7 < iw, "07sw 在 00-util 之後、11-watch（開機 route()）之前");
   assert.match(M("m/11-watch.js"), /^route\(\);$/m, "開機的 route() 還在 11-watch");
   for (const f of fs.readdirSync(path.join(__dirname, "../../xiangqi-db/m")).filter(f => /\.js$/.test(f) && f !== "11-watch.js")) assert.doesNotMatch(M("m/" + f), /^route\(\);$/m, f + " 也在載入時呼叫 route()，07sw 要在它前面");
+});
+
+test("千秋盃報名紅幔、垂簾布幕：直式換直圖、iPad 橫向換 _l1610；圖載好時橫直已經切換就不換；垂簾的燈照條目 fx.lamp，原圖照 HUB_LAMP.battle", () => {
+  const YH = M("m/07y-hubmap.js"), cut = (a, b) => { const i = YH.indexOf(a), j = YH.indexOf(b, i); assert.ok(i >= 0 && j > i, a); return YH.slice(i, j) };
+  const SRC_CUP = cut("const hbCupSrc=", "/* 千秋盃結束的煙火");
+  const mk = () => {
+    const imgs = [];
+    const ctx = vm.createContext({ SCW_IMGV: "S", HB_IMGV: "H", HUB_LAMP: { battle: [[3, 30.5], [22.5, 29], [50, 26.5], [65, 25.5], [26.5, 42.5], [51, 39], [91, 64.5], [62, 72]] },
+      hbImg: (b) => b + "_tang", scwCur: P => P.dataset.scw ? { fx: { lamp: SCW["hubmap/battle_tang"].fx.lamp } } : null,
+      Image: function () { imgs.push(this) } });
+    vm.runInContext(SRC_CUP, ctx);
+    const img = { isConnected: true, _s: "data/hubmap/battle_tang.webp?v=H0", getAttribute() { return this._s }, set src(v) { this._s = v }, get src() { return this._s } };
+    const lamps = Array.from({ length: 8 }, () => ({ style: {} })), cls = new Set();
+    const P = { dataset: {}, _hbAlt: "battle_red", querySelector: () => img, querySelectorAll: q => q === ".hb-cl" ? lamps : [], classList: { toggle: (c, on) => on ? cls.add(c) : cls.delete(c) } };
+    return { ctx, imgs, img, P, lamps, cls, R: n => vm.runInContext(n, ctx) };
+  };
+  // 直式：換直的狀態圖（先載好才換）
+  let E = mk(); E.R("hbCupSwap")(E.P);
+  assert.equal(E.imgs.length, 1); assert.equal(E.imgs[0].src, "data/hubmap/battle_red_tang.webp?v=H"); assert.equal(E.img._s, "data/hubmap/battle_tang.webp?v=H0", "還沒載好不換");
+  E.imgs[0].onload(); assert.equal(E.img._s, "data/hubmap/battle_red_tang.webp?v=H");
+  // 橫式：換 _l1610
+  E = mk(); E.P.dataset.scw = "l1610"; E.R("hbCupSwap")(E.P); E.imgs[0].onload();
+  assert.equal(E.img._s, "data/hubmap/battle_red_tang_l1610.webp?v=S", "橫式圖換橫式狀態圖（以前是不換，iPad 上看不到報名紅榜）");
+  // 開頁先用直圖去載、載好前已經掛上橫式圖：不換（不然直圖蓋掉橫式圖）
+  E = mk(); E.R("hbCupSwap")(E.P); E.P.dataset.scw = "l1610"; E.imgs[0].onload();
+  assert.equal(E.img._s, "data/hubmap/battle_tang.webp?v=H0", "要的網址變了，晚到的直圖不蓋");
+  // 已經是要的那張就不再載
+  E = mk(); E.P.dataset.scw = "l1610"; E.img._s = "data/hubmap/battle_red_tang_l1610.webp?v=S"; E.R("hbCupSwap")(E.P); assert.equal(E.imgs.length, 0);
+  // 沒有狀態（_hbAlt 空）不動
+  E = mk(); E.P._hbAlt = ""; E.R("hbCupSwap")(E.P); assert.equal(E.imgs.length, 0);
+  // 燈：橫式照條目、加 hb-l1610 縮小；轉回直式照 HUB_LAMP.battle、拿掉 hb-l1610
+  E = mk(); E.P.dataset.scw = "l1610"; E.R("hbCupPlace")(E.P);
+  assert.equal(E.lamps[0].style.left, "16.8%"); assert.equal(E.lamps[7].style.top, "60.5%"); assert.ok(E.cls.has("hb-l1610"));
+  E.P.dataset.scw = ""; E.R("hbCupPlace")(E.P);
+  assert.equal(E.lamps[0].style.left, "3%"); assert.equal(E.lamps[6].style.top, "64.5%"); assert.ok(!E.cls.has("hb-l1610"));
+  // 條目：原圖、11 朝都共用經典版那 8 盞燈
+  for (const k of ["hubmap/battle", "hubmap/battle_tang", "hubmap/battle_song"]) assert.equal(SCW[k].fx.lamp, SCW["hubmap/battle_classic"].fx.lamp, k);
+  assert.equal(SCW["hubmap/battle_classic"].fx.lamp.length, 8);
+  for (const [x, y] of SCW["hubmap/battle_classic"].fx.lamp) assert.ok(x > 0 && x < 100 && y > 0 && y < 100);
 });

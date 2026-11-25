@@ -159,11 +159,18 @@ function hbFxLearn(P){const fx=P.querySelector(".hb-fx");if(!fx||hbIsCl())return
   hbRedoN().then(n=>{if(n==null||!pond.isConnected)return;pond.innerHTML=n>0?`<i class="hb-ink" style="opacity:${Math.min(.85,.3+n*.06).toFixed(2)}${inkBg}"></i>`:'<i class="hb-clear"></i>'})}
 function hbFxBattle(P,img){let ph="";try{const S=window.XQNet&&XQNet.cup&&XQNet.cup();ph=S&&S.ph||""}catch(e){}
   const alt=ph==="reg"||ph==="wait"?"battle_red":ph==="ck"||ph==="play"?"battle_curtain":"";
-  const lw=!!P.dataset.scw;   /* W107-L：用 iPad 橫向專用橫式圖時不換千秋盃的報名、垂簾狀態圖（那兩張是直圖，換了座標就對不上），燈也不疊；狀態圖的橫式版還沒畫 */
-  if(alt&&!hbIsCl()&&!lw){const im=new Image();im.onload=()=>{if(img.isConnected&&!P.dataset.scw)img.src=im.src};im.src="data/hubmap/"+hbImg(alt,"battle")+".webp?v="+HB_IMGV}   /* 換圖前先載好，載不到就留原圖 */
+  P._hbAlt=alt&&!hbIsCl()?alt:"";hbCupSwap(P);   /* W107-L：直式換直的狀態圖；iPad 橫向換 <鍵>_l1610（Windows Claude 1 對齊回各朝對戰橫式圖，座標共用）；橫直切換後 apply 再換一次 */
   const fx=P.querySelector(".hb-fx");if(!fx)return;
-  if(alt==="battle_curtain"&&!lw)fx.insertAdjacentHTML("beforeend",HUB_LAMP.battle.map(p=>`<i class="hb-lamp on" style="left:${p[0]}%;top:${p[1]}%"></i>`).join(""));
-  if(ph==="done")fx.insertAdjacentHTML("beforeend",HB_FW.map(([x,y,d])=>`<i class="hb-fw" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join(""));hbFwPlace(P)}
+  if(P._hbAlt==="battle_curtain")fx.insertAdjacentHTML("beforeend",HUB_LAMP.battle.map(()=>`<i class="hb-lamp on hb-cl"></i>`).join(""));
+  if(ph==="done")fx.insertAdjacentHTML("beforeend",HB_FW.map(([x,y,d])=>`<i class="hb-fw" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join(""));hbFwPlace(P);hbCupPlace(P)}
+/* 千秋盃狀態圖網址：橫式圖時用 _l1610（版本跟 07sw 一樣），否則原本的直圖 */
+const hbCupSrc=(P,alt)=>{const k=hbImg(alt,"battle");return P.dataset.scw?"data/hubmap/"+k+"_l1610.webp?v="+SCW_IMGV:"data/hubmap/"+k+".webp?v="+HB_IMGV};
+/* 換圖前先載好，載不到就留底圖；載好時橫直已經又切換（要的網址變了）就不換 */
+function hbCupSwap(P){const img=P.querySelector(":scope>img"),alt=P._hbAlt;if(!img||!alt)return;const want=hbCupSrc(P,alt);if(img.getAttribute("src")===want)return;
+  const im=new Image();im.onload=()=>{if(img.isConnected&&hbCupSrc(P,alt)===want)img.src=want};im.src=want}
+/* 垂簾的燈：橫式圖照條目 fx.lamp，原圖照 HUB_LAMP.battle；橫式圖燈縮小（.hb-l1610，跟學習分頁同一條） */
+function hbCupPlace(P){const L=P.querySelectorAll(".hb-cl");if(!L.length)return;const e=typeof scwCur==="function"?scwCur(P):null,G=e&&e.fx&&e.fx.lamp;P.classList.toggle("hb-l1610",!!G);
+  L.forEach((f,i)=>{const p=(G||HUB_LAMP.battle)[i];if(p){f.style.left=p[0]+"%";f.style.top=p[1]+"%";f.style.display=""}else f.style.display="none"})}
 /* 千秋盃結束的煙火（原圖 %）；W107-L 橫式圖照條目 fx.fw 擺 */
 const HB_FW=[[64,14,0],[81,11,-.9],[95,15,-1.7],[72,18,-.4],[57,12,-2.2]];
 function hbFwPlace(P){const e=typeof scwCur==="function"?scwCur(P):null,F=e&&e.fx&&e.fx.fw;P.querySelectorAll(".hb-fw").forEach((f,i)=>{const p=F&&F[i]||HB_FW[i];if(p){f.style.left=p[0]+"%";f.style.top=p[1]+"%"}})}
@@ -183,7 +190,7 @@ function hubMap(v,hub){const D=HUB_DEF[hub],home=v.querySelector(".home");if(!D|
   if(typeof shpFit==="function")shpFit(v);
   try{const SW=hbIsCl()&&SHW_HUB_CL[hub]||SHW_HUB[hub],pfx="hub:"+hub+(SW===SHW_HUB[hub]?"":":cl");let cfg=SW?Object.assign({},SHW_PG0,SW):null;
     /* W107-L：交給 07sw 換圖、入口、出口、走路節點；換圖後煙火換位置、重掛走路角色後照新的隱身範圍 */
-    if(typeof scwMount==="function"&&cfg){const o={key:scwKey(src),src0:src,ids:sp.map(x=>x.id),pfx,cfg0:cfg,apply:()=>{hbFwPlace(P);if(hub==="learn")try{hbFxLearn(P)}catch(x){}},onWalk:c=>hbHide(P,c.hide)};scwMount(P,o);if(pre.k){cfg=scwWalkCfg(o,scwCur(P));P._scwW="l";if(hub==="learn")try{hbFxLearn(P)}catch(x){}}hbFwPlace(P)}
+    if(typeof scwMount==="function"&&cfg){const o={key:scwKey(src),src0:src,ids:sp.map(x=>x.id),pfx,cfg0:cfg,apply:()=>{hbFwPlace(P);if(hub==="learn")try{hbFxLearn(P)}catch(x){}if(hub==="battle")try{hbCupSwap(P);hbCupPlace(P)}catch(x){}},onWalk:c=>hbHide(P,c.hide)};scwMount(P,o);if(pre.k){cfg=scwWalkCfg(o,scwCur(P));P._scwW="l";if(hub==="learn")try{hbFxLearn(P)}catch(x){}if(hub==="battle")try{hbCupSwap(P);hbCupPlace(P)}catch(x){}}hbFwPlace(P)}
     if(typeof shwPage==="function"&&SHIP_WALK_ON&&cfg){shwPage(v,cfg,pfx);hbHide(P,cfg.hide)}}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Home==="function"){const f0=Home;Home=function(v,hub){const r=f0.apply(this,arguments);try{if(HUB_MAP_ON&&(hub==="learn"||hub==="battle"))hubMap(v,hub)}catch(e){}return r}}

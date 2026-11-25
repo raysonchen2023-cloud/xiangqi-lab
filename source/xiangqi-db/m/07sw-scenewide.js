@@ -74,7 +74,8 @@ const SCW={
       N:{home:[77,90],th:[72,75],arena:[60,63],n:[54,59],bt:[40,55],tlb:[33,64],cpu:[31,72],drum:[78,49],sf:[66,48.8],s1:[64.5,40],st:[61,34.4],gal:[52,35.2],stage:[43,36],wing:[20,40]},
       E:"home-th th-arena arena-n n-bt bt-tlb tlb-cpu n-sf sf-drum sf-s1 s1-st st-gal gal-stage stage-wing",
       HS:{hbNet:["n",54,55,"bow"],hbCpu:["cpu",15,66,"bow"],hbCup:["stage",52,15,"bow"],hbSimul:["wing",20,34,"bow"],hbPvp:["th",72,60,"bow"],hbCar:["drum",80,40,"wave"]}},
-    fx:{fw:[[64,7],[74,5],[84,9],[70,12],[58,6]],cy:[["weijin",22,16,8],["nanbei",76,15,7],["sui",88,19,7]]},
+    fx:{fw:[[64,7],[74,5],[84,9],[70,12],[58,6]],cy:[["weijin",22,16,8],["nanbei",76,15,7],["sui",88,19,7]],
+      lamp:[[16.8,34.6],[25.7,32.5],[40.8,43.5],[49.8,26.9],[74,30.1],[86.2,37.1],[64.5,63.4],[77.8,60.5]]},   /* 千秋盃垂簾時亮的 8 盞燈（%，Windows Claude 1 量；原圖、11 朝共用） */
     sw7:{sky:[[[0,0],[2560,0],[2560,320],[0,320]]],fg:null,tr:null}},
   /* 學習分頁（07y 藏譜石窟）經典世界、白天、沒有季節的那一張：output/w107-ipad/l1610/hubmap/learn，取代 HUB_CL_SPOTS.learn、SHW_HUB_CL.learn。
      走路：大卷軸上中庭，進殿門（隱身）從頂上拱洞出來；戰績站木人樁平台抬頭看書塔（書塔底是書堆斜坡站不住）。fx.cy 朝代殘影 [朝代, 左%, 上%, 寬%]，只放天空 */
