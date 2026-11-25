@@ -50,10 +50,11 @@ var XQEngine=(function(){
         print:onLine,printErr:()=>{},preRun:[m=>m.FS.writeFile("/pikafish.nnue",nnue)]}),new Promise((_,j)=>setTimeout(()=>j(new Error("電腦棋手啟動太久")),45000*TMO))]);
       if(my!==LG)throw new Error("電腦棋手已重新啟動");mod=m;
       send("uci");await untilT(l=>l==="uciok",null,20000);
-      const th=Math.max(1,Math.min(4,(navigator.hardwareConcurrency||2)-1));
       /* 11/15 意見回饋 896（iOS 下黑洞玩一陣子整頁被系統重開）：量到進黑洞後 JS 多 120 MB、3D 貼圖約 240 MB；
          iPhone／iPad 上雜湊表 64→16 MB（App 的搜尋都很淺，16 MB 夠用），神經網路讀進引擎後把記憶體檔案系統裡那份 nnue 刪掉（約 50 MB） */
       const ios=/iP(hone|ad|od)/.test(navigator.userAgent)||(/Macintosh/.test(navigator.userAgent)&&navigator.maxTouchPoints>1);
+      /* 11/25 iPad Air 4（A14、4GB）實機：多執行緒時 Pikafish wasm 一開算就 Out of bounds memory access，電腦不回棋；iPhone 相容模式也一樣，改 1 條就正常。iPhone／iPad 固定 1 條，其他照舊 */
+      const th=ios?1:Math.max(1,Math.min(4,(navigator.hardwareConcurrency||2)-1));
       send("setoption name Threads value "+th);send("setoption name Hash value "+(ios?16:64));
       send("isready");await untilT(l=>l==="readyok",null,20000);
       try{m.FS.unlink("/pikafish.nnue")}catch(e){}
