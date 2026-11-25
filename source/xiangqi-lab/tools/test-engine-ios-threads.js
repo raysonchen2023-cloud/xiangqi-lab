@@ -26,9 +26,11 @@ async function opts(nav,maxPages){
   await E.search({moves:[]},{depth:3},1);
   const th=log.find(c=>c.startsWith("setoption name Threads value "));
   const hs=log.find(c=>c.startsWith("setoption name Hash value "));
+  /* 引擎建的記憶體先記下來（iMac Claude 2 複審：後面 new 的 after 也會進 mems，不能拿 mems[0] 事後讀） */
+  const engMems=mems.map(x=>x.d.initial);
   /* 建完之後再 new 一個（例如別的程式用 WebAssembly.Memory）：要是原本的建構子、大小不被改 */
   const after=new ctx.WebAssembly.Memory({initial:3072,maximum:32768,shared:true});   /* 3072 頁在退路測試的上限內 */
-  return{th:th&&+th.split(" ").pop(),hash:hs&&+hs.split(" ").pop(),E,mem:mems[0].d.initial,restored:ctx.WebAssembly.Memory===FakeMem&&after.d.initial===3072,warn:log}}
+  return{th:th&&+th.split(" ").pop(),hash:hs&&+hs.split(" ").pop(),E,mem:engMems[0],engMems,restored:ctx.WebAssembly.Memory===FakeMem&&after.d.initial===3072,warn:log}}
 
 const IPHONE="Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148";
 const IPAD_DESKTOP="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15";
@@ -37,13 +39,13 @@ const WIN="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, 
 
 test("iPhone：共享記憶體一開始就給 6144 頁（384 MB），執行緒照核心數最多 4 條、雜湊 16 MB；建完馬上換回原本的建構子",async()=>{
   const r=await opts({userAgent:IPHONE,hardwareConcurrency:6,maxTouchPoints:5});
-  assert.equal(r.mem,6144);assert.equal(r.th,4);assert.equal(r.hash,16);assert.equal(r.E.threads,4);assert.equal(r.E.memMB,384);assert.ok(r.restored)});
+  assert.deepEqual(r.engMems,[6144]);assert.equal(r.th,4);assert.equal(r.hash,16);assert.equal(r.E.threads,4);assert.equal(r.E.memMB,384);assert.ok(r.restored)});
 test("iPad（桌面版 UA＋觸控）：一樣一次給 384 MB、4 條執行緒",async()=>{
   const r=await opts({userAgent:IPAD_DESKTOP,hardwareConcurrency:8,maxTouchPoints:5});
   assert.equal(r.mem,6144);assert.equal(r.th,4);assert.equal(r.hash,16);assert.ok(r.restored)});
 test("退路：iPhone 一次建不起 384 MB（建構子丟 RangeError）→ 退回 192 MB 起跳＋1 條執行緒，引擎照樣啟動、建構子有換回",async()=>{
   const r=await opts({userAgent:IPHONE,hardwareConcurrency:6,maxTouchPoints:5},3072);
-  assert.equal(r.mem,3072);assert.equal(r.th,1);assert.equal(r.hash,16);assert.equal(r.E.threads,1);assert.ok(r.restored)});
+  assert.deepEqual(r.engMems,[3072]);assert.equal(r.E.memMB,192);assert.equal(r.th,1);assert.equal(r.hash,16);assert.equal(r.E.threads,1);assert.ok(r.restored)});
 test("Mac 桌機 Safari（沒有觸控）不算 iOS：記憶體照舊 192 MB 起跳、最多 4 條、雜湊 64 MB",async()=>{
   const r=await opts({userAgent:IPAD_DESKTOP,hardwareConcurrency:8,maxTouchPoints:0});
   assert.equal(r.mem,3072);assert.equal(r.th,4);assert.equal(r.hash,64);assert.ok(r.restored)});
