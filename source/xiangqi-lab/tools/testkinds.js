@@ -114,6 +114,7 @@ const CLASSIFIED = new Set([
   "test-spotfit.js",   /* 11/13 hspx 1098 場景標籤英文疊在一起、聲音提示蓋頂欄 */
   "test-engine-start.js",   /* 11/13 hspx P0 章回棋路殘局開局送錯局面給引擎（不合法著法 g3g4／c3c4、電腦卡住） */
   "test-ui-1113.js",   /* 11/13 hspx：看我的棋力沒反應（P0）、toast 換行規矩、幻影台詞、漂浮畫卷 */
+  "test-w107-libmap-l1610.js",   /* 11/25 W107-L 第 3 批：棋譜庫（10b）iPad 橫向橫式圖：書閣＋11 朝、石窟兩套條目、量好的點寫死、石窟 10 片玉冊分法、走路、出口 libL／libCL、lbGeo（行為 6、原始碼 1） */
   "test-home-wide.js",   /* 11/13 首頁接 iPad 寬版圖 home_p34／home_l1610：挑圖、退回原圖、座標表、走路節點、網址版本、cover 填滿（07z HMW、07fl xflCover；行為 8、混合 1） */
   "test-ipad-fill.js",   /* 11/13 遊戲畫面都要滿版：iPad／Duo 直向填滿寬度、橫向兩側模糊底（07fl；行為 8、原始碼 1） */
   "test-scene-wide-l1610.js",   /* 11/25 W107-L 場景頁 iPad 橫向專用橫式圖（07sw，第一頁錯棋重練經典白天）：選圖門檻、鍵與條目、座標範圍、天氣範圍、原地換圖與退回（含開頁就是橫式圖、00-util CDN 補抓）、手機不動標籤、走路設定；〔混合〕原始碼接線 */
