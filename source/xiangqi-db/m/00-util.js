@@ -10,6 +10,13 @@ const XQ_CDN="https://xiangqi-cdn.pages.dev/";
 function xqShareBase(){let o="",p="/";try{o=location.origin||"";p=location.pathname||"/"}catch(e){}
   if(!xqNat()&&/^https:\/\//.test(o)&&!/^https:\/\/(localhost|127\.|\[::1\]|[^/]*\.localhost(:|$))/.test(o))return o+p;return"https://raysonchen2023-cloud.github.io/xiangqi-lab/"}
 function xqNat(){try{return!!(typeof window!=="undefined"&&window.XQ_NATIVE)||(typeof navigator!=="undefined"&&/XQQianqiuApp\//.test(String(navigator.userAgent||"")))}catch(e){return false}}
+/* W126（開發者 11/26「包交出後就修」）：iOS 版只做 iPhone（device family=1），裝在 iPad 上會跑在 iPadOS 26 的相容視窗裡，
+   左上角紅黃綠視窗鈕疊在 App 畫面上，蓋住每一頁頂欄最左邊的返回鈕和首頁標題下的星晷。safe-area 在相容視窗不會算進那塊，只能自己判斷：
+   原生 App＋iPad（iPadOS 會報 Macintosh＋多點觸控，兩種都認）＋視窗是手機寬（小於 500），就在 html 加 xq-ipcompat，m.css 讓頂欄左邊多留 76px。
+   網頁版（Safari 有自己的網址列、沒有視窗鈕）、真 iPad 寬度、iPhone 都不加。轉向、改視窗大小時重算 */
+function xqIpCompatOf(ua,tp,w,nat){ua=String(ua||"");return!!nat&&(/iPad/.test(ua)||(/Macintosh/.test(ua)&&tp>1))&&w>0&&w<500}
+function xqIpCompat(){try{return xqIpCompatOf(navigator.userAgent,navigator.maxTouchPoints||0,innerWidth,xqNat())}catch(e){return false}}
+if(typeof document!=="undefined"&&document.documentElement){const f=()=>{try{document.documentElement.classList.toggle("xq-ipcompat",xqIpCompat())}catch(e){}};f();addEventListener("resize",f)}
 const xqCdnRel=u=>{try{const x=new URL(u,location.href);if(x.origin!==location.origin)return"";const b=location.pathname.replace(/[^/]*$/,""),p=x.pathname.startsWith(b)?decodeURI(x.pathname.slice(b.length)):"";return(xqNat()?/^data\//:/^(data|engine)\//).test(p)?p:""}catch(e){return""}};
 /* 11/17 iMac 模擬器 P0：第一次造訪 service worker 還沒接管時，棋盤的棋子、底圖是 SVG <image>（tagName 小寫 image），以前不在名單裡，全部變成「?」；SVG 的換 href */
 addEventListener("error",e=>{const t=e.target;if(!t||!t.tagName||(t.dataset&&t.dataset.cdnTry))return;const svg=String(t.tagName).toLowerCase()==="image";if(!svg&&!/^(IMG|AUDIO|SOURCE|VIDEO)$/.test(t.tagName))return;const r=xqCdnRel(svg?(t.getAttribute("href")||t.getAttribute("xlink:href")||""):(t.currentSrc||t.src||""));if(!r)return;t.dataset.cdnTry="1";if(svg)t.setAttribute("href",XQ_CDN+r);else t.src=XQ_CDN+r},true);
