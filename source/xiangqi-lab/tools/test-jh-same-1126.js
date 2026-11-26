@@ -46,7 +46,7 @@ test("登記：順炮門有登記、路由 #/jianghu/maze/same_cannon；三個�
   const c = load(), lv = LV(c), sidOf = vm.runInContext("jhMzSidOf", c);
   assert.ok(lv); assert.equal(sidOf("#/jianghu/maze/same_cannon"), "same_cannon"); assert.equal(lv.key, "jhMaze_same_cannon");
   assert.equal(lv.guards.length, 3); for (const G of lv.guards) assert.equal(G.kind, "dash");
-  assert.equal(lv.jump, ""); assert.equal(typeof lv.onStep, "function"); assert.ok(lv.solid.includes("Z") && lv.opaque.includes("Z"), "鹽灶擋路也擋視線");
+  assert.equal(lv.jump, ""); assert.equal(typeof lv.onStep, "function"); assert.ok(lv.solid.includes("s") && lv.opaque.includes("s"), "鹽灶擋路也擋視線");
   assert.ok(lv.hall && lv.hall.zh && lv.hall.en && lv.hall.at.length === 2); assert.equal(lv.rew.length, 3);
 });
 
@@ -75,7 +75,7 @@ test("改壞驗證：暗哨改成中炮門那種走法（一格、撞牆當回�
 
 test("視線：被鹽灶擋住就看不到後面；最遠 RANGE 格（長廊比 RANGE 長時看不到盡頭）", () => {
   const c = load(), R = vm.runInContext("JH_MZ_SAME_RANGE", c);
-  let S = room(c, ["###############", "###############", "#....Z........#", "###############"], { x: 1, y: 2, dx: 1 }, 1, 0);
+  let S = room(c, ["###############", "###############", "#....s........#", "###############"], { x: 1, y: 2, dx: 1 }, 1, 0);
   assert.deepEqual(Array.from(c.jhMzSight(S, S.guard), (q) => q.x), [2, 3, 4], "鹽灶 (5,2) 擋住後面");   /* Array.from：vm 裡建的陣列原型不同，轉成這邊的陣列再比 */
   const long = ["#".repeat(25), "#" + ".".repeat(23) + "#", "#".repeat(25)];
   S = room(c, long, { x: 1, y: 1, dx: 1 }, 1, 0); assert.equal(c.jhMzSight(S, S.guard).length, R, "空廊只看 RANGE 格");
@@ -83,7 +83,7 @@ test("視線：被鹽灶擋住就看不到後面；最遠 RANGE 格（長廊比 
 });
 
 test("鹽灶：走到旁邊（上下左右）就點亮、記在 S.lit、之後一直亮；撞牆不算；鹽灶本身走不進去", () => {
-  const c = load(), rows = ["#######", "#.....#", "#..Z..#", "#.....#", "#######"];
+  const c = load(), rows = ["#######", "#.....#", "#..s..#", "#.....#", "#######"];
   const S = room(c, rows, { x: 5, y: 1, dx: 0, dy: 0, stun: 99 }, 1, 2); const k = 2 * S.W + 3;
   assert.ok(!S.lit.has(k));
   let r = c.jhMzStep(S, 0, -1); assert.equal(r.ev, "move"); assert.ok(!S.lit.has(k), "(1,1) 不在鹽灶旁邊");
@@ -92,7 +92,7 @@ test("鹽灶：走到旁邊（上下左右）就點亮、記在 S.lit、之後�
   r = c.jhMzStep(S, 0, 1); assert.equal(r.ev, "wall", "鹽灶走不進去");
   r = c.jhMzStep(S, 1, 0); r = c.jhMzStep(S, 1, 0); assert.ok(S.lit.has(k), "離開之後還亮著");
   assert.ok(c.jhMzLight(S, 3, 3, 0) > 0, "照得到鹽灶下面那一格");
-  const T = room(c, ["#####", "#.#Z#", "#####"], { x: 1, y: 1, stun: 99 }, 1, 1); c.jhMzStep(T, 1, 0); assert.ok(!T.lit.has(1 * T.W + 3), "撞牆（往牆走）不點亮");
+  const T = room(c, ["#####", "#.#s#", "#####"], { x: 1, y: 1, stun: 99 }, 1, 1); c.jhMzStep(T, 1, 0); assert.ok(!T.lit.has(1 * T.W + 3), "撞牆（往牆走）不點亮");
 });
 
 function reach(c, S) { const lv = LV(c), seen = new Set(), q = []; const st = S.player; q.push([st.x, st.y]); seen.add(st.y * S.W + st.x);
@@ -104,7 +104,7 @@ test("地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓�
   for (const r of M) assert.equal(r.length, W);
   for (let x = 0; x < W; x++) { assert.equal(M[0][x], "#"); assert.equal(M[M.length - 1][x], "#") } for (const r of M) { assert.equal(r[0], "#"); assert.equal(r[W - 1], "#") }
   const count = (ch) => M.join("").split(ch).length - 1;
-  assert.equal(count("@"), 1); assert.equal(count("D"), 1); assert.equal(count("P"), 1); assert.equal(count(">"), 1); assert.equal(count("C"), 3); assert.ok(count("Z") >= 2);
+  assert.equal(count("@"), 1); assert.equal(count("D"), 1); assert.equal(count("P"), 1); assert.equal(count(">"), 1); assert.equal(count("C"), 3); assert.ok(count("s") >= 2);
   const S = c.jhMzNew("same_cannon"), all = reach(c, S), pos = (ch) => { const o = []; M.forEach((r, y) => [...r].forEach((v, x) => v === ch && o.push(y * W + x))); return o };
   for (const ch of "PD>C") for (const k of pos(ch)) assert.ok(all.has(k), ch + " 走得到");
   assert.ok(!c.jhMzCaught(S), "開局不會被抓");
