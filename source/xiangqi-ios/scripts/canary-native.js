@@ -231,6 +231,18 @@ const KINDS = {
   swiftXcAppApp: { break: (R) => fs.writeFileSync(iosp(R, "ios/App/App/xq.xcconfig"), "OTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n"), expect: "Swift 語言版本全是 5.0" },
   swiftXcTrailCmt: { break: (R) => edit(R, "ios/debug.xcconfig", (s) => s + "\nOTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex // xq\n"), expect: "Swift 語言版本全是 5.0" },
   swiftXcCapVal: { break: (R) => edit(R, "ios/debug.xcconfig", rep("CAPACITOR_DEBUG = true", "CAPACITOR_DEBUG = xq")), expect: "Swift 語言版本全是 5.0" },
+  /* #204 第三輪複審：特殊字元範圍兩端各一個、xcconfig 白名單的行首行尾、rootObject 寫成陣列 */
+  swiftLk0000: { break: (R) => edit(R, "ios/debug.xcconfig", (s) => s + "\n// xq\u0000OTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n"), expect: "Swift 語言版本全是 5.0" },
+  swiftLk0008: { break: (R) => edit(R, "ios/debug.xcconfig", (s) => s + "\n// xq\u0008OTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n"), expect: "Swift 語言版本全是 5.0" },
+  swiftLk000E: { break: (R) => edit(R, "ios/debug.xcconfig", (s) => s + "\n// xq\u000EOTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n"), expect: "Swift 語言版本全是 5.0" },
+  swiftLk001F: { break: (R) => edit(R, "ios/debug.xcconfig", (s) => s + "\n// xq\u001FOTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n"), expect: "Swift 語言版本全是 5.0" },
+  swiftLk200F: { break: (R) => edit(R, "ios/debug.xcconfig", (s) => s + "\n// xq\u200FOTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n"), expect: "Swift 語言版本全是 5.0" },
+  swiftLk2064: { break: (R) => edit(R, "ios/debug.xcconfig", (s) => s + "\n// xq\u2064OTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n"), expect: "Swift 語言版本全是 5.0" },
+  swiftLk202A: { break: (R) => edit(R, "ios/debug.xcconfig", (s) => s + "\n// xq\u202AOTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n"), expect: "Swift 語言版本全是 5.0" },
+  swiftLk206F: { break: (R) => edit(R, "ios/debug.xcconfig", (s) => s + "\n// xq\u206FOTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n"), expect: "Swift 語言版本全是 5.0" },
+  swiftXcCapTail: { break: (R) => edit(R, "ios/debug.xcconfig", (s) => s + "\nOTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex // CAPACITOR_DEBUG = true\n"), expect: "Swift 語言版本全是 5.0" },   /* xcconfig 的 // 在行中間也是註解，旗標照樣生效 */
+  swiftXcCapSuffix: { break: (R) => edit(R, "ios/debug.xcconfig", rep("CAPACITOR_DEBUG = true", "CAPACITOR_DEBUG = trueXQ")), expect: "Swift 語言版本全是 5.0" },
+  swiftRootArray: { break: (R) => edit(R, "ios/App/App.xcodeproj/project.pbxproj", (s) => { const t = s.replace(/rootObject = 504EC2FC1FED79650016851F[^;]*;/, "rootObject = (504EC2FC1FED79650016851F);"); if (t === s) throw new Error("找不到 rootObject"); return t }), expect: "Swift 語言版本全是 5.0" },
   estNoReturn: { break: both(SRV, (s) => { const i = s.indexOf("private func establishNow()"), j = s.indexOf("xqLog(\"驗證通過", i), k = s.indexOf("return .verified", j); if (i < 0 || j < 0 || k < 0) throw new Error("找不到第二個 if 區塊"); return s.slice(0, k) + "_ = 0" + s.slice(k + "return .verified".length) }), expect: "establish 一定經過 verifyNow" },
   estElseAfter: { break: both(SRV, rep("if verifyNow(timeout: 2.0) { return .verified }", "if verifyNow(timeout: 2.0) { return .verified } else { xqLog(\"x\") }")), expect: "establish 一定經過 verifyNow" },
   estFuncTwice: { break: both(SRV, beforeEnd("    private func verifyNow(timeout: Double, xq: Int) -> Bool { return true }")), expect: "establish 一定經過 verifyNow" },
