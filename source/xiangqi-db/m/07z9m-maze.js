@@ -440,8 +440,10 @@ function jhMzMv(a,b){return"abcdefghi"[a.c]+(9-a.r)+"abcdefghi"[b.c]+(9-b.r)}
    改成：落子前先用 XQCore 規則核對紅方這一步合不合法（含走完自己被將）；不合法只提示原因、不算答錯；合法但不是正解才照原本算一次。XQCore 不在（理論上不會）就照舊全部交給 jhMzTry */
 function jhMzLegal(pcs,mv){try{if(typeof XQCore==="undefined"||!XQCore.legal)return true;const b=Array(90).fill(null);for(const q of pcs)b[q.r*9+q.c]=q.p;const f=XQCore.parseSq(mv.slice(0,2)),t=XQCore.parseSq(mv.slice(2,4));return XQCore.legal(b,"r").some(([a,z])=>a===f&&z===t)}catch(e){return true}}
 
+/* 11/26 Windows Claude 2 實走順炮門看到「葛青禾的提示」：提示人原本寫死中炮門掌門，改成照這一派的掌門（OSC.MST）；查不到才用葛青禾 */
+function jhMzMaster(sid){try{const m=OSC.MST.find(x=>x.sid===sid);if(m)return[m.nm,m.en]}catch(e){}return["葛青禾","Ge Qinghe"]}
 /* W87：sid＝哪一派（路由 #/jianghu/maze/<派> 帶進來；沒有＝中炮門） */
-function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/hall/"+LV.sid,ZS=k=>{const a=LV.say&&LV.say[k];return a?jhL(a[0],a[1]):""},HELP=LV.helper||["葛青禾","Ge Qinghe"];
+function JhMaze(v,sid){jhCss();jhMzCss();const LV=jhMzLv(sid),HALL="#/jianghu/hall/"+LV.sid,ZS=k=>{const a=LV.say&&LV.say[k];return a?jhL(a[0],a[1]):""},HELP=LV.helper||jhMzMaster(LV.sid);
   if(!jhMzOn()){location.hash=HALL;return{}}
   setTop(jhL(LV.title[0],LV.title[1]),"^"+HALL);if(typeof setTabs==="function")setTabs(false);
   v.className="view";document.body.classList.add("jh-on");
