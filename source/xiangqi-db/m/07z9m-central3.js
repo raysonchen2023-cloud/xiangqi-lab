@@ -1,6 +1,6 @@
 /* ---------- W87-3 中炮門地底迷宮・第三層「督運密庫」（11/26 Windows Claude 1 分派給 Windows Claude 2）----------
    規格：story/gemini_app/208_十派地底迷宮第二三層_補件_1126_Gemini回覆.md 的中炮門第三層，照 207、208 複核和開發者 11/26 的決定改：
-     ・滾動糧桶（K）：往糧桶走、糧桶前面是空地，就把它推出去——糧桶一路滾到底，碰到牆、別的東西、守衛、或不是空地的格子（寶箱、踏板、壁燈這些）就停在前一格；
+     ・滾動糧桶（b）：往糧桶走、糧桶前面是空地，就把它推出去——糧桶一路滾到底，碰到牆、別的東西、守衛、或不是空地的格子（寶箱、踏板、壁燈這些）就停在前一格；
        人跟著走進糧桶原來那一格（算一回合）。糧桶擋路、擋光，也擋守衛的視線，用來切斷車衛那條長廊。前面一格就推不動＝撞牆（不算回合）。
        被抓拖回入口時，整層照第一層的規則重擺（糧桶也回原位），不會因為推錯卡死。
      ・守衛（208 複核①：炮衛改照車看，糧桶只負責擋線，不跟過宮炮門「隔一子才看得到」重複）：
@@ -22,24 +22,24 @@ const JH_MZ_CENTRAL3_MAP=[
 "#...#.#.#.#...#",
 "#.###.###.###.#",
 "#.............#",
-"###.###K###.###",
+"###.###b###.###",
 "#P..#.....#..C#",
 "###.#.###.#.###",
 "#.............#",
-"#.###.#K#.###.#",
+"#.###.#b#.###.#",
 "#...#..@..#...#",
 "###############"];
 /* 守衛：車衛在第 14 列（下面的長廊）來回、看 7 格；雙炮衛在第 10 列，前衛在前、兩個都往右 */
 const JH_MZ_CENTRAL3_GUARDS=[{kind:"rook",x:13,y:14,dx:-1,dy:0,range:7},{kind:"twincannon",x:9,y:10,dx:1,dy:0,front:1},{kind:"twincannon",x:7,y:10,dx:1,dy:0}];
-/* 推糧桶：往 K 走就把它往同一個方向推，一路滾到前面不是空地（或有守衛）的前一格；滾不動＝撞牆。回 null 讓共用程式照常走一步、算回合、讓守衛動 */
-function jhMzCentral3Roll(S,dx,dy,c){if(c!=="K"||(!dx&&!dy))return null;const P=S.player,x1=P.x+dx,y1=P.y+dy,free=(x,y)=>jhMzCell(S,x,y)==="."&&!(S.guards||[]).some(G=>G.x===x&&G.y===y);
+/* 推糧桶：往 b 走就把它往同一個方向推，一路滾到前面不是空地（或有守衛）的前一格；滾不動＝撞牆。回 null 讓共用程式照常走一步、算回合、讓守衛動 */
+function jhMzCentral3Roll(S,dx,dy,c){if(c!=="b"||(!dx&&!dy))return null;const P=S.player,x1=P.x+dx,y1=P.y+dy,free=(x,y)=>jhMzCell(S,x,y)==="."&&!(S.guards||[]).some(G=>G.x===x&&G.y===y);
   let x=x1,y=y1;while(free(x+dx,y+dy)){x+=dx;y+=dy}
   if(x===x1&&y===y1)return{ev:"wall",msg:["糧桶推不動：前面被擋住了。","The grain barrel won't roll: something is in the way."]};
-  S.grid[y1][x1]=".";S.grid[y][x]="K";return null}
+  S.grid[y1][x1]=".";S.grid[y][x]="b";return null}
 /* 3D：橫倒的糧桶（木桶身＋兩道鐵箍）；平面版：木色圓桶 */
-if(!JH_MZ_OBJ.K)JH_MZ_OBJ.K=H=>{const{T3,mesh,lam}=H,g=new T3.Group(),b=mesh(new T3.CylinderGeometry(.3,.3,.7,14),lam("#7a5530"),0,.3,0);b.rotation.z=Math.PI/2;g.add(b);
+if(!JH_MZ_OBJ.b)JH_MZ_OBJ.b=H=>{const{T3,mesh,lam}=H,g=new T3.Group(),b=mesh(new T3.CylinderGeometry(.3,.3,.7,14),lam("#7a5530"),0,.3,0);b.rotation.z=Math.PI/2;g.add(b);
   for(const s of[-.22,.22]){const r=mesh(new T3.CylinderGeometry(.315,.315,.06,14),lam("#3a3a3a"),s,.3,0);r.rotation.z=Math.PI/2;g.add(r)}return g};
-if(!JH_MZ_TILE.K)JH_MZ_TILE.K=(cx,px,py,T)=>{cx.fillStyle="#3b3428";cx.fillRect(px,py,T,T);cx.fillStyle="#7a5530";cx.beginPath();cx.arc(px+T/2,py+T/2,T*.36,0,Math.PI*2);cx.fill();
+if(!JH_MZ_TILE.b)JH_MZ_TILE.b=(cx,px,py,T)=>{cx.fillStyle="#3b3428";cx.fillRect(px,py,T,T);cx.fillStyle="#7a5530";cx.beginPath();cx.arc(px+T/2,py+T/2,T*.36,0,Math.PI*2);cx.fill();
   cx.strokeStyle="#2e2418";cx.lineWidth=2;cx.beginPath();cx.arc(px+T/2,py+T/2,T*.36,0,Math.PI*2);cx.moveTo(px+T*.2,py+T/2);cx.lineTo(px+T*.8,py+T/2);cx.stroke()};
 /* ==JH_MZ_POOL:JH_MZ_POOL_CENTRAL3== */
 const JH_MZ_POOL_CENTRAL3={door:[
@@ -60,7 +60,7 @@ trap:[
 {"id":"lk054c7","src":{"book":"爛柯神機","title":"功歸轉軸"},"zh":["被守衛逮住了","守衛把你押在糧桶堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a guard","The guard pins you by the barrels: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"3a1N3/8R/1NC2k3/4p4/9/9/6P2/9/2pp1pp2/r1c1K4","line":["f9h8","f7e7","h8g6","e7d7","b7c9"]},
 {"id":"lk072c7","src":{"book":"爛柯神機","title":"季庭舞俏"},"zh":["被守衛逮住了","守衛把你押在糧桶堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a guard","The guard pins you by the barrels: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"9/2NP5/5k3/3n1C3/2r6/9/9/4p4/3pCp3/4K4","line":["c8d6","f7f8","d8e8","f8f9","d6f7"]}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_CENTRAL3_TRAP== */
-jhMzLayer("central",3,{map:JH_MZ_CENTRAL3_MAP,guards:JH_MZ_CENTRAL3_GUARDS,solid:"#SDKL",opaque:"#DK",dyn:"K",onStep:jhMzCentral3Roll,
+jhMzLayer("central",3,{map:JH_MZ_CENTRAL3_MAP,guards:JH_MZ_CENTRAL3_GUARDS,solid:"#SDbL",opaque:"#Db",dyn:"b",onStep:jhMzCentral3Roll,
   pool:{door:JH_MZ_POOL_CENTRAL3.door,trap:JH_MZ_POOL_CENTRAL3_TRAP.trap},puz:{door:JH_MZ_POOL_CENTRAL3.door[0],trap:JH_MZ_POOL_CENTRAL3_TRAP.trap[0]},
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"古譜殘頁",en:"Old manual page"},{k:"relic",zh:"收藏品「鎮河鐵卷」",en:"Keepsake: the river-guard iron scroll"}],
   lore:[{id:"cc5",kind:"stele",title:["清江浦碑","Qingjiangpu stele"],
