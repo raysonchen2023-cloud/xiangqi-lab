@@ -99,9 +99,9 @@ function pools() { const D = path.join(ROOT, "xiangqi-db", "m"), o = [];
   for (const f of fs.readdirSync(D).filter((f) => /^07z9m-.*\.js$/.test(f))) { const s = fs.readFileSync(path.join(D, f), "utf8");
     for (const m of s.matchAll(/\/\* ==JH_MZ_POOL:(\w+)== \*\//g)) { const nm = m[1], a = m.index, b = s.indexOf(`/* ==/JH_MZ_POOL:${nm}== */`); const ctx = {}; vm.createContext(ctx); vm.runInContext(s.slice(a, b) + `;this.v=${nm};`, ctx); o.push({ f, nm, items: [...ctx.v.door, ...ctx.v.trap] }) } }
   return o }
-/* 第二層被抓題的題號重複（開發者 11/26 允許不同派重用；同樣收尾的派錯開，免得三派選到同一組題） */
+/* 第二層題目（石門＋被抓）的題號重複：開發者 11/26 選「題庫只在同一派各層之間不重複」，第二層另外十派錯開，免得玩家在不同派碰到同一題（以前三派被抓題選到同一組、幾派石門互撞） */
 function dupProblems(P) { const seen = {}, bad = [];
-  for (const p of P.filter((p) => /2_TRAP$/.test(p.nm))) for (const x of p.items) { if (seen[x.id]) bad.push(x.id + "：" + seen[x.id] + " 和 " + p.nm); else seen[x.id] = p.nm }
+  for (const p of P.filter((p) => /2(_TRAP)?$/.test(p.nm))) for (const x of p.items) { if (seen[x.id]) bad.push(x.id + "：" + seen[x.id] + " 和 " + p.nm); else seen[x.id] = p.nm }
   return bad }
 
 test("題庫裡每一棵 alt 樹（--multi 出的多解，遊戲照它判斷對錯）都用 core.js 獨立重算：收齊所有最快殺、只收最快殺、黑方應著合法而且撐最久、終點將死、主變在樹裡", () => {
@@ -110,11 +110,14 @@ test("題庫裡每一棵 alt 樹（--multi 出的多解，遊戲照它判斷對�
   for (const [nm, x] of all) assert.deepEqual(altProblems(x), [], nm + "：" + x.id);
 });
 
-test("七派第二層的被抓題彼此不重複（同收尾的派錯開）；改壞驗證：塞一題重複一定抓得到", () => {
-  const P = pools(); assert.ok(P.filter((p) => /2_TRAP$/.test(p.nm)).length >= 7, "七派第二層的被抓題庫都讀到");
+test("第二層題目（各派石門＋被抓）彼此不重複；改壞驗證：被抓題撞被抓題、石門撞別派石門、石門撞別派被抓題，一定抓得到", () => {
+  const P = pools(); assert.ok(P.filter((p) => /2(_TRAP)?$/.test(p.nm)).length >= 14, "七派第二層的石門、被抓題庫都讀到");
   assert.deepEqual(dupProblems(P), []);
   const Q = JSON.parse(JSON.stringify(P)), a = Q.find((p) => p.nm === "JH_MZ_POOL_CENTRAL2_TRAP"), b = Q.find((p) => p.nm === "JH_MZ_POOL_PALACE2_TRAP"); b.items[0].id = a.items[0].id;
   assert.ok(dupProblems(Q).length === 1, "塞一題重複要被抓到");
+  for (const [x, y] of [["JH_MZ_POOL_SAME2", "JH_MZ_POOL_CROSS2"], ["JH_MZ_POOL_CORNER2", "JH_MZ_POOL_OPP2_TRAP"]]) {
+    const R = JSON.parse(JSON.stringify(P)), u = R.find((p) => p.nm === x), v = R.find((p) => p.nm === y); assert.ok(u && v, x + "、" + y + " 都讀到"); v.items[0].id = u.items[0].id;
+    assert.ok(dupProblems(R).length === 1, x + " 撞 " + y + " 要被抓到") }
 });
 
 test("〔原始碼〕maze-puzzles.js：有 --multi；不加 --multi 照舊用唯一解的 verify（既有題庫 --check 逐字相同）；只有真的有第二種殺法才寫 alt；07z9m-maze.js LF、沒有控制字元", () => {
