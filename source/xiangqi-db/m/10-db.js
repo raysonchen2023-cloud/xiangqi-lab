@@ -370,8 +370,9 @@ function Viewer(v,c,id){
     // 棋譜也有將軍／吃子／開局動畫和音效，小人也會反應（意見回饋 166）：只在「往前一步」時觸發，跳步或倒退不放
     const ckSq=FREE?(last&&last.ck?pos.board.indexOf(pos.side==="r"?"K":"k"):-1):(window.XQCore&&XQCore.inCheck&&XQCore.inCheck(pos.board,pos.side)?pos.board.indexOf(pos.side==="r"?"K":"k"):-1);
     const stepFwd=!FREE&&vwPly!=null&&ply===vwPly+1&&vwLine===line;vwPly=ply;vwLine=line;
-    if(stepFwd&&s.length&&s.every(m=>m&&m.cn)){const cue=openingCue(s);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
-    if(stepFwd&&typeof BOT!=="undefined"&&BOT&&ply===maxPly(line)&&ply>10)setTimeout(()=>{BOT.act("clap");BOT.say("精彩的一盤！",2.4,{auto:1})},900);
+    const p0=ply,l0=line,same=()=>vwPly===p0&&vwLine===l0;   /* 11/25 W120：開局特效、拍手延後才做，到時換了頁、棋譜又走了一步（或倒退、換分支）就不做 */
+    if(stepFwd&&s.length&&s.every(m=>m&&m.cn)){const cue=openingCue(s);if(cue)stillHere(350,()=>openFx(bd.svg,cue[1],cue[0]),()=>same()&&bd.svg.isConnected)}
+    if(stepFwd&&typeof BOT!=="undefined"&&BOT&&ply===maxPly(line)&&ply>10)stillHere(900,()=>{BOT.act("clap");BOT.say("精彩的一盤！",2.4,{auto:1})},same);
     // 這步不是好棋：把 Pikafish 建議的走法（最多 3 步）畫成藍色箭頭
     let sugg=null;if(KM)sugg=KM.best?[KM.best]:null;   /* T01 關鍵步模式：只畫 Pikafish 建議的第一步 */
     else if(!FREE&&ply>0){   // 開著 🔍 分析（橘色虛線框）時也要畫建議箭頭
@@ -411,6 +412,8 @@ function Viewer(v,c,id){
         :`${FREE.base+FREE.cur}. ${PLAYER[m.by]} ${m.cn}`+(m.tags&&m.tags.length?`【${m.tags.join("、")}】`:"")+(g&&g.q&&g.q!=="—"?`　${g.q}`:"")
          +(g&&g.q&&g.q!=="正著"&&g.q!=="妙著"&&g.bc?`\nPikafish 認為更好的是：${g.bc}`:"")}
     else if(KM)note.textContent=typeof tmxEn==="function"&&tmxEn()?mkNoteEn(KM,mvArrowName(),pendLine()):mkNote(KM)+pendLine();   /* T01 關鍵步模式 */
+    /* W89 掌門覆盤：關鍵步模式在說明框上面放主修門派掌門（沒拜師是隨行夥伴）的一句話；離開關鍵步就拿掉 */
+    if(typeof mntCard==="function")try{mntCard(note,KM&&!FREE?KM.q:"",KM&&!FREE?KM.m.cn:"")}catch(e){}
     else{const ck=owner(line,ply)+"_"+ply,g=ply>0&&gradeOf(ply),
         rk=g&&(g.q==="失著"||g.q==="敗著")&&typeof mflRisk==="function"?mflRisk(boardAt(line,ply-1),moverAt(ply),s[ply-1],g):"";   /* ChatGPT 評審 11/11：失著的具體後果（只在分析線支持時） */
       {const nt=([ply===0?(it.comments["0_0"]||it.note||""):it.comments[ck]||"",ply>0?gradeNote(g,boardAt(line,ply-1)):"",rk?"⚠ "+rk:""].filter(Boolean).join("\n")||(ply===0?"點棋子可以自由走棋；按 🔍 看 Pikafish 分析。":""))+pendLine();note.textContent=typeof tmxEn==="function"&&tmxEn()?dbNoteLines(nt):nt}}

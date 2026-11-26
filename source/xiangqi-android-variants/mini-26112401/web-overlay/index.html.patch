@@ -1,0 +1,58 @@
+--- a/index.html
++++ b/index.html
+@@ -383,6 +383,7 @@ html[data-era=ming] .topbar,html[data-era=qing] .topbar{border-bottom-width:4px}
+ /* 結果畫面 */
+ .modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;background:#000a}
+ .modal .box{background:var(--card);border-radius:22px;padding:24px 20px;width:100%;max-width:340px;text-align:center}
++.modal.native-compat .box{max-height:100%;overflow-y:auto;overscroll-behavior:contain}
+ .modal .em{font-size:56px;line-height:1}.modal h2{font-family:var(--serif);font-size:24px;margin:8px 0 4px}
+ .emo{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);z-index:65;background:var(--card,#fff);color:var(--ink,#222);border-radius:22px;padding:14px 20px;box-shadow:0 10px 40px #0006;text-align:center;opacity:0;transition:.25s;pointer-events:none}.emo.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.emo .big{font-size:64px;line-height:1.1}.emo .t{font-weight:700;font-size:18px}.emo.mine{top:auto;bottom:calc(120px + var(--safeB))}.emo.mine .big{font-size:40px}
+ .emo.at{left:var(--x);top:var(--y);bottom:auto;transform:scale(.6);transform-origin:12px 0;text-align:left;padding:0 4px;border-radius:0;background:none;box-shadow:none;text-shadow:0 0 3px var(--card,#fff),0 0 3px var(--card,#fff),0 0 6px var(--card,#fff),0 0 10px var(--card,#fff)}.emo.at::before{display:none}.emo.at.show{transform:scale(1)}.emo.at.up{top:auto;bottom:var(--y);transform-origin:12px 100%}
+@@ -3465,7 +3466,7 @@ if(window.XQ_OFFLINE&&!myName()&&!store.get("nameAsked",false)&&store.get("onboa
+ function poller(fn,ms){let on=true,t=null;const tick=async()=>{if(!on)return;try{await fn()}catch(e){}if(on)t=setTimeout(tick,typeof ms==="function"?ms():ms)};tick();return()=>{on=false;clearTimeout(t)}}
+ 
+ // ================= 離線版專用：連線、引擎下載 =================
+-async function appVer(){try{const k=(await caches.keys()).filter(x=>x.startsWith("xqlab-app-")).pop();return k?k.slice(10):null}catch(e){return null}}
++async function appVer(){try{if(typeof xqNat==="function"&&xqNat())return window.XQ_BUILD||null;const k=(await caches.keys()).filter(x=>x.startsWith("xqlab-app-")).pop();return k?k.slice(10):null}catch(e){return null}}
+ async function netVer(){
+   const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),8000);
+   try{
+@@ -3494,7 +3495,8 @@ try{store.del?store.del("cpuCar"):localStorage.removeItem("xq_cpuCar")}catch(e){
+ addEventListener("orientationchange",()=>[150,400,800,1500].forEach(t=>setTimeout(()=>{try{dispatchEvent(new Event("resize"))}catch(e){}},t)));
+ /* hspx 第 1035 列：轉回直向時把橫向留下的左右捲動歸零 */
+ addEventListener("orientationchange",()=>[150,500,1000].forEach(t=>setTimeout(()=>{try{if(innerHeight>innerWidth){const se=document.scrollingElement||document.documentElement;if(se.scrollLeft)se.scrollLeft=0;if(window.scrollX)window.scrollTo(0,window.scrollY)}}catch(e){}},t)));
+-if(OFF&&!xqNat()&&"serviceWorker" in navigator){
++function xqWebUpdateOn(){return !(typeof xqNat==="function"&&xqNat())}
++if(OFF&&xqWebUpdateOn()&&"serviceWorker" in navigator){
+   // 註冊 service worker；第一次要重新整理一次，多執行緒（跨來源隔離）才會生效
+   /* 開發者決定（Gemini 效能審閱 P0-2）：等 service worker 真的就緒、接管這一頁再看；還沒有跨來源隔離（多執行緒引擎開不起來）就自動重整，同一次打開最多兩次 */
+   /* 11/13 Android 舊 WebView：原生 App（UA 帶 XQQianqiuApp/）的隔離靠 App 原生碼、不靠 sw.js，重整不會好，所以不自動重整（改跳下面的降級提示） */
+@@ -3649,8 +3651,8 @@ if(OFF&&/XQQianqiuApp\//.test(navigator.userAgent)&&(!self.crossOriginIsolated||
+   if(window.XQEngine){const no=()=>Promise.reject(new Error(NATIVE_OLDWV));XQEngine.load=no;XQEngine.search=no;XQEngine.prefetch=no}
+   const wv=(navigator.userAgent.match(/Chrome\/([\d.]+)/)||[])[1]||"",mute=store.get("oldWvMute","")===wv;let tries=0;
+   const show=()=>{if(document.querySelector("#preov,.modal,#sheet.show")&&++tries<30)return setTimeout(show,3000);if(mute){toast("⚠ "+NATIVE_OLDWV);return}
+-    modal(`<div class="em">📱</div><h2>${NATIVE_IOS?"電腦棋手沒有啟動成功":"電腦棋手需要更新手機元件"}</h2><p style="text-align:left">${esc(NATIVE_OLDWV)}。</p><p class="muted" style="text-align:left">${NATIVE_IOS?"聯絡方式在設定房間「🔒 系統・隱私・家長」的「📮 聯絡與支援」。":"更新好以後，把 App 完全關掉再打開就能用。"}<br>現在照樣能用：同桌對弈（兩人在這支手機輪流下）、殘局、古譜與大師對局、測驗、線上對弈。<br>${NATIVE_IOS?"要等電腦棋手啟動成功才能用":"要等更新才能用"}：挑戰電腦、擂台、棋局分析與提示。</p>${wv&&!NATIVE_IOS?`<p class="muted">目前的 WebView 版本：${esc(wv)}</p>`:""}`,[["知道了",null],["這個版本不再跳出",()=>store.set("oldWvMute",wv),true]])};
+-  setTimeout(show,2500)}
++    modal(`<div class="em">📱</div><h2>${NATIVE_IOS?"電腦棋手沒有啟動成功":"電腦棋手需要更新手機元件"}</h2><p style="text-align:left">${esc(NATIVE_OLDWV)}。</p><p class="muted" style="text-align:left">${NATIVE_IOS?"聯絡方式在設定房間「🔒 系統・隱私・家長」的「📮 聯絡與支援」。":"更新好以後，把 App 完全關掉再打開就能用。"}<br>現在照樣能用：同桌對弈（兩人在這支手機輪流下）、殘局、古譜與大師對局、測驗、線上對弈。<br>${NATIVE_IOS?"要等電腦棋手啟動成功才能用":"要等更新才能用"}：挑戰電腦、擂台、棋局分析與提示。</p>${wv&&!NATIVE_IOS?`<p class="muted">目前的 WebView 版本：${esc(wv)}</p>`:""}`,[["知道了",null],["這個版本不再跳出",()=>store.set("oldWvMute",wv),true]],"native-compat")};
++  if(NATIVE_IOS)setTimeout(show,2500)}
+ if(OFF&&window.XQEngine){let bar=null;const NAT=typeof xqNat==="function"&&xqNat();
+   XQEngine.onProgress((got,total)=>{if(!bar){keepAwake("engine",()=>!!bar);bar=document.createElement("div");bar.className="toast";if(/^#[/](cpu|arena|pvp|quiz|watch|journey[/]play|redo[/]play|legend)([/]|$)/.test(location.hash))bar.style.display="none";   /* QA P2-6：下棋、讀故事時不蓋引擎下載進度 */
+   bar.style.bottom="auto";bar.style.top="calc(70px + var(--safeT))";document.body.append(bar);setTimeout(()=>{if(bar)bar.style.display="none"},1200)}
+@@ -3820,7 +3822,7 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋
+   return{stop:()=>{offs.forEach(f=>f());clearInterval(t);if(XQNet.seeking()&&!XQNet.active())XQNet.seek(false)}}}
+ // 不管在哪個畫面都能收到邀請
+ if(OFF&&window.XQNet){XQNet.start();
+-  XQNet.on("version",async x=>{if(!x||!x.v)return;const a=await appVer();if(a&&x.v>a&&window.XQ_notifyNew)XQ_notifyNew(x.v,x.note||"")});
++  XQNet.on("version",async x=>{if(!xqWebUpdateOn()||!x||!x.v)return;const a=await appVer();if(a&&x.v>a&&window.XQ_notifyNew)XQ_notifyNew(x.v,x.note||"")});
+   const goGame=()=>{if(location.hash==="#/pvp")route();else location.hash="#/pvp"};
+   XQNet.on("invite",x=>{vibrate([40,60,40]);
+     const acc=()=>{const go=()=>{XQNet.respond(x,true);goGame()};if(XQNet.active()&&XQNet.game()&&!XQNet.game().result&&XQNet.side())XQNet.leave();go()};
+@@ -5685,7 +5687,7 @@ async function wipeAllData(){toast("正在刪除這支手機的資料…");
+   try{IDBObjectStore.prototype.put=IDBObjectStore.prototype.add=function(){throw new Error("資料刪除中")}}catch(e){}
+   try{history.replaceState(null,"",location.pathname+"#/")}catch(e){}location.reload()}
+ /* 意見回饋 531：檢查更新（設定 → 系統 → 關於） */
+-async function updCheck(b){if(window.XQ_NATIVE){b.disabled=true;b.textContent="新版由 App Store 更新";return}b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
++async function updCheck(b){if(setNat()){b.disabled=true;b.textContent=/Android/i.test(navigator.userAgent||"")?"新版由 Google Play 更新":"新版由 App Store 更新";return}b.disabled=true;b.textContent="檢查中…";const r=window.XQ_checkUpdate?await XQ_checkUpdate():{};
+   if(!r.n){b.textContent="沒有網路";b.disabled=false;return}if(r.a&&r.n<=r.a){b.textContent="✓ 已是最新版";b.disabled=false;return}b.textContent="有新版";b.disabled=false}
+ /* 回饋 846（開發者 11/9 選：字級放大）：App 內字級 小／標準／大／特大＝0.9／1／1.15／1.3 倍。
+    html 上掛 data-fz 和 --fz（標準就拿掉 data-fz，畫面跟以前一模一樣）；m.css 照 --fz 放大面板、卡片、對局文字、小說、設定頁、頂欄標題，

@@ -52,6 +52,7 @@ JOURNEY_KEYS.push("m_opSeen");   /* 11/17 晚開場順序（07stq 檔尾 stqXu*�
 JOURNEY_KEYS.push("m_xsmStall");   /* 11/16 開發者（西市四攤，07xsm-ximarket.js）：xsmStall＝找棋子（這一副找到第幾顆、湊齊幾副、哪天找過）、老槐樹下今天是誰來、見過了沒、小禮收了沒。另外加一行，不動上面清單的字（好幾支測試比對清單結尾） */
 JOURNEY_KEYS.push("m_zm","m_zmCur");   /* 11/18 開發者（十派掌門，07z9-school.js）：zm＝各掌門目前強度、各角色對各掌門的勝和負；zmCur＝這一盤是哪位掌門、哪位角色（帳號第一次贏的修為去重在 oscClaim） */
 JOURNEY_KEYS.push("m_osc");   /* 11/18 開發者（開局門派，07z9-school.js）：osc＝每位七星的門派、各課進度、看過提示／示範、三階段完成時間（跟旅程走；修為去重的 oscClaim 是帳號層，不在這裡） */
+JOURNEY_KEYS.push("m_secMs","m_secMsDay","m_secAll");   /* W96（11/24）：散佚手稿張數、今天撿了幾張、雲河尋訪錄集滿的保底發過沒（07-legend.js） */
 JOURNEY_KEYS.push("m_jhKick");   /* 11/22 開發者（W45② 十州踢館令，07z9b-jianghu.js）：jhKick＝各組踢館第一次破陣的時間、局號、哪位角色（帳號第一次破陣的修為去重在 oscClaim 的 kick:A>B） */
 JOURNEY_KEYS.push("m_jhScreen");   /* 11/22 開發者（W48 屏風馬門門內，07z9c-screen.js）：jhScreen＝雙馬守中宮第一次過關與最多守幾步、挑錯著與算帳今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhGong");   /* 11/22 開發者（W48 過宮炮門「宣紙蓋子位」，07z9d-gongpao.js）：jhGong＝上次選的難度、今天領過修為的日子、一輪最多記對幾題 */
@@ -62,13 +63,21 @@ JOURNEY_KEYS.push("m_jhShijiao");   /* 11/22 開發者（W48 仕角炮門「當�
 JOURNEY_KEYS.push("m_jhFanggong");   /* 11/22 開發者（W48-S4 反宮馬門「活字排局陣」，07z9g-fanggong.js）：jhFanggong＝上次選的難度、今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhLiepao");   /* 11/22 開發者（W48-S5 列炮門「擊板記譜局」，07z9h-liepao.js）：jhLiepao＝上次選的難度、今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhFeixiang");   /* 11/22 開發者（W48-S8 飛相門「築堤擺陣形」，07z9j-feixiang.js）：jhFeixiang＝上次選的難度、今天領過修為的日子 */
+JOURNEY_KEYS.push("m_jhGateSeen");   /* 11/24 W104 十州棋館晚明轉場（07z9n-jhgate.js）：jhGateSeen＝第一次看過的時間（之後旁白換成「十州棋局再開」）；新旅程重新算 */
 JOURNEY_KEYS.push("m_jhXianren");   /* 11/22 開發者（W48-S7 仙人指路門「探路猜陣勢」，07z9k-xianren.js）：jhXianren＝上次選的難度、今天領過修為的日子、累計答對題數（揚州園林探路紀錄） */
+JOURNEY_KEYS.push("m_jhMzDeep");   /* W87-2 換層（11/26，07z9m-maze.js jhMzDeep）：jhMzDeep＝各派地底迷宮最深到過第幾層（門內頁選層用）。另外加一行，不動上面清單的字 */
+/* W87-2（11/26 開發者選單「修，跟旅程走」，Windows Claude 1 轉）：地底迷宮的通關紀錄（clear、best、各種獎勵）和題目指標（…Ptr）跟旅程走。
+   鍵照 07z9m-maze.js：中炮門 jhMaze、其他派 jhMaze_<派>；第二層以後加 _L<層>（目前做到第三層）；題目指標再加 Ptr。十派名單、層數寫死在這裡（05b 比迷宮早載入），加派或加層要一起改（test-jh-maze-save-1126 會比對）。
+   舊存檔：這些鍵原本是整支手機共用；讀檔、開新旅程之前都會先 saveNow 存目前這一格，所以第一次切換時，現有的迷宮進度歸給「當時正在玩的那段旅程」；
+   其他舊存檔格沒有這些鍵，讀進來就是迷宮從頭開始（以前沒分開記，分不出是哪段旅程的）。 */
+const JH_MZ_SAVE_SIDS=["central","cross_palace","pawn","elephant","screen","horse","same_cannon","opposite_cannon","advisor_corner","palace_horse"],JH_MZ_SAVE_LAYERS=3;
+for(const s of JH_MZ_SAVE_SIDS)for(let n=1;n<=JH_MZ_SAVE_LAYERS;n++){const k="m_"+(s==="central"?"jhMaze":"jhMaze_"+s)+(n>1?"_L"+n:"");JOURNEY_KEYS.push(k,k+"Ptr")}
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
 /* 開發者 11/6 修：全新玩家第一次打開，開機時就會寫進 era、jStars、playSec 這些鍵，原本的判斷會把新玩家當成舊玩家，跳出「存檔功能上線了、角色是小帥Q版」。改成只看真的玩過才會有的鍵（新手引導做完、修為、戰績、故事進度） */
 const SAVE_OLD=(()=>{try{if(localStorage.getItem("m_saveMig1")!=null)return null;return["m_onboard1","m_xp","m_record","xq_record","m_legend","m_legendGame","xq_play"].some(k=>localStorage.getItem(k)!=null)}catch(e){return null}})();
 const curSlot=()=>store.get("slotCur",0)|0,journey=()=>store.get("journey",null),slotMetaAll=()=>store.get("slotMeta",{})||{};
-let SAVE_LOCK=false,SAVE_HC=0,TITLE=null,ME_HI=null,ME_CAP=null;
+let SAVE_LOCK=false,SAVE_HC=0,TITLE=null,ME_HI=null,ME_CAP=null,PLAY_NOW=null;
 
 /* ---------- 存檔格（IndexedDB xqlab-slots／slot，鍵 1～3，值 {v,at,meta,data:{localStorage 鍵:字串}}） ---------- */
 let SLOT_DB=null;
@@ -112,11 +121,15 @@ const pickOne=a=>a&&a.length?a[Math.floor(Math.random()*a.length)]:"";
 /* 給 bot3d.js 用：me＝小名；win／lose／draw＝贏輸和的一句話（小帥、小帥妹沒有，維持原本的台詞） */
 window.XQ_MELINE=k=>{const c=myChar();if(!c)return null;if(k==="me")return WX_CHARS[c].nk||WX_CHARS[c].n;const L=WX_CHARS[c];return L&&Array.isArray(L[k])?pickOne(L[k]):null};
 /* 對局畫面每畫一次叫一次（08b-cpugame.js）：新的一盤開局說一句；你吃掉對方的子，一半機率說一句 */
-function meGameTalk(st){try{if(!st||!myChar()||typeof BOT==="undefined"||!BOT||!BOT.say)return;const L=WX_CHARS[myChar()];if(!L||!Array.isArray(st.board))return;
-  if(!st.moves.length&&!st.result&&ME_HI!==st.id){ME_HI=st.id;setTimeout(()=>{try{if(BOT&&BOT.say)BOT.say(pickOne(L.start),2.6,{auto:1})}catch(e){}},2400)}   /* 11/11 模擬玩家問題 2：對局中的閒話標成 auto，有棋盤時 bot3d 不冒泡泡 */
+/* 11/25 W120：對局頁每畫一次記下這盤（PLAY_NOW：盤號 id、旅程 j、步數 m、這一頁第一次畫到時的步數 m1、有沒有結果 r、畫的時候的換頁計數 rn）。
+   jPlayOk(rn,j,still)：jStart 開局後改網址、延後說的那句吐司或卡片，到時確認「只換過這一次頁（ROUTE_N 最多多 1：改網址後要等 hashchange 才加一，所以不能用 stillHere）、還在對局頁、畫著的是 j 那一盤、還沒結束」；still＝還要沒走過子。這一頁還沒畫好（PLAY_NOW 是上一頁的）先算成立 */
+function jPlayOk(rn,j,still){if(ROUTE_N-rn>1||!/^#\/journey\/play(\/|$|\?)/.test(location.hash||""))return false;const P=PLAY_NOW;if(!P||P.rn!==ROUTE_N)return true;return(j==null||P.j===j)&&!P.r&&(!still||P.m===P.m1)}
+function meGameTalk(st){try{if(st){const P=PLAY_NOW,m=Array.isArray(st.moves)?st.moves.length:0;PLAY_NOW={id:st.id,j:st.journey||null,m,m1:P&&P.rn===ROUTE_N&&P.id===st.id?P.m1:m,r:!!st.result,rn:ROUTE_N}}}catch(e){}
+  try{if(!st||!myChar()||typeof BOT==="undefined"||!BOT||!BOT.say)return;const L=WX_CHARS[myChar()];if(!L||!Array.isArray(st.board))return;
+  if(!st.moves.length&&!st.result&&ME_HI!==st.id){ME_HI=st.id;const gid=st.id,hl=st.human==="b"?1:0;stillHere(2400,()=>{try{if(BOT&&BOT.say)BOT.say(pickOne(L.start),2.6,{auto:1})}catch(e){}},()=>!!ME_CAP&&ME_CAP.id===gid&&ME_CAP.m<=hl&&!ME_CAP.r)}   /* 11/11 模擬玩家問題 2：對局中的閒話標成 auto，有棋盤時 bot3d 不冒泡泡 */
   const opp=st.human==="b"?/[A-Z]/:/[a-z]/,n=st.board.filter(p=>p&&opp.test(p)).length;
-  if(ME_CAP&&ME_CAP.id===st.id&&n<ME_CAP.n&&st.moves.length>ME_CAP.m&&!st.result&&Math.random()<.5)setTimeout(()=>{try{if(BOT&&BOT.say)BOT.say(pickOne(L.cap),1.8,{auto:1})}catch(e){}},350);
-  ME_CAP={id:st.id,n,m:st.moves.length}}catch(e){}}
+  if(ME_CAP&&ME_CAP.id===st.id&&n<ME_CAP.n&&st.moves.length>ME_CAP.m&&!st.result&&Math.random()<.5){const gid=st.id,m0=st.moves.length;stillHere(350,()=>{try{if(BOT&&BOT.say)BOT.say(pickOne(L.cap),1.8,{auto:1})}catch(e){}},()=>!!ME_CAP&&ME_CAP.id===gid&&ME_CAP.m===m0&&!ME_CAP.r)}
+  ME_CAP={id:st.id,n,m:st.moves.length,r:!!st.result}}catch(e){}}   /* 11/25 W120：開局、吃子那句延後才說；到時換了頁、換了一盤、已經走子（開局那句）或又走了一步、已經結束就不說（ME_CAP 每畫一次更新：盤號 id、步數 m、有沒有結果 r） */
 /* 園子路人打招呼時叫你的小名（雲河七星才叫；小帥、小帥妹照舊） */
 function meHi(s){try{const c=myChar();if(!c||!s)return s;const nk=WX_CHARS[c].nk||WX_CHARS[c].n;if(String(s).includes(nk)||Math.random()>=.7)return s;return nk+"，"+String(s).replace(/^「|」$/g,"")}catch(e){return s}}
 /* 驛站旅人看你一眼：依你的角色是男是女稱呼 */
@@ -590,7 +603,13 @@ setTimeout(saveFixChar,0);
    彙整：node xiangqi-lab/tools/stuck-report.js。同一頁 3 分鐘沒動先送一包 live:1，收資料的分頁會即時跳一行。
    關法：設定 → 隱私「📍 匿名記錄卡住的地方」（store stkOff）；家長關閉線上大廳時本來就連不上大廳、不會送。開發者模式不記（測試機、本機例外，加 test:1） */
 const STK={sid:"",t0:Date.now(),p:[],e:[],pg:"",h:"",pgT:Date.now(),act:Date.now(),idle:-1,live:0,taps:[],rageAt:0,errN:0,miss:{}};
-function stkOn(){try{return!store.get("stkOff",false)&&!navigator.webdriver&&(!(typeof DEVMODE==="function"&&DEVMODE())||fnTest())}catch(e){return false}}
+/* 開發者 11/24（手機收到「電腦玩家在首頁 3 分鐘沒動」「殘局程式出錯」，查出是我們自己的 iPad 模擬器、本機測試分頁、Android 模擬器）：「開工單從程式上擋」。
+   測試流量一律不記、不送：網頁版只有正式站（APP_HOME 的網址）才送——本機、區網、預覽站都不送；開了測試房（xq_netRoot）不送；
+   原生 App 在模擬器不送（iOS 模擬器由 XQBridgeViewController 在識別字串加 XQSim/1；Android 模擬器的機型是 sdk_gphone…／Android SDK built for…）。真機照舊 */
+function stkTestEnv(){try{if(localStorage.getItem("xq_netRoot")!=null)return true;const ua=String(navigator.userAgent||""),nat=typeof xqNat==="function"?xqNat():!!window.XQ_NATIVE;
+  if(nat)return/XQSim\/|sdk_gphone|Android SDK built for|\bEmulator\b/i.test(ua);
+  return String(location.origin||"")!==new URL(typeof APP_HOME==="string"?APP_HOME:"https://raysonchen2023-cloud.github.io/").origin}catch(e){return true}}
+function stkOn(){try{return!store.get("stkOff",false)&&!navigator.webdriver&&!stkTestEnv()&&(!(typeof DEVMODE==="function"&&DEVMODE())||fnTest())}catch(e){return false}}
 const stkSec=()=>Math.round((Date.now()-STK.t0)/1000);
 /* usePlace 沒對照的頁會回英文路徑，補常見的中文名 */
 const STK_PN={feedback:"意見回饋",lobby:"線上大廳",pvp:"同桌對弈",cpu:"挑戰電腦",camp:"新手訓練營",hub:"書院／茶樓",settings:"設定",db:"棋譜庫",quiz:"測驗",guess:"猜著法",me:"我的角色",today:"今日推薦",stats:"戰績",openings:"開局",redo:"錯棋重練",terms:"規則碑林",canju:"殘局",cup:"千秋盃",cpuroom:"練功房",arena:"擂台",theme:"主題練習",gm:"大師對局",simul:"車輪戰"};

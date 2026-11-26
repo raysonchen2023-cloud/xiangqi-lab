@@ -7,11 +7,14 @@ const assert = require("node:assert/strict"), test = require("node:test"), fs = 
 const ROOT = path.join(__dirname, "../..");
 const rd = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
 const SRC = rd("xiangqi-db/m/07z9c-screen.js");
+/* 11/25 W120：過關跳回門內、被破的吐司改用 00-util.js 的 stillHere（到時換頁計數 ROUTE_N、網址沒變，而且還是這一盤才做）。從 00-util.js 抽真的那一行進沙箱，不自己寫假版本 */
+const STILL = rd("xiangqi-db/m/00-util.js").replace(/\r\n/g, "\n").split("\n").find((l) => l.startsWith("function stillHere(")) || "";
+if (!STILL) throw new Error("00-util.js 找不到 function stillHere(");
 const C = require(path.join(ROOT, "xiangqi-lab", "site", "core.js"));
 const J = (x) => JSON.parse(JSON.stringify(x));
 
 function load(o = {}) {
-  const mem = Object.assign({}, o.store || {}), calls = { jstart: [], xp: [], toast: [], hash: [], watch0: 0, end0: 0, rsfin: [] };
+  const mem = Object.assign({}, o.store || {}), calls = { jstart: [], xp: [], toast: [], hash: [], watch0: 0, end0: 0, rsfin: [], timers: [] };
   const loc = { hash: "#/journey/play" };
   const c = {
     window: { XQCore: C }, document: undefined,
@@ -20,7 +23,7 @@ function load(o = {}) {
     jhL: (zh) => zh, jhT: (s) => s, esc: (s) => String(s), oscEn: () => false, i18nWxf: () => null,
     jhWindDay: () => o.day || "2026-11-22",
     store: { get: (k, d) => (k in mem ? J(mem[k]) : d), set: (k, v) => { mem[k] = v == null ? v : J(v) } },
-    toast: (s) => calls.toast.push(s), setTimeout: (f) => f(), closeSheet() {},
+    toast: (s) => calls.toast.push(s), setTimeout: (f) => { if (o.defer) calls.timers.push(f); else f() }, closeSheet() {},   /* o.defer：計時器先排著，測試自己 flush，才能在中間換頁、開新的一盤 */
     addXP: (n, why, key) => calls.xp.push([n, key]), rsFin: (id) => calls.rsfin.push(id),
     parkNpcLv: () => 4,
     jStart: (id, b, go) => { calls.jstart.push({ id, b }); mem.jPending = { id, game: "g1" }; go(true) },
@@ -30,7 +33,7 @@ function load(o = {}) {
     JH_HALL_WALK: { central: {} },
   };
   vm.createContext(c);
-  vm.runInContext(SRC + ";this.R={JH_SCR_GUARD,JH_SCR_J,jhScrGet,jhScrBig,jhScrGuardEval,jhScrGuardStart,jhScrGuardOf,jhScrDayXP,jhScrBoardAt,lvWatch,journeyGameEnd,jName,JhHall}", c);
+  vm.runInContext("let ROUTE_N=0;\n" + STILL + "\n" + SRC + ";this.route=()=>{ROUTE_N++};this.R={JH_SCR_GUARD,JH_SCR_J,jhScrGet,jhScrBig,jhScrGuardEval,jhScrGuardStart,jhScrGuardOf,jhScrDayXP,jhScrBoardAt,lvWatch,journeyGameEnd,jName,JhHall}", c);
   return { c, R: c.R, mem, calls, loc };
 }
 const board = (fen) => C.parseFen(fen);
@@ -152,10 +155,49 @@ test("別的對局照原本的 lvWatch；分出勝負時照原本結算、另外
   assert.match(L.calls.toast.at(-1), /守了 6 步/);
 });
 
+test("W120：過關跳回門內、被破的吐司延後才做：到時換了頁或已經開了別盤就不做；還在這一盤照做", () => {
+  const GP = { id: "jh:guard:screen", game: "g1", jhg: { limit: 10 } }, flush = (L) => { while (L.calls.timers.length) L.calls.timers.shift()() };
+  /* 過關：還在這一盤 → 1.8 秒後跳回門內 */
+  let L = load({ defer: 1, store: { jPending: J(GP) } }), b0 = board(L.R.JH_SCR_GUARD.fen);
+  L.R.lvWatch(st(b0, 10), {}); assert.equal(L.calls.timers.length, 1); assert.deepEqual(L.calls.hash, [], "還沒到時間不跳");
+  flush(L); assert.deepEqual(L.calls.hash, ["#/jianghu/hall/screen"]);
+  /* 過關後 1.8 秒內開了新的一盤（jPending 指到 g2）→ 不跳 */
+  L = load({ defer: 1, store: { jPending: J(GP) } });
+  L.R.lvWatch(st(b0, 10), {}); L.mem.jPending = { id: "jh:guard:screen", game: "g2", jhg: { limit: 10 } }; flush(L);
+  assert.deepEqual(L.calls.hash, [], "已經開了別盤：不把人拉走");
+  /* 過關後換了頁（route 走過一次）→ 不跳 */
+  L = load({ defer: 1, store: { jPending: J(GP) } });
+  L.R.lvWatch(st(b0, 10), {}); L.c.route(); flush(L);
+  assert.deepEqual(L.calls.hash, [], "換過頁：不跳");
+  /* 被破：還在這一盤 → 吐司照出；守的步數當下就記 */
+  L = load({ defer: 1, store: { jPending: J(GP) } });
+  L.R.journeyGameEnd(st(b0, 6, { result: { w: "r" } })); assert.equal(L.R.jhScrGet().best, 6, "步數當下就記");
+  assert.equal(L.calls.toast.length, 0); flush(L); assert.match(L.calls.toast.at(-1), /守了 6 步/);
+  /* 被破後換了頁、或開了別盤 → 吐司不出，步數照記 */
+  L = load({ defer: 1, store: { jPending: J(GP) } });
+  L.R.journeyGameEnd(st(b0, 6, { result: { w: "r" } })); L.c.route(); flush(L);
+  assert.equal(L.calls.toast.length, 0, "換過頁：不出吐司"); assert.equal(L.R.jhScrGet().best, 6);
+  L = load({ defer: 1, store: { jPending: J(GP) } });
+  L.R.journeyGameEnd(st(b0, 6, { result: { w: "r" } })); L.mem.jPending = { id: "x", game: "g9" }; flush(L);
+  assert.equal(L.calls.toast.length, 0, "開了別盤：不出吐司");
+});
+
 test("對局頁頂欄名稱：守中宮另外寫，其他照原本", () => {
   const { R } = load();
   assert.equal(R.jName("jh:guard:screen"), "屏風馬門・雙馬守中宮");
   assert.equal(R.jName("park"), "原本:park");
+});
+
+test("〔混合〕Pikafish 盤整 P1（11/24）挑錯著：按「就是這步」但不是錯的那手時，停在紅方那手（n 奇數）要說「這是紅方走的」、黑方那手說「沒問題」、還沒走說先往下看", () => {
+  /* 取出 07z9c 裡按「就是這步」答錯時的那一句（三元式），用假的 jhL 跑：n＝目前顯示到第幾手，mv[n-1] 是剛顯示的那手、mv[0] 是紅方 */
+  const m = SRC.match(/else say\((n[=%][^;]*?)\)\};/);
+  assert.ok(m, "找不到挑錯著答錯那一句");
+  const say = vm.runInNewContext("(n)=>(" + m[1] + ")", { jhL: (zh) => zh });
+  assert.match(say(1), /紅方走的/, "第 1 手是紅方");
+  assert.match(say(3), /紅方走的/, "第 3 手是紅方");
+  assert.match(say(2), /沒問題/, "第 2 手是黑方（不是錯的那手）");
+  assert.match(say(4), /沒問題/);
+  assert.match(say(0), /還沒走棋/);
 });
 
 test("挑錯著、算帳每天只給一次修為 +10（換日再給）", () => {

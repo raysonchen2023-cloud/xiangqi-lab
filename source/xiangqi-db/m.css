@@ -154,6 +154,18 @@ input,select{font:inherit;font-size:16px;color:inherit}
 .view.fixed.vw .boardbox{flex:1 1 0;min-height:140px;overflow:hidden}
 .view.fixed.vw .boardbox svg{height:100%;width:auto;max-width:100%}
 .view.fixed.vw .note{flex:0 1 auto;min-height:1.6em;max-height:24vh}
+/* W107 iPad 大螢幕（11/24 開發者：「因為是棋藝類的遊戲 想為大螢幕好好設計」）第一步：有棋盤的對局頁（挑戰電腦、殘局、題目、錯棋重練、棋譜檢視共用 #bbox）。
+   ① 平板直向（寬 700 以上）：棋盤上限從 560 放寬，照可用高度自然放大（820 寬約 804）。
+   ② 平板橫向（寬 900、高 600 以上；手機橫放高度不到 600，不受影響）：改兩欄，棋盤獨占左欄、高度撐滿，其他區塊依序排右欄。
+      .view.fixed 用 flex:1 撐滿剩下的高度、高度確定，所以當尺寸容器，棋盤高度＝100cqh（不必猜頂欄、瀏海多高）；寬度照棋盤 560:620 算。
+      只套有棋盤的頁（:has(> #bbox)）；不支援 :has 或容器查詢的舊 WebView 照原本的直式排法。3D 模式的園子畫面也在左欄（#bbox 裡）。 */
+@media (orientation:portrait) and (min-width:700px){.view.fixed .boardbox svg{max-width:min(860px,100%)}}
+@media (orientation:landscape) and (min-width:900px) and (min-height:600px){
+  .view.fixed:has(> #bbox){container-type:size;display:grid;grid-template-columns:auto minmax(320px,1fr);grid-auto-rows:min-content;align-content:start;column-gap:16px;padding-left:12px;padding-right:12px}
+  .view.fixed:has(> #bbox)>*{grid-column:2;min-width:0}
+  .view.fixed:has(> #bbox)>#bbox{grid-column:1;grid-row:1 / span 30;align-self:start;padding:6px 0;height:calc(100cqh - 12px);width:calc((100cqh - 24px) * 560 / 620)}
+  .view.fixed:has(> #bbox)>#bbox svg{height:100%;width:100%;max-width:none;max-height:none}
+}
 .evline{flex:none;height:6px;margin:0 10px;border-radius:3px;background:var(--blk);overflow:hidden;display:flex}
 .evline div{background:var(--red);height:100%;width:50%;transition:width .5s}
 .player{flex:none;display:flex;align-items:center;gap:10px;padding:6px 12px}
@@ -988,6 +1000,10 @@ html[data-theme=dark]:not([data-era]) .shp-rd strong.kl,html[data-era=qin] .shp-
 .shl-board b{font:900 3.8cqw/1.25 var(--serif,serif);text-align:center;margin-bottom:.4cqw}.shl-board p{margin:0}.shl-board .shl-k{color:#9b2b17;font-weight:800;text-align:center;margin-top:.3cqw}
 .shs-card{position:absolute;left:7%;right:7%;top:15%;padding:3.2cqw 4.4cqw;border-radius:14px;background:rgba(255,251,242,.88);border:1.5px solid #2a2018;color:#2a2018;box-shadow:0 4px 16px rgba(0,0,0,.25);font-size:3.4cqw;line-height:1.55;max-height:46%;overflow:auto}
 .shs-card b{display:block;font:900 4.6cqw/1.3 var(--serif,serif)}.shs-card p{margin:1cqw 0 0}.shs-card .muted{color:#6b5a48}.shs-card .shp-say{color:#5a3a22}
+/* W107-L 第 4 批：船上各頁換成 iPad 橫式圖（.scw-l，圖寬 2560）時，字級照圖寬（cqw）會變成直圖的近 3 倍：木牌照板面寬度比例縮（直圖 45%→橫式 29%，×0.65），說明卡縮一半 */
+.shp-page.scw-l .shl-board{gap:.32cqw;font-size:1.55cqw}.shp-page.scw-l .shl-board b{font-size:2.45cqw;margin-bottom:.26cqw}.shp-page.scw-l .shl-board .shl-k{margin-top:.2cqw}
+html:is([data-fz=l],[data-fz=xl],[data-fz=xxl],[data-fz=max]) .shp-page.scw-l .shl-board{font-size:calc(1.55cqw * var(--fz));padding:.78cqw 1.17cqw;min-height:0}html:is([data-fz=l],[data-fz=xl],[data-fz=xxl],[data-fz=max]) .shp-page.scw-l .shl-board b{font-size:calc(2.45cqw * var(--fz))}   /* 大字模式：橫式木牌字級照 --fz 放大（上面那條優先度比大字規則高，不另寫字會固定）；位置在 07f shpBoardFz */
+.shp-page.scw-l .shs-card{padding:1.6cqw 2.2cqw;font-size:1.7cqw}.shp-page.scw-l .shs-card b{font-size:2.3cqw}.shp-page.scw-l .shs-card p{margin-top:.5cqw}
 .shl-more{padding-top:10px}.shl-more .port-say{margin-bottom:8px}
 
 /* 意見回饋 712：渡口圖上的歷史景點（白底墨字小牌，跟金色的三扇門分開） */
@@ -1624,3 +1640,6 @@ body.bh-field #cgStuck button{pointer-events:auto}
   body.bh-field #bhFieldDock .bf-keys{grid-column:2}
   body.bh-field.bh-field-pad .view.fixed>#bbox .gpad{left:auto!important;right:calc(6px + env(safe-area-inset-right,0px));transform:none!important}
 }
+/* W126（開發者 11/26）：iPhone 版在 iPadOS 26 相容視窗裡，左上紅黃綠視窗鈕蓋住頂欄最左邊的返回鈕、首頁星晷；00-util xqIpCompat 判斷到才加 xq-ipcompat，頂欄左邊多留 76px（視窗鈕約 70pt 寬）。
+   寫成 html.xq-ipcompat body #topbar＋!important，才蓋得過門派等頁面 html body.bh-field #topbar 自己的內距 */
+html.xq-ipcompat body #topbar{padding-left:76px!important}

@@ -192,7 +192,8 @@ test("P1 序局：入局後黑洞底幕蓋著，等 3D 畫面出現＋九顆棋�
   assert.equal(f({ shown: true, models: true, boss: true, ms: 100 }), false, "都好了就不等");
   for (const k of ["shown", "models", "boss"]) assert.equal(f(Object.assign({ shown: true, models: true, boss: true, ms: 100 }, { [k]: false })), true, k + " 還沒好就再等");
   assert.equal(f({ shown: false, models: false, boss: false, ms: 15000 }), false, "最多 15 秒");
-  assert.ok(B.includes("bhxReveal();   /* 11/16 OpenAI") && !B.includes("const bhxWaitPark="), "入局改走 bhxReveal");
+  /* 11/25 W120：入局的回呼多了「還在序局這一盤」的檢查（xok＝jPlayOk），bhxReveal 照樣在開場那句之後、同一個回呼裡馬上叫 */
+  assert.ok(B.includes('const rn=ROUTE_N,xok=still=>jPlayOk(rn,BHX_ID,still);location.hash="#/journey/play";setTimeout(()=>{if(!xok())return;bhBell();toast("✦ 星樞："+BHX_TXT.start)},900);bhxReveal();   /* 11/25 W120') && B.includes("/* 11/16 OpenAI 審查：慢的手機 3D 還沒出來就拿掉黑底會閃出別頁") && !B.includes("const bhxWaitPark="), "入局改走 bhxReveal");
   assert.ok(B.includes("if(!hint&&ms>2000){hint=true;bhxHint(true)}") && B.includes('h.textContent="星盤展開中…"'));
   assert.ok(B.includes("requestAnimationFrame(()=>requestAnimationFrame(()=>{bhxHint(false);bhxBack(false)}))"), "多等兩格才淡出");
   assert.ok(B.includes("PARK.v.whenShown(()=>{S.shown=true})") && B.includes("BHFX.ready.then("), "等 park3d 畫面、魔王的 ready");

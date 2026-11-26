@@ -17,6 +17,7 @@ const M=f=>fs.readFileSync(path.join(__dirname,"../../xiangqi-db/m",f),"utf8").r
 const PARK3D=fs.readFileSync(path.join(__dirname,"../src/park3d.js"),"utf8");
 const SIMUL=M("08s-simul.js"),CPU=M("06-cpu.js"),LEG=M("07-legend.js"),QQ=M("07h-qqev.js"),BOARD=M("01-board.js");
 const C=require("../site/core.js");
+const STILL=M("00-util.js").split("\n").find(l=>l.startsWith("function stillHere("))||"";if(!STILL)throw new Error("00-util.js 找不到 function stillHere(");
 const cut=(src,start,end)=>{const i=src.indexOf(start);assert.ok(i>=0,"找不到 "+start);const j=src.indexOf(end,i+start.length);assert.ok(j>i,"找不到結尾 "+end);return src.slice(i,j)};
 
 // ---------- 871 ----------
@@ -47,20 +48,21 @@ test("871：車輪戰給棋館 gate（同 simIntro 那張圖）、quietMate，�
 });
 
 function runParkDraw(){
-  const fn=cut(CPU,"function parkDraw(","\n/* =");const calls={create:[],say:[],intro:[],oppSay:[]};let hash="#/simul";const timers=[];
+  const fn=cut(CPU,"function parkDraw(","\n/* =");const calls={create:[],say:[],intro:[],oppSay:[]};let hash="#/simul",inDoc=true;const timers=[];
   const el=()=>({style:{},hidden:false,children:[],querySelector:()=>null,append(){},prepend(){}});
   const host=Object.assign(el(),{querySelector:()=>null});
   const pv=()=>{const p={el:{},say:(t)=>calls.say.push(t),oppSay:t=>calls.oppSay.push(t),intro:k=>{calls.intro.push(k);return true},show(){},draw:(b,o,ex)=>{(calls.draw=calls.draw||[]).push(ex)},destroy(){},hide(){}};return p};
   const P3={create:(h,opt)=>{calls.create.push(opt);return pv()}};const env={parkOn:()=>true,window:{XQPark3D:P3},XQPark3D:P3,parkLoad:()=>Promise.resolve(),toast(){},
     store:{get:(k,d)=>k==="era"?"classic":k==="parkView"?"":d,set(){}},pkIntroKey:ex=>String(ex&&ex.gid||("h:"+hash)),parkQuote:()=>null,pkGateWatch(){},parkUi(){},
-    BOTN:()=>"小帥妹",getComputedStyle:()=>({position:"relative"}),eraLabel:k=>k,PW:{},document:{body:{contains:()=>true},createElement:el,querySelector:()=>null},
+    BOTN:()=>"小帥妹",getComputedStyle:()=>({position:"relative"}),eraLabel:k=>k,PW:{},document:{body:{contains:()=>inDoc},createElement:el,querySelector:()=>null},location:{get hash(){return hash}},
     botVis(){},parkLook:()=>({}),oppFig:x=>x,remoteLook:x=>x,myLook:()=>({cus:"me:girl"}),parkCrowd:()=>({}),pkSwUi(){},pkGateEat:()=>false,pkSwTap(){},parkInfo(){},
     setTimeout:f=>{timers.push(f);return timers.length}};
   const names=Object.keys(env);
-  const mk=new Function(...names,"let PARK=null;"+fn+";return{parkDraw,reset(){PARK=null}}");
+  /* 11/25 W120：小人打招呼改用 00-util.js 的 stillHere（到時換頁計數 ROUTE_N、網址都沒變才說）：抽真的那一行進來；setHash 模擬 route() 換頁，ROUTE_N 跟著加一 */
+  const mk=new Function(...names,"let PARK=null,ROUTE_N=0;"+STILL+"\n"+fn+";return{parkDraw,reset(){PARK=null},route(){ROUTE_N++}}");
   const api=mk(...names.map(k=>env[k]));
-  const flush=()=>{while(timers.length)timers.shift()()};
-  return{api,calls,flush,host,setHash:h=>{hash=h}};
+  const flush=()=>{while(timers.length)timers.shift()()},flushOne=()=>{const n=timers.length;for(let i=0;i<n;i++)timers.shift()()};
+  return{api,calls,flush,flushOne,host,setHash:h=>{hash=h;api.route()},setInDoc:b=>{inDoc=b}};
 }
 
 test("871：parkDraw 跑車輪戰（quietMate）→ 沒有入座運鏡、小帥不打招呼；換一盤也不補播", ()=>{
@@ -79,6 +81,18 @@ test("871：一般挑戰電腦（沒有 quietMate）照舊有入座運鏡和小�
   assert.equal(R.calls.create[0].intro,"cpu:1");assert.deepEqual(R.calls.say,["我是小帥妹，幫你加油！"]);
   R.api.parkDraw(R.host,bd,[],{},{tap(){},gid:"cpu:2",gate:{title:"移步後園",img:[]}});
   assert.deepEqual(R.calls.intro,["cpu:2"],"換下一盤照舊播入座運鏡");
+});
+
+test("W120：小帥招呼、對手開口延後才說：到時換了頁（ROUTE_N／網址變了）、棋盤已經不在畫面上就不說；還在原頁照說", ()=>{
+  const ex=()=>({tap(){},gid:"cpu:1",gate:{title:"移步後園",img:[]},oppHello:"請指教"});
+  let R=runParkDraw(),bd={svg:{style:{}}};R.setHash("#/cpu");R.api.parkDraw(R.host,bd,[],{},ex());
+  R.setHash("#/port");R.flush();assert.deepEqual(R.calls.say,[],"0.7 秒內換頁：小帥不說");assert.deepEqual(R.calls.oppSay,[],"對手也不說");
+  R=runParkDraw();R.setHash("#/cpu");R.api.parkDraw(R.host,bd,[],{},ex());R.setInDoc(false);R.flush();
+  assert.deepEqual(R.calls.say,[],"棋盤已經離開畫面：不說");assert.deepEqual(R.calls.oppSay,[]);
+  R=runParkDraw();R.setHash("#/cpu");R.api.parkDraw(R.host,bd,[],{},ex());
+  R.flush();assert.deepEqual(R.calls.say,["我是小帥妹，幫你加油！"],"還在原頁：小帥照說");assert.deepEqual(R.calls.oppSay,["請指教"],"對手照說（第二段延後也還在原頁）");
+  R=runParkDraw();R.setHash("#/cpu");R.api.parkDraw(R.host,bd,[],{},ex());R.flushOne();R.setHash("#/port");R.flush();
+  assert.deepEqual(R.calls.say,["我是小帥妹，幫你加油！"]);assert.deepEqual(R.calls.oppSay,[],"小帥說完、對手開口前換了頁：對手不說");
 });
 
 test("871 追加：玩家這一側的角色照舊看得到（mate＝myLook），對面坐的是這一桌的棋客", ()=>{

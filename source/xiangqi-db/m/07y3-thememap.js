@@ -19,6 +19,15 @@ const SHW_TM={el:30,h:[.073,70,.002],look0:[50,50],home:"home",
   E:"home-c1 c1-l1 c1-r1 c1-c2 c2-l2 c2-r2 c2-c3 c3-l3 c3-r3 c3-c4 c4-l4 c4-r4"};
 const TM_NODE=["l1","r1","l2","r2","l3","r3","l4","r4"];
 const tmPc=(x,y)=>[x/7.68,y/13.76];
+/* W107-L：iPad 橫向專用橫式圖（07sw SCW）。output/w107-ipad/l1610/thememap/theme_day_classic_l1610.json（Windows Claude 1 量）；原圖 theme_day 對齊到經典版、共用。
+   fx.tmq＝8 塊牌四角（像素 2560×1600，順序＝TM_Q）；主題小牌、走路小動作照原本的算法從 tmq 算（小牌離牌緣 53px＝原本 16px×2560/768）；sw7 天空、前景（像素）給 07w7 雨雪 */
+const TM_L1610=(()=>{const Q=[[[358,453],[584,530],[584,1101],[358,1165]],[[1971,530],[2196,453],[2196,1165],[1971,1101]],[[724,620],[837,653],[837,1011],[724,1037]],[[1720,653],[1830,620],[1830,1037],[1720,1011]],[[896,704],[965,722],[965,986],[896,1004]],[[1587,722],[1659,704],[1659,1004],[1587,986]],[[1004,755],[1050,768],[1050,942],[1004,952]],[[1505,763],[1551,750],[1551,947],[1505,937]]],W=2560,H=1600,pc=(x,y)=>[+(x/W*100).toFixed(2),+(y/H*100).toFixed(2)],S={},HS={};
+  Q.forEach((q,i)=>{const top=TM_TAGAT[i]==="t";S["tmT"+i]=pc((q[0][0]+q[1][0])/2,top?Math.min(q[0][1],q[1][1])-53:Math.max(q[2][1],q[3][1])+53);HS["tmT"+i]=[TM_NODE[i],...pc((q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2),"idle"]});
+  return{ready:true,f:"thememap/theme_day_classic_l1610",w:W,h:H,S,exit:[50,92],safe:{"l":0.12,"r":0.12,"t":0.05,"b":0.1},
+    walk:{W,H,el:30,h:[.12,96,.0025],look0:[50,60],home:"home",N:{"home":[50,96],"c1":[50,85],"c2":[50,72],"c3":[50,64],"c4":[50,61],"l1":[30,80],"l2":[38,68],"l3":[42,63],"l4":[45,60],"r1":[70,80],"r2":[62,68],"r3":[58,63],"r4":[55,60]},E:"home-c1 c1-c2 c2-c3 c3-c4 c1-l1 c1-r1 c2-l2 c2-r2 c3-l3 c3-r3 c4-l4 c4-r4",HS},
+    fx:{tmq:Q},sw7:{sky:[[[0,0],[358,0],[358,1100],[0,1100]],[[2202,0],[2560,0],[2560,1100],[2202,1100]]],fg:[[[0,0],[2560,0],[2560,180],[0,180]],[[589,307],[717,307],[717,1306],[589,1306]],[[1830,307],[1958,307],[1958,1306],[1830,1306]]]}}})();
+if(typeof SCW!=="undefined"){SCW["thememap/theme_day_classic"]=TM_L1610;SCW["thememap/theme_day"]=Object.assign({},TM_L1610,{f:"thememap/theme_day_l1610",base:"thememap/theme_day_classic"})}
+
 const tmDark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"&&xqNight())};   /* 11/17 第 28 輪 N28-2：有夜版圖的頁一律照實際日落（00-util xqNight，跟首頁同一個判斷）；深色主題照舊 */
 const TM_GLYPH={K:"帥",A:"仕",B:"相",N:"傌",R:"俥",C:"炮",P:"兵",k:"將",a:"士",b:"象",n:"馬",r:"車",c:"砲",p:"卒"};
 /* 例局棋盤 SVG（9 直 10 橫、河界、九宮 X；紅子朱字、黑子墨字；小牌上只畫子不寫字） */
@@ -55,13 +64,17 @@ function themeMap(v){if(v.querySelector(".tm-page"))return;const pad=v.querySele
   const P=document.createElement("div");P.className="shp-page cq tm-page";
   const tas='<svg viewBox="0 0 10 40"><path d="M5 0V10" stroke="#8a2a1a" stroke-width="1"/><circle cx="5" cy="11.5" r="2.2" fill="#b23a26"/><path d="M5 13C2 20 2 30 3 38M5 13C5 22 5 30 5 39M5 13C8 20 8 30 7 38" stroke="#c0402a" stroke-width="1.6" fill="none"/></svg>';
   const sw='<svg viewBox="0 0 40 20"><path d="M2 12C10 6 16 7 20 10C24 7 30 4 38 2C32 8 26 11 22 12L20 14L18 12C12 12 6 13 2 12Z" fill="#2a2420"/></svg>';
-  let fx="";TM_Q.forEach((q,i)=>{if(stOf(TM_EX[i][0])!=="full")return;const[x,y]=tmPc((q[2][0]+q[3][0])/2,(q[2][1]+q[3][1])/2);fx+=`<span class="tm-tas" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%">${tas}</span>`});
-  P.innerHTML=`<img src="${xqClImg(`data/thememap/${tmDark()?"theme_night":"theme_day"}.webp?v=${TM_IMGV}`)}" alt="演武迴廊"><div class="tm-fx" aria-hidden="true">${fx}<span class="tm-swallow">${sw}</span></div>`+
+  let fx="";TM_Q.forEach((q,i)=>{if(stOf(TM_EX[i][0])!=="full")return;fx+=`<span class="tm-tas" data-i="${i}">${tas}</span>`});   /* 流蘇位置交給 fit（照當下的圖） */
+  /* W107-L：iPad 橫向有專用橫式圖（07sw）就一開始載那張；牌面、流蘇照條目 fx.tmq，主題小牌、出口、走路照條目 */
+  const src=xqClImg(`data/thememap/${tmDark()?"theme_night":"theme_day"}.webp?v=${TM_IMGV}`),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}
+  P.innerHTML=`<img src="${pre.src}" alt="演武迴廊"><div class="tm-fx" aria-hidden="true">${fx}<span class="tm-swallow">${sw}</span></div>`+
     TM_Q.map((q,i)=>{const k=TM_EX[i][0];return`<button type="button" class="tm-face ${stOf(k)}" data-i="${i}" aria-label="${esc(k)}"><span class="tm-bd"></span></button>`}).join("")+
     TM_Q.map((q,i)=>{const k=TM_EX[i][0],top=TM_TAGAT[i]==="t",[x,y]=tmPc((q[0][0]+q[1][0])/2,top?Math.min(q[0][1],q[1][1])-16:Math.max(q[2][1],q[3][1])+16);
       return`<button class="shp-spot tm-tag" id="tmT${i}" data-i="${i}" style="left:${x.toFixed(2)}%;top:${y.toFixed(2)}%"><b>${esc(k)}</b></button>`}).join("");
   v.insertBefore(P,pad);
-  const fit=()=>{const k=P.clientWidth/768;if(!k)return;P.querySelectorAll(".tm-face").forEach(f=>{const i=+f.dataset.i,q=TM_Q[i].map(([x,y])=>[x*k,y*k]);f.style.transform=tmM3(100,300,q);
+  const fit=()=>{const e=typeof scwCur==="function"?scwCur(P):null,G=e&&e.fx&&e.fx.tmq?e:null,Q=G?G.fx.tmq:TM_Q,W=G?G.w:768,H=G?G.h:1376,k=P.clientWidth/W;if(!k)return;
+    P.querySelectorAll(".tm-tas").forEach(t=>{const q=Q[+t.dataset.i];t.style.left=((q[2][0]+q[3][0])/2/W*100).toFixed(2)+"%";t.style.top=((q[2][1]+q[3][1])/2/H*100).toFixed(2)+"%"});
+    P.querySelectorAll(".tm-face").forEach(f=>{const i=+f.dataset.i,q=Q[i].map(([x,y])=>[x*k,y*k]);f.style.transform=tmM3(100,300,q);
     const wide=(q[1][0]-q[0][0])>=16,bd=f.querySelector(".tm-bd");if(wide&&!bd.firstChild)bd.innerHTML=tmBoard(TM_EX[i][4],false);if(!wide)bd.innerHTML=""})};
   fit();if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}
   const go=i=>{if(typeof vibrate==="function")vibrate(5);tmOpen(i,TS)};
@@ -69,7 +82,11 @@ function themeMap(v){if(v.querySelector(".tm-page"))return;const pad=v.querySele
   P.querySelectorAll(".tm-tag").forEach(b=>b.onclick=()=>go(+b.dataset.i));
   if(typeof shpFit==="function")shpFit(v);
   const HS={};TM_Q.forEach((q,i)=>{const[x,y]=tmPc((q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2);HS["tmT"+i]=[TM_NODE[i],+x.toFixed(2),+y.toFixed(2),stOf(TM_EX[i][0])==="full"?"cheer":"idle"]});
-  try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_TM,{HS}),"tm")}catch(e){}
+  for(const n in TM_L1610.walk.HS)TM_L1610.walk.HS[n][3]=HS[n][3];   /* 橫式圖的小動作也照練習狀態（練熟的歡呼）；原圖、11 朝共用同一份 HS */
+  const cfg=Object.assign({},SHW_PG0,SHW_TM,{HS});let cfgNow=cfg;
+  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:TM_Q.map((q,i)=>"tmT"+i),pfx:"tm",cfg0:cfg,apply:fit};scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}}
+  fit();
+  try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfgNow,"tm")}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Theme==="function"){const f0=Theme;Theme=function(v,tag){const r=f0.apply(this,arguments);
   try{if(THEME_MAP_ON&&!tag){const mo=new MutationObserver(()=>{if(!v.isConnected){mo.disconnect();return}if(v.querySelector(".pad [data-t]")){mo.disconnect();try{themeMap(v)}catch(e){}}});mo.observe(v,{childList:true,subtree:true})}}catch(e){}return r}}

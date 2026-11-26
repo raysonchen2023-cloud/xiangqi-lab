@@ -68,6 +68,23 @@ test("出題：選項三個不重複、含答案、都有同一邊挺兵的例�
   }
 });
 
+test("Pikafish 盤整 P2（11/24）：黑方著法一樣、只差順序的兩課（第 8、12 課）不能同時當選項；三級各 60 天都不會出現", () => {
+  const { R } = load();
+  const L = R.jhXrLines(D), blk = (m) => m.filter((u, i) => i % 2 === 1).slice().sort().join(" ");
+  const twins = new Set();
+  for (const x of L) for (const y of L) if (x.side === y.side && x.cat < y.cat && blk(x.mv) === blk(y.mv)) twins.add(x.cat + "|" + y.cat);
+  assert.ok(twins.has("pawn_08|pawn_12"), "題庫裡第 8、12 課確實只差順序（不然這項測不到東西）：" + [...twins]);
+  let n = 0;
+  for (const lv of R.JH_XR_LV) for (let d = 1; d <= 60; d++) {
+    for (const q of R.jhXrRound(L, lv, "2027-01-" + String(d).padStart(2, "0") + "x")) {
+      n++;
+      const keys = q.opts.map((c) => blk(c === q.cat ? q.mv : q.ref[c]));
+      assert.equal(new Set(keys).size, 3, lv.k + " 選項 " + q.opts + " 有只差順序的");
+    }
+  }
+  assert.ok(n >= 500, "題數 " + n);
+});
+
 test("答錯說明：指出黑方第一個分岔的那一步（另外照主線獨立比一次），而且那一步確實只有答案這一路會走", () => {
   const { R } = load();
   const L = R.jhXrLines(D);

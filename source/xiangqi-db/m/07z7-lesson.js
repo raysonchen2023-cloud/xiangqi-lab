@@ -79,10 +79,11 @@ function lsnArrows(svg,list,flip){svg.querySelectorAll(".lsn-ov").forEach(x=>x.r
     h+=`<g opacity="${op}"><line x1="${F(x1+ux*31)}" y1="${F(y1+uy*31)}" x2="${F(hx)}" y2="${F(hy)}" stroke="#fff" stroke-width="15" stroke-linecap="round" opacity=".7"/><line x1="${F(x1+ux*31)}" y1="${F(y1+uy*31)}" x2="${F(hx)}" y2="${F(hy)}" stroke="${c}" stroke-width="10" stroke-linecap="round"/><polygon points="${F(ex)},${F(ey)} ${F(hx+nx)},${F(hy+ny)} ${F(hx-nx)},${F(hy-ny)}" fill="${c}" stroke="#fff" stroke-width="2"/></g>`}
   g.innerHTML=h;svg.append(g)}
 /* 一步一步演一串著法：st＝{tok,fast}（換頁或重來時 tok++ 就停；fast＝快轉）；step(盤面,{f,t},中文記譜,被吃的子,第幾步)；遇到不合法的著法就停在那裡 */
-function lsnPlay(st,seq,b0,step,done){const C=XQCore,my=++st.tok;let b=b0,i=0;
+/* opt（11/24 開發者「看懂失誤這盤進來後棋子動太快了，玩家看不清楚」）：{first:開始前先停幾毫秒, gap:每步間隔, end:最後一步後}；不給照舊（立刻開始、800／450） */
+function lsnPlay(st,seq,b0,step,done,opt){const C=XQCore,my=++st.tok,O=opt||{};let b=b0,i=0;
   const one=()=>{if(my!==st.tok)return;if(i>=seq.length){done&&done(b,i);return}const[f,t]=lsnSq(seq[i]);
     if(!b[f]||!C.legal(b,C.sideOf(b[f])).some(([x,y])=>x===f&&y===t)){done&&done(b,i);return}
-    const tx=C.notate(b,f,t),cap=b[t];b=C.make(b,f,t);i++;step&&step(b,{f,t},tx,cap,i);if(st.fast)return one();setTimeout(one,i>=seq.length?450:800)};one()}
+    const tx=C.notate(b,f,t),cap=b[t];b=C.make(b,f,t);i++;step&&step(b,{f,t},tx,cap,i);if(st.fast)return one();setTimeout(one,i>=seq.length?(O.end||450):(O.gap||800))};if(O.first&&!st.fast)setTimeout(one,O.first);else one()}
 /* 答案樹從 u 往下的主線（跟解題頁「看答案」一樣：每層取第一條） */
 function lsnRest(node,u){const o=node&&node.o&&node.o[u];if(!o)return[];if(!o[1])return cjSplit(o[0]);const s=[o[0]];let n=o[1];
   while(n&&n.o){const k=Object.keys(n.o)[0];if(!k)break;const x=n.o[k];s.push(k);if(x[1]){s.push(x[0]);n=x[1]}else{s.push(...cjSplit(x[0]));n=null}}return s}

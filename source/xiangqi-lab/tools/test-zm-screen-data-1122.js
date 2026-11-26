@@ -134,3 +134,8 @@ test("算盤算帳：答案跟分數門檻一致、三種各約 10 題、子力�
   }
   for (const k of ["r", "b", "="]) assert.ok(n[k] >= 8 && n[k] <= 12, "答案 " + k + " 有 " + n[k] + " 題");
 });
+
+test("〔原始碼〕Pikafish 盤整 P2（11/24）：建置腳本有「最佳跟第二好差超過 100（只有一步能維持）不出」的條件（原 a20；重建後的題庫跟網站 data/zmhall 一起在發布 PR 帶上）", () => {
+  const B = fs.readFileSync(path.join(__dirname, "screen-quiz-build.js"), "utf8");
+  assert.match(B, /r2\[0\]\.cp - r2\[1\]\.cp > 100\) continue/);
+});

@@ -51,6 +51,18 @@ test("出題：初級 6 步、中級 8 步只打散黑方（第 2、4、6…步�
   }
 });
 
+test("Pikafish 盤整 P2（11/24）：一輪 3 題的前 n 步互不相同（初級 42 條只有 10 種前 6 步，原本常重複）；每天都一樣", () => {
+  for (const L of R.JH_FG_LV) {
+    const kinds = new Set(LINES.filter((l) => l.length >= L.n).map((l) => l.slice(0, L.n).join(" "))).size;
+    assert.ok(kinds >= 3, L.k + " 只有 " + kinds + " 種");
+    for (let d = 1; d <= 30; d++) {
+      const day = "2026-12-" + String(d).padStart(2, "0"), Q = J(R.jhFgRound(LINES, L, day));
+      assert.equal(new Set(Q.map((q) => q.seq.join(" "))).size, 3, L.k + " " + day + " 一輪有重複的題");
+      assert.deepEqual(J(R.jhFgRound(LINES, L, day)), Q, "同一天要出同一輪");
+    }
+  }
+});
+
 test("判對錯：照主線次序才算對；換了次序（就算走得通、局面一樣）也算錯，並指出第幾步主線先走哪一張", () => {
   const q = J(R.jhFgMake(LINES, R.JH_FG_LV[0], "x"));
   assert.deepEqual(J(R.jhFgCheck(q, q.seq)), { ok: true, step: 6, why: "" });
@@ -75,6 +87,19 @@ test("判對錯：走不下去的步當場指出第幾步、哪一張、為什�
   const r2 = J(R.jhFgCheck(q2, ["h2e2", "a9a5"]));
   assert.equal(r2.ok, false); assert.equal(r2.step, 1);
   assert.match(r2.why, /^第 2 步「a9a5」走不下去：這一步現在不合法/);
+});
+
+test("判對錯：不合法時指出是前面第幾步走過去的子擋住（W48-S4 預驗 P3：先排馬8進7、再排砲8平6）", () => {
+  const q = { seq: ["h2e2", "h7f7", "b0c2", "h9g7"], nt: ["炮二平五", "砲8平6", "馬八進七", "馬8進7"], slots: [1, 3], cards: [] };
+  const r = J(R.jhFgCheck(q, ["h2e2", "h9g7", "b0c2", "h7f7"]));
+  assert.equal(r.ok, false); assert.equal(r.step, 3);
+  assert.match(r.why, /^第 4 步「砲8平6」走不下去：這一步現在不合法（被第 2 步「馬8進7」走過去的那顆子擋住了）。$/);
+  /* 照主線次序排就走得通（同一顆馬不擋） */
+  assert.equal(J(R.jhFgCheck(q, q.seq)).ok, true);
+  /* 擋路的子不是前面排的步走過去的（車前是沒動過的卒）：照舊說「被擋住，或走了會被將軍」 */
+  const q2 = { seq: ["h2e2", "i9h9"], nt: ["炮二平五", "車9平8"], slots: [1], cards: [] };
+  const r2 = J(R.jhFgCheck(q2, ["h2e2", "a9a5"]));
+  assert.match(r2.why, /^第 2 步「a9a5」走不下去：這一步現在不合法（被擋住，或走了會被將軍）。$/);
 });
 
 test("每天修為：一輪全對 +10，同一天不再給；存檔壞掉不當掉", () => {

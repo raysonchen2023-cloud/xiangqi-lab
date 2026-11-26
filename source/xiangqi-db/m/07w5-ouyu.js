@@ -152,7 +152,7 @@ function oyCss(){if(document.getElementById("oyCss"))return;const s=document.cre
 const oyName=(w,mdl)=>w==="hp"&&mdl==="douhua"?"賣豆花的小販":OY_WHO[w].nm;
 const oyModel=(w,mdl)=>w==="hp"&&mdl==="douhua"?"n_douhua":OY_WHO[w].m;
 const oyBackHash=place=>place==="yz"?"#/journey/inn":"#/port";
-function oyCfg(place,k){try{if(place==="port"){if(typeof SHW_PORT==="undefined"||!SHW_PORT[k])return null;const C=shwCfg(SHW_PORT[k],typeof SHW_PSX!=="undefined"?SHW_PSX[k]:null);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];return C}
+function oyCfg(place,k,P){try{if(place==="port")return typeof ph4Cfg==="function"?ph4Cfg(P,k):null;   /* 07w4 ph4Cfg：橫式圖時用條目的路網（審查 #165 第四輪） */
   if(typeof SHW_YZ==="undefined"||!SHW_YZ[k])return null;return Object.assign({},SHW_PG0,SHW_YZ[k])}catch(e){return null}}
 /* 站位：路網上的點往右挪一點；不壓到標籤、驛路小圓印、07w4 主人、旅伴的「！」、七星來訪，也不站在 07w4 主人的固定站位、走路角色起點附近 */
 function oySpot(P,C,hFr,k){const W=P.clientWidth,Hh=P.clientHeight,q=P.getBoundingClientRect();
@@ -200,9 +200,11 @@ function oyPage(v,k,place){if(!OUYU_ON)return;const P=v&&v.querySelector(".shp-p
   if(OY_LETTER){const env=document.createElement("button");env.type="button";env.className="oy-env";env.setAttribute("aria-label",(r.back?nm+"在等你":"有人求助")+"：點開來看");env.innerHTML=`<i aria-hidden="true"></i><b>${r.back?"有人等你":"有人求助"}</b>`;
     env.onclick=e=>{e.stopPropagation();e.preventDefault();act()};let n=0;const put=()=>{if(!P.isConnected)return;if((P.classList.contains("pc-run")||document.querySelector(".walkc"))&&++n<40)return void setTimeout(put,300);
       /* 開發者 11/10「放在場景裡，例如岸邊或樹上，放右上角很怪」：用 3D 小人的站位規則（沿著角色走得到的路、避開入口標籤和其他角色）找一個地上的點，信就擱在那裡；找不到才放右上角 */
-      let at=null;try{const C=oyCfg(place,k);if(C)at=oySpot(P,C,()=>.07,k)}catch(x){}
-      if(at){env.classList.add("oy-in");env.style.left=at[0]+"%";env.style.top=at[1]+"%"}P.append(env)};setTimeout(put,900);return}
-  const C=oyCfg(place,k);if(!C||typeof shwRM==="function"&&shwRM()||typeof XQBot3D==="undefined"&&typeof loadScript!=="function"){addCard();return}
+      const spot=()=>{let at=null;try{const C=oyCfg(place,k,P);if(C)at=oySpot(P,C,()=>.07,k)}catch(x){}
+        env.classList.toggle("oy-in",!!at);env.style.left=at?at[0]+"%":"";env.style.top=at?at[1]+"%":""};
+      spot();P.append(env);P._oyRe=()=>{if(env.isConnected)spot()}};setTimeout(put,900);return}   /* W107-L：07f 轉向換圖後叫 P._oyRe，照當下的路網重找位置（審查 #165 第五輪） */
+  let C=oyCfg(place,k,P);if(!C||typeof shwRM==="function"&&shwRM()||typeof XQBot3D==="undefined"&&typeof loadScript!=="function"){addCard();return}
+  const mount=()=>{
   const box=document.createElement("div");box.className="oy3";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';
   const hit=document.createElement("button");hit.type="button";hit.className="oy-hit";hit.style.display="none";hit.setAttribute("aria-label",nm+"：點他聽他說");
   const mk=document.createElement("div");mk.className="oy-mk";mk.textContent=ic;mk.setAttribute("aria-hidden","true");
@@ -211,7 +213,10 @@ function oyPage(v,k,place){if(!OUYU_ON)return;const P=v&&v.querySelector(".shp-p
   /* 等下船過場、步行小卡播完、07w4 主人站好以後再找位置 */
   let n=0;const go=()=>{if(!P.isConnected)return;if((P.classList.contains("pc-run")||document.querySelector(".walkc"))&&++n<40)return void setTimeout(go,300);
     oyFig(P,C,k,r.back?oyModel("hp",r.mdl):oyModel(w,r.mdl),OY_WHO[w].pc,box,hit,mk).catch(()=>{box.remove();hit.remove();mk.remove();addCard()})};
-  setTimeout(go,1400)}
+  setTimeout(go,1400);
+  /* W107-L：轉向換圖後 07f 叫這裡——收掉舊的小人（框不在了 3D 迴圈自己停），照當下的路網重掛（審查 #165 第五輪） */
+  P._oyRe=()=>{if(!box.isConnected)return;box.remove();hit.remove();mk.remove();const C2=oyCfg(place,k,P);if(!C2){addCard();return}C=C2;mount()}};
+  mount()}
 /* 晴天回報（賣花姑娘／豆花小販）：同一朝、沒下雨、不是同一天 */
 function oyBackVisit(P,k,place){const S=oySt(),B=S.hp.back;if(!B||B.era!==k||oyBuddyBusy(place,k))return null;const d=oyNow();if(oyDay(d)===B.day||oyWx(P))return null;return{w:"hp",mdl:B.mdl,back:1}}
 function oyBackOpen(r){const S=oySt(),B=S.hp.back;if(!B)return;const nm=oyName("hp",B.mdl);
@@ -273,7 +278,7 @@ function OuyuPage(v,parts){const w=parts[0],id=decodeURIComponent(parts[1]||""),
 /* 解開：記存檔、給修為、說謝謝；extra()＝角色另外送的東西 */
 function oyWin(c,say,extra,why){const S=oySt(),w=c.w,R=S[w],first=!R.seen[c.Q.id];R.seen[c.Q.id]=Date.now();R.era[c.era]=(R.era[c.era]|0)+1;R.n=(R.n|0)+1;if(S.cur&&S.cur.pz===c.Q.id)S.cur.done=1;
   if(w==="hp")S.hp.back={era:c.era,mdl:(c.cur.mdl||"maihua"),day:oyDay(oyNow())};oySave(S);
-  const xp=OY_WHO[w].xp+(w==="mj"&&c.Q.k===2?5:0);if(first&&typeof addXP==="function")setTimeout(()=>addXP(xp,"偶遇幫忙","ouyu:"+w+":"+c.Q.id),900);
+  const xp=OY_WHO[w].xp+(w==="mj"&&c.Q.k===2?5:0);if(first&&typeof addXP==="function")addXP(xp,"偶遇幫忙","ouyu:"+w+":"+c.Q.id,{chipDelay:900});
   if(typeof vibrate==="function")vibrate([15,30,15]);
   const box=c.$("#oyA");c.note(why||"");c.stat("✔ 幫上忙了！");
   setTimeout(()=>{if(!c.v.isConnected)return;modal(`<div class="em">${OY_WHO[w].ic}</div><h2>${esc(c.nm)}</h2><div class="oy-done"><p>「${esc(say)}」</p>${why?`<p class="muted" style="font-size:14px">${esc(why)}</p>`:""}${first?`<p>✨ 修為 +${xp}</p>`:'<p class="muted">這一題以前解過了，這次不加修為。</p>'}</div>`,[["回去",()=>{if(extra)extra().then(()=>goUp(c.back));else goUp(c.back)}]])},900);
@@ -353,7 +358,7 @@ function oyZf(v,era,place){const back=oyBackHash(place),dn=typeof diffNow==="fun
   jLevel(v,{id:"oy:zf:"+era+":"+dn,name:"張三丰（傳說人物）"},{G,rk:"jRunO",icon:"☯",back,title:`${typeof eraLabel==="function"?eraLabel(era):era}・張三丰讓一車一馬`,
     done:stars=>{oyZfDone(era);return stars},line:()=>"",get next(){return["回去",()=>goUp(back)]}})}
 function oyZfDone(era){const S=oySt(),E=S.zf.era[era]||(S.zf.era[era]={n:0});const first=!E.ok;E.ok=Date.now();E.n=(E.n|0)+1;if(S.cur&&S.cur.w==="zf")S.cur.done=1;oySave(S);
-  if(first&&typeof addXP==="function")setTimeout(()=>addXP(OY_WHO.zf.xp,"張三丰","ouyu:zf:"+era),600);
+  if(first&&typeof addXP==="function")addXP(OY_WHO.zf.xp,"張三丰","ouyu:zf:"+era,{chipDelay:600});
   try{const id="zhangsanfeng";if(typeof jSecrets==="function"&&!jSecrets()[id]&&typeof SECRETS!=="undefined"&&SECRETS.some(x=>x.id===id)){const C2=store.get("secretClue",{})||{};if(!C2[id]){C2[id]=Date.now();store.set("secretClue",C2);setTimeout(()=>toast("☯ 張三丰："+OY_SAY.zf.back),1800)}}}catch(e){}}
 /* 上一盤跟電腦下被將死：記下來，張三丰才會出現（包一層 07-legend.js journeyGameEnd，08b 對局頁結束時呼叫；練習、和棋、贏棋不算） */
 function oyGameEnd(st){try{if(!OUYU_ON||!st||!st.result||!st.result.w||st.practice)return;if(st.result.w!==st.human&&/將死/.test(st.result.why||"")){const S=oySt();S.zf.mated=Date.now();oySave(S)}}catch(e){}}

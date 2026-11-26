@@ -23,10 +23,11 @@ var XQNet=(function(){
      帳密會跟著 App 程式公開，所以這裡只能放「權限最小」的帳號（只准用 xqlab-… 開頭的頻道）。
      測試房間（xq_netRoot 有設）可以在 localStorage 的 xq_mqtt 放 {"url":"wss://…","user":"…","pass":"…"}，先用測試房間試新伺服器；正式大廳不看 xq_mqtt */
   /* host 留空＝照舊用公開伺服器 broker.emqx.io；填了 host（EMQX Serverless 總覽頁的 Address，例如 xxxxxxxx.ala.us-east-1.emqxsl.com）就連 wss://host:port/path。user／pass 放給 App 用的那組帳號（xqapp） */
-  const MQ={host:"d23f1132.ala.asia-southeast1.emqxsl.com",port:8084,path:"/mqtt",user:"xqapp",pass:"xqapp12345678",alt:[]};   /* 開發者 11/9「可以切換私人伺服器了」：EMQX Serverless（xiangqi-lobby，新加坡）；xqapp 是公開帳號，權限只准 +/v1/…（不能發 sys、cup/state、cup/hall、cal、ctl/ack、c/） */
+  const MQ={host:"d23f1132.ala.asia-southeast1.emqxsl.com",port:8084,path:"/mqtt",user:"xqapp",pass:"xqapp12345678",alt:["wss://xq-lobby-v6.preview-w36.workers.dev/mqtt"]};   /* 開發者 11/9「可以切換私人伺服器了」：EMQX Serverless（xiangqi-lobby，新加坡）；xqapp 是公開帳號，權限只准 +/v1/…（不能發 sys、cup/state、cup/hall、cal、ctl/ack、c/） */
   /* W53（11/22，App 審查 P-5「只有 IPv6 的網路」）：主伺服器只有 IPv4（DNS 只有 A 紀錄），審查用的 DNS64／NAT64 網路理論上連得上但沒實測。
      MQ.alt＝備援入口（要有 IPv6 的網址，例如經 Cloudflare 轉送；建端點要開發者授權帳號操作，建好前留空＝跟以前一模一樣只連主伺服器）。
-     連不上（還沒登入就斷）就換下一個網址；連上了記住是哪一個（xq_mqUrl），下次開 App 先試它。帳號照舊用 MQ 的 xqapp */
+     11/24 開發者授權「Cloudflare 轉送」：Worker xq-lobby-v6（原始碼 xiangqi-lab/tools/mq-alt-worker/，只轉 /mqtt 的 WebSocket 到 EMQX 8084，其他一律 404；有 IPv6）。
+     連不上（還沒登入就斷）就換下一個網址。開 App 一律先試主伺服器，不記上次連上哪一個（#146 審查：記住會讓一般玩家碰巧連到備援後一直黏在備援）。帳號照舊用 MQ 的 xqapp */
   const mqUrlOk=u=>typeof u==="string"&&/^wss?:\/\/[\w.:\[\]-]+(\/[\w./-]*)?$/.test(u);
   const URLS=[MQ.host?"wss://"+MQ.host+":"+MQ.port+MQ.path:"wss://broker.emqx.io:8084/mqtt",...(MQ.alt||[]).filter(mqUrlOk)];
   let ROOT="xqlab-r7k2q/v1";try{const v=localStorage.getItem("xq_netRoot");let r=null;try{r=JSON.parse(v||"null")}catch(e){r=v}   /* 11/12：測試房設成沒引號的字串（例如 xq_test）以前會 JSON 解析失敗、默默連到正式大廳（棋友a3d9）；沒引號也當測試房 */
@@ -285,15 +286,13 @@ var XQNet=(function(){
   function sendInvite(to,auto){if(selfBan())return null;const m=me(),   /* 回饋 852：停權中不能邀請 */gid=Math.random().toString(36).slice(2,10)+Date.now().toString(36);pending={gid,to:to.id,name:to.name,auto};
     iSend(to.id,{type:"invite",gid,auto:!!auto,from:{id:m.id,name:m.name,pts:myPts(),n:gamesOf(rec()),tc:tcPref(),rules:RULE_ID,rs:rsPref(),pk:PK||undefined,kv:PK?2:undefined,nv:PK?1:undefined},at:Date.now()});   /* 評比第 13 輪 X2：kv＝2 表示這支手機的連線同步頻道（k）會簽名，對方也是新版的話這盤的 k 一律要簽名。第 14 輪 F2：iSend 先用手機金鑰簽名（sg）再送（見 PIN 區段） */
     clearTimeout(pendT);if(auto)pendT=setTimeout(()=>{if(pending&&pending.gid===gid){pending=null;tryMatch()}},8000);return gid}
-  /* W53：上次連上的網址還在清單裡，就從它開始試（只有 IPv6 的網路不用每次先撞主伺服器）；沒連上就斷換下一個；連上了記下來 */
-  try{const i=URLS.indexOf(localStorage.getItem("xq_mqUrl"));if(i>0)urlI=i}catch(e){}
+  /* W53：開 App 一律從主伺服器（URLS[0]）開始；沒連上就斷換下一個。只有 IPv6 的網路連主伺服器會很快失敗，下一次就換到備援 */
   function mqNext(){if(URLS.length>1)urlI=(urlI+1)%URLS.length}
-  function mqRemember(){try{localStorage.setItem("xq_mqUrl",URLS[urlI])}catch(e){}}
   function connect(){if(cli||!want)return;const m=me();
     cli=mqtt(URLS[urlI],{clientId:"xq"+m.id.slice(0,12)+Math.random().toString(36).slice(2,8),keepalive:30,will:{topic:`${ROOT}/u/${m.id}`,payload:"",retain:true},user:MQA.user,pass:MQA.pass});
     /* 回饋 854：連上時不再一律訂整份名單（u/+），改由 syncRoster 看頁面決定；sys/+、cup/+ 用萬用字元合併（專用伺服器每條連線最多 10 個訂閱）。
        30 秒的計時器還在（判對方離線太久），但在線狀態要有變化或滿 30 分鐘才真的送 */
-    cli.onup=()=>{mqRemember();const re=everUp;everUp=true;if(downAt)offSum+=Math.max(0,Date.now()-downAt);downAt=0;upAt=Date.now();rosterOn=false;trk.clear();prune();cli.sub([`${ROOT}/i/${m.id}`,`${ROOT}/sys/+`,`${ROOT}/cup/+`,...(cur?gt(cur.gid):[]),...Object.keys(QS).map(k=>`${ROOT}/${k}`)]);syncRoster();presence(true);pubHist();flushIRT();clearInterval(hb);hb=setInterval(()=>{presence();staleCheck()},30000);
+    cli.onup=()=>{const re=everUp;everUp=true;if(downAt)offSum+=Math.max(0,Date.now()-downAt);downAt=0;upAt=Date.now();rosterOn=false;trk.clear();prune();cli.sub([`${ROOT}/i/${m.id}`,`${ROOT}/sys/+`,`${ROOT}/cup/+`,...(cur?gt(cur.gid):[]),...Object.keys(QS).map(k=>`${ROOT}/${k}`)]);syncRoster();presence(true);pubHist();flushIRT();clearInterval(hb);hb=setInterval(()=>{presence();staleCheck()},30000);
       if(dirty&&G){dirty=false;setTimeout(()=>{if(G&&cli&&cli.up)pubGame()},600)}if(cur&&!G)waitGame(cur.gid,false);rxAt=syncAt=Date.now();if(document.hidden&&!bgT)bgWatch();lkUp(re);emit("status")};   /* 評審 P22.1：剛訂閱會收到保留狀態，重抓計時從現在算；在背景連上的，滿 60 秒再下線 */
     cli.onmsg=onMsg;
     cli.ondown=was=>{cli=null;if(!was)mqNext();clearInterval(hb);if(!downAt)downAt=Date.now();emit("status");

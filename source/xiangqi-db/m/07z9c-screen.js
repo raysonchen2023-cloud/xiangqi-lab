@@ -61,7 +61,9 @@ function jhScrGuardFin(st,P,ok,why){store.set("jPending",null);try{if(typeof rsF
   if(ok&&!G.g){G.g={t:Date.now(),id:String(st.id||"").slice(0,60)};try{const cl=store.get("oscClaim",{})||{};if(!cl["guard:screen"]){cl["guard:screen"]=Date.now();xp=20;store.set("oscClaim",cl)}}catch(e){}}
   jhScrSet(G);if(xp&&typeof addXP==="function")try{addXP(xp,jhL("雙馬守中宮","Guard the palace"),"guard:"+st.id)}catch(e){}
   toast(ok?jhL(`🐎 守住了！走滿 ${JH_SCR_GUARD.limit} 步，中宮沒破`,`🐎 Held! ${JH_SCR_GUARD.limit} moves and the palace stands`):why);
-  setTimeout(()=>{if(typeof navKey==="function"&&navKey(location.hash)==="/journey/play")location.hash="#/jianghu/hall/screen"},1800)}
+  stillHere(1800,()=>{if(typeof navKey==="function"&&navKey(location.hash)==="/journey/play")location.hash="#/jianghu/hall/screen"},()=>jhScrSame(st))}   /* W120：1.8 秒後還在這一盤（沒換頁、沒開新的一盤）才跳回屏風馬門 */
+/* W120：已經開了新的一盤（jPending 指向別盤）＝不是同一盤了 */
+function jhScrSame(st){try{const P=store.get("jPending",null);return!P||!st||P.game===st.id}catch(e){return false}}
 /* 對局頁每次更新都會呼叫 lvWatch（08b-cpugame）：包一層，守中宮的盤在這裡判定。
    PR #39 審查（iMac Claude 2）：淨虧只在輪到紅方（玩家剛走完）時判——紅方剛吃子、輪到玩家還沒吃回的那一刻不算，「換子不算」才成立 */
 try{if(typeof lvWatch==="function"&&!lvWatch.jhScr){const w0=lvWatch;lvWatch=function(st,v){const P=jhScrGuardOf(st);
@@ -75,7 +77,7 @@ try{if(typeof lvWatch==="function"&&!lvWatch.jhScr){const w0=lvWatch;lvWatch=fun
 /* 沒守滿就分出勝負（被將死、認輸）：照常結算對局修為，另外記最多守了幾步 */
 try{if(typeof journeyGameEnd==="function"&&!journeyGameEnd.jhScr){const g0=journeyGameEnd;journeyGameEnd=function(st){let P=null;try{P=st&&st.result?jhScrGuardOf(st):null}catch(e){}
     const r=g0.apply(this,arguments);if(P)try{const G=jhScrGet(),E=jhScrGuardEval(st);G.best=Math.max(G.best,Math.min(E.n,JH_SCR_GUARD.limit));jhScrSet(G);
-      setTimeout(()=>toast(st.result.w===st.human?jhL("🐎 直接贏下來了！不過守中宮要走滿 10 步才算，再來一次吧","🐎 You won outright! The trial needs 10 moves held, though. Try again"):jhL(`🐎 中宮被攻破了（守了 ${E.n} 步）`,`🐎 The palace fell after ${E.n} moves`)),1500)}catch(e){}
+      stillHere(1500,()=>toast(st.result.w===st.human?jhL("🐎 直接贏下來了！不過守中宮要走滿 10 步才算，再來一次吧","🐎 You won outright! The trial needs 10 moves held, though. Try again"):jhL(`🐎 中宮被攻破了（守了 ${E.n} 步）`,`🐎 The palace fell after ${E.n} moves`)),()=>jhScrSame(st))}catch(e){}   /* W120：守的步數當下就記；吐司只在還在這一盤時出 */
     return r};journeyGameEnd.jhScr=1}}catch(e){}
 try{if(typeof jName==="function"&&!jName.jhScr){const n0=jName;jName=function(j){if(j===JH_SCR_J)return jhL("屏風馬門・雙馬守中宮","Screen Horses · Guard the palace");return n0.apply(this,arguments)};jName.jhScr=1}}catch(e){}
 
@@ -112,7 +114,7 @@ async function jhScrErrata(i0){const L=await jhScrLoad("errata");if(!L){toast(jh
     bd=Board(tap);$("#jhEb").append(bd.svg);
     $("#jhEp").onclick=()=>{if(stage===0&&n>0){n--;show()}};$("#jhEx").onclick=()=>{if(stage===0&&n<q.mv.length){n++;show()}};
     $("#jhEk").onclick=()=>{if(stage!==0)return;if(n-1===q.wrong){stage=1;$("#jhEa").style.display="none";$("#jhEq").textContent=jhL("找到了！這一步之前，換你替她走一步更好的。","Found it! Now play the better move in her place.");say(jhL("點黑方的子，再點要去的地方。","Tap a black piece, then where it should go."));show()}
-      else say(n%2?jhL("這一步沒問題，再找找。","That move is fine. Keep looking."):jhL("這是紅方走的，要找黑方（學童）的那一步。","That's Red's move. Find Black's (the pupil's) slip."))};
+      else say(n===0?jhL("還沒走棋，先按 › 往下看。","No move shown yet. Tap › to step forward."):n%2?jhL("這是紅方走的，要找黑方（學童）的那一步。","That's Red's move. Find Black's (the pupil's) slip."):jhL("這一步沒問題，再找找。","That move is fine. Keep looking."))};   /* 2026-11-24 Pikafish 盤整 P1：mv[n-1] 是剛顯示的那手、mv[0] 是紅方，n 奇數＝紅方那手（原本兩句寫反） */
     $("#jhEnew").onclick=()=>{try{closeSheet()}catch(e){}setTimeout(()=>jhScrErrata(i+1+jhScrHash(Date.now())%Math.max(1,L.length-1)),250)};
     show()})}
 function jhScrCn1(mv,n){try{const C=window.XQCore,p=jhScrBoardAt(mv,n-1),u=mv[n-1],cn=C.notate(p.b,C.parseSq(u.slice(0,2)),C.parseSq(u.slice(2,4)));return typeof oscEn==="function"&&oscEn()&&typeof i18nWxf==="function"?(i18nWxf(cn)||cn):cn}catch(e){return mv[n-1]}}

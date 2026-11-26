@@ -169,3 +169,18 @@ test("05-settings 藏起來的三個設定（3D 園子棋盤、對手形象、�
   /* 對手形象、棋子樣式的設定值照舊讀（照目前的設定畫），只是不再有藏起來的開關 */
   assert.ok(M("01-board.js").includes('store.get("pieceStyle","3d")'));
 });
+
+test("11/24 簡體棋子字：OpenCC 把「傌」「俥」轉成罕見字「㐷」「伡」，兩岸用詞補一層改成「马」「车」；記譜「傌八進七」→「马八进七」；只有一個字的文字節點（棋盤上的棋子）也要處理", () => {
+  const SITE = path.join(__dirname, "..", "site"), I = rd("xiangqi-db/m/07i18n.js");
+  const occ = require(path.join(SITE, "opencc-t2cn.js")), conv = occ.Converter({ from: "tw", to: "cn" });
+  assert.equal(conv("傌俥"), "㐷伡", "OpenCC 本身就是這樣轉（不然這項測不到東西）");
+  const W = vm.runInNewContext("(" + between(I, "const ZH_CN_WORDS=", ";   /* zh-lint-ok */\nfunction zhCnWords").replace("const ZH_CN_WORDS=", "").replace(/\/\*[^*]*\*\//g, "") + ")");
+  const f = (s) => { for (const [a, b] of W) if (s.includes(a)) s = s.split(a).join(b); return s };
+  assert.equal(f(conv("帥仕相傌俥炮兵")), "帅仕相马车炮兵"); assert.equal(f(conv("將士象馬車砲卒")), "将士象马车砲卒");
+  assert.equal(f(conv("傌八進七 俥一平二")), "马八进七 车一平二");
+  assert.equal(f(conv("用下面的方向鈕")), "用下面的方向按钮");
+  const i0 = I.indexOf("function zhCnWords(s){"), iife = I.slice(i0, I.indexOf("/* 11/18 第 30 輪", i0));
+  assert.ok(iife.length > 200, "取得到兩岸用詞那一段");
+  assert.ok(/fix=n=>\{const t=n\.nodeValue;if\(!t\|\|!\/\[㐀-鿿\]\/\.test\(t\)\)return;/.test(iife), "文字節點的判斷要含擴充 A 區（只有「㐷」一個字也要換）");
+  assert.ok(!iife.includes("/[一-鿿]/"), "不能再用只到 U+4E00 的範圍");
+});

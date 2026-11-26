@@ -8,11 +8,12 @@ const ROOT = path.join(__dirname, "../..");
 const rd = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
 const JH = rd("xiangqi-db/m/07z9b-jianghu.js"), OS = rd("xiangqi-db/m/07z9-school.js"), SH = rd("xiangqi-db/m/02-shell.js");
 const HALL = JH.slice(JH.indexOf("/* ---------- W48 十派門內場景"));
+const SHOWN = OS.match(/^function oscNpcShown\(k\)\{.*$/m)[0];   /* 11/24：門下棋友要不要列（秘境人物找到過才列） */
 
-function load() {
-  const c = { jhL: (zh) => zh, jhT: (s) => s, esc: (s) => String(s), document: undefined };
+function load(sec = {}) {
+  const c = { jhL: (zh) => zh, jhT: (s) => s, esc: (s) => String(s), document: undefined, jSecrets: () => sec };
   vm.createContext(c);
-  vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + HALL + ";this.R={JH_HALL,JH_HALL_W,JH_HALL_H,JH_HALL_BAD,jhHallPc,jhHallMates,JH_HALL_WALK}", c);
+  vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + SHOWN + "\n" + HALL + ";this.R={JH_HALL,JH_HALL_W,JH_HALL_H,JH_HALL_BAD,jhHallPc,jhHallMates,JH_HALL_WALK}", c);
   return c;
 }
 
@@ -34,8 +35,9 @@ test("座標換成百分比：jhHallPc", () => {
   assert.equal(R.jhHallPc([0, 0]), "left:0.00%;top:0.00%");
 });
 
-test("前院：列出這一派的門下棋友與他們在哪裡（驛站、園子、秘境）", () => {
-  const { R, OSC } = load();
+test("前院：列出這一派的門下棋友與他們在哪裡（驛站、園子、秘境）；11/24 起秘境人物要在秘境找到過才列", () => {
+  const all = {}; { const { OSC } = load(); for (const k of Object.keys(OSC.NPC)) if (k.startsWith("secret:")) all[k.slice(7)] = 1 }
+  const { R, OSC } = load(all);   /* 全部秘境人物都找到過：每一派列出全部門人 */
   for (const s of OSC.SCH) {
     const L = R.jhHallMates(s.id), want = Object.values(OSC.NPC).filter((x) => x[0] === s.id).length;
     assert.equal(L.length, want, s.id);
@@ -52,7 +54,8 @@ test("〔原始碼〕路由：#/jianghu/hall/<派> 排在長卷之前，不會�
 
 test("〔原始碼〕圖讀不到：記下這一派、退回長卷開原本的小卡；小卡在門內或讀圖失敗過就不顯示「走進山門」", () => {
   assert.match(JH, /img\.onerror=\(\)=>\{JH_HALL_BAD\.add\(sid\);back\(\)\}/);
-  assert.match(JH, /const back=\(\)=>\{f\.classList\.remove\("on"\);location\.hash="#\/jianghu";setTimeout\(\(\)=>\{try\{jhSheet\(sid\)\}catch\(e\)\{\}\},700\)\}/);
+  /* 11/25 W120：照樣退回長卷、700ms 後開這一派的小卡；多了「只換過這一次頁、還在長卷」才開（ROUTE_N 在改網址前記下） */
+  assert.match(JH, /const back=\(\)=>\{f\.classList\.remove\("on"\);const rn=ROUTE_N;location\.hash="#\/jianghu";setTimeout\(\(\)=>\{if\(ROUTE_N-rn>1\|\|location\.hash!=="#\/jianghu"\)return;try\{jhSheet\(sid\)\}catch\(e\)\{\}\},700\)\}/);
   assert.match(JH, /\$\{JH_HALL\[sid\]&&!inHall&&!JH_HALL_BAD\.has\(sid\)\?`<button class="btn" id="jhHallGo">/);
   assert.match(JH, /inHall=location\.hash==="#\/jianghu\/hall\/"\+sid/);
 });
@@ -86,7 +89,7 @@ function loadMates(extra = {}) {
     JhHall: () => ({}), setTimeout: () => {}, ...extra,
   };
   vm.createContext(c);
-  vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + HALL + ";this.R={JH_HALL,JH_HALL_W,JH_HALL_H,JH_MATE_W,jhMateInfo,jhMatesOf,jhMatesShown,jhMateTip,jhMateIntel,jhMatePlay}", c);
+  vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + SHOWN + "\n" + HALL + ";this.R={JH_HALL,JH_HALL_W,JH_HALL_H,JH_MATE_W,jhMateInfo,jhMatesOf,jhMatesShown,jhMateTip,jhMateIntel,jhMatePlay}", c);
   return { c, calls };
 }
 
@@ -95,8 +98,11 @@ test("前院門人：園子棋友用閒聊與小知識、能下；秘境人物�
   const a = R.jhMateInfo("npc:w15_yuan_archer");
   assert.equal(a.kind, "npc"); assert.equal(a.img, "data/npc/w15_yuan_archer.webp"); assert.equal(a.can, true); assert.equal(a.at, "園子");
   assert.deepEqual([...a.lines], ["百步穿楊。", "拉弓要穩。", "蒙古騎兵擅長騎射。"]);
-  const s = R.jhMateInfo("secret:liuji");
-  assert.equal(s.img, "data/actors/liuji.webp"); assert.equal(s.can, false); assert.match(s.why, /先在秘境遇到/);
+  /* 11/24 開發者：「我希望要現在秘境遇到才能出現在門下棋友那邊 不然都不能看到」——還沒在秘境找到的秘境人物不出現（不是「出現了卻不能下」） */
+  assert.equal(R.jhMateInfo("secret:liuji"), null, "還沒在秘境找到：不出現");
+  assert.ok(!R.jhMatesOf("central").some((m) => m.k === "secret:liuji"), "門下棋友名單也沒有他");
+  const s = loadMates({ jSecrets: () => ({ liuji: 1 }) }).c.R.jhMateInfo("secret:liuji");
+  assert.equal(s.img, "data/actors/liuji.webp"); assert.equal(s.can, true, "找到之後出現、能切磋"); assert.equal(s.why, "", "不再有「要先在秘境遇到他」的提示");
   assert.equal(s.lines[0], "運籌帷幄。", "秘境台詞去掉外層引號");
   const t = R.jhMateInfo("inn:tea");
   assert.equal(t.at, "驛站"); assert.equal(t.can, true);
@@ -132,6 +138,15 @@ test("切磋一盤：園子棋友指定由他坐下（只用一次）；驛站�
   assert.equal(calls.jstart[1], "inn:tea");
   R.jhMatePlay(R.jhMateInfo("secret:liuji"));
   assert.equal(calls.jstart.length, 2, "沒遇過的秘境人物不開局");
+  const M2 = loadMates({ jSecrets: () => ({ liuji: 1 }) }); M2.c.R.jhMatePlay(M2.c.R.jhMateInfo("secret:liuji"));
+  assert.deepEqual(M2.calls.jstart, ["inn:liuji"], "在秘境找到過的，前院切磋會開局");
+  const M3 = loadMates({ jSecrets: () => ({ liuji: 1 }), SECRETS: [] }), gone = M3.c.R.jhMateInfo("secret:liuji");
+  assert.ok(gone && gone.can === false, "找到過但秘境資料被拿掉：出現但不能下"); M3.c.R.jhMatePlay(gone);
+  assert.deepEqual(M3.calls.jstart, [], "不能下的不開局（can=false 那道守門）");
+  /* 園子棋友的開局那條路不再查資料，只靠 can 擋：找一位不在園子名單（PARK_NPC）裡的園子門人 */
+  const M4 = loadMates(), kNpc = Object.keys(M4.c.OSC.NPC).find((k) => k.startsWith("npc:") && !["w15_yuan_archer", "niao"].includes(k.slice(4)));
+  assert.ok(kNpc, "測試資料要有不在園子名單裡的園子門人"); const off = M4.c.R.jhMateInfo(kNpc);
+  assert.equal(off.can, false, "不在園子名單：不能下"); M4.c.R.jhMatePlay(off); assert.deepEqual(M4.calls.jstart, [], "不能下的園子門人不開局（只靠 can 擋）");
 });
 
 test("〔原始碼〕前院門人：站位在原圖範圍內、立繪大小合理；JhHall 與 parkNpcNew 的包裝只做一次", () => {
@@ -183,7 +198,8 @@ test("PR #21 審查（反向對照補測）：外部傳進來的指定（例如�
 
 test("PR #21 再審（反向對照補測）：前院能下的優先——就算不能下的那位雜湊排在前面", () => {
   /* 讓秘境人物（不能下）的雜湊比較小：沒有「能下的優先」時他會排第一 */
-  const { c } = loadMates({ jhWindHash: (s) => (s.includes("secret:") ? 0 : 999) });
+  /* 11/24 起沒找到的秘境人物不出現，所以讓劉基「找到過、但秘境資料被拿掉」，當那位出現了卻不能下的人 */
+  const { c } = loadMates({ jhWindHash: (s) => (s.includes("secret:") ? 0 : 999), jSecrets: () => ({ liuji: 1 }), SECRETS: [] });
   const L = c.R.jhMatesShown("central", 3, new Date(2026, 10, 21));
   assert.equal(L[0].can, true, "第一位要是能下的：" + L[0].k);
   assert.equal(L[L.length - 1].k, "secret:liuji", "不能下的排最後");
@@ -350,4 +366,60 @@ test("〔原始碼〕11/22 開發者「怎麼會坐在桌子上」→ 中炮門�
   assert.ok(cut >= 0.42, "要藏住棋子上的字：" + cut);
   assert.ok(Math.abs(line - 275) <= 4, "裁切線要對齊桌子後緣：" + line.toFixed(1));
   assert.match(JHs, /\(H\.cut\?`;clip-path:inset\(0 0 \$\{H\.cut\*100\}% 0\);-webkit-clip-path:/, "JhHall 照 cut 裁");
+});
+
+test("11/24 開發者實機（劉伯溫）：前院不再寫「要先在秘境遇到他，才能切磋」——沒找到的不站前院，找到的直接能下", () => {
+  assert.ok(!/要先在秘境遇到他，才能切磋/.test(HALL));
+  const shown = loadMates().c.R.jhMatesShown("central", 3, new Date(2026, 10, 24));
+  assert.ok(shown.every((m) => m.k !== "secret:liuji"), "沒找到：前院看不到");
+  const met = loadMates({ jSecrets: () => ({ liuji: 1 }), jhWindHash: (s) => (s.includes("secret:") ? 0 : 999) }).c.R.jhMatesShown("central", 3, new Date(2026, 10, 24));
+  assert.ok(met.some((m) => m.k === "secret:liuji" && m.can), "找到之後：前院站得到他，而且能切磋");
+});
+
+test("11/24 開發者：沒在秘境找到的秘境人物，前院清單、打聽提示、掌門小卡、修行頁的師友都不列；找到之後才列", () => {
+  const { R, OSC } = load(), secs = Object.entries(OSC.NPC).filter(([k]) => k.startsWith("secret:"));
+  assert.ok(secs.length > 0, "測試資料要有秘境人物");
+  for (const s of OSC.SCH) {
+    const L = R.jhHallMates(s.id);
+    assert.ok(L.every((x) => !x.k.startsWith("secret:")), s.id + "：沒找到的秘境人物不列");
+    assert.equal(L.length, Object.entries(OSC.NPC).filter(([k, x]) => x[0] === s.id && !k.startsWith("secret:")).length, s.id + "：驛站、園子的照列");
+  }
+  const [k0, x0] = secs[0], one = load({ [k0.slice(7)]: 1 }).R.jhHallMates(x0[0]);
+  assert.ok(one.some((x) => x.k === k0), "找到過的那一位才列出來");
+  assert.ok(!/這一派目前沒有登記的門人/.test(JH), "空清單不再說「沒有登記的門人」");
+  assert.match(JH, /const mates=jhSheetMates\(sid\)/, "掌門小卡用 jhSheetMates（行為見下一項）"); assert.match(OS, /const FW=oscFellows\(sid\)/, "修行頁師友用 oscFellows（行為見下一項）");
+});
+
+/* #107 再審（iMac Claude 2）：門派的 who 欄位、掌門小卡、修行頁「師友」——用真的函式跑行為，不只比對原始碼 */
+function loadWho(sec, opts = {}) {
+  const fn = (src, name) => src.match(new RegExp("^function " + name + "\\(.*$", "m"))[0];
+  const c = { jhT: (s) => s, oscT: opts.en ? (s) => "EN:" + s : (s) => s, jSecrets: opts.throws ? () => { throw new Error("壞掉") } : () => sec };
+  vm.createContext(c);
+  vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + ["oscNpcShown", "oscWhoShown", "oscWhoNames", "oscFellows"].map((n) => fn(OS, n)).join("\n") + "\n" + fn(JH, "jhSheetMates"), c);
+  return c;
+}
+test("#107 再審：門派 who 裡的秘境人物（常遇春、施耐庵、王冕…）沒找到就不印；總覽、師友、掌門小卡都照這個規則", () => {
+  const none = loadWho({}), SCH = none.OSC.SCH, secName = (id) => none.OSC.NPC["secret:" + id][2];
+  const sc = SCH.find((s) => s.who.split("、").includes(secName("changyuchun")));
+  assert.ok(sc, "測試前提：有一派的 who 寫了常遇春");
+  assert.ok(!none.oscWhoShown(sc.who).includes("常遇春"), "沒找到：who 裡的常遇春拿掉");
+  assert.ok(none.oscWhoShown(sc.who).length >= 1, "其他人照列");
+  assert.ok(loadWho({ changyuchun: 1 }).oscWhoShown(sc.who).includes("常遇春"), "找到過：照列");
+  for (const s of SCH) {
+    const F = none.oscFellows(s.id)[0];
+    for (const [k, x] of Object.entries(none.OSC.NPC)) if (k.startsWith("secret:")) assert.ok(!F.includes(x[2]), s.id + " 師友不列沒找到的 " + x[2]);
+    assert.ok(!/，以及。|，以及$|以及。/.test(F), s.id + " 沒有其他門人時不留「以及」：" + F);
+    for (const n of none.jhSheetMates(s.id)) assert.ok(!Object.entries(none.OSC.NPC).some(([k, x]) => k.startsWith("secret:") && x[2] === n), s.id + " 掌門小卡不列沒找到的秘境人物：" + n);
+  }
+  const all = {}; for (const k of Object.keys(none.OSC.NPC)) if (k.startsWith("secret:")) all[k.slice(7)] = 1;
+  const met = loadWho(all); assert.ok(SCH.some((s) => met.jhSheetMates(s.id).length > none.jhSheetMates(s.id).length), "全部找到過時掌門小卡會多出秘境人物");
+  assert.match(OS, /\$\{oscWhoNames\(s0\.who\)\.length\?/, "門派總覽「代表棋友」用中文 who（s0）經 oscWhoNames 濾再翻");
+  const en = loadWho({}, { en: true }), enMet = loadWho({ changyuchun: 1 }, { en: true });
+  assert.ok(!en.oscWhoNames(sc.who).includes("EN:常遇春"), "英文版：沒找到的常遇春也不列");
+  assert.ok(en.oscWhoNames(sc.who).every((n) => n.startsWith("EN:")), "英文版：照樣翻譯");
+  assert.ok(enMet.oscWhoNames(sc.who).includes("EN:常遇春"), "英文版：找到過照列");
+});
+test("#107 再審：oscNpcShown 讀存檔出錯時當作沒找到（不列），不會把秘境人物全放出來", () => {
+  const c = loadWho({}, { throws: true }), k = Object.keys(c.OSC.NPC).find((x) => x.startsWith("secret:"));
+  assert.equal(c.oscNpcShown(k), false); assert.equal(c.oscNpcShown("inn:tea"), true, "驛站、園子的照常");
 });

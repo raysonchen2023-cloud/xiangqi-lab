@@ -77,8 +77,8 @@ function lmGongCss(){if(document.getElementById("lmGongCss"))return;const s=docu
 @keyframes lmMal{0%{transform:rotate(-40deg);opacity:0}15%{opacity:1}40%{transform:rotate(3deg)}52%{transform:rotate(-2deg)}100%{transform:rotate(-34deg);opacity:0}}
 @media (prefers-reduced-motion:reduce){.lm-hit .gd,.lm-hit .ml{animation:none}.lm-hit .rp{animation-duration:.8s}}`;document.head.append(s)}
 function lmGongHit(P){try{const im=P&&P.querySelector(":scope>img");if(!im)return;lmGongCss();P.querySelectorAll(".lm-hit").forEach(x=>x.remove());
-  const e=lmEra(),drum=LM_GONG.drum.includes(e),R=im.getBoundingClientRect(),W=R.width,H=R.height,d=W*LM_GONG.d/100,cx=W*LM_GONG.x/100,cy=H*LM_GONG.y/100;
-  const h=document.createElement("div");h.className="lm-hit "+(drum?"drum":"gong");h.style.cssText=`left:${LM_GONG.x}%;top:${LM_GONG.y}%;width:${d}px;height:${d}px`;
+  const e=lmEra(),drum=LM_GONG.drum.includes(e),R=im.getBoundingClientRect(),W=R.width,H=R.height,GG=lmGeo(P).gong,d=W*GG.d/100,cx=W*GG.x/100,cy=H*GG.y/100;
+  const h=document.createElement("div");h.className="lm-hit "+(drum?"drum":"gong");h.style.cssText=`left:${GG.x}%;top:${GG.y}%;width:${d}px;height:${d}px`;
   const n=drum?2:3,rips=Array.from({length:n},(_,i)=>`<span class="rp" style="animation-delay:${(drum?.22+i*.34:.22+i*.28).toFixed(2)}s"></span>`).join("");
   h.innerHTML=`<div class="gd" style="background-image:url('${im.currentSrc||im.src}');background-size:${W}px ${H}px;background-position:${-(cx-d/2)}px ${-(cy-d/2)}px"></div>${rips}<div class="ml"><i></i><b></b></div>`;
   P.append(h);setTimeout(()=>h.remove(),2400);
@@ -104,11 +104,11 @@ function lmCss(){if(document.getElementById("lmCss"))return;const s=document.cre
 .lobby-page{margin:0 0 6px}.lobby-page .shp-spot{max-width:46%;padding:4px 11px;z-index:3}.lobby-page .shp-spot b{white-space:nowrap;font-size:14px}.lobby-page .shp-spot.hot{padding:5px 13px}.lobby-page .shp-spot.hot b{font-size:15px}
 .lm-l{position:absolute;inset:0;pointer-events:none}
 .lobby-page.nt .lm-t>img,.lobby-page.nt .lm-fig{filter:brightness(.55) saturate(.7)}
-.lm-t{position:absolute;width:18%;transform:translate(-50%,-50%);padding:0;border:0;background:none;pointer-events:auto;cursor:pointer;z-index:1}
+.lm-t{position:absolute;width:calc(18% * var(--lmk,1));transform:translate(-50%,-50%);padding:0;border:0;background:none;pointer-events:auto;cursor:pointer;z-index:1}
 .lm-t img{display:block;width:100%;height:auto;filter:drop-shadow(0 2px 2px rgba(40,30,20,.35))}
 .lm-t.mine img{filter:drop-shadow(0 0 4px #f2c94c) drop-shadow(0 0 2px #f2c94c)}.lm-t.empty{pointer-events:none}
-.lm-lp{position:absolute;width:3.2%;transform:translate(-50%,-12%);padding:0;border:0;background:none;pointer-events:none;z-index:2}
-.lm-lp.f1{width:3.6%}
+.lm-lp{position:absolute;width:calc(3.2% * var(--lmk,1));transform:translate(-50%,-12%);padding:0;border:0;background:none;pointer-events:none;z-index:2}
+.lm-lp.f1{width:calc(3.6% * var(--lmk,1))}
 .lm-lp img{display:block;width:100%;height:auto}
 .lm-l .lm-lp>img{width:100%!important;height:auto!important;max-width:none}   /* 秦～隋的青銅燈是 <img>：亮著的故事角色燈有 data-jc，會被全域 [data-jc]>img{width:56px}（角色頭像）放大，這裡壓回去 */
 .lm-lp.on{pointer-events:auto;cursor:pointer}
@@ -116,19 +116,20 @@ function lmCss(){if(document.getElementById("lmCss"))return;const s=document.cre
 .lm-lp.bot::before{opacity:.45}
 .lm-lp i{position:absolute;left:50%;top:100%;width:46%;height:34%;transform:translateX(-50%);border-radius:2px}
 .lm-lp.fam i{background:#e2b53e;box-shadow:0 0 3px #f2c94c}.lm-lp.story i{background:#3f8f86;box-shadow:0 0 3px #7fd1c4}
-.lm-fig{position:absolute;width:3.4%;transform:translate(-50%,-100%);pointer-events:none;opacity:.88;z-index:1}
+.lm-fig{position:absolute;width:calc(3.4% * var(--lmk,1));transform:translate(-50%,-100%);pointer-events:none;opacity:.88;z-index:1}
+.scw-l .lm-fig.f2{-webkit-mask-image:linear-gradient(#000 52%,transparent 78%);mask-image:linear-gradient(#000 52%,transparent 78%)}   /* W107-L 橫式圖：二樓欄杆頂到簷下很短，人影腳底會落在欄杆上；下半部淡出，看起來像站在欄杆後面（Android 平板預驗，Windows Claude 1 建議） */
 @keyframes lmFl{from{opacity:.8}to{opacity:1}}
-.lm-lp.ink{width:2.3%;transform:translate(-50%,-4%)}.lm-lp.ink.f1{width:2.6%}
+.lm-lp.ink{width:calc(2.3% * var(--lmk,1));transform:translate(-50%,-4%)}.lm-lp.ink.f1{width:calc(2.6% * var(--lmk,1))}
 .lm-lp.ink svg{display:block;width:100%;height:auto;overflow:visible;--lmf:url(#lmLgOff);filter:drop-shadow(0 1px 1px rgba(40,24,12,.35))}
 .lm-lp.ink.on svg{--lmf:url(#lmLgOn)}
 .lm-lp.ink.pale svg{--lmf:url(#lmLgOffP)}.lm-lp.ink.pale.on svg{--lmf:url(#lmLgOn)}
-.lm-lp.gu{width:2.4%;transform:translate(-50%,-2%)}.lm-lp.gu.f1{width:2.7%}
+.lm-lp.gu{width:calc(2.4% * var(--lmk,1));transform:translate(-50%,-2%)}.lm-lp.gu.f1{width:calc(2.7% * var(--lmk,1))}
 .lm-lp.gu.on::before{width:240%;top:74%;background:radial-gradient(closest-side,rgba(255,176,80,.45),rgba(255,160,60,.16) 60%,rgba(255,150,50,0));mix-blend-mode:normal}
 .lm-lp.ink.on::before{width:230%;top:42%;background:radial-gradient(closest-side,rgba(255,176,80,.42),rgba(255,160,60,.16) 60%,rgba(255,150,50,0));mix-blend-mode:normal}
 .lm-more{position:absolute;transform:translate(-50%,-50%);z-index:3;pointer-events:auto;cursor:pointer;border:1px solid #6b4a2a;border-radius:3px;background:#f3e6c8;color:#3a2618;font:800 12px/1 var(--serif,serif);padding:4px 8px;box-shadow:0 1px 3px rgba(40,24,12,.4);white-space:nowrap}
 .lm-more::before{content:"";position:absolute;left:50%;bottom:100%;width:1px;height:8px;background:#3a2a1c}
 .lm-quiet{position:absolute;left:50%;top:65%;transform:translate(-50%,-50%);z-index:3;pointer-events:none;background:rgba(30,24,18,.62);color:#f6e7c8;font:700 12px/1 var(--serif,serif);padding:5px 10px;border-radius:999px;white-space:nowrap}
-.lm-wave{position:absolute;left:50%;top:59.5%;width:22%;aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none}
+.lm-wave{position:absolute;left:50%;top:59.5%;width:calc(22% * var(--lmk,1));aspect-ratio:1;transform:translate(-50%,-50%);pointer-events:none}
 .lm-wave i{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(242,201,76,.85);animation:lmWave 1.8s ease-out infinite;opacity:0}
 .lm-wave i:nth-child(2){animation-delay:-.6s}.lm-wave i:nth-child(3){animation-delay:-1.2s}
 @keyframes lmWave{0%{transform:scale(.25);opacity:.95}100%{transform:scale(1.25);opacity:0}}
@@ -145,14 +146,20 @@ function lmCss(){if(document.getElementById("lmCss"))return;const s=document.cre
 .lm-dw{visibility:hidden;transition:transform .28s ease,visibility 0s linear .28s}.lm-dw.open{visibility:visible;transition:transform .28s ease}
 @media (prefers-reduced-motion:reduce){.lm-lp.on::before,.lm-wave i{animation:none}.lm-wave i{opacity:.6;transform:scale(.8)}.lm-dw,.lm-dw.open{transition:none}}`;document.head.append(s)}
 const LM_SLOT={};   /* 人 id → 燈的編號（同一個人一直用同一盞，直到離開） */
-function lmSlots(ids){for(const k of Object.keys(LM_SLOT))if(!ids.includes(k))delete LM_SLOT[k];const used=new Set(Object.values(LM_SLOT));
+function lmSlots(ids,G){G=G||lmGeo(null);const N=G.lamps.length;for(const k of Object.keys(LM_SLOT))if(!ids.includes(k)||LM_SLOT[k]>=N)delete LM_SLOT[k];const used=new Set(Object.values(LM_SLOT));
   for(const id of ids){if(LM_SLOT[id]!=null)continue;let h=0;for(const c of String(id))h=(h*31+c.charCodeAt(0))>>>0;
-    let pk=-1;for(let i=0;i<LM_LAMPS.length;i++){const s=(h+i*7)%LM_LAMPS.length;if(used.has(s))continue;if(pk<0)pk=s;if(lmFar(s,used)){pk=s;break}}if(pk>=0){LM_SLOT[id]=pk;used.add(pk)}}}
+    let pk=-1;for(let i=0;i<N;i++){const s=(h+i*7)%N;if(used.has(s))continue;if(pk<0)pk=s;if(lmFar(s,used,G)){pk=s;break}}if(pk>=0){LM_SLOT[id]=pk;used.add(pk)}}}
 /* 第 16 輪：新點的燈先挑離其他亮燈至少 LM_GAP（圖寬的 %；手機 375 寬約 44px）的那盞，44×44 的點選範圍才不會互相蓋到；都太近才照舊用第一盞空燈。座標是圖寬、圖高的 %，高換成寬的單位（圖 768×1376） */
 const LM_GAP=12;
-function lmFar(s,used){const a=LM_LAMPS[s];for(const u of used){const b=LM_LAMPS[u];if(!b)continue;if(Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1])*1376/768)<LM_GAP)return false}return true}
+/* W107-L：圖上座標集中成一組；iPad 橫向換成專用橫式圖（07sw SCW）時整組換成條目 fx。gap＝亮燈最小間距（圖寬 %）：原圖照舊 12（手機 375 寬約 44px）；
+   橫式圖改照螢幕上 44px 換算（圖寬在螢幕上大很多），ar＝圖高÷圖寬（把上下距離換成寬的單位） */
+function lmGeo(P){const e=P&&typeof scwCur==="function"?scwCur(P):null,f=e&&e.fx;
+  if(f&&f.lamps){const pw=P.clientWidth||e.w;return{l:true,k:f.k||1,lamps:f.lamps,tables:f.tables,gong:f.gong,more:f.more,quiet:f.quiet,gap:44/pw*100,ar:e.h/e.w}}
+  return{l:false,k:1,lamps:LM_LAMPS,tables:typeof LM_TABLES!=="undefined"?LM_TABLES:[],gong:typeof LM_GONG!=="undefined"?LM_GONG:null,more:{people:[88,30.5],games:[67,90]},quiet:[50,65],gap:LM_GAP,ar:1376/768}}
+function lmFar(s,used,G){G=G||lmGeo(null);const L=G.lamps,a=L[s];for(const u of used){const b=L[u];if(!b)continue;if(Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1])*G.ar)<G.gap)return false}return true}
 /* 照 XQNet 的即時資料畫棋桌、燈籠、剪影、銅鑼狀態 */
 function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)return;let ps=[];try{ps=XQNet.people()||[]}catch(e){}
+  const GE=lmGeo(P);P.style.setProperty("--lmk",String(GE.k));
   const me=(()=>{try{return XQNet.me().id}catch(e){return""}})(),G=(()=>{try{return XQNet.playing()&&XQNet.game()}catch(e){return null}})();
   /* 熟面孔、路過的石桌往事人物 */
   let fam=new Set();try{for(const x of(XQNet.rating().hist||[]))if(x.oid)fam.add(x.oid)}catch(e){}
@@ -167,21 +174,21 @@ function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)
   let VS=[];try{VS=typeof lobbyVisitors==="function"?lobbyVisitors():[]}catch(e){}
   /* 回饋 800：人比燈多（50 盞）時，熟面孔、真人先點燈，石桌往事人物其次，雲遊棋客（電腦）最後；點不到燈的人數掛在「＋N 人」木牌上（點了開名冊） */
   const pri=id=>/^jc:/.test(id)?2:fam.has(id)?0:(typeof isCloud==="function"&&isCloud(id))?3:1;
-  const ids0=ps.filter(p=>p.id!==me).map(p=>p.id).concat(VS.map(k=>"jc:"+k)),ids=ids0.map((id,i)=>[id,i]).sort((a,b)=>pri(a[0])-pri(b[0])||a[1]-b[1]).map(x=>x[0]).slice(0,LM_LAMPS.length);
-  const extra=ids0.length-ids.length;lmSlots(ids);
+  const ids0=ps.filter(p=>p.id!==me).map(p=>p.id).concat(VS.map(k=>"jc:"+k)),ids=ids0.map((id,i)=>[id,i]).sort((a,b)=>pri(a[0])-pri(b[0])||a[1]-b[1]).map(x=>x[0]).slice(0,GE.lamps.length);
+  const extra=ids0.length-ids.length;lmSlots(ids,GE);
   const lit={};for(const p of ps)if(p.id!==me&&LM_SLOT[p.id]!=null)lit[LM_SLOT[p.id]]={id:p.id,name:lbnShow(p),cls:(fam.has(p.id)?" fam":"")+(typeof isCloud==="function"&&isCloud(p.id)?" bot":"")};
   for(const k of VS){const s=LM_SLOT["jc:"+k];if(s!=null)lit[s]={jc:k,name:(typeof JCHAR!=="undefined"&&JCHAR[k]&&JCHAR[k].name)||k,cls:" story"}}
   const E=lmEra(),GU=(LM_SET.lantern_on||[]).includes(E),PALE=E==="tang"||E==="wudai";   /* 停靠朝代：唐以前掛青銅燈盞圖，唐、五代素紗燈 */
   const FIG=["fig_sit","fig_lean","fig_fan"].map(n=>lmN(n,E));
-  lay.innerHTML=T.slice(0,8).map((t,i)=>{const[x,y]=LM_TABLES[i];const nm=t.l?t.l.map(p=>lbnShow(p)).join(" 對 "):"";
+  lay.innerHTML=T.slice(0,8).map((t,i)=>{const[x,y]=GE.tables[i];const nm=t.l?t.l.map(p=>lbnShow(p)).join(" 對 "):"";
       const tg=t.empty?"span":"button";   /* 第 16 輪版面缺陷清零：空桌、暗燈本來就不接點選（pointer-events:none、tabindex -1），改成裝飾用的 span，不再算成按鈕（讀螢幕也不念「空著的燈」×40） */
       return`<${tg} class="lm-t${t.mine?" mine":""}${t.empty?" empty":""}" ${t.gid?`data-g="${esc(t.gid)}"`:""}${t.mine?' data-mine="1"':""} style="left:${x}%;top:${y}%;z-index:${Math.round(y)}" ${t.empty?'aria-hidden="true"':`aria-label="${esc(t.mine?"我的對局":nm+"・觀戰")}" tabindex="0"`}><img src="${LM_IMG(lmN(t.empty?"table_empty":"table_game",E))}" alt=""></${tg}>`}).join("")+
-    LM_LAMPS.map(([x,y,f,g],i)=>{const o=lit[i];const fig=o&&g?`<img class="lm-fig" src="${LM_IMG(FIG[i%3])}" alt="" style="left:${x}%;top:${y+(f===2?10.5:7.5)}%">`:"";
+    GE.lamps.map(([x,y,f,g],i)=>{const o=lit[i];const fig=o&&g?`<img class="lm-fig${f===2?" f2":""}" src="${LM_IMG(FIG[i%3])}" alt="" style="left:${x}%;top:${y+(f===2?10.5:7.5)}%">`:"";
       const tg=o?"button":"span";return`${fig}<${tg} class="lm-lp f${f}${GU?" gu":LM_INK_LAMP?" ink"+(PALE?" pale":""):""}${o?" on"+o.cls:""}" ${o?(o.jc?`data-jc="${esc(o.jc)}"`:`data-p="${esc(o.id)}"`):""} style="left:${x}%;top:${y}%" ${o?`aria-label="${esc(o.name)+(/ bot/.test(o.cls)?"（雲遊棋客・電腦）":"")}" tabindex="0"`:'aria-hidden="true"'}>${LM_INK_LAMP&&!GU?'<svg viewBox="0 0 20 46"><use href="#lmLamp"/></svg>':`<img src="${LM_IMG(lmN(o?"lantern_on":"lantern_off",E))}" alt="">`}${o&&/fam|story/.test(o.cls)?"<i></i>":""}</${tg}>`}).join("")+
-    (XQNet.seeking&&XQNet.seeking()?'<span class="lm-wave"><i></i><i></i><i></i></span>':"")+
-    (extra>0?`<button type="button" class="lm-more" data-more="p" style="left:88%;top:30.5%">＋${extra} 人</button>`:"")+
-    (moreG>0?`<button type="button" class="lm-more" data-more="g" style="left:67%;top:90%">更多棋局 ＋${moreG}</button>`:"")+
-    (!ids0.length&&!T.some(t=>t.gid)?'<span class="lm-quiet">天井清靜・敲鑼等棋友</span>':"");
+    (XQNet.seeking&&XQNet.seeking()?`<span class="lm-wave"${GE.l?` style="left:${GE.gong.x}%;top:${GE.gong.y}%"`:""}><i></i><i></i><i></i></span>`:"")+
+    (extra>0?`<button type="button" class="lm-more" data-more="p" style="left:${GE.more.people[0]}%;top:${GE.more.people[1]}%">＋${extra} 人</button>`:"")+
+    (moreG>0?`<button type="button" class="lm-more" data-more="g" style="left:${GE.more.games[0]}%;top:${GE.more.games[1]}%">更多棋局 ＋${moreG}</button>`:"")+
+    (!ids0.length&&!T.some(t=>t.gid)?`<span class="lm-quiet"${GE.l?` style="left:${GE.quiet[0]}%;top:${GE.quiet[1]}%"`:""}>天井清靜・敲鑼等棋友</span>`:"");
   /* 點了＝按清單裡對應的那顆（邀請、觀戰、確認視窗都照原本） */
   const lb=v.querySelector("#lb"),press=sel=>{const b=lb&&lb.querySelector(sel);if(b){b.click();return true}return false};
   lay.querySelectorAll(".lm-t[data-g]").forEach(b=>b.onclick=e=>{e.stopPropagation();vibrate(5);if(b.dataset.mine){location.hash="#/pvp";return}press(`[data-w="${CSS.escape(b.dataset.g)}"]`)||toast("這盤剛下完了")});
@@ -194,7 +201,8 @@ function lmPaint(v,P){const lay=P.querySelector(".lm-l");if(!lay||!window.XQNet)
 function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".lobby-page"))return;lmCss();
   const d=document.createElement("div");
   const lmNt=typeof sw7NightNow==="function"&&sw7NightNow();   /* 11/10 日落後換夜景圖 lobby_<朝>_night；棋桌、茶客小圖跟著調暗（.nt），燈照樣亮 */
-  d.innerHTML=`<div class="shp-page cq lobby-page${lmNt?" nt":""}"><img src="${LM_IMG((typeof hbIsCl==="function"&&hbIsCl()?"lobby_classic":lmN("lobby",lmEra()))+(lmNt?"_night":""))}" alt="千燈天井" onerror="this.onerror=null;this.src=this.src.replace('_night.','.');this.parentNode.classList.remove('nt')"><div class="lm-l"></div>${LM_INK_LAMP?LM_LAMP_SVG:""}${LM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
+  const src=LM_IMG((typeof hbIsCl==="function"&&hbIsCl()?"lobby_classic":lmN("lobby",lmEra()))+(lmNt?"_night":"")),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};   /* W107-L：iPad 橫向有專用橫式圖（07sw SCW）就一開始載那張 */
+  d.innerHTML=`<div class="shp-page cq lobby-page${lmNt?" nt":""}${pre.k?" scw-l":""}"${pre.k?` data-scw="${pre.k}"`:""}><img src="${pre.src}" alt="千燈天井" onerror="this.onerror=null;this.src=this.src.replace('_night.','.');this.parentNode.classList.remove('nt')"><div class="lm-l"></div>${LM_INK_LAMP?LM_LAMP_SVG:""}${LM_SPOTS.map(([id,x,y,t])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`).join("")}</div>`;
   const P=d.firstElementChild;v.insertBefore(P,lb);
   /* 名冊抽屜：原本的清單整個搬進來（還在 v 裡面，paint() 照樣找得到 #lb） */
   const dw=document.createElement("div");dw.className="lm-dw";dw.innerHTML='<div class="lm-dw-h">📜 名冊<button type="button" aria-label="關上名冊">✕</button></div><div class="lm-dw-b"></div>';
@@ -208,11 +216,14 @@ function lobbyMap(v){const lb=v.querySelector("#lb");if(!lb||v.querySelector(".l
       if(XQNet.playing&&XQNet.playing()){lbPress("#back");return}{const sk=XQNet.seeking&&XQNet.seeking();if(!sk)lmGongHit(P);lbPress(sk?"#sk0":"#sk1")}},
     lmAi:()=>lbPress("#aiw")||(location.hash="#/cpu")};
   for(const[id]of LM_SPOTS){const b=P.querySelector("#"+id);if(b)b.onclick=()=>{vibrate(5);try{GO[id]()}catch(e){}}}
+  /* W107-L：交給 07sw 換圖、入口、出口、走路節點；換圖後棋桌、燈、人影跟著重畫 */
+  const cfg=Object.assign({},SHW_PG0,SHW_LOBBY);let cfgNow=cfg;
+  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:LM_SPOTS.map(x=>x[0]),pfx:"lobby",cfg0:cfg,apply:()=>{try{lmPaint(v,P)}catch(e){}}};scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}}
   lmPaint(v,P);
   /* 清單每次重畫（有人進出、每 15 秒）場景也跟著重畫 */
   const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}lmPaint(v,P)});mo.observe(lb,{childList:true});
   if(typeof shpFit==="function")shpFit(v);
-  try{if(typeof shwPage==="function"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_LOBBY),"lobby")}catch(e){}
+  try{if(typeof shwPage==="function"&&SHIP_WALK_ON)shwPage(v,cfgNow,"lobby")}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Lobby==="function"){const f0=Lobby;Lobby=function(v){const r=f0.apply(this,arguments);try{if(LOBBY_MAP_ON&&OFF&&window.XQNet)lobbyMap(v)}catch(e){}return r}}
 /* 11/10 開發者「線上對戰點進去場景跟茶坊不同，玩家會困惑」第一步：

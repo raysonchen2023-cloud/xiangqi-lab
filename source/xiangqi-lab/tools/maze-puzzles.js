@@ -1,0 +1,135 @@
+#!/usr/bin/env node
+/* W87a（11/24）地底迷宮殘局題庫出題工具（不是測試，CI 不跑：要 Pikafish）。
+   開發者 11/24（iMac Claude 1 轉）：「被暗匪抓住的聯續三題題目居然都一樣！請修正，而且都超簡單一步殺，這樣太無聊了」；
+   之前的決定：第一層 2～3 步殺、照門派特色出題、Pikafish 驗證唯一解。
+   做法：
+     1. 從殘局題庫 data/canju/canju-set.json 挑「紅方先走、n 步殺（--n，預設 2,3）、主變 line 用 core.js 走完真的將死、最後一步是 --mate 指定的子（中炮門是炮 C）、
+        全盤子數 ≤ --max-pieces」的題，照題號排；
+     2. Pikafish（深度 --depth，預設 20）逐步核對：紅方每一步，所有合法著法裡「剩下步數內將死」的只有主變那一步（唯一解）；
+        黑方每一步，主變的應著是「撐最久」的應法之一（不然題目的解答是在對方送死）；
+     3. 照順序取 --door 題當石門、--trap 題當陷阱（石門優先取步數多的），寫進 --out 檔裡 /* ==JH_MZ_POOL:<名>== *\/ 那一段（const <名>={door:[…],trap:[…]}）。
+   古譜優先（開發者 11/24：「你也可以從古譜找題目 比較可靠 古譜+pikafish」）：預設只收古譜題（src.book 不是「特級大師對局」），--allow-games 才收實戰對局；每題記出處 src（書名、局名）。
+   引擎結果記在 maze-puzzles-engine.json（局面＋走到第幾手 → 合格與否），沒有 PIKAFISH 時照紀錄重跑；--check 跟檔裡現在那一段逐字比對。
+   用法：PIKAFISH=<pikafish 執行檔> node xiangqi-lab/tools/maze-puzzles.js --name JH_MZ_POOL_CENTRAL --out xiangqi-db/m/07z9m-maze.js --mate C --door 3 --trap 6
+        --title-door "石門機關：炮的殺法" --title-trap "被暗匪逮住了" … 見下面 ARGS */
+"use strict";
+const fs = require("fs"), path = require("path");
+const ROOT = path.join(__dirname, "..", "..");
+const SITE = fs.existsSync(path.join(ROOT, "xiangqi-lab", "site", "core.js")) ? path.join(ROOT, "xiangqi-lab", "site") : path.join(ROOT, "..");
+const C = require(path.join(SITE, "core.js"));
+const arg = (k, d) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : d };
+const ARGS = {
+  name: arg("--name", "JH_MZ_POOL_CENTRAL"), out: arg("--out", path.join("xiangqi-db", "m", "07z9m-maze.js")), mate: arg("--mate", "C"),
+  n: String(arg("--n", "2,3")).split(",").map(Number), maxPieces: +arg("--max-pieces", "16"), door: +arg("--door", "3"), trap: +arg("--trap", "6"), depth: +arg("--depth", "20"),
+  tDoor: [arg("--title-door", "石門機關：炮的殺法"), arg("--title-door-en", "Stone door: a cannon's mate")],
+  dDoor: [arg("--desc-door", "門上刻著一座拋石車。紅方先走，{n} 步將死黑方，門就會開。提示：炮要隔一個子才打得到。"), arg("--desc-door-en", "A catapult is carved on the door. Red to move: checkmate in {n} and the door opens. Hint: a cannon needs one piece to jump over.")],
+  exclude: String(arg("--exclude", "")).split(",").filter(Boolean), minRed: arg("--min-red", ""), preferRed: arg("--prefer-red", ""),
+  tTrap: [arg("--title-trap", "被暗匪逮住了"), arg("--title-trap-en", "Caught by a granary thief")],
+  dTrap: [arg("--desc-trap", "暗匪把你按在糧袋堆旁：「解得開這局，就放你走。」紅方先走，{n} 步將死黑方。"), arg("--desc-trap-en", "The thief pins you by the grain sacks: \"Solve this and you can go.\" Red to move: checkmate in {n}.")],
+};
+const CHECK = process.argv.includes("--check"), GAMES = process.argv.includes("--allow-games");
+/* --multi（W87-2，開發者 11/26 選單「放寬到不是唯一解，只要走的那步仍是最快殺就算對」）：紅方每一步收錄所有「剩下步數內最快殺」的著法（有更短的殺法就不收這題），
+   黑方每一步照撐最久的方式應（主變那一步也是撐最久的就照主變）；題目多一個 alt 樹（只在真的有第二種殺法時才寫，唯一解的題輸出跟以前一樣）。
+   不加 --multi 照舊只收唯一解（既有題庫 --check 逐字相同）。07z9m-maze.js 的 jhMzTry 照 alt 判斷。 */
+const MULTI = process.argv.includes("--multi");
+/* --exclude <題庫名,…>：別派已經用掉的題（從 --out 檔裡那幾段讀 id）不再收，九派之間不重複；--min-red C2＝紅方開局至少要有 2 個 C（只收雙炮題）；--prefer-red C2＝雙炮題排前面先取，不夠再補其他題 */
+const redHas = (x, spec) => { const m = spec.match(/^([KABNRCP])(\d+)$/); if (!m) throw new Error("--min-red 要寫成 C2 這種格式"); return board0(x).filter((p) => p === m[1]).length >= +m[2] };
+const minRedOk = (x) => !ARGS.minRed || redHas(x, ARGS.minRed), pref = (x) => (ARGS.preferRed && redHas(x, ARGS.preferRed) ? 0 : 1);
+const isGame = (x) => !x.src || !x.src.book || /特級大師|對局|實戰/.test(String(x.src.book));
+const sq = (u) => [C.parseSq(u.slice(0, 2)), C.parseSq(u.slice(2, 4))];
+const uci = (f, t) => C.iccs ? C.iccs(f, t) : "abcdefghi"[f % 9] + (9 - ((f / 9) | 0)) + "abcdefghi"[t % 9] + (9 - ((t / 9) | 0));
+const board0 = (x) => C.parseFen(String(x.fen).split(" ")[0]);
+/* 照主變走到第 k 手前的局面（回傳盤面與輪誰走）；主變有不合法的一步回 null */
+function at(x, k) { let b = board0(x), s = "r"; for (let i = 0; i < k; i++) { const [f, t] = sq(x.line[i]); if (!b[f] || C.sideOf(b[f]) !== s || !C.legal(b, s).some((m) => m[0] === f && m[1] === t)) return null; b = C.make(b, f, t); s = C.opp(s) } return { b, s } }
+function mated(x) { const L = x.line; if (!Array.isArray(L) || L.length !== 2 * x.n - 1) return false; const e = at(x, L.length); return !!e && C.inCheck(e.b, e.s) && C.legal(e.b, e.s).length === 0 }
+const lastPiece = (x) => { const e = at(x, x.line.length - 1); return e ? String(e.b[sq(x.line[x.line.length - 1])[0]] || "").toUpperCase() : "" };
+const fenOf = (b, s) => C.fen(b, s).split(" ")[0];
+
+const ENG_F = path.join(__dirname, "maze-puzzles-engine.json");
+const ENG = fs.existsSync(ENG_F) ? JSON.parse(fs.readFileSync(ENG_F, "utf8")) : {};
+/* 一個局面的所有合法著法的分數（走方觀點；mate＞0＝走方 N 步殺，mate＜0＝被殺） */
+async function allMoves(E, b, s) {
+  const L = C.legal(b, s).map(([f, t]) => uci(f, t)), r = await E.analyse(fenOf(b, s), s, { depth: ARGS.depth, multipv: L.length });
+  const o = {}; for (const l of r.lines) o[l.pv[0]] = { mate: l.mate, cp: l.cp };
+  return { moves: L, sc: o };
+}
+/* 核對一題：紅方每一步唯一解、黑方應著撐最久。回傳 {ok, why}；結果記在 ENG（key＝起始局面＋主變） */
+async function verify(E, x) {
+  const key = String(x.fen).split(" ")[0] + "|" + x.line.join(" ") + "@" + ARGS.depth;
+  if (key in ENG) return ENG[key];
+  if (!E) return null;
+  let res = { ok: true, why: "" };
+  for (let k = 0; k < x.line.length && res.ok; k++) {
+    const e = at(x, k), left = Math.ceil((x.line.length - k) / 2), A = await allMoves(E, e.b, e.s);
+    if (A.moves.some((m) => !(m in A.sc))) { res = { ok: false, why: `第 ${k + 1} 手有著法沒分析到（multipv 不足）` }; break }
+    if (e.s === "r") {
+      const win = A.moves.filter((m) => A.sc[m].mate != null && A.sc[m].mate > 0 && A.sc[m].mate <= left);
+      if (win.length !== 1 || win[0] !== x.line[k]) res = { ok: false, why: `第 ${k + 1} 手（紅）剩 ${left} 步內將死的著法是 ${win.join("、") || "沒有"}，不是只有 ${x.line[k]}` };
+    } else {
+      const ms = A.moves.map((m) => A.sc[m].mate).filter((v) => v != null && v < 0), worst = Math.min(...ms);
+      if (A.sc[x.line[k]].mate !== worst) res = { ok: false, why: `第 ${k + 1} 手（黑）主變的應著不是撐最久的（${A.sc[x.line[k]].mate} 對 ${worst}）` };
+    }
+  }
+  ENG[key] = res; return res;
+}
+
+/* --multi：從起始局面建 alt 樹（見檔頭 MULTI 的說明）。回傳 {ok, why, alt}；alt 只在有分岔時給 */
+async function verifyMulti(E, x) {
+  const key = "multi|" + String(x.fen).split(" ")[0] + "|" + x.line.join(" ") + "@" + ARGS.depth;
+  if (key in ENG) return ENG[key];
+  if (!E) return null;
+  const L = x.line, mv = (b, u) => { const [f, t] = sq(u); return C.make(b, f, t) };
+  let fork = false;
+  /* 紅方節點：b＝局面、left＝還要幾步殺、k＝還在主變上的話是主變第幾手（不在主變上＝-1） */
+  async function red(b, left, k) {
+    const A = await allMoves(E, b, "r");
+    if (A.moves.some((m) => !(m in A.sc))) throw new Error("有著法沒分析到（multipv 不足）");
+    const ms = A.moves.map((m) => A.sc[m].mate).filter((v) => v != null && v > 0), best = ms.length ? Math.min(...ms) : null;
+    if (best == null || best > left) throw new Error(`剩 ${left} 步內殺不了`);
+    if (best < left) throw new Error(`有更短的殺法（${best} 步）`);
+    const win = A.moves.filter((m) => A.sc[m].mate === left).sort((a, c) => (a === L[k] ? -1 : c === L[k] ? 1 : a < c ? -1 : 1));
+    if (k >= 0 && !win.includes(L[k])) throw new Error(`主變第 ${k + 1} 手 ${L[k]} 不是最快殺`);
+    if (win.length > 1) fork = true;
+    const node = {};
+    for (const m of win) {
+      const b1 = mv(b, m);
+      if (left === 1) { if (!(C.inCheck(b1, "b") && C.legal(b1, "b").length === 0)) throw new Error(`${m} 引擎說一步殺，走完卻沒將死`); node[m] = 0; continue }
+      const B = await allMoves(E, b1, "b"), bm = B.moves.map((r) => B.sc[r].mate).filter((v) => v != null && v < 0), worst = Math.min(...bm);
+      const main = k >= 0 && m === L[k];
+      if (main && B.sc[L[k + 1]].mate !== worst) throw new Error(`主變第 ${k + 2} 手（黑）的應著不是撐最久的`);
+      const reply = main ? L[k + 1] : B.moves.filter((r) => B.sc[r].mate === worst).sort()[0];
+      node[m] = [reply, await red(mv(b1, reply), left - 1, main ? k + 2 : -1)];
+    }
+    return node;
+  }
+  let res;
+  try { const alt = await red(board0(x), x.n, 0); res = fork ? { ok: true, why: "", alt } : { ok: true, why: "" } } catch (e) { res = { ok: false, why: String(e && e.message || e) } }
+  ENG[key] = res; return res;
+}
+
+(async () => {
+  const D = JSON.parse(fs.readFileSync(path.join(SITE, "data", "canju", "canju-set.json"), "utf8"));
+  /* --exclude 寫「檔案:題庫名」（例如 xiangqi-db/m/07z9m-maze.js:JH_MZ_POOL_CENTRAL），可以用逗號列好幾個 */
+  const EX = new Set();
+  for (const e of ARGS.exclude) { const i = e.lastIndexOf(":"), f = e.slice(0, i), nm = e.slice(i + 1), T = i > 0 && fs.existsSync(path.resolve(ROOT, f)) ? fs.readFileSync(path.resolve(ROOT, f), "utf8") : "";
+    const a = T.indexOf(`/* ==JH_MZ_POOL:${nm}== */`), b = T.indexOf(`/* ==/JH_MZ_POOL:${nm}== */`); if (a < 0 || b < a) { console.log(`✘ --exclude ${e}：找不到那個檔或那一段`); process.exit(1) } for (const m of T.slice(a, b).matchAll(/"id":"([^"]+)"/g)) EX.add(m[1]) }
+  if (EX.size) console.log(`排除別派已用的 ${EX.size} 題`);
+  const cand = D.items.filter((x) => x && !EX.has(x.id) && minRedOk(x) && x.side === "r" && ARGS.n.includes(x.n) && mated(x) && lastPiece(x) === ARGS.mate && board0(x).filter(Boolean).length <= ARGS.maxPieces && (GAMES || !isGame(x)))
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  console.log(`候選 ${cand.length} 題（${ARGS.n.join("、")} 步殺、${ARGS.mate} 收尾、子數 ≤ ${ARGS.maxPieces}、${GAMES ? "含實戰對局" : "只收古譜"}）`);
+  const E = process.env.PIKAFISH && !CHECK ? await require("./zm-engine.js").engine() : null;
+  const ok = [];
+  for (const x of cand) { const r = MULTI ? await verifyMulti(E, x) : await verify(E, x); if (!r) continue; console.log((r.ok ? "✔ " : "✘ ") + x.id + " " + x.n + " 步" + (r.ok ? (r.alt ? "（有其他最快殺法）" : "") : "：" + r.why)); if (r.ok) { if (r.alt) x.alt = r.alt; ok.push(x) } }
+  if (E) { E.quit(); const o = {}; for (const k of Object.keys(ENG).sort()) o[k] = ENG[k]; fs.writeFileSync(ENG_F, JSON.stringify(o, null, 0).replace(/\},"/g, "},\n\"") + "\n") }
+  /* 石門取步數多的、陷阱取剩下的；同一題不重複 */
+  const ok2 = [...ok].sort((a, b) => pref(a) - pref(b)), byN = [...ok2].sort((a, b) => pref(a) - pref(b) || b.n - a.n || (a.id < b.id ? -1 : 1)), door = byN.slice(0, ARGS.door), used = new Set(door.map((x) => x.id)), trap = ok2.filter((x) => !used.has(x.id)).slice(0, ARGS.trap);
+  if (door.length < ARGS.door || trap.length < ARGS.trap) { console.log(`✘ 題目不夠：石門 ${door.length}／${ARGS.door}、陷阱 ${trap.length}／${ARGS.trap}`); process.exit(1) }
+  const fill = (t, n) => t.split("{n}").join(String(n));
+  const item = (x, T, Dd) => Object.assign({ id: x.id, src: { book: x.src.book, title: x.src.title || "" }, zh: [T[0], fill(Dd[0], x.n)], en: [T[1], fill(Dd[1], x.n)], fen: String(x.fen).split(" ")[0], line: x.line }, x.alt ? { alt: x.alt } : {});
+  const body = `const ${ARGS.name}={door:[\n${door.map((x) => JSON.stringify(item(x, ARGS.tDoor, ARGS.dDoor))).join(",\n")}],\ntrap:[\n${trap.map((x) => JSON.stringify(item(x, ARGS.tTrap, ARGS.dTrap))).join(",\n")}]};\n`;
+  const M0 = `/* ==JH_MZ_POOL:${ARGS.name}== */\n`, M1 = `/* ==/JH_MZ_POOL:${ARGS.name}== */`, OUT = path.resolve(ROOT, ARGS.out), SRC = fs.readFileSync(OUT, "utf8"), i0 = SRC.indexOf(M0), i1 = SRC.indexOf(M1);
+  if (i0 < 0 || i1 < i0) { console.log(`✘ ${ARGS.out} 裡找不到 ${M0.trim()} 那一段`); process.exit(1) }
+  const next = SRC.slice(0, i0) + M0 + body + SRC.slice(i1);
+  if (CHECK) { const same = next === SRC; console.log(same ? "✔ 一樣：檔裡的題庫跟重跑結果逐字相同" : "✘ 不一樣"); process.exit(same ? 0 : 1) }
+  fs.writeFileSync(OUT, next); console.log(`✔ 寫回 ${ARGS.out}：石門 ${door.length} 題、陷阱 ${trap.length} 題`);
+})().catch((e) => { console.error("✘ " + (e && e.message || e)); process.exit(1) });
