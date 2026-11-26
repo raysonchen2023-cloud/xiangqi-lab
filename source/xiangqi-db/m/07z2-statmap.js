@@ -14,6 +14,23 @@ const JZ2_LAMP=[632,312],JZ2_BOOK=[225,715],JZ2_SCROLL=[480,712];
 const SHW_JZ2={el:40,h:[.085,92,.0028],look0:[46,40],home:"home",N:{home:[45,97],mid:[46,82],desk:[44,70],tbl:[62,86]},E:"home-mid mid-desk mid-tbl",
   HS:{jz2Rank:["desk",44,34,"idle"],jz2Book:["desk",29,52,"idle"],jz2Scroll:["desk",62,52,"idle"],jz2Tbl:["tbl",86,75,"idle"],jz2Lamp:["desk",82,23,"idle"]}};
 const jz2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
+/* W107-L 第 1 批 iPad 橫向專用圖（l1610，2560×1600；Windows Claude 1 11/25 量，output/w107-ipad/l1610/statmap/stat_day_classic_l1610.json）：
+   經典版、原圖版共用一套座標；夜景沒有橫式圖＝照舊原圖。S 入口、exit 出口、walk 走路節點、fx.hitTbl 棋桌熱區是圖的 %；
+   fx.board 榜面（左、上、右、下）、fx.table 棋桌桌面四角（左上、右上、右下、左下）、fx.lamp 紗燈直寫段位的位置是橫式圖像素。
+   書桌腳到 y 85.6，路線都在書桌前；tbl 在書桌右腳和棋桌左凳之間。小人身高照榜面、棋桌寬換算（.085 → .13）；點了的動作照原本（待機） */
+if(typeof SCW!=="undefined"){const e={ready:true,f:"statmap/stat_day_classic_l1610",w:2560,h:1600,
+    S:{jz2Rank:[50,16],jz2Book:[29.5,58],jz2Scroll:[51.5,58],jz2Tbl:[83,66],jz2Lamp:[84,10]},exit:[14,92],safe:{l:.12,r:.12,t:.05,b:.10},
+    walk:{W:2560,H:1600,el:40,h:[.13,92,.004],look0:[50,40],home:"home",N:{home:[50,96],mid:[50,90],desk:[35,90],tbl:[63,88]},E:"home-mid mid-desk mid-tbl",
+      HS:{jz2Rank:["mid",50,30,"idle"],jz2Book:["desk",29.5,61,"idle"],jz2Scroll:["mid",51.5,61,"idle"],jz2Tbl:["tbl",82,70,"idle"],jz2Lamp:["tbl",84,18,"idle"]}},
+    fx:{board:[768,294,1784,814],table:[[1907,1101],[2176,1096],[2330,1293],[1951,1293]],hitTbl:[74.5,68,16.5,13],lamp:[2150,358]}};
+  SCW["statmap/stat_day_classic"]=e;SCW["statmap/stat_day"]=Object.assign({},e,{f:"statmap/stat_day_l1610"})}
+/* 現在用的那張圖：榜面、棋桌、棋桌熱區、紗燈字照它的座標（橫式圖照條目 fx，原圖照 JZ2_*，棋桌熱區照原本 74.7／71.5／24.2／7.8） */
+function jz2G(P){const e=typeof scwCur==="function"?scwCur(P):null,f=e&&e.fx;if(!f||!f.board)return{W:768,H:1376,board:JZ2_BOARD,table:JZ2_TABLE,hitTbl:[74.7,71.5,24.2,7.8],lamp:JZ2_LAMP};
+  return{W:e.w,H:e.h,board:f.board,table:f.table,hitTbl:f.hitTbl,lamp:f.lamp}}
+const jz2Box=(G,[l,t,r,b])=>`left:${(l/G.W*100).toFixed(2)}%;top:${(t/G.H*100).toFixed(2)}%;width:${((r-l)/G.W*100).toFixed(2)}%;height:${((b-t)/G.H*100).toFixed(2)}%`;
+/* 榜面、榜面熱區（第一個 .jz2-hit）、棋桌熱區（第二個）照現在用的那張圖擺 */
+function jz2Place(P){const G=jz2G(P),bx=jz2Box(G,G.board),[hl,ht,hw,hh]=G.hitTbl,h=P.querySelectorAll(".jz2-hit");
+  P.querySelector(".jz2-board").style.cssText=bx;h[0].style.cssText=bx;h[1].style.cssText=`left:${hl}%;top:${ht}%;width:${hw}%;height:${hh}%`}
 const jz2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function jz2M3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
@@ -56,14 +73,18 @@ function jz2TableSVG(nOk){const W=200,H=225,ox=14,oy=12,cw=(W-2*ox)/8,ch=(H-2*oy
   return`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><g stroke="#5a3a1c" stroke-width="1.1" fill="none">${g}</g>${c}</svg>`}
 function jz2Wrap(v,R0){if(!STAT_MAP_ON||!v.querySelector("#sTabs"))return R0;jz2Css();
   const dk=jz2Dark(),P=document.createElement("div");P.className="shp-page cq jz2-page"+(dk?" jz2-night":"");
+  /* W107-L：iPad 橫向有專用橫式圖（07sw SCW，條目在上面）就一開始載那張；入口、出口照條目，榜面、棋桌、熱區、紗燈字照條目的 fx */
+  const src=xqClImg(`data/statmap/${dk?"stat_night":"stat_day"}.webp?v=${JZ2_IMGV}`),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}
   const sp=(id,x,y,t)=>{const[a,b]=jz2Pc(x,y);return`<button class="shp-spot jz2-tag" id="${id}" style="left:${a}%;top:${b}%"><b>${t}</b></button>`},[bl,bt,br,bb]=JZ2_BOARD;
   const NET=!!(OFF&&window.XQNet);
-  P.innerHTML=`<img src="${xqClImg(`data/statmap/${dk?"stat_night":"stat_day"}.webp?v=${JZ2_IMGV}`)}" alt="書院廊下的朱紅榜">
+  P.innerHTML=`<img src="${pre.src}" alt="書院廊下的朱紅榜">
     <div class="jz2-fx"><div class="jz2-board" style="left:${(bl/7.68).toFixed(2)}%;top:${(bt/13.76).toFixed(2)}%;width:${((br-bl)/7.68).toFixed(2)}%;height:${((bb-bt)/13.76).toFixed(2)}%"></div><div class="jz2-tq"></div><div class="jz2-lw"></div></div>
     <button type="button" class="jz2-hit" data-to="jz2Rank" aria-label="朱紅榜：段位、進度、五邊形" style="left:${(bl/7.68).toFixed(2)}%;top:${(bt/13.76).toFixed(2)}%;width:${((br-bl)/7.68).toFixed(2)}%;height:${((bb-bt)/13.76).toFixed(2)}%"></button><button type="button" class="jz2-hit" data-to="jz2Tbl" aria-label="棋桌：電腦" style="left:74.7%;top:71.5%;width:24.2%;height:7.8%"></button>
     ${sp("jz2Rank",354,330,"📋 總覽")}${sp("jz2Book",JZ2_BOOK[0],JZ2_BOOK[1]-48,"課簿・對局紀錄")}${sp("jz2Scroll",JZ2_SCROLL[0],JZ2_SCROLL[1]-48,"手卷・我的成長")}${sp("jz2Tbl",665,950,"棋桌・電腦")}${NET?sp("jz2Lamp",632,230,"紗燈・線上"):""}`;
   v.insertBefore(P,v.firstChild);
-  const tq=P.querySelector(".jz2-tq"),fit=()=>{const k=P.clientWidth/768;if(!k)return;tq.style.transform=jz2M3(200,225,JZ2_TABLE.map(([x,y])=>[x*k,y*k]))};
+  /* 榜面、熱區、棋桌照現在用的那張圖擺（原圖照舊；換圖時 07sw 叫 apply 再擺一次） */
+  const tq=P.querySelector(".jz2-tq"),place=()=>jz2Place(P),
+    fit=()=>{const G=jz2G(P),k=P.clientWidth/G.W;if(!k)return;tq.style.transform=jz2M3(200,225,G.table.map(([x,y])=>[x*k,y*k]))};
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit();
   /* 回饋 828（開發者 11/9）：頁面只留滿版圖。原本接在圖下的戰績（四個分頁、對局紀錄、成長、電腦、線上）整塊收進一張面板（07w 的 xqSheet，照 812 修正紀錄的做法）：
      點榜上的標籤（或榜面、棋桌本身）＝切到那一分頁、展開面板、捲到那一塊；面板裡照舊可以切分頁；返回鍵、點外面、✕ 收起 */
@@ -86,15 +107,18 @@ function jz2Wrap(v,R0){if(!STAT_MAP_ON||!v.querySelector("#sTabs"))return R0;jz2
   /* 資料：段位（線上優先）、自選難度過關幾級、五邊形 */
   let R=null,lab="",A=null,pk=null,nOk=0;
   const paint=()=>{if(!P.isConnected)return;P.querySelector(".jz2-board").innerHTML=jz2BoardSVG(R,lab,A,pk);tq.innerHTML=jz2TableSVG(nOk);
-    const lw=P.querySelector(".jz2-lw");if(NET){let O=null;try{O=XQNet.rating()}catch(e){}const[a,b]=jz2Pc(...JZ2_LAMP);lw.innerHTML=O?`<span class="jz2-lamp" style="left:${a}%;top:${b}%">${esc(O.rank)}</span>`:""}};
+    const lw=P.querySelector(".jz2-lw");if(NET){let O=null;try{O=XQNet.rating()}catch(e){}const G=jz2G(P),a=(G.lamp[0]/G.W*100).toFixed(2),b=(G.lamp[1]/G.H*100).toFixed(2);lw.innerHTML=O?`<span class="jz2-lamp" style="left:${a}%;top:${b}%">${esc(O.rank)}</span>`:""}};
   if(NET){try{R=XQNet.rating();lab="線上段位"}catch(e){}}
   paint();
+  const cfg=Object.assign({},SHW_PG0,SHW_JZ2);let cfgNow=cfg;
+  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:["jz2Rank","jz2Book","jz2Scroll","jz2Tbl","jz2Lamp"],pfx:"jz2",cfg0:cfg,apply:()=>{place();fit();paint()}};
+    scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}place();fit();paint()}
   api("/play/state").then(ST=>{if(!ST)return;nOk=(ST.levels||[]).filter(l=>((ST.record||{})[l.n]||{}).w).length;if(!R&&ST.cpuRate){R=ST.cpuRate;lab="電腦段位・晉級賽"}paint()}).catch(()=>{});
   (async()=>{try{const{G}=await skillRows();A=skillAxes(G,tlIRT(store.get("quizLog",[])));pk=skillPick(A);paint()}catch(e){}})();
   /* 電腦分頁的過關 ✔ 改成朱圈 */
   const mo=new MutationObserver(()=>{if(!P.isConnected){mo.disconnect();return}v.querySelectorAll(".st-lv .w").forEach(x=>{if(x.textContent==="✔"&&!x.classList.contains("jz2-ok")){x.classList.add("jz2-ok");x.setAttribute("aria-label","過關")}})});
   const body=v.querySelector("#sBody");if(body)mo.observe(body,{childList:true,subtree:true});
-  if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_JZ2),"jz2")}catch(e){}}
+  if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfgNow,"jz2")}catch(e){}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
   return R0}

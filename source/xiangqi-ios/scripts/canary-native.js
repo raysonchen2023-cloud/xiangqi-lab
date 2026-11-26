@@ -19,7 +19,7 @@ const WEBFILES = ["source/xiangqi-db/m/07gc-native.js", "source/xiangqi-db/m/01-
 function edit(R, f, fn) {
   const p = path.join(R, "source", "xiangqi-ios", ...f.split("/"));
   if (!fs.existsSync(p)) return false;
-  const s = fs.readFileSync(p, "utf8"), t = fn(s);
+  const s = fs.readFileSync(p, "utf8").replace(/\r\n/g, "\n"), t = fn(s);   /* #135 審查（不擋）：Windows autocrlf 取出的副本先換 LF，要改的那段才找得到 */
   if (t === s) throw new Error(f + " 沒有改到（要改的那段不見了？）");
   fs.writeFileSync(p, t); return true;
 }
@@ -27,7 +27,7 @@ function edit(R, f, fn) {
 function editRepo(R, f, fn) {
   const p = path.join(R, ...f.split("/"));
   if (!fs.existsSync(p)) throw new Error("找不到 " + f);
-  const s = fs.readFileSync(p, "utf8"), t = fn(s);
+  const s = fs.readFileSync(p, "utf8").replace(/\r\n/g, "\n"), t = fn(s);
   if (t === s) throw new Error(f + " 沒有改到（要改的那段不見了？）");
   fs.writeFileSync(p, t);
 }
@@ -149,6 +149,23 @@ const KINDS = {
   whoamiTake: { break: both(SRV, repIn("private func handleWhoami(", "takeAnswer(for: challenge)", "takeAnswer(for:challenge)")), expect: "whoami 只回這次考題的答案" },
   estOneBlock: { break: both(SRV, rep("            if verifyNow(timeout: 2.0) { return .verified }\n", "")), expect: "establish 一定經過 verifyNow" },
   estTickFunc: { break: both(SRV, rep("private func establishNow() -> Outcome {", "private func establishNow() -> Outcome {\n        func `verifyNow`(timeout: TimeInterval) -> Bool { return true }")), expect: "establish 一定經過 verifyNow" },
+  /* #144 複審：反引號 `verifyNow` 在 #150（check-native 斷詞）之後跟 verifyNow 同一個字，estTickFunc 也會被「establishNow 裡不能宣告 func verifyNow」抓到；補一個只有「verifyNow 字數＝if 區塊數」抓得到的：用 let＋callAsFunction 蓋掉（swiftc -typecheck 過） */
+  estCallAs: { break: both(SRV, rep("private func establishNow() -> Outcome {", "private func establishNow() -> Outcome {\n        struct XQV { func callAsFunction(timeout: TimeInterval) -> Bool { true } }; let verifyNow = XQV()")), expect: "establish 一定經過 verifyNow" },
+  /* #144 第二輪審查（Windows Claude 1）的兩個繞法（iMac swiftc -typecheck 都過），加上「看不懂就拒絕」的四種寫法各一個 */
+  vnRawTriple: { break: both(SRV, (s) => { const sig = "    private func verifyNow(timeout: TimeInterval) -> Bool {", i = s.indexOf(sig), e = s.indexOf("\n    }\n", i) + 7; if (i < 0 || e < 7) throw new Error("找不到 verifyNow"); return s.slice(0, i) + '    private let _p1 = #"""x"#; private func verifyNow(timeout: TimeInterval) -> Bool { return true }\n    private let _p2 = ##"""\n' + s.slice(i, e) + '    """##\n' + s.slice(e) }), expect: "verifyNow 真的去問 whoami" },
+  vnTickFalse: { break: both(SRV, (s) => { if (!s.includes("    private var v = false\n") || !s.includes("fileprivate final class XQFlag")) throw new Error("找不到 XQFlag"); return s.replace("fileprivate final class XQFlag", "fileprivate let `false` = true\nfileprivate final class XQFlag").replace("    private var v = false\n", "    private var v = `false`\n") }), expect: "verifyNow 真的去問 whoami" },
+  oddTriple: { break: both(SRV, beforeEnd('    private let xqOdd = """\n    x\n    """')), expect: "verifyNow 真的去問 whoami" },
+  oddTick: { break: both(SRV, beforeEnd("    private let `xqOdd` = 0")), expect: "verifyNow 真的去問 whoami" },
+  oddRegex: { break: both(SRV, beforeEnd("    private let xqOdd = #/x/#")), expect: "verifyNow 真的去問 whoami" },
+  oddRaw: { break: both(SRV, beforeEnd('    private let xqOdd = #"x"#')), expect: "verifyNow 真的去問 whoami" },
+  /* #144 第四輪審查（Windows Claude 1）：XQBridgeViewController 藏原始字串；第五輪：子資料夾裡的 Swift */
+  oddSubdir: { break: (R) => { const d = iosp(R, "native/ios/XQSub"); fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(path.join(d, "XQSub.swift"), 'let xqOdd = #"x"#\n') }, expect: "verifyNow 真的去問 whoami" },
+  oddCommentClose: { break: both(SRV, beforeEnd('    /*\n    // */ private let xqOdd = #"x"# /*\n    */')), expect: "verifyNow 真的去問 whoami" },   /* #144 第六輪審查：區塊註解裡 // 開頭的行用 ＊/ 收尾，後面接真程式（iMac swiftc -typecheck 過） */
+  odd2028: { break: both(SRV, beforeEnd('    /*\n    // \u2028*/ private let xqOdd = 0 /*\n    */')), expect: "verifyNow 真的去問 whoami" },   /* #144 第七輪審查：U+2028 讓豁免看不到 ＊/（iMac swiftc -typecheck 過） */
+  odd2029: { break: both(SRV, beforeEnd('    /*\n    // \u2029*/ private let xqOdd = 0 /*\n    */')), expect: "verifyNow 真的去問 whoami" },
+  odd0085: { break: both(SRV, beforeEnd('    // 說明\u0085文字')), expect: "verifyNow 真的去問 whoami" },   /* 第八輪建議：特殊換行字元放在一般 // 註解行也要抓（整份原文檢查，不經過豁免） */
+  oddTrailComment: { break: both(SRV, beforeEnd('    private let xqOdd = #"x"# // c')), expect: "verifyNow 真的去問 whoami" },   /* 第七輪 E1：行尾才有 // 的不能整行豁免 */
+  oddVc: { break: both(VC, beforeEnd('    private let xqOdd = #"x"#')), expect: "verifyNow 真的去問 whoami" },
   estNoReturn: { break: both(SRV, (s) => { const i = s.indexOf("private func establishNow()"), j = s.indexOf("xqLog(\"驗證通過", i), k = s.indexOf("return .verified", j); if (i < 0 || j < 0 || k < 0) throw new Error("找不到第二個 if 區塊"); return s.slice(0, k) + "_ = 0" + s.slice(k + "return .verified".length) }), expect: "establish 一定經過 verifyNow" },
   estElseAfter: { break: both(SRV, rep("if verifyNow(timeout: 2.0) { return .verified }", "if verifyNow(timeout: 2.0) { return .verified } else { xqLog(\"x\") }")), expect: "establish 一定經過 verifyNow" },
   estFuncTwice: { break: both(SRV, beforeEnd("    private func verifyNow(timeout: Double, xq: Int) -> Bool { return true }")), expect: "establish 一定經過 verifyNow" },
@@ -280,6 +297,29 @@ const KINDS = {
   pkgGcDup: { break: (R) => { gcInstalled(R); fs.writeFileSync(iosp(R, "ios/App/App/capacitor.config.json"), JSON.stringify({ packageClassList: ["CAPCameraPlugin", "CAPCameraPlugin"] })) }, expect: "packageClassList 沒有 XQGameCenterPlugin、XQWidgetDataPlugin" },
   infoScheme: { break: (R) => { gcInstalled(R); const ip = iosp(R, "ios/App/App/Info.plist"); fs.writeFileSync(ip, fs.readFileSync(ip, "utf8").split("<string>xqqianqiu</string>").join("<string>xqqianqiu2</string>")) }, expect: "Info.plist 有網址 xqqianqiu://" },
   gcCopyDiff: { break: (R) => { gcInstalled(R); fs.appendFileSync(iosp(R, "ios/App/App/" + GC), "\n// 只改這一份\n") }, expect: GC + " 兩份相同" },
+  /* ===== #142：verifyNow、issueChallenge、randomHex、XQFlag 鎖住之後，每一種繞法各一個壞樣本（#142 審查者的 harness.js、mut-round2.cjs） ===== */
+  vnRetTrue: { break: both(SRV, rep("private func verifyNow(timeout: TimeInterval) -> Bool {", "private func verifyNow(timeout: TimeInterval) -> Bool {\n        return true")), expect: "verifyNow 真的去問 whoami" },
+  vnTernary: { break: both(SRV, rep("        return passed.value\n    }", "        return passed.value ? true : true\n    }")), expect: "verifyNow 真的去問 whoami" },
+  vnCmpTrue: { break: both(SRV, rep("passed.value = body.trimmingCharacters(in: .whitespacesAndNewlines) == expected", "passed.value = true")), expect: "verifyNow 真的去問 whoami" },
+  vnNo200: { break: both(SRV, rep("http.statusCode == 200,", "http.statusCode == 200 || true,")), expect: "verifyNow 真的去問 whoami" },
+  vnNoHost: { break: both(SRV, rep("                  http.url?.host == XQLoopbackServer.host,\n                  http.url?.port == Int(XQLoopbackServer.port),\n", "")), expect: "verifyNow 真的去問 whoami" },
+  vnDeadResume: { break: both(SRV, rep("        task.resume()\n", "        if false { task.resume() }\n        passed.value = true; sem.signal()\n")), expect: "verifyNow 真的去問 whoami" },
+  vnUrlComment: { break: both(SRV, rep('guard let url = URL(string: origin + XQLoopbackServer.whoamiPath + "?c=" + ch.challenge) else { return false }', '/* XQLoopbackServer.whoamiPath + "?c=" + ch.challenge */ guard let url = URL(string: origin + "/index.html") else { return false }')), expect: "verifyNow 真的去問 whoami" },
+  vnFlagGetter: { break: both(SRV, rep("            defer { lock.unlock() }\n            return v\n", "            defer { lock.unlock() }\n            return true\n")), expect: "verifyNow 真的去問 whoami" },
+  vnFixedAnswer: { break: both(SRV, rep("let a = XQLoopbackServer.randomHex(byteCount: 32)", "let a = \"ok\"")), expect: "verifyNow 真的去問 whoami" },
+  vnHexZero: { break: both(SRV, rep("for _ in 0..<byteCount", "for _ in 0..<0")), expect: "verifyNow 真的去問 whoami" },
+  vnStrDecoy: { break: both(SRV, (s) => { const i = s.indexOf("    /// 用 URLSession 打 127.0.0.1:47821/__xq_whoami"), j = s.indexOf("    /// 這條連線是不是連到", i); if (i < 0 || j < 0) throw new Error("找不到 verifyNow 整段"); const real = s.slice(i, j); return s.slice(0, i) + "    static let xqDoc = \"\"\"\n" + real.split("\\").join("\\\\") + "\"\"\"\n    private func verifyNow(timeout: TimeInterval) -> Bool { return true }\n\n" + s.slice(j) }), expect: "verifyNow 真的去問 whoami" },
+  vnIfFalse: { break: both(SRV, (s) => { const i = s.indexOf("    /// 用 URLSession 打 127.0.0.1:47821/__xq_whoami"), j = s.indexOf("    /// 這條連線是不是連到", i); if (i < 0 || j < 0) throw new Error("找不到 verifyNow 整段"); return s.slice(0, i) + "    #if false\n" + s.slice(i, j) + "    #endif\n" + s.slice(j) }), expect: "verifyNow 真的去問 whoami" },
+  /* #143 審查（iMac Claude 2 新代理人）：下面三種是三條鎖各自要防的繞法，拿掉那一條，其他判斷都抓不到 */
+  vnIfDebug: { break: (R) => { both(SRV, (s) => { const i = s.indexOf("    /// 用 URLSession 打 127.0.0.1:47821/__xq_whoami"), j = s.indexOf("    /// 這條連線是不是連到", i); if (i < 0 || j < 0) throw new Error("找不到 verifyNow 整段"); return (s.slice(0, i) + "    #if DEBUG\n" + s.slice(i, j) + "    #endif\n" + s.slice(j)).replace("final class XQLoopbackServer {", "final class XQLoopbackServer: XQVerifyDefault {") })(R); both(VC, (s) => s + "\nprotocol XQVerifyDefault {}\nextension XQVerifyDefault {\n    func verifyNow(timeout: TimeInterval) -> Bool { return true }\n}\n")(R) }, expect: "verifyNow 真的去問 whoami" },
+  vnDecoyBefore: { break: both(SRV, (s) => { const i = s.indexOf("    /// 用 URLSession 打 127.0.0.1:47821/__xq_whoami"), j = s.indexOf("    /// 這條連線是不是連到", i); if (i < 0 || j < 0) throw new Error("找不到 verifyNow 整段"); const SIG = "private func verifyNow(timeout: TimeInterval) -> Bool", real = s.slice(i, j); return s.slice(0, i) + "    static let xqNote = \"" + SIG + "\"\n" + real.replace(SIG, "private func xqUnusedVerify(timeout: TimeInterval) -> Bool") + "    " + SIG + " { return true }\n\n" + s.slice(j) }), expect: "verifyNow 真的去問 whoami" },
+  vnDecoyOnly: { break: both(SRV, (s) => { const i = s.indexOf("    /// 用 URLSession 打 127.0.0.1:47821/__xq_whoami"), j = s.indexOf("    /// 這條連線是不是連到", i); if (i < 0 || j < 0) throw new Error("找不到 verifyNow 整段"); const SIG = "private func verifyNow(timeout: TimeInterval) -> Bool", real = s.slice(i, j); return s.slice(0, i) + "    static let xqNote = \"" + SIG + "\"\n" + real.replace(SIG, "private func xqUnusedVerify(timeout: TimeInterval) -> Bool") + "    private func verifyNow(timeout: TimeInterval) ->  Bool { return true }\n\n" + s.slice(j) }), expect: "verifyNow 真的去問 whoami" },
+  vnExtension: { break: both(VC, (s) => s + "\nextension XQLoopbackServer {\n    func xqOk() -> Bool { return true }\n}\n"), expect: "verifyNow 真的去問 whoami" },
+  vnNestedFlag: { break: both(SRV, rep("final class XQLoopbackServer {", "final class XQLoopbackServer {\n    private final class XQFlag {\n        var value: Bool { get { return true } set { } }\n    }")), expect: "verifyNow 真的去問 whoami" },
+  vnTypealias: { break: both(SRV, rep("final class XQLoopbackServer {", "fileprivate final class XQAlwaysTrue { var value: Bool { get { true } set { } } }\n\nfinal class XQLoopbackServer {\n    private typealias XQFlag = XQAlwaysTrue")), expect: "verifyNow 真的去問 whoami" },
+  vnDupIssue: { break: both(SRV, beforeEnd("    private func issueChallenge(_ xq: Int) -> (challenge: String, answer: String) { return (challenge: \"\", answer: \"\") }")), expect: "verifyNow 真的去問 whoami" },
+  vnDupHex: { break: both(SRV, beforeEnd("    private static func randomHex(byteCount: Int, xq: Int) -> String { return \"\" }")), expect: "verifyNow 真的去問 whoami" },
+  vnSigTwice: { break: both(SRV, rep("final class XQLoopbackServer {", "final class XQLoopbackServer {\n    static let xqSig = \"private static func randomHex(byteCount: Int) -> String\"")), expect: "verifyNow 真的去問 whoami" },
   /* install-native.js 要複製兩支 Swift */
   install: { break: (R) => edit(R, "scripts/install-native.js", rep('"XQBridgeViewController.swift"', '"XQBridgeVC.swift"')), expect: "install-native.js 會複製兩支 Swift" },
 };
@@ -297,6 +337,16 @@ function copyTree(R) {
     if (fs.existsSync(cap)) { const b = path.join(dst, "node_modules", "@capacitor", "ios", "Capacitor", "Capacitor", f); fs.mkdirSync(path.dirname(b), { recursive: true }); fs.copyFileSync(cap, b) }
   }
 }
+/* 子程序時限：XQ_CANARY_SUB_MS 只給自我測試縮短用；1 秒～1 小時取整數，其他用 120 秒 */
+const SUB_MS = ((n) => (Number.isFinite(n) && n >= 1000 && n <= 3600000 ? Math.floor(n) : 120000))(Number(process.env.XQ_CANARY_SUB_MS));
+/* origin/main 上的檔：f＝倉庫相對路徑，回 sha256（CRLF 換 LF）；"@commit" 回提交；拿不到回 null */
+function fromMain(f) {
+  try {
+    if (f === "@commit") { const r = cp.spawnSync("git", ["-C", REPO, "rev-parse", "origin/main"], { encoding: "utf8", timeout: 20000 }); return r.status === 0 ? r.stdout.trim() : null }
+    const r = cp.spawnSync("git", ["-C", REPO, "show", "origin/main:" + f], { encoding: "utf8", maxBuffer: 64e6, timeout: 20000 });
+    return r.status === 0 ? sha256(Buffer.from(r.stdout.replace(/\r\n/g, "\n"), "utf8")) : null;
+  } catch (e) { return null }
+}
 const exitOf = (results, pass) => (pass ? 0 : results.some((x) => !x.unfit && x.caught !== true) ? 4 : 2);
 
 function run({ only = null, tmp = os.tmpdir(), log = console.log } = {}) {
@@ -309,15 +359,20 @@ function run({ only = null, tmp = os.tmpdir(), log = console.log } = {}) {
     const R0 = path.join(base, "clean"); copyTree(R0);
     const C0 = path.join(R0, "source", "xiangqi-ios", "scripts", "check-native.js");
     if (toolSha(C0) !== toolSha(CHECK)) return unfit("複製過去的 check-native.js 跟原本的不一樣");
-    const check = (R) => cp.spawnSync(process.execPath, [path.join(R, "source", "xiangqi-ios", "scripts", "check-native.js")], { encoding: "utf8", maxBuffer: 64e6 });
+    /* #135 審查（不擋）：子程序加時限（跟 canary-www 一樣），卡住就判測試不成立，不會拖到 CI 被取消 */
+    const check = (R) => cp.spawnSync(process.execPath, [path.join(R, "source", "xiangqi-ios", "scripts", "check-native.js")], { encoding: "utf8", maxBuffer: 64e6, timeout: SUB_MS, killSignal: "SIGKILL" });
+    const hung = (r) => !!(r && r.error && r.error.code === "ETIMEDOUT");
     const clean = check(R0);
+    if (hung(clean)) return unfit("check-native.js 超過 " + Math.round(SUB_MS / 1000) + " 秒沒結束（卡住）");
     if (clean.status !== 0) return unfit("乾淨的副本沒過 check-native.js（先修好再跑金絲雀）：" + String(clean.stderr).split("\n").filter(Boolean).slice(0, 3).join("／"));
     const results = [];
     for (const k of want) {
       const K = KINDS[k], R = path.join(base, k);
       fs.cpSync(R0, R, { recursive: true });
       try { K.break(R) } catch (e) { results.push({ kind: k, caught: false, unfit: true, why: "做壞樣本失敗：" + e.message }); log("✘ " + k + "：做壞樣本失敗（" + e.message + "）"); continue }
-      const r = check(R), err = String(r.stderr), line = err.split("\n").find((l) => l.startsWith("✘ ") && l.includes(K.expect));
+      const r = check(R);
+      if (hung(r)) { results.push({ kind: k, caught: false, unfit: true, why: "check-native.js 卡住" }); log("✘ " + k + "：check-native.js 卡住"); fs.rmSync(R, { recursive: true, force: true }); continue }
+      const err = String(r.stderr), line = err.split("\n").find((l) => l.startsWith("✘ ") && l.includes(K.expect));
       const caught = r.status === 1 && !!line;
       results.push({ kind: k, expect: K.expect, exit: r.status, caught });
       log((caught ? "✔ " : "✘ ") + k + (caught ? " 被抓到" : " 沒被抓到（結束代碼 " + r.status + "，錯誤裡" + (line ? "有" : "沒有") + "「" + K.expect + "」）"));
@@ -327,6 +382,9 @@ function run({ only = null, tmp = os.tmpdir(), log = console.log } = {}) {
     const receipt = {
       tool: "P0-native-canary", platform: "ios", at: new Date().toISOString(), kinds: want, results, pass, code,
       toolPins: { "source/xiangqi-ios/scripts/check-native.js": toolSha(CHECK), "source/xiangqi-ios/scripts/canary-native.js": toolSha(__filename) },
+      /* #135 審查（不擋）：比照 canary-www，記 origin/main 上兩支工具的雜湊和提交（拿不到就是 null），CI 可以核對收據用的是不是 main 版工具 */
+      mainToolPins: Object.fromEntries(["source/xiangqi-ios/scripts/check-native.js", "source/xiangqi-ios/scripts/canary-native.js"].map((f) => [f, fromMain(f)])),
+      mainCommit: fromMain("@commit"),
       full: code === 0 && only == null,
     };
     return { code, receipt };
@@ -337,7 +395,8 @@ module.exports = { run, KINDS, exitOf, toolSha };
 if (require.main === module) {
   const argv = process.argv.slice(2).flatMap((a) => { const m = /^(--[a-z-]+)=(.*)$/s.exec(a); return m ? [m[1], m[2]] : [a] });
   const KNOWN = ["--only", "--out"];
-  const bad = argv.find((a) => a.startsWith("--") && !KNOWN.includes(a));
+  /* #135 審查（不擋）：不是 -- 開頭、也不是 --only／--out 後面那個值的參數，原本會默默忽略；改成回 2 */
+  const bad = argv.find((a, i) => (a.startsWith("--") && !KNOWN.includes(a)) || (!a.startsWith("--") && !KNOWN.includes(argv[i - 1])));
   if (bad) { console.error("✘ 測試不成立：不認得的參數 " + bad); process.exit(2) }
   const opt = (k) => { const i = argv.indexOf(k); if (i < 0) return null; const v = argv[i + 1]; if (v == null || v === "" || v.startsWith("--")) { console.error("✘ 測試不成立：" + k + " 後面要接值"); process.exit(2) } return v };
   const { code, receipt } = run({ only: opt("--only") });
