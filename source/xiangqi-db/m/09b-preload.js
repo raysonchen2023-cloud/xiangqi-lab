@@ -305,8 +305,8 @@ function PvpGame(v){
   function render(s){if(!askD){askD=true;pvpAskResume(s)}const n0=lastN;st=s;lastN=s.moves.length;if(seat!=="w"&&lastN>(n0||0))setTimeout(()=>{if(typeof repWarn==="function")repWarn(st,mySide(),()=>{if(st&&!st.result)post("/pvp/draw",{side:mySide()})})},700);   /* 開發者 11/11 選規劃書方案 01 */
     /* 意見回饋 598：對方的棋一到就輕震一下，狀態列也寫出對方走了哪一步——對方秒回時，才不會以為自己能連走兩步 */
     if(n0!=null&&lastN>n0&&seat&&seat!=="w"){const L=s.moves[s.moves.length-1];if(L&&L.by&&L.by!==seat){vibrate([15,60,15]);if(typeof pmvArrive==="function")pmvArrive()}}   /* 第 13 輪 F3：記下對方落子的時間（pmvStats 量預走反應） */if(NET&&s.mySide&&s.mySide!==seat){seat=s.mySide;flipMan=null;setTitle();flipBtn()}if(!st.legal.some(([f])=>f===sel))sel=-1;draw();
-    if(n0!=null&&lastN===n0+1&&view==null){const cue=openingCue(st.moves);if(cue)setTimeout(()=>openFx(bd.svg,cue[1],cue[0]),350)}
-    {const gk=NET&&window.XQNet&&XQNet.gid?XQNet.gid():null;if(NET&&gk&&!st.result&&!st.moves.length&&seat!=="w"&&KJ_LAST!==gk){KJ_LAST=gk;loadKaiju();setTimeout(()=>kaijuFx(bd.svg,"r"),parkOn()?1600:350)}}   /* 意見回饋 416：線上對戰也有開局特效（觀戰的人不播） */
+    if(n0!=null&&lastN===n0+1&&view==null){const cue=openingCue(st.moves);if(cue){const n1=lastN,g1=st.id;stillHere(350,()=>openFx(bd.svg,cue[1],cue[0]),()=>!!st&&st.id===g1&&st.moves.length===n1&&bd.svg.isConnected)}}   /* W120：0.35 秒內悔棋、又走一步、換盤就不播 */
+    {const gk=NET&&window.XQNet&&XQNet.gid?XQNet.gid():null;if(NET&&gk&&!st.result&&!st.moves.length&&seat!=="w"&&KJ_LAST!==gk){KJ_LAST=gk;loadKaiju();setTimeout(()=>kaijuFx(bd.svg,"r",0,(()=>{const krn=ROUTE_N,kh=location.hash;return()=>!!st&&!st.result&&!st.moves.length&&!!window.XQNet&&!!XQNet.gid&&XQNet.gid()===gk&&ROUTE_N===krn&&location.hash===kh&&!!bd.svg&&bd.svg.isConnected})()),parkOn()?1600:350)}}   /* 意見回饋 416：線上對戰也有開局特效（觀戰的人不播） */
     const ems=st.emotes||[];if(lastEmo==null)lastEmo=ems.reduce((m,x)=>Math.max(m,x.id),0);
     else for(const x of ems)if(x.id>lastEmo){lastEmo=x.id;if(x.text){const fl0=isFlip(),tp=fl0?"r":"b",pk=parkOn()&&PARK&&PARK.host===v.querySelector("#bbox");
         let said=false;if(pk){try{x.by===tp?PARK.v.oppSay(x.text,4):PARK.v.say(x.text,4);said=true}catch(e){}}if(!said)showChat(x.text,x.by===seat,(NET&&typeof lbnSeat==="function"&&lbnSeat(x.by,x.name)||x.name)||PLAYER[x.by],v.querySelector(x.by===tp?"#pTop":"#pBot"))}else if(seat&&x.by!==seat)showEmote(x.e,false)}
@@ -355,7 +355,7 @@ function PvpGame(v){
     if(st.result&&shownResult!==st.id){shownResult=st.id;vibrate([30,40,30]);try{if(typeof shipGameDone==="function")shipGameDone(st)}catch(e){}
       /* 意見回饋 597：線上對戰也有機會掉寶物（照對手段位），線上不能用、跟電腦下時用 */
       if(NET&&seat&&seat!=="w"&&window.XQNet)try{const G=XQNet.game(),o=G&&(seat==="r"?G.black:G.red),pt=o?((XQNet.people().find(q=>q.id===o.id)||{}).pts??o.pts):null;
-        const ud=itemDrop(st.id||(XQNet.gid&&XQNet.gid()),st.moves.filter(m=>m.by===seat).length,pt==null?1:ptsLv(pt),st.result.w===seat);if(ud)setTimeout(()=>{vibrate([20,40,60]);toast(ud)},2600)}catch(e){}
+        const ud=itemDrop(st.id||(XQNet.gid&&XQNet.gid()),st.moves.filter(m=>m.by===seat).length,pt==null?1:ptsLv(pt),st.result.w===seat);if(ud){const g1=st.id;stillHere(2600,()=>{vibrate([20,40,60]);toast(ud)},()=>!!st&&st.id===g1)}}catch(e){}   /* W120：寶物當下就記（itemDrop），只有吐司 2.6 秒後；換頁、開了新的一盤就不出 */
       /* 意見回饋 323：線上對戰也用原本的勝負動畫（挑戰電腦同一個 killFx），將死以外（認輸、超時、離線）就在說明那行寫原因；結果視窗等動畫播完再出來 */
       {const w=st.result.w,mine=seat==="r"||seat==="b"?seat:null,win=w?(mine?w===mine:true):false;
         if(w&&!st.result.abort&&st.moves.length>=2&&!(typeof blzSkip==="function"&&blzSkip("killFx"))){const loser=w==="r"?"b":"r",k=st.board.indexOf(loser==="r"?"K":"k");
@@ -369,7 +369,7 @@ function PvpGame(v){
   /* 11/16 開發者「同桌對戰初始棋盤有錯」（一進來就是上一盤沒下完的那兩手），選單「先問繼續或新局」：同一支手機輪流下（不是線上、不是觀戰）、有走過、還沒結束，
      這次開 App 這一盤還沒問過（sessionStorage pvpAsk）就先問；開新局沿用兩方名字與計時 */
   function pvpAskResume(s){try{let a="";try{a=sessionStorage.getItem("pvpAsk")||""}catch(e){}if(NET||seat||!s||!s.moves||!s.moves.length||s.result||a===String(s.id))return;try{sessionStorage.setItem("pvpAsk",String(s.id))}catch(e){}
-    setTimeout(()=>modal(`<div class="em">👥</div><h2>上一盤還沒下完</h2><p>同桌對弈下到第 ${s.moves.length} 手。要接著下，還是開一盤新的？</p>`,[["▶ 接著下",null],["＋ 開新局",()=>{shownResult=null;sel=-1;flipMan=null;post("/pvp/new",{red:s.red,black:s.black,tc:s.tcKey})},true]]),300)}catch(e){}}
+    stillHere(300,()=>modal(`<div class="em">👥</div><h2>上一盤還沒下完</h2><p>同桌對弈下到第 ${s.moves.length} 手。要接著下，還是開一盤新的？</p>`,[["▶ 接著下",null],["＋ 開新局",()=>{shownResult=null;sel=-1;flipMan=null;post("/pvp/new",{red:s.red,black:s.black,tc:s.tcKey})},true]]),()=>!!st&&st.id===s.id&&!st.result)}catch(e){}}   /* W120：0.3 秒後還在這頁、還是這一盤、還沒結束才問 */
   function newSheet(){let tc=st?st.tcKey:"none",red=st&&st.red!=="紅方"?st.red:"",black=st&&st.black!=="黑方"?st.black:"";
     sheet("開新局",b=>{const TCS=[["none","不計時"],["10+5","10 分＋5 秒"],["20+10","20 分＋10 秒"],["60+30","60 分＋30 秒"]];
       const paint=()=>{b.innerHTML=`<div class="field"><label>紅方</label><input id="nR" maxlength="20" placeholder="紅方名字" value="${esc(red)}"></div>

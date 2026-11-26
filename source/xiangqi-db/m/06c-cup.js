@@ -40,7 +40,10 @@ function cupGrant(S){if(!S||S.ph!=="done"||!S.place)return;const me=meInfo().id,
   if(pz.ling&&typeof lingAdd==="function"){lingN();lingAdd(pz.ling)}if(pz.hint)store.set("hintBonus",(store.get("hintBonus",0)||0)+pz.hint);if(pz.undo)store.set("undoBonus",undoLeft()+pz.undo);
   if(pz.xp&&typeof addXP==="function")addXP(pz.xp,"千秋盃","cup:"+S.wk);vibrate([20,40,20,40,60]);
   const head=p===1?"🏆 你是本週擂主！":p===2?"🥈 攻擂英雄！":p<=4?"🥉 闖進四強！":p===8?"🎖 闖進八強！":"🎖 謝謝你上擂台！";
-  setTimeout(()=>modal(`<div class="em">${p===1?"🏆":"🏯"}</div><h2>${head}</h2><p>${esc(cupNm(S.name))}${S.ed?` 第 ${S.ed} 屆`:""}：你拿到「${esc((S.practice&&p!==16?CUP_PRIZE[16]:CUP_PRIZE[p]).t)}」</p><p class="muted">${esc(cupPrizeText(S.practice&&p!==16?16:p))}${S.practice?"<br>（這一屆真人不到 2 位，是闖擂練習，只發參加獎）":""}${p===1&&!S.practice?"<br>這一週你的名字旁邊會有 🏆，也刻上了千秋擂主碑。":""}</p>`,[["好",null]]),900)}
+  /* W120：獎品當下就發；頒獎通知本來就是在哪一頁都要出（cupWatch 全域聽），所以不擋，只看 0.9 秒內換了頁沒：沒換照舊彈視窗，換了改成吐司（不在新的頁面上突然彈視窗） */
+  const rn=ROUTE_N,h0=location.hash,pt=(S.practice&&p!==16?CUP_PRIZE[16]:CUP_PRIZE[p]).t;
+  setTimeout(()=>{try{if(ROUTE_N!==rn||location.hash!==h0){toast(`${head} ${cupNm(S.name)}：你拿到「${pt}」`);return}
+    modal(`<div class="em">${p===1?"🏆":"🏯"}</div><h2>${head}</h2><p>${esc(cupNm(S.name))}${S.ed?` 第 ${S.ed} 屆`:""}：你拿到「${esc(pt)}」</p><p class="muted">${esc(cupPrizeText(S.practice&&p!==16?16:p))}${S.practice?"<br>（這一屆真人不到 2 位，是闖擂練習，只發參加獎）":""}${p===1&&!S.practice?"<br>這一週你的名字旁邊會有 🏆，也刻上了千秋擂主碑。":""}</p>`,[["好",null]])}catch(e){}},900)}
 /* 不管在哪個畫面：輪到自己的比賽開打就提醒入座 */
 let CUP_ASKED="";
 function cupWatch(){if(!(OFF&&window.XQNet&&XQNet.on))return;XQNet.on("cup",k=>{if(k!=="state")return;const S=XQNet.cup();if(!S)return;cupGrant(S);

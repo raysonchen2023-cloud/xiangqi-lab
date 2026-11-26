@@ -7,6 +7,7 @@
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");
 const ROOT = path.join(__dirname, "../..");
 const rd = (p) => fs.readFileSync(path.join(ROOT, p), "utf8");
+const UTIL = rd("xiangqi-db/m/00-util.js"), STILL = (() => { const a = UTIL.indexOf("function stillHere("), b = UTIL.indexOf("\n", a); assert.ok(a > 0 && b > a, "抓得到 00-util.js 的 stillHere"); return UTIL.slice(a, b) })();   /* 11/25 W120：悄悄話改走 stillHere，抽真的那一行進沙箱 */
 const JH = rd("xiangqi-db/m/07z9b-jianghu.js"), OS = rd("xiangqi-db/m/07z9-school.js"), LOCAL = rd("xiangqi-lab/src/local.js"), CG = rd("xiangqi-db/m/08b-cpugame.js");
 const SCH = ["central", "screen", "palace_horse", "same_cannon", "opposite_cannon", "pawn", "elephant", "horse", "cross_palace", "advisor_corner"];
 
@@ -19,10 +20,11 @@ function load(env = {}) {
     jhSch: (id) => ({ nm: id + "門", op: id + "開局" }),
     toast: (m) => toasts.push(m), setTimeout: (f) => f(), addXP: () => {},
     oscNpcKey: () => "", journeyGameEnd: (st) => { ended.push(st && st.id) },
+    ROUTE_N: 0, location: { hash: "#/journey/play" }, console,   /* stillHere 用的換頁計數與網址（00-util.js、02-shell.js 的 route()） */
     ...env,
   };
   vm.createContext(c);
-  vm.runInContext(OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + JH.slice(JH.indexOf("/* ---------- W45 風向標")), c);
+  vm.runInContext(STILL + ";\n" + OS.slice(OS.indexOf("const OSC=(()=>{"), OS.indexOf("/* ===== END osc-core")) + ";this.OSC=OSC;\n" + JH.slice(JH.indexOf("/* ---------- W45 風向標")), c);
   return { c, mem, toasts, ended };
 }
 const engineLean = () => { const c = {}; vm.createContext(c); const a = LOCAL.indexOf("function zmLeanOrd"); vm.runInContext(LOCAL.slice(a, LOCAL.indexOf("\n", a)), c); return c.zmLeanOrd };
@@ -66,6 +68,24 @@ test("案 4：贏了門下棋友（至少 10 步）才打聽得到；同一天�
   assert.equal(ended.length, 4, "包裝後原本的結算每一盤都照跑");
   mem.jhIntel = { d: "2000-01-01", s: [tea[0]] };
   assert.equal(c.jhIntelOn(tea[0]), false, "隔天要重新打聽");
+});
+
+test("案 4（W120）：悄悄話 2.6 秒後才冒；到時換了頁就不冒，但情報已經存好；沒換頁就照常冒", () => {
+  const q = [], { c, toasts } = load({ oscNpcKey: () => "inn:tea", setTimeout: (f, ms) => { q.push([f, ms]); return q.length } });
+  const tea = c.OSC.NPC["inn:tea"], st = (n) => ({ id: "g" + n, human: "r", result: { w: "r" }, moves: Array(n).fill({}) });
+  c.journeyGameEnd(st(20));
+  assert.equal(c.jhIntelOn(tea[0]), true, "贏了當下就存好情報");
+  assert.deepEqual(q.map(x => x[1]), [2600], "排一個 2.6 秒的悄悄話");
+  assert.equal(toasts.length, 0, "還沒到時間不冒");
+  c.ROUTE_N++; c.location.hash = "#/journey";   /* 玩家在 2.6 秒內離開對局頁 */
+  q.shift()[0]();
+  assert.equal(toasts.length, 0, "換了頁就不冒");
+  assert.equal(c.jhIntelOn(tea[0]), true, "情報照樣留著");
+  const b = load({ oscNpcKey: () => "inn:tea", setTimeout: (f, ms) => { q.push([f, ms]); return q.length } });
+  b.c.journeyGameEnd(st(20));
+  assert.deepEqual(q.map(x => x[1]), [2600]);
+  q.shift()[0]();
+  assert.equal(b.toasts.length, 1, "沒換頁照常冒"); assert.match(b.toasts[0], /悄悄說：掌門.+今天打算走/);
 });
 
 test("案 4：掌門盤本身、沒有對應門派的對局都不會解鎖", () => {

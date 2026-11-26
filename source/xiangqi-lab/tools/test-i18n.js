@@ -199,7 +199,7 @@ const REGIONS = [
   ["08b 對局工具列", CPU, "const acts=actionBar(", "]]);"],
   ["08b 頂欄模式（晉級賽／練功房）", CPU, "seg.innerHTML=", "\n"],
   ["08b 悔棋確認", CPU, "function undoBox(", "/* 意見回饋 597（開發者）：對局中多一顆"],
-  ["08b 狀態列", CPU, "else if(st.thinking)S2.textContent=", "if(st.practice&&!st.result&&!st.msg"],
+  ["08b 狀態列", CPU, "else if(st.thinking||st.turn!==st.human)S2.textContent=", "if(st.practice&&!st.result&&!st.msg"],
   ["08b 結果視窗按鈕", CPU, "const resBtns=(main,back,noRev,back2)=>", "\n"],
   ["08b 晉級賽結果", CPU, "if(st.ranked){const R=st.rate;", "if(MODE===\"arena\"&&ARENA[st.arena])"],
   ["08b 挑戰電腦結果", CPU, "      modal(`<div class=\"em\">${win?\"🏆\":draw0?\"🤝\":\"💪\"}</div><h2 data-i18n=\"res.${win?\"win\":draw0?\"draw\":\"lose\"}\">${win?\"你贏了！\":draw0?\"和局\":\"這盤輸了\"}</h2><p class=\"muted\">${esc(st.result.why)}・${st.journey", "/* ================= ChatGPT 改善單 T01"],

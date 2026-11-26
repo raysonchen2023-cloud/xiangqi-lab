@@ -453,7 +453,7 @@ function zmGameEnd(st,P){const m=zmAct(P&&P.id)&&OSC.mst(P.id);if(!m||!st||!st.r
   const C=store.get("zmCur",null),rl=C&&C.id===m.id&&Number.isInteger(C.rl)?C.rl:OSC.zmRlv(zmGet(),m),c=C&&C.id===m.id&&C.c?C.c:"";
   const res=st.result.w===st.human?"w":st.result.w?"l":"d",z=zmGet();OSC.zmEnd(z,c,m,res,rl);store.set("zm",z);
   let xp=0;try{const cl=store.get("oscClaim",{})||{};xp=OSC.zmReward(cl,m,res,Date.now());store.set("oscClaim",cl)}catch(e){}if(xp&&typeof addXP==="function")try{addXP(xp,oscL("十派掌門","Ten School Masters"),"zm:"+st.id)}catch(e){}
-  setTimeout(()=>{try{toast(zmSay(m,res==="w"?m.lose:res==="l"?m.win:"這盤和得好，改天再分高下。"))}catch(e){}},1500);return true}
+  stillHere(1500,()=>{try{toast(zmSay(m,res==="w"?m.lose:res==="l"?m.win:"這盤和得好，改天再分高下。"))}catch(e){}},()=>{const q=store.get("jPending",null);return!q||q.game===st.id});return true}   /* W120：戰績、修為當下就記，掌門那句話 1.5 秒後、還在原頁、沒開新的一盤才說 */
 function zmCardHTML(m,z,c,mine){const S=oscSchE(m.sid),R=c?OSC.zmRec(z,c,m.id):null,rl=OSC.zmRlv(z,m),ms=OSC.mside(m),rk=esc(oscT(OSC.RNK[rl]||"")),cn=c?esc(oscNmE(c)):"";
   return`<div class="card osc-zm${mine?" osc-zm-mine":""}"><img src="${zmImg(m)}" alt="" onerror="this.remove()"><div class="tx">
     <b>${esc(oscL(m.nm,m.en))}</b><span class="osc-op">${oscL(`${esc(S.nm)}掌門・慣用${esc(S.op)}`,`Master of the ${esc(S.nm)} · plays ${esc(S.op)}`)}</span>${mine?`<span class="osc-tag osc-rec">${oscL("你的掌門","Your master")}</span>`:""}
