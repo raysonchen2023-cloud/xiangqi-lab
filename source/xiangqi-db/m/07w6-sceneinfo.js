@@ -99,7 +99,7 @@ function sciMount(P,I,D){if(!SCENE_INFO_ON||!P||!I||!D||!D.it||P.dataset.sci)ret
   const pt=e=>{const r=I.getBoundingClientRect(),C=cur(),W=C.W||768,H=C.H||1376;if(!r.width||!r.height)return null;return[(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H]};
   const off=()=>{if(P.dataset.scw&&!D.wide)return true;try{return!!(D.off&&D.off(P))}catch(e){return false}};   /* W107-L：換成 iPad 橫向專用圖（07sw）時座標不是原圖像素，先不跳說明（照首頁寬版） */
   const onImg=t=>!!t&&!!t.closest&&P.contains(t)&&!t.closest("button,a,input,select,textarea,label,[role=button],[tabindex],.v7")&&!P.classList.contains("pc-run")&&!off();
-  P._sci={D,I,pt,onImg};
+  P._sci={D,I,pt,onImg,cur};
   P.addEventListener("click",e=>{if(e.__sci||e.defaultPrevented||!onImg(e.target))return;const C=cur(),p=pt(e);if(!p||p[0]<0||p[1]<0||p[0]>(C.W||768)||p[1]>(C.H||1376))return;const h=sciHit(C,P,I,p);if(!h)return;
     sciShow(C,h.x,sciNight(I),P,I)});   /* 回饋 833（開發者 11/9）：點物件時不再描金邊框，直接跳說明卡 */
   /* 電腦滑鼠移到物件上換成手指游標（手機沒有游標，不影響） */
@@ -112,9 +112,9 @@ function sciMount(P,I,D){if(!SCENE_INFO_ON||!P||!I||!D||!D.it||P.dataset.sci)ret
    這裡在 07w 的 shwClick 前面先看一眼（不改 07w，也不擋它）：點到登記的物件就先跳卡（記 e.__sci，框上的處理就不再跳一次），07w 照舊讓角色走過去。
    出口那一塊、角色正在入口前做小動作（再點＝直接開入口）、程式自己按的 click 都不跳卡，讓 07w 先 */
 function sciPre(S,e){const P=S&&S.I,Z=P&&P._sci;if(!Z||S.pass||e.__sci||!S.ready)return;const g=S.go;if(g&&!g.free&&g.act>=0)return;if(!Z.onImg(e.target))return;
-  const p=Z.pt(e),W=Z.D.W||768,H=Z.D.H||1376;if(!p||p[0]<0||p[1]<0||p[0]>W||p[1]>H)return;
+  const C=Z.cur?Z.cur():Z.D,p=Z.pt(e),W=C.W||768,H=C.H||1376;if(!p||p[0]<0||p[1]<0||p[0]>W||p[1]>H)return;
   const X=S.o&&S.o.X;if(X&&X.r&&typeof shwExitOn==="function"&&shwExitOn()){const x=p[0]/W*100,y=p[1]/H*100;if(x>=X.r[0]&&x<=X.r[2]&&y>=X.r[1]&&y<=X.r[3])return}
-  const h=sciHit(Z.D,P,Z.I,p);if(!h)return;e.__sci=1;sciShow(Z.D,h.x,sciNight(Z.I),P,Z.I)}
+  const h=sciHit(C,P,Z.I,p);if(!h)return;e.__sci=1;sciShow(C,h.x,sciNight(Z.I),P,Z.I)}   /* W165：跟 click 一樣照 cur()，給了橫式座標時用橫式 */
 if(typeof shwClick==="function"){const f0=shwClick;shwClick=function(S,e){try{sciPre(S,e)}catch(x){}return f0.apply(this,arguments)}}
 function sciPage(v,D){const P=v&&v.querySelector(".shp-page.cq"),I=P&&P.querySelector(":scope>img");sciMount(P,I,D)}
 /* 自動接：07w6b-scenedata.js 的 SCI_REG（[{re:圖網址的正規式, img:找圖的選擇器（不寫＝.shp-page.cq>img）, D:登記資料}]）。

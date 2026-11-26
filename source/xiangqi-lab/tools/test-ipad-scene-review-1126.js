@@ -25,31 +25,51 @@ test("W164 營地橫式：完成第 12 課後走到結業旗不繞遠", () => {
 });
 
 /* ---- W165 書齋 ---- */
-function studyShown(sciSrc, studySrc, scw) {
+/* 書齋：用 07z4 真正組說明資料的那段程式（不自己抄公式；#231 審查意見），接住它交給 sciPage 的 D，
+   再用 07w6 真正的 sciMount 掛上去，模擬手點 12 格：橫放（scw）照 MZ_L.cells、直向照原圖格子，各自要跳對應的器物。 */
+const SNIP_A = 'if(typeof sciPage==="function"){try{const CELLS=', SNIP_B = "}catch(e){}}";
+function studyData(studySrc) {
+  const pick = (a, b) => { const i = studySrc.indexOf(a); if (i < 0) throw new Error("07z4 找不到 " + a); return studySrc.slice(i, studySrc.indexOf(b, i)) };
+  const c = { __D: null, Math, JSON, Object, Array, String, Number }; vm.createContext(c);
+  vm.runInContext(pick("const MZ_W=", "if(typeof SCW") + "\n" + pick("const MZ_RELIC=[", "const mzDark="), c);
+  const i = studySrc.indexOf(SNIP_A); if (i < 0) throw new Error("07z4 找不到組說明資料那段");
+  const snip = studySrc.slice(i, studySrc.indexOf(SNIP_B, i) + SNIP_B.length);
+  vm.runInContext(`(function(){const v={},src="studymap/study_day.webp",zOn=12;const sciPage=(v,D)=>{__D=D};${snip}})()`, c);
+  if (!c.__D) throw new Error("07z4 沒有呼叫 sciPage");
+  return { D: c.__D, L: vm.runInContext("MZ_L", c), cells: vm.runInContext("MZ_CELLS", c), relic: vm.runInContext("MZ_RELIC.map(r=>r[0])", c) };
+}
+function studyClicks(sciSrc, studySrc, scw) {
+  const { D, L, cells, relic } = studyData(studySrc);
   const el = () => ({ style: {}, dataset: {}, classList: { add() {}, contains() { return false }, toggle() {} }, setAttribute() {}, append() {}, appendChild() {}, addEventListener() {}, querySelector() { return null }, querySelectorAll() { return [] } });
   const c = { document: { getElementById: () => null, createElement: el, addEventListener() {}, head: { append() {}, appendChild() {} }, body: { append() {} } }, addEventListener() {}, removeEventListener() {},
     store: { get: (k, d) => d, set() {} }, esc: String, setTimeout: () => 0, Math, JSON, Set, Map, Date, String, Number, Array, Object, __shown: [] };
   c.window = c; vm.createContext(c); vm.runInContext(sciSrc, c);
   vm.runInContext("sciShow=function(D,x){__shown.push(x.n)};sciHint=function(){};", c);
-  /* 書齋：只取 MZ_L 與 MZ_RELIC，照 07z4 的方式組 it 與 wide（直向格子用一組假的） */
-  const pick = (a, b) => studySrc.slice(studySrc.indexOf(a), studySrc.indexOf(b, studySrc.indexOf(a)));
-  vm.runInContext(pick("const MZ_L={", "if(typeof SCW") + "\n" + pick("const MZ_RELIC=[", "const MZ_SCI=") , c);
-  const usesWide = /wide:\{W:MZ_L\.W,H:MZ_L\.H,it:itW\}/.test(studySrc);
-  vm.runInContext(`var __it=MZ_RELIC.map(([n,t,nd],i)=>({n,nd,t,s:[[[0,0],[1,0],[1,1],[0,1]]]}));
-    var __itW=MZ_RELIC.map(([n,t,nd],i)=>{const c=MZ_L.cells[i];return{n,nd,t,s:[[[c[0]+6,c[1]+6],[c[2]-6,c[1]+6],[c[2]-6,c[3]-6],[c[0]+6,c[3]-6]]]}});
-    var __D={k:"study",nm:"書齋",W:768,H:1376,it:__it${usesWide ? ",wide:{W:MZ_L.W,H:MZ_L.H,it:__itW}" : ""}};`, c);
-  const H = {}, P = { dataset: scw ? { scw: "1" } : {}, classList: { contains: () => false }, contains: () => true, querySelector: () => null, append() {}, closest: () => null,
-    addEventListener(t, f) { H[t] = f } };
-  const I = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 2560, height: 1600 }), complete: true, naturalWidth: 2560, addEventListener() {} };
-  c.__P = P; c.__I = I; vm.runInContext("sciMount(__P,__I,__D)", c);
-  const cell = c.MZ_L ? vm.runInContext("MZ_L.cells[0]", c) : [120, 333, 256, 499];
-  const tgt = { closest: () => null };
-  H.click({ target: tgt, clientX: (cell[0] + cell[2]) / 2, clientY: (cell[1] + cell[3]) / 2, defaultPrevented: false });
-  return c.__shown;
+  const H = {}, P = { dataset: scw ? { scw: "1" } : {}, classList: { contains: () => false }, contains: () => true, querySelector: () => null, append() {}, closest: () => null, addEventListener(t, f) { H[t] = f } };
+  const W = scw ? L.W : D.W, Ht = scw ? L.H : D.H;   /* 畫面上的圖照當時那張圖的比例 */
+  const I = { getBoundingClientRect: () => ({ left: 0, top: 0, width: W, height: Ht }), complete: true, naturalWidth: W, addEventListener() {} };
+  c.__P = P; c.__I = I; c.__D = D; vm.runInContext("sciMount(__P,__I,__D)", c);
+  const grid = scw ? L.cells : cells, bad = [];
+  grid.forEach((q, i) => {
+    c.__shown.length = 0;
+    H.click({ target: { closest: () => null }, clientX: (q[0] + q[2]) / 2, clientY: (q[1] + q[3]) / 2, defaultPrevented: false });
+    if (c.__shown[0] !== relic[i]) bad.push(`${scw ? "橫放" : "直向"}點第 ${i + 1} 格要跳「${relic[i]}」（實際 ${JSON.stringify(c.__shown)}）`);
+  });
+  return bad;
 }
-const studyProblems = (sci, study) => { const s = studyShown(sci, study, true); return s.includes("青瓷玉壺春瓶") ? [] : ["書齋橫式點亮格第一格要跳「青瓷玉壺春瓶」（實際 " + JSON.stringify(s) + "）"] };
+const studyProblems = (sci, study) => [...studyClicks(sci, study, true), ...studyClicks(sci, study, false)];
 
-test("W165 書齋橫式：點亮格器物跳說明", () => {
+test("W165 書齋：07z4 交給 07w6 的橫式座標逐格對到 MZ_L.cells、器物順序跟 MZ_RELIC 一樣", () => {
+  const { D, L, relic } = studyData(rd("07z4-studymap.js"));
+  assert.ok(D.wide, "要給橫式座標 wide"); assert.equal(D.wide.W, L.W); assert.equal(D.wide.H, L.H); assert.equal(D.wide.it.length, 12);
+  D.wide.it.forEach((it, i) => {
+    const q = L.cells[i], xs = it.s[0].map((p) => p[0]), ys = it.s[0].map((p) => p[1]);
+    assert.equal(it.n, relic[i], "第 " + (i + 1) + " 件器物名");
+    assert.ok(Math.min(...xs) >= q[0] && Math.max(...xs) <= q[2] && Math.min(...ys) >= q[1] && Math.max(...ys) <= q[3], "第 " + (i + 1) + " 格的點擊範圍要在 MZ_L.cells 那一格裡");
+  });
+});
+
+test("W165 書齋：橫放、直向手點 12 格都跳對應的器物說明", () => {
   assert.deepEqual(studyProblems(rd("07w6-sceneinfo.js"), rd("07z4-studymap.js")), []);
 });
 
@@ -74,6 +94,14 @@ test("改壞驗證：營地少接環線、書齋沒給橫式座標，檢查都�
   assert.notEqual(badCamp, camp); assert.ok(campProblems(badCamp).length > 0, "營地少接環線要抓得到");
   const study = rd("07z4-studymap.js"), badStudy = study.replace(",wide:{W:MZ_L.W,H:MZ_L.H,it:itW}", "");
   assert.notEqual(badStudy, study); assert.ok(studyProblems(rd("07w6-sceneinfo.js"), badStudy).length > 0, "書齋沒給橫式座標要抓得到");
+  /* #231 審查：橫式座標改用直向格子、順序反過來、07w6 不看 scw（直向也套橫式座標），都要抓得到 */
+  const sci = rd("07w6-sceneinfo.js");
+  const badCells = study.replace("const c=MZ_L.cells[i];return{n,nd,t:it[i].t", "const c=MZ_CELLS[i];return{n,nd,t:it[i].t");
+  assert.notEqual(badCells, study); assert.ok(studyProblems(sci, badCells).length > 0, "橫式座標用直向格子要抓得到");
+  const badOrder = study.replace("const c=MZ_L.cells[i];return{n,nd,t:it[i].t", "const c=MZ_L.cells[11-i];return{n,nd,t:it[i].t");
+  assert.notEqual(badOrder, study); assert.ok(studyProblems(sci, badOrder).length > 0, "格子順序反過來要抓得到");
+  const badCur = sci.replace("const cur=()=>P.dataset.scw&&D.wide?", "const cur=()=>D.wide?");
+  assert.notEqual(badCur, sci); assert.ok(studyClicks(badCur, study, false).length > 0, "直向也套橫式座標要抓得到");
   const badCover = study.replace('["mzZhen",115,883,678,1254,', '["mzZhen",102,269,742,858,');
   assert.notEqual(badCover, study); assert.ok(coverProblems(badCover).length > 0, "珍品熱區蓋住亮格要抓得到");
 });
