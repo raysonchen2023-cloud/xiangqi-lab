@@ -96,7 +96,7 @@ function sciHint(P,I,D){const seen=store.get("sciSeen",{})||{};if(seen[D.k]){sci
 function sciMount(P,I,D){if(!SCENE_INFO_ON||!P||!I||!D||!D.it||P.dataset.sci)return;P.dataset.sci="1";sciCss();
   const W=D.W||768,H=D.H||1376;
   const pt=e=>{const r=I.getBoundingClientRect();if(!r.width||!r.height)return null;return[(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H]};
-  const off=()=>{try{return!!(D.off&&D.off(P))}catch(e){return false}};
+  const off=()=>{if(P.dataset.scw)return true;try{return!!(D.off&&D.off(P))}catch(e){return false}};   /* W107-L：換成 iPad 橫向專用圖（07sw）時座標不是原圖像素，先不跳說明（照首頁寬版） */
   const onImg=t=>!!t&&!!t.closest&&P.contains(t)&&!t.closest("button,a,input,select,textarea,label,[role=button],[tabindex],.v7")&&!P.classList.contains("pc-run")&&!off();
   P._sci={D,I,pt,onImg};
   P.addEventListener("click",e=>{if(e.__sci||e.defaultPrevented||!onImg(e.target))return;const p=pt(e);if(!p||p[0]<0||p[1]<0||p[0]>W||p[1]>H)return;const h=sciHit(D,P,I,p);if(!h)return;
