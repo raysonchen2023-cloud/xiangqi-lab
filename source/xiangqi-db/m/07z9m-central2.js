@@ -1,12 +1,14 @@
 /* ---------- W87-2 中炮門地底迷宮・第二層「漕底淤廊」（11/26 Windows Claude 1 分派給 Windows Claude 2）----------
    規格：story/gemini_app/208_十派地底迷宮第二三層_補件_1126_Gemini回覆.md 的中炮門第二層，照 208 複核（iMac Claude 1）和開發者 11/26 的決定改：
      ・淺水窪（Q）：走進去要多耗一回合（守衛多走一步）；擋路、擋光都不會。自動規劃路線不主動踩（lv.avoid），踩到自動走就停。
-       多耗的那一回合照「原地等一回合」的規則（jhMzStep(S,0,0)，#212 審查）：守衛走完才看到你就先提醒（spot）、這一步不走進去；被抓就照被抓；
-       那一回合守衛走完以後，水窪落在紅線上（或站著守衛）也一樣先提醒、人不進去（#212 複審：走之前不是紅線的水窪，不能直接被抓）；都沒事才走進水窪。
+       開發者 11/26 選單（#212 第三輪審查）：先照一般規則走進水窪，再在水窪裡原地等一回合（jhMzStep(S,0,0)）——守衛走、先提醒再抓都照共用規則；
+       走進去那一回合就被提醒或被抓，照那個結果、不再多耗；兩回合都沒事，自動走停下（stop）。被提醒時往水窪逃一樣有效。
+       耗的那一回合開始前人不在醒著的守衛紅線上，這一回合才被看到（含走到暈著的守衛身上、守衛剛好醒來）也只先提醒——走地面不會被抓的情況，走水窪也不會（窮舉驗過）。
      ・雙炮衛（JH_MZ_KIND.twincannon）：兩個炮衛在同一條走廊來回巡，面向那一邊看得到 3 格；
        複核選「前衛擋住就看不到」：另一個炮衛擋在前面，後面那一格起就看不到（跟過宮炮門「隔一子才看得到」區隔開）。
-       前衛（front）不踩水窪，碰到水窪就掉頭；後衛會走進水窪。兩個炮衛不會走進對方那一格（碰到就掉頭）。
-     ・機關殘局：中兵突破，兵收尾（古譜裡沒有兵收尾的兩步殺，用三步殺）；被抓殘局一律殺題（開發者決定），車收尾。
+       前衛（front）不踩水窪，碰到水窪就掉頭；後衛會走進水窪。兩個炮衛走路時不會走進對方那一格（碰到就掉頭）；
+       被抓解完題、共用的 jhMzSolved 把守衛推開 3 格時，可能暫時跟另一個炮衛同格，下一步就會分開（測試驗）。
+     ・機關殘局：中兵突破，兵收尾（古譜裡沒有兵收尾的兩步殺，用三步殺）；被抓殘局一律殺題（開發者決定），馬收尾（開發者 11/26 選單「換成馬、兵收尾」：用 --multi 出題，最快殺都算對）。
      ・碑刻：遊戲整理，據潘季馴《河防一覽》（複核：可用）。
      ・寶箱：門派貢獻、中炮譜殘頁、稱號「逆水行舟」（外觀出圖前先問開發者，這一層的獎勵本來就是稱號，不用出圖）。
      ・修為 +40、去重鍵 maze:central:2（jhMzLayer 照開發者決定給）。配樂照第一層同一首（環境音之後另做）。 */
@@ -42,11 +44,12 @@ JH_MZ_KIND.twincannon={
   step(S,G){const blk=(x,y)=>jhMzSolid(S,x,y)||jhMzCentral2Mate(S,G,x,y)||!!G.front&&jhMzCell(S,x,y)==="Q";let dx=G.dx||0,dy=G.dy||0;
     if(blk(G.x+dx,G.y+dy)){dx=-dx;dy=-dy;G.dx=dx;G.dy=dy}if(!blk(G.x+dx,G.y+dy)){G.x+=dx;G.y+=dy}},
   look:{body:"#3a2418",head:"#5a3626",eye:0xE24A3A}};
-/* 走進水窪：陷在泥裡多耗一回合——照原地等一回合跑（守衛走、先提醒、被抓都照共用規則）；那一回合沒事，才照預設走進去 */
-function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;const r=jhMzStep(S,0,0);if(r.ev!=="move")return r;
-  /* #212 複審：那一回合守衛走完以後，水窪落在紅線上（或站著守衛）＝也是「走完才看到」，先提醒、人不進去，不直接抓 */
-  const x=S.player.x+dx,y=S.player.y+dy;if((S.guards||[]).some(G=>!(G.stun>0)&&(G.x===x&&G.y===y||jhMzSight(S,G).some(q=>q.x===x&&q.y===y)))){S.caughtBy=null;return{ev:"spot"}}
-  return null}
+/* 走進水窪：先照一般規則走進去（S.mudIn 防止下面那一步又進來這裡），再在水窪裡原地等一回合；兩回合的事件照共用規則，沒事就停下 */
+function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q"||S.mudIn)return null;S.mudIn=1;let r;try{r=jhMzStep(S,dx,dy)}finally{S.mudIn=0}if(r.ev!=="move")return r;
+  /* 耗的那一回合同樣先提醒再抓：開始前人不在任何醒著的守衛紅線上（也沒跟醒著的守衛同格），這一回合才被看到或暈的守衛醒來同格＝先提醒，不直接抓 */
+  const P=S.player,warned=(S.guards||[]).some(G=>!(G.stun>0)&&(G.x===P.x&&G.y===P.y||jhMzSight(S,G).some(q=>q.x===P.x&&q.y===P.y)));
+  const r2=jhMzStep(S,0,0);if(r2.ev==="trap"&&!warned){S.caughtBy=null;return{ev:"spot"}}if(r2.ev!=="move")return r2;r.stop=true;
+  return r}
 /* 3D：淺水窪（地上一層半透明的淡藍水面）；平面版：地面色上一塊淡藍 */
 if(!JH_MZ_OBJ.Q)JH_MZ_OBJ.Q=H=>{const{T3,mesh}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(.96,.03,.96),new T3.MeshLambertMaterial({color:0x4a6a7a,transparent:true,opacity:.75}),0,.015,0));return g};
 if(!JH_MZ_TILE.Q)JH_MZ_TILE.Q=(cx,px,py,T)=>{cx.fillStyle="#3b3428";cx.fillRect(px,py,T,T);cx.fillStyle="rgba(90,130,150,.75)";cx.fillRect(px+T*.08,py+T*.08,T*.84,T*.84)};
@@ -62,12 +65,12 @@ trap:[
 const JH_MZ_POOL_CENTRAL2_TRAP={door:[
 ],
 trap:[
-{"id":"lk085c7","src":{"book":"爛柯神機","title":"抉盡藩籬"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"3a1R3/1r1k5/4P4/6Nc1/5C3/9/9/4p1n2/3r1p3/4K2c1","line":["f9f8","d9e8","e7e8","d8d7","f8f7"]},
-{"id":"lk091c4","src":{"book":"爛柯神機","title":"力穿七扎"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"3a3NC/3Ra4/3Nnk3/1c7/9/9/9/3Cp4/2r1pr3/3K5","line":["d7e5","b6e6","d2d7","e8d7","d8f8"]},
-{"id":"lk094c5","src":{"book":"爛柯神機","title":"聯軍戰勝-(B字形)"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"9/2P1P4/3k2N2/3cR4/3c5/3p2p2/3r2p2/2pp1K3/9/9","line":["e6d6","d7e7","g7f9","e7e8","d6e6"]},
-{"id":"lk103c5","src":{"book":"爛柯神機","title":"馬陵塞道-(紅勝)"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"c2R2b2/2n1P1r2/4bk3/5c3/9/9/4C4/4p4/3pApr2/4K4","line":["e3f3","f6i6","d9f9","g8f8","f9f8"]},
-{"id":"lk116c6","src":{"book":"爛柯神機","title":"排●妥帖"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"4P1c2/2P1n1N2/3kb4/9/9/9/5r1R1/3p5/4p4/3K1C3","line":["g8f6","f3f6","h3d3","f6d6","d3d6"]},
-{"id":"lk208c5","src":{"book":"爛柯神機","title":"野無害馬"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"2n1k4/3P1R3/5nc2/4C4/9/9/3pcN3/3App3/4p3r/3K5","line":["d8e8","e9d9","f8f9","f7e9","f9e9"]}]};
+{"id":"jc099c4","src":{"book":"橘中秘","title":"馬兵攻雙士炮卒"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"3ak1P2/3ca4/9/5N3/9/9/9/p8/9/4K4","line":["f6g4","a2a1","g4h6","a1a0","h6f7"]},
+{"id":"jz039c6","src":{"book":"蕉竹齋","title":"回騎進兵"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"3ak1P2/3P5/3a4N/9/9/9/9/9/1p7/3Kp4","line":["d0d1","b1c1","d1d2","e0d0","i7g8"]},
+{"id":"lk001c4","src":{"book":"爛柯神機","title":"八蠻獻寶"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"3kc1cn1/4P3N/9/9/9/3r5/9/4BC3/4p1p2/3p1K3","line":["f2f9","e9e2","f9h9","g9g8","i8g9"]},
+{"id":"lk024c4","src":{"book":"爛柯神機","title":"單騎徇敵"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"3C1k3/4P4/4b3c/9/7N1/9/5C3/9/1np1pcr2/3K1n3","line":["h5f6","i7f7","f6d7","f7i7","d7e9"]},
+{"id":"lk054c7","src":{"book":"爛柯神機","title":"功歸轉軸"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"3a1N3/8R/1NC2k3/4p4/9/9/6P2/9/2pp1pp2/r1c1K4","line":["f9h8","f7e7","h8g6","e7d7","b7c9"]},
+{"id":"lk072c7","src":{"book":"爛柯神機","title":"季庭舞俏"},"zh":["被炮衛逮住了","炮衛把你按在淤泥邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a cannon guard","The cannon guard pins you by the mud: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"9/2NP5/5k3/3n1C3/2r6/9/9/4p4/3pCp3/4K4","line":["c8d6","f7f8","d8e8","f8f9","d6f7"]}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_CENTRAL2_TRAP== */
 jhMzLayer("central",2,{map:JH_MZ_CENTRAL2_MAP,guards:JH_MZ_CENTRAL2_GUARDS,avoid:"Q",onStep:jhMzCentral2Mud,
   pool:{door:JH_MZ_POOL_CENTRAL2.door,trap:JH_MZ_POOL_CENTRAL2_TRAP.trap},puz:{door:JH_MZ_POOL_CENTRAL2.door[0],trap:JH_MZ_POOL_CENTRAL2_TRAP.trap[0]},
