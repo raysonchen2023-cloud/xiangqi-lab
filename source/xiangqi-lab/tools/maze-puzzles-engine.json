@@ -24,6 +24,7 @@
 "2R2aR2/1C3k3/3a5/4C4/9/2B6/2p6/3KBA3/r3r3c/9|g9f9 f8e8 c9e9 e8d8 f9f8@20":{"ok":false,"why":"第 1 手（紅）剩 3 步內將死的著法是 c9f9、g9f9，不是只有 g9f9"},
 "2RNk4/9/1N7/9/1n7/9/C7r/9/2c1p4/2c2K3|d9c7 c1c9 a3a9 c9c8 b7c9@20":{"ok":true,"why":""},
 "2b1R2c1/R3a4/1n2kaN2/4p4/2bP5/6C2/9/9/3r1r3/4K4|g7f9 e7d7 a8d8 b7d8 d5d6 d1d6 g4g7@20":{"ok":true,"why":""},
+"2b1R4/3k1rNn1/1n2b4/9/2p3p2/1NB1C4/9/4B4/1r1p5/c3KC3|b4c6 d8d7 e9d9 b7d8 c6e5@20":{"ok":true,"why":""},
 "2b1R4/3k5/4b4/4C1N2/9/9/3nP4/6C2/3rAp3/c1nAK4|e9d9 d8d9 g6f8 d9d8 g2g8@20":{"ok":true,"why":""},
 "2b1R4/5k3/1N7/C8/c1n2r3/9/P8/9/2pp1p3/c3K4|e9f9 f8f9 b7d8 f9f8 a6a8@20":{"ok":true,"why":""},
 "2b1k4/1r1Rn4/c2ab3N/1C7/9/9/9/B8/5Kp2/2p1p4|f1f2 b8d8 b6b9 d8d9 i7g8@20":{"ok":false,"why":"第 3 手（紅）剩 2 步內將死的著法是 i7g8、b6b9，不是只有 b6b9"},
@@ -94,6 +95,7 @@
 "3ara3/4N3C/P2kb4/2N6/6b2/9/9/9/2p1r4/R3K3c|e0e1 c1d1 e1e2 d1d0 a0d0@20":{"ok":false,"why":"第 5 手（紅）剩 1 步內將死的著法是 c6b8、c6e5、a0d0，不是只有 a0d0"},
 "3c1kb2/3PP2P1/5c3/9/1N7/5p3/4P4/4R4/4KR3/1p1p3pC|f1f4 b0a0 f4f7@20":{"ok":false,"why":"第 1 手（紅）剩 2 步內將死的著法是 d8d9、f1f4，不是只有 f1f4"},
 "3k1Pb1C/4a4/9/2N6/9/9/4c4/4R4/2nrRrn2/4K4|f9e9 e3e9 c6b8 d9d8 e2e8@20":{"ok":true,"why":""},
+"3k1a2N/4a4/2n5r/N2C1P3/9/C8/9/3A1c3/3pAr1n1/4K3c|a6c7 i7c7 a4d4 d9e9 i9g8@20":{"ok":true,"why":""},
 "3k1a3/1NR2n3/3a5/1r4CC1/2b6/9/9/9/1c1p3r1/4K4|g6g9 f9e8 h6d6 b6d6 c8e8@20":{"ok":true,"why":""},
 "3k1aRPr/4nC1n1/4b4/6C2/4N4/9/9/4p4/2r1p1p2/5K3|g9f9 h8f9 g6g9 f9d8 g9i9@20":{"ok":true,"why":""},
 "3k1ab1C/1n3c3/4RN2b/9/9/9/9/3p4r/r3p4/2RK5|c0c9 d9d8 e7e1 d8d7 c9c7@20":{"ok":false,"why":"第 3 手（紅）剩 2 步內將死的著法是 i9i8、e7e6、e7e5、e7e4、e7e3、e7e2、e7e1、e7e9、e7d7、e7c7、e7b7、e7a7，不是只有 e7e1"},
@@ -196,6 +198,7 @@
 "c3ka3/3P4C/b2N3c1/4C4/6b2/9/9/9/4p3r/5K3|i8e8 g5e7 d8d9 e9d9 e6d6@20":{"ok":true,"why":""},
 "nR7/4ak3/9/9/4N4/2C2c3/5n3/9/r5p1r/4K4|c4c8 e8f9 e5d7 f8f7 c8c7@20":{"ok":true,"why":""},
 "r1P1k4/5P3/9/6c2/9/9/9/9/2p3p2/1p1KCNNrc|f0e2 g6e6 e2f4 e6i6 f4e6@20":{"ok":false,"why":"第 3 手（紅）剩 2 步內將死的著法是 e2d4、e2f4，不是只有 e2f4"},
+"r2aR1b2/4a4/3kbR3/2c6/9/9/4P4/4BA1r1/3CAp3/2N1K3c|c0d2 c6d6 d2c4 d6i6 c4d6@20":{"ok":false,"why":"第 3 手（紅）剩 2 步內將死的著法是 d2c4、d2e4，不是只有 d2c4"},
 "r3k2r1/4a4/9/3R1N3/9/9/9/9/3p1pc2/4K4|f6g8 e9f9 d6f6 e8f7 f6f7@20":{"ok":true,"why":""},
 "r4k3/4a1P2/1n3a3/4N4/9/9/9/4C4/4p4/2BK5|g8g9 f9e9 g9f9 e9f9 e6g7 f9f8 e2f2@20":{"ok":false,"why":"第 1 手（紅）剩 4 步內將死的著法是 g8g9、g8f8，不是只有 g8g9"},
 "rN1c1Rb2/6R2/3k5/2n6/9/9/5n3/2rp5/4pp3/3K1C3|g8g7 g9e7 f9d9 c6d8 d9d8@20":{"ok":true,"why":""}}
