@@ -52,7 +52,7 @@ function xflHmw(V,P,nw,nh,k){const vr=V.getBoundingClientRect(),pr=P.getBounding
 const XFL_SEL=".shp-spot,.po-sight,[data-r07m],.pz-go,.ex-bow,.cy,[data-xfl]",XFL_SKIP=".hm-go-bar,.shw,.hm-me,.zm-ex,.zm-tip,.shp-cap";   /* 只量固定的入口和點選區（.cy＝07y 經典世界天上的朝代殘影，點了會說是哪一朝，也算）；旁白泡泡、角色這種會一直出現消失的不算，免得一直重排 */
 function xflItems(P,pr){const out=[];if(!pr||!pr.height)return out;
   for(const e of P.querySelectorAll(XFL_SEL)){if(e.closest(XFL_SKIP)||!e.getClientRects().length)continue;const s=getComputedStyle(e);if(s.visibility==="hidden"||s.position==="fixed"||+s.opacity<0.05)continue;
-    const r=e.getBoundingClientRect();if(r.width<2||r.height<2)continue;const dy=+(e.dataset&&e.dataset.spfY)||0,c=(r.top-dy+r.height/2-pr.top)/pr.height;if(c<-0.05||c>1.05)continue;out.push({c,h:r.height,p:e.matches(".shp-spot")})}
+    const r=e.getBoundingClientRect();if(r.width<2||r.height<2)continue;const dy=+(e.dataset&&e.dataset.spfY)||0,c=(r.top-dy+r.height/2-pr.top)/pr.height;if(c<-0.05||c>1.05)continue;out.push({c,h:r.height,p:e.matches(".shp-spot")||e.matches(".cy")})}   /* W131b（11/26 iPad 直向盤點）：對戰、學習大廳天上有經典世界的朝代殘影（.cy，點了只會說是哪一朝），原本因為它不是 .shp-spot 就不填滿、兩側留 45px 模糊底；殘影被裁到不影響玩法，算成可以裁 */
   return out}
 const xflKey=L=>L.map(q=>q.c.toFixed(2)).sort().join(",");
 function xflCss(){if(document.getElementById("xflCss"))return;const s=document.createElement("style");s.id="xflCss";s.textContent=`

@@ -197,6 +197,7 @@ const CLASSIFIED = new Set([
   "test-w89-mentor-1124.js",   /* 11/24 W89 開發者選 Gemini 文案 2「掌門覆盤」：關鍵步由主修門派掌門（沒拜師用隨行夥伴）講一句，十派四組中英台詞、輸棋不嘲諷（m/07z9o-mentor.js；行為 5、原始碼 1） */
   "test-w108-sel-glow-1125.js",   /* 11/25 W108 玩家回饋：選中的棋子底下加柔和光暈（主題強調色、不擋點擊、不動畫；01-board.js；原始碼 3） */
   "test-w126-ipcompat.js",   /* 11/26 W126 iPhone 版在 iPadOS 26 相容視窗裡頂欄讓出視窗鈕（00-util xqIpCompatOf、m.css #topbar 左內距）〔行為 2：vm 跑判斷與 resize 重算；原始碼 1：CSS 規則〕 */
+  "test-w131b-hub-fill.js",   /* 11/26 W131b iPad 直向：對戰、學習大廳的朝代殘影（.cy）算可以裁，大廳照樣填滿寬度、不留模糊底 */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */
