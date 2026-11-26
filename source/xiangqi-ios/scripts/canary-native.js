@@ -149,6 +149,8 @@ const KINDS = {
   whoamiTake: { break: both(SRV, repIn("private func handleWhoami(", "takeAnswer(for: challenge)", "takeAnswer(for:challenge)")), expect: "whoami 只回這次考題的答案" },
   estOneBlock: { break: both(SRV, rep("            if verifyNow(timeout: 2.0) { return .verified }\n", "")), expect: "establish 一定經過 verifyNow" },
   estTickFunc: { break: both(SRV, rep("private func establishNow() -> Outcome {", "private func establishNow() -> Outcome {\n        func `verifyNow`(timeout: TimeInterval) -> Bool { return true }")), expect: "establish 一定經過 verifyNow" },
+  /* #144 複審：反引號 `verifyNow` 在 #150（check-native 斷詞）之後跟 verifyNow 同一個字，estTickFunc 也會被「establishNow 裡不能宣告 func verifyNow」抓到；補一個只有「verifyNow 字數＝if 區塊數」抓得到的：用 let＋callAsFunction 蓋掉（swiftc -typecheck 過） */
+  estCallAs: { break: both(SRV, rep("private func establishNow() -> Outcome {", "private func establishNow() -> Outcome {\n        struct XQV { func callAsFunction(timeout: TimeInterval) -> Bool { true } }; let verifyNow = XQV()")), expect: "establish 一定經過 verifyNow" },
   estNoReturn: { break: both(SRV, (s) => { const i = s.indexOf("private func establishNow()"), j = s.indexOf("xqLog(\"驗證通過", i), k = s.indexOf("return .verified", j); if (i < 0 || j < 0 || k < 0) throw new Error("找不到第二個 if 區塊"); return s.slice(0, k) + "_ = 0" + s.slice(k + "return .verified".length) }), expect: "establish 一定經過 verifyNow" },
   estElseAfter: { break: both(SRV, rep("if verifyNow(timeout: 2.0) { return .verified }", "if verifyNow(timeout: 2.0) { return .verified } else { xqLog(\"x\") }")), expect: "establish 一定經過 verifyNow" },
   estFuncTwice: { break: both(SRV, beforeEnd("    private func verifyNow(timeout: Double, xq: Int) -> Bool { return true }")), expect: "establish 一定經過 verifyNow" },

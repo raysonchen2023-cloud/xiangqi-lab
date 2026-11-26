@@ -10,13 +10,20 @@
   const load=()=>loading||(loading=new Promise((ok,no)=>{const cn=mode()==="cn",s=document.createElement("script");s.src=cn?"opencc-t2cn.js":"opencc-cn2t.js";
     s.onload=()=>{try{conv=cn?OpenCC.Converter({from:"tw",to:"cn"}):OpenCC.Converter({from:"cn",to:"tw"});ok()}catch(e){no(e)}};s.onerror=no;document.head.append(s)}));
   const SKIP=/^(SCRIPT|STYLE|TEXTAREA|INPUT|SELECT|CODE|CANVAS|SVG)$/i,ATTR=["placeholder","title","aria-label"];
+  /* W94b（11/24 開發者問「英文和簡體都能正常轉換嗎」）：簡體模式下，平面棋盤是 SVG（棋子字在 <text> 裡）、3D 棋子與小人肚子上的字、河界「漢」是畫布 fillText 畫的，
+     原本 SVG、CANVAS 都跳過，紅子照樣顯示「傌」「俥」「帥」。簡體模式改成：SVG 也轉；畫布的 fillText／strokeText／measureText 先轉再畫（3D 貼圖也是畫布畫的）。
+     OpenCC 會把「傌」「俥」轉成手機常缺字型的罕見字「㐷」「伡」，大陸習慣紅黑都寫「马」「车」，轉之前先換掉；畫布常在 OpenCC 載好之前就畫（3D 棋子貼圖只畫一次），
+     所以棋子字和「漢」用這張小表同步換，不等 OpenCC。繁體模式完全不動（SVG 照舊跳過、畫布不包）。 */
+  const PC_CN={帥:"帅",將:"将",傌:"马",俥:"车",馬:"马",車:"车",漢:"汉"},pcCn=t=>t.replace(/[帥將傌俥馬車漢]/g,c=>PC_CN[c]);   /* zh-lint-ok */
+  const skipEl=n=>SKIP.test(n.nodeName)&&!(mode()==="cn"&&/^svg$/i.test(n.nodeName));
   const need=t=>t&&CJK.test(t)&&(mode()==="cn"||hasSimp(t));
   /* 評比循環第 1 輪（AI 模擬玩家第二輪問題 9：時辰盤「丑」變「醜」、秦站「咸陽」變「鹹陽」）：OpenCC 簡→繁會把本來就是繁體的「丑」轉成「醜」、「咸」轉成「鹹」
      （opencc-cn2t.js 實測 conv("丑")＝醜、conv("咸陽")＝鹹陽）。繁體模式只該動純簡體字，所以轉完長度沒變時，原文是「丑」「咸」的位置一律放回原字 */
   const KEEP=new Set("丑咸"),tw=(t,c)=>{if(mode()==="cn"||c.length!==t.length)return c;let o="";for(let i=0;i<t.length;i++)o+=KEEP.has(t[i])?t[i]:c[i];return o};
-  const fixText=n=>{const t=n.nodeValue;if(!need(t))return;if(!conv){pend.add(n);kick();return}const c=tw(t,conv(t));if(c!==t)n.nodeValue=c};
-  const walk=n=>{if(n.nodeType===3)return fixText(n);if(n.nodeType!==1||SKIP.test(n.nodeName)||(n.closest&&n.closest("[data-nocc]")))return;
-    for(const a of ATTR){const v=n.getAttribute&&n.getAttribute(a);if(v&&need(v)){if(!conv){pend.add(n);kick()}else{const c=tw(v,conv(v));if(c!==v)n.setAttribute(a,c)}}}
+  const cv=t=>conv(mode()==="cn"?pcCn(t):t);
+  const fixText=n=>{const t=n.nodeValue;if(!need(t))return;if(!conv){pend.add(n);kick();return}const c=tw(t,cv(t));if(c!==t)n.nodeValue=c};
+  const walk=n=>{if(n.nodeType===3)return fixText(n);if(n.nodeType!==1||skipEl(n)||(n.closest&&n.closest("[data-nocc]")))return;
+    for(const a of ATTR){const v=n.getAttribute&&n.getAttribute(a);if(v&&need(v)){if(!conv){pend.add(n);kick()}else{const c=tw(v,cv(v));if(c!==v)n.setAttribute(a,c)}}}
     for(let c=n.firstChild;c;c=c.nextSibling)walk(c)};
   const pend=new Set();let kicked=false;
   const kick=()=>{if(kicked)return;kicked=true;load().then(()=>{const L=[...pend];pend.clear();for(const n of L)if(n.isConnected)walk(n);if(mode()==="cn")walk(document.body)}).catch(()=>{kicked=false})};
@@ -24,5 +31,10 @@
     new MutationObserver(ms=>{for(const m of ms){if(m.type==="characterData")fixText(m.target);else if(m.type==="attributes")walk(m.target);else for(const x of m.addedNodes)walk(x)}})
       .observe(document.body,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:ATTR});
     if(mode()==="cn"){const t0=document.title;load().then(()=>{document.title=conv(t0)}).catch(()=>{})}};
-  window.XQ_ZH={mode,set(m){localStorage.setItem("xq_zhMode",JSON.stringify(m==="cn"?"cn":"tw"));location.reload()}};
+  /* W94b：簡體模式包住畫布寫字（2D 與 OffscreenCanvas 都包）；OpenCC 載好後的結果記起來，同一段字不重轉 */
+  const cvMemo=new Map(),cvTxt=t=>{if(typeof t!=="string"||!CJK.test(t))return t;const m=cvMemo.get(t);if(m!=null)return m;const p=pcCn(t);if(!conv){kick();return p}
+    const c=conv(p);if(cvMemo.size<4000)cvMemo.set(t,c);return c};
+  if(mode()==="cn")for(const C of [typeof CanvasRenderingContext2D!=="undefined"&&CanvasRenderingContext2D,typeof OffscreenCanvasRenderingContext2D!=="undefined"&&OffscreenCanvasRenderingContext2D])
+    if(C&&C.prototype&&!C.prototype.__xqCn){for(const k of ["fillText","strokeText","measureText"]){const f=C.prototype[k];if(typeof f==="function")C.prototype[k]=function(t,...a){return f.call(this,cvTxt(t),...a)}}C.prototype.__xqCn=1}
+  window.XQ_ZH={mode,cnText:cvTxt,set(m){localStorage.setItem("xq_zhMode",JSON.stringify(m==="cn"?"cn":"tw"));location.reload()}};
   if(document.body)start();else document.addEventListener("DOMContentLoaded",start)})();

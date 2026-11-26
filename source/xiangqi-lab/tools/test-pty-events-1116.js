@@ -152,7 +152,7 @@ test("〔行為〕07bh 黑洞台詞、07bhtl 練習賽旁白：說話的人沒�
   X = bh(["x_swordboy", "x_spiritgirl"]);
   assert.equal(X.bhWho("田飛燕"), "田飛燕", "燕子已加入：照原本由她說");
   assert.equal(bh(null).bhWho("雷借花"), "齊轍", "沒有旅程（序局）：一律齊轍");
-  assert.ok(BH.includes("const say=(k,L,ms)=>{if(S[k])return;S[k]=1;L=[bhWho(L[0]),L[1]];"), "對局中領先／落後的提醒也換人");
+  assert.ok(BH.includes("const gid=st.id,say=(k,L,ms)=>{if(S[k])return;S[k]=1;L=[bhWho(L[0]),L[1]];"), "對局中領先／落後的提醒也換人（11/25 W120：say 前面多記這盤的 gid，換人那段不變）");
 
   const g = joined => run(cutOf(BHTL)("function bhtlGuide()", "const bhtlSay="), Object.assign({ bhtdChar: () => "x_swordboy",
     BHTD: { CH: { x_swordboy: { n: "齊轍" }, x_spiritgirl: { n: "田飛燕" }, x_shi: { n: "鐵連城" } } } }, party(joined)), "bhtlGuide")();
