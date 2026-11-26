@@ -160,6 +160,7 @@
 "5k3/2N6/4b1n2/5Cp2/4pcb2/5p3/4PRP2/5r3/4rNp2/3K1p3|f6f4 f5f3 f4f2 f3f1 f2f0@20":{"ok":true,"why":""},
 "5k3/3P2P2/c1Pa1P3/4C4/6b2/9/9/9/3p1Kp2/4p4|f1f2 e0d0 f7f8 f9e9 f8f9@20":{"ok":false,"why":"第 3 手（紅）剩 2 步內將死的著法是 d8d9、d8e8、f7f8，不是只有 f7f8"},
 "5k3/3R5/3P2P2/4p4/6b2/9/9/9/3p1pp2/4K4|d8d9 f9f8 g7f7 f8f7 d9f9@20":{"ok":true,"why":""},
+"5k3/4PN3/5c2b/7P1/2b6/9/4pCn2/B8/4A4/3K1A3|f8h9 e3f3 h9g7@20":{"ok":true,"why":""},
 "5kc1c/1C2P4/b4N3/4P4/9/9/9/9/4p3r/2RK5|c0c9 g9c9 f7h8@20":{"ok":true,"why":""},
 "5kc2/3r3R1/5a3/4p4/8C/7C1/9/9/3p1pp2/4K4|h8f8 d8f8 i5i9 g9g8 h4h9@20":{"ok":false,"why":"第 3 手（紅）剩 2 步內將死的著法是 i5i9、h4h9，不是只有 i5i9"},
 "6Nc1/2PP1k3/4N2n1/9/9/9/9/3p5/2rp1r3/4K4|e7g6 f8f9 g6h8 f9f8 d8e8@20":{"ok":true,"why":""},

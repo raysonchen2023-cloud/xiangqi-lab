@@ -74,6 +74,7 @@ const JH_MZ_BGM="maze/maze_1.mp3";
      guards     守衛 [{kind, x, y, dx, dy, …}]：走法與視線照 JH_MZ_KIND[kind]（中炮門是 rook＝車）
      puz/pool   殘局：puz＝固定題；pool＝題庫 {door:[…], trap:[…]}，每題 {zh:[標題,說明], en:[…], fen, line:[紅,黑,紅,…]}（多步殺）或 ans（一步殺）
      solid／opaque  擋路／擋光的字元（預設 "#SD"／"#D"）；jump  可以像炮一樣隔一個跳過去的字元（中炮門 "S"＝糧袋）
+     afterMove(S,dx,dy)  走完一步之後的強制位移（例如淤泥滑到底），可回傳 {stop:true}；寶箱、踏板、被抓照最後的位置算
      canMove(S,x,y,dx,dy)  自動走找路時問它這一步能不能走（例如仙人指路第二層竹林只能上下直走）；沒設＝都能走。實際走路的限制要在 onStep 另外擋
      onStep(S,dx,dy,c)  走一步之前的機關（例如推箱子塞象眼），回傳事件物件就照它、回傳 null 照預設走
      rew、xp、xpKey、key（存檔鍵）、title、lvName、intro、warn、hall（門內頁入口）、back（回到哪一派的門內頁）
@@ -375,6 +376,8 @@ function jhMzStep(S,dx,dy){if(S.done)return{ev:"done"};const P=S.player,nx=P.x+d
   if(typeof S.lv.onStep==="function"&&(dx||dy)){const h=S.lv.onStep(S,dx,dy,c);if(h)return h}
   /* 糧袋當炮架：往糧袋走、糧袋後面那一格走得進去，就像炮一樣「隔一個子」跳過去（算一步）；兩袋並排、後面是牆或石門都跳不過（W87：跳得過的字元照該派 jump 設定，中炮門是 S） */
   if(dx||dy){if(c&&S.lv.jump.includes(c)&&!jhMzSolid(S,nx+dx,ny+dy)){P.x=nx+dx;P.y=ny+dy;P.jump=1;out.ev="jump"}else if(jhMzSolid(S,nx,ny))return c&&S.lv.jump.includes(c)?{ev:"wall",block:"jump"}:{ev:"wall"};   /* W71e①：撞到跳不過的糧袋，畫面改說「炮只能隔一個子跳」 */else{P.x=nx;P.y=ny}}
+  /* afterMove：走進去之後的強制位移（例如飛相第二層的淤泥一路滑到底）；回傳的欄位併進事件（stop:true＝自動走停下）。之後的點燈、寶箱、踏板、被抓都照滑完的位置算 */
+  if(typeof S.lv.afterMove==="function"&&(dx||dy)){const m=S.lv.afterMove(S,dx,dy);if(m)Object.assign(out,m)}
   S.turn++;
   for(const[a,b]of[[0,0],[1,0],[-1,0],[0,1],[0,-1]]){const x=P.x+a,y=P.y+b;if(jhMzCell(S,x,y)==="T"&&!S.lit.has(y*S.W+x)){S.lit.add(y*S.W+x);out.torch=true}}
   const k=P.y*S.W+P.x;
