@@ -101,7 +101,7 @@ const safeWalk = (c, S) => { const L = L3(c), clone = (T) => { const U = c.jhMzN
   for (let st = 0; st < 250 && q.length && !door; st++) { const nq = [];
     for (const T of q) { for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]]) { const U = clone(T), r = c.jhMzStep(U, dx, dy);
       if (r.ev === "door") { door = U; break } if (["trap", "wall", "locked", "spot", "lore"].includes(r.ev)) continue; const k = key(U); if (seen.has(k)) continue; seen.add(k); nq.push(U) } if (door) break }
-    q = nq.length > 4000 ? nq.slice(0, 4000) : nq }
+    q = nq.length > 2000 ? nq.slice(0, 2000) : nq }
   return door };
 test("走一趟：一定有一條不被守衛看到的路，先踩踏板、再走到石門前；任一個守衛慢 1～7 回合都走得過", () => {
   const c = load();
