@@ -76,7 +76,7 @@ function bhStart(k,cover){{const lk=typeof bhtdLock==="function"?bhtdLock():"";i
   if(typeof SG2G!=="undefined"&&typeof gsvSelect==="function"){if(cover!==false&&k&&typeof sg2Drift==="function"){const t0=Date.now();bhLd();if(sg2Drift(k,cover)){const R=store.get("bhRet",null);if(!R||!(+R.at>=t0))bhLdOff();return}bhLdOff()}gsvSelect(k,cover);return}   /* 11/16 黑洞新規則：偏航（有目的站）直接打一場星門圍城，不然開選關 */   /* 11/17 iPhone 模擬器測試：按「接受急襲」到星盤出來約 8 秒整頁空白 → 先蓋載入畫面（bhLd）；gsvStart 被鎖擋下（沒寫新的 bhRet＝沒開局）就馬上收掉 */
   if(typeof BHTD_ON!=="undefined"&&BHTD_ON&&typeof bhtdSelect==="function"){if(cover!==false&&k&&typeof bhtdRaidDrift==="function"&&bhtdRaidDrift(k,cover))return;bhtdSelect(k,cover);return}   /* 開發者 11/13：黑洞對戰改成陣地塔防，先選關卡（m/07bht-td.js）；11/15：星槎偏航（cover 不是 false、有目的站）而且急襲已開＝直接進一場星淵急襲，不開選關 */
   try{bhPreload()}catch(e){}store.set("bhRet",{k,cover:cover!==false,at:Date.now(),first:!((+store.get("bhCount",0)||0)>0)});store.set("park3d",true);
-  jStart("bh:"+k,{human:"r",lx:bhLevel(),journey:"bh:"+k},()=>{location.hash="#/journey/play";setTimeout(()=>toast("✦ 星樞："+BH_TXT.voice[1]),900)})}
+  jStart("bh:"+k,{human:"r",lx:bhLevel(),journey:"bh:"+k},()=>{const rn=ROUTE_N;location.hash="#/journey/play";setTimeout(()=>{if(jPlayOk(rn,"bh:"+k))toast("✦ 星樞："+BH_TXT.voice[1])},900)})}   /* 11/25 W120：到時還在對局頁、是這一盤、還沒結束才說（jPlayOk 在 05b-save.js） */
 const bhIs=st=>!!st&&String(st.journey||"").startsWith("bh:");
 /* 對局頁的 3D：巨盤模式＋黑洞環景（08b-cpugame 的 parkDraw 參數最後疊上去） */
 /* 開發者 11/12「黑洞對戰自動轉成手機／平板的橫向遊玩；等於是滿版的對戰，其他原本的文字你幫我優化要放哪」＋hspx「搖桿直向橫向都能使用」：
@@ -208,7 +208,7 @@ function bhFieldSync(st,host){
 let BH_T={id:null,s:{}};
 function bhTick(st){try{if(typeof bhtdTick==="function")bhtdTick(st)}catch(e){console.warn("[bhtd]",e)}try{if(typeof bhfxSync==="function")bhfxSync(st)}catch(e){console.warn("[bhfx]",e)}try{if(typeof gsvTick==="function")gsvTick(st)}catch(e){console.warn("[gsv]",e)}   /* 11/15 星門圍城・試玩（07bhg-gatesiege.js）：不是那一盤就收起來 */   /* 11/14 太虛星尊魔法 3D：魔王該上場就延遲載入、建特效，不該就收掉（07bhf-bossfx.js） */   /* 陣地塔防：元氣、靈力條、招式鈕、盤上標記（07bht-td.js；不是陣地局就收起來） */
   if(bhIs(st))try{bhMusTick(st)}catch(e){}if(!bhIs(st)||st.result||!st.id)return;if(BH_T.id!==st.id)BH_T={id:st.id,s:{}};const S=BH_T.s,n=(st.moves||[]).length,me=st.human==="b"?-1:1,v=st.eval&&st.eval.v!=null?st.eval.v*me:null;
-  const say=(k,L,ms)=>{if(S[k])return;S[k]=1;L=[bhWho(L[0]),L[1]];setTimeout(()=>{if(L[0]==="星樞")bhBell()},ms||600);setTimeout(()=>toast((L[0]==="星樞"?"✦ ":"")+L[0]+"："+L[1]),ms||600)};
+  const gid=st.id,say=(k,L,ms)=>{if(S[k])return;S[k]=1;L=[bhWho(L[0]),L[1]];stillHere(ms||600,()=>{if(L[0]==="星樞")bhBell();toast((L[0]==="星樞"?"✦ ":"")+L[0]+"："+L[1])},()=>!!PLAY_NOW&&PLAY_NOW.id===gid&&!PLAY_NOW.r)};   /* 11/25 W120：延後才說，到時換了頁、換了一盤、這盤已經有結果就不說（PLAY_NOW 是對局頁最近一次畫的那盤，05b-save.js） */
   if(st.td){}else if(v!=null&&n>=8&&v>=280)say("lead",BH_TXT.lead);   /* 陣地塔防不看盤面評估（黑子還沒全上場） */else if(v!=null&&n>=8&&v<=-280)say("behind",BH_TXT.behind);
   if(n>=24&&st.turn===st.human)say("hush",BH_TXT.hush,1200)}
 /* 07-legend journeyGameEnd 叫：記次數、照輸贏調下次難度 */
@@ -510,9 +510,9 @@ function bhxHint(on){const d=document.getElementById("bhxBk");if(!d)return;let h
 function bhxIntro(){OP.loop=[75,89];opVol(.5,1.5);const bhxIdle0=typeof requestIdleCallback==="function"?requestIdleCallback:f=>setTimeout(f,900);bhxIdle0(()=>{try{bhxPreImg()}catch(e){}try{bhxPreFetch(0)}catch(e){}try{bhxPreParse()}catch(e){}},{timeout:2500});   /* 11/18 N33-3：第 2 段電影的圖也在邀局時確定抓好（第 1 段沒看完就按掉的人） */   /* 11/18 P1：還沒下載完的接著下載（電影提早結束、15 秒還沒到時）；邀局卡畫面靜止，趁這時一顆一顆解析九顆棋子人和魔王 */   /* 11/16 OpenAI 審查：邀局視窗淡入時不搶主執行緒 */   /* 11/14：序局的黑將是太虛星尊，魔王模型、魔法圖也趁讀字時先下載 */   /* 邀局時第 1 首小聲在最後一段循環；趁玩家讀字先載 3D */
   modal(`<div class="em">♟</div><h2>星樞棋局・序局</h2><p>星盤展開，棋路成光。七星化作紅方棋子。</p><p class="pl-say">✦ 星樞：「${esc(BHX_TXT.start)}」</p><p class="muted" style="font-size:13px">黑洞殘局，只差最後一手：紅方先走，一步將死黑將。走錯也不算輸。<br>說書人：${esc(BHX_TXT.open)}</p>`,[["入局",bhxGo]],"prolog")}
 function bhxGo(){BHX_W=0;if(!store.get("bhxP3",null))store.set("bhxP3",{v:store.get("park3d",null)});store.set("park3d",true);   /* 11/16 P0：記下原本的 3D 設定，循著茶香時還原 */store.set("bhRet",null);opPlay(2,{fade:.8,loop:[8,84]});   /* 第 2 首〈星樞試局〉：按「入局」那一下開始（iPhone 要在點選裡），玩家一直沒下就 8～84 秒循環 */
-  jStart(BHX_ID,{human:"r",lx:1,journey:BHX_ID,lv:{fen:BHX_FEN,turn:"r",noPerpetual:true}},()=>{location.hash="#/journey/play";setTimeout(()=>{bhBell();toast("✦ 星樞："+BHX_TXT.start)},900);bhxReveal();   /* 11/16 OpenAI 審查：慢的手機 3D 還沒出來就拿掉黑底會閃出別頁；11/18 P1：改成等 3D 畫面、九顆棋子人、魔王都好了才拿掉（最多 15 秒，見 bhxReveal） */
+  jStart(BHX_ID,{human:"r",lx:1,journey:BHX_ID,lv:{fen:BHX_FEN,turn:"r",noPerpetual:true}},()=>{const rn=ROUTE_N,xok=still=>jPlayOk(rn,BHX_ID,still);location.hash="#/journey/play";setTimeout(()=>{if(!xok())return;bhBell();toast("✦ 星樞："+BHX_TXT.start)},900);bhxReveal();   /* 11/25 W120：開場那句、轉鏡頭延後才做，到時還在對局頁、還是序局這一盤（轉鏡頭還要沒走過子）才做 */   /* 11/16 OpenAI 審查：慢的手機 3D 還沒出來就拿掉黑底會閃出別頁；11/18 P1：改成等 3D 畫面、九顆棋子人、魔王都好了才拿掉（最多 15 秒，見 bhxReveal） */
     /* 從紅方正後方看，同一路的俥、炮、黑士、黑將疊在一起 → 開場轉到右前方斜看、對焦黑士（實測挑的角度） */
-    let k=0;const cam=()=>{k++;if(typeof bhfxXuBusy==="function"&&bhfxXuBusy())return;   /* 11/14 太虛星尊開場示威正在播（07bhf-bossfx.js）：播完由它轉到這個角度 */try{if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.setView){PARK.v.setView(BHX_CAM);return}}catch(e){}if(k<30)setTimeout(cam,400)};setTimeout(cam,1200)})}
+    let k=0;const cam=()=>{k++;if(!xok(true))return;if(typeof bhfxXuBusy==="function"&&bhfxXuBusy())return;   /* 11/14 太虛星尊開場示威正在播（07bhf-bossfx.js）：播完由它轉到這個角度 */try{if(typeof PARK!=="undefined"&&PARK&&PARK.v&&PARK.v.setView){PARK.v.setView(BHX_CAM);return}}catch(e){}if(k<30)setTimeout(cam,400)};setTimeout(cam,1200)})}
 const BHX_CAM={y:.6,p:.45,z:.65,foc:"a"};   /* 序局開場的鏡頭角度（上面 bhxGo 用；太虛星尊示威播完也轉回這裡） */
 /* 08b-cpugame tap() 送出前問：序局走錯就不送（回傳 {hint}），走對回 null 照常送 */
 /* 11/16 開發者「打完boss才能繼續」：序局還沒打完＝鎖住（08b-cpugame.js：頂欄沒有返回鈕、底欄沒有新局／認輸／擺盤；打完就照常） */

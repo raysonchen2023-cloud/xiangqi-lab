@@ -230,9 +230,22 @@ function ptyOnSolve(k,id){let P=null;try{P=ptyGet()}catch(e){}if(!P)return;const
 /* 11/17 iMac 模擬器第 12 項：殘局解開的「完美解開」結算是 07c 的卡片（#sheet），不是 .modal，以前不算在「等」裡，2.5 秒一到過場就蓋上去。
    結算卡（或任何卡片）開著就一直等、不算進 20 次，玩家按了按鈕或關掉卡片才播過場、出加入卡 */
 const ptyResOpen=()=>{try{return typeof document!=="undefined"&&!!document.getElementById("sheet")}catch(e){return false}};
-function ptyJoinCutLater(k,L,n){setTimeout(()=>{if(ptyResOpen())return ptyJoinCutLater(k,L,Math.max(1,n));const busy=document.querySelector(".modal")||(typeof mnfBusy==="function"&&mnfBusy());if(busy&&n<20)return ptyJoinCutLater(k,L,n+1);
-  let d=0;const go=()=>{if(d)return;d=1;if(document.querySelector(".modal"))ptyJoinCardLater(L,1);else ptyJoinCard(L)};try{pjcPlay(k,L,go)}catch(e){go()}},n?1500:2500)}
-function ptyJoinCardLater(L,n){setTimeout(()=>{if(ptyResOpen())return ptyJoinCardLater(L,Math.max(1,n));if(document.querySelector(".modal")&&n<20)return ptyJoinCardLater(L,n+1);ptyJoinCard(L)},n?1500:2500)}
+/* 11/25 W120：記下排程那一刻的頁面（ROUTE_N＋網址 ptyJoinAt），每次重試都先看；換頁就停，不在別的頁上播過場、跳加入卡，改用吐司說一聲（ptyJoinToast，不動加入與存檔）。
+   卡片或視窗開著也不再無上限等：結算卡、視窗、主線電影合計最多等 PTY_JOIN_MAX 次（約 2 分鐘），到了還被蓋著也不硬播，一樣改吐司 */
+const PTY_JOIN_MAX=80;
+const ptyJoinAt=()=>({rn:ROUTE_N,h:location.hash});
+const ptyJoinGone=at=>ROUTE_N!==at.rn||location.hash!==at.h;
+function ptyJoinToast(L){try{if(L&&L.length&&typeof toast==="function")toast("✨ "+L.map(ptyNm).join("、")+"加入了！到「雲河七星」卡冊可以換隨行的人")}catch(e){}}
+/* 11/25 W120（開發者選「到下一個安全的頁再補播」）：換頁或等到上限時，不在新頁上硬播，也不只出吐司——把過場記進存檔（ptyJoinPend，關掉 App 也不漏），
+   之後每次換頁、開 App 時看：不在對局或解題頁（dglBusy）、沒有卡片或視窗、主線電影沒在播，就補播過場和加入卡 */
+function ptyJoinDefer(k,L,cut){try{if(!L||!L.length)return;const Q=store.get("ptyJoinPend",[])||[];Q.push({k,L,cut:!!cut,at:Date.now()});store.set("ptyJoinPend",Q.slice(-6))}catch(e){ptyJoinToast(L)}}
+function ptyJoinSafe(){try{if(typeof dglBusy==="function"&&dglBusy(location.hash))return false;if(ptyResOpen()||document.querySelector(".modal"))return false;if(typeof mnfBusy==="function"&&mnfBusy())return false;return true}catch(e){return false}}
+function ptyJoinFlush(){try{const Q=store.get("ptyJoinPend",[])||[];if(!Q.length||!ptyJoinSafe())return;const x=Q.shift();store.set("ptyJoinPend",Q);const at=ptyJoinAt(),card=()=>{if(ptyJoinGone(at))return ptyJoinDefer(x.k,x.L,false);ptyJoinCard(x.L)};
+  if(x.cut&&typeof pjcPlay==="function"){let d=0;const go=()=>{if(d)return;d=1;card()};try{pjcPlay(x.k,x.L,go)}catch(e){go()}}else card()}catch(e){}}
+try{if(typeof addEventListener==="function"){addEventListener("hashchange",()=>setTimeout(ptyJoinFlush,1200));setTimeout(ptyJoinFlush,4000)}}catch(e){}
+function ptyJoinCutLater(k,L,n,at){at=at||ptyJoinAt();setTimeout(()=>{if(ptyJoinGone(at))return ptyJoinDefer(k,L,true);const busy=ptyResOpen()||document.querySelector(".modal")||(typeof mnfBusy==="function"&&mnfBusy());if(busy)return n<PTY_JOIN_MAX?ptyJoinCutLater(k,L,n+1,at):ptyJoinDefer(k,L,true);
+  let d=0;const go=()=>{if(d)return;d=1;if(ptyJoinGone(at))return ptyJoinDefer(k,L,false);if(document.querySelector(".modal"))ptyJoinCardLater(L,1,at);else ptyJoinCard(L)};try{pjcPlay(k,L,go)}catch(e){go()}},n?1500:2500)}
+function ptyJoinCardLater(L,n,at){at=at||ptyJoinAt();setTimeout(()=>{if(ptyJoinGone(at))return ptyJoinDefer(null,L,false);if(ptyResOpen()||document.querySelector(".modal"))return n<PTY_JOIN_MAX?ptyJoinCardLater(L,n+1,at):ptyJoinDefer(null,L,false);ptyJoinCard(L)},n?1500:2500)}
 function ptyJoinCard(L){if(typeof modal!=="function"||!L||!L.length)return;const P=ptyGet();if(!P)return;
   const nm=L.map(ptyNm).join("、"),c=L[0];
   modal(`<img src="data/xs/prev_${c}.webp" alt="" onerror="this.remove()"><h2>${esc(nm)}加入了！</h2>${L.map(x=>PTY_SAY[x]?`<p class="pl-say">${esc(ptyNm(x))}：「${esc(PTY_SAY[x])}」</p>`:"").join("")}<p class="muted">${ptyTa(L)}的招式黑洞裡就能帶；在「雲河七星」卡冊可以換隨行的人，也可以分星輝給${ptyTa(L)}。</p>`,

@@ -1624,3 +1624,6 @@ body.bh-field #cgStuck button{pointer-events:auto}
   body.bh-field #bhFieldDock .bf-keys{grid-column:2}
   body.bh-field.bh-field-pad .view.fixed>#bbox .gpad{left:auto!important;right:calc(6px + env(safe-area-inset-right,0px));transform:none!important}
 }
+/* W126（開發者 11/26）：iPhone 版在 iPadOS 26 相容視窗裡，左上紅黃綠視窗鈕蓋住頂欄最左邊的返回鈕、首頁星晷；00-util xqIpCompat 判斷到才加 xq-ipcompat，頂欄左邊多留 76px（視窗鈕約 70pt 寬）。
+   寫成 html.xq-ipcompat body #topbar＋!important，才蓋得過門派等頁面 html body.bh-field #topbar 自己的內距 */
+html.xq-ipcompat body #topbar{padding-left:76px!important}

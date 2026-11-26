@@ -46,7 +46,9 @@ function rlgBoot(){const now=Date.now(),L=rlgLs(RLG_KEY),W=rlgLs(RLG_WHY);try{lo
   if(c&&ended&&rlgIsGame(L.h)){RLG_SAY={why:c.why};if(rlgIsGame(location.hash))try{history.replaceState(history.state,"",location.pathname+location.search+rlgMenu(location.hash))}catch(e){}}
   RLG_REC=null;rlgSave({h:location.hash,a:now,ph:0,vh:0,d3:false,end:L&&+L.end||0});return{c,ended}}
 /* 大字提示：等開頭的載入畫面收起來；新版套用那次先讓「✓ 已更新到新版」顯示完 */
-function rlgSay(){if(!RLG_SAY)return;const s=RLG_SAY;RLG_SAY=null;let n=0;const go=()=>{if(document.getElementById("preov")&&++n<100)return setTimeout(go,400);
+/* W120：「上一盤的結果已經記好」只在還沒開新的一盤時說：之後走過棋（xq-play）、又分出勝負（xq-result），或已經進了對局類的頁，就不說了 */
+const rlgStale=t0=>{try{return RLG_PLAYT>t0||RLG_END>t0||rlgIsGame(location.hash)}catch(e){return true}};
+function rlgSay(){if(!RLG_SAY)return;const s=RLG_SAY,t0=Date.now();RLG_SAY=null;let n=0;const go=()=>{if(rlgStale(t0))return;if(document.getElementById("preov"))return++n<100?setTimeout(go,400):void 0;   /* W120：每次重試都先確認；等了 40 秒載入畫面還在就放棄，不再硬說 */
   const t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.style.cssText="z-index:312;font-size:19px;font-weight:900;line-height:1.5;width:min(88vw,460px);max-width:min(88vw,460px);padding:14px 20px;border-radius:16px";   /* 11/13：.toast 是膠囊形（圓角 999px），長句大字會縮成大黑圓、斷成 4 行 → 固定寬度、一般圓角 */
   t.textContent=typeof i18nT==="function"?i18nT("rlg.reloaded","剛才畫面重新載入了，上一盤的結果已經記好"):"剛才畫面重新載入了，上一盤的結果已經記好";document.body.append(t);setTimeout(()=>t.remove(),6000)};
   setTimeout(go,s.why==="upd"?6200:900)}
