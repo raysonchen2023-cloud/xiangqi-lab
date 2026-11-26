@@ -9,6 +9,8 @@ const C = require(path.join(ROOT, "xiangqi-lab", "site", "core.js"));
 const rd = (f) => fs.readFileSync(path.join(ROOT, "xiangqi-db", "m", f), "utf8");
 const SRC = rd("07z9m-central2.js");
 
+/* 把 07z9m-central2.js 的 jhMzCentral2Mud 整個換成 body（改壞驗證用：拿以前的寫法跑） */
+const withMud = (src, body) => { const a = src.indexOf("function jhMzCentral2Mud"), e = src.indexOf("\n  return null}", a); assert.ok(a > 0 && e > a, "找得到 jhMzCentral2Mud"); return src.slice(0, a) + body + src.slice(e + "\n  return null}".length) };
 function load(patch) {
   const mem = {}, c = {
     store: { get: (k, d) => (k in mem ? JSON.parse(mem[k]) : d), set: (k, v) => { mem[k] = JSON.stringify(v) } },
@@ -60,6 +62,16 @@ test("登記：中炮門第二層；雙炮衛兩個（一個前衛）；水窪�
   assert.equal(typeof L.onStep, "function"); assert.equal(L.lore.length, 1); assert.match(L.lore[0].src, /^遊戲整理，據潘季馴《河防一覽》/);
   assert.deepEqual(Array.from(L.rew, (r) => r.k), ["gong", "page", "title"]); assert.match(L.rew[2].zh, /逆水行舟/);
   assert.equal(L.xp, 40); assert.equal(L.xpKey, "maze:central:2"); assert.equal(L.key, "jhMaze_L2");
+  /* #212 複審建議：題庫、預設題是自己這一層的；前衛真的在前面；碑刻包上了、走過去出得了碑文卡；lore id 跟第一層不重複 */
+  const D = vm.runInContext("JH_MZ_POOL_CENTRAL2", c), T = vm.runInContext("JH_MZ_POOL_CENTRAL2_TRAP", c), B = vm.runInContext("JH_MZ_LV", c).central;
+  assert.equal(L.pool.door, D.door); assert.equal(L.pool.trap, T.trap); assert.equal(L.puz.door, D.door[0]); assert.equal(L.puz.trap, T.trap[0]);
+  assert.notEqual(L.pool.door, B.pool.door, "不是第一層的題庫");
+  const F = L.guards.find((G) => G.front), R = L.guards.find((G) => !G.front); assert.ok(F.dx === R.dx && (F.x - R.x) * F.dx > 0 && F.y === R.y, "前衛在面向那一邊的前面");
+  assert.equal(L._lore, 1, "碑刻 L、暗門 H 包上了（jhMzLoreWrap）");
+  const ids = Array.from(B.lore || [], (x) => x.id); assert.ok(!ids.includes(L.lore[0].id), "碑刻 id 跟第一層不重複");
+  const S = c.jhMzNew(L), M = L.map, ly = M.findIndex((r) => r.includes("L")), lx = M[ly].indexOf("L"); for (const G of S.guards) G.stun = 99;
+  const side = [[-1, 0], [1, 0], [0, -1], [0, 1]].find(([a, b]) => !c.jhMzSolid(S, lx + a, ly + b)); assert.ok(side, "碑刻旁邊有可以站的格子");
+  at(S, lx + side[0], ly + side[1]); const ev = c.jhMzStep(S, -side[0], -side[1]); assert.equal(ev.ev, "lore", "往碑刻走：出碑文卡"); assert.equal(ev.id, "cc4");
 });
 
 test("雙炮衛的規則都符合（看 3 格、另一個炮衛擋住就看不到、牆擋住、前衛不踩水窪、後衛會踩、不走進對方那一格）", () => {
@@ -67,10 +79,13 @@ test("雙炮衛的規則都符合（看 3 格、另一個炮衛擋住就看不�
 });
 
 test("改壞驗證（水窪）：多耗的那一回合直接讓守衛走、不照原地等的規則（#212 審查抓到的舊寫法），檢查一定抓得到", () => {
-  const OLD = SRC.replace('const r=jhMzStep(S,0,0);return r.ev==="move"?null:r}', "S.turn++;jhMzGuardStep(S);return null}");
+  const OLD = withMud(SRC, 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;S.turn++;jhMzGuardStep(S);return null}');
   assert.notEqual(OLD, SRC, "改壞的字串要真的找得到");
   const c = load(() => OLD);
   assert.ok(mudProblems(c).some((s) => s.includes("先提醒")), "舊寫法：守衛才看到就直接抓");
+  /* #212 複審抓到的上一版：多耗那一回合沒事就直接走進水窪，不管水窪已經落在紅線上 */
+  const PREV = withMud(SRC, 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;const r=jhMzStep(S,0,0);return r.ev==="move"?null:r}');
+  assert.notEqual(PREV, SRC); assert.ok(mudProblems(load(() => PREV)).some((s) => s.includes("紅線上")), "上一版：水窪落在紅線上就直接抓");
 });
 
 test("改壞驗證：穿過守衛看、看 5 格、前衛踩水窪、走進對方那一格、不擋牆，規則檢查一定抓得到", () => {
@@ -95,6 +110,12 @@ function mudProblems(c) {
   S = corridor(c, { 7: "Q" }, [{ x: 11, dx: 1 }], 8, 1); r = c.jhMzStep(S, -1, 0);
   if (r.ev !== "spot") bad.push("多耗的那一回合守衛才看到：先提醒、不直接抓（實際 " + r.ev + "）");
   if (S.player.x !== 8) bad.push("先提醒的那一回合人留在原地，不走進水窪");
+  /* #212 複審：守衛在 (2,1) 面右、水窪 (6,1)、人在 (7,1) 往左。走之前水窪不在紅線上（看 3,4,5）；多耗那一回合守衛走到 3、看到 4,5,6＝水窪在紅線上：先提醒、人不進去 */
+  S = corridor(c, { 6: "Q" }, [{ x: 2, dx: 1 }], 7, 1); r = c.jhMzStep(S, -1, 0);
+  if (r.ev !== "spot") bad.push("多耗的那一回合結束時水窪落在紅線上：先提醒、不直接抓（實際 " + r.ev + "）");
+  if (S.player.x !== 7) bad.push("水窪落在紅線上：人留在原地");
+  /* 對照：同樣配置、水窪換成一般地面＝守衛走完才看到，也是先提醒 */
+  S = corridor(c, {}, [{ x: 2, dx: 1 }], 7, 1); r = c.jhMzStep(S, -1, 0); if (r.ev !== "spot") bad.push("對照組（一般地面，同樣配置）要是先提醒（實際 " + r.ev + "）");
   return bad;
 }
 
