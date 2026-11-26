@@ -47,7 +47,7 @@ test("橫式座標：14 個入口跟原圖同一組 id、都在 2560×1600 裡�
     box[id] = [x0, y0, x1, y1];
   }
   assert.equal(L.cells.length, 12);
-  for (const c of L.cells) { assert.ok(c[0] < c[2] && c[1] < c[3]); assert.ok(c[0] >= box.mzZhen[0] && c[2] <= box.mzZhen[2] && c[1] >= box.mzZhen[1] && c[3] <= box.mzZhen[3], "亮格在珍品（亮格櫃）範圍裡") }
+  for (const c of L.cells) { assert.ok(c[0] < c[2] && c[1] < c[3]); const cx = (c[0] + c[2]) / 2; assert.ok(c[3] <= box.mzZhen[1] && cx >= box.mzZhen[0] && cx <= box.mzZhen[2], "亮格在珍品（下方櫃門）正上方，不被櫃門熱區蓋住") }   /* W165（11/26 iMac Claude 1 預驗）：珍品熱區原本蓋住整個亮格櫃，改到下方櫃門 */
   const inside = (p, b) => p[0] >= b[0] && p[0] <= b[2] && p[1] >= b[1] && p[1] <= b[3];
   assert.ok(inside(L.smoke, box.mzXp), "爐煙在修為（小三足鼎）上"); assert.ok(inside(L.dot, box.mzLetter), "朱點在信上");
   assert.ok(L.plum[0] >= box.mzXh[0] && L.plum[2] <= box.mzXh[2] && L.plum[1] >= box.mzXh[1] && L.plum[3] <= box.mzXh[3], "素梅畫在立軸裡");
@@ -129,6 +129,7 @@ test("〔混合〕07z4 接線：開頁先量（scwPre）、掛 07sw（換圖時 
   assert.match(MZ, /addEventListener\("resize",rs\)/);
   assert.match(MZ, /if\(MZ_WALK_ON&&!W\.dataset\.scw&&/);
   assert.match(MZ, /sciPage\(v,\{k:"study",nm:"書齋",W:MZ_W,H:MZ_H,/);
-  assert.match(M("m/07w6-sceneinfo.js"), /const off=\(\)=>\{if\(P\.dataset\.scw\)return true;/);
+  assert.match(M("m/07w6-sceneinfo.js"), /const off=\(\)=>\{if\(P\.dataset\.scw&&!D\.wide\)return true;/);   /* W165（11/26）：給了橫式座標 D.wide 就照它，沒給才自己關 */
+  assert.match(MZ, /wide:\{W:MZ_L\.W,H:MZ_L\.H,it:itW\}/, "書齋要給橫式座標，亮格器物橫放才點得開");
   const C = load(true); assert.equal(vm.runInContext("MZ_WALK_ON", C), false, "這頁沒有走路角色");
 });

@@ -44,9 +44,9 @@ if(typeof SHW_EXITS!=="undefined"&&SHW_EXITS&&!("study" in SHW_EXITS))SHW_EXITS.
    smoke 修為小三足鼎口（爐煙）、dot 園子棋友新信朱點。新圖沒有香爐和秘境那件：修為＝多寶格第一排的小三足鼎、秘境棋友＝多寶格右下的太湖石擺件。
    書齋牆在 3D 舞台下面，不是整頁場景：橫向用橫式圖時滿寬、照圖原本的高、往下捲（跟直向回饋 885 同一套），不用 07fl 的 cover 填滿；
    選圖照整個畫面量（07sw scwPre 的量法：圖框當成在最上面），不照牆實際的位置量——iPad 直拿時舞台下面剩的空間比較寬，照實際位置量會在直向誤換成橫式圖（見 mzScwSync）。
-   這一頁沒有走路角色（MZ_WALK_ON＝false），不給路網；07w6 物件說明在橫式圖上自動關掉（P.dataset.scw） */
+   這一頁沒有走路角色（MZ_WALK_ON＝false），不給路網；07w6 物件說明在橫式圖上改用 wide 那份座標（W165：亮格 12 件器物；其他物件橫式還沒量，橫放時點不出說明） */
 const MZ_L={W:2560,H:1600,
-  spots:[["mzZhen",102,269,742,858,"珍品",422,269,"m"],["mzBoard",947,952,1147,1062,"棋盤",1047,952,"a"],["mzSecret",568,717,671,845,"秘境棋友",619,717,"m"],["mzKifu",1157,942,1313,1070,"棋譜",1235,942,"m"],
+  spots:[["mzZhen",115,883,678,1254,"珍品",397,883,"m"],["mzBoard",947,952,1147,1062,"棋盤",1047,952,"a"],["mzSecret",568,717,671,845,"秘境棋友",619,717,"m"],["mzKifu",1157,942,1313,1070,"棋譜",1235,942,"m"],
     ["mzXh",1157,77,1395,819,"消寒圖",1276,77,"m"],["mzYu",1608,102,2419,538,"輿圖",2013,102,"m"],["mzRank",1800,594,2248,760,"官階",2024,594,"m"],["mzSeal",768,942,955,1062,"千秋印譜",861,942,"a"],
     ["mzXp",422,379,520,486,"修為",471,379,"b"],["mzLetter",1331,952,1462,1062,"園子棋友",1396,952,"a"],["mzCodex",1498,883,1651,1070,"千秋大百科",1574,883,"b"],["mzJar",1677,916,1792,1062,"棋罐",1734,916,"a"],
     ["mzBox",1836,952,1920,1055,"提示棋",1878,952,"b"],["mzHist",1966,960,2086,1062,"棋史卡",2026,960,"m"]],
@@ -183,9 +183,11 @@ function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(
   /* 走路角色（07w）：入口是 .mz-hs（id），收滿的那一類改成歡呼；座標是原圖的，用橫式圖時不掛 */
   if(MZ_WALK_ON&&!W.dataset.scw&&typeof shwMount==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON){try{const HS={};for(const k in SHW_MZ.HS){HS[k]=SHW_MZ.HS[k].slice();if(full[k])HS[k][3]="cheer"}
     shwMount({v,cfg:Object.assign({},SHW_MZ,{HS}),root:W,frame:W,layer:W,before:W.querySelector(".mz-hs"),sel:".mz-hs",keyOf:b=>b.id,find:h=>W.querySelector("#"+h),mem:"study"})}catch(e){}}
-  /* 點畫裡的東西看說明（07w6）：座標是原圖的（用橫式圖時 07w6 自己關掉）；亮格各格還是淡墨的，說明後面補一句 */
+  /* 點畫裡的東西看說明（07w6）：it 是原圖座標；換成橫式圖時 07w6 改用下面 wide 那份（W165）；亮格各格還是淡墨的，說明後面補一句 */
   if(typeof sciPage==="function"){try{const CELLS=/_classic\.webp/.test(src)?MZ_CELLS_CL:MZ_CELLS,it=MZ_RELIC.map(([n,t,nd],i)=>{const c=CELLS[i];return{n,nd,t:t+(i<zOn?"":"（這一格還是淡墨的，多收幾件珍品就會變成彩色。）"),s:[[[c[0]+3,c[1]+3],[c[2]-3,c[1]+3],[c[2]-3,c[3]-3],[c[0]+3,c[3]-3]]]}});
-    sciPage(v,{k:"study",nm:"書齋",W:MZ_W,H:MZ_H,it:it.concat(MZ_SCI)})}catch(e){}}
+    /* W165：橫式圖（MZ_L，2560×1600）另給一份 12 件亮格器物的座標，換成橫式圖時 07w6 改用這份；其他說明（亮格櫃等）只有直向座標，橫式先不給 */
+    const itW=MZ_RELIC.map(([n,t,nd],i)=>{const c=MZ_L.cells[i];return{n,nd,t:it[i].t,s:[[[c[0]+6,c[1]+6],[c[2]-6,c[1]+6],[c[2]-6,c[3]-6],[c[0]+6,c[3]-6]]]}});
+    sciPage(v,{k:"study",nm:"書齋",W:MZ_W,H:MZ_H,it:it.concat(MZ_SCI),wide:{W:MZ_L.W,H:MZ_L.H,it:itW}})}catch(e){}}
   if(typeof shpFit==="function")try{shpFit(v)}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 /* 消寒圖：一枝素梅 9 朵、每朵 9 瓣，共 81 瓣；染了幾瓣就幾瓣朱紅（原圖畫在立軸畫心 474～573 × 118～350 裡；
