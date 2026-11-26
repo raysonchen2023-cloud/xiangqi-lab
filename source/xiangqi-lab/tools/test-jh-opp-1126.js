@@ -110,6 +110,10 @@ test("地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓�
   for (const G of S.guards) for (let y = G.pal[1]; y < G.pal[1] + 3; y++) for (let x = G.pal[0]; x < G.pal[0] + 3; x++) assert.ok(!c.jhMzSolid(S, x, y), "九宮每一格都是地面：" + x + "," + y);
   const ys = S.guards.map((G) => G.pal[1]), riv = M.findIndex((r) => r.includes("~"));
   assert.ok(ys.some((y) => y < riv) && ys.some((y) => y > riv), "水溝兩邊各一個戲軸");
+  /* 冷光柱要看得到對岸：每個光柱那一欄，水溝那一列是水（不是牆）；實際走進去，對岸那一半也進了 seen */
+  for (const k of pos("M")) { const x = k % W, y = (k / W) | 0; assert.equal(M[riv][x], "~", "光柱 (" + x + "," + y + ") 那一欄的水溝是水");
+    const T = c.jhMzNew("opposite_cannon"); for (const G of T.guards) G.stun = 99; T.seen = new Set(); const dx = M[y][x - 1] !== "#" ? -1 : 1; at(T, x + dx, y); c.jhMzStep(T, -dx, 0);
+    const other = y < riv ? riv + 1 : riv - 1; assert.ok(T.seen.has(other * W + x), "走進光柱 (" + x + "," + y + ")，對岸 (" + x + "," + other + ") 看得到") }
 });
 
 const safeWalk = (c, S) => { const clone = (T) => { const U = c.jhMzNew("opposite_cannon"); U.guards.forEach((G, i) => Object.assign(G, T.guards[i])); at(U, T.player.x, T.player.y); U.plate = T.plate; U.turn = T.turn; U.grid = T.grid.map((r) => r.slice()); U.chests = new Set(T.chests); return U };
@@ -120,13 +124,13 @@ const safeWalk = (c, S) => { const clone = (T) => { const U = c.jhMzNew("opposit
       if (r.ev === "door") { door = U; break } if (r.ev === "trap" || r.ev === "wall" || r.ev === "locked" || r.ev === "spot") continue; const k = key(U); if (seen.has(k)) continue; seen.add(k); nq.push(U) }
     q = nq.length > 20000 ? nq.slice(0, 20000) : nq }
   return door };
-test("走一趟：一定有一條不被戲軸看到的路，先踩踏板、再走到石門前；兩個戲軸的步調差換成 6（被抓解題、其中一個停 4 回合後）也走得過", () => {
+test("走一趟：一定有一條不被戲軸看到的路，先踩踏板、再走到石門前；兩個戲軸的步調差換成 7（被抓解題、其中一個停 4 回合後）也走得過", () => {
   const c = load(), RING = vm.runInContext("JH_MZ_OPP_RING", c);
   let S = c.jhMzNew("opposite_cannon"), door = safeWalk(c, S);
   assert.ok(door && door.plate, "原本的步調：先踩踏板、再走到石門前");
-  const d0 = ((S.guards[1].i - S.guards[0].i) % 8 + 8) % 8; assert.equal(d0, 2, "步調差 2");
+  const d0 = ((S.guards[1].i - S.guards[0].i) % 8 + 8) % 8; assert.equal(d0, 3, "步調差 3");
   S = c.jhMzNew("opposite_cannon"); const G = S.guards[1], i = (G.i + 4) % 8; G.i = i; G.x = G.pal[0] + RING[i][0]; G.y = G.pal[1] + RING[i][1];
-  door = safeWalk(c, S); assert.ok(door && door.plate, "步調差 6 也走得過");
+  door = safeWalk(c, S); assert.ok(door && door.plate, "步調差 7 也走得過");
 });
 
 test("題庫：石門 3 題（炮收尾、紅方雙炮優先）、陷阱至少 5 題；core.js 獨立重算——每步合法、走完將死、最後一步是對的子、沒有更短的殺法；不跟別派重複、兩段不重複；都出自古譜", () => {
