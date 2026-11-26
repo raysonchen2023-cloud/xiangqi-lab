@@ -62,6 +62,8 @@ function problems(c) {
   if (!r.stop) bad.push("踩到瓦片要回 stop:true（自動走停下）");
   if (T.guards[0].x === U.guards[0].x && T.guards[0].y === U.guards[0].y) bad.push("踩到瓦片那一回合野馬要多跳一步（位置要跟沒踩瓦片不同）");
   if (T.guards[0].rush) bad.push("多跳一步只限那一回合");
+  const d2 = (X) => (X.guards[0].x - X.player.x) ** 2 + (X.guards[0].y - X.player.y) ** 2;
+  if (!(d2(T) < d2(U))) bad.push("踩到瓦片後野馬要離玩家更近（第二跳朝玩家）");
   /* 自動走：繞過瓦片 */
   const A = c.jhMzNew(L); for (let y = 0; y < A.H; y++) for (let x = 0; x < A.W; x++) A.seen.add(y * A.W + x); A.player = { x: 3, y: 10 };
   const pa = c.jhMzPath(A, 5, 10), steps = pa ? Array.from(pa, (q) => q.join(",")) : [];

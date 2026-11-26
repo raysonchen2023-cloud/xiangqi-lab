@@ -1,7 +1,7 @@
 /* ---------- W87-2 起馬地底迷宮・第二層「烽火暗驛」（開發者 11/26 下一版目標②：十派地底迷宮都做到三層；第二層分工 Windows Claude 1）----------
    規格：story/gemini_app/208_十派地底迷宮第二三層_補件_1126_Gemini回覆.md 的起馬第二層，加上 iMac Claude 1 兩份複核與開發者 11/26 選單：
      ・守衛「追跡野馬」（wildhorse2）：走法同第一層的野馬（循玩家足跡跳日字、蹩馬腿照舊），但足跡只慢 2 步（第一層 3 步），追得更緊。
-     ・新地形「碎瓦片」（V）：踩上去會碎、發出聲響，野馬聽到那一回合會多跳一步（等於一下子又近了一步）；瓦片踩過就碎成平地。
+     ・新地形「碎瓦片」（V）：踩上去會碎、發出聲響，野馬聽到那一回合會多跳一步、直接朝玩家現在的位置（等於一下子又近了一步）；瓦片踩過就碎成平地。
        自動走不主動踩瓦片（lv.avoid），點的終點就是瓦片可以；踩到會停下（afterMove 回 stop:true）。
      ・殘局照開發者 11/26 選單「一律出殺題」：石門「掛角馬」與被抓都是馬收尾的殺題；題庫只排除起馬自己各層（不同派可以重用）。
    共用程式在 m/07z9m-maze.js（jhMzLayer、afterMove、avoid）；日字跳法 jhMzHorseCan、JH_MZ_HORSE_DIR 在 m/07z9m-screen.js，屏風馬巡法 JH_MZ_KIND.horse（m.html 排在前面）。
@@ -28,6 +28,9 @@ const JH_MZ_HORSE2_MAP=[
 "#......@......#",
 "###############"];
 const JH_MZ_HORSE2_LAG=2;
+/* 朝 (tx,ty) 跳一步日字：挑八個方向裡落點最近的；跳了不會更近就不跳 */
+function jhMzHorse2Toward(S,G,tx,ty){let best=null,bd=1e9;for(const[dx,dy]of JH_MZ_HORSE_DIR){if(!jhMzHorseCan(S,G.x,G.y,dx,dy,G))continue;const nx=G.x+dx,ny=G.y+dy,d=(nx-tx)*(nx-tx)+(ny-ty)*(ny-ty);if(d<bd){bd=d;best=[dx,dy]}}
+  if(!best||bd>=(G.x-tx)*(G.x-tx)+(G.y-ty)*(G.y-ty))return false;G.x+=best[0];G.y+=best[1];G.dx=best[0];G.dy=best[1];return true}
 const JH_MZ_HORSE2_GUARDS=[{kind:"wildhorse2",x:7,y:8,dx:2,dy:1}];
 JH_MZ_KIND.wildhorse2={
   sight(S,G){return JH_MZ_KIND.horse.sight(S,G)},
@@ -38,8 +41,8 @@ JH_MZ_KIND.wildhorse2={
     for(const[dx,dy]of JH_MZ_HORSE_DIR){if(!jhMzHorseCan(S,G.x,G.y,dx,dy,G))continue;const nx=G.x+dx,ny=G.y+dy,d=(nx-tx)*(nx-tx)+(ny-ty)*(ny-ty);if(d<bd){bd=d;best=[dx,dy]}}
     if(!best)return;const cur=(G.x-tx)*(G.x-tx)+(G.y-ty)*(G.y-ty);if(bd>=cur)return;
     G.x+=best[0];G.y+=best[1];G.dx=best[0];G.dy=best[1];
-    /* 剛聽到瓦片碎裂：這一回合再跳一步（不再記足跡） */
-    if(rush){tr.pop();JH_MZ_KIND.wildhorse2.step(S,G)}},
+    /* 剛聽到瓦片碎裂：這一回合再朝玩家現在的位置跳一步（跳了會更近才跳），玩家看得到牠被聲音引過來 */
+    if(rush&&P)jhMzHorse2Toward(S,G,P.x,P.y)},
   look:{body:"#6e4a24",head:"#80582c",eye:0xE24A3A}};
 /* 碎瓦片：踩上去碎成平地；每一匹追跡野馬這一回合多跳一步（rush），回 stop:true 讓自動走停下 */
 function jhMzHorse2Shard(S){const P=S.player;if(jhMzCell(S,P.x,P.y)!=="V")return null;S.grid[P.y][P.x]=".";
