@@ -44,8 +44,8 @@ function xflCover(o){const W=o.W,av=o.av,nw=o.nw,nh=o.nh,S=Object.assign({l:0,r:
   const lx=cut(cx,S.l,S.r,w),ty=lockTop?0:cut(cy,t0,S.b,h);
   return{w:Math.round(w),h:Math.round(h),left:Math.round(cx?-lx:(W-w)/2),top:Math.round(ty),crop:Math.round(cy),gx:Math.max(0,Math.round(W-w)),gy:Math.max(0,Math.round(av-h))}}
 /* 首頁寬版圖排版：成功回傳 true；k＝07z 的 "p34"／"l1610"。沿用 xfl-port（07sp 推回範圍 xflVis、標題條和主張紙條跟著看得到的上緣、標籤晚到重排），多一個 xfl-hmw 記號 */
-function xflHmw(V,P,nw,nh,k){const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0,off=pr.top-vr.top+V.scrollTop,av=V.clientHeight-pb-off,W=pr.width;
-  const sf=typeof HMW!=="undefined"&&HMW[k]?HMW[k].safe:null,pl=xflCover({W,av,nw,nh,off,safe:sf});if(!pl||av<120)return false;
+function xflHmw(V,P,nw,nh,k,sf0){const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0,off=pr.top-vr.top+V.scrollTop,av=V.clientHeight-pb-off,W=pr.width;
+  const sf=sf0||(typeof HMW!=="undefined"&&HMW[k]?HMW[k].safe:null),pl=xflCover({W,av,nw,nh,off,safe:sf});if(!pl||av<120)return false;
   if(typeof r07Off==="function")xflR07Off(V);
   if(P.dataset.xflMt==null)P.dataset.xflMt=P.style.marginTop||"";
   Object.assign(P.style,{maxWidth:"none",width:pl.w+"px",marginLeft:pl.left+"px",marginTop:(pl.top?-pl.top:0)+"px"});P.style.setProperty("--xflT",pl.top+"px");P.classList.toggle("xfl-nar",pl.gx>1);
@@ -107,6 +107,7 @@ let xflR07Off=function(){},xflR07Wide=null;
       /* 意見回饋 885（iPad 直拿「我的角色」下面畫面太小）：書齋牆在角色舞台下面，縮到剛好塞進剩下的高度只剩中間一半寬；直向大螢幕改成跟手機一樣滿寬、往下捲 */
       if(P&&/(^|\s)mz-wall(\s|$)/.test(P.className||"")&&V.clientWidth/Math.max(1,V.clientHeight)<=XFL_PORT_MAX){xflR07Off(V);return true}
       {const hk=typeof hmwSync==="function"?hmwSync(V,P):null;if(hk==="wait"){xflR07Off(V);return true}if(hk&&xflHmw(V,P,nw,nh,hk))return true}   /* 11/13 首頁寬版圖：比例跨過門檻＝07z 原地換圖，等圖載好再排；用寬版＝cover 填滿 */
+      {const sk=typeof scwSync==="function"?scwSync(V,P):null;if(sk==="wait"){xflR07Off(V);return true}if(sk&&xflHmw(V,P,nw,nh,sk,typeof scwSafe==="function"?scwSafe(P):null))return true}   /* W107-L 場景頁的 iPad 橫向專用圖（07sw）：同一套，安全區照條目 */
       if(xflPort(V,P,nw,nh))return true;vr=V.getBoundingClientRect();pr=P.getBoundingClientRect()}catch(e){}
     const r=wide0.call(this,V,P,vr,pr,nw,nh);try{xflBg(V,P,!!r&&(V.classList.contains("r07-fit")||V.classList.contains("r07-side")))}catch(e){}return r};
   /* 換頁時 #view 內容整個換掉，ttFill 要 350ms 後才重排：舊圖框一離開就立刻收掉模糊底、還原「不給捲」，新頁不會先閃舊圖、也不會短暫不能捲 */

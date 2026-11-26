@@ -1,11 +1,11 @@
 {
- "version": "20261126-0626",
- "checkedAt": "2026-11-25T22:26:39.812Z",
- "html": "9e0cee0575bd",
- "sw": "291720a74e16",
+ "version": "20261126-1111",
+ "checkedAt": "2026-11-26T03:11:55.411Z",
+ "html": "3b8605f21741",
+ "sw": "0ce2cf6535f8",
  "scripts": 6,
  "modules": {
-  "00-util.js": "504c14c35089",
+  "00-util.js": "962d0c7f95df",
   "00f-flags.js": "a07a43061bea",
   "01-board.js": "caf0c42b2f1d",
   "02-shell.js": "93cc0e603672",

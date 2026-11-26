@@ -183,7 +183,9 @@ function shwPage(v,cfg,mem,gate){const P=v&&v.querySelector(".shp-page.cq");if(!
   const kOf=b=>b.id||(b.dataset.ps!=null?"ps"+b.dataset.ps:""),fd=h=>/^ps\d+$/.test(h)?P.querySelector(`[data-ps="${h.slice(2)}"]`):P.querySelector("#"+h);
   shwMount({v,cfg,root:P,frame:P,layer:P,before:P.querySelector(".shp-spot,.po-sight"),sel:".shp-spot,.po-sight",keyOf:kOf,find:fd,mem,gate})}
 const SHW_PORT_K=1.35;   /* 開發者 11/8：渡口的角色原本約圖高 3～4%，放大 1.35 倍 */
-function shwPort(v,k){if(!SHW_PORT_ON||!SHW_PORT[k])return;const C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];shwPage(v,C,"port:"+k,()=>{const P=v.querySelector(".shp-page.cq");return!!P&&!P.classList.contains("pc-run")&&!document.querySelector(".walkc")})}   /* 07p 下船過場（pc-run）、步行小卡（.walkc）播完才出現 */
+function shwPort(v,k){if(!SHW_PORT_ON||!SHW_PORT[k])return;let C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
+  {const P=v&&v.querySelector(".shp-page.cq"),e=P&&typeof scwCur==="function"?scwCur(P):null;if(e&&e.walk&&P._scw){C=scwWalkCfg(P._scw,e);P._scwW="l"}}   /* W107-L：開頁就是渡口橫式圖時用條目的路網（換圖時 07sw scwWalk 重掛） */
+  shwPage(v,C,"port:"+k,()=>{const P=v.querySelector(".shp-page.cq");return!!P&&!P.classList.contains("pc-run")&&!document.querySelector(".walkc")})}   /* 07p 下船過場（pc-run）、步行小卡（.walkc）播完才出現 */
 function shwYz(v,k){if(!SHW_YZ_ON||!SHW_YZ[k])return;shwPage(v,Object.assign({},SHW_PG0,SHW_YZ[k]),"yz:"+k,()=>!document.querySelector(".walkc"))}
 if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){const r=f0.apply(this,arguments);try{shwPort(v,k)}catch(e){}return r}}
 if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.apply(this,arguments);try{shwYz(v,k)}catch(e){}return r}}
@@ -270,7 +272,7 @@ const SHW_XT={};
 function shwExitOn(){const b=document.querySelector("#topbar #back");return!!(b&&!b.hidden&&b.getClientRects().length)}
 function shwExitCfg(o){if(!SHW_EXIT_ON||!o||!o.cfg||!o.mem)return o;const m=o.mem,K=SHW_EXITS;let X=K[m];if(X===undefined)X=K[m.split(":")[0]+":*"];if(X===false)return o;
   const C=o.cfg,hP=C.N&&C.N[C.home];if(!hP)return o;if(!X){if(hP[1]<85)return o;X={out:[hP[0],108],r:[hP[0]-10,hP[1]-1,hP[0]+10,100]}}
-  if(X.boat){const A=typeof PH4_PIER!=="undefined"&&PH4_PIER[m.split(":")[1]];if(!A||!A.boat)return o;X=Object.assign({},X,{out:A.boat})}
+  if(X.boat){const k=m.split(":")[1],L=C.W===2560&&typeof PORT_L1610!=="undefined"&&PORT_L1610[k],A=L?L.pier:typeof PH4_PIER!=="undefined"&&PH4_PIER[k];if(!A||!A.boat)return o;X=Object.assign({},X,{out:A.boat})}   /* W107-L：渡口橫式圖（路網 W＝2560）走出去要上橫式圖的那條船（07f PORT_L1610，審查 #165 第 1 項）；不然站點是橫式的碼頭、船卻是直圖的，漢版會走進水裡 */
   let n=C.home,N=C.N,E=C.E;if(typeof X.at==="string"){if(!N[X.at])return o;n=X.at}else if(X.at){n="_x";N=Object.assign({},N,{_x:X.at});E=E+" "+(X.ln||C.home).split(" ").filter(k=>N[k]&&k!=="_x").map(k=>k+"-_x").join(" ")}
   return Object.assign({},o,{cfg:Object.assign({},C,{N,E,_e:null}),X:{n,out:X.out,r:X.r}})}
 const SHW_XR=[];   /* 各頁出口點區（給 07t3 籤筒讓位用）：{f:圖框, r:[左,上,右,下]%} */

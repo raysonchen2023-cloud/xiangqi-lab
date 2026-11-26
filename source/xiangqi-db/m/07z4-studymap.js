@@ -38,6 +38,22 @@ const SHW_MZ={W:MZ_W,H:MZ_H,el:18,h:[.12,97,.0005],home:"home",look0:[47,120],
     mzSeal:["fS",26,70,"wave"],mzXp:["home",45,70,"bow"],mzLetter:["fC",54,70,"wave"],mzCodex:["fR",63,69,"wave"],mzJar:["fJ",72,69,"wave"],mzBox:["fJ",79,70,"wave"],mzHist:["fH",90,80,"wave"]}};
 /* 出口（回饋 824）：左下角，從左邊走道往左走出去；點左下這一塊（左 0～9%、上 86～100%）＝出口 */
 if(typeof SHW_EXITS!=="undefined"&&SHW_EXITS&&!("study" in SHW_EXITS))SHW_EXITS.study={at:"lx",out:[-9,97.5],r:[0,86,9,100]};
+/* W107-L iPad 橫向專用圖（l1610，2560×1600；Windows Claude 1 11/25 量，output/w107-ipad/l1610/studymap/study_day_classic_l1610.json）：
+   經典版、原圖版共用同一套座標（直式原本兩張圖構圖不同、各自一套；橫式統一成一套）；夜景沒有橫式圖＝照舊原圖。座標都是橫式圖像素：
+   spots 入口（格式同 MZ_SPOTS，錨點是點選範圍上緣中間，對齊照原本）、cells 亮格 12 格、plum 消寒圖畫心、yu 輿圖畫心（原本 13 站照比例放進來）、
+   smoke 修為小三足鼎口（爐煙）、dot 園子棋友新信朱點。新圖沒有香爐和秘境那件：修為＝多寶格第一排的小三足鼎、秘境棋友＝多寶格右下的太湖石擺件。
+   書齋牆在 3D 舞台下面，不是整頁場景：橫向用橫式圖時滿寬、照圖原本的高、往下捲（跟直向回饋 885 同一套），不用 07fl 的 cover 填滿；
+   選圖照整個畫面量（07sw scwPre 的量法：圖框當成在最上面），不照牆實際的位置量——iPad 直拿時舞台下面剩的空間比較寬，照實際位置量會在直向誤換成橫式圖（見 mzScwSync）。
+   這一頁沒有走路角色（MZ_WALK_ON＝false），不給路網；07w6 物件說明在橫式圖上改用 wide 那份座標（W165：亮格 12 件器物；其他物件橫式還沒量，橫放時點不出說明） */
+const MZ_L={W:2560,H:1600,
+  spots:[["mzZhen",115,883,678,1254,"珍品",397,883,"m"],["mzBoard",947,952,1147,1062,"棋盤",1047,952,"a"],["mzSecret",568,717,671,845,"秘境棋友",619,717,"m"],["mzKifu",1157,942,1313,1070,"棋譜",1235,942,"m"],
+    ["mzXh",1157,77,1395,819,"消寒圖",1276,77,"m"],["mzYu",1608,102,2419,538,"輿圖",2013,102,"m"],["mzRank",1800,594,2248,760,"官階",2024,594,"m"],["mzSeal",768,942,955,1062,"千秋印譜",861,942,"a"],
+    ["mzXp",422,379,520,486,"修為",471,379,"b"],["mzLetter",1331,952,1462,1062,"園子棋友",1396,952,"a"],["mzCodex",1498,883,1651,1070,"千秋大百科",1574,883,"b"],["mzJar",1677,916,1792,1062,"棋罐",1734,916,"a"],
+    ["mzBox",1836,952,1920,1055,"提示棋",1878,952,"b"],["mzHist",1966,960,2086,1062,"棋史卡",2026,960,"m"]],
+  cells:[[120,333,256,499],[261,333,402,499],[402,333,543,499],[543,333,684,499],[120,504,256,671],[261,504,402,671],[402,504,543,671],[543,504,684,671],[120,676,256,845],[261,676,402,845],[402,676,543,845],[543,676,684,845]],
+  plum:[1183,218,1370,768],yu:[1638,128,2386,512],smoke:[468,384],dot:[1434,968]};
+if(typeof SCW!=="undefined"){const e={ready:true,f:"studymap/study_day_classic_l1610",w:2560,h:1600,safe:{l:.12,r:.12,t:.05,b:.10},fx:{mz:MZ_L}};
+  SCW["studymap/study_day_classic"]=e;SCW["studymap/study_day"]=Object.assign({},e,{f:"studymap/study_day_l1610"})}
 /* 點畫裡的東西看說明（07w6 sciPage）：亮格 12 件器物照格子順序（上排左到右、中排、下排） */
 const MZ_RELIC=[["青瓷玉壺春瓶","細頸、圓肚的青瓷瓶{{yuan:，宋元以來很常見的瓶形{{ming:，明代書齋常拿來插一兩枝花}}}}。"],["甜白瓷杯","{{ming:明代永樂年間景德鎮燒的白瓷，白得像糖霜一樣，所以叫「甜白」。}}{{<ming:這是一隻潔白的瓷杯，白得像一層糖霜，摸起來溫溫潤潤的。}}","{{ming:甜白}}{{<ming:白}}瓷杯"],
   ["仿古銅鼎","照商周青銅鼎的樣子鑄的小鼎。{{ming:明代文人喜歡收藏仿古的銅器，擺在架上賞玩。}}"],["玉璧","中間有圓孔的扁圓玉器，很早就有，古人當作禮器和佩玉；放在書齋裡是一件古玩。"],
@@ -57,6 +73,7 @@ function mzCss(){if(document.getElementById("mzCss"))return;const s=document.cre
 .shp-page.mz-wall{position:relative;margin:10px 0 6px;border-radius:6px;user-select:none;-webkit-user-select:none}
 .mz-wall>img{display:block;width:100%;height:auto}
 .mz-g{position:absolute;inset:0;pointer-events:none}
+.mz-ov{position:absolute;inset:0;pointer-events:none}.mz-ov .mz-hs{pointer-events:auto}
 .mz-cell{position:absolute;background-repeat:no-repeat;filter:grayscale(1) brightness(1.06) contrast(.92);transition:opacity .6s}
 .mz-dk .mz-cell{filter:grayscale(1) brightness(.92) contrast(.92)}
 .mz-cell.on{opacity:0}
@@ -97,14 +114,29 @@ function mzItemSheet(k){const T=(f,d)=>{try{return f()}catch(e){return d}};const
   sheet(k==="jar"?"🫙 棋罐":"🎒 寶物",b=>{b.innerHTML=k==="jar"?jar+`<div style="height:8px"></div>`+bag:bag+`<div style="height:8px"></div>`+jar})}
 /* 打開千秋印譜：有 sealBook 就用；沒有就退回舊的集章簿，再不行開千秋大百科 */
 function mzSealOpen(){if(typeof sealBook==="function")return sealBook();if(typeof stampBook==="function")return stampBook();location.hash="#/codex"}
+/* 這一頁現在用哪一套座標：l＝橫式圖（MZ_L），不然照原圖（cells＝原圖的亮格：經典版另外量的 MZ_CELLS_CL 或 MZ_CELLS） */
+const MZ_YU_BOX=[668,64,896,219];   /* 原圖輿圖畫心（MZ_YU 13 站在這一框裡） */
+function mzGeo(l,cells){if(l){const[a,b,c,d]=MZ_L.yu,[A,B,C,D]=MZ_YU_BOX,k=(c-a)/(C-A);
+    return{W:MZ_L.W,H:MZ_L.H,cells:MZ_L.cells,spots:MZ_L.spots,plum:MZ_L.plum,yu:MZ_YU.map(([x,y])=>[+(a+(x-A)*k).toFixed(1),+(b+(y-B)*(d-b)/(D-B)).toFixed(1)]),yuK:k,smoke:MZ_L.smoke,dot:MZ_L.dot}}
+  return{W:MZ_W,H:MZ_H,cells,spots:MZ_SPOTS,plum:null,yu:MZ_YU,yuK:1,smoke:null,dot:null}}
+/* W107-L：書齋牆的選圖照整個畫面量（07sw scwMeasure 不給圖框＝當成在最上面），要換就原地換（07sw scwSet，換完 apply 重畫疊圖）；
+   回 "wait"＝剛換、等圖載好、"l1610"＝用橫式圖、null＝原圖（交回 07fl／07t3 照原本排） */
+function mzScwSync(V,P){const o=P&&P._scw;if(!o||!V||typeof scwEntry!=="function")return null;let k="";if(scwEntry(o.key)){const m=scwMeasure(V,null);k=scwKind(m.W,m.av,m.vw,m.vh)}
+  if(k!==(P.dataset.scw||"")){scwSet(P,k);return"wait"}if(!k)return null;const im=P.querySelector(":scope>img");
+  if(im&&im.complete&&!im.naturalWidth&&im.getAttribute("src")){scwFail(P);return"wait"}return k}
+/* 07fl 包的 r07Wide 每次排版會問 07sw scwSync（照圖框實際位置量）；書齋牆改問 mzScwSync（照整個畫面量）：
+   用橫式圖（或剛換、在等）回 "wait"＝07fl 不排、還原成滿寬照圖的高往下捲（跟直向回饋 885 同一套，不用 cover 填滿）；原圖回 null＝照原本排。
+   在這裡包 scwSync（07sw 先載入）而不是包 r07Wide：直接開 #/me 時開頁比 07fl 載入早，那時包 r07Wide 會被 07fl 包在裡面 */
+if(typeof scwSync==="function"){const f0=scwSync;scwSync=function(V,P){if(P&&P._scw&&P.classList&&P.classList.contains("mz-wall"))return mzScwSync(V,P)?"wait":null;return f0.apply(this,arguments)}}
 function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(".me2");if(!me2||pad.querySelector(".mz-wall"))return;mzCss();
-  const dk=mzDark(),src=xqClImg(`data/studymap/${dk?"study_night":"study_day"}.webp?v=${MZ_IMGV}`),CELLS=/_classic\.webp/.test(src)?MZ_CELLS_CL:MZ_CELLS,pc=(a,b)=>((a/b)*100).toFixed(2)+"%",
-    R4=r=>`left:${pc(r[0],MZ_W)};top:${pc(r[1],MZ_H)};width:${pc(r[2]-r[0],MZ_W)};height:${pc(r[3]-r[1],MZ_H)}`;
+  const dk=mzDark(),src=xqClImg(`data/studymap/${dk?"study_night":"study_day"}.webp?v=${MZ_IMGV}`),CELLS0=/_classic\.webp/.test(src)?MZ_CELLS_CL:MZ_CELLS,pc=(a,b)=>((a/b)*100).toFixed(2)+"%";
+  /* W107-L：iPad 橫向有書齋橫式圖（07sw SCW，條目在上面 MZ_L）就一開始載那張 */
+  const pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};
   /* 原本的東西：藏起來、留著給牆上的東西按 */
   const q=s=>pad.querySelector(s),hide=e=>{if(e)e.style.display="none"};
   ["section.mr","section.mx","section.mwall"].forEach(s=>hide(me2.querySelector(s)));const gd=q(".gd-me"),cx=q("#cxMe")&&q("#cxMe").closest(".card");
   [gd,cx].forEach(hide);   /* 11/9：印匣改代表千秋印譜，本命修行卡留著（828 收進 📜 面板） */
-  const W=document.createElement("div");W.className="shp-page cq mz-wall"+(dk?" mz-dk":"");
+  const W=document.createElement("div");W.className="shp-page cq mz-wall"+(dk?" mz-dk":"");if(pre.k){W.dataset.scw=pre.k;W.classList.add("scw-l")}
   const txt=e=>e?e.textContent.replace(/\s+/g," ").trim():"",num=(e,re)=>{const m=txt(e).match(re||/(\d+)\s*／\s*(\d+)/);return m?[+m[1],+(m[2]||0)]:null};
   /* 各類收集數（照原本畫面上的字讀，原本的算法一改這裡就跟著） */
   const C={b:num(q('.mw[data-c="b"]'),/(\d+)/),r:num(q('.mw[data-c="r"]'),/(\d+)/),s:num(q('.mw[data-c="s"]')),z:num(q('.mw[data-c="z"]')),hist:num(q("#gdMeH")),yu:num(q("#gdMeY")),xh:num(q("#gdMeX")),
@@ -112,45 +144,63 @@ function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(
     hx:[...me2.querySelectorAll(".mx .hx b")].map(b=>txt(b))};
   const zOn=C.z&&C.z[0]?Math.max(1,Math.round(12*C.z[0]/(C.z[1]||130))):0;
   const lb=(x0,y0,x1,y1,t,ax,ay,al)=>`<span class="mz-lb ${al}" data-hs="1" style="left:${pc(ax-x0,x1-x0)};top:${pc(ay-y0,y1-y0)}"><b>${esc(t)}</b><small></small></span>`;
-  W.innerHTML=`<img src="${src}" alt="棋鎮書齋：亮格櫃、書格、輿圖、立軸和畫桌上的收藏">
-    <div class="mz-g">${CELLS.map((c,i)=>`<i class="mz-cell${i<zOn?" on":""}" style="${R4(c)};background-image:url(${src});background-size:${(MZ_W/(c[2]-c[0])*100).toFixed(2)}% ${(MZ_H/(c[3]-c[1])*100).toFixed(2)}%;background-position:${(c[0]/(MZ_W-(c[2]-c[0]))*100).toFixed(2)}% ${(c[1]/(MZ_H-(c[3]-c[1]))*100).toFixed(2)}%"></i>`).join("")}
-      ${mzPlum(C.xh)}${mzMap(C.yu)}</div>
-    ${MZ_SPOTS.map(([id,x0,y0,x1,y1,t,ax,ay,al])=>`<button type="button" class="mz-hs" id="${id}" style="${R4([x0,y0,x1,y1])}" aria-label="${esc(t)}">${lb(x0,y0,x1,y1,t,ax,ay,al)}</button>`).join("")}`;
-  me2.after(W);
-  const lbl=(id,t)=>{const s=W.querySelector(`#${id} small`);if(s)s.textContent=t==null?"":String(t);const b=W.querySelector("#"+id);if(b)b.setAttribute("aria-label",(b.querySelector(".mz-lb b")||b).textContent+(t!=null&&t!==""?" "+t:""))};
-  if(C.b)lbl("mzBoard",C.b[0]);if(C.r)lbl("mzKifu",C.r[0]);if(C.s)lbl("mzSecret",C.s.join("／"));if(C.z)lbl("mzZhen",C.z.join("／"));
-  if(C.hist)lbl("mzHist",C.hist.join("／"));if(C.yu)lbl("mzYu",C.yu.join("／"));if(C.xh)lbl("mzXh",C.xh.join("／"));else{const m=txt(q("#gdMeX")).match(/冬至還有\s*\d+\s*天/);if(m)lbl("mzXh",m[0])}
-  if(C.cx)lbl("mzCodex",C.cx+"%");else setTimeout(()=>{const m=txt(q("#cxMeS")).match(/(\d+)%/);if(m&&W.isConnected)lbl("mzCodex",m[1]+"%")},1500);   /* 百科完成度是非同步算的 */
-  if(C.xp)lbl("mzXp","Lv "+C.xp);if(C.hx[2])lbl("mzJar",C.hx[2].replace(/\D+$/,""));if(C.hx[0])lbl("mzBox",C.hx[0].replace(/\D+$/,""));
-  if(C.letter){const b=W.querySelector("#mzLetter .mz-lb");if(b)b.insertAdjacentHTML("beforeend",'<i class="mz-dot" aria-hidden="true"></i>')}
-  {const b=W.querySelector("#mzRank");if(b&&C.rank){b.insertAdjacentHTML("beforeend",`<span class="mz-rank">${esc(C.rank)}</span>`);b.querySelector(".mz-lb").remove();b.setAttribute("aria-label","官階 "+C.rank)}}
-  {const b=W.querySelector("#mzXp");if(b&&C.xp)b.insertAdjacentHTML("afterbegin",`<i class="mz-smoke" style="left:50%;bottom:62%;height:${Math.min(160,30+(+C.xp)*6)}%"></i>`)}
-  if(typeof sealGoldN==="function")lbl("mzSeal",`金印 ${sealGoldN()}／13`);
-  /* 點了＝按原本那一顆；角色走過去、轉身揮手，收滿的那一類歡呼 */
   const full={mzSecret:C.s&&C.s[0]>=C.s[1],mzHist:C.hist&&C.hist[0]>=C.hist[1],mzYu:C.yu&&C.yu[0]>=C.yu[1],mzXh:C.xh&&C.xh[0]>=C.xh[1],mzZhen:C.z&&C.z[0]>=C.z[1],mzSeal:typeof sealGoldN==="function"&&sealGoldN()>=13};
   const GO={mzBoard:'.mw[data-c="b"]',mzKifu:'.mw[data-c="r"]',mzSecret:'.mw[data-c="s"]',mzZhen:'.mw[data-c="z"]',mzLetter:"#gdMeB",mzHist:"#gdMeH",mzYu:"#gdMeY",mzXh:"#gdMeX",mzCodex:"#cxMe",mzRank:"#meRk",mzXp:"#meXp"};
-  W.querySelectorAll(".mz-hs").forEach(b=>b.onclick=()=>{vibrate(5);if(!document.body.classList.contains("shw-on")){const r=b.getBoundingClientRect(),x=(r.left+r.width/2)/innerWidth;try{mzAct(full[b.id]?"cheer":"wave",x<.4?-1:x>.6?1:0)}catch(e){}}
-    if(b.id==="mzSeal"){mzSealOpen();return}
-    if(b.id==="mzJar"||b.id==="mzBox"){mzItemSheet(b.id==="mzJar"?"jar":"bag");return}
-    const o=GO[b.id]&&q(GO[b.id]);if(o)o.click()});
-  /* 走路角色（07w）：入口是 .mz-hs（id），收滿的那一類改成歡呼 */
-  if(MZ_WALK_ON&&typeof shwMount==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON){try{const HS={};for(const k in SHW_MZ.HS){HS[k]=SHW_MZ.HS[k].slice();if(full[k])HS[k][3]="cheer"}
+  W.innerHTML=`<img src="${pre.src}" alt="棋鎮書齋：亮格櫃、書格、輿圖、立軸和畫桌上的收藏"><div class="mz-ov"></div>`;
+  me2.after(W);
+  const im=W.querySelector(":scope>img");
+  /* 亮格淡墨格的底圖要用「現在真的載到的那張」（經典版、橫式圖只在 CDN：00-util 會把 src 改去 CDN 補抓，照最早的網址疊會是空的） */
+  const cellBg=()=>{const u=im.currentSrc||im.getAttribute("src")||"";W.querySelectorAll(".mz-cell").forEach(c=>{c.style.backgroundImage=`url("${u}")`})};
+  im.addEventListener("load",cellBg);
+  /* 疊在圖上的東西（亮格、消寒圖、輿圖、入口）照現在這套座標畫；換圖（07sw scwSet）時整層重畫 */
+  const paint=()=>{const G=mzGeo(!!W.dataset.scw,CELLS0),CELLS=G.cells,R4=r=>`left:${pc(r[0],G.W)};top:${pc(r[1],G.H)};width:${pc(r[2]-r[0],G.W)};height:${pc(r[3]-r[1],G.H)}`;
+    W.querySelector(".mz-ov").innerHTML=`<div class="mz-g">${CELLS.map((c,i)=>`<i class="mz-cell${i<zOn?" on":""}" style="${R4(c)};background-size:${(G.W/(c[2]-c[0])*100).toFixed(2)}% ${(G.H/(c[3]-c[1])*100).toFixed(2)}%;background-position:${(c[0]/(G.W-(c[2]-c[0]))*100).toFixed(2)}% ${(c[1]/(G.H-(c[3]-c[1]))*100).toFixed(2)}%"></i>`).join("")}
+      ${mzPlum(C.xh,G)}${mzMap(C.yu,G)}</div>
+    ${G.spots.map(([id,x0,y0,x1,y1,t,ax,ay,al])=>`<button type="button" class="mz-hs" id="${id}" style="${R4([x0,y0,x1,y1])}" aria-label="${esc(t)}">${lb(x0,y0,x1,y1,t,ax,ay,al)}</button>`).join("")}`;
+    cellBg();
+    const lbl=(id,t)=>{const s=W.querySelector(`#${id} small`);if(s)s.textContent=t==null?"":String(t);const b=W.querySelector("#"+id);if(b)b.setAttribute("aria-label",(b.querySelector(".mz-lb b")||b).textContent+(t!=null&&t!==""?" "+t:""))};
+    if(C.b)lbl("mzBoard",C.b[0]);if(C.r)lbl("mzKifu",C.r[0]);if(C.s)lbl("mzSecret",C.s.join("／"));if(C.z)lbl("mzZhen",C.z.join("／"));
+    if(C.hist)lbl("mzHist",C.hist.join("／"));if(C.yu)lbl("mzYu",C.yu.join("／"));if(C.xh)lbl("mzXh",C.xh.join("／"));else{const m=txt(q("#gdMeX")).match(/冬至還有\s*\d+\s*天/);if(m)lbl("mzXh",m[0])}
+    if(C.cx)lbl("mzCodex",C.cx+"%");else setTimeout(()=>{const m=txt(q("#cxMeS")).match(/(\d+)%/);if(m&&W.isConnected)lbl("mzCodex",m[1]+"%")},1500);   /* 百科完成度是非同步算的 */
+    if(C.xp)lbl("mzXp","Lv "+C.xp);if(C.hx[2])lbl("mzJar",C.hx[2].replace(/\D+$/,""));if(C.hx[0])lbl("mzBox",C.hx[0].replace(/\D+$/,""));
+    if(C.letter){const b=G.dot?W.querySelector("#mzLetter"):W.querySelector("#mzLetter .mz-lb"),sp=G.spots.find(x=>x[0]==="mzLetter");
+      if(b)b.insertAdjacentHTML("beforeend",G.dot&&sp?`<i class="mz-dot" aria-hidden="true" style="right:auto;top:${pc(G.dot[1]-sp[2],sp[4]-sp[2])};left:${pc(G.dot[0]-sp[1],sp[3]-sp[1])};margin:-5px 0 0 -5px"></i>`:'<i class="mz-dot" aria-hidden="true"></i>')}
+    {const b=W.querySelector("#mzRank");if(b&&C.rank){b.insertAdjacentHTML("beforeend",`<span class="mz-rank">${esc(C.rank)}</span>`);b.querySelector(".mz-lb").remove();b.setAttribute("aria-label","官階 "+C.rank)}}
+    {const b=W.querySelector("#mzXp"),sp=G.spots.find(x=>x[0]==="mzXp");if(b&&C.xp){const at=G.smoke&&sp?`left:${pc(G.smoke[0]-sp[1],sp[3]-sp[1])};bottom:${pc(sp[4]-G.smoke[1],sp[4]-sp[2])}`:"left:50%;bottom:62%";
+      b.insertAdjacentHTML("afterbegin",`<i class="mz-smoke" style="${at};height:${Math.min(160,30+(+C.xp)*6)}%"></i>`)}}
+    if(typeof sealGoldN==="function")lbl("mzSeal",`金印 ${sealGoldN()}／13`);
+    /* 點了＝按原本那一顆；角色走過去、轉身揮手，收滿的那一類歡呼 */
+    W.querySelectorAll(".mz-hs").forEach(b=>b.onclick=()=>{vibrate(5);if(!document.body.classList.contains("shw-on")){const r=b.getBoundingClientRect(),x=(r.left+r.width/2)/innerWidth;try{mzAct(full[b.id]?"cheer":"wave",x<.4?-1:x>.6?1:0)}catch(e){}}
+      if(b.id==="mzSeal"){mzSealOpen();return}
+      if(b.id==="mzJar"||b.id==="mzBox"){mzItemSheet(b.id==="mzJar"?"jar":"bag");return}
+      const o=GO[b.id]&&q(GO[b.id]);if(o)o.click()});
+    try{if(typeof ttAvoid==="function")ttAvoid()}catch(e){}};
+  paint();
+  /* W107-L：掛上 07sw（換圖、載不到退回原圖）；選圖由 mzScwSync 照整個畫面量（上面包了 scwSync）。
+     直拿時 07fl 走回饋 885 那條、不會問 scwSync，轉向就在這裡自己問一次（橫轉直才換得回原圖） */
+  if(typeof scwMount==="function"){try{scwMount(W,{key:scwKey(src),src0:src,ids:[],apply:()=>paint()});let t=0;
+    const rs=()=>{clearTimeout(t);t=setTimeout(()=>{if(!W.isConnected){removeEventListener("resize",rs);return}try{mzScwSync(document.getElementById("view"),W)}catch(e){}},200)};addEventListener("resize",rs)}catch(e){}}
+  /* 走路角色（07w）：入口是 .mz-hs（id），收滿的那一類改成歡呼；座標是原圖的，用橫式圖時不掛 */
+  if(MZ_WALK_ON&&!W.dataset.scw&&typeof shwMount==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON){try{const HS={};for(const k in SHW_MZ.HS){HS[k]=SHW_MZ.HS[k].slice();if(full[k])HS[k][3]="cheer"}
     shwMount({v,cfg:Object.assign({},SHW_MZ,{HS}),root:W,frame:W,layer:W,before:W.querySelector(".mz-hs"),sel:".mz-hs",keyOf:b=>b.id,find:h=>W.querySelector("#"+h),mem:"study"})}catch(e){}}
-  /* 點畫裡的東西看說明（07w6）：亮格各格還是淡墨的，說明後面補一句 */
-  if(typeof sciPage==="function"){try{const it=MZ_RELIC.map(([n,t,nd],i)=>{const c=CELLS[i];return{n,nd,t:t+(i<zOn?"":"（這一格還是淡墨的，多收幾件珍品就會變成彩色。）"),s:[[[c[0]+3,c[1]+3],[c[2]-3,c[1]+3],[c[2]-3,c[3]-3],[c[0]+3,c[3]-3]]]}});
-    sciPage(v,{k:"study",nm:"書齋",W:MZ_W,H:MZ_H,it:it.concat(MZ_SCI)})}catch(e){}}
+  /* 點畫裡的東西看說明（07w6）：it 是原圖座標；換成橫式圖時 07w6 改用下面 wide 那份（W165）；亮格各格還是淡墨的，說明後面補一句 */
+  if(typeof sciPage==="function"){try{const CELLS=/_classic\.webp/.test(src)?MZ_CELLS_CL:MZ_CELLS,it=MZ_RELIC.map(([n,t,nd],i)=>{const c=CELLS[i];return{n,nd,t:t+(i<zOn?"":"（這一格還是淡墨的，多收幾件珍品就會變成彩色。）"),s:[[[c[0]+3,c[1]+3],[c[2]-3,c[1]+3],[c[2]-3,c[3]-3],[c[0]+3,c[3]-3]]]}});
+    /* W165：橫式圖（MZ_L，2560×1600）另給一份 12 件亮格器物的座標，換成橫式圖時 07w6 改用這份；其他說明（亮格櫃等）只有直向座標，橫式先不給 */
+    const itW=MZ_RELIC.map(([n,t,nd],i)=>{const c=MZ_L.cells[i];return{n,nd,t:it[i].t,s:[[[c[0]+6,c[1]+6],[c[2]-6,c[1]+6],[c[2]-6,c[3]-6],[c[0]+6,c[3]-6]]]}});
+    sciPage(v,{k:"study",nm:"書齋",W:MZ_W,H:MZ_H,it:it.concat(MZ_SCI),wide:{W:MZ_L.W,H:MZ_L.H,it:itW}})}catch(e){}}
   if(typeof shpFit==="function")try{shpFit(v)}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
-/* 消寒圖：一枝素梅 9 朵、每朵 9 瓣，共 81 瓣；染了幾瓣就幾瓣朱紅（畫在立軸畫心 474～573 × 118～350 裡） */
-function mzPlum(xh){const n=xh?xh[0]:0,box=[480,126,567,342],cx=(box[0]+box[2])/2,F=[];let k=0;
-  for(let i=0;i<9;i++){const y=box[3]-16-i*(box[3]-box[1]-34)/8,x=cx+(i%2?20:-20)+Math.sin(i)*3;let p="";
-    for(let j=0;j<9;j++){const a=j/9*Math.PI*2,px=x+Math.cos(a)*6.5,py=y+Math.sin(a)*6.5;p+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="3.4" fill="${k<n?"#c0392b":"rgba(255,255,255,.35)"}" stroke="#5a4630" stroke-width=".8"/>`;k++}
-    F.push(`<path d="M${cx.toFixed(1)} ${y.toFixed(1)}L${x.toFixed(1)} ${y.toFixed(1)}" stroke="#4a3a28" stroke-width="1.2"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.6" fill="#5a4630"/>`+p)}
-  return`<svg class="mz-svg" viewBox="0 0 ${MZ_W} ${MZ_H}" style="inset:0;width:100%;height:100%" aria-hidden="true"><path d="M${cx} ${box[3]}C${cx-10} ${box[1]+150} ${cx+10} ${box[1]+80} ${cx-2} ${box[1]+4}" stroke="#4a3a28" stroke-width="2.2" fill="none"/>${F.join("")}</svg>`}
-/* 輿圖：13 站沿著畫裡的河往右上的山一站一站點亮（畫心 668～896 × 64～219） */
+/* 消寒圖：一枝素梅 9 朵、每朵 9 瓣，共 81 瓣；染了幾瓣就幾瓣朱紅（原圖畫在立軸畫心 474～573 × 118～350 裡；
+   W107-L 橫式圖照 G.plum 那一框，枝、花的大小照框的寬高等比放大，原圖照舊） */
+function mzPlum(xh,G){const n=xh?xh[0]:0,box=G&&G.plum||[480,126,567,342],s=(box[2]-box[0])/87,hs=(box[3]-box[1])/216,VW=G?G.W:MZ_W,VH=G?G.H:MZ_H,cx=(box[0]+box[2])/2,F=[];let k=0;
+  for(let i=0;i<9;i++){const y=box[3]-16*hs-i*(box[3]-box[1]-34*hs)/8,x=cx+(i%2?20:-20)*s+Math.sin(i)*3*s;let p="";
+    for(let j=0;j<9;j++){const a=j/9*Math.PI*2,px=x+Math.cos(a)*6.5*s,py=y+Math.sin(a)*6.5*s;p+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${+(3.4*s).toFixed(2)}" fill="${k<n?"#c0392b":"rgba(255,255,255,.35)"}" stroke="#5a4630" stroke-width="${+(.8*s).toFixed(2)}"/>`;k++}
+    F.push(`<path d="M${cx.toFixed(1)} ${y.toFixed(1)}L${x.toFixed(1)} ${y.toFixed(1)}" stroke="#4a3a28" stroke-width="${+(1.2*s).toFixed(2)}"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${+(1.6*s).toFixed(2)}" fill="#5a4630"/>`+p)}
+  return`<svg class="mz-svg" viewBox="0 0 ${VW} ${VH}" style="inset:0;width:100%;height:100%" aria-hidden="true"><path d="M${cx} ${box[3]}C${cx-10*s} ${box[1]+150*hs} ${cx+10*s} ${box[1]+80*hs} ${cx-2*s} ${box[1]+4*hs}" stroke="#4a3a28" stroke-width="${+(2.2*s).toFixed(2)}" fill="none"/>${F.join("")}</svg>`}
+/* 輿圖：13 站沿著畫裡的河往右上的山一站一站點亮（原圖畫心 668～896 × 64～219；W107-L 橫式圖的 13 站照比例放進 MZ_L.yu 那一框，圈也等比放大） */
 const MZ_YU=[[678,163],[698,167],[716,173],[734,179],[752,184],[770,188],[788,186],[806,176],[818,163],[830,150],[845,140],[862,132],[880,124]];
-function mzMap(yu){const n=yu?yu[0]:0,P=MZ_YU.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${i<n?6:4.5}" fill="${i<n?"#c0392b":"#f3ead2"}" stroke="#5a1a10" stroke-width="1.4"/>`);
-  return`<svg class="mz-svg" viewBox="0 0 ${MZ_W} ${MZ_H}" style="inset:0;width:100%;height:100%" aria-hidden="true"><path d="M${MZ_YU.map(p=>p.join(" ")).join("L")}" stroke="#7a2a18" stroke-width="1.2" stroke-dasharray="3 3" fill="none" opacity=".55"/>${P.join("")}</svg>`}
+function mzMap(yu,G){const n=yu?yu[0]:0,pts=G&&G.yu||MZ_YU,k=G&&G.yuK||1,VW=G?G.W:MZ_W,VH=G?G.H:MZ_H,f=v=>+(v*k).toFixed(2),P=pts.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${f(i<n?6:4.5)}" fill="${i<n?"#c0392b":"#f3ead2"}" stroke="#5a1a10" stroke-width="${f(1.4)}"/>`);
+  return`<svg class="mz-svg" viewBox="0 0 ${VW} ${VH}" style="inset:0;width:100%;height:100%" aria-hidden="true"><path d="M${pts.map(p=>p.join(" ")).join("L")}" stroke="#7a2a18" stroke-width="${f(1.2)}" stroke-dasharray="${f(3)} ${f(3)}" fill="none" opacity=".55"/>${P.join("")}</svg>`}
 if(typeof Me==="function"){const f0=Me;Me=function(v){const r=f0.apply(this,arguments);try{if(STUDYMAP_ON)mzWall(v)}catch(e){}return r}}
 /* 籤筒（07t3）讓位只在換頁時算一次；這頁的牆在舞台下面，捲動後再算一次，免得籤筒蓋到畫缸、書格的標籤 */
 {let t=0;document.addEventListener("scroll",()=>{clearTimeout(t);t=setTimeout(()=>{try{if(STUDYMAP_ON&&document.querySelector("#view .mz-wall")&&typeof ttAvoid==="function")ttAvoid()}catch(e){}},150)},{capture:true,passive:true})}
