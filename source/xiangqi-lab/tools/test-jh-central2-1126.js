@@ -81,12 +81,19 @@ test("雙炮衛的規則都符合（看 3 格、另一個炮衛擋住就看不�
   assert.deepEqual(guardProblems(load()), []);
 });
 
+test("提示文字（#212 第四輪）：不踩水窪的是 front 標記的那個，往回走時它不一定在前面，warn、retry 不能寫「前面那個不踩水窪」", () => {
+  const L = L2(load()), txt = JSON.stringify([L.warn, L.say && L.say.retry]);
+  for (const w of ["前面那個不踩水窪", "前面的炮衛走到水窪前", "front guard won't step", "front guard to turn back"]) assert.ok(!txt.includes(w), "不能寫：" + w);
+  assert.ok(txt.includes("其中一個不踩水窪") && txt.includes("One of them won't step in a puddle"), "warn 改寫成「其中一個」");
+});
+
 test("改壞驗證（水窪）：以前的四種寫法、耗的那一回合不照共用規則，檢查一定抓得到", () => {
   const V = [
     ["第一版：多耗的那一回合直接讓守衛走", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;S.turn++;jhMzGuardStep(S);return null}', "先提醒"],
     ["第二版：先原地等一回合再走進去", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;const r=jhMzStep(S,0,0);return r.ev==="move"?null:r}', "不能被抓"],
     ["第三版：等完再看水窪在不在紅線上", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;const r=jhMzStep(S,0,0);if(r.ev!=="move")return r;const x=S.player.x+dx,y=S.player.y+dy;if((S.guards||[]).some(G=>!(G.stun>0)&&(G.x===x&&G.y===y||jhMzSight(S,G).some(q=>q.x===x&&q.y===y)))){S.caughtBy=null;return{ev:"spot"}}return null}', "已經在水窪裡"],
     ["第四版：耗的那一回合被抓不降成先提醒", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q"||S.mudIn)return null;S.mudIn=1;let r;try{r=jhMzStep(S,dx,dy)}finally{S.mudIn=0}if(r.ev!=="move")return r;const r2=jhMzStep(S,0,0);if(r2.ev!=="move")return r2;r.stop=true;return r}', "醒來"],
+    ["#212 第四輪：拿掉 finally，S.mudIn 沒復原（同一局再進水窪就不多耗）", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q"||S.mudIn)return null;S.mudIn=1;const r=jhMzStep(S,dx,dy);if(r.ev!=="move")return r;const r2=jhMzStep(S,0,0);if(r2.ev==="trap"){S.caughtBy=null;return{ev:"spot"}}if(r2.ev!=="move")return r2;r.stop=true;return r}', "再進水窪"],
     ["耗的那一回合不照共用規則（直接讓守衛走、看到就抓）", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q"||S.mudIn)return null;S.mudIn=1;let r;try{r=jhMzStep(S,dx,dy)}finally{S.mudIn=0}if(r.ev!=="move")return r;S.turn++;jhMzGuardStep(S);if(jhMzCaught(S))return{ev:"trap"};r.stop=true;return r}', "走到水窪上"],
   ];
   for (const [nm, body, key] of V) { const src = withMud(SRC, body); assert.notEqual(src, SRC, nm); assert.ok(mudProblems(load(() => src)).some((s) => s.includes(key)), nm + "：要被抓到（" + key + "）") }
@@ -111,6 +118,10 @@ function mudProblems(c) {
   if (S.guards[0].x !== g0 + 2) bad.push("走進水窪：守衛走了兩步（" + g0 + "→" + S.guards[0].x + "）");
   if (!r.stop) bad.push("走進水窪以後自動走停下");
   r = c.jhMzStep(S, 1, 0); if (S.turn !== 3) bad.push("走出水窪一回合");
+  /* ⑺ #212 第四輪：同一局進、出、再進水窪，每次進去都兩回合（守衛暈著，只看回合數） */
+  S = corridor(c, { 4: "Q" }, [{ x: 11, dx: 1, stun: 99 }], 5, 1);
+  for (const [dx, want, nm] of [[-1, 2, "第一次進水窪"], [-1, 3, "走出水窪"], [1, 5, "再進水窪"], [1, 6, "再走出水窪"], [-1, 8, "第三次進水窪"]]) {
+    r = c.jhMzStep(S, dx, 0); if (S.turn !== want) bad.push(nm + "：回合數要到 " + want + "（實際 " + S.turn + "）") }
   /* ⑵ 走進水窪那一回合守衛掉頭才看到：先提醒；開發者 11/26 選單「先進水窪、再在水窪裡耗那一回合」：被提醒時人已經在水窪裡 */
   S = corridor(c, { 7: "Q" }, [{ x: 11, dx: 1 }], 8, 1); r = c.jhMzStep(S, -1, 0);
   if (r.ev !== "spot") bad.push("守衛走完才看到：先提醒、不直接抓（實際 " + r.ev + "）");
