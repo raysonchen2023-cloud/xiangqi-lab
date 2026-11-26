@@ -56,17 +56,17 @@ function problems(c) {
   if (!L) return bad;
   const lags = (L.guards || []).map((g) => g.lag).sort().join(",");
   if (lags !== "2,4") bad.push("兩匹野馬要一匹慢 2 步、一匹慢 4 步（實際 " + lags + "）");
-  /* 驛門 J（往東）：從西邊往東走得過、從東邊往西撞牆不算回合 */
-  let S = mini(c, ["######", "#.J..#", "######"], 1, 1), r = c.jhMzStep(S, 1, 0);
+  /* 驛門 j（往東）：從西邊往東走得過、從東邊往西撞牆不算回合 */
+  let S = mini(c, ["######", "#.j..#", "######"], 1, 1), r = c.jhMzStep(S, 1, 0);
   if (S.player.x !== 2) bad.push("驛門順向要走得進去");
-  S = mini(c, ["######", "#.J..#", "######"], 3, 1); const t0 = S.turn; r = c.jhMzStep(S, -1, 0);
+  S = mini(c, ["######", "#.j..#", "######"], 3, 1); const t0 = S.turn; r = c.jhMzStep(S, -1, 0);
   if (r.ev !== "wall" || S.player.x !== 3 || S.turn !== t0) bad.push("驛門反向要撞牆、不算回合");
   /* 自動走：只能從順向繞 */
-  S = mini(c, ["#######", "#.....#", "#.##..#", "#..J..#", "#######"], 4, 3);
+  S = mini(c, ["#######", "#.....#", "#.##..#", "#..j..#", "#######"], 4, 3);
   const pa = c.jhMzPath(S, 1, 3), steps = pa ? Array.from(pa, (q) => q.join(",")) : [];
   if (!pa || steps.includes("3,3")) bad.push("自動走不能反向穿驛門（實際 " + steps.join(" ") + "）");
   /* 野馬：落點或馬腿是驛門就不能跳 */
-  S = mini(c, ["#######", "#.....#", "#..J..#", "#.....#", "#.....#", "#######"], 5, 4);
+  S = mini(c, ["#######", "#.....#", "#..j..#", "#.....#", "#.....#", "#######"], 5, 4);
   const G = { kind: "wildhorse3", x: 1, y: 1, lag: 2 }; const sight = K(G).sight(S, G).map((q) => q.x + "," + q.y);
   if (sight.includes("3,2")) bad.push("野馬不能落在驛門上");
   const G2 = { kind: "wildhorse3", x: 2, y: 1, lag: 2 }; const s2 = K(G2).sight(S, G2).map((q) => q.x + "," + q.y);
@@ -105,3 +105,4 @@ test("改壞驗證：驛門兩邊都能走、野馬能落在驛門上、自動�
     assert.ok(problems(load(patch)).length > 0, name + "：檢查要抓得到");
   }
 });
+

@@ -30,7 +30,7 @@ function reach(c) {
   const S0 = c.jhMzNew(L3(c)), find = (ch) => { for (let y = 0; y < S0.H; y++) for (let x = 0; x < S0.W; x++) if (S0.lv.map[y][x] === ch) return { x, y } }, dr = find("D");
   S0.player = Object.assign({ face: 1 }, S0.start); S0.guards = (S0.lv.guards || []).map((g) => Object.assign({}, g));
   const clone = (S) => Object.assign(Object.create(Object.getPrototypeOf(S)), S, { grid: S.grid.map((r) => r.slice()), player: Object.assign({}, S.player), guards: S.guards.map((g) => Object.assign({}, g)), chests: new Set(S.chests), lit: new Set(S.lit), bag: Object.assign({}, S.bag), got: [] });
-  const key = (S) => [S.player.x, S.player.y, S.plate ? 1 : 0, S.grid.map((r) => r.map((ch) => (ch === "X" || ch === "Q") ? ch : "").join(".")).join("/"), S.guards.map((g) => [g.x, g.y, g.dx, g.dy].join(":")).join("|")].join(",");
+  const key = (S) => [S.player.x, S.player.y, S.plate ? 1 : 0, S.grid.map((r) => r.map((ch) => (ch === "X" || ch === "q") ? ch : "").join(".")).join("/"), S.guards.map((g) => [g.x, g.y, g.dx, g.dy].join(":")).join("|")].join(",");
   const seen = new Set([key(S0)]); let q = [S0], depth = 0, plate = -1;
   while (q.length && depth < 110) {
     const nq = [];
@@ -56,15 +56,15 @@ function problems(c) {
   if (!L) return bad;
   if ((L.guards || []).length !== 2 || L.guards.some((g) => g.y > 9)) bad.push("兩隻相都要在河的上半場");
   /* 水坑：走不過、撞牆不算回合 */
-  let S = mini(c, ["######", "#.Q..#", "######"], 1, 1), t0 = S.turn, r = c.jhMzStep(S, 1, 0);
+  let S = mini(c, ["######", "#.q..#", "######"], 1, 1), t0 = S.turn, r = c.jhMzStep(S, 1, 0);
   if (r.ev !== "wall" || S.player.x !== 1 || S.turn !== t0) bad.push("水坑要走不過去、撞到不算回合");
   /* 推桌：推進水坑填平、桌子消失；推到平地照常 */
-  S = mini(c, ["######", "#.XQ.#", "######"], 1, 1); c.jhMzStep(S, 1, 0);
+  S = mini(c, ["######", "#.Xq.#", "######"], 1, 1); c.jhMzStep(S, 1, 0);
   if (cell(S, 3, 1) !== "." || cell(S, 2, 1) !== ".") bad.push(`破桌推進水坑要填平成平地、桌子消失（實際 ${S.grid[1].join("")}）`);
   S = mini(c, ["######", "#.X..#", "######"], 1, 1); c.jhMzStep(S, 1, 0);
   if (cell(S, 3, 1) !== "X") bad.push("破桌推到平地要照常移過去");
   /* 自動走不走水坑 */
-  S = mini(c, ["#######", "#.....#", "#.QQQ.#", "#.....#", "#######"], 1, 2);
+  S = mini(c, ["#######", "#.....#", "#.qqq.#", "#.....#", "#######"], 1, 2);
   const pa = c.jhMzPath(S, 5, 2), steps = pa ? Array.from(pa, (q) => q.join(",")) : [];
   if (!pa || steps.some((q) => ["2,2", "3,2", "4,2"].includes(q))) bad.push("自動走要繞過水坑（實際 " + steps.join(" ") + "）");
   const g = reach(c); if (g.plate < 0) bad.push("從入口走不到踏板"); else if (g.door < 0) bad.push("踩完踏板走不到石門前");
@@ -92,8 +92,8 @@ test("飛相第三層：修為 +60、存檔鍵分層、碑刻標「遊戲整理�
 
 test("改壞驗證：水坑可以走、桌子推不進水坑、自動走會走水坑，檢查都要抓得到", () => {
   const cases = [
-    ["水坑可以走", { "07z9m-elephant3.js": (s) => s.replace("if(c===\"Q\")return{ev:\"wall\"", "if(false)return{ev:\"wall\"") }],
-    ["桌子推不進水坑", { "07z9m-elephant3.js": (s) => s.replace("if((c2!==\".\"&&c2!==\"Q\")", "if((c2!==\".\")") }],
+    ["水坑可以走", { "07z9m-elephant3.js": (s) => s.replace("if(c===\"q\")return{ev:\"wall\"", "if(false)return{ev:\"wall\"") }],
+    ["桌子推不進水坑", { "07z9m-elephant3.js": (s) => s.replace("if((c2!==\".\"&&c2!==\"q\")", "if((c2!==\".\")") }],
     ["自動走會走水坑", { "07z9m-elephant3.js": (s) => s.replace(",canMove:jhMzEle3CanMove", "") }],
   ];
   for (const [name, patch] of cases) {

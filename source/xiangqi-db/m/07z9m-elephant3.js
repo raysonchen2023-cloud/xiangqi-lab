@@ -1,6 +1,6 @@
 /* ---------- W87-2 飛相地底迷宮・第三層「絕密號舍」（開發者 11/26「現在開工」做第三層；第三層分工 Windows Claude 1）----------
    規格：story/gemini_app/208_十派地底迷宮第二三層_補件_1126_Gemini回覆.md 的飛相第三層，加上 iMac Claude 1 兩份複核與開發者 11/26 選單：
-     ・新地形「小水坑」（Q，號舍裡積的水，不是中間的河 W）：人走不過去。把破桌（X）推進水坑就填平成平地，桌子也沒了。相照舊可以落在水坑上。
+     ・新地形「小水坑」（q，號舍裡積的水，不是中間的河 W）：人走不過去。把破桌（X）推進水坑就填平成平地，桌子也沒了。相照舊可以落在水坑上。
        自動走找路不走水坑（lv.canMove）；用方向鈕撞到水坑＝撞牆、不算回合，畫面提示去推桌子。
      ・破桌 X：跟考箱一樣推得動（後面是平地或水坑才推得動），也能拿來塞象眼。
      ・守衛「雙相疊加」：兩隻相（JH_MZ_KIND.elephant：田字、塞象眼、不過河）都在河的上半場，田字路線交錯。
@@ -14,15 +14,15 @@ const JH_MZ_ELE3_MAP=[
 "#####...#######",
 "######D########",
 "#T...........T#",
-"#..X..Q.Q..X..#",
-"#.Q.........Q.#",
+"#..X..q.q..X..#",
+"#.q.........q.#",
 "#L....X.X....C#",
-"#.Q.........Q.#",
-"#..X..QPQ..X..#",
+"#.q.........q.#",
+"#..X..qPq..X..#",
 "#WWWWWW.WWWWWW#",
 "#.............#",
-"#..X..Q.Q..X..#",
-"#.Q.........Q.#",
+"#..X..q.q..X..#",
+"#.q.........q.#",
 "#T...X...X...T#",
 "##.###.#.###.##",
 "#.....#.#.....#",
@@ -32,14 +32,14 @@ const JH_MZ_ELE3_MAP=[
 const JH_MZ_ELE3_GUARDS=[{kind:"elephant",x:2,y:4,dx:1,dy:1},{kind:"elephant",x:12,y:8,dx:-1,dy:-1}];
 /* 推破桌：後面是平地就推過去；後面是水坑就把水坑填平、桌子沒了；後面有相、牆、別的桌子就推不動 */
 function jhMzEle3Step(S,dx,dy,c){if(!dx&&!dy)return null;const P=S.player,x1=P.x+dx,y1=P.y+dy;
-  if(c==="Q")return{ev:"wall",msg:["水坑太深走不過去。推一張破桌進去填平。","The puddle is too deep to cross. Push a broken desk in to fill it."]};
+  if(c==="q")return{ev:"wall",msg:["水坑太深走不過去。推一張破桌進去填平。","The puddle is too deep to cross. Push a broken desk in to fill it."]};
   if(c!=="X")return null;const x2=x1+dx,y2=y1+dy,c2=jhMzCell(S,x2,y2);
-  if((c2!=="."&&c2!=="Q")||(S.guards||[]).some(G=>G.x===x2&&G.y===y2))return{ev:"wall",msg:["破桌推不動：後面被擋住了。","The desk won't budge: something is behind it."]};
-  S.grid[y2][x2]=c2==="Q"?".":"X";S.grid[y1][x1]=".";return null}
-const jhMzEle3CanMove=(S,x,y,dx,dy)=>jhMzCell(S,x+dx,y+dy)!=="Q";
+  if((c2!=="."&&c2!=="q")||(S.guards||[]).some(G=>G.x===x2&&G.y===y2))return{ev:"wall",msg:["破桌推不動：後面被擋住了。","The desk won't budge: something is behind it."]};
+  S.grid[y2][x2]=c2==="q"?".":"X";S.grid[y1][x1]=".";return null}
+const jhMzEle3CanMove=(S,x,y,dx,dy)=>jhMzCell(S,x+dx,y+dy)!=="q";
 /* 3D：破桌是一張缺腳的木桌；小水坑是一片淺水；平面版 */
-JH_MZ_OBJ.Q=H=>{const{T3,mesh,lam}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(.9,.03,.9),lam("#3f6670"),0,.016,0));return g};
-JH_MZ_TILE.Q=(cx,px,py,T)=>{cx.fillStyle="#3f6670";cx.beginPath();cx.ellipse(px+T*.5,py+T*.5,T*.44,T*.38,0,0,7);cx.fill();cx.strokeStyle="rgba(210,235,240,.45)";cx.lineWidth=1.3;cx.beginPath();cx.moveTo(px+T*.25,py+T*.48);cx.quadraticCurveTo(px+T*.45,py+T*.38,px+T*.65,py+T*.48);cx.stroke()};
+JH_MZ_OBJ["q"]=H=>{const{T3,mesh,lam}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(.9,.03,.9),lam("#3f6670"),0,.016,0));return g};
+JH_MZ_TILE["q"]=(cx,px,py,T)=>{cx.fillStyle="#3f6670";cx.beginPath();cx.ellipse(px+T*.5,py+T*.5,T*.44,T*.38,0,0,7);cx.fill();cx.strokeStyle="rgba(210,235,240,.45)";cx.lineWidth=1.3;cx.beginPath();cx.moveTo(px+T*.25,py+T*.48);cx.quadraticCurveTo(px+T*.45,py+T*.38,px+T*.65,py+T*.48);cx.stroke()};
 /* 被抓的解殺題（kind:"defend"）：題源同第一、二層（W95），扣掉前兩層用過的 */
 /* ==ELE3_TRAP== */
 const JH_MZ_ELE3_TRAP=[

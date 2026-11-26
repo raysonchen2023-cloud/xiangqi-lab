@@ -1,6 +1,6 @@
 /* ---------- W87-2 起馬地底迷宮・第三層「急遞暗房」（開發者 11/26「現在開工」做第三層；第三層分工 Windows Claude 1）----------
    規格：story/gemini_app/208_十派地底迷宮第二三層_補件_1126_Gemini回覆.md 的起馬第三層，加上 iMac Claude 1 兩份複核與開發者 11/26 選單：
-     ・新地形「單向驛門」：J＝只能往東（右）穿過、K＝只能往北（上）穿過。人走進驛門那一格要照門的方向，反方向撞到＝撞牆、不算回合；
+     ・新地形「單向驛門」：j＝只能往東（右）穿過、k＝只能往北（上）穿過。人走進驛門那一格要照門的方向，反方向撞到＝撞牆、不算回合；
        自動走找路照這條規則（lv.canMove）。野馬不能落在驛門上，馬腿也不能踩在驛門上（驛門是窄窄的門框），所以可以用驛門逼野馬繞路。
      ・守衛「雙野馬」（wildhorse3）：兩匹循足跡追的野馬，一匹慢 2 步、一匹慢 4 步（G.lag），走法同第二層的追跡野馬，多了驛門的限制。
      ・殘局照開發者 11/26 選單：殺題不用炮、車收尾、第三層可到四步殺、被抓一律殺題。石門「臥槽馬」、被抓「蹩腿困馬」都是馬收尾
@@ -13,23 +13,23 @@ const JH_MZ_HORSE3_MAP=[
 "#####...#######",
 "######D########",
 "#T...........T#",
-"#.###.##K##.#.#",
+"#.###.##k##.#.#",
 "#.#C......#...#",
 "#.#.####.##.#.#",
-"#...#L....J...#",
+"#...#L....j...#",
 "###.#.##P##.###",
 "#.....#...#...#",
-"#.###.#K#.###.#",
+"#.###.#k#.###.#",
 "#...#.....#...#",
-"#.#.#J###.#.#.#",
+"#.#.#j###.#.#.#",
 "#.#...#C....#.#",
 "#.#####.#####.#",
-"#T......K....T#",
+"#T......k....T#",
 "#.##.#####.##.#",
 "#......@......#",
 "###############"];
 const JH_MZ_HORSE3_GUARDS=[{kind:"wildhorse3",x:12,y:12,dx:-2,dy:-1,lag:2},{kind:"wildhorse3",x:2,y:10,dx:2,dy:-1,lag:4}];
-const JH_MZ_HORSE3_GATE={J:[1,0],K:[0,-1]};
+const JH_MZ_HORSE3_GATE={j:[1,0],k:[0,-1]};
 const jhMzHorse3Gate=(S,x,y)=>JH_MZ_HORSE3_GATE[jhMzCell(S,x,y)]||null;
 /* 人走進驛門：方向要跟門一樣 */
 const jhMzHorse3CanMove=(S,x,y,dx,dy)=>{const g=jhMzHorse3Gate(S,x+dx,y+dy);return!g||(g[0]===dx&&g[1]===dy)};
@@ -50,7 +50,7 @@ JH_MZ_KIND.wildhorse3={
     G.x+=best[0];G.y+=best[1];G.dx=best[0];G.dy=best[1]},
   look:{body:"#5e3e1e",head:"#704a26",eye:0xE24A3A}};
 /* 3D：驛門是一道木門框，門板偏向能推開的那一邊；平面版畫箭頭 */
-for(const ch of["J","K"]){const[gx,gy]=JH_MZ_HORSE3_GATE[ch];
+for(const ch of["j","k"]){const[gx,gy]=JH_MZ_HORSE3_GATE[ch];
   JH_MZ_OBJ[ch]=H=>{const{T3,mesh,lam}=H,g=new T3.Group(),wd=lam("#6b4a2a"),side=gx?0:1;
     for(const s of[-1,1])g.add(mesh(new T3.BoxGeometry(side?.08:.08,.8,.08),wd,side?s*.42:0,.4,side?0:s*.42));
     g.add(mesh(new T3.BoxGeometry(side?.84:.06,.06,side?.06:.84),wd,0,.78,0));

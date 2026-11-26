@@ -57,14 +57,14 @@ function problems(c) {
   if (!L) return bad;
   if ((L.guards || []).length !== 3) bad.push("兵衛陣列要三隻兵卒");
   /* 流水：往右踩進去 → 沖下一格、stop；下面是牆就不動；往上游一踩被沖回原處 */
-  let S = mini(c, ["#####", "#.F.#", "#...#", "#####"], 1, 1), r = c.jhMzStep(S, 1, 0);
+  let S = mini(c, ["#####", "#.f.#", "#...#", "#####"], 1, 1), r = c.jhMzStep(S, 1, 0);
   if (S.player.x !== 2 || S.player.y !== 2 || !r.stop) bad.push(`踩上流水要被沖往下一格並停下（實際 ${S.player.x},${S.player.y} stop=${r.stop}）`);
-  S = mini(c, ["#####", "#.F.#", "#####"], 1, 1); c.jhMzStep(S, 1, 0);
+  S = mini(c, ["#####", "#.f.#", "#####"], 1, 1); c.jhMzStep(S, 1, 0);
   if (S.player.x !== 2 || S.player.y !== 1) bad.push("流水下面是牆就不動");
-  S = mini(c, ["#####", "#.F.#", "#...#", "#####"], 2, 2); c.jhMzStep(S, 0, -1);
+  S = mini(c, ["#####", "#.f.#", "#...#", "#####"], 2, 2); c.jhMzStep(S, 0, -1);
   if (S.player.y !== 2) bad.push("往上游踩流水要被沖回原處");
   /* 自動走：繞過流水 */
-  S = mini(c, ["#######", "#.....#", "#.FFF.#", "#.....#", "#######"], 1, 2);
+  S = mini(c, ["#######", "#.....#", "#.fff.#", "#.....#", "#######"], 1, 2);
   const pa = c.jhMzPath(S, 5, 2), steps = pa ? Array.from(pa, (q) => q.join(",")) : [];
   if (!pa || steps.some((q) => ["2,2", "3,2", "4,2"].includes(q))) bad.push("自動走要繞過流水（實際 " + steps.join(" ") + "）");
   /* 整層走得過 */
@@ -94,7 +94,7 @@ test("仙人指路第三層：修為 +60、存檔鍵分層、碑刻標「遊戲�
 test("改壞驗證：水不沖、自動走會踩流水、只剩兩隻兵，檢查都要抓得到", () => {
   const cases = [
     ["水不沖", { "07z9m-pawn3.js": (s) => s.replace("&&!(S.guards||[]).some(G=>G.x===P.x&&G.y===y))P.y=y;", "&&false)P.y=y;") }],
-    ["自動走會踩流水", { "07z9m-pawn3.js": (s) => s.replace("avoid:\"F\",", "") }],
+    ["自動走會踩流水", { "07z9m-pawn3.js": (s) => s.replace("avoid:\"f\",", "") }],
     ["只剩兩隻兵", { "07z9m-pawn3.js": (s) => s.replace(",{kind:\"pawn\",x:7,y:6,dx:1,dy:1}];", "];") }],
   ];
   for (const [name, patch] of cases) {

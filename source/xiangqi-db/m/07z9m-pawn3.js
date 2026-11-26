@@ -1,6 +1,6 @@
 /* ---------- W87-2 仙人指路地底迷宮・第三層「聽泉幽窟」（開發者 11/26「現在開工」做第三層；第三層分工 Windows Claude 1）----------
    規格：story/gemini_app/208_十派地底迷宮第二三層_補件_1126_Gemini回覆.md 的仙人指路第三層，加上 iMac Claude 1 兩份複核與開發者 11/26 選單：
-     ・新地形「流水石階」（F）：地下泉水往下游流，踩上去會被水沖往下一格（下面被擋就不動），然後停下（afterMove 回 stop:true）。
+     ・新地形「流水石階」（f）：地下泉水往下游流，踩上去會被水沖往下一格（下面被擋就不動），然後停下（afterMove 回 stop:true）。
        往上游走時一踩就被沖回來，所以一排流水石階就是一道「只能往下過」的關卡，要繞到沒有水的地方上去。自動走不主動踩（lv.avoid）。
        守衛不受水流影響。
      ・守衛「兵衛陣列」：三隻兵卒（走法、視線都照第一層 JH_MZ_KIND.pawn：沒過河只往前看前面，過了河左右來回、看前面加面向那一側），
@@ -15,30 +15,30 @@ const JH_MZ_PAWN3_MAP=[
 "#####...#######",
 "######D########",
 "#T...........T#",
-"#.R..FF.FF..R.#",
+"#.R..ff.ff..R.#",
 "#...C.....L...#",
-"#.FFF.....FFF.#",
+"#.fff.....fff.#",
 "#.....P.R.....#",
-"#T....FFF....T#",
+"#T....fff....T#",
 "#~~~~~~~~~~~~~#",
 "#~~~~~~~~~~~~~#",
 "#.............#",
-"#.FF..R...R.FF#",
-"#...FF.....FF.#",
+"#.ff..R...R.ff#",
+"#...ff.....ff.#",
 "#.R.....C.....#",
-"#..FFF...FFF..#",
+"#..fff...fff..#",
 "#C...........C#",
 "#T.....@.....T#",
 "###############"];
 const JH_MZ_PAWN3_RIVER=[10,11];
 const JH_MZ_PAWN3_GUARDS=[{kind:"pawn",x:3,y:4,dx:1,dy:1},{kind:"pawn",x:11,y:4,dx:-1,dy:1},{kind:"pawn",x:7,y:6,dx:1,dy:1}];
 /* 流水石階：站上去就被沖往下一格（下面不能走、或有守衛就不動），一律停下 */
-function jhMzPawn3Flow(S){const P=S.player;if(jhMzCell(S,P.x,P.y)!=="F")return null;const y=P.y+1;
+function jhMzPawn3Flow(S){const P=S.player;if(jhMzCell(S,P.x,P.y)!=="f")return null;const y=P.y+1;
   if(!jhMzSolid(S,P.x,y)&&!(S.guards||[]).some(G=>G.x===P.x&&G.y===y))P.y=y;return{stop:true,flow:true}}
 /* 3D：一級一級的石階，上面一層淺淺的流水；平面版 */
-JH_MZ_OBJ.F=H=>{const{T3,mesh,lam}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(1,.06,1),lam("#7d8a86"),0,.03,0));
+JH_MZ_OBJ["f"]=H=>{const{T3,mesh,lam}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(1,.06,1),lam("#7d8a86"),0,.03,0));
   g.add(mesh(new T3.BoxGeometry(.96,.02,.96),lam("#5f97a8"),0,.07,0));for(const z of[-.25,.05,.35])g.add(mesh(new T3.BoxGeometry(.9,.012,.04),lam("#cfe8ee"),0,.085,z));return g};
-JH_MZ_TILE.F=(cx,px,py,T)=>{cx.fillStyle="#5f97a8";cx.fillRect(px,py,T,T);cx.strokeStyle="rgba(230,245,248,.7)";cx.lineWidth=1.6;
+JH_MZ_TILE["f"]=(cx,px,py,T)=>{cx.fillStyle="#5f97a8";cx.fillRect(px,py,T,T);cx.strokeStyle="rgba(230,245,248,.7)";cx.lineWidth=1.6;
   for(const a of[.3,.5,.7]){cx.beginPath();cx.moveTo(px+a*T-T*.08,py+T*.3);cx.lineTo(px+a*T,py+T*.42);cx.lineTo(px+a*T+T*.08,py+T*.3);cx.stroke();cx.beginPath();cx.moveTo(px+a*T-T*.08,py+T*.6);cx.lineTo(px+a*T,py+T*.72);cx.lineTo(px+a*T+T*.08,py+T*.6);cx.stroke()}};
 /* 殘局題庫（maze-puzzles.js 產生）：馬收尾的 3、4 步殺，Pikafish 驗證、--multi（最快殺都算對）。重跑指令見 PR 描述。 */
 /* ==JH_MZ_POOL:JH_MZ_POOL_PAWN3== */
@@ -55,7 +55,7 @@ trap:[
 {"id":"sq103","src":{"book":"適情雅趣","title":"雙鷺窺魚"},"zh":["被兵衛陣列圍住了","三隻兵卒把你圍在泉水邊：「單馬也能擒王，解得開就放你走。」紅方先走，4 步將死黑方。"],"en":["Surrounded by the pawn formation","Three pawn guards hem you in by the spring: \"A lone horse can still take the king. Solve it and you may go.\" Red to move: checkmate in 4."],"fen":"3ak3N/4aP3/8R/1rr5N/9/9/9/9/5p3/4K4","line":["f8f9","e9f9","i7f7","e8f7","i6h8","f9f8","i9h7"]}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_PAWN3== */
 jhMzLayer("pawn",3,{map:JH_MZ_PAWN3_MAP,guards:JH_MZ_PAWN3_GUARDS,river:JH_MZ_PAWN3_RIVER,pool:JH_MZ_POOL_PAWN3,
-  puz:{door:JH_MZ_POOL_PAWN3.door[0],trap:JH_MZ_POOL_PAWN3.trap[0]},solid:"#DRHL",opaque:"#DH",jump:"",avoid:"F",afterMove:jhMzPawn3Flow,
+  puz:{door:JH_MZ_POOL_PAWN3.door[0],trap:JH_MZ_POOL_PAWN3.trap[0]},solid:"#DRHL",opaque:"#DH",jump:"",avoid:"f",afterMove:jhMzPawn3Flow,
   title:["🌊 聽泉幽窟","🌊 Grotto of the listening spring"],lvName:["聽泉幽窟・第三層","Grotto of the listening spring · Level 3"],
   intro:["最底下是一座地下泉窟，泉水順著石階往下流。<b>踩上流水石階會被沖往下一格</b>，往上游走過不去，要繞到沒有水的地方上去。",
     "At the very bottom is an underground spring; water runs down a flight of stone steps. <b>Step onto the flowing steps and the water pushes you one square down</b>, so you can't climb against it: go around where it's dry."],
