@@ -59,16 +59,22 @@ test("出口：橫式圖記憶名 campL:*，從 w0（左下營寨）往左走出
   const X2 = { "campL:*": false }; load(true, X2); assert.equal(X2["campL:*"], false, "已經有的不蓋掉");
 });
 
+test("座標照量好的 json（output/w107-ipad/l1610/campmap/camp_day_classic_l1610.json）：頭尾和中間幾個點寫死比對", () => {
+  const L = vm.runInContext("CP_L", load(true)), J = x => JSON.parse(JSON.stringify(x));
+  assert.deepEqual(J([L.flags[0], L.flags[5], L.flags[12]]), [[862, 866], [1716, 292], [736, 1062]]);
+  assert.deepEqual(J([L.path[0], L.path[15], L.path[30]]), [[666, 1167], [1926, 376], [750, 1177]]);
+});
+
 test("〔混合〕07y2 接線：開頁先量（scwPre）、掛 07sw（13 面旗）、換圖重掛走路時換成這一課的 cpCfgL 和記憶名；旗在橫式圖上換小一點", () => {
   assert.match(CP, /pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\};/);
   assert.match(CP, /<img src="\$\{pre\.src\}"/);
   assert.match(CP, /ids:CP_FLAGS\.map\(\(_,i\)=>"cpF"\+\(i\+1\)\),pfx:mem,cfg0:cfg,/);
-  assert.match(CP, /onCfg:x=>\{const L=x\.W===2560;if\(L\)Object\.assign\(x,cpCfgL\(c\)\);o\.pfx=\(L\?"campL:":"camp:"\)\+c\}/);
+  assert.match(CP, /onCfg:x=>cpOnCfg\(o,c,x\)\}/);
   assert.match(CP, /if\(pre\.k\)\{cfgNow=Object\.assign\(scwWalkCfg\(o,scwCur\(P\)\),cpCfgL\(c\)\);mem=o\.pfx="campL:"\+c;P\._scwW="l"\}/);
   assert.match(CP, /shwPage\(v,cfgNow,mem\)/);
   assert.match(CP, /\.camp-page\.scw-l \.shp-spot\.cp-flag\{width:2\.2%;height:3\.6%\}/);
-  /* onCfg 實際跑一次：橫式設定補上這一課的起點、記憶名換 campL；換回原圖記憶名換回 camp */
-  const C = load(true), cfgL = vm.runInContext("cpCfgL", C), o = { pfx: "camp:3" }, x = { W: 2560 };
-  const onCfg = xx => { const L = xx.W === 2560; if (L) Object.assign(xx, cfgL(3)); o.pfx = (L ? "campL:" : "camp:") + 3 };
-  onCfg(x); assert.equal(o.pfx, "campL:3"); assert.equal(x.home, cfgL(3).home); onCfg({ W: 768 }); assert.equal(o.pfx, "camp:3");
+  /* 07y2 的 cpOnCfg 實際跑（#159 審查建議 5：不抄進測試）：橫式設定補上這一課的起點、記憶名換 campL；換回原圖記憶名換回 camp、設定不動 */
+  const C = load(true), [cfgL, on] = vm.runInContext("[cpCfgL, cpOnCfg]", C), o = { pfx: "camp:3" }, x = { W: 2560 };
+  on(o, 3, x); assert.equal(o.pfx, "campL:3"); assert.equal(x.home, cfgL(3).home); assert.equal(Object.keys(x.N).length, 31);
+  const y = { W: 768, home: "w2" }; on(o, 3, y); assert.equal(o.pfx, "camp:3"); assert.equal(y.home, "w2");
 });

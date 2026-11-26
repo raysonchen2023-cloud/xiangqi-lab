@@ -34,6 +34,8 @@ function cpCfgL(cur){const N={},E=[];CP_L.path.forEach(([x,y],i)=>{const[a,b]=cp
   const HS={};CP_L.flags.forEach(([x,y],i)=>{const[a,b]=cpPcL(x,y);HS["cpF"+(i+1)]=["w"+CP_NODE_L[i],+a.toFixed(2),+b.toFixed(2),"bow"]});
   const home="w"+CP_NODE_L[Math.max(0,Math.min(11,cur-1))],nx=CP_L.flags[Math.min(11,cur)]||CP_L.flags[11];
   return{W:2560,H:1600,el:52,h:[.06,60,.0008],look0:cpPcL(nx[0],nx[1]),home,N,E:E.join(" "),HS}}
+/* 換圖重掛走路時（07sw scwWalk 叫 onCfg）：橫式圖的設定補上這一課的起點、看的方向，記憶名換成 campL（出口不同）；換回原圖記憶名換回 camp */
+function cpOnCfg(o,c,x){const L=x&&x.W===2560;if(L)Object.assign(x,cpCfgL(c));o.pfx=(L?"campL:":"camp:")+c}
 if(typeof SHW_EXITS!=="undefined"&&SHW_EXITS&&!("campL:*" in SHW_EXITS))SHW_EXITS["campL:*"]={at:"w0",out:[10,82],r:[4,74,18,90]};
 if(typeof SCW!=="undefined"){const S={};CP_L.flags.forEach(([x,y],i)=>{const[a,b]=cpPcL(x,y);S["cpF"+(i+1)]=[+a.toFixed(2),+b.toFixed(2)]});
   const e={ready:true,f:"campmap/camp_day_classic_l1610",w:2560,h:1600,S,exit:[11,82],safe:{l:.12,r:.12,t:.05,b:.10},walk:cpCfgL(1)};
@@ -65,7 +67,7 @@ function campMap(v){if(v.querySelector(".camp-page"))return;const pad=v.querySel
   P.querySelectorAll(".cp-flag").forEach(b=>b.onclick=()=>{const n=+b.id.slice(3);vibrate(5);if(!open(n)){toast(`先完成第 ${n-1} 課「${(CAMP[n-2]||{}).name||""}」`);return}if(typeof jRunSet==="function")jRunSet(null,"jRunC");location.hash="#/camp/"+n});   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：新手訓練營用自己的 jRunC，不洗掉石桌往事的 jRun */
   const c=Math.min(cur,12),cfg=Object.assign({},SHW_PG0,cpCfg(c));let cfgNow=cfg,mem="camp:"+c;
   if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:CP_FLAGS.map((_,i)=>"cpF"+(i+1)),pfx:mem,cfg0:cfg,
-      onCfg:x=>{const L=x.W===2560;if(L)Object.assign(x,cpCfgL(c));o.pfx=(L?"campL:":"camp:")+c}};   /* 換圖重掛走路：橫式圖用這一課的起點、記憶名換成 campL（出口不同） */
+      onCfg:x=>cpOnCfg(o,c,x)};
     scwMount(P,o);if(pre.k){cfgNow=Object.assign(scwWalkCfg(o,scwCur(P)),cpCfgL(c));mem=o.pfx="campL:"+c;P._scwW="l"}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfgNow,mem)}catch(e){}
