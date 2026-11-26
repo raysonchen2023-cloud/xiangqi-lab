@@ -10,7 +10,7 @@ const rd = (f) => fs.readFileSync(path.join(ROOT, "xiangqi-db", "m", f), "utf8")
 const SRC = rd("07z9m-central2.js");
 
 /* 把 07z9m-central2.js 的 jhMzCentral2Mud 整個換成 body（改壞驗證用：拿以前的寫法跑） */
-const withMud = (src, body) => { const a = src.indexOf("function jhMzCentral2Mud"), e = src.indexOf("\n  return null}", a); assert.ok(a > 0 && e > a, "找得到 jhMzCentral2Mud"); return src.slice(0, a) + body + src.slice(e + "\n  return null}".length) };
+const withMud = (src, body) => { const a = src.indexOf("function jhMzCentral2Mud"), e = src.indexOf("\n/* 3D：淺水窪", a); assert.ok(a > 0 && e > a, "找得到 jhMzCentral2Mud"); return src.slice(0, a) + body + src.slice(e) };
 function load(patch) {
   const mem = {}, c = {
     store: { get: (k, d) => (k in mem ? JSON.parse(mem[k]) : d), set: (k, v) => { mem[k] = JSON.stringify(v) } },
@@ -51,6 +51,9 @@ function guardProblems(c) {
     S.guards.forEach((G, i) => { const d = Math.abs(G.x - o[i][0]) + Math.abs(G.y - o[i][1]); if (d > 1) bad.push("一回合最多走一格") });
     if (S.guards[0].x === S.guards[1].x) bad.push("重疊：第 " + k + " 步");
     if (S.guards[0].x === 9) bad.push("前衛踩進水窪") }
+  /* 被推開後跟另一個炮衛同格（共用 jhMzSolved 推 3 格）：下一步就分開；同向、反向、前面是牆都試 */
+  for (const [g1, g2] of [[{ x: 5, dx: 1 }, { x: 5, dx: 1 }], [{ x: 5, dx: 1 }, { x: 5, dx: -1 }], [{ x: 11, dx: 1 }, { x: 11, dx: 1 }], [{ x: 1, dx: -1, front: 1 }, { x: 1, dx: -1 }]]) {
+    S = corridor(c, {}, [g1, g2]); c.jhMzGuardStep(S); if (S.guards[0].x === S.guards[1].x) bad.push("同格的兩個炮衛下一步要分開（" + g1.x + "," + g1.dx + "/" + g2.dx + "）") }
   return bad;
 }
 
@@ -78,14 +81,15 @@ test("雙炮衛的規則都符合（看 3 格、另一個炮衛擋住就看不�
   assert.deepEqual(guardProblems(load()), []);
 });
 
-test("改壞驗證（水窪）：多耗的那一回合直接讓守衛走、不照原地等的規則（#212 審查抓到的舊寫法），檢查一定抓得到", () => {
-  const OLD = withMud(SRC, 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;S.turn++;jhMzGuardStep(S);return null}');
-  assert.notEqual(OLD, SRC, "改壞的字串要真的找得到");
-  const c = load(() => OLD);
-  assert.ok(mudProblems(c).some((s) => s.includes("先提醒")), "舊寫法：守衛才看到就直接抓");
-  /* #212 複審抓到的上一版：多耗那一回合沒事就直接走進水窪，不管水窪已經落在紅線上 */
-  const PREV = withMud(SRC, 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;const r=jhMzStep(S,0,0);return r.ev==="move"?null:r}');
-  assert.notEqual(PREV, SRC); assert.ok(mudProblems(load(() => PREV)).some((s) => s.includes("紅線上")), "上一版：水窪落在紅線上就直接抓");
+test("改壞驗證（水窪）：以前的四種寫法、耗的那一回合不照共用規則，檢查一定抓得到", () => {
+  const V = [
+    ["第一版：多耗的那一回合直接讓守衛走", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;S.turn++;jhMzGuardStep(S);return null}', "先提醒"],
+    ["第二版：先原地等一回合再走進去", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;const r=jhMzStep(S,0,0);return r.ev==="move"?null:r}', "不能被抓"],
+    ["第三版：等完再看水窪在不在紅線上", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;const r=jhMzStep(S,0,0);if(r.ev!=="move")return r;const x=S.player.x+dx,y=S.player.y+dy;if((S.guards||[]).some(G=>!(G.stun>0)&&(G.x===x&&G.y===y||jhMzSight(S,G).some(q=>q.x===x&&q.y===y)))){S.caughtBy=null;return{ev:"spot"}}return null}', "已經在水窪裡"],
+    ["第四版：耗的那一回合被抓不降成先提醒", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q"||S.mudIn)return null;S.mudIn=1;let r;try{r=jhMzStep(S,dx,dy)}finally{S.mudIn=0}if(r.ev!=="move")return r;const r2=jhMzStep(S,0,0);if(r2.ev!=="move")return r2;r.stop=true;return r}', "醒來"],
+    ["耗的那一回合不照共用規則（直接讓守衛走、看到就抓）", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q"||S.mudIn)return null;S.mudIn=1;let r;try{r=jhMzStep(S,dx,dy)}finally{S.mudIn=0}if(r.ev!=="move")return r;S.turn++;jhMzGuardStep(S);if(jhMzCaught(S))return{ev:"trap"};r.stop=true;return r}', "走到水窪上"],
+  ];
+  for (const [nm, body, key] of V) { const src = withMud(SRC, body); assert.notEqual(src, SRC, nm); assert.ok(mudProblems(load(() => src)).some((s) => s.includes(key)), nm + "：要被抓到（" + key + "）") }
 });
 
 test("改壞驗證：穿過守衛看、看 5 格、前衛踩水窪、走進對方那一格、不擋牆，規則檢查一定抓得到", () => {
@@ -100,22 +104,28 @@ test("改壞驗證：穿過守衛看、看 5 格、前衛踩水窪、走進對�
 /* 水窪規則檢查（#212 審查：多耗的那一回合要照「原地等一回合」的共用規則，不能跳過「先提醒」） */
 function mudProblems(c) {
   const bad = [];
-  /* 炮衛往右走、看不到玩家：走進水窪算兩回合、守衛走了兩步、人進到水窪 */
+  /* ⑴ 炮衛往右走、看不到玩家：走進水窪算兩回合、守衛走了兩步、人在水窪裡、自動走停下 */
   let S = corridor(c, { 4: "Q" }, [{ x: 6, dx: 1 }], 3, 1); const g0 = S.guards[0].x; let r = c.jhMzStep(S, 1, 0);
   if (r.ev !== "move" || S.player.x !== 4) bad.push("走進水窪：人進到水窪（實際 " + r.ev + "," + S.player.x + "）");
   if (S.turn !== 2) bad.push("走進水窪算兩回合（實際 " + S.turn + "）");
   if (S.guards[0].x !== g0 + 2) bad.push("走進水窪：守衛走了兩步（" + g0 + "→" + S.guards[0].x + "）");
+  if (!r.stop) bad.push("走進水窪以後自動走停下");
   r = c.jhMzStep(S, 1, 0); if (S.turn !== 3) bad.push("走出水窪一回合");
-  /* 多耗的那一回合守衛掉頭才看到你：先提醒（spot），人留在原地、不直接抓 */
+  /* ⑵ 走進水窪那一回合守衛掉頭才看到：先提醒；開發者 11/26 選單「先進水窪、再在水窪裡耗那一回合」：被提醒時人已經在水窪裡 */
   S = corridor(c, { 7: "Q" }, [{ x: 11, dx: 1 }], 8, 1); r = c.jhMzStep(S, -1, 0);
-  if (r.ev !== "spot") bad.push("多耗的那一回合守衛才看到：先提醒、不直接抓（實際 " + r.ev + "）");
-  if (S.player.x !== 8) bad.push("先提醒的那一回合人留在原地，不走進水窪");
-  /* #212 複審：守衛在 (2,1) 面右、水窪 (6,1)、人在 (7,1) 往左。走之前水窪不在紅線上（看 3,4,5）；多耗那一回合守衛走到 3、看到 4,5,6＝水窪在紅線上：先提醒、人不進去 */
-  S = corridor(c, { 6: "Q" }, [{ x: 2, dx: 1 }], 7, 1); r = c.jhMzStep(S, -1, 0);
-  if (r.ev !== "spot") bad.push("多耗的那一回合結束時水窪落在紅線上：先提醒、不直接抓（實際 " + r.ev + "）");
-  if (S.player.x !== 7) bad.push("水窪落在紅線上：人留在原地");
-  /* 對照：同樣配置、水窪換成一般地面＝守衛走完才看到，也是先提醒 */
+  if (r.ev !== "spot") bad.push("守衛走完才看到：先提醒、不直接抓（實際 " + r.ev + "）");
+  if (S.player.x !== 7) bad.push("先進水窪：被提醒時人已經在水窪裡");
+  /* ⑶ #212 審查情境：守衛 2 面右、水窪 6、人 7 往左＝先提醒，不直接抓；⑹ 對照：一般地面同樣配置也是先提醒 */
+  S = corridor(c, { 6: "Q" }, [{ x: 2, dx: 1 }], 7, 1); r = c.jhMzStep(S, -1, 0); if (r.ev !== "spot") bad.push("審查情境（守衛 2、水窪 6、人 7）：先提醒、不直接抓（實際 " + r.ev + "）");
   S = corridor(c, {}, [{ x: 2, dx: 1 }], 7, 1); r = c.jhMzStep(S, -1, 0); if (r.ev !== "spot") bad.push("對照組（一般地面，同樣配置）要是先提醒（實際 " + r.ev + "）");
+  /* ⑷ #212 第三輪：玩家跟快醒的炮衛同格（stun 1），往乾淨的水窪走：不能被抓 */
+  S = corridor(c, { 2: "Q" }, [{ x: 3, dx: 1, stun: 1 }], 3, 1); r = c.jhMzStep(S, -1, 0); if (r.ev === "trap") bad.push("跟快醒的炮衛同格、往乾淨的水窪走：不能被抓");
+  /* ⑸ #212 第三輪：在水窪裡耗的那一回合，守衛（走之前看不到人）掉頭剛好走到水窪上：先提醒，不直接抓 */
+  S = corridor(c, { 2: "Q" }, [{ x: 1, dx: -1, stun: 1 }], 3, 1); r = c.jhMzStep(S, -1, 0); if (r.ev !== "spot") bad.push("耗的那一回合守衛走到水窪上：先提醒、不直接抓（實際 " + r.ev + "）");
+  /* ⑹ 窮舉找到的：走到暈 2 回合的炮衛身上（那格是水窪），耗的那一回合炮衛醒來同格：走地面不會被抓，走水窪也只先提醒；下一步還留在原地才抓 */
+  S = corridor(c, { 2: "Q" }, [{ x: 2, dx: 1, stun: 2 }], 3, 1); r = c.jhMzStep(S, -1, 0);
+  if (r.ev !== "spot") bad.push("走到暈著的炮衛身上、耗的那一回合牠醒來：先提醒、不直接抓（實際 " + r.ev + "）");
+  else if (c.jhMzStep(S, 0, 0).ev !== "trap") bad.push("被提醒以後還留在原地：被抓");
   return bad;
 }
 

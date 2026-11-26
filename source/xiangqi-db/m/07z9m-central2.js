@@ -1,11 +1,13 @@
 /* ---------- W87-2 中炮門地底迷宮・第二層「漕底淤廊」（11/26 Windows Claude 1 分派給 Windows Claude 2）----------
    規格：story/gemini_app/208_十派地底迷宮第二三層_補件_1126_Gemini回覆.md 的中炮門第二層，照 208 複核（iMac Claude 1）和開發者 11/26 的決定改：
      ・淺水窪（Q）：走進去要多耗一回合（守衛多走一步）；擋路、擋光都不會。自動規劃路線不主動踩（lv.avoid），踩到自動走就停。
-       多耗的那一回合照「原地等一回合」的規則（jhMzStep(S,0,0)，#212 審查）：守衛走完才看到你就先提醒（spot）、這一步不走進去；被抓就照被抓；
-       那一回合守衛走完以後，水窪落在紅線上（或站著守衛）也一樣先提醒、人不進去（#212 複審：走之前不是紅線的水窪，不能直接被抓）；都沒事才走進水窪。
+       開發者 11/26 選單（#212 第三輪審查）：先照一般規則走進水窪，再在水窪裡原地等一回合（jhMzStep(S,0,0)）——守衛走、先提醒再抓都照共用規則；
+       走進去那一回合就被提醒或被抓，照那個結果、不再多耗；兩回合都沒事，自動走停下（stop）。被提醒時往水窪逃一樣有效。
+       耗的那一回合開始前人不在醒著的守衛紅線上，這一回合才被看到（含走到暈著的守衛身上、守衛剛好醒來）也只先提醒——走地面不會被抓的情況，走水窪也不會（窮舉驗過）。
      ・雙炮衛（JH_MZ_KIND.twincannon）：兩個炮衛在同一條走廊來回巡，面向那一邊看得到 3 格；
        複核選「前衛擋住就看不到」：另一個炮衛擋在前面，後面那一格起就看不到（跟過宮炮門「隔一子才看得到」區隔開）。
-       前衛（front）不踩水窪，碰到水窪就掉頭；後衛會走進水窪。兩個炮衛不會走進對方那一格（碰到就掉頭）。
+       前衛（front）不踩水窪，碰到水窪就掉頭；後衛會走進水窪。兩個炮衛走路時不會走進對方那一格（碰到就掉頭）；
+       被抓解完題、共用的 jhMzSolved 把守衛推開 3 格時，可能暫時跟另一個炮衛同格，下一步就會分開（測試驗）。
      ・機關殘局：中兵突破，兵收尾（古譜裡沒有兵收尾的兩步殺，用三步殺）；被抓殘局一律殺題（開發者決定），馬收尾（開發者 11/26 選單「換成馬、兵收尾」：用 --multi 出題，最快殺都算對）。
      ・碑刻：遊戲整理，據潘季馴《河防一覽》（複核：可用）。
      ・寶箱：門派貢獻、中炮譜殘頁、稱號「逆水行舟」（外觀出圖前先問開發者，這一層的獎勵本來就是稱號，不用出圖）。
@@ -42,11 +44,12 @@ JH_MZ_KIND.twincannon={
   step(S,G){const blk=(x,y)=>jhMzSolid(S,x,y)||jhMzCentral2Mate(S,G,x,y)||!!G.front&&jhMzCell(S,x,y)==="Q";let dx=G.dx||0,dy=G.dy||0;
     if(blk(G.x+dx,G.y+dy)){dx=-dx;dy=-dy;G.dx=dx;G.dy=dy}if(!blk(G.x+dx,G.y+dy)){G.x+=dx;G.y+=dy}},
   look:{body:"#3a2418",head:"#5a3626",eye:0xE24A3A}};
-/* 走進水窪：陷在泥裡多耗一回合——照原地等一回合跑（守衛走、先提醒、被抓都照共用規則）；那一回合沒事，才照預設走進去 */
-function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;const r=jhMzStep(S,0,0);if(r.ev!=="move")return r;
-  /* #212 複審：那一回合守衛走完以後，水窪落在紅線上（或站著守衛）＝也是「走完才看到」，先提醒、人不進去，不直接抓 */
-  const x=S.player.x+dx,y=S.player.y+dy;if((S.guards||[]).some(G=>!(G.stun>0)&&(G.x===x&&G.y===y||jhMzSight(S,G).some(q=>q.x===x&&q.y===y)))){S.caughtBy=null;return{ev:"spot"}}
-  return null}
+/* 走進水窪：先照一般規則走進去（S.mudIn 防止下面那一步又進來這裡），再在水窪裡原地等一回合；兩回合的事件照共用規則，沒事就停下 */
+function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q"||S.mudIn)return null;S.mudIn=1;let r;try{r=jhMzStep(S,dx,dy)}finally{S.mudIn=0}if(r.ev!=="move")return r;
+  /* 耗的那一回合同樣先提醒再抓：開始前人不在任何醒著的守衛紅線上（也沒跟醒著的守衛同格），這一回合才被看到或暈的守衛醒來同格＝先提醒，不直接抓 */
+  const P=S.player,warned=(S.guards||[]).some(G=>!(G.stun>0)&&(G.x===P.x&&G.y===P.y||jhMzSight(S,G).some(q=>q.x===P.x&&q.y===P.y)));
+  const r2=jhMzStep(S,0,0);if(r2.ev==="trap"&&!warned){S.caughtBy=null;return{ev:"spot"}}if(r2.ev!=="move")return r2;r.stop=true;
+  return r}
 /* 3D：淺水窪（地上一層半透明的淡藍水面）；平面版：地面色上一塊淡藍 */
 if(!JH_MZ_OBJ.Q)JH_MZ_OBJ.Q=H=>{const{T3,mesh}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(.96,.03,.96),new T3.MeshLambertMaterial({color:0x4a6a7a,transparent:true,opacity:.75}),0,.015,0));return g};
 if(!JH_MZ_TILE.Q)JH_MZ_TILE.Q=(cx,px,py,T)=>{cx.fillStyle="#3b3428";cx.fillRect(px,py,T,T);cx.fillStyle="rgba(90,130,150,.75)";cx.fillRect(px+T*.08,py+T*.08,T*.84,T*.84)};
