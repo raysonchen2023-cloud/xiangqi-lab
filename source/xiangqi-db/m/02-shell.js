@@ -17,7 +17,10 @@ const icoSrc=n=>`data/icons/${icoAt(n,store.get("era","classic"))}/${n}.webp`;
 function icoImg(el,n){const em=el.textContent;const im=document.createElement("img");im.className="eic";im.alt="";im.dataset.ico=n;im.onerror=()=>{const c=+(im.dataset.c||0),A=["classic","ming","qin","tang","yuan"];if(c<A.length){im.dataset.c=c+1;im.src="data/icons/"+A[c]+"/"+n+".webp";return}const sp=document.createElement("span");sp.className="noico";sp.textContent=em;im.replaceWith(sp)};im.src=icoSrc(n);el.textContent="";el.append(im)}   /* 552：這個朝代缺圖就先用經典那套 */
 /* 意見回饋 433、435、466：首頁三張大卡、設定的分頁、棋童資料的圓鈕也換成朝代圖示（第二張總表，tools/gen_round2.py --icons2） */
 const ICO_HUB={"#/cpu":"cpu","#/db":"db","#/hub/battle":"h_battle","#/adventure":"h_adventure","#/hub/learn":"h_learn"};
-const ETIMG=(n,old,emo)=>`<img class="ti eic" data-ico="${n}" src="${icoSrc(n)}" alt="" onerror="if(!this.dataset.c&&!/\/classic\//.test(this.src)){this.dataset.c=1;this.src='data/icons/classic/${n}.webp'}else if(this.dataset.f||!'${old||""}'){this.replaceWith(document.createTextNode('${emo}'))}else{this.dataset.f=1;this.classList.remove('eic');this.src='${old||""}'}">`;
+/* W152（11/26 Windows Claude 2 實走 #201 時發現，正式站就有）：onerror 原本用正規式 /\/classic\//，在模板字串裡 \/ 會被當成跳脫、輸出成 //classic//，
+   後半段變成註解、整段 onerror 語法錯誤（進十州棋館時主控台兩次 Unexpected end of input），圖示載不到時的備援（改抓經典版、再換表情文字）完全不會跑。
+   改用 includes，不用反斜線。test-icon-onerror-1126.js 把組出來的 onerror 拿去 new Function 並實際跑一次 */
+const ETIMG=(n,old,emo)=>`<img class="ti eic" data-ico="${n}" src="${icoSrc(n)}" alt="" onerror="if(!this.dataset.c&&!this.src.includes('/classic/')){this.dataset.c=1;this.src='data/icons/classic/${n}.webp'}else if(this.dataset.f||!'${old||""}'){this.replaceWith(document.createTextNode('${emo}'))}else{this.dataset.f=1;this.classList.remove('eic');this.src='${old||""}'}">`;
 function iconize(){document.querySelectorAll("[data-go] > .ic,[data-go] > .dic").forEach(x=>{if(x.querySelector("img"))return;const n=ICO_GO[x.parentElement.dataset.go];if(n)icoImg(x,n)});
   document.querySelectorAll(".hubc > .hi").forEach(x=>{if(x.querySelector("img"))return;const n=ICO_HUB[x.parentElement.dataset.go];if(n)icoImg(x,n)});
   document.querySelectorAll("#sgTabs .tic").forEach(x=>{if(x.querySelector("img"))return;icoImg(x,x.dataset.ic)});
@@ -113,7 +116,7 @@ function route(){
   try{if(typeof dglRouteGate==="function"&&dglRouteGate())return}catch(e){}   /* 開發者 11/13 平日體力：定軌力用完（化墨退場）後，人間的頁先關著、回星槎歇息（m/07dgl-stamina.js） */
   try{if(typeof fcmBootGo==="function"&&fcmBootGo())return}catch(e){}   /* 評比循環第 12 輪 X10 中斷恢復：這個分頁第一次打開、網址是首頁、6 小時內在對局／解題中被打斷（切背景、關分頁）＝直接回那一盤（m/07fm-focus.js） */
   /* 意見回饋 607：換頁時把上一頁的視窗（結果視窗等）一起關掉；ROUTE_N 讓殺棋動畫後才要出來的視窗知道畫面換了 */
-  ROUTE_N++;document.querySelectorAll(".modal:not(.keep)").forEach(m=>m.remove());
+  ROUTE_N++;document.querySelectorAll(".modal:not(.keep),.kjfx").forEach(m=>m.remove());   /* W121：換頁時正在播的開局特效（.kjfx）也拿掉，不留在下一頁 */
   try{storyEraSync()}catch(e){}   /* 意見回饋 610：故事線自動換朝代 */
   closeSheet();if(screen&&screen.stop)screen.stop();screen=null;PARK_OFF=false;PARK_J=null;PARK_LK=false;
   const v=$("#view");v.className="view";v.innerHTML="";v.scrollTop=0;
@@ -548,7 +551,10 @@ function Lobby(v){setTop("線上大廳",false,[["📤",shareSheet,"分享給朋�
   paint();const t=setInterval(paint,15000);
   return{stop:()=>{offs.forEach(f=>f());clearInterval(t);if(XQNet.seeking()&&!XQNet.active())XQNet.seek(false)}}}
 // 不管在哪個畫面都能收到邀請
-if(OFF&&window.XQNet){XQNet.start();
+/* 11/25 審核（高）：兒童模式說「資料零收集」，但這裡開 App 就連大廳（連線帶裝置代號）。家長關掉線上大廳或開兒童模式時，啟動不連；
+   直接讀存檔的 fmCfg（07m5 的 fmNetOff 這時還不能叫：它用到後面才宣告的常數，會出錯回 false）。大廳、千秋盃、觀戰在兒童模式本來就轉到說明頁 */
+const NET_KIDOFF=(()=>{try{const c=store.get("fmCfg",null)||{};return c.net===false||c.kid===true}catch(e){return false}})();
+if(OFF&&window.XQNet){if(!NET_KIDOFF)XQNet.start();   /* #185 審查：只擋「開 App 就連」；下面的邀請、配對、積分、新版通知事件照常登記——同一次使用中家長打開大廳、Lobby() 自己連上時才收得到 */
   XQNet.on("version",async x=>{if(!x||!x.v)return;const a=await appVer();if(a&&x.v>a&&window.XQ_notifyNew)XQ_notifyNew(x.v,x.note||"")});
   const goGame=()=>{if(location.hash==="#/pvp")route();else location.hash="#/pvp"};
   XQNet.on("invite",x=>{vibrate([40,60,40]);

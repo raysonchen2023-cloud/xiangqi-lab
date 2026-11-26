@@ -211,7 +211,7 @@ document.addEventListener("click",e=>{const x=e.target&&e.target.closest&&e.targ
 function wipeAsk(){
   if(window.XQNet&&XQNet.playing&&XQNet.playing())return modal(`<div class="em">⏳</div><h2>對局還在進行</h2><p>線上對局下完（或認輸）之後，才能刪除資料。</p>`,[["好",null]]);
   modal(`<div class="em">🗑</div><h2>刪除這支手機的全部資料？</h2><p>會刪掉：全部對局紀錄和棋譜、解題和故事進度、每一格存檔、角色與收藏、設定、暱稱和線上積分。</p><p class="muted" style="font-size:13px">只刪這支手機裡的。已經送出的意見回饋、檢舉和玩家登記，還有別人手機上留著的對局紀錄，這裡刪不到；伺服器上的請先用設定 → 隱私「🗑 申請刪除我在伺服器上的資料」（刪掉手機資料後裝置代號會換新，就對不到了）。下載過的棋譜庫和引擎會留著，不用重新下載。</p>`,[["下一步",()=>setTimeout(wipeAsk2,120)],["不要刪",null,true]])}
-function wipeAsk2(){modal(`<div class="em">⚠️</div><h2>真的要刪除嗎？</h2><p><b>刪掉就救不回來。</b></p><p class="muted" style="font-size:13px">想留著，先按「不要刪」，到設定用「換手機」把存檔搬到別支手機。</p>`,[["🗑 全部刪除",wipeAllData],["不要刪",null,true]])}
+function wipeAsk2(){modal(`<div class="em">⚠️</div><h2>真的要刪除嗎？</h2><p><b>刪掉就救不回來。</b></p><p class="muted" style="font-size:13px">想留著，先按「不要刪」，到設定用「換手機」把存檔搬到別支手機。</p>`,[["🗑 全部刪除",wipeAllData],["不要刪",null,"ax-first"]])}   /* W156（11/26 外部複審）：報讀模式下第二層原本自動聚焦「全部刪除」，連按兩次就刪；「不要刪」加 ax-first，焦點先落在它 */
 /* v5 改善單 R06：原本完成、出錯、被擋、逾時都走同一個結束，失敗了 App 照樣重開、看起來像刪好了。
    改成回報每個資料庫的結果 st：done 清空了、empty 本來就沒有表、none 本來就沒有這個資料庫、error 清的時候出錯、blocked 被別的連線擋住、timeout 超過 ms 毫秒沒回應 */
 function wipeDb(n,ms){return new Promise(res=>{let done=false,fresh=false;const fin=(st,msg)=>{if(!done){done=true;res({n,st,msg:msg||""})}};setTimeout(()=>fin("timeout"),ms||4000);
@@ -606,9 +606,9 @@ function feedbackSheet(){let type="🐞 錯誤";
 const USE_NAME=[["#/ship/read","雲河七星閱讀"],["#/ship","雲河星槎"],["#/journey/play","園子對局"],["#/journey/inn","驛站"],["#/journey/park","千秋石枰"],["#/journey","章回棋路"],["#/adventure","雲河星槎"],["#/port","渡口"],["#/arena","擂台"],["#/canju","殘局"],["#/cpu","挑戰電腦"],["#/lobby","線上對戰"],["#/play","對局"],["#/db","棋譜"],["#/quiz","測驗"],["#/guess","猜著法"],["#/settings","設定"],["#/me","我的角色"],["#/shelf","書架"],["#/stats","戰績"],["#/openings","開局"],["#/redo","錯棋重練"],["#/terms","規則"]];
 const usePlace=h=>{h=h||"#/";if(h==="#/"||h==="#")return"首頁";for(const[p,n]of USE_NAME)if(h===p||h.startsWith(p+"/"))return n;return h.split("/")[1]||"首頁"};
 let useT=Date.now(),useH=location.hash;
-function useTick(){const now=Date.now(),dt=Math.min(now-useT,60000);useT=now;if(document.hidden||dt<=0)return;try{const S=store.get("useStat",null)||{t:0,p:{}};S.t=(S.t||0)+dt;S.p=S.p||{};const k=usePlace(useH);S.p[k]=(S.p[k]||0)+dt;store.set("useStat",S)}catch(e){}
+function useTick(hide){const now=Date.now(),dt=Math.min(now-useT,60000);useT=now;if((document.hidden&&!hide)||dt<=0)return;   /* 11/25 審核（高）：切到背景時 document.hidden 已經是 true，原本直接 return，上次記到切背景之間最多 15 秒全丟（前景 10 秒、背景 5 秒來回 20 分鐘可記成 0 分），家長每日上限少算；切背景那一次照算到現在 */try{const S=store.get("useStat",null)||{t:0,p:{}};S.t=(S.t||0)+dt;S.p=S.p||{};const k=usePlace(useH);S.p[k]=(S.p[k]||0)+dt;store.set("useStat",S)}catch(e){}
   try{const D=store.get("useDay",null)||{},d=localDay();D[d]=(D[d]||0)+dt;const ks=Object.keys(D).sort();while(ks.length>60)delete D[ks.shift()];store.set("useDay",D)}catch(e){}}   /* 學習週報（開發者 11/8 核准）：每天畫面開著幾毫秒，留 60 天；useStat 只有總數，沒辦法算「這一週」 */
-setInterval(useTick,15000);addEventListener("hashchange",()=>{useTick();useH=location.hash});document.addEventListener("visibilitychange",()=>{if(document.hidden)useTick();else useT=Date.now()});
+setInterval(useTick,15000);addEventListener("hashchange",()=>{useTick();useH=location.hash});document.addEventListener("visibilitychange",()=>{if(document.hidden)useTick(1);else useT=Date.now()});
 const useFmt=ms=>{const m=Math.round(ms/60000);return m>=60?`${Math.floor(m/60)} 小時${m%60?` ${m%60} 分`:""}`:`${m} 分`};
 function useSummary(){const S=store.get("useStat",null);if(!S||!S.t)return"";const P={...(S.p||{})};if(P.ship){P["雲河星槎"]=(P["雲河星槎"]||0)+P.ship;delete P.ship}   /* 意見回饋 724：星槎新頁（#/ship/...）以前記成 ship，併進雲河星槎 */
   const top=Object.entries(P).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([k,v])=>`${k} ${useFmt(v)}`);return`總共用了 ${useFmt(S.t)}・最常待：${top.join("、")}`}
