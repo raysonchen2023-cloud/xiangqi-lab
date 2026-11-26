@@ -53,9 +53,27 @@ test("W165 書齋橫式：點亮格器物跳說明", () => {
   assert.deepEqual(studyProblems(rd("07w6-sceneinfo.js"), rd("07z4-studymap.js")), []);
 });
 
+/* iMac Claude 1 預驗（11/26）：橫式珍品熱區 mzZhen 蓋住整個亮格櫃，手點格子打開的是珍品面板。
+   熱區是按鈕、疊在畫面最上層，所以橫式 12 格的中心不能落在熱區裡。珍品熱區照說明文字放在下方櫃門。
+   例外：橫式圖裡「修為」就是第 3 格的香爐、「秘境棋友」就是第 12 格的供石（標註圖刻意掛的），這兩格點了開功能。 */
+const COVER_OK = { 3: "mzXp", 12: "mzSecret" };
+function coverProblems(studySrc) {
+  const c = {}; vm.createContext(c);
+  vm.runInContext(studySrc.slice(studySrc.indexOf("const MZ_L={"), studySrc.indexOf("if(typeof SCW", studySrc.indexOf("const MZ_L={"))) + "\nvar __L=MZ_L;", c);
+  const L = c.__L, bad = [];
+  L.cells.forEach((q, i) => { const x = (q[0] + q[2]) / 2, y = (q[1] + q[3]) / 2;
+    for (const s of L.spots) if (x >= s[1] && x <= s[3] && y >= s[2] && y <= s[4] && COVER_OK[i + 1] !== s[0]) bad.push(`亮格第 ${i + 1} 格被熱區 ${s[0]} 蓋住`); });
+  return bad;
+}
+test("W165 書齋橫式：亮格 12 格不被熱區按鈕蓋住", () => {
+  assert.deepEqual(coverProblems(rd("07z4-studymap.js")), []);
+});
+
 test("改壞驗證：營地少接環線、書齋沒給橫式座標，檢查都要抓得到", () => {
   const camp = rd("07y2-campmap.js"), badCamp = camp.replace(/\n  E\.push\(`w\$\{CP_L\.path\.length-1\}-w0`\);[^\n]*/, "");
   assert.notEqual(badCamp, camp); assert.ok(campProblems(badCamp).length > 0, "營地少接環線要抓得到");
   const study = rd("07z4-studymap.js"), badStudy = study.replace(",wide:{W:MZ_L.W,H:MZ_L.H,it:itW}", "");
   assert.notEqual(badStudy, study); assert.ok(studyProblems(rd("07w6-sceneinfo.js"), badStudy).length > 0, "書齋沒給橫式座標要抓得到");
+  const badCover = study.replace('["mzZhen",115,883,678,1254,', '["mzZhen",102,269,742,858,');
+  assert.notEqual(badCover, study); assert.ok(coverProblems(badCover).length > 0, "珍品熱區蓋住亮格要抓得到");
 });
