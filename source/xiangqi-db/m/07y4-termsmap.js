@@ -11,6 +11,17 @@ const TB2_IMGV="2340";
 const TB_STELE=[["play","棋規",122,643,210,807,153,583,190,623,166,545,"sl"],["note","記譜",333,630,453,857,373,567,410,620,393,510,"sm"],["terms","術語",577,693,677,933,613,657,653,700,640,583,"sr"]];
 const SHW_TB={el:38,h:[.085,70,.0012],look0:[50,50],home:"home",N:{home:[50,94.5],mid:[50,76.3],sl:[24.7,67.6],sm:[52,69.8],sr:[78,77]},E:"home-mid mid-sl mid-sm mid-sr"};
 const tbPc=(x,y)=>[x/7.68,y/13.76];
+/* W107-L：iPad 橫向專用橫式圖（07sw SCW）。output/w107-ipad/l1610/termsmap/terms_day_classic_l1610.json（Windows Claude 1 量）；原圖 terms_day 對齊到經典版、共用。
+   fx.stele 跟 TB_STELE 同格式（像素 2560×1600）；標題牌、走路小動作照原本的算法從 stele 算；青苔、碑面點選範圍、拓碑動畫照當下的圖（tbGeo）。sw7 天空照舊是整張圖 */
+const TB_L1610=(()=>{const ST=[["play","棋規",422,781,627,1126,404,594,640,768,525,576,"sl"],["note","記譜",1165,768,1395,1126,1144,550,1416,755,1280,525,"sm"],["terms","術語",1907,794,2104,1126,1889,607,2125,781,2010,584,"sr"]],W=2560,H=1600,pc=(x,y)=>[+(x/W*100).toFixed(2),+(y/H*100).toFixed(2)],S={},HS={};
+  for(const[k,,x0,y0,x1,y1,,,,,lx,ly,nd]of ST){S["tbT_"+k]=pc(lx,ly);HS["tbT_"+k]=[nd,...pc((x0+x1)/2,(y0+y1)/2),"bow"]}
+  return{ready:true,f:"termsmap/terms_day_classic_l1610",w:W,h:H,S,exit:[14,92],safe:{"l":0.12,"r":0.12,"t":0.05,"b":0.1},
+    walk:{W,H,el:38,h:[.14,96,.004],look0:[50,60],home:"home",N:{"home":[50,96],"mid":[50,90],"sl":[20,84],"sm":[50,84],"sr":[78,84]},E:"home-mid mid-sl mid-sm mid-sr",HS},
+    fx:{stele:ST,leaf:[65,70]},sw7:{sky:[[[0,0],[2560,0],[2560,1600],[0,1600]]],fg:null}}})();
+if(typeof SCW!=="undefined"){SCW["termsmap/terms_day_classic"]=TB_L1610;SCW["termsmap/terms_day"]=Object.assign({},TB_L1610,{f:"termsmap/terms_day_l1610",base:"termsmap/terms_day_classic"})}
+/* 現在用的那張圖：碑的座標和換算（橫式圖用條目，原圖照 TB_STELE、768×1376） */
+const tbGeo=P=>{const e=typeof scwCur==="function"?scwCur(P):null,G=e&&e.fx&&e.fx.stele?e:null;return G?{ST:G.fx.stele,pc:(x,y)=>[x/G.w*100,y/G.h*100]}:{ST:TB_STELE,pc:tbPc}};
+
 const tb2Dark=()=>{const t=store.get("pageTheme","auto");return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"&&xqNight())};   /* 11/17 第 28 輪 N28-2：有夜版圖的頁一律照實際日落（00-util xqNight，跟首頁同一個判斷）；深色主題照舊 */
 /* 記譜用：標好一到九路的棋盤（紅方在下，路數從紅方右手邊數；黑方在上，用 1～9 從黑方右手邊數） */
 function tbFiles(){const L=[];for(let i=0;i<9;i++)L.push(i%8?`M${i} 0V4M${i} 5V9`:`M${i} 0V9`);for(let j=0;j<10;j++)L.push(`M0 ${j}H8`);L.push("M3 0L5 2M5 0L3 2M3 7L5 9M5 7L3 9");
@@ -62,14 +73,18 @@ function termsMap(v){if(v.querySelector(".tb-page"))return;const tabs=v.querySel
   const RD=store.get("termsRead",{})||{};
   const P=document.createElement("div");P.className="shp-page cq tb-page";const pc=tbPc;
   const leaf='<svg viewBox="-10 -10 20 20"><path d="M0-9C3-5 3 4 0 9C-3 4-3-5 0-9Z" fill="#7fa36a" stroke="rgba(50,70,40,.6)" stroke-width=".6"/></svg>';
-  let fx="";for(const[k,,x0,y0,x1,y1,zx0,zy0,zx1,zy1]of TB_STELE){const[a,b]=pc(x0,y1-(y1-y0)*.32),[c,d]=pc(x1,y1+18);
-    if(!RD[k])fx+=`<span class="tb-moss" style="left:${(a-1).toFixed(2)}%;top:${b.toFixed(2)}%;width:${(c-a+2).toFixed(2)}%;height:${(d-b).toFixed(2)}%"></span>`;
-}
-  fx+=`<span class="tb-leaf" style="left:70%;top:62%">${leaf}</span>`;
-  P.innerHTML=`<img src="${xqClImg(`data/termsmap/${tb2Dark()?"terms_night":"terms_day"}.webp?v=${TB2_IMGV}`)}" alt="書院碑林"><div class="tb-fx" aria-hidden="true">${fx}</div>`+
-    TB_STELE.map(([k,t,x0,y0,x1,y1])=>{const[a,b]=pc(x0,y0),[c,d]=pc(x1,y1);return`<button type="button" class="tb-face" data-k="${k}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(c-a).toFixed(2)}%;height:${(d-b).toFixed(2)}%" aria-label="${t}碑"></button>`}).join("")+
+  let fx="";for(const[k]of TB_STELE){if(!RD[k])fx+=`<span class="tb-moss" data-k="${k}"></span>`}   /* 青苔、碑面的位置交給 place（照當下的圖） */
+  fx+=`<span class="tb-leaf">${leaf}</span>`;   /* 竹葉位置交給 place：原圖 70%,62%，橫式圖照條目 fx.leaf（中、右碑之間的青苔上；審查 #158 第 1 項） */
+  /* W107-L：iPad 橫向有專用橫式圖（07sw）就一開始載那張；碑、標題牌、出口、走路照條目 */
+  const src=xqClImg(`data/termsmap/${tb2Dark()?"terms_night":"terms_day"}.webp?v=${TB2_IMGV}`),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}
+  P.innerHTML=`<img src="${pre.src}" alt="書院碑林"><div class="tb-fx" aria-hidden="true">${fx}</div>`+
+    TB_STELE.map(([k,t])=>`<button type="button" class="tb-face" data-k="${k}" aria-label="${t}碑"></button>`).join("")+
     TB_STELE.map(([k,t,,,,,,,,,lx,ly])=>{const[a,b]=pc(lx,ly);return`<button class="shp-spot tb-tag" id="tbT_${k}" data-k="${k}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><b>${t}</b></button>`}).join("");
   v.insertBefore(P,tabs);
+  const place=()=>{const{ST,pc}=tbGeo(P),at=k=>ST.find(s=>s[0]===k),e=typeof scwCur==="function"?scwCur(P):null,lf=e&&e.fx&&e.fx.leaf||[70,62],le=P.querySelector(".tb-leaf");if(le){le.style.left=lf[0]+"%";le.style.top=lf[1]+"%"}
+    P.querySelectorAll(".tb-moss").forEach(m=>{const[,,x0,y0,x1,y1]=at(m.dataset.k),[a,b]=pc(x0,y1-(y1-y0)*.32),[c,d]=pc(x1,y1+18*(ST===TB_STELE?1:2560/768));Object.assign(m.style,{left:(a-1).toFixed(2)+"%",top:b.toFixed(2)+"%",width:(c-a+2).toFixed(2)+"%",height:(d-b).toFixed(2)+"%"})});
+    P.querySelectorAll(".tb-face").forEach(f=>{const[,,x0,y0,x1,y1]=at(f.dataset.k),[a,b]=pc(x0,y0),[c,d]=pc(x1,y1);Object.assign(f.style,{left:a.toFixed(2)+"%",top:b.toFixed(2)+"%",width:(c-a).toFixed(2)+"%",height:(d-b).toFixed(2)+"%"})})};
+  place();
   /* 拓片面板：原本的分頁和內容整包搬進來（還在 v 裡面，原本綁好的按鈕、搜尋、示範都照常） */
   const pn=document.createElement("div");pn.className="tb-pn";pn.setAttribute("role","dialog");pn.innerHTML='<div class="tb-pn-h"><span id="tbPnT"></span><button type="button">收起拓片</button></div><div class="tb-pn-b"></div>';
   const body=pn.querySelector(".tb-pn-b");for(const id of["rTabs","rPlay","rNote","rTerms"]){const e=v.querySelector("#"+id);if(e)body.append(e)}v.append(pn);
@@ -78,7 +93,7 @@ function termsMap(v){if(v.querySelector(".tb-page"))return;const tabs=v.querySel
     if(k==="note"){const n=body.querySelector("#rNote");if(n&&!n.querySelector(".tb-files"))n.insertAdjacentHTML("afterbegin",tbFiles())}
     if(!pn.classList.contains("open")&&typeof xqPanelNav==="function")unNav=xqPanelNav(()=>{unNav=null;pn.classList.remove("open")});   /* 回饋 803：返回鍵先收起拓片 */
     pn.classList.add("open");const R=store.get("termsRead",{})||{};if(!R[k]){R[k]=1;store.set("termsRead",R)}};
-  const rub=k=>{const S=TB_STELE.find(s=>s[0]===k);if(!S)return;if(matchMedia("(prefers-reduced-motion: reduce)").matches){openTab(k);return}
+  const rub=k=>{const{ST,pc}=tbGeo(P),S=ST.find(s=>s[0]===k);if(!S)return;if(matchMedia("(prefers-reduced-motion: reduce)").matches){openTab(k);return}
     /* 11/9 開發者「動畫太詭異，請重新設計」：原本白紙框、條紋、墨點一格一格跳，框又不貼碑形。改成：四周暗下來只留這通碑 → 碑面墨從中間暈開、透出幾行淡淡的字 → 拓片從碑面升起放大成全螢幕，字最後才淡入 */
     const[,,x0,y0,x1,y1]=S,[a,b]=pc(x0,y0),[c,d]=pc(x1,y1),fx=P.querySelector(".tb-fx"),r=document.createElement("span"),dm=document.createElement("i");r.className="tb-rub";dm.className="tb-dim";
     const cx=((a+c)/2).toFixed(1),cy=((b+d)/2).toFixed(1);dm.style.background=`radial-gradient(${((c-a)*1.1).toFixed(1)}% ${((d-b)*.75).toFixed(1)}% at ${cx}% ${cy}%,rgba(20,18,16,0) 60%,rgba(20,18,16,.55) 100%)`;
@@ -93,6 +108,9 @@ function termsMap(v){if(v.querySelector(".tb-page"))return;const tabs=v.querySel
   P.querySelectorAll(".tb-tag").forEach(b=>b.onclick=()=>{if(typeof vibrate==="function")vibrate(5);rub(b.dataset.k)});
   if(typeof shpFit==="function")shpFit(v);
   const HS={};TB_STELE.forEach(([k,,x0,y0,x1,y1,,,,,,,nd])=>{const[a,b]=pc((x0+x1)/2,(y0+y1)/2);HS["tbT_"+k]=[nd,+a.toFixed(2),+b.toFixed(2),"bow"]});
-  try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_TB,{HS}),"tb")}catch(e){}
+  const cfg=Object.assign({},SHW_PG0,SHW_TB,{HS});let cfgNow=cfg;
+  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:TB_STELE.map(s=>"tbT_"+s[0]),pfx:"tb",cfg0:cfg,apply:place};scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}}
+  place();
+  try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfgNow,"tb")}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Terms==="function"){const f0=Terms;Terms=function(v,pick){const r=f0.apply(this,arguments);try{if(TERMS_MAP_ON&&!pick)termsMap(v)}catch(e){}return r}}
