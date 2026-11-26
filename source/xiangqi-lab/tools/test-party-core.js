@@ -76,12 +76,14 @@ test("〔原始碼〕主場表跟 05b-save.js 的 CHAR_HOMES 一樣；pty 前綴
     const s=fs.readFileSync(path.join(dir,f),"utf8");assert.ok(!/(?:function|const|let|var)\s+(?:pty|PTY)[A-Za-z_$]/.test(s),f+" 不能另外定義 pty 開頭的名字")}});
 
 /* ===== 存檔層（整支模組＋假的 store）：舊存檔轉換、經驗分配、換首頁小人、起航閘門、解題加入 ===== */
+/* 11/25 W120：07pty 的七星加入過場排程時記下換頁計數 ROUTE_N（00-util.js）和網址，沙箱補上這兩個；c.route() 模擬 route() 換頁（ROUTE_N 加一）。
+   o.timers：給一個陣列就把計時器收進去，測試自己一個一個跑（預設照舊不跑） */
 function world(o){o=o||{};const S=new Map(Object.entries(o.store||{}).map(([k,v])=>[k,JSON.parse(JSON.stringify(v))]));const ev=[];
-  const c={console,Math,JSON,Date,setTimeout:()=>0,store:{get:(k,d)=>S.has(k)?JSON.parse(JSON.stringify(S.get(k))):d,set:(k,v)=>{S.set(k,v==null?v:JSON.parse(JSON.stringify(v)))}},
+  const c={console,Math,JSON,Date,setTimeout:o.timers?(f=>{o.timers.push(f);return o.timers.length}):()=>0,location:{hash:o.hash||"#/adventure"},store:{get:(k,d)=>S.has(k)?JSON.parse(JSON.stringify(S.get(k))):d,set:(k,v)=>{S.set(k,v==null?v:JSON.parse(JSON.stringify(v)))}},
     window:{dispatchEvent:e=>ev.push(e.type)},Event:function(t){this.type=t},document:{querySelector:()=>null},
     WX_CHARS:{x_swordboy:{n:"齊轍",pc:"俥",sx:"m"},x_miaogirl:{n:"駱躍梅",pc:"傌",sx:"f"},x_martialgirl:{n:"雷借花",pc:"炮",sx:"f"},x_shuai:{n:"沈方庭",pc:"帥",sx:"m"},x_shi:{n:"鐵連城",pc:"仕",sx:"m"},x_spiritgirl:{n:"田飛燕",pc:"相",sx:"f"},x_bing:{n:"步越溪",pc:"兵",sx:"f"}},
     shipDockList:()=>S.get("shipDock")||[],shipFront:()=>{const D=S.get("shipDock")||[];return D[D.length-1]||null},shipRec:(k,id)=>((S.get("shipSolved")||{})[k]||{})[id]||null,esc:x=>String(x)};
-  vm.createContext(c);vm.runInContext(SRC+"\n;this.PTY=PTY;",c);c.xpInfo=()=>({L:c.PTY.lvOf(S.get("xp")||0)});return{c,S,ev}}
+  vm.createContext(c);vm.runInContext("let ROUTE_N=0;\n"+SRC+"\n;this.PTY=PTY;this.route=()=>{ROUTE_N++};",c);c.xpInfo=()=>({L:c.PTY.lvOf(S.get("xp")||0)});return{c,S,ev}}
 
 test("〔行為〕存檔層：沒有旅程就沒有隊伍、等級照修為；舊存檔第一次讀到就轉換並存起來，之後不再轉", ()=>{
   const A=world({store:{xp:500}});assert.equal(A.c.ptyGet(),null);assert.equal(A.c.ptyLv("x_bing"),A.c.PTY.lvOf(500));
@@ -113,6 +115,28 @@ test("〔行為〕星槎：停在漢朝、還沒幫小梅就不能起航；解�
   const V=world({store:{journey:{c:"x_swordboy"},party:T.fresh(0),shipDock:["classic","qin","han","sanguo"],shipSolved:{sanguo:{"xs-sanguo-0":{at:1}}}}});
   assert.equal(V.c.ptySailBlock(),null);assert.ok(V.c.ptyHas("x_shuai")&&V.c.ptyHas("x_shi"),"庭哥和城子一起補加入");
   const U=world({store:{journey:{c:"x_swordboy"},party:T.fresh(0),shipDock:["classic","qin"]}});assert.equal(U.c.ptySailBlock(),null,"秦朝站沒有人要加入")});
+
+test("〔行為〕W120 加入卡延後才出：還在原頁＝照出一次；中途換頁＝不在新頁跳卡、記進 ptyJoinPend 等安全頁補播；視窗一直開著＝最多等 PTY_JOIN_MAX 次後記下來，不無限重試", ()=>{
+  const st=()=>({journey:{c:"x_swordboy"},party:T.fresh(0),shipDock:["classic","qin","han"],xp:T.base(4)});
+  const run=Q=>{let n=0;while(Q.length){Q.shift()();n++;assert.ok(n<1000,"計時器沒有停")}return n};
+  /* 還在原頁：2.5 秒後出加入卡，不留待補播 */
+  let Q=[],W=world({store:st(),timers:Q,hash:"#/ship/han"}),cards=[];W.c.modal=h=>cards.push(h);
+  W.c.ptyOnSolve("han","xs-han-0");assert.ok(W.c.ptyHas("x_miaogirl"),"加入當下就算");assert.equal(cards.length,0,"還沒到時間");
+  run(Q);assert.equal(cards.length,1);assert.match(cards[0],/加入了！/);assert.deepEqual(W.S.get("ptyJoinPend")||[],[]);
+  /* 中途換頁：不出卡、記下來；人照樣已加入 */
+  Q=[];W=world({store:st(),timers:Q,hash:"#/ship/han"});cards=[];W.c.modal=h=>cards.push(h);
+  W.c.ptyOnSolve("han","xs-han-0");W.c.location.hash="#/cpu";W.c.route();run(Q);
+  assert.equal(cards.length,0,"換頁後不在新頁跳加入卡");assert.ok(W.c.ptyHas("x_miaogirl"));
+  const P1=W.S.get("ptyJoinPend");assert.equal(P1.length,1);assert.deepEqual(J(P1[0].L),["x_miaogirl"]);assert.equal(P1[0].cut,false);
+  /* 只改網址、沒走 route：一樣算換頁 */
+  Q=[];W=world({store:st(),timers:Q,hash:"#/ship/han"});cards=[];W.c.modal=h=>cards.push(h);
+  W.c.ptyOnSolve("han","xs-han-0");W.c.location.hash="#/port";run(Q);assert.equal(cards.length,0);assert.equal(W.S.get("ptyJoinPend").length,1);
+  /* 視窗一直開著：等到上限就記下來，不無限重試、不硬蓋 */
+  Q=[];W=world({store:st(),timers:Q,hash:"#/ship/han"});cards=[];W.c.modal=h=>cards.push(h);W.c.document.querySelector=s=>s===".modal"?{}:null;
+  W.c.ptyOnSolve("han","xs-han-0");const n=run(Q);
+  assert.equal(n,vm.runInContext("PTY_JOIN_MAX",W.c)+1,"第一次加上 PTY_JOIN_MAX 次重試");assert.equal(vm.runInContext("PTY_JOIN_MAX",W.c),80);
+  assert.equal(cards.length,0,"視窗開著不硬蓋");assert.equal(W.S.get("ptyJoinPend").length,1,"等到上限記下來補播");
+});
 
 test("〔行為〕修為到了只提醒一次、不加入", ()=>{
   const W=world({store:{journey:{c:"x_swordboy"},party:T.fresh(0),xp:T.base(5)}});W.c.ptyOnXp(10);const P=W.S.get("party");

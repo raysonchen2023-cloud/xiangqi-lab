@@ -54,7 +54,8 @@ test("〔原始碼〕路由：#/jianghu/hall/<派> 排在長卷之前，不會�
 
 test("〔原始碼〕圖讀不到：記下這一派、退回長卷開原本的小卡；小卡在門內或讀圖失敗過就不顯示「走進山門」", () => {
   assert.match(JH, /img\.onerror=\(\)=>\{JH_HALL_BAD\.add\(sid\);back\(\)\}/);
-  assert.match(JH, /const back=\(\)=>\{f\.classList\.remove\("on"\);location\.hash="#\/jianghu";setTimeout\(\(\)=>\{try\{jhSheet\(sid\)\}catch\(e\)\{\}\},700\)\}/);
+  /* 11/25 W120：照樣退回長卷、700ms 後開這一派的小卡；多了「只換過這一次頁、還在長卷」才開（ROUTE_N 在改網址前記下） */
+  assert.match(JH, /const back=\(\)=>\{f\.classList\.remove\("on"\);const rn=ROUTE_N;location\.hash="#\/jianghu";setTimeout\(\(\)=>\{if\(ROUTE_N-rn>1\|\|location\.hash!=="#\/jianghu"\)return;try\{jhSheet\(sid\)\}catch\(e\)\{\}\},700\)\}/);
   assert.match(JH, /\$\{JH_HALL\[sid\]&&!inHall&&!JH_HALL_BAD\.has\(sid\)\?`<button class="btn" id="jhHallGo">/);
   assert.match(JH, /inHall=location\.hash==="#\/jianghu\/hall\/"\+sid/);
 });
