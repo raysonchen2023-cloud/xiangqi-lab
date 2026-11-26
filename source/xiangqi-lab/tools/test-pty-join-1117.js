@@ -9,6 +9,10 @@ const test = require("node:test"), assert = require("node:assert/strict"), fs = 
 const ROOT = path.join(__dirname, "..", "..");
 const rd = p => fs.readFileSync(path.join(ROOT, p), "utf8").replace(/\r\n/g, "\n");
 const PTY_SRC = rd("xiangqi-db/m/07pty-party.js"), PJC_SRC = rd("xiangqi-db/m/07pjc-joincut.js");
+/* 11/25 W120：07pty 改用換頁計數 ROUTE_N＋網址判斷「還在原來那一頁」。從 00-util.js 抽真的那兩行（ROUTE_N 宣告、stillHere）進沙箱，不自己寫假的 */
+const UTIL_SRC = rd("xiangqi-db/m/00-util.js");
+const utilLine = re => { const l = UTIL_SRC.split("\n").find(s => re.test(s)); if (!l) throw new Error("00-util.js 找不到：" + re); return l };
+const UTIL_W120 = utilLine(/^let ROUTE_N=/) + "\n" + utilLine(/^function stillHere\(/);
 
 /* ---------- 假 DOM ---------- */
 class El {
@@ -62,7 +66,7 @@ function env(o) {
   const pzData = o.pz === undefined ? { "xs-han-0": { id: "xs-han-0", fen: "4ka3/4a4/9/2N6/2N6/9/8p/9/9/4K4", side: "r" } } : o.pz;
   const ctx = {
     console, Math, JSON, Date, Promise, Object, Array, String, Number, Set, Map,
-    document: doc, Image: FakeImage, setTimeout: clk.setTimeout, clearTimeout: clk.clearTimeout,
+    document: doc, location: { hash: o.hash || "#/journey/xs" }, Image: FakeImage, setTimeout: clk.setTimeout, clearTimeout: clk.clearTimeout,
     addEventListener() { }, removeEventListener() { }, innerWidth: 390, innerHeight: 844,
     matchMedia: () => ({ matches: !!o.rm }),
     store, WX_CHARS: WX, xpInfo: () => ({ L: 5, need: 100, rest: 0 }),
@@ -74,23 +78,49 @@ function env(o) {
     Board: (tap) => { const svg = new El("svg", doc); return { svg, draw: (b, O) => boards.push(b) } },
   };
   vm.createContext(ctx);
-  vm.runInContext(PTY_SRC + "\n" + (o.noPjc ? "" : PJC_SRC) + "\n;this.__X={PTY,ptyOnSolve,ptyGet,ptyHas:typeof ptyHas==='function'?ptyHas:null,pjcPlay:typeof pjcPlay==='function'?pjcPlay:null,PJC_SC:typeof PJC_SC!=='undefined'?PJC_SC:null,pjcMeet:typeof pjcMeet==='function'?pjcMeet:null,pjcSay:typeof pjcSay==='function'?pjcSay:null,PJC_DUR:typeof PJC_DUR!=='undefined'?PJC_DUR:null};", ctx, { filename: "pty+pjc.js" });
+  vm.runInContext(UTIL_W120 + "\n" + PTY_SRC + "\n" + (o.noPjc ? "" : PJC_SRC) + "\n;this.__X={PTY,ptyOnSolve,ptyGet,ptyJoinFlush,PTY_JOIN_MAX,route:h=>{ROUTE_N++;location.hash=h},ptyHas:typeof ptyHas==='function'?ptyHas:null,pjcPlay:typeof pjcPlay==='function'?pjcPlay:null,PJC_SC:typeof PJC_SC!=='undefined'?PJC_SC:null,pjcMeet:typeof pjcMeet==='function'?pjcMeet:null,pjcSay:typeof pjcSay==='function'?pjcSay:null,PJC_DUR:typeof PJC_DUR!=='undefined'?PJC_DUR:null};", ctx, { filename: "pty+pjc.js" });
   const X = ctx.__X;
   const pg = () => doc.getElementById("pjcPg");
-  return { doc, clk, log, modals, boards, toasts, X, db, pg, sub: () => { const p = pg(); return p ? [...p.walk()].find(e => e._cls.has("pjc-sub")) : null } };
+  return { doc, clk, log, modals, boards, toasts, X, db, pg, pend: () => db.ptyJoinPend || [], sub: () => { const p = pg(); return p ? [...p.walk()].find(e => e._cls.has("pjc-sub")) : null } };
 }
 
 /* 解題結算卡（07c 用 sheet）：假 DOM 裡放一個 id="sheet" 的元素當作開著 */
 const openSheet = E => { const s = E.doc.createElement("div"); s.id = "sheet"; E.doc.body.append(s); return s };
 
-test("〔第 12 項〕殘局「完美解開」結算卡開著：過場不播、加入卡不出，等多久都一樣；玩家關掉卡片才播", async () => {
+/* 11/25 W120：結算卡開著不再無上限等。PTY_JOIN_MAX＝80 次（第一次 2.5 秒、之後每 1.5 秒，第 80 次重試在 2.5＋80×1.5＝122.5 秒）：
+   80 次內照舊不播、玩家關卡片才播；超過 80 次不硬播在卡片上，改記進存檔 ptyJoinPend，到安全的頁（ptyJoinFlush）再補播 */
+test("〔第 12 項〕殘局「完美解開」結算卡開著：80 次（約 2 分鐘）內過場不播、加入卡不出；玩家關掉卡片才播", async () => {
   const E = env(); const sh = openSheet(E);
+  assert.equal(E.X.PTY_JOIN_MAX, 80, "等待上限 80 次");
   E.X.ptyOnSolve("han", "xs-han-0"); assert.ok(E.db.party.m.x_miaogirl, "加入的資料照舊當下就記");
   E.clk.tick(2600); await flush(); assert.equal(E.pg(), null, "2.5 秒：結算卡還開著，不蓋上去");
   E.clk.tick(60000); await flush(); assert.equal(E.pg(), null, "一分鐘後（超過以前 20 次的等）還是不搶"); assert.equal(E.modals.length, 0);
-  sh.remove(); E.clk.tick(1600); await flush(); assert.ok(E.pg(), "關掉卡片 1.5 秒內開始播過場");
+  E.clk.tick(58000); await flush(); assert.equal(E.pg(), null, "120.6 秒（還在 80 次內）照舊不搶"); assert.equal(E.modals.length, 0);
+  assert.deepEqual(E.pend(), [], "80 次內還在等，不記進 ptyJoinPend");
+  sh.remove(); E.clk.tick(1600); await flush(); assert.ok(E.pg(), "關掉卡片 1.5 秒內開始播過場"); assert.deepEqual(E.pend(), [], "當場播了就不記補播");
   for (let t = 0; t < 16000 && E.pg(); t += 100) { E.clk.tick(100); await flush() }
   E.clk.tick(1000); await flush(); assert.equal(E.modals.length, 1, "播完出加入卡"); assert.ok(E.modals[0].html.includes("駱躍梅加入了"));
+});
+
+test("〔第 12 項〕結算卡開著超過 80 次：不播在卡片上，記進 ptyJoinPend；卡片還開著補播也不播，關掉後 ptyJoinFlush 才補播過場和加入卡", async () => {
+  const E = env(); const sh = openSheet(E);
+  E.X.ptyOnSolve("han", "xs-han-0");
+  E.clk.tick(122000); await flush(); assert.equal(E.pg(), null); assert.equal(E.modals.length, 0); assert.deepEqual(E.pend(), [], "122 秒：第 80 次重試還沒到，照舊在等");
+  E.clk.tick(1000); await flush();
+  assert.equal(E.pg(), null, "超過 80 次：不硬播在結算卡上"); assert.equal(E.modals.length, 0, "加入卡也不出");
+  const Q = E.pend(); assert.equal(Q.length, 1, "記進 ptyJoinPend 一筆"); assert.equal(Q[0].k, "han"); assert.deepEqual(Q[0].L, ["x_miaogirl"]); assert.equal(Q[0].cut, true, "要補播過場");
+  E.clk.tick(120000); await flush(); assert.equal(E.pg(), null, "記下來以後不再自己重試"); assert.equal(E.modals.length, 0); assert.equal(E.pend().length, 1, "不重複記");
+  E.X.ptyJoinFlush(); E.clk.tick(1000); await flush(); assert.equal(E.pg(), null, "卡片還開著：補播也不播"); assert.equal(E.pend().length, 1, "留著等下次");
+  sh.remove(); E.X.ptyJoinFlush(); await flush(); assert.ok(E.pg(), "卡片關了：補播過場"); assert.deepEqual(E.pend(), [], "補播後從 ptyJoinPend 拿掉");
+  for (let t = 0; t < 16000 && E.pg(); t += 100) { E.clk.tick(100); await flush() }
+  E.clk.tick(1000); await flush(); assert.equal(E.modals.length, 1, "過場播完出加入卡"); assert.ok(E.modals[0].html.includes("駱躍梅加入了"));
+});
+
+test("〔第 12 項〕等的時候換了頁：不在新頁上播過場、出加入卡，改記進 ptyJoinPend", async () => {
+  const E = env(); E.X.ptyOnSolve("han", "xs-han-0");
+  E.X.route("#/home"); E.clk.tick(2600); await flush();
+  assert.equal(E.pg(), null, "換頁：過場不播"); assert.equal(E.modals.length, 0, "加入卡不出");
+  const Q = E.pend(); assert.equal(Q.length, 1); assert.equal(Q[0].k, "han"); assert.deepEqual(Q[0].L, ["x_miaogirl"]); assert.equal(Q[0].cut, true);
 });
 
 test("〔第 12 項〕沒有過場的站：加入卡也等結算卡關掉；沒有卡片時照舊 2.5 秒出", async () => {
@@ -98,6 +128,12 @@ test("〔第 12 項〕沒有過場的站：加入卡也等結算卡關掉；沒�
   E.clk.tick(40000); await flush(); assert.equal(E.modals.length, 0, "結算卡開著：加入卡不蓋上去");
   sh.remove(); E.clk.tick(1600); await flush(); assert.equal(E.modals.length, 1);
   E = env({ noPjc: true }); E.X.ptyOnSolve("han", "xs-han-0"); E.clk.tick(2600); await flush(); assert.equal(E.modals.length, 1, "照舊");
+  /* 11/25 W120：沒有過場的站，加入卡也最多等 80 次；超過就記進 ptyJoinPend（不要過場），關掉卡片後補播只出加入卡 */
+  E = env({ noPjc: true }); const sh2 = openSheet(E); E.X.ptyOnSolve("han", "xs-han-0");
+  E.clk.tick(122000); await flush(); assert.equal(E.modals.length, 0); assert.deepEqual(E.pend(), [], "80 次內照舊等");
+  E.clk.tick(1000); await flush(); assert.equal(E.modals.length, 0, "超過 80 次：不蓋在結算卡上");
+  const Q = E.pend(); assert.equal(Q.length, 1); assert.deepEqual(Q[0].L, ["x_miaogirl"]); assert.equal(Q[0].cut, false, "這站沒有過場，補播只出加入卡");
+  sh2.remove(); E.X.ptyJoinFlush(); await flush(); assert.equal(E.modals.length, 1, "關掉卡片後補播加入卡"); assert.deepEqual(E.pend(), []);
 });
 
 test("〔第 13 項〕每張至少 3.5 秒（字幕淡入後還留 3 秒以上）；點畫面提前換下一張；「略過」整段跳過", async () => {

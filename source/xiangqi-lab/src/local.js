@@ -557,7 +557,7 @@ var XQ=(function(){
       try{const B=await npcBookLoad();if(P&&P.id===id&&P.moves.length===n&&!P.result&&P.turn!==P.human){if(P.npcOrd==null)P.npcOrd=/^inn:zm_/.test(nk)?zmLeanOrd(nk):(Math.random()<.75?0:1);pk=npcBookPick(B,NPC_SCH[nk],P.board,P.turn,P.npcOrd,Math.random);if(!pk&&B)P.npcOut=1}}catch(e){}
       if(pk){setTimeout(()=>{try{if(P&&P.id===id&&P.moves.length===n&&!P.result&&P.turn!==P.human){const f=parseSq(pk.u.slice(0,2)),t=parseSq(pk.u.slice(2,4));if(legal(P.board,P.turn).some(([a,b])=>a===f&&b===t)){playApply(f,t);playMsg="";engFail=0}}}finally{playBusy=false;setTimeout(playEngine,0)}},900);return}
       playBusy=false;if(!P||P.id!==id||P.moves.length!==n||P.result)return}}
-    {const sm=styleMove();if(sm){playBusy=true;setTimeout(()=>{try{if(P&&!P.result&&P.turn!==P.human)playApply(sm[0],sm[1])}finally{playBusy=false;setTimeout(playEngine,0)}},700);return}}
+    {const sm=styleMove();if(sm){playBusy=true;const sid=P.id,sn=P.moves.length;setTimeout(()=>{try{if(P&&P.id===sid&&P.moves.length===sn&&!P.result&&P.turn!==P.human&&legal(P.board,P.turn).some(([a,b])=>a===sm[0]&&b===sm[1]))playApply(sm[0],sm[1])}   /* W119：0.7 秒內換盤、悔棋，排好的這一步不能套到別盤（照上一行棋友棋路的檢查） */finally{playBusy=false;setTimeout(playEngine,0)}},700);return}}
     playBusy=true;playSince=Date.now();const id=P.id,n=P.moves.length,lv=P.ranked?RLV[P.rk]||RLV[0]:P.rlv!=null?RLV[P.rlv]||RLV[0]:LEVELS[P.level-1]||LEVELS[2];   /* 意見回饋 548：驛站旅人用段位強度 rlv 浮動 */
     const t0=Date.now();   /* 11/10 開發者「我剛走完一步，電腦就馬上落子」：低等級用淺層深度幾毫秒就算完，至少等 1～1.5 秒再落子，讓玩家看清自己那一步 */
     const zg=zgOn(P);   /* 笑面掌櫃：前 20 手先查開局庫（照次數加權抽，不叫引擎）；出庫後引擎多給幾條候選，STYLEPICK 照棋風挑 */

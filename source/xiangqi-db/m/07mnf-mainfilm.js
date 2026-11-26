@@ -282,8 +282,13 @@ function mnfNoise(t,dur,type,f,Q,vol,att){const n=AC.createBufferSource(),len=Ma
    播完或跳到任務卡再照順序一則一則顯示（不丟掉、不疊在電影字幕上）；平常照舊直接顯示（開發者 11/13 看儀式截圖） */
 const MNF_Q=[];let MNF_QT=0;
 function mnfBusy(){try{const p=document.getElementById("mnfPg"),v=document.getElementById("mnvPg");return!!document.getElementById("mnfRite")||!!(p&&!p.querySelector(".mnf-card"))||!!(v&&!v.querySelector(".mnv-end"))}catch(e){return false}}
-function mnfHold(fn,args,ms){MNF_Q.push([fn,args,ms]);mnfFlushSoon()}
-function mnfFlushSoon(){if(MNF_QT)return;const step=()=>{MNF_QT=0;if(!MNF_Q.length)return;if(mnfBusy()){MNF_QT=setTimeout(step,400);return}const[fn,a,ms]=MNF_Q.shift();try{fn.apply(null,a)}catch(e){}if(MNF_Q.length)MNF_QT=setTimeout(step,ms)};MNF_QT=setTimeout(step,400)}
+/* W120：排隊的每一則記下排進來時的換頁計數；放出時已經換了頁、而且現在在對局解題頁（dglBusy），那一則就丟掉（不在別人的棋盤上冒出來）。
+   等電影播完的重試有上限 MNF_QMAX 次（每 0.4 秒一次，約 15 分鐘）；超過就整個清掉，不無限等 */
+const MNF_QMAX=2250;
+function mnfUnsafe(){try{return typeof dglBusy==="function"&&dglBusy(location.hash)}catch(e){return false}}
+function mnfHold(fn,args,ms){MNF_Q.push([fn,args,ms,ROUTE_N]);mnfFlushSoon()}
+function mnfFlushSoon(){if(MNF_QT)return;let n=0;const step=()=>{MNF_QT=0;if(!MNF_Q.length)return;if(mnfBusy()){if(++n>MNF_QMAX){MNF_Q.length=0;return}MNF_QT=setTimeout(step,400);return}n=0;
+  let it=MNF_Q.shift();while(it&&it[3]!==ROUTE_N&&mnfUnsafe())it=MNF_Q.shift();if(!it)return;const[fn,a,ms]=it;try{fn.apply(null,a)}catch(e){}if(MNF_Q.length)MNF_QT=setTimeout(step,ms)};MNF_QT=setTimeout(step,400)}
 if(typeof toast==="function"){const f=toast;toast=function(m){if(mnfBusy()||MNF_Q.length)return mnfHold(f,[m],2400);return f.apply(this,arguments)}}
 if(typeof xpChip==="function"){const f=xpChip;xpChip=function(t,big){if(mnfBusy()||MNF_Q.length)return mnfHold(f,[t,big],big?3400:1600);return f.apply(this,arguments)}}
 /* bgmSync（01-board）：電影播的時候一般背景音樂暫停 */
@@ -427,7 +432,8 @@ function mnfQte(host,P,done){if(typeof i18nStoryData==="function")P=i18nStoryDat
   presel();draw();requestAnimationFrame(()=>requestAnimationFrame(()=>w.classList.add("on")));
   const lit=s=>{const r=bd.svg.getBoundingClientRect(),wr=wrap.getBoundingClientRect(),k=r.width/560,x=(40+(s%9)*60)*k+(r.left-wr.left),y=(40+(s/9|0)*60)*k+(r.top-wr.top);const d=document.createElement("div");d.className="mnf-lit";d.style.left=x+"px";d.style.top=y+"px";wrap.append(d);setTimeout(()=>d.remove(),1300)};
   const win=()=>{busy=true;hintE.textContent="";dE.innerHTML="";mnfSfx("gong");if(typeof vibrate==="function")vibrate([15,40,25]);lit(last.t);
-    setTimeout(()=>{w.classList.add("done");setTimeout(()=>{w.remove();done({mist,hint:hintOn,demo,cn:cn.join("　")})},900)},700)};
+    const alive=()=>w.isConnected&&!!host&&host.isConnected;   /* W120：電影已經結束（畫面或這題被拿掉）就不再 done，免得接著 seek／resume 一部已經關掉的電影 */
+    setTimeout(()=>{if(!alive())return;w.classList.add("done");setTimeout(()=>{if(!alive())return;w.remove();done({mist,hint:hintOn,demo,cn:cn.join("　")})},900)},700)};
   const wrong=(nb,f,t)=>{busy=true;mist++;b=nb;last={f,t};sel=-1;draw({targets:[]});wrap.classList.add("shk");if(typeof vibrate==="function")vibrate([20,40,20]);mnfSfx("drum");
     /* 題目指定的陷阱著法（P.wrong）：先顯示那句台詞，對方吃得回來就真的吃回給玩家看，再倒帶 */
     const W0=P.wrong&&P.wrong[C.iccs(f,t)],msg=W0&&(W0.say||W0),re=W0&&W0.re;if(msg){hintE.textContent=msg;hintE.classList.add("w");setTimeout(()=>{const R=C.legal(nb,C.opp(side)).find(x=>re?C.iccs(x[0],x[1])===re:x[1]===t);if(R){b=C.make(nb,R[0],R[1]);last={f:R[0],t:R[1]};draw({targets:[]});mnfSfx("drum")}},560)}

@@ -180,12 +180,13 @@ function chdOpOk(c,own){const O=own||[],B=(CHD_BM[c]||{}).pc;if(O.length<8)retur
   if(B==="P")return!!o0&&o0.p==="P"&&o0.fr===6&&o0.tr===5&&o0.fc===o0.tc&&O.slice(0,10).some(m=>m.p==="P"&&m.tr<=4);return false}
 const chdOp=c=>((chdSt().op||{})[c])||{n:0,g:[]};
 /* 送一件珍品（雲河尋根優先）；回傳 [朝代, 珍品] 或 null */
-async function chdGiveRelic(c,from){try{const R=await relicsData(),M=relicsMine(),has=(e,id)=>(M[e]||[]).includes(id),e0=chdHomeEra(c);
+async function chdGiveRelic(c,from,fxDelay){try{const R=await relicsData(),M=relicsMine(),has=(e,id)=>(M[e]||[]).includes(id),e0=chdHomeEra(c);
   let pick=(CHD_ROOT[c]||[]).find(([e,id])=>!has(e,id)&&(R[e]||[]).some(z=>z.id===id));if(!pick){const z=(R[e0]||[]).find(x=>!has(e0,x.id));if(z)pick=[e0,z.id]}if(!pick)return null;
-  const it=(R[pick[0]]||[]).find(z=>z.id===pick[1]);M[pick[0]]=(M[pick[0]]||[]).concat(pick[1]);store.set("relics",M);if(typeof relicFx==="function")relicFx(pick[0],it,{from});return[pick[0],it]}catch(e){return null}}
+  const it=(R[pick[0]]||[]).find(z=>z.id===pick[1]);M[pick[0]]=(M[pick[0]]||[]).concat(pick[1]);store.set("relics",M);if(typeof relicFx==="function"){if(fxDelay>0)setTimeout(()=>relicFx(pick[0],it,{from}),fxDelay);else relicFx(pick[0],it,{from})}return[pick[0],it]}catch(e){return null}}
 function chdOpEnd(st,c,R){if(!CHD7_ON||!CHD_OP[c]||!chdStd(st)||!chdOpOk(c,R.own))return;const id=String(st.id||Date.now());let o=chdOp(c);if(o.done||(o.g||[]).includes(id))return;
   chdSet(S=>{S.op=S.op||{};const x=S.op[c]=S.op[c]||{n:0,g:[]};x.n=(x.n||0)+1;x.g=(x.g||[]).concat(id).slice(-12);if(x.n>=CHD_OP_N)x.done=Date.now()});o=chdOp(c);const T=chdT(c)||{};
-  setTimeout(()=>{try{if(o.done){if(typeof addXP==="function")addXP(40,"起手式","op:"+c);toast(`🌟 千秋起手式「${CHD_OP[c].nm}」修成！${chdNk(c)}：「${(T.op||{}).say||""}」`);chdGiveRelic(c,"千秋起手式・"+CHD_OP[c].nm+"修成")}
+  if(o.done){try{if(typeof addXP==="function")addXP(40,"起手式","op:"+c,{chipDelay:3200})}catch(e){}chdGiveRelic(c,"千秋起手式・"+CHD_OP[c].nm+"修成",3200)}   /* W119：修成的修為、珍品當下就發（原本 3.2 秒後才發，期間關掉 App 會永久少發），特效和吐司照舊 3.2 秒後 */
+  setTimeout(()=>{try{if(o.done){toast(`🌟 千秋起手式「${CHD_OP[c].nm}」修成！${chdNk(c)}：「${(T.op||{}).say||""}」`)}
     else toast(`🌟 千秋起手式「${CHD_OP[c].nm}」${o.n}／${CHD_OP_N}`)}catch(e){}},3200)}
 
 /* ---------- 8 七星破擂（CHD8_ON）----------
@@ -203,8 +204,9 @@ function chdChalHTML(era){if(!CHD8_ON)return"";const c=chdMe();if(!c||!CHD_CHAL[
 function chdChalSet(b,era){const x=b&&b.querySelector("#chdChal");if(!x)return;chdSet(S=>{S.chal=S.chal||{};if(x.checked)S.chal[era]=1;else delete S.chal[era]})}
 const chdSealCls=e=>CHD8_ON&&chdSeal(e)?" chd-shine":"";
 function chdChalEnd(st,c,R){if(!CHD8_ON||!st.arena||!((chdSt().chal||{})[st.arena]))return;const win=!!st.result&&st.result.w===st.human,ok=win&&chdChalOk(c,R),e=st.arena;
-  setTimeout(()=>{try{if(!ok){toast(win?`⭐ 本命挑戰沒達成：${CHD_CHAL[c]}`:"⭐ 本命挑戰：要贏了才算");return}const first=!chdSeal(e);if(first)chdSet(S=>{S.seal=S.seal||{};S.seal[e]={c,at:Date.now()}});
-    chdSealFx(e);toast(`⭐ 本命挑戰達成！${typeof sealNm==="function"?sealNm(e):eraLabel(e)}${first?"多了一顆本命星":"已經有本命星了"}。${chdNk(c)}：「${(chdT(c)||{}).seal||""}」`)}catch(x){}},3000)}
+  const first=ok&&!chdSeal(e);if(first)chdSet(S=>{S.seal=S.seal||{};S.seal[e]={c,at:Date.now()}});   /* W120：本命星當下就寫進存檔（原本 3 秒後才寫，期間換頁、關掉 App 會少記），特效和吐司照舊 3 秒後、還在原頁才出 */
+  stillHere(3000,()=>{try{if(!ok){toast(win?`⭐ 本命挑戰沒達成：${CHD_CHAL[c]}`:"⭐ 本命挑戰：要贏了才算");return}
+    chdSealFx(e);toast(`⭐ 本命挑戰達成！${typeof sealNm==="function"?sealNm(e):eraLabel(e)}${first?"多了一顆本命星":"已經有本命星了"}。${chdNk(c)}：「${(chdT(c)||{}).seal||""}」`)}catch(x){}})}
 function chdSealFx(e){if(typeof sealHTML!=="function")return;chdCss();const d=document.createElement("div");d.className="stampfx chd-shine";d.innerHTML=typeof sealDraw==="function"?sealDraw(e,{fx:1}):sealHTML(e,true,true);document.body.append(d);try{vibrate([20,60,40,60])}catch(x){}setTimeout(()=>d.remove(),2800)}
 
 /* ---------- 對局結束（08b-cpugame.js CpuGame 結果處呼叫；錯棋重練不算；線上對戰不走這裡） ---------- */
