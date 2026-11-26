@@ -46,9 +46,9 @@ JH_MZ_KIND.twincannon={
   look:{body:"#3a2418",head:"#5a3626",eye:0xE24A3A}};
 /* 走進水窪：先照一般規則走進去（S.mudIn 防止下面那一步又進來這裡），再在水窪裡原地等一回合；兩回合的事件照共用規則，沒事就停下 */
 function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q"||S.mudIn)return null;S.mudIn=1;let r;try{r=jhMzStep(S,dx,dy)}finally{S.mudIn=0}if(r.ev!=="move")return r;
-  /* 耗的那一回合同樣先提醒再抓：開始前人不在任何醒著的守衛紅線上（也沒跟醒著的守衛同格），這一回合才被看到或暈的守衛醒來同格＝先提醒，不直接抓 */
-  const P=S.player,warned=(S.guards||[]).some(G=>!(G.stun>0)&&(G.x===P.x&&G.y===P.y||jhMzSight(S,G).some(q=>q.x===P.x&&q.y===P.y)));
-  const r2=jhMzStep(S,0,0);if(r2.ev==="trap"&&!warned){S.caughtBy=null;return{ev:"spot"}}if(r2.ev!=="move")return r2;r.stop=true;
+  /* 耗的那一回合同樣先提醒再抓：走進水窪那一步是 move，表示那時沒有醒著的守衛看到你（看到就會是 spot），
+     所以這一回合才被看到、或暈的守衛醒來同格，一律先提醒、不直接抓（#212 第四輪：原本另算的 warned 恆為 false，拿掉） */
+  const r2=jhMzStep(S,0,0);if(r2.ev==="trap"){S.caughtBy=null;return{ev:"spot"}}if(r2.ev!=="move")return r2;r.stop=true;
   return r}
 /* 3D：淺水窪（地上一層半透明的淡藍水面）；平面版：地面色上一塊淡藍 */
 if(!JH_MZ_OBJ.Q)JH_MZ_OBJ.Q=H=>{const{T3,mesh}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(.96,.03,.96),new T3.MeshLambertMaterial({color:0x4a6a7a,transparent:true,opacity:.75}),0,.015,0));return g};
@@ -82,12 +82,12 @@ jhMzLayer("central",2,{map:JH_MZ_CENTRAL2_MAP,guards:JH_MZ_CENTRAL2_GUARDS,avoid
   title:["🕳 漕底淤廊","🕳 Silted culvert"],lvName:["漕底淤廊・第二層","Silted culvert · Level 2"],
   intro:["你順著石階往下，腳下的泥越來越濕，這裡是漕倉底下的暗渠。<b>點地面就會走過去</b>，也可以按住搖桿往要去的方向推（拖搖桿右上角的 ✥ 可以換位置）。地上的淺水窪陷腳，<b>走進去要多花一回合</b>，自動走不會主動踩。",
     "You follow the steps down; the mud underfoot grows wetter. This is the culvert under the granary. <b>Tap the floor to walk there</b>, or hold the joystick and push the way you want to go (drag the ✥ on it to move it). The shallow puddles suck at your feet: <b>stepping into one costs an extra turn</b>, and auto-walk won't step in on its own."],
-  warn:["<b>中間的走廊有兩個炮衛一前一後巡邏。</b>紅線是他們看得到的 3 格；後面那個被前面那個擋住就看不到。前面那個不踩水窪，走到水窪前會掉頭。",
-    "<b>Two cannon guards patrol the middle corridor, one behind the other.</b> The red line is the 3 squares each can see; the rear one can't see past the front one. The front guard won't step in a puddle and turns back at one."],
+  warn:["<b>中間的走廊有兩個炮衛一前一後巡邏。</b>紅線是他們看得到的 3 格；後面那個被前面那個擋住就看不到。其中一個不踩水窪，走到水窪前會掉頭；另一個會直接踩進去。",
+    "<b>Two cannon guards patrol the middle corridor, one behind the other.</b> The red line is the 3 squares each can see; the rear one can't see past the front one. One of them won't step in a puddle and turns back at one; the other wades right in."],
   say:{door:["將死！中兵一路衝破防線，石門轟隆一聲往上收。","Checkmate! The central pawn breaks through and the stone door rumbles open."],trap:["將死！炮衛愣在原地，你趁機脫身。","Checkmate! The cannon guard freezes and you slip away."],
     dazed:["炮衛暈頭轉向，<b>四回合內</b>不會動。","The cannon guard is dazed and <b>won't move for four turns</b>."],
     dragged:["炮衛把你拖回入口，還把你最後撿到的東西丟回原來的箱子。","The cannon guard drags you back to the entrance and tosses your last find back into its chest."],
-    retry:["你被拖回了入口。<b>等前面的炮衛走到水窪前掉頭，再從他背後過去。</b>","You were dragged back. <b>Wait for the front guard to turn back at a puddle, then cross behind him.</b>"],
+    retry:["你被拖回了入口。<b>等不踩水窪的那個炮衛走到水窪前掉頭，再從他背後過去。</b>","You were dragged back. <b>Wait for the guard who avoids puddles to turn back at one, then cross behind him.</b>"],
     locked:["石門被機關鎖住了。<b>先在淤廊裡找到機關踏板踩下去。</b>","The stone door is locked by a mechanism. <b>Find the pressure plate somewhere in the culvert first.</b>"],
     spot:["<b>炮衛轉過頭來看見你了！</b>趕快離開紅線——下一步還在紅線上就會被逮住。","<b>A cannon guard turns and spots you!</b> Get off the red line now: if you are still on it next turn, you are caught."],
     done:["石階還往下延伸，第三層之後再開。","The steps go on down. Level 3 opens later."]}});
