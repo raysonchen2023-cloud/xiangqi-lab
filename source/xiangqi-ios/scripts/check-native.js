@@ -224,6 +224,87 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
     if (odd.length) pinBad.push(path.relative(HERE, f) + " 不能有 " + odd.join("、") + "（斷詞可能跟 Swift 認定不同）");
   }
 }
+/* W69 設定鎖（從 #144 拆出來；#144 第三～五輪審查）：swiftCode 不認不加 # 的斜線正規式 /…/。Swift 5 預設是語法錯誤，繞不過去；
+   但開了 bare-slash-regex（OTHER_SWIFT_FLAGS、SWIFT_UPCOMING_FEATURE_…、xcconfig）就合法，/"/ 配 /*" 能讓斷詞和 Swift 對字串邊界錯開。所以鎖住 Swift 編譯設定。
+   第五輪審查：用文字比對會被「引號裡的 /＊ ＊/」「<group> 相對路徑」騙過（iMac 用 xcodebuild -showBuildSettings 實測過：Xcode 照語法讀，<group> 照群組階層算路徑）。
+   所以照 pbxproj（OpenStep plist）的語法真正解析，看不懂就算錯：
+   ① 每個 XCBuildConfiguration 只能有 isa、buildSettings、name、baseConfigurationReference 四個欄位（Xcode 16 的 baseConfigurationReferenceAnchor 這類新寫法一律不行）
+   ② buildSettings 裡名字有 SWIFT 的設定只能是 SW_OK 的值（值寫死，陣列、$(變數) 拼不出別的旗標）；SWIFT_VERSION 至少一處；任何地方都不能有 COMPILER_FLAGS
+   ③ baseConfigurationReference 照 sourceTree 和群組階層算出真正的路徑（只認 <group>、SOURCE_ROOT）；PBXProject 的 projectDirPath、projectRoot 要是空的
+   ④ 算出來的、以及 ios/、ios/App/、ios/App/App/ 底下的 .xcconfig，每一行只能是空白、// 註解或 CAPACITOR_DEBUG = true／false；#include 一律不行；引用的檔要存在 */
+/* #147 審查①②：Xcode 把 U+2028、U+2029 當換行，pbxproj、xcconfig 的 // 註解後面接它再寫設定，解析器當成同一行註解、Xcode 卻讀得到。
+   特殊換行、CR 和看不見的字元（跟 Swift 那段的 ODD_NL 同一組，另加 \r），pbxproj 和每一份 xcconfig 出現就拒絕 */
+const LOCK_NL = /[\r\u2028\u2029\u0085\u000B\u000C\uFEFF\u200B-\u200F\u2060-\u2064\u00AD\u0000-\u0008\u000E-\u001F\u007F\u202A-\u202E\u2066-\u206F]/;
+function pbxParse(src) {
+  let i = 0;
+  const fail = (m) => { throw new Error(m + "（第 " + src.slice(0, i).split("\n").length + " 行）") };
+  const ws = () => { for (;;) {
+    while (i < src.length && /\s/.test(src[i])) i++;
+    if (src.startsWith("//", i)) { while (i < src.length && src[i] !== "\n") i++; continue }
+    if (src.startsWith("/*", i)) { const e = src.indexOf("*/", i + 2); if (e < 0) fail("註解沒有收尾"); i = e + 2; continue }
+    return } };
+  const val = () => {
+    ws(); const c = src[i];
+    if (c === "{") { i++; const o = Object.create(null);
+      for (;;) { ws(); if (src[i] === "}") { i++; return o }
+        const k = val(); if (typeof k !== "string") fail("鍵不是字串"); ws(); if (src[i] !== "=") fail("少了 ="); i++;
+        const v = val(); ws(); if (src[i] !== ";") fail("少了 ;"); i++;
+        if (k in o) fail("重複的鍵 " + k); o[k] = v } }
+    if (c === "(") { i++; const a = [];
+      for (;;) { ws(); if (src[i] === ")") { i++; return a } a.push(val()); ws(); if (src[i] === ",") { i++; continue } if (src[i] === ")") { i++; return a } fail("陣列少了 ,") } }
+    if (c === "\"") { i++; let s = "";
+      for (;;) { if (i >= src.length) fail("字串沒有收尾"); const d = src[i++];
+        if (d === "\"") return s;
+        if (d === "\\") { const e = src[i++]; if (e === "n") s += "\n"; else if (e === "t") s += "\t"; else if (e === "\"" || e === "\\") s += e; else fail("看不懂的跳脫 \\" + e); continue }
+        s += d } }
+    const m = /[A-Za-z0-9_$+/:.-]+/y; m.lastIndex = i; const r = m.exec(src); if (!r) fail("看不懂的字元 " + JSON.stringify(src.slice(i, i + 8))); i = m.lastIndex; return r[0] };
+  const root = val(); ws(); if (i !== src.length) fail("結尾多了東西"); return root;
+}
+{
+  const pbxSV = path.join(HERE, "ios", "App", "App.xcodeproj", "project.pbxproj"), projDir = path.join(HERE, "ios", "App");
+  const swBad = [], xcRefs = [];
+  let P = null, svN = 0;
+  if (!fs.existsSync(pbxSV)) swBad.push("找不到 pbxproj");
+  else { const raw = rd(pbxSV); if (LOCK_NL.test(raw)) swBad.push("pbxproj 有特殊換行或看不見的字元（Xcode 把 U+2028／U+2029 當換行，// 註解後面的設定斷詞看不到）");
+    try { P = pbxParse(raw) } catch (e) { swBad.push("pbxproj 看不懂：" + e.message) } }   /* 看不懂時 P 是 null、svN 是 0，下面的 check 也一定紅（雙保險；這行只是讓訊息好讀） */
+  if (P) {
+    const O = P.objects || {}, parent = {};
+    for (const [id, o] of Object.entries(O)) if (Array.isArray(o.children)) for (const c of o.children) parent[c] = id;
+    /* #147 審查④：只取第一個 PBXProject 會被「第二個 PBXProject 當 rootObject」騙過（PROJECT_DIR、SRCROOT 都換掉）。改成照 rootObject 取，而且整份只能有一個 PBXProject */
+    const projN = Object.values(O).filter((o) => o.isa === "PBXProject").length, proj = (typeof P.rootObject === "string" && O[P.rootObject] && O[P.rootObject].isa === "PBXProject") ? O[P.rootObject] : {};
+    if (projN !== 1 || proj.isa !== "PBXProject") swBad.push("PBXProject 要剛好一個，而且就是 rootObject（現在 " + projN + " 個）");
+    if ((proj.projectDirPath || "") !== "" || (proj.projectRoot || "") !== "") swBad.push("PBXProject 的 projectDirPath／projectRoot 不是空的");
+    /* #147 審查③：檔案參照、群組的 path／name 裡有 $（例如 $(SRCROOT)），Xcode 會展開、這裡不會，兩邊讀到不同的檔，一律看不懂 */
+    const dirOf = (id, depth) => { const o = O[id]; if (!o || depth > 40) return null; if (/\$/.test(String(o.path || "") + String(o.name || ""))) return null;
+      let base;
+      if (o.sourceTree === "<group>") base = parent[id] ? dirOf(parent[id], depth + 1) : (id === proj.mainGroup ? projDir : null);
+      else if (o.sourceTree === "SOURCE_ROOT") base = projDir;
+      else return null;
+      return base == null ? null : path.resolve(base, typeof o.path === "string" ? o.path : "") };
+    const SW_OK = { SWIFT_VERSION: ["5.0"], SWIFT_ACTIVE_COMPILATION_CONDITIONS: ["", "DEBUG"], SWIFT_COMPILATION_MODE: ["wholemodule"], SWIFT_OPTIMIZATION_LEVEL: ["-O", "-Onone"],
+      OTHER_SWIFT_FLAGS: ["$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\""] };
+    const CFG_KEYS = new Set(["isa", "buildSettings", "name", "baseConfigurationReference"]);
+    for (const [id, o] of Object.entries(O)) {
+      if (o.isa !== "XCBuildConfiguration") continue;
+      for (const k of Object.keys(o)) if (!CFG_KEYS.has(k)) swBad.push("XCBuildConfiguration 不認得的欄位 " + k);
+      for (const [k, v] of Object.entries(o.buildSettings || {})) {
+        if (k === "SWIFT_VERSION") svN++;
+        if (/SWIFT/.test(k) && !(SW_OK[k] || []).includes(v)) swBad.push(k + " = " + JSON.stringify(v));   /* 編譯設定名都是大寫；陣列、帶 [sdk=…] 條件的都不在白名單 */
+      }
+      if (o.baseConfigurationReference != null) { const p = dirOf(o.baseConfigurationReference, 0); if (p) xcRefs.push(p); else swBad.push("baseConfigurationReference 的路徑看不懂（只認 <group>、SOURCE_ROOT）") }
+    }
+    if (/COMPILER_FLAGS/.test(JSON.stringify(O))) swBad.push("COMPILER_FLAGS");
+  }
+  const xcDirs = [path.join(HERE, "ios"), projDir, APP];
+  const xcFiles = [...new Set([...xcRefs, ...xcDirs.flatMap((d) => fs.existsSync(d) ? fs.readdirSync(d).filter((f) => f.endsWith(".xcconfig")).map((f) => path.join(d, f)) : [])])];
+  for (const f of xcFiles) {
+    if (!fs.existsSync(f)) { swBad.push("找不到 " + path.relative(HERE, f)); continue }
+    const xraw = rd(f); if (LOCK_NL.test(xraw)) swBad.push(path.relative(HERE, f) + " 有特殊換行或看不見的字元");
+    for (const l of xraw.split("\n")) if (l.trim() && !/^\s*\/\//.test(l) && !/^\s*CAPACITOR_DEBUG\s*=\s*(true|false)\s*$/.test(l)) swBad.push(path.relative(HERE, f) + "：" + l.trim());
+  }
+  check(svN > 0 && swBad.length === 0,
+    "Swift 語言版本全是 5.0、沒開 bare-slash-regex（swiftCode 不認 /…/ 正規式；升 Swift 6 前要先補斷詞）" + (swBad.length ? "：不在白名單的設定 " + swBad.slice(0, 5).join("、") : "") + (svN ? "" : "：pbxproj 沒有 SWIFT_VERSION"));
+}
 for (const [n, re] of [["verifyNow", /\bfunc\s+verifyNow\b/g], ["issueChallenge", /\bfunc\s+issueChallenge\b/g], ["randomHex", /\bfunc\s+randomHex\b/g]]) if ((srvCode.match(re) || []).length !== 1) pinBad.push(n + "（宣告不只一次）");
 const flagDecl = swiftAll.filter((x) => x.f.startsWith("native")).reduce((t, x) => t + (x.c.match(/\b(class|struct|enum|actor|protocol|typealias)\s+XQFlag\b/g) || []).length, 0);
 if (flagDecl !== 1) pinBad.push("XQFlag（整個專案要剛好宣告一次，現在 " + flagDecl + " 次）");
