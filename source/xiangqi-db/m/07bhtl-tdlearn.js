@@ -75,7 +75,7 @@ function bhtlStart(k,cover){const C=bhtdC();if(!C)return toast("規則程式還�
   BHTL_W=0;BHTL_W4=false;BHTL_SKIP=false;BHTL_K="";bhtlSave({cur:null});
   jStart(BHTL_ID,{human:"r",lx:1,journey:BHTL_ID,lv:{fen:BHTD.startFen("tl",C),turn:"r",mirror:T.blk.slice()},td:{lv:"tl",ch:ck,L,diff}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
     if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}
-    setTimeout(()=>{try{bhBell()}catch(e){}},900)})}   /* 星樞照 lv.mirror 走劇本（local.js styleMove）；走不通才叫引擎（推算 1 步）。不傳 force：別的對局下到一半照 jStart 先問；同一盤練習沒下完就接著下 */
+    setTimeout(()=>{try{const P=store.get("jPending",null);if(/^#\/journey\/play/.test(location.hash)&&P&&P.id===BHTL_ID)bhBell()}catch(e){}},900)})}   /* W120：0.9 秒後還在對局頁、而且還是這盤練習（jPending 指著它）才敲鑼；網址剛改、換頁計數還沒加，所以不用 stillHere */   /* 星樞照 lv.mirror 走劇本（local.js styleMove）；走不通才叫引擎（推算 1 步）。不傳 force：別的對局下到一半照 jStart 先問；同一盤練習沒下完就接著下 */
 /* ---------- 對局中 ---------- */
 function bhtlTick(st){if(typeof document==="undefined")return;if(!st||!st.td){bhtlHide();return}
   if(!bhtlIs(st)){bhtlHide(1);if(BHTL_FR!==st.id){BHTL_FR=st.id;if(!st.result)bhtlLvTips(st)}return}

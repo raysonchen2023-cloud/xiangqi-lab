@@ -7,6 +7,10 @@ const test = require("node:test"), assert = require("node:assert/strict"), fs = 
 const ROOT = path.join(__dirname, "..", "..");
 const rd = p => fs.readFileSync(path.join(ROOT, p), "utf8").replace(/\r\n/g, "\n");
 const PTY_SRC = rd("xiangqi-db/m/07pty-party.js"), PJC_SRC = rd("xiangqi-db/m/07pjc-joincut.js");
+/* 11/25 W120：07pty 改用換頁計數 ROUTE_N＋網址判斷「還在原來那一頁」。從 00-util.js 抽真的那兩行（ROUTE_N 宣告、stillHere）進沙箱，不自己寫假的 */
+const UTIL_SRC = rd("xiangqi-db/m/00-util.js");
+const utilLine = re => { const l = UTIL_SRC.split("\n").find(s => re.test(s)); if (!l) throw new Error("00-util.js 找不到：" + re); return l };
+const UTIL_W120 = utilLine(/^let ROUTE_N=/) + "\n" + utilLine(/^function stillHere\(/);
 
 /* ---------- 假 DOM ---------- */
 class El {
@@ -60,7 +64,7 @@ function env(o) {
   const pzData = o.pz === undefined ? { "xs-han-0": { id: "xs-han-0", fen: "4ka3/4a4/9/2N6/2N6/9/8p/9/9/4K4", side: "r" } } : o.pz;
   const ctx = {
     console, Math, JSON, Date, Promise, Object, Array, String, Number, Set, Map,
-    document: doc, Image: FakeImage, setTimeout: clk.setTimeout, clearTimeout: clk.clearTimeout,
+    document: doc, location: { hash: "#/journey/xs" }, Image: FakeImage, setTimeout: clk.setTimeout, clearTimeout: clk.clearTimeout,
     addEventListener() { }, removeEventListener() { }, innerWidth: 390, innerHeight: 844,
     matchMedia: () => ({ matches: !!o.rm }),
     store, WX_CHARS: WX, xpInfo: () => ({ L: 5, need: 100, rest: 0 }),
@@ -72,7 +76,7 @@ function env(o) {
     Board: (tap) => { const svg = new El("svg", doc); return { svg, draw: (b, O) => boards.push(b) } },
   };
   vm.createContext(ctx);
-  vm.runInContext(PTY_SRC + "\n" + (o.noPjc ? "" : PJC_SRC) + "\n;this.__X={PTY,ptyOnSolve,ptyGet,ptyHas:typeof ptyHas==='function'?ptyHas:null,pjcPlay:typeof pjcPlay==='function'?pjcPlay:null,PJC_SC:typeof PJC_SC!=='undefined'?PJC_SC:null,pjcMeet:typeof pjcMeet==='function'?pjcMeet:null,pjcSay:typeof pjcSay==='function'?pjcSay:null};", ctx, { filename: "pty+pjc.js" });
+  vm.runInContext(UTIL_W120 + "\n" + PTY_SRC + "\n" + (o.noPjc ? "" : PJC_SRC) + "\n;this.__X={PTY,ptyOnSolve,ptyGet,ptyHas:typeof ptyHas==='function'?ptyHas:null,pjcPlay:typeof pjcPlay==='function'?pjcPlay:null,PJC_SC:typeof PJC_SC!=='undefined'?PJC_SC:null,pjcMeet:typeof pjcMeet==='function'?pjcMeet:null,pjcSay:typeof pjcSay==='function'?pjcSay:null};", ctx, { filename: "pty+pjc.js" });
   const X = ctx.__X;
   const pg = () => doc.getElementById("pjcPg");
   return { doc, clk, log, modals, boards, X, db, pg, sub: () => { const p = pg(); return p ? [...p.walk()].find(e => e._cls.has("pjc-sub")) : null } };

@@ -122,3 +122,29 @@ test("〔原始碼〕m.html 在 07t3 和 07sp 後面載入 07fl；07sp 量看得
   assert.equal(/(^|[^:"'])\/\/(?!#)/m.test(SRC.replace(/'[^'\n]*'|"[^"\n]*"|`[^`]*`/g, "")), false, "07fl 裡不要有 // 註解");
   assert.match(SRC, /filter:blur\(/); assert.doesNotMatch(SRC, /backdrop-filter:/, "用 filter（靜態）不用 backdrop-filter（每幀重算）");
 });
+
+test("W131 入口全是推得動的 .shp-spot（門派門內、設定房間）：擺不進也照樣填滿寬度，裁切讓入口範圍置中", () => {
+  const W = 820, av = 1197, H0 = W * NH / NW;
+  const its = [{ c: .081, h: 34, p: true }, { c: .3, h: 34, p: true }, { c: .62, h: 34, p: true }, { c: .967, h: 34, p: true }];
+  const pl = xflPlan({ W, av, nw: NW, nh: NH, items: its });
+  assert.equal(pl.w, W); assert.equal(pl.fill, 1, "不留模糊底");
+  assert.ok(Math.abs(pl.crop - Math.round(H0 - av)) <= 1);
+  const mid = (.081 + .967) / 2 * H0 - av / 2;
+  assert.ok(Math.abs(pl.top - Math.round(mid)) <= 1, "入口範圍置中：" + pl.top + " vs " + Math.round(mid));
+  assert.ok(pl.top > 0 && pl.top < pl.crop, "上下都裁一點");
+  const lock = xflPlan({ W, av, nw: NW, nh: NH, items: its, off: 40 });
+  assert.equal(lock.w, W); assert.equal(lock.top, 0, "圖上面還有內容就不裁上面");
+});
+
+test("W131 只要有一個入口推不動（不是 .shp-spot），照舊少放大、入口全部看得到", () => {
+  const W = 820, av = 1197;
+  const its = [{ c: .081, h: 34, p: true }, { c: .5, h: 34, p: false }, { c: .967, h: 34, p: true }];
+  const pl = xflPlan({ W, av, nw: NW, nh: NH, items: its });
+  assert.ok(pl.w < W, "比畫面窄＝沒有硬填滿");
+  assert.ok(seen(pl, its, av));
+});
+
+test("W131 xflItems 會記下哪些入口是 .shp-spot", () => {
+  assert.match(SRC, /p:e\.matches\("\.shp-spot"\)/);
+  assert.match(SRC, /its\.every\(q=>q\.p\)/);
+});
