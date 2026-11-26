@@ -109,3 +109,37 @@ test("大檔放進包裡（全離線版）就不需要切塊接回 → 綠燈", 
   const r = run(aab({ dex: [], gm: true }));
   assert.equal(r.status, 0, r.stdout + r.stderr);
 });
+
+/* W66c（11/26 #221 審查發現，main 本來就有的缺口）：主流程把 CDN 的 404／410 推進 R.red（realMiss 那一行），刪掉或改錯原本沒有測試會紅。
+   這一項真的跑整支工具（加 --cdn），用 --require 把 fetch 換成假的 CDN（不連網）：圖片 data/a/x.webp 不在包裡、CDN 回 404，要算 ✘、結束代碼 1；
+   對照組 CDN 回 200 時，報告的 redItems 不能有它。改壞驗證：把 realMiss 那行改成不推進 R.red，同一組檢查一定抓得到。 */
+function cdnRun(tool, plan) {
+  const d = fs.mkdtempSync(path.join(os.tmpdir(), "xq-w66c-")); made.push(d);
+  const stub = path.join(d, "fake-cdn.js"), out = path.join(d, "out.json");
+  fs.writeFileSync(stub, `const plan = ${JSON.stringify(plan)};
+globalThis.fetch = async (url) => { const u = new URL(String(url)).pathname.slice(1); let st = 200;
+  for (const k in plan) if (u === k || u === k + ".parts.json") st = plan[k];
+  if (u.includes("__xq_p0_canary_")) st = 404;
+  return { status: st, ok: st === 200, json: async () => { throw new Error("假 CDN 不給 JSON") }, text: async () => "" } };\n`);
+  const r = cp.spawnSync(process.execPath, ["--require", stub, tool, "--aab", aab({ dex: W30, x: null }), "--cdn", "--out", out], { encoding: "utf8" });
+  return { status: r.status, log: r.stdout + r.stderr, rep: fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, "utf8")) : null };
+}
+function mainMissProblems(tool) {
+  const bad = [], miss = cdnRun(tool, { "data/a/x.webp": 404 }), ok = cdnRun(tool, {});
+  /* 假 CDN 或工具本身當掉也會回 1，所以先確認兩次都真的跑完、寫出報告 */
+  for (const [nm, r] of [["CDN 回 404", miss], ["對照組", ok]]) if (!r.rep || !/金絲雀：/.test(r.log)) bad.push(nm + "：工具要真的跑完並寫出報告（" + r.log.slice(0, 200) + "）");
+  if (miss.status !== 1) bad.push("CDN 回 404：結束代碼要是 1（實際 " + miss.status + "）");
+  if (!miss.rep || !miss.rep.redItems.some((x) => x.f === "data/a/x.webp" && /CDN 上沒有（HTTP 404）/.test(x.why))) bad.push("CDN 回 404：報告的 redItems 要有 data/a/x.webp");
+  if (!/✘ 1 項｜CDN 上沒有（HTTP 404）/.test(miss.log)) bad.push("CDN 回 404：畫面要印 ✘");
+  if (!ok.rep || ok.rep.redItems.some((x) => x.f === "data/a/x.webp")) bad.push("對照組 CDN 回 200：redItems 不能有 data/a/x.webp");
+  if (miss.rep && miss.rep.redItems.some((x) => /__xq_p0_canary_/.test(x.f))) bad.push("金絲雀探測檔不能算進 redItems");
+  return bad;
+}
+test("W66c：加 --cdn 跑整支工具，CDN 回 404 的圖要算 ✘、結束代碼 1；改壞驗證：主流程不把 404 推進 R.red 一定抓得到", () => {
+  assert.deepEqual(mainMissProblems(CHECK), []);
+  const src = fs.readFileSync(CHECK, "utf8"), line = "R.red.push(...realMiss);";
+  assert.equal(src.split(line).length, 2, "找得到 realMiss 那一行");
+  const mut = path.join(AND, ".w66c-mut-" + crypto.randomBytes(4).toString("hex") + ".js");
+  try { fs.writeFileSync(mut, src.replace(line, "void realMiss;")); assert.ok(mainMissProblems(mut).some((s) => s.includes("redItems 要有")), "改壞（404 沒推進 R.red）要被抓到") }
+  finally { fs.rmSync(mut, { force: true }) }
+});
