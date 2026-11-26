@@ -65,6 +65,18 @@ test("馬的走法：照目前方向跳日字、跳不過去就順時針換方�
   const T = c.jhMzNew("screen"); assert.ok(!c.jhMzCaught(T), "開局不會被抓");
 });
 
+test("巡法固定案例（#196 審查第 1 點：銅人不動、改成逆時針都要抓得到）：空房間照目前方向跳；馬腿被蹩就順時針換下一個方向；上廳銅人的巡場路線固定", () => {
+  const c = load();
+  let S = room(c, OPEN, { x: 4, y: 4, dx: 1, dy: -2 }, 7, 7);
+  c.jhMzGuardStep(S); assert.deepEqual([S.guard.x, S.guard.y, S.guard.dx, S.guard.dy], [5, 2, 1, -2], "照目前方向 (1,-2) 跳到 (5,2)");
+  const rows = OPEN.slice(); rows[3] = "#...G...#";
+  S = room(c, rows, { x: 4, y: 4, dx: 1, dy: -2 }, 7, 7);
+  c.jhMzGuardStep(S); assert.deepEqual([S.guard.x, S.guard.y, S.guard.dx, S.guard.dy], [6, 3, 2, -1], "往上的馬腿被石鼓蹩住：順時針換成 (2,-1) 跳到 (6,3)（逆時針會是 (-1,-2)／(-2,-1)）");
+  const T = c.jhMzNew("screen"); at(T, 13, 9); const path0 = [];
+  for (let i = 0; i < 7; i++) { c.jhMzGuardStep(T); path0.push(T.guards[0].x + "," + T.guards[0].y) }
+  assert.deepEqual(path0, ["1,5", "3,4", "5,5", "6,7", "4,6", "2,5", "3,7"], "上廳銅人巡七點、經過石門前一帶");
+});
+
 /* 地圖：BFS（擋路照 lv.solid，石門走得過去） */
 function reach(c, S) { const lv = LV(c), seen = new Set(), q = []; const st = S.player; q.push([st.x, st.y]); seen.add(st.y * S.W + st.x);
   while (q.length) { const [x, y] = q.shift(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, ch = (S.grid[ny] || [])[nx];
