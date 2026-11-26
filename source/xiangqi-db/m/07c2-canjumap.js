@@ -58,24 +58,33 @@ function cjmCss(){if(document.getElementById("cjmCss"))return;const s=document.c
 function canjuMap(v){if(v.querySelector(".cjm-page"))return;const wrap=v.querySelector(".cj-wrap");if(!wrap||typeof cjState!=="function")return;cjmCss();
   const S=cjState(),L=S.day===cjDay()&&Array.isArray(S.list)&&S.list.length===3?S.list:null;if(!L)return;
   const bySlot={};for(const x of L)bySlot[x.slot]=x;const solved=k=>bySlot[k]&&bySlot[k].st==="done",all=solved("sip")&&solved("cup")&&solved("pot");
-  const P=document.createElement("div");P.className="shp-page cq cjm-page";const pc=cjmPc;let fx="";
-  const g=cjmG(),VES=CJM_VES_G[g]||CJM_VES,SP=g in CJM_SPOUT_G?CJM_SPOUT_G[g]:CJM_SPOUT;
-  for(const[k,x,y,rx,ry]of VES){if(!solved(k))continue;const[a,b]=pc(x,y);
-    if(k==="pot"){if(!SP){fx+=`<span class="cjm-steam" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><i></i><i></i><i></i></span>`;continue}const[sx,sy]=pc(...SP);fx+=`<span class="cjm-steam" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><i></i><i></i><i></i></span><span class="cjm-steam" style="left:${sx.toFixed(2)}%;top:${sy.toFixed(2)}%;width:6%"><i></i><i></i></span>`;continue}
-    fx+=`<span class="cjm-foam${g==="weijin"?" boil":""}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(rx*2/7.68).toFixed(2)}%;height:${(ry*2/13.76).toFixed(2)}%">${k==="cup"&&all?(g==="weijin"?'<span class="cjm-rip"><i></i><i></i><i></i></span>':g==="tang"?'<span class="cjm-mo"></span>':'<span class="cjm-art"><svg viewBox="-12 -12 24 24" preserveAspectRatio="none" aria-hidden="true"><circle r="10" fill="none" stroke="rgba(140,96,52,.55)" stroke-width="1.1"/><circle r="8.2" fill="none" stroke="rgba(140,96,52,.35)" stroke-width=".6"/><text y="4.2" text-anchor="middle" font-size="12" font-weight="900" fill="rgba(150,70,40,.62)" font-family="serif">帥</text></svg></span>'):""}</span>`;
-    fx+=`<span class="cjm-steam${k==="cup"&&all&&g==="weijin"?" thick":""}" style="left:${a.toFixed(2)}%;top:${(b-1).toFixed(2)}%;width:${k==="cup"?(all&&g==="weijin"?13:9):6}%"><i></i><i></i><i></i></span>`}
-  const[lfN,lfC,lfK]=cjmLeaf();fx+=`<span class="cjm-leaf" title="${esc(lfN)}" style="left:62%;top:58%">${cjmLeafSvg(lfC,lfK)}</span>`;
+  const P=document.createElement("div");P.className="shp-page cq cjm-page";
+  const g=cjmG(),src=xqClImg(`data/canjumap/${cjmDark()?"canju_night":"canju_day"}${g?"_"+g:""}.webp?v=${CJM_IMGV}`),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}
+  /* W107-L：圖上座標集中成一組 G；iPad 橫向換成專用橫式圖（07sw SCW）時整組換成條目（ves、spout 是像素，tag、leaf 是 %），換圖後重畫茶沫、熱氣、落葉、點選框、標籤、走路角色 */
+  const geo=()=>{const e=typeof scwCur==="function"?scwCur(P):null,f=e&&e.fx;if(f&&f.ves)return{W:e.w,H:e.h,VES:f.ves,SP:f.spout||null,tag:f.tag,leaf:f.leaf,walk:e.walk};
+    return{W:768,H:1376,VES:CJM_VES_G[g]||CJM_VES,SP:g in CJM_SPOUT_G?CJM_SPOUT_G[g]:CJM_SPOUT,tag:null,leaf:[62,58],walk:null}};
   const NM={sip:"一口",cup:"一盞",pot:"一壺"};
-  P.innerHTML=`<img src="${xqClImg(`data/canjumap/${cjmDark()?"canju_night":"canju_day"}${g?"_"+g:""}.webp?v=${CJM_IMGV}`)}" alt="${g==="weijin"?"煮茶席":g==="tang"?"煎茶席":"宋代點茶席"}"><div class="cjm-fx" aria-hidden="true">${fx}</div>`+
-    VES.map(([k,,,,,hx,hy,w,h])=>{const[a,b]=pc(hx,hy),it=bySlot[k];return`<span class="cjm-hit" aria-hidden="true" data-id="${esc(it.id)}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(w/7.68).toFixed(2)}%;height:${(h/13.76).toFixed(2)}%"></span>`}).join("")+
-    VES.map(([k,mx,my])=>{const[a,b]=pc(mx,my-(k==="cup"?62:k==="pot"?40:44)),it=bySlot[k];return`<button class="shp-spot cjm-tag${solved(k)?" done":""}" id="cjm_${k}" data-id="${esc(it.id)}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><b>${NM[k]}</b></button>`}).join("");
+  P.innerHTML=`<img src="${pre.src}" alt="${g==="weijin"?"煮茶席":g==="tang"?"煎茶席":"宋代點茶席"}"><div class="cjm-fx" aria-hidden="true"></div>`;
   v.insertBefore(P,wrap);
   const open=id=>{if(typeof vibrate==="function")vibrate(5);location.hash="#/canju/"+encodeURIComponent(id)};
-  P.querySelectorAll(".cjm-hit").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=P.querySelector(`.cjm-tag[data-id="${CSS.escape(b.dataset.id)}"]`);if(t)t.click();else open(b.dataset.id)});
-  P.querySelectorAll(".cjm-tag").forEach(b=>b.onclick=()=>open(b.dataset.id));
+  const render=()=>{const G=geo(),pc=(x,y)=>[x/G.W*100,y/G.H*100],VES=G.VES,SP=G.SP;let fx="";
+    for(const[k,x,y,rx,ry]of VES){if(!solved(k))continue;const[a,b]=pc(x,y);
+      if(k==="pot"){if(!SP){fx+=`<span class="cjm-steam" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><i></i><i></i><i></i></span>`;continue}const[sx,sy]=pc(...SP);fx+=`<span class="cjm-steam" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%"><i></i><i></i><i></i></span><span class="cjm-steam" style="left:${sx.toFixed(2)}%;top:${sy.toFixed(2)}%;width:6%"><i></i><i></i></span>`;continue}
+      fx+=`<span class="cjm-foam${g==="weijin"?" boil":""}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(rx*2/G.W*100).toFixed(2)}%;height:${(ry*2/G.H*100).toFixed(2)}%">${k==="cup"&&all?(g==="weijin"?'<span class="cjm-rip"><i></i><i></i><i></i></span>':g==="tang"?'<span class="cjm-mo"></span>':'<span class="cjm-art"><svg viewBox="-12 -12 24 24" preserveAspectRatio="none" aria-hidden="true"><circle r="10" fill="none" stroke="rgba(140,96,52,.55)" stroke-width="1.1"/><circle r="8.2" fill="none" stroke="rgba(140,96,52,.35)" stroke-width=".6"/><text y="4.2" text-anchor="middle" font-size="12" font-weight="900" fill="rgba(150,70,40,.62)" font-family="serif">帥</text></svg></span>'):""}</span>`;
+      fx+=`<span class="cjm-steam${k==="cup"&&all&&g==="weijin"?" thick":""}" style="left:${a.toFixed(2)}%;top:${(b-1).toFixed(2)}%;width:${k==="cup"?(all&&g==="weijin"?13:9):6}%"><i></i><i></i><i></i></span>`}
+    const[lfN,lfC,lfK]=cjmLeaf();fx+=`<span class="cjm-leaf" title="${esc(lfN)}" style="left:${G.leaf[0]}%;top:${G.leaf[1]}%">${cjmLeafSvg(lfC,lfK)}</span>`;
+    P.querySelector(".cjm-fx").innerHTML=fx;P.querySelectorAll(":scope>.cjm-hit,:scope>.cjm-tag").forEach(x=>x.remove());
+    P.querySelector(".cjm-fx").insertAdjacentHTML("afterend",
+      VES.map(([k,,,,,hx,hy,w,h])=>{const[a,b]=pc(hx,hy),it=bySlot[k];return`<span class="cjm-hit" aria-hidden="true" data-id="${esc(it.id)}" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;width:${(w/G.W*100).toFixed(2)}%;height:${(h/G.H*100).toFixed(2)}%"></span>`}).join("")+
+      VES.map(([k,mx,my])=>{const[a,b]=G.tag&&G.tag[k]?G.tag[k]:pc(mx,my-(k==="cup"?62:k==="pot"?40:44)),it=bySlot[k];return`<button class="shp-spot cjm-tag${solved(k)?" done":""}" id="cjm_${k}" data-id="${esc(it.id)}" style="left:${(+a).toFixed(2)}%;top:${(+b).toFixed(2)}%"><b>${NM[k]}</b></button>`}).join(""));
+    P.querySelectorAll(".cjm-hit").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=P.querySelector(`.cjm-tag[data-id="${CSS.escape(b.dataset.id)}"]`);if(t)t.click();else open(b.dataset.id)});
+    P.querySelectorAll(".cjm-tag").forEach(b=>b.onclick=()=>open(b.dataset.id));
+    const HS={};VES.forEach(([k,x,y])=>{const[a,b]=pc(x,y);HS["cjm_"+k]=[typeof WALK_HOP_ON!=="undefined"&&WALK_HOP_ON?"tt":"tbl",+a.toFixed(2),+b.toFixed(2),all?"cheer":"bow"]});
+    if(P.dataset.shw){P.querySelectorAll(":scope>.shw,:scope>.shw-me,:scope>.shw-hint,:scope>.shw-say,:scope>.shw-menu").forEach(x=>x.remove());delete P.dataset.shw;P.classList.remove("shw-iso")}
+    try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,cjmShw(g),G.walk||{},{HS}),"cjm")}catch(e){}};
+  if(typeof scwMount==="function")scwMount(P,{key:scwKey(src),src0:src,ids:[],apply:render});
+  render();
   if(typeof shpFit==="function")shpFit(v);
-  const HS={};VES.forEach(([k,x,y])=>{const[a,b]=pc(x,y);HS["cjm_"+k]=[typeof WALK_HOP_ON!=="undefined"&&WALK_HOP_ON?"tt":"tbl",+a.toFixed(2),+b.toFixed(2),all?"cheer":"bow"]});
-  try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,cjmShw(g),{HS}),"cjm")}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof CanjuDaily==="function"){const f0=CanjuDaily;CanjuDaily=function(v){const r=f0.apply(this,arguments);
   try{if(CANJU_MAP_ON){const mo=new MutationObserver(()=>{if(!v.isConnected){mo.disconnect();return}if(v.querySelector(".cj-wrap")){mo.disconnect();try{canjuMap(v)}catch(e){}}});mo.observe(v,{childList:true});if(v.querySelector(".cj-wrap"))canjuMap(v)}}catch(e){}return r}}

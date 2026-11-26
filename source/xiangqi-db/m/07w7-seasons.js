@@ -150,7 +150,9 @@ const SW7_PAGES=[
   {k:"yz_qing",re:/data\/yizhan\/qing(_c|_f)?\.webp/,m:"out",rg:"s",tr:[[[0,380],[30,345],[90,322],[150,298],[180,310],[220,365],[270,410],[292,470],[282,570],[255,650],[205,665],[155,560],[90,520],[30,600],[15,680],[0,680]],[[600,400],[625,370],[660,345],[700,335],[730,330],[768,320],[768,500],[740,470],[720,420],[690,405],[640,410]]]},
   {k:"yz_classic",re:/data\/yizhan\/classic(_c|_f)?\.webp/,m:"out",rg:"cl"},
   {k:"indoor",re:/data\/(campmap|gmmap|cupmap|exammap|openmap|libmap|setmap|feedback|statmap|shipmap\/page_(bag|shelf|canju))\/?/,m:"in"}];
-function sw7Page(src){for(const o of SW7_PAGES)if(o.re.test(src))return o;return null}
+function sw7Page0(src){for(const o of SW7_PAGES)if(o.re.test(src))return o;return null}
+/* W107-L：場景頁的 iPad 橫向專用圖（07sw SCW，檔名 *_l1610）座標不是原圖像素，問 07sw：條目有天氣範圍用它，沒有就這張不下雨雪；不是登記表裡的（首頁 home_l1610）照原本找 */
+function sw7Page(src){if(/_l1610\.webp/.test(src||"")&&typeof scwSw7==="function"){const r=scwSw7(src,sw7Page0);if(r!==undefined)return r}return sw7Page0(src)}
 /* 這一頁現在是哪個節氣：預設跟手機的真實日期（07y5 tdTerm）。星槎的新世界觀若讓各朝渡口、驛站改用自己的「歷史時間」，在這裡按頁（P、o.k）覆寫就好，天氣、四季變色都問它 */
 function sw7TermFor(P,o){return P&&P.dataset&&P.dataset.sw7Term||sw7Term()}   /* ⑥ 四時風物匣點了某一季＝這一頁 data-sw7-term 暫時覆寫，離開這頁就沒了 */
 /* 11/10 開發者「同一個朝代某個場景下雨，其他場景也要統一下雨」：棋鎮各頁（首頁、書院、茶坊、天井…）原本固定算南方 "s"，渡口、驛站照那一朝自己的地區算，停在唐、五代時會一邊下一邊晴；

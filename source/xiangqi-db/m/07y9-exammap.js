@@ -28,7 +28,7 @@ function ex2Css(){if(document.getElementById("ex2Css"))return;const s=document.c
 .ex2-paper .muted{color:#6a5640 !important}.ex2-paper .card{background:rgba(255,250,238,.55) !important}
 .ex2-paper b[style*="font-size:18px"]{color:#b23a26}`;document.head.append(s)}
 /* 十五格題名榜：級名直寫；目前那一級蓋「吾」印；80% 範圍用朱筆括號；破紀錄在印外加朱圈 */
-function ex2BoardSVG(){const W=558,H=385,n=15,cw=W/n,qt=store.get("quizTheta",null),best=store.get("quizBest",null);
+function ex2BoardSVG(W0,H0){const W=W0||558,H=H0||385,n=15,cw=W/n,qt=store.get("quizTheta",null),best=store.get("quizBest",null);
   const tier=th=>Math.max(0,Math.min(n-1,Math.round(th/.55+7)));
   let g="";for(let i=1;i<n;i++)g+=`<line x1="${(i*cw).toFixed(1)}" y1="6" x2="${(i*cw).toFixed(1)}" y2="${H-6}" stroke="rgba(60,40,24,.55)" stroke-width="1.1"/>`;
   g+=EX2_RK.map((r,i)=>`<text x="${(i*cw+cw/2).toFixed(1)}" y="26" style="writing-mode:vertical-rl;text-orientation:upright" text-anchor="start" font-size="17" font-weight="800" letter-spacing="1" fill="#2a1d12" font-family="var(--kai,serif)">${esc(r)}</text>`).join("");
@@ -44,16 +44,27 @@ function ex2Books(){sheet("📚 題源",b=>{b.innerHTML=`<div style="line-height
   <p class="muted">四類題：殺法、戰術、局面判斷、殘局。答案由 Pikafish 深度計算。</p></div>`})}
 function ex2Mount(v){if(!EXAM_MAP_ON||v.querySelector(".ex2-page"))return;const intro=!!v.querySelector("#go"),res=!intro&&/估計棋力/.test(v.textContent||"");if(!intro&&!res)return;ex2Css();
   const dk=ex2Dark(),P=document.createElement("div");P.className="shp-page cq ex2-page"+(dk?" ex2-night":"");
+  /* W107-L：iPad 橫向有專用橫式圖（07sw SCW）就一開始載那張；卷子標籤、題源、出口、走路節點照條目，題名榜照條目的 fx.board（像素） */
+  const src=xqClImg(`data/exammap/${dk?"exam_night":"exam_day"}.webp?v=${EX2_IMGV}`),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}
   const sp=(id,x,y,t,cl,hide)=>{const[a,b]=ex2Pc(x,y);return`<button class="shp-spot ex2-tag${cl?" "+cl:""}" id="${id}" style="left:${a}%;top:${b}%${hide?";display:none":""}"><b>${t}</b></button>`};
-  const[bl,bt,br,bb]=EX2_BOARD;
-  P.innerHTML=`<img src="${xqClImg(`data/exammap/${dk?"exam_night":"exam_day"}.webp?v=${EX2_IMGV}`)}" alt="書院講堂的考桌和題名榜">
-    <div class="ex2-fx"><div class="ex2-board" style="left:${(bl/7.68).toFixed(2)}%;top:${(bt/13.76).toFixed(2)}%;width:${((br-bl)/7.68).toFixed(2)}%;height:${((bb-bt)/13.76).toFixed(2)}%">${ex2BoardSVG()}</div></div>
+  P.innerHTML=`<img src="${pre.src}" alt="書院講堂的考桌和題名榜">
+    <div class="ex2-fx"><div class="ex2-board">${ex2BoardSVG()}</div></div>
     ${intro?EX2_SCROLL.map(([id,sel,,,lx,ly,t])=>sp(id,lx,ly,t,"",!v.querySelector(sel))).join(""):""}${sp("ex2Book",195,640,"📚 題源","ex2-small")}`;
   const pad=v.querySelector(".pad");v.insertBefore(P,pad||v.firstChild);
   if(intro)for(const[id,sel]of EX2_SCROLL){const b=P.querySelector("#"+id);if(b)b.onclick=()=>{const t=v.querySelector(sel);if(t)t.click()}}
   P.querySelector("#ex2Book").onclick=()=>ex2Books();
+  /* 題名榜擺在哪：原圖照 EX2_BOARD（長方形，像素 768×1376）；橫式圖照條目 fx.boardQ 的四角（榜在側牆上有透視，用 07sw scwM3 貼上去；方塊照榜面大約的寬高畫，字才不會被壓扁） */
+  const brd=()=>{const e=typeof scwCur==="function"?scwCur(P):null,Q=e&&e.fx&&e.fx.boardQ,d=P.querySelector(".ex2-board");if(!d)return;
+    if(Q&&typeof scwM3==="function"){const k=P.clientWidth/e.w;if(!k)return;const W0=480,H0=540,q=Q.map(([x,y])=>[x*k,y*k]);
+      if(d.dataset.q!=="1"){d.innerHTML=ex2BoardSVG(W0,H0);d.dataset.q="1"}Object.assign(d.style,{left:"0",top:"0",width:W0+"px",height:H0+"px",transformOrigin:"0 0",transform:scwM3(W0,H0,q)});return}
+    const[bl,bt,br,bb]=EX2_BOARD;if(d.dataset.q==="1"){d.innerHTML=ex2BoardSVG();delete d.dataset.q}
+    Object.assign(d.style,{left:(bl/7.68).toFixed(2)+"%",top:(bt/13.76).toFixed(2)+"%",width:((br-bl)/7.68).toFixed(2)+"%",height:((bb-bt)/13.76).toFixed(2)+"%",transformOrigin:"",transform:""})};
+  if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}brd()});ro.observe(P)}
+  const cfg=Object.assign({},SHW_PG0,SHW_EX2);let cfgNow=cfg;
+  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:["ex2S0","ex2S1","ex2S2","ex2Book"],pfx:"ex2",cfg0:cfg,apply:brd};scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}}
+  brd();
   if(res){const c=pad&&pad.querySelector(".card");if(c)c.classList.add("ex2-paper")}
-  if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_EX2),"ex2")}catch(e){}}
+  if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfgNow,"ex2")}catch(e){}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 if(typeof Quiz==="function"){const f0=Quiz;Quiz=function(v){const R=f0.apply(this,arguments);try{if(EXAM_MAP_ON){ex2Mount(v);const mo=new MutationObserver(()=>{if(!v.isConnected||!/^#\/quiz/.test(location.hash)){mo.disconnect();return}try{ex2Mount(v)}catch(e){}});mo.observe(v,{childList:true})}}catch(e){}return R}}
