@@ -33,20 +33,40 @@ function mkCtx() {
   return c;
 }
 
+/* 列鍵一律用 Reflect.ownKeys（含不可列舉、Symbol 鍵；#239 第四輪複審）；snap 記下每個自有屬性的描述 */
+const keysOf = (T) => Reflect.ownKeys(T);
+const snap = (T) => { const o = new Map(); for (const ch of keysOf(T)) o.set(ch, Object.getOwnPropertyDescriptor(T, ch)); return o };
+/* 兩張表的形狀：原型是 context 自己的 Object.prototype（擋 setPrototypeOf），每個自有屬性都可列舉、而且是函式 */
+function shapeProblems(c, f) {
+  const bad = [], OP = vm.runInContext("Object.getPrototypeOf({})", c);
+  for (const k of ["OBJ", "TILE"]) {
+    const T = vm.runInContext("JH_MZ_" + k, c);
+    if (Object.getPrototypeOf(T) !== OP) bad.push(`載完 ${f}：JH_MZ_${k} 的原型被換掉`);
+    for (const ch of keysOf(T)) {
+      const d = Object.getOwnPropertyDescriptor(T, ch);
+      if (!d.enumerable) bad.push(`載完 ${f}：JH_MZ_${k}["${String(ch)}"] 不可列舉`);
+      if (!("value" in d) || typeof d.value !== "function") bad.push(`載完 ${f}：JH_MZ_${k}["${String(ch)}"] 不是函式`);
+    }
+  }
+  return bad;
+}
+
 function regs(patch = {}) {
   const c = mkCtx();
   const files = mazeFiles(), out = [], owner = {};   /* out：{ f, k, ch, src } 每個檔自己登記的字元；owner：每一層是哪個檔加的 */
   for (const f of files) {
     const src = patch[f] ? patch[f](rd(f)) : rd(f);
-    if (f === "07z9m-maze.js") { vm.runInContext(src, c); for (const k of ["OBJ", "TILE"]) { const T = vm.runInContext("JH_MZ_" + k, c); for (const ch of Object.keys(T)) out.push({ f, k, ch, src: String(T[ch]) }) } continue }
+    if (f === "07z9m-maze.js") { vm.runInContext(src, c); for (const k of ["OBJ", "TILE"]) { const T = vm.runInContext("JH_MZ_" + k, c); for (const ch of keysOf(T)) out.push({ f, k, ch: String(ch), src: String(T[ch]) }) } continue }
     const saved = {};
-    for (const k of ["OBJ", "TILE"]) { const T = vm.runInContext("JH_MZ_" + k, c); saved[k] = Object.assign({}, T); for (const ch of Object.keys(T)) delete T[ch] }
+    for (const k of ["OBJ", "TILE"]) { const T = vm.runInContext("JH_MZ_" + k, c); saved[k] = snap(T); for (const ch of keysOf(T)) delete T[ch] }
     vm.runInContext(src, c);
     for (const k of ["OBJ", "TILE"]) {
-      const T = vm.runInContext("JH_MZ_" + k, c), mine = Object.assign({}, T);
-      for (const ch of Object.keys(mine)) if (typeof mine[ch] === "function") out.push({ f, k, ch, src: String(mine[ch]) });
-      for (const ch of Object.keys(T)) delete T[ch];
-      Object.assign(T, mine, saved[k]);   /* 還原：已經有的保持原樣（先到先贏），新的加進去；撞名由上面的記錄判斷 */
+      const T = vm.runInContext("JH_MZ_" + k, c), mine = snap(T);
+      for (const [ch, d] of mine) out.push({ f, k, ch: String(ch), src: String(d.value) });   /* 不管是不是函式、可不可列舉都記；形狀另外由 shapeProblems 擋 */
+      for (const ch of keysOf(T)) delete T[ch];
+      /* 還原：已經有的保持原樣（先到先贏），新的加進去；撞名由上面的記錄判斷 */
+      for (const [ch, d] of mine) if (!saved[k].has(ch)) Object.defineProperty(T, ch, d);
+      for (const [ch, d] of saved[k]) Object.defineProperty(T, ch, d);
     }
     /* 這個檔載完之後才出現的層＝這個檔的層（sid:第幾層） */
     const LV = vm.runInContext("JH_MZ_LV", c);
@@ -140,15 +160,17 @@ function fullLoad(patch = {}) {
   const c = mkCtx(), bad = [], first = {};   /* first：每個字元第一次出現時的函式與檔名 */
   for (const f of mazeFiles()) {
     const before = {};
-    if (f !== "07z9m-maze.js") for (const k of ["OBJ", "TILE"]) before[k] = Object.assign({}, vm.runInContext("JH_MZ_" + k, c));
+    if (f !== "07z9m-maze.js") for (const k of ["OBJ", "TILE"]) before[k] = snap(vm.runInContext("JH_MZ_" + k, c));
     vm.runInContext(patch[f] ? patch[f](rd(f)) : rd(f), c);
+    bad.push(...shapeProblems(c, f));
     for (const k of ["OBJ", "TILE"]) {
       const T = vm.runInContext("JH_MZ_" + k, c);
-      for (const ch of Object.keys(before[k] || {})) {
-        if (!(ch in T)) bad.push(`載完 ${f}：JH_MZ_${k}["${ch}"] 不見了`);
-        else if (T[ch] !== before[k][ch]) bad.push(`載完 ${f}：JH_MZ_${k}["${ch}"] 被換掉（原本是 ${first[k + ":" + ch]}）`);
+      for (const [ch, d] of before[k] || new Map()) {
+        const now = Object.getOwnPropertyDescriptor(T, ch), nm = String(ch);
+        if (!now) bad.push(`載完 ${f}：JH_MZ_${k}["${nm}"] 不見了`);
+        else if (now.value !== d.value) bad.push(`載完 ${f}：JH_MZ_${k}["${nm}"] 被換掉（原本是 ${first[k + ":" + nm]}）`);
       }
-      for (const ch of Object.keys(T)) if (!(k + ":" + ch in first)) first[k + ":" + ch] = f;
+      for (const ch of keysOf(T)) if (!(k + ":" + String(ch) in first)) first[k + ":" + String(ch)] = f;
     }
   }
   for (const key of Object.keys(ALLOW)) if (first[key] !== ALLOW[key][0]) bad.push(`${key} 最後不是正本 ${ALLOW[key][0]} 那份（是 ${first[key]}）`);
@@ -171,4 +193,23 @@ test("改壞驗證：過宮炮拿掉守衛、真的蓋掉說明碑；或門派�
   /* 同樣的原始碼、不同的檔再登記一次也算撞（不再用「畫法一字不差」豁免） */
   const same = (s) => s + '\nJH_MZ_OBJ["y"]=H=>null;\n', dup = { "07z9m-pawn2.js": same, "07z9m-horse2.js": same };
   assert.ok(clashes(dup).some((m) => m.includes('["y"]')), "兩個檔登記一模一樣的程式也要抓得到");
+});
+
+test("改壞驗證：不可列舉的新鍵、非函式的值、改原型，都要抓得到（#239 第四輪 e4a、e4c、e7a、e7b）", () => {
+  const add = (line) => (s) => s + "\n" + line + "\n";
+  const hidden = 'Object.defineProperty(JH_MZ_OBJ,"y",{value:H=>null,enumerable:false,writable:true,configurable:true});';
+  const cases = [
+    ["e4a 仙人指路第二層加一個不可列舉的新鍵 y", { "07z9m-pawn2.js": add(hidden) }, "不可列舉"],
+    ["e4c 不可列舉的 y 之後，起馬第二層直接寫 y 蓋掉", { "07z9m-pawn2.js": add(hidden), "07z9m-horse2.js": add("JH_MZ_OBJ.y=H=>1;") }, '["y"] 被換掉'],
+    ["e7a 仙人指路第二層寫入非函式 y=1", { "07z9m-pawn2.js": add("JH_MZ_OBJ.y=1;") }, "不是函式"],
+    ["e7b y=1 之後，起馬第二層用 if(!…) 守衛寫 y（自己的沒生效）", { "07z9m-pawn2.js": add("JH_MZ_OBJ.y=1;"), "07z9m-horse2.js": add("if(!JH_MZ_OBJ.y)JH_MZ_OBJ.y=H=>null;") }, "不是函式"],
+    ["改原型：仙人指路第二層把 y 藏在原型上", { "07z9m-pawn2.js": add("Object.setPrototypeOf(JH_MZ_OBJ,{y:H=>null});") }, "原型被換掉"],
+  ];
+  for (const [name, patch, key] of cases) {
+    for (const f of Object.keys(patch)) assert.notEqual(patch[f](rd(f)), rd(f), name + "：改壞的程式要真的有改到");
+    assert.ok(fullLoad(patch).some((m) => m.includes(key)), name + "：要抓得到（" + key + "）");
+  }
+  /* e4c、e7b 在 regs 這邊也要記成兩個檔都登記 y */
+  assert.ok(clashes({ "07z9m-pawn2.js": add(hidden), "07z9m-horse2.js": add("JH_MZ_OBJ.y=H=>1;") }).some((m) => m.includes('["y"]')), "e4c：撞名檢查也要看得到不可列舉的 y");
+  assert.ok(clashes({ "07z9m-pawn2.js": add("JH_MZ_OBJ.y=1;"), "07z9m-horse2.js": add("if(!JH_MZ_OBJ.y)JH_MZ_OBJ.y=H=>null;") }).some((m) => m.includes('["y"]')), "e7b：撞名檢查也要看得到非函式的 y");
 });
