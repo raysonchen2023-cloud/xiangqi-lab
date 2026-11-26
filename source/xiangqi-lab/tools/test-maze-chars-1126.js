@@ -29,7 +29,7 @@ function regs(patch = {}) {
   };
   c.window = c; c.window.matchMedia = () => ({ matches: false }); c.location = { href: "http://x/index.html#/", hash: "#/" };
   vm.createContext(c);
-  const files = mazeFiles(), out = [];   /* out：{ f, k, ch, src } 每個檔自己登記的字元 */
+  const files = mazeFiles(), out = [], owner = {};   /* out：{ f, k, ch, src } 每個檔自己登記的字元；owner：每一層是哪個檔加的 */
   for (const f of files) {
     const src = patch[f] ? patch[f](rd(f)) : rd(f);
     if (f === "07z9m-maze.js") { vm.runInContext(src, c); for (const k of ["OBJ", "TILE"]) { const T = vm.runInContext("JH_MZ_" + k, c); for (const ch of Object.keys(T)) out.push({ f, k, ch, src: String(T[ch]) }) } continue }
@@ -42,8 +42,29 @@ function regs(patch = {}) {
       for (const ch of Object.keys(T)) delete T[ch];
       Object.assign(T, mine, saved[k]);   /* 還原：已經有的保持原樣（先到先贏），新的加進去；撞名由上面的記錄判斷 */
     }
+    /* 這個檔載完之後才出現的層＝這個檔的層（sid:第幾層） */
+    const LV = vm.runInContext("JH_MZ_LV", c);
+    for (const sid of Object.keys(LV)) {
+      const n = typeof c.jhMzLayers === "function" ? c.jhMzLayers(sid) : 1;
+      for (let k = 1; k <= n; k++) if (!(sid + ":" + k in owner)) owner[sid + ":" + k] = { f, sid, k, map: (c.jhMzLvN ? c.jhMzLvN(sid, k) : LV[sid]).map };
+    }
   }
-  return { files, out };
+  return { files, out, owner: Object.values(owner) };
+}
+
+/* 地圖字元（#239 複審）：共用程式（07z9m-maze.js）認得的格子，加上說明碑模組（07z9m-lore.js）的 L、H */
+const SHARED = "#.DCTSP>@", LORE = "LH";
+function mapProblems(patch = {}) {
+  const { out, owner } = regs(patch), bad = [], mine = {};
+  for (const r of out) (mine[r.f] = mine[r.f] || new Set()).add(r.ch);
+  for (const r of out) if (r.f !== "07z9m-maze.js" && SHARED.includes(r.ch)) bad.push(`${r.f} 登記了共用字元 "${r.ch}"（會改掉全部迷宮的 ${r.ch}）`);
+  for (const L of owner) {
+    const ok = new Set([...SHARED, ...LORE, ...(mine[L.f] || [])]);
+    for (const P of owner) if (P.sid === L.sid && P.k < L.k) for (const ch of mine[P.f] || []) ok.add(ch);
+    const used = new Set((L.map || []).join(""));
+    for (const ch of used) if (!ok.has(ch)) bad.push(`${L.sid} 第 ${L.k} 層（${L.f}）地圖用了 "${ch}"：不是共用字元、也不是自己或同派前幾層登記的`);
+  }
+  return bad;
 }
 
 /* 刻意沿用（白名單，要寫理由）：同一個東西、只是有備援畫法，不是兩派搶同一個字元 */
@@ -86,5 +107,23 @@ test("改壞驗證：三種撞法都要抓得到", () => {
     const p = { [f]: fn };
     assert.notEqual(fn(rd(f)), rd(f), name + "：改壞的程式要真的有改到");
     assert.ok(clashes(p).some((m) => m.includes(key)), name + "：要抓得到");
+  }
+});
+
+test("每層地圖只用共用字元、說明碑 L／H、自己或同派前幾層登記的字元；門派檔不准登記共用字元", () => {
+  const { owner } = regs();
+  assert.ok(owner.length >= 20, "要真的看到全部的層：" + owner.length);
+  assert.deepEqual(mapProblems(), []);
+});
+
+test("改壞驗證：地圖借別派字元、門派檔登記共用字元，都要抓得到", () => {
+  const cases = [
+    ["仙人指路第二層地圖借列炮的 ~", "07z9m-pawn2.js", (s) => s.replace('"#rrrrrrrrrrrrr#"', '"#~~~~~~~~~~~~~#"'), "地圖用了 \"~\""],
+    ["列炮第一層地圖借飛相的 X", "07z9m-opp.js", (s) => s.replace('"#..o.......o..#"', '"#..X.......o..#"'), "地圖用了 \"X\""],
+    ["仙人指路第二層登記共用的寶箱 C", "07z9m-pawn2.js", (s) => s + "\nJH_MZ_OBJ.C=H=>null;\n", "登記了共用字元 \"C\""],
+  ];
+  for (const [name, f, fn, key] of cases) {
+    assert.notEqual(fn(rd(f)), rd(f), name + "：改壞的程式要真的有改到");
+    assert.ok(mapProblems({ [f]: fn }).some((m) => m.includes(key)), name + "：要抓得到");
   }
 });
