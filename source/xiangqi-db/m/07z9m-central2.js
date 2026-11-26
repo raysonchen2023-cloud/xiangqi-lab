@@ -1,10 +1,11 @@
 /* ---------- W87-2 中炮門地底迷宮・第二層「漕底淤廊」（11/26 Windows Claude 1 分派給 Windows Claude 2）----------
    規格：story/gemini_app/208_十派地底迷宮第二三層_補件_1126_Gemini回覆.md 的中炮門第二層，照 208 複核（iMac Claude 1）和開發者 11/26 的決定改：
      ・淺水窪（Q）：走進去要多耗一回合（守衛多走一步）；擋路、擋光都不會。自動規劃路線不主動踩（lv.avoid），踩到自動走就停。
+       多耗的那一回合照「原地等一回合」的規則（jhMzStep(S,0,0)，#212 審查）：守衛走完才看到你就先提醒（spot）、這一步不走進去；被抓就照被抓；沒事才走進水窪。
      ・雙炮衛（JH_MZ_KIND.twincannon）：兩個炮衛在同一條走廊來回巡，面向那一邊看得到 3 格；
        複核選「前衛擋住就看不到」：另一個炮衛擋在前面，後面那一格起就看不到（跟過宮炮門「隔一子才看得到」區隔開）。
        前衛（front）不踩水窪，碰到水窪就掉頭；後衛會走進水窪。兩個炮衛不會走進對方那一格（碰到就掉頭）。
-     ・機關殘局：中兵突破，兵收尾兩步殺；被抓殘局一律殺題（開發者決定）。
+     ・機關殘局：中兵突破，兵收尾（古譜裡沒有兵收尾的兩步殺，用三步殺）；被抓殘局一律殺題（開發者決定），車收尾。
      ・碑刻：遊戲整理，據潘季馴《河防一覽》（複核：可用）。
      ・寶箱：門派貢獻、中炮譜殘頁、稱號「逆水行舟」（外觀出圖前先問開發者，這一層的獎勵本來就是稱號，不用出圖）。
      ・修為 +40、去重鍵 maze:central:2（jhMzLayer 照開發者決定給）。配樂照第一層同一首（環境音之後另做）。 */
@@ -40,8 +41,8 @@ JH_MZ_KIND.twincannon={
   step(S,G){const blk=(x,y)=>jhMzSolid(S,x,y)||jhMzCentral2Mate(S,G,x,y)||!!G.front&&jhMzCell(S,x,y)==="Q";let dx=G.dx||0,dy=G.dy||0;
     if(blk(G.x+dx,G.y+dy)){dx=-dx;dy=-dy;G.dx=dx;G.dy=dy}if(!blk(G.x+dx,G.y+dy)){G.x+=dx;G.y+=dy}},
   look:{body:"#3a2418",head:"#5a3626",eye:0xE24A3A}};
-/* 走進水窪：陷在泥裡多耗一回合（守衛先多走一步），然後照預設走進去 */
-function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;S.turn++;jhMzGuardStep(S);return null}
+/* 走進水窪：陷在泥裡多耗一回合——照原地等一回合跑（守衛走、先提醒、被抓都照共用規則）；那一回合沒事，才照預設走進去 */
+function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;const r=jhMzStep(S,0,0);return r.ev==="move"?null:r}
 /* 3D：淺水窪（地上一層半透明的淡藍水面）；平面版：地面色上一塊淡藍 */
 if(!JH_MZ_OBJ.Q)JH_MZ_OBJ.Q=H=>{const{T3,mesh}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(.96,.03,.96),new T3.MeshLambertMaterial({color:0x4a6a7a,transparent:true,opacity:.75}),0,.015,0));return g};
 if(!JH_MZ_TILE.Q)JH_MZ_TILE.Q=(cx,px,py,T)=>{cx.fillStyle="#3b3428";cx.fillRect(px,py,T,T);cx.fillStyle="rgba(90,130,150,.75)";cx.fillRect(px+T*.08,py+T*.08,T*.84,T*.84)};
