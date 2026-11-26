@@ -74,6 +74,7 @@ const JH_MZ_BGM="maze/maze_1.mp3";
      guards     守衛 [{kind, x, y, dx, dy, …}]：走法與視線照 JH_MZ_KIND[kind]（中炮門是 rook＝車）
      puz/pool   殘局：puz＝固定題；pool＝題庫 {door:[…], trap:[…]}，每題 {zh:[標題,說明], en:[…], fen, line:[紅,黑,紅,…]}（多步殺）或 ans（一步殺）
      solid／opaque  擋路／擋光的字元（預設 "#SD"／"#D"）；jump  可以像炮一樣隔一個跳過去的字元（中炮門 "S"＝糧袋）
+     canMove(S,x,y,dx,dy)  自動走找路時問它這一步能不能走（例如仙人指路第二層竹林只能上下直走）；沒設＝都能走。實際走路的限制要在 onStep 另外擋
      onStep(S,dx,dy,c)  走一步之前的機關（例如推箱子塞象眼），回傳事件物件就照它、回傳 null 照預設走
      rew、xp、xpKey、key（存檔鍵）、title、lvName、intro、warn、hall（門內頁入口）、back（回到哪一派的門內頁）
    守衛走法 JH_MZ_KIND[kind]＝{step(S,G), sight(S,G)→[{x,y}]，look（3D 顏色）}；障礙外觀 JH_MZ_OBJ[字元]＝(T3,helpers)→Group（3D），預設糧袋 */
@@ -398,7 +399,7 @@ function jhMzPath(S,tx,ty){const P=S.player,K=(x,y)=>y*S.W+x,isDoor=(x,y)=>jhMzC
   if(jhMzSolid(S,tx,ty)&&!isDoor(tx,ty))return null;const prev=new Map([[K(P.x,P.y),null]]),q=[[P.x,P.y]];
   while(q.length){const[x,y]=q.shift();if(x===tx&&y===ty)break;
     for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+a,ny=y+b,kk=K(nx,ny),end=nx===tx&&ny===ty;if(prev.has(kk))continue;
-      if(jhMzSolid(S,nx,ny)&&!(end&&isDoor(nx,ny)))continue;if(!S.seen.has(kk)&&!end)continue;if(!end&&jhMzAvoid(S,nx,ny))continue;prev.set(kk,[x,y]);q.push([nx,ny])}}
+      if(jhMzSolid(S,nx,ny)&&!(end&&isDoor(nx,ny)))continue;if(!S.seen.has(kk)&&!end)continue;if(!end&&jhMzAvoid(S,nx,ny))continue;if(S.lv.canMove&&!S.lv.canMove(S,x,y,a,b))continue;prev.set(kk,[x,y]);q.push([nx,ny])}}
   if(!prev.has(K(tx,ty)))return null;const o=[];let cur=[tx,ty];while(cur&&!(cur[0]===P.x&&cur[1]===P.y)){o.unshift(cur);cur=prev.get(K(cur[0],cur[1]))}return o}
 /* 殘局：走一步。回傳 ok（解開）、bad（不是答案）、back（陷阱錯第 4 次，拖回入口） */
 /* W87：這一題是哪一題——有題庫（pool[id]）就照「第幾次走＋這一層換過幾題」輪著挑（同一層換題不重複，題庫夠大才不重複），沒有就用固定題 puz[id] */

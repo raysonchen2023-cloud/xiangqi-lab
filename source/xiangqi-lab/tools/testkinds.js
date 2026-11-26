@@ -192,6 +192,7 @@ const CLASSIFIED = new Set([
   "test-jh-opp-1126.js",   /* 11/26 W87-2 列炮地底迷宮（m/07z9m-opp.js）：vm 跑淨面戲軸繞九宮外圈、緊鄰四格＋飛將（隔水溝也看得到、戲箱擋住）（含改壞驗證）；冷光柱點亮整欄；地圖 BFS 與兩種步調差都有不被抓的路；兩段題庫 core.js 獨立重算 */
   "test-jh-corner-1126.js",   /* 11/26 W87-2 仕角炮地底迷宮（m/07z9m-corner.js）：vm 跑朝奉機關只在那一間斜走、只看正在走的那一條斜線（另一條、每邊正中間、出了那一間都看不到、擋光）（含改壞驗證）；銅鏡照亮整條直線；地圖 BFS 與 512 種步調錯開都有不被抓的路；兩段題庫 core.js 獨立重算 */
   "test-jh-palace-1126.js",   /* 11/26 W87-2 反宮馬地底迷宮（m/07z9m-palace.js）：vm 跑墨工傀儡跳日字、反宮挑離工坊中心最遠的落點、蹩馬腿、墨池裡看不到也抓不到（含改壞驗證）；墨池擋光；地圖 BFS 與任一傀儡慢 1～7 回合都有不被抓的路；兩段題庫 core.js 獨立重算 */
+  "test-jh-pawn2-1126.js",   /* 11/26 W87-2 仙人指路地底迷宮第二層「漏月迷陣」（m/07z9m-pawn2.js、jhMzPath 的 lv.canMove）：vm 跑竹林只能上下直走（onStep 與自動走）、巡竹兵卒過河加左右視線、逐回合模擬走得過（守衛慢 1～7 回合也一樣）、題庫與改壞驗證 */
   "test-jh-maze-layers-1126.js",   /* 11/26 W87-2 地底迷宮換層（m/07z9m-maze.js jhMzLayer／jhMzDeep／jhMzPick、07z9m-fall.js 層數標題、07z9m-central2.js 中炮門第二層示範）：vm 跑登記多層不動第一層、存檔分層、最深層含舊存檔、選層鎖住、門內頁入口、轉場何時播（含改壞驗證） */
   "test-jh-maze-save-1126.js",   /* 11/26 W87-2 地底迷宮存檔跟旅程走（m/05b-save.js JOURNEY_KEYS 加 jhMaze*、各層、題目指標）：vm 跑真的 saveSnap／saveApply＋jhMzGet／jhMzSave，十派每層都在清單、兩段旅程互不影響、舊存檔升上來（含改壞驗證） */
   "test-jh-central2-1126.js",   /* 11/26 W87-2 中炮門地底迷宮第二層（m/07z9m-central2.js）：vm 跑雙炮衛看 3 格、另一個炮衛擋住就看不到、前衛不踩水窪（含改壞驗證）；淺水窪多耗一回合、自動走繞開；地圖 BFS、必經走廊、任一炮衛慢 1～7 回合都走得過；兩段題庫 core.js 獨立重算 */
