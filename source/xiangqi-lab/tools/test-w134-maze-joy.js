@@ -64,3 +64,28 @@ test("〔原始碼〕迷宮頁掛上搖桿；原本的方向鈕、鍵盤方向�
   assert.match(SRC, /setAttribute\("aria-hidden","true"\)/, "搖桿本身不進旁白（旁白用方向鈕）");
   assert.equal(/(^|[^:"'])\/\/(?!#)/m.test(SRC.replace(/'[^'\n]*'|"[^"\n]*"|`[^`]*`/g, "")), false, "07z9m-joy.js 裡不要有 // 註解");
 });
+
+test("搖桿位置可以自己放（開發者 11/26「左邊或是右邊或是任何地方」）：存比例、換尺寸照比例放、整個圓盤含把手都留在框裡", () => {
+  const at = vm.runInContext("jhMzJoyAt", ctx), R = J.R;
+  const p = at(.5, .5, 400, 700);
+  assert.deepEqual([p.left + R, p.top + R], [200, 350], "正中間");
+  const q = at(.5, .5, 1180, 700);
+  assert.deepEqual([q.left + R, q.top + R], [590, 350], "換尺寸照比例");
+  const c = at(1.2, -0.3, 400, 700);
+  assert.ok(c.left >= 6 && c.left + 2 * R + 10 <= 400 - 6, "拖到右邊外面：夾回框裡（右上把手多出 10px 也算）");
+  assert.ok(c.top - 10 >= 6, "拖到上面外面：把手不出框");
+  const d = at(-1, 2, 400, 700);
+  assert.deepEqual([d.left, d.top + 2 * R], [6, 700 - 6], "左下角外面：貼左下、離邊 6");
+});
+
+test("點一下把手換位置：左下 → 右下 → 預設 → 左下", () => {
+  const nx = vm.runInContext("jhMzJoyNext", ctx);
+  assert.equal(nx(null), "l"); assert.equal(nx("l"), "r"); assert.equal(nx("r"), null);
+});
+
+test("〔原始碼〕把手：拖＝搬到任何位置並記住（直的、橫的各一份）；點一下換左右；拖的時候不會走", () => {
+  assert.match(SRC, /store\.set\("mzJoyPos",a\)/);
+  assert.match(SRC, /orient=\(\)=>jhMzJoySide\(innerWidth,innerHeight\)==="r"\?"w":"t"/);
+  assert.match(SRC, /J\.addEventListener\("pointerdown",e=>\{if\(e\.target===grip\)return;/, "按把手不會開始走");
+  assert.match(SRC, /grip\.addEventListener\("pointerdown",e=>\{e\.preventDefault\(\);e\.stopPropagation\(\);/);
+});
