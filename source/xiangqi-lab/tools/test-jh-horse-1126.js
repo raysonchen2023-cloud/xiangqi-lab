@@ -36,25 +36,34 @@ test("野馬的視線跟屏風馬門的銅人一樣：下一步跳得到的日�
   assert.equal(c.jhMzSight(S, S.guard).length, 6, "玩家站在右邊馬腿：少兩個");
 });
 
-test("循足跡追：前 LAG 回合照巡法；之後朝 LAG 步以前的足跡跳、每跳一次都不會比原地更遠；足跡在原地時不亂跳", () => {
-  const c = load(), LAG = vm.runInContext("JH_MZ_HORSE_LAG", c);
-  const S = room(c, OPEN, { x: 1, y: 1, dx: 2, dy: 1 }, 9, 9);
-  const d2 = (G, x, y) => (G.x - x) ** 2 + (G.y - y) ** 2;
-  /* 玩家原地不動：足跡都在 (9,9)，野馬應該一路靠近，不會變遠 */
-  let last = d2(S.guard, 9, 9);
-  for (let i = 0; i < 8; i++) { c.jhMzGuardStep(S); const d = d2(S.guard, 9, 9); if (i >= LAG) assert.ok(d <= last, "第 " + i + " 回合沒有變遠：" + d + " ≤ " + last); last = d }
-  assert.ok(last < 2 * 2 + 1 * 1 + 1, "最後跳到 (9,9) 附近：" + last);
-  /* 足跡慢 LAG 步：玩家剛換位置，野馬追的還是舊的那一格 */
-  const T = room(c, OPEN, { x: 1, y: 9, dx: 2, dy: -1 }, 9, 1);
-  for (let i = 0; i < LAG + 1; i++) c.jhMzGuardStep(T);
-  assert.deepEqual(JSON.parse(JSON.stringify(T.guard.tr[0])), [9, 1], "追的是 LAG 步以前的那一格");
+test("循足跡追（#198 審查①）：玩家每回合往右走一格，野馬朝 LAG 步以前那一格跳——逐回合用「落點離那一格最近、跳了不會更遠」獨立算出該落在哪裡；這個情境裡「不延遲」會跳到不同的地方", () => {
+  const c = load(), LAG = vm.runInContext("JH_MZ_HORSE_LAG", c), DIR = vm.runInContext("JH_MZ_HORSE_DIR", c);
+  const S = room(c, OPEN, { x: 1, y: 1, dx: 2, dy: 1 }, 1, 8), G = S.guard, P = [];
+  const pick = (gx, gy, tx, ty) => { let best = null, bd = 1e9; for (const [dx, dy] of DIR) { if (!c.jhMzHorseCan(S, gx, gy, dx, dy, G)) continue; const d = (gx + dx - tx) ** 2 + (gy + dy - ty) ** 2; if (d < bd) { bd = d; best = [gx + dx, gy + dy] } }
+    return best && bd < (gx - tx) ** 2 + (gy - ty) ** 2 ? best : [gx, gy] };
+  let differs = 0;
+  for (let i = 0; i < 8; i++) {
+    at(S, 1 + i, 8); P.push([1 + i, 8]);
+    const gx = G.x, gy = G.y, n = Math.min(P.length, LAG + 1), want = P.length > LAG ? pick(gx, gy, ...P[P.length - 1 - LAG]) : null, now = P.length > LAG ? pick(gx, gy, ...P[P.length - 1]) : null;
+    c.jhMzGuardStep(S);
+    if (want) { assert.deepEqual([G.x, G.y], want, "第 " + i + " 回合朝 " + LAG + " 步以前的 " + P[P.length - 1 - LAG] + " 跳"); if (now[0] !== want[0] || now[1] !== want[1]) differs++ }
+    assert.equal(G.tr.length, n, "足跡只留 LAG+1 筆");
+  }
+  assert.ok(differs > 0, "這個情境裡至少有一回合「追現在的位置」跟「追 LAG 步以前」跳的地方不同（改成不延遲就會紅）");
 });
 
-test("蹩馬腿困住野馬：四面都被牆蹩住時原地不動", () => {
-  const c = load(), rows = ["#####", "#...#", "##.##", "#...#", "#####"];
-  const S = room(c, rows, { x: 2, y: 2 }, 1, 1);
-  const before = [S.guard.x, S.guard.y]; for (let i = 0; i < 6; i++) c.jhMzGuardStep(S);
-  assert.deepEqual([S.guard.x, S.guard.y], before, "日字四個馬腿方向都是牆，跳不出去");
+test("蹩馬腿困住野馬（#198 審查②）：只有四個馬腿是牆、八個落點都是空地時跳不出去；玩家站在馬腿上，那兩個方向跳不過去", () => {
+  const c = load();
+  const rows = ["#######", "#.....#", "#..#..#", "#.#.#.#", "#..#..#", "#.....#", "#######"];   /* 野馬在 (3,3)，上下左右四個馬腿 (3,2)(3,4)(2,3)(4,3) 是牆，日字落點都是空地 */
+  let S = room(c, rows, { x: 3, y: 3 }, 1, 1);
+  for (const [dx, dy] of vm.runInContext("JH_MZ_HORSE_DIR", c)) assert.ok(!c.jhMzSolid(S, 3 + dx, 3 + dy), "落點 " + (3 + dx) + "," + (3 + dy) + " 是空地");
+  for (let i = 0; i < 6; i++) c.jhMzGuardStep(S);
+  assert.deepEqual([S.guard.x, S.guard.y], [3, 3], "四個馬腿都是牆：原地不動");
+  /* 玩家站在右邊的馬腿 (5,4)：野馬在 (4,4)，往右的兩個日字 (6,3)(6,5) 跳不過去 */
+  S = room(c, OPEN, { x: 4, y: 4, dx: 2, dy: -1 }, 5, 4);
+  assert.ok(!c.jhMzSight(S, S.guard).some((q) => q.x === 6), "看不到右邊那兩格");
+  c.jhMzGuardStep(S);
+  assert.ok(!(S.guard.x === 6 && (S.guard.y === 3 || S.guard.y === 5)), "玩家站在馬腿上，往右那兩格跳不過去：" + S.guard.x + "," + S.guard.y);
 });
 
 function reach(c, S) { const lv = LV(c), seen = new Set(), q = []; const st = S.player; q.push([st.x, st.y]); seen.add(st.y * S.W + st.x);
