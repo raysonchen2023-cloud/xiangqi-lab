@@ -21,8 +21,9 @@ function pcCss(){if(PC.css)return;PC.css=true;const s=document.createElement("st
 @keyframes pcIn{from{opacity:0}to{opacity:1}}`;document.head.append(s)}
 function pcIfx(){try{if(typeof ifxData!=="function"||!(typeof ifxOn==="function"&&ifxOn()))return Promise.resolve();
   return ifxData().then(M=>{if(M)for(const e of PORTC_ERAS){const a=M["shipmap/port_"+e];if(a)for(const x of["_c","_f"])if(!M["shipmap/port_"+e+x])M["shipmap/port_"+e+x]=a}}).catch(()=>{})}catch(e){return Promise.resolve()}}
-function pcSet(img,src,orig){const L=[].concat(src);let i=0;img.onerror=()=>{i++;if(i<L.length)img.src=L[i];else{img.onerror=null;img.src=orig}};pcIfx();img.src=L[0]}
+function pcSet(img,src,orig){{const F=img.closest&&img.closest(".shp-page");if(F&&F.dataset.scw)return}   /* W107-L：上色過場播到一半轉成橫式圖，不要把圖換回直的（審查 #165 建議） */const L=[].concat(src);let i=0;img.onerror=()=>{i++;if(i<L.length)img.src=L[i];else{img.onerror=null;img.src=orig}};pcIfx();img.src=L[0]}
 function portColor(v,k){if(!PORTC_ON||!PORTC_ERAS.includes(k))return;const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.querySelector(":scope>img");if(!img)return;
+  if(P.dataset.scw)return;   /* W107-L：iPad 橫向用全彩橫式圖（07f portScw），不跑下船上色過場；轉回直向時 07sw 換回全彩直圖 */
   const orig=img.getAttribute("src"),src="data/shipmap/port_"+k+"_c.webp",full=PORTF_ON&&PORTF_ERAS.includes(k)?"data/shipmap/port_"+k+"_f.webp":null,arr=PC.k===k&&Date.now()-PC.at<15000;PC.at=0;PC.k=null;
   let rm=false;try{rm=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
   if(!arr||rm){pcSet(img,full?[full,src]:src,orig);return}
@@ -32,7 +33,7 @@ function portColor(v,k){if(!PORTC_ON||!PORTC_ERAS.includes(k))return;const P=v&&
   const ld=u=>new Promise(r=>{if(!u)return r(null);const i=new Image();i.decoding="async";i.onload=()=>r(u);i.onerror=()=>r(null);i.src=u});
   Promise.all([ld(src),ld(full)]).then(([c,f])=>{if(!P.isConnected||sk)return;if(!c&&!f){P.removeEventListener("click",sk0,true);P.classList.remove("pc-run");return}
     let n=0;const wait=()=>{if(!P.isConnected)return;if(document.querySelector(".walkc")&&n++<40){setTimeout(wait,100);return}setTimeout(()=>{if(sk)return;P.removeEventListener("click",sk0,true);pcRun(P,img,c||f,orig,c&&f)},350)};wait()})}   /* 回饋 835：已經點過跳過就不播 */
-function pcRun(P,img,src,orig,full){if(!P.isConnected)return;
+function pcRun(P,img,src,orig,full){if(!P.isConnected)return;if(P.dataset.scw){P.classList.remove("pc-run");return}   /* W107-L：已經換成 iPad 橫式圖就不播（過場是照直圖做的） */
   const mkO=u=>{const o=document.createElement("img");o.className="pc-col";o.alt="";o.src=u;return o};
   const o=mkO(src),o2=full?mkO(full):null;img.after(o);if(o2){o2.style.opacity="0";o.after(o2)}
   const fin_src=full||src;
@@ -43,6 +44,7 @@ function pcRun(P,img,src,orig,full){if(!P.isConnected)return;
     const fin=()=>{o.remove();if(o2)o2.remove();P.classList.remove("pc-run");P.classList.add("pc-in");setTimeout(()=>P.classList.remove("pc-in"),700)};
     img.addEventListener("load",fin,{once:true});img.addEventListener("error",fin,{once:true});pcSet(img,full?[full,src]:src,orig);if(img.complete&&img.naturalWidth&&img.getAttribute("src")===fin_src)setTimeout(fin,30)};
   const skip=e=>{e.stopPropagation();e.preventDefault();end()};P.addEventListener("click",skip,true);
+  P._pcStop=()=>{done=true;cancelAnimationFrame(raf);P.removeEventListener("click",skip,true);o.remove();if(o2)o2.remove();delete P._pcStop};   /* 07f portScwStop：播到一半轉成橫式圖，直接收掉，不等底圖換回直的 */
   const T1=1700,T2=o2?1700:0,t0=performance.now(),ease=t=>1-Math.pow(1-t,2.2),io=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
   if(mk)o.style[mk]="radial-gradient(circle at 10% 96%,#000 0%,transparent 0%)";else{o.style.filter="grayscale(1)"}
   const step=now=>{if(done)return;if(!o.isConnected){end();return}const e=now-t0,t=Math.min(1,e/T1);
@@ -55,7 +57,7 @@ function pcRun(P,img,src,orig,full){if(!P.isConnected)return;
    每次開 App、每個驛站第一次進門播一次（sessionStorage yzcSeen），之後直接全彩；減少動態直接全彩；圖 4 秒內沒載好也直接全彩；點一下跳過（pcRun）。
    由 07m-yizhan.js 的驛站頁插好以後呼叫。開關 YZC_ON */
 const YZC_ON=true;
-function yzColor(P,k){if(!YZC_ON||!P||!P.isConnected||!k)return;const img=P.querySelector(":scope>img");if(!img)return;
+function yzColor(P,k){if(!YZC_ON||!P||!P.isConnected||!k||(P.dataset&&P.dataset.scw))return;   /* W107-L：iPad 橫向換成橫式圖（07sw）時不播：淡彩 _c 只有直式圖 */const img=P.querySelector(":scope>img");if(!img)return;
   let seen={},rm=false;try{seen=JSON.parse(sessionStorage.getItem("yzcSeen")||"{}")||{}}catch(e){}try{rm=matchMedia("(prefers-reduced-motion: reduce)").matches}catch(e){}
   if(seen[k]||rm)return;seen[k]=1;try{sessionStorage.setItem("yzcSeen",JSON.stringify(seen))}catch(e){}
   const q=k==="classic"&&typeof YZ_CLV!=="undefined"?"?v="+YZ_CLV:"",c="data/yizhan/"+k+"_c.webp"+q,f="data/yizhan/"+k+"_f.webp"+q,orig=img.getAttribute("src");

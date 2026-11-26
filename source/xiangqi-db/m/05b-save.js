@@ -66,6 +66,12 @@ JOURNEY_KEYS.push("m_jhFeixiang");   /* 11/22 開發者（W48-S8 飛相門「築
 JOURNEY_KEYS.push("m_jhGateSeen");   /* 11/24 W104 十州棋館晚明轉場（07z9n-jhgate.js）：jhGateSeen＝第一次看過的時間（之後旁白換成「十州棋局再開」）；新旅程重新算 */
 JOURNEY_KEYS.push("m_jhXianren");   /* 11/22 開發者（W48-S7 仙人指路門「探路猜陣勢」，07z9k-xianren.js）：jhXianren＝上次選的難度、今天領過修為的日子、累計答對題數（揚州園林探路紀錄） */
 JOURNEY_KEYS.push("m_jhMzDeep");   /* W87-2 換層（11/26，07z9m-maze.js jhMzDeep）：jhMzDeep＝各派地底迷宮最深到過第幾層（門內頁選層用）。另外加一行，不動上面清單的字 */
+/* W87-2（11/26 開發者選單「修，跟旅程走」，Windows Claude 1 轉）：地底迷宮的通關紀錄（clear、best、各種獎勵）和題目指標（…Ptr）跟旅程走。
+   鍵照 07z9m-maze.js：中炮門 jhMaze、其他派 jhMaze_<派>；第二層以後加 _L<層>（目前做到第三層）；題目指標再加 Ptr。十派名單、層數寫死在這裡（05b 比迷宮早載入），加派或加層要一起改（test-jh-maze-save-1126 會比對）。
+   舊存檔：這些鍵原本是整支手機共用；讀檔、開新旅程之前都會先 saveNow 存目前這一格，所以第一次切換時，現有的迷宮進度歸給「當時正在玩的那段旅程」；
+   其他舊存檔格沒有這些鍵，讀進來就是迷宮從頭開始（以前沒分開記，分不出是哪段旅程的）。 */
+const JH_MZ_SAVE_SIDS=["central","cross_palace","pawn","elephant","screen","horse","same_cannon","opposite_cannon","advisor_corner","palace_horse"],JH_MZ_SAVE_LAYERS=3;
+for(const s of JH_MZ_SAVE_SIDS)for(let n=1;n<=JH_MZ_SAVE_LAYERS;n++){const k="m_"+(s==="central"?"jhMaze":"jhMaze_"+s)+(n>1?"_L"+n:"");JOURNEY_KEYS.push(k,k+"Ptr")}
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
 /* 開發者 11/6 修：全新玩家第一次打開，開機時就會寫進 era、jStars、playSec 這些鍵，原本的判斷會把新玩家當成舊玩家，跳出「存檔功能上線了、角色是小帥Q版」。改成只看真的玩過才會有的鍵（新手引導做完、修為、戰績、故事進度） */
