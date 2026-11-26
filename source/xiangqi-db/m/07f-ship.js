@@ -391,12 +391,37 @@ const SHIP_PZ_SPOT=[[17,42],[80,37],[64,85]];
 const PZ_TL=[320,582],PZ_TR=[697,737],PZ_BL=[65,853],PZ_BR=[453,1065];
 const pzP=(u,v)=>{const s=u/8,t=v/9;return[(1-s)*(1-t)*PZ_TL[0]+s*(1-t)*PZ_TR[0]+(1-s)*t*PZ_BL[0]+s*t*PZ_BR[0],(1-s)*(1-t)*PZ_TL[1]+s*(1-t)*PZ_TR[1]+(1-s)*t*PZ_BL[1]+s*t*PZ_BR[1]]};
 const PZ_CN={r:"車",n:"馬",b:"象",a:"士",k:"將",c:"砲",p:"卒",R:"俥",N:"傌",B:"相",A:"仕",K:"帥",C:"炮",P:"兵"};
-function pzSvg(fen){const L=[];String(fen||"").split(" ")[0].split("/").forEach((row,v)=>{let u=0;for(const c of row){if(/\d/.test(c)){u+=+c;continue}if(PZ_CN[c])L.push([u,v,c]);u++}});
-  L.sort((a,b)=>pzP(a[0],a[1])[1]-pzP(b[0],b[1])[1]);const rx=21.4,ry=17.6,th=6.7;
+function pzSvg(fen){pzSvg.last=fen;const L=[];String(fen||"").split(" ")[0].split("/").forEach((row,v)=>{let u=0;for(const c of row){if(/\d/.test(c)){u+=+c;continue}if(PZ_CN[c])L.push([u,v,c]);u++}});
+  L.sort((a,b)=>pzP(a[0],a[1])[1]-pzP(b[0],b[1])[1]);const rx=21.4,ry=17.6,th=6.7,z=pzZ();   /* W107-L：橫式圖的棋盤在圖上比較寬（四角換了），棋子照棋盤寬放大；直圖 z＝1 輸出不變 */
   return L.map(([u,v,c])=>{const[x,y]=pzP(u,v),red=c===c.toUpperCase(),sd=red?"#78100a":"#080808",tp=red?"#d6221a":"#1d1d1d",hi=red?"#ff7864":"#787878",tc=red?"#ffecd6":"#e8e8e4";
-    return`<g><ellipse cx="${x+4.6}" cy="${y+th+4.6}" rx="${rx}" ry="${ry}" fill="rgba(0,0,0,.28)"/><ellipse cx="${x}" cy="${y+th}" rx="${rx}" ry="${ry}" fill="${sd}"/><rect x="${x-rx}" y="${y}" width="${rx*2}" height="${th}" fill="${sd}"/><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${tp}" stroke="${sd}" stroke-width="2"/><ellipse cx="${x}" cy="${y}" rx="${rx*.78}" ry="${ry*.78}" fill="none" stroke="${hi}" stroke-width="1.4"/><text x="${x}" y="${y+8.6}" text-anchor="middle" font-size="25" font-family="var(--serif),serif" font-weight="700" fill="${tc}">${PZ_CN[c]}</text></g>`}).join("")}
-function ShipPz(v){setTop("♟ 千秋殘局","#/adventure");setTabs(false);v.className="view";const k=shipHere(),T=SHIP_STOP[k]||{};
-  v.innerHTML=`<div class="shp-page" id="pzPage"><img src="data/shipmap/page_canju.webp" alt="星槎石桌"><svg class="pz-svg" viewBox="0 0 768 1376" preserveAspectRatio="xMidYMid meet" id="pzSvg"></svg><div class="shp-cap"><b>♟ 千秋殘局・${esc(shipShort(k))}</b><small id="pzCap">${esc(T.place||"")}</small></div><div id="pzSpots"></div><button class="btn pz-go" id="pzGo" style="display:none">♟ 開始下棋</button></div><div id="pzMore"></div>`;
+    return`<g${z!==1?` transform="translate(${x} ${y}) scale(${z}) translate(${-x} ${-y})"`:""}><ellipse cx="${x+4.6}" cy="${y+th+4.6}" rx="${rx}" ry="${ry}" fill="rgba(0,0,0,.28)"/><ellipse cx="${x}" cy="${y+th}" rx="${rx}" ry="${ry}" fill="${sd}"/><rect x="${x-rx}" y="${y}" width="${rx*2}" height="${th}" fill="${sd}"/><ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${tp}" stroke="${sd}" stroke-width="2"/><ellipse cx="${x}" cy="${y}" rx="${rx*.78}" ry="${ry*.78}" fill="none" stroke="${hi}" stroke-width="1.4"/><text x="${x}" y="${y+8.6}" text-anchor="middle" font-size="25" font-family="var(--serif),serif" font-weight="700" fill="${tc}">${PZ_CN[c]}</text></g>`}).join("")}
+/* W107-L 第 4 批（審查 #168 第 1 項）：石桌棋盤頁 iPad 橫向用橫式圖 page_canju_l1610。四角、三團星光是 ship_pages_l1610.json 的 page_canju（Windows Claude 1 依透視重畫棋盤、量格線交點），
+   星光照橫式圖上三團金點的位置。這頁是長捲動頁（沒有 cq，不走 07fl 滿版），自己聽 resize 換圖：pzUse 原地換掉 PZ_TL/TR/BL/BR、SHIP_PZ_SPOT 的值（07o 續局也讀同一份），換回直圖還原 */
+const PZ_L1610={TL:[1164,686],TR:[1718,836],BL:[798,1028],BR:[1367,1285],spot:[[21,60],[83,40],[84,73]]},PZ_KEY="shipmap/page_canju",PZ_SRC0="data/shipmap/page_canju.webp";
+const PZ_T0={TL:PZ_TL.slice(),TR:PZ_TR.slice(),BL:PZ_BL.slice(),BR:PZ_BR.slice(),spot:SHIP_PZ_SPOT.map(x=>x.slice())};
+function pzUse(wide){const F=wide?PZ_L1610:PZ_T0;[[PZ_TL,F.TL],[PZ_TR,F.TR],[PZ_BL,F.BL],[PZ_BR,F.BR]].forEach(([a,b])=>{a[0]=b[0];a[1]=b[1]});F.spot.forEach((p,i)=>{SHIP_PZ_SPOT[i]=p.slice()})}
+const pzZ=()=>{const d=(a,b)=>Math.hypot(b[0]-a[0],b[1]-a[1]),z=d(PZ_TL,PZ_TR)/d(PZ_T0.TL,PZ_T0.TR);return Math.abs(z-1)<1e-6?1:+z.toFixed(4)};
+const pzVB=wide=>wide?[2560,1600]:[768,1376];
+/* 換圖：底圖、svg 的 viewBox 和比例、星光位置、已擺上的棋子（pzSvg.last）都換成 k 那一套；橫式圖載不到退回直圖（記 SCW_BAD，這次開 App 不再試） */
+function pzSet(v,k){const pg=v&&v.querySelector("#pzPage");if(!pg)return;const img=pg.querySelector(":scope>img"),svg=pg.querySelector("#pzSvg"),wide=!!k;
+  pzUse(wide);pg.dataset.scw=k||"";pg.classList.toggle("scw-l",wide);const[W,H]=pzVB(wide);
+  const src=wide&&typeof scwSrc==="function"?scwSrc(SCW[PZ_KEY]):PZ_SRC0;if(img&&img.getAttribute("src")!==src){img.onerror=wide?()=>pzFail(v,img):null;if(img.dataset)delete img.dataset.cdnTry;img._scwCdn="";img.src=src}   /* 換網址就清掉 00-util 的 cdnTry，新網址載不到時它才會再去 CDN 補抓（直圖 page_canju 只在 CDN） */
+  if(svg){svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.style.aspectRatio=W+"/"+H;if(svg.innerHTML&&pzSvg.last!=null)svg.innerHTML=pzSvg(pzSvg.last)}
+  pg.querySelectorAll("#pzSpots .shp-spot").forEach(b=>{const p=SHIP_PZ_SPOT[+b.dataset.i];if(p&&typeof scwPut==="function")scwPut(b,p)})}   /* 走 07sw scwPut：清掉 00-util xqTop0 記的舊 top（不然轉回直向 top 又被放回橫式的值） */
+/* 橫式圖載不到（照 07sw scwFail，審查 #168 第二輪）：00-util 的擷取監聽先把 src 改成 XQ_CDN、設 cdnTry，同一次事件才輪到這裡——這時候還在等 CDN 那次，不能退回（會蓋掉補抓）；
+   記住正在等的網址，CDN 那次也失敗（同一個網址再錯一次）才記 SCW_BAD、退回直圖 */
+function pzFail(v,im){const u=String(im.getAttribute("src")||im.src||"");
+  if(im.dataset&&im.dataset.cdnTry&&typeof XQ_CDN==="string"&&u.indexOf(XQ_CDN)===0&&im._scwCdn!==u){im._scwCdn=u;return}
+  if(typeof SCW_BAD!=="undefined")SCW_BAD[PZ_KEY]=1;pzSet(v,"")}
+/* 開頁就是橫式圖：掛上載不到退回 */
+function pzMountErr(v,pre){const im=v.querySelector("#pzPage>img");if(pre.k&&im)im.onerror=()=>pzFail(v,im)}
+function pzScw(v){const pre=typeof scwPre==="function"?scwPre(v,PZ_SRC0):{src:PZ_SRC0,k:""};pzUse(!!pre.k);
+  let t=0;const rs=()=>{clearTimeout(t);t=setTimeout(()=>{const pg=v.querySelector("#pzPage");if(!v.isConnected||!pg){removeEventListener("resize",rs);return}
+    const k=typeof scwPick==="function"?scwPick(v,null,PZ_KEY):"";if(k!==(pg.dataset.scw||""))pzSet(v,k)},150)};
+  if(v._pzRs)removeEventListener("resize",v._pzRs);v._pzRs=rs;addEventListener("resize",rs);return pre}   /* 重開這頁先拿掉上一次的監聽，不累積 */
+function ShipPz(v){setTop("♟ 千秋殘局","#/adventure");setTabs(false);v.className="view";const k=shipHere(),T=SHIP_STOP[k]||{},pzPre=pzScw(v),[pzW,pzH]=pzVB(!!pzPre.k);
+  v.innerHTML=`<div class="shp-page${pzPre.k?" scw-l":""}" id="pzPage" data-scw="${pzPre.k}"><img src="${pzPre.src}" alt="星槎石桌"><svg class="pz-svg" viewBox="0 0 ${pzW} ${pzH}" style="aspect-ratio:${pzW}/${pzH}" preserveAspectRatio="xMidYMid meet" id="pzSvg"></svg><div class="shp-cap"><b>♟ 千秋殘局・${esc(shipShort(k))}</b><small id="pzCap">${esc(T.place||"")}</small></div><div id="pzSpots"></div><button class="btn pz-go" id="pzGo" style="display:none">♟ 開始下棋</button></div><div id="pzMore"></div>`;
+  pzMountErr(v,pzPre);
   shipBank().then(()=>{if(!v.isConnected)return;const Lz=(shipPuzzles(k)||[]).slice(0,3),B=SHIP_BANK.D.byId,sp=v.querySelector("#pzSpots"),more=v.querySelector("#pzMore"),svg=v.querySelector("#pzSvg"),cap=v.querySelector("#pzCap"),go=v.querySelector("#pzGo");
     if(!Lz.length){sp.innerHTML=`<div class="shp-pznone">🧩 這一站的千秋殘局還在準備中</div>`;return}
     sp.innerHTML=Lz.map((id,i)=>{const P=B[id]||{},r=shipRec(k,id),nm=(typeof shipSlotName==="function"?shipSlotName(k,i,P):"")||`第 ${i+1} 題`,[x,y]=SHIP_PZ_SPOT[i]||[50,50];
@@ -418,6 +443,22 @@ function ShipPz(v){setTop("♟ 千秋殘局","#/adventure");setTabs(false);v.cla
     more.innerHTML=`<p class="muted shp-pzhint">點石桌旁的星光看那一題，石桌上就換成那一盤；${Lz.every(id=>shipRec(k,id))?"再按下面的按鈕":"再按「開始下棋」"}・● 自己解開　◐ 用過提示　★ 還沒解</p>`+(X.length?`<div class="items" style="padding:0">${X.map(id=>{const P=B[id]||{};return`<button class="item" data-pz="${esc(id)}"><span class="lb">🔥</span><span class="tx"><b>選做・${esc(String((P.src||{}).title||"").replace(/^.*・/,""))}</b><span>不計點、不給修為</span></span><span class="muted">›</span></button>`}).join("")}</div>`:"");
     more.querySelectorAll("[data-pz]").forEach(b=>b.onclick=()=>{vibrate(5);location.hash=shipHref(k,b.dataset.pz)})})}
 
+/* W107-L 第 4 批：星槎船上各頁 iPad 橫向專用橫式圖（07sw SCW）：起航、書架、棋話一頁、行囊、幻影指導局（page_canju）。
+   座標是 output/w107-ipad/l1610/shipmap/ship_pages_l1610.json（Windows Claude 1 量，%）：入口照原表的 id；card＝說明卡（.shs-card）的位置、board＝棋話木牌（.shl-board）的位置。
+   石桌棋盤頁 #/ship/pz 是長捲動頁（.shp-page 沒有 cq），自己換圖（上面 pzScw／pzSet）；同一張 page_canju 的幻影指導局頁有圖框，換圖、說明卡照 json。行囊的「突發事件」(bgQq) json 沒給，照舊原位 */
+const SHP_L1610={"page_sail":{"S":{"ssGo":[67,78],"ssBack":[67,78],"ssDb":[67,78],"ssFin":[67,88],"ssUp":[26,80]},"card":{"left":"40%","right":"6%","top":"8%","maxHeight":"36%"}},"page_shelf":{"S":{"sb1":[30,28],"sb2":[73,60],"sb3":[37,63]}},"page_lesson":{"S":{"slDemo":[24,78],"slHist":[75,79],"slRead":[51,84]},"board":{"left":"36%","width":"29%","top":"31%","height":"30%"}},"page_bag":{"S":{"bgDiff":[26,41],"bgCx":[73,39],"bgMe":[29,70],"bgSave":[76,71]}},"page_canju":{"S":{},"card":{"left":"70%","right":"4%","top":"10%","maxHeight":"40%"}}};
+if(typeof SCW!=="undefined")for(const pg in SHP_L1610)SCW["shipmap/"+pg]={ready:true,f:"shipmap/"+pg+"_l1610",w:2560,h:1600,S:SHP_L1610[pg].S,exit:null,safe:{l:.12,r:.12,t:.05,b:.10},fx:{card:SHP_L1610[pg].card||null,board:SHP_L1610[pg].board||null}};
+/* 大字模式（m.css html[data-fz=l/xl/xxl/max] .shl-board：寬 58%、高度跟著字長、top 是中心再 translateY(-50%)）：橫式木牌照同一個做法——以量好的板面中心為準、寬度放大 58/45，
+   top 寫中心、高度交回 CSS（不然 style 的 top 是上緣，又被 translateY 往上推半個自身高度；審查 #168 第 2 項）。字級在 m.css 照 --fz 放大 */
+function shpBoardFz(o){const fz=typeof document!=="undefined"&&document.documentElement&&document.documentElement.dataset?document.documentElement.dataset.fz||"":"";
+  if(!/^(l|xl|xxl|max)$/.test(fz))return o;const n=s=>parseFloat(s),L=n(o.left),W=n(o.width),T=n(o.top),H=n(o.height);if(![L,W,T,H].every(isFinite))return o;
+  const w=Math.min(96,W*58/45),c=L+W/2;return{left:Math.max(2,Math.min(98-w,c-w/2)).toFixed(2)+"%",width:w.toFixed(2)+"%",top:(T+H/2).toFixed(2)+"%",height:""}}
+/* 掛上 07sw：開頁照 scwPre 選圖；說明卡、木牌的位置照條目（橫式圖時寫在 style，換回原圖清掉交回 CSS；字級在 m.css .shp-page.scw-l 縮） */
+function shpScw(v,pg){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.querySelector(":scope>img");if(!img||typeof scwPre!=="function"||!SHP_L1610[pg])return;
+  const src0="data/shipmap/"+pg+".webp",pre=scwPre(v,src0);if(pre.k){img.src=pre.src;P.dataset.scw=pre.k;P.classList.add("scw-l")}
+  const place=()=>{const e=typeof scwCur==="function"?scwCur(P):null,X=e&&e.fx,put=(el,o)=>{if(!el)return;for(const k of["left","right","top","width","height","maxHeight"])el.style[k]=o&&o[k]!=null?o[k]:""};
+    put(P.querySelector(".shs-card"),X&&X.card);put(P.querySelector(".shl-board"),X&&X.board&&shpBoardFz(X.board))};
+  if(typeof scwMount==="function")scwMount(P,{key:scwKey(src0),src0,ids:Object.keys(SHP_L1610[pg].S),apply:place});place()}
 /* 意見回饋 709（開發者 11/6）：星槎其他入口也各開一頁滿版水墨圖（圖 768×1376，規格 tools/art_shippages.json），圖上的金色入口位置用百分比，照圖量的。
    右下角有固定的小助手圖示，入口不放那裡。shpPage(圖, 標題, 小字, 入口[[id,左%,上%,大字,小字,class]], 疊在圖上的 HTML) */
 function shpPage(img,cap,sub,spots,over){return`<div class="shp-page cq"><img src="data/shipmap/${img}.webp" alt="">${over||""}<div class="shp-cap"><b>${cap}</b><small>${sub}</small></div>${spots.map(([id,x,y,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${x}%;top:${y}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}</div>`}
@@ -437,7 +478,7 @@ function ShipLesson(v){setTop("📘 棋話一頁","#/adventure");setTabs(false);
     ${lrn&&typeof qpCardHTML==="function"?qpCardHTML(k):""}
     ${lrn&&Ls.theme?`<button class="lk" id="slTheme">想多練？主題訓練・${esc(Ls.theme)} 10 題 ›</button>`:""}</div>`;
   shpOn(v,"#slDemo",()=>shipDemo(k));shpOn(v,"#slHist",()=>{if(typeof histCard==="function")histCard(k)});shpOn(v,"#slRead",()=>{SHIP_RD_BACK="#/ship/lesson";location.hash="#/ship/read/"+k});
-  shpOn(v,"#slTheme",()=>{location.hash="#/theme/"+encodeURIComponent(Ls.theme)});shpOn(v,"#qpReplay",()=>{if(typeof qpPlay==="function")qpPlay(k)});shpFit(v);
+  shpOn(v,"#slTheme",()=>{location.hash="#/theme/"+encodeURIComponent(Ls.theme)});shpOn(v,"#qpReplay",()=>{if(typeof qpPlay==="function")qpPlay(k)});try{shpScw(v,"page_lesson")}catch(e){}shpFit(v);
   try{if(typeof lsnShipAdd==="function")lsnShipAdd(v,k)}catch(e){}   /* ChatGPT 改善單 I01：有棋理體驗的站（07z7-lesson.js LSN_SET）多一顆「動手試這一頁棋理」 */
   return{}}
 /* 書架 #/ship/shelf：船艙書架特寫，三本書＝石桌往事、紙譜新局（第一集都過了才開）、雲河七星合集 */
@@ -447,14 +488,14 @@ function ShipShelf(v){setTop("📚 書架","#/adventure");setTabs(false);v.class
     ["sb2",SHELF_SPOT[1][0],SHELF_SPOT[1][1],(b1?"📜":"🔒")+" 第二集・紙譜新局",b1?"明朝隆慶・過了 "+p2+"／"+J2.length+" 關":"第一集 "+J.length+" 關都過了才會打開",b1?"":"lk"],
     ["sb3",SHELF_SPOT[2][0],SHELF_SPOT[2][1],"🌌 雲河七星・合集","第 1～14 章・全書"]],SHELF_EN_CSS);
   shpOn(v,"#sb1",()=>{location.hash="#/shelf/1"});shpOn(v,"#sb2",()=>{if(!book1Done()&&!(typeof DEVUNLOCK==="function"&&DEVUNLOCK()))return toast("🔒 讀完第一集、36 關都過了，第二集就會打開");location.hash="#/shelf/2"});
-  shpOn(v,"#sb3",()=>{SHIP_RD_BACK="#/ship/shelf";location.hash="#/ship/read"});shpFit(v);setTimeout(()=>{if(v.isConnected)shpFit(v)},700);return{}}
+  shpOn(v,"#sb3",()=>{SHIP_RD_BACK="#/ship/shelf";location.hash="#/ship/read"});try{shpScw(v,"page_shelf")}catch(e){}shpFit(v);setTimeout(()=>{if(v.isConnected)shpFit(v)},700);return{}}
 const SHELF_SPOT=[[31,36],[66,57],[31,80]];
 /* 11/17 第 4 輪 D P2-5：英文書名比中文長一倍，標籤不換行（.shp-spot nowrap）就超出畫面、副標被刪節號切掉；英文時三本書的標籤可換行（最寬 62%），翻譯完（約半秒後）再貼邊一次 */
 const SHELF_EN_CSS=`<style>html[lang^=en] :is(#sb1,#sb2,#sb3){white-space:normal;max-width:62%;width:max-content;text-align:center}html[lang^=en] :is(#sb1,#sb2,#sb3) :is(b,small){white-space:normal;line-height:1.25}</style>`;
 /* 行囊 #/ship/bag：羅盤＝航行難度、包袱＝棋童資料、木箱＝存檔與讀檔（意見回饋 735：人物與年表只留在《石桌往事》書末附錄，卷軸不再是入口；BAG_SPOT[1] 現在放 📚 千秋大百科 #/codex，07i-codex.js） */
 function ShipBag(v){setTop("🎒 行囊","#/adventure");setTabs(false);v.className="view";const B=BAG_SPOT;
   v.innerHTML=shpPage("page_bag","🎒 行囊","旅途帶著走的東西",[["bgDiff",B[0][0],B[0][1],"🎚 航行難度",esc(diffOf().n)+"・隨時可換"],["bgMe",B[2][0],B[2][1],"🎒 棋童資料","棋盤・棋譜・棋友"],...(typeof Codex==="function"?[["bgCx",B[1][0],B[1][1],"📚 千秋大百科","所有收藏的總目錄"]]:[]),["bgSave",B[3][0],B[3][1],"💾 存檔與讀檔",curSlot()?"第 "+curSlot()+" 格":"3 格存檔"],...(typeof qqPending==="function"&&qqPending().length?[["bgQq",50,60,"🌀 雲河怪事",qqPending().length+" 件還沒了結","hot"]]:[])]);
-  shpOn(v,"#bgDiff",()=>diffSheet(()=>{if(v.isConnected)ShipBag(v)}));shpOn(v,"#bgMe",()=>{location.hash="#/profile"});shpOn(v,"#bgSave",()=>saveSheet());shpOn(v,"#bgQq",()=>qqPendingSheet());shpOn(v,"#bgCx",()=>{location.hash="#/codex"});shpFit(v);return{}}   /* 千秋穿梭突發事件（07h-qqev.js）：押走、扣著的東西 */
+  shpOn(v,"#bgDiff",()=>diffSheet(()=>{if(v.isConnected)ShipBag(v)}));shpOn(v,"#bgMe",()=>{location.hash="#/profile"});shpOn(v,"#bgSave",()=>saveSheet());shpOn(v,"#bgQq",()=>qqPendingSheet());shpOn(v,"#bgCx",()=>{location.hash="#/codex"});try{shpScw(v,"page_bag")}catch(e){}shpFit(v);return{}}   /* 千秋穿梭突發事件（07h-qqev.js）：押走、扣著的東西 */
 const BAG_SPOT=[[28,50],[73,47],[26,77],[73,71]];
 /* 意見回饋 856（開發者 11/10「一直按起航就破關」）→ 開發者「只解千秋殘局太簡單，1 小時就破關」→ Gemini 66 定案「星槎歷練清單 5 選 3」：
    航線最前面那一站（第 3 站起）列 5 件事，完成 3 件才能起航：解局（這站 2 題千秋殘局）、對弈（這一朝贏 1 盤，或下滿 3 盤 20 手以上的棋）、
@@ -505,7 +546,7 @@ function ShipSail(v){setTop("⛵ 起航",null,[["🏠",()=>goHome(),"回首頁"]
   else{cap="⛵ 起航";sub=ap?"說書人的學徒":"";card=ap?`<b>📜 十三站都能去</b><p>說書人的學徒不用照順序起航；回星槎頁，在航線上點想去的那一站。</p>`:`<b>還沒選角色</b><p>回星槎頁，從頭開始這段旅程。</p>`;sp=[["ssBack",sx,sy,"🌌 看航線","回星槎頁"]]}
   if(shipFinaleOpen()){const fd=shipLearned("finale");sp.push(["ssFin",FIN_SPOT[0],FIN_SPOT[1],"♟ 千秋歸位",fd?"✅ 石桌已補全":"終章・七人共局",fd?"":"hot"]);card+=fd?`<p class="muted">✅ 石桌已補全：七顆棋子都歸位了。</p>`:`<p class="shp-say">說書人：「歸位以前，再陪老朽看一局？」</p>`}   /* 終章（元件 C）：13 站都學會才出現 */
   if(!sp.some(s=>s[0]==="ssBack"))sp.push(["ssUp",UP_SPOT[0],UP_SPOT[1],"⛵ 回星槎",""]);
-  v.innerHTML=shpPage("page_sail",cap,sub,sp,`<div class="shs-card">${card}</div>`+SHS_NOBOT);
+  v.innerHTML=shpPage("page_sail",cap,sub,sp,`<div class="shs-card">${card}</div>`+SHS_NOBOT);try{shpScw(v,"page_sail")}catch(e){}
   shpOn(v,"#ssUp",()=>goUp("#/adventure"));shpOn(v,"#ssFin",()=>{location.hash="#/ship/lv/finale/xl-finale"});shpOn(v,"#ssGo",()=>shipSailGo(()=>goUp("#/adventure")));shpOn(v,"#ssDb",()=>{location.hash="#/db"});shpOn(v,"#ssBack",()=>goUp("#/adventure"));if(allIn&&typeof chdEndBind==="function")chdEndBind(v);shpFit(v);return{}}
 const SAIL_SPOT=[52,72],FIN_SPOT=[52,86],UP_SPOT=[20,86];
 const SHIP_PG={lesson:ShipLesson,shelf:ShipShelf,bag:ShipBag,sail:ShipSail};
@@ -820,7 +861,7 @@ function ShipPhantom(v){setTop("🀄 千秋石桌","#/port");setTabs(false);v.cl
   else{const k=S.lastK,C=k&&S.cards[k];card=gh+'<b>幻影</b><p class="shp-say">「'+(C?'記住這句口訣：「'+esc((SHIP_LESSON[k]||{}).k||"")+'」。帶回'+esc(shipShort(k))+'，再試一次吧！':'石桌上的紅子，要等七位旅伴都走過自己的路，才會全部回來。卡住的時候，再來找我。')+'」</p></div></div>'+(C?'<div class="row" style="gap:8px;margin-top:8px"><button class="btn" id="phBack">⛵ 回'+esc(shipShort(k))+'再試一次</button></div>':'')}
   const solid=phSolid().filter(s=>s>=1).length;
   card+='<p style="margin:10px 0 0"><b>歸位之兆</b>　石桌上的紅子：'+solid+'／7</p>'+phTableHTML()+'<p class="muted" style="font-size:12.5px;margin:2px 0 0">每學會一站、每次跟幻影練過，紅子就更清楚一點；七顆都回來，就是「千秋歸位」的時候。</p>';
-  v.innerHTML=shpPage("page_canju","🀄 千秋石桌","青石園・幻影指導局",[],'<div class="shs-card">'+card+'</div>'+SHS_NOBOT);
+  v.innerHTML=shpPage("page_canju","🀄 千秋石桌","青石園・幻影指導局",[],'<div class="shs-card">'+card+'</div>'+SHS_NOBOT);try{shpScw(v,"page_canju")}catch(e){}
   if(glow!=null){const e=v.querySelectorAll(".ph-pc")[glow];if(e)e.classList.add("glow");const T=phGet();delete T.glow;store.set("phState",T)}
   const pl=v.querySelector("#phPlay");if(pl)pl.onclick=async()=>{vibrate(5);pl.disabled=true;let id=null;try{id=await phPick(N)}catch(e){}if(!id){pl.disabled=false;toast("題目還在載入，再按一次");return}location.hash="#/canju/ph/"+N.k+"/"+id};
   const bk=v.querySelector("#phBack");if(bk)bk.onclick=()=>{const k=S.lastK,id=S.lastId;vibrate(5);try{shipEra(k)}catch(e){}setTimeout(()=>{location.hash=id?shipHref(k,id):"#/ship/pz"},60)};
