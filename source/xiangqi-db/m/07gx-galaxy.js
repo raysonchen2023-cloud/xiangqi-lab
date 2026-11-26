@@ -72,7 +72,7 @@ async function gxStart(id,again,mode){const g=id==="mirror"?{id:"mirror",n:"第�
   else if(id==="mirror"){b.human="b";b.lv={fen:"",turn:"r",mirror:await gxMirrorLine()}}
   store.set("gxRun",R);store.set("park3d",true);
   const sub=g.canju?`第 ${R.k+1}／${g.canju} 局`:g.twice?`第 ${R.ph}／2 盤`:"";
-  jStart("gx:"+id,b,()=>{location.hash="#/journey/play";setTimeout(()=>toast(`🌌 ${g.t}${sub?"・"+sub:""}：「${g.say}」`),600)},!!again)}
+  jStart("gx:"+id,b,()=>{const rn=ROUTE_N;location.hash="#/journey/play";setTimeout(()=>{if(jPlayOk(rn,"gx:"+id))toast(`🌌 ${g.t}${sub?"・"+sub:""}：「${g.say}」`)},600)},!!again)}   /* 11/25 W120：到時還在對局頁、是這一盤、還沒結束才說（jPlayOk 在 05b-save.js） */
 /* 判一盤：回 {ok,fin,next,why}；ok＝這一步過了，fin＝整關過了（給星印），next＝還要接著下 */
 function gxJudge(st,forced){const id=String(st.journey||"").slice(3),g=id==="mirror"?{id:"mirror"}:gxGet(id),R=store.get("gxRun",null)||{id,k:0,ph:1};if(!g)return null;
   const me=st.human,res=st.result,won=forced?forced==="win":!!(res&&res.w===me),lost=forced?forced==="lose":!!(res&&res.w&&res.w!==me);

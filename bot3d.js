@@ -721,7 +721,7 @@
     let dodgeN=0;
     const baseK=()=>boardMode?.6:1;
     const setK=k=>{if(k===szK)return;szK=k;shrink=baseK()*k;applySize()};
-    const dodgeTick=()=>{if(!bVis()){hid=false;dim=false;return}koScan();if(drag)return;
+    const dodgeTick=jump=>{if(!bVis()){hid=false;dim=false;return}koScan();if(drag)return;
       if(userHold||boardDrag){hid=false;dim=bodyCost(x,y,W,H)>0;return}dim=false;
       const k0=baseK(),w0=W0*SC*k0,h0=H0*SC*k0,vw=innerWidth,vh=innerHeight;let want=null;
       if(boardMode)want=[vw-w0-2,vh-h0-64];else if(parked){const p=store.get("botPos",null);if(p)want=[p.x*vw,p.y*vh]}
@@ -732,16 +732,20 @@
       else{const L=spots(w0,h0);if(L.length)p=nearest(L,want[0],want[1]);else{const L2=spots(w0*.6,h0*.6);if(L2.length){k=.6;p=nearest(L2,vw,vh)}}}
       if(!p){if(!hid){hid=true;bub.style.opacity=0;bubT=0}return}
       const was=hid;hid=false;setK(k);
-      if(was){x=tx=p[0];y=ty=p[1];dodge=false;return}   /* 藏著的時候直接換位置，不要從禁區上走過去 */
+      if(was||jump){x=tx=p[0];y=ty=p[1];dodge=false;return}   /* 藏著的時候直接換位置，不要從禁區上走過去 */   /* W121-2：jump＝剛進棋盤畫面或卡片剛關、背後有棋盤：直接站到棋盤外，不從棋盤上走出去 */
       if(Math.hypot(p[0]-tx,p[1]-ty)>2){tx=p[0];ty=p[1];dodge=Math.hypot(p[0]-x,p[1]-y)>2;if(dodge&&!celeb)act=null}};
     const isModal=()=>!!document.querySelector(".modal .box");
+    /* W121-2（11/25 真人視角）：練功房按「新局」（開新局卡片）、古戰場按「開打」時，小人先跑到卡片上緣右邊＝棋盤右側，卡片關掉後壓著兵、車，約 1 秒才走出棋盤。
+       改成：卡片上緣那個位置會蓋到棋盤，就跟確認框一樣先藏起來；卡片關掉、或剛出現棋盤的那一格，直接站到棋盤外的空位（dodgeTick(1)），不從棋盤上走過去 */
+    const sheetOnBoard=sr=>{const b=bigBoard();if(!b)return false;const l=bounds().x1-4,t=Math.max(0,sr.top-H);return l<b.right&&l+W>b.left&&t<b.bottom&&t+H>b.top};
     const boardT=(window.bgpEvery||setInterval)(()=>{if(celeb)return;const sr=sheetRect();
-      if(sr){sheetMode=true;act=null;if(isModal()||sr.top-6<H+40){box.style.opacity="0";hit.style.pointerEvents="none"}else{box.style.opacity="";hit.style.pointerEvents="auto";if(!drag){tx=bounds().x1-4;ty=Math.max(0,sr.top-H)}}return}
-      if(sheetMode){sheetMode=false;box.style.opacity="";hit.style.pointerEvents="auto";if(!boardMode){if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}}
+      if(sr){sheetMode=true;act=null;if(isModal()||sr.top-6<H+40||sheetOnBoard(sr)){box.style.opacity="0";hit.style.pointerEvents="none"}else{box.style.opacity="";hit.style.pointerEvents="auto";if(!drag){tx=bounds().x1-4;ty=Math.max(0,sr.top-H)}}return}
+      let jump=false;
+      if(sheetMode){sheetMode=false;jump=true;box.style.opacity="";hit.style.pointerEvents="auto";if(!boardMode){if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}}
       const r=bigBoard();
-      if(r&&!boardMode){boardMode=true;boardDrag=false;act=null;shrink=.6*szK;applySize()}
+      if(r&&!boardMode){boardMode=true;boardDrag=false;act=null;shrink=.6*szK;applySize();jump=true}
       else if(!r&&boardMode){boardMode=false;boardDrag=false;shrink=szK;applySize();box.style.opacity="";if(parked){const p=store.get("botPos",null);if(p){tx=p.x*innerWidth;ty=p.y*innerHeight}}else wander()}
-      if(!(++dodgeN&1))dodgeTick();
+      if(jump&&boardMode)dodgeTick(1);else if(!(++dodgeN&1))dodgeTick();
       hit.style.pointerEvents=hid||dim?"none":"auto";
       box.style.opacity=hid?"0":dim?(boardMode?".2":".25"):boardMode&&!(act||drag||bubT>0)?".45":""},250);
     const onHash=()=>{userHold=false;boardDrag=false;bub.style.opacity=0;bubT=0};window.addEventListener("hashchange",onHash);   /* 11/11：換頁就收起泡泡（首頁的冷知識原本會跟到對局頁、蓋在工具列上） */

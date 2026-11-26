@@ -358,7 +358,7 @@ function checkFx(svg,label){if(!store.get("ckFx",true)||(typeof blzSkip==="funct
 let KJ_P=null,KJ_GLY=null,KJ_LAST=null;const loadKaiju=()=>KJ_P||(KJ_P=fetch("data/glyphs/kaiju.json").then(r=>r.ok?r.json():null).then(j=>KJ_GLY=j).catch(()=>{KJ_P=null}));
 /* QA P2-6、P2-9：載入畫面、朝代過場還在的時候，「開局」動畫等它們收掉再播，不疊在一起 */
 const fxBusy=()=>!!document.querySelector("#preov,.ecover");
-function kaijuFx(svg,side,k){if(!store.get("opFx",true)||focusOn()||(typeof blzSkip==="function"&&blzSkip("kaiju")))return;   /* 第 12 輪 F3：快棋模式略過 */if(fxBusy()&&(k||0)<40){setTimeout(()=>kaijuFx(svg,side,(k||0)+1),400);return}svg=fxHost(svg);const r=svg.getBoundingClientRect();if(!r.width)return;loadKaiju();
+function kaijuFx(svg,side,k,ok){if(typeof ok==="function"&&!ok())return;if(svg&&svg.isConnected===false)return;   /* 11/25 W121 真人視角第一輪：點「快速對局」後很快按返回，開局特效蓋在首頁上——棋盤已經不在畫面上就不播 */   /* 11/25 開發者截圖：練功房下到第 5、6 步才跳出開局「紅先」。等過場收掉（最多 16 秒）或 3D 建好的期間，棋局已經開始走了；ok() 在真正要播時（含每次重試）再問一次「還是同一盤、還沒走子」，不是就不播。舊的呼叫沒帶 ok 照舊 */if(!store.get("opFx",true)||focusOn()||(typeof blzSkip==="function"&&blzSkip("kaiju")))return;   /* 第 12 輪 F3：快棋模式略過 */if(fxBusy()&&(k||0)<40){setTimeout(()=>kaijuFx(svg,side,(k||0)+1,ok),400);return}svg=fxHost(svg);const r=svg.getBoundingClientRect();if(!r.width)return;loadKaiju();
   document.querySelectorAll(".kjfx").forEach(x=>x.remove());const P=KJ_GLY&&KJ_GLY.kaiju&&KJ_GLY.kaiju.length?KJ_GLY.kaiju:null,id="kj"+Math.random().toString(36).slice(2,7);
   const g=P?`<svg viewBox="0 0 ${(KJ_GLY.vb||[200,100]).join(" ")}"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6d8"/><stop offset=".45" stop-color="#f3cf73"/><stop offset="1" stop-color="#c8902c"/></linearGradient></defs><path d="${P[Math.floor(Math.random()*P.length)]}" fill-rule="evenodd" fill="url(#${id})" stroke="#3a1a06" stroke-width=".9" paint-order="stroke"/></svg>`:"<b>開局</b>";
   const d=document.createElement("div");d.className="kjfx";d.style.cssText=`left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px;font-size:${Math.round(r.width*.2)}px`;
@@ -585,6 +585,9 @@ function boardBG(T,eR,eD,u,flip,imgK){
     +`<linearGradient id="sdT${u}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>`
     +`<linearGradient id="sdL${u}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".2"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>`
     // 棋子用：落影（徑向漸層，不用 filter，手機上比較省）、側邊、頂面隆起、倒角亮邊、反光
+    /* W108（11/25 玩家回饋「選中的棋子加一點高光或光暈，快棋時比較清楚」，開發者排在送審前）：選中光暈用暖金色（固定，不跟主題強調色 T.mv：
+       預覽站實測 T.mv＝#2F6B4F 這類深色畫出來像一圈影子，不像發光；選中棋子的邊緣本來就有 T.mv 外框，光暈只負責「亮起來」）。中心會被棋子蓋住，看得到的是外圈 */
+    +`<radialGradient id="psel${u}"><stop offset=".55" stop-color="#FFE7A0" stop-opacity=".85"/><stop offset=".78" stop-color="#FFD25E" stop-opacity=".45"/><stop offset="1" stop-color="#FFD25E" stop-opacity="0"/></radialGradient>`
     +`<radialGradient id="psh${u}"><stop offset="0" stop-color="#000" stop-opacity=".55"/><stop offset=".6" stop-color="#000" stop-opacity=".32"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>`
     +`<linearGradient id="pside${u}" x1="0" y1="0" x2="0" y2="1"><stop offset=".45" stop-color="#9A6633"/><stop offset=".8" stop-color="#6E4219"/><stop offset="1" stop-color="#4A2A0E"/></linearGradient>`
     +`<radialGradient id="p3d${u}" cx=".42" cy=".34" r=".72"><stop offset="0" stop-color="#FFF7E6"/><stop offset=".5" stop-color="#F3DDB4"/><stop offset=".86" stop-color="#DDB57E"/><stop offset="1" stop-color="#B98A50"/></radialGradient>`
@@ -801,15 +804,17 @@ function Board(onTap,onSwipe){
     axSel=o.sel>=0?o.sel:-1;
     if(fresh&&o.anim!==false){if(!(typeof axsMove==="function"&&axsMove({to:L.t,flip,cap:!!prevB[L.t],side:sideOf(board[L.t]),me:o.me||(AXI&&!onSwipe?(flip?"b":"r"):null),ck:o.check>=0?o.check:-1,board})))moveSound(!!prevB[L.t]);if(o.check>=0)setTimeout(()=>sayCall("將軍"),120);else if(prevB[L.t])setTimeout(()=>sayCall("吃"),120)}   /* 11/12 無障礙 P16.4：聲音方位開著時，落子／吃子／對方走完／將軍／輪到你改播 11c 的有方位提示音（axsMove 回 true），沒開照舊 moveSound */
     if(fresh&&o.anim!==false&&onTap&&!onSwipe&&typeof hapMove==="function")hapMove(!!prevB[L.t],o.check,board);   /* 第 11 輪 X2 觸覺回饋：能下的棋盤走完一步震落子／吃子／將軍／將死（07hp-haptics.js）；看棋譜翻頁不震 */
+    /* W120：殺棋、將軍、吃子特效 0.2 秒後才蓋；到時棋盤 svg 要還在、這塊棋盤最後畫的局面跟現在一樣（悔棋、換盤、又走一步都會變），換了頁也不播 */
+    const fxPos=fresh&&o.fx?board.join(","):"",fxOk=()=>svg.isConnected&&!!lastBoard&&lastBoard.join(",")===fxPos;
     if(fresh&&o.fx&&o.check>=0){const ms=board[o.check]==="K"?"r":"b",mate=window.XQCore&&XQCore.legal&&XQCore.legal(board,ms).length===0;
-      if(mate)setTimeout(()=>{if(Date.now()-LAST_KFX>1500&&store.get("ckFx",true)&&!(typeof blzSkip==="function"&&blzSkip("killFx")))killFx(svg,true,"將死",o.check,flip,{side:ms==="r"?"b":"r",cap:"　"})},200);
-      else{const lab=matePattern(board,L,o.check);setTimeout(()=>checkFx(svg,lab),200)}}   // 走完棋才蓋章
-    else if(fresh&&o.fx&&prevB[L.t]){const cx=X(L.t),cy=Y(L.t);setTimeout(()=>capFx(svg,cx,cy,L.t),200)}   // 吃子（沒將軍時）：棋子落定再蓋水墨「吃」
+      if(mate)stillHere(200,()=>{if(Date.now()-LAST_KFX>1500&&store.get("ckFx",true)&&!(typeof blzSkip==="function"&&blzSkip("killFx")))killFx(svg,true,"將死",o.check,flip,{side:ms==="r"?"b":"r",cap:"　"})},fxOk);
+      else{const lab=matePattern(board,L,o.check);stillHere(200,()=>checkFx(svg,lab),fxOk)}}   /* 走完棋才蓋章 */
+    else if(fresh&&o.fx&&prevB[L.t]){const cx=X(L.t),cy=Y(L.t);stillHere(200,()=>capFx(svg,cx,cy,L.t),fxOk)}   /* 吃子（沒將軍時）：棋子落定再蓋水墨「吃」 */
     const anim=fresh&&o.anim!==false&&store.get("mvAnim",true)&&!dropNoAnim;if(fresh)dropNoAnim=false;   // 拖過去放下的棋，不用再滑一次
     const BZ=typeof blzOn==="function"&&blzOn();   /* 第 12 輪 F3 快棋模式：走子滑動 .28→.09 秒、被吃淡出 .45→.12 秒、上一步外圈 .2＋.25→.08＋.06 秒（07pm-premove.js blzTab） */
     if(anim&&prevB[L.t]){const cg=piece(prevB[L.t],L.t,0,T,PS,false);svg.append(cg);requestAnimationFrame(()=>{cg.style.transition=BZ?"opacity .12s":"opacity .45s";cg.style.opacity="0"})}
     lastBoard=board;lastO=o;pieceEls={};
-    board.forEach((p,i)=>{if(!p)return;const up=i===o.sel,pg=piece(p,i,up?-7:0,T,PS,up);if(up&&BD_BIGSEL){const cx=X(i),cy=Y(i)-7;pg.setAttribute("transform",`translate(${cx} ${cy}) scale(1.12) translate(${-cx} ${-cy})`)}svg.append(pg);pieceEls[i]=pg;   /* 開發者 11/11 選規劃書方案 09：選起的棋子放大 */
+    board.forEach((p,i)=>{if(!p)return;const up=i===o.sel;if(up)svg.append(el("circle",{class:"bd-selglow",cx:X(i),cy:Y(i)-7,r:46,fill:`url(#psel${uid})`,"pointer-events":"none"}));const pg=piece(p,i,up?-7:0,T,PS,up);if(up&&BD_BIGSEL){const cx=X(i),cy=Y(i)-7;pg.setAttribute("transform",`translate(${cx} ${cy}) scale(1.12) translate(${-cx} ${-cy})`)}svg.append(pg);pieceEls[i]=pg;   /* 開發者 11/11 選規劃書方案 09：選起的棋子放大 */
       if(anim&&i===L.t){pg.style.transform=`translate(${X(L.f)-X(L.t)}px,${Y(L.f)-Y(L.t)}px)`;pg.getBoundingClientRect();
         requestAnimationFrame(()=>{pg.style.transition=BZ?"transform .09s ease-out":"transform .28s ease-out";pg.style.transform="translate(0px,0px)"})}});
     if(L&&board[L.t]){const ring=el("circle",{cx:X(L.t),cy:Y(L.t),r:30.5,fill:"none",stroke:T.mv,"stroke-width":4,opacity:.95});svg.append(ring);
@@ -985,13 +990,17 @@ function tmxPlainEn(q,loss,ev,by){const l=+loss,L=loss!=null&&loss!==""&&isFinit
       敗著:`A blunder. This move is worth ${a} less than the best move`}[q];if(!x)return"";
   const k=["緩著","失著","敗著"].includes(q)?tmxEvLinkEn(ev,by):"";return`"${tmxT(q)}": ${x}${k?"; "+k:""}.`}
 /* 小泡泡：指著 el（在上面放不下就放下面），ms 毫秒後或點畫面任何地方就收；成功顯示回 true */
-function tmxBub(el,html,ms){try{document.querySelectorAll(".tmx-bub").forEach(x=>x.remove());if(!el||!el.isConnected)return false;const r=el.getBoundingClientRect();if(!r.width||r.bottom<0||r.top>innerHeight)return false;
+function tmxBub(el,html,ms,av){try{document.querySelectorAll(".tmx-bub").forEach(x=>x.remove());if(!el||!el.isConnected)return false;const r=el.getBoundingClientRect();if(!r.width||r.bottom<0||r.top>innerHeight)return false;
   const b=document.createElement("div");b.className="tmx-bub";b.dataset.nomvt="1";b.setAttribute("role","status");b.innerHTML=html;document.body.append(b);
   const w=b.offsetWidth,h=b.offsetHeight,x=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2));let up=r.top-h-12>8,top=up?r.top-h-10:r.bottom+10;
   /* 評比循環第 1 輪（AI 模擬玩家第二輪問題 7）：泡泡不要蓋住狀態列（#stat「輪到你・黑方大占上風…」那一行局面句）。
      往上放會壓到它：整個移到狀態列上面（離被指的字遠了，箭頭收起來，class far）；上面放不下才改放下面。狀態列本身就是被指的那個元素時不管 */
   let far=false;try{const S=[...document.querySelectorAll("#stat")].find(s=>s.offsetParent&&!s.contains(el)&&!el.contains(s));if(S){const q=S.getBoundingClientRect(),hit=t=>t<q.bottom&&t+h>q.top&&x<q.right&&x+w>q.left;
     if(hit(top)){if(q.top-h-8>=8){top=q.top-h-8;far=true}else if(r.bottom+10+h<=innerHeight-8){up=false;top=r.bottom+10}}}}catch(e){}
+  /* W121-5（11/25 真人視角）：av＝這些區塊不能蓋（tmxFirst 自己跳出來時傳棋盤、狀態列、工具列）。蓋到就改放被指的字另一邊；兩邊都會蓋到就不跳、回 false（下次再試，評等字照樣點得開）。點了才出的泡泡不傳 av，照舊 */
+  if(av){const R=[...document.querySelectorAll(av)].filter(e=>!e.contains(el)&&!el.contains(e)).map(e=>e.getBoundingClientRect()).filter(q=>q.width&&q.height),
+    hitR=t=>t<8||t+h>innerHeight-8||R.some(q=>t<q.bottom&&t+h>q.top&&x<q.right&&x+w>q.left);
+    if(hitR(top)){const t2=up?r.bottom+10:r.top-h-10;if(hitR(t2)){b.remove();return false}up=!up;top=t2;far=false}}
   b.style.left=x+"px";b.style.top=top+"px";b.classList.add(up?"up":"dn");if(far)b.classList.add("far");b.style.setProperty("--ax",Math.max(14,Math.min(w-14,r.left+r.width/2-x))+"px");
   let t=0;const kill=()=>{clearTimeout(t);removeEventListener("pointerdown",kill,true);b.classList.add("out");setTimeout(()=>b.remove(),300)};t=setTimeout(kill,ms||6000);setTimeout(()=>{if(b.isConnected)addEventListener("pointerdown",kill,true)},60);return true}catch(e){return false}}
 addEventListener("hashchange",()=>document.querySelectorAll(".tmx-bub").forEach(x=>x.remove()));
@@ -1001,13 +1010,14 @@ function tmxStrip(box,moves,onPick){if(!box||!moves)return;const k=box.dataset.k
     if(q&&TMX_QS.includes(q.textContent)){q.dataset.tq=q.textContent;if(m.loss!=null)q.dataset.tl=m.loss;if(m.ev!=null&&isFinite(+m.ev))q.dataset.te=m.ev;else delete q.dataset.te;if(m.by)q.dataset.tb=m.by;const tr=tmxRisk(q.textContent,m);if(tr)q.dataset.tr=tr;else delete q.dataset.tr;q.setAttribute("aria-label",tmxPlain(q.textContent,m.loss,m.ev,m.by)+tr)}   /* te、tb：走完的分數、誰走的（評比循環第 1 輪：評等泡泡接一句「走完整盤誰好」） */
     if(!onPick)c.onclick=()=>tmxMove(c,m,i)});
   setTimeout(()=>{try{tmxFirst(box)}catch(e){}},400)}
+const TMX_AV="#bbox,.boardbox,#stat,#acts";   /* W121-5：評等說明自己跳出來時不能蓋的區塊（棋盤、狀態列、工具列） */
 function tmxFirst(box){if(typeof bhtlHush==="function"&&bhtlHush())return;   /* 塔防練習賽進行中先不跳（07bhtl-tdlearn.js），練完照常 */
   if(!box.isConnected||!box.offsetParent||document.querySelector(".tmx-bub")||Date.now()-TMX_T<3000)return;
   const seen=store.get("tmxSeen",[])||[],br=box.getBoundingClientRect(),on=box.querySelector(".chip.on")||box.lastElementChild,oc=on?on.getBoundingClientRect():br,cx=oc.left+oc.width/2;let best=null,bd=1e9;
   box.querySelectorAll(".q[data-tq]").forEach(q=>{if(seen.includes(q.dataset.tq))return;const r=q.getBoundingClientRect();if(!r.width||r.left<br.left-2||r.right>br.right+2)return;const d=Math.abs(r.left+r.width/2-cx);if(d<bd){bd=d;best=q}});
   if(!best)return;const g=best.dataset.tq;
   const pw=best.dataset.tl!=null&&["緩著","失著","敗著"].includes(g)&&!store.get("tmxPw",false);   /* 第一次講到「幾個兵」補一句：不是棋子數（AI 模擬玩家第二輪：小凱把兵的價值當成棋子數） */
-  if(tmxBub(best,`${esc(tmxPlain(g,best.dataset.tl,best.dataset.te,best.dataset.tb))}${best.dataset.tr?"<br>⚠ "+esc(best.dataset.tr):""}<small>${pw?esc(TMX_PW)+"<br>":""}著法條上的評等字，點一下可以再看說明</small>`,7000)){seen.push(g);store.set("tmxSeen",seen);if(pw)store.set("tmxPw",true);TMX_T=Date.now()}}
+  if(tmxBub(best,`${esc(tmxPlain(g,best.dataset.tl,best.dataset.te,best.dataset.tb))}${best.dataset.tr?"<br>⚠ "+esc(best.dataset.tr):""}<small>${pw?esc(TMX_PW)+"<br>":""}著法條上的評等字，點一下可以再看說明</small>`,7000,TMX_AV)){seen.push(g);store.set("tmxSeen",seen);if(pw)store.set("tmxPw",true);TMX_T=Date.now()}}
 /* ChatGPT 評審 11/11（失著的具體後果）：失著、敗著才講「這手讓對方下一手可以吃你的車（車8進3）」；只看分析線存的 rr（05-settings mflRisk），沒有就不說。
    著法條沒有盤面，這裡不重驗（rr 本來就是 core.js classifyRaw 用規則算的）；檢討頁說明另外帶盤面重驗 */
 function tmxRisk(q,m){try{return(q==="失著"||q==="敗著")&&m&&m.rr&&typeof mflRisk==="function"?mflRisk(null,m.by,m,m):""}catch(e){return""}}
