@@ -17,7 +17,10 @@ const icoSrc=n=>`data/icons/${icoAt(n,store.get("era","classic"))}/${n}.webp`;
 function icoImg(el,n){const em=el.textContent;const im=document.createElement("img");im.className="eic";im.alt="";im.dataset.ico=n;im.onerror=()=>{const c=+(im.dataset.c||0),A=["classic","ming","qin","tang","yuan"];if(c<A.length){im.dataset.c=c+1;im.src="data/icons/"+A[c]+"/"+n+".webp";return}const sp=document.createElement("span");sp.className="noico";sp.textContent=em;im.replaceWith(sp)};im.src=icoSrc(n);el.textContent="";el.append(im)}   /* 552：這個朝代缺圖就先用經典那套 */
 /* 意見回饋 433、435、466：首頁三張大卡、設定的分頁、棋童資料的圓鈕也換成朝代圖示（第二張總表，tools/gen_round2.py --icons2） */
 const ICO_HUB={"#/cpu":"cpu","#/db":"db","#/hub/battle":"h_battle","#/adventure":"h_adventure","#/hub/learn":"h_learn"};
-const ETIMG=(n,old,emo)=>`<img class="ti eic" data-ico="${n}" src="${icoSrc(n)}" alt="" onerror="if(!this.dataset.c&&!/\/classic\//.test(this.src)){this.dataset.c=1;this.src='data/icons/classic/${n}.webp'}else if(this.dataset.f||!'${old||""}'){this.replaceWith(document.createTextNode('${emo}'))}else{this.dataset.f=1;this.classList.remove('eic');this.src='${old||""}'}">`;
+/* W152（11/26 Windows Claude 2 實走 #201 時發現，正式站就有）：onerror 原本用正規式 /\/classic\//，在模板字串裡 \/ 會被當成跳脫、輸出成 //classic//，
+   後半段變成註解、整段 onerror 語法錯誤（進十州棋館時主控台兩次 Unexpected end of input），圖示載不到時的備援（改抓經典版、再換表情文字）完全不會跑。
+   改用 includes，不用反斜線。test-icon-onerror-1126.js 把組出來的 onerror 拿去 new Function 並實際跑一次 */
+const ETIMG=(n,old,emo)=>`<img class="ti eic" data-ico="${n}" src="${icoSrc(n)}" alt="" onerror="if(!this.dataset.c&&!this.src.includes('/classic/')){this.dataset.c=1;this.src='data/icons/classic/${n}.webp'}else if(this.dataset.f||!'${old||""}'){this.replaceWith(document.createTextNode('${emo}'))}else{this.dataset.f=1;this.classList.remove('eic');this.src='${old||""}'}">`;
 function iconize(){document.querySelectorAll("[data-go] > .ic,[data-go] > .dic").forEach(x=>{if(x.querySelector("img"))return;const n=ICO_GO[x.parentElement.dataset.go];if(n)icoImg(x,n)});
   document.querySelectorAll(".hubc > .hi").forEach(x=>{if(x.querySelector("img"))return;const n=ICO_HUB[x.parentElement.dataset.go];if(n)icoImg(x,n)});
   document.querySelectorAll("#sgTabs .tic").forEach(x=>{if(x.querySelector("img"))return;icoImg(x,x.dataset.ic)});
