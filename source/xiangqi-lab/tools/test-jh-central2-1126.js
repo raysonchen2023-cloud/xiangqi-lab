@@ -9,13 +9,13 @@ const C = require(path.join(ROOT, "xiangqi-lab", "site", "core.js"));
 const rd = (f) => fs.readFileSync(path.join(ROOT, "xiangqi-db", "m", f), "utf8");
 const SRC = rd("07z9m-central2.js");
 
-function load() {
+function load(patch) {
   const mem = {}, c = {
     store: { get: (k, d) => (k in mem ? JSON.parse(mem[k]) : d), set: (k, v) => { mem[k] = JSON.stringify(v) } },
     jhL: (zh) => zh, esc: (s) => String(s), addXP: () => {}, xqFlag: () => true, Math, JSON, Set, Map, Number, String, Array, Object, Float32Array,
   };
   Object.defineProperty(c, "location", { get: () => ({ hash: "#/jianghu/maze?l=2" }) });
-  vm.createContext(c); for (const f of ["07z9m-maze.js", "07z9m-lore.js", "07z9m-central2.js"]) vm.runInContext(rd(f), c);
+  vm.createContext(c); for (const f of ["07z9m-maze.js", "07z9m-lore.js", "07z9m-central2.js"]) vm.runInContext(f === "07z9m-central2.js" && patch ? patch(rd(f)) : rd(f), c);
   return c;
 }
 const L2 = (c) => c.jhMzLvN("central", 2);
@@ -66,6 +66,13 @@ test("雙炮衛的規則都符合（看 3 格、另一個炮衛擋住就看不�
   assert.deepEqual(guardProblems(load()), []);
 });
 
+test("改壞驗證（水窪）：多耗的那一回合直接讓守衛走、不照原地等的規則（#212 審查抓到的舊寫法），檢查一定抓得到", () => {
+  const OLD = SRC.replace('const r=jhMzStep(S,0,0);return r.ev==="move"?null:r}', "S.turn++;jhMzGuardStep(S);return null}");
+  assert.notEqual(OLD, SRC, "改壞的字串要真的找得到");
+  const c = load(() => OLD);
+  assert.ok(mudProblems(c).some((s) => s.includes("先提醒")), "舊寫法：守衛才看到就直接抓");
+});
+
 test("改壞驗證：穿過守衛看、看 5 格、前衛踩水窪、走進對方那一格、不擋牆，規則檢查一定抓得到", () => {
   const bad = (code) => { const c = load(); vm.runInContext(code, c); return guardProblems(c) };
   assert.ok(bad("JH_MZ_KIND.twincannon.sight=function(S,G){const o=[];for(let i=1;i<=3;i++){const x=G.x+G.dx*i,y=G.y+G.dy*i;if(jhMzSolid(S,x,y))break;o.push({x,y})}return o}").some((s) => s.includes("擋住")), "穿過守衛看");
@@ -75,12 +82,26 @@ test("改壞驗證：穿過守衛看、看 5 格、前衛踩水窪、走進對�
   assert.ok(bad("JH_MZ_KIND.twincannon.sight=function(S,G){const o=[];for(let i=1;i<=3;i++){const x=G.x+G.dx*i,y=G.y+G.dy*i;if(jhMzCentral2Mate(S,G,x,y))break;o.push({x,y})}return o}").some((s) => s.includes("牆擋住")), "不擋牆");
 });
 
-test("淺水窪：走進去多耗一回合（守衛多走一步）；走出來、走一般地面照常一回合；自動走繞開水窪、點的終點是水窪可以走；被雙炮衛直接看到照樣會被抓", () => {
+/* 水窪規則檢查（#212 審查：多耗的那一回合要照「原地等一回合」的共用規則，不能跳過「先提醒」） */
+function mudProblems(c) {
+  const bad = [];
+  /* 炮衛往右走、看不到玩家：走進水窪算兩回合、守衛走了兩步、人進到水窪 */
+  let S = corridor(c, { 4: "Q" }, [{ x: 6, dx: 1 }], 3, 1); const g0 = S.guards[0].x; let r = c.jhMzStep(S, 1, 0);
+  if (r.ev !== "move" || S.player.x !== 4) bad.push("走進水窪：人進到水窪（實際 " + r.ev + "," + S.player.x + "）");
+  if (S.turn !== 2) bad.push("走進水窪算兩回合（實際 " + S.turn + "）");
+  if (S.guards[0].x !== g0 + 2) bad.push("走進水窪：守衛走了兩步（" + g0 + "→" + S.guards[0].x + "）");
+  r = c.jhMzStep(S, 1, 0); if (S.turn !== 3) bad.push("走出水窪一回合");
+  /* 多耗的那一回合守衛掉頭才看到你：先提醒（spot），人留在原地、不直接抓 */
+  S = corridor(c, { 7: "Q" }, [{ x: 11, dx: 1 }], 8, 1); r = c.jhMzStep(S, -1, 0);
+  if (r.ev !== "spot") bad.push("多耗的那一回合守衛才看到：先提醒、不直接抓（實際 " + r.ev + "）");
+  if (S.player.x !== 8) bad.push("先提醒的那一回合人留在原地，不走進水窪");
+  return bad;
+}
+
+test("淺水窪：走進去多耗一回合（守衛多走一步、照原地等一回合的規則，守衛才看到就先提醒）；走出來照常一回合；自動走繞開水窪、點的終點是水窪可以走；被雙炮衛直接看到照樣會被抓", () => {
   const c = load();
-  let S = corridor(c, { 4: "Q" }, [{ x: 9, stun: 99 }, { x: 11, stun: 99 }], 3, 1); S.guards.forEach((G) => { G.stun = 0; G.dx = 1 });
-  const g0 = S.guards.map((G) => G.x); let r = c.jhMzStep(S, 1, 0);
-  assert.equal(r.ev, "move"); assert.deepEqual([S.player.x, S.player.y], [4, 1]); assert.equal(S.turn, 2, "走進水窪算兩回合");
-  r = c.jhMzStep(S, 1, 0); assert.equal(S.turn, 3, "走出水窪一回合");
+  assert.deepEqual(mudProblems(c), []);
+  let S, r;
   /* 自動走：上下兩條路，下面短但有水窪 */
   const T = c.jhMzNew(L2(c)); T.grid = ["#######", "#.....#", "#.###.#", "#.QQQ.#", "#######"].map((r) => r.split("")); T.W = 7; T.H = 5; T.guards = []; T.guard = null;
   for (let y = 0; y < 5; y++) for (let x = 0; x < 7; x++) T.seen.add(y * 7 + x); at(T, 1, 3);
