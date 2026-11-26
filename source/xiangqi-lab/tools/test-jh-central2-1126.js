@@ -165,22 +165,20 @@ test("走一趟：一定有一條不被炮衛看到的路，先踩踏板、再�
 });
 
 const poolOf = (src, nm) => { const a = src.indexOf(`/* ==JH_MZ_POOL:${nm}== */`), b = src.indexOf(`/* ==/JH_MZ_POOL:${nm}== */`); assert.ok(a > 0 && b > a, nm); const ctx = {}; vm.createContext(ctx); vm.runInContext(src.slice(a, b) + `;this.v=${nm};`, ctx); return ctx.v };
-test("題庫：石門 3 題（兵收尾：中兵突破）、被抓至少 5 題（車收尾的殺題）；core.js 獨立重算——每步合法、走完將死、最後一步是對的子、沒有更短的殺法；不跟十派第一層重複、兩段不重複；都出自古譜", () => {
+test("題庫：石門 3 題（兵收尾：中兵突破）、被抓至少 5 題（馬收尾的殺題；開發者 11/26 選「換成馬、兵收尾」）；core.js 獨立重算——每步合法、走完將死、最後一步是對的子、沒有更短的殺法；不跟中炮門第一層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜", () => {
   const c = load(), D = vm.runInContext("JH_MZ_POOL_CENTRAL2", c), T = vm.runInContext("JH_MZ_POOL_CENTRAL2_TRAP", c), others = [];
-  for (const f of ["07z9m-maze.js:JH_MZ_POOL_CENTRAL", "07z9m-cross.js:JH_MZ_POOL_CROSS", "07z9m-pawn.js:JH_MZ_POOL_PAWN", "07z9m-screen.js:JH_MZ_POOL_SCREEN", "07z9m-horse.js:JH_MZ_POOL_HORSE",
-    "07z9m-same.js:JH_MZ_POOL_SAME", "07z9m-opp.js:JH_MZ_POOL_OPP", "07z9m-opp.js:JH_MZ_POOL_OPP_TRAP", "07z9m-corner.js:JH_MZ_POOL_CORNER", "07z9m-corner.js:JH_MZ_POOL_CORNER_TRAP",
-    "07z9m-palace.js:JH_MZ_POOL_PALACE", "07z9m-palace.js:JH_MZ_POOL_PALACE_TRAP"]) { const [fn, nm] = f.split(":"); others.push(poolOf(rd(fn), nm)) }
+  others.push(poolOf(rd("07z9m-maze.js"), "JH_MZ_POOL_CENTRAL"));   /* 開發者 11/26 選單：不同派可以重用題目，只在同一派各層之間不重複 */
   assert.equal(D.door.length, 3); assert.equal(D.trap.length, 0); assert.equal(T.door.length, 0); assert.ok(T.trap.length >= 5);
   const L = L2(c); assert.equal(L.pool.door.length, 3); assert.equal(L.pool.trap.length, T.trap.length);
   const ids = new Set(others.flatMap((o) => [...o.door, ...o.trap]).map((x) => x.id)), mine = [...D.door, ...T.trap];
-  assert.ok(ids.size >= 75, "別派題庫有讀到"); assert.equal(new Set(mine.map((x) => x.id)).size, mine.length, "兩段不重複");
+  assert.ok(ids.size >= 9, "中炮門第一層題庫有讀到"); assert.equal(new Set(mine.map((x) => x.id)).size, mine.length, "兩段不重複");
   for (const x of mine) {
     const door = D.door.includes(x);
-    assert.ok(!ids.has(x.id), "跟別派重複：" + x.id); assert.ok(x.src && x.src.book && !/特級大師|對局|實戰/.test(x.src.book), "出自古譜：" + x.id);
+    assert.ok(!ids.has(x.id), "跟中炮門第一層重複：" + x.id); assert.ok(x.src && x.src.book && !/特級大師|對局|實戰/.test(x.src.book), "出自古譜：" + x.id);
     let b = C.parseFen(x.fen), s = "r", last = "";
     for (let i = 0; i < x.line.length; i++) { const f = C.parseSq(x.line[i].slice(0, 2)), t = C.parseSq(x.line[i].slice(2, 4));
       assert.ok(C.legal(b, s).some((m) => m[0] === f && m[1] === t), x.id + " 第 " + (i + 1) + " 步合法"); if (i === x.line.length - 1) last = b[f]; b = C.make(b, f, t); s = C.opp(s) }
-    assert.ok(C.inCheck(b, s) && C.legal(b, s).length === 0, x.id + " 走完將死"); assert.equal(last, door ? "P" : "R", x.id + " 最後一步");
+    assert.ok(C.inCheck(b, s) && C.legal(b, s).length === 0, x.id + " 走完將死"); assert.equal(last, door ? "P" : "N", x.id + " 最後一步");
     const n = (x.line.length + 1) / 2, b0 = C.parseFen(x.fen);
     const mateIn = (bd, k) => C.legal(bd, "r").some(([f, t]) => { const b1 = C.make(bd, f, t), R = C.legal(b1, "b"); if (!R.length) return C.inCheck(b1, "b"); if (k === 1) return false; return R.every(([f2, t2]) => mateIn(C.make(b1, f2, t2), k - 1)) });
     if (n >= 2) assert.ok(!mateIn(b0, n - 1), x.id + " 沒有更短的殺法");
