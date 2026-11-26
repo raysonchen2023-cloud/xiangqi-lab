@@ -4,8 +4,9 @@
    當時撞到的：起馬第三層驛門 J、K（反宮馬）、仙人指路竹林 Z（過宮炮）、仙人指路的河 ~（列炮）、飛相第二層淤泥 U（反宮馬第二層墨池）、
    起馬第二層瓦片 V（屏風馬第二層地裂）、順炮鹽灶 Z（過宮炮）、列炮戲箱 X（飛相考箱）、飛相第三層水坑 Q（中炮第二層）、仙人指路第三層流水 F（列炮第二層）。
    做法：照 m.html 的 //#include 順序載入全部 m/07z9m-*.js（不在 m.html 的接在最後）；每個檔載入前先把兩張表暫時清空，
-   記下這個檔自己登記了哪些字元（守衛擋掉的那次也看得到），再把表還原。同一個字元被兩個檔登記、而且畫法（函式原始碼）不同＝撞名。
-   畫法一字不差的重複登記（例如第二層照抄第一層同一個東西）不算撞。含三種改壞驗證。 */
+   記下這個檔自己登記了哪些字元（守衛擋掉的那次也看得到），再把表還原。同一個字元被兩個檔登記＝撞名（不看原始碼一不一樣：同樣的程式、閉包值不同照樣畫錯）；只有白名單 ALLOW 例外。
+   另外照 m.html 順序整串載入一次（不清表）：每載完一個檔，之前已有的字元都要還是同一個函式、不能少；白名單的字元最後要是正本那份。
+   另有地圖字元檢查（每層地圖只能用共用字元、說明碑、自己或同派前幾層登記的）。都含改壞驗證。 */
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");
 const DB = path.join(__dirname, "..", "..", "xiangqi-db"), M = path.join(DB, "m"), rd = (f) => fs.readFileSync(path.join(M, f), "utf8");
@@ -19,7 +20,7 @@ function mazeFiles() {
   return [...inc, ...rest];
 }
 
-function regs(patch = {}) {
+function mkCtx() {
   const mem = {}, c = {
     store: { get: (k, d) => (k in mem ? JSON.parse(mem[k]) : d), set: (k, v) => { mem[k] = JSON.stringify(v) } },
     jhL: (zh) => zh, esc: (s) => String(s), addXP: () => {}, xqFlag: () => true, vibrate: () => {}, jhGo: () => {}, jhHallPc: () => "",
@@ -29,6 +30,11 @@ function regs(patch = {}) {
   };
   c.window = c; c.window.matchMedia = () => ({ matches: false }); c.location = { href: "http://x/index.html#/", hash: "#/" };
   vm.createContext(c);
+  return c;
+}
+
+function regs(patch = {}) {
+  const c = mkCtx();
   const files = mazeFiles(), out = [], owner = {};   /* out：{ f, k, ch, src } 每個檔自己登記的字元；owner：每一層是哪個檔加的 */
   for (const f of files) {
     const src = patch[f] ? patch[f](rd(f)) : rd(f);
@@ -81,7 +87,7 @@ function clashes(patch = {}) {
   for (const r of out) (by[r.k + ":" + r.ch] = by[r.k + ":" + r.ch] || []).push(r);
   for (const key of Object.keys(by)) {
     const list = by[key], first = list[0];
-    for (const r of list.slice(1)) if (r.f !== first.f && r.src !== first.src) bad.push(`JH_MZ_${r.k}["${r.ch}"]：${first.f} 跟 ${r.f} 都登記、畫法不同`);
+    for (const r of list.slice(1)) if (r.f !== first.f) bad.push(`JH_MZ_${r.k}["${r.ch}"]：${first.f} 跟 ${r.f} 都登記`);   /* 不看原始碼一不一樣：同樣的程式、閉包值不同照樣畫錯（#239 第三輪複審） */
   }
   return bad;
 }
@@ -126,4 +132,43 @@ test("改壞驗證：地圖借別派字元、門派檔登記共用字元，都�
     assert.notEqual(fn(rd(f)), rd(f), name + "：改壞的程式要真的有改到");
     assert.ok(mapProblems({ [f]: fn }).some((m) => m.includes(key)), name + "：要抓得到");
   }
+});
+
+/* 整串載入（#239 第三輪複審）：照 m.html 順序、不清表，模擬真的網頁。
+   每載完一個檔，之前已有的字元都要還是同一個函式（===）、不能少；白名單的字元最後要是正本（ALLOW 第一個檔）登記的那份。 */
+function fullLoad(patch = {}) {
+  const c = mkCtx(), bad = [], first = {};   /* first：每個字元第一次出現時的函式與檔名 */
+  for (const f of mazeFiles()) {
+    const before = {};
+    if (f !== "07z9m-maze.js") for (const k of ["OBJ", "TILE"]) before[k] = Object.assign({}, vm.runInContext("JH_MZ_" + k, c));
+    vm.runInContext(patch[f] ? patch[f](rd(f)) : rd(f), c);
+    for (const k of ["OBJ", "TILE"]) {
+      const T = vm.runInContext("JH_MZ_" + k, c);
+      for (const ch of Object.keys(before[k] || {})) {
+        if (!(ch in T)) bad.push(`載完 ${f}：JH_MZ_${k}["${ch}"] 不見了`);
+        else if (T[ch] !== before[k][ch]) bad.push(`載完 ${f}：JH_MZ_${k}["${ch}"] 被換掉（原本是 ${first[k + ":" + ch]}）`);
+      }
+      for (const ch of Object.keys(T)) if (!(k + ":" + ch in first)) first[k + ":" + ch] = f;
+    }
+  }
+  for (const key of Object.keys(ALLOW)) if (first[key] !== ALLOW[key][0]) bad.push(`${key} 最後不是正本 ${ALLOW[key][0]} 那份（是 ${first[key]}）`);
+  return bad;
+}
+
+test("整串載入：已登記的字元不會被後面的檔換掉或弄丟；說明碑 L、H 是 lore.js 那份", () => {
+  assert.deepEqual(fullLoad(), []);
+});
+
+test("改壞驗證：過宮炮拿掉守衛、真的蓋掉說明碑；或門派檔直接蓋掉別人的字元，都要抓得到", () => {
+  const cases = [
+    ["過宮炮第一層說明碑 L 拿掉 if(!…)", "07z9m-cross.js", (s) => s.replace("if(!JH_MZ_OBJ.L)JH_MZ_OBJ.L=", "JH_MZ_OBJ.L="), '["L"] 被換掉'],
+    ["列炮第一層直接蓋掉飛相的考箱 X", "07z9m-opp.js", (s) => s + "\nJH_MZ_OBJ.X=H=>null;\n", '["X"] 被換掉'],
+  ];
+  for (const [name, f, fn, key] of cases) {
+    assert.notEqual(fn(rd(f)), rd(f), name + "：改壞的程式要真的有改到");
+    assert.ok(fullLoad({ [f]: fn }).some((m) => m.includes(key)), name + "：要抓得到");
+  }
+  /* 同樣的原始碼、不同的檔再登記一次也算撞（不再用「畫法一字不差」豁免） */
+  const same = (s) => s + '\nJH_MZ_OBJ["y"]=H=>null;\n', dup = { "07z9m-pawn2.js": same, "07z9m-horse2.js": same };
+  assert.ok(clashes(dup).some((m) => m.includes('["y"]')), "兩個檔登記一模一樣的程式也要抓得到");
 });
