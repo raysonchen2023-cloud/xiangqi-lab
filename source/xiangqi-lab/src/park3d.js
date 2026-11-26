@@ -1038,8 +1038,22 @@
             CLS.forEach(([s,sz],i)=>{if(i%2!==n-1)return;s.material.map=t;s.material.needsUpdate=true;const w=sz*1.5;s.scale.set(w,w*im.naturalHeight/im.naturalWidth,1)})};if(loadImg(src,go))go()})}
         /* 桌角一個青瓷小香爐（茶杯的對角），爐頂飄淡淡的白煙（程式畫、會往上飄散） */
         /* 11/15 開發者截圖（平視時香爐壓在棋盤右上角上）：原本放在 (5.9,-4.4)，立牌左半邊插進棋盤的木框（棋盤半寬 5.45），低角度看就像擺在棋盤角上；往外挪到木框外的桌面（左緣 5.56），還在桌緣（半徑 8.2）裡面；俯視時右上角仍露出一小半 */
-        use("censer",im=>{const x=6.35,z=-3.6,c=card(im,{x,y:.015,z,h:1.5,tilt:.3}),b=lastB(c);if(b)Object.assign(b,{cup:[x,z],hb:0});
-          const st=radial("rgba(255,255,255,.85)","rgba(255,255,255,.35)");for(let i=0;i<4;i++){const s=new T.Sprite(new T.SpriteMaterial({map:st,transparent:true,opacity:0,depthWrite:false,toneMapped:false,fog:false}));root.add(s);if(X.bills)X.bills.push({m:s,y:0,tilt:0,smk:[x,1.25,z,i/4]})}})}
+        /* 11/25 開發者 iPad 截圖：「問題是看起來沒有平放在桌子上！」「會飄起來」「所有角度看起來都要是穩穩地放在桌子」。2D 立牌（往後仰 .3）在 iPad 寬畫面、低角度、側面看，底部對不上桌面像浮著，左半邊又疊到棋盤右上角。
+           改法跟茶杯（意見回饋 456、479）一樣換成立體的：程式畫青瓷三足小香爐，三隻腳踩在桌面（y=0），底下一圈接觸陰影，從哪個角度看都平放在桌上。
+           位置再往桌緣挪到 (6.8,-3)：爐身外緣離棋盤木框外緣 5.56 約 0.7，離桌心約 7.9，還在桌緣 8.2 裡面。白煙照舊，改從香頭往上飄 */
+        {const x=6.8,z=-3,R=.46,LG=.1,S=1.3,g=new T.Group();g.position.set(x,0,z);g.scale.setScalar(S);g.name="censer3d";root.add(g);   /* S：整組放大（爐身直徑約 1.2、連香約 1.2 高，跟茶杯差不多大） */
+          const cel=new T.MeshStandardMaterial({color:0x8FB8A2,roughness:.35,metalness:0,side:T.DoubleSide}),ash=new T.MeshStandardMaterial({color:0x6E6A63,roughness:.95}),stk=new T.MeshStandardMaterial({color:0x8A3B2A,roughness:.8});
+          const prof=[[0,0],[R*.62,0],[R*.86,.07],[R,.2],[R*.96,.32],[R*.82,.4],[R*.84,.44],[R*.9,.46]].map(([a,b])=>new T.Vector2(a,b+LG));
+          g.add(new T.Mesh(new T.LatheGeometry(prof,40),cel));
+          const lip=new T.Mesh(new T.TorusGeometry(R*.9,.025,8,40),cel);lip.rotation.x=-PI/2;lip.position.y=LG+.46;g.add(lip);
+          const am=new T.Mesh(new T.CircleGeometry(R*.8,32),ash);am.rotation.x=-PI/2;am.position.y=LG+.4;g.add(am);
+          for(let k=0;k<3;k++){const a=k/3*TAU+PI/6,l=new T.Mesh(new T.CylinderGeometry(.045,.06,LG+.04,10),cel);l.position.set(Math.cos(a)*R*.6,(LG+.04)/2,Math.sin(a)*R*.6);g.add(l)}
+          for(const s of[-1,1]){const e=new T.Mesh(new T.TorusGeometry(.08,.022,6,16),cel);e.position.set(s*R*.98,LG+.38,0);e.rotation.y=PI/2;g.add(e)}
+          const sk=new T.Mesh(new T.CylinderGeometry(.012,.012,.36,6),stk);sk.position.y=LG+.58;g.add(sk);
+          const tip=new T.Mesh(new T.SphereGeometry(.022,8,6),new T.MeshBasicMaterial({color:0xFF7A3A,toneMapped:false}));tip.position.y=LG+.76;g.add(tip);
+          g.traverse(o=>{if(o.isMesh&&o!==tip){o.castShadow=true;o.receiveShadow=true}});
+          blob(x,.02,z,R*1.25*S,R*1.25*S,.32,0);
+          const top=(LG+.78)*S,st=radial("rgba(255,255,255,.85)","rgba(255,255,255,.35)");for(let i=0;i<4;i++){const s=new T.Sprite(new T.SpriteMaterial({map:st,transparent:true,opacity:0,depthWrite:false,toneMapped:false,fog:false}));root.add(s);if(X.bills)X.bills.push({m:s,y:0,tilt:0,smk:[x,top,z,i/4]})}}}
       // 茶杯：從斜上方看的手繪茶碗，立牌整張正對鏡頭、下緣貼著杯托前緣（Pikafish 一杯、我一杯，位置跟原本一樣）
       /* 意見回饋 423：茶杯看起來沒有平放——原本立牌的下緣往「舊的鏡頭位置 (0,16,9.2)」挪，鏡頭拉高、繞桌轉之後杯子就歪、浮、滑到杯影外面。
          改成：找出圖上杯托最寬的那一列（＝杯托圓心，杯子真正落在桌上的點）當轉軸，每一格都讓這個點落在鏡頭看向杯位的那條視線上、
@@ -1080,7 +1094,9 @@
     if(T.ColorManagement)T.ColorManagement.legacyMode=false;if(T.sRGBEncoding!=null)rd.outputEncoding=T.sRGBEncoding;if(T.SRGBColorSpace)rd.outputColorSpace=T.SRGBColorSpace;
     rd.toneMapping=T.ACESFilmicToneMapping;rd.toneMappingExposure=.98;try{ANI=rd.capabilities.getMaxAnisotropy()||8}catch(e){}
     rd.domElement.style.cssText="display:block;width:100%;height:100%";el.append(rd.domElement);
-    const hint=document.createElement("div");hint.style.cssText="position:absolute;left:50%;bottom:8px;transform:translateX(-50%);font:600 11px sans-serif;color:#fff;background:rgba(30,20,10,.45);padding:3px 10px;border-radius:99px;white-space:nowrap;pointer-events:none;transition:opacity .6s";
+    /* 11/25 W121-6（真人視角截圖 375×812）：操作提示原本貼底 8px、不換行，被左下「▦ 平面棋盤」（.pk2d，底 10px、約 44 高）、右下 ＋／－（.pzoom，底 8px、兩顆 34＋間隔 12＝80 高）和「〇〇到〇〇有多遠？」小紙條（.mh-note，底 14px）壓住只看到一半。
+       改成整行抬到這些按鈕和小紙條上面（底 96px），寬度照字長（max-content）但不超過園子寬減 24px，太長就置中換行（英文那句也看得完整）；字級、顏色、淡出時間都不變 */
+    const hint=document.createElement("div");hint.style.cssText="position:absolute;left:50%;bottom:96px;transform:translateX(-50%);font:600 11px sans-serif;color:#fff;background:rgba(30,20,10,.45);padding:3px 10px;border-radius:12px;width:max-content;max-width:calc(100% - 24px);box-sizing:border-box;text-align:center;pointer-events:none;transition:opacity .6s";
     // 意見回饋 251：載入時不是一行字，而是小帥原地走路去公園（樹和遠山往後退，看起來像在走），全部載好就淡出
     const veil=document.createElement("div");veil.style.cssText="position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font:600 14px sans-serif;color:#6b5a44;pointer-events:none;transition:opacity .35s;overflow:hidden;background:linear-gradient(#EAF1F6,#F4ECDC 70%)";
     {let ch="帥";try{const L=window.XQ_BOTLOOK&&window.XQ_BOTLOOK();if(L&&L.p)ch=L.p}catch(e){}
@@ -2359,11 +2375,11 @@
       for(const d of pkcbPre(o,pos))markAdd(d);   /* 第 13 輪 F4：預走標記（紫色虛線框、淡色箭頭、「預」字牌）、預走走出後對方那一步灰色虛線 */
       try{CR.chkSet(typeof o.check==="number"&&o.check>=0&&board[o.check]?sideOf(board[o.check]):null)}catch(e){}
       thinking=!!ex.thinking;setOpp(ex.opp||null);try{simSync(ex.simul)}catch(e){}setMate(ex.mateLook||null);setWatchers(ex.watchers);mySide=ex.botSide?(ex.botSide==="r"?"b":"r"):"r";try{CR.data(ex.crowd||null,o,ex)}catch(e){}
-      if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;endT=END;
+      if(ex.result&&ex.result!==mood){mood=ex.result;const b=ex.botSide;endT=END;const mm=mood,mk=CAPKEY,endOk=()=>!stopped&&mood===mm&&CAPKEY===mk;   /* W120：隊友那句話 1.5／1.8 秒後才說；到時場景停了（stopped）、開了新的一盤（mood 清掉或 gid 換了）就不說 */
         oppRes=mood==="draw"||!b?"draw":mood===b?"win":"lose";mateRes=oppRes==="win"?"lose":oppRes==="lose"?"win":"draw";
         if(mood==="draw"){opp.setFace("flat",99);mate.setFace("flat",99);mate.say("和棋，不錯喔！",3)}
-        else if(b&&mood===b){opp.setFace("happy",99);opp.say(ex.oppWin||"我贏了！再來一盤？",3);mate.setFace("sad",99);setTimeout(()=>mate.say("下次一定贏！",2.6),1800)}
-        else if(b){opp.setFace("sad",99);opp.say(ex.oppLose||"你好厲害…",3);mate.setFace("happy",99);setTimeout(()=>mate.say("你贏了！太強了！",2.6),1500)}}
+        else if(b&&mood===b){opp.setFace("happy",99);opp.say(ex.oppWin||"我贏了！再來一盤？",3);mate.setFace("sad",99);setTimeout(()=>{if(endOk())mate.say("下次一定贏！",2.6)},1800)}
+        else if(b){opp.setFace("sad",99);opp.say(ex.oppLose||"你好厲害…",3);mate.setFace("happy",99);setTimeout(()=>{if(endOk())mate.say("你贏了！太強了！",2.6)},1500)}}
       if(!ex.result&&mood){mood=null;endT=0;opp.setFace("smile");mate.setFace("smile")}}
     // ---------- 鏡頭與互動 ----------
     let yaw=0,pitch=0,tyaw=0,tpitch=0,zoom=1,tzoom=1,W=1,H=1,flatV=false;const BILLV=new T.Vector3();   // zoom＝鏡頭到棋盤中心的距離倍數（兩指捏合）

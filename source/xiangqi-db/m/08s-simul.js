@@ -182,7 +182,7 @@ function SimulPage(v){
         <button class="btn" id="smGo" style="width:100%">開始繞場</button>`;
         b.querySelectorAll("[data-n]").forEach(x=>x.onclick=()=>{n=+x.dataset.n;vibrate(5);draw()});
         b.querySelector("#smM").onclick=()=>{lx=Math.max(1,lx-1);draw()};{const wy=b.querySelector("#smWhy");if(wy)wy.onclick=()=>{vibrate(5);modal(`<img src="data/zhanggui/idle.webp" alt="" onerror="this.remove()"><h2>笑面掌櫃</h2><p class="pl-say">「規矩嘛——上二樓的，都得卸下棋子身，免得十盤棋氣撞在一塊。至於他們原本是誰……客官下完再問吧。」</p>`,[["知道了",null]],"prolog")}}   /* 開發者 11/12 選「表面規矩、底下殘譜」（story/114）：棋客為何不是棋子身——表面是茶肆二樓的規矩，底下是黑洞循環留下的人形殘譜（不說破） */b.querySelector("#smP").onclick=()=>{lx=Math.min(18,lx+1);draw()};
-        b.querySelector("#smGo").onclick=()=>{store.set("simN",n);store.set("simLx",lx);closeSheet();cur=0;sel=-1;shownDone=null;post("/simul/new",{n,lx}).then(()=>{if(S&&!S.none&&!S.done)simIntro(S,()=>flash("茶已溫，棋已擺好。請入席，走第一步"));else flash("茶已溫，棋已擺好。請入席，走第一步")})}};draw()})}
+        b.querySelector("#smGo").onclick=()=>{store.set("simN",n);store.set("simLx",lx);closeSheet();cur=0;sel=-1;shownDone=null;post("/simul/new",{n,lx}).then(()=>{if(!live)return;   /* 11/25 W120：開新的一場要等伺服器回來，這段時間離開了車輪戰頁（live 變 false，同 172、213 行）就不播開場、不冒字 */if(S&&!S.none&&!S.done)simIntro(S,()=>flash("茶已溫，棋已擺好。請入席，走第一步"));else flash("茶已溫，棋已擺好。請入席，走第一步")})}};draw()})}
   function summary(){const D=S.done,n=S.n,B=(S.best||{})[n],r=D.pts/n,em=D.w===n?"🏆":r>=.6?"😄":r>=.4?"🤝":"🧐",
       h=D.w===n?`${n===10?"十":n===5?"五":"三"}桌皆破！`:r>=.6?"今日戰果漂亮！":r>=.4?"有來有往！":"這一輪很硬！",
       p=D.w===n?"像真正的大師一樣，一圈走完，桌桌奏捷。":r>=.6?"穩住了大多數棋局，車輪轉得很順。":r>=.4?"贏輸各半，再磨幾盤就能多拿幾桌。":"多桌同時應戰不容易，記住幾個關鍵失誤，下次再扳回來。";
