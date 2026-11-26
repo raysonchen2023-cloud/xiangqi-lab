@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-w107-cupmap-l1610.js",   /* 11/25 W107-L 第 2 批：千秋盃頁（07y7）iPad 橫向橫式圖：5 張條目、屏風掛板英雄帖燈綵球座標、燈掛在掛環下、量好的點寫死、cp2Geo、走路（行為 5、混合 1、原始碼 1） */
   "test-eye-p3-1125.js",   /* 11/25 W121 真人視角第一輪 P3（平面）：隨行小人不站上棋盤（src/bot3d.js）、輪到電腦時狀態列不寫「輪到你」（m/08b-cpugame.js）、評等說明泡泡自己跳出時不蓋棋盤（m/01-board.js tmxBub av）。14 項行為、2 項〔原始碼〕 */
   "test-eye-3d-1125.js",   /* 11/25 W121 真人視角第一輪 P3（3D）：玩家碰過畫面或按過鍵就不再跳「拖曳轉身」教學（m/06-cpu.js）、3D 操作提示抬到按鈕和小紙條上方（src/park3d.js）。7 項行為、3 項〔原始碼〕 */
   "test-censer-3d-1125.js",   /* 11/25 開發者 iPad 截圖「香爐看起來沒有平放在桌子上、會飄起來」：石桌香爐從往後仰的 2D 立牌換成 3D 青瓷三足爐（src/park3d.js censer3d），三隻腳踩桌面、不出桌緣、不進棋盤木框、白煙從香頭起 */
