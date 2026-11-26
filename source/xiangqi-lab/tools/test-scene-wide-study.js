@@ -1,5 +1,5 @@
 // W107-L 第 1 批（開發者 11/25「先做沒做的頁日間」）：我的角色「棋鎮書齋珍藏牆」（07z4）在 iPad 橫向換成 2560×1600 橫式圖，
-// 經典版、原圖版共用一套座標（Windows Claude 1 量，output/w107-ipad/l1610/studymap/study_day_classic_l1610.json）；夜景、手機、iPad 直向照舊原圖。
+// 經典版、原圖版共用一套座標（Windows Claude 1 量，output/w107-ipad/l1610/studymap/study_day_classic_l1610.json）；手機、iPad 直向照舊原圖；夜景照日間條目登記（#173 scwVarInit）。
 // 書齋牆在 3D 舞台下面，不是整頁場景：選圖照整個畫面量（mzScwSync），用橫式圖時滿寬往下捲（包 07sw scwSync 回 "wait"），不用 07fl cover 填滿。
 // 不開瀏覽器：07sw＋07z4 在 vm 跑，換圖用假的 #view／圖框。用法 node --test xiangqi-lab/tools/test-scene-wide-study.js
 "use strict";
@@ -26,13 +26,13 @@ function fakeWall(ctx, src0) {
 }
 const KC = "studymap/study_day_classic", KO = "studymap/study_day", SRC_C = "data/studymap/study_day_classic.webp?v=2510";
 
-test("條目：經典版、原圖版兩個白天鍵都登記（共用一套座標、各自的圖）；夜景沒有橫式圖", () => {
+test("條目：經典版、原圖版兩個白天鍵都登記（共用一套座標、各自的圖）；夜景照日間條目登記（#173）", () => {
   const C = load(true), SCW = vm.runInContext("SCW", C), L = vm.runInContext("MZ_L", C), ent = vm.runInContext("scwEntry", C);
   for (const [k, f] of [[KC, "studymap/study_day_classic_l1610"], [KO, "studymap/study_day_l1610"]]) {
     const e = SCW[k]; assert.ok(e, k); assert.equal(e.ready, true, k); assert.equal(e.f, f); assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.equal(e.fx.mz, L, "座標共用 MZ_L");
     assert.ok(ent(k), "開發用開關打開時用得到");
   }
-  assert.equal(ent("studymap/study_night_classic"), null); assert.equal(ent("studymap/study_night"), null);
+  const nt = (n, dd) => { const e = ent(n); assert.ok(e, n + " 夜景照日間條目登記（#173 scwVarInit）"); assert.equal(e.f, n + "_l1610", n); assert.equal(e.base, dd, n); assert.deepEqual(e.S, ent(dd).S, n + " 座標跟日間共用"); }; nt("studymap/study_night_classic", "studymap/study_day_classic"); nt("studymap/study_night", "studymap/study_day");
   assert.equal(vm.runInContext("scwEntry", load(false))(KC), null, "SCW_CDN 還是 false、沒開開發用開關＝正式玩家照舊原圖");
 });
 
@@ -99,7 +99,7 @@ test("選圖照整個畫面量：iPad 橫向換橫式圖（換完重畫疊圖）
   dims.w = 932; dims.h = 430; assert.equal(sync(w.V, w.P), null, "手機橫放（短邊不到 600）");
   const C2 = load(false); dims.w = 1180; dims.h = 820; const w2 = fakeWall(C2, SRC_C);
   assert.equal(vm.runInContext("mzScwSync", C2)(w2.V, w2.P), null, "沒開開關、SCW_CDN false＝原圖"); assert.equal(w2.img.src, SRC_C);
-  const w3 = fakeWall(C, "data/studymap/study_night_classic.webp?v=2510"); assert.equal(sync(w3.V, w3.P), null, "夜景沒有橫式圖");
+  const w3 = fakeWall(C, "data/studymap/study_night_classic.webp?v=2510"); assert.equal(sync(w3.V, w3.P), "wait", "夜景照日間條目登記（#173），iPad 橫向也換橫式圖"); assert.match(String(w3.img.src), /studymap\/study_night_classic_l1610\.webp/);
 });
 
 test("07fl 問 scwSync：書齋牆用橫式圖回 \"wait\"（滿寬往下捲，不 cover）、原圖回 null；別頁照 07sw 原本的 scwSync", () => {
