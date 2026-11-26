@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-w131b-hub-fill.js",   /* 11/26 W131b iPad 直向：對戰、學習大廳的朝代殘影（.cy）算可以裁，大廳照樣填滿寬度、不留模糊底 */
   "test-w107-hall-l1610.js",   /* 11/25 W107-L 第 5 批：江湖會館十派門內頁（07z9b／07z9l／07z9c／07z9m）iPad 橫向橫式圖：十派條目與量好的點、jhHallUse 整套換與還原、迷宮入口位置（行為 3、原始碼 1） */
   "test-scene-wide-xsm.js",   /* 11/25 W107-L 第 4 批：西市（07xsm）iPad 橫向橫式圖——外景、冬景、茶坊、茶坊冬景四個條目、座標整組照量好的值、藏點與茶坊禁區照當下的圖、日夜換季換圖照 07sw 的鍵重選、開頁就是橫式圖與換圖失敗實跑真的 07sw、開頁 xsmPre／xsmPageScw 實跑、00-util 補抓 CDN 後每分鐘換圖（行為 8、〔混合〕1、〔原始碼〕1） */
   "test-w107-shippages-l1610.js",   /* 11/25 W107-L 第 4 批：星槎船上各頁（07f 起航、書架、棋話、行囊、幻影指導局）iPad 橫向橫式圖：5 頁條目、量好的點寫死、shpScw 用真的 07sw（開頁、轉向、載不到退回）、大字木牌、石桌棋盤頁換圖、CDN 補抓（00-util 真監聽）、resize 不累積、橫式字級（行為 1、混合 6、原始碼 1） */
