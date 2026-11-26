@@ -114,7 +114,7 @@ test("〔混合〕JhHall 開頁實跑真的 07sw：iPad 橫向開頁用橫式圖
       getAttribute(k) { return k === "src" ? this._src : null }, get src() { return this._src }, set src(x) { this._src = x }, addEventListener() { },
       append(...c) { this.children.push(...c) }, querySelector(q) { return q === ":scope>img" ? this.children.find(c => c.tagName === "IMG") || null : null }, classList: { _c: new Set(), add(c) { this._c.add(c) }, remove(c) { this._c.delete(c) }, toggle(c, on) { on ? this._c.add(c) : this._c.delete(c) }, contains(c) { return this._c.has(c) } } }; els.push(e); return e };
     Object.assign(C, { localStorage: { getItem: k => k === "xqScwDev" ? "1" : null }, jhCss() { }, jhSch: () => ({ nm: "中炮門" }), setTop() { }, jhL: a => a, esc: s => s, jhFadeEl: () => ({ classList: { add() { }, remove() { }, contains() { return false } } }), jhFadeOut() { }, jhSheet() { }, jhGo() { },
-      setTimeout: f => 0, getComputedStyle: () => ({ paddingBottom: "0", paddingLeft: "0", paddingRight: "0" }), innerHeight: sz[1], location: { hash: "#/jianghu/hall/central" },
+      setTimeout: f => 0, ROUTE_N: 0, getComputedStyle: () => ({ paddingBottom: "0", paddingLeft: "0", paddingRight: "0" }), innerHeight: sz[1], location: { hash: "#/jianghu/hall/central" },
       document: { createElement: mk, body: { classList: { add() { } } }, documentElement: { clientHeight: sz[1] } } });
     const v = { clientWidth: sz[0], clientHeight: sz[1], scrollTop: 0, innerHTML: "", children: [], append(...c) { this.children.push(...c) }, getBoundingClientRect: () => ({ top: 0 }) };
     R("JhHall")(v, "central");
