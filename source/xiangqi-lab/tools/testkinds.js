@@ -126,6 +126,10 @@ const CLASSIFIED = new Set([
   "test-ipad-fill.js",   /* 11/13 遊戲畫面都要滿版：iPad／Duo 直向填滿寬度、橫向兩側模糊底（07fl；行為 8、原始碼 1） */
   "test-w109-home-cdn.js",   /* 11/25 W109 首頁寬版圖同源 404 時先等 00-util 的 CDN 補抓、CDN 也失敗才退回原圖（07z hmwFail；載入 07z 和 00-util 真正的監聽，行為 3、〔混合〕2） */
   "test-scene-wide-l1610.js",   /* 11/25 W107-L 場景頁 iPad 橫向專用橫式圖（07sw，第一頁錯棋重練經典白天）：選圖門檻、鍵與條目、座標範圍、天氣範圍、原地換圖與退回（含開頁就是橫式圖、00-util CDN 補抓）、手機不動標籤、走路設定；〔混合〕原始碼接線 */
+  "test-w107-setmap-l1610.js",   /* 11/25 W107-L 第 1 批：設定頁（07s2）iPad 橫向橫式圖：條目、入口與走路、疊圖座標、smScene 橫式不換日夜圖且疊圖照條目（行為 7、原始碼 1） */
+  "test-w107-feedback-l1610.js",   /* 11/25 W107-L 第 1 批：意見回饋頁（07s3）iPad 橫向橫式圖：條目、銅匭順序、疊圖座標、走路、橫式不飛鴿、座標組 GEO、出口 fbpL（行為 6、混合 1、原始碼 1） */
+  "test-w107-thememap-l1610.js",   /* 11/25 W107-L 第 1 批：主題訓練頁（07y3）iPad 橫向橫式圖：條目、8 塊牌順序、小牌與小動作從 tmq 算、走路、天氣範圍（行為 4、原始碼 1） */
+  "test-w107-termsmap-l1610.js",   /* 11/25 W107-L 第 1 批：名詞頁（07y4）iPad 橫向橫式圖：條目、三通碑格式與順序、標題牌與小動作從 stele 算、tbGeo（行為 4、原始碼 1） */
   "test-engine-ios-threads.js",   /* 11/25 iPad Air 4 實機 Pikafish 多執行緒記憶體越界、電腦不回棋：真正原因是共享記憶體算到一半加大，iPhone／iPad 一開始就給 384 MB、執行緒恢復最多 4 條（src/engine.js）。6 項行為（vm 載入 engine.js、看記憶體大小、建不起 384 MB 的退路和送出的 setoption） */
   "test-engine-timeout.js",   /* 11/12 開發者截圖「思考有點久」：引擎沒回應不再永遠等 */
   "test-ai-levels.js",   /* 11/12 第 10 輪 F3：電腦對手透明頁（行為 2、混合 3、原始碼 2） */
