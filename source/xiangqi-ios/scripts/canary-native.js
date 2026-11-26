@@ -151,6 +151,21 @@ const KINDS = {
   estTickFunc: { break: both(SRV, rep("private func establishNow() -> Outcome {", "private func establishNow() -> Outcome {\n        func `verifyNow`(timeout: TimeInterval) -> Bool { return true }")), expect: "establish 一定經過 verifyNow" },
   /* #144 複審：反引號 `verifyNow` 在 #150（check-native 斷詞）之後跟 verifyNow 同一個字，estTickFunc 也會被「establishNow 裡不能宣告 func verifyNow」抓到；補一個只有「verifyNow 字數＝if 區塊數」抓得到的：用 let＋callAsFunction 蓋掉（swiftc -typecheck 過） */
   estCallAs: { break: both(SRV, rep("private func establishNow() -> Outcome {", "private func establishNow() -> Outcome {\n        struct XQV { func callAsFunction(timeout: TimeInterval) -> Bool { true } }; let verifyNow = XQV()")), expect: "establish 一定經過 verifyNow" },
+  /* #144 第二輪審查（Windows Claude 1）的兩個繞法（iMac swiftc -typecheck 都過），加上「看不懂就拒絕」的四種寫法各一個 */
+  vnRawTriple: { break: both(SRV, (s) => { const sig = "    private func verifyNow(timeout: TimeInterval) -> Bool {", i = s.indexOf(sig), e = s.indexOf("\n    }\n", i) + 7; if (i < 0 || e < 7) throw new Error("找不到 verifyNow"); return s.slice(0, i) + '    private let _p1 = #"""x"#; private func verifyNow(timeout: TimeInterval) -> Bool { return true }\n    private let _p2 = ##"""\n' + s.slice(i, e) + '    """##\n' + s.slice(e) }), expect: "verifyNow 真的去問 whoami" },
+  vnTickFalse: { break: both(SRV, (s) => { if (!s.includes("    private var v = false\n") || !s.includes("fileprivate final class XQFlag")) throw new Error("找不到 XQFlag"); return s.replace("fileprivate final class XQFlag", "fileprivate let `false` = true\nfileprivate final class XQFlag").replace("    private var v = false\n", "    private var v = `false`\n") }), expect: "verifyNow 真的去問 whoami" },
+  oddTriple: { break: both(SRV, beforeEnd('    private let xqOdd = """\n    x\n    """')), expect: "verifyNow 真的去問 whoami" },
+  oddTick: { break: both(SRV, beforeEnd("    private let `xqOdd` = 0")), expect: "verifyNow 真的去問 whoami" },
+  oddRegex: { break: both(SRV, beforeEnd("    private let xqOdd = #/x/#")), expect: "verifyNow 真的去問 whoami" },
+  oddRaw: { break: both(SRV, beforeEnd('    private let xqOdd = #"x"#')), expect: "verifyNow 真的去問 whoami" },
+  /* #144 第四輪審查（Windows Claude 1）：XQBridgeViewController 藏原始字串；第五輪：子資料夾裡的 Swift */
+  oddSubdir: { break: (R) => { const d = iosp(R, "native/ios/XQSub"); fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(path.join(d, "XQSub.swift"), 'let xqOdd = #"x"#\n') }, expect: "verifyNow 真的去問 whoami" },
+  oddCommentClose: { break: both(SRV, beforeEnd('    /*\n    // */ private let xqOdd = #"x"# /*\n    */')), expect: "verifyNow 真的去問 whoami" },   /* #144 第六輪審查：區塊註解裡 // 開頭的行用 ＊/ 收尾，後面接真程式（iMac swiftc -typecheck 過） */
+  odd2028: { break: both(SRV, beforeEnd('    /*\n    // \u2028*/ private let xqOdd = 0 /*\n    */')), expect: "verifyNow 真的去問 whoami" },   /* #144 第七輪審查：U+2028 讓豁免看不到 ＊/（iMac swiftc -typecheck 過） */
+  odd2029: { break: both(SRV, beforeEnd('    /*\n    // \u2029*/ private let xqOdd = 0 /*\n    */')), expect: "verifyNow 真的去問 whoami" },
+  odd0085: { break: both(SRV, beforeEnd('    // 說明\u0085文字')), expect: "verifyNow 真的去問 whoami" },   /* 第八輪建議：特殊換行字元放在一般 // 註解行也要抓（整份原文檢查，不經過豁免） */
+  oddTrailComment: { break: both(SRV, beforeEnd('    private let xqOdd = #"x"# // c')), expect: "verifyNow 真的去問 whoami" },   /* 第七輪 E1：行尾才有 // 的不能整行豁免 */
+  oddVc: { break: both(VC, beforeEnd('    private let xqOdd = #"x"#')), expect: "verifyNow 真的去問 whoami" },
   estNoReturn: { break: both(SRV, (s) => { const i = s.indexOf("private func establishNow()"), j = s.indexOf("xqLog(\"驗證通過", i), k = s.indexOf("return .verified", j); if (i < 0 || j < 0 || k < 0) throw new Error("找不到第二個 if 區塊"); return s.slice(0, k) + "_ = 0" + s.slice(k + "return .verified".length) }), expect: "establish 一定經過 verifyNow" },
   estElseAfter: { break: both(SRV, rep("if verifyNow(timeout: 2.0) { return .verified }", "if verifyNow(timeout: 2.0) { return .verified } else { xqLog(\"x\") }")), expect: "establish 一定經過 verifyNow" },
   estFuncTwice: { break: both(SRV, beforeEnd("    private func verifyNow(timeout: Double, xq: Int) -> Bool { return true }")), expect: "establish 一定經過 verifyNow" },
