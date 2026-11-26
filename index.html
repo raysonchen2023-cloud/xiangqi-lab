@@ -1648,6 +1648,9 @@ body.bh-field #cgStuck button{pointer-events:auto}
   body.bh-field #bhFieldDock .bf-keys{grid-column:2}
   body.bh-field.bh-field-pad .view.fixed>#bbox .gpad{left:auto!important;right:calc(6px + env(safe-area-inset-right,0px));transform:none!important}
 }
+/* W126（開發者 11/26）：iPhone 版在 iPadOS 26 相容視窗裡，左上紅黃綠視窗鈕蓋住頂欄最左邊的返回鈕、首頁星晷；00-util xqIpCompat 判斷到才加 xq-ipcompat，頂欄左邊多留 76px（視窗鈕約 70pt 寬）。
+   寫成 html.xq-ipcompat body #topbar＋!important，才蓋得過門派等頁面 html body.bh-field #topbar 自己的內距 */
+html.xq-ipcompat body #topbar{padding-left:76px!important}
 </style></head><body>
 <script>/* 11/18 第 31 輪 N31-3：冷開時頂欄「象棋千秋」和底下四顆分頁鈕的空殼，在程式跑完以前（約 0.4 秒）就先畫出來了。這次會出開頭畫面時（跟 05b xqBootCovNeed 同一套判斷），先在 html 標上 xq-bootcov，蓋一層跟開頭畫面同色的底；05b saveBoot 跑完就拿掉（xqBootCovOff），保險 6 秒一定拿掉 */(function(){try{var d=document.documentElement;if(navigator.webdriver||sessionStorage.getItem("xqTitleShown")||sessionStorage.getItem("xqPrologue")||localStorage.getItem("xqUpdBack")||!/^(#\/?)?$/.test(location.hash||""))return;var s=document.createElement("style");s.textContent="html.xq-bootcov::after{content:'';position:fixed;inset:0;z-index:9997;background:#F3ECDD}";document.head.appendChild(s);d.classList.add("xq-bootcov");setTimeout(function(){d.classList.remove("xq-bootcov")},6000)}catch(e){}})();</script>
 <div class="app">
@@ -1712,7 +1715,7 @@ body.bh-field #cgStuck button{pointer-events:auto}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261126-0626";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261126-1111";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -1732,6 +1735,13 @@ const XQ_CDN="https://xiangqi-cdn.pages.dev/";
 function xqShareBase(){let o="",p="/";try{o=location.origin||"";p=location.pathname||"/"}catch(e){}
   if(!xqNat()&&/^https:\/\//.test(o)&&!/^https:\/\/(localhost|127\.|\[::1\]|[^/]*\.localhost(:|$))/.test(o))return o+p;return"https://raysonchen2023-cloud.github.io/xiangqi-lab/"}
 function xqNat(){try{return!!(typeof window!=="undefined"&&window.XQ_NATIVE)||(typeof navigator!=="undefined"&&/XQQianqiuApp\//.test(String(navigator.userAgent||"")))}catch(e){return false}}
+/* W126（開發者 11/26「包交出後就修」）：iOS 版只做 iPhone（device family=1），裝在 iPad 上會跑在 iPadOS 26 的相容視窗裡，
+   左上角紅黃綠視窗鈕疊在 App 畫面上，蓋住每一頁頂欄最左邊的返回鈕和首頁標題下的星晷。safe-area 在相容視窗不會算進那塊，只能自己判斷：
+   原生 App＋iPad（iPadOS 會報 Macintosh＋多點觸控，兩種都認）＋視窗是手機寬（小於 500），就在 html 加 xq-ipcompat，m.css 讓頂欄左邊多留 76px。
+   網頁版（Safari 有自己的網址列、沒有視窗鈕）、真 iPad 寬度、iPhone 都不加。轉向、改視窗大小時重算 */
+function xqIpCompatOf(ua,tp,w,nat){ua=String(ua||"");return!!nat&&(/iPad/.test(ua)||(/Macintosh/.test(ua)&&tp>1))&&w>0&&w<500}
+function xqIpCompat(){try{return xqIpCompatOf(navigator.userAgent,navigator.maxTouchPoints||0,innerWidth,xqNat())}catch(e){return false}}
+if(typeof document!=="undefined"&&document.documentElement){const f=()=>{try{document.documentElement.classList.toggle("xq-ipcompat",xqIpCompat())}catch(e){}};f();addEventListener("resize",f)}
 const xqCdnRel=u=>{try{const x=new URL(u,location.href);if(x.origin!==location.origin)return"";const b=location.pathname.replace(/[^/]*$/,""),p=x.pathname.startsWith(b)?decodeURI(x.pathname.slice(b.length)):"";return(xqNat()?/^data\//:/^(data|engine)\//).test(p)?p:""}catch(e){return""}};
 /* 11/17 iMac 模擬器 P0：第一次造訪 service worker 還沒接管時，棋盤的棋子、底圖是 SVG <image>（tagName 小寫 image），以前不在名單裡，全部變成「?」；SVG 的換 href */
 addEventListener("error",e=>{const t=e.target;if(!t||!t.tagName||(t.dataset&&t.dataset.cdnTry))return;const svg=String(t.tagName).toLowerCase()==="image";if(!svg&&!/^(IMG|AUDIO|SOURCE|VIDEO)$/.test(t.tagName))return;const r=xqCdnRel(svg?(t.getAttribute("href")||t.getAttribute("xlink:href")||""):(t.currentSrc||t.src||""));if(!r)return;t.dataset.cdnTry="1";if(svg)t.setAttribute("href",XQ_CDN+r);else t.src=XQ_CDN+r},true);
