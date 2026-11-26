@@ -198,6 +198,7 @@ const CLASSIFIED = new Set([
   "test-jh-corner-1126.js",   /* 11/26 W87-2 仕角炮地底迷宮（m/07z9m-corner.js）：vm 跑朝奉機關只在那一間斜走、只看正在走的那一條斜線（另一條、每邊正中間、出了那一間都看不到、擋光）（含改壞驗證）；銅鏡照亮整條直線；地圖 BFS 與 512 種步調錯開都有不被抓的路；兩段題庫 core.js 獨立重算 */
   "test-jh-palace-1126.js",   /* 11/26 W87-2 反宮馬地底迷宮（m/07z9m-palace.js）：vm 跑墨工傀儡跳日字、反宮挑離工坊中心最遠的落點、蹩馬腿、墨池裡看不到也抓不到（含改壞驗證）；墨池擋光；地圖 BFS 與任一傀儡慢 1～7 回合都有不被抓的路；兩段題庫 core.js 獨立重算 */
   "test-jh-maze-layers-1126.js",   /* 11/26 W87-2 地底迷宮換層（m/07z9m-maze.js jhMzLayer／jhMzDeep／jhMzPick、07z9m-fall.js 層數標題、07z9m-central2.js 中炮門第二層示範）：vm 跑登記多層不動第一層、存檔分層、最深層含舊存檔、選層鎖住、門內頁入口、轉場何時播（含改壞驗證） */
+  "test-jh-maze-save-1126.js",   /* 11/26 W87-2 地底迷宮存檔跟旅程走（m/05b-save.js JOURNEY_KEYS 加 jhMaze*、各層、題目指標）：vm 跑真的 saveSnap／saveApply＋jhMzGet／jhMzSave，十派每層都在清單、兩段旅程互不影響、舊存檔升上來（含改壞驗證） */
   "test-jh-screen-1126.js",   /* 11/26 W87-2 屏風馬地底迷宮（m/07z9m-screen.js）：vm 跑馬型銅人的日字落點、蹩馬腿（石鼓、玩家站在馬腿）、巡邏範圍、地圖 BFS 與不被逮到的路線搜尋；題庫用 core.js 獨立重算（最後一步是馬）；〔原始碼〕LF、include 順序、搖桿說法 */
   "test-jh-cross-1124.js",   /* 11/24 W87 過宮炮地底迷宮（m/07z9m-cross.js）：vm 跑炮型護院視線、走法、地圖 BFS 與不被看到的路線搜尋、碑刻；題庫用 core.js 獨立重算 */
   "test-w101-first-move-1124.js",   /* 11/24 W101 開發者截圖「還沒切到棋盤，掌門就先落子了」：電腦先手的第一步等棋盤真的看得到（3D 建好、開場封面 pk-veil 收掉）再走（src/local.js）〔混合：等待時間 vm 行為 2（含慢機器封面 23 秒）、接線與就緒判斷、park3d 訊號原始碼 2〕 */
