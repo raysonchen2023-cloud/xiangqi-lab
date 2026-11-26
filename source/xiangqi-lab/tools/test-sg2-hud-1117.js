@@ -61,7 +61,8 @@ test("〔B-6〕直式 HUD 依內容尺寸留位，尺寸變動重測，離開時
 test("〔B-7〕對局中 toast 不在畫面下方、不接點選（11/17 第二批 N-4 再搬到棋盤外：直式頂欄下方那條、橫式左欄下半，見 test-sg2-layout-1117b.js）", () => {
   assert.ok(SCSS.includes("body.gsv-on .toast{bottom:auto;top:calc(var(--gsvTop,var(--bhTop,44px)) + 4px);"));
   assert.ok(/body\.gsv-on \.toast\{[^}]*pointer-events:none\}/.test(SCSS), "不接點選");
-  assert.ok(G.includes('setTimeout(()=>toast("✦ 星樞："+V.say),3200)'), "開局那句是 toast");
+  /* 11/25 W120：開局那句照樣 3.2 秒後用 toast 說，多了 gsvStill(J) 的檢查（還在對局頁、同一關同一盤、還沒結束才說） */
+  assert.ok(G.includes('const ok=gsvStill(J);') && G.includes('setTimeout(()=>{if(ok())toast("✦ 星樞："+V.say)},3200)') && G.includes("function gsvStill(J){"), "開局那句是 toast");
 });
 
 test("〔B-12〕星門預告整行 44px，面板自然長高", () => {

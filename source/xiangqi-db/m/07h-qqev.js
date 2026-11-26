@@ -238,8 +238,9 @@ function qqBlockLose(C,why){if(C.res.over)return;C.res.over="lose";const{who:w,R
   return{got,tail,why}}
 function qqBlockWin(C){if(C.res.over)return C.res.winRes;C.res.over="win";const{who:w,xp,bond}=C.res,era=C.ev.era;addXP(xp,"攔路棋客","qq:bw:"+C.ev.id);
   const k=Math.random()<.5?"h":"u";qqGiveItems({h:k==="h"?1:0,u:k==="u"?1:0});const it=k==="h"?"提示棋 +1":"悔棋符 +1";
-  if(bond&&w.n&&typeof npcBondUp==="function")setTimeout(()=>{try{npcBondUp(w.n)}catch(e){}},1400);
-  else if(qqDi()>=2&&typeof relicDrop==="function")setTimeout(()=>{try{relicDrop(era,qqDi()>=3?.2:.1)}catch(e){}},1400);   /* 破陣偶爾珍品，國手以上機會加倍 */
+  if(bond&&w.n&&typeof npcBondUp==="function"){const rn=ROUTE_N,h0=location.hash;setTimeout(()=>{try{if(ROUTE_N===rn&&location.hash===h0){npcBondUp(w.n);return}   /* W120：羈絆、修為照樣 1400ms 後記；已經換頁就不開羈絆卡片（npcBondUp 裡的 sheet 暫時換成不做事），改成吐司 */
+    const s0=sheet;let n1=0;try{sheet=()=>{n1=1;return null};npcBondUp(w.n)}finally{sheet=s0}if(n1)toast(`🌸 和${w.n.name}的羈絆加深了（修為 +10）`)}catch(e){}},1400)}
+  else if(qqDi()>=2&&typeof relicDrop==="function")stillHere(1400,()=>relicDrop(era,qqDi()>=3?.2:.1));   /* 破陣偶爾珍品，國手以上機會加倍。W120：這是機率掉落（不是保證的獎勵），relicDrop 的寫入和開箱特效都在 await 之後、從外面擋不住，所以 1.4 秒到時還在原頁才擲這次；換頁了就不擲，不會在別的畫面突然開箱 */
   return C.res.winRes=`修為 +${xp}・${it}${bond?"・羈絆 +1":""}`}
 /* ================= ④ 漂流瓶裡的殘譜（bottle） ================= */
 const qqLossTxt=cp=>cp>=20000?"會被將死":cp>=800?"大約少一輛車":`大約少 ${Math.max(1,Math.round(cp/100))} 個兵`;
@@ -342,12 +343,13 @@ function qqParkEasy(era){try{const P=store.get("evPawn",null);if(!P||P.era!==(er
 function qqParkEnd(st){if(!st||st.journey!=="park"||!st.result||st.result.w!==st.human||st.practice)return;const era=store.get("era","classic"),N=typeof parkNpcOf==="function"?parkNpcOf(st):null;
   const P=store.get("evPawn",null);if(P&&P.era===era&&(/^m:/.test(P.npc)||(N&&N.id===P.npc))){store.set("evPawn",null);if(P.items)qqGiveItems(P.items);
     const L=qqLog();L.won=L.won||{};if(P.rid)L.won[P.rid]=Date.now();qqLogSet(L);
-    setTimeout(()=>modal(`<div class="em">🌸</div><h2>贖回來了！</h2><p style="line-height:1.8">${esc(P.nm)}：「說話算話，還你。」</p><p class="muted">${esc(P.rid?"珍品〈"+P.rnm+"〉":qqItemsTxt(P.items))}回到你手上了。</p>`,[["好",null]]),2600);return}
+    {const tx=`${esc(P.rid?"珍品〈"+P.rnm+"〉":qqItemsTxt(P.items))}回到你手上了。`,rn=ROUTE_N,h0=location.hash;   /* W120：東西當下就還；2.6 秒後還在這盤的頁面才彈「贖回來了」，已經換頁就改成吐司（不在別頁彈視窗） */
+      setTimeout(()=>{try{if(ROUTE_N===rn&&location.hash===h0)modal(`<div class="em">🌸</div><h2>贖回來了！</h2><p style="line-height:1.8">${esc(P.nm)}：「說話算話，還你。」</p><p class="muted">${tx}</p>`,[["好",null]]);else toast(`🌸 贖回來了！${P.rid?"珍品〈"+P.rnm+"〉":qqItemsTxt(P.items)}回到你手上了`)}catch(e){}},2600)}return}
   const L=qqLog(),D=L.dare;if(D&&D.era===era&&N&&N.id===D.npc){L.dare=null;qqLogSet(L);addXP(D.xp||30,"攔路棋客・補下","qq:dare:"+D.at);
-    setTimeout(()=>toast(`🌸 ${N.name}：「這回不跑啦？好棋！」攔路的獎勵補給你了`),2600)}}
+    stillHere(2600,()=>toast(`🌸 ${N.name}：「這回不跑啦？好棋！」攔路的獎勵補給你了`))}}   /* W120：修為當下就補；吐司只在還在原頁時出（換頁了修為小標籤已經出過） */
 /* 珍品藏局解開（07c-canju.js finish，不看答案）：寇船扣著的那件就贖回 */
 function qqHeldSolved(rid){const H=store.get("evHeld",null);if(!H||H.rid!==rid)return;store.set("evHeld",null);const L=qqLog();L.won=L.won||{};L.won[rid]=Date.now();qqLogSet(L);
-  setTimeout(()=>toast(`🏴 寇首把〈${H.rnm}〉丟回星槎：「算你有本事！」（珍品冊那一格蓋上「奪回」印）`),1800)}
+  stillHere(1800,()=>toast(`🏴 寇首把〈${H.rnm}〉丟回星槎：「算你有本事！」（珍品冊那一格蓋上「奪回」印）`))}   /* W120：贖回當下就記；吐司只在還在解題頁時出，換頁了珍品冊那格照樣有「奪回」印 */
 /* 到期自動歸還：攔路棋客寄回驛站（7 天，珍品 3 天）、寇首自己送回來（3 天） */
 function qqSettle(quiet){const now=Date.now(),msg=[];
   const P=store.get("evPawn",null);if(P&&now>=P.due){store.set("evPawn",null);if(P.items)qqGiveItems(P.items);msg.push(["📮 驛站信箱來了一封信",`${P.nm}寄來一封信：「說好的日子到了，${P.rid?"〈"+P.rnm+"〉":qqItemsTxt(P.items)}還你。下次經過${eraLabel(P.era)}，記得來園子找我下棋。」`])}
@@ -377,5 +379,5 @@ function qqRelicHeld(id){const P=store.get("evPawn",null),H=store.get("evHeld",n
   if(P&&P.rid===id){sheet("🌸 押在"+P.nm+"那裡",b=>{b.innerHTML=`<p style="line-height:1.8">${esc(P.nm)}：「想拿回去？到${esc(eraLabel(P.era))}的園子贏我一盤。」</p><p class="muted">${qqDaysLeft(P.due)} 天後她會自己還你。</p><button class="btn ghost" id="qqOk" style="width:100%">知道了</button>`;b.querySelector("#qqOk").onclick=()=>closeSheet()});return true}
   return false}
 setTimeout(()=>{try{qqPool();if(typeof relicsData==="function")relicsData()}catch(e){}},3000);
-setTimeout(()=>{try{if(journey())qqSettle()}catch(e){}},9000);
+setTimeout(()=>{try{if(journey())qqSettle(typeof dglBusy==="function"&&dglBusy(location.hash))}catch(e){}},9000);   /* W120：開機 9 秒後到期歸還照舊當下做；正在對局、解題頁（dglBusy）就不彈視窗，改成吐司（quiet） */
 addEventListener("hashchange",()=>setTimeout(()=>{try{qqStashBadge()}catch(e){}},350));setTimeout(()=>{try{qqStashBadge()}catch(e){}},2500);(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{try{qqStashBadge()}catch(e){}},30000);
