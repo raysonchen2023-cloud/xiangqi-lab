@@ -272,6 +272,7 @@
 "multi|3k1a2N/4a4/2n5r/N2C1P3/9/C8/9/3A1c3/3pAr1n1/4K3c|a6c7 i7c7 a4d4 d9e9 i9g8@20":{"ok":true,"why":""},
 "multi|3k1aRPr/4nC1n1/4b4/6C2/4N4/9/9/4p4/2r1p1p2/5K3|g9f9 h8f9 g6g9 f9d8 g9i9@20":{"ok":true,"why":""},
 "multi|3k1c3/3nP4/4R3b/9/9/9/9/2pK5/2p2p3/7C1|d2e2 d8b7 e7d7 b7d8 e8d8@20":{"ok":true,"why":"","alt":{"d2e2":["d8b7",{"e7d7":["b7d8",{"e8d8":0,"d7d8":0,"e8e9":0}]}]}},
+"multi|3k2b2/2R1a4/r1Nab4/9/9/6R2/6P2/9/3p5/4K1Br1|g4g9 e7g9 c8c9 d9d8 c9d9 e8d9 c7b9@20":{"ok":true,"why":""},
 "multi|3k3C1/1P4P2/4bN2b/4P4/9/9/9/5p3/3cp4/3p1K3|f7g9 d9d8 b8c8 d8d7 e6d6@20":{"ok":true,"why":""},
 "multi|3k3C1/2P1N4/9/9/9/9/9/5p3/1rrnc2R1/5K1p1|e8g9 e1e9 h1d1 c1d1 g9e8@20":{"ok":true,"why":""},
 "multi|3k3C1/4P4/4b3b/3n5/3N5/3C5/8r/4p4/4p4/5K3|d5b6 d6b5 b6d7 b5d4 d7b8@20":{"ok":true,"why":"","alt":{"d5b6":["d6b5",{"b6d7":["b5d4",{"d7b8":0}]}],"d5f6":["d6b5",{"f6d7":["b5d4",{"d7b8":0}]}]}},
