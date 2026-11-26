@@ -5,7 +5,8 @@
      3. 標題（1.3～2.2 秒）：「地底・第一層」＋迷宮名稱（lv.title）淡入淡出，然後整層淡出露出迷宮。
    點一下就跳過。系統開「減少動態」時不捲、不震，只淡入淡出標題（約 0.9 秒）。
    重新整理、從別處（例如網址、回上一頁）進迷宮不播；同一次進迷宮只播一次。
-   這支包住 JhMaze（不改共用的 07z9m-maze.js）；之後各派都會套到，用的是該派自己的牆面材質。 */
+   這支包住 JhMaze（不改共用的 07z9m-maze.js）；之後各派都會套到，用的是該派自己的牆面材質。
+   W87-2 換層（11/26 Windows Claude 2）：標題照 lv.layer 寫「地底・第二層」；第一層樓梯「往下走」換到 ?l=2 時也播（jhFallWant）。 */
 const JH_FALL_MS=2400,JH_FALL_RM_MS=900;
 /* 記「上一頁」：不能靠 hashchange 的先後——路由（02-shell）的 hashchange 比這支先登記，JhMaze 被叫的時候這支的 hashchange 還沒跑（iMac Claude 2 #129 預驗抓到）。
    自己記最近兩個網址（last、prev）和第幾次換頁（n）：JhMaze 被叫時，last 已經是目前這頁＝這支先跑過，來源是 prev；還不是＝這支還沒跑，來源就是 last。
@@ -15,8 +16,9 @@ let JH_FALL_LAST=(()=>{try{return jhFallH(location.href)}catch(e){return""}})(),
 if(typeof addEventListener==="function")addEventListener("hashchange",e=>{try{const h=jhFallH(e&&e.newURL!=null?e.newURL:location.href);if(h!==JH_FALL_LAST){JH_FALL_PREV=JH_FALL_LAST;JH_FALL_LAST=h;JH_FALL_N++}}catch(e2){}});
 /* 這次進迷宮是從哪一頁來、是第幾次換頁 */
 function jhFallVisit(){let cur="";try{cur=jhFallH(location.href)}catch(e){}return JH_FALL_LAST===cur?{from:JH_FALL_PREV,n:JH_FALL_N}:{from:JH_FALL_LAST,n:JH_FALL_N+1}}
-/* 從大廳進迷宮才播 */
-function jhFallWant(V){return/^#\/jianghu\/hall\//.test(V.from)&&V.n>JH_FALL_DONE}
+/* 從大廳進迷宮才播；W87-2 換層（11/26）：同一派從淺的一層換到深的一層（第一層樓梯「往下走」）也播。cur＝目前網址（不給就讀 location） */
+function jhFallWant(V,cur){if(!(V.n>JH_FALL_DONE))return false;if(/^#\/jianghu\/hall\//.test(V.from))return true;
+  try{if(cur==null)cur=jhFallH(location.href);const a=jhMzSidOf(V.from),b=jhMzSidOf(cur);return!!a&&a===b&&jhMzLayerOf(cur)>jhMzLayerOf(V.from)}catch(e){return false}}
 function jhFallRM(){try{return!!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)}catch(e){return false}}
 function jhFallCss(){if(document.getElementById("jhFallCss"))return;const s=document.createElement("style");s.id="jhFallCss";s.textContent=`
 .jh-fall{position:fixed;inset:0;z-index:2147483000;background:#000;overflow:hidden;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:opacity .4s}
@@ -49,14 +51,16 @@ function jhFallCss(){if(document.getElementById("jhFallCss"))return;const s=docu
 /* 標題卡只要名字：拿掉開頭的圖示（lv.title 常帶「🕳 」） */
 const jhFallName=t=>String(t||"").replace(/^[^\p{L}\p{N}]+/u,"");
 /* 播一次；回傳轉場的元素（測試用）。到時間、點一下、換頁都會收掉 */
-function jhFallPlay(lv,opt){opt=opt||{};jhFallCss();const rm=opt.rm!=null?opt.rm:jhFallRM(),T=lv&&lv.title||["地底迷宮","Underground maze"],tex=lv&&lv.tex&&lv.tex.side;
+/* 第幾層（lv.layer，沒有＝第一層）；中文數字用共用程式的 jhMzCn */
+const jhFallCn=n=>typeof jhMzCn==="function"?jhMzCn(n):["","一","二","三"][n]||String(n);
+function jhFallPlay(lv,opt){opt=opt||{};jhFallCss();const N=Math.max(1,Math.floor(+(lv&&lv.layer))||1);const rm=opt.rm!=null?opt.rm:jhFallRM(),T=lv&&lv.title||["地底迷宮","Underground maze"],tex=lv&&lv.tex&&lv.tex.side;
   const o=document.createElement("div");o.className="jh-fall"+(rm?" rm":"");o.setAttribute("role","presentation");o.setAttribute("aria-hidden","true");
   /* 牆面材質：先用 Image 載（載好才換上，沒到之前是程式畫的磚紋）；同源拿不到（網頁版還沒上 CDN 的檔、沒有 service worker）就改向 CDN 要一次（00-util 的 xqCdnRel） */
   if(tex){const im=new Image();im.onload=()=>{try{o.style.setProperty("--jhfall-tex",`url("${String(im.src).replace(/["\\]/g,"")}")`)}catch(e){}};
     im.onerror=()=>{if(im.dataset.cdn)return;im.dataset.cdn="1";try{const r=typeof xqCdnRel==="function"&&xqCdnRel(tex);if(r&&typeof XQ_CDN==="string")im.src=XQ_CDN+r}catch(e){}};im.src=tex}
   let dust="";for(let i=0;i<10;i++){const a=(i/9-.5)*2,dx=Math.round(a*120+(i%3-1)*14),dy=-Math.round(40+((i*37)%5)*16);dust+=`<i style="left:${Math.round(50+a*14)}%;--dx:${dx}px;--dy:${dy}px;animation-delay:${(i%4)*30}ms"></i>`}
   o.innerHTML=`<div class="jh-fall-shaft"></div><div class="jh-fall-hole"></div><div class="jh-fall-dust">${dust}</div>
-    <div class="jh-fall-card"><small>${esc(jhL("地底・第一層","Underground · Level 1"))}</small><b>${esc(jhFallName(jhL(T[0],T[1])))}</b></div><div class="jh-fall-skip">${esc(jhL("點一下跳過","Tap to skip"))}</div>`;
+    <div class="jh-fall-card"><small>${esc(jhL(`地底・第${jhFallCn(N)}層`,`Underground · Level ${N}`))}</small><b>${esc(jhFallName(jhL(T[0],T[1])))}</b></div><div class="jh-fall-skip">${esc(jhL("點一下跳過","Tap to skip"))}</div>`;
   const tm=[];let done=false;
   const end=()=>{if(done)return;done=true;for(const t of tm)clearTimeout(t);removeEventListener("hashchange",end);o.classList.add("out");setTimeout(()=>{try{o.remove()}catch(e){}},420)};
   o.addEventListener("click",end);addEventListener("hashchange",end);
@@ -69,4 +73,4 @@ function jhFallPlay(lv,opt){opt=opt||{};jhFallCss();const rm=opt.rm!=null?opt.rm
   document.body.append(o);return o}
 /* 包住 JhMaze：從大廳進來才播（播完就清掉來源，同一次不重播） */
 try{if(typeof JhMaze==="function"&&!JhMaze.jhFall){const m0=JhMaze;JhMaze=function(v,sid){const r=m0.apply(this,arguments);
-  try{const V=jhFallVisit();if(jhFallWant(V)&&(typeof jhMzOn!=="function"||jhMzOn())&&String(location.hash).indexOf("#/jianghu/maze")===0){JH_FALL_DONE=V.n;jhFallPlay(jhMzLv(sid))}}catch(e){}return r};JhMaze.jhFall=1}}catch(e){}
+  try{const V=jhFallVisit();if(jhFallWant(V)&&(typeof jhMzOn!=="function"||jhMzOn())&&String(location.hash).indexOf("#/jianghu/maze")===0){JH_FALL_DONE=V.n;jhFallPlay(typeof jhMzLvN==="function"?jhMzLvN(sid,jhMzLayerOf(location.hash)):jhMzLv(sid))}}catch(e){}return r};JhMaze.jhFall=1}}catch(e){}
