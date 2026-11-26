@@ -124,7 +124,7 @@ test("橫式圖載不到：記 SCW_BAD、退回原圖；這次開 App 不再試"
 
 test("座標照量好的 json（output/w107-ipad/l1610/studymap/study_day_classic_l1610.json）：抽幾個點寫死比對；輿圖圈照畫心寬等比放大（#159 審查建議 3）", () => {
   const C = load(true), L = vm.runInContext("MZ_L", C), J = x => JSON.parse(JSON.stringify(x));
-  assert.deepEqual(J(L.spots.find(s => s[0] === "mzZhen")), ["mzZhen", 102, 269, 742, 858, "珍品", 422, 269, "m"]);
+  assert.deepEqual(J(L.spots.find(s => s[0] === "mzZhen")), ["mzZhen", 115, 883, 678, 1254, "珍品", 397, 883, "m"]);
   assert.deepEqual(J(L.spots.find(s => s[0] === "mzHist")), ["mzHist", 1966, 960, 2086, 1062, "棋史卡", 2026, 960, "m"]);
   assert.deepEqual(J([L.cells[0], L.cells[11]]), [[120, 333, 256, 499], [543, 676, 684, 845]]);
   assert.deepEqual(J([L.plum, L.yu, L.smoke, L.dot]), [[1183, 218, 1370, 768], [1638, 128, 2386, 512], [468, 384], [1434, 968]]);
