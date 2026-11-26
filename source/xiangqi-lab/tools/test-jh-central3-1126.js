@@ -24,29 +24,29 @@ const at = (S, x, y) => { S.player.x = x; S.player.y = y; S.player.fx = x; S.pla
 function room(c, marks, guards, px, py) { const rows = []; for (let y = 0; y < 7; y++) { const r = (y === 0 || y === 6 ? "#".repeat(13) : "#" + ".".repeat(11) + "#").split(""); for (const k in marks || {}) { const [x, yy] = k.split(",").map(Number); if (yy === y) r[x] = marks[k] } rows.push(r.join("")) }
   const S = c.jhMzNew(L3(c)); S.grid = rows.map((r) => r.split("")); S.W = 13; S.H = 7; S.seen = new Set(); S.chests = new Set(); S.turn = 0;
   S.guards = (guards || []).map((g) => Object.assign({ kind: "rook", dx: -1, dy: 0, range: 7 }, g)); S.guard = S.guards[0] || null; at(S, px == null ? 1 : px, py == null ? 3 : py); return S }
-const kegAt = (S) => { const o = []; S.grid.forEach((r, y) => r.forEach((v, x) => { if (v === "K") o.push(x + "," + y) })); return o.join(" ") };
+const kegAt = (S) => { const o = []; S.grid.forEach((r, y) => r.forEach((v, x) => { if (v === "b") o.push(x + "," + y) })); return o.join(" ") };
 
 function rollProblems(c) {
   const bad = [];
   /* ① 一路滾到底：人跟著走進糧桶原來那一格，算一回合 */
-  let S = room(c, { "3,3": "K" }, [], 2, 3), r = c.jhMzStep(S, 1, 0);
+  let S = room(c, { "3,3": "b" }, [], 2, 3), r = c.jhMzStep(S, 1, 0);
   if (kegAt(S) !== "11,3") bad.push("① 糧桶要一路滾到牆前（實際 " + kegAt(S) + "）");
   if (S.player.x !== 3 || r.ev !== "move" || S.turn !== 1) bad.push("① 人走進糧桶原來那一格、算一回合（實際 " + S.player.x + "," + r.ev + "," + S.turn + "）");
   /* ② 碰到寶箱、踏板、壁燈這些不是空地的格子，停在前一格 */
-  for (const ch of ["C", "P", "T", ">"]) { S = room(c, { "3,3": "K", "8,3": ch }, [], 2, 3); c.jhMzStep(S, 1, 0); if (kegAt(S) !== "7,3") bad.push("② 碰到 " + ch + " 停在前一格（實際 " + kegAt(S) + "）") }
+  for (const ch of ["C", "P", "T", ">"]) { S = room(c, { "3,3": "b", "8,3": ch }, [], 2, 3); c.jhMzStep(S, 1, 0); if (kegAt(S) !== "7,3") bad.push("② 碰到 " + ch + " 停在前一格（實際 " + kegAt(S) + "）") }
   /* ③ 碰到守衛停在前一格；④ 碰到別的糧桶停在前一格 */
-  S = room(c, { "3,3": "K" }, [{ x: 9, y: 3, dx: 0, dy: 1, range: 0 }], 2, 3); c.jhMzStep(S, 1, 0); if (!kegAt(S).startsWith("8,3")) bad.push("③ 碰到守衛停在前一格（實際 " + kegAt(S) + "）");
-  S = room(c, { "3,3": "K", "9,3": "K" }, [], 2, 3); c.jhMzStep(S, 1, 0); if (kegAt(S) !== "8,3 9,3") bad.push("④ 碰到別的糧桶停在前一格（實際 " + kegAt(S) + "）");
+  S = room(c, { "3,3": "b" }, [{ x: 9, y: 3, dx: 0, dy: 1, range: 0 }], 2, 3); c.jhMzStep(S, 1, 0); if (!kegAt(S).startsWith("8,3")) bad.push("③ 碰到守衛停在前一格（實際 " + kegAt(S) + "）");
+  S = room(c, { "3,3": "b", "9,3": "b" }, [], 2, 3); c.jhMzStep(S, 1, 0); if (kegAt(S) !== "8,3 9,3") bad.push("④ 碰到別的糧桶停在前一格（實際 " + kegAt(S) + "）");
   /* ⑤ 前面一格就擋住：推不動＝撞牆，不算回合、人不動 */
-  S = room(c, { "3,3": "K", "4,3": "#" }, [], 2, 3); r = c.jhMzStep(S, 1, 0);
+  S = room(c, { "3,3": "b", "4,3": "#" }, [], 2, 3); r = c.jhMzStep(S, 1, 0);
   if (r.ev !== "wall" || S.turn !== 0 || S.player.x !== 2 || kegAt(S) !== "3,3") bad.push("⑤ 推不動要算撞牆、不算回合（實際 " + r.ev + "," + S.turn + "）");
   /* ⑥ 糧桶擋車衛的視線；⑦ 擋雙炮衛的視線；對照：沒有糧桶就看得到 */
-  S = room(c, { "8,3": "K" }, [{ x: 11, y: 3, dx: -1 }], 6, 3); if (c.jhMzCaught(S)) bad.push("⑥ 糧桶要擋住車衛的視線");
+  S = room(c, { "8,3": "b" }, [{ x: 11, y: 3, dx: -1 }], 6, 3); if (c.jhMzCaught(S)) bad.push("⑥ 糧桶要擋住車衛的視線");
   S = room(c, {}, [{ x: 11, y: 3, dx: -1 }], 6, 3); if (!c.jhMzCaught(S)) bad.push("⑥ 對照組：沒有糧桶時車衛看得到");
-  S = room(c, { "8,3": "K" }, [{ kind: "twincannon", x: 10, y: 3, dx: -1 }], 7, 3); if (c.jhMzCaught(S)) bad.push("⑦ 糧桶要擋住炮衛的視線");
+  S = room(c, { "8,3": "b" }, [{ kind: "twincannon", x: 10, y: 3, dx: -1 }], 7, 3); if (c.jhMzCaught(S)) bad.push("⑦ 糧桶要擋住炮衛的視線");
   S = room(c, {}, [{ kind: "twincannon", x: 10, y: 3, dx: -1 }], 7, 3); if (!c.jhMzCaught(S)) bad.push("⑦ 對照組：沒有糧桶時炮衛看得到");
   /* ⑧ 守衛也被糧桶擋路（走到糧桶前掉頭） */
-  S = room(c, { "8,3": "K" }, [{ x: 9, y: 3, dx: -1, range: 1 }], 1, 5); c.jhMzGuardStep(S); if (S.guards[0].x !== 10) bad.push("⑧ 守衛碰到糧桶要掉頭（實際 " + S.guards[0].x + "）");
+  S = room(c, { "8,3": "b" }, [{ x: 9, y: 3, dx: -1, range: 1 }], 1, 5); c.jhMzGuardStep(S); if (S.guards[0].x !== 10) bad.push("⑧ 守衛碰到糧桶要掉頭（實際 " + S.guards[0].x + "）");
   return bad;
 }
 
@@ -54,7 +54,7 @@ test("登記：中炮門第三層；車衛（看 7 格）＋兩個雙炮衛；�
   const c = load(), L = L3(c);
   assert.equal(L.layer, 3); assert.equal(c.jhMzLayers("central"), 3); assert.equal(L.guards.length, 3);
   assert.deepEqual(Array.from(L.guards, (G) => G.kind), ["rook", "twincannon", "twincannon"]); assert.equal(L.guards[0].range, 7); assert.equal(L.guards.filter((G) => G.front).length, 1);
-  assert.ok(L.solid.includes("K") && L.opaque.includes("K") && L.solid.includes("L")); assert.equal(L.dyn, "K", "糧桶會移動：3D 每一幀照目前格子擺（lv.dyn）"); assert.equal(typeof L.onStep, "function");
+  assert.ok(L.solid.includes("b") && L.opaque.includes("b") && L.solid.includes("L")); assert.equal(L.dyn, "b", "糧桶會移動：3D 每一幀照目前格子擺（lv.dyn）"); assert.equal(typeof L.onStep, "function");
   assert.equal(L.lore.length, 1); assert.match(L.lore[0].src, /^遊戲整理，據《明史·河渠志》（清修）/);
   assert.deepEqual(Array.from(L.rew, (r) => r.k), ["gong", "page", "relic"]); assert.match(L.rew[2].zh, /鎮河鐵卷/);
   assert.equal(L.xp, 60); assert.equal(L.xpKey, "maze:central:3"); assert.equal(L.key, "jhMaze_L3");
@@ -69,7 +69,7 @@ test("改壞驗證：只滾一格、滾過寶箱、滾過守衛、糧桶不擋�
   const P1 = (s) => s.replace("let x=x1,y=y1;while(free(x+dx,y+dy)){x+=dx;y+=dy}", "let x=x1,y=y1;if(free(x+dx,y+dy)){x+=dx;y+=dy}");
   const P2 = (s) => s.replace('free=(x,y)=>jhMzCell(S,x,y)==="."&&', 'free=(x,y)=>!jhMzSolid(S,x,y)&&');
   const P3 = (s) => s.replace('&&!(S.guards||[]).some(G=>G.x===x&&G.y===y);', ";");
-  const P4 = (s) => s.replace('opaque:"#DK"', 'opaque:"#D"').replace('solid:"#SDKL"', 'solid:"#SDL"');
+  const P4 = (s) => s.replace('opaque:"#Db"', 'opaque:"#D"').replace('solid:"#SDbL"', 'solid:"#SDL"');
   for (const P of [P1, P2, P3, P4]) assert.notEqual(P(SRC), SRC, "改壞的字串要真的找得到");
   assert.ok(rollProblems(load(P1)).some((s) => s.startsWith("①")), "只滾一格");
   assert.ok(rollProblems(load(P2)).some((s) => s.startsWith("②")), "滾過寶箱");
@@ -79,14 +79,14 @@ test("改壞驗證：只滾一格、滾過寶箱、滾過守衛、糧桶不擋�
 
 function reach(c, S) { const lv = L3(c), seen = new Set(), q = [[S.player.x, S.player.y]]; seen.add(S.player.y * S.W + S.player.x);
   while (q.length) { const [x, y] = q.shift(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy, ch = (S.grid[ny] || [])[nx], k = ny * S.W + nx;
-      if (ch === undefined) continue; if (lv.solid.includes(ch) && ch !== "D" && ch !== "K") continue; if (seen.has(k)) continue; seen.add(k); q.push([nx, ny]) } }
+      if (ch === undefined) continue; if (lv.solid.includes(ch) && ch !== "D" && ch !== "b") continue; if (seen.has(k)) continue; seen.add(k); q.push([nx, ny]) } }
   return seen }
 test("地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、兩個糧桶；全部走得到（糧桶推得開）；碑刻旁有可站的格子；開局不會被抓", () => {
   const c = load(), L = L3(c), M = L.map, W = M[0].length;
   for (const r of M) assert.equal(r.length, W);
   for (let x = 0; x < W; x++) { assert.equal(M[0][x], "#"); assert.equal(M[M.length - 1][x], "#") } for (const r of M) { assert.equal(r[0], "#"); assert.equal(r[W - 1], "#") }
   const cnt = (ch) => M.join("").split(ch).length - 1;
-  for (const ch of "@DP>") assert.equal(cnt(ch), 1, ch); assert.equal(cnt("C"), 3); assert.equal(cnt("L"), 1); assert.equal(cnt("K"), 2);
+  for (const ch of "@DP>") assert.equal(cnt(ch), 1, ch); assert.equal(cnt("C"), 3); assert.equal(cnt("L"), 1); assert.equal(cnt("b"), 2);
   const S = c.jhMzNew(L), all = reach(c, S);
   M.forEach((r, y) => [...r].forEach((v, x) => { if ("PCD>".includes(v)) assert.ok(all.has(y * W + x), v + " 走得到 " + x + "," + y) }));
   const ly = M.findIndex((r) => r.includes("L")), lx = M[ly].indexOf("L");
@@ -137,6 +137,10 @@ test("題庫：石門 3 題（兵收尾的三步殺：炮兵協同）、被抓�
 });
 
 test("〔原始碼〕07z9m-central3.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_CENTRAL3／jhMzCentral3 前綴；m.html 排在中炮門第二層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法", () => {
+  /* 地圖字元的外觀（JH_MZ_OBJ／JH_MZ_TILE）只有這一派自己登記：別的檔先登記了同一個字元，這裡的「if(!JH_MZ_OBJ.x)」會被跳過、畫成別派的東西 */
+  { const own = new Set([...SRC.matchAll(/JH_MZ_(?:OBJ|TILE)\.([A-Za-z])\b/g)].map((m) => m[1])), dir = path.join(ROOT, "xiangqi-db", "m");
+    for (const g of fs.readdirSync(dir).filter((g) => /^07z9m-.*\.js$/.test(g) && g !== "07z9m-central3.js")) { const x = fs.readFileSync(path.join(dir, g), "utf8");
+      for (const m of x.matchAll(/JH_MZ_(?:OBJ|TILE)\.([A-Za-z])\b/g)) assert.ok(!own.has(m[1]), "字元 " + m[1] + " 跟 " + g + " 撞了") } }
   assert.ok(!SRC.includes("\r")); assert.ok(!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(SRC));
   for (const line of SRC.split("\n")) { const code = line.replace(/"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`|'(?:[^'\\]|\\.)*'|\/(?:[^/\\\n]|\\.)+\/[gimsuy]*/g, ""); assert.ok(!/;\s*\/\/\s*\S/.test(code) && !/^\s*\/\//.test(line), "行內 // 註解：" + line.slice(0, 60)) }
   const tops = [...SRC.matchAll(/^(?:const|let|function)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
