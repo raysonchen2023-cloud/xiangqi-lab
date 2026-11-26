@@ -13,6 +13,9 @@ const LAB = path.join(__dirname, ".."), DB = path.join(LAB, "..", "xiangqi-db"),
 const rd = f => fs.readFileSync(f, "utf8").replace(/\r\n/g, "\n");
 const PRE = rd(path.join(M, "09b-preload.js")), P3 = rd(path.join(LAB, "src/park3d.js")), CPU = rd(path.join(M, "06-cpu.js")), B8 = rd(path.join(M, "08b-cpugame.js")), PM = rd(path.join(M, "07pm-premove.js"));
 const sq = s => C.parseSq(s), J = x => JSON.parse(JSON.stringify(x));
+/* 11/25 W120：06-cpu parkDraw 的小人打招呼改用 stillHere（00-util.js）。抽真的那兩行（ROUTE_N 宣告、stillHere）進沙箱，不自己寫假的 */
+const UTIL = rd(path.join(M, "00-util.js")), utilLine = re => { const l = UTIL.split("\n").find(x => re.test(x)); if (!l) throw new Error("00-util.js 找不到：" + re); return l };
+const UTIL_W120 = utilLine(/^let ROUTE_N=/) + "\n" + utilLine(/^function stillHere\(/) + "\n";
 const cut = (s, a, b) => { const i = s.indexOf(a), j = s.indexOf(b, i + a.length); assert.ok(i >= 0 && j > i, "找不到 " + a); return s.slice(i, j) };
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
@@ -221,9 +224,9 @@ test("06-cpu parkDraw 把快棋模式帶給 3D（ex.blitz＝blzOn()）；pkSwTap
     const env = { parkOn: () => true, window: { XQPark3D: P }, XQPark3D: P, parkLoad: () => Promise.resolve(), toast() {}, store: { get: (k, d) => k === "era" ? "classic" : k === "parkView" ? "" : d, set() {} },
       pkIntroKey: () => "k", parkQuote: () => null, pkGateWatch() {}, parkUi() {}, BOTN: () => "小帥", getComputedStyle: () => ({ position: "relative" }), eraLabel: k => k, PW: {},
       document: { body: { contains: () => true }, createElement: el, querySelector: () => null }, botVis() {}, parkLook: () => ({}), oppFig: x => x, remoteLook: x => x, myLook: () => ({}),
-      parkCrowd: () => ({}), pkSwUi() {}, pkGateEat: () => false, pkSwTap() {}, parkInfo() {}, setTimeout() {} };
+      parkCrowd: () => ({}), pkSwUi() {}, pkGateEat: () => false, pkSwTap() {}, parkInfo() {}, setTimeout() {}, location: { hash: "#/journey/play" } };
     if (on !== null) env.blzOn = () => on;
-    const names = Object.keys(env), api = new Function(...names, "let PARK=null;" + fn + ";return{parkDraw}")(...names.map(k => env[k]));
+    const names = Object.keys(env), api = new Function(...names, "let PARK=null;" + UTIL_W120 + fn + ";return{parkDraw}")(...names.map(k => env[k]));
     api.parkDraw(host, { svg: { style: {} } }, [], {}, { tap() {} });
     assert.equal(drawn[0].blitz, on === true, "blzOn=" + on);
   }
