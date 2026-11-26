@@ -1,7 +1,8 @@
 /* ---------- W87-2 中炮門地底迷宮・第二層「漕底淤廊」（11/26 Windows Claude 1 分派給 Windows Claude 2）----------
    規格：story/gemini_app/208_十派地底迷宮第二三層_補件_1126_Gemini回覆.md 的中炮門第二層，照 208 複核（iMac Claude 1）和開發者 11/26 的決定改：
      ・淺水窪（Q）：走進去要多耗一回合（守衛多走一步）；擋路、擋光都不會。自動規劃路線不主動踩（lv.avoid），踩到自動走就停。
-       多耗的那一回合照「原地等一回合」的規則（jhMzStep(S,0,0)，#212 審查）：守衛走完才看到你就先提醒（spot）、這一步不走進去；被抓就照被抓；沒事才走進水窪。
+       多耗的那一回合照「原地等一回合」的規則（jhMzStep(S,0,0)，#212 審查）：守衛走完才看到你就先提醒（spot）、這一步不走進去；被抓就照被抓；
+       那一回合守衛走完以後，水窪落在紅線上（或站著守衛）也一樣先提醒、人不進去（#212 複審：走之前不是紅線的水窪，不能直接被抓）；都沒事才走進水窪。
      ・雙炮衛（JH_MZ_KIND.twincannon）：兩個炮衛在同一條走廊來回巡，面向那一邊看得到 3 格；
        複核選「前衛擋住就看不到」：另一個炮衛擋在前面，後面那一格起就看不到（跟過宮炮門「隔一子才看得到」區隔開）。
        前衛（front）不踩水窪，碰到水窪就掉頭；後衛會走進水窪。兩個炮衛不會走進對方那一格（碰到就掉頭）。
@@ -42,7 +43,10 @@ JH_MZ_KIND.twincannon={
     if(blk(G.x+dx,G.y+dy)){dx=-dx;dy=-dy;G.dx=dx;G.dy=dy}if(!blk(G.x+dx,G.y+dy)){G.x+=dx;G.y+=dy}},
   look:{body:"#3a2418",head:"#5a3626",eye:0xE24A3A}};
 /* 走進水窪：陷在泥裡多耗一回合——照原地等一回合跑（守衛走、先提醒、被抓都照共用規則）；那一回合沒事，才照預設走進去 */
-function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;const r=jhMzStep(S,0,0);return r.ev==="move"?null:r}
+function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q")return null;const r=jhMzStep(S,0,0);if(r.ev!=="move")return r;
+  /* #212 複審：那一回合守衛走完以後，水窪落在紅線上（或站著守衛）＝也是「走完才看到」，先提醒、人不進去，不直接抓 */
+  const x=S.player.x+dx,y=S.player.y+dy;if((S.guards||[]).some(G=>!(G.stun>0)&&(G.x===x&&G.y===y||jhMzSight(S,G).some(q=>q.x===x&&q.y===y)))){S.caughtBy=null;return{ev:"spot"}}
+  return null}
 /* 3D：淺水窪（地上一層半透明的淡藍水面）；平面版：地面色上一塊淡藍 */
 if(!JH_MZ_OBJ.Q)JH_MZ_OBJ.Q=H=>{const{T3,mesh}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(.96,.03,.96),new T3.MeshLambertMaterial({color:0x4a6a7a,transparent:true,opacity:.75}),0,.015,0));return g};
 if(!JH_MZ_TILE.Q)JH_MZ_TILE.Q=(cx,px,py,T)=>{cx.fillStyle="#3b3428";cx.fillRect(px,py,T,T);cx.fillStyle="rgba(90,130,150,.75)";cx.fillRect(px+T*.08,py+T*.08,T*.84,T*.84)};

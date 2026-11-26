@@ -58,7 +58,8 @@ function layerProblems(T) {
   const pb = c.jhMzPath(A, 2, 3); if (!pb || Array.from(pb, (q) => q.join(",")).join(" ") !== "2,3") bad.push("自動走：點的終點就是水窪可以走");
   /* say 疊在第一層上面：只寫一部分 say 的層，沒寫的那幾句照第一層（#212 審查：要真的寫一部分才驗得到「疊加」） */
   { const T2 = load({ ...T.opt }), Lx = T2.c.jhMzLayer("central", 3, { map: ["###", "#@#", "###"], title: ["三", "3"], say: { done: ["三", "3"] } }), Bx = LV(T2.c).central;
-    if (!Lx.say || Lx.say.spot !== Bx.say.spot || Lx.say.done[0] !== "三") bad.push("沒寫的 say 照第一層、寫了的用自己的（say 要疊在第一層上面）") }
+    if (!Lx.say || Lx.say.spot !== Bx.say.spot || Lx.say.done[0] !== "三") bad.push("沒寫的 say 照第一層、寫了的用自己的（say 要疊在第一層上面）");
+    if (Lx._lore !== 1 || typeof Lx.onStep !== "function") bad.push("第二層以後也要包碑刻 L、暗門 H（jhMzLoreWrap）") }
   return bad;
 }
 
@@ -76,7 +77,8 @@ test("登記多層：jhMzLayer 不動第一層；沒寫的欄位照第一層（�
   assert.deepEqual(Array.from(L2.say.done), ["石階還往下延伸，第三層之後再開。", "The steps go on down. Level 3 opens later."], "第二層自己的 done");
   assert.equal(L3.say.spot, B.say.spot, "沒寫的 say 照第一層（第三層只寫了 done）"); assert.equal(L3.say.done[0], "三層的結尾", "寫了的 say 用自己的");
   for (const k of ["plate", "open", "jump"]) assert.equal(L2.say[k], B.say[k], "第二層沒寫的 say 照第一層：" + k);
-  assert.equal(typeof L2.onStep, "function", "第二層也包了碑刻 L、暗門 H（在 07z9m-lore.js 後面登記）");
+  assert.equal(L2._lore, 1, "第二層也包了碑刻 L、暗門 H（在 07z9m-lore.js 後面登記）"); assert.equal(L3._lore, 1, "沒寫 onStep 的第三層也包了碑刻");
+  assert.equal(typeof L3.onStep, "function", "沒寫 onStep 的層：碑刻包裝給它一個 onStep");
   assert.equal(c.jhMzLayer("central", 1, {}), null); assert.equal(c.jhMzLayer("nope", 2, {}), null); assert.equal(c.jhMzLayer("central", "x", {}), null);
   assert.equal(c.jhMzLvN("central", 9), B, "沒登記的層＝第一層"); assert.equal(c.jhMzLvN("central", 1), B); assert.equal(K(c, "jhMzLv")(L2), L2, "jhMzLv 收層物件就直接用");
   /* 十派第一層的登記都還在、都是第一層 */
@@ -191,8 +193,10 @@ test("改壞驗證：第二層蓋掉第一層、最深層不看舊存檔、選�
   const P4 = { "07z9m-maze.js": (s) => s.replace("if(!end&&jhMzAvoid(S,nx,ny))continue;", "") };
   assert.ok(mk(P4).some((s) => s.includes("繞過水窪")), "自動走踩水窪要被抓到");
   const P5 = { "07z9m-maze.js": (s) => s.replace("say:Object.assign({},B.say,o.say)", "say:o.say||B.say") };
+  const P6 = { "07z9m-maze.js": (s) => s.replace('if(typeof jhMzLoreWrap==="function")jhMzLoreWrap(L);', "") };
+  assert.ok(mk(P6).some((s) => s.includes("包碑刻")), "第二層沒包碑刻要被抓到");
   assert.ok(mk(P5).some((s) => s.includes("say 要疊")), "say 整個換掉、沒有疊在第一層上面要被抓到");
-  for (const P of [P1, P2, P3, P4, P5]) assert.notEqual(P["07z9m-maze.js"](rd("07z9m-maze.js")), rd("07z9m-maze.js"), "改壞的字串要真的找得到");
+  for (const P of [P1, P2, P3, P4, P5, P6]) assert.notEqual(P["07z9m-maze.js"](rd("07z9m-maze.js")), rd("07z9m-maze.js"), "改壞的字串要真的找得到");
 });
 
 test("〔原始碼〕LF、沒有控制字元；07z9m-central2.js 全域名稱有 JH_MZ_CENTRAL2／jhMzCentral2 前綴、排在 07z9m-lore.js 後面（碑刻才包得到）、07z9m-fall.js 前面", () => {
