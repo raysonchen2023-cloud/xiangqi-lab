@@ -21,7 +21,13 @@ const XFL_HOME_MAX=1.04;
 function xflPlan(o){const W=o.W,av=o.av,nw=o.nw||768,nh=o.nh||1376,H0=W*nh/nw,fitH=av,lockTop=(o.off||0)>8,its=(o.items||[]).filter(q=>q&&isFinite(q.c));
   if(!(W>0&&av>0)||H0-av<2)return null;
   const ok=H=>{const mx=H-av;let lo=0,hi=lockTop?0:mx;for(const q of its){const e=Math.min((q.h||0)/2,30)+6,c=Math.max(0,Math.min(1,q.c))*H,t=Math.max(0,c-e),b=Math.min(H,c+e);lo=Math.max(lo,b-av);hi=Math.min(hi,t)}return lo<=hi+0.5?{lo:Math.max(0,lo),hi:Math.max(Math.max(0,lo),hi)}:null};
-  let H=fitH,r=null;const push=its.length&&its.every(q=>q.p);for(let i=0;i<=(push?0:XFL_STEPS);i++){const h=H0-(H0-fitH)*i/XFL_STEPS,z=ok(h);if(z){H=h;r=z;break}}
+  let H=fitH,r=null;const push=its.length&&its.every(q=>q.p);
+  /* W131b（11/26 iPad 13 吋直向盤點：棋譜庫圖寬 919／1024）：除了推得動的入口，只剩大塊點選區（高 ≥100，例如棋譜庫的古譜書架 .lb-shelf）＝照樣填滿寬度，
+     只要大塊那幾個中間那段看得到（跟 ok() 同一個規則）；裁切位置先讓全部入口範圍置中，再夾進大塊看得到的範圍。擺不進就照原本少放大 */
+  if(!push&&its.length&&its.some(q=>q.p)&&its.every(q=>q.p||q.h>=100)){const mx=H0-av;let lo=0,hi=lockTop?0:mx;
+    for(const q of its){if(q.p)continue;const e=Math.min(q.h/2,30)+6,c=Math.max(0,Math.min(1,q.c))*H0;lo=Math.max(lo,Math.min(H0,c+e)-av);hi=Math.min(hi,Math.max(0,c-e))}
+    if(lo<=hi+.5){const mid=(Math.min(...its.map(q=>q.c))+Math.max(...its.map(q=>q.c)))/2*H0-av/2,t=Math.max(lo,Math.min(hi,lockTop?0:mid));H=H0;r={lo:t,hi:t}}}
+  for(let i=0;i<=(r?-1:push?0:XFL_STEPS);i++){const h=H0-(H0-fitH)*i/XFL_STEPS,z=ok(h);if(z){H=h;r=z;break}}
   if(!r&&push){const mx=H0-av,mid=(Math.min(...its.map(q=>q.c))+Math.max(...its.map(q=>q.c)))/2*H0-av/2,t=lockTop?0:Math.max(0,Math.min(mx,mid));H=H0;r={lo:t,hi:t}}   /* W131（11/26 開發者選「改程式放大填滿」，不重畫 3:4 圖）：入口全是 07sp 推得動的 .shp-spot（門派門內、設定房間）＝照樣填滿寬度，裁切位置讓入口範圍置中，裁到的標籤由 07sp 推回看得到的範圍 */
   if(!r){H=fitH;r={lo:0,hi:0}}
   const mx=H-av,top=Math.min(r.hi,Math.max(r.lo,lockTop?0:mx*XFL_TOPW)),w=Math.min(W,H*nw/nh);
@@ -38,8 +44,8 @@ function xflCover(o){const W=o.W,av=o.av,nw=o.nw,nh=o.nh,S=Object.assign({l:0,r:
   const lx=cut(cx,S.l,S.r,w),ty=lockTop?0:cut(cy,t0,S.b,h);
   return{w:Math.round(w),h:Math.round(h),left:Math.round(cx?-lx:(W-w)/2),top:Math.round(ty),crop:Math.round(cy),gx:Math.max(0,Math.round(W-w)),gy:Math.max(0,Math.round(av-h))}}
 /* 首頁寬版圖排版：成功回傳 true；k＝07z 的 "p34"／"l1610"。沿用 xfl-port（07sp 推回範圍 xflVis、標題條和主張紙條跟著看得到的上緣、標籤晚到重排），多一個 xfl-hmw 記號 */
-function xflHmw(V,P,nw,nh,k){const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0,off=pr.top-vr.top+V.scrollTop,av=V.clientHeight-pb-off,W=pr.width;
-  const sf=typeof HMW!=="undefined"&&HMW[k]?HMW[k].safe:null,pl=xflCover({W,av,nw,nh,off,safe:sf});if(!pl||av<120)return false;
+function xflHmw(V,P,nw,nh,k,sf0){const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0,off=pr.top-vr.top+V.scrollTop,av=V.clientHeight-pb-off,W=pr.width;
+  const sf=sf0||(typeof HMW!=="undefined"&&HMW[k]?HMW[k].safe:null),pl=xflCover({W,av,nw,nh,off,safe:sf});if(!pl||av<120)return false;
   if(typeof r07Off==="function")xflR07Off(V);
   if(P.dataset.xflMt==null)P.dataset.xflMt=P.style.marginTop||"";
   Object.assign(P.style,{maxWidth:"none",width:pl.w+"px",marginLeft:pl.left+"px",marginTop:(pl.top?-pl.top:0)+"px"});P.style.setProperty("--xflT",pl.top+"px");P.classList.toggle("xfl-nar",pl.gx>1);
@@ -52,7 +58,7 @@ function xflHmw(V,P,nw,nh,k){const vr=V.getBoundingClientRect(),pr=P.getBounding
 const XFL_SEL=".shp-spot,.po-sight,[data-r07m],.pz-go,.ex-bow,.cy,[data-xfl]",XFL_SKIP=".hm-go-bar,.shw,.hm-me,.zm-ex,.zm-tip,.shp-cap";   /* 只量固定的入口和點選區（.cy＝07y 經典世界天上的朝代殘影，點了會說是哪一朝，也算）；旁白泡泡、角色這種會一直出現消失的不算，免得一直重排 */
 function xflItems(P,pr){const out=[];if(!pr||!pr.height)return out;
   for(const e of P.querySelectorAll(XFL_SEL)){if(e.closest(XFL_SKIP)||!e.getClientRects().length)continue;const s=getComputedStyle(e);if(s.visibility==="hidden"||s.position==="fixed"||+s.opacity<0.05)continue;
-    const r=e.getBoundingClientRect();if(r.width<2||r.height<2)continue;const dy=+(e.dataset&&e.dataset.spfY)||0,c=(r.top-dy+r.height/2-pr.top)/pr.height;if(c<-0.05||c>1.05)continue;out.push({c,h:r.height,p:e.matches(".shp-spot")})}
+    const r=e.getBoundingClientRect();if(r.width<2||r.height<2)continue;const dy=+(e.dataset&&e.dataset.spfY)||0,c=(r.top-dy+r.height/2-pr.top)/pr.height;if(c<-0.05||c>1.05)continue;out.push({c,h:r.height,p:e.matches(".shp-spot")||e.matches(".cy")})}   /* W131b（11/26 iPad 直向盤點）：對戰、學習大廳天上有經典世界的朝代殘影（.cy，點了只會說是哪一朝），原本因為它不是 .shp-spot 就不填滿、兩側留 45px 模糊底；殘影被裁到不影響玩法，算成可以裁 */
   return out}
 const xflKey=L=>L.map(q=>q.c.toFixed(2)).sort().join(",");
 function xflCss(){if(document.getElementById("xflCss"))return;const s=document.createElement("style");s.id="xflCss";s.textContent=`
@@ -101,6 +107,7 @@ let xflR07Off=function(){},xflR07Wide=null;
       /* 意見回饋 885（iPad 直拿「我的角色」下面畫面太小）：書齋牆在角色舞台下面，縮到剛好塞進剩下的高度只剩中間一半寬；直向大螢幕改成跟手機一樣滿寬、往下捲 */
       if(P&&/(^|\s)mz-wall(\s|$)/.test(P.className||"")&&V.clientWidth/Math.max(1,V.clientHeight)<=XFL_PORT_MAX){xflR07Off(V);return true}
       {const hk=typeof hmwSync==="function"?hmwSync(V,P):null;if(hk==="wait"){xflR07Off(V);return true}if(hk&&xflHmw(V,P,nw,nh,hk))return true}   /* 11/13 首頁寬版圖：比例跨過門檻＝07z 原地換圖，等圖載好再排；用寬版＝cover 填滿 */
+      {const sk=typeof scwSync==="function"?scwSync(V,P):null;if(sk==="wait"){xflR07Off(V);return true}if(sk&&xflHmw(V,P,nw,nh,sk,typeof scwSafe==="function"?scwSafe(P):null))return true}   /* W107-L 場景頁的 iPad 橫向專用圖（07sw）：同一套，安全區照條目 */
       if(xflPort(V,P,nw,nh))return true;vr=V.getBoundingClientRect();pr=P.getBoundingClientRect()}catch(e){}
     const r=wide0.call(this,V,P,vr,pr,nw,nh);try{xflBg(V,P,!!r&&(V.classList.contains("r07-fit")||V.classList.contains("r07-side")))}catch(e){}return r};
   /* 換頁時 #view 內容整個換掉，ttFill 要 350ms 後才重排：舊圖框一離開就立刻收掉模糊底、還原「不給捲」，新頁不會先閃舊圖、也不會短暫不能捲 */

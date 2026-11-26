@@ -132,19 +132,12 @@ async function main() {
     if (CDN_CHECK) {
       // 11/21 實測：同時 16 個請求會被 CDN 限流，472 項連線失敗被誤算成「沒有」→ 改成 6 個、失敗等一下再試 4 次；
       // 連不上（沒拿到 HTTP 狀態）只算「沒確認到」（△），拿到 404 等狀態才算確定缺（✘）
-      let i = 0, ok200 = 0; const miss = [], unknown = [];
-      const sleep = ms => new Promise(r => setTimeout(r, ms));
-      /* 金絲雀③（PR #66 審查③）：一個一定不存在的檔排進同一個佇列，走同一個 worker 判斷，要被判成「CDN 上沒有」 */
+      // W66：全部問完後，沒確認到的再低並行問一輪（askCdn），重問還是沒確認到才留在 △
+      /* 金絲雀③（PR #66 審查③）：一個一定不存在的檔排進同一個佇列，走同一個 askCdn 判斷，要被判成「CDN 上沒有」 */
       const probeF = "data/__xq_p0_canary_" + crypto.randomBytes(6).toString("hex") + ".webp";
       const queue = [...viaCdn, [probeF, false]];
-      async function worker() { while (i < queue.length) { const [f, split] = queue[i++];
-        const url = CDN + f + (split ? ".parts.json" : "");
-        let st = -1; for (let t = 0; t < 4 && st !== 200; t++) { if (t) await sleep(800 * t); try { st = (await fetch(url, { method: "HEAD" })).status } catch (e) { st = -1 } }
-        if (st === 200) ok200++;
-        // PR #11 審查：只有 404／410 是確定沒有；連不上、429（限流）、5xx 都只算沒確認到
-        if (st === 404 || st === 410) miss.push({ f, why: `CDN 上沒有（${split ? ".parts.json " : ""}HTTP ${st}）：靠 CDN 補抓會失敗` });
-        else if (st !== 200) unknown.push({ f, st, why: unknownWhy(st) }); } }
-      await Promise.all(Array.from({ length: 6 }, worker));
+      const { miss, unknown, ok200, recheck } = await askCdn(queue, async (u) => (await fetch(CDN + u, { method: "HEAD" })).status);
+      R.cdnRecheck = recheck;
       cdnRun = { probeF, miss, unknown, ok200 };
       /* 金絲雀檔不算進正式結果：判成「沒有」是預期的，拿掉；判成「沒確認到」（CDN 連不上）照樣算缺驗，留在 unknown */
       const realMiss = miss.filter(x => x.f !== probeF);
@@ -164,6 +157,7 @@ async function main() {
     console.log(`安裝包：${sum.aab}（網站 ${sum.siteVersion}，網頁 ${String(sum.sharedWebCommit).slice(0, 7)}）`);
     console.log(`原生：CDN 補抓 ${native.cdnFallback ? "有" : "沒有"}｜切塊接回 ${native.partsJoin ? "有" : "沒有"}｜離線素材包 ${native.assetPacks.length ? native.assetPacks.join("、") : "沒有"}`);
     console.log(`需求 ${sum.need} 項：在安裝包 ${sum.inPack}、靠 CDN ${sum.viaCdn}${CDN_CHECK ? "（已問過 CDN）" : "（沒問 CDN，加 --cdn 才會實際核對）"}`);
+    if (R.cdnRecheck && R.cdnRecheck.asked) console.log(`CDN 重問一輪（W66）：第一輪沒確認到 ${R.cdnRecheck.asked} 項，重問後連上 ${R.cdnRecheck.ok}、確定沒有 ${R.cdnRecheck.miss}、還是沒確認到 ${R.cdnRecheck.asked - R.cdnRecheck.ok - R.cdnRecheck.miss}`);
     const group = list => { const g = new Map(); for (const x of list) g.set(x.why, (g.get(x.why) || []).concat(x.f)); return g };
     for (const [why, fs_] of group(R.red)) console.log(`✘ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
     for (const [why, fs_] of group(R.warn)) console.log(`△ ${fs_.length} 項｜${why}\n    例：${fs_.slice(0, 5).join("、")}`);
@@ -176,7 +170,7 @@ async function main() {
       : code === 3 ? `△ 還不能送審：CDN 有 ${R.unknown} 項沒確認到（缺驗），請稍後重跑 --cdn`
       : CDN_CHECK ? "✔ 安裝包內容沒有發現會破圖或讀不到的問題（含 CDN 核對）"
       : "✔ 安裝包本身沒有問題；送審前還要加 --cdn 核對 CDN（P0-IMG 通過條件＝--cdn 且結束代碼 0）");
-    if (OUT) fs.writeFileSync(OUT, JSON.stringify({ tool: "P0-IMG", ...sum, cdnCompared: R.cdnCompared || 0, unknown: R.unknown || 0, exitCode: code, pass: CDN_CHECK && code === 0 && canary.ok, canary, toolPins: TOOL_PINS, redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
+    if (OUT) fs.writeFileSync(OUT, JSON.stringify({ tool: "P0-IMG", ...sum, cdnCompared: R.cdnCompared || 0, unknown: R.unknown || 0, cdnRecheck: R.cdnRecheck || null, exitCode: code, pass: CDN_CHECK && code === 0 && canary.ok, canary, toolPins: TOOL_PINS, redItems: R.red, warnItems: R.warn }, null, 1) + "\n");
     process.exitCode = code;
   } finally { fs.rmSync(tmp, { recursive: true, force: true }) }
 }
@@ -275,6 +269,26 @@ function deepOk(d, needW42) { return !!d && ["w21", "w30", "home", "hash"].every
 /* 結束代碼（PR #11 審查：缺驗不能送審）：有 ✘＝1；沒有 ✘ 但金絲雀沒被抓到＝4（看起來全過、其實檢查本身失靈：4 要防的就是這種）；
    加 --cdn 而有沒確認到的＝3；其餘＝0。有 ✘ 時本來就不能送審，回 1 比較有用，金絲雀結果照樣印出、寫進報告（pass 照樣 false）。
    canaryOk 沒給（舊呼叫）當成 true，只有明確傳 false 才回 4 */
+/* 問 CDN（W66 抽出來，測試用假的 head 跑同一段）：head(相對路徑) 回 HTTP 狀態，丟例外＝連不上。
+   第一輪 conc 個並行、每檔最多 4 次；全部問完後，沒確認到的（連不上、429、5xx）等 reWait 毫秒，再用 reConc 個並行問一輪（每檔最多 3 次）。
+   只有 404／410 算確定沒有（✘）；重問一輪還是沒確認到的照樣是 △（缺驗，結束代碼 3），不會被當成通過。
+   11/22 26112201 閘門九次重跑都有 1～41 項偶發連不上（Node fetch），單次拿不到結束代碼 0，所以加這一輪。 */
+async function askCdn(queue, head, { sleep = (ms) => new Promise((r) => setTimeout(r, ms)), conc = 6, reConc = 2, reWait = 5000 } = {}) {
+  const miss = [], unknown = [], first = []; let ok200 = 0;
+  const ask = async (f, split, tries, gap) => { let st = -1; for (let t = 0; t < tries && st !== 200; t++) { if (t) await sleep(gap * t); try { st = await head(f + (split ? ".parts.json" : "")) } catch (e) { st = -1 } } return st };
+  const pool = async (items, n, fn) => { let i = 0; await Promise.all(Array.from({ length: Math.min(n, items.length) }, async () => { while (i < items.length) await fn(items[i++]) })) };
+  const sort = (f, split, st, notYet) => {
+    if (st === 200) ok200++;
+    /* PR #11 審查：只有 404／410 是確定沒有；連不上、429（限流）、5xx 都只算沒確認到 */
+    else if (st === 404 || st === 410) miss.push({ f, why: `CDN 上沒有（${split ? ".parts.json " : ""}HTTP ${st}）：靠 CDN 補抓會失敗` });
+    else notYet(st) };
+  await pool(queue, conc, async ([f, split]) => sort(f, split, await ask(f, split, 4, 800), () => first.push([f, split])));
+  const recheck = { asked: first.length, ok: 0, miss: 0 };
+  if (first.length) { await sleep(reWait); const ok0 = ok200, miss0 = miss.length;
+    await pool(first, reConc, async ([f, split]) => sort(f, split, await ask(f, split, 3, 2000), (st) => unknown.push({ f, st, why: unknownWhy(st) })));
+    recheck.ok = ok200 - ok0; recheck.miss = miss.length - miss0 }
+  return { miss, unknown, ok200, recheck };
+}
 function exitCode({ red, unknown, cdn, canaryOk = true }) { return red ? 1 : canaryOk === false ? 4 : cdn && unknown ? 3 : 0 }
 
 /* 逐項判斷（純函式，金絲雀也用這一支）：need＝需求清單 Map；has(f)＝包裡有沒有；sha1Of(f)＝包裡那份的 SHA-1 前 8 碼；native＝原生能力 */
@@ -337,5 +351,5 @@ function cdnCanary(probe, miss, unknown, ev = {}) {
 /* 結束代碼用的金絲雀判斷（純函式）：①②一律要抓到；加 --cdn 時③要抓到，或 CDN 真的連不上（cdnUnreachable，歸缺驗 3，不算失靈）；看布林欄位，不看訊息文字。
    深層金絲雀（PR②）：有跑就要過（W42 沒 manifest＝缺驗，不算失靈） */
 function canaryExitOk(c, cdn) { return c.home === true && c.stale === true && (!cdn || c.cdn404 === true || c.cdnUnreachable === true) && (c.deep === undefined || deepOk(c.deep, true)) }
-module.exports = { exitCode, PARTS_MARKER, MEDIA, NOTE_VIA_WEB, MAN_MISS_WHY, manHasFiles, unknownWhy, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk, analyzeTree, deepCanaries, deepOk, bufReplaceAll, spoil, fileSha1 };
+module.exports = { exitCode, askCdn, PARTS_MARKER, MEDIA, NOTE_VIA_WEB, MAN_MISS_WHY, manHasFiles, unknownWhy, staleVsCdn, classify, canaryChecks, cdnCanary, canaryExitOk, analyzeTree, deepCanaries, deepOk, bufReplaceAll, spoil, fileSha1 };
 if (require.main === module) main().catch(e => die(e.stack || String(e)));

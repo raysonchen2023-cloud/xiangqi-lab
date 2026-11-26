@@ -150,7 +150,9 @@ const SW7_PAGES=[
   {k:"yz_qing",re:/data\/yizhan\/qing(_c|_f)?\.webp/,m:"out",rg:"s",tr:[[[0,380],[30,345],[90,322],[150,298],[180,310],[220,365],[270,410],[292,470],[282,570],[255,650],[205,665],[155,560],[90,520],[30,600],[15,680],[0,680]],[[600,400],[625,370],[660,345],[700,335],[730,330],[768,320],[768,500],[740,470],[720,420],[690,405],[640,410]]]},
   {k:"yz_classic",re:/data\/yizhan\/classic(_c|_f)?\.webp/,m:"out",rg:"cl"},
   {k:"indoor",re:/data\/(campmap|gmmap|cupmap|exammap|openmap|libmap|setmap|feedback|statmap|shipmap\/page_(bag|shelf|canju))\/?/,m:"in"}];
-function sw7Page(src){for(const o of SW7_PAGES)if(o.re.test(src))return o;return null}
+function sw7Page0(src){for(const o of SW7_PAGES)if(o.re.test(src))return o;return null}
+/* W107-L：場景頁的 iPad 橫向專用圖（07sw SCW，檔名 *_l1610）座標不是原圖像素，問 07sw：條目有天氣範圍用它，沒有就這張不下雨雪；不是登記表裡的（首頁 home_l1610）照原本找 */
+function sw7Page(src){if(/_l1610\.webp/.test(src||"")&&typeof scwSw7==="function"){const r=scwSw7(src,sw7Page0);if(r!==undefined)return r}return sw7Page0(src)}
 /* 這一頁現在是哪個節氣：預設跟手機的真實日期（07y5 tdTerm）。星槎的新世界觀若讓各朝渡口、驛站改用自己的「歷史時間」，在這裡按頁（P、o.k）覆寫就好，天氣、四季變色都問它 */
 function sw7TermFor(P,o){return P&&P.dataset&&P.dataset.sw7Term||sw7Term()}   /* ⑥ 四時風物匣點了某一季＝這一頁 data-sw7-term 暫時覆寫，離開這頁就沒了 */
 /* 11/10 開發者「同一個朝代某個場景下雨，其他場景也要統一下雨」：棋鎮各頁（首頁、書院、茶坊、天井…）原本固定算南方 "s"，渡口、驛站照那一朝自己的地區算，停在唐、五代時會一邊下一邊晴；
@@ -523,7 +525,9 @@ const SW7_POEM={
 const sw7SeaOf=t=>SW7_SPRING.has(t)?"sp":SW7_SUMMER.has(t)?"su":SW7_WINTER.has(t)?"wi":t?"au":"";
 function sw7BoxSt(){const S=store.get("sw7Box",null)||{};S.pg=S.pg||{};S.w=S.w||{};S.u=S.u||{};S.g=S.g||[];return S}
 const sw7BoxTok=(S,e)=>Math.max(0,Math.floor((S.w[e]||0)/3)-(S.u[e]||0));
-function sw7BoxKey(src){let m=/data\/shipmap\/port_(\w+?)(?:_c|_f)?\.webp/.exec(src);if(m&&m[1]!=="classic"&&SW7_BOX_POS.port[m[1]])return["port",m[1]];m=/data\/yizhan\/(\w+?)(?:_c|_f)?\.webp/.exec(src);if(m&&SW7_BOX_POS.yz[m[1]])return["yz",m[1]];return null}
+/* #171：渡口 iPad 橫式圖 port_<朝>_f_l1610（2560×1600）的木匣（底部中心 %，Windows Claude 1 量）；寬照石桌比例縮成 6%（直圖 10%，橫式圖用 10% 比石桌大很多）。存檔的鍵照舊是 port:<朝> */
+const SW7_BOX_POS_L={port:{"qin":[17,62],"han":[25,69],"sanguo":[44,73],"weijin":[77,67.5],"nanbei":[67,68.5],"sui":[16,75],"tang":[21.5,57],"wudai":[60,56.5],"song":[18,56.5],"yuan":[44,62.5],"ming":[16.5,59.5],"qing":[64,88]}},SW7_BOX_LW=6;
+function sw7BoxKey(src){let m=/data\/shipmap\/port_(\w+?)_f_l1610\.webp/.exec(src);if(m&&SW7_BOX_POS_L.port[m[1]])return["port",m[1],1];m=/data\/shipmap\/port_(\w+?)(?:_c|_f)?\.webp/.exec(src);if(m&&m[1]!=="classic"&&SW7_BOX_POS.port[m[1]])return["port",m[1]];m=/data\/yizhan\/(\w+?)(?:_c|_f)?\.webp/.exec(src);if(m&&SW7_BOX_POS.yz[m[1]])return["yz",m[1]];return null}
 /* 贏棋記到那一朝（包一層 07-legend.js 的 journeyGameEnd：先讀 jPending，古戰場 bt: 不算） */
 function sw7BoxWin(st,P){if(!st||!st.result||st.practice||st.result.w!==st.human||(st.moves||[]).length<10)return;if(P&&P.game===st.id&&String(P.id).startsWith("bt:"))return;
   const S=sw7BoxSt(),id=String(st.id||"");if(!id||S.g.includes(id))return;S.g=S.g.concat(id).slice(-60);const e=store.get("eraUser",null)||store.get("era","classic");S.w[e]=(S.w[e]||0)+1;store.set("sw7Box",S);
@@ -533,8 +537,9 @@ if(typeof journeyGameEnd==="function"){const f0=journeyGameEnd;journeyGameEnd=fu
 function sw7Box(R){if(!SW7_BOX_ON)return;const P=R.P,src=R.img.getAttribute("src")||"",K=sw7BoxKey(src);if(!K){const o=P.querySelector(":scope>.sw7-box");if(o)o.remove();return}
   const[g,e]=K,key=g+":"+e,S=sw7BoxSt(),pg=S.pg[key]||(S.pg[key]={}),se=sw7SeaOf(sw7Term());
   if(se&&!pg[se]){pg[se]=Date.now();store.set("sw7Box",S);const x=SW7_SEA.find(z=>z[0]===se);setTimeout(()=>{try{toast(`${x[4]} 四時風物匣收進了${x[2]}（真實的${x[1]}天來過這裡）`)}catch(z){}},2200)}
-  let b=P.querySelector(":scope>.sw7-box");if(b&&b.dataset.k===key)return sw7BoxDot(b,S,e);if(b)b.remove();
-  const[x,y]=SW7_BOX_POS[g][e];b=document.createElement("button");b.type="button";b.className="sw7-box";b.dataset.k=key;b.style.left=x+"%";b.style.top=y+"%";b.setAttribute("aria-label","四時風物匣");
+  const L=K[2],bk=key+(L?":l":"");   /* 橫式圖、直圖的木匣位置不同：元素的 data-k 分開，轉向時換一個 */
+  let b=P.querySelector(":scope>.sw7-box");if(b&&b.dataset.k===bk)return sw7BoxDot(b,S,e);if(b)b.remove();
+  const[x,y]=(L?SW7_BOX_POS_L:SW7_BOX_POS)[g][e];b=document.createElement("button");b.type="button";b.className="sw7-box";b.dataset.k=bk;b.style.left=x+"%";b.style.top=y+"%";if(L)b.style.width=SW7_BOX_LW+"%";b.setAttribute("aria-label","四時風物匣");
   b.innerHTML=`<img src="${SW7_BOX_IMG}" alt="" draggable="false">`;b.onclick=ev=>{ev.stopPropagation();ev.preventDefault();if(typeof vibrate==="function")vibrate(5);sw7BoxOpen(R,g,e)};
   ["pointerdown","touchstart","mousedown"].forEach(t=>b.addEventListener(t,ev=>ev.stopPropagation(),{passive:true}));P.append(b);sw7BoxDot(b,S,e)}
 function sw7BoxDot(b,S,e){b.classList.toggle("tok",sw7BoxTok(S,e)>0)}
