@@ -68,6 +68,12 @@ const xcCap = (to) => (R) => edit(R, "ios/debug.xcconfig", rep("CAPACITOR_DEBUG 
 const xcHidden = (inc) => (R) => { xcAdd(inc)(R); fs.mkdirSync(iosp(R, "ios/XQInc"), { recursive: true }); fs.writeFileSync(iosp(R, "ios/XQInc/extra.xcconfig"), "OTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n") };
 /* pbxproj 的 debug.xcconfig 參照改到 ios/App 底下的子資料夾：bad 那份有壞旗標、ok 那份乾淨（放寬後讀到 ok 那份就會放行） */
 const xcRefTo = (p, bad, ok) => (R) => { edit(R, PBXF, repAll("path = ../debug.xcconfig;", "path = " + p + ";")); for (const [f, t] of [[bad, "CAPACITOR_DEBUG = true\nOTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n"], [ok, "CAPACITOR_DEBUG = true\n"]]) { if (!f) continue; fs.mkdirSync(path.dirname(iosp(R, f)), { recursive: true }); fs.writeFileSync(iosp(R, f), t) } };
+/* #204 第五輪：debug.xcconfig 參照改成 <group>、掛到新群組底下（grpOne 一個上層、grpTwo 兩個上層 XQA、XQB）；xcPut 寫 xcconfig（bad＝有壞旗標） */
+const grpRef = (s) => rep("path = ../debug.xcconfig; sourceTree = SOURCE_ROOT;", 'path = debug.xcconfig; sourceTree = "<group>";')(s);
+const grpOne = (s, id, attrs) => rep("/* Begin PBXGroup section */\n", "/* Begin PBXGroup section */\n\t\t" + id + " = {isa = PBXGroup; children = (958DCC722DB07C7200EA8C5F, ); " + attrs + " };\n")(rep("\t\t\t\t958DCC722DB07C7200EA8C5F /* debug.xcconfig */,\n", "\t\t\t\t" + id + ",\n")(grpRef(s)));
+const grpTwo = (s) => rep("/* Begin PBXGroup section */\n", "/* Begin PBXGroup section */\n\t\tCACACACACACACACACACACACA = {isa = PBXGroup; children = (958DCC722DB07C7200EA8C5F, ); path = XQA; sourceTree = \"<group>\"; };\n\t\tCBCBCBCBCBCBCBCBCBCBCBCB = {isa = PBXGroup; children = (958DCC722DB07C7200EA8C5F, ); path = XQB; sourceTree = \"<group>\"; };\n")(rep("\t\t\t\t958DCC722DB07C7200EA8C5F /* debug.xcconfig */,\n", "\t\t\t\tCACACACACACACACACACACACA,\n\t\t\t\tCBCBCBCBCBCBCBCBCBCBCBCB,\n")(grpRef(s)));
+const xcPut = (R, f, bad) => { fs.mkdirSync(path.dirname(iosp(R, f)), { recursive: true }); fs.writeFileSync(iosp(R, f), "CAPACITOR_DEBUG = true\n" + (bad ? "OTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex\n" : "")) };
+const rep2 = (f, a, b) => (R) => edit(R, f, rep(a, b));
 const KINDS = {
   /* 1. 兩份一樣 */
   copyDiff: { break: (R) => edit(R, "ios/App/App/" + VC, (s) => s + "\n// 只改了 ios/App/App 這一份\n"), expect: VC + " 兩份相同" },
@@ -315,6 +321,40 @@ const KINDS = {
   swiftXcCapYes: { break: xcCap("CAPACITOR_DEBUG = YES"), expect: "Swift 語言版本全是 5.0" },
   swiftXcCapCmt: { break: xcCap("CAPACITOR_DEBUG = true // xq"), expect: "Swift 語言版本全是 5.0" },
   swiftXcCapPre: { break: xcCap("CAPACITOR_DEBUG = $(XQ)true"), expect: "Swift 語言版本全是 5.0" },
+  /* #204 第五輪複審：上層群組的 $、sourceTree、兩個上層、第二個 baseConfigurationReference、Anchor 欄位、註解收尾、字串跳脫、裸字字元、遠處的特殊字元 */
+  swiftCfgAnchorKey: { break: (R) => edit(R, PBXF, rep("baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;", "baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;\n\t\t\tbaseConfigurationReferenceAnchor = 504EC2FB1FED79650016851F;")), expect: "Swift 語言版本全是 5.0" },   /* check-native 註解點名的 Xcode 16 欄位 */
+  swiftGroupDollar: { break: (R) => { edit(R, PBXF, (s) => grpOne(s, "C9C9C9C9C9C9C9C9C9C9C9C9", 'path = "$(SRCROOT)/XQC"; sourceTree = "<group>";')); xcPut(R, "ios/App/XQC/debug.xcconfig", true); xcPut(R, "ios/App/$(SRCROOT)/XQC/debug.xcconfig", false) }, expect: "Swift 語言版本全是 5.0" },   /* 上層群組的 path 有 $，Xcode 會展開 */
+  swiftParentTree: { break: (R) => { edit(R, PBXF, (s) => grpOne(s, "CDCDCDCDCDCDCDCDCDCDCDCD", "path = XQ; sourceTree = BUILT_PRODUCTS_DIR;")); xcPut(R, "ios/App/XQ/debug.xcconfig", false) }, expect: "Swift 語言版本全是 5.0" },   /* 上層群組的 sourceTree 也只認 <group>、SOURCE_ROOT */
+  swiftTwoParentsLast: { break: (R) => { edit(R, PBXF, (s) => grpTwo(s)); xcPut(R, "ios/App/XQA/debug.xcconfig", false); xcPut(R, "ios/App/XQB/debug.xcconfig", true) }, expect: "Swift 語言版本全是 5.0" },   /* 同一個參照列在兩個群組：照最後一個上層算，壞旗標放在後一個（前一個放壞旗標的情形鎖本身判過，留給下一支鎖的 PR） */
+  swiftCommentI3: { break: (R) => edit(R, PBXF, repLast("SWIFT_VERSION = 5.0;", 'SWIFT_VERSION = 5.0;\n\t\t\t\t/**/ OTHER_SWIFT_FLAGS = "-enable-bare-slash-regex"; /* x */')), expect: "Swift 語言版本全是 5.0" },   /* ／＊＊／ 是完整的註解，＊／ 從 ／＊ 後面緊接著就要找 */
+  swiftSecondRef: { break: (R) => { edit(R, PBXF, (s) => { s = repLast("baseConfigurationReference = 958DCC722DB07C7200EA8C5F /* debug.xcconfig */;", "baseConfigurationReference = F2F2F2F2F2F2F2F2F2F2F2F2;")(s); return rep("/* Begin PBXFileReference section */\n", "/* Begin PBXFileReference section */\n\t\tF2F2F2F2F2F2F2F2F2F2F2F2 = {isa = PBXFileReference; path = XQ/t.xcconfig; sourceTree = SOURCE_ROOT; };\n")(s) }); xcPut(R, "ios/App/XQ/t.xcconfig", true) }, expect: "Swift 語言版本全是 5.0" },   /* 每一個 baseConfigurationReference 都要追，不是只有第一個 */
+  swiftGroupDeep: { break: (R) => { edit(R, PBXF, (s) => { let g = ""; for (let n = 0; n < 45; n++) g += "\t\t" + ("D" + String(n).padStart(23, "0")) + " = {isa = PBXGroup; children = (" + (n < 44 ? "D" + String(n + 1).padStart(23, "0") : "958DCC722DB07C7200EA8C5F") + ", ); path = d; sourceTree = \"<group>\"; };\n"; return rep("/* Begin PBXGroup section */\n", "/* Begin PBXGroup section */\n" + g)(rep("\t\t\t\t958DCC722DB07C7200EA8C5F /* debug.xcconfig */,\n", "\t\t\t\tD00000000000000000000000,\n")(rep("path = ../debug.xcconfig; sourceTree = SOURCE_ROOT;", 'path = debug.xcconfig; sourceTree = "<group>";')(s))) }); xcPut(R, "ios/App/" + Array(45).fill("d").join("/") + "/debug.xcconfig", false) }, expect: "Swift 語言版本全是 5.0" },   /* 群組超過 40 層就算看不懂（內容乾淨也一樣） */
+  swiftCfgNoName: { break: rep2(PBXF, "/* Begin XCBuildConfiguration section */\n", "/* Begin XCBuildConfiguration section */\n\t\tE2E2E2E2E2E2E2E2E2E2E2E2 = {isa = XCBuildConfiguration; };\n"), expect: "Swift 語言版本全是 5.0" },   /* 沒有 name 的設定組也要明寫 NO */
+  swiftEscBsEmpty: { break: rep2(PBXF, 'SWIFT_OPTIMIZATION_LEVEL = "-O";', 'SWIFT_OPTIMIZATION_LEVEL = "-O\\\\";'), expect: "Swift 語言版本全是 5.0" },   /* 字串裡的 \\ 不能解成空的 */
+  swiftCompFlagsCfg: { break: pbxAdd('COMPILER_FLAGS = "-enable-bare-slash-regex";'), expect: "Swift 語言版本全是 5.0" },   /* COMPILER_FLAGS 寫在 buildSettings 也不行 */
+  swiftProjDirSpace: { break: rep2(PBXF, 'projectDirPath = "";', 'projectDirPath = " ";'), expect: "Swift 語言版本全是 5.0" },
+  swiftXcDeepLine: { break: xcAdd("// a\n// b\n// c\nOTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex"), expect: "Swift 語言版本全是 5.0" },   /* xcconfig 每一行都要看 */
+  swiftPbxCmtSemi: { break: pbxAdd("XQ_A = 1 // ;"), expect: "Swift 語言版本全是 5.0" },   /* // 註解到行尾，裡面的 ; 不算 */
+  swiftNlFar: { break: (R) => edit(R, PBXF, (s) => rep("SWIFT_VERSION = 5.0;", "SWIFT_VERSION = 5.0;\n\t\t\t\t// xq\u2028SWIFT_ENABLE_BARE_SLASH_REGEX = YES;")(s.replace("{\n", "{\n/* " + "x".repeat(60000) + " */\n"))), expect: "Swift 語言版本全是 5.0" },   /* 特殊字元放在 6 萬字後面，整份都要查 */
+  swiftXcNlFar: { break: xcAdd("// " + "x".repeat(60000) + "\n// xq\u2028OTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChHash: { break: pbxAdd("XQ_A = a#b;"), expect: "Swift 語言版本全是 5.0" },   /* 不加引號的字只認 A-Z a-z 0-9 _ $ + / : . -，其他字元一個一個測 */
+  swiftPbxChBang: { break: pbxAdd("XQ_A = a!b;"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChPct: { break: pbxAdd("XQ_A = a%b;"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChAmp: { break: pbxAdd("XQ_A = a&b;"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChLt: { break: pbxAdd("XQ_A = a<b;"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChGt: { break: pbxAdd("XQ_A = a>b;"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChQ: { break: pbxAdd("XQ_A = a?b;"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChTick: { break: pbxAdd("XQ_A = a`b;"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChTilde: { break: pbxAdd("XQ_A = a~b;"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChBar: { break: pbxAdd("XQ_A = a|b;"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChCaret: { break: pbxAdd("XQ_A = a^b;"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChApos: { break: pbxAdd("XQ_A = a'b;"), expect: "Swift 語言版本全是 5.0" },
+  swiftPbxChBslash: { break: pbxAdd("XQ_A = a\\b;"), expect: "Swift 語言版本全是 5.0" },
+
+  swiftTwoParentsSecond: { break: (R) => { edit(R, PBXF, (s) => grpTwo(s).replace("children = (958DCC722DB07C7200EA8C5F, ); path = XQB;", "children = (504EC3051FED79650016851F, 958DCC722DB07C7200EA8C5F, ); path = XQB;")); xcPut(R, "ios/App/XQA/debug.xcconfig", false); xcPut(R, "ios/App/XQB/debug.xcconfig", true) }, expect: "Swift 語言版本全是 5.0" },   /* 後一個群組裡參照不是第一個 children，也要算上層 */
+  swiftXcLongLine: { break: xcAdd("OTHER_SWIFT_FLAGS = $(inherited) -enable-bare-slash-regex // " + "x".repeat(2000)), expect: "Swift 語言版本全是 5.0" },   /* 很長的行也要看 */
+  swiftGroupDollarMid: { break: (R) => { edit(R, PBXF, (s) => grpOne(s, "CECECECECECECECECECECECE", 'path = "XQC$(XQ)"; sourceTree = "<group>";')); xcPut(R, "ios/App/XQC/debug.xcconfig", true); xcPut(R, "ios/App/XQC$(XQ)/debug.xcconfig", false) }, expect: "Swift 語言版本全是 5.0" },   /* 上層群組 path 中間的 $ 也是變數 */
+  swiftParentSdk: { break: (R) => { edit(R, PBXF, (s) => grpOne(s, "CFCFCFCFCFCFCFCFCFCFCFCF", "path = XQ; sourceTree = SDKROOT;")); xcPut(R, "ios/App/XQ/debug.xcconfig", false) }, expect: "Swift 語言版本全是 5.0" },   /* 上層群組的 sourceTree 不是只擋 BUILT_PRODUCTS_DIR */
   estNoReturn: { break: both(SRV, (s) => { const i = s.indexOf("private func establishNow()"), j = s.indexOf("xqLog(\"驗證通過", i), k = s.indexOf("return .verified", j); if (i < 0 || j < 0 || k < 0) throw new Error("找不到第二個 if 區塊"); return s.slice(0, k) + "_ = 0" + s.slice(k + "return .verified".length) }), expect: "establish 一定經過 verifyNow" },
   estElseAfter: { break: both(SRV, rep("if verifyNow(timeout: 2.0) { return .verified }", "if verifyNow(timeout: 2.0) { return .verified } else { xqLog(\"x\") }")), expect: "establish 一定經過 verifyNow" },
   estFuncTwice: { break: both(SRV, beforeEnd("    private func verifyNow(timeout: Double, xq: Int) -> Bool { return true }")), expect: "establish 一定經過 verifyNow" },
