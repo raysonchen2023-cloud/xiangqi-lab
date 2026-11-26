@@ -65,6 +65,7 @@ JOURNEY_KEYS.push("m_jhLiepao");   /* 11/22 開發者（W48-S5 列炮門「擊�
 JOURNEY_KEYS.push("m_jhFeixiang");   /* 11/22 開發者（W48-S8 飛相門「築堤擺陣形」，07z9j-feixiang.js）：jhFeixiang＝上次選的難度、今天領過修為的日子 */
 JOURNEY_KEYS.push("m_jhGateSeen");   /* 11/24 W104 十州棋館晚明轉場（07z9n-jhgate.js）：jhGateSeen＝第一次看過的時間（之後旁白換成「十州棋局再開」）；新旅程重新算 */
 JOURNEY_KEYS.push("m_jhXianren");   /* 11/22 開發者（W48-S7 仙人指路門「探路猜陣勢」，07z9k-xianren.js）：jhXianren＝上次選的難度、今天領過修為的日子、累計答對題數（揚州園林探路紀錄） */
+JOURNEY_KEYS.push("m_jhMzDeep");   /* W87-2 換層（11/26，07z9m-maze.js jhMzDeep）：jhMzDeep＝各派地底迷宮最深到過第幾層（門內頁選層用）。另外加一行，不動上面清單的字 */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
 /* 開發者 11/6 修：全新玩家第一次打開，開機時就會寫進 era、jStars、playSec 這些鍵，原本的判斷會把新玩家當成舊玩家，跳出「存檔功能上線了、角色是小帥Q版」。改成只看真的玩過才會有的鍵（新手引導做完、修為、戰績、故事進度） */

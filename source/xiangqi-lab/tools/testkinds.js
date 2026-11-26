@@ -188,6 +188,13 @@ const CLASSIFIED = new Set([
   "test-gx-gatepano.js",   /* 11/15 開發者選星頁截圖「重新繪製滿版環景的幻譜星門讓玩家選」「觀星臺有什麼神秘的力量」：直式整個畫面是一圈水墨環景、星球各自去背疊上去、左右拖曳繞一圈（m/07gxp-gatepano.js）；說明卡兩版共用與星碑共鳴文案（m/07gx-galaxy.js）；從星圖石碑進星門的過場（m/07gxt-guanxing.js gxtGate）（行為 9、混合 1、原始碼 3） */
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
   "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
+  "test-jh-horse-1126.js",   /* 11/26 W87-2 起馬地底迷宮（m/07z9m-horse.js）：vm 跑無韁野馬循足跡追（慢 LAG 步、不會越追越遠）、蹩馬腿困住、地圖 BFS 與不被撞倒的路線搜尋（狀態含足跡）；題庫用 core.js 獨立重算（最後一步是馬）；〔原始碼〕LF、include 排在屏風馬後面、搖桿說法 */
+  "test-jh-same-1126.js",   /* 11/26 W87-2 順炮地底迷宮（m/07z9m-same.js）：vm 跑鹽道暗哨一回合衝兩格、撞牆花一回合轉身、只看正前方、衝到玩家就停（含改壞驗證）；鹽灶點亮與擋視線；地圖 BFS 與不被抓的路；題庫 core.js 獨立重算 */
+  "test-jh-opp-1126.js",   /* 11/26 W87-2 列炮地底迷宮（m/07z9m-opp.js）：vm 跑淨面戲軸繞九宮外圈、緊鄰四格＋飛將（隔水溝也看得到、戲箱擋住）（含改壞驗證）；冷光柱點亮整欄；地圖 BFS 與兩種步調差都有不被抓的路；兩段題庫 core.js 獨立重算 */
+  "test-jh-corner-1126.js",   /* 11/26 W87-2 仕角炮地底迷宮（m/07z9m-corner.js）：vm 跑朝奉機關只在那一間斜走、只看正在走的那一條斜線（另一條、每邊正中間、出了那一間都看不到、擋光）（含改壞驗證）；銅鏡照亮整條直線；地圖 BFS 與 512 種步調錯開都有不被抓的路；兩段題庫 core.js 獨立重算 */
+  "test-jh-palace-1126.js",   /* 11/26 W87-2 反宮馬地底迷宮（m/07z9m-palace.js）：vm 跑墨工傀儡跳日字、反宮挑離工坊中心最遠的落點、蹩馬腿、墨池裡看不到也抓不到（含改壞驗證）；墨池擋光；地圖 BFS 與任一傀儡慢 1～7 回合都有不被抓的路；兩段題庫 core.js 獨立重算 */
+  "test-jh-maze-layers-1126.js",   /* 11/26 W87-2 地底迷宮換層（m/07z9m-maze.js jhMzLayer／jhMzDeep／jhMzPick、07z9m-fall.js 層數標題、07z9m-central2.js 中炮門第二層示範）：vm 跑登記多層不動第一層、存檔分層、最深層含舊存檔、選層鎖住、門內頁入口、轉場何時播（含改壞驗證） */
+  "test-jh-screen-1126.js",   /* 11/26 W87-2 屏風馬地底迷宮（m/07z9m-screen.js）：vm 跑馬型銅人的日字落點、蹩馬腿（石鼓、玩家站在馬腿）、巡邏範圍、地圖 BFS 與不被逮到的路線搜尋；題庫用 core.js 獨立重算（最後一步是馬）；〔原始碼〕LF、include 順序、搖桿說法 */
   "test-jh-cross-1124.js",   /* 11/24 W87 過宮炮地底迷宮（m/07z9m-cross.js）：vm 跑炮型護院視線、走法、地圖 BFS 與不被看到的路線搜尋、碑刻；題庫用 core.js 獨立重算 */
   "test-w101-first-move-1124.js",   /* 11/24 W101 開發者截圖「還沒切到棋盤，掌門就先落子了」：電腦先手的第一步等棋盤真的看得到（3D 建好、開場封面 pk-veil 收掉）再走（src/local.js）〔混合：等待時間 vm 行為 2（含慢機器封面 23 秒）、接線與就緒判斷、park3d 訊號原始碼 2〕 */
   "test-secret-friends-1124.js",   /* 11/24 W96 秘境棋友吸引力第一組：vm 跑 07-legend.js 的尋訪錄集滿保底、散佚手稿撿拾與換線索；畫面接線用原始碼比對（標〔原始碼〕） */
@@ -196,8 +203,10 @@ const CLASSIFIED = new Set([
   "test-w104-jhgate-1124.js",   /* 11/24 W104 開發者選 ChatGPT 場景盤點 K：十州棋館晚明轉場（m/07z9n-jhgate.js）；在明朝只用簡單淡入〔混合：播不播、文字、星線棋盤格數 vm 行為 3、包裝與載入順序原始碼 1〕 */
   "test-w102-master-gate-1124.js",   /* 11/24 W102 開發者選「改成中炮門的場景」＋ChatGPT 場景盤點 A、B、L：掌門局封面改門派場景（m/07z9-school.js zmGate／zmPlace），驛站旅人、秘境棋友、門下棋友改園子封面與英文（08b-cpugame.js cgGardenGate）〔混合：vm 行為 6、接線原始碼 1〕 */
   "test-w89-mentor-1124.js",   /* 11/24 W89 開發者選 Gemini 文案 2「掌門覆盤」：關鍵步由主修門派掌門（沒拜師用隨行夥伴）講一句，十派四組中英台詞、輸棋不嘲諷（m/07z9o-mentor.js；行為 5、原始碼 1） */
+  "test-w107-tablet-board-1125.js",   /* 11/25 W107 開發者「為大螢幕好好設計」第一步：對局頁 iPad 直向放大、橫向兩欄；手機與分割畫面不受影響（m.css；行為 3、原始碼 1） */
   "test-w108-sel-glow-1125.js",   /* 11/25 W108 玩家回饋：選中的棋子底下加柔和光暈（主題強調色、不擋點擊、不動畫；01-board.js；原始碼 3） */
   "test-w126-ipcompat.js",   /* 11/26 W126 iPhone 版在 iPadOS 26 相容視窗裡頂欄讓出視窗鈕（00-util xqIpCompatOf、m.css #topbar 左內距）〔行為 2：vm 跑判斷與 resize 重算；原始碼 1：CSS 規則〕 */
+  "test-icon-onerror-1126.js",   /* 11/26 W152 圖示載不到時的備援（m/02-shell.js ETIMG）：組出 onerror 拿去 new Function 編譯並用假 img 實際跑（改抓經典版、換舊圖、換表情文字）；掃所有 m/*.js 的 onerror 不能有反斜線 */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */
