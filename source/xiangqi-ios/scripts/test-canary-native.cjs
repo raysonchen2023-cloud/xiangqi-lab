@@ -381,6 +381,7 @@ const MUT = [
   ["Swift 設定（放寬）：baseRef 只追 Debug","if (o.baseConfigurationReference != null) {","if (o.baseConfigurationReference != null && o.name === \"Debug\" && !xcRefs.length) {","swiftSecondRef"],
   ["Swift 設定（第六輪）：xcconfig 逐行切（縮排的續行也要看）","for (const l of xraw.split(\"\\n\"))","for (const l of xraw.split(/\\n(?=\\S)/))","swiftXcIndentCont"],
   ["Swift 設定（第六輪）：xcconfig 每行整行都看（不能只看前 200 字）","for (const l of xraw.split(\"\\n\")) if (l.trim()","for (const l of xraw.split(\"\\n\").map((x) => x.slice(0, 200))) if (l.trim()","swiftXcLongIndent"],
+  ["Swift 設定（第七輪）：xcconfig 每行整行都看（不能只看前 1000 字）","for (const l of xraw.split(\"\\n\")) if (l.trim()","for (const l of xraw.split(\"\\n\").map((x) => x.slice(0, 1000))) if (l.trim()","swiftXcLongIndent"],
   ["Swift 設定（第六輪）：每個 baseConfigurationReference 都追（不能只追最後一個）","if (p) xcRefs.push(p); else swBad","if (p) xcRefs.splice(0, xcRefs.length, p); else swBad","swiftFirstRefBad"],
   ["Swift 設定（放寬）：M4 /* 從 i+3 找 */","src.indexOf(\"*/\", i + 2)","src.indexOf(\"*/\", i + 3)","swiftCommentI3"],
   ["Swift 設定（放寬）：M11 bare NO 只查有 buildSettings 的","if ((o.buildSettings || {}).SWIFT_ENABLE_BARE_SLASH_REGEX !== \"NO\")","if (o.buildSettings && o.buildSettings.SWIFT_ENABLE_BARE_SLASH_REGEX !== \"NO\")","swiftCfgNoSettings"],
@@ -503,7 +504,7 @@ test("check-native.js 每一條判斷改成恆真，對應的壞樣本都要回 
 
 test("子條件改壞清單：每一條只拿掉一個子條件或一個字，指定的壞樣本要回 4；重疊清單的原文還在（#135 審查①②③）", () => {
   const { canary, check } = repoCopy(), orig = fs.readFileSync(check, "utf8");
-  assert.equal(MUT.length, 384); assert.equal(REDUNDANT.length, 46);
+  assert.equal(MUT.length, 385); assert.equal(REDUNDANT.length, 46);
   for (const [name, from, to, kind] of MUT) {
     assert.equal(orig.split(from).length - 1, 1, name + "：要改的原文在 check-native.js 裡要剛好一處");
     assert.ok(KINDS[kind], name + "：指定的壞樣本 " + kind + " 要存在");
