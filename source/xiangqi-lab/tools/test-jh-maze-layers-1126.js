@@ -50,6 +50,12 @@ function layerProblems(T) {
   const btn = (n) => (h.match(new RegExp(`<button type="button" data-n="${n}"([^>]*)>`)) || [])[1];
   if (btn(1) == null || /disabled/.test(btn(1))) bad.push("選層：第一層要能選");
   if (btn(2) == null || !/disabled/.test(btn(2))) bad.push("選層：沒到過的第二層要鎖住");
+  /* 新地形：自動走不主動踩 avoid 的格子（終點是它可以）；繞得過去就繞 */
+  const A = c.jhMzNew(L2); A.grid = ["#######", "#.....#", "#.###.#", "#.~~~.#", "#######"].map((r) => r.split("")); A.W = 7; A.H = 5; A.lv = Object.assign({}, L2, { avoid: "~" });
+  for (let y = 0; y < 5; y++) for (let x = 0; x < 7; x++) A.seen.add(y * 7 + x); A.player.x = 1; A.player.y = 3;
+  const pa = c.jhMzPath(A, 5, 3), path = pa ? Array.from(pa, (q) => q.join(",")) : [];
+  if (!pa || path.some((q) => ["2,3", "3,3", "4,3"].includes(q))) bad.push("自動走：要繞過水窪，不主動踩（實際 " + path.join(" ") + "）");
+  const pb = c.jhMzPath(A, 2, 3); if (!pb || Array.from(pb, (q) => q.join(",")).join(" ") !== "2,3") bad.push("自動走：點的終點就是水窪可以走");
   return bad;
 }
 
@@ -58,7 +64,9 @@ test("登記多層：jhMzLayer 不動第一層；第二層照第一層的寶箱�
   assert.deepEqual(layerProblems({ c, opt: {} }), []);
   assert.equal(L2.sid, "central"); assert.equal(L2.layer, 2);
   for (const k of ["rew", "back", "hall", "tex", "solid", "opaque", "jump"]) assert.equal(L2[k], B[k], "第二層照第一層：" + k);
-  assert.equal(L2.key, "jhMaze_L2"); assert.equal(L2.xpKey, "maze:central:2"); assert.equal(L2.xp, 45, "修為佔位：第一層 30 的 1.5 倍");
+  assert.equal(L2.key, "jhMaze_L2"); assert.equal(L2.xpKey, "maze:central:2"); assert.equal(L2.xp, 40, "修為：第二層 +40（開發者 11/26 選單）");
+  const L3 = c.jhMzLayer("central", 3, { map: ["###", "#@#", "###"], title: ["三", "3"] }); assert.equal(L3.xp, 60, "第三層 +60"); assert.equal(L3.xpKey, "maze:central:3", "去重鍵一律 maze:<派>:<層>");
+  assert.equal(c.jhMzLayers("central"), 3); assert.equal(B.xp, 30, "第一層照舊 30"); assert.equal(B.xpKey, "maze:1", "中炮門第一層的去重鍵不動（舊存檔）");
   assert.notEqual(L2.map, B.map); assert.notEqual(L2.pool, undefined); assert.equal(L2.lore, undefined, "碑刻不照第一層");
   assert.deepEqual(Array.from(L2.say.done), ["石階還往下延伸，第三層之後再開。", "The steps go on down. Level 3 opens later."], "第二層自己的 done");
   assert.equal(L2.say.spot, B.say.spot, "沒寫的 say 照第一層");
@@ -81,7 +89,7 @@ test("存檔分層：第二層走完存在 jhMaze_L2、不動第一層；第一�
   const S = c.jhMzNew(L2, 0, c.jhMzPtrGet(L2)); assert.equal(S.lv, L2); assert.equal(S.sid, "central"); assert.equal(S.W, L2.map[0].length);
   S.turn = 20; S.bag.gong = 2; let R = c.jhMzSave(S); assert.equal(R.first, true);
   assert.ok("jhMaze_L2" in mem && !("jhMaze" in mem), "存在 jhMaze_L2，第一層 jhMaze 沒動");
-  assert.deepEqual(xp, [[45, "maze:central:2"]]);
+  assert.deepEqual(xp, [[40, "maze:central:2"]]);
   R = c.jhMzSave(S); assert.equal(R.first, false); assert.equal(xp.length, 1, "第二次不再給修為");
   c.jhMzPtrSet(L2, { door: 2, trap: 1 }); assert.ok("jhMaze_L2Ptr" in mem, "題目指標也分層");
   assert.equal(c.jhMzGet(L2).clear, 2); assert.equal(c.jhMzGet("central").clear, 0);
@@ -138,6 +146,13 @@ test("下墜轉場：標題照層數（地底・第二層／Level 2）；從大�
   assert.equal(T.c.jhFallWant({ from: "#/jianghu/hall/central", n: -5 }, "#/jianghu/maze"), false, "這次換頁已經播過");
 });
 
+test("新地形停下（原始碼）：走到 avoid 的格子、或機關回傳 stop，自動走和按住搖桿都停；第二層照第一層的 avoid", () => {
+  const S = rd("07z9m-maze.js"), a = S.indexOf("const act=(dx,dy)=>{"), f = S.slice(a, S.indexOf("if(r.card&&", a));
+  assert.match(f, /if\(r\.stop\|\|\(S\.player\.x!==x0\|\|S\.player\.y!==y0\)&&jhMzAvoid\(S,S\.player\.x,S\.player\.y\)\)\{path=\[\];held=null\}/);
+  const { c } = load(); assert.equal(c.jhMzLvN("central", 2).avoid, LV(c).central.avoid); assert.equal(LV(c).central.avoid, "", "第一層沒有新地形");
+  const A = c.jhMzNew("central"); A.lv = Object.assign({}, A.lv, { avoid: "~" }); A.grid[1][1] = "~"; assert.equal(c.jhMzAvoid(A, 1, 1), true); assert.equal(c.jhMzAvoid(A, 99, 99), false, "地圖外不算");
+});
+
 test("過關畫面（原始碼）：有下一層就記到過下一層、多一顆「往下走・第N層」換到下一層的網址；標題寫第幾層；沒有下一層照舊回門派", () => {
   const S = rd("07z9m-maze.js"), a = S.indexOf("const finish=()=>{"), f = S.slice(a, S.indexOf("o.querySelector('[data-a=\"out\"]')", a));
   assert.ok(a > 0); assert.match(f, /jhMzLayers\(LV\.sid\)>n/); assert.match(f, /jhMzDeepSet\(LV\.sid,n\+1\)/);
@@ -159,7 +174,7 @@ test("第二層示範地圖：走得完、有不被抓的路、先踩踏板再�
   assert.ok(door && door.plate);
 });
 
-test("改壞驗證：第二層蓋掉第一層、最深層不看舊存檔、選層不鎖，規則檢查一定抓得到", () => {
+test("改壞驗證：第二層蓋掉第一層、最深層不看舊存檔、選層不鎖、自動走踩水窪，規則檢查一定抓得到", () => {
   const mk = (patch) => { const T = load({ patch }); return layerProblems({ c: T.c, opt: { patch } }) };
   const P1 = { "07z9m-maze.js": (s) => s.replace("(B.layers||(B.layers={}))[n]=L;", "(B.layers||(B.layers={}))[n]=L;JH_MZ_LV[sid]=L;") };
   assert.ok(mk(P1).some((s) => s.includes("第一層被蓋掉")), "第二層蓋掉第一層要被抓到");
@@ -167,7 +182,9 @@ test("改壞驗證：第二層蓋掉第一層、最深層不看舊存檔、選�
   assert.ok(mk(P2).some((s) => s.includes("舊存檔")), "不看舊存檔要被抓到");
   const P3 = { "07z9m-maze.js": (s) => s.replace("lock=n>D;", "lock=false;") };
   assert.ok(mk(P3).some((s) => s.includes("鎖住")), "選層不鎖要被抓到");
-  for (const P of [P1, P2, P3]) assert.notEqual(P["07z9m-maze.js"](rd("07z9m-maze.js")), rd("07z9m-maze.js"), "改壞的字串要真的找得到");
+  const P4 = { "07z9m-maze.js": (s) => s.replace("if(!end&&jhMzAvoid(S,nx,ny))continue;", "") };
+  assert.ok(mk(P4).some((s) => s.includes("繞過水窪")), "自動走踩水窪要被抓到");
+  for (const P of [P1, P2, P3, P4]) assert.notEqual(P["07z9m-maze.js"](rd("07z9m-maze.js")), rd("07z9m-maze.js"), "改壞的字串要真的找得到");
 });
 
 test("〔原始碼〕LF、沒有控制字元；07z9m-central2.js 全域名稱有 JH_MZ_CENTRAL2 前綴、排在 07z9m-lore.js 後面（碑刻才包得到）、07z9m-fall.js 前面", () => {

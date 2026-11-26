@@ -80,7 +80,7 @@ const JH_MZ_BGM="maze/maze_1.mp3";
 const JH_MZ_LV={},JH_MZ_KIND={},JH_MZ_OBJ={},JH_MZ_TILE={};   /* JH_MZ_TILE[字元]＝(cx,px,py,T,S,x,y)：3D 載不起來時平面版怎麼畫這一格 */
 function jhMzDef(sid,o){return JH_MZ_LV[sid]=jhMzMake(sid,o)}
 /* 建一層的設定（預設值＋o）；第一層 jhMzDef 登記在 JH_MZ_LV[派]，第二層以後 jhMzLayer 登記在 JH_MZ_LV[派].layers[層] */
-function jhMzMake(sid,o){return Object.assign({sid,layer:1,map:[],guards:[],puz:{},pool:{},solid:"#SD",opaque:"#D",jump:"",onStep:null,rew:JH_MZ_REW,xp:JH_MZ_XP,xpKey:"maze:"+sid+":1",key:"jhMaze_"+sid,
+function jhMzMake(sid,o){return Object.assign({sid,layer:1,avoid:"",map:[],guards:[],puz:{},pool:{},solid:"#SD",opaque:"#D",jump:"",onStep:null,rew:JH_MZ_REW,xp:JH_MZ_XP,xpKey:"maze:"+sid+":1",key:"jhMaze_"+sid,
   title:["🕳 地底迷宮","🕳 Underground maze"],lvName:["地底迷宮・第一層","Underground maze · Level 1"],intro:["",""],warn:["",""],hall:null,back:["回門派","Back to the school"]},o)}
 /* 車（rook）：沿著直線來回巡（dx 或 dy 其中一個不是 0），碰到擋路的就掉頭；面向那一邊看得到 range 格（預設 5），擋路的東西擋視線 */
 JH_MZ_KIND.rook={
@@ -124,14 +124,16 @@ jhMzDef("central",{map:JH_MZ_MAP,guards:[Object.assign({kind:"rook",dy:0},JH_MZ_
    存檔鍵 key＝第一層的鍵＋"_L"＋層（中炮門 jhMaze_L2）；修為去重鍵 xpKey＝"maze:派:層"。
    路由：第一層照舊（#/jianghu/maze、#/jianghu/maze/<派>），第二層以後加 ?l=層（jhMzUrl）；網址沒有 ?l 或那一層沒登記＝第一層。
    最深到過第幾層：store「jhMzDeep」＝{派:層}，跟旅程走（05b-save 的 JOURNEY_KEYS 有 m_jhMzDeep）；舊存檔沒有這個鍵，就看各層的通關次數推（第 N 層走完過＝到過第 N+1 層）。
+   新地形（開發者 11/26 選單：點地面自動走保留）：lv.avoid＝自動規劃路線不主動踩的字元（水窪、瓦片、灰燼這類；點的終點就是它可以）；
+   走到 avoid 的格子、或機關 onStep 回傳 stop:true（滑完、被強制位移）時，自動走和按住搖桿都會停下，要玩家再點一次。
    第二層以後要在 07z9m-lore.js 之後登記（各派自己的檔都在它後面），碑刻 L、暗門 H 才會包到。 */
-/* 修為（第一次走完）：第一層的倍數。207 號文案建議 150／250，是以為第一層 100；照同樣比例換到第一層實際的 30＝第二層 45、第三層 75。佔位值，待開發者決定 */
-const JH_MZ_LAYER_XP=[0,1,1.5,2.5];
+/* 修為（第一次走完）：開發者 11/26 選單（Windows Claude 1 轉）第二層 +40、第三層 +60，第一層照舊 JH_MZ_XP（30）；去重鍵一律 maze:<派>:<層>（中炮門也一樣）。沒列的層照第三層 */
+const JH_MZ_LAYER_XP=[0,30,40,60];
 const JH_MZ_CN=["","一","二","三","四","五","六","七","八","九","十"];
 const jhMzCn=n=>JH_MZ_CN[n]||String(n);
 function jhMzLayer(sid,n,o){const B=JH_MZ_LV[sid];n=Math.floor(+n);if(!B||!(n>=2))return null;o=o||{};const N=jhMzCn(n);
-  const L=jhMzMake(sid,Object.assign({rew:B.rew,back:B.back,hall:B.hall,tex:B.tex,solid:B.solid,opaque:B.opaque,jump:B.jump,helper:B.helper,
-    xp:Math.round(B.xp*(JH_MZ_LAYER_XP[n]||n)),key:B.key+"_L"+n,xpKey:"maze:"+sid+":"+n,
+  const L=jhMzMake(sid,Object.assign({rew:B.rew,back:B.back,hall:B.hall,tex:B.tex,avoid:B.avoid,solid:B.solid,opaque:B.opaque,jump:B.jump,helper:B.helper,
+    xp:JH_MZ_LAYER_XP[n]||JH_MZ_LAYER_XP[JH_MZ_LAYER_XP.length-1],key:B.key+"_L"+n,xpKey:"maze:"+sid+":"+n,
     lvName:[String(B.lvName[0]).replace("第一層","第"+N+"層"),String(B.lvName[1]).replace("Level 1","Level "+n)]},o,{layer:n,say:Object.assign({},B.say,o.say)}));
   (B.layers||(B.layers={}))[n]=L;if(typeof jhMzLoreWrap==="function")jhMzLoreWrap(L);return L}
 /* 第 n 層的設定（沒有就是第一層）；這一派一共幾層（從第一層往下連續登記的） */
@@ -390,11 +392,13 @@ function jhMzStep(S,dx,dy){if(S.done)return{ev:"done"};const P=S.player,nx=P.x+d
   if(jhMzCaught(S)){const G=S.caughtBy;if(G&&G.x===P.x&&G.y===P.y)out.ev="trap";else{S.caughtBy=null;out.ev="spot"}}
   return out}
 /* 點地面自動走：只走看過的格子；終點可以是石門（走到門前開殘局） */
+/* 這一格是不是自動走要避開、走到就要停的新地形（lv.avoid） */
+function jhMzAvoid(S,x,y){const a=S.lv&&S.lv.avoid,c=jhMzCell(S,x,y);return!!a&&c!==undefined&&a.includes(c)}
 function jhMzPath(S,tx,ty){const P=S.player,K=(x,y)=>y*S.W+x,isDoor=(x,y)=>jhMzCell(S,x,y)==="D";
   if(jhMzSolid(S,tx,ty)&&!isDoor(tx,ty))return null;const prev=new Map([[K(P.x,P.y),null]]),q=[[P.x,P.y]];
   while(q.length){const[x,y]=q.shift();if(x===tx&&y===ty)break;
     for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+a,ny=y+b,kk=K(nx,ny),end=nx===tx&&ny===ty;if(prev.has(kk))continue;
-      if(jhMzSolid(S,nx,ny)&&!(end&&isDoor(nx,ny)))continue;if(!S.seen.has(kk)&&!end)continue;prev.set(kk,[x,y]);q.push([nx,ny])}}
+      if(jhMzSolid(S,nx,ny)&&!(end&&isDoor(nx,ny)))continue;if(!S.seen.has(kk)&&!end)continue;if(!end&&jhMzAvoid(S,nx,ny))continue;prev.set(kk,[x,y]);q.push([nx,ny])}}
   if(!prev.has(K(tx,ty)))return null;const o=[];let cur=[tx,ty];while(cur&&!(cur[0]===P.x&&cur[1]===P.y)){o.unshift(cur);cur=prev.get(K(cur[0],cur[1]))}return o}
 /* 殘局：走一步。回傳 ok（解開）、bad（不是答案）、back（陷阱錯第 4 次，拖回入口） */
 /* W87：這一題是哪一題——有題庫（pool[id]）就照「第幾次走＋這一層換過幾題」輪著挑（同一層換題不重複，題庫夠大才不重複），沒有就用固定題 puz[id] */
@@ -565,6 +569,7 @@ function JhMaze(v,sid,n){jhCss();jhMzCss();const LV=jhMzLvN(sid,n||jhMzLayerOf(l
   const card=c=>{const o=ov(`<h2>${esc(jhL(c.title[0],c.title[1]))}</h2><div class="jh-mz-lore">${jhL(c.body[0],c.body[1])}</div><div class="jh-mz-row"><button type="button" class="main" data-a="ok">${esc(jhL("收好","Keep it"))}</button></div>`);o.querySelector('[data-a="ok"]').onclick=()=>shut(o)};
   const act=(dx,dy)=>{if(busy||S.done)return false;if(dx||dy)S.player.dir=[dx,dy];const x0=S.player.x,y0=S.player.y,r=jhMzStep(S,dx,dy);
     if(r.msg)say(jhL(r.msg[0],r.msg[1]));
+    if(r.stop||(S.player.x!==x0||S.player.y!==y0)&&jhMzAvoid(S,S.player.x,S.player.y)){path=[];held=null}
     if(r.card&&r.card.title&&r.card.body){path=[];held=null;card(r.card);return false}
     if((dx||dy)&&S.player.x===x0&&S.player.y===y0&&!["wall","door","locked","trap","spot","finish","done"].includes(r.ev)){path=[];held=null;return false}
     if(r.ev==="wall"){say(esc(r.block==="jump"?jhL("炮只能隔一個子跳：這袋糧後面還有東西擋著（另一袋、牆或石門），跳不過去。","A cannon jumps over exactly one piece: something is right behind this sack (another sack, a wall or the stone door), so you can't jump it."):jhL("前面過不去。","Can't go that way.")));return false}
