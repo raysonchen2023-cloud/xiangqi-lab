@@ -54,7 +54,7 @@ test("登記：中炮門第三層；車衛（看 7 格）＋兩個雙炮衛；�
   const c = load(), L = L3(c);
   assert.equal(L.layer, 3); assert.equal(c.jhMzLayers("central"), 3); assert.equal(L.guards.length, 3);
   assert.deepEqual(Array.from(L.guards, (G) => G.kind), ["rook", "twincannon", "twincannon"]); assert.equal(L.guards[0].range, 7); assert.equal(L.guards.filter((G) => G.front).length, 1);
-  assert.ok(L.solid.includes("K") && L.opaque.includes("K") && L.solid.includes("L")); assert.equal(typeof L.onStep, "function");
+  assert.ok(L.solid.includes("K") && L.opaque.includes("K") && L.solid.includes("L")); assert.equal(L.dyn, "K", "糧桶會移動：3D 每一幀照目前格子擺（lv.dyn）"); assert.equal(typeof L.onStep, "function");
   assert.equal(L.lore.length, 1); assert.match(L.lore[0].src, /^遊戲整理，據《明史·河渠志》（清修）/);
   assert.deepEqual(Array.from(L.rew, (r) => r.k), ["gong", "page", "relic"]); assert.match(L.rew[2].zh, /鎮河鐵卷/);
   assert.equal(L.xp, 60); assert.equal(L.xpKey, "maze:central:3"); assert.equal(L.key, "jhMaze_L3");

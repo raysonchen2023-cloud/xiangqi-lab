@@ -60,7 +60,7 @@ trap:[
 {"id":"lk054c7","src":{"book":"爛柯神機","title":"功歸轉軸"},"zh":["被守衛逮住了","守衛把你押在糧桶堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a guard","The guard pins you by the barrels: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"3a1N3/8R/1NC2k3/4p4/9/9/6P2/9/2pp1pp2/r1c1K4","line":["f9h8","f7e7","h8g6","e7d7","b7c9"]},
 {"id":"lk072c7","src":{"book":"爛柯神機","title":"季庭舞俏"},"zh":["被守衛逮住了","守衛把你押在糧桶堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a guard","The guard pins you by the barrels: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"9/2NP5/5k3/3n1C3/2r6/9/9/4p4/3pCp3/4K4","line":["c8d6","f7f8","d8e8","f8f9","d6f7"]}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_CENTRAL3_TRAP== */
-jhMzLayer("central",3,{map:JH_MZ_CENTRAL3_MAP,guards:JH_MZ_CENTRAL3_GUARDS,solid:"#SDKL",opaque:"#DK",onStep:jhMzCentral3Roll,
+jhMzLayer("central",3,{map:JH_MZ_CENTRAL3_MAP,guards:JH_MZ_CENTRAL3_GUARDS,solid:"#SDKL",opaque:"#DK",dyn:"K",onStep:jhMzCentral3Roll,
   pool:{door:JH_MZ_POOL_CENTRAL3.door,trap:JH_MZ_POOL_CENTRAL3_TRAP.trap},puz:{door:JH_MZ_POOL_CENTRAL3.door[0],trap:JH_MZ_POOL_CENTRAL3_TRAP.trap[0]},
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"古譜殘頁",en:"Old manual page"},{k:"relic",zh:"收藏品「鎮河鐵卷」",en:"Keepsake: the river-guard iron scroll"}],
   lore:[{id:"cc5",kind:"stele",title:["清江浦碑","Qingjiangpu stele"],
