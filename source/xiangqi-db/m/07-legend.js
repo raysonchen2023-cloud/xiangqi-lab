@@ -276,11 +276,12 @@ const XP_TITLES=["棋童","棋徒","棋友","棋客","棋士","棋師","棋豪",
 function xpInfo(x){x=x==null?store.get("xp",0):x;let L=1,rest=x;while(L<100&&rest>=xpNeed(L)){rest-=xpNeed(L);L++}return{L,rest,need:L<100?xpNeed(L):0,title:XP_TITLES[Math.min(9,Math.floor((L-1)/10))],total:x}}
 function xpChip(t,big){let c=document.getElementById("xpchip");if(!c){c=document.createElement("div");c.id="xpchip";document.body.append(c)}
   c.textContent=t;c.className=big?"big":"";c.style.opacity="1";clearTimeout(xpChip.t);xpChip.t=setTimeout(()=>{c.style.opacity="0"},big?3200:1400)}
-function addXP(n,why,key){if(!n)return;
+function addXP(n,why,key,opt){if(!n)return;   /* 11/25 W119：opt.chipDelay＝修為當下就寫進存檔，只把震動和小標籤延後。原本呼叫端用 setTimeout 延後整個 addXP，延遲期間 App 被關掉，「已領」記號已寫、修為卻永遠補不回來 */
   if(key){const K=store.get("xpKeys",{});if(K[key])return;K[key]=1;const ks=Object.keys(K);if(ks.length>4000)for(const k of ks.slice(0,1000))delete K[k];store.set("xpKeys",K)}
   const today=localDay();let bonus=0;if(store.get("xpDay","")!==today){store.set("xpDay",today);bonus=20}
   const b=xpInfo(),x=b.total+n+bonus;store.set("xp",x);const a=xpInfo(x);try{if(typeof ptyOnXp==="function")ptyOnXp(n+bonus)}catch(e){}   /* 11/15 七星改版：修為加多少，全隊自動拿一半、另一半進星輝（07pty-party.js） */
-  if(a.L>b.L){vibrate([20,40,20,40,60]);xpChip(`🎉 修行升級！Lv ${a.L}・${a.title}${a.title!==b.title?"（新稱號）":""}`,true)}else xpChip(`+${n+bonus} 修為${bonus?"（今日第一次練習 +20）":""}`)}
+  const show=()=>{if(a.L>b.L){vibrate([20,40,20,40,60]);xpChip(`🎉 修行升級！Lv ${a.L}・${a.title}${a.title!==b.title?"（新稱號）":""}`,true)}else xpChip(`+${n+bonus} 修為${bonus?"（今日第一次練習 +20）":""}`)};
+  if(opt&&opt.chipDelay>0)setTimeout(show,opt.chipDelay);else show()}
 function xpSheet(){const I=xpInfo();sheet("🀄 棋道修行",b=>{b.innerHTML=`<div style="text-align:center"><div style="font-size:40px;font-weight:900;font-family:var(--serif)">Lv ${I.L}</div><div style="font-size:18px"><b>${I.title}</b></div>
     ${I.need?`<div class="st-bar" style="margin:8px 0 2px"><i style="width:${Math.round(I.rest*100/I.need)}%"></i></div><div class="muted">${I.rest} / ${I.need} 修為（累積 ${I.total}）</div>`:'<div class="muted">已到最高等級</div>'}</div>
     <div style="text-align:left;font-size:14px;line-height:1.75;margin-top:14px">
@@ -588,9 +589,9 @@ function ParkGate(v){setTop("🪨 千秋石枰","#/adventure");setTabs(false);v.
      園子換掉千秋石枰這一頁（replace），園子的「‹」回渡口 */
   v.querySelectorAll("[data-e]").forEach(b=>b.onclick=()=>{if(b.disabled)return;const k=b.dataset.e;if(eraLocked(k)){vibrate(8);toast(eraLockMsg(k));return}b.disabled=true;vibrate(5);setTimeout(()=>{b.disabled=false},2500);   /* 意見回饋 673：星槎還沒停靠的朝代進不去 */
     const from=typeof shipAt==="function"?shipAt():cur,im=b.querySelector("img");if(im&&k!==from)im.classList.add("sflip");
-    setTimeout(()=>qianqiu(from,k,()=>{if(typeof shipEra==="function")shipEra(k);else{store.set("era",k);try{applyEra()}catch(e){}}store.set("park3d",true);try{saveNow(true)}catch(e){}
+    stillHere(k===from?0:800,()=>qianqiu(from,k,()=>{if(typeof shipEra==="function")shipEra(k);else{store.set("era",k);try{applyEra()}catch(e){}}store.set("park3d",true);try{saveNow(true)}catch(e){}
     jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},()=>{navReplace("#/journey/play");
-      setTimeout(()=>{const r=store.get("parkNpc",null),n=r&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`);if(k==="classic"&&typeof tellerTalk==="function")setTimeout(()=>tellerTalk(),900)},600)})},"park"),k===from?0:800)})}   /* 意見回饋 674：青石園有說書人 */
+      setTimeout(()=>{const r=store.get("parkNpc",null),n=r&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`);if(k==="classic"&&typeof tellerTalk==="function")setTimeout(()=>tellerTalk(),900)},600)})},"park"))})}   /* 意見回饋 674：青石園有說書人。W120：石頭翻轉的 0.8 秒等待改 stillHere——排程當下就記住網址和換頁計數，這段時間換了頁就不叫 qianqiu（原本 qianqiu 的 h0 是 0.8 秒後才取，換頁了照跑、還會開園子那一盤） */
 /* 意見回饋 389：點朝代石頭——石頭先慢慢翻轉，再出現那個朝代的封面（驛站場景圖＋朝代名＋印），然後才進公園下棋；點封面可以跳過 */
 function stoneCover(b,k){return new Promise(res=>{const im=b.querySelector("img")||b;im.classList.add("sflip");vibrate(8);
   const info=(PARK_INFO[k]||PARK_INFO.classic)._||[eraLabel(k),""],seal=(ARENA[k]&&ARENA[k].seal)||"";let done=false;
@@ -660,6 +661,7 @@ function lvRuleMiss(st,rule,me){const C=window.XQCore;let b,miss=0,n=0,crossed=f
 function journeyGameEnd(st){if(!st||!st.result)return;try{if(typeof qqParkEnd==="function")qqParkEnd(st)}catch(e){}   /* 千秋穿梭突發事件：在園子贏了攔路棋客＝贖回押著的東西 */
   if(!st.practice&&(st.moves||[]).length>=10&&!(typeof bhtdNoXp==="function"&&bhtdNoXp(st)))addXP(st.result.w===st.human?40:15,"對局","g:"+st.id);   /* 11/14：星淵急襲只給星塵、不給修為（07bht bhtdNoXp） */   /* QA P1-3：雙方各走不到 5 步就結束（走一步就認輸）不給修為，免得刷經驗 */
   const P=store.get("jPending",null);if(!P||P.game!==st.id)return;store.set("jPending",null);
+  const jEndOk=()=>{const q=store.get("jPending",null);return!q||q.game===st.id};   /* W120：賽後延遲吐司（1.5／4 秒）用 stillHere 擋換頁；這段時間又開了新的一盤（jAgain／jStart 會記新的 jPending）也不出 */
   if(String(P.id).startsWith("bh:")){if(typeof bhGameEnd==="function")bhGameEnd(st,P);return}
   if(String(P.id).startsWith("gx:")){if(typeof gxGameEnd==="function")gxGameEnd(st,P);return}   /* 幻譜星門・十三星系（07gx-galaxy.js）：記星印、推進玉宿／北辰的進度 */   /* hspx（開發者 11/12）：黑洞星樞棋局（07bh-blackhole.js）：記輸贏、調下次難度 */
   if(String(P.id).startsWith("bt:")){if(typeof battleOddsEnd==="function")battleOddsEnd(st,P);return}   /* 古戰場的讓子對弈（07g-battle.js）：贏了蓋戰役印 */
@@ -667,19 +669,19 @@ function journeyGameEnd(st){if(!st||!st.result)return;try{if(typeof qqParkEnd===
     let rl=null;if(!x.who){const C=store.get("innCur",null);rl=C&&C.id===x.id&&Number.isInteger(C.rl)?C.rl:innRlv(x);const i=INN.indexOf(x),B=INN_BAND[i]||INN_BAND[0],A=store.get("innAdj",{});
       if(st.result.w===st.human)A[x.id]=Math.min(B[1],rl+1);else if(st.result.w)A[x.id]=Math.max(B[0],rl-1);store.set("innAdj",A)}
     const TK=typeof innTalk==="function"?innTalk(x):{win:"承讓了，下次再來！",lose:"好棋！佩服。",draw:"承讓了，下次再來！"};   /* 意見回饋 826 追加：旅人、秘境棋友各說自己的話（07m3-opptalk.js） */
-    if(st.result.w===st.human){const xp=x.who?secretXP(x):innXP(rl);addXP(xp,"驛站","inn:"+st.id);setTimeout(()=>toast(`${x.ic} ${x.name}：「${TK.lose}」`),1500);
-      if(x.who){const W=store.get("secretWins",{});W[x.id]=(W[x.id]||0)+1;store.set("secretWins",W);if(x.id==="shinaian"&&!SECRETS.every(z=>jSecrets()[z.id])){const m=secMsN()+1;store.set("secMs",m);setTimeout(()=>toast(`📝 施耐庵塞給你一張手稿：「這一回寫的是別人藏身的地方，你拿去吧。」（散佚手稿 ${m} 張）`),4000)}   /* W96：贏施耐庵必掉一張手稿 */
+    if(st.result.w===st.human){const xp=x.who?secretXP(x):innXP(rl);addXP(xp,"驛站","inn:"+st.id);stillHere(1500,()=>toast(`${x.ic} ${x.name}：「${TK.lose}」`),jEndOk);
+      if(x.who){const W=store.get("secretWins",{});W[x.id]=(W[x.id]||0)+1;store.set("secretWins",W);if(x.id==="shinaian"&&!SECRETS.every(z=>jSecrets()[z.id])){const m=secMsN()+1;store.set("secMs",m);stillHere(4000,()=>toast(`📝 施耐庵塞給你一張手稿：「這一回寫的是別人藏身的地方，你拿去吧。」（散佚手稿 ${m} 張）`),jEndOk)}   /* W96：贏施耐庵必掉一張手稿 */
       setTimeout(()=>secretGift(x,st.id),7000)}}
-    else setTimeout(()=>toast(`${x.ic} ${x.name}：「${st.result.w?TK.win:TK.draw}」`),1500);return}
+    else stillHere(1500,()=>toast(`${x.ic} ${x.name}：「${st.result.w?TK.win:TK.draw}」`),jEndOk);return}
   if(P.lvp){const R=jRunGet(P.id),L=P.lvp,me=st.human,won=st.result.w===me,lost=!!st.result.w&&st.result.w!==me,n=st.moves.filter(m=>m.by===me).length;
     const ok=L.goal==="survive"||L.goal==="draw"?!lost:won,over=ok&&L.limit&&L.goal!=="survive"&&n>L.limit;
     if(R){if(P.hint)R.hint=true;if(over)R.miss++;R.f={...(R.f||{}),win:won,draw:!st.result.w,plies:st.moves.length};{const k0=L.step!=null?L.step:R.k;R.fs=R.fs||{};const o=R.fs[k0]||{};R.fs[k0]={...o,win:won,draw:!st.result.w,survived:ok&&!won&&!st.result.w,mine:n,lastPiece:won?lvLastPiece(st):null,retried:o.retried||!ok}}if(L.rule)R.miss+=lvRuleMiss(st,L.rule,me);if(ok)R.k++;else R.lose=(R.lose||0)+1;R.ret=true;jRunSet(R)}
-    setTimeout(()=>toast(ok?`🎴 這一步過了${over?`（超過 ${L.limit} 步，算一次失誤）`:""}，回到關卡繼續`:"🎴 這一步沒過，回到關卡再試一次"),1500);
+    stillHere(1500,()=>toast(ok?`🎴 這一步過了${over?`（超過 ${L.limit} 步，算一次失誤）`:""}，回到關卡繼續`:"🎴 這一步沒過，回到關卡再試一次"),jEndOk);
     return}
   if(P.id==="park"&&st.result.w){const a=store.get("parkAdj",0)||0;store.set("parkAdj",st.result.w===st.human?Math.min(2,a+1):Math.max(-2,a-1))}   /* 588：園子路人照輸贏微調難度 */
   const s=jStages().find(x=>x.id===P.id);if(!s)return;
-  if(st.result.w===st.human){const n=st.moves.length,stars=Math.min(P.hint?2:3,n<=60?3:n<=100?2:1);jSet(s.id,stars,"闖關");setTimeout(()=>toast(`🗺 ${ROAD_NAME}「${roadSeg(s.r)}・${s.name}」過關！收到${ZI.slice(0,stars).join("、")}（${Math.ceil(n/2)} 回合內贏）`),1500)}
-  else setTimeout(()=>toast(`🗺 「${s.name}」還沒過關，回${ROAD_NAME}再挑戰一次`),1500)}
+  if(st.result.w===st.human){const n=st.moves.length,stars=Math.min(P.hint?2:3,n<=60?3:n<=100?2:1);jSet(s.id,stars,"闖關");stillHere(1500,()=>toast(`🗺 ${ROAD_NAME}「${roadSeg(s.r)}・${s.name}」過關！收到${ZI.slice(0,stars).join("、")}（${Math.ceil(n/2)} 回合內贏）`),jEndOk)}
+  else stillHere(1500,()=>toast(`🗺 「${s.name}」還沒過關，回${ROAD_NAME}再挑戰一次`),jEndOk)}
 function Journey(v,sid){
   setTop(ROAD_NAME,"#/shelf/1");setTimeout(()=>{if(location.hash==="#/journey")jarCheck()},900);   /* 老玩家原本的進度：打開雲河棋路就補發已經達到的棋罐獎勵 */setTabs(!sid,"#/");const L=jStages(),S=jStars();
   if(sid==="inn")return innSheet(v);
@@ -944,7 +946,7 @@ function jStepsB2(X){const C=window.XQCore,{v,bd}=X,$=q=>v.querySelector(q);
         if(RS&&RS.si===si&&RS.fr){const F=RS.fr;try{n=F.n|0;save0={b:C.parseFen(F.f0),turn:F.t0==="b"?"b":"r"};last0=F.l0||null;if(Array.isArray(F.k0))kept0=F.k0}catch(e){}}RS=null;   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：自由段走到一半：步數、這段開頭的局面照舊（被將死要重來時退回那裡） */
         const frv=()=>rsv({fr:{n,f0:FN(save0.b),t0:save0.turn,l0:last0,k0:kept0}});note(g.hint||(g.goal==="mate"?`${n0} 步內將死對方`:`走滿 ${n0} 步，${keep.map(p=>B2_CN[p]).join("、")}不能丟`));
         const fail=msg=>{X.setTap(null);X.miss();pos=save0;lastMv=last0;draw();X.failCard(msg)};
-        const after=async()=>{if(over()){X.setTap(null);stat(C.inCheck(pos.b,pos.turn)?"✔ 將死了！":"✔ 困斃！對方一步都動不了");if(g.goal==="keep")si=st.segs.length-1;return acts([["next","›","繼續",()=>{si++;seg()},true]])}
+        const after=async()=>{if(over()){if(g.goal!=="mate"&&keep.some((p,i)=>cnt(p)<kept0[i]))return fail(`${keep.map(p=>B2_CN[p]).join("、")}不能丟，這一段重來。`+(g.fail?" "+g.fail:""));   /* W157（11/26 外部複審）：函谷關可以丟一仕一相、靠黑方困斃提早過關；對局提早結束時也要檢查保護的子 */X.setTap(null);stat(C.inCheck(pos.b,pos.turn)?"✔ 將死了！":"✔ 困斃！對方一步都動不了");if(g.goal==="keep")si=st.segs.length-1;return acts([["next","›","繼續",()=>{si++;seg()},true]])}
           if(n>=n0){if(g.goal!=="mate"&&!keep.some((p,i)=>cnt(p)<kept0[i])){si++;rsv();si--}   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：這段撐過了，記成下一段 */if(g.goal==="mate")return fail(`${n0} 步內沒有贏下來，這一段重來。`+(g.fail?" "+g.fail:""));if(keep.some((p,i)=>cnt(p)<kept0[i]))return fail("有子被吃掉了，這一段重來。"+(g.fail?" "+g.fail:""));X.setTap(null);stat("✔ 這一段撐過了");return acts([["next","›","繼續",()=>{si++;seg()},true]])}
           if(pos.turn!==me){X.setTap(null);const m=await b2Eng(pos.b,pos.turn,(g.opp&&g.opp.ai)||3);if(!alive())return;if(m)mv(m.f,m.t);if(over())return fail("被將死了，這一段重來。"+(g.fail?" "+g.fail:""));X.setTap(tap)}
           frv();stat(`第 ${si+1} 段・你走（${n}／${n0} 步）`)};   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：輪到你走時記下盤面 */

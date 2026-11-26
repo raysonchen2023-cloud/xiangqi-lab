@@ -21,10 +21,25 @@ const LB_BOX=[[69.5,30],[81.8,30.5],[94.1,31]];   /* 11/12 第 11 輪觸控測�
 /* 11/10 經典世界（lib_classic，藏譜石窟最深處）：沒有書櫥和樟木箱。左上一排 9 片白玉冊：左邊 3 片＝特級大師、右邊 6 片各是一本古譜（字直排）；
    3 箱比賽對局改落在右上那捆竹簡上；木案上的最近對局小棋盤不放 */
 const LB_CL={cells:[[18.9,25],[23.2,25],[26.8,25],[30.6,25],[34.1,25],[37.2,25]],box:[[82,30.5],[87,31.5],[92,32.5]],one:[86.5,31.5],spots:{lbBio:[10,17]}};   /* 11/12 第 11 輪觸控測試：三冊擠在同一捆竹簡上（每冊只有 19px 間隔、互相重疊），經典世界改成整捆一顆（one），點了開三冊選單 */
+/* 現在用的那張圖的座標組：橫式圖照條目 fx；原圖照原本的常數（石窟 LB_CL、書閣 LB_CELLS／LB_BOX，古譜點選區照原本的位置、小棋盤和厚度交回 CSS） */
+const lbGeo=(P,CLB)=>{const e=typeof scwCur==="function"?scwCur(P):null;if(e&&e.fx&&e.fx.cells)return e.fx;return CLB?{cells:LB_CL.cells,one:LB_CL.one,shelf:null}:{cells:LB_CELLS,box:LB_BOX,shelf:[4.2,50.8,22.6,16.2]}};
 const lbCl=()=>typeof hbIsCl==="function"&&hbIsCl();   /* 3 口樟木箱（封條中心） */
 /* 11/12 ChatGPT UI 冗餘盤查（story/104 號）第 6 項：三個入口改寫成「第一步要做什麼」——瀏覽大師棋譜／按棋手找譜／按賽事找譜；進去以後的面板、清單照舊用正式書名
    （大師對局、特級大師、比賽對局）。看完一局按返回，回到同一部書時面板照原樣打開（LB_PN），再點「按棋手找譜」「按賽事找譜」會標出上次選的那位、那一冊（LB_LAST） */
 const LB_SPOTS=[["lbGm",84,51.5,"🏆 瀏覽大師棋譜"],["lbBio",33,12,"🖼 按棋手找譜"],["lbTour",84,24.5,"📦 按賽事找譜"],["lbRead",51,77.5,"📖 繼續研究"],["lbMine",80,75.5,"📒 我的對局"]];   /* 回饋 846（開發者 11/9「搜尋的功能好像冗餘了，拿掉吧」）：燈檠上的「🔍 搜尋」拿掉；每部書的清單裡本來就有搜尋框 */
+/* W107-L 第 3 批：iPad 橫向專用橫式圖（07sw SCW）。output/w107-ipad/l1610/libmap/lib_l1610.json（Windows Claude 1 量）分兩套：
+   書閣 lib（原圖）＋11 朝 lib_<朝>：都對齊到書閣（位移最多 1.8%），座標共用；石窟 lib_classic 構圖不同，另一套。
+   fx：cells 六部古譜（順序照 LB_CELLS）、box 三口樟木箱封條（書閣）／one 整捆竹簡（石窟）、shelf 古譜點選區（%，左上寬高）、mini 繼續研究的小棋盤（左上、寬，%）、thick 手抄冊厚度（左、寬、最上一層的 top，%）。
+   石窟新圖玉冊是 10 片（原本 9 片）：照 json 建議，左 4 片＝特級大師（lbBio），右 6 片＝六部古譜，點選區只蓋右 6 片；石窟照舊不放小棋盤、不畫厚度。左邊新多的石龕先不當入口。
+   shelf、mini、thick 不在 json 裡，是 iMac 照標註圖量的（書櫥、大案攤開那本的右頁、右邊那疊手抄冊）。出口：書閣往右、石窟往左，記憶名各換一個（libL、libCL） */
+const LB_L1610={ready:true,f:"libmap/lib_l1610",w:2560,h:1600,S:{"lbGm":[80.6,59],"lbBio":[24,17],"lbTour":[76,24],"lbRead":[50,79.5],"lbMine":[66,78]},exit:[86,92],safe:{"l":0.12,"r":0.12,"t":0.05,"b":0.1},
+  walk:{W:2560,H:1600,el:40,h:[.13,70,.00118],look0:[50,55],N:{"home":[45,70],"lamp":[33,71],"book":[50,71],"stack":[70,71],"shelf":[20,86],"cab":[80,77],"sf":[50,69],"t1":[52,61],"t2":[54.3,54.5],"t3":[56.5,48],"t4":[58.8,41.5],"t5":[60.5,37],"top":[61.5,34],"g0":[58,32],"g1":[45,31.5],"g2":[33,31.5],"por":[24,31.5],"r1":[70,32],"box":[77,31.5]},E:"home-lamp home-book home-stack lamp-shelf home-sf sf-shelf stack-cab sf-t1 t1-t2 t2-t3 t3-t4 t4-t5 t5-top top-g0 g0-g1 g1-g2 g2-por top-r1 r1-box",HS:{"lbGm":["cab",80.6,59,"bow"],"lbBio":["por",24,17,"bow"],"lbTour":["box",76,24,"cheer"],"lbRead":["book",50,79.5,"bow"],"lbMine":["stack",66,78,"bow"],"lbFind":["lamp",35,63,"wave"],"lbC0":["shelf",16.4,52.5,"bow"],"lbC1":["shelf",25,52.5,"bow"],"lbC2":["shelf",16.4,61.5,"bow"],"lbC3":["shelf",25,61.5,"bow"],"lbC4":["shelf",16.4,69.5,"bow"],"lbC5":["shelf",25,69.5,"bow"]}},
+  fx:{cells:[[16.4,52.5],[25,52.5],[16.4,61.5],[25,61.5],[16.4,69.5],[25,69.5]],box:[[64.4,28.5],[76.1,29],[88.6,29.5]],shelf:[9,48,20,27],mini:[50.5,76.5,5],thick:[62.5,7,73.5]}};
+const LB_L1610_CL={ready:true,f:"libmap/lib_classic_l1610",w:2560,h:1600,S:{"lbBio":[15.3,17.5],"lbGm":[79.7,52.5],"lbTour":[76,23],"lbRead":[40.6,76.5],"lbMine":[78,74]},exit:[14,92],safe:{"l":0.12,"r":0.12,"t":0.05,"b":0.1},
+  walk:{W:2560,H:1600,el:40,h:[.13,70,.00118],look0:[50,50],N:{"home":[50,70],"book":[42,71],"stack":[68,82],"shelf":[20,72],"cab":[76,66],"sf":[49,66],"t1":[51,60],"t2":[53,53],"t3":[55,46],"t4":[57,40],"t5":[58.5,35],"top":[60,31],"g0":[55,31],"g1":[45,31],"g2":[35,31.5],"por":[24,31],"r1":[65,31],"box":[72,30]},E:"home-book home-stack home-sf sf-shelf home-cab sf-t1 t1-t2 t2-t3 t3-t4 t4-t5 t5-top top-g0 g0-g1 g1-g2 g2-por top-r1 r1-box",HS:{"lbGm":["cab",79.7,52.5,"bow"],"lbBio":["por",15.3,17.5,"bow"],"lbTour":["box",76,23,"cheer"],"lbRead":["book",40.6,76.5,"bow"],"lbMine":["stack",78,74,"bow"],"lbFind":["book",40.6,76.5,"wave"],"lbC0":["por",22.7,17.5,"bow"],"lbC1":["por",25.2,17.5,"bow"],"lbC2":["por",28.1,17.5,"bow"],"lbC3":["por",30.7,17.5,"bow"],"lbC4":["por",33.2,17.5,"bow"],"lbC5":["por",35.5,17.5,"bow"]}},
+  fx:{cells:[[22.7,17.5],[25.2,17.5],[28.1,17.5],[30.7,17.5],[33.2,17.5],[35.5,17.5]],one:[76,26.5],slips:[[11.0,17.5],[13.8,17.5],[16.7,17.5],[19.7,17.5],[22.7,17.5],[25.2,17.5],[28.1,17.5],[30.7,17.5],[33.2,17.5],[35.5,17.5]],shelf:[21,11,16.5,16]}};
+if(typeof SCW!=="undefined"){SCW["libmap/lib"]=LB_L1610;for(const e of LB_ERAS)SCW["libmap/lib_"+e]=Object.assign({},LB_L1610,{f:"libmap/lib_"+e+"_l1610",base:"libmap/lib"});SCW["libmap/lib_classic"]=LB_L1610_CL}
+if(typeof SHW_EXITS!=="undefined"&&SHW_EXITS){if(!("libL" in SHW_EXITS))SHW_EXITS.libL={at:[90,84],ln:"cab",out:[106,86],r:[86,76,100,94]};if(!("libCL" in SHW_EXITS))SHW_EXITS.libCL={at:[10,80],ln:"shelf",out:[-8,82],r:[0,72,14,90]}}
 let LB_OPEN=null;   /* 換頁到 #/db/<書> 之後要不要直接打開面板（"list"／"q"） */
 let LB_PN=null;   /* 面板開著的那部書 {c,t,q,m,at}：看完一局回來重新打開；按 ✕／點外面／返回收起就清掉；離開棋譜庫也清掉 */
 const LB_LAST={bio:"",tour:""};   /* 上次選的棋手（gmbios 的鍵）、比賽冊（書的 key） */
@@ -74,7 +89,8 @@ function lbMini(fen){let b=null;try{b=parseFen(fen||START)}catch(e){}const G=[];
   return`<svg class="lb-mini" viewBox="-.6 -.6 9.2 10.2" aria-hidden="true"><g stroke="#7a5a3a" stroke-width=".07" fill="none">${G.join("")}</g>${P}</svg>`}
 function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelector(".lib-page"))return;lbCss();
   const d=document.createElement("div");
-  const CLB=lbCl();d.innerHTML=`<div class="shp-page cq lib-page${CLB?" cl":""}"><img src="data/libmap/${lbImg()}.webp?v=${LB_IMGV}" alt="崇文書閣"><div class="lb-fx"></div>
+  /* W107-L：iPad 橫向有專用橫式圖（07sw）就一開始載那張；古譜、木箱、點選區、小棋盤、厚度交給 place（照當下的圖），入口、出口、走路照條目 */
+  const CLB=lbCl(),src=`data/libmap/${lbImg()}.webp?v=${LB_IMGV}`,pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};d.innerHTML=`<div class="shp-page cq lib-page${CLB?" cl":""}${pre.k?" scw-l":""}"${pre.k?` data-scw="${pre.k}"`:""}><img src="${pre.src}" alt="崇文書閣"><div class="lb-fx"></div>
     ${LB_OLD.map(([k,n,f],i)=>`<span class="lb-cell" id="lbC${i}" data-c="${k}" style="left:${(CLB?LB_CL.cells:LB_CELLS)[i][0]}%;top:${(CLB?LB_CL.cells:LB_CELLS)[i][1]}%" aria-hidden="true"><span>${esc(n)}</span></span>`).join("")}
     ${CLB?`<button class="lb-box lb-one" style="left:${LB_CL.one[0]}%;top:${LB_CL.one[1]}%" aria-label="比賽對局（三冊）"><i></i></button>`:LB_BOX.map(([x,y],i)=>`<button class="lb-box" data-i="${i}" style="left:${x}%;top:${y}%" aria-label="比賽對局第 ${i+1} 箱"><i></i></button>`).join("")}
     ${LB_SPOTS.map(([id,x,y,t])=>{if(CLB&&LB_CL.spots[id])[x,y]=LB_CL.spots[id];return`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%"><b>${esc(t)}</b></button>`}).join("")}</div>`;
@@ -97,7 +113,7 @@ function libMap(v,c0){const root=v.querySelector(".lib");if(!root||v.querySelect
      改成兩個世界都蓋透明點選區、點了跳同一張「選一本棋譜」大按鈕清單（每本一顆，至少 52px 高）。書閣的點選區蓋住 6 格書櫥和格子名（左 4.2%～26.8%、上 50.8%～67%，圖上這一塊沒有別的入口）。
      點選區標 data-r07m：橫放矮螢幕的側欄入口選單（07t3 r07Menu）也會列出「📚 古譜」這一項 */
   {const sh=document.createElement("button");sh.type="button";sh.className="lb-shelf";sh.setAttribute("aria-label","古譜六部："+LB_OLD.map(x=>x[2]).join("、"));sh.dataset.r07m="📚 古譜";   /* 第 16 輪：書名籤改成裝飾，這塊點選區就是古譜的入口（讀螢幕、鍵盤也走這裡） */
-if(!CLB)Object.assign(sh.style,{left:"4.2%",top:"50.8%",width:"22.6%",height:"16.2%"});P.append(sh);
+P.append(sh);   /* 位置交給 place */
     sh.onclick=()=>{vibrate(5);sheet("📚 選一本棋譜",b=>{b.innerHTML=`<div class="lb-pick">${LB_OLD.map(([k,n,f])=>`<button type="button" data-c="${esc(k)}" data-f="${esc(f)}">${esc(n)}${f&&f!==n?`<small>${esc(f)}</small>`:""}</button>`).join("")}</div>`;
       b.querySelectorAll("[data-c]").forEach(x=>x.onclick=()=>{vibrate(5);closeSheet();book(x.dataset.c,x.dataset.f)})})}}
   const GO={lbGm:()=>book("gmgames","大師對局"),lbMine:()=>book("play","我的對局",false,"mine"),lbFind:()=>open("搜尋",true),
@@ -108,10 +124,22 @@ if(!CLB)Object.assign(sh.style,{left:"4.2%",top:"50.8%",width:"22.6%",height:"16
   /* 場景狀態：繼續研究的迷你棋盤、手抄冊的厚度、樟木箱的封條 */
   const fx=P.querySelector(".lb-fx"),r=store.get("recent",[])[0];fx.innerHTML=lbMini(r&&r.fen);
   api("/db/books").then(bs=>{if(!P.isConnected)return;const n=bs.filter(x=>["play","pvp","study"].includes(x.key)).reduce((a,x)=>a+(x.count||0),0),lv=n>=200?3:n>=50?2:n>0?1:0;
-    fx.insertAdjacentHTML("beforeend",Array.from({length:lv},(_,i)=>`<i class="lb-thick" style="top:${(77.6-i*1.1).toFixed(1)}%"></i>`).join(""));lbSeal(P,bs)}).catch(()=>{});
+    fx.insertAdjacentHTML("beforeend",Array.from({length:lv},(_,i)=>`<i class="lb-thick" style="top:${(77.6-i*1.1).toFixed(1)}%"></i>`).join(""));if(P._lbPlace)P._lbPlace();lbSeal(P,bs)}).catch(()=>{});
   if(LB_OPEN){const o=LB_OPEN;LB_OPEN=null;setTimeout(()=>open(o.t,o.q,o.m),30)}else{const o=lbPnBack(cK);if(o)setTimeout(()=>open(o.t,o.q,o.m),30)}
+  /* 照當下的圖重放：古譜格、木箱（或整捆竹簡）、古譜點選區、小棋盤、厚度；橫式圖的值寫在 style，換回原圖就清掉交回 CSS */
+  const place=()=>{const G=lbGeo(P,CLB),wide=!!(typeof scwCur==="function"&&scwCur(P)),xy=(e,p)=>{e.style.left=p[0]+"%";e.style.top=p[1]+"%"};
+    P.querySelectorAll(".lb-cell").forEach((e,i)=>{if(G.cells[i])xy(e,G.cells[i])});
+    P.querySelectorAll(".lb-box").forEach(b=>{if(b.dataset.i==null){if(G.one)xy(b,G.one)}else if(G.box&&G.box[+b.dataset.i])xy(b,G.box[+b.dataset.i])});
+    const sh=P.querySelector(".lb-shelf");if(sh){const a=G.shelf;if(a)Object.assign(sh.style,{left:a[0]+"%",top:a[1]+"%",width:a[2]+"%",height:a[3]+"%"});else sh.style.left=sh.style.top=sh.style.width=sh.style.height=""}
+    const mi=P.querySelector(".lb-mini");if(mi){if(wide&&G.mini)Object.assign(mi.style,{left:G.mini[0]+"%",top:G.mini[1]+"%",width:G.mini[2]+"%",display:""});else mi.style.left=mi.style.top=mi.style.width=mi.style.display=""}
+    P.querySelectorAll(".lb-thick").forEach((t,i)=>{const T=wide?G.thick:null;if(T)Object.assign(t.style,{left:T[0]+"%",width:T[1]+"%",top:(T[2]-i*1.1).toFixed(1)+"%",display:""});else if(wide)t.style.display="none";else{t.style.left=t.style.width=t.style.display="";t.style.top=(77.6-i*1.1).toFixed(1)+"%"}})};
+  P._lbPlace=place;place();
   if(typeof shpFit==="function")shpFit(v);
-  try{if(typeof shwPage==="function"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_LIBMAP,{HS:Object.fromEntries(Object.entries(SHW_LIBMAP.HS))}),"lib",null)}catch(e){}
+  const cfg=Object.assign({},SHW_PG0,SHW_LIBMAP,{HS:Object.fromEntries(Object.entries(SHW_LIBMAP.HS))});let cfgNow=cfg,mem="lib";
+  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:LB_SPOTS.map(z=>z[0]),pfx:"lib",cfg0:cfg,apply:place,onCfg:x=>{o.pfx=x.W===2560?(CLB?"libCL":"libL"):"lib"}};   /* 換圖重掛走路：橫式圖的出口記憶名換成 libL／libCL */
+    scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));mem=o.pfx=CLB?"libCL":"libL";P._scwW="l"}}
+  place();
+  try{if(typeof shwPage==="function"&&SHIP_WALK_ON)shwPage(v,cfgNow,mem,null)}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 /* 樟木箱封條：下載好的變金色（可以打開），下載中發金光 */
 let LB_DL={};
@@ -122,7 +150,7 @@ function lbTours(P,book,i){const big=P._big||[];const one=g=>{LB_LAST.tour=g.key
     sheet("下載"+g.name,b=>{b.innerHTML=`<p>${esc(g.name)}${g.count?`：${g.count.toLocaleString()} 局`:""}，約 ${Math.round(g.size/1048576)} MB。下載一次存在手機裡，之後沒網路也能看。建議用 Wi-Fi 下載。</p><p class="muted" id="bp"></p><button class="btn" id="bg">開始下載</button>`;
       const bt=b.querySelector("#bg"),bp=b.querySelector("#bp");bt.onclick=async()=>{bt.disabled=true;bt.textContent="下載中…";LB_DL[g.key]=1;lbSeal(P,bs);
         try{const n=await XQ.syncSite(g.key,g.name,(got,total)=>{bp.textContent=`已下載 ${(got/1048576).toFixed(1)}${total?" / "+(total/1048576).toFixed(1):""} MB`},g.h);
-          delete LB_DL[g.key];bp.textContent=`✅ 完成，共 ${n} 局`;toast("下載完成，箱子打開了");api("/db/books").then(x=>lbSeal(P,x)).catch(()=>{});setTimeout(()=>{closeSheet();book(g.key,g.name)},700)}
+          delete LB_DL[g.key];bp.textContent=`✅ 完成，共 ${n} 局`;toast("下載完成，箱子打開了");api("/db/books").then(x=>lbSeal(P,x)).catch(()=>{});{const sh=b.closest("#sheet");/* W120：700ms 後還在藏書閣、這張下載卡片還開著才跳去棋譜庫；不在了只留吐司 */stillHere(700,()=>{closeSheet();book(g.key,g.name)},()=>P.isConnected&&!!sh&&sh.isConnected&&!sh.dataset.closing)}}
         catch(e){delete LB_DL[g.key];lbSeal(P,bs);bp.textContent="⚠ "+e.message+"，請確認網路後再試";bt.disabled=false;bt.textContent="再試一次"}}})}).catch(()=>{})};
   if(i!=null&&big[i])return one(big[i]);
   sheet("📦 比賽對局",b=>{b.innerHTML=big.map((g,k)=>`<button class="item${g.key===LB_LAST.tour?" lb-last":""}" data-k="${k}"${g.key===LB_LAST.tour?' aria-current="true"':""}><span class="lb">📦</span><span class="tx"><b>${esc(g.name)}${g.key===LB_LAST.tour?"　✔":""}</b><span>${g.count?g.count.toLocaleString()+" 局・":""}約 ${Math.round(g.size/1048576)} MB</span></span><span class="muted">›</span></button>`).join("")||'<p class="muted">讀不到比賽對局的書目</p>';

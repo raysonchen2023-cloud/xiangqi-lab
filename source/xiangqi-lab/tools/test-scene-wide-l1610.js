@@ -245,7 +245,7 @@ test("〔混合〕原始碼：07fl 排版前先問 scwSync、安全區照條目�
   assert.match(FL, /function xflHmw\(V,P,nw,nh,k,sf0\)/); assert.match(FL, /const sf=sf0\|\|\(/);
   assert.ok(FL.indexOf("hmwSync(V,P)") < FL.indexOf("scwSync(V,P)") && FL.indexOf("scwSync(V,P)") < FL.indexOf("if(xflPort(V,P,nw,nh))return true"), "首頁先、場景頁其次、最後才直向填滿");
   assert.match(W7, /function sw7Page\(src\)\{if\(\/_l1610\\\.webp\/\.test\(src\|\|""\)&&typeof scwSw7==="function"\)\{const r=scwSw7\(src,sw7Page0\);if\(r!==undefined\)return r\}return sw7Page0\(src\)\}/);
-  assert.match(W6, /const off=\(\)=>\{if\(P\.dataset\.scw\)return true;/);
+  assert.match(W6, /const off=\(\)=>\{if\(P\.dataset\.scw&&!D\.wide\)return true;/);   /* W165（11/26）：頁面給了橫式座標 D.wide 就照它判斷，沒給才在橫式圖自己關 */
   assert.match(Y8, /const pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\}/);
   assert.match(Y8, /<img src="\$\{pre\.src\}"/);
   assert.match(Y8, /ids:\["rd2Book","rd2Stack","rd2Pole","rd2All"\],pfx:"rd2"/);

@@ -258,7 +258,7 @@ function shipMark(k,id,o){const A=store.get("shipSolved",{})||{},E=A[k]||(A[k]={
   if(first)E[id]={at:Date.now(),h};else if(old.h&&!h)E[id]={at:old.at||Date.now(),h:0,up:Date.now()};store.set("shipSolved",A);try{if(first&&typeof ptyOnSolve==="function")ptyOnSolve(k,id)}catch(e){}   /* 11/15 七星改版：解開下船幫忙的那一題，他就加入（07pty-party.js） */
   const L=shipPuzzles(k)||[],n=L.filter(x=>shipRec(k,x)).length;let learned=false;
   if(L.length&&n>=L.length&&!shipLearned(k)){const M=store.get("shipLearn",{})||{};M[k]=Date.now();store.set("shipLearn",M);learned=true}
-  if(first&&typeof addXP==="function")setTimeout(()=>addXP(15,"千秋殘局",`ship:${k}:${id}`),1600);
+  if(first&&typeof addXP==="function")addXP(15,"千秋殘局",`ship:${k}:${id}`,{chipDelay:1600});   /* W119：修為當下發，小標籤照舊 1.6 秒後 */
   return{first,h,n,all:L.length,learned,stale1:shipStale1(id)}}
 function shipDoneHTML(k,o,ans,id,isX){if(ans||!o)return`<p class="muted">看了答案，這題先不算解開；之後不看答案再解一次就算。</p>`;
   const Ls=SHIP_LESSON[k]||{},W=shipWho(k,Ls.doneBy),P=id&&SHIP_BANK?SHIP_BANK.D.byId[id]:null,S=id?shipSay(k,id,P,-1):{};
@@ -304,7 +304,7 @@ function navPrev(){try{for(let i=NAV_D-1;i>=0;i--){const x=NAV_H[i];if(typeof x=
 const shipNav=(h,rep)=>{if(navKey(h)===navKey(location.hash))route();else if(rep)navReplace(h);else location.hash=h};   /* 已經在那一頁（例如在驛站旅人的對局頁去園子）就重畫 */
 function shipPort(k){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);walk("port",()=>{location.hash="#/port"},k==="classic"?"⚓ 下船・走進":"⚓ 放下跳板，走上")}
 function shipPark(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);store.set("park3d",true);
-  jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},()=>{shipNav("#/journey/play",rep);setTimeout(()=>{const r=store.get("parkNpc",null),n=r&&typeof PARK_NPC!=="undefined"&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`);if(k==="classic")setTimeout(()=>tellerTalk(),900)},600)})}   /* 意見回饋 674：青石園有說書人 */
+  jStart("park",{human:"r",level:parkNpcLv(),journey:"park"},()=>{const rn=ROUTE_N;shipNav("#/journey/play",rep);setTimeout(()=>{if(!jPlayOk(rn,"park",true))return;const r=store.get("parkNpc",null),n=r&&typeof PARK_NPC!=="undefined"&&PARK_NPC.find(x=>x.id===r.id);toast(`🌳 ${parkName(k)}到了${n?"・遇到"+n.name:""}`);if(k==="classic")setTimeout(()=>{if(jPlayOk(rn,"park",true))tellerTalk()},900)},600)})}   /* 意見回饋 674：青石園有說書人 */   /* 11/25 W120：吐司、說書人卡片延後才出，到時還在對局頁、是園子這一盤、還沒走子才出（jPlayOk 在 05b-save.js） */
 function shipInn(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);walk("inn",()=>shipNav("#/journey/inn",rep))}
 function shipArena(k,rep){if(eraLocked(k))return toast(eraLockMsg(k));shipEra(k);if(typeof arP3On==="function")arP3On();else store.set("park3d",true);shipNav("#/arena",rep)}   /* iMac V P3-3：擂台的 3D 只算這一局（03-home-quiz arP3On） */
 
