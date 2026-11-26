@@ -16,6 +16,23 @@ const SHW_KJ2={el:40,h:[.085,92,.0028],look0:[50,40],home:"home",N:{home:[50,97]
     ob:[[[11,35.5],[28.5,35.5],[26.5,47.5],[9.5,47.5]],[[31,30],[69.5,30],[72.5,50.5],[28,50.5]],[[73,38],[89.5,38],[91.5,50],[75,50]],[[62,25],[67,24.5],[91,34.5],[84,36.5],[62,28]],[[33,52.5],[68,52.5],[68.5,57],[32,57]]]}},   /* 回饋 816：點矮几桌面＝跳上比較近的那一角 */   /* 身高照「矮几前」那一點的透視（這頁透視縮得快，照桌腳會太小） */   /* 回饋 808：點朱冊／墨冊＝跳上矮几前面左右兩角（冊子前的空處，不站在棋枰和紙籤上） */
   HS:{kj2Brd:["front",50,38,"cheer"],kj2Red:["tl",20,42,"idle"],kj2Blk:["tr",82,44,"idle"],kj2Slip:["front",50,55,"idle"],kj2Scr:["front",76,32,"idle"]}};
 const kj2Pc=(x,y)=>[(x/7.68).toFixed(2),(y/13.76).toFixed(2)];
+/* W107-L 第 1 批 iPad 橫向專用圖（l1610，2560×1600；Windows Claude 1 11/25 量，output/w107-ipad/l1610/openmap/open_day_classic_l1610.json）：
+   經典版、原圖版共用一套座標；夜景沒有橫式圖＝照舊原圖。S 入口、exit 出口、walk 走路節點是圖的 %；fx 是橫式圖像素：
+   board 棋枰頂面四角、slip 紙籤四角（左上、右上、右下、左下）、red／blk 兩冊中心、scr 手卷；朱印「招」、待補籤照原本的偏移（直圖像素）×(2560/768)。
+   大桌佔滿中間、桌前幾乎沒有地面：地面只走左右兩側（左 home→fl→櫃子前 tl、右 hr→fr→手卷架前 tr），兩邊靠 TB.low 跳上桌面前角連通；
+   小人身高照棋枰寬換算（原圖棋枰約 0.38 圖寬、橫式圖約 0.20）：原圖 .085 → .13。點了的動作照原本（招牌開局歡呼、最會輸那一冊揮手，見 kj2Wrap） */
+if(typeof SCW!=="undefined"){const e={ready:true,f:"openmap/open_day_classic_l1610",w:2560,h:1600,
+    S:{kj2Brd:[50.5,34],kj2Red:[32.5,44],kj2Blk:[69.7,47],kj2Slip:[50.5,79],kj2Scr:[82,9]},exit:[10,94],safe:{l:.12,r:.12,t:.05,b:.10},
+    walk:{W:2560,H:1600,el:40,h:[.13,92,.004],look0:[50,45],home:"home",N:{home:[14,92],fl:[17,80],tl:[14,72],hr:[86,92],fr:[84,82],tr:[86,60]},E:"home-fl fl-tl hr-fr fr-tr",T:{},
+      TB:{low:{poly:[[32,33],[70,33],[79,79],[22,79]],hy:[79,97,1],hops:[["fl",[26,76]],["fr",[76,76]]],
+        ob:[[[37.5,36.5],[63,36.5],[63.5,65.5],[37,65.5]],[[27,45],[38,45],[38,61.5],[27,61.5]],[[64,49],[75.5,49],[75.5,67],[64,67]],[[40,68],[61.5,68],[62,77],[40,77]]]}},
+      HS:{kj2Brd:["fl",50,45,"cheer"],kj2Red:["fl",32,50,"idle"],kj2Blk:["fr",70,52,"idle"],kj2Slip:["fr",51,72,"idle"],kj2Scr:["tr",82,12,"idle"]}},
+    fx:{board:[[1032,584],[1554,584],[1618,973],[960,973]],slip:[[1050,1093],[1556,1093],[1577,1229],[1032,1229]],red:[832,852],blk:[1784,934],scr:[2112,282]}};
+  SCW["openmap/open_day_classic"]=e;SCW["openmap/open_day"]=Object.assign({},e,{f:"openmap/open_day_l1610"})}
+/* 現在用的那張圖：照它的座標算 %（橫式圖照條目 fx，原圖照 KJ2_*）；dx、dy 是原本寫在直圖像素的偏移，橫式圖 ×(2560/768) */
+function kj2G(P){const e=typeof scwCur==="function"?scwCur(P):null,f=e&&e.fx;if(!f||!f.board)return{W:768,H:1376,k:1,board:KJ2_BOARD,slip:KJ2_SLIP,red:KJ2_RED,blk:KJ2_BLK};
+  return{W:e.w,H:e.h,k:e.w/768,board:f.board,slip:f.slip,red:f.red,blk:f.blk}}
+const kj2At=(G,p,dx,dy)=>[((p[0]+(dx||0)*G.k)/G.W*100).toFixed(2),((p[1]+(dy||0)*G.k)/G.H*100).toFixed(2)];
 const kj2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function kj2M3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
@@ -53,12 +70,14 @@ async function kj2Data(){const gs=(await myGames(150)).filter(g=>!g.it.mid&&isSt
   return{fav,bad,mid,moves,n:gs.length}}
 function kj2Wrap(v,R0){if(!OPEN_MAP_ON||!v.querySelector("#ob"))return R0;kj2Css();
   const dk=kj2Dark(),P=document.createElement("div");P.className="shp-page cq kj2-page"+(dk?" kj2-night":"");
+  /* W107-L：iPad 橫向有專用橫式圖（07sw SCW，條目在上面）就一開始載那張；入口、出口照條目，棋枰、紙籤、朱印、待補籤照條目的 fx（像素） */
+  const src=xqClImg(`data/openmap/${dk?"open_night":"open_day"}.webp?v=${KJ2_IMGV}`),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}
   const sp=(id,x,y,t)=>{const[a,b]=kj2Pc(x,y);return`<button class="shp-spot kj2-tag" id="${id}" style="left:${a}%;top:${b}%"><b>${t}</b></button>`};
-  P.innerHTML=`<img src="${xqClImg(`data/openmap/${dk?"open_night":"open_day"}.webp?v=${KJ2_IMGV}`)}" alt="書齋矮几上的棋枰和紅黑兩冊譜">
+  P.innerHTML=`<img src="${pre.src}" alt="書齋矮几上的棋枰和紅黑兩冊譜">
     <div class="kj2-fx"><div class="kj2-q" data-q="b" style="width:300px;height:330px"></div><div class="kj2-q" data-q="s" style="width:280px;height:64px"></div><div class="kj2-mk"></div></div>
     ${sp("kj2Brd",387,385,"招牌開局")}${sp("kj2Red",KJ2_RED[0],KJ2_RED[1]-112,"執紅開局")}${sp("kj2Blk",KJ2_BLK[0],KJ2_BLK[1]-112,"執黑應法")}${sp("kj2Slip",388,818,"中局著法")}${sp("kj2Scr",600,372,"推薦對局")}`;
   v.insertBefore(P,v.firstChild);
-  const Q=k=>P.querySelector(`[data-q="${k}"]`),fit=()=>{const k=P.clientWidth/768;if(!k)return;const sc=q=>q.map(([x,y])=>[x*k,y*k]);Q("b").style.transform=kj2M3(300,330,sc(KJ2_BOARD));Q("s").style.transform=kj2M3(280,64,sc(KJ2_SLIP))};
+  const Q=k=>P.querySelector(`[data-q="${k}"]`),fit=()=>{const G=kj2G(P),k=P.clientWidth/G.W;if(!k)return;const sc=q=>q.map(([x,y])=>[x*k,y*k]);Q("b").style.transform=kj2M3(300,330,sc(G.board));Q("s").style.transform=kj2M3(280,64,sc(G.slip))};
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit();
   Q("b").innerHTML=kj2BoardSVG(parseFen(START));Q("s").innerHTML=kj2SlipSVG({});
   /* 點冊：把原本那一段清單放進宣紙面板 */
@@ -85,14 +104,21 @@ function kj2Wrap(v,R0){if(!OPEN_MAP_ON||!v.querySelector("#ob"))return R0;kj2Css
   P.querySelector("#kj2Red").onclick=()=>{if(!one("red","執紅開局"))pan("執紅","📕 執紅開局")};P.querySelector("#kj2Blk").onclick=()=>{if(!one("blk","執黑應法"))pan("執黑","📘 執黑應法")};
   P.querySelector("#kj2Slip").onclick=()=>{if(!one("mid","中局著法"))go("中局")};P.querySelector("#kj2Scr").onclick=()=>{if(!one("scr","推薦對局"))go("推薦")};
   P.querySelector("#kj2Brd").onclick=()=>{if(one("brd","招牌開局"))return;const c=v.querySelector("#ob .card");try{(c||v.querySelector("#ob")).scrollIntoView({behavior:"smooth",block:"start"})}catch(e){}};
-  const cfg=Object.assign({},SHW_PG0,SHW_KJ2,{HS:Object.assign({},SHW_KJ2.HS,{kj2Red:SHW_KJ2.HS.kj2Red.slice(),kj2Blk:SHW_KJ2.HS.kj2Blk.slice()})});
-  kj2Data().then(D=>{if(!P.isConnected)return;
+  const cfg=Object.assign({},SHW_PG0,SHW_KJ2,{HS:Object.assign({},SHW_KJ2.HS,{kj2Red:SHW_KJ2.HS.kj2Red.slice(),kj2Blk:SHW_KJ2.HS.kj2Blk.slice()})});let cfgNow=cfg,D0=null,waveId="";
+  /* 朱印「招」、待補籤：照現在用的那張圖擺（換圖時 07sw 叫 apply 再擺一次） */
+  const mkDraw=()=>{const D=D0;if(!D)return;const G=kj2G(P);let mk="";
+    if(D.fav){const[a,c]=kj2At(G,G.red,22,40);mk+=`<span class="kj2-seal" style="left:${a}%;top:${c}%" title="招牌開局：${esc(D.fav[0])}">招</span>`}
+    if(D.bad){const r=D.bad.sd==="r",[a,c]=kj2At(G,r?G.red:G.blk,r?-56:56,30);mk+=`<span class="kj2-tab" style="left:${a}%;top:${c}%">待補</span>`}
+    P.querySelector(".kj2-mk").innerHTML=mk};
+  if(typeof scwMount==="function"){const o={key:scwKey(src),src0:src,ids:["kj2Brd","kj2Red","kj2Blk","kj2Slip","kj2Scr"],pfx:"kj2",cfg0:cfg,apply:()=>{fit();mkDraw()},
+      onCfg:c=>{cfgNow=c;if(waveId&&c.HS&&c.HS[waveId])c.HS[waveId][3]="wave"}};   /* 換了走路設定（橫式圖的節點）：最會輸那一冊照舊揮手 */
+    scwMount(P,o);if(pre.k){cfgNow=scwWalkCfg(o,scwCur(P));P._scwW="l"}fit()}
+  kj2Data().then(D=>{if(!P.isConnected)return;D0=D;
     const b=parseFen(START);for(const[f,t]of D.moves){if(b[f]){b[t]=b[f];b[f]=null}}Q("b").innerHTML=kj2BoardSVG(b);Q("s").innerHTML=kj2SlipSVG(D.mid);
-    let mk="";if(D.fav){const[a,c]=kj2Pc(KJ2_RED[0]+22,KJ2_RED[1]+40);mk+=`<span class="kj2-seal" style="left:${a}%;top:${c}%" title="招牌開局：${esc(D.fav[0])}">招</span>`;P.querySelector("#kj2Brd b").textContent="招牌・"+D.fav[0]}
-    if(D.bad){const B=D.bad.sd==="r"?KJ2_RED:KJ2_BLK,[a,c]=kj2Pc(B[0]+(D.bad.sd==="r"?-56:56),B[1]+30);mk+=`<span class="kj2-tab" style="left:${a}%;top:${c}%">待補</span>`;
-      const id=D.bad.sd==="r"?"kj2Red":"kj2Blk";cfg.HS[id][3]="wave";P.querySelector("#"+id).setAttribute("aria-label",`${D.bad.sd==="r"?"執紅開局":"執黑應法"}・最會輸：${D.bad.n}`)}
-    P.querySelector(".kj2-mk").innerHTML=mk}).catch(()=>{});
-  if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfg,"kj2")}catch(e){}}
+    if(D.fav)P.querySelector("#kj2Brd b").textContent="招牌・"+D.fav[0];
+    if(D.bad){const id=D.bad.sd==="r"?"kj2Red":"kj2Blk";waveId=id;for(const c of [cfg,cfgNow])if(c.HS&&c.HS[id])c.HS[id][3]="wave";P.querySelector("#"+id).setAttribute("aria-label",`${D.bad.sd==="r"?"執紅開局":"執黑應法"}・最會輸：${D.bad.n}`)}
+    mkDraw()}).catch(()=>{});
+  if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,cfgNow,"kj2")}catch(e){}}
   if(typeof shpFit==="function")shpFit(v);
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}
   return R0}

@@ -2419,7 +2419,7 @@
     const gntFocus=(cx,cy,rad)=>{const r=cvs.getBoundingClientRect();let best=null,bd=rad;for(const g of gntFigs){if(!gntOn(g))continue;g.getWorldPosition(GFQ);GFQ.y+=GNT_H*.62;myv(GFQ).project(cam);if(GFQ.z>1)continue;
         const d=Math.hypot(r.left+(GFQ.x+1)/2*r.width-cx,r.top+(1-GFQ.y)/2*r.height-cy);if(d<bd){bd=d;best=g}}if(best){GFOC=best;pwPoke(1500)}return best};
     const gntCamNear=()=>{const k=smooth(1,.45,zoom);if(GFOC&&!gntOn(GFOC))GFOC=null;
-      if(GFOC){GFOC.getWorldPosition(GFD);GFD.y+=GNT_H*.62}else GFD.copy(GFL);GFD.lerp(GFL,1-k);
+      if(GFOC){GFOC.getWorldPosition(GFD);if(selI>=0&&pieces[selI]===GFOC)GFD.y=TOP+.32;GFD.y+=GNT_H*.62}   /* 選中的棋子會上下浮動，鏡頭用它浮起的固定高度，不跟著晃（Android 12 黑洞正面鏡頭停不穩） */else GFD.copy(GFL);GFD.lerp(GFL,1-k);
       const dd=GFT.distanceTo(GFD);GFT.lerp(GFD,dd>1e-3?.2:1);if(dd>1e-3)pwPoke(120);
       const e=GF_E1+(.22-GF_E1)*k+.45*k+(pitch-.5)*1.2,d=GF_D1*zoom*(1+(GS-1)*(1-k)),a=yaw;   /* 開發者 11/12「拖曳可以繞整球」：上下拖曳不再設上下限，可以一路轉過頭頂、繞到棋盤底下（pitch .5＝原本的預設角度） */
       cam.position.set(GFT.x+Math.sin(a)*Math.cos(e)*d,GFT.y+Math.sin(e)*d,GFT.z+Math.cos(a)*Math.cos(e)*d);
