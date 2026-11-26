@@ -10,7 +10,8 @@ const cut = (s, a, b) => { const i = s.indexOf(a); assert.ok(i >= 0, "找得到 
 const DRIFT = cut(TD, "function bhtdRaidDrift(k,cover){", "}catch(e){return false}}");
 /* 11/16 取消隊長、全隊招式：急襲帶的招改由 bhtdPick（bhtdLearned＝全隊已學會的招）決定，一起拿來跑 */
 const PICK = cut(TD, "const bhtdLearned=", "const bhtdPick=()=>bhtdLearned().map(s=>s.id);");
-const START = cut(BH, "function bhStart(k,cover){", 'setTimeout(()=>toast("✦ 星樞："+BH_TXT.voice[1]),900)})}');
+/* 11/25 W120：開場那句改成到時先用 jPlayOk 確認還在這一盤才說，結尾比對跟著換成新寫法（切出來的仍是整個 bhStart） */
+const START = cut(BH, "function bhStart(k,cover){", 'setTimeout(()=>{if(jPlayOk(rn,"bh:"+k))toast("✦ 星樞："+BH_TXT.voice[1])},900)})}');
 
 /* 假的塔防環境：SK 六招（Lv1、1、6、12、17、23），角色 x_swordboy */
 const mkDrift = o => { const calls = [];
@@ -76,4 +77,5 @@ test("〔原始碼〕偏航視窗：急襲已開時說明與按鈕換成急襲�
   assert.ok(BH.includes("墨色星渦的中心，浮著一張巨大的棋盤。要下這一盤嗎？不下也不扣任何東西，星槎照原本的航線停靠。"), "原本的文案還在");
   assert.ok(BH.includes('<h2>${n||rd?"星槎偏航":esc(BHX_FD.title)}</h2>') && BH.includes('${n?bhSay(BH_TXT.again):rd?"":BHX_FD.desc.map('), "急襲時不放「星樞未醒、棋力低一階、不計積分」那幾句（那是第一次下星樞棋局的說明，急襲有星塵、強度固定）");
   assert.ok(TD.includes("const bhtdRdOpen=P=>!!(P&&P.c&&P.c[1]);"), "急襲還是破第 1 關才開");
+  assert.ok(START.includes('const rn=ROUTE_N;location.hash="#/journey/play";'), "11/25 W120：換到對局頁之前先記下換頁計數，延後那句才分得出換過頁");
 });

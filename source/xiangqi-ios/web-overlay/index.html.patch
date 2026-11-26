@@ -1,6 +1,6 @@
 --- a/index.html
 +++ b/index.html
-@@ -383,6 +383,7 @@
+@@ -385,6 +385,7 @@
  /* 結果畫面 */
  .modal{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;background:#000a}
  .modal .box{background:var(--card);border-radius:22px;padding:24px 20px;width:100%;max-width:340px;text-align:center}
@@ -8,7 +8,7 @@
  .modal .em{font-size:56px;line-height:1}.modal h2{font-family:var(--serif);font-size:24px;margin:8px 0 4px}
  .emo{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);z-index:65;background:var(--card,#fff);color:var(--ink,#222);border-radius:22px;padding:14px 20px;box-shadow:0 10px 40px #0006;text-align:center;opacity:0;transition:.25s;pointer-events:none}.emo.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.emo .big{font-size:64px;line-height:1.1}.emo .t{font-weight:700;font-size:18px}.emo.mine{top:auto;bottom:calc(120px + var(--safeB))}.emo.mine .big{font-size:40px}
  .emo.at{left:var(--x);top:var(--y);bottom:auto;transform:scale(.6);transform-origin:12px 0;text-align:left;padding:0 4px;border-radius:0;background:none;box-shadow:none;text-shadow:0 0 3px var(--card,#fff),0 0 3px var(--card,#fff),0 0 6px var(--card,#fff),0 0 10px var(--card,#fff)}.emo.at::before{display:none}.emo.at.show{transform:scale(1)}.emo.at.up{top:auto;bottom:var(--y);transform-origin:12px 100%}
-@@ -3524,7 +3525,7 @@
+@@ -3539,7 +3540,7 @@
  function poller(fn,ms){let on=true,t=null;const tick=async()=>{if(!on)return;try{await fn()}catch(e){}if(on)t=setTimeout(tick,typeof ms==="function"?ms():ms)};tick();return()=>{on=false;clearTimeout(t)}}
  
  // ================= 離線版專用：連線、引擎下載 =================
@@ -17,7 +17,7 @@
  async function netVer(){
    const abort=new AbortController(),timer=setTimeout(()=>abort.abort(),8000);
    try{
-@@ -3553,7 +3554,8 @@
+@@ -3568,7 +3569,8 @@
  addEventListener("orientationchange",()=>[150,400,800,1500].forEach(t=>setTimeout(()=>{try{dispatchEvent(new Event("resize"))}catch(e){}},t)));
  /* hspx 第 1035 列：轉回直向時把橫向留下的左右捲動歸零 */
  addEventListener("orientationchange",()=>[150,500,1000].forEach(t=>setTimeout(()=>{try{if(innerHeight>innerWidth){const se=document.scrollingElement||document.documentElement;if(se.scrollLeft)se.scrollLeft=0;if(window.scrollX)window.scrollTo(0,window.scrollY)}}catch(e){}},t)));
@@ -27,7 +27,7 @@
    // 註冊 service worker；第一次要重新整理一次，多執行緒（跨來源隔離）才會生效
    /* 開發者決定（Gemini 效能審閱 P0-2）：等 service worker 真的就緒、接管這一頁再看；還沒有跨來源隔離（多執行緒引擎開不起來）就自動重整，同一次打開最多兩次 */
    /* 11/13 Android 舊 WebView：原生 App（UA 帶 XQQianqiuApp/）的隔離靠 App 原生碼、不靠 sw.js，重整不會好，所以不自動重整（改跳下面的降級提示） */
-@@ -3711,7 +3713,7 @@
+@@ -3726,7 +3728,7 @@
    try{window.XQ_ENG_FALLBACK=1}catch(e){}
    const wv=(navigator.userAgent.match(/Chrome\/([\d.]+)/)||[])[1]||"",mute=store.get("oldWvMute","")===wv;let tries=0;
    const show=()=>{if(document.querySelector("#preov,.modal,#sheet.show")&&++tries<30)return setTimeout(show,3000);if(mute){toast("⚠ "+NATIVE_OLDWV);return}
@@ -36,16 +36,16 @@
    setTimeout(show,2500)}
  if(OFF&&window.XQEngine){let bar=null;const NAT=typeof xqNat==="function"&&xqNat();
    XQEngine.onProgress((got,total)=>{if(!bar){keepAwake("engine",()=>!!bar);bar=document.createElement("div");bar.className="toast";if(/^#[/](cpu|arena|pvp|quiz|watch|journey[/]play|redo[/]play|legend)([/]|$)/.test(location.hash))bar.style.display="none";   /* QA P2-6：下棋、讀故事時不蓋引擎下載進度 */
-@@ -3882,7 +3884,7 @@
-   return{stop:()=>{offs.forEach(f=>f());clearInterval(t);if(XQNet.seeking()&&!XQNet.active())XQNet.seek(false)}}}
- // 不管在哪個畫面都能收到邀請
- if(OFF&&window.XQNet){XQNet.start();
+@@ -3900,7 +3902,7 @@
+    直接讀存檔的 fmCfg（07m5 的 fmNetOff 這時還不能叫：它用到後面才宣告的常數，會出錯回 false）。大廳、千秋盃、觀戰在兒童模式本來就轉到說明頁 */
+ const NET_KIDOFF=(()=>{try{const c=store.get("fmCfg",null)||{};return c.net===false||c.kid===true}catch(e){return false}})();
+ if(OFF&&window.XQNet){if(!NET_KIDOFF)XQNet.start();   /* #185 審查：只擋「開 App 就連」；下面的邀請、配對、積分、新版通知事件照常登記——同一次使用中家長打開大廳、Lobby() 自己連上時才收得到 */
 -  XQNet.on("version",async x=>{if(!x||!x.v)return;const a=await appVer();if(a&&x.v>a&&window.XQ_notifyNew)XQ_notifyNew(x.v,x.note||"")});
 +  XQNet.on("version",async x=>{if(!xqWebUpdateOn()||!x||!x.v)return;const a=await appVer();if(a&&x.v>a&&window.XQ_notifyNew)XQ_notifyNew(x.v,x.note||"")});
    const goGame=()=>{if(location.hash==="#/pvp")route();else location.hash="#/pvp"};
    XQNet.on("invite",x=>{vibrate([40,60,40]);
      const acc=()=>{const go=()=>{XQNet.respond(x,true);goGame()};if(XQNet.active()&&XQNet.game()&&!XQNet.game().result&&XQNet.side())XQNet.leave();go()};
-@@ -5749,7 +5751,7 @@
+@@ -5769,7 +5771,7 @@
    try{IDBObjectStore.prototype.put=IDBObjectStore.prototype.add=function(){throw new Error("資料刪除中")}}catch(e){}
    try{history.replaceState(null,"",location.pathname+"#/")}catch(e){}location.reload()}
  /* 意見回饋 531：檢查更新（設定 → 系統 → 關於） */

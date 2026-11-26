@@ -285,7 +285,7 @@ function jhFadeEl(){let f=document.getElementById("jhFade");if(!f){jhCss();f=doc
 /* 首頁往遠山放大：放大中心＝「十州棋館」入口那一點（測試員 1821 P3-4：原本是畫面正中央） */
 function jhGo(hash,from){hash=hash||"#/jianghu";jhCss();const f=jhFadeEl();
   if(from){const b=from.querySelector("#hmJh");if(b){const r=b.getBoundingClientRect(),q=from.getBoundingClientRect();from.style.transformOrigin=`${Math.round(r.left+r.width/2-q.left)}px ${Math.round(r.top+r.height/2-q.top)}px`}from.classList.add("jh-zoom")}
-  setTimeout(()=>f.classList.add("on"),20);setTimeout(()=>{location.hash=hash;if(from){from.classList.remove("jh-zoom");from.style.transformOrigin=""}},JH_FADE+40)}
+  const rn=ROUTE_N,h0=location.hash;setTimeout(()=>f.classList.add("on"),20);setTimeout(()=>{if(from){from.classList.remove("jh-zoom");from.style.transformOrigin=""}if(ROUTE_N!==rn||location.hash!==h0){f.classList.remove("on");return}location.hash=hash},JH_FADE+40)}   /* 11/25 W120：淡出這段時間玩家已經換了頁（返回鍵、別的按鈕），就不再硬改網址拉回江湖，黑幕收掉 */
 function jhFadeOut(){const f=document.getElementById("jhFade");if(!f)return;f.classList.add("on");setTimeout(()=>f.classList.remove("on"),40)}
 /* ---------- 長卷頁 #/jianghu ---------- */
 function Jianghu(v){jhCss();setTop(jhL("🗺 十州棋館","🗺 Ten Prefectures"),"#/");if(typeof setTabs==="function")setTabs(false);v.className="view fixed jh-v";
@@ -557,7 +557,7 @@ function jhIntelGot(d){d=d||new Date();let r=null;try{r=store.get("jhIntel",null
 function jhIntelOn(sid,d){return jhIntelGot(d).includes(sid)}
 function jhIntelGet(sid,mate){if(!sid||jhIntelOn(sid))return false;const m=OSC.MST.find(x=>x.sid===sid);if(!m)return false;
   const day=jhWindDay(new Date()),s=jhIntelGot().concat(sid);try{store.set("jhIntel",{d:day,s})}catch(e){return false}
-  const T=jhSch(jhIntelSch(sid));if(typeof toast==="function"&&T)setTimeout(()=>{try{toast(jhL(`${mate}悄悄說：掌門${m.nm}今天打算走${T.op}。`,`${mate} whispers: Master ${m.en} plans to play ${T.op} today.`))}catch(e){}},2600);
+  const T=jhSch(jhIntelSch(sid));if(typeof toast==="function"&&T)stillHere(2600,()=>{try{toast(jhL(`${mate}悄悄說：掌門${m.nm}今天打算走${T.op}。`,`${mate} whispers: Master ${m.en} plans to play ${T.op} today.`))}catch(e){}});   /* 11/25 W120：情報上面已經存好；悄悄話延後才冒，到時換了頁就不冒 */
   return true}
 /* 駐地小卡上的一段：打聽到了＝寫出今天的棋路；還沒＝告訴玩家去贏哪幾位門人 */
 function jhIntelHTML(sid,m,mates){if(jhIntelOn(sid)){const T=jhSch(jhIntelSch(sid));if(!T)return"";
@@ -583,8 +583,10 @@ const JH_HALL={
      中炮門桌子後緣原圖 y≈275：寬 66 → 高 89 → 275＋27＝302 */
   central:{v:"1122",seat:[387,314],w:66,cut:.44,spots:{hall:[384,112],study:[226,458],yard:[384,1008],gate:[384,1330]}}
 };
-const JH_HALL_W=768,JH_HALL_H=1376;
+let JH_HALL_W=768,JH_HALL_H=1376;   /* W107-L：iPad 橫式圖時 jhHallUse 換成 2560×1600 */
 const JH_HALL_BAD=new Set();   /* 這次開 App 讀圖失敗過的派：小卡不再顯示「走進山門」，免得一直繞回來 */
+/* 順風小字放在這一派大廳標籤正下方：照當下那套圖（直圖 768×1376 或橫式 2560×1600）算；往下的距離直圖 46、橫式 100（兩邊在 iPad 螢幕上都約 50px；審查 #170） */
+const jhNoteAt=(n,hs)=>{if(!n||!hs)return;const dy=JH_HALL_W===768?46:100;n.style.left=(hs[0]/JH_HALL_W*100).toFixed(2)+"%";n.style.top=((hs[1]+dy)/JH_HALL_H*100).toFixed(2)+"%"};
 const jhHallPc=([x,y])=>`left:${(x/JH_HALL_W*100).toFixed(2)}%;top:${(y/JH_HALL_H*100).toFixed(2)}%`;
 /* 門下棋友在哪裡找得到：驛站（inn:）、園子（npc:）、秘境（secret:） */
 function jhHallMates(sid){if(typeof OSC==="undefined")return[];const P={inn:jhL("驛站","Post Inn"),npc:jhL("園子","the Park"),secret:jhL("秘境","a hidden place")};
@@ -601,9 +603,11 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   if(!H||!S){location.hash="#/jianghu";return{}}
   setTop(jhL(`🚪 ${S.nm}`,`🚪 ${S.nm}`),"#/jianghu");if(typeof setTabs==="function")setTabs(false);v.className="view";document.body.classList.add("jh-on");
   const f=jhFadeEl();f.classList.add("on");
-  const P=document.createElement("div");P.className="shp-page cq jh-hall";v.innerHTML="";v.append(P);
-  const img=document.createElement("img");img.src=`data/zmhall/${sid}.webp?v=${H.v}`;img.alt=jhL(`${S.nm}門內：碼頭、長石階、四座方亭，最上面是掌門大廳`,`Inside the ${S.nm}: the pier, a long stairway, four pavilions, and the master's hall at the top`);img.draggable=false;P.append(img);
-  const back=()=>{f.classList.remove("on");location.hash="#/jianghu";setTimeout(()=>{try{jhSheet(sid)}catch(e){}},700)};
+  /* W107-L：iPad 橫向有專用橫式圖（07sw）就整頁用橫式那一套座標（jhHallUse），開頁照 scwPre 選圖 */
+  const src0=`data/zmhall/${sid}.webp?v=${H.v}`,pre=typeof scwPre==="function"?scwPre(v,src0):{src:src0,k:""};if(typeof jhHallUse==="function")jhHallUse(!!pre.k);
+  const P=document.createElement("div");P.className="shp-page cq jh-hall"+(pre.k?" scw-l":"");if(pre.k)P.dataset.scw=pre.k;v.innerHTML="";v.append(P);
+  const img=document.createElement("img");img.src=pre.src;img.alt=jhL(`${S.nm}門內：碼頭、長石階、四座方亭，最上面是掌門大廳`,`Inside the ${S.nm}: the pier, a long stairway, four pavilions, and the master's hall at the top`);img.draggable=false;P.append(img);
+  const back=()=>{f.classList.remove("on");const rn=ROUTE_N;location.hash="#/jianghu";setTimeout(()=>{if(ROUTE_N-rn>1||location.hash!=="#/jianghu")return;try{jhSheet(sid)}catch(e){}},700)};   /* 11/25 W120：退回長卷後才開小卡；改網址後 ROUTE_N 要等 hashchange 才加一，所以只許換過這一次頁、還在長卷才開 */
   img.onerror=()=>{JH_HALL_BAD.add(sid);back()};   /* 圖還沒上 CDN、史學顧問還沒審完：退回長卷、開原本的小卡 */
   if(m){const z=document.createElement("img");z.className="jh-hall-zm";z.src=`data/npc/${m.id}.webp`;z.alt=jhL(`掌門${m.nm}坐在大廳主位`,`Master ${m.en} seated in the hall`);
     z.style.cssText=jhHallPc(H.seat)+`;width:${(H.w/JH_HALL_W*100).toFixed(2)}%`+(H.cut?`;clip-path:inset(0 0 ${H.cut*100}% 0);-webkit-clip-path:inset(0 0 ${H.cut*100}% 0)`:"");z.onclick=()=>jhSheet(sid);z.onerror=()=>z.remove();P.append(z)}
@@ -611,10 +615,16 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
   spot("hall",m?jhL(`🏯 掌門大廳・${m.nm}`,`🏯 Master's hall · ${m.en}`):jhL("🏯 掌門大廳","🏯 Master's hall"),()=>jhSheet(sid));
   spot("study",jhL("📖 講棋堂","📖 Lecture hall"),()=>jhHallStudy(sid));
   spot("yard",jhL("👥 前院・門下棋友","👥 Front yard"),()=>jhHallYard(sid));
-  spot("gate",jhL("‹ 搭船回十州棋館","‹ Take a boat back to the Ten Prefectures"),()=>jhGo("#/jianghu"));
-  if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("順風・修為多給","Fair wind +XP");n.title=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");P.append(n)}   /* 11/22 Windows Claude 2 查 W62 時發現：英文原句折成兩行壓到「掌門大廳」標籤；實測中文一行也會壓到。門內頁改成掌門大廳標籤正下方置中的一行小徽章（圖比螢幕寬、左右會被裁，不能放角落），完整說明在掌門小卡 */
+  spot("gate",jhL("‹ 搭船回十州棋館","‹ Take a boat back to the Ten Prefectures"),()=>{try{const p=NAV_D>0?NAV_H[NAV_D-1]:null;if(typeof p==="string"&&navKey(p)==="/jianghu"){history.back();return}if(typeof navReplace==="function"){navReplace("#/jianghu");return}}catch(e){}jhGo("#/jianghu")});
+  /* 11/26 開發者回報（P0）：進中炮門再搭船回十州棋館，左上角變成「回中炮門」，按了又進中炮門、再搭船又回來，「完全無法離開這個十州棋館」。
+     根因：搭船用 jhGo 往前多開一頁，十州棋館的返回鍵（瀏覽器上一頁）就指回門內頁。搭船是回上一層：上一頁就是十州棋館＝退回那一頁；
+     不是（從開局棋路、掌門頁直接進門）＝把門內頁這一筆換成十州棋館（navReplace），不往前多開。回到十州棋館後，返回鍵指的是進門之前的那一頁。
+     不用 goUp：它會往很早的紀錄找十州棋館、一次跳好幾頁，跳回去那一頁的上一頁可能又是門內頁 */
+  if(typeof jhWindOn==="function"&&jhWindOn(sid)){const n=document.createElement("p");n.className="jh-windnote jh-hall-note";n.textContent=jhL("順風・修為多給","Fair wind +XP");n.title=jhL("眼下順風：在這一派上課、挑戰掌門，修為多給。","Fair wind now: lessons and master challenges here give extra XP.");jhNoteAt(n,H.spots&&H.spots.hall);P.append(n)}   /* 11/22 Windows Claude 2 查 W62 時發現：英文原句折成兩行壓到「掌門大廳」標籤；實測中文一行也會壓到。門內頁改成掌門大廳標籤正下方置中的一行小徽章（圖比螢幕寬、左右會被裁，不能放角落），完整說明在掌門小卡 */
   const ready=()=>{if(P.isConnected)jhFadeOut()};if(img.complete&&img.naturalWidth)setTimeout(ready,0);else img.onload=ready;
   setTimeout(()=>{if(f.classList.contains("on")&&P.isConnected&&img.naturalWidth)jhFadeOut()},6000);
+  /* 轉向換圖：整頁重畫（座標整套換掉，包裝鏈跟著重跑）；07sw 換圖時才叫 apply */
+  if(typeof scwMount==="function")scwMount(P,{key:scwKey(src0),src0,ids:[],apply:()=>setTimeout(()=>{if(P.isConnected&&location.hash==="#/jianghu/hall/"+sid)JhHall(v,sid)},0)});
   return{}}
 /* 樣式：掌門立繪＝坐在主位（腳底對齊桌面）；地點標籤沿用 .shp-spot */
 (function(){if(typeof document==="undefined")return;const s=document.createElement("style");s.id="jhHallCss";s.textContent=`
@@ -632,7 +642,7 @@ function JhHall(v,sid){jhCss();const H=JH_HALL[sid],S=jhSch(sid),m=typeof OSC!==
    不加修為、不改強度與棋局；贏了照案 4 規則解鎖情報（journeyGameEnd 包裝本來就會判斷）。 */
 JH_HALL.central.mates=[[296,1150],[472,1150]];   /* 11/22 第 7 版：站在碼頭平台、靠石階底端，左右對稱；前院標籤在石階上，不壓到人頭；左右拉開到 296／472，兩個五字名牌在 375 寬手機上也不相碰。
    PR #22 審查後開發者決定（iMac 轉達）：前院最多只站 2 位——站位只留兩格（jhHallMatesDraw 照格數畫）；門人超過 2 位時照 jhMatesShown 的排序每天換一批（能切磋的優先，其餘照每日雜湊）。 */
-const JH_MATE_W=54;   /* 11/22 開發者看實機畫面說「放上門下棋友的畫面變得好怪」：88 比遠處的掌門還大、像巨人；對照三案後選「縮小靠石階、有名牌」 */
+let JH_MATE_W=54;   /* 11/22 開發者看實機畫面說「放上門下棋友的畫面變得好怪」：88 比遠處的掌門還大、像巨人；對照三案後選「縮小靠石階、有名牌」 */
 let jhMateKeep=null;   /* {id,t}：從前院點「切磋一盤」指定的園子棋友；用掉就清，45 秒內才算數，到期也清 */
 const JH_MATE_KEEP_MS=45000;
 /* 一位門人的資料：k＝OSC.NPC 的鍵（inn:／npc:／secret:）；回傳名字、立繪、在哪、台詞清單、能不能下 */
@@ -728,6 +738,24 @@ const JH_HALL_WALK={
 /* PR #23 審查（iMac）：門內頁原本沒寫出口，套到 07w 的預設出口，第一次進門亮的是頂欄返回鍵、「要回去，點這裡」也指著返回鍵。
    出口就是圖上的「‹ 搭船回十州棋館」：搭船標籤加 ex-spot（07w shwXHi 找它亮框、放泡泡），這裡寫明出口：從碼頭下方走進來、點碼頭下緣空地＝走出去 */
 if(typeof SHW_EXITS!=="undefined"&&SHW_EXITS&&!("jhhall:*" in SHW_EXITS))SHW_EXITS["jhhall:*"]={out:[50,104],r:[38,90,62,100]};
+/* W107-L 第 5 批：江湖會館十派門內頁 iPad 橫向專用橫式圖（07sw SCW，zmhall/<派>_l1610.webp）。座標是 output/w107-ipad/l1610/zmhall/zm_l1610.json（Windows Claude 1 量，像素 2560×1600）：
+   seat、w、cut＝掌門立繪（w 先照桌寬 0.75 倍估、seat 照原公式算，實機再調）、spots＝四個地點、extra＝各派玩法入口（JH_HALLS8 的 play、屏風馬門的石馬與算盤）、mates＝中炮門前院門人。
+   做法：門內頁的位置都經 jhHallPc（照 JH_HALL_W／H）和 JH_HALL[派]、JH_HALLS8[派]、JH_MZ_LV[派].hall、JH_HALL_WALK[派] 算；jhHallUse(wide) 一次把這些換成橫式或直式那一套，
+   JhHall 開頁時照 scwPre 決定；轉向（07sw apply）就整頁重畫，07z9l 八派、07z9c 屏風馬門、門人、迷宮入口、走路這些包裝都跟著用新的那套。
+   迷宮入口（中炮門拋石車、兵門左下池邊太湖石、相門右上廂房當考棚、過宮炮門焙紙牆右下段）：Windows Claude 1 補量的 JH_MZ_AT_L（會補進 zm_l1610.json 的 extra.maze） */
+const JH_HALL_L={"central":{"seat":[1312,389],"w":84,"cut":0.44,"spots":{"hall":[1296,144],"study":[1040,608],"yard":[1296,1024],"gate":[1296,1379]},"mates":[[1126,1264],[1485,1264]]},"screen":{"seat":[1280,402],"w":108,"cut":0.42,"spots":{"hall":[1280,192],"study":[1280,720],"gate":[1280,1296]},"extra":{"horse":[1264,1040],"abacus":[1240,331]}},"cross_palace":{"seat":[1280,444],"w":120,"cut":0.42,"spots":{"hall":[1280,224],"study":[880,896],"yard":[1280,1040],"gate":[1280,1328]},"extra":{"paper":[1840,992]}},"horse":{"seat":[1280,354],"w":108,"cut":0.42,"spots":{"hall":[1280,144],"study":[1280,960],"yard":[1488,1200],"gate":[1280,1376]},"extra":{"post":[816,1120]}},"advisor_corner":{"seat":[1288,504],"w":132,"cut":0.42,"spots":{"hall":[1280,240],"study":[960,896],"yard":[1280,1040],"gate":[1280,1328]},"extra":{"shop":[1680,864]}},"palace_horse":{"seat":[1288,409],"w":144,"cut":0.42,"spots":{"hall":[1280,160],"study":[1280,912],"yard":[896,1184],"gate":[1280,1400]},"extra":{"desk":[1648,752]}},"opposite_cannon":{"seat":[1656,374],"w":96,"cut":0.42,"spots":{"hall":[1648,176],"study":[1232,800],"yard":[1024,1088],"gate":[1232,1280]},"extra":{"stage":[1696,1056]}},"same_cannon":{"seat":[1304,478],"w":114,"cut":0.42,"spots":{"hall":[1328,240],"study":[1696,896],"yard":[1120,1024],"gate":[1408,1280]},"extra":{"posts":[864,976]}},"elephant":{"seat":[1272,613],"w":156,"cut":0.42,"spots":{"hall":[1264,352],"study":[1232,944],"yard":[1248,1120],"gate":[1248,1344]},"extra":{"pavilion":[640,1104]}},"pawn":{"seat":[1288,403],"w":132,"cut":0.42,"spots":{"hall":[1280,160],"study":[1232,848],"yard":[896,1120],"gate":[1216,1360]},"extra":{"rock":[1232,1024]}}};
+const JH_HALL_WALK_L={"central":{"N":{"dock":[50,88],"home":[50,84],"mA":[44,82],"mB":[56,82],"s0":[50,76],"s1":[50,60],"mid":[50,45],"hall":[50,30],"study":[40,44]},"E":"home-dock home-mA home-mB home-s0 s0-s1 s1-mid mid-hall mid-study","HS":{"hall":["hall",50.6,13,"bow"],"zm":["hall",50.6,13,"bow"],"study":["study",40,36,"wave"],"yard":["s0",50,64,"wave"],"gate":["dock",50,92,"wave"],"m0":["mA",42,78,"wave"],"m1":["mB",58,78,"wave"]}},"screen":{"N":{"gate":[50,95],"dock":[50,88],"home":[50,80],"yard":[50,72],"hf":[50,66],"cf":[49.5,61],"gL":[35,64],"gL2":[34,50],"gL3":[36,36],"ct":[44,33],"hall":[50,31]},"E":"gate-dock dock-home home-yard yard-hf hf-cf yard-gL gL-gL2 gL2-gL3 gL3-ct ct-hall","HS":{"hall":["hall",50,12,"bow"],"zm":["hall",50,12,"bow"],"abacus":["hall",48,12,"bow"],"study":["cf",50,45,"bow"],"horse":["hf",40,62,"wave"],"gate":["gate",50,98,"wave"]}}};
+const JH_MZ_AT_L={"central":[1472,424],"pawn":[832,1232],"elephant":[1936,544],"cross_palace":[1920,1152]};
+const JH_HALL_P={};let jhHallWide=false;
+function jhHallUse(wide){wide=!!wide;if(wide===jhHallWide)return;jhHallWide=wide;JH_HALL_W=wide?2560:768;JH_HALL_H=wide?1600:1376;JH_MATE_W=wide?70:54;
+  for(const sid in JH_HALL_L){const H=JH_HALL[sid];if(!H)continue;const L=JH_HALL_L[sid];
+    if(!JH_HALL_P[sid])JH_HALL_P[sid]={seat:H.seat,w:H.w,cut:H.cut,spots:H.spots,mates:H.mates,extra:H.extra};
+    const S=wide?L:JH_HALL_P[sid];H.seat=S.seat;H.w=S.w;H.cut=S.cut;H.spots=S.spots;H.mates=S.mates;H.extra=S.extra;
+    const P8=typeof JH_HALLS8!=="undefined"&&JH_HALLS8[sid];if(P8){if(!P8._p)P8._p={spots:P8.spots,at:P8.play.at};P8.spots=wide?L.spots:P8._p.spots;P8.play.at=wide&&L.extra&&L.extra[P8.play.k]||P8._p.at}
+    const M=typeof JH_MZ_LV!=="undefined"&&JH_MZ_LV[sid]&&JH_MZ_LV[sid].hall;if(M&&JH_MZ_AT_L[sid]){if(!M._p)M._p=M.at;M.at=wide?JH_MZ_AT_L[sid]:M._p}
+    const W=JH_HALL_WALK[sid],WL=JH_HALL_WALK_L[sid];if(W&&WL){if(!W._p)W._p={N:W.N,E:W.E,HS:W.HS,h:W.h,look0:W.look0};const T=wide?Object.assign({},WL,{h:[.1,88,.0013],look0:[50,60]}):W._p;
+      W.N=T.N;W.E=T.E;W.HS=T.HS;W.h=T.h;W.look0=T.look0;if(wide){W.W=2560;W.H=1600}else{delete W.W;delete W.H}}}}
+if(typeof SCW!=="undefined")for(const sid in JH_HALL_L)SCW["zmhall/"+sid]={ready:true,f:"zmhall/"+sid+"_l1610",w:2560,h:1600,S:{},exit:null,safe:{l:.12,r:.12,t:.05,b:.10}};
 function jhHallWalk(v,sid){const W=JH_HALL_WALK[sid],P=v&&v.querySelector(".jh-hall"),img=P&&P.querySelector("img");
   if(!W||!P||!img||typeof shwMount!=="function"||typeof SHW_PG0==="undefined")return;
   const zm=P.querySelector(".jh-hall-zm");if(zm)zm.dataset.k="zm";
@@ -878,7 +906,7 @@ function jhCanalXM(sid,day,pid){const st=jhCanalOf(sid),back=()=>"#/jianghu";if(
     next:back,nextL:()=>jhL("回十州棋館","Back to the Ten Prefectures")}}
 function jhCanalMark(sid,day,o){if(day!==jhCanalDay())return{first:false};const S=jhCanalGet(day);if(S.s[sid])return{first:false};
   S.s[sid]={t:Date.now(),p:o&&o.perfect?1:0};store.set("jhCanal",S);
-  if(typeof addXP==="function")setTimeout(()=>{try{addXP(JH_CANAL_XP,jhL("漕運殘局","Canal puzzle"),"cy:"+day+":"+sid)}catch(e){}},1600);
+  if(typeof addXP==="function")try{addXP(JH_CANAL_XP,jhL("漕運殘局","Canal puzzle"),"cy:"+day+":"+sid,{chipDelay:1600})}catch(e){}   /* W119：修為當下發，小標籤照舊 1.6 秒後 */
   return{first:true}}
 try{if(typeof cjXMode==="function"&&!cjXMode.jhCanal){const x0=cjXMode;cjXMode=function(id){const m=/^cy\/(\w+)\/(\d{4}-\d{2}-\d{2})\/(.+)$/.exec(String(id||""));if(m)return jhCanalXM(m[1],m[2],decodeURIComponent(m[3]));return x0.apply(this,arguments)};cjXMode.jhCanal=1}}catch(e){}
 const JH_CANAL_IMG="data/canal/barge.webp";

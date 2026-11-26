@@ -210,14 +210,16 @@ function bdPort(v,k){if(!bdOk())return;const P=v&&v.querySelector(".shp-page.cq"
   let card=null;const addCard=()=>{if(card||!pad.isConnected)return;card=document.createElement("button");card.type="button";card.className="card bd-card";
     card.innerHTML=`${bdFace(who)}<span style="flex:1;min-width:0"><b>${evOn?"❗ "+esc(nk)+"闖禍了！":"🎁 "+esc(nk)+"在等你"}</b><br><span class="muted" style="font-size:13px">${evOn?"點這裡聽她說，幫她解圍":"把找到的珍品拿給她看"}</span></span><span class="muted">›</span>`;
     card.onclick=()=>{if(typeof vibrate==="function")vibrate(5);act()};const say=pad.querySelector(".port-say");if(say)say.after(card);else pad.prepend(card)};
-  const hit=P.querySelector(".ph4-hit");let stand=false;try{stand=typeof ph4Who==="function"&&ph4Who(k)===who}catch(e){}
+  let hit=P.querySelector(".ph4-hit");let stand=false;try{stand=typeof ph4Who==="function"&&ph4Who(k)===who}catch(e){}
   if(!hit||!stand){addCard();return}
   const mk=document.createElement("div");mk.className="bd-mark"+(evOn?"":" kn");mk.setAttribute("aria-hidden","true");mk.textContent=evOn?"！":"🎁";mk.style.display="none";P.append(mk);
   hit.setAttribute("aria-label",nk+(evOn?"：她闖禍了，點她聽她說":"：她在等你"));
   const cap=e=>{if(!mk.isConnected){v.removeEventListener("click",cap,true);return}if(e.target!==hit||P.dataset.bdFind)return;e.stopPropagation();e.preventDefault();if(typeof vibrate==="function")vibrate(5);act()};
   v.addEventListener("click",cap,true);
-  let n=0;const stop=()=>{mk.remove();v.removeEventListener("click",cap,true)};
-  const tick=()=>{if(!P.isConnected||!mk.isConnected){stop();return}if(evOn&&(bdSt().ev[k]||{}).done){stop();return}if(!hit.isConnected){stop();addCard();return}
+  let n=0,lost=0;const stop=()=>{mk.remove();v.removeEventListener("click",cap,true)};
+  /* W107-L：iPad 轉向時 07f 會把渡口主人拿掉重掛，點擊區換了一顆：重抓新的，「！」接到新的上面；等 6 秒還沒有才退回小卡（審查 #165 第八輪） */
+  const tick=()=>{if(!P.isConnected||!mk.isConnected){stop();return}if(evOn&&(bdSt().ev[k]||{}).done){stop();return}
+    if(!hit.isConnected){const h2=P.querySelector(".ph4-hit");if(h2){hit=h2;lost=0;hit.setAttribute("aria-label",nk+(evOn?"：她闖禍了，點她聽她說":"：她在等你"))}else{mk.style.display="none";if(++lost>=15){stop();addCard();return}setTimeout(tick,400);return}}
     const on=hit.style.display!=="none"&&!P.classList.contains("pc-run")&&!document.querySelector(".walkc");
     if(on){mk.style.display="";mk.style.left=(parseFloat(hit.style.left)+parseFloat(hit.style.width)/2)+"px";mk.style.top=(parseFloat(hit.style.top)-2)+"px"}else{mk.style.display="none";if(++n===50)addCard()}
     setTimeout(tick,400)};
@@ -228,7 +230,7 @@ function bdEvXM(k){const back=()=>"#/port";if(!bdOk())return{err:"雲河七星�
   return{id:E.pz,rk:"cjRunBd",back,top:"❗ 旅伴闖禍",icon:"❗",noXP:true,nudgeN:2,ans:"看答案這一題就不算幫她解圍（也沒有修為），確定？",
     head:P=>`<b>❗ ${esc(nk)}闖的禍・${esc(pc)}當主角</b>・${cjLv(P.d)}　<span class="muted">${cjSrc(P)}</span><div class="shp-psay">${esc(nk)}：「${esc(bdTx(E.say,E.c))}」</div>${bdOldTip(k)}`,
     wrong:(u,step)=>step===0?nk+"："+bdTx(E.oops||bdOops(E.c),E.c):"",
-    mark:()=>{const S=bdSt(),R2=S.ev[k]||(S.ev[k]={c:E.c,at:Date.now()}),first=!R2.done;if(first){R2.done=Date.now();bdSave(S);if(typeof addXP==="function")setTimeout(()=>addXP(BD_XP.ev,"旅伴解圍","bd:ev:"+k),1200)}return{first}},
+    mark:()=>{const S=bdSt(),R2=S.ev[k]||(S.ev[k]={c:E.c,at:Date.now()}),first=!R2.done;if(first){R2.done=Date.now();bdSave(S);if(typeof addXP==="function")addXP(BD_XP.ev,"旅伴解圍","bd:ev:"+k,{chipDelay:1200})}return{first}},
     done:(x,ans)=>{if(ans||!x)return`<p class="muted">看了答案，這次先不算幫她解圍；不看答案再解一次就算。</p>`;bdCss();return bdSay(E.c,E.thx)+(E.n?`<p class="muted bd-note">📜 ${esc(E.n)}</p>`:"")+(x.first?`<p>✨ 修為 +${BD_XP.ev}</p>`:"")},
     next:()=>"#/port",nextL:()=>"回渡口"}}
 
@@ -274,7 +276,7 @@ function bdMlXM(e){const S=bdSt(),back=()=>bdSt().lb||"#/journey/inn",L=BD_ML[e]
   return{id:L.pz,rk:"cjRunBd",back,top:"🕊 驛站飛書",icon:"🕊",noXP:true,nudgeN:2,ans:"看答案的話，這封回信先不寄出（也沒有修為），確定？",
     head:P=>`<b>🕊 ${esc(nk)}的求救信・${esc(pc)}當主角</b>・${cjLv(P.d)}　<span class="muted">${cjSrc(P)}</span><div class="shp-psay">${esc(nk)}：「${esc(bdTx(L.say,L.c))}」</div>${bdOldTip(e)}`,
     wrong:(u,step)=>step===0?nk+"："+bdTx(bdOops(L.c),L.c):"",
-    mark:()=>{const S2=bdSt(),M2=S2.ml[e]||(S2.ml[e]={at:Date.now(),r:Date.now()}),first=!M2.s;if(first){M2.s=Date.now();M2.sd=bdDay();bdSave(S2);if(typeof addXP==="function")setTimeout(()=>addXP(BD_XP.ml,"驛站飛書","bd:ml:"+e),1200)}return{first}},
+    mark:()=>{const S2=bdSt(),M2=S2.ml[e]||(S2.ml[e]={at:Date.now(),r:Date.now()}),first=!M2.s;if(first){M2.s=Date.now();M2.sd=bdDay();bdSave(S2);if(typeof addXP==="function")addXP(BD_XP.ml,"驛站飛書","bd:ml:"+e,{chipDelay:1200})}return{first}},
     done:(x,ans)=>{if(ans||!x)return`<p class="muted">看了答案，回信先不寄出；不看答案解開，回信就會寄出。</p>`;bdCss();return`<div class="bd-lt"><p><b>📨 你的回信寄出了</b></p><p>驛騎捎回${esc(nk)}的話：「${esc(bdTx(L.rp,L.c))}」</p></div>`+(x.first?`<p>✨ 修為 +${BD_XP.ml}　🎁 明天打開驛站信箱，會收到${esc(nk)}的回禮。</p>`:"")},
     next:()=>back(),nextL:()=>"回去"}}
 
@@ -289,7 +291,7 @@ async function bdKnOpen(c){const K=BD_KN[c];if(!K||!bdOk())return;bdCss();let R=
       :`<p class="muted" style="line-height:1.7;font-size:13.5px">還沒有〈${esc(it.name)}〉。${esc(nk)}寄來的那封信，解開以後的回禮就是它；在${esc(en)}的渡口景點、驛站史實小牌、園子長卷，也有機會撿到。</p>`)+`<button class="btn ghost" id="bdKnX" style="width:100%;margin-top:8px">關閉</button>`;
     b.querySelector("#bdKnX").onclick=()=>closeSheet();const g=b.querySelector("#bdKn");
     if(g)g.onclick=()=>{const S2=bdSt(),R2=S2.kn[c]||(S2.kn[c]={seen:Date.now()});const first=!R2.done;R2.done=R2.done||Date.now();bdSave(S2);if(typeof vibrate==="function")vibrate([15,30,15]);
-      g.remove();const d=document.createElement("div");d.innerHTML=tail()+(first?`<p>✨ 心結解開了！修為 +${BD_XP.kn}</p>`:"");b.querySelector("#bdKnX").before(d);if(first&&typeof addXP==="function")setTimeout(()=>addXP(BD_XP.kn,"解開心結","bd:kn:"+c),600)}})}
+      g.remove();const d=document.createElement("div");d.innerHTML=tail()+(first?`<p>✨ 心結解開了！修為 +${BD_XP.kn}</p>`:"");b.querySelector("#bdKnX").before(d);if(first&&typeof addXP==="function")addXP(BD_XP.kn,"解開心結","bd:kn:"+c,{chipDelay:600})}})}
 
 /* ---------- 4 七星軍師獻策 ---------- */
 function bdPlanCard(c){if(!BUDDY_ON||!c||!c.flag||!Array.isArray(c.flag.opts)||!BD_PLAN[c.id]||!bdOk())return null;const D=BD_PLAN[c.id],me=bdMe();let n=0;

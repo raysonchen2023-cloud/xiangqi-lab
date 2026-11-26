@@ -787,9 +787,9 @@ function bhtdStart(n,k,cover,sk,how,q){const C=bhtdC();if(!C)return toast("規�
   P.sk["*"]=sk;P.last=n;store.set("bhtd",P);try{bhPreload()}catch(e){}
   const R0=store.get("bhRet",null);store.set("bhRet",{k:k||(R0&&R0.k)||store.get("era","classic"),cover:k?cover!==false:!!(R0&&R0.cover),at:Date.now(),first:!((+store.get("bhCount",0)||0)>0)});store.set("park3d",true);
   let xm=0;try{if(how!=="old"&&typeof dglXmTake==="function"){const spM=bhtdSpMax();xm=dglXmTake(Math.min(spM,(BHTD.LV[n-1].sp0||0)+bhtdTalSp(tal)),spM,BHTD.SPK)}}catch(e){xm=0}   /* 開發者 11/13 平日體力：身上的星芒帶進來當開局靈力，用掉的扣掉（m/07dgl-stamina.js；boot 的 cfg.xm）；11/14 晚：1 點星芒＝SPK 點靈力，xm 是換到的靈力點數 */
-  jStart("bh:td"+n,{human:"r",lx:Math.min(18,ai.depth),journey:"bh:td"+n,lv:{fen:BHTD.startFen(n,C),turn:"r"},td:{lv:n,ch:ck,L,diff,sk,xm,tal}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
-    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}if(xm)setTimeout(()=>toast(`✦ 帶進 ${Math.ceil(xm/BHTD.SPK)} 點星芒，開局靈力 +${xm}`),q?2400:6200);
-    setTimeout(()=>{try{bhBell()}catch(e){}toast(`✦ 第 ${n} 關・${BHTD.LV[n-1].nm}——星樞推算 ${ai.depth} 步`)},q?300:900);if(!q)setTimeout(()=>toast("✦ 星樞："+BHTD.LV[n-1].say),3600)},how==="new")}   /* "new"＝jStart 第 4 個參數 force：不接舊盤 */
+  jStart("bh:td"+n,{human:"r",lx:Math.min(18,ai.depth),journey:"bh:td"+n,lv:{fen:BHTD.startFen(n,C),turn:"r"},td:{lv:n,ch:ck,L,diff,sk,xm,tal}},()=>{const rn=ROUTE_N,J="bh:td"+n,ok=()=>jPlayOk(rn,J);const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";   /* 11/25 W120：下面延後的吐司、鐘聲，到時還在對局頁、是這一關這一盤、還沒結束才出（jPlayOk 在 05b-save.js；改網址後 ROUTE_N 要等 hashchange 才加一，不能用 stillHere） */
+    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}if(xm)setTimeout(()=>{if(ok())toast(`✦ 帶進 ${Math.ceil(xm/BHTD.SPK)} 點星芒，開局靈力 +${xm}`)},q?2400:6200);
+    setTimeout(()=>{if(!ok())return;try{bhBell()}catch(e){}toast(`✦ 第 ${n} 關・${BHTD.LV[n-1].nm}——星樞推算 ${ai.depth} 步`)},q?300:900);if(!q)setTimeout(()=>{if(ok())toast("✦ 星樞："+BHTD.LV[n-1].say)},3600)},how==="new")}   /* "new"＝jStart 第 4 個參數 force：不接舊盤 */
 /* ---------- 11/14 第二批：星淵急襲（3～5 分鐘的中局殘陣；每場從 BHTD.RAID 隨機抽一組＋星門變化；星塵照表現 6～10、不給修為）---------- */
 let BHTD_RDL="";   /* 上一場抽到的模板（再刷不連抽同一組） */
 const bhtdRdOpen=P=>!!(P&&P.c&&P.c[1]);   /* 破第 1 關才開 */
@@ -802,9 +802,9 @@ function bhtdRaid(k,cover,sk,q){const C=bhtdC();if(!C)return toast("規則程式
   BHTD_RDL=T.id;if(Array.isArray(sk)&&sk.length){P.sk["*"]=sk;store.set("bhtd",P)}try{bhPreload()}catch(e){}
   const R0=store.get("bhRet",null);store.set("bhRet",{k:k||(R0&&R0.k)||store.get("era","classic"),cover:k?cover!==false:!!(R0&&R0.cover),at:Date.now(),first:!((+store.get("bhCount",0)||0)>0)});store.set("park3d",true);
   let xm=0;try{if(typeof dglXmTake==="function"){const spM=bhtdSpMax();xm=dglXmTake(Math.min(spM,BHTD.SPK+bhtdTalSp(tal)),spM,BHTD.SPK)}}catch(e){xm=0}   /* 11/16 靈力上限看全隊平均（跟 boot 一樣） */
-  jStart("bh:rd",{human:"r",lx:Math.min(18,ai.depth),journey:"bh:rd",lv:{fen:BHTD.raidFen(T.id,C),turn:"r"},td:{raid:{id:T.id,v},ch:ck,L,diff,sk,xm,tal}},()=>{const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";
-    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}if(xm)setTimeout(()=>toast(`✦ 帶進 ${Math.ceil(xm/BHTD.SPK)} 點星芒，開局靈力 +${xm}`),2400);
-    setTimeout(()=>{try{bhBell()}catch(e){}toast(`⚡ 星淵急襲・${T.nm}——星樞元氣 ${BHTD.RAID_HP}`)},q?300:900)},true)}
+  jStart("bh:rd",{human:"r",lx:Math.min(18,ai.depth),journey:"bh:rd",lv:{fen:BHTD.raidFen(T.id,C),turn:"r"},td:{raid:{id:T.id,v},ch:ck,L,diff,sk,xm,tal}},()=>{const rn=ROUTE_N,ok=()=>jPlayOk(rn,"bh:rd");const was=/^#\/journey\/play/.test(location.hash);location.hash="#/journey/play";   /* 11/25 W120：同上，延後的吐司、鐘聲到時還在急襲這一盤才出 */
+    if(was)try{window.dispatchEvent(new Event("xq-play"))}catch(e){}if(xm)setTimeout(()=>{if(ok())toast(`✦ 帶進 ${Math.ceil(xm/BHTD.SPK)} 點星芒，開局靈力 +${xm}`)},2400);
+    setTimeout(()=>{if(!ok())return;try{bhBell()}catch(e){}toast(`⚡ 星淵急襲・${T.nm}——星樞元氣 ${BHTD.RAID_HP}`)},q?300:900)},true)}
 /* ---------- 11/14 第二批：星塵與天賦（存檔鍵 bhtdDust，05b JOURNEY_KEYS）----------
    d＝星塵、t＝點亮的天賦、s＝各關最佳星數、r＝急襲 {n 場數, w 勝場}、g＝發過星塵的盤（最近 20 盤，重新整理不重發）、la＝上一盤的結算（結果視窗重開照樣顯示） */
 function bhtdDust(){let o=null;try{o=store.get("bhtdDust",null)}catch(e){}const D=o&&typeof o==="object"?o:{};
