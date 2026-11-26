@@ -1,11 +1,11 @@
-# 驗證紀錄（版本 20261126-0420）
+# 驗證紀錄（版本 20261126-1111）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 執行編號：gh-45694040412-1（Node.js v24.22.3；這一頁、驗證紀錄 verify-all.js、測試分類報表是同一次執行產生的；比對時這一行與下一行不算）
-- 產生時間：2026-11-26 04:32:29（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 3345 項＝**通過 3198**、**失敗 0**、**略過 147**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（838 個檔，樹雜湊 SHA-256 `8f8d91a02e5850fba2415bee9152e6ce59ea3c4901b3533663e7b819763b907f`），對應的發布版：`20261126-0420`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 執行編號：gh-45747410733-1（Node.js v24.22.3；這一頁、驗證紀錄 verify-all.js、測試分類報表是同一次執行產生的；比對時這一行與下一行不算）
+- 產生時間：2026-11-26 11:24:08（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 3348 項＝**通過 3201**、**失敗 0**、**略過 147**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（848 個檔，樹雜湊 SHA-256 `afd1bd4456780368b041748fe9218d7043b19818e1871cf2054e2c2160204ce0`），對應的發布版：`20261126-1111`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔有 37 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -164,9 +164,9 @@
 
 | 類別 | 項數 | 這類測試證明了什麼 |
 |---|---:|---|
-| 行為 | 1905 項（通過 1898、略過 7） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
+| 行為 | 1907 項（通過 1900、略過 7） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
 | 混合 | 91 項（通過 89、略過 2） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
-| 原始碼比對 | 308 項（通過 302、略過 6） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
+| 原始碼比對 | 309 項（通過 303、略過 6） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
 | 待分類 | 1041 項（通過 909、略過 132） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-refit-1118.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-film-tap-1118.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-jh-fade-1118.js`、`test-jianghu-1118.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-pvp-faceoff-1121.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js`、`test-zm-medallion-1118.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
@@ -1039,6 +1039,7 @@
 | test-w106-maze-tex-cdn-1124.js | — | 4 | 0 | 0 |  | 4／4 |
 | test-w108-sel-glow-1125.js | — | 0 | 0 | 3 |  | 3／3 |
 | test-w109-home-cdn.js | — | 3 | 2 | 0 |  | 5／5 |
+| test-w126-ipcompat.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-w89-mentor-1124.js | — | 5 | 0 | 1 |  | 6／6 |
 | test-w92-oldwv-fallback-1124.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-watcher-sway-1115.js | — | 0 | 0 | 3 |  | 3／3 |
@@ -5072,6 +5073,12 @@
 - ✔ 〔行為〕CDN 補抓成功＝留在寬版；直版 p34 也一樣
 - ✔ 〔混合〕開頁就是寬版（07z Home 開頁那條路）：onerror 也走 hmwFail，一樣先等 CDN
 - ✔ 〔混合〕用原圖時（hmw 是空的）載不到：hmwFail 不做事，照舊交給 00-util 補抓；原始碼裡退回寬版只剩 hmwFail 一處
+
+### test-w126-ipcompat.js
+
+- ✔ 〔行為〕判斷：只有原生 App 在 iPad 相容視窗（手機寬）才加；iPhone、真 iPad 寬度、Safari 網頁版、Android、沒觸控的 Mac 都不加
+- ✔ 〔行為〕轉向、改視窗大小時重算：手機寬→寬→手機寬，class 跟著加、拿掉、再加
+- ✔ 〔原始碼〕m.css：xq-ipcompat 時 #topbar 左邊留 76px，寫在檔尾、!important，蓋得過 html body.bh-field #topbar 的內距
 
 ### test-w89-mentor-1124.js
 

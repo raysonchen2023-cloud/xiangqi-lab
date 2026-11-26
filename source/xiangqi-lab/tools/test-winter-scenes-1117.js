@@ -125,7 +125,7 @@ test("三處同時入夜：冬天逐分鐘掃日落、日出，首頁 _night、�
 test("頁面開著也會換季：西市外景每分鐘交給 xsmSwap（網址一樣就不動）、茶坊比對網址、觀星臺比對 gxtSrc 網址", () => {
   assert.match(XSM, /const d=xsmPickDay\(xsmDay\(\)\);xsmSwap\(P,d\);/, "外景不再只看日夜有沒有變");
   assert.match(XSM, /function xsmSwap\(P,day\)\{[^\n]*if\(im\.getAttribute\("src"\)===src\)return;/, "xsmSwap 網址一樣就不動");
-  assert.match(XSM, /const s=xsmSrc\(false,1\);if\(im\.getAttribute\("src"\)!==s\)\{P\.dataset\.win=isW\(s\)\?"1":"";im\.src=s;/, "茶坊");
+  assert.match(XSM, /const a=xsmSrc\(false,1\),s=xsmCdnAs\(im,P\._scw\?xsmScwTo\(P,a\):a\);P\.dataset\.win=\/_winter\\\.\/\.test\(a\)\?"1":"";if\(s!=null&&im\.getAttribute\("src"\)!==s\)\{im\.src=s;/, "茶坊（#169 合成一條 xsmTeaTick；沒掛 07sw 時照舊原圖網址，行為在 test-scene-wide-xsm.js 實跑）");
   assert.match(GXT, /if\(gxtSrc\(kk,d\)!==\(im\.getAttribute\("src"\)\|\|""\)\)gxtSet\(P,kk,d\)/, "觀星臺");
   assert.match(GXT, /pre\.onerror=\(\)=>\{if\(\/_winter\[\._\]\/\.test\(src\)\)/, "觀星臺換圖時冬景載不到退回原圖");
 });
