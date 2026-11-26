@@ -185,7 +185,9 @@ function mzWall(v){const pad=v.querySelector(".pad"),me2=pad&&pad.querySelector(
     shwMount({v,cfg:Object.assign({},SHW_MZ,{HS}),root:W,frame:W,layer:W,before:W.querySelector(".mz-hs"),sel:".mz-hs",keyOf:b=>b.id,find:h=>W.querySelector("#"+h),mem:"study"})}catch(e){}}
   /* 點畫裡的東西看說明（07w6）：座標是原圖的（用橫式圖時 07w6 自己關掉）；亮格各格還是淡墨的，說明後面補一句 */
   if(typeof sciPage==="function"){try{const CELLS=/_classic\.webp/.test(src)?MZ_CELLS_CL:MZ_CELLS,it=MZ_RELIC.map(([n,t,nd],i)=>{const c=CELLS[i];return{n,nd,t:t+(i<zOn?"":"（這一格還是淡墨的，多收幾件珍品就會變成彩色。）"),s:[[[c[0]+3,c[1]+3],[c[2]-3,c[1]+3],[c[2]-3,c[3]-3],[c[0]+3,c[3]-3]]]}});
-    sciPage(v,{k:"study",nm:"書齋",W:MZ_W,H:MZ_H,it:it.concat(MZ_SCI)})}catch(e){}}
+    /* W165：橫式圖（MZ_L，2560×1600）另給一份 12 件亮格器物的座標，換成橫式圖時 07w6 改用這份；其他說明（亮格櫃等）只有直向座標，橫式先不給 */
+    const itW=MZ_RELIC.map(([n,t,nd],i)=>{const c=MZ_L.cells[i];return{n,nd,t:it[i].t,s:[[[c[0]+6,c[1]+6],[c[2]-6,c[1]+6],[c[2]-6,c[3]-6],[c[0]+6,c[3]-6]]]}});
+    sciPage(v,{k:"study",nm:"書齋",W:MZ_W,H:MZ_H,it:it.concat(MZ_SCI),wide:{W:MZ_L.W,H:MZ_L.H,it:itW}})}catch(e){}}
   if(typeof shpFit==="function")try{shpFit(v)}catch(e){}
   try{if(typeof zmPage==="function")zmPage(v)}catch(e){}}
 /* 消寒圖：一枝素梅 9 朵、每朵 9 瓣，共 81 瓣；染了幾瓣就幾瓣朱紅（原圖畫在立軸畫心 474～573 × 118～350 裡；

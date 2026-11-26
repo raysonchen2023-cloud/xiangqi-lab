@@ -94,15 +94,16 @@ function sciHint(P,I,D){const seen=store.get("sciSeen",{})||{};if(seen[D.k]){sci
   const later=()=>setTimeout(wait,900);if(I.complete&&I.naturalWidth)later();else I.addEventListener("load",later,{once:true})}
 /* P＝圖的框（座標 100% 的那一層，入口和角色都在裡面），I＝圖。滿版頁是 .shp-page.cq＞img；名冊抽屜、換手機、書案面板是各自的框＞img */
 function sciMount(P,I,D){if(!SCENE_INFO_ON||!P||!I||!D||!D.it||P.dataset.sci)return;P.dataset.sci="1";sciCss();
-  const W=D.W||768,H=D.H||1376;
-  const pt=e=>{const r=I.getBoundingClientRect();if(!r.width||!r.height)return null;return[(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H]};
-  const off=()=>{if(P.dataset.scw)return true;try{return!!(D.off&&D.off(P))}catch(e){return false}};   /* W107-L：換成 iPad 橫向專用圖（07sw）時座標不是原圖像素，先不跳說明（照首頁寬版） */
+  /* W165（11/26 外部複審：書齋橫放後點不開器物）：頁面另外給了橫式圖用的 D.wide＝{W,H,it}（橫式圖像素）時，換成橫式圖就改用它；沒給的頁面照舊先不跳 */
+  const cur=()=>P.dataset.scw&&D.wide?Object.assign({},D,D.wide):D;
+  const pt=e=>{const r=I.getBoundingClientRect(),C=cur(),W=C.W||768,H=C.H||1376;if(!r.width||!r.height)return null;return[(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H]};
+  const off=()=>{if(P.dataset.scw&&!D.wide)return true;try{return!!(D.off&&D.off(P))}catch(e){return false}};   /* W107-L：換成 iPad 橫向專用圖（07sw）時座標不是原圖像素，先不跳說明（照首頁寬版） */
   const onImg=t=>!!t&&!!t.closest&&P.contains(t)&&!t.closest("button,a,input,select,textarea,label,[role=button],[tabindex],.v7")&&!P.classList.contains("pc-run")&&!off();
   P._sci={D,I,pt,onImg};
-  P.addEventListener("click",e=>{if(e.__sci||e.defaultPrevented||!onImg(e.target))return;const p=pt(e);if(!p||p[0]<0||p[1]<0||p[0]>W||p[1]>H)return;const h=sciHit(D,P,I,p);if(!h)return;
-    sciShow(D,h.x,sciNight(I),P,I)});   /* 回饋 833（開發者 11/9）：點物件時不再描金邊框，直接跳說明卡 */
+  P.addEventListener("click",e=>{if(e.__sci||e.defaultPrevented||!onImg(e.target))return;const C=cur(),p=pt(e);if(!p||p[0]<0||p[1]<0||p[0]>(C.W||768)||p[1]>(C.H||1376))return;const h=sciHit(C,P,I,p);if(!h)return;
+    sciShow(C,h.x,sciNight(I),P,I)});   /* 回饋 833（開發者 11/9）：點物件時不再描金邊框，直接跳說明卡 */
   /* 電腦滑鼠移到物件上換成手指游標（手機沒有游標，不影響） */
-  P.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const p=onImg(e.target)?pt(e):null,on=!!(p&&sciHit(D,P,I,p));if(P.dataset.sciCur!==(on?"1":"")){P.dataset.sciCur=on?"1":"";P.style.cursor=on?"pointer":""}});
+  P.addEventListener("pointermove",e=>{if(e.pointerType!=="mouse")return;const p=onImg(e.target)?pt(e):null,on=!!(p&&sciHit(cur(),P,I,p));if(P.dataset.sciCur!==(on?"1":"")){P.dataset.sciCur=on?"1":"";P.style.cursor=on?"pointer":""}});
   /* 讀螢幕的人：一排看不見的按鈕（同名的只列一次），一樣開小卡（只開現在看得到的那一件） */
   const nm=[...new Set((D.it||[]).filter(x=>sciEraOk(x)).map(x=>x.n))],sr=document.createElement("div");sr.className="sci-sr";sr.innerHTML=`<span>畫裡可以點的東西：</span>`+nm.map((n,i)=>`<button type="button" data-i="${i}">${esc(sciEraText(((D.it||[]).find(y=>y.n===n)||{}).nd||n))}</button>`).join("");P.append(sr);
   sr.onclick=e=>{const b=e.target.closest("button");if(!b)return;e.stopPropagation();const n=nm[+b.dataset.i],L=sciLive(D,P,I),x=L.find(y=>y.n===n);if(x)sciShow(D,x,sciNight(I),P,I)};
