@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-w107-port-l1610.js",   /* 11/25 W107-L 第 3 批：渡口（07f）iPad 橫向橫式圖：13 朝條目、門景點碼頭格式（多朝寫死）、路網與小動作、明朝繞開內湖、出口上橫式的船、上色過場不換回直圖、各模組接法（行為 6、原始碼 1） */
   "test-w107-libmap-l1610.js",   /* 11/25 W107-L 第 3 批：棋譜庫（10b）iPad 橫向橫式圖：書閣＋11 朝、石窟兩套條目、量好的點寫死、石窟 10 片玉冊分法、走路、出口 libL／libCL、lbGeo（行為 6、原始碼 1） */
   "test-w107-cupmap-l1610.js",   /* 11/25 W107-L 第 2 批：千秋盃頁（07y7）iPad 橫向橫式圖：5 張條目、屏風掛板英雄帖燈綵球座標、燈掛在掛環下、量好的點寫死、cp2Geo、走路（行為 5、混合 1、原始碼 1） */
   "test-eye-p3-1125.js",   /* 11/25 W121 真人視角第一輪 P3（平面）：隨行小人不站上棋盤（src/bot3d.js）、輪到電腦時狀態列不寫「輪到你」（m/08b-cpugame.js）、評等說明泡泡自己跳出時不蓋棋盤（m/01-board.js tmxBub av）。14 項行為、2 項〔原始碼〕 */

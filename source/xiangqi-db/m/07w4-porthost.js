@@ -26,8 +26,11 @@ function ph4Css(){if(document.getElementById("ph4Css"))return;const s=document.c
 /* 這一朝渡口小卡上說話的七星主人（說書人、或就是玩家自己的角色時回傳空字串） */
 function ph4Who(k){try{const Ls=SHIP_LESSON[k]||{},T=SHIP_STOP[k]||{};if(shipAppr()||!Ls.open)return"";const by=shipLearned(k)&&Ls.done?Ls.doneBy:Ls.openBy;if(by==="teller")return"";
   const c=by||(T.who||[])[0]||"";if(!c||!WX_CHARS[c]||c===myChar())return"";if(typeof ptyHas==="function"&&!ptyHas(c))return"";return c}catch(e){return""}}   /* 11/16 開發者「所有意外事件只有已加入的夥伴角色才能觸發該角的特殊事件」：主人還沒加入就不站出來（小卡也改說書人，見 07f Port） */
+/* 渡口路網（主人站位、泡泡、07w5 偶遇的信）：直圖照 SHW_PORT＋身高乘 SHW_PORT_K；W107-L 橫式圖時換成條目的路網（07sw scwWalkCfg），不用直圖寫死的位置（審查 #165 第 2、4 輪） */
+function ph4Cfg(P,k){if(typeof SHW_PORT==="undefined"||!SHW_PORT[k])return null;let C=shwCfg(SHW_PORT[k],typeof SHW_PSX!=="undefined"?SHW_PSX[k]:null);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
+  const e=P&&typeof scwCur==="function"?scwCur(P):null;if(e&&e.walk&&P._scw&&typeof scwWalkCfg==="function")C=scwWalkCfg(P._scw,e);return C}
 function ph4Mount(v,k){if(!PORT_HOST3D||shwRM()||!SHW_PORT_ON||!SHW_PORT[k])return false;const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.ph4)return!!(P&&P.dataset.ph4);const c=ph4Who(k);if(!c||typeof TRIPO!=="undefined"&&Object.keys(TRIPO).length&&!TRIPO[c])return false;P.dataset.ph4="1";ph4Css();
-  const C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
+  const C=ph4Cfg(P,k);P._ph4L=C.W===2560;   /* W107-L：渡口橫式圖時，主人站位照條目的路網，不用直圖寫死的 PH4_AT（審查 #165 第 2 項）；記下掛的是哪一種，轉向時 07f 重掛 */
   const box=document.createElement("div");box.className="ph4";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="sh"></i>';
   const hit=document.createElement("button");hit.type="button";hit.className="ph4-hit";const nm=(WX_CHARS[c].nk||WX_CHARS[c].n||"");hit.setAttribute("aria-label",nm+"：聽她說話");hit.style.display="none";
   const say=document.createElement("div");say.className="ph4-say";say.setAttribute("aria-live","polite");
@@ -39,7 +42,7 @@ function ph4Card(v){const p=v&&v.querySelector(".port-say p"),b=p&&p.querySelect
 function ph4Line(v,k){if(!PORT_CARD_HIDE)return;const P=v&&v.querySelector(".shp-page.cq");if(!P||P.dataset.ph4l)return;const L=ph4Card(v);if(!L.t)return;P.dataset.ph4l="1";ph4Css();
   const say=document.createElement("div");say.className="ph4-say";say.setAttribute("aria-live","polite");say.innerHTML=`<b>${esc(L.n)}</b>${esc(L.t)}`;P.append(say);let n=0;
   const go=()=>{if(!say.isConnected)return;if((P.classList.contains("pc-run")||document.querySelector(".walkc")||document.hidden)&&++n<60)return void setTimeout(go,300);
-    const C=SHW_PORT[k]?shwCfg(SHW_PORT[k],SHW_PSX[k]):null,H=C&&C.N[C.home]||[50,70],Ih=P.clientHeight,Iw=P.clientWidth,hh=C?shwHt(C,H[1])*SHW_PORT_K*Ih:Ih*.06;
+    const C=ph4Cfg(P,k),H=C&&C.N[C.home]||[50,70],Ih=P.clientHeight,Iw=P.clientWidth,hh=C?shwHt(C,H[1])*Ih:Ih*.06;   /* 照當下的圖（ph4Cfg 已乘 SHW_PORT_K） */
     Object.assign(say.style,{left:(H[0]*Iw/100)+"px",top:(H[1]*Ih/100-hh-6)+"px"});say.classList.add("on");try{if(typeof shwSayFit==="function")shwSayFit(say,P,hh+say.offsetHeight+14)}catch(e){}
     setTimeout(()=>{say.classList.remove("on");setTimeout(()=>say.remove(),400)},Math.max(4000,Math.min(9000,L.t.length*170)))};
   setTimeout(go,900)}
@@ -55,9 +58,10 @@ function ph4Spot(P,C,hFr){const H=C.N[C.home]||[50,70],W=P.clientWidth,Hh=P.clie
   return cand.find(p=>!bad(p))||cand[0]||[H[0]+11,H[1]]}
 async function ph4Load(P,box,hit,say,C,k,cid){
   await loadScript(OFF?"three.min.js":"/m/three.min.js");await loadScript((OFF?"bot3d.js":"/m/bot3d.js")+"?v="+encodeURIComponent(window.XQ_BUILD||""));
-  const T=window.THREE;if(!T||!window.XQBot3D||!XQBot3D.figure)throw 0;if(!box.isConnected)return;await shwTripo();if(!box.isConnected)return;
+  const T=window.THREE;if(!T||!window.XQBot3D||!XQBot3D.figure)throw 0;const gone=()=>{hit.remove();say.remove()};   /* 載入中被 07f 轉向重掛（框拿掉了）：點擊區、泡泡一起收，不留孤兒（審查 #165 第八輪） */
+  if(!box.isConnected)return gone();await shwTripo();if(!box.isConnected)return gone();
   const Cc=WX_CHARS[cid]||{},look=TRIPO[cid]?{p:Cc.pc||"俥",e:k,g:9,glb:`data/tripo_app/${cid}.glb`,ring:TRIPO[cid]}:null;if(!look)throw 0;
-  const B=XQBot3D.figure(look);if(!B.glbP)throw 0;await B.glbP;if(!box.isConnected)return;
+  const B=XQBot3D.figure(look);if(!B.glbP)throw 0;await B.glbP;if(!box.isConnected)return gone();
   const EL=C.el*Math.PI/180,r=new T.WebGLRenderer({antialias:true,alpha:true,powerPreference:"low-power"});r.setPixelRatio(Math.min(2,devicePixelRatio||1));if(T.sRGBEncoding!=null)r.outputEncoding=T.sRGBEncoding;
   const cv=r.domElement,sh=box.querySelector(".sh");box.append(cv);
   const sc=new T.Scene();sc.add(new T.HemisphereLight(0xFFF6E8,0x6A5A48,1.15));const dl=new T.DirectionalLight(0xFFFFFF,.85);dl.position.set(-3,6,5);sc.add(dl);
@@ -66,7 +70,7 @@ async function ph4Load(P,box,hit,say,C,k,cid){
   const vh=hM*1.45,cam=new T.OrthographicCamera(-vh*.375,vh*.375,vh/2,-vh/2,hM*.1,hM*20),tg=new T.Vector3(0,hM*.6,0);cam.position.set(0,tg.y+Math.sin(EL)*hM*6,Math.cos(EL)*hM*6);cam.lookAt(tg);cam.updateMatrixWorld(true);
   const ft=new T.Vector3(0,0,0).project(cam),ftF=(1-ft.y)/2,hFr=y=>shwHt(C,y)/(Math.cos(EL)/1.45);
   let at=null,cw=0,ch=0;
-  const fit=()=>{const Iw=P.clientWidth,Ih=P.clientHeight;if(!Ih)return;if(!at)at=PH4_AT[k]||ph4Spot(P,C,hFr);const h=Math.round(hFr(at[1])*Ih),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch)}
+  const fit=()=>{const Iw=P.clientWidth,Ih=P.clientHeight;if(!Ih)return;if(!at)at=(C.W===2560?null:PH4_AT[k])||ph4Spot(P,C,hFr);const h=Math.round(hFr(at[1])*Ih),w=Math.round(h*.75);if(h!==ch||w!==cw){ch=h;cw=w;r.setSize(cw,ch)}
     const x=at[0]*Iw/100,y=at[1]*Ih/100;Object.assign(cv.style,{left:(x-cw/2)+"px",top:(y-Math.round(ftF*ch))+"px"});Object.assign(sh.style,{width:Math.round(ch*.34)+"px",height:Math.round(ch*.1)+"px",left:(x-Math.round(ch*.17))+"px",top:(y-Math.round(ch*.05))+"px"});
     const top=y-Math.round(ftF*ch)+ch*.12;Object.assign(hit.style,{display:"",left:(x-cw*.22)+"px",top:top+"px",width:(cw*.44)+"px",height:Math.max(10,y-top)+"px"});Object.assign(say.style,{left:x+"px",top:(top-4)+"px"})};
   /* 面向：朝畫面中間偏一點，不背對人 */
@@ -117,5 +121,5 @@ function ph4Pier(v,k){const A=PH4_PIER[k],P=v&&v.querySelector(".shp-page.cq");i
   b.onclick=()=>{if(typeof vibrate==="function")vibrate(5);goUp("#/adventure")};
   const z=document.createElement("button");z.type="button";z.className="ph4-pz";z.setAttribute("aria-hidden","true");z.tabIndex=-1;const e=A.N.pier;Object.assign(z.style,{left:(e[0]-9)+"%",top:(e[1]-4.5)+"%",width:"18%",height:"7%"});
   z.onclick=ev=>{ev.stopPropagation();b.click()};
-  const first=P.querySelector(".shp-spot");P.insertBefore(z,first);P.append(b)}
+  const first=P.querySelector(".shp-spot");P.insertBefore(z,first);P.append(b);if(P._portPlace)P._portPlace()}   /* W107-L：渡口橫式圖時標籤、點選區照條目（07f portScw） */
 if(typeof portWind==="function"){const f0=portWind;portWind=function(v,k){try{if(PORT_CARD_HIDE)ph4Pier(v,k)}catch(e){}const r=f0.apply(this,arguments);try{const pad=PORT_CARD_HIDE&&v&&v.querySelector(".pad.port");if(pad){ph4Css();pad.classList.add("ph4-nc")}if(!ph4Mount(v,k)&&pad)ph4Line(v,k)}catch(e){}return r}}
