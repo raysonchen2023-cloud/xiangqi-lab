@@ -15,14 +15,16 @@ test("〔原始碼〕遮篷：鏡頭在篷頂上方（俯視）時墨線整個�
   assert.ok(tick[0].includes("op=above?.12:.9"), "篷面的淡出沒有改");
 });
 
-test("〔混合〕香爐：整張立牌在棋盤木框外、桌緣內（不會壓在棋盤角上、也不會懸在桌外）；煙跟著同一個位置", () => {
-  const m = SRC.match(/use\("censer",im=>\{const x=([\d.]+),z=(-?[\d.]+),c=card\(im,\{x,y:\.015,z,h:1\.5,tilt:\.3\}\)/);
+test("〔混合〕香爐：整個在棋盤木框外、桌緣內（不會壓在棋盤角上、也不會懸在桌外）；煙跟著同一個位置", () => {
+  /* 11/25 起香爐從 2D 立牌換成 3D 青瓷三足爐（開發者 iPad「看起來沒有平放在桌子上」，細節驗在 test-censer-3d-1125.js）；這一項照原本的意思改成量 3D 香爐：
+     半寬＝爐身半徑 R 加兩耳（R*.98＋耳環外徑約 .1）再乘整組放大 S，比原本立牌的 .8 只會算大不會算小 */
+  const m = SRC.match(/\{const x=([\d.]+),z=(-?[\d.]+),R=([\d.]+),LG=[\d.]+,S=([\d.]+),g=new T\.Group\(\);g\.position\.set\(x,0,z\)/);
   assert.ok(m, "找得到香爐");
-  const x = +m[1], z = +m[2], HALF = .8, FRAME = 5.51, FRAME_Z = 6.01, TABLE = 8.2;   /* 立牌高 1.5、圖近正方形＝半寬約 .8；棋盤木框半寬 5.51、半深 6.01；圓桌半徑 8.2（實機量的） */
+  const x = +m[1], z = +m[2], HALF = (+m[3] + .11) * +m[4], FRAME = 5.51, FRAME_Z = 6.01, TABLE = 8.2;   /* 棋盤木框半寬 5.51、半深 6.01；圓桌半徑 8.2（實機量的） */
   assert.ok(x - HALF >= FRAME || Math.abs(z) - HALF >= FRAME_Z, `香爐左緣 ${(x - HALF).toFixed(2)} 要在木框（${FRAME}）外`);
   assert.ok(Math.hypot(x + HALF, z) <= TABLE, `香爐最外緣離桌心 ${Math.hypot(x + HALF, z).toFixed(2)}，要在桌緣 ${TABLE} 裡`);
   assert.ok(z < 0, "還是放在對手那一側（茶杯的對角）");
-  assert.match(SRC, /smk:\[x,1\.25,z,i\/4\]/, "煙用同一組 x、z");
+  assert.match(SRC, /smk:\[x,top,z,i\/4\]/, "煙用同一組 x、z");
 });
 
 test("〔原始碼〕幻影棋客半透明：只有 k:pika／k:pika2 會進來；材質複製後透明、照寫深度、不投影；每格更新；2D 立牌一樣淡；省電停住、減少動態不呼吸", () => {

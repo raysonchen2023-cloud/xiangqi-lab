@@ -15,6 +15,14 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-eye-p3-1125.js",   /* 11/25 W121 真人視角第一輪 P3（平面）：隨行小人不站上棋盤（src/bot3d.js）、輪到電腦時狀態列不寫「輪到你」（m/08b-cpugame.js）、評等說明泡泡自己跳出時不蓋棋盤（m/01-board.js tmxBub av）。14 項行為、2 項〔原始碼〕 */
+  "test-eye-3d-1125.js",   /* 11/25 W121 真人視角第一輪 P3（3D）：玩家碰過畫面或按過鍵就不再跳「拖曳轉身」教學（m/06-cpu.js）、3D 操作提示抬到按鈕和小紙條上方（src/park3d.js）。7 項行為、3 項〔原始碼〕 */
+  "test-censer-3d-1125.js",   /* 11/25 開發者 iPad 截圖「香爐看起來沒有平放在桌子上、會飄起來」：石桌香爐從往後仰的 2D 立牌換成 3D 青瓷三足爐（src/park3d.js censer3d），三隻腳踩桌面、不出桌緣、不進棋盤木框、白煙從香頭起 */
+  "test-maze-illegal-1125.js",   /* 11/25 第 22 輪評比 P2：地底迷宮殘局點到不合棋規的位置不算答錯（m/07z9m-maze.js jhMzLegal 用 XQCore 核對），合法但不是正解才算一次 */
+  "test-kid-time-maze-1125.js",   /* 11/25 唯讀審核：兒童模式／家長關大廳啟動不連大廳（m/02-shell.js NET_KIDOFF）、切背景照算家長時間（m/05-settings.js useTick(1)）、迷宮判負後不再接受落子（m/07z9m-maze.js lost） */
+  "test-still-here-1125.js",   /* 11/25 W120 延遲執行稽核中、低約 40 處：m/00-util.js 共用 stillHere(ms,fn,ok)（到時還在原頁、ok 成立才做），各處接上；七星加入過場換頁時記下來到安全頁補播。5 項行為（vm 跑 stillHere）、1 項〔原始碼〕 */
+  "test-delay-reward-1125.js",   /* 11/25 W119 延遲執行稽核的 4 處高風險：古戰場、千秋殘局、漕運殘局、千秋起手式的修為和珍品不再延後才發（addXP 的 chipDelay、chdGiveRelic 的 fxDelay）；鏡像關卡電腦走子比對同一盤、步數、合法（src/local.js）。3 項行為（vm 跑 addXP）、3 項〔原始碼〕 */
+  "test-kaiju-late-1125.js",   /* 11/25 開發者截圖：練功房下到第 5、6 步才跳出開局「紅先」特效。kaijuFx 多 ok 參數，真正要播時（含等過場的重試）再問「同一盤、還沒走子」；練功房、線上對局都帶（m/01-board.js、08b-cpugame.js、09b-preload.js）。6 項行為（vm 跑 kaijuFx）、1 項〔原始碼〕 */
   "test-devmode-native-1124.js",   /* 11/24 D1 送審前（App Store 2.3.1）：原生 App 一律不是開發者模式，存檔帶來的 devMode 不生效；手機網頁、電腦網頁照舊（m/02-shell.js DEVMODE；行為 3） */
   "test-zh-canvas-1124.js",   /* 11/24 W94b 簡體模式：平面棋盤（SVG）與畫布（3D 棋子貼圖、河界）上的字也轉簡體，紅子寫「马」「车」不變罕見字（src/zh.js；行為 5） */
   "test-zh-canvas-1124.js",   /* 11/24 W94b 簡體模式：平面棋盤（SVG）與畫布（3D 棋子貼圖、河界）上的字也轉簡體，紅子寫「马」「车」不變罕見字（src/zh.js；朝代圖片棋子組改底圖＋文字：m/01-board.js、m/06-cpu.js；行為 5、混合 1） */
@@ -120,7 +128,9 @@ const CLASSIFIED = new Set([
   "test-scene-wide-stat.js",   /* 11/25 W107-L 第 1 批：我的戰績（07z2）iPad 橫向橫式圖——兩個條目共用座標、榜面比例／棋桌四角／熱區／紗燈落點、走路節點與動作照原本、原圖照 JZ2_*（榜面、棋桌熱區位置不變）（行為 4、〔混合〕1） */
   "test-scene-wide-open.js",   /* 11/25 W107-L 第 1 批：我的開局（07z3）iPad 橫向橫式圖——兩個條目共用座標、入口／棋枰紙籤四角／兩冊手卷落點、走路節點與動作照原本、原圖照 KJ2_*（朱印、待補籤位置不變）、橫式圖偏移 ×(2560/768)（行為 4、〔混合〕1） */
   "test-scene-wide-study.js",   /* 11/25 W107-L 第 1 批：我的角色書齋牆（07z4）iPad 橫向橫式圖——經典版、原圖版共用座標的兩個條目、14 入口／亮格／消寒圖／輿圖／爐煙／朱點落點、原圖消寒圖與輿圖畫法不變、選圖照整個畫面量（直向不誤換）、07fl 問 scwSync 時滿寬不 cover、載不到退回（行為 6、〔混合〕1） */
+  "test-w109-home-cdn.js",   /* 11/25 W109 首頁寬版圖同源 404 時先等 00-util 的 CDN 補抓、CDN 也失敗才退回原圖（07z hmwFail；載入 07z 和 00-util 真正的監聽，行為 3、〔混合〕2） */
   "test-scene-wide-l1610.js",   /* 11/25 W107-L 場景頁 iPad 橫向專用橫式圖（07sw，第一頁錯棋重練經典白天）：選圖門檻、鍵與條目、座標範圍、天氣範圍、原地換圖與退回（含開頁就是橫式圖、00-util CDN 補抓）、手機不動標籤、走路設定；〔混合〕原始碼接線 */
+  "test-engine-ios-threads.js",   /* 11/25 iPad Air 4 實機 Pikafish 多執行緒記憶體越界、電腦不回棋：真正原因是共享記憶體算到一半加大，iPhone／iPad 一開始就給 384 MB、執行緒恢復最多 4 條（src/engine.js）。6 項行為（vm 載入 engine.js、看記憶體大小、建不起 384 MB 的退路和送出的 setoption） */
   "test-engine-timeout.js",   /* 11/12 開發者截圖「思考有點久」：引擎沒回應不再永遠等 */
   "test-ai-levels.js",   /* 11/12 第 10 輪 F3：電腦對手透明頁（行為 2、混合 3、原始碼 2） */
   "test-land3d.js", "test-bhmate.js", "test-docs-md.js", "test-net-chaos.js", "test-park3d-bench.js", "test-save-file.js", "test-story0.js",   /* 11/12 晚上逐項分類（第 8 輪證據頁） */
@@ -191,6 +201,7 @@ const CLASSIFIED = new Set([
   "test-w102-master-gate-1124.js",   /* 11/24 W102 開發者選「改成中炮門的場景」＋ChatGPT 場景盤點 A、B、L：掌門局封面改門派場景（m/07z9-school.js zmGate／zmPlace），驛站旅人、秘境棋友、門下棋友改園子封面與英文（08b-cpugame.js cgGardenGate）〔混合：vm 行為 6、接線原始碼 1〕 */
   "test-w89-mentor-1124.js",   /* 11/24 W89 開發者選 Gemini 文案 2「掌門覆盤」：關鍵步由主修門派掌門（沒拜師用隨行夥伴）講一句，十派四組中英台詞、輸棋不嘲諷（m/07z9o-mentor.js；行為 5、原始碼 1） */
   "test-w108-sel-glow-1125.js",   /* 11/25 W108 玩家回饋：選中的棋子底下加柔和光暈（主題強調色、不擋點擊、不動畫；01-board.js；原始碼 3） */
+  "test-w126-ipcompat.js",   /* 11/26 W126 iPhone 版在 iPadOS 26 相容視窗裡頂欄讓出視窗鈕（00-util xqIpCompatOf、m.css #topbar 左內距）〔行為 2：vm 跑判斷與 resize 重算；原始碼 1：CSS 規則〕 */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */
