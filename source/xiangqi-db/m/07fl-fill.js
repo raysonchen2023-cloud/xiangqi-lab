@@ -16,12 +16,13 @@ function xflGate(vw,av,W,nw,nh,mx){if(!(W>0&&av>=120&&nw>0&&nh>0))return false;i
 /* 意見回饋 889（iPhone 主畫面 App 669×869 首頁元朝夜景只剩中間一窄條＋兩側模糊）：首頁用原圖時（季節／夜景／朝代變體沒有寬版圖；沒變體但比例在 0.89～1.04，見 07z HMW_SQ），0.85～1.04 這段接近正方形的畫面原本不進 ① ，縮到等高置中。
    首頁的入口都集中在圖的中段（上 15%～48%），① 本來就會先確認每個入口都看得到、擺不進才少放大，所以首頁的門檻放寬到 1.04（跟 07z HMW_SQ 同一點）：填滿寬度、上下多裁一些；別的場景頁照舊 0.85 */
 const XFL_HOME_MAX=1.04;
-/* 純計算：o={W 可用寬, av 可用高, nw/nh 圖原尺寸, off 圖上面還有多少內容（>8＝不能裁上面）, items:[{c 中心在圖高的比例, h 高(px)}]}
+/* 純計算：o={W 可用寬, av 可用高, nw/nh 圖原尺寸, off 圖上面還有多少內容（>8＝不能裁上面）, items:[{c 中心在圖高的比例, h 高(px), p 是 07sp 推得動的 .shp-spot}]}
    回傳 {w 圖寬, H 圖高, top 裁掉上面幾 px, crop 總共裁幾 px, fill w÷W}；每個東西要看得到中間 min(h/2,30)+6 px（大塊點選區只要中間那段看得到） */
 function xflPlan(o){const W=o.W,av=o.av,nw=o.nw||768,nh=o.nh||1376,H0=W*nh/nw,fitH=av,lockTop=(o.off||0)>8,its=(o.items||[]).filter(q=>q&&isFinite(q.c));
   if(!(W>0&&av>0)||H0-av<2)return null;
   const ok=H=>{const mx=H-av;let lo=0,hi=lockTop?0:mx;for(const q of its){const e=Math.min((q.h||0)/2,30)+6,c=Math.max(0,Math.min(1,q.c))*H,t=Math.max(0,c-e),b=Math.min(H,c+e);lo=Math.max(lo,b-av);hi=Math.min(hi,t)}return lo<=hi+0.5?{lo:Math.max(0,lo),hi:Math.max(Math.max(0,lo),hi)}:null};
-  let H=fitH,r=null;for(let i=0;i<=XFL_STEPS;i++){const h=H0-(H0-fitH)*i/XFL_STEPS,z=ok(h);if(z){H=h;r=z;break}}
+  let H=fitH,r=null;const push=its.length&&its.every(q=>q.p);for(let i=0;i<=(push?0:XFL_STEPS);i++){const h=H0-(H0-fitH)*i/XFL_STEPS,z=ok(h);if(z){H=h;r=z;break}}
+  if(!r&&push){const mx=H0-av,mid=(Math.min(...its.map(q=>q.c))+Math.max(...its.map(q=>q.c)))/2*H0-av/2,t=lockTop?0:Math.max(0,Math.min(mx,mid));H=H0;r={lo:t,hi:t}}   /* W131（11/26 開發者選「改程式放大填滿」，不重畫 3:4 圖）：入口全是 07sp 推得動的 .shp-spot（門派門內、設定房間）＝照樣填滿寬度，裁切位置讓入口範圍置中，裁到的標籤由 07sp 推回看得到的範圍 */
   if(!r){H=fitH;r={lo:0,hi:0}}
   const mx=H-av,top=Math.min(r.hi,Math.max(r.lo,lockTop?0:mx*XFL_TOPW)),w=Math.min(W,H*nw/nh);
   return{w:Math.round(w),H:Math.round(H),top:Math.max(0,Math.round(top)),crop:Math.max(0,Math.round(mx)),fill:Math.round(w/W*1000)/1000}}
@@ -51,7 +52,7 @@ function xflHmw(V,P,nw,nh,k){const vr=V.getBoundingClientRect(),pr=P.getBounding
 const XFL_SEL=".shp-spot,.po-sight,[data-r07m],.pz-go,.ex-bow,.cy,[data-xfl]",XFL_SKIP=".hm-go-bar,.shw,.hm-me,.zm-ex,.zm-tip,.shp-cap";   /* 只量固定的入口和點選區（.cy＝07y 經典世界天上的朝代殘影，點了會說是哪一朝，也算）；旁白泡泡、角色這種會一直出現消失的不算，免得一直重排 */
 function xflItems(P,pr){const out=[];if(!pr||!pr.height)return out;
   for(const e of P.querySelectorAll(XFL_SEL)){if(e.closest(XFL_SKIP)||!e.getClientRects().length)continue;const s=getComputedStyle(e);if(s.visibility==="hidden"||s.position==="fixed"||+s.opacity<0.05)continue;
-    const r=e.getBoundingClientRect();if(r.width<2||r.height<2)continue;const dy=+(e.dataset&&e.dataset.spfY)||0,c=(r.top-dy+r.height/2-pr.top)/pr.height;if(c<-0.05||c>1.05)continue;out.push({c,h:r.height})}
+    const r=e.getBoundingClientRect();if(r.width<2||r.height<2)continue;const dy=+(e.dataset&&e.dataset.spfY)||0,c=(r.top-dy+r.height/2-pr.top)/pr.height;if(c<-0.05||c>1.05)continue;out.push({c,h:r.height,p:e.matches(".shp-spot")})}
   return out}
 const xflKey=L=>L.map(q=>q.c.toFixed(2)).sort().join(",");
 function xflCss(){if(document.getElementById("xflCss"))return;const s=document.createElement("style");s.id="xflCss";s.textContent=`

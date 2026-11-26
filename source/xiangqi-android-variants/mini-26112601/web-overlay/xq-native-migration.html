@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>象棋千秋</title>
+<style>body{background:#3b2a1a;color:#fff8e8;margin:2rem;font:1rem system-ui}button{font:inherit;padding:.6em 1em}</style>
+</head>
+<body>
+<p id="status" role="status">正在準備象棋千秋…</p>
+<button id="retry" type="button" hidden>重試</button>
+<script>
+(function () {
+    var status = document.getElementById('status');
+    var retry = document.getElementById('retry');
+    var failed = false;
+
+    retry.onclick = function () { location.reload(); };
+    var timeout = setTimeout(function () {
+        showFailure(new Error('Cache migration timed out'));
+    }, 10000);
+
+    function showFailure(error) {
+        failed = true;
+        clearTimeout(timeout);
+        console.warn('[native] PWA cache migration failed', error);
+        status.textContent = '暫時無法完成程式快取更新，請重試。';
+        retry.hidden = false;
+    }
+
+    async function migrate() {
+        if ('serviceWorker' in navigator) {
+            var worker = navigator.serviceWorker;
+            var registrations = await worker.getRegistrations();
+            await Promise.all(registrations.map(function (registration) {
+                return registration.unregister();
+            }));
+            if ((await worker.getRegistrations()).length) {
+                throw new Error('Service worker registration still present');
+            }
+        }
+        if ('caches' in window) {
+            var keys = await caches.keys();
+            await Promise.all(keys.filter(function (key) {
+                return key.indexOf('xqlab-app-') === 0;
+            }).map(function (key) {
+                return caches.delete(key);
+            }));
+            if ((await caches.keys()).some(function (key) { return key.indexOf('xqlab-app-') === 0; })) {
+                throw new Error('Old app cache still present');
+            }
+        }
+        clearTimeout(timeout);
+        if (!failed) location.replace('/xq-native-migration-done');
+    }
+
+    migrate().catch(showFailure);
+}());
+</script>
+</body>
+</html>

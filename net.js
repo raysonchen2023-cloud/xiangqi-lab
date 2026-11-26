@@ -23,8 +23,13 @@ var XQNet=(function(){
      帳密會跟著 App 程式公開，所以這裡只能放「權限最小」的帳號（只准用 xqlab-… 開頭的頻道）。
      測試房間（xq_netRoot 有設）可以在 localStorage 的 xq_mqtt 放 {"url":"wss://…","user":"…","pass":"…"}，先用測試房間試新伺服器；正式大廳不看 xq_mqtt */
   /* host 留空＝照舊用公開伺服器 broker.emqx.io；填了 host（EMQX Serverless 總覽頁的 Address，例如 xxxxxxxx.ala.us-east-1.emqxsl.com）就連 wss://host:port/path。user／pass 放給 App 用的那組帳號（xqapp） */
-  const MQ={host:"d23f1132.ala.asia-southeast1.emqxsl.com",port:8084,path:"/mqtt",user:"xqapp",pass:"xqapp12345678"};   /* 開發者 11/9「可以切換私人伺服器了」：EMQX Serverless（xiangqi-lobby，新加坡）；xqapp 是公開帳號，權限只准 +/v1/…（不能發 sys、cup/state、cup/hall、cal、ctl/ack、c/） */
-  const URLS=[MQ.host?"wss://"+MQ.host+":"+MQ.port+MQ.path:"wss://broker.emqx.io:8084/mqtt"];
+  const MQ={host:"d23f1132.ala.asia-southeast1.emqxsl.com",port:8084,path:"/mqtt",user:"xqapp",pass:"xqapp12345678",alt:["wss://xq-lobby-v6.preview-w36.workers.dev/mqtt"]};   /* 開發者 11/9「可以切換私人伺服器了」：EMQX Serverless（xiangqi-lobby，新加坡）；xqapp 是公開帳號，權限只准 +/v1/…（不能發 sys、cup/state、cup/hall、cal、ctl/ack、c/） */
+  /* W53（11/22，App 審查 P-5「只有 IPv6 的網路」）：主伺服器只有 IPv4（DNS 只有 A 紀錄），審查用的 DNS64／NAT64 網路理論上連得上但沒實測。
+     MQ.alt＝備援入口（要有 IPv6 的網址，例如經 Cloudflare 轉送；建端點要開發者授權帳號操作，建好前留空＝跟以前一模一樣只連主伺服器）。
+     11/24 開發者授權「Cloudflare 轉送」：Worker xq-lobby-v6（原始碼 xiangqi-lab/tools/mq-alt-worker/，只轉 /mqtt 的 WebSocket 到 EMQX 8084，其他一律 404；有 IPv6）。
+     連不上（還沒登入就斷）就換下一個網址。開 App 一律先試主伺服器，不記上次連上哪一個（#146 審查：記住會讓一般玩家碰巧連到備援後一直黏在備援）。帳號照舊用 MQ 的 xqapp */
+  const mqUrlOk=u=>typeof u==="string"&&/^wss?:\/\/[\w.:\[\]-]+(\/[\w./-]*)?$/.test(u);
+  const URLS=[MQ.host?"wss://"+MQ.host+":"+MQ.port+MQ.path:"wss://broker.emqx.io:8084/mqtt",...(MQ.alt||[]).filter(mqUrlOk)];
   let ROOT="xqlab-r7k2q/v1";try{const v=localStorage.getItem("xq_netRoot");let r=null;try{r=JSON.parse(v||"null")}catch(e){r=v}   /* 11/12：測試房設成沒引號的字串（例如 xq_test）以前會 JSON 解析失敗、默默連到正式大廳（棋友a3d9）；沒引號也當測試房 */
   if(r&&/^[\w-]{3,40}$/.test(r))ROOT="xqlab-test-"+r+"/v1"}catch(e){}
   /* 開發者 11/12「嚴格禁止電腦虛擬測試玩家跑到正式大廳」：本機網址（localhost、127.x、[::1]、*.localhost、區網 192.168／10.x）或自動化瀏覽器（navigator.webdriver），
@@ -33,7 +38,8 @@ var XQNet=(function(){
      App 裡（UA 有 XQQianqiuApp 或 Capacitor 原生平台）不套用本機網址這一條；模擬器（UA 有 sdk_gphone 等）和自動化瀏覽器照舊只進測試房 */
   try{const h=String(location.hostname||""),ua=typeof navigator!=="undefined"&&navigator.userAgent||"",app=/XQQianqiuApp\//.test(ua)||!!(typeof window!=="undefined"&&window.Capacitor&&typeof window.Capacitor.isNativePlatform==="function"&&window.Capacitor.isNativePlatform());if(ROOT==="xqlab-r7k2q/v1"&&((typeof navigator!=="undefined"&&navigator.webdriver)||/sdk_gphone|Android SDK built for|google_sdk|generic_x86|Emulator/i.test(ua)||(!app&&(/^(localhost|127\.|\[::1\]|192\.168\.|10\.)/.test(h)||/\.localhost$/.test(h)))))ROOT="xqlab-test-local/v1"}catch(e){}
   const MQA={user:MQ.user,pass:MQ.pass};
-  if(/^xqlab-test-/.test(ROOT))try{const t=JSON.parse(localStorage.getItem("xq_mqtt")||"null");if(t&&typeof t.url==="string"&&/^wss?:\/\/[\w.:\[\]-]+(\/[\w./-]*)?$/.test(t.url)){URLS[0]=t.url;MQA.user=String(t.user||"");MQA.pass=String(t.pass||"")}}catch(e){}
+  if(/^xqlab-test-/.test(ROOT))try{const t=JSON.parse(localStorage.getItem("xq_mqtt")||"null");if(t&&typeof t.url==="string"&&mqUrlOk(t.url)){URLS[0]=t.url;MQA.user=String(t.user||"");MQA.pass=String(t.pass||"")}
+    if(t&&Array.isArray(t.urls)){const L=t.urls.filter(mqUrlOk).slice(0,4);if(L.length){URLS.splice(0,URLS.length,...L);MQA.user=String(t.user||"");MQA.pass=String(t.pass||"")}}}catch(e){}   /* W53：測試房可以放好幾個網址（urls），試「連不上換下一個」 */
   const ALIVE=150000;
   /* 回饋 854：在線狀態改成「有變化才送」。新版（v:2）只在上線、換狀態時送，另外每 30 分鐘補送一次（REFRESH，防伺服器漏掉遺囑留下幽靈玩家）；
      斷線時伺服器照遺囑清掉。新版看新版：用 ts（送出時間）算，65 分鐘（ALIVE2）沒更新就不算在線。
@@ -280,6 +286,8 @@ var XQNet=(function(){
   function sendInvite(to,auto){if(selfBan())return null;const m=me(),   /* 回饋 852：停權中不能邀請 */gid=Math.random().toString(36).slice(2,10)+Date.now().toString(36);pending={gid,to:to.id,name:to.name,auto};
     iSend(to.id,{type:"invite",gid,auto:!!auto,from:{id:m.id,name:m.name,pts:myPts(),n:gamesOf(rec()),tc:tcPref(),rules:RULE_ID,rs:rsPref(),pk:PK||undefined,kv:PK?2:undefined,nv:PK?1:undefined},at:Date.now()});   /* 評比第 13 輪 X2：kv＝2 表示這支手機的連線同步頻道（k）會簽名，對方也是新版的話這盤的 k 一律要簽名。第 14 輪 F2：iSend 先用手機金鑰簽名（sg）再送（見 PIN 區段） */
     clearTimeout(pendT);if(auto)pendT=setTimeout(()=>{if(pending&&pending.gid===gid){pending=null;tryMatch()}},8000);return gid}
+  /* W53：開 App 一律從主伺服器（URLS[0]）開始；沒連上就斷換下一個。只有 IPv6 的網路連主伺服器會很快失敗，下一次就換到備援 */
+  function mqNext(){if(URLS.length>1)urlI=(urlI+1)%URLS.length}
   function connect(){if(cli||!want)return;const m=me();
     cli=mqtt(URLS[urlI],{clientId:"xq"+m.id.slice(0,12)+Math.random().toString(36).slice(2,8),keepalive:30,will:{topic:`${ROOT}/u/${m.id}`,payload:"",retain:true},user:MQA.user,pass:MQA.pass});
     /* 回饋 854：連上時不再一律訂整份名單（u/+），改由 syncRoster 看頁面決定；sys/+、cup/+ 用萬用字元合併（專用伺服器每條連線最多 10 個訂閱）。
@@ -287,7 +295,7 @@ var XQNet=(function(){
     cli.onup=()=>{const re=everUp;everUp=true;if(downAt)offSum+=Math.max(0,Date.now()-downAt);downAt=0;upAt=Date.now();rosterOn=false;trk.clear();prune();cli.sub([`${ROOT}/i/${m.id}`,`${ROOT}/sys/+`,`${ROOT}/cup/+`,...(cur?gt(cur.gid):[]),...Object.keys(QS).map(k=>`${ROOT}/${k}`)]);syncRoster();presence(true);pubHist();flushIRT();clearInterval(hb);hb=setInterval(()=>{presence();staleCheck()},30000);
       if(dirty&&G){dirty=false;setTimeout(()=>{if(G&&cli&&cli.up)pubGame()},600)}if(cur&&!G)waitGame(cur.gid,false);rxAt=syncAt=Date.now();if(document.hidden&&!bgT)bgWatch();lkUp(re);emit("status")};   /* 評審 P22.1：剛訂閱會收到保留狀態，重抓計時從現在算；在背景連上的，滿 60 秒再下線 */
     cli.onmsg=onMsg;
-    cli.ondown=was=>{cli=null;clearInterval(hb);if(!downAt)downAt=Date.now();emit("status");
+    cli.ondown=was=>{cli=null;if(!was)mqNext();clearInterval(hb);if(!downAt)downAt=Date.now();emit("status");
       clearTimeout(retryT);if(want)retryT=setTimeout(connect,backoff(was))}}
   /* 評審 P22（重連風暴）：以前連不上一律每 3 秒重試、斷線一律 0.8 秒重連；伺服器掛掉時每支手機一分鐘敲 20 次，連上又被踢的話更是不停重連。
      改成：連續失敗（連不上、或連上不到 60 秒又斷）重試間隔加倍 3、6、12、24、48 秒，最多 60 秒，再乘 0.8～1.2 的亂數錯開（伺服器恢復時大家不會同一秒湧進來）；

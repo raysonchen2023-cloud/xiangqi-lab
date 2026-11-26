@@ -18,6 +18,8 @@ const CLASSIFIED = new Set([
   "test-eye-p3-1125.js",   /* 11/25 W121 真人視角第一輪 P3（平面）：隨行小人不站上棋盤（src/bot3d.js）、輪到電腦時狀態列不寫「輪到你」（m/08b-cpugame.js）、評等說明泡泡自己跳出時不蓋棋盤（m/01-board.js tmxBub av）。14 項行為、2 項〔原始碼〕 */
   "test-eye-3d-1125.js",   /* 11/25 W121 真人視角第一輪 P3（3D）：玩家碰過畫面或按過鍵就不再跳「拖曳轉身」教學（m/06-cpu.js）、3D 操作提示抬到按鈕和小紙條上方（src/park3d.js）。7 項行為、3 項〔原始碼〕 */
   "test-censer-3d-1125.js",   /* 11/25 開發者 iPad 截圖「香爐看起來沒有平放在桌子上、會飄起來」：石桌香爐從往後仰的 2D 立牌換成 3D 青瓷三足爐（src/park3d.js censer3d），三隻腳踩桌面、不出桌緣、不進棋盤木框、白煙從香頭起 */
+  "test-maze-illegal-1125.js",   /* 11/25 第 22 輪評比 P2：地底迷宮殘局點到不合棋規的位置不算答錯（m/07z9m-maze.js jhMzLegal 用 XQCore 核對），合法但不是正解才算一次 */
+  "test-kid-time-maze-1125.js",   /* 11/25 唯讀審核：兒童模式／家長關大廳啟動不連大廳（m/02-shell.js NET_KIDOFF）、切背景照算家長時間（m/05-settings.js useTick(1)）、迷宮判負後不再接受落子（m/07z9m-maze.js lost） */
   "test-still-here-1125.js",   /* 11/25 W120 延遲執行稽核中、低約 40 處：m/00-util.js 共用 stillHere(ms,fn,ok)（到時還在原頁、ok 成立才做），各處接上；七星加入過場換頁時記下來到安全頁補播。5 項行為（vm 跑 stillHere）、1 項〔原始碼〕 */
   "test-delay-reward-1125.js",   /* 11/25 W119 延遲執行稽核的 4 處高風險：古戰場、千秋殘局、漕運殘局、千秋起手式的修為和珍品不再延後才發（addXP 的 chipDelay、chdGiveRelic 的 fxDelay）；鏡像關卡電腦走子比對同一盤、步數、合法（src/local.js）。3 項行為（vm 跑 addXP）、3 項〔原始碼〕 */
   "test-kaiju-late-1125.js",   /* 11/25 開發者截圖：練功房下到第 5、6 步才跳出開局「紅先」特效。kaijuFx 多 ok 參數，真正要播時（含等過場的重試）再問「同一盤、還沒走子」；練功房、線上對局都帶（m/01-board.js、08b-cpugame.js、09b-preload.js）。6 項行為（vm 跑 kaijuFx）、1 項〔原始碼〕 */
@@ -123,6 +125,7 @@ const CLASSIFIED = new Set([
   "test-home-wide.js",   /* 11/13 首頁接 iPad 寬版圖 home_p34／home_l1610：挑圖、退回原圖、座標表、走路節點、網址版本、cover 填滿（07z HMW、07fl xflCover；行為 8、混合 1） */
   "test-ipad-fill.js",   /* 11/13 遊戲畫面都要滿版：iPad／Duo 直向填滿寬度、橫向兩側模糊底（07fl；行為 8、原始碼 1） */
   "test-w109-home-cdn.js",   /* 11/25 W109 首頁寬版圖同源 404 時先等 00-util 的 CDN 補抓、CDN 也失敗才退回原圖（07z hmwFail；載入 07z 和 00-util 真正的監聽，行為 3、〔混合〕2） */
+  "test-engine-ios-threads.js",   /* 11/25 iPad Air 4 實機 Pikafish 多執行緒記憶體越界、電腦不回棋：真正原因是共享記憶體算到一半加大，iPhone／iPad 一開始就給 384 MB、執行緒恢復最多 4 條（src/engine.js）。6 項行為（vm 載入 engine.js、看記憶體大小、建不起 384 MB 的退路和送出的 setoption） */
   "test-engine-timeout.js",   /* 11/12 開發者截圖「思考有點久」：引擎沒回應不再永遠等 */
   "test-ai-levels.js",   /* 11/12 第 10 輪 F3：電腦對手透明頁（行為 2、混合 3、原始碼 2） */
   "test-land3d.js", "test-bhmate.js", "test-docs-md.js", "test-net-chaos.js", "test-park3d-bench.js", "test-save-file.js", "test-story0.js",   /* 11/12 晚上逐項分類（第 8 輪證據頁） */
@@ -193,6 +196,7 @@ const CLASSIFIED = new Set([
   "test-w102-master-gate-1124.js",   /* 11/24 W102 開發者選「改成中炮門的場景」＋ChatGPT 場景盤點 A、B、L：掌門局封面改門派場景（m/07z9-school.js zmGate／zmPlace），驛站旅人、秘境棋友、門下棋友改園子封面與英文（08b-cpugame.js cgGardenGate）〔混合：vm 行為 6、接線原始碼 1〕 */
   "test-w89-mentor-1124.js",   /* 11/24 W89 開發者選 Gemini 文案 2「掌門覆盤」：關鍵步由主修門派掌門（沒拜師用隨行夥伴）講一句，十派四組中英台詞、輸棋不嘲諷（m/07z9o-mentor.js；行為 5、原始碼 1） */
   "test-w108-sel-glow-1125.js",   /* 11/25 W108 玩家回饋：選中的棋子底下加柔和光暈（主題強調色、不擋點擊、不動畫；01-board.js；原始碼 3） */
+  "test-w126-ipcompat.js",   /* 11/26 W126 iPhone 版在 iPadOS 26 相容視窗裡頂欄讓出視窗鈕（00-util xqIpCompatOf、m.css #topbar 左內距）〔行為 2：vm 跑判斷與 resize 重算；原始碼 1：CSS 規則〕 */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
 /* 還沒逐項分類的檔（統計列為「待分類」）；新測試檔先放這裡，分好類再移到 CLASSIFIED */
