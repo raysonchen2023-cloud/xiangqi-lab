@@ -110,6 +110,29 @@ test("題庫裡每一棵 alt 樹（--multi 出的多解，遊戲照它判斷對�
   for (const [nm, x] of all) assert.deepEqual(altProblems(x), [], nm + "：" + x.id);
 });
 
+/* 題庫裡帶 alt 的每一題，用真的 jhMzTry 走遍 alt 樹：每一條最快殺都算對、黑方照那一條應、走完將死；每個局面上 alt 樹以外的合法著法都判錯（#212 第六輪：alt 在 #219 下真的判對） */
+function poolTryProblems(c, P) {
+  const bad = [], reply = (S) => K(c, "jhMzReply")(P, S.pz);
+  const replay = (path) => { const S = state(c, P); for (const u of path) if (c.jhMzTry(S, "door", u) !== "next") return null; return S };
+  (function walk(node, b, path) {
+    const S0 = replay(path); if (!S0) { bad.push(P.id + "：" + path.join(",") + " 重播不到"); return }
+    for (const u of ucis(b, "r")) if (!(u in node)) { const S = replay(path); if (c.jhMzTry(S, "door", u) !== "bad") bad.push(P.id + "：" + [...path, u].join(",") + " 不是最快殺要判錯") }
+    for (const [u, v] of Object.entries(node)) { const S = replay(path), r = c.jhMzTry(S, "door", u);
+      if (v === 0) { if (r !== "ok") bad.push(P.id + "：" + [...path, u].join(",") + " 要將死（實際 " + r + "）"); continue }
+      if (r !== "next") { bad.push(P.id + "：" + [...path, u].join(",") + " 要算對（實際 " + r + "）"); continue }
+      if (reply(S) !== v[0]) bad.push(P.id + "：" + [...path, u].join(",") + " 黑方要應 " + v[0] + "（實際 " + reply(S) + "）");
+      walk(v[1], mv(mv(b, u), v[0]), [...path, u]) } })(P.alt, C.parseFen(P.fen), []);
+  return bad }
+
+test("題庫裡帶 alt 的每一題（各派第二層），真的 jhMzTry 走遍 alt 樹：每一條最快殺都算對、黑方照那一條應、走完將死，其他著法都判錯；改壞驗證：拿掉 alt 一定抓得到", () => {
+  const c = load(), all = pools().flatMap((p) => p.items.filter((x) => x.alt));
+  assert.ok(all.length >= 7, "各派第二層帶 alt 的題目都讀到（實際 " + all.length + "）");
+  for (const x of all) assert.deepEqual(poolTryProblems(c, x), [], x.id);
+  /* 改壞驗證：程式不看 alt（只認主變）時，每一題都有分岔（工具只在有分岔時才寫 alt），一定抓得到 */
+  const P1 = MZ.replace("if(P.alt&&typeof P.alt===\"object\"){", "if(false){"); assert.notEqual(P1, MZ); const c1 = load(P1);
+  for (const x of all) assert.ok(poolTryProblems(c1, x).length >= 1, x.id + "：程式不看 alt 要被抓到");
+});
+
 test("第二層題目（各派石門＋被抓）彼此不重複；改壞驗證：被抓題撞被抓題、石門撞別派石門、石門撞別派被抓題，一定抓得到", () => {
   const P = pools(); assert.ok(P.filter((p) => /2(_TRAP)?$/.test(p.nm)).length >= 14, "七派第二層的石門、被抓題庫都讀到");
   assert.deepEqual(dupProblems(P), []);
