@@ -30,37 +30,37 @@ const sees = (c, S, G, x, y) => c.jhMzSight(S, G).some((q) => q.x === x && q.y =
 function drumProblems(c) {
   const bad = [];
   /* ① 往石鼓走：順時針轉 90 度、人不動、算一回合 */
-  let S = room(c, { "4,7": "U" }, [], 3, 7, { "4,7": 0 }), r = c.jhMzStep(S, 1, 0);
+  let S = room(c, { "4,7": "d" }, [], 3, 7, { "4,7": 0 }), r = c.jhMzStep(S, 1, 0);
   if (S.drum3["4,7"] !== 1) bad.push("① 往石鼓走要順時針轉 90 度（北→東；實際 " + S.drum3["4,7"] + "）");
   if (S.player.x !== 3 || S.turn !== 1 || r.ev !== "move") bad.push("① 轉石鼓人不動、算一回合（實際 " + S.player.x + "," + S.turn + "," + r.ev + "）");
   c.jhMzStep(S, 1, 0); c.jhMzStep(S, 1, 0); c.jhMzStep(S, 1, 0); if (S.drum3["4,7"] !== 0) bad.push("① 轉四次回到原本的方向");
   /* ② 凸起蓋住的那一格：人照樣能走、能站 */
-  S = room(c, { "6,3": "U" }, [], 7, 4, { "6,3": 1 }); r = c.jhMzStep(S, 0, -1); if (S.player.y !== 3 || r.ev !== "move") bad.push("② 凸起蓋住的格子人照樣能走");
+  S = room(c, { "6,3": "d" }, [], 7, 4, { "6,3": 1 }); r = c.jhMzStep(S, 0, -1); if (S.player.y !== 3 || r.ev !== "move") bad.push("② 凸起蓋住的格子人照樣能走");
   /* ③ 馬腿在凸起那一格：那個方向跳不過去；凸起轉走後就跳得過去 */
-  S = room(c, { "6,3": "U" }, [{ x: 7, y: 4 }], 1, 7, { "6,3": 1 }); if (sees(c, S, S.guards[0], 8, 2) || sees(c, S, S.guards[0], 6, 2)) bad.push("③ 馬腿被凸起蓋住：往上跳的兩個落點都沒有");
+  S = room(c, { "6,3": "d" }, [{ x: 7, y: 4 }], 1, 7, { "6,3": 1 }); if (sees(c, S, S.guards[0], 8, 2) || sees(c, S, S.guards[0], 6, 2)) bad.push("③ 馬腿被凸起蓋住：往上跳的兩個落點都沒有");
   S.drum3["6,3"] = 2; if (!sees(c, S, S.guards[0], 8, 2)) bad.push("③ 凸起轉走：又跳得到");
   /* ④ 連環：兩隻一起往同一個方向跳 */
   S = room(c, {}, [{ x: 3, y: 4 }, { x: 9, y: 4 }], 1, 7); c.jhMzGuardStep(S);
   if (!(S.guards[0].x === 4 && S.guards[0].y === 2 && S.guards[1].x === 10 && S.guards[1].y === 2)) bad.push("④ 兩隻一起往同一個方向跳（實際 " + S.guards.map((G) => G.x + "," + G.y).join(" ") + "）");
   /* ⑤ 其中一隻的馬腿被蹩住：兩隻都不往那個方向，一起換下一個方向（順時針） */
-  S = room(c, { "2,3": "U" }, [{ x: 3, y: 4 }, { x: 9, y: 4 }], 1, 7, { "2,3": 1 }); c.jhMzGuardStep(S);
+  S = room(c, { "2,3": "d" }, [{ x: 3, y: 4 }, { x: 9, y: 4 }], 1, 7, { "2,3": 1 }); c.jhMzGuardStep(S);
   if (!(S.guards[0].x === 5 && S.guards[0].y === 3 && S.guards[1].x === 11 && S.guards[1].y === 3)) bad.push("⑤ 蹩住一隻：兩隻一起換方向（實際 " + S.guards.map((G) => G.x + "," + G.y).join(" ") + "）");
   /* ⑥ 暈著的那一隻不跟、也不擋方向 */
-  S = room(c, { "2,3": "U" }, [{ x: 3, y: 4, stun: 2 }, { x: 9, y: 4 }], 1, 7, { "2,3": 1 }); c.jhMzGuardStep(S);
+  S = room(c, { "2,3": "d" }, [{ x: 3, y: 4, stun: 2 }, { x: 9, y: 4 }], 1, 7, { "2,3": 1 }); c.jhMzGuardStep(S);
   if (!(S.guards[0].x === 3 && S.guards[0].y === 4 && S.guards[1].x === 10 && S.guards[1].y === 2)) bad.push("⑥ 暈的不跟也不擋（實際 " + S.guards.map((G) => G.x + "," + G.y).join(" ") + "）");
   /* ⑦ 石鼓擋路、不擋光 */
-  S = room(c, { "4,7": "U" }, [], 3, 7, { "4,7": 0 }); if (!c.jhMzSolid(S, 4, 7) || c.jhMzOpaque(S, 4, 7)) bad.push("⑦ 石鼓擋路、不擋光");
+  S = room(c, { "4,7": "d" }, [], 3, 7, { "4,7": 0 }); if (!c.jhMzSolid(S, 4, 7) || c.jhMzOpaque(S, 4, 7)) bad.push("⑦ 石鼓擋路、不擋光");
   return bad;
 }
 
 test("登記：屏風馬門第三層；兩隻連環馬衛；石鼓擋路不擋光；碑刻一則（《御製皇陵碑》）；寶箱有收藏品「殘局銅盤」；修為 +60；結尾寫三層都走完", () => {
   const c = load(), L = L3(c);
   assert.equal(L.layer, 3); assert.equal(c.jhMzLayers("screen"), 3); assert.deepEqual(Array.from(L.guards, (G) => G.kind), ["linkhorse", "linkhorse"]);
-  assert.ok(L.solid.includes("U") && !L.opaque.includes("U") && L.solid.includes("L")); assert.equal(typeof L.onStep, "function");
+  assert.ok(L.solid.includes("d") && !L.opaque.includes("d") && L.solid.includes("L")); assert.equal(typeof L.onStep, "function");
   assert.equal(L.lore.length, 1); assert.match(L.lore[0].src, /^遊戲整理，據朱元璋《御製皇陵碑》/);
   assert.deepEqual(Array.from(L.rew, (r) => r.k), ["gong", "page", "relic"]); assert.match(L.rew[2].zh, /殘局銅盤/);
   assert.equal(L.xp, 60); assert.equal(L.xpKey, "maze:screen:3"); assert.equal(L.key, "jhMaze_screen_L3"); assert.match(L.say.done[0], /三層都走完了/);
-  const S = c.jhMzNew(L), want = []; L.map.forEach((r, y) => [...r].forEach((v, x) => { if (v === "U") want.push(x + "," + y) }));
+  const S = c.jhMzNew(L), want = []; L.map.forEach((r, y) => [...r].forEach((v, x) => { if (v === "d") want.push(x + "," + y) }));
   assert.deepEqual(Object.keys(vm.runInContext("jhMzScreen3Drum", c)(S)).sort(), want.sort(), "每個石鼓都有起始方向");
 });
 
@@ -89,7 +89,7 @@ test("地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓�
   for (const r of M) assert.equal(r.length, W);
   for (let x = 0; x < W; x++) { assert.equal(M[0][x], "#"); assert.equal(M[M.length - 1][x], "#") } for (const r of M) { assert.equal(r[0], "#"); assert.equal(r[W - 1], "#") }
   const cnt = (ch) => M.join("").split(ch).length - 1;
-  for (const ch of "@DP>") assert.equal(cnt(ch), 1, ch); assert.equal(cnt("C"), 3); assert.equal(cnt("L"), 1); assert.equal(cnt("U"), 4);
+  for (const ch of "@DP>") assert.equal(cnt(ch), 1, ch); assert.equal(cnt("C"), 3); assert.equal(cnt("L"), 1); assert.equal(cnt("d"), 4);
   const S = c.jhMzNew(L), all = reach(c, S);
   M.forEach((r, y) => [...r].forEach((v, x) => { if ("PCD>".includes(v)) assert.ok(all.has(y * W + x), v + " 走得到 " + x + "," + y) }));
   const ly = M.findIndex((r) => r.includes("L")), lx = M[ly].indexOf("L");
@@ -140,6 +140,10 @@ test("題庫：石門 3 題（雙馬、馬收尾的三步殺：雙馬飲泉）�
 });
 
 test("〔原始碼〕07z9m-screen3.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_SCREEN3／jhMzScreen3 前綴；m.html 排在屏風馬門第二層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法", () => {
+  /* 地圖字元的外觀（JH_MZ_OBJ／JH_MZ_TILE）只有這一派自己登記：別的檔先登記了同一個字元，這裡的「if(!JH_MZ_OBJ.x)」會被跳過、畫成別派的東西 */
+  { const own = new Set([...SRC.matchAll(/JH_MZ_(?:OBJ|TILE).([A-Za-z])=/g)].map((m) => m[1])), dir = path.join(ROOT, "xiangqi-db", "m");
+    for (const g of fs.readdirSync(dir).filter((g) => /^07z9m-.*\.js$/.test(g) && g !== "07z9m-screen3.js")) { const x = fs.readFileSync(path.join(dir, g), "utf8");
+      for (const m of x.matchAll(/JH_MZ_(?:OBJ|TILE).([A-Za-z])=/g)) assert.ok(!own.has(m[1]), "字元 " + m[1] + " 跟 " + g + " 撞了") } }
   assert.ok(!SRC.includes("\r")); assert.ok(!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(SRC));
   for (const line of SRC.split("\n")) { const code = line.replace(/"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`|'(?:[^'\\]|\\.)*'|\/(?:[^/\\\n]|\\.)+\/[gimsuy]*/g, ""); assert.ok(!/;\s*\/\/\s*\S/.test(code) && !/^\s*\/\//.test(line), "行內 // 註解：" + line.slice(0, 60)) }
   const tops = [...SRC.matchAll(/^(?:const|let|function)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);

@@ -18,9 +18,9 @@ const JH_MZ_SCREEN3_MAP=[
 "#T..L........T#",
 "#.###.#.#.###.#",
 "#C..#.....#..C#",
-"##.##.U.U.##.##",
+"##.##.d.d.##.##",
 "#.............#",
-"#.###.U.U.###.#",
+"#.###.d.d.###.#",
 "#P..#.....#..C#",
 "###.###.###.###",
 "#.............#",
@@ -31,7 +31,7 @@ const JH_MZ_SCREEN3_DIR=[[0,-1],[1,0],[0,1],[-1,0]];
 const JH_MZ_SCREEN3_DRUM0={"6,7":0,"8,7":0,"6,9":2,"8,9":2};
 const jhMzScreen3Drum=S=>S.drum3||(S.drum3=Object.assign({},JH_MZ_SCREEN3_DRUM0));
 /* 這一格有沒有被石鼓的凸起蓋住 */
-function jhMzScreen3Bump(S,x,y){const D=jhMzScreen3Drum(S);for(const k in D){if(jhMzCell(S,...k.split(",").map(Number))!=="U")continue;const[a,b]=k.split(",").map(Number),d=JH_MZ_SCREEN3_DIR[D[k]];if(a+d[0]===x&&b+d[1]===y)return true}return false}
+function jhMzScreen3Bump(S,x,y){const D=jhMzScreen3Drum(S);for(const k in D){if(jhMzCell(S,...k.split(",").map(Number))!=="d")continue;const[a,b]=k.split(",").map(Number),d=JH_MZ_SCREEN3_DIR[D[k]];if(a+d[0]===x&&b+d[1]===y)return true}return false}
 /* 馬衛往 (dx,dy) 跳得過去嗎：照第一層（馬腿擋路、玩家站在馬腿、落點擋路都不行），再加上馬腿被凸起蓋住也不行 */
 function jhMzScreen3Can(S,x,y,dx,dy,G){const L=jhMzHorseLeg(x,y,dx,dy);if(jhMzScreen3Bump(S,L.x,L.y))return false;return jhMzHorseCan(S,x,y,dx,dy,G)}
 const JH_MZ_SCREEN3_GUARDS=[{kind:"linkhorse",x:5,y:8,dx:1,dy:-2},{kind:"linkhorse",x:9,y:8,dx:1,dy:-2}];
@@ -44,13 +44,13 @@ JH_MZ_KIND.linkhorse={
       if(A.every(H=>jhMzScreen3Can(S,H.x,H.y,dx,dy,H)&&!A.some(J=>J!==H&&J.x===H.x+dx&&J.y===H.y+dy))){for(const H of A){H.x+=dx;H.y+=dy;H.dx=dx;H.dy=dy}return}}},
   look:{body:"#5a6b5e",head:"#6d7f70",eye:0xE24A3A}};
 /* 往石鼓走：順時針轉 90 度，花一回合（照「原地等一回合」的共用規則：守衛走、先提醒再抓），人不動 */
-function jhMzScreen3Turn(S,dx,dy,c){if(c!=="U"||(!dx&&!dy))return null;const P=S.player,k=(P.x+dx)+","+(P.y+dy),D=jhMzScreen3Drum(S);D[k]=((D[k]||0)+1)%4;
+function jhMzScreen3Turn(S,dx,dy,c){if(c!=="d"||(!dx&&!dy))return null;const P=S.player,k=(P.x+dx)+","+(P.y+dy),D=jhMzScreen3Drum(S);D[k]=((D[k]||0)+1)%4;
   const r=jhMzStep(S,0,0),N=["北","東","南","西"][D[k]],E=["north","east","south","west"][D[k]];
   if(r.ev==="move")Object.assign(r,{msg:[`你推著石鼓轉了一下，凸起轉到<b>${N}邊</b>，蓋住旁邊那一格當馬腿的地方。`,`You turn the stone drum; its knob now faces <b>${E}</b>, covering the square beside it where a horse's leg would go.`]});
   return r}
 /* 3D：照第一層的石鼓（JH_MZ_OBJ.G）再加一塊凸起（3D 版凸起不轉，轉的時候用文字說朝哪）；平面版：圓鼓＋一塊指向凸起那一邊的方塊 */
-if(!JH_MZ_OBJ.U)JH_MZ_OBJ.U=H=>{const{T3,mesh,lam}=H,g=JH_MZ_OBJ.G?JH_MZ_OBJ.G(H):new T3.Group();g.add(mesh(new T3.BoxGeometry(.22,.2,.22),lam("#5f645c"),0,.1,-.44));return g};
-if(!JH_MZ_TILE.U)JH_MZ_TILE.U=(cx,px,py,T,S,x,y)=>{cx.fillStyle="#3b3428";cx.fillRect(px,py,T,T);cx.fillStyle="#7b8077";cx.beginPath();cx.arc(px+T/2,py+T/2,T*.34,0,Math.PI*2);cx.fill();
+if(!JH_MZ_OBJ.d)JH_MZ_OBJ.d=H=>{const{T3,mesh,lam}=H,g=JH_MZ_OBJ.G?JH_MZ_OBJ.G(H):new T3.Group();g.add(mesh(new T3.BoxGeometry(.22,.2,.22),lam("#5f645c"),0,.1,-.44));return g};
+if(!JH_MZ_TILE.d)JH_MZ_TILE.d=(cx,px,py,T,S,x,y)=>{cx.fillStyle="#3b3428";cx.fillRect(px,py,T,T);cx.fillStyle="#7b8077";cx.beginPath();cx.arc(px+T/2,py+T/2,T*.34,0,Math.PI*2);cx.fill();
   const i=S&&S.drum3&&S.drum3[x+","+y],d=JH_MZ_SCREEN3_DIR[i==null?(JH_MZ_SCREEN3_DRUM0[x+","+y]||0):i];cx.fillStyle="#5f645c";cx.fillRect(px+T/2+d[0]*T*.36-T*.12,py+T/2+d[1]*T*.36-T*.12,T*.24,T*.24)};
 /* ==JH_MZ_POOL:JH_MZ_POOL_SCREEN3== */
 const JH_MZ_POOL_SCREEN3={door:[
@@ -71,7 +71,7 @@ trap:[
 {"id":"lk137c6","src":{"book":"爛柯神機","title":"巧用連環-(連環形)"},"zh":["被馬衛逮住了","兩隻馬衛把你夾在石鼓中間：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by the horse guards","The horse guards pin you between the drums: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"9/4k4/3R1P3/6p2/2P6/4n4/3C1p3/2p3r2/3p1p3/4K4","line":["d7e7","e8d8","c5d5","e4d6","d5d6"]},
 {"id":"lk141c5","src":{"book":"爛柯神機","title":"屈乘假道"},"zh":["被馬衛逮住了","兩隻馬衛把你夾在石鼓中間：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by the horse guards","The horse guards pin you between the drums: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"C1bak4/3R5/5cr2/9/4P4/9/9/9/2r1p4/3K5","line":["d8d9","e9e8","d9d8","e8e7","e5e6"]}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_SCREEN3_TRAP== */
-jhMzLayer("screen",3,{map:JH_MZ_SCREEN3_MAP,guards:JH_MZ_SCREEN3_GUARDS,solid:"#DGUL",opaque:"#DL",onStep:jhMzScreen3Turn,
+jhMzLayer("screen",3,{map:JH_MZ_SCREEN3_MAP,guards:JH_MZ_SCREEN3_GUARDS,solid:"#DGdL",opaque:"#DL",onStep:jhMzScreen3Turn,
   pool:{door:JH_MZ_POOL_SCREEN3.door,trap:JH_MZ_POOL_SCREEN3_TRAP.trap},puz:{door:JH_MZ_POOL_SCREEN3.door[0],trap:JH_MZ_POOL_SCREEN3_TRAP.trap[0]},
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"古譜殘頁",en:"Old manual page"},{k:"relic",zh:"收藏品「殘局銅盤」",en:"Keepsake: the bronze endgame tray"}],
   lore:[{id:"sh5",kind:"stele",title:["皇陵碑","The imperial tomb stele"],

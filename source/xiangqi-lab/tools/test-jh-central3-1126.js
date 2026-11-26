@@ -138,9 +138,9 @@ test("題庫：石門 3 題（兵收尾的三步殺：炮兵協同）、被抓�
 
 test("〔原始碼〕07z9m-central3.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_CENTRAL3／jhMzCentral3 前綴；m.html 排在中炮門第二層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法", () => {
   /* 地圖字元的外觀（JH_MZ_OBJ／JH_MZ_TILE）只有這一派自己登記：別的檔先登記了同一個字元，這裡的「if(!JH_MZ_OBJ.x)」會被跳過、畫成別派的東西 */
-  { const own = new Set([...SRC.matchAll(/JH_MZ_(?:OBJ|TILE)\.([A-Za-z])\b/g)].map((m) => m[1])), dir = path.join(ROOT, "xiangqi-db", "m");
+  { const own = new Set([...SRC.matchAll(/JH_MZ_(?:OBJ|TILE).([A-Za-z])=/g)].map((m) => m[1])), dir = path.join(ROOT, "xiangqi-db", "m");
     for (const g of fs.readdirSync(dir).filter((g) => /^07z9m-.*\.js$/.test(g) && g !== "07z9m-central3.js")) { const x = fs.readFileSync(path.join(dir, g), "utf8");
-      for (const m of x.matchAll(/JH_MZ_(?:OBJ|TILE)\.([A-Za-z])\b/g)) assert.ok(!own.has(m[1]), "字元 " + m[1] + " 跟 " + g + " 撞了") } }
+      for (const m of x.matchAll(/JH_MZ_(?:OBJ|TILE).([A-Za-z])=/g)) assert.ok(!own.has(m[1]), "字元 " + m[1] + " 跟 " + g + " 撞了") } }
   assert.ok(!SRC.includes("\r")); assert.ok(!/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(SRC));
   for (const line of SRC.split("\n")) { const code = line.replace(/"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`|'(?:[^'\\]|\\.)*'|\/(?:[^/\\\n]|\\.)+\/[gimsuy]*/g, ""); assert.ok(!/;\s*\/\/\s*\S/.test(code) && !/^\s*\/\//.test(line), "行內 // 註解：" + line.slice(0, 60)) }
   const tops = [...SRC.matchAll(/^(?:const|let|function)\s+([A-Za-z_$][\w$]*)/gm)].map((m) => m[1]);
