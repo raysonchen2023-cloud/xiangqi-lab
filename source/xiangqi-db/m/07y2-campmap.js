@@ -30,6 +30,7 @@ const CP_L={W:2560,H:1600,flags:[[862,866],[1037,796],[1275,656],[1380,530],[156
 const CP_NODE_L=CP_L.flags.map(([x,y])=>{const bx=x-12*CP_LK,by=y+45*CP_LK;let k=0,d=1e9;CP_L.path.forEach(([px,py],i)=>{const e=(px-bx)**2+(py-by)**2;if(e<d){d=e;k=i}});return k});
 const cpPcL=(x,y)=>[x/25.6,y/16];
 function cpCfgL(cur){const N={},E=[];CP_L.path.forEach(([x,y],i)=>{const[a,b]=cpPcL(x,y);N["w"+i]=[+a.toFixed(2),+b.toFixed(2)];if(i)E.push(`w${i-1}-w${i}`)});
+  E.push(`w${CP_L.path.length-1}-w0`);   /* W164（11/26 外部複審）：路線是一圈（最後一點回到出發營寨旁），原本少接這一段，結業路線要繞大半圈（約 14.6 倍） */
   const HS={};CP_L.flags.forEach(([x,y],i)=>{const[a,b]=cpPcL(x,y);HS["cpF"+(i+1)]=["w"+CP_NODE_L[i],+a.toFixed(2),+b.toFixed(2),"bow"]});
   const home="w"+CP_NODE_L[Math.max(0,Math.min(11,cur-1))],nx=CP_L.flags[Math.min(11,cur)]||CP_L.flags[11];
   return{W:2560,H:1600,el:52,h:[.06,60,.0008],look0:cpPcL(nx[0],nx[1]),home,N,E:E.join(" "),HS}}

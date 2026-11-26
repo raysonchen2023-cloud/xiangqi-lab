@@ -44,7 +44,7 @@ test("走路：每面旗對到離旗腳最近的路線點（偏移 ×2560/768）
     const c = cfgL(cur), o = cfg0(cur);
     assert.equal(c.home, "w" + NL[Math.max(0, Math.min(11, cur - 1))]); assert.ok(c.N[c.home]);
     assert.deepEqual(Object.keys(c.HS).sort(), Object.keys(o.HS).sort(), "入口跟原本同一組"); for (const h of Object.values(c.HS)) { assert.ok(c.N[h[0]]); assert.equal(h[3], "bow") }
-    assert.equal(c.N.w0[0], +(L.path[0][0] / 25.6).toFixed(2)); assert.equal(Object.keys(c.N).length, 31); assert.equal(c.E.split(" ").length, 30);
+    assert.equal(c.N.w0[0], +(L.path[0][0] / 25.6).toFixed(2)); assert.equal(Object.keys(c.N).length, 31); assert.equal(c.E.split(" ").length, 31);   /* 31 段：環線 30 段＋W164（11/26）補上最後一段 w30-w0，結業不再繞大半圈 */
     assert.deepEqual([c.W, c.H, c.el], [2560, 1600, o.el]); assert.ok(c.h[0] > o.h[0], "小人身高放大");
   }
   assert.deepEqual(cfg0(3).home, "w" + NODE0[2], "原圖照舊");

@@ -62,6 +62,7 @@ const CLASSIFIED = new Set([
   "test-aab-assets-check-1121.js",   /* 11/21 W41① 送審前安裝包內容檢查 xiangqi-android/scripts/check-aab-assets.js（封測 P0-IMG：W21 缺素材、W30 切塊大檔接不回、舊檔；行為 6） */
   "test-p0-aab-bound-1122.js",   /* 11/22 W69 流程盤點第 3 項：P0 證據綁住送審 AAB（p0-gate 三份報告同一個 AAB 雜湊、P0-IMG 要 --cdn 且 0、P0-UPD 不准 --no-old-worker）、包裡素材跟 CDN 現行版交叉核對、建包只換清單內舊副本、簽章密碼不上命令列、建包腳本 --home-art 必填；PR #42 審查：版號要等於送審版號、P0-3D Android 12／16 各一份且完整跑、已知問題清單用倉庫那份（行為 7、原始碼 1） */
   "test-p0-canary-1123.js",   /* 11/23 AGENTS.md「P0 出口驗證要難作假」：P0 工具鎖定 tool-pin.js（報告記工具雜湊、閘門比 origin/main）、三項金絲雀（破圖拿掉首頁素材／改雜湊／CDN 404、更新檢查假視窗、3D 自我反測遮罩）、閘門收 Android 12／16 金絲雀；行為 36、混合 2、原始碼 6 */
+  "test-w66-cdn-recheck-1126.js",   /* 11/26 W66 P0-IMG check-aab-assets.js 問 CDN：全部問完後沒確認到的低並行再問一輪（askCdn）；只有 404／410 算 ✘、還是連不上照樣 △（行為 2、原始碼 1） */
   "test-app-assets-check-1122.js",   /* 11/22 W69② iOS 送審前安裝包素材檢查 xiangqi-ios/scripts/check-app-assets.js（對應 Android W41①：首頁必要素材、清單 SHA-1、缺圖與切塊大檔、跟 CDN 清單比對、.ipa；反測必紅；--gate 送審閘門沒核對 CDN 就擋、.ipa 出錯也清暫存（PR #41 審查）；行為 8、原始碼 1） */
   "test-preview-build-1121.js",   /* 11/21 W43 Cloudflare PR 預覽建置 source/preview-build.js（版號跟 sw.js 一致、刪超過 25 MB 的檔、寫 404.html；行為 5） */
   "test-device-checks-1121.js",   /* 11/21 W41②③ 升級測試 check-upgrade.js 與 44 畫面破圖掃描 check-scenes.js 的判斷規則（P0-UPD、P0-IMG；離線只算看得到的破圖；測不成立回 2；只准模擬器；更新視窗看 20 秒；行為 12、原始碼 3） */
@@ -205,6 +206,10 @@ const CLASSIFIED = new Set([
   "test-jh-horse2-1126.js",   /* 11/26 W87-2 起馬地底迷宮第二層「烽火暗驛」（m/07z9m-horse2.js）：vm 跑追跡野馬只慢 2 步、碎瓦片踩碎＋野馬那一回合多跳一步＋stop、自動走不踩瓦片、用真的 jhMzStep 搜尋走得過、題庫與改壞驗證 */
   "test-jh-elephant2-1126.js",   /* 11/26 W87-2 飛相地底迷宮第二層「淤泥闈場」（m/07z9m-elephant2.js、jhMzStep 的 afterMove）：vm 跑淤泥一路滑到底、考箱推進淤泥當煞車與還原、自動走不踩淤泥、用真的 jhMzStep 搜尋走得過、題庫（馬收尾殺題＋解殺題）與改壞驗證 */
   "test-jh-pawn2-1126.js",   /* 11/26 W87-2 仙人指路地底迷宮第二層「漏月迷陣」（m/07z9m-pawn2.js、jhMzPath 的 lv.canMove）：vm 跑竹林只能上下直走（onStep 與自動走）、巡竹兵卒過河加左右視線、逐回合模擬走得過（守衛慢 1～7 回合也一樣）、題庫與改壞驗證 */
+  "test-ipad-scene-review-1126.js",   /* 11/26 W164、W165 外部複審：營地橫式結業路線補上環線最後一段（vm 跑 cpCfgL＋shwPath 量長度）、書齋橫式點亮格器物照 D.wide 跳說明（vm 跑 sciMount），含改壞驗證 */
+  "test-maze-review-1126.js",   /* 11/26 W153～W155 外部複審：迷宮過關那句話有下一層就說通到下一層（jhMzDoneText）、飛相第二層石門紅方要有相、多解題題面不寫死最後一步、反宮馬不標馬後炮；vm 跑十派第一、二層，含改壞驗證 */
+  "test-legend-keep-1126.js",   /* 11/26 W157 外部複審：古戰場自由段保護任務（函谷關）提早結束時也要檢查保護的子；vm 跑 07-legend.js 的判斷，含改壞驗證 */
+  "test-delete-focus-1126.js",   /* 11/26 W156 外部複審：刪除本機資料第二層確認，報讀模式先聚焦「不要刪」（ax-first）；vm 跑 11b-a11y.js 的 axmDlgAdd，含改壞驗證 */
   "test-jh-maze-layers-1126.js",   /* 11/26 W87-2 地底迷宮換層（m/07z9m-maze.js jhMzLayer／jhMzDeep／jhMzPick、07z9m-fall.js 層數標題、07z9m-central2.js 中炮門第二層示範）：vm 跑登記多層不動第一層、存檔分層、最深層含舊存檔、選層鎖住、門內頁入口、轉場何時播（含改壞驗證） */
   "test-jh-maze-save-1126.js",   /* 11/26 W87-2 地底迷宮存檔跟旅程走（m/05b-save.js JOURNEY_KEYS 加 jhMaze*、各層、題目指標）：vm 跑真的 saveSnap／saveApply＋jhMzGet／jhMzSave，十派每層都在清單、兩段旅程互不影響、舊存檔升上來（含改壞驗證） */
   "test-jh-central2-1126.js",   /* 11/26 W87-2 中炮門地底迷宮第二層（m/07z9m-central2.js）：vm 跑雙炮衛看 3 格、另一個炮衛擋住就看不到、前衛不踩水窪（含改壞驗證）；淺水窪多耗一回合、自動走繞開；地圖 BFS、必經走廊、任一炮衛慢 1～7 回合都走得過；兩段題庫 core.js 獨立重算 */
