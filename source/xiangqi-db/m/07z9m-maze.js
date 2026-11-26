@@ -412,10 +412,19 @@ function jhMzPtrGet(sid){let o=null;try{o=store.get(jhMzLv(sid).key+"Ptr",null)}
 function jhMzPtrSet(sid,p){try{store.set(jhMzLv(sid).key+"Ptr",{door:p.door,trap:p.trap})}catch(e){}}
 /* 這一題的著法序列：line＝[紅,黑,紅,…]（多步殺，最後一步是紅方將死）；只有 ans＝一步殺 */
 const jhMzLine=P=>P?(Array.isArray(P.line)&&P.line.length?P.line:[P.ans]):[];
+/* 黑方剛應的那一步（alt 分支記在 S.pz.reply，舊題照主變）；現在該走的那一步（提示用：主變還在這一層可以走就提示主變，不然提示這一層第一個可以走的） */
+const jhMzReply=(P,pz)=>pz&&pz.reply||jhMzLine(P)[pz?pz.i-1:0];
+function jhMzNow(P,pz){const L=jhMzLine(P);if(!pz)return L[0];if(P.alt&&pz.node){const k=Object.keys(pz.node);return k.includes(L[pz.i])?L[pz.i]:k[0]}return L[pz.i]||L[0]}
 /* W87：多步殺一步一步走——走對了、還沒將死回 next（S.pz 記到第幾手，對方照 line 應一步）；最後一步走對回 ok；
    走錯回 bad（從頭再來）或 back（陷阱錯第 4 次）。一步殺跟原本一樣 */
+/* W87-2（11/26 開發者選單「放寬到不是唯一解，只要走的那步仍是最快殺就算對」）：題目有 alt 就照 alt 判斷——
+   alt＝{紅方這一步可以走的著法: 0（這一步就將死）或 [黑方照撐最久的方式應的那一步, 下一層 alt]}，maze-puzzles.js --multi 預先收錄每一步所有最快殺的著法；
+   每條分支都是最快殺，步數一樣，所以「還要幾步殺」照舊用主變長度算。S.pz.node＝現在走到 alt 的哪一層、S.pz.reply＝黑方剛應的那一步。
+   沒有 alt 的舊題（唯一解）照舊只認主變 line。 */
 function jhMzTry(S,id,mv){const P=jhMzPuz(S,id);if(!P)return"bad";const L=jhMzLine(P),i=S.pz&&S.pz.id===id?S.pz.i:0;
-  if(mv===L[i]){if(i+1>=L.length){S.pz=null;return"ok"}S.pz={id,i:i+2};return"next"}
+  if(P.alt&&typeof P.alt==="object"){const node=i&&S.pz.node||P.alt,v=node&&Object.prototype.hasOwnProperty.call(node,mv)?node[mv]:undefined;
+    if(v===0){S.pz=null;return"ok"}if(Array.isArray(v)&&v.length===2){S.pz={id,i:i+2,node:v[1],reply:v[0]};return"next"}}
+  else if(mv===L[i]){if(i+1>=L.length){S.pz=null;return"ok"}S.pz={id,i:i+2};return"next"}
   S.pz=null;S.fails[id]=(S.fails[id]||0)+1;return id==="trap"&&S.fails.trap>=4?"back":"bad"}
 function jhMzSolved(S,id){S.pz=null;if(id==="door"){jhMzOpenDoor(S);return}
   const G=S.caughtBy||S.guard,P=S.player;S.caughtBy=null;S.fails.trap=0;if(S.cur)delete S.cur.trap;if(!G)return;G.stun=4;
@@ -609,7 +618,7 @@ function JhMaze(v,sid,n){jhCss();jhMzCss();const LV=jhMzLvN(sid,n||jhMzLayerOf(l
       <div class="jh-mz-row"><button type="button" data-a="hint">${esc(jhL(HELP[0]+"的提示",HELP[1]+"'s hint"))}</button>${id==="door"?`<button type="button" data-a="back">${esc(jhL("先退開","Step back"))}</button>`:""}</div>${id==="trap"?`<div class="jh-mz-esc">${escIdle()}</div>`:""}`);
     if(id==="trap"){trapO=o;escPush();escBind()}
     const res=(m,c)=>{const e=o.querySelector(".jh-mz-res");e.textContent=m;e.className="jh-mz-res "+(c||"")};
-    const now=()=>L[S.pz&&S.pz.id===id?S.pz.i:0]||L[0];
+    const now=()=>jhMzNow(P,S.pz&&S.pz.id===id?S.pz:null);
     const apply=mv=>{const a=jhMzSq(mv.slice(0,2)),b=jhMzSq(mv.slice(2));pcs=pcs.filter(x=>!(x.c===b.c&&x.r===b.r));const me=pcs.find(x=>x.c===a.c&&x.r===a.r);if(me){me.c=b.c;me.r=b.r}last=[a,b]};
     const restart=()=>{pcs=jhMzFen(P.fen);last=null};
     const draw=()=>{const Z=40,ox=24,oy=24,Wd=ox*2+Z*8,Hd=oy*2+Z*9;
@@ -623,7 +632,7 @@ function JhMaze(v,sid,n){jhCss();jhMzCss();const LV=jhMzLvN(sid,n||jhMzLayerOf(l
     const pick=(c,r)=>{if(won||mzLost)return;   /* 11/25 審核：陷阱題第 4 次答錯、叫你回入口之後，棋盤原本還能下；再走正解按「繼續」就留在原地、保住寶物、守衛反被暈眩。判負後（mzLost；不叫 lost，下面「回到入口」那段有 const lost＝丟回箱子的寶物）不再接受落子 */const q=pcs.find(x=>x.c===c&&x.r===r);if(q&&q.p===q.p.toUpperCase()){sel={c,r};draw();return}
       if(!sel){res(jhL("先點一顆紅方的棋子。","Tap a red piece first."));return}
       const mv=jhMzMv(sel,{c,r});if(!jhMzLegal(pcs,mv)){sel=null;draw();res(jhL("這一步不合棋規，不算答錯。換一個位置，或改點別顆紅子。","That move isn't legal, so it doesn't count. Pick another square or another red piece."),"bad");return}const got=jhMzTry(S,id,mv);sel=null;
-      if(got==="next"){S.hintOn=null;if(typeof hl==="function")hl();apply(mv);apply(L[S.pz.i-1]);draw();const left=(L.length-S.pz.i+1)>>1;res(jhL(`走對了。黑方應了一步（虛線框），還要 ${left} 步殺。`,`Good. Black replied (dashed squares); mate in ${left} more.`),"ok");return}
+      if(got==="next"){S.hintOn=null;if(typeof hl==="function")hl();apply(mv);apply(jhMzReply(P,S.pz));draw();const left=(L.length-S.pz.i+1)>>1;res(jhL(`走對了。黑方應了一步（虛線框），還要 ${left} 步殺。`,`Good. Black replied (dashed squares); mate in ${left} more.`),"ok");return}
       if(got==="ok"){won=true;{const eb=o.querySelector(".jh-mz-esc");if(eb)eb.remove()}   /* W99 預驗建議：解開了就不留逃跑鈕（誤按白丟整層） */
         apply(mv);draw();
         res(ZS(id)||(DEF?jhL("解圍了！","Threat stopped!"):jhL("將死！","Checkmate!")),"ok");
