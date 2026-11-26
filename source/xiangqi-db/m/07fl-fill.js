@@ -21,7 +21,13 @@ const XFL_HOME_MAX=1.04;
 function xflPlan(o){const W=o.W,av=o.av,nw=o.nw||768,nh=o.nh||1376,H0=W*nh/nw,fitH=av,lockTop=(o.off||0)>8,its=(o.items||[]).filter(q=>q&&isFinite(q.c));
   if(!(W>0&&av>0)||H0-av<2)return null;
   const ok=H=>{const mx=H-av;let lo=0,hi=lockTop?0:mx;for(const q of its){const e=Math.min((q.h||0)/2,30)+6,c=Math.max(0,Math.min(1,q.c))*H,t=Math.max(0,c-e),b=Math.min(H,c+e);lo=Math.max(lo,b-av);hi=Math.min(hi,t)}return lo<=hi+0.5?{lo:Math.max(0,lo),hi:Math.max(Math.max(0,lo),hi)}:null};
-  let H=fitH,r=null;const push=its.length&&its.every(q=>q.p);for(let i=0;i<=(push?0:XFL_STEPS);i++){const h=H0-(H0-fitH)*i/XFL_STEPS,z=ok(h);if(z){H=h;r=z;break}}
+  let H=fitH,r=null;const push=its.length&&its.every(q=>q.p);
+  /* W131b（11/26 iPad 13 吋直向盤點：棋譜庫圖寬 919／1024）：除了推得動的入口，只剩大塊點選區（高 ≥100，例如棋譜庫的古譜書架 .lb-shelf）＝照樣填滿寬度，
+     只要大塊那幾個中間那段看得到（跟 ok() 同一個規則）；裁切位置先讓全部入口範圍置中，再夾進大塊看得到的範圍。擺不進就照原本少放大 */
+  if(!push&&its.length&&its.some(q=>q.p)&&its.every(q=>q.p||q.h>=100)){const mx=H0-av;let lo=0,hi=lockTop?0:mx;
+    for(const q of its){if(q.p)continue;const e=Math.min(q.h/2,30)+6,c=Math.max(0,Math.min(1,q.c))*H0;lo=Math.max(lo,Math.min(H0,c+e)-av);hi=Math.min(hi,Math.max(0,c-e))}
+    if(lo<=hi+.5){const mid=(Math.min(...its.map(q=>q.c))+Math.max(...its.map(q=>q.c)))/2*H0-av/2,t=Math.max(lo,Math.min(hi,lockTop?0:mid));H=H0;r={lo:t,hi:t}}}
+  for(let i=0;i<=(r?-1:push?0:XFL_STEPS);i++){const h=H0-(H0-fitH)*i/XFL_STEPS,z=ok(h);if(z){H=h;r=z;break}}
   if(!r&&push){const mx=H0-av,mid=(Math.min(...its.map(q=>q.c))+Math.max(...its.map(q=>q.c)))/2*H0-av/2,t=lockTop?0:Math.max(0,Math.min(mx,mid));H=H0;r={lo:t,hi:t}}   /* W131（11/26 開發者選「改程式放大填滿」，不重畫 3:4 圖）：入口全是 07sp 推得動的 .shp-spot（門派門內、設定房間）＝照樣填滿寬度，裁切位置讓入口範圍置中，裁到的標籤由 07sp 推回看得到的範圍 */
   if(!r){H=fitH;r={lo:0,hi:0}}
   const mx=H-av,top=Math.min(r.hi,Math.max(r.lo,lockTop?0:mx*XFL_TOPW)),w=Math.min(W,H*nw/nh);
