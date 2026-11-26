@@ -96,6 +96,9 @@ test("改壞驗證（水窪）：以前的四種寫法、耗的那一回合不�
     ["#212 第四輪：拿掉 finally，S.mudIn 沒復原（同一局再進水窪就不多耗）", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q"||S.mudIn)return null;S.mudIn=1;const r=jhMzStep(S,dx,dy);if(r.ev!=="move")return r;const r2=jhMzStep(S,0,0);if(r2.ev==="trap"){S.caughtBy=null;return{ev:"spot"}}if(r2.ev!=="move")return r2;r.stop=true;return r}', "再進水窪"],
     ["耗的那一回合不照共用規則（直接讓守衛走、看到就抓）", 'function jhMzCentral2Mud(S,dx,dy,c){if(c!=="Q"||S.mudIn)return null;S.mudIn=1;let r;try{r=jhMzStep(S,dx,dy)}finally{S.mudIn=0}if(r.ev!=="move")return r;S.turn++;jhMzGuardStep(S);if(jhMzCaught(S))return{ev:"trap"};r.stop=true;return r}', "走到水窪上"],
   ];
+  /* #212 第五輪：走進水窪那一步已經被提醒，還繼續在水窪裡耗那一回合 */
+  { const a = SRC.indexOf("function jhMzCentral2Mud"), e = SRC.indexOf("\n/* 3D：淺水窪", a), F = SRC.slice(a, e);
+    assert.equal(F.split('if(r.ev!=="move")return r;').length, 2, "找得到走進去那一步的判斷"); V.push(["#212 第五輪：走進水窪那步已提醒還繼續耗", F.replace('if(r.ev!=="move")return r;', 'if(r.ev==="trap")return r;'), "已提醒就不再耗"]) }
   for (const [nm, body, key] of V) { const src = withMud(SRC, body); assert.notEqual(src, SRC, nm); assert.ok(mudProblems(load(() => src)).some((s) => s.includes(key)), nm + "：要被抓到（" + key + "）") }
 });
 
@@ -126,6 +129,7 @@ function mudProblems(c) {
   S = corridor(c, { 7: "Q" }, [{ x: 11, dx: 1 }], 8, 1); r = c.jhMzStep(S, -1, 0);
   if (r.ev !== "spot") bad.push("守衛走完才看到：先提醒、不直接抓（實際 " + r.ev + "）");
   if (S.player.x !== 7) bad.push("先進水窪：被提醒時人已經在水窪裡");
+  if (S.turn !== 1) bad.push("走進水窪那步已提醒就不再耗：只算一回合（實際 " + S.turn + "）");
   /* ⑶ #212 審查情境：守衛 2 面右、水窪 6、人 7 往左＝先提醒，不直接抓；⑹ 對照：一般地面同樣配置也是先提醒 */
   S = corridor(c, { 6: "Q" }, [{ x: 2, dx: 1 }], 7, 1); r = c.jhMzStep(S, -1, 0); if (r.ev !== "spot") bad.push("審查情境（守衛 2、水窪 6、人 7）：先提醒、不直接抓（實際 " + r.ev + "）");
   S = corridor(c, {}, [{ x: 2, dx: 1 }], 7, 1); r = c.jhMzStep(S, -1, 0); if (r.ev !== "spot") bad.push("對照組（一般地面，同樣配置）要是先提醒（實際 " + r.ev + "）");
@@ -186,6 +190,12 @@ test("走一趟：一定有一條不被炮衛看到的路，先踩踏板、再�
 });
 
 const poolOf = (src, nm) => { const a = src.indexOf(`/* ==JH_MZ_POOL:${nm}== */`), b = src.indexOf(`/* ==/JH_MZ_POOL:${nm}== */`); assert.ok(a > 0 && b > a, nm); const ctx = {}; vm.createContext(ctx); vm.runInContext(src.slice(a, b) + `;this.v=${nm};`, ctx); return ctx.v };
+/* #212 第五輪：說明裡的「N 步將死」「checkmate in N」要等於 line 的紅方步數 */
+function descProblems(items) { const bad = [];
+  for (const x of items) { const n = (x.line.length + 1) / 2, z = /(\d+) 步將死/.exec(x.zh[1]), e = /checkmate in (\d+)/.exec(x.en[1]);
+    if (!z || +z[1] !== n || !e || +e[1] !== n) bad.push(x.id + "：line " + n + " 步，說明寫 " + (z && z[1]) + "／" + (e && e[1])) }
+  return bad }
+
 test("題庫：石門 3 題（兵收尾：中兵突破）、被抓至少 5 題（馬收尾的殺題；開發者 11/26 選「換成馬、兵收尾」）；core.js 獨立重算——每步合法、走完將死、最後一步是對的子、沒有更短的殺法；不跟中炮門第一層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜", () => {
   const c = load(), D = vm.runInContext("JH_MZ_POOL_CENTRAL2", c), T = vm.runInContext("JH_MZ_POOL_CENTRAL2_TRAP", c), others = [];
   others.push(poolOf(rd("07z9m-maze.js"), "JH_MZ_POOL_CENTRAL"));   /* 開發者 11/26 選單：不同派可以重用題目，只在同一派各層之間不重複 */
@@ -204,6 +214,9 @@ test("題庫：石門 3 題（兵收尾：中兵突破）、被抓至少 5 題�
     const mateIn = (bd, k) => C.legal(bd, "r").some(([f, t]) => { const b1 = C.make(bd, f, t), R = C.legal(b1, "b"); if (!R.length) return C.inCheck(b1, "b"); if (k === 1) return false; return R.every(([f2, t2]) => mateIn(C.make(b1, f2, t2), k - 1)) });
     if (n >= 2) assert.ok(!mateIn(b0, n - 1), x.id + " 沒有更短的殺法");
   }
+  assert.deepEqual(descProblems(mine), [], "說明寫的步數＝line 的紅方步數");
+  /* 改壞驗證：說明步數寫錯（中文或英文）一定抓得到 */
+  for (const k of ["zh", "en"]) { const Q = JSON.parse(JSON.stringify(mine)); Q[0][k][1] = Q[0][k][1].replace(/\d+(?= 步將死)|(?<=checkmate in )\d+/, (d) => String(+d + 1)); assert.notEqual(Q[0][k][1], mine[0][k][1], k); assert.equal(descProblems(Q).length, 1, k + " 步數寫錯要被抓到") }
 });
 
 test("〔原始碼〕07z9m-central2.js：LF、沒有控制字元、沒有行內 // 註解；新的全域名稱都有 JH_MZ_CENTRAL2／jhMzCentral2 前綴；開場說明用搖桿的新說法", () => {
