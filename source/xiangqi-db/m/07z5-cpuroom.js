@@ -31,7 +31,8 @@ function crInfo(md,lv,sd,o){o=o||{};if(crEn()){const s=sd==="b"?"Black, moves se
 function crDiffSheet(){sheet("模式差在哪？",b=>{b.innerHTML=`<p class="muted" style="margin:0 0 8px">${esc(CR_GUIDE)}</p>`+["rank","free","blind"].filter(k=>k!=="rank"||OFF).map(k=>{const T=CR_TXT[k];
   return`<div class="card" style="padding:8px 12px;margin:0 0 8px"><b>${T[0]}</b><p style="margin:4px 0 2px">${esc(T[1])}</p><p class="muted" style="margin:0;font-size:13.5px">${esc(T[2])}</p></div>`}).join("")})}
 function crFit(P){const c=P&&P.querySelector(".cr-card");if(!c||!P.isConnected)return;const V=document.getElementById("view")||document.documentElement,vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect();if(!pr.width)return;
-  const m=10,k=pr.width*.05;c.style.left=Math.round(Math.max(k,vr.left+m-pr.left))+"px";c.style.right=Math.round(Math.max(k,pr.right-(vr.right-m)))+"px"}
+  const e=typeof scwCur==="function"?scwCur(P):null,cd=e&&e.fx&&e.fx.card;   /* W107-L 橫式圖：說明卡左右照條目留白（圖變寬，不拉滿） */
+  const m=10,kl=pr.width*(cd?cd.left/100:.05),kr=pr.width*(cd?cd.right/100:.05);c.style.left=Math.round(Math.max(kl,vr.left+m-pr.left))+"px";c.style.right=Math.round(Math.max(kr,pr.right-(vr.right-m)))+"px"}
 /* 11/11 規格表 87「等級四套」白話對照：第 N 級＝電腦強度；括號＝同等棋力的段位（晉級賽升的就是它）；修為 Lv 是另一條、跟棋力無關（#/terms 玩法頁也有同一段） */
 const CR_LVTIP="📏 <b>第 N 級</b>是電腦對手的強度（1 最弱、18 最強；幻影棋客、笑面掌櫃都照這個級數）；括號裡是同等棋力的<b>段位</b>：新手→入門 1～3→業餘 1～9 級→專業。晉級賽贏棋升的就是這個段位。<b>修為 Lv</b> 是走故事、做題累積的經驗，跟棋力無關。";
 /* 熱點（原圖像素 768×1376）：[id, x, y, 標籤] */
@@ -120,8 +121,10 @@ function crTips(P){if(typeof tmxBub!=="function")return;
   one("crTipScroll","crScroll","點卷軸換難度",1200);one("crTipOpp","crOpp","點名牌換對手",6500)}
 function CpuRoom(v){setTop("挑戰電腦","#/hub/battle");setTabs(true,"#/hub/battle");v.className="view";crCss();
   const g=crEra(),P=document.createElement("div");P.className="shp-page cq cr-page";
+  /* W107-L：iPad 橫向有專用橫式圖（07sw SCW）就一開始載那張；入口照條目，掌櫃幻影、名牌、說明卡照條目 fx */
+  const src=xqClImg(`data/cpuroom/cpuroom_day${g?"_"+g:""}.webp?v=${CR_IMGV}`),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}
   const sp=(id,t)=>{const[x,y]=CR_SPOT[id];return`<button type="button" class="shp-spot" id="${id}" style="${crPc(x,y)}"><b>${t}</b></button>`};
-  P.innerHTML=`<img src="${xqClImg(`data/cpuroom/cpuroom_day${g?"_"+g:""}.webp?v=${CR_IMGV}`)}" alt="茶坊深處的對弈雅間：棋桌、戰帖、棋譜、棋罐、茶爐">
+  P.innerHTML=`<img src="${pre.src}" alt="茶坊深處的對弈雅間：棋桌、戰帖、棋譜、棋罐、茶爐">
     <div class="cr-ghost${g==="han"?" han":""} g-${g||"def"}" aria-hidden="true"><img src="${typeof PIKA_DIR==="function"?PIKA_DIR():"data/pika2/"}idle.webp" alt=""><i><b>${crSide()==="b"?"帥":"將"}</b></i><span class="cr-zg">掌</span><img class="cr-zgimg" src="data/zhanggui/seat.webp" alt="" onload="this.parentNode.classList.add('zgimg')" onerror="this.remove()"></div><button type="button" class="cr-name" id="crOpp">👤 幻影棋客</button>
     ${sp("crRank","🏅 段位")}${sp("crScroll","📜 選難度")}${OFF?sp("crRankT","🥇 晉級賽"):""}${sp("crFree","📚 練功房")}${sp("crBlind","🙈 盲棋")}${sp("crRed","🔴 執紅")}${sp("crBlack","⚫ 執黑")}${sp("crGo",(g==="han"?"🍶 ":"🍵 ")+CR_GO[crMode()])}
     <div class="cr-card" data-bot-avoid></div>`;
@@ -132,6 +135,9 @@ function CpuRoom(v){setTop("挑戰電腦","#/hub/battle");setTabs(true,"#/hub/ba
   on("crBlind",()=>{store.set("cpuRanked",false);store.set("cpuBlind",true);crPaint(P)});
   on("crRed",()=>{store.set("cpuSide","r");crPaint(P)});on("crBlack",()=>{store.set("cpuSide","b");crPaint(P)});
   on("crScroll",()=>crPick(P));on("crOpp",()=>zgOppSheet(crRanked(),()=>crPaint(P)));on("crRank",()=>crRankSheet());on("crGo",()=>crStart());
+  {const lay=()=>{const e=typeof scwCur==="function"?scwCur(P):null,f=e&&e.fx||{},gh=P.querySelector(".cr-ghost"),nm=P.querySelector(".cr-name"),cd=P.querySelector(".cr-card");
+      if(gh){gh.style.bottom=f.ghost?f.ghost.bottom+"%":"";gh.style.width=f.ghost?f.ghost.width+"%":""}if(nm)nm.style.top=f.name?f.name.top+"%":"";if(cd)cd.style.top=f.card?f.card.top+"%":"";try{crFit(P)}catch(x){}};
+    if(typeof scwMount==="function")scwMount(P,{key:scwKey(src),src0:src,ids:Object.keys(CR_SPOT),apply:lay});lay()}
   crPaint(P);crState().then(()=>{if(P.isConnected)crPaint(P)});crTips(P);
   {const fit=()=>{try{crFit(P)}catch(e){}},rs=()=>{if(!P.isConnected){removeEventListener("resize",rs);return}setTimeout(fit,300)};addEventListener("resize",rs);setTimeout(fit,60);setTimeout(fit,700);const im=P.querySelector(":scope>img");if(im)im.addEventListener("load",()=>setTimeout(fit,200))}
   if(typeof shpFit==="function")shpFit(v);

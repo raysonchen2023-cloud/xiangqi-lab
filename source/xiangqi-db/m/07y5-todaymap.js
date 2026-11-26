@@ -19,6 +19,11 @@ const TD_NOTES=[[[270,540],[367,522],[372,685],[272,710]],[[512,491],[587,477],[
   [[512,640],[593,626],[600,735],[518,752]],[[398,497],[478,483],[482,570],[402,585]]];
 const TD_GLYPH={go:"俥",tea:"炮",ship:"傌",story:"相",cpu:"帥"};
 const TD_EAVE=[[222,446],[642,424]],TD_CENSER=[629,932,45,15],TD_TERM_AT=[440,470];
+/* W107-L：圖上的座標（像素）集中在這裡；iPad 橫向換成專用橫式圖（07sw SCW）時整組換成條目 fx（像素＝條目 w×h）。tdGm(P) 照這一頁現在用的圖選 */
+const TD_GM0={W:768,H:1376,notes:TD_NOTES,eave:TD_EAVE,censer:TD_CENSER,term:TD_TERM_AT,seal:[560,690]};
+let TD_GM=TD_GM0;
+function tdGm(P){const e=typeof scwCur==="function"&&P?scwCur(P):null;TD_GM=e&&e.fx&&e.fx.notes?Object.assign({W:e.w,H:e.h},e.fx):TD_GM0;return TD_GM}
+const tdPc=(x,y)=>[x/TD_GM.W*100,y/TD_GM.H*100];
 /* 回饋 818：點畫裡的東西看說明（07w6-sceneinfo.js 的 sciPage；內容取自 park/todaymap/考究說明.md；告示紙是入口，不登記；開發者 11/9：大片背景不登記，拿掉「楚河和對岸」） */
 const TD_BOARD=[[[240,470],[612,420],[612,722],[240,835]],[[180,330],[240,330],[240,1060],[180,1040]],[[600,400],[650,400],[650,890],[600,895]]];
 const TD_SCI={k:"td",nm:"今日推薦",it:[
@@ -49,7 +54,6 @@ const SHW_TD={el:40,h:[.085,70,.0012],look0:[50,45],home:"home",N:{home:[50,96],
 /* 二十四節氣（約略的國曆日期，每年差一天以內） */
 const TD_TERMS=[[1,6,"小寒"],[1,20,"大寒"],[2,4,"立春"],[2,19,"雨水"],[3,6,"驚蟄"],[3,21,"春分"],[4,5,"清明"],[4,20,"穀雨"],[5,6,"立夏"],[5,21,"小滿"],[6,6,"芒種"],[6,21,"夏至"],
   [7,7,"小暑"],[7,23,"大暑"],[8,8,"立秋"],[8,23,"處暑"],[9,8,"白露"],[9,23,"秋分"],[10,8,"寒露"],[10,24,"霜降"],[11,7,"立冬"],[11,22,"小雪"],[12,7,"大雪"],[12,22,"冬至"]];
-const tdPc=(x,y)=>[x/7.68,y/13.76];
 /* 今天要做的事：照 07l-homepath.js 的判斷（那個檔目前沒有接進 m.html，所以這裡帶一份 td 前綴的副本）：接著下、今日茶單、這站殘局、石桌往事、下一盤 */
 let TD_CPU={d:"",n:0};   /* 今天下完幾盤（棋譜庫查一次記住，同一天不重查） */
 const tdHpDay=t=>typeof cjDay==="function"?cjDay(t):new Date(t==null?Date.now():t).toDateString();
@@ -107,18 +111,18 @@ function tdCss(){if(document.getElementById("tdCss"))return;const s=document.cre
 .td-page .shp-spot.td-tag{padding:4px 12px}.td-page .shp-spot.td-tag b{font-size:14px;white-space:nowrap}
 @media (prefers-reduced-motion:reduce){.td-snow i,.td-rain i,.td-pet i,.td-smoke i{animation:none}.td-snow,.td-rain,.td-pet{display:none}}`;document.head.append(s)}
 /* 簷影：早晚長、中午短；早上影子往右偏、傍晚往左偏 */
-function tdShadow(){const d=new Date(),h=d.getHours()+d.getMinutes()/60,len=Math.max(14,Math.min(110,14+Math.abs(12.5-h)*14)),dx=Math.max(-60,Math.min(60,(12.5-h)*10)),[[x0,y0],[x1,y1]]=TD_EAVE;
-  const P=[[x0,y0],[x1,y1],[x1+dx,y1+len],[x0+dx,y0+len]].map(([x,y])=>`${(x/7.68).toFixed(2)},${(y/13.76).toFixed(2)}`).join(" ");
+function tdShadow(){const d=new Date(),h=d.getHours()+d.getMinutes()/60,s=TD_GM.H/1376,len=Math.max(14,Math.min(110,14+Math.abs(12.5-h)*14))*s,dx=Math.max(-60,Math.min(60,(12.5-h)*10))*s,[[x0,y0],[x1,y1]]=TD_GM.eave;
+  const P=[[x0,y0],[x1,y1],[x1+dx,y1+len],[x0+dx,y0+len]].map(([x,y])=>{const[a,b]=tdPc(x,y);return`${a.toFixed(2)},${b.toFixed(2)}`}).join(" ");
   const tint=h>=5&&h<8.5?"rgba(120,150,205,.16)":h>=16&&h<19.5?"rgba(255,150,70,.16)":"";
   return`<svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 100 100" preserveAspectRatio="none"><polygon points="${P}" fill="rgba(40,28,18,.2)" style="filter:blur(.6px)"/></svg>${tint?`<span style="position:absolute;inset:0;background:${tint};mix-blend-mode:multiply"></span>`:""}`}
 /* 百刻香：香篆的香路（三圈螺旋），已燒的一段是灰白的香灰、燒到的那一點是紅火，上面一縷細煙 */
-function tdIncense(){const d=new Date(),f=(d.getHours()*60+d.getMinutes())/1440,[cx,cy,rx,ry]=TD_CENSER,N=180,pts=[];
+function tdIncense(){const d=new Date(),f=(d.getHours()*60+d.getMinutes())/1440,[cx,cy,rx,ry]=TD_GM.censer,N=180,pts=[];
   for(let i=0;i<=N;i++){const t=i/N,a=t*6*Math.PI,r=.92-.78*t;pts.push([cx+Math.cos(a)*rx*r,cy+Math.sin(a)*ry*r])}
-  const path=A=>A.map(([x,y],i)=>`${i?"L":"M"}${(x/7.68).toFixed(3)} ${(y/13.76).toFixed(3)}`).join(""),k=Math.max(1,Math.round(f*N)),[ex,ey]=pts[k];
+  const path=A=>A.map(([x,y],i)=>{const[a,b]=tdPc(x,y);return`${i?"L":"M"}${a.toFixed(3)} ${b.toFixed(3)}`}).join(""),k=Math.max(1,Math.round(f*N)),[ex,ey]=tdPc(...pts[k]);
   return`<svg style="position:absolute;inset:0;width:100%;height:100%" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="${path(pts)}" fill="none" stroke="rgba(120,84,48,.55)" stroke-width=".28" vector-effect="non-scaling-stroke" style="stroke-width:1.6px"/>
     <path d="${path(pts.slice(0,k+1))}" fill="none" stroke="rgba(236,232,224,.95)" vector-effect="non-scaling-stroke" style="stroke-width:1.8px"/>
-    <ellipse cx="${(ex/7.68).toFixed(3)}" cy="${(ey/13.76).toFixed(3)}" rx=".45" ry=".25" fill="#ff7a2a" style="filter:drop-shadow(0 0 .4px #ffb070)"/></svg>
-    <span class="td-smoke" style="left:${(ex/7.68).toFixed(2)}%;top:${(ey/13.76).toFixed(2)}%"><i></i></span>`}
+    <ellipse cx="${ex.toFixed(3)}" cy="${ey.toFixed(3)}" rx=".45" ry=".25" fill="#ff7a2a" style="filter:drop-shadow(0 0 .4px #ffb070)"/></svg>
+    <span class="td-smoke" style="left:${ex.toFixed(2)}%;top:${ey.toFixed(2)}%"><i></i></span>`}
 /* 節氣疊圖：春分桃花、秋分落葉。11/10 開發者 hspx「同個朝代不同場景天氣一致還是沒修好」：這裡原本冬至、小寒整天下雪，清明整天下雨，跟別頁共用的天氣（07w7 sw7Precip）對不上；
    雨雪改由 07w7 照共用天氣畫，這裡只留季節點綴（那天真的在下雨雪時，07w7 會蓋掉點綴） */
 function tdWeather(term){const n=term==="春分"?"pet":term==="秋分"?"leaf":"";if(!n)return"";
@@ -128,22 +132,28 @@ function tdWeather(term){const n=term==="春分"?"pet":term==="秋分"?"leaf":""
   return`<span class="${n==="snow"?"td-snow":n==="rain"?"td-rain":"td-pet"}" style="position:absolute;inset:0">${h}</span>`}
 function TodayPage(v){tdCss();setTop("📜 今日推薦","#/");if(typeof setTabs==="function")setTabs(true,"#/");v.className="view";
   const term=tdTerm(),P=document.createElement("div");P.className="shp-page cq td-page"+(tdDarkNow()?" td-night":"");v.innerHTML="";v.append(P);
-  const[tx,ty]=tdPc(...TD_TERM_AT);
-  const tg=tdG();P.innerHTML=`<img src="${xqClImg(`data/todaymap/${tdDarkNow()?"today_night":"today_day"}${tg?"_"+tg:""}.webp?v=${TD_IMGV}`)}" alt="橋頭榜文牌"><div class="td-fx" aria-hidden="true">${tdShadow()}${tdIncense()}${tdWeather(term)}<span class="td-term" style="left:${tx.toFixed(2)}%;top:${ty.toFixed(2)}%">${esc(tdTermTag())}</span></div><div class="td-ns"></div>`;
+  const tg=tdG(),src=xqClImg(`data/todaymap/${tdDarkNow()?"today_night":"today_day"}${tg?"_"+tg:""}.webp?v=${TD_IMGV}`),pre=typeof scwPre==="function"?scwPre(v,src):{src,k:""};if(pre.k){P.dataset.scw=pre.k;P.classList.add("scw-l")}
+  P.innerHTML=`<img src="${pre.src}" alt="橋頭榜文牌"><div class="td-fx" aria-hidden="true"></div><div class="td-ns"></div>`;
+  /* W107-L：交給 07sw 換圖、換出口（要在下面第一次畫簷影、告示之前掛上，才量得到現在用哪張圖）；換圖後重畫疊圖、告示、走路角色（走路設定跟著告示位置算，所以這頁自己重掛） */
+  if(typeof scwMount==="function")scwMount(P,{key:scwKey(src),src0:src,ids:[],apply:()=>{fx();P.querySelectorAll(":scope>.shw,:scope>.shw-me,:scope>.shw-hint,:scope>.shw-say,:scope>.shw-menu").forEach(x=>x.remove());delete P.dataset.shw;P.classList.remove("shw-iso");draw(st0)}});
+  /* 簷影、香篆、節氣點綴、節氣牌照現在用的那張圖畫（換圖時重畫） */
+  const fx=()=>{tdGm(P);const[tx,ty]=tdPc(...TD_GM.term);P.querySelector(".td-fx").innerHTML=`${tdShadow()}${tdIncense()}${tdWeather(term)}<span class="td-term" style="left:${tx.toFixed(2)}%;top:${ty.toFixed(2)}%">${esc(tdTermTag())}</span>`};
   let N=[],onl=null;
   const go=async x=>{if(typeof vibrate==="function")vibrate(5);if(x.sw)try{await api("/play/switch",{kind:x.sw})}catch(e){}if(x.park)store.set("park3d",true);location.hash=x.go};
-  const fit=()=>{const k=P.clientWidth/768;if(!k)return;P.querySelectorAll(".td-note").forEach(f=>{const q=TD_NOTES[+f.dataset.i].map(([x,y])=>[x*k,y*k]);f.style.transform=tdM3(100,160,q)})};
-  const draw=st=>{if(!P.isConnected)return;try{N=tdHpNodes(st,onl)}catch(e){N=[]}const L=N.slice(0,TD_NOTES.length),all=L.length&&L.every(x=>x.done);
+  const fit=()=>{tdGm(P);const k=P.clientWidth/TD_GM.W;if(!k)return;P.querySelectorAll(".td-note").forEach(f=>{const q=TD_GM.notes[+f.dataset.i].map(([x,y])=>[x*k,y*k]);f.style.transform=tdM3(100,160,q)})};
+  let st0=null;const draw=st=>{if(!P.isConnected)return;st0=st;tdGm(P);const G=TD_GM;try{N=tdHpNodes(st,onl)}catch(e){N=[]}const L=N.slice(0,G.notes.length),all=L.length&&L.every(x=>x.done);
     const box=P.querySelector(".td-ns");
     box.innerHTML=L.map((x,i)=>{const g=TD_GLYPH[x.id]||"兵",red=true;
       return`<button type="button" class="td-note${i>=3?(tg==="han"?" wood":" paper"):""}${tg==="weijin"||tg==="tang"?" huang":""}${x.st==="cur"?" cur":""}" data-i="${i}" aria-label="${esc(x.t+"・"+x.s+(x.done?"，完成了":""))}"><span class="pc ${red?"r":"k"}">${g}</span><span class="tx"><b>${esc(x.t)}</b><small>${esc(x.s)}</small></span>${x.done?'<span class="seal">訖</span>':""}</button>`}).join("")+
-      L.map((x,i)=>{const q=TD_NOTES[i],[a,b]=tdPc((q[0][0]+q[1][0])/2,Math.min(q[0][1],q[1][1])-14);return`<button class="shp-spot td-tag" id="tdT${i}" data-i="${i}" data-nolift="1" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;opacity:0;pointer-events:none" aria-hidden="true"><b>${esc(x.t)}</b></button>`}).join("")+
-      (all?`<span class="td-done" style="left:${tdPc(560,690)[0].toFixed(2)}%;top:${tdPc(560,690)[1].toFixed(2)}%">圓滿</span>`:"");
+      L.map((x,i)=>{const q=G.notes[i],[a,b]=tdPc((q[0][0]+q[1][0])/2,Math.min(q[0][1],q[1][1])-14*G.H/1376);return`<button class="shp-spot td-tag" id="tdT${i}" data-i="${i}" data-nolift="1" style="left:${a.toFixed(2)}%;top:${b.toFixed(2)}%;opacity:0;pointer-events:none" aria-hidden="true"><b>${esc(x.t)}</b></button>`}).join("")+
+      (all?`<span class="td-done" style="left:${tdPc(...G.seal)[0].toFixed(2)}%;top:${tdPc(...G.seal)[1].toFixed(2)}%">圓滿</span>`:"");
     fit();
     box.querySelectorAll(".td-note").forEach(b=>b.onclick=e=>{e.stopPropagation();const t=box.querySelector("#tdT"+b.dataset.i);if(t)t.click()});
     box.querySelectorAll(".td-tag").forEach(t=>t.onclick=()=>{const x=N[+t.dataset.i];if(x)go(x)});
-    const HS={};L.forEach((x,i)=>{const q=TD_NOTES[i],[a,b]=tdPc((q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2);HS["tdT"+i]=["brd",+a.toFixed(2),+b.toFixed(2),all?"cheer":"idle"]});
-    if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_TD,{HS}),"td")}catch(e){}}};
+    const HS={};L.forEach((x,i)=>{const q=G.notes[i],[a,b]=tdPc((q[0][0]+q[2][0])/2,(q[0][1]+q[2][1])/2);HS["tdT"+i]=["brd",+a.toFixed(2),+b.toFixed(2),all?"cheer":"idle"]});
+    const e=typeof scwCur==="function"?scwCur(P):null;
+    if(!P.dataset.shw){try{if(typeof shwPage==="function"&&typeof SHIP_WALK_ON!=="undefined"&&SHIP_WALK_ON)shwPage(v,Object.assign({},SHW_PG0,SHW_TD,e&&e.walk||{},{HS}),"td")}catch(x){}}};
+  fx();
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}
   try{if(window.XQNet&&XQNet.playing&&XQNet.playing())onl={go:"#/pvp",t:"⚔ 回線上對局"}}catch(e){}
   draw(null);
