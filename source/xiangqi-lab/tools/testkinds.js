@@ -187,6 +187,7 @@ const CLASSIFIED = new Set([
   "test-gx-gatepano.js",   /* 11/15 開發者選星頁截圖「重新繪製滿版環景的幻譜星門讓玩家選」「觀星臺有什麼神秘的力量」：直式整個畫面是一圈水墨環景、星球各自去背疊上去、左右拖曳繞一圈（m/07gxp-gatepano.js）；說明卡兩版共用與星碑共鳴文案（m/07gx-galaxy.js）；從星圖石碑進星門的過場（m/07gxt-guanxing.js gxtGate）（行為 9、混合 1、原始碼 3） */
   "test-sw-offline.js",   /* 11/15 hspx 離線 3D 角色變小帥：sw.js 安裝時先存 3D 模型載入器（GLTFLoader.mjs 和它 import 的 .mjs），一般檔案也存 .mjs */
   "test-fb888.js",   /* 11/15 意見回饋 888 iPad 首頁兩指放大縮不回（07x 整頁放大救援、回首頁回 1 倍）、889 669×869 首頁一窄條（07z HMW_PORT 0.89／HMW_SQ、07fl XFL_HOME_MAX）、890 插曲全螢幕頁讓開狀態列（07t .ep-ov）（行為 11、原始碼 3） */
+  "test-jh-horse-1126.js",   /* 11/26 W87-2 起馬地底迷宮（m/07z9m-horse.js）：vm 跑無韁野馬循足跡追（慢 LAG 步、不會越追越遠）、蹩馬腿困住、地圖 BFS 與不被撞倒的路線搜尋（狀態含足跡）；題庫用 core.js 獨立重算（最後一步是馬）；〔原始碼〕LF、include 排在屏風馬後面、搖桿說法 */
   "test-jh-screen-1126.js",   /* 11/26 W87-2 屏風馬地底迷宮（m/07z9m-screen.js）：vm 跑馬型銅人的日字落點、蹩馬腿（石鼓、玩家站在馬腿）、巡邏範圍、地圖 BFS 與不被逮到的路線搜尋；題庫用 core.js 獨立重算（最後一步是馬）；〔原始碼〕LF、include 順序、搖桿說法 */
   "test-jh-cross-1124.js",   /* 11/24 W87 過宮炮地底迷宮（m/07z9m-cross.js）：vm 跑炮型護院視線、走法、地圖 BFS 與不被看到的路線搜尋、碑刻；題庫用 core.js 獨立重算 */
   "test-w101-first-move-1124.js",   /* 11/24 W101 開發者截圖「還沒切到棋盤，掌門就先落子了」：電腦先手的第一步等棋盤真的看得到（3D 建好、開場封面 pk-veil 收掉）再走（src/local.js）〔混合：等待時間 vm 行為 2（含慢機器封面 23 秒）、接線與就緒判斷、park3d 訊號原始碼 2〕 */
