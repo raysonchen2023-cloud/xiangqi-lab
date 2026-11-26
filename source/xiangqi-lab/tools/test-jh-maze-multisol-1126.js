@@ -94,6 +94,29 @@ test("改壞驗證（題庫）：少收一種最快殺、多收一步不是最�
   P = clone(); P.alt.e3e5[1] = { e5d5: ["e0e1", {}] }; assert.ok(altProblems(P).some((s) => s.includes("值要是 0")), "最後一步不是將死");
 });
 
+/* 所有門派題庫（m/07z9m-*.js 裡每一段 JH_MZ_POOL） */
+function pools() { const D = path.join(ROOT, "xiangqi-db", "m"), o = [];
+  for (const f of fs.readdirSync(D).filter((f) => /^07z9m-.*\.js$/.test(f))) { const s = fs.readFileSync(path.join(D, f), "utf8");
+    for (const m of s.matchAll(/\/\* ==JH_MZ_POOL:(\w+)== \*\//g)) { const nm = m[1], a = m.index, b = s.indexOf(`/* ==/JH_MZ_POOL:${nm}== */`); const ctx = {}; vm.createContext(ctx); vm.runInContext(s.slice(a, b) + `;this.v=${nm};`, ctx); o.push({ f, nm, items: [...ctx.v.door, ...ctx.v.trap] }) } }
+  return o }
+/* 第二層被抓題的題號重複（開發者 11/26 允許不同派重用；同樣收尾的派錯開，免得三派選到同一組題） */
+function dupProblems(P) { const seen = {}, bad = [];
+  for (const p of P.filter((p) => /2_TRAP$/.test(p.nm))) for (const x of p.items) { if (seen[x.id]) bad.push(x.id + "：" + seen[x.id] + " 和 " + p.nm); else seen[x.id] = p.nm }
+  return bad }
+
+test("題庫裡每一棵 alt 樹（--multi 出的多解，遊戲照它判斷對錯）都用 core.js 獨立重算：收齊所有最快殺、只收最快殺、黑方應著合法而且撐最久、終點將死、主變在樹裡", () => {
+  const all = pools().flatMap((p) => p.items.filter((x) => x.alt).map((x) => [p.nm, x]));
+  assert.ok(all.length >= 1, "題庫裡至少有一題多解（不然這一項沒驗到東西）");
+  for (const [nm, x] of all) assert.deepEqual(altProblems(x), [], nm + "：" + x.id);
+});
+
+test("七派第二層的被抓題彼此不重複（同收尾的派錯開）；改壞驗證：塞一題重複一定抓得到", () => {
+  const P = pools(); assert.ok(P.filter((p) => /2_TRAP$/.test(p.nm)).length >= 7, "七派第二層的被抓題庫都讀到");
+  assert.deepEqual(dupProblems(P), []);
+  const Q = JSON.parse(JSON.stringify(P)), a = Q.find((p) => p.nm === "JH_MZ_POOL_CENTRAL2_TRAP"), b = Q.find((p) => p.nm === "JH_MZ_POOL_PALACE2_TRAP"); b.items[0].id = a.items[0].id;
+  assert.ok(dupProblems(Q).length === 1, "塞一題重複要被抓到");
+});
+
 test("〔原始碼〕maze-puzzles.js：有 --multi；不加 --multi 照舊用唯一解的 verify（既有題庫 --check 逐字相同）；只有真的有第二種殺法才寫 alt；07z9m-maze.js LF、沒有控制字元", () => {
   assert.match(TOOL, /const MULTI = process\.argv\.includes\("--multi"\);/);
   assert.match(TOOL, /const r = MULTI \? await verifyMulti\(E, x\) : await verify\(E, x\);/);

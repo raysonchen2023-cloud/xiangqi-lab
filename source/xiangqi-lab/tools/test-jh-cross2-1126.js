@@ -111,7 +111,7 @@ test("走一趟：一定有一條不被炮衛看到的路，先踩踏板、再�
 });
 
 const poolOf = (src, nm) => { const a = src.indexOf(`/* ==JH_MZ_POOL:${nm}== */`), b = src.indexOf(`/* ==/JH_MZ_POOL:${nm}== */`); assert.ok(a > 0 && b > a, nm); const ctx = {}; vm.createContext(ctx); vm.runInContext(src.slice(a, b) + `;this.v=${nm};`, ctx); return ctx.v };
-test("題庫：石門 3 題（馬收尾：炮牽制馬殺）、被抓至少 5 題（車收尾的殺題）；core.js 獨立重算；不跟過宮炮第一層重複（只在同一派各層不重複）、兩段不重複；都出自古譜", () => {
+test("題庫：石門 3 題（馬收尾：炮牽制馬殺）、被抓至少 5 題（兵收尾的殺題；開發者 11/26 選「換成馬、兵收尾」）；core.js 獨立重算；不跟過宮炮第一層重複（只在同一派各層不重複）、兩段不重複；都出自古譜", () => {
   const c = load(), D = vm.runInContext("JH_MZ_POOL_CROSS2", c), T = vm.runInContext("JH_MZ_POOL_CROSS2_TRAP", c), same = [poolOf(rd("07z9m-cross.js"), "JH_MZ_POOL_CROSS")];
   assert.equal(D.door.length, 3); assert.equal(D.trap.length, 0); assert.equal(T.door.length, 0); assert.ok(T.trap.length >= 5);
   const L = L2(c); assert.equal(L.pool.door.length, 3); assert.equal(L.pool.trap.length, T.trap.length);
@@ -123,7 +123,7 @@ test("題庫：石門 3 題（馬收尾：炮牽制馬殺）、被抓至少 5 �
     let b = C.parseFen(x.fen), s = "r", last = "";
     for (let i = 0; i < x.line.length; i++) { const f = C.parseSq(x.line[i].slice(0, 2)), t = C.parseSq(x.line[i].slice(2, 4));
       assert.ok(C.legal(b, s).some((m) => m[0] === f && m[1] === t), x.id + " 第 " + (i + 1) + " 步合法"); if (i === x.line.length - 1) last = b[f]; b = C.make(b, f, t); s = C.opp(s) }
-    assert.ok(C.inCheck(b, s) && C.legal(b, s).length === 0, x.id + " 走完將死"); assert.equal(last, door ? "N" : "R", x.id + " 最後一步");
+    assert.ok(C.inCheck(b, s) && C.legal(b, s).length === 0, x.id + " 走完將死"); assert.equal(last, door ? "N" : "P", x.id + " 最後一步");
     const n = (x.line.length + 1) / 2, b0 = C.parseFen(x.fen);
     const mateIn = (bd, k) => C.legal(bd, "r").some(([f, t]) => { const b1 = C.make(bd, f, t), R = C.legal(b1, "b"); if (!R.length) return C.inCheck(b1, "b"); if (k === 1) return false; return R.every(([f2, t2]) => mateIn(C.make(b1, f2, t2), k - 1)) });
     if (n >= 2) assert.ok(!mateIn(b0, n - 1), x.id + " 沒有更短的殺法");
