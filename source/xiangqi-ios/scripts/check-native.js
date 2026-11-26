@@ -224,8 +224,9 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
     if (odd.length) pinBad.push(path.relative(HERE, f) + " 不能有 " + odd.join("、") + "（斷詞可能跟 Swift 認定不同）");
   }
 }
-/* W69 設定鎖（從 #144 拆出來；#144 第三～五輪審查）：swiftCode 不認不加 # 的斜線正規式 /…/。Swift 5 預設是語法錯誤，繞不過去；
-   但開了 bare-slash-regex（OTHER_SWIFT_FLAGS、SWIFT_UPCOMING_FEATURE_…、xcconfig）就合法，/"/ 配 /*" 能讓斷詞和 Swift 對字串邊界錯開。所以鎖住 Swift 編譯設定。
+/* W69 設定鎖（從 #144 拆出來；#144 第三～五輪審查）：swiftCode 不認不加 # 的斜線正規式 /…/。
+   #147 複審：Xcode 27.2 的 Swift.xcspec 寫 SWIFT_ENABLE_BARE_SLASH_REGEX 在 Swift 4／4.2／5 預設 YES（建置會帶 -enable-bare-slash-regex），不寫等於開著；
+   所以每個 XCBuildConfiguration 都要明寫 SWIFT_ENABLE_BARE_SLASH_REGEX = NO。開著時（不寫、OTHER_SWIFT_FLAGS、SWIFT_UPCOMING_FEATURE_…、xcconfig）/…/ 就合法，/"/ 配 /*" 能讓斷詞和 Swift 對字串邊界錯開。所以鎖住 Swift 編譯設定。
    第五輪審查：用文字比對會被「引號裡的 /＊ ＊/」「<group> 相對路徑」騙過（iMac 用 xcodebuild -showBuildSettings 實測過：Xcode 照語法讀，<group> 照群組階層算路徑）。
    所以照 pbxproj（OpenStep plist）的語法真正解析，看不懂就算錯：
    ① 每個 XCBuildConfiguration 只能有 isa、buildSettings、name、baseConfigurationReference 四個欄位（Xcode 16 的 baseConfigurationReferenceAnchor 這類新寫法一律不行）
@@ -282,7 +283,7 @@ function pbxParse(src) {
       else return null;
       return base == null ? null : path.resolve(base, typeof o.path === "string" ? o.path : "") };
     const SW_OK = { SWIFT_VERSION: ["5.0"], SWIFT_ACTIVE_COMPILATION_CONDITIONS: ["", "DEBUG"], SWIFT_COMPILATION_MODE: ["wholemodule"], SWIFT_OPTIMIZATION_LEVEL: ["-O", "-Onone"],
-      OTHER_SWIFT_FLAGS: ["$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\""] };
+      OTHER_SWIFT_FLAGS: ["$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\""], SWIFT_ENABLE_BARE_SLASH_REGEX: ["NO"] };
     const CFG_KEYS = new Set(["isa", "buildSettings", "name", "baseConfigurationReference"]);
     for (const [id, o] of Object.entries(O)) {
       if (o.isa !== "XCBuildConfiguration") continue;
@@ -291,6 +292,8 @@ function pbxParse(src) {
         if (k === "SWIFT_VERSION") svN++;
         if (/SWIFT/.test(k) && !(SW_OK[k] || []).includes(v)) swBad.push(k + " = " + JSON.stringify(v));   /* 編譯設定名都是大寫；陣列、帶 [sdk=…] 條件的都不在白名單 */
       }
+      /* #147 複審：Xcode 預設開著 bare-slash-regex，每一組設定都要明寫 NO 才關得掉 */
+      if ((o.buildSettings || {}).SWIFT_ENABLE_BARE_SLASH_REGEX !== "NO") swBad.push("XCBuildConfiguration " + (o.name || id) + " 沒有明寫 SWIFT_ENABLE_BARE_SLASH_REGEX = NO（Xcode 預設 YES）");
       if (o.baseConfigurationReference != null) { const p = dirOf(o.baseConfigurationReference, 0); if (p) xcRefs.push(p); else swBad.push("baseConfigurationReference 的路徑看不懂（只認 <group>、SOURCE_ROOT）") }
     }
     if (/COMPILER_FLAGS/.test(JSON.stringify(O))) swBad.push("COMPILER_FLAGS");
