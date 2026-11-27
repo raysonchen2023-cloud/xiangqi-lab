@@ -25,7 +25,7 @@ App 依 GPL-3.0-or-later 授權；象棋引擎 Pikafish 是 GPL-3。這個資料
 | Node.js | 26.13.1（`package.json` 要求 ≥ 22） |
 | npm | 11.20.0 |
 | Capacitor | core、ios、cli 8.6.2（Swift Package Manager，`package-lock.json` 已釘住） |
-| 最低 iOS | 17.0，只支援 iPhone |
+| 最低 iOS | 17.0，支援 iPhone 和 iPad（`TARGETED_DEVICE_FAMILY = 1,2`，W107 #152 起；之前的建置只支援 iPhone） |
 
 ## 三、步驟
 
