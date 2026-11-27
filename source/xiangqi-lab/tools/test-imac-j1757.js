@@ -7,6 +7,7 @@ const rd = p => fs.readFileSync(path.join(ROOT, p), "utf8").replace(/\r\n/g, "\n
 const M = f => rd("xiangqi-db/m/" + f);
 const between = (s, a, b, incl) => { const i = s.indexOf(a), j = s.indexOf(b, i + 1); assert.ok(i >= 0 && j > i, "切不到：" + a.slice(0, 40)); return s.slice(i, incl ? j + b.length : j) };
 const IOS = fs.existsSync(path.join(ROOT, "xiangqi-ios")) ? false : "沒有 xiangqi-ios";
+const SKIP_STORE = fs.existsSync(path.join(ROOT, "xiangqi-ios", "appstore")) ? false : "沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦）";   /* W69 盤點高 7 */
 
 test("P1-1：「請 Claude 講解」「請 GPT 講解」和「額度」那句只在開發者工具（DEVTOOLS）開著時出現；一般玩家（原生、網頁）看不到", () => {
   const D = M("10-db.js");
@@ -91,7 +92,7 @@ test("P1-2 全站：組分享連結的地方不再直接用 location.href／loca
   assert.ok(M("07dq-daily.js").includes("function dqBase(){"), "每日同題本來就對（dqBase）");
 });
 
-test("P2：商店描述照實寫「錯棋重練」只收跟電腦對局裡走錯的步（中英）", { skip: IOS }, () => {
+test("P2：商店描述照實寫「錯棋重練」只收跟電腦對局裡走錯的步（中英）", { skip: SKIP_STORE }, () => {
   const T = rd("xiangqi-ios/appstore/metadata.md");
   assert.ok(!T.includes("錯題會回來讓你複習") && !T.includes("mistakes come back for review"));
   assert.ok(T.includes("跟電腦對局裡走錯的那幾步，會收進「錯棋重練」讓你再練一次"));

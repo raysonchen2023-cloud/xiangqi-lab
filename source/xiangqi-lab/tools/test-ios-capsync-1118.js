@@ -19,7 +19,10 @@ function sandbox(oldList) {
   fs.cpSync(path.join(IOS, "native"), path.join(T, "native"), { recursive: true });
   fs.cpSync(APP0, path.join(T, "ios", "App"), { recursive: true, filter: s => !/[\\/]App[\\/]App[\\/]public([\\/]|$)/.test(s) && !/CapApp-SPM[\\/]\.build/.test(s) });
   /* 舊版 install-native 留下的樣子：packageClassList 裡有我們的外掛（測清掉、不重複） */
-  const cfgP = path.join(T, "ios", "App", "App", "capacitor.config.json"), cfg = JSON.parse(fs.readFileSync(cfgP, "utf8"));
+  const cfgP = path.join(T, "ios", "App", "App", "capacitor.config.json");
+  /* W69 盤點高 7：ios/App/App/capacitor.config.json 是 cap sync 產生的（ios/.gitignore 不進倉庫）。公開倉庫沒有時，先照 cap sync 的做法產生一份，這項在公開 CI 也照跑 */
+  if (!fs.existsSync(cfgP)) capSync({ cfgP });
+  const cfg = JSON.parse(fs.readFileSync(cfgP, "utf8"));
   if (oldList) { cfg.packageClassList = (cfg.packageClassList || []).filter(c => !OURS.includes(c)).concat(oldList); fs.writeFileSync(cfgP, JSON.stringify(cfg, null, "\t") + "\n") }
   return { T, cfgP, vcP: path.join(T, "ios", "App", "App", "XQBridgeViewController.swift"), run: (...a) => spawnSync(process.execPath, [path.join(T, "scripts", "install-native.js"), ...a], { encoding: "utf8", cwd: T }) };
 }
