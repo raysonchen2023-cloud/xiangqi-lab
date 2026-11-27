@@ -59,20 +59,20 @@ function problems(c) {
   if (B.layer !== 1 || B.map !== vm.runInContext("JH_MZ_ELE_MAP", c)) bad.push("第一層被蓋掉");
   if (!L) return bad;
   /* 淤泥滑到底：右邊一排淤泥，盡頭是牆 → 停在最後一格淤泥上；中間有箱子 → 停在箱子前 */
-  let S = mini(c, ["#######", "#.UUU.#", "#######"], 1, 1), r = c.jhMzStep(S, 1, 0);
+  let S = mini(c, ["#######", "#.mmm.#", "#######"], 1, 1), r = c.jhMzStep(S, 1, 0);
   if (S.player.x !== 5 || !r.stop) bad.push(`淤泥要一路滑到底、滑完停下（實際停在 ${S.player.x}，stop=${r.stop}）`);
-  S = mini(c, ["#######", "#.UUUU#", "#######"], 1, 1); c.jhMzStep(S, 1, 0);
+  S = mini(c, ["#######", "#.mmmm#", "#######"], 1, 1); c.jhMzStep(S, 1, 0);
   if (S.player.x !== 5) bad.push("淤泥盡頭是牆：停在最後一格淤泥上");
-  S = mini(c, ["########", "#.UUXU.#", "########"], 1, 1); c.jhMzStep(S, 1, 0);
+  S = mini(c, ["########", "#.mmXm.#", "########"], 1, 1); c.jhMzStep(S, 1, 0);
   if (S.player.x !== 3) bad.push(`淤泥裡有考箱要停在箱子前（實際 ${S.player.x}）`);
   /* 考箱推進淤泥、推開後淤泥還原 */
-  S = mini(c, ["#######", "#.XU..#", "#######"], 1, 1); c.jhMzStep(S, 1, 0);
+  S = mini(c, ["#######", "#.Xm..#", "#######"], 1, 1); c.jhMzStep(S, 1, 0);
   if (cell(S, 3, 1) !== "X") bad.push("考箱要推得進淤泥");
   if (cell(S, 2, 1) !== ".") bad.push("考箱推走後原本的平地要還原成平地");
-  S = mini(c, ["########", "#.XU...#", "########"], 1, 1); S.lv = Object.assign({}, S.lv, { map: ["########", "#.UU...#", "########"] }); S.grid[1][2] = "X";
-  c.jhMzStep(S, 1, 0); if (cell(S, 2, 1) !== "U") bad.push("考箱從淤泥上推走後，那一格要還原成淤泥");
+  S = mini(c, ["########", "#.Xm...#", "########"], 1, 1); S.lv = Object.assign({}, S.lv, { map: ["########", "#.mm...#", "########"] }); S.grid[1][2] = "X";
+  c.jhMzStep(S, 1, 0); if (cell(S, 2, 1) !== "m") bad.push("考箱從淤泥上推走後，那一格要還原成淤泥");
   /* 自動走：繞過淤泥，不主動踩；點的終點是淤泥可以 */
-  S = mini(c, ["#######", "#.....#", "#.UUU.#", "#.....#", "#######"], 1, 2);
+  S = mini(c, ["#######", "#.....#", "#.mmm.#", "#.....#", "#######"], 1, 2);
   const pa = c.jhMzPath(S, 5, 2), steps = pa ? Array.from(pa, (q) => q.join(",")) : [];
   if (!pa || steps.some((q) => ["2,2", "3,2", "4,2"].includes(q))) bad.push("自動走要繞過淤泥（實際 " + steps.join(" ") + "）");
   /* 整層走得過：入口 → 踏板 → 石門前 */
@@ -104,9 +104,9 @@ test("飛相第二層：修為 +40、存檔鍵分層、碑刻標「遊戲整理�
 
 test("改壞驗證：淤泥不滑、考箱推不進淤泥、自動走會踩淤泥，檢查都要抓得到", () => {
   const cases = [
-    ["淤泥不滑", { "07z9m-elephant2.js": (s) => s.replace("while(jhMzCell(S,P.x,P.y)===\"U\"){", "while(false){") }],
-    ["考箱推不進淤泥", { "07z9m-elephant2.js": (s) => s.replace("if((c2!==\".\"&&c2!==\"U\")", "if((c2!==\".\")") }],
-    ["自動走會踩淤泥", { "07z9m-elephant2.js": (s) => s.replace("avoid:\"U\",", "") }],
+    ["淤泥不滑", { "07z9m-elephant2.js": (s) => s.replace("while(jhMzCell(S,P.x,P.y)===\"m\"){", "while(false){") }],
+    ["考箱推不進淤泥", { "07z9m-elephant2.js": (s) => s.replace("if((c2!==\".\"&&c2!==\"m\")", "if((c2!==\".\")") }],
+    ["自動走會踩淤泥", { "07z9m-elephant2.js": (s) => s.replace("avoid:\"m\",", "") }],
   ];
   for (const [name, patch] of cases) {
     const f = Object.keys(patch)[0], orig = rd(f); assert.notEqual(patch[f](orig), orig, name + "：改壞的程式要真的有改到");

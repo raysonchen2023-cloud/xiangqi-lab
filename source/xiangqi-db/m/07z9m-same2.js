@@ -5,7 +5,7 @@
      ・衝刺暗哨（JH_MZ_KIND.flaredash）：平常照第一層鹽道暗哨（JH_MZ_KIND.dash：一回合衝兩格、撞牆花一回合轉身、只看正前方）；
        火星亮著的 2 回合裡，暗哨跟火星在同一條直線上、中間沒被擋住，就放下原路、轉向朝火星衝過去（衝到火星那一格停下查看）。
        所以踩灰燼是兩面刃：照亮路，也會把同一條長廊上的暗哨引過來；反過來，也能用它把暗哨引離你要走的那條路。
-     ・廢棄鹽灶（Z）照第一層：走到旁邊就撥旺、一直亮著。
+     ・廢棄鹽灶（s）照第一層：走到旁邊就撥旺、一直亮著。
      ・機關殘局：棄子搶攻，馬收尾（規格是馬臥槽）；被抓殘局一律殺題（開發者決定），兵收尾（開發者 11/26 選單「換成馬、兵收尾」：用 --multi 出題，最快殺都算對）。
        開發者 11/26 選單：不同派可以重用題目，只在同一派各層之間不重複（出題的 --exclude 只排除順炮自己的各層）。
      ・碑刻：遊戲整理，據嘉靖《兩淮鹽法志》（複核：可用，要寫明用明代版本）。
@@ -20,7 +20,7 @@ const JH_MZ_SAME2_MAP=[
 "#.............#",
 "#C#.###.###.#C#",
 "#.#.#.....#.#.#",
-"#...#.Z.L.#...#",
+"#...#.s.L.#...#",
 "###.#.....#.###",
 "#.............#",
 "#.#A###.###A#.#",
@@ -72,7 +72,7 @@ trap:[
 {"id":"lk173c5","src":{"book":"爛柯神機","title":"歲寒松柏"},"zh":["被鹽道暗哨押住了","暗哨把你押在灶邊：「鹽票背面這局解得開，就放你走。」紅方先走，3 步將死黑方。"],"en":["Held by a salt-road runner","The runner holds you by the stove: \"Solve the game on the back of this salt ticket and you can go.\" Red to move: checkmate in 3."],"fen":"5cb2/3n1P3/2r1k4/2Rc1PN2/4P1b2/2r6/9/2p6/3p1p3/4K4","line":["e5e6","d8e6","f6e6","e7f7","e6f6"]},
 {"id":"lk182c5","src":{"book":"爛柯神機","title":"脫帽露頂"},"zh":["被鹽道暗哨押住了","暗哨把你押在灶邊：「鹽票背面這局解得開，就放你走。」紅方先走，3 步將死黑方。"],"en":["Held by a salt-road runner","The runner holds you by the stove: \"Solve the game on the back of this salt ticket and you can go.\" Red to move: checkmate in 3."],"fen":"6Nc1/2PP1k3/4N2n1/9/9/9/9/3p5/2rp1r3/4K4","line":["e7g6","f8f9","g6h8","f9f8","d8e8"]}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_SAME2_TRAP== */
-jhMzLayer("same_cannon",2,{map:JH_MZ_SAME2_MAP,guards:JH_MZ_SAME2_GUARDS,solid:"#DZL",opaque:"#DZL",avoid:"A",onStep:jhMzSame2Ash,
+jhMzLayer("same_cannon",2,{map:JH_MZ_SAME2_MAP,guards:JH_MZ_SAME2_GUARDS,solid:"#DsL",opaque:"#DsL",avoid:"A",onStep:jhMzSame2Ash,
   pool:{door:JH_MZ_POOL_SAME2.door,trap:JH_MZ_POOL_SAME2_TRAP.trap},puz:{door:JH_MZ_POOL_SAME2.door[0],trap:JH_MZ_POOL_SAME2_TRAP.trap[0]},
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"順炮譜殘頁",en:"Same-Direction Cannons manual page"},{k:"face",zh:"頭像「霜鹽結晶」",en:"Avatar: Frost-salt crystal"}],
   lore:[{id:"sc4",kind:"stele",title:["灶戶苦役碑","Stele of the salt-boilers' toil"],
