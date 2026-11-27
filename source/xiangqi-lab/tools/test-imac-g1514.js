@@ -8,6 +8,7 @@ const rd = p => fs.readFileSync(path.join(ROOT, p), "utf8").replace(/\r\n/g, "\n
 const M = f => rd("xiangqi-db/m/" + f);
 const between = (s, a, b) => { const i = s.indexOf(a), j = s.indexOf(b, i + 1); assert.ok(i >= 0 && j > i, "切不到：" + a + " … " + b); return s.slice(i, j) };
 const IOS = path.join(ROOT, "xiangqi-ios"), HAS_IOS = fs.existsSync(IOS), SKIP_IOS = HAS_IOS ? false : "沒有 xiangqi-ios";
+const SKIP_STORE = fs.existsSync(path.join(ROOT, "xiangqi-ios", "appstore")) ? false : "沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦）";   /* W69 盤點高 7：iOS 專案在公開倉庫裡，appstore/ 不在；讀 appstore/ 的檢查拆成獨立一項 */
 
 /* WCAG 對比 */
 const lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2] };
@@ -35,14 +36,18 @@ test("G-2（P1）：相機權限說明照實際用途（意見回饋附圖選「
   assert.ok(rd("xiangqi-ios/ios/App/App/zh-Hant.lproj/InfoPlist.strings").includes('"NSCameraUsageDescription" = "' + ZH + '";'));
   assert.ok(rd("xiangqi-ios/ios/App/App/en.lproj/InfoPlist.strings").includes('"NSCameraUsageDescription" = "' + EN + '";'));
   assert.ok(rd("xiangqi-ios/scripts/install-native.js").includes('addKey("NSCameraUsageDescription", "<string>' + ZH + '</string>");'));
-  for (const f of ["ios/App/App/Info.plist", "ios/App/App/zh-Hant.lproj/InfoPlist.strings", "ios/App/App/en.lproj/InfoPlist.strings", "scripts/install-native.js", "appstore/app-privacy.md"]) assert.ok(!/掃描舊手機|scan the QR code on your old phone|只在掃 QR 時用/.test(rd("xiangqi-ios/" + f)), "舊說法拿掉：" + f);
+  for (const f of ["ios/App/App/Info.plist", "ios/App/App/zh-Hant.lproj/InfoPlist.strings", "ios/App/App/en.lproj/InfoPlist.strings", "scripts/install-native.js"]) assert.ok(!/掃描舊手機|scan the QR code on your old phone|只在掃 QR 時用/.test(rd("xiangqi-ios/" + f)), "舊說法拿掉：" + f);
   /* 實際用到相機的地方：意見回饋的 <input type=file accept=image/*>（iOS 會給「拍照」選項）；getUserMedia 掃 QR 只在 connectSheet 裡，而 connectSheet 沒有任何地方叫它 */
   const all = fs.readdirSync(path.join(ROOT, "xiangqi-db/m")).filter(f => f.endsWith(".js")).map(f => [f, M(f)]);
   assert.ok(M("05-settings.js").includes('<input type="file" id="fi" accept="image/*" multiple hidden>'));
   const gum = all.filter(([, s]) => s.includes("getUserMedia")).map(([f]) => f); assert.deepEqual(gum, ["02-shell.js"]);
   const callers = all.reduce((n, [, s]) => n + (s.match(/connectSheet\(\)/g) || []).length, 0); assert.equal(callers, 1, "connectSheet 只有定義、沒人呼叫");
   assert.ok(!all.some(([, s]) => /capture=/.test(s)), "沒有 capture 屬性的直接拍照");
-  assert.match(rd("xiangqi-ios/appstore/app-privacy.md"), /相機只在「意見回饋」附圖時選「拍照」才用/);
+});
+test("〔原始碼〕G-2（P1）：App 隱私申報 app-privacy.md 也照實際用途寫相機（拍照附圖），沒有掃 QR 的舊說法", { skip: SKIP_STORE }, () => {
+  const AP = rd("xiangqi-ios/appstore/app-privacy.md");
+  assert.ok(!/掃描舊手機|scan the QR code on your old phone|只在掃 QR 時用/.test(AP), "舊說法拿掉：appstore/app-privacy.md");
+  assert.match(AP, /相機只在「意見回饋」附圖時選「拍照」才用/);
 });
 
 /* G-4 */
@@ -69,7 +74,7 @@ test("G-4：隱私、家長文件裡的 Game Center、桌面小工具，只在�
   assert.ok(G.includes('try{if(typeof xqDocVar==="function"&&!xqDocVar.__gcn){const f0=xqDocVar;xqDocVar=function(t,nat){return xqDocEnNote(f0(xqDocClean(gcnDocFeat(t)),nat))};xqDocVar.__gcn=1}}catch(e){}'));   /* D Y7：外面再包英文說明 */   /* 11/17 I P1-3：中間多一層 xqDocClean（藏開發用內容） */
   assert.ok(S.includes("t=xqDocVar(t,setNat());"), "05-settings 顯示文件前叫 xqDocVar（沒改 05-settings）");
 });
-test("G-4：審查備註、App 隱私申報照建置內容：Notes 不寫 Game Center、小工具（另外放「裝了 --gc-widget 才換上」那一段）；申報表標註只有那種建置才有", { skip: SKIP_IOS }, () => {
+test("G-4：審查備註、App 隱私申報照建置內容：Notes 不寫 Game Center、小工具（另外放「裝了 --gc-widget 才換上」那一段）；申報表標註只有那種建置才有", { skip: SKIP_STORE }, () => {
   const s = rd("xiangqi-ios/appstore/metadata.md"), a = s.indexOf("```\nThank you"), b = s.indexOf("\n```", a + 3), N = s.slice(a + 4, b);
   assert.ok(!/Game Center|今日茶單|Today's tea/.test(N), "Notes 不寫");
   assert.ok(N.includes('Native 原生功能: Daily reminder (local notification):') && N.includes("每日提醒在每日同題頁下方。"));
@@ -91,7 +96,9 @@ test("D1：關於頁的開發者寫「Hung-Sheng Chen」（跟 App Store 賣家�
   const S = M("05-settings.js"); assert.ok(S.includes('${aboutK("開發者")}<b>Hung-Sheng Chen</b>') && !S.includes("<b>hungshengc</b>"));
   for (const f of fs.readdirSync(path.join(ROOT, "xiangqi-db/m")).filter(f => f.endsWith(".js"))) assert.ok(!M(f).includes("hungshengc"), f);
   for (const d of ["privacy.md", "family.md"]) assert.ok(!rd("xiangqi-lab/site/data/docs/" + d).includes("hungshengc"));
-  if (HAS_IOS) for (const f of ["appstore/metadata.md", "appstore/app-privacy.md"]) assert.ok(!rd("xiangqi-ios/" + f).includes("hungshengc"), f);
+});
+test("〔原始碼〕D1：App Store 上架文案（metadata.md、app-privacy.md）也沒有 hungshengc", { skip: SKIP_STORE }, () => {
+  for (const f of ["appstore/metadata.md", "appstore/app-privacy.md"]) assert.ok(!rd("xiangqi-ios/" + f).includes("hungshengc"), f);
 });
 test("D2：原生 App 三個匿名開關（卡住的地方、對局評分、學習進度）全新安裝預設關；已經有存檔的照原本（開著）；自己切過的不動；網頁版照舊", () => {
   const B = M("05b-save.js"), src = between(B, "function anonNatDefault(){", "\nanonNatDefault();");
@@ -108,8 +115,10 @@ test("D2：原生 App 三個匿名開關（卡住的地方、對局評分、學�
   for (const sw of ["📍 匿名記錄卡住的地方", "📊 匿名送出對局評分", "📈 匿名送出學習進度"]) { const nat = xqDocVar(feat(P, { gc: false, widget: false }), true), web = xqDocVar(P, false);
     assert.ok(nat.includes("App 版：**預設關閉**；你在設定 →「🔒 系統・隱私・家長」→ 隱私打開「" + sw + "」才會送"), sw); assert.ok(!web.includes("App 版：**預設關閉**；你在設定 →「🔒 系統・隱私・家長」→ 隱私打開「" + sw), "網頁版不出現：" + sw) }
   assert.match(xqDocVar(P, true), /### 3\. 匿名卡關訊號（App 版預設關，你打開才送）/); assert.match(xqDocVar(P, false), /### 3\. 匿名卡關訊號（預設開，可以關）/);
-  if (HAS_IOS) { assert.match(rd("xiangqi-ios/appstore/app-privacy.md"), /申報照樣保留這幾項：Apple 的規則是「App 會收集的資料」都要申報/);
-    assert.match(rd("xiangqi-ios/appstore/metadata.md"), /So are the three anonymous-data switches/) }
+});
+test("〔原始碼〕D2：App 隱私申報保留三個匿名開關並寫理由；商店描述也寫了（appstore/）", { skip: SKIP_STORE }, () => {   /* W69 盤點高 7：從上一項拆出來，缺 appstore/ 才略過 */
+  assert.match(rd("xiangqi-ios/appstore/app-privacy.md"), /申報照樣保留這幾項：Apple 的規則是「App 會收集的資料」都要申報/);
+  assert.match(rd("xiangqi-ios/appstore/metadata.md"), /So are the three anonymous-data switches/);
 });
 /* G P3-1 11/17 升 P2：改成「需要時才抓」，完整驗收在 test-netfetch-1117.js；這裡只留 fetch 共用（同一次開 App 只真的抓一次）和文件新說法 */
 test("G P3-1：第 9 項寫「送過回饋才在開 App 時抓修正清單、進大廳才抓停權名單」；同一個資料檔同一次開 App 只真的抓一次", async () => {
