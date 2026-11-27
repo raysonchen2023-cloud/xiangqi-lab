@@ -43,7 +43,15 @@ async function recheckProblems(askCdn) {
   if (r.unknown.length !== 30 || r.miss.length !== 0 || r.ok200 !== 0) bad.push("③ 全部連不上：30 項都要留在 △（實際 unknown " + r.unknown.length + "、miss " + r.miss.length + "、ok " + r.ok200 + "）");
   if (codeOf(r) !== 3) bad.push("③ 全部連不上：結束代碼 3（實際 " + codeOf(r) + "）");
   if (r.unknown.some((x) => !/連不上/.test(x.why) || x.st !== -1)) bad.push("③ △ 寫明連不上、記狀態 -1");
-  if (Object.values(C.asked).some((n) => n !== 7)) bad.push("③ 每檔第一輪 4 次＋重問 3 次＝7 次");
+  /* W66b：CDN 整個斷掉（沒有任何一項拿到 200）：重問連續 4 項都連不上就不再問（重問是 2 個並行，判定那一刻另一個可能已經在問第 5 項，所以重問 4～5 項），其他只問第一輪的 4 次 */
+  { const n = Object.values(C.asked), seven = n.filter((k) => k === 7).length, four = n.filter((k) => k === 4).length;
+    if (seven < 4 || seven > 5 || seven + four !== 30) bad.push("③ CDN 全斷：重問 4～5 項（各 7 次）就停、其他只問 4 次（實際 7 次 " + seven + "、4 次 " + four + "）");
+    if (!r.recheck || r.recheck.skipped !== 30 - seven) bad.push("③ 報告記沒再問的項數（實際 " + (r.recheck && r.recheck.skipped) + "）") }
+  /* ⑧ W66b 反測：CDN 只是部分斷（第一輪有一項拿到 200）：不提早結束，30 項照樣每項重問 */
+  const part = {}; for (const [f] of all) part[f] = [-1]; part["data/ok.webp"] = [200];
+  C = fakeCdn(part); r = await askCdn([["data/ok.webp", false], ...all], C.head, noWait);
+  if (r.unknown.length !== 30 || r.recheck.skipped !== 0 || Object.entries(C.asked).some(([f, k]) => f !== "data/ok.webp" && k !== 7)) bad.push("⑧ 部分斷：不提早結束，每項都重問（實際 skipped " + r.recheck.skipped + "）");
+  if (codeOf(r) !== 3) bad.push("⑧ 部分斷：結束代碼 3");
   /* ④ 429、5xx 重問還是一樣：留在 △，狀態照記 */
   C = fakeCdn({ "data/d.webp": [429], "data/e.webp": [502] });
   r = await askCdn([["data/d.webp", false], ["data/e.webp", false]], C.head, noWait);
@@ -73,13 +81,15 @@ test("CDN 偶發連不上：全部問完後低並行再問一輪；重問連上�
   assert.deepEqual(await recheckProblems(CA.askCdn), []);
 });
 
-test("改壞驗證：拿掉重問、連不上當成有、連不上當成沒有、重問全開 6 個並行，檢查一定抓得到", async () => {
+test("改壞驗證：拿掉重問、連不上當成有、連不上當成沒有、重問全開 6 個並行、CDN 全斷也全部重問、部分斷也提早結束（W66b），檢查一定抓得到", async () => {
   const Mod = require("module"), fn = (src) => { const m = new Mod(CHECK, module); m.filename = CHECK; m.paths = Mod._nodeModulePaths(path.dirname(CHECK)); m._compile(src, CHECK); return m.exports.askCdn };
   const V = [
     ["拿掉重問", (s) => s.replace("  if (first.length) { await sleep(reWait);", "  for (const [f, split] of first) unknown.push({ f, st: -1, why: unknownWhy(-1) });\n  if (false) { await sleep(reWait);"), "①"],
     ["連不上當成有", (s) => s.replace("else notYet(st) };", "else ok200++ };"), "③"],
     ["連不上當成沒有", (s) => s.replace("else if (st === 404 || st === 410) miss.push", "else if (st !== 200) miss.push"), "③"],
     ["重問全開 6 個並行", (s) => s.replace("reConc = 2, reWait = 5000", "reConc = 6, reWait = 5000"), "⑥"],
+    ["W66b：CDN 全斷也照樣全部重問", (s) => s.replace("if (down >= giveUp) {", "if (false) {"), "③"],
+    ["W66b：部分斷也提早結束", (s) => s.replace("down = st === -1 && ok200 === 0 ? down + 1 : 0;", "down = st === -1 ? down + 1 : 0;"), "⑧"],
   ];
   for (const [nm, patch, key] of V) { const s = patch(SRC); assert.notEqual(s, SRC, nm + "：改壞有改到"); const bad = await recheckProblems(fn(s)); assert.ok(bad.some((x) => x.startsWith(key)), nm + "：要被抓到（" + key + "），實際 " + JSON.stringify(bad)) }
   assert.deepEqual(await recheckProblems(fn(SRC)), [], "沒改壞的原檔用同一個載入方式也全過");

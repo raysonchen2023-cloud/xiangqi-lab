@@ -61,7 +61,7 @@ trap:[
 {"id":"mr002","src":{"book":"夢入神機","title":"弋不射宿"},"zh":["被戲班守衛逮住了","守衛把你押在布景後面，攤開一張舊戲譜：「譜背面這局解得開，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a troupe guard","The guard holds you behind the scenery and unrolls an old score: \"Solve the game on the back and you can go.\" Red to move: checkmate in 3."],"fen":"3akab2/Rc1Pn4/7C1/6pN1/1r7/9/9/9/2pC5/3K2B1r","line":["h7e7","e8g7","h6g8","b8g8","d8e8"]},
 {"id":"mr043c4","src":{"book":"夢入神機","title":"黃鸝出谷-02"},"zh":["被戲班守衛逮住了","守衛把你押在布景後面，攤開一張舊戲譜：「譜背面這局解得開，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a troupe guard","The guard holds you behind the scenery and unrolls an old score: \"Solve the game on the back and you can go.\" Red to move: checkmate in 3."],"fen":"1C3kc1c/2N1P4/b8/4P4/9/9/9/9/4p3r/3K5","line":["e8e9","f9f8","b9b8","f8f7","e6f6"],"alt":{"e8e9":["f9f8",{"b9b8":["f8f7",{"e6f6":0,"e6e7":0}]}]}}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_OPP2_TRAP== */
-jhMzLayer("opposite_cannon",2,{map:JH_MZ_OPP2_MAP,guards:JH_MZ_OPP2_GUARDS,solid:"#DXYL",opaque:"#DXYL",avoid:"F",onStep:jhMzOpp2Drop,
+jhMzLayer("opposite_cannon",2,{map:JH_MZ_OPP2_MAP,guards:JH_MZ_OPP2_GUARDS,solid:"#DoYL",opaque:"#DoYL",avoid:"F",onStep:jhMzOpp2Drop,
   pool:{door:JH_MZ_POOL_OPP2.door,trap:JH_MZ_POOL_OPP2_TRAP.trap},puz:{door:JH_MZ_POOL_OPP2.door[0],trap:JH_MZ_POOL_OPP2_TRAP.trap[0]},
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"列炮譜殘頁",en:"Opposite Cannons manual page"},{k:"title",zh:"稱號「粉墨登場」",en:"Title: Painted and on stage"}],
   lore:[{id:"oc4",kind:"doc",title:["戲班筆記","A troupe's notebook"],
