@@ -456,7 +456,7 @@ const REDUNDANT = [
   ["Swift 設定（放寬）：M7 裸字加 ,","const m = /[A-Za-z0-9_$+/:.-]+/y;","const m = /[A-Za-z0-9_$+/:.,-]+/y;","乾淨的副本就判失敗（金絲雀回 2，實跑），只會更嚴"],
   ["Swift 設定（放寬）：M5 */ 後 i=e+3","i = e + 2; continue","i = e + 3; continue","乾淨的副本就判失敗（金絲雀回 2，實跑），只會更嚴"],
   ["Swift 設定（放寬）：M18 SWIFT_VERSION 計數只在白名單內","if (k === \"SWIFT_VERSION\") svN++;","if (k === \"SWIFT_VERSION\" && v === \"5.0\") svN++;","SWIFT_VERSION 不是 5.0 時本來就被 SW_OK 白名單推進 swBad，差別只在 svN 有沒有加一，最後一樣判紅"],
-  ["Swift 設定（放寬）：parent 只記每個群組的第一個 children（#222 B1 後）", "for (const c of o.children) parent[c] = id;", "for (const c of o.children.slice(0, 1)) parent[c] = id;", "#222 B1 先用「同一個項目掛在兩個群組底下」擋掉所有兩個上層的樣本，parent 怎麼記都不再構成繞過；B1 本身的壞樣本 swiftTwoParentsFirst 跟它的改壞項放在 #222 A 段（先合鎖、再合壞樣本，guard-base 才不會紅）"],
+  ["Swift 設定（放寬）：parent 只記每個群組的第一個 children（#222 B1 後）", "for (const c of o.children) parent[c] = id;", "for (const c of o.children.slice(0, 1)) parent[c] = id;", "#222 B1 先用「同一個項目掛在兩個群組底下」擋掉所有兩個上層的樣本，parent 怎麼記都不再構成繞過；B1 本身由 swiftTwoParentsFirst 和兩條 #222 B1 改壞項測"],
   ["Swift 設定（放寬）：M3 parent 先到先得（#222 B1 後）", "for (const c of o.children) parent[c] = id;", "for (const c of o.children) if (!(c in parent)) parent[c] = id;", "同上：B1 先擋掉兩個上層的樣本；swiftTwoParentsLast、swiftTwoParentsSecond 都由 B1 抓"],
   ["Swift 設定（放寬）：#222 B2 path 不是字串照用", "if (o.path != null && typeof o.path !== \"string\") return null; ", "", "照用的話 path 變成空字串、解到 ios/App 資料夾，下面「不是一般檔案」那層照樣擋（swiftPathArr 照樣被抓）；那層本身由 swiftRefDir 測"],
 ];
