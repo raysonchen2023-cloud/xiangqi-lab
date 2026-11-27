@@ -217,6 +217,7 @@ const CLASSIFIED = new Set([
   "test-jh-pawn2-1126.js",   /* 11/26 W87-2 仙人指路地底迷宮第二層「漏月迷陣」（m/07z9m-pawn2.js、jhMzPath 的 lv.canMove）：vm 跑竹林只能上下直走（onStep 與自動走）、巡竹兵卒過河加左右視線、逐回合模擬走得過（守衛慢 1～7 回合也一樣）、題庫與改壞驗證 */
   "test-ipad-scene-review-1126.js",   /* 11/26 W164、W165 外部複審：營地橫式結業路線補上環線最後一段（vm 跑 cpCfgL＋shwPath 量長度）、書齋橫式點亮格器物照 D.wide 跳說明（vm 跑 sciMount），含改壞驗證 */
   "test-maze-review-1126.js",   /* 11/26 W153～W155 外部複審：迷宮過關那句話有下一層就說通到下一層（jhMzDoneText）、飛相第二層石門紅方要有相、多解題題面不寫死最後一步、反宮馬不標馬後炮；vm 跑十派第一、二層，含改壞驗證 */
+  "test-maze-chars-1126.js",   /* 11/26 迷宮地圖字元不跨檔撞名：依序載入全部 m/07z9m-*.js，每載一個就比對 JH_MZ_OBJ／JH_MZ_TILE 有沒有被後面的檔蓋掉；含改壞驗證 */
   "test-legend-keep-1126.js",   /* 11/26 W157 外部複審：古戰場自由段保護任務（函谷關）提早結束時也要檢查保護的子；vm 跑 07-legend.js 的判斷，含改壞驗證 */
   "test-delete-focus-1126.js",   /* 11/26 W156 外部複審：刪除本機資料第二層確認，報讀模式先聚焦「不要刪」（ax-first）；vm 跑 11b-a11y.js 的 axmDlgAdd，含改壞驗證 */
   "test-jh-maze-layers-1126.js",   /* 11/26 W87-2 地底迷宮換層（m/07z9m-maze.js jhMzLayer／jhMzDeep／jhMzPick、07z9m-fall.js 層數標題、07z9m-central2.js 中炮門第二層示範）：vm 跑登記多層不動第一層、存檔分層、最深層含舊存檔、選層鎖住、門內頁入口、轉場何時播（含改壞驗證） */
