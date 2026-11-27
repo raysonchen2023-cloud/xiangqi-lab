@@ -9,7 +9,8 @@ const SRC = M("m/07sw-scenewide.js");
 function load(extra) {
   const ctx = vm.createContext(Object.assign({ setTimeout: () => 0, clearTimeout: () => { }, requestAnimationFrame: () => 0, addEventListener: () => { }, isFinite, Math, Object, String, localStorage: { getItem: () => null } }, extra || {}));
   vm.runInContext(SRC, ctx);
-  if (!(extra && extra.__noCdn)) vm.runInContext("SCW_CDN=true", ctx);   // 測座標和行為時當作圖已經上 CDN
+  if (extra && extra.__noCdn) vm.runInContext("SCW_CDN=false", ctx);   // 模擬圖還沒上 CDN，測把關
+  else if (!(extra && extra.__raw)) vm.runInContext("SCW_CDN=true", ctx);   // 測座標和行為時當作圖已經上 CDN（__raw＝照檔案裡的預設值）
   return ctx;
 }
 const C0 = load(), [scwKind, scwKey, scwEntry, scwSw7, SCW, SCW_BAD] = vm.runInContext("[scwKind, scwKey, scwEntry, scwSw7, SCW, SCW_BAD]", C0);
@@ -44,8 +45,10 @@ test("圖網址 → 鍵；條目要 ready、或開發用開關，載不到過的
   const C3 = load(); vm.runInContext("SCW['" + RD + "'].ready=false", C3);
   assert.equal(vm.runInContext("scwEntry('" + RD + "')", C3), null);
   // 審查 #155：圖還沒上 CDN（SCW_CDN=false）時正式玩家一律原圖，只有開發用開關才用
-  const C4 = load({ __noCdn: 1 }); assert.equal(vm.runInContext("SCW_CDN", C4), false, "預設還沒上 CDN"); assert.equal(vm.runInContext("scwEntry('" + RD + "')", C4), null);
+  const C4 = load({ __noCdn: 1 }); assert.equal(vm.runInContext("SCW_CDN", C4), false, "模擬還沒上 CDN"); assert.equal(vm.runInContext("scwEntry('" + RD + "')", C4), null);
   const C5 = load({ __noCdn: 1, localStorage: { getItem: k => k === "xqScwDev" ? "1" : null } }); assert.ok(vm.runInContext("scwEntry('" + RD + "')", C5), "開發用開關照樣看得到");
+  // W107-L 發布：橫式圖已上 CDN，檔案預設 SCW_CDN=true，正式玩家沒開開發用開關也用橫式圖
+  const C6 = load({ __raw: 1 }); assert.equal(vm.runInContext("SCW_CDN", C6), true, "這版預設已上 CDN"); assert.ok(vm.runInContext("scwEntry('" + RD + "')", C6), "正式玩家看得到橫式圖");
 });
 
 test("錯棋重練條目：座標都在圖內、走路的邊和小動作都接得到節點、入口四個都有", () => {
