@@ -66,14 +66,17 @@ function pwdSoil(img,d){try{const c=document.createElement("canvas");c.width=192
   const D=x.getImageData(Math.round(d[0]*1.92),Math.round(d[1]*3.44),Math.max(1,Math.round((d[2]-d[0])*1.92)),Math.max(1,Math.round((d[3]-d[1])*3.44))).data;let r=0,g=0,b=0,n=0;
   for(let i=0;i<D.length;i+=4){const R=D[i]/255,G=D[i+1]/255,B=D[i+2]/255,L=.3*R+.59*G+.11*B;if(d[4]===1||(R-B>.08&&R>=G-.02&&L>.42)){r+=R;g+=G;b+=B;n++}}
   if(n<20)return[.86,.74,.52];const k=v=>Math.min(1,v/n*1.18+.14);return[k(r),k(g),k(b)]}catch(e){return[.86,.74,.52]}}
-function portWind(v,k){const C=PWD[k],P=v&&v.querySelector(".shp-page.cq"),img=P&&P.querySelector(":scope>img");if(!C||!img)return;
+/* W107-L：轉回直向時 07f 只重掛風本身（portWindCore），不再叫外面包了 5 層的 portWind（07q 旅伴小卡、07w 走路、07w4 主人、07x 放大、07w5 偶遇），免得旅伴小卡一直多一張（審查 #165 第七輪） */
+function portWind(v,k){return portWindCore(v,k)}
+function portWindCore(v,k){const C=PWD[k],P=v&&v.querySelector(".shp-page.cq"),img=P&&P.querySelector(":scope>img");if(!C||!img)return;
+  if(P.dataset.scw)return;   /* W107-L：風的範圍是照直圖量的，iPad 橫式圖先不掛（轉成橫式時 CSS 藏起來） */
   pwdDev(P);if(!pwdOn()||matchMedia("(prefers-reduced-motion: reduce)").matches||typeof pfxGl!=="function")return;
   let n=0;const wait=()=>{if(!P.isConnected)return;const ok=!P.classList.contains("pc-run")&&!document.querySelector(".walkc")&&img.complete&&img.naturalWidth;if(!ok&&n++<80){setTimeout(wait,150);return}if(ok)pwdRun(P,img,C,k)};wait()}
 function pwdRun(P,img,C,k){if(img.naturalWidth!==768||img.naturalHeight!==1376)return;
   const cv=document.createElement("canvas");cv.className="pw-gl";cv.setAttribute("aria-hidden","true");cv.style.cssText="position:absolute;left:0;top:0;width:100%;height:100%;display:block;pointer-events:none";img.after(cv);
   let undo=()=>{};const fail=()=>{cv.remove();img.style.visibility="";undo()};
   const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/layers/"+s});
-  Promise.all(["sm_mist_ink.webp","sm_mist_fog.webp"].map(ld)).then(im=>{if(!P.isConnected||!cv.isConnected)return;if(im.some(m=>m.naturalWidth!==512||m.naturalHeight!==512))throw 0;
+  Promise.all(["sm_mist_ink.webp","sm_mist_fog.webp"].map(ld)).then(im=>{if(!P.isConnected||!cv.isConnected||P.dataset.scw)return;if(im.some(m=>m.naturalWidth!==512||m.naturalHeight!==512))throw 0;
     const G=pfxGl(cv,PFX_VS,PWD_FS,[["I",img],["Mi",im[0],1,1],["Mf",im[1],1,1]]);if(!G)throw 0;
     const{gl,u}=G,U={t:u("t"),k:u("k"),DM:u("DM"),DB:u("DB"),DS:u("DS"),DC:u("DC")},px=(x,y)=>[x*7.68,y*13.76];
     const Fv=new Float32Array(24),FT=new Float32Array(6);(C.f||[]).slice(0,6).forEach((f,i)=>{const[a,b]=px(f[0],f[1]),[c,d]=px(f[2],f[3]);Fv.set([a-3,b-3,c+4,d+4],i*4);FT[i]=f[4]==="v"?1:0});

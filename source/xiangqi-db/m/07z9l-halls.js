@@ -38,8 +38,8 @@ if(typeof JH_HALL!=="undefined")for(const [sid,H] of Object.entries(JH_HALLS8))i
 function jhHalls8Hall(v,sid){const H=JH_HALLS8[sid],P=v&&v.querySelector(".jh-hall");if(!H||!P)return;
   const img=P.querySelector("img");if(img)img.alt=jhL(H.alt[0],H.alt[1]);
   const g=P.querySelector('.jh-hall-spot[data-k="gate"]');if(g)g.innerHTML=`<b>${esc(jhL("‹ 出山門回十州棋館","‹ Out the gate to the Ten Prefectures"))}</b>`;
-  /* 順風小字：07z9b 寫死在畫面上方 11.5%（中炮門大廳標籤 y112 再往下 46）；其他派大廳位置不同，改放在自己的大廳標籤正下方 */
-  const n=P.querySelector(".jh-hall-note"),hs=H.spots.hall;if(n&&hs){n.style.left=(hs[0]/768*100).toFixed(2)+"%";n.style.top=((hs[1]+46)/1376*100).toFixed(2)+"%"}
+  /* 順風小字：放在自己的大廳標籤正下方，照當下那套圖算（07z9b jhNoteAt；橫式圖不能再用 768／1376 當除數，審查 #170） */
+  const n=P.querySelector(".jh-hall-note");if(n&&typeof jhNoteAt==="function")jhNoteAt(n,H.spots.hall);
   const p=H.play;if(P.querySelector(`.jh-hall-spot[data-k="${p.k}"]`))return;
   if(!jhHalls8On("play_"+sid))return;   /* 遠端開關關掉這一派的玩法：門內頁照常，只是不放玩法入口 */
   const b=document.createElement("button");b.type="button";b.className="shp-spot jh-hall-spot";b.dataset.k=p.k;b.style.cssText=jhHallPc(p.at);b.innerHTML=`<b>${esc(jhL(p.zh,p.en))}</b>`;

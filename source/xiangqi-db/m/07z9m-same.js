@@ -5,23 +5,23 @@
      ・鹽道暗哨（JH_MZ_KIND.dash）只在筆直的長廊上來回衝刺：一回合衝兩格（第二格被擋就只走一格、衝到玩家那一格就停），
        撞到牆不會馬上掉頭，要花一回合轉身（那一回合原地不動）；只看正前方，最遠 JH_MZ_SAME_RANGE 格，被牆或鹽灶擋住就看不到。
        中炮門的暗匪一回合一格、撞牆當回合掉頭、看 5 格；這裡快一倍、看得更遠，但轉身慢——趁牠轉身那一回合穿過長廊，或躲進牆邊的凹槽。
-     ・廢棄鹽灶（Z）還在悶燒：擋路、擋視線；走到鹽灶旁邊（上下左右）就把它撥旺，之後一直亮著，照亮四周（跟點亮的壁燈一樣）。
+     ・廢棄鹽灶（s）還在悶燒：擋路、擋視線；走到鹽灶旁邊（上下左右）就把它撥旺，之後一直亮著，照亮四周（跟點亮的壁燈一樣）。
    還沒做（之後補）：碑刻文書 L 與暗門 H（要先請 Gemini 查史料、iMac Claude 1 複核）、像素材質（每派一套，出圖要先問開發者）。 */
 const JH_MZ_SAME_MAP=[
 "###############",
 "#####.>.#######",
 "#####...#######",
 "######D########",
-"#T.......Z..T.#",
+"#T.......s..T.#",
 "###.#######.###",
 "#.............#",
 "#.##.#####.##.#",
 "#C##.......##C#",
-"####.#Z#P..####",
+"####.#s#P..####",
 "####.#####.####",
 "#.............#",
 "#.##.#####.##.#",
-"#.##...Z...##.#",
+"#.##...s...##.#",
 "####...C...####",
 "####.#####.####",
 "#.............#",
@@ -41,12 +41,12 @@ JH_MZ_KIND.dash={
   look:{body:"#6b2e22",head:"#7d3a2c",eye:0xFFB04A}};
 /* 鹽灶：走到旁邊（上下左右）就點亮，之後一直亮著（跟壁燈一樣記在 S.lit）。在走這一步之前判斷要走進的那一格；撞牆不算 */
 function jhMzSameStove(S,dx,dy){const P=S.player,nx=P.x+dx,ny=P.y+dy;if(jhMzSolid(S,nx,ny))return null;
-  for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){const x=nx+a,y=ny+b;if(jhMzCell(S,x,y)==="Z")S.lit.add(y*S.W+x)}return null}
+  for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){const x=nx+a,y=ny+b;if(jhMzCell(S,x,y)==="s")S.lit.add(y*S.W+x)}return null}
 /* 鹽灶（3D）：矮土灶上一口鐵鹽盤，灶口一點暗紅的火；平面版：方形土灶加紅點 */
-if(!JH_MZ_OBJ.Z)JH_MZ_OBJ.Z=H=>{const{T3,mesh,lam}=H,g=new T3.Group();
+if(!JH_MZ_OBJ["s"])JH_MZ_OBJ["s"]=H=>{const{T3,mesh,lam}=H,g=new T3.Group();
   g.add(mesh(new T3.BoxGeometry(.78,.42,.78),lam("#6e4a36"),0,.21,0));g.add(mesh(new T3.CylinderGeometry(.36,.32,.08,20),lam("#3a3a3a"),0,.46,0));
   g.add(mesh(new T3.BoxGeometry(.26,.16,.04),new T3.MeshBasicMaterial({color:0xD2552A}),0,.14,.4));return g};
-if(!JH_MZ_TILE.Z)JH_MZ_TILE.Z=(cx,px,py,T)=>{cx.fillStyle="#6e4a36";cx.fillRect(px+T*.12,py+T*.12,T*.76,T*.76);
+if(!JH_MZ_TILE["s"])JH_MZ_TILE["s"]=(cx,px,py,T)=>{cx.fillStyle="#6e4a36";cx.fillRect(px+T*.12,py+T*.12,T*.76,T*.76);
   cx.fillStyle="#3a3a3a";cx.beginPath();cx.arc(px+T/2,py+T/2,T*.26,0,Math.PI*2);cx.fill();cx.fillStyle="#d2552a";cx.fillRect(px+T*.4,py+T*.74,T*.2,T*.1)};
 /* 殘局題庫（maze-puzzles.js 產生，不要手改）。重跑／核對（在 source/ 底下；核對加 --check、不用 Pikafish）：
    PIKAFISH=<執行檔> node xiangqi-lab/tools/maze-puzzles.js --name JH_MZ_POOL_SAME --out xiangqi-db/m/07z9m-same.js --mate C --door 3 --trap 6 --prefer-red C2
@@ -66,7 +66,7 @@ trap:[
 {"id":"sq233c5","src":{"book":"適情雅趣","title":"停車絆馬"},"zh":["被鹽道暗哨逮住了","暗哨把你按在鹽灶邊：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a salt-road sentry","The sentry pins you against a salt stove: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"nR7/4ak3/9/9/4N4/2C2c3/5n3/9/r5p1r/4K4","line":["c4c8","e8f9","e5d7","f8f7","c8c7"]}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_SAME== */
 jhMzDef("same_cannon",{map:JH_MZ_SAME_MAP,guards:JH_MZ_SAME_GUARDS,pool:JH_MZ_POOL_SAME,
-  puz:{door:JH_MZ_POOL_SAME.door[0],trap:JH_MZ_POOL_SAME.trap[0]},solid:"#DZ",opaque:"#DZ",jump:"",onStep:jhMzSameStove,
+  puz:{door:JH_MZ_POOL_SAME.door[0],trap:JH_MZ_POOL_SAME.trap[0]},solid:"#Ds",opaque:"#Ds",jump:"",onStep:jhMzSameStove,
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"順炮譜殘頁",en:"Same-Direction Cannons manual page"},{k:"box",zh:"稱號「破浪鹽丁」",en:"Title: Wave-breaking Salter"}],
   title:["🧂 煮鹽廢灶","🧂 Abandoned salt stoves"],lvName:["煮鹽廢灶・第一層","Abandoned salt stoves · Level 1"],back:["回順炮門","Back to the Same-Direction Cannons School"],
   hall:{at:[600,600],zh:"🧂 煎鹽灶・灰坑暗道",en:"🧂 Salt stove · Tunnel in the ash pit"},
