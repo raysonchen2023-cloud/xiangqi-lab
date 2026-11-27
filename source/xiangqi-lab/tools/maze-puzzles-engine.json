@@ -281,6 +281,7 @@
 "multi|3k3C1/2P1N4/9/9/9/9/9/5p3/1rrnc2R1/5K1p1|e8g9 e1e9 h1d1 c1d1 g9e8@20":{"ok":true,"why":""},
 "multi|3k3C1/4P4/4b3b/3n5/3N5/3C5/8r/4p4/4p4/5K3|d5b6 d6b5 b6d7 b5d4 d7b8@20":{"ok":true,"why":"","alt":{"d5b6":["d6b5",{"b6d7":["b5d4",{"d7b8":0}]}],"d5f6":["d6b5",{"f6d7":["b5d4",{"d7b8":0}]}]}},
 "multi|3k4C/4P2N1/9/9/7c1/9/9/9/2nr1pp2/4K1BN1|h8f9 h5h9 f9g7 h9h8 g7h9@20":{"ok":true,"why":""},
+"multi|3k5/4P4/3Nb4/3n5/2b6/6B2/3cC4/4BA1p1/4A4/4K4|d7b8 d6c8 b8c6 e7c9 e8d8 d9e9 c6e7@20":{"ok":true,"why":""},
 "multi|3k5/5P3/3Nb4/9/6b2/9/9/9/9/3K5|f8e8 g5i7 d0e0 e7c5 d7b8@20":{"ok":true,"why":""},
 "multi|3k5/6R1C/3c5/6N2/6b2/9/9/9/2r1p1p2/5K3|g8g9 d9d8 g6f8@20":{"ok":true,"why":"","alt":{"g8g9":["d9d8",{"g6f8":0,"g6h8":0}],"g6f8":["d9d8",{"g8g5":0,"g8g6":0,"g8g7":0,"g8g9":0}]}},
 "multi|3kc1cn1/4P3N/9/9/9/3r5/9/4BC3/4p1p2/3p1K3|f2f9 e9e2 f9h9 g9g8 i8g9@20":{"ok":true,"why":""},

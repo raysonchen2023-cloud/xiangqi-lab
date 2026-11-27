@@ -156,7 +156,7 @@ function axmDlgAdd(el){if(AXM_DLG.has(el)||!el.isConnected)return;const a=docume
   el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");
   if(!el.hasAttribute("aria-label")&&!el.hasAttribute("aria-labelledby")){const h=el.querySelector("h1,h2,h3,.sh-t,.xqs-h");if(h&&h.textContent.trim()){if(!h.id)h.id="axmH"+(++axmN);el.setAttribute("aria-labelledby",h.id)}else el.setAttribute("aria-label","對話框")}
   if(!el.hasAttribute("tabindex"))el.setAttribute("tabindex","-1");
-  setTimeout(()=>{const ae=document.activeElement;if(!el.isConnected||el.contains(ae))return;if(!axmOn()&&ae&&(ae.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)))return;const f=axmOn()?axmFocusables(el).filter(x=>!x.classList.contains("sh-x"))[0]:null;try{(f||el).focus({preventScroll:true})}catch(x){}},80)}
+  setTimeout(()=>{const ae=document.activeElement;if(!el.isConnected||el.contains(ae))return;if(!axmOn()&&ae&&(ae.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)))return;const fl=axmOn()?axmFocusables(el).filter(x=>!x.classList.contains("sh-x")):[],f=fl.find(x=>x.classList.contains("ax-first"))||fl[0]||null;   /* W156：有 ax-first（安全的那一顆，例如「不要刪」）就先聚焦它 */try{(f||el).focus({preventScroll:true})}catch(x){}},80)}
 /* 關掉一層：等一下下（按鈕常常關掉這層、馬上開下一層），還有別層開著就把「回哪裡」交給它；都關了才把焦點還回去 */
 function axmDlgGone(el){const d=AXM_DLG.get(el);AXM_DLG.delete(el);if(!d)return;
   setTimeout(()=>{const open=[...AXM_DLG.keys()].filter(x=>x.isConnected);if(open.length){const top=AXM_DLG.get(open[open.length-1]);if(top&&(!top.ret||!top.ret.isConnected))top.ret=d.ret;return}

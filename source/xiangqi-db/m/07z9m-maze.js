@@ -109,7 +109,7 @@ jhMzDef("central",{map:JH_MZ_MAP,guards:[Object.assign({kind:"rook",dy:0},JH_MZ_
       src:"明代官倉常見的防潮做法；碑文是遊戲整理改寫，不是特定碑刻的原文"}],
   title:["🕳 地底漕倉","🕳 Underground granary"],lvName:["地底漕倉・第一層","Underground granary · Level 1"],back:["回中炮門","Back to the Central Cannon School"],
   hall:{at:[530,395],zh:"🕳 拋石車・地底密道",en:"🕳 Catapult · Hidden passage"},
-  intro:["你從拋石車底下的暗門爬下來，四周一片漆黑。<b>點地面就會走過去</b>，也可以用下面的方向鈕。走到壁燈旁邊會點亮它。","You climb down through the hatch under the catapult into pitch darkness. <b>Tap the floor to walk there</b>, or use the arrows below. Walk next to a wall lamp to light it."],
+  intro:["你從拋石車底下的暗門爬下來，四周一片漆黑。<b>點地面就會走過去</b>，也可以按住搖桿往要去的方向推（拖搖桿右上角的 ✥ 可以換位置）。走到壁燈旁邊會點亮它。","You climb down through the hatch under the catapult into pitch darkness. <b>Tap the floor to walk there</b>, or hold the joystick and push the way you want to go (drag the ✥ on it to move it). Walk next to a wall lamp to light it."],
   warn:["<b>前面有暗匪在巡邏。</b>紅線是他看得到的地方，從他背後或趁他轉身時過去。","<b>A thief is patrolling ahead.</b> The red line is what he can see. Slip past behind him or while he turns."],
   say:{door:["將死！炮隔著兵打到將，石門轟隆一聲往上收。","Checkmate! The cannon fires over the pawn and the stone door rumbles open."],trap:["將死！暗匪愣在原地，你趁機脫身。","Checkmate! The thief freezes and you slip away."],
     open:["石門開了，<b>往下的樓梯就在門後</b>。","The door is open. <b>The stairs down are right behind it.</b>"],dazed:["暗匪暈頭轉向，<b>四回合內</b>不會動。","The thief is dazed and <b>won't move for four turns</b>."],
@@ -497,6 +497,10 @@ function jhMzMv(a,b){return"abcdefghi"[a.c]+(9-a.r)+"abcdefghi"[b.c]+(9-b.r)}
    改成：落子前先用 XQCore 規則核對紅方這一步合不合法（含走完自己被將）；不合法只提示原因、不算答錯；合法但不是正解才照原本算一次。XQCore 不在（理論上不會）就照舊全部交給 jhMzTry */
 function jhMzLegal(pcs,mv){try{if(typeof XQCore==="undefined"||!XQCore.legal)return true;const b=Array(90).fill(null);for(const q of pcs)b[q.r*9+q.c]=q.p;const f=XQCore.parseSq(mv.slice(0,2)),t=XQCore.parseSq(mv.slice(2,4));return XQCore.legal(b,"r").some(([a,z])=>a===f&&z===t)}catch(e){return true}}
 
+/* 過關那句話（W153，11/26 外部複審：第一層寫「第二、三層之後再開」，同一個視窗卻有「往下走・第二層」）：
+   有下一層＝一律說石階通到下一層（各層自己寫的 say.done 多半是做第二、三層之前寫的）；沒有下一層才用該層的 say.done */
+function jhMzDoneText(LV,nx,own){if(nx){const nm=nx.lvName||["下一層","the next level"];return jhL(`石階往下通到${nm[0]}。`,`The steps lead down to ${nm[1]}.`)}
+  return own||jhL("更深的地方之後再開。","Deeper levels open later.")}
 /* W87：sid＝哪一派（路由 #/jianghu/maze/<派> 帶進來；沒有＝中炮門） */
 function JhMaze(v,sid,n){jhCss();jhMzCss();const LV=jhMzLvN(sid,n||jhMzLayerOf(location.hash)),HALL="#/jianghu/hall/"+LV.sid,ZS=k=>{const a=LV.say&&LV.say[k];return a?jhL(a[0],a[1]):""},HELP=LV.helper||["葛青禾","Ge Qinghe"];
   if(!jhMzOn()){location.hash=HALL;return{}}
@@ -512,7 +516,7 @@ function JhMaze(v,sid,n){jhCss();jhMzCss();const LV=jhMzLvN(sid,n||jhMzLayerOf(l
   /* 3D 迷宮（h3）：載好之前（或載不到）畫平面版＋立繪；載好後平面畫布藏起來（透明，但照舊收點選） */
   /* W87c：3D 是斜俯視，畫面上地圖的「北」在右上；方向鈕跟著擺到四個斜角、箭頭改成斜的（平面版照舊上下左右） */
   const isoPad=on=>{const m=v.querySelector(".jh-mz");if(m)m.classList.toggle("iso",!!on);for(const[k,a,b]of JH_MZ_PADG){const e=v.querySelector('.jh-mz-pad [data-k="'+k+'"]');if(e)e.textContent=on?b:a}};
-  jhMzWorld3(box,c0,S).then(w=>{if(alive()){h3=w;cv.style.opacity="0";isoPad(true)}else w.dispose()}).catch(()=>{});
+  jhMzWorld3(box,c0,S).then(w=>{if(alive()){h3=w;cv.style.opacity="0";isoPad(true);try{if(joy)joy.arrows()}catch(e){}}else w.dispose()}).catch(()=>{});   /* W134：搖桿上的小三角形跟著轉到四個斜角 */
   /* 畫面上還在走（離目標格超過 0.12 格）＝還不能踏下一格；剩一點點就先接下一格，連著走不停頓 */
   const moving=()=>{const P=S.player;return Math.hypot(P.x-P.fx,P.y-P.fy)>.12};
   const say=h=>{v.querySelector(".jh-mz-msg").innerHTML=h};
@@ -652,7 +656,7 @@ function JhMaze(v,sid,n){jhCss();jhMzCss();const LV=jhMzLvN(sid,n||jhMzLayerOf(l
   /* 走到樓梯：存檔；有下一層就記「到過下一層」、多一顆「往下走」 */
   const finish=()=>{const R=jhMzSave(S),n=LV.layer||1,nx=jhMzLayers(LV.sid)>n?jhMzLvN(LV.sid,n+1):null;if(nx)jhMzDeepSet(LV.sid,n+1);
     const o=ov(`<h2>${esc(jhL(`第${jhMzCn(n)}層走完了`,`Level ${n} cleared`))}</h2>
-      <p>${esc(ZS("done")||(nx?jhL("石階繼續往下。","The steps go on down."):jhL("更深的地方之後再開。","Deeper levels open later.")))}</p>
+      <p>${esc(jhMzDoneText(LV,nx,ZS("done")))}</p>
       <p>${esc(jhL(`這次帶出來：${S.lv.rew.map(r=>r.zh+" "+S.bag[r.k]).join("、")}；走了 ${S.turn} 步。`,`Brought out: ${S.lv.rew.map(r=>r.en+" "+S.bag[r.k]).join(", ")}; ${S.turn} steps.`))}</p>
       ${R.first?`<p><b>${esc(jhL(`第一次走完：修為 +${S.lv.xp}`,`First clear: +${S.lv.xp} XP`))}</b></p>`:`<p>${esc(jhL(`最佳：${R.G.best} 步`,`Best: ${R.G.best} steps`))}</p>`}
       <div class="jh-mz-row"><button type="button" data-a="again">${esc(jhL("再走一次","Play again"))}</button><button type="button"${nx?"":' class="main"'} data-a="out">${esc(jhL(LV.back[0],LV.back[1]))}</button>${nx?`<button type="button" class="main" data-a="down">${esc(jhL(`往下走・第${jhMzCn(n+1)}層`,`Go down · Level ${n+1}`))}</button>`:""}</div>`);
@@ -671,6 +675,8 @@ function JhMaze(v,sid,n){jhCss();jhMzCss();const LV=jhMzLvN(sid,n||jhMzLayerOf(l
     let pd=false;b.addEventListener("pointerdown",e=>{pd=true;try{b.setPointerCapture(e.pointerId)}catch(e2){}go(m)});
     const up=()=>{if(held===m)held=null};for(const n of["pointerup","pointercancel","lostpointercapture"])b.addEventListener(n,up);
     b.addEventListener("click",()=>{if(pd){pd=false;return}go(m);held=null});b.addEventListener("contextmenu",e=>e.preventDefault())});
+  /* W134（11/26 開發者「重新設計地底迷宮的方向鍵，太醜了，不直觀也怪怪的」，選虛擬搖桿）：地圖左下（橫的畫面右下）疊一個搖桿，拇指推哪走哪（07z9m-joy.js）；上面四顆方向鈕收到畫面外，只給旁白、切換控制用 */
+  const joy=typeof jhMzJoy==="function"?jhMzJoy(v,{iso:()=>!!h3,go:k=>{if(DIR[k])go(DIR[k])},stop:()=>{held=null}}):null;
   const keys={ArrowUp:DIR.u,ArrowDown:DIR.d,ArrowLeft:DIR.l,ArrowRight:DIR.r};
   const onPop=()=>{if(!alive()){off();return}if(escIgn){escIgn=false;return}if(trapO){escPush();escAsk()}};
   const onHome=e=>{if(!trapO||!alive())return;const t=e.target&&e.target.closest&&e.target.closest('#back,[data-home="1"]');if(!t)return;e.preventDefault();e.stopImmediatePropagation();escAsk()};
