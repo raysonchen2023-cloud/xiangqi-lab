@@ -64,7 +64,10 @@ test("香爐是立體的：有爐身、三隻腳、兩耳、香，不是一張�
 });
 
 test("穩穩放在桌面上：三隻腳的底剛好在桌面（y=0），沒有零件低於桌面", () => {
-  const { W } = build();
+  const { g, W } = build();
+  /* #180 審查（iMac Claude 1）：整組設 g.rotation.x=.5（傾倒）時，上面的外緣算法只看零件自己的旋轉，照樣會過 → 這裡直接要求整組不能前後、左右傾（繞直立軸轉不影響平放，不管） */
+  assert.equal(g.rotation.x, 0, "整組不能前後傾"); assert.equal(g.rotation.z, 0, "整組不能左右傾");
+  for (const w of W) if (w.m.geometry.type === "Cylinder" || w.m.geometry.type === "Lathe") { assert.equal(w.m.rotation.x, 0, "爐身、腳、香要直立"); assert.equal(w.m.rotation.z, 0, "爐身、腳、香要直立") }
   const low = Math.min(...W.map(w => w.y0));
   assert.ok(Math.abs(low) < 1e-6, "最低點 y=" + low);
   const legs = W.filter(w => w.m.geometry.type === "Cylinder" && w.m.geometry.args[2] < .2);
