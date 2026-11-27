@@ -525,7 +525,9 @@ const SW7_POEM={
 const sw7SeaOf=t=>SW7_SPRING.has(t)?"sp":SW7_SUMMER.has(t)?"su":SW7_WINTER.has(t)?"wi":t?"au":"";
 function sw7BoxSt(){const S=store.get("sw7Box",null)||{};S.pg=S.pg||{};S.w=S.w||{};S.u=S.u||{};S.g=S.g||[];return S}
 const sw7BoxTok=(S,e)=>Math.max(0,Math.floor((S.w[e]||0)/3)-(S.u[e]||0));
-function sw7BoxKey(src){let m=/data\/shipmap\/port_(\w+?)(?:_c|_f)?\.webp/.exec(src);if(m&&m[1]!=="classic"&&SW7_BOX_POS.port[m[1]])return["port",m[1]];m=/data\/yizhan\/(\w+?)(?:_c|_f)?\.webp/.exec(src);if(m&&SW7_BOX_POS.yz[m[1]])return["yz",m[1]];return null}
+/* #171：渡口 iPad 橫式圖 port_<朝>_f_l1610（2560×1600）的木匣（底部中心 %，Windows Claude 1 量）；寬照石桌比例縮成 6%（直圖 10%，橫式圖用 10% 比石桌大很多）。存檔的鍵照舊是 port:<朝> */
+const SW7_BOX_POS_L={port:{"qin":[17,62],"han":[25,69],"sanguo":[44,73],"weijin":[77,67.5],"nanbei":[67,68.5],"sui":[16,75],"tang":[21.5,57],"wudai":[60,56.5],"song":[18,56.5],"yuan":[44,62.5],"ming":[16.5,59.5],"qing":[64,88]}},SW7_BOX_LW=6;
+function sw7BoxKey(src){let m=/data\/shipmap\/port_(\w+?)_f_l1610\.webp/.exec(src);if(m&&SW7_BOX_POS_L.port[m[1]])return["port",m[1],1];m=/data\/shipmap\/port_(\w+?)(?:_c|_f)?\.webp/.exec(src);if(m&&m[1]!=="classic"&&SW7_BOX_POS.port[m[1]])return["port",m[1]];m=/data\/yizhan\/(\w+?)(?:_c|_f)?\.webp/.exec(src);if(m&&SW7_BOX_POS.yz[m[1]])return["yz",m[1]];return null}
 /* 贏棋記到那一朝（包一層 07-legend.js 的 journeyGameEnd：先讀 jPending，古戰場 bt: 不算） */
 function sw7BoxWin(st,P){if(!st||!st.result||st.practice||st.result.w!==st.human||(st.moves||[]).length<10)return;if(P&&P.game===st.id&&String(P.id).startsWith("bt:"))return;
   const S=sw7BoxSt(),id=String(st.id||"");if(!id||S.g.includes(id))return;S.g=S.g.concat(id).slice(-60);const e=store.get("eraUser",null)||store.get("era","classic");S.w[e]=(S.w[e]||0)+1;store.set("sw7Box",S);
@@ -535,8 +537,9 @@ if(typeof journeyGameEnd==="function"){const f0=journeyGameEnd;journeyGameEnd=fu
 function sw7Box(R){if(!SW7_BOX_ON)return;const P=R.P,src=R.img.getAttribute("src")||"",K=sw7BoxKey(src);if(!K){const o=P.querySelector(":scope>.sw7-box");if(o)o.remove();return}
   const[g,e]=K,key=g+":"+e,S=sw7BoxSt(),pg=S.pg[key]||(S.pg[key]={}),se=sw7SeaOf(sw7Term());
   if(se&&!pg[se]){pg[se]=Date.now();store.set("sw7Box",S);const x=SW7_SEA.find(z=>z[0]===se);setTimeout(()=>{try{toast(`${x[4]} 四時風物匣收進了${x[2]}（真實的${x[1]}天來過這裡）`)}catch(z){}},2200)}
-  let b=P.querySelector(":scope>.sw7-box");if(b&&b.dataset.k===key)return sw7BoxDot(b,S,e);if(b)b.remove();
-  const[x,y]=SW7_BOX_POS[g][e];b=document.createElement("button");b.type="button";b.className="sw7-box";b.dataset.k=key;b.style.left=x+"%";b.style.top=y+"%";b.setAttribute("aria-label","四時風物匣");
+  const L=K[2],bk=key+(L?":l":"");   /* 橫式圖、直圖的木匣位置不同：元素的 data-k 分開，轉向時換一個 */
+  let b=P.querySelector(":scope>.sw7-box");if(b&&b.dataset.k===bk)return sw7BoxDot(b,S,e);if(b)b.remove();
+  const[x,y]=(L?SW7_BOX_POS_L:SW7_BOX_POS)[g][e];b=document.createElement("button");b.type="button";b.className="sw7-box";b.dataset.k=bk;b.style.left=x+"%";b.style.top=y+"%";if(L)b.style.width=SW7_BOX_LW+"%";b.setAttribute("aria-label","四時風物匣");
   b.innerHTML=`<img src="${SW7_BOX_IMG}" alt="" draggable="false">`;b.onclick=ev=>{ev.stopPropagation();ev.preventDefault();if(typeof vibrate==="function")vibrate(5);sw7BoxOpen(R,g,e)};
   ["pointerdown","touchstart","mousedown"].forEach(t=>b.addEventListener(t,ev=>ev.stopPropagation(),{passive:true}));P.append(b);sw7BoxDot(b,S,e)}
 function sw7BoxDot(b,S,e){b.classList.toggle("tok",sw7BoxTok(S,e)>0)}
