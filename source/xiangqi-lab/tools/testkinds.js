@@ -299,10 +299,13 @@ function tally(mode) {
   const z = () => Object.assign(Object.fromEntries(KINDS.map(k => [k, { all: 0, pass: 0, skip: 0 }])), { todo: { all: 0, xpass: 0 } });
   const total = z(), files = [];
   for (const file of listFiles()) {
+    const t0 = Date.now();
     const items = (mode === "static" ? staticFile(file) : runFile(file)).map(x => ({ ...x, kind: kindOf(file, x.name) }));
     const n = z();
     for (const it of items) for (const o of [n, total]) { if (it.todo) { o.todo.all++; if (it.ok) o.todo.xpass++; continue } o[it.kind].all++; if (it.skip) o[it.kind].skip++; else if (it.ok) o[it.kind].pass++ }
-    files.push({ file, items, n });
+    /* W189 第一步（11/27）：實際跑的時候記下這支檔花了幾毫秒（ms），只寫進 XQ_TALLY_OUT 的逐項結果，畫面輸出不變
+       （驗證紀錄要跟 CI 重跑逐字比對，秒數每次不同，不能印出來）。下一步照這些秒數決定怎麼同時跑；判斷紅綠的規則都沒動 */
+    files.push(mode === "static" ? { file, items, n } : { file, items, n, ms: Date.now() - t0 });
   }
   return { files, total };
 }
