@@ -210,14 +210,16 @@ function bdPort(v,k){if(!bdOk())return;const P=v&&v.querySelector(".shp-page.cq"
   let card=null;const addCard=()=>{if(card||!pad.isConnected)return;card=document.createElement("button");card.type="button";card.className="card bd-card";
     card.innerHTML=`${bdFace(who)}<span style="flex:1;min-width:0"><b>${evOn?"❗ "+esc(nk)+"闖禍了！":"🎁 "+esc(nk)+"在等你"}</b><br><span class="muted" style="font-size:13px">${evOn?"點這裡聽她說，幫她解圍":"把找到的珍品拿給她看"}</span></span><span class="muted">›</span>`;
     card.onclick=()=>{if(typeof vibrate==="function")vibrate(5);act()};const say=pad.querySelector(".port-say");if(say)say.after(card);else pad.prepend(card)};
-  const hit=P.querySelector(".ph4-hit");let stand=false;try{stand=typeof ph4Who==="function"&&ph4Who(k)===who}catch(e){}
+  let hit=P.querySelector(".ph4-hit");let stand=false;try{stand=typeof ph4Who==="function"&&ph4Who(k)===who}catch(e){}
   if(!hit||!stand){addCard();return}
   const mk=document.createElement("div");mk.className="bd-mark"+(evOn?"":" kn");mk.setAttribute("aria-hidden","true");mk.textContent=evOn?"！":"🎁";mk.style.display="none";P.append(mk);
   hit.setAttribute("aria-label",nk+(evOn?"：她闖禍了，點她聽她說":"：她在等你"));
   const cap=e=>{if(!mk.isConnected){v.removeEventListener("click",cap,true);return}if(e.target!==hit||P.dataset.bdFind)return;e.stopPropagation();e.preventDefault();if(typeof vibrate==="function")vibrate(5);act()};
   v.addEventListener("click",cap,true);
-  let n=0;const stop=()=>{mk.remove();v.removeEventListener("click",cap,true)};
-  const tick=()=>{if(!P.isConnected||!mk.isConnected){stop();return}if(evOn&&(bdSt().ev[k]||{}).done){stop();return}if(!hit.isConnected){stop();addCard();return}
+  let n=0,lost=0;const stop=()=>{mk.remove();v.removeEventListener("click",cap,true)};
+  /* W107-L：iPad 轉向時 07f 會把渡口主人拿掉重掛，點擊區換了一顆：重抓新的，「！」接到新的上面；等 6 秒還沒有才退回小卡（審查 #165 第八輪） */
+  const tick=()=>{if(!P.isConnected||!mk.isConnected){stop();return}if(evOn&&(bdSt().ev[k]||{}).done){stop();return}
+    if(!hit.isConnected){const h2=P.querySelector(".ph4-hit");if(h2){hit=h2;lost=0;hit.setAttribute("aria-label",nk+(evOn?"：她闖禍了，點她聽她說":"：她在等你"))}else{mk.style.display="none";if(++lost>=15){stop();addCard();return}setTimeout(tick,400);return}}
     const on=hit.style.display!=="none"&&!P.classList.contains("pc-run")&&!document.querySelector(".walkc");
     if(on){mk.style.display="";mk.style.left=(parseFloat(hit.style.left)+parseFloat(hit.style.width)/2)+"px";mk.style.top=(parseFloat(hit.style.top)-2)+"px"}else{mk.style.display="none";if(++n===50)addCard()}
     setTimeout(tick,400)};
