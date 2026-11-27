@@ -1,6 +1,6 @@
 /* ---------- W87-2 飛相地底迷宮・第二層「淤泥闈場」（開發者 11/26 下一版目標②：十派地底迷宮都做到三層；第二層分工 Windows Claude 1）----------
    規格：story/gemini_app/208_十派地底迷宮第二三層_補件_1126_Gemini回覆.md 的飛相第二層，加上 iMac Claude 1 兩份複核與開發者 11/26 選單：
-     ・新地形「深淤泥」（U）：走進去就一路往同一個方向滑，直到離開淤泥或前面被擋住（牆、考箱、碑、守衛）；滑完自動走停下（afterMove 回 stop:true）。
+     ・新地形「深淤泥」（m）：走進去就一路往同一個方向滑，直到離開淤泥或前面被擋住（牆、考箱、碑、守衛）；滑完自動走停下（afterMove 回 stop:true）。
        淤泥算平地，不是河：相可以落在淤泥上。自動走不主動踩淤泥（lv.avoid），點的終點就是淤泥可以。
      ・考箱 X 可以推進淤泥裡當「煞車」：箱子擋路，滑到箱子前面就停。箱子推開以後，底下原本是淤泥的照樣是淤泥。
      ・守衛照第一層的「相」（JH_MZ_KIND.elephant：田字、塞象眼、不下水 W），中間一排水是「河」，兩隻相各守半場。
@@ -14,15 +14,15 @@ const JH_MZ_ELE2_MAP=[
 "#####...#######",
 "######D########",
 "#T...........T#",
-"#.UUUU...UUUU.#",
+"#.mmmm...mmmm.#",
 "#.....X.X.....#",
-"#L.UUU...UUU.C#",
+"#L.mmm...mmm.C#",
 "#.............#",
 "#WWWWW.P.WWWWW#",
 "#.............#",
-"#.UUUU...UUUU.#",
+"#.mmmm...mmmm.#",
 "#..X.......X..#",
-"#.UUU.....UUU.#",
+"#.mmm.....mmm.#",
 "#T....C......T#",
 "###.###.###.###",
 "#.....#.#.....#",
@@ -31,19 +31,19 @@ const JH_MZ_ELE2_MAP=[
 "###############"];
 const JH_MZ_ELE2_GUARDS=[{kind:"elephant",x:3,y:4,dx:1,dy:1},{kind:"elephant",x:11,y:14,dx:-1,dy:-1}];
 /* 格子底下原本是什麼（推走箱子以後還原用）：地圖上是淤泥就是淤泥，其他一律平地 */
-const jhMzEle2Under=(S,x,y)=>(S.lv.map[y]||"")[x]==="U"?"U":".";
+const jhMzEle2Under=(S,x,y)=>(S.lv.map[y]||"")[x]==="m"?"m":".";
 /* 推考箱：箱子後面是平地或淤泥（沒有相站著）就推過去；箱子離開的格子照原本地形還原 */
 function jhMzEle2Push(S,dx,dy,c){if(c!=="X"||(!dx&&!dy))return null;const P=S.player,x1=P.x+dx,y1=P.y+dy,x2=x1+dx,y2=y1+dy,c2=jhMzCell(S,x2,y2);
-  if((c2!=="."&&c2!=="U")||(S.guards||[]).some(G=>G.x===x2&&G.y===y2))return{ev:"wall",msg:["考箱推不動：後面被擋住了。","The chest won't budge: something is behind it."]};
+  if((c2!=="."&&c2!=="m")||(S.guards||[]).some(G=>G.x===x2&&G.y===y2))return{ev:"wall",msg:["考箱推不動：後面被擋住了。","The chest won't budge: something is behind it."]};
   S.grid[y2][x2]="X";S.grid[y1][x1]=jhMzEle2Under(S,x1,y1);return null}
 /* 淤泥：站在淤泥上就照剛才的方向一直滑，前面是牆、箱子、碑或有相站著就停；離開淤泥那一格停下 */
 function jhMzEle2Slide(S,dx,dy){const P=S.player;let n=0;
-  while(jhMzCell(S,P.x,P.y)==="U"){const x=P.x+dx,y=P.y+dy;if(jhMzSolid(S,x,y)||(S.guards||[]).some(G=>G.x===x&&G.y===y))break;P.x=x;P.y=y;if(++n>40)break}
-  return jhMzCell(S,P.x,P.y)==="U"||n?{stop:true,slide:n}:null}
+  while(jhMzCell(S,P.x,P.y)==="m"){const x=P.x+dx,y=P.y+dy;if(jhMzSolid(S,x,y)||(S.guards||[]).some(G=>G.x===x&&G.y===y))break;P.x=x;P.y=y;if(++n>40)break}
+  return jhMzCell(S,P.x,P.y)==="m"||n?{stop:true,slide:n}:null}
 /* 3D：淤泥是一層深褐色、帶幾個泥泡；平面版 */
-JH_MZ_OBJ.U=H=>{const{T3,mesh,lam}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(1,.04,1),lam("#4a3a26"),0,.02,0));
+JH_MZ_OBJ["m"]=H=>{const{T3,mesh,lam}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(1,.04,1),lam("#4a3a26"),0,.02,0));
   for(const[a,z,s]of[[-.2,.15,.07],[.22,-.12,.05],[.05,.3,.04]])g.add(mesh(new T3.SphereGeometry(s,6,4),lam("#5e4a32"),a,.04,z));return g};
-JH_MZ_TILE.U=(cx,px,py,T)=>{cx.fillStyle="#4a3a26";cx.fillRect(px,py,T,T);cx.fillStyle="#6a5338";
+JH_MZ_TILE["m"]=(cx,px,py,T)=>{cx.fillStyle="#4a3a26";cx.fillRect(px,py,T,T);cx.fillStyle="#6a5338";
   for(const[a,b,r]of[[.3,.35,.08],[.65,.6,.06],[.45,.78,.05]]){cx.beginPath();cx.arc(px+a*T,py+b*T,r*T,0,7);cx.fill()}};
 /* 被抓的解殺題（kind:"defend"）：line 只有一手＝紅方唯一能解圍的那一步。題源同第一層（W95：大師對局主線、Pikafish 深度 22），扣掉第一層 8 題 */
 /* ==ELE2_TRAP== */
@@ -59,15 +59,15 @@ const JH_MZ_ELE2_TRAP=[
    重跑比對（在 source/ 底下）：見 PR 描述的完整指令（--name JH_MZ_POOL_ELE2 --mate N --n 2,3 --door 3 --trap 0 --max-pieces 24 --allow-games … --check） */
 /* ==JH_MZ_POOL:JH_MZ_POOL_ELE2== */
 const JH_MZ_POOL_ELE2={door:[
-{"id":"lk200c7","src":{"book":"爛柯神機","title":"挾彈馳驅"},"zh":["石門機關：飛相掩護、馬收尾","門上刻著一頭石象和一匹馬。紅方先走，3 步將死黑方，門就會開。提示：最後一步由馬將死。"],"en":["Stone door: the elephant covers, the horse finishes","An elephant and a horse are carved on the door. Red to move: checkmate in 3 and the door opens. Hint: the horse delivers the final blow."],"fen":"2b6/4k1P2/4b4/9/4N4/4C4/9/7r1/4p4/3K5","line":["e5g6","e7g9","g8f8","e8e9","g6e7"]},
-{"id":"lk236","src":{"book":"爛柯神機","title":"運實於虛"},"zh":["石門機關：飛相掩護、馬收尾","門上刻著一頭石象和一匹馬。紅方先走，3 步將死黑方，門就會開。提示：最後一步由馬將死。"],"en":["Stone door: the elephant covers, the horse finishes","An elephant and a horse are carved on the door. Red to move: checkmate in 3 and the door opens. Hint: the horse delivers the final blow."],"fen":"4ka3/3Pn4/5R3/5N3/9/9/1r1n5/9/4p4/3K5","line":["d8d9","e9d9","f7d7","d9e9","f6g8"]},
-{"id":"lk252c5","src":{"book":"爛柯神機","title":"縱橫馳驟"},"zh":["石門機關：飛相掩護、馬收尾","門上刻著一頭石象和一匹馬。紅方先走，3 步將死黑方，門就會開。提示：最後一步由馬將死。"],"en":["Stone door: the elephant covers, the horse finishes","An elephant and a horse are carved on the door. Red to move: checkmate in 3 and the door opens. Hint: the horse delivers the final blow."],"fen":"3n5/3N1k3/9/9/9/9/9/3n5/3r1r3/C3K4","line":["a0a8","d9b8","d8e6","f8f9","e6g7"]}],
+{"id":"gm2004-A1p14A44K4r","src":{"book":"特級大師對局","title":"象棋甲級聯賽"},"zh":["石門機關：飛相掩護、馬收尾","門上刻著一頭石象和一匹馬。紅方先走，4 步將死黑方，門就會開。提示：紅方的相守住家門，其中一種解法是最後由馬將死。"],"en":["Stone door: the elephant covers, the horse finishes","An elephant and a horse are carved on the door. Red to move: checkmate in 4 and the door opens. Hint: Red's elephant guards home; one solution ends with the horse giving mate."],"fen":"3k5/4P4/3Nb4/3n5/2b6/6B2/3cC4/4BA1p1/4A4/4K4","line":["d7b8","d6c8","b8c6","e7c9","e8d8","d9e9","c6e7"]},
+{"id":"ys130","src":{"book":"淵深海闊","title":"楊青打虎"},"zh":["石門機關：飛相掩護、馬收尾","門上刻著一頭石象和一匹馬。紅方先走，4 步將死黑方，門就會開。提示：紅方的相守住家門，其中一種解法是最後由馬將死。"],"en":["Stone door: the elephant covers, the horse finishes","An elephant and a horse are carved on the door. Red to move: checkmate in 4 and the door opens. Hint: Red's elephant guards home; one solution ends with the horse giving mate."],"fen":"3k2b2/2R1a4/r1Nab4/9/9/6R2/6P2/9/3p5/4K1Br1","line":["g4g9","e7g9","c8c9","d9d8","c9d9","e8d9","c7b9"]},
+{"id":"ys061c7","src":{"book":"淵深海闊","title":"火毀晉宮"},"zh":["石門機關：飛相掩護、馬收尾","門上刻著一頭石象和一匹馬。紅方先走，3 步將死黑方，門就會開。提示：紅方的相守住家門，其中一種解法是最後由馬將死。"],"en":["Stone door: the elephant covers, the horse finishes","An elephant and a horse are carved on the door. Red to move: checkmate in 3 and the door opens. Hint: Red's elephant guards home; one solution ends with the horse giving mate."],"fen":"r2aR1b2/4a4/3kbR3/2c6/9/9/4P4/4BA1r1/3CAp3/2N1K3c","line":["c0d2","c6d6","d2c4","d6i6","c4d6"],"alt":{"c0d2":["c6d6",{"d2c4":["d6i6",{"c4d6":0}],"d2e4":["d6a6",{"e4d6":0}]}]}}],
 trap:[
 ]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_ELE2== */
 const JH_MZ_ELE2_POOL={door:JH_MZ_POOL_ELE2.door,trap:JH_MZ_ELE2_TRAP};
 jhMzLayer("elephant",2,{map:JH_MZ_ELE2_MAP,guards:JH_MZ_ELE2_GUARDS,pool:JH_MZ_ELE2_POOL,puz:{door:JH_MZ_ELE2_POOL.door[0],trap:JH_MZ_ELE2_POOL.trap[0]},
-  solid:"#DXHL",opaque:"#DH",jump:"",dyn:"X",avoid:"U",onStep:jhMzEle2Push,afterMove:jhMzEle2Slide,
+  solid:"#DXHL",opaque:"#DH",jump:"",dyn:"X",avoid:"m",onStep:jhMzEle2Push,afterMove:jhMzEle2Slide,
   title:["🐘 淤泥闈場","🐘 Mud-choked exam yard"],lvName:["淤泥闈場・第二層","Mud-choked exam yard · Level 2"],
   intro:["石階再往下，是被淤泥灌滿的考場。<b>踩進深淤泥會一路滑到底</b>，前面有考箱、牆擋住才停。考箱可以推進淤泥裡當煞車。",
     "Further down, the exam yard is choked with mud. <b>Step into deep mud and you slide all the way</b> until a chest or a wall stops you. Push a chest into the mud to use it as a brake."],

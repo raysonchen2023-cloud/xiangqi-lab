@@ -1,5 +1,5 @@
 // W107-L 第 1 批（開發者 11/25「先做沒做的頁日間」）：我的角色「棋鎮書齋珍藏牆」（07z4）在 iPad 橫向換成 2560×1600 橫式圖，
-// 經典版、原圖版共用一套座標（Windows Claude 1 量，output/w107-ipad/l1610/studymap/study_day_classic_l1610.json）；夜景、手機、iPad 直向照舊原圖。
+// 經典版、原圖版共用一套座標（Windows Claude 1 量，output/w107-ipad/l1610/studymap/study_day_classic_l1610.json）；手機、iPad 直向照舊原圖；夜景照日間條目登記（#173 scwVarInit）。
 // 書齋牆在 3D 舞台下面，不是整頁場景：選圖照整個畫面量（mzScwSync），用橫式圖時滿寬往下捲（包 07sw scwSync 回 "wait"），不用 07fl cover 填滿。
 // 不開瀏覽器：07sw＋07z4 在 vm 跑，換圖用假的 #view／圖框。用法 node --test xiangqi-lab/tools/test-scene-wide-study.js
 "use strict";
@@ -26,13 +26,13 @@ function fakeWall(ctx, src0) {
 }
 const KC = "studymap/study_day_classic", KO = "studymap/study_day", SRC_C = "data/studymap/study_day_classic.webp?v=2510";
 
-test("條目：經典版、原圖版兩個白天鍵都登記（共用一套座標、各自的圖）；夜景沒有橫式圖", () => {
+test("條目：經典版、原圖版兩個白天鍵都登記（共用一套座標、各自的圖）；夜景照日間條目登記（#173）", () => {
   const C = load(true), SCW = vm.runInContext("SCW", C), L = vm.runInContext("MZ_L", C), ent = vm.runInContext("scwEntry", C);
   for (const [k, f] of [[KC, "studymap/study_day_classic_l1610"], [KO, "studymap/study_day_l1610"]]) {
     const e = SCW[k]; assert.ok(e, k); assert.equal(e.ready, true, k); assert.equal(e.f, f); assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.equal(e.fx.mz, L, "座標共用 MZ_L");
     assert.ok(ent(k), "開發用開關打開時用得到");
   }
-  assert.equal(ent("studymap/study_night_classic"), null); assert.equal(ent("studymap/study_night"), null);
+  const nt = (n, dd) => { const e = ent(n); assert.ok(e, n + " 夜景照日間條目登記（#173 scwVarInit）"); assert.equal(e.f, n + "_l1610", n); assert.equal(e.base, dd, n); assert.deepEqual(e.S, ent(dd).S, n + " 座標跟日間共用"); }; nt("studymap/study_night_classic", "studymap/study_day_classic"); nt("studymap/study_night", "studymap/study_day");
   assert.equal(vm.runInContext("scwEntry", load(false))(KC), null, "SCW_CDN 還是 false、沒開開發用開關＝正式玩家照舊原圖");
 });
 
@@ -47,7 +47,7 @@ test("橫式座標：14 個入口跟原圖同一組 id、都在 2560×1600 裡�
     box[id] = [x0, y0, x1, y1];
   }
   assert.equal(L.cells.length, 12);
-  for (const c of L.cells) { assert.ok(c[0] < c[2] && c[1] < c[3]); assert.ok(c[0] >= box.mzZhen[0] && c[2] <= box.mzZhen[2] && c[1] >= box.mzZhen[1] && c[3] <= box.mzZhen[3], "亮格在珍品（亮格櫃）範圍裡") }
+  for (const c of L.cells) { assert.ok(c[0] < c[2] && c[1] < c[3]); const cx = (c[0] + c[2]) / 2; assert.ok(c[3] <= box.mzZhen[1] && cx >= box.mzZhen[0] && cx <= box.mzZhen[2], "亮格在珍品（下方櫃門）正上方，不被櫃門熱區蓋住") }   /* W165（11/26 iMac Claude 1 預驗）：珍品熱區原本蓋住整個亮格櫃，改到下方櫃門 */
   const inside = (p, b) => p[0] >= b[0] && p[0] <= b[2] && p[1] >= b[1] && p[1] <= b[3];
   assert.ok(inside(L.smoke, box.mzXp), "爐煙在修為（小三足鼎）上"); assert.ok(inside(L.dot, box.mzLetter), "朱點在信上");
   assert.ok(L.plum[0] >= box.mzXh[0] && L.plum[2] <= box.mzXh[2] && L.plum[1] >= box.mzXh[1] && L.plum[3] <= box.mzXh[3], "素梅畫在立軸裡");
@@ -99,7 +99,7 @@ test("選圖照整個畫面量：iPad 橫向換橫式圖（換完重畫疊圖）
   dims.w = 932; dims.h = 430; assert.equal(sync(w.V, w.P), null, "手機橫放（短邊不到 600）");
   const C2 = load(false); dims.w = 1180; dims.h = 820; const w2 = fakeWall(C2, SRC_C);
   assert.equal(vm.runInContext("mzScwSync", C2)(w2.V, w2.P), null, "沒開開關、SCW_CDN false＝原圖"); assert.equal(w2.img.src, SRC_C);
-  const w3 = fakeWall(C, "data/studymap/study_night_classic.webp?v=2510"); assert.equal(sync(w3.V, w3.P), null, "夜景沒有橫式圖");
+  const w3 = fakeWall(C, "data/studymap/study_night_classic.webp?v=2510"); assert.equal(sync(w3.V, w3.P), "wait", "夜景照日間條目登記（#173），iPad 橫向也換橫式圖"); assert.match(String(w3.img.src), /studymap\/study_night_classic_l1610\.webp/);
 });
 
 test("07fl 問 scwSync：書齋牆用橫式圖回 \"wait\"（滿寬往下捲，不 cover）、原圖回 null；別頁照 07sw 原本的 scwSync", () => {
@@ -122,13 +122,27 @@ test("橫式圖載不到：記 SCW_BAD、退回原圖；這次開 App 不再試"
   w.img.complete = true; w.img.naturalWidth = 768; assert.equal(sync(w.V, w.P), null, "不再試");
 });
 
+test("座標照量好的 json（output/w107-ipad/l1610/studymap/study_day_classic_l1610.json）：抽幾個點寫死比對；輿圖圈照畫心寬等比放大（#159 審查建議 3）", () => {
+  const C = load(true), L = vm.runInContext("MZ_L", C), J = x => JSON.parse(JSON.stringify(x));
+  assert.deepEqual(J(L.spots.find(s => s[0] === "mzZhen")), ["mzZhen", 115, 883, 678, 1254, "珍品", 397, 883, "m"]);
+  assert.deepEqual(J(L.spots.find(s => s[0] === "mzHist")), ["mzHist", 1966, 960, 2086, 1062, "棋史卡", 2026, 960, "m"]);
+  assert.deepEqual(J([L.cells[0], L.cells[11]]), [[120, 333, 256, 499], [543, 676, 684, 845]]);
+  assert.deepEqual(J([L.plum, L.yu, L.smoke, L.dot]), [[1183, 218, 1370, 768], [1638, 128, 2386, 512], [468, 384], [1434, 968]]);
+  const G = vm.runInContext("mzGeo", C)(true), k = (2386 - 1638) / (896 - 668), m = vm.runInContext("mzMap", C)([5, 13], G);
+  const r = [...m.matchAll(/r="([\d.]+)" fill="(#c0392b|#f3ead2)"/g)].map(x => [+x[1], x[2]]);
+  assert.equal(r.length, 13); for (const [v, c] of r) assert.ok(Math.abs(v - (c === "#c0392b" ? 6 : 4.5) * k) < .01, "輿圖圈等比放大：" + v);
+});
+
 test("〔混合〕07z4 接線：開頁先量（scwPre）、掛 07sw（換圖時 apply 重畫疊圖）、轉向自己再問一次；走路角色只在原圖掛；物件說明照原圖座標（07w6 遇到橫式圖自己關）", () => {
   assert.match(MZ, /const pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\};/);
   assert.match(MZ, /<img src="\$\{pre\.src\}"/);
   assert.match(MZ, /scwMount\(W,\{key:scwKey\(src\),src0:src,ids:\[\],apply:\(\)=>paint\(\)\}\)/);
   assert.match(MZ, /addEventListener\("resize",rs\)/);
+  assert.match(MZ, /const cellBg=\(\)=>\{const u=im\.currentSrc\|\|im\.getAttribute\("src"\)\|\|"";W\.querySelectorAll\("\.mz-cell"\)\.forEach\(c=>\{c\.style\.backgroundImage=`url\("\$\{u\}"\)`\}\)\};/, "亮格底圖用真的載到的那張（#159 審查建議 3）");
+  assert.match(MZ, /im\.addEventListener\("load",cellBg\);/);
   assert.match(MZ, /if\(MZ_WALK_ON&&!W\.dataset\.scw&&/);
   assert.match(MZ, /sciPage\(v,\{k:"study",nm:"書齋",W:MZ_W,H:MZ_H,/);
-  assert.match(M("m/07w6-sceneinfo.js"), /const off=\(\)=>\{if\(P\.dataset\.scw\)return true;/);
+  assert.match(M("m/07w6-sceneinfo.js"), /const off=\(\)=>\{if\(P\.dataset\.scw&&!D\.wide\)return true;/);   /* W165（11/26）：給了橫式座標 D.wide 就照它，沒給才自己關 */
+  assert.match(MZ, /wide:\{W:MZ_L\.W,H:MZ_L\.H,it:itW\}/, "書齋要給橫式座標，亮格器物橫放才點得開");
   const C = load(true); assert.equal(vm.runInContext("MZ_WALK_ON", C), false, "這頁沒有走路角色");
 });
