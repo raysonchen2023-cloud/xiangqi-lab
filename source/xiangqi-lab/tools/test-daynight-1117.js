@@ -155,7 +155,7 @@ test("全部經過同一個判斷（改 07w7 一處全部一起變）；退路�
   for (const f of files) for (const ln of M(f).split("\n")) if (/h>=(19|20)\|\|h<5/.test(ln) && /Dark|dark/.test(ln)) assert.ok(/typeof xqNight==="function"\?xqNight\(\):h>=(19|20)\|\|h<5/.test(ln), f + "：" + ln.slice(0, 80));
 });
 
-test("07s4-passmap（禁改檔）的改動寫在 reps-next.json，以線上 pub.html 為底每組只命中 1 次", { skip: !fs.existsSync(path.join(ROOT, "xiangqi-ios")) || fs.existsSync(path.join(ROOT, "STAGE-MANIFEST.json")) ? "公開副本：這項檢查開發者電腦上的發版暫存檔，不在公開副本跑（11/17 1757 證據補）" : fs.existsSync(path.join(process.env.TEMP || "", "claude/C--Users-rayson-myClaude/a1520069-d9a3-4c4a-a1ad-2cbf5ca0228d/scratchpad/relD/reps-next.json")) ? false : "沒有 reps-next.json（暫存區）" }, () => {
+test("07s4-passmap（禁改檔）的改動寫在 reps-next.json，以線上 pub.html 為底每組只命中 1 次", { skip: process.env.XQ_PUBLIC_COPY === "1" || fs.existsSync(path.join(ROOT, "STAGE-MANIFEST.json")) ? "公開副本：這項檢查開發者電腦上的發版暫存檔，不在公開副本跑（11/17 1757 證據補）" : fs.existsSync(path.join(process.env.TEMP || "", "claude/C--Users-rayson-myClaude/a1520069-d9a3-4c4a-a1ad-2cbf5ca0228d/scratchpad/relD/reps-next.json")) ? false : "沒有 reps-next.json（暫存區）" }, () => {
   const D = path.join(process.env.TEMP, "claude/C--Users-rayson-myClaude/a1520069-d9a3-4c4a-a1ad-2cbf5ca0228d/scratchpad/relD");
   const R = JSON.parse(fs.readFileSync(path.join(D, "reps-next.json"), "utf8")); let h = fs.readFileSync(path.join(D, "pub.html"), "utf8").replace(/\r\n/g, "\n");
   for (const [a, b] of R) { assert.equal(h.split(a).length - 1, 1, a.slice(0, 50)); h = h.replace(a, () => b) }

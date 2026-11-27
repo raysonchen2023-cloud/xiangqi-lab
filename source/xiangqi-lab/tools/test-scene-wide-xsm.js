@@ -9,7 +9,7 @@ const dims = { w: 1180, h: 820 };
 function load(dev) {
   const ctx = vm.createContext({ setTimeout: () => 0, clearTimeout: () => { }, addEventListener: () => { }, Math, Object, String, JSON, Set, Date, localStorage: { getItem: k => dev && k === "xqScwDev" ? "1" : null },
     getComputedStyle: () => ({ paddingBottom: "0", paddingLeft: "0", paddingRight: "0" }), document: { getElementById: id => id === "view" ? V : null, documentElement: { get clientHeight() { return dims.h } } } });
-  vm.runInContext(SW, ctx); vm.runInContext(XM, ctx);
+  vm.runInContext(SW, ctx); if (!dev) vm.runInContext("SCW_CDN=false", ctx);   /* 沒開開發用開關的那一組，模擬「圖還沒上 CDN」，照舊測把關（這版 SCW_CDN 已改 true） */ vm.runInContext(XM, ctx);
   return ctx;
 }
 const V = { scrollTop: 0, get clientWidth() { return dims.w }, get clientHeight() { return dims.h }, getBoundingClientRect: () => ({ top: 0 }) };
