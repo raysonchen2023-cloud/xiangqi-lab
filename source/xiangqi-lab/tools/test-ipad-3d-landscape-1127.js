@@ -49,10 +49,10 @@ test("反證：把「不同欄就不扣」那段拿掉，兩欄時就會少掉�
   assert.match(src, /cR\.left>=bR\.right\|\|cR\.right<=bR\.left/, "room() 要比對左右有沒有重疊");
 });
 
-test("m.css：寬螢幕兩欄、3D 顯示中，#bbox 用剩下的寬度（右欄 340～440）；平面棋盤（.park3d display:none）不套", () => {
+test("m.css：寬螢幕兩欄、3D 顯示中，#bbox 用剩下的寬度（右欄 320～400）；平面棋盤（.park3d display:none）不套", () => {
   const blk = CSS.slice(CSS.indexOf("@media (orientation:landscape) and (min-width:900px) and (min-height:600px){"));
   const end = blk.indexOf("\n}\n"); const media = blk.slice(0, end);
   assert.ok(media.length > 0, "找不到平板橫向那段 @media");
-  assert.match(media, /\.view\.fixed:has\(> #bbox > \.park3d:not\(\[style\*="display: none"\]\):not\(\[style\*="display:none"\]\)\)>#bbox\{width:calc\(100cqw - 24px - 16px - clamp\(340px, 36cqw, 440px\)\)\}/);
+  assert.match(media, /\.view\.fixed:has\(> #bbox > \.park3d:not\(\[style\*="display: none"\]\):not\(\[style\*="display:none"\]\)\)>#bbox\{width:calc\(100cqw - 24px - 16px - clamp\(320px, 30cqw, 400px\)\)\}/);
   assert.match(media, /\.view\.fixed:has\(> #bbox\)>#bbox\{grid-column:1;grid-row:1 \/ span 30;align-self:start;padding:6px 0;height:calc\(100cqh - 12px\);width:calc\(\(100cqh - 24px\) \* 560 \/ 620\)\}/, "平面棋盤原本的 560:620 規則還在");
 });
