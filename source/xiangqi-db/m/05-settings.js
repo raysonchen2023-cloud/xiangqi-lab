@@ -211,7 +211,7 @@ document.addEventListener("click",e=>{const x=e.target&&e.target.closest&&e.targ
 function wipeAsk(){
   if(window.XQNet&&XQNet.playing&&XQNet.playing())return modal(`<div class="em">⏳</div><h2>對局還在進行</h2><p>線上對局下完（或認輸）之後，才能刪除資料。</p>`,[["好",null]]);
   modal(`<div class="em">🗑</div><h2>刪除這支手機的全部資料？</h2><p>會刪掉：全部對局紀錄和棋譜、解題和故事進度、每一格存檔、角色與收藏、設定、暱稱和線上積分。</p><p class="muted" style="font-size:13px">只刪這支手機裡的。已經送出的意見回饋、檢舉和玩家登記，還有別人手機上留著的對局紀錄，這裡刪不到；伺服器上的請先用設定 → 隱私「🗑 申請刪除我在伺服器上的資料」（刪掉手機資料後裝置代號會換新，就對不到了）。下載過的棋譜庫和引擎會留著，不用重新下載。</p>`,[["下一步",()=>setTimeout(wipeAsk2,120)],["不要刪",null,true]])}
-function wipeAsk2(){modal(`<div class="em">⚠️</div><h2>真的要刪除嗎？</h2><p><b>刪掉就救不回來。</b></p><p class="muted" style="font-size:13px">想留著，先按「不要刪」，到設定用「換手機」把存檔搬到別支手機。</p>`,[["🗑 全部刪除",wipeAllData],["不要刪",null,true]])}
+function wipeAsk2(){modal(`<div class="em">⚠️</div><h2>真的要刪除嗎？</h2><p><b>刪掉就救不回來。</b></p><p class="muted" style="font-size:13px">想留著，先按「不要刪」，到設定用「換手機」把存檔搬到別支手機。</p>`,[["🗑 全部刪除",wipeAllData],["不要刪",null,"ax-first"]])}   /* W156（11/26 外部複審）：報讀模式下第二層原本自動聚焦「全部刪除」，連按兩次就刪；「不要刪」加 ax-first，焦點先落在它 */
 /* v5 改善單 R06：原本完成、出錯、被擋、逾時都走同一個結束，失敗了 App 照樣重開、看起來像刪好了。
    改成回報每個資料庫的結果 st：done 清空了、empty 本來就沒有表、none 本來就沒有這個資料庫、error 清的時候出錯、blocked 被別的連線擋住、timeout 超過 ms 毫秒沒回應 */
 function wipeDb(n,ms){return new Promise(res=>{let done=false,fresh=false;const fin=(st,msg)=>{if(!done){done=true;res({n,st,msg:msg||""})}};setTimeout(()=>fin("timeout"),ms||4000);
