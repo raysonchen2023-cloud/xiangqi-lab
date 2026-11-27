@@ -48,7 +48,7 @@ function xflHmw(V,P,nw,nh,k,sf0){const vr=V.getBoundingClientRect(),pr=P.getBoun
   const sf=sf0||(typeof HMW!=="undefined"&&HMW[k]?HMW[k].safe:null),pl=xflCover({W,av,nw,nh,off,safe:sf});if(!pl||av<120)return false;
   if(typeof r07Off==="function")xflR07Off(V);
   if(P.dataset.xflMt==null)P.dataset.xflMt=P.style.marginTop||"";
-  Object.assign(P.style,{maxWidth:"none",width:pl.w+"px",marginLeft:pl.left+"px",marginTop:(pl.top?-pl.top:0)+"px"});P.style.setProperty("--xflT",pl.top+"px");P.classList.toggle("xfl-nar",pl.gx>1);P.style.setProperty("--xflL",Math.max(0,-pl.left)+"px");P.style.setProperty("--xflR",Math.max(0,pl.w+pl.left-V.clientWidth)+"px");   /* #255（11/27 iPad 橫向星槎書架）：寬版圖左右裁掉時，標題條（.shp-cap）貼著圖緣、「船艙書架」被切掉一半；跟 07t3 --ttCx 一樣左右縮回裁掉的那一截 */
+  Object.assign(P.style,{maxWidth:"none",width:pl.w+"px",marginLeft:pl.left+"px",marginTop:(pl.top?-pl.top:0)+"px"});P.style.setProperty("--xflT",pl.top+"px");P.classList.toggle("xfl-nar",pl.gx>1);
   xflCss();V.classList.add("xfl-port","xfl-hmw");P._xflKey=xflKey(xflItems(P,P.getBoundingClientRect()));
   {const ex=V.scrollHeight-V.clientHeight;if(ex<=pl.crop-pl.top+30){V.classList.add("xfl-clip");V.scrollTop=0}}
   xflBg(V,P,pl.gx>1||pl.gy>1);
@@ -69,8 +69,7 @@ function xflCss(){if(document.getElementById("xflCss"))return;const s=document.c
 #view.xfl-port .shp-page.cq.xfl-nar{box-shadow:0 0 22px rgba(20,12,6,.45)}
 #view.xfl-port .shp-page .shp-cap{top:var(--xflT,0px)}
 #view.xfl-port .shp-page .hm-slogan{top:calc(var(--xflT,0px) + 10px)}
-#view.xfl-hmw .shp-page .hm-slogan{top:calc(var(--xflT,0px) + var(--hmSlT,1.4%))}
-#view.xfl-hmw .shp-page>.shp-cap{left:var(--xflL,0px);right:var(--xflR,0px)}`;document.head.append(s)}
+#view.xfl-hmw .shp-page .hm-slogan{top:calc(var(--xflT,0px) + var(--hmSlT,1.4%))}`;document.head.append(s)}
 /* ③ 模糊底：蓋住 #view 的範圍；圖換了（日夜、季節、雨雪）跟著換 */
 function xflBg(V,P,on){let B=document.getElementById("xflBg");
   if(!on||!V||!P){if(B)B.hidden=true;if(V)V.classList.remove("xfl-bgon");return}

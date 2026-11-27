@@ -57,14 +57,37 @@ test("m.css：寬螢幕兩欄、3D 顯示中，#bbox 用剩下的寬度（右欄
   assert.match(media, /\.view\.fixed:has\(> #bbox\)>#bbox\{grid-column:1;grid-row:1 \/ span 30;align-self:start;padding:6px 0;height:calc\(100cqh - 12px\);width:calc\(\(100cqh - 24px\) \* 560 \/ 620\)\}/, "平面棋盤原本的 560:620 規則還在");
 });
 
-// ③ 07fl-fill.js xflHmw：寬版圖左右裁掉時（iPad 13 吋橫向星槎書架 page_shelf_l1610 寬 1544、往左 84），標題條 .shp-cap 照裁掉的寬度左右縮回（跟 07t3 --ttCx 同一招），「船艙書架」不再被切一半
-test("07fl xflHmw：設 --xflL／--xflR（左右裁掉多少），#view.xfl-hmw 的 .shp-cap 照它縮回", () => {
-  const FL = rd("xiangqi-db/m/07fl-fill.js");
-  const i = FL.indexOf("function xflHmw("); assert.ok(i >= 0); const body = FL.slice(i, FL.indexOf("\nfunction ", i + 10));
-  assert.match(body, /setProperty\("--xflL",Math\.max\(0,-pl\.left\)\+"px"\)/);
-  assert.match(body, /setProperty\("--xflR",Math\.max\(0,pl\.w\+pl\.left-V\.clientWidth\)\+"px"\)/);
-  assert.match(FL, /#view\.xfl-hmw \.shp-page>\.shp-cap\{left:var\(--xflL,0px\);right:var\(--xflR,0px\)\}/);
-  /* 算給 1376 寬、圖 1544 寬、往左 84 的情況：左右各縮 84，標題條剛好對齊畫面 */
-  const pl = { w: 1544, left: -84 }, Vw = 1376;
-  assert.equal(Math.max(0, -pl.left), 84); assert.equal(Math.max(0, pl.w + pl.left - Vw), 84);
+// ③ 07f shpCapL：寬版圖往左裁掉時（iPad 13 吋橫向星槎書架 page_shelf_l1610 寬 1544、marginLeft −84），標題條照 --pcL 往內縮（跟渡口 portScw 同一招，審查 #165 決定不改 07fl）
+test("07f shpCapL：shpFit 每頁都掛；照 marginLeft 算 --pcL、直圖 0；渡口掛過就不重掛；07fl 不改", () => {
+  const F = rd("xiangqi-db/m/07f-ship.js");
+  assert.match(F, /function shpFit\(v\)\{try\{shpCapL\(v\.querySelector\("\.shp-page\.cq"\)\)\}catch\(e\)\{\}/);
+  assert.match(F, /\.shp-page\.scw-l>\.shp-cap\{padding-left:calc\(16px \+ var\(--pcL,0px\)\)\}/);
+  const src = F.slice(F.indexOf("function shpCapL("), F.indexOf("function shpFit("));
+  let obs = null; const props = {}; const doc = { getElementById: () => 1, createElement: () => ({}), head: { append() { } } };
+  const fn = new Function("window", "document", "MutationObserver", src + "\nreturn shpCapL;")({ MutationObserver: 1 }, doc, function (f) { obs = f; this.observe = () => { } });
+  const P = { dataset: { scw: "l1610" }, style: { marginLeft: "-84px", getPropertyValue: k => props[k] || "", setProperty: (k, v) => { props[k] = v } } };
+  fn(P); assert.equal(props["--pcL"], "84px", "13 吋橫向：左邊裁掉 84");
+  P.dataset.scw = ""; obs(); assert.equal(props["--pcL"], "0px", "直圖不縮");
+  const Q = { _pcLmo: 1, dataset: { scw: "l1610" }, style: { marginLeft: "-50px", getPropertyValue: () => "", setProperty: () => { throw new Error("不該重掛") } } }; fn(Q);
+  assert.doesNotMatch(rd("xiangqi-db/m/07fl-fill.js"), /--xflL/, "07fl 不改（審查 #165）");
+});
+
+// ④ 對局 2D／3D 右欄：平板橫向著法條改成直式兩欄、撐到右欄底（11/27 開發者選「直式著法紀錄撐滿」）
+test("m.css＋05 stripFitV：平板橫向 #strip 排右欄最後、紅黑兩欄、黑先走放右欄、空的寫提示；高度量到右欄底", () => {
+  const blk = CSS.slice(CSS.indexOf("@media (orientation:landscape) and (min-width:900px) and (min-height:600px){")); const media = blk.slice(0, blk.indexOf("\n}\n"));
+  assert.match(media, /\.view\.fixed:has\(> #bbox\)>#strip\{order:1;display:grid;grid-template-columns:1fr 1fr;/);
+  assert.match(media, /#strip>\.chip\.b:first-child\{grid-column:2\}/);
+  assert.match(media, /#strip:empty::before\{content:"著法會記在這裡"/);
+  const S = rd("xiangqi-db/m/05-settings.js");
+  assert.match(S, /const STRIP_V_MQ="\(orientation:landscape\) and \(min-width:900px\) and \(min-height:600px\)";/, "跟 m.css 同一個 @media 條件");
+  assert.ok(media.length && CSS.includes("@media (orientation:landscape) and (min-width:900px) and (min-height:600px){"));
+  const rs = S.slice(S.indexOf("function renderStrip("), S.indexOf("function actionBar("));
+  assert.match(rs, /stripFitV\(box,on\)\}/, "renderStrip 每次換內容都量一次");
+  /* 實跑 stripFitV：右欄 view 上緣 59、高 761、padding-bottom 0；#strip 上緣 260 → 高 820-260-8＝552；不是直式就還原 */
+  const fn = new Function("matchMedia", "getComputedStyle", S.slice(S.indexOf("const STRIP_V_MQ="), S.indexOf('if(typeof addEventListener==="function")addEventListener("resize"')) + "\nreturn stripFitV;");
+  const mk = (grid, mq) => { const v = { clientHeight: 761, getBoundingClientRect: () => ({ top: 59 }) }; const box = { parentElement: v, style: { height: "" }, scrollTop: 0, clientHeight: 552, lastElementChild: null, getBoundingClientRect: () => ({ top: 260 }) };
+    const f = fn(() => ({ matches: mq }), (e) => e === box ? { display: grid ? "grid" : "flex" } : { paddingBottom: "0px" }); return { f, box }; };
+  { const { f, box } = mk(true, true); f(box); assert.equal(box.style.height, "552px"); }
+  { const { f, box } = mk(false, true); box.style.height = "300px"; f(box); assert.equal(box.style.height, "", "不是直式（手機、平板直向）就還原"); }
+  { const { f, box } = mk(true, false); box.style.height = "300px"; f(box); assert.equal(box.style.height, ""); }
 });
