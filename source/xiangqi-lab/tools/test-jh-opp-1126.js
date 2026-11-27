@@ -22,7 +22,7 @@ const LV = (c) => vm.runInContext("JH_MZ_LV", c).opposite_cannon;
 const at = (S, x, y) => { S.player.x = x; S.player.y = y; S.player.fx = x; S.player.fy = y };
 const xs = (a) => Array.from(a, (q) => q.x + "," + q.y).sort();   /* Array.from：vm 裡建的陣列原型不同，轉成這邊的陣列再比 */
 /* 一間 11×13 的房間：九宮在 (4,4)～(6,6)；第 9 列是水溝（中間 x＝5 是水），第 2 列 x＝5 放戲箱可以換 */
-function roomRows(box) { const r = []; for (let y = 0; y < 13; y++) { if (y === 0 || y === 12) { r.push("#".repeat(11)); continue } let row = "#" + ".".repeat(9) + "#"; if (y === 9) row = "####~~~####"; if (y === 2 && box) row = "#....X....#"; r.push(row) } return r }
+function roomRows(box) { const r = []; for (let y = 0; y < 13; y++) { if (y === 0 || y === 12) { r.push("#".repeat(11)); continue } let row = "#" + ".".repeat(9) + "#"; if (y === 9) row = "####~~~####"; if (y === 2 && box) row = "#....o....#"; r.push(row) } return r }
 function room(c, rows, G, px, py) { const S = c.jhMzNew("opposite_cannon"); S.grid = rows.map((r) => r.split("")); S.W = rows[0].length; S.H = rows.length; S.guards = [Object.assign({ kind: "king", pal: [4, 4], i: 0, x: 4, y: 4 }, G)]; S.guard = S.guards[0]; at(S, px, py); return S }
 
 /* 規則檢查：回傳不符合的地方（空陣列＝都符合）。同一組檢查也拿去跑改壞的戲軸（改壞驗證） */
@@ -53,7 +53,7 @@ test("登記：列炮門有登記、路由 #/jianghu/maze/opposite_cannon；兩�
   assert.ok(lv); assert.equal(sidOf("#/jianghu/maze/opposite_cannon"), "opposite_cannon"); assert.equal(lv.key, "jhMaze_opposite_cannon");
   assert.equal(lv.guards.length, 2); for (const G of lv.guards) assert.equal(G.kind, "king");
   assert.equal(lv.jump, ""); assert.equal(typeof lv.onStep, "function");
-  assert.ok(lv.solid.includes("X") && lv.opaque.includes("X"), "戲箱擋路也擋視線"); assert.ok(lv.solid.includes("~") && !lv.opaque.includes("~"), "水溝擋路、不擋視線");
+  assert.ok(lv.solid.includes("o") && lv.opaque.includes("o"), "戲箱擋路也擋視線"); assert.ok(lv.solid.includes("~") && !lv.opaque.includes("~"), "水溝擋路、不擋視線");
   assert.ok(lv.hall && lv.hall.zh && lv.hall.en && lv.hall.at.length === 2); assert.equal(lv.rew.length, 3);
 });
 
@@ -103,7 +103,7 @@ test("地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓�
   for (let x = 0; x < W; x++) { assert.equal(M[0][x], "#"); assert.equal(M[M.length - 1][x], "#") } for (const r of M) { assert.equal(r[0], "#"); assert.equal(r[W - 1], "#") }
   const count = (ch) => M.join("").split(ch).length - 1;
   assert.equal(count("@"), 1); assert.equal(count("D"), 1); assert.equal(count("P"), 1); assert.equal(count(">"), 1); assert.equal(count("C"), 3);
-  assert.ok(count("M") >= 2 && count("~") >= 1 && count("X") >= 4);
+  assert.ok(count("M") >= 2 && count("~") >= 1 && count("o") >= 4);
   const S = c.jhMzNew("opposite_cannon"), all = reach(c, S), pos = (ch) => { const o = []; M.forEach((r, y) => [...r].forEach((v, x) => v === ch && o.push(y * W + x))); return o };
   for (const ch of "PD>C") for (const k of pos(ch)) assert.ok(all.has(k), ch + " 走得到");
   assert.ok(!c.jhMzCaught(S), "開局不會被抓");

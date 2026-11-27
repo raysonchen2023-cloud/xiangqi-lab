@@ -1,5 +1,5 @@
 // W107-L 第 1 批（開發者 11/25「先做沒做的頁日間」）：新手訓練營「沙盤兵推圖」（07y2）在 iPad 橫向換成 2560×1600 橫式圖，
-// 經典版、原圖版共用一套座標（Windows Claude 1 量，output/w107-ipad/l1610/campmap/camp_day_classic_l1610.json）；夜景、手機、iPad 直向照舊原圖。
+// 經典版、原圖版共用一套座標（Windows Claude 1 量，output/w107-ipad/l1610/campmap/camp_day_classic_l1610.json）；手機、iPad 直向照舊原圖；夜景照日間條目登記（#173 scwVarInit）。
 // 13 面旗、31 個路線點；找旗腳最近的路線點時偏移照原本 ×(2560/768)；走路記憶名換成 campL（出口在左下營寨）。
 // 不開瀏覽器：07sw＋07y2 在 vm 跑。用法 node --test xiangqi-lab/tools/test-scene-wide-camp.js
 "use strict";
@@ -14,13 +14,13 @@ function load(dev, exits) {
 }
 const KC = "campmap/camp_day_classic", KO = "campmap/camp_day";
 
-test("條目：經典版、原圖版兩個白天鍵都登記（共用座標、各自的圖）；夜景沒有；SCW_CDN 還是 false＝正式玩家照舊原圖", () => {
+test("條目：經典版、原圖版兩個白天鍵都登記（共用座標、各自的圖）；夜景照日間條目登記（#173）；SCW_CDN 還是 false＝正式玩家照舊原圖", () => {
   const C = load(true), SCW = vm.runInContext("SCW", C), ent = vm.runInContext("scwEntry", C);
   for (const [k, f] of [[KC, "campmap/camp_day_classic_l1610"], [KO, "campmap/camp_day_l1610"]]) {
     const e = SCW[k]; assert.ok(e && e.ready, k); assert.equal(e.f, f); assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.ok(ent(k));
   }
   assert.equal(SCW[KO].S, SCW[KC].S); assert.equal(SCW[KO].walk, SCW[KC].walk);
-  assert.equal(ent("campmap/camp_night_classic"), null); assert.equal(ent("campmap/camp_night"), null);
+  const nt = (n, dd) => { const e = ent(n); assert.ok(e, n + " 夜景照日間條目登記（#173 scwVarInit）"); assert.equal(e.f, n + "_l1610", n); assert.equal(e.base, dd, n); assert.deepEqual(e.S, ent(dd).S, n + " 座標跟日間共用"); }; nt("campmap/camp_night_classic", "campmap/camp_day_classic"); nt("campmap/camp_night", "campmap/camp_day");
   assert.equal(vm.runInContext("scwEntry", load(false))(KC), null);
 });
 

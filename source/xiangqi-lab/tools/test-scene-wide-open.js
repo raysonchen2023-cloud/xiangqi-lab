@@ -1,5 +1,5 @@
 // W107-L 第 1 批（開發者 11/25「先做沒做的頁日間」）：我的開局「矮几棋枰＋紅黑兩冊」（07z3）在 iPad 橫向換成 2560×1600 橫式圖，
-// 經典版、原圖版共用一套座標（Windows Claude 1 量，output/w107-ipad/l1610/openmap/open_day_classic_l1610.json）；夜景、手機、iPad 直向照舊原圖。
+// 經典版、原圖版共用一套座標（Windows Claude 1 量，output/w107-ipad/l1610/openmap/open_day_classic_l1610.json）；手機、iPad 直向照舊原圖；夜景照日間條目登記（#173 scwVarInit）。
 // 棋枰、紙籤照條目 fx 的四角貼；朱印「招」、待補籤的偏移照原本（直圖像素）×(2560/768)；走路地面只走左右兩側，靠 TB.low 跳上桌面連通。
 // 不開瀏覽器：07sw＋07z3 在 vm 跑。用法 node --test xiangqi-lab/tools/test-scene-wide-open.js
 "use strict";
@@ -14,13 +14,13 @@ function load(dev) {
 const KC = "openmap/open_day_classic", KO = "openmap/open_day";
 const fakeP = scw => ({ dataset: { scw: scw ? "l1610" : "" }, _scw: { key: KC } });
 
-test("條目：經典版、原圖版兩個白天鍵都登記（共用座標、各自的圖）；夜景沒有；SCW_CDN 還是 false＝正式玩家照舊原圖", () => {
+test("條目：經典版、原圖版兩個白天鍵都登記（共用座標、各自的圖）；夜景照日間條目登記（#173）；SCW_CDN 還是 false＝正式玩家照舊原圖", () => {
   const C = load(true), SCW = vm.runInContext("SCW", C), ent = vm.runInContext("scwEntry", C);
   for (const [k, f] of [[KC, "openmap/open_day_classic_l1610"], [KO, "openmap/open_day_l1610"]]) {
     const e = SCW[k]; assert.ok(e && e.ready, k); assert.equal(e.f, f); assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.ok(ent(k));
   }
   assert.equal(SCW[KO].S, SCW[KC].S, "入口座標共用"); assert.equal(SCW[KO].walk, SCW[KC].walk, "走路節點共用");
-  assert.equal(ent("openmap/open_night_classic"), null); assert.equal(ent("openmap/open_night"), null);
+  const nt = (n, dd) => { const e = ent(n); assert.ok(e, n + " 夜景照日間條目登記（#173 scwVarInit）"); assert.equal(e.f, n + "_l1610", n); assert.equal(e.base, dd, n); assert.deepEqual(e.S, ent(dd).S, n + " 座標跟日間共用"); }; nt("openmap/open_night_classic", "openmap/open_day_classic"); nt("openmap/open_night", "openmap/open_day");
   assert.equal(vm.runInContext("scwEntry", load(false))(KC), null);
 });
 

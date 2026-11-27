@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-w107-night-l1610.js",   /* 11/25 W107-L 夜景、四季 218 張 iPad 橫式圖（07sw scwVarList／scwVarInit）：清單逐類寫死、日間晚登記接得上、各類對應、夏季夏夜、scwPre／scwSw7、不蓋掉已有條目（行為 4、混合 1） */
   "test-w131b-hub-fill.js",   /* 11/26 W131b iPad 直向：對戰、學習大廳的朝代殘影（.cy）算可以裁，大廳照樣填滿寬度、不留模糊底 */
   "test-w107-hall-l1610.js",   /* 11/25 W107-L 第 5 批：江湖會館十派門內頁（07z9b／07z9l／07z9c／07z9m）iPad 橫向橫式圖：十派條目與量好的點、jhHallUse 整套換與還原、迷宮入口位置（行為 3、原始碼 1） */
   "test-scene-wide-xsm.js",   /* 11/25 W107-L 第 4 批：西市（07xsm）iPad 橫向橫式圖——外景、冬景、茶坊、茶坊冬景四個條目、座標整組照量好的值、藏點與茶坊禁區照當下的圖、日夜換季換圖照 07sw 的鍵重選、開頁就是橫式圖與換圖失敗實跑真的 07sw、開頁 xsmPre／xsmPageScw 實跑、00-util 補抓 CDN 後每分鐘換圖（行為 8、〔混合〕1、〔原始碼〕1） */
@@ -216,6 +217,7 @@ const CLASSIFIED = new Set([
   "test-jh-pawn2-1126.js",   /* 11/26 W87-2 仙人指路地底迷宮第二層「漏月迷陣」（m/07z9m-pawn2.js、jhMzPath 的 lv.canMove）：vm 跑竹林只能上下直走（onStep 與自動走）、巡竹兵卒過河加左右視線、逐回合模擬走得過（守衛慢 1～7 回合也一樣）、題庫與改壞驗證 */
   "test-ipad-scene-review-1126.js",   /* 11/26 W164、W165 外部複審：營地橫式結業路線補上環線最後一段（vm 跑 cpCfgL＋shwPath 量長度）、書齋橫式點亮格器物照 D.wide 跳說明（vm 跑 sciMount），含改壞驗證 */
   "test-maze-review-1126.js",   /* 11/26 W153～W155 外部複審：迷宮過關那句話有下一層就說通到下一層（jhMzDoneText）、飛相第二層石門紅方要有相、多解題題面不寫死最後一步、反宮馬不標馬後炮；vm 跑十派第一、二層，含改壞驗證 */
+  "test-maze-chars-1126.js",   /* 11/26 迷宮地圖字元不跨檔撞名：依序載入全部 m/07z9m-*.js，每載一個就比對 JH_MZ_OBJ／JH_MZ_TILE 有沒有被後面的檔蓋掉；含改壞驗證 */
   "test-legend-keep-1126.js",   /* 11/26 W157 外部複審：古戰場自由段保護任務（函谷關）提早結束時也要檢查保護的子；vm 跑 07-legend.js 的判斷，含改壞驗證 */
   "test-delete-focus-1126.js",   /* 11/26 W156 外部複審：刪除本機資料第二層確認，報讀模式先聚焦「不要刪」（ax-first）；vm 跑 11b-a11y.js 的 axmDlgAdd，含改壞驗證 */
   "test-jh-maze-layers-1126.js",   /* 11/26 W87-2 地底迷宮換層（m/07z9m-maze.js jhMzLayer／jhMzDeep／jhMzPick、07z9m-fall.js 層數標題、07z9m-central2.js 中炮門第二層示範）：vm 跑登記多層不動第一層、存檔分層、最深層含舊存檔、選層鎖住、門內頁入口、轉場何時播（含改壞驗證） */
@@ -240,6 +242,7 @@ const CLASSIFIED = new Set([
   "test-w107-tablet-board-1125.js",   /* 11/25 W107 開發者「為大螢幕好好設計」第一步：對局頁 iPad 直向放大、橫向兩欄；手機與分割畫面不受影響（m.css；行為 3、原始碼 1） */
   "test-w108-sel-glow-1125.js",   /* 11/25 W108 玩家回饋：選中的棋子底下加柔和光暈（主題強調色、不擋點擊、不動畫；01-board.js；原始碼 3） */
   "test-w126-ipcompat.js",   /* 11/26 W126 iPhone 版在 iPadOS 26 相容視窗裡頂欄讓出視窗鈕（00-util xqIpCompatOf、m.css #topbar 左內距）〔行為 2：vm 跑判斷與 resize 重算；原始碼 1：CSS 規則〕 */
+  "test-w134-maze-joy.js",   /* 11/26 W134 開發者「重新設計地底迷宮的方向鍵」選虛擬搖桿：推的方向對到格子方向（平面上下左右、斜俯視四個斜角）、死區、換方向黏性、橫畫面放右下；迷宮頁掛上搖桿、方向鈕與鍵盤照舊 */
   "test-icon-onerror-1126.js",   /* 11/26 W152 圖示載不到時的備援（m/02-shell.js ETIMG）：組出 onerror 拿去 new Function 編譯並用假 img 實際跑（改抓經典版、換舊圖、換表情文字）；掃所有 m/*.js 的 onerror 不能有反斜線 */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);

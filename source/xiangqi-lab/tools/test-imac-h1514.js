@@ -8,6 +8,7 @@ const rd = p => fs.readFileSync(path.join(ROOT, p), "utf8").replace(/\r\n/g, "\n
 const M = f => rd("xiangqi-db/m/" + f);
 const between = (s, a, b) => { const i = s.indexOf(a), j = s.indexOf(b, i + 1); assert.ok(i >= 0 && j > i, "切不到：" + a + " … " + b); return s.slice(i, j) };
 const HAS_IOS = fs.existsSync(path.join(ROOT, "xiangqi-ios")), SKIP_IOS = HAS_IOS ? false : "沒有 xiangqi-ios";
+const SKIP_STORE = fs.existsSync(path.join(ROOT, "xiangqi-ios", "appstore")) ? false : "沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦）";   /* W69 盤點高 7 */
 const U = M("00-util.js"), CSS = vm.runInNewContext(between(U, "const SAFE_LR_CSS=", "`;   /*").replace("const SAFE_LR_CSS=", "") + "`");   /* 11/17 之後 SAFE_LR_CSS 後面還接了 TAP44_CSS 等，切到樣板字串結尾為止 */
 /* 很小的 CSS 計算：calc／min／env，單位 px、vw、%（相對寬 W） */
 function px(expr, W, insL, insR) {
@@ -50,7 +51,7 @@ test("H P1：滑出面板可以往下滑關、點外面關（遮罩被別的圖�
   Sx.el.classList.add("open"); listeners[0]({ target: { nodeType: 1, closest: () => null } }); assert.equal(closed, 1, "點外面收起");
   Sx.el.classList.add("open"); listeners[0]({ target: { nodeType: 1, inside: true, closest: () => null } }); assert.equal(closed, 1, "點面板裡不收");
 });
-test("H P2（準則 2.3）：商店描述照畫面寫 18 級（新手～專3・全力），不再寫「入門到大師共八個難度」；其他數字對過", { skip: SKIP_IOS }, () => {
+test("H P2（準則 2.3）：商店描述照畫面寫 18 級（新手～專3・全力），不再寫「入門到大師共八個難度」；其他數字對過", { skip: SKIP_STORE }, () => {
   const md = rd("xiangqi-ios/appstore/metadata.md");
   assert.ok(!/八個難度|eight levels|到大師|to master/.test(md.replace(/- 「18 級」[^\n]*/, "")), "舊說法拿掉");
   assert.ok(md.includes("從「新手」、入門、業餘到「專3・全力」共 18 級。") && md.includes("with 18 levels, from Novice through Beginner and Amateur to Expert 3 (full strength)."));
