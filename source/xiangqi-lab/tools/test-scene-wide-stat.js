@@ -7,7 +7,7 @@ const M = p => fs.readFileSync(path.join(__dirname, "../../xiangqi-db", p), "utf
 const SW = M("m/07sw-scenewide.js"), JZ = M("m/07z2-statmap.js");
 function load(dev) {
   const ctx = vm.createContext({ setTimeout: () => 0, clearTimeout: () => { }, addEventListener: () => { }, isFinite, Math, Object, String, JSON, localStorage: { getItem: k => dev && k === "xqScwDev" ? "1" : null } });
-  vm.runInContext(SW, ctx); vm.runInContext(JZ, ctx);
+  vm.runInContext(SW, ctx); if (!dev) vm.runInContext("SCW_CDN=false", ctx);   /* 沒開開發用開關的那一組，模擬「圖還沒上 CDN」，照舊測把關（這版 SCW_CDN 已改 true） */ vm.runInContext(JZ, ctx);
   return ctx;
 }
 const KC = "statmap/stat_day_classic", KO = "statmap/stat_day";
