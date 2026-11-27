@@ -15,8 +15,9 @@
    純計算 scwKind／scwKey 不碰 DOM，自動測試 xiangqi-lab/tools/test-scene-wide-l1610.js 用 vm 跑 */
 const SCW_ON=true,SCW_IMGV="1125";
 /* 橫式圖上了 CDN 沒有（iMac Claude 2 審查 #155：還沒上 CDN 就開，合併後到上傳前每個寬螢幕開頁都先 404 一次）。
-   false＝正式玩家一律照舊原圖，只有開發用開關（localStorage xqScwDev=1）才用橫式圖；發布時圖上傳 CDN 的同一個 PR 改成 true */
-let SCW_CDN=false;
+   false＝正式玩家一律照舊原圖，只有開發用開關（localStorage xqScwDev=1）才用橫式圖；發布時圖上傳 CDN 的同一個 PR 改成 true。
+   11/27 開發者選「這版就開」：370 張橫式圖由 Windows Claude 1 上 CDN（逐張比過 sha1）後改 true */
+let SCW_CDN=true;
 const SCW_SQ=1.04,SCW_LMIN=600;   /* 跟 07z HMW_SQ、HMW_LMIN 同一點 */
 /* 錯棋重練（07y8）經典世界白天：output/w107-ipad/l1610/redomap/redo_day_classic_l1610.json（Windows Claude 1 11/25 在 2560×1600 圖上量，誤差約 ±1%）。
    座標都是圖的 %（sw7.sky 是像素）。fx：bookText 攤開冊子右頁中心（直寫今日複習）、stackBase 矮几上已畫那疊冊子的頂、stackStep 每本往上幾 % 圖高、bookW 疊的冊子寬（圖寬 %）、censer 香爐口。

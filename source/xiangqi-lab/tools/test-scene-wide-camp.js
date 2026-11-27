@@ -9,7 +9,7 @@ const SW = M("m/07sw-scenewide.js"), CP = M("m/07y2-campmap.js");
 function load(dev, exits) {
   const ctx = vm.createContext({ setTimeout: () => 0, clearTimeout: () => { }, addEventListener: () => { }, isFinite, Math, Object, String, JSON, localStorage: { getItem: k => dev && k === "xqScwDev" ? "1" : null } });
   if (exits) ctx.SHW_EXITS = exits;
-  vm.runInContext(SW, ctx); vm.runInContext(CP, ctx);
+  vm.runInContext(SW, ctx); if (!dev) vm.runInContext("SCW_CDN=false", ctx);   /* 沒開開發用開關的那一組，模擬「圖還沒上 CDN」，照舊測把關（這版 SCW_CDN 已改 true） */ vm.runInContext(CP, ctx);
   return ctx;
 }
 const KC = "campmap/camp_day_classic", KO = "campmap/camp_day";
