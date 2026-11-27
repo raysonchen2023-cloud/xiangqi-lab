@@ -12,7 +12,9 @@ const T_ALL = Date.now(), ALL_MS = 30 * 60000;
 const spawnT = (cmd, args, o = {}) => { const left = ALL_MS - (Date.now() - T_ALL), lim = Math.min(240000, left); const what = [cmd, ...args].map(String).join(" ").slice(0, 300);
   if (lim <= 0) throw new Error("整支測試超過 30 分鐘，不再開新的子程序：" + what);
   const r = cp.spawnSync(cmd, args, { timeout: lim, killSignal: "SIGKILL", ...o });
-  if (r.error && r.error.code === "ETIMEDOUT") throw new Error((lim < 240000 ? "整支測試的 30 分鐘用完了，" : "") + "子程序超過 " + Math.round(lim / 1000) + " 秒沒結束（卡住）：" + what); return r };
+  /* W184：卡住時附上子程序已經印出的最後幾行（金絲雀每測完一個壞樣本印一行），才看得出卡在哪一步；11/27 第四次卡住時只看得到指令 */
+  const tail = (x) => String(x == null ? "" : x).trim().split("\n").slice(-8).join("\n");
+  if (r.error && r.error.code === "ETIMEDOUT") throw new Error((lim < 240000 ? "整支測試的 30 分鐘用完了，" : "") + "子程序超過 " + Math.round(lim / 1000) + " 秒沒結束（卡住）：" + what + "\n——卡住前最後印出（stdout）：\n" + (tail(r.stdout) || "（沒有）") + "\n——（stderr）：\n" + (tail(r.stderr) || "（沒有）")); return r };
 const made = [];
 test.after(() => { for (const d of made) fs.rmSync(d, { recursive: true, force: true }) });
 const tmp = (p) => { const d = fs.mkdtempSync(path.join(os.tmpdir(), p)); made.push(d); return d };
@@ -526,13 +528,15 @@ test("W30：大於 20 MB、記了雜湊的檔每個種子都全測（不只最�
   for (const [rel, n] of big) { const b = Buffer.alloc(n, rel.length); fs.writeFileSync(path.join(D, ...rel.split("/")), b); LJ.files[rel] = [n, sha1(b)] }
   fs.writeFileSync(L, JSON.stringify(LJ));
   for (const seed of ["1", "2"]) {   /* 大檔是每次都測的固定名單，跟種子無關；兩個種子就夠 */
-    const out = path.join(tmp("xq-w30-"), "r.json"), r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "swap,nohash", "--seed", seed, "--out", out]);
+    /* W184：每次 check-www 平常不到 1 秒（W30 整項 CI 4.4～6.7 秒、叫 28 次）。內層時限給 60 秒：單次卡住時由金絲雀先判「不成立」、寫出是哪一步，
+       不會被外層 240 秒直接砍掉（11/27 第四次卡住剛好 241 秒，什麼都沒留下）。連卡三次也還在 240 秒內 */
+    const out = path.join(tmp("xq-w30-"), "r.json"), r = runCanary(CANARY, ["--dir", D, "--list", L, "--only", "swap,nohash", "--seed", seed, "--out", out], { XQ_CANARY_SUB_MS: "60000" });
     assert.equal(r.status, 0, r.stdout + r.stderr);
     const R = JSON.parse(fs.readFileSync(out, "utf8"));
     for (const k of ["swap", "nohash"]) for (const [rel] of big) assert.ok(R.results.some((x) => x.kind === k && x.file === rel), k + "（種子 " + seed + "）要測到 " + rel);
   }
   for (const [kind, from, to] of [["swap", "    else if (h && crypto", "    else if (h && !(sz > 20 * 1048576 && sz < 30 * 1048576) && crypto"], ["nohash", "|| sz > 20 * 1048576)) noHash.push(rel);", "|| sz >= 30 * 1048576)) noHash.push(rel);"]]) {
-    const C = blindCanary(from, to), r = runCanary(C, ["--dir", D, "--list", L, "--only", kind, "--seed", "1"]);
+    const C = blindCanary(from, to), r = runCanary(C, ["--dir", D, "--list", L, "--only", kind, "--seed", "1"], { XQ_CANARY_SUB_MS: "60000" });
     assert.equal(r.status, 4, kind + " 只對 20～30 MB 放水：" + r.stdout + r.stderr);
   }
 });
