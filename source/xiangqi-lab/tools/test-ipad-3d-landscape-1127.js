@@ -56,3 +56,15 @@ test("m.css：寬螢幕兩欄、3D 顯示中，#bbox 用剩下的寬度（右欄
   assert.match(media, /\.view\.fixed:has\(> #bbox > \.park3d:not\(\[style\*="display: none"\]\):not\(\[style\*="display:none"\]\)\)>#bbox\{width:calc\(100cqw - 24px - 16px - clamp\(320px, 30cqw, 400px\)\)\}/);
   assert.match(media, /\.view\.fixed:has\(> #bbox\)>#bbox\{grid-column:1;grid-row:1 \/ span 30;align-self:start;padding:6px 0;height:calc\(100cqh - 12px\);width:calc\(\(100cqh - 24px\) \* 560 \/ 620\)\}/, "平面棋盤原本的 560:620 規則還在");
 });
+
+// ③ 07fl-fill.js xflHmw：寬版圖左右裁掉時（iPad 13 吋橫向星槎書架 page_shelf_l1610 寬 1544、往左 84），標題條 .shp-cap 照裁掉的寬度左右縮回（跟 07t3 --ttCx 同一招），「船艙書架」不再被切一半
+test("07fl xflHmw：設 --xflL／--xflR（左右裁掉多少），#view.xfl-hmw 的 .shp-cap 照它縮回", () => {
+  const FL = rd("xiangqi-db/m/07fl-fill.js");
+  const i = FL.indexOf("function xflHmw("); assert.ok(i >= 0); const body = FL.slice(i, FL.indexOf("\nfunction ", i + 10));
+  assert.match(body, /setProperty\("--xflL",Math\.max\(0,-pl\.left\)\+"px"\)/);
+  assert.match(body, /setProperty\("--xflR",Math\.max\(0,pl\.w\+pl\.left-V\.clientWidth\)\+"px"\)/);
+  assert.match(FL, /#view\.xfl-hmw \.shp-page>\.shp-cap\{left:var\(--xflL,0px\);right:var\(--xflR,0px\)\}/);
+  /* 算給 1376 寬、圖 1544 寬、往左 84 的情況：左右各縮 84，標題條剛好對齊畫面 */
+  const pl = { w: 1544, left: -84 }, Vw = 1376;
+  assert.equal(Math.max(0, -pl.left), 84); assert.equal(Math.max(0, pl.w + pl.left - Vw), 84);
+});
