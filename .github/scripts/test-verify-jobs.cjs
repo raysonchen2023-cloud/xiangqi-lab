@@ -4,7 +4,8 @@
 //   ① 拆開前的 24 條檢查指令一條不少、各只出現一次，放在該放的工作（清單寫死在這裡，不從 verify.yml 讀，改 verify.yml 改不到基準）；
 //   ② 分支保護的必要檢查叫 verify：verify 工作要 needs 兩個工作、if: always()（被略過的必要檢查會被當成通過）；
 //   ③ 除了 verify 的 always()，沒有工作層的 if、沒有 continue-on-error（不准改成條件式略過或失敗照過）；
-//   ④ 實跑 verify 的彙整指令：兩個都 success 才結束代碼 0，失敗、取消、略過、空值都要 1。
+//   ④ 實跑 verify 的彙整指令：兩個都 success 才結束代碼 0，失敗、取消、略過、空值都要 1；
+//   ⑤ 每一步的步驟層 if、id 照拆開前寫死；⑥ 彙整那一步不准有 if、shell、continue-on-error（#242 審查建議 1、2）。
 "use strict";
 const test = require("node:test"), assert = require("node:assert"), fs = require("fs"), path = require("path"), cp = require("child_process");
 const Y = fs.readFileSync(path.join(__dirname, "..", "workflows", "verify.yml"), "utf8");
@@ -107,4 +108,168 @@ test("④ 實跑彙整指令：兩個都 success 才 0；失敗、取消、略�
     assert.equal(run("success", bad), 1, "full=" + JSON.stringify(bad) + " 要算不過");
   }
   assert.equal(run("failure", "failure"), 1);
+});
+
+/* 拆開前（main 937fdfa1）每一步的步驟層 if 與 id，照抄過來寫死（#242 審查建議 2）：條件不能改、不能加、不能拿掉 */
+const STEP_IF = [
+  [
+    "run:node --test .github/scripts/test-check-text.cjs .github/scripts/test-ci-mode.cjs .github/scripts/test-guard-scan.cjs .github/scripts/test-skip-checks.cjs .github/scripts/test-test-classified.cjs .github/scripts/test-tag-release.cjs .github/scripts/test-check-evidence.cjs .github/scripts/test-base-guard.cjs .github/scripts/test-release-guard.cjs .github/scripts/test-todo-checks.cjs .github/scripts/test-zero-assert.cjs .github/scripts/test-check-verify-log.cjs .github/scripts/test-test-empty.cjs .github/scripts/test-tag-native.cjs",
+    null,
+    null
+  ],
+  [
+    "run:node source/xiangqi-ios/scripts/check-native.js",
+    null,
+    null
+  ],
+  [
+    "run:node --test source/xiangqi-ios/scripts/p03d/test-p03d.cjs",
+    null,
+    null
+  ],
+  [
+    "run:node --test source/xiangqi-ios/scripts/test-canary-www.cjs",
+    null,
+    null
+  ],
+  [
+    "run:node --test source/xiangqi-ios/scripts/test-canary-native.cjs",
+    null,
+    null
+  ],
+  [
+    "run:node .github/scripts/ci-mode.cjs \"$HEAD_REF\" \"$EVENT_NAME\" >> \"$GITHUB_OUTPUT\"",
+    null,
+    "mode"
+  ],
+  [
+    "run:node .github/scripts/check-text.cjs \"origin/$BASE_REF\"",
+    null,
+    null
+  ],
+  [
+    "run:node .github/scripts/guard-release-files.cjs \"origin/$BASE_REF\"",
+    "steps.mode.outputs.mode == 'feature'",
+    null
+  ],
+  [
+    "run:node source/check-build.js --out index.html",
+    "steps.mode.outputs.mode == 'feature'",
+    null
+  ],
+  [
+    "run:node source/xiangqi-lab/tools/verify-all.js --skip release-verify --out verify-ci.txt --tally-out tally-ci.json",
+    "steps.mode.outputs.mode == 'feature'",
+    null
+  ],
+  [
+    "run:node source/xiangqi-lab/tools/oss-scan.js source",
+    "steps.mode.outputs.mode == 'feature'",
+    null
+  ],
+  [
+    "run:node .github/scripts/guard-release-pr.cjs \"origin/$BASE_REF\"",
+    "steps.mode.outputs.mode == 'release'",
+    null
+  ],
+  [
+    "run:node source/xiangqi-lab/tools/verify-all.js --out verify-ci.txt --tally-out tally-ci.json",
+    "steps.mode.outputs.mode == 'release'",
+    null
+  ],
+  [
+    "run:node source/xiangqi-lab/tools/make-evidence.js --verify verify-ci.txt --tally tally-ci.json --out evidence-ci.md --report-out testkinds-ci.json",
+    null,
+    null
+  ],
+  [
+    "run:node .github/scripts/check-evidence.cjs data/docs/evidence.md evidence-ci.md",
+    "steps.mode.outputs.mode == 'release'",
+    null
+  ],
+  [
+    "run:node .github/scripts/check-verify-log.cjs . verify-ci.txt",
+    "steps.mode.outputs.mode == 'release'",
+    null
+  ],
+  [
+    "run:node source/xiangqi-lab/tools/release-sync-check.js --dir .",
+    "steps.mode.outputs.mode == 'release'",
+    null
+  ],
+  [
+    "run:node .github/scripts/check-fake-skip.cjs",
+    null,
+    null
+  ],
+  [
+    "run:node .github/scripts/check-zero-assert.cjs \"$RUNNER_TEMP/assert-count\" verify-ci.txt",
+    null,
+    null
+  ],
+  [
+    "run:node .github/scripts/check-test-skips.cjs verify-ci.txt",
+    null,
+    null
+  ],
+  [
+    "run:node .github/scripts/check-test-todos.cjs tally-ci.json --base \"origin/$BASE_REF\"",
+    null,
+    null
+  ],
+  [
+    "run:node .github/scripts/check-test-empty.cjs tally-ci.json",
+    null,
+    null
+  ],
+  [
+    "run:node .github/scripts/check-test-classified.cjs \"origin/$BASE_REF\"",
+    null,
+    null
+  ],
+  [
+    "run:node .github/scripts/scan-changed.cjs \"origin/$BASE_REF\" \"$RUNNER_TEMP/changed-files\"",
+    null,
+    null
+  ],
+  [
+    "uses:actions/upload-artifact@v4",
+    "always()",
+    null
+  ]
+];
+
+/* 切出某個工作的每一步：回傳 [{ key, if, id, text }] */
+function stepsOf(jobText) {
+  const out = []; let cur = null;
+  for (const l of jobText.split("\n")) {
+    if (l.startsWith("      - ")) { if (cur) out.push(cur); cur = [l]; } else if (cur) cur.push(l);
+  }
+  if (cur) out.push(cur);
+  return out.map((s) => {
+    const t = s.join("\n");
+    const run = (/^\s+run: (.*)$/m.exec(t) || [])[1], uses = (/^\s+(?:- )?uses: (.*)$/m.exec(t) || [])[1];
+    return { key: run ? "run:" + run : "uses:" + uses, if: (/^(?:        |      - )if: (.*)$/m.exec(t) || [])[1] || null, id: (/^(?:        |      - )id: (.*)$/m.exec(t) || [])[1] || null, text: t };   /* 「- if:」寫在步驟第一行也要認得 */
+  });
+}
+
+test("⑤ 每一步的步驟層 if、id 都跟拆開前一樣（功能／發布模式的條件、id: mode、上傳紀錄的 always()）", () => {
+  const J = jobs(Y), all = [...stepsOf(J["selftest-ios"]), ...stepsOf(J.full)];
+  for (const [key, iff, id] of STEP_IF) {
+    const hit = all.filter((s) => s.key === key || (key === "run:" + SELF0 && same(s.key.slice(4), SELF0)));
+    assert.equal(hit.length, 1, "這一步要剛好一個：" + key);
+    assert.equal(hit[0].if, iff, "步驟層 if 不能改：" + key);
+    assert.equal(hit[0].id, id, "步驟 id 不能改：" + key);
+  }
+  /* 拆開後沒有多出別的步驟（checkout、setup-node 兩個工作各一次） */
+  const extra = all.filter((s) => !/actions\/(checkout|setup-node)@v4/.test(s.key) && !STEP_IF.some(([k]) => k === s.key || (k === "run:" + SELF0 && same(s.key.slice(4), SELF0))));
+  assert.deepEqual(extra.map((s) => s.key), [], "不准多出步驟");
+});
+
+test("⑥ verify 彙整那一步：不准有步驟層 if、shell、continue-on-error、working-directory（步驟被略過或換了執行程式，工作會算成功）", () => {
+  const S = stepsOf(jobs(Y).verify);
+  assert.equal(S.length, 1, "verify 只有一步");
+  for (const k of ["if", "shell", "continue-on-error", "working-directory", "uses"]) assert.doesNotMatch(S[0].text, new RegExp("^\\s+(- )?" + k + ":", "m"), "彙整步驟不准有 " + k);
+  assert.doesNotMatch(jobs(Y).verify, /^    defaults:/m, "verify 不准用 defaults 改 shell");
+  assert.doesNotMatch(Y, /^defaults:/m, "workflow 不准用 defaults 改 shell");
 });
