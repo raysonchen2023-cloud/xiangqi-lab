@@ -78,7 +78,7 @@ jhMzLayer("horse",2,{map:JH_MZ_HORSE2_MAP,guards:JH_MZ_HORSE2_GUARDS,pool:JH_MZ_
   lore:[{title:["驛傳","Post relays"],
     body:["驛站傳遞文書，騎馬傳送叫「驛」，步行傳送叫「急遞舖」。徐州水陸要衝，驛傳不能廢。（遊戲整理）","Official dispatches went by horse through relay stations and on foot through courier posts. Xuzhou sat on key land and water routes, so its relays could never close. (Summarized for the game.)"],
     src:"遊戲整理，據《明史・兵志》（清修）"}],
-  say:{door:["將死！馬掛角一將，石門往兩旁滑開。","Checkmate! The horse checks from the corner and the door slides apart."],
+  say:{door:["將死！這一將封住了黑將的去路，石門往兩旁滑開。","Checkmate! The check seals the black general in, and the door slides apart."],
     trap:["將死！野馬愣在原地，你趁機溜走。","Checkmate! The wild horse freezes and you slip away."],
     retry:["你被拖回了入口。<b>別踩瓦片，繞到牆角讓馬腿被擋住。</b>","You were dragged back. <b>Avoid the tiles and use a corner to block the horse's leg.</b>"],
     done:["地窖盡頭還有往下的石階，第三層之後再開。","At the end of the cellar more steps lead down. Level 3 opens later."]}});

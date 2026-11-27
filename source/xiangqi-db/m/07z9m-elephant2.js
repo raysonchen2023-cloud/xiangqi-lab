@@ -76,7 +76,7 @@ jhMzLayer("elephant",2,{map:JH_MZ_ELE2_MAP,guards:JH_MZ_ELE2_GUARDS,pool:JH_MZ_E
   lore:[{title:["泗州水患","Floods at Sizhou"],
     body:["萬曆年間，淮水屢次漲溢，泗州城一帶常被水淹，街巷泥濘不堪。（遊戲整理）","In the Wanli years the Huai River flooded again and again; Sizhou was often under water and its streets deep in mud. (Summarized for the game.)"],
     src:"遊戲整理，據曾惟誠《帝鄉紀略》"}],
-  say:{door:["將死！相把路讓開，馬一躍收尾，石門往兩旁滑開。","Checkmate! The elephant clears the way, the horse leaps in to finish, and the door slides apart."],
+  say:{door:["將死！相守住家門，黑將無路可走，石門往兩旁滑開。","Checkmate! With the elephants guarding home, the black general has nowhere to go, and the door slides apart."],
     trap:["解圍了！巡場的相愣在原地，你趁機溜走。","Defended! The patrolling elephant stands stunned and you slip away."],
     retry:["你被押回了入口。<b>淤泥會讓你停不下來，先把考箱推進去當煞車。</b>","You were marched back. <b>Mud won't let you stop: push a chest in first as a brake.</b>"],
     done:["考場盡頭還有往下的石階，第三層之後再開。","At the far end of the yard more steps lead down. Level 3 opens later."]}});
