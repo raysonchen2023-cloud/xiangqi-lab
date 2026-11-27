@@ -1,10 +1,10 @@
 # 開源建置與授權
 
-<!--web-only-->最後核對：2026 年 11 月 14 日（第 11 輪 X7 寫成，第 13 輪 F2 補「可建置證據」和缺口分類；11 月 13 日開發者決定公開原始碼、改授權後更新；第 14 輪 F3 補 Android 路線圖和可重現驗證包；第 17 輪補〈這一頁對應哪一版〉的同版閘門、Android 公開建置鏈、「APK 可重建」和「整站可重建」的分別，11 月 14 日第一次照同版閘門對 `20261114-1209` 發布，同日對 `20261114-1407` 再發一次（紅藍隊攻擊重現工具隨新版連線程式公開）；給 F-Droid 和其他自由軟體平台的審查參考）。這一頁是整理，不是法律意見。<!--/web-only-->
+<!--web-only-->最後核對：2026 年 11 月 27 日（改「F-Droid 收錄條件」第 1 項與對照表的 Android 現況：Google Play 封閉測試中、F-Droid 還沒試建；其他各節重新核對，內容沒變）。上一次：2026 年 11 月 14 日（第 11 輪 X7 寫成，第 13 輪 F2 補「可建置證據」和缺口分類；11 月 13 日開發者決定公開原始碼、改授權後更新；第 14 輪 F3 補 Android 路線圖和可重現驗證包；第 17 輪補〈這一頁對應哪一版〉的同版閘門、Android 公開建置鏈、「APK 可重建」和「整站可重建」的分別，11 月 14 日第一次照同版閘門對 `20261114-1209` 發布，同日對 `20261114-1407` 再發一次（紅藍隊攻擊重現工具隨新版連線程式公開）；給 F-Droid 和其他自由軟體平台的審查參考）。這一頁是整理，不是法律意見。<!--/web-only-->
 
 ## 這一頁對應哪一版（發布前自動核對）
 
-**這一頁和 `source/` 對應的發布版：`20261126-1111`**
+**這一頁和 `source/` 對應的發布版：`20261127-1607`**
 
 （每次發布時用 `release-sync-check.js --stamp <版本> foss.md` 改成那一版；跟發布版不一致就不准發布，見下面。）
 
@@ -50,7 +50,7 @@ APK 用的是公開倉庫裡**已經組好的網站成品**，不是從原始碼
 <!--web-only-->
 改了以後，《象棋千秋》**仍然不符合 F-Droid 的收錄條件**，不打算假裝符合。還卡在三件事：
 
-1. **Android 安裝檔還沒上架。** F-Droid 收的是 Android App，而且要它的伺服器能從原始碼建出安裝檔。Android 原生專案（Capacitor）第 15 輪起在開發者電腦上編得出 debug／release APK 和 AAB、乾淨環境重建拿掉簽章後逐位元相同；**第 17 輪起整個建置鏈公開在 `source/xiangqi-android/`**（原生專案、釘版本的相依、`clean-rebuild.js`、`REBUILD.md`、建置紀錄）。還沒有正式簽章、沒有上任何商店、沒在 Linux（F-Droid 的建置環境）重建過。怎麼上 Google Play 和 F-Droid、要決定什麼，整理在〈Android 與 F-Droid 路線圖〉（[android.md](android.md)）。
+1. **Android 版只在 Google Play 封閉測試，F-Droid 還沒上。** F-Droid 收的是 Android App，而且要它的伺服器能從原始碼建出安裝檔。Android 原生專案（Capacitor）第 15 輪起在開發者電腦上編得出 debug／release APK 和 AAB、乾淨環境重建拿掉簽章後逐位元相同；**第 17 輪起整個建置鏈公開在 `source/xiangqi-android/`**（原生專案、釘版本的相依、`clean-rebuild.js`、`REBUILD.md`、建置紀錄）。Google Play 版已經用正式的上傳金鑰簽章、在封閉測試中（只有登記的測試人員拿得到）；F-Droid 那條路線還沒試建、還沒送，也沒在 Linux（F-Droid 的建置環境）重建過。怎麼上 Google Play 和 F-Droid、要決定什麼，整理在〈Android 與 F-Droid 路線圖〉（[android.md](android.md)）。
 2. **公開的原始碼還建不出「整個網站」。** `source/` 能組出 `index.html`（`node source/check-build.js` 核對跟發布的逐字相同）和 `core.js`；但完整建置（`build-site.js`）還要用到只在開發者電腦上的資料檔和素材原始資料夾，大部分圖片、音樂、3D 模型也只放在 Cloudflare CDN、不進 git。
 3. **有非自由素材。** 開發者的素材是 CC BY-NC-SA 4.0（限非商業，不算自由授權），神經網路權重 `pikafish.nnue` 也不得商用。F-Droid 對這種情形是收錄但標「NonFreeAssets」，不是拒收。
 <!--/web-only-->
@@ -65,7 +65,7 @@ APK 用的是公開倉庫裡**已經組好的網站成品**，不是從原始碼
 | App 本身用自由軟體授權（OSI／FSF 認可） | 程式碼 GPL-3.0-or-later（倉庫根目錄 `LICENSE`，11/13 起）；開發者素材 CC BY-NC-SA 4.0（`LICENSE-ASSETS.md`） | **程式符合**；素材不是自由授權 | 素材部分見下面「非自由素材」 |
 | 從公開原始碼建置 | `source/` 有原始模組（`xiangqi-db/m.html`、`m/*.js`、`m.css`）、`src/*.js`、規則程式 `xiangqi-referee.js`、建置與測試工具；`check-build.js` 組出的 `index.html` 跟發布的逐字相同 | **部分符合** | 完整建置還要只在開發者電腦上的資料檔（`xiangqi-db/*.json` 等）和素材資料夾；要把這些也放到公開來源，並把 `build-site.js` 改成只靠公開檔案就能跑 |
 | 倉庫裡有建置需要的全部素材 | GitHub 只放瘦身版：大部分圖片、音樂、3D 模型只放在 Cloudflare CDN，不進 git | **不符合** | 素材也要能從公開來源取得（例如放進倉庫或發布附件） |
-| 是 Android App，F-Droid 伺服器能建出安裝檔 | 只有網頁 App（PWA）；開發者電腦上有 Capacitor 8.6.2 的 Android 骨架和 F-Droid 建置設定草稿（第 14 輪，沒編譯、沒上機，見 [android.md](android.md)） | **不符合** | 做一個不依賴 Google Play 服務、本身也開源、能從原始碼建置的 Android 包裝（把網頁資源打包進 App，不是只開網址）：編出 APK、驗證引擎在 Android WebView 的多執行緒、把 Android 專案放上公開倉庫；引擎的 `pikafish.wasm` 要能在建置時從原始碼編（或改用 NDK 原生引擎） |
+| 是 Android App，F-Droid 伺服器能建出安裝檔 | 有 Android 版（Capacitor 8.6.2，網頁資源打包進 App），建置鏈公開在 `source/xiangqi-android/`，在 Google Play 封閉測試；F-Droid 的建置設定還是草稿，還沒試建、還沒送（見 [android.md](android.md)） | **不符合** | 做一個不依賴 Google Play 服務、本身也開源、能從原始碼建置的 Android 包裝（把網頁資源打包進 App，不是只開網址）：編出 APK、驗證引擎在 Android WebView 的多執行緒、把 Android 專案放上公開倉庫；引擎的 `pikafish.wasm` 要能在建置時從原始碼編（或改用 NDK 原生引擎） |
 | 不含閉源相依（Google Play 服務、Firebase、廣告 SDK 等） | `foss-audit.js` 查 10 類，一個都沒有 | **符合** | — |
 | 第三方元件授權相容、全文齊全 | 程式庫、引擎、字型的授權全文都在 `licenses/` 和根目錄 | **符合** | 版本沒記錄的幾項（opencc-js、字型）補上版本 |
 | GPL 元件提供對應原始碼 | 上游標籤＋改過的 `uci.cpp`＋建置腳本都公開；第 13 輪用 Emscripten 6.0.13 重編，跟發布的 `pikafish.wasm`、`pikafish.js` 逐位元相同 | **大致符合** | 公開的 `build-wsl.sh` 還是裝 latest、釘版本的腳本和建置紀錄還沒放上倉庫；沒有完整原始碼包（見下面〈Pikafish〉） |
