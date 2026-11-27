@@ -72,6 +72,7 @@ JOURNEY_KEYS.push("m_jhMzDeep");   /* W87-2 換層（11/26，07z9m-maze.js jhMzD
    其他舊存檔格沒有這些鍵，讀進來就是迷宮從頭開始（以前沒分開記，分不出是哪段旅程的）。 */
 const JH_MZ_SAVE_SIDS=["central","cross_palace","pawn","elephant","screen","horse","same_cannon","opposite_cannon","advisor_corner","palace_horse"],JH_MZ_SAVE_LAYERS=3;
 for(const s of JH_MZ_SAVE_SIDS)for(let n=1;n<=JH_MZ_SAVE_LAYERS;n++){const k="m_"+(s==="central"?"jhMaze":"jhMaze_"+s)+(n>1?"_L"+n:"");JOURNEY_KEYS.push(k,k+"Ptr")}
+JOURNEY_KEYS.push("m_jhMzKey");   /* W172（11/27，07z9m-vault.js）：jhMzKey＝各派的漕運密室鑰匙拿到沒、密室開了沒、殘譜讀過沒，跟旅程走。另外加一行，不動上面清單的字 */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
 /* 開發者 11/6 修：全新玩家第一次打開，開機時就會寫進 era、jStars、playSec 這些鍵，原本的判斷會把新玩家當成舊玩家，跳出「存檔功能上線了、角色是小帥Q版」。改成只看真的玩過才會有的鍵（新手引導做完、修為、戰績、故事進度） */

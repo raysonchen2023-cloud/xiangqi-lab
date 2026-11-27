@@ -80,12 +80,17 @@ function regs(patch = {}) {
 
 /* 地圖字元（#239 複審）：共用程式（07z9m-maze.js）認得的格子，加上說明碑模組（07z9m-lore.js）的 L、H */
 const SHARED = "#.DCTSP>@", LORE = "LH";
+/* 漕運密室（W172，11/27，07z9m-vault.js）的 N（銅鎖門）、p（殘譜架）：只准由 07z9m-vault.js 登記，只准用在有密室的那幾層。
+   名單寫死在這裡（不從 07z9m-vault.js 讀）：加派要連這支測試一起改、一起審 */
+const VAULT = "Np", VAULT_FILE = "07z9m-vault.js", VAULT_AT = new Set(["central:2", "elephant:2"]);
 function mapProblems(patch = {}) {
   const { out, owner } = regs(patch), bad = [], mine = {};
   for (const r of out) (mine[r.f] = mine[r.f] || new Set()).add(r.ch);
   for (const r of out) if (r.f !== "07z9m-maze.js" && SHARED.includes(r.ch)) bad.push(`${r.f} 登記了共用字元 "${r.ch}"（會改掉全部迷宮的 ${r.ch}）`);
+  for (const r of out) if (VAULT.includes(r.ch) && r.f !== VAULT_FILE) bad.push(`${r.f} 登記了密室字元 "${r.ch}"（只准 ${VAULT_FILE} 登記）`);
   for (const L of owner) {
-    const ok = new Set([...SHARED, ...LORE, ...(mine[L.f] || [])]);
+    const ok = new Set([...SHARED, ...LORE, ...(mine[L.f] || []), ...(VAULT_AT.has(L.sid + ":" + L.k) ? VAULT : "")]);
+    if (L.f !== VAULT_FILE) for (const ch of mine[VAULT_FILE] || []) if (!VAULT_AT.has(L.sid + ":" + L.k)) ok.delete(ch);
     for (const P of owner) if (P.sid === L.sid && P.k < L.k) for (const ch of mine[P.f] || []) ok.add(ch);
     const used = new Set((L.map || []).join(""));
     for (const ch of used) if (!ok.has(ch)) bad.push(`${L.sid} 第 ${L.k} 層（${L.f}）地圖用了 "${ch}"：不是共用字元、也不是自己或同派前幾層登記的`);
