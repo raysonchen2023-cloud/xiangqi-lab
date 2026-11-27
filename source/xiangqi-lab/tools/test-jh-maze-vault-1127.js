@@ -2,7 +2,7 @@
    用 vm 跑真的程式（m.html 裡全部 07z9m-*，加上漕運那一段），存檔、修為用假的記下呼叫。
    規則：漕船停在那一州時解題拿鑰匙（只發給第二層有密室的派、只發一次）；N＝銅鎖門，有鑰匙才開、開過永久開；p＝殘譜架，第一次讀給修為；
    鑰匙只開密室：石門、水窪、各派機關照舊。
-   「改壞驗證」：同一組檢查拿去跑改壞的程式（沒鑰匙也開、重建後門又關上、鑰匙重複發、鑰匙順便開石門），一定要抓得到。 */
+   「改壞驗證」：同一組檢查拿去跑改壞的程式（沒鑰匙也開、重建後門又關上、鑰匙重複發、鑰匙順便開石門、開密室順便算踩過踏板、重建時連石門一起拆），一定要抓得到。 */
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");
 const ROOT = path.join(__dirname, "..", ".."), M = path.join(ROOT, "xiangqi-db", "m"), rd = (f) => fs.readFileSync(path.join(M, f), "utf8");
@@ -52,11 +52,16 @@ function chkOpenStays(c) {   /* 有鑰匙：打開、走得進去；重建、新
   c.jhMzReset(S, true); if (cell(S, 8, 2) !== ".") return false;
   const S2 = c.jhMzNew(c.jhMzLvN("central", 2)); return cell(S2, 8, 2) === "." && cell(c.jhMzNew(c.jhMzLvN("elephant", 2)), 8, 2) === "N";
 }
-function chkNoBypass(c) {   /* 有鑰匙、密室開了：石門沒踩踏板照樣打不開 */
-  c.jhMzVaultGive("central"); const S = atDoor(c, "central"); c.jhMzStep(S, 1, 0);
-  let d = null; for (let y = 0; y < S.H && !d; y++) for (let x = 0; x < S.W; x++) if (cell(S, x, y) === "D") { d = { x, y }; break }
-  S.plate = false; S.player = { x: d.x, y: d.y + 1, face: 1 }; const r = c.jhMzStep(S, 0, -1);
-  return r.ev === "locked";
+function chkNoBypass(c) {   /* 有鑰匙、密室開了：踏板、石門都沒被動到；重建格子（新開局、被拖回入口）、再新開一局，石門都還在原位、沒踩踏板碰到照樣打不開 */
+  c.jhMzVaultGive("central"); const S = atDoor(c, "central"); if (c.jhMzStep(S, 1, 0).ev !== "secret") return false;
+  if (S.plate !== false || S.doorOpen !== false) return false;
+  const findD = (X) => { for (let y = 0; y < X.H; y++) for (let x = 0; x < X.W; x++) if (cell(X, x, y) === "D") return { x, y }; return null };
+  const d0 = findD(S); if (!d0) return false;
+  const knock = (X) => { const d = findD(X); if (!d || d.x !== d0.x || d.y !== d0.y) return false; X.guards = []; X.player = { x: d.x, y: d.y + 1, face: 1 }; return c.jhMzStep(X, 0, -1).ev === "locked" };
+  if (!knock(S)) return false;
+  c.jhMzReset(S, true); if (S.plate || S.doorOpen || !knock(S)) return false;
+  c.jhMzReset(S, false); if (S.plate || S.doorOpen || !knock(S)) return false;
+  const S2 = c.jhMzNew(c.jhMzLvN("central", 2)); return !S2.plate && !S2.doorOpen && knock(S2);
 }
 
 test("登記：07z9m-vault.js 排在 m.html 全部迷宮檔最後；只包中炮、飛相第二層；N 擋路擋視線、p 擋路不擋視線；3D、平面畫法都有", () => {
@@ -96,7 +101,7 @@ test("殘譜架：第一次讀跳卡片、給修為一次（vault:<派>）；之
   const r2 = c.jhMzStep(S, 1, 0); assert.equal(r2.ev, "lore"); assert.equal(r2.first, false); assert.equal(calls.xp.length, 1, "第二次不再給修為");
 });
 
-test("鑰匙只開密室：石門沒踩踏板照樣打不開；水窪等該派機關的結果跟沒鑰匙時一樣", () => {
+test("鑰匙只開密室：開密室不動踏板和石門；重建、新開局後石門還在、沒踩踏板照樣打不開；水窪等該派機關的結果跟沒鑰匙時一樣", () => {
   assert.ok(chkNoBypass(load().c));
   /* 飛相第二層的淤泥 m：有鑰匙、沒鑰匙走同一步，結果要一樣 */
   const run = (withKey) => { const { c } = load(); if (withKey) c.jhMzVaultGive("elephant"); const S = c.jhMzNew(c.jhMzLvN("elephant", 2)); S.guards = [];
@@ -121,7 +126,7 @@ test("漕運：解開那一班就發那一派的密室鑰匙並在結果寫出�
   assert.match(X.done({ first: true, key: { zh: "中炮門", en: "Central Cannon" } }), /密室/); assert.doesNotMatch(X.done({ first: true }), /密室/);
 });
 
-test("改壞驗證：沒鑰匙也開、重建後門又關上、鑰匙重複發、鑰匙順便開石門，上面的檢查都要抓得到", () => {
+test("改壞驗證：沒鑰匙也開、重建後門又關上、鑰匙重複發、鑰匙順便開石門、開密室順便算踩過踏板、重建時連石門一起拆，上面的檢查都要抓得到", () => {
   const V = rd("07z9m-vault.js"), P = (from, to) => ({ "07z9m-vault.js": (s) => { assert.ok(s.includes(from), "改壞點不存在：" + from); return s.replace(from, to) } });
   { const k = load(P("if (!m.got && !m.open) return {", "if (false) return {")); assert.equal(chkLocked(k.c), false, "沒鑰匙也開") }
   { const k = load(P("jhMzReset = function (S, full) {", "jhMzResetX = function (S, full) {")); assert.equal(chkOpenStays(k.c), false, "重建後門又關上") }
@@ -129,6 +134,8 @@ test("改壞驗證：沒鑰匙也開、重建後門又關上、鑰匙重複發�
   /* 鑰匙順便開石門：密室模組自己處理 D（但石門的判斷在 onStep 之前，所以改壞版應該照樣被擋——要證明這條路走不到，改成在 jhMzStep 前面攔） */
   { const k = load({ "07z9m-maze.js": (s) => s.replace('if(c==="D")return S.plate?{ev:"door"}:{ev:"locked"};', 'if(c==="D"&&!(typeof jhMzVaultOf==="function"&&jhMzVaultOf("central").got))return S.plate?{ev:"door"}:{ev:"locked"};if(c==="D")return{ev:"door"};') });
     assert.equal(chkNoBypass(k.c), false, "鑰匙順便開石門") }
+  { const k = load(P('S.grid[ny][nx] = ".";', 'S.grid[ny][nx] = "."; S.plate = true;')); assert.equal(chkNoBypass(k.c), false, "開密室時順便算成踩過踏板") }
+  { const k = load(P('if (S.grid[y][x] === "N") S.grid[y][x] = ".";', 'if (S.grid[y][x] === "N" || S.grid[y][x] === "D") S.grid[y][x] = ".";')); assert.equal(chkNoBypass(k.c), false, "重建格子時連石門一起拆掉") }
   assert.ok(V.includes("jhMzReset = function (S, full)"));
 });
 
