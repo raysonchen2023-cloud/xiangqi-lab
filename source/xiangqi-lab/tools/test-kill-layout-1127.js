@@ -58,6 +58,20 @@ test("改壞驗證：換回原本的固定百分比（44%、69%、80%），手�
   assert.ok(problems(load(NOGAP)).length > 0, "拿掉推開紅方那一步要被抓到");
 });
 
+test("隨機挑字跳過版 3（墨團）、版 7（重飛白）：10 版的陣列挑 3000 次不會出現 3、7，其他 8 版都輪得到；陣列只有 2 版時照常；改壞驗證：拿掉跳過要抓到", () => {
+  const src = sl(U, "const KILL_SKIP=", "\nconst loadKillGly");
+  const run = (s) => { const c = { Math }; vm.createContext(c); vm.runInContext(s + ";this.p=kxPick", c); return c.p };
+  const P = run(src), A = [...Array(10).keys()], seen = new Set();
+  for (let n = 0; n < 3000; n++) seen.add(P(A));
+  assert.deepEqual([...seen].sort((a, b) => a - b), [0, 1, 2, 4, 5, 6, 8, 9]);
+  assert.equal(P([]), null); assert.equal(P(null), null);
+  const two = new Set(); for (let n = 0; n < 200; n++) two.add(P(["a", "b"])); assert.deepEqual([...two].sort(), ["a", "b"]);
+  const BAD = src.replace("const KILL_SKIP=[3,7];", "const KILL_SKIP=[];"); assert.notEqual(BAD, src);
+  const P2 = run(BAD), s2 = new Set(); for (let n = 0; n < 3000; n++) s2.add(P2(A));
+  assert.ok(s2.has(3) && s2.has(7), "不跳過時版 3、7 會出現（改壞驗證成立）");
+  assert.match(sl(U, "function killFx(", "\n  vibrate([70,50,140])"), /const pick=kxPick,G=KILL_GLY,/);
+});
+
 test("〔原始碼〕killFx 真的用 kxLayout 的結果擺「絕殺」、勝方字、朱印、「你贏了」", () => {
   const K = sl(U, "function killFx(", "\n  vibrate([70,50,140])");
   assert.match(K, /const KL=kxLayout\(W,H,kxWh,kxSh,W\*\.075\*1\.3\);wd\.style\.top=KL\.wy\+"px";if\(kxSd\)kxSd\.style\.top=KL\.sy\+"px";/);

@@ -130,6 +130,10 @@ let KILL_GLY=null,KILL_P=null;
    整組超出容器 97% 就一起往上移（「絕殺」頂端不高過 3%）。回傳 wy、sy＝中心，cy＝「你贏了！」的上緣，單位 px */
 function kxLayout(W,H,wh,sh,ch){const g=W*.02;let wy=H*.44;const wb=wy+wh/2;let sy=sh?Math.max(H*.69,wb+g+sh/2):wb,cy=Math.max(H*.8,(sh?sy+sh/2:wb)+g);
   const over=cy+ch-H*.97;if(over>0){const up=Math.min(over,Math.max(0,wy-wh/2-H*.03));wy-=up;sy-=up;cy-=up}return{wy,sy,cy}}
+/* W192（開發者 11/27 選單選「一起拿掉版 3、版 7」）：kill.json 三組的版 3 糊成一團墨、版 7 飛白太重（「方」的橫和撇斷成好幾截），
+   隨機挑字時跳過這兩版（字形檔不動，之後換新字形可以直接改這裡）。陣列不夠長、全部被跳過時照舊從全部挑 */
+const KILL_SKIP=[3,7];
+const kxPick=a=>{if(!a||!a.length)return null;let ix=a.map((_,i)=>i).filter(i=>!KILL_SKIP.includes(i));if(!ix.length)ix=a.map((_,i)=>i);return a[ix[Math.random()*ix.length|0]]};
 const loadKillGly=()=>KILL_P||(KILL_P=fetch("data/glyphs/kill.json").then(r=>r.json()).then(j=>KILL_GLY=j).catch(()=>{KILL_P=null}));
 setTimeout(loadKillGly,2500);
 // 公園 3D 棋盤時棋盤模式是藏起來的：特效改蓋在 3D 畫面上（意見回饋 234）
@@ -208,7 +212,7 @@ function killFx(svg,win,why,kIdx,flip,o){svg=fxHost(svg);const r=svg.getBounding
   d.innerHTML=`<svg viewBox="0 0 560 620" preserveAspectRatio="none">${cr}
       <circle class="ring" cx="${kx}" cy="${ky}" r="260" stroke="#ffd36b" stroke-width="9"/><circle class="ring" cx="${kx}" cy="${ky}" r="180" stroke="#e0303a" stroke-width="15" style="animation-delay:.06s"/><circle class="ring" cx="${kx}" cy="${ky}" r="100" stroke="#fff3c4" stroke-width="5" style="animation-delay:.12s"/>
       <g class="swipe"><path d="${band}" fill="#0d0604" opacity=".93"/>${fb}</g></svg>`;
-  const pick=a=>a&&a.length?a[Math.random()*a.length|0]:null,G=KILL_GLY,word=/困斃/.test(why||"")?"困斃":"絕殺";
+  const pick=kxPick,G=KILL_GLY,word=/困斃/.test(why||"")?"困斃":"絕殺";
   const kg=word==="絕殺"&&G?pick(G.kill):null,winSide=o.side||(o.seal==="紅"?"r":o.seal==="黑"?"b":null),sg=G&&winSide?pick(winSide==="r"?G.hong:G.hei):null;
   const gid="kxg"+Math.random().toString(36).slice(2,7);
   const defs=`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">${lose?'<stop offset="0" stop-color="#f2f5f8"/><stop offset=".45" stop-color="#aab3bd"/><stop offset=".8" stop-color="#5e6670"/><stop offset="1" stop-color="#2c3238"/>':'<stop offset="0" stop-color="#fff7d6"/><stop offset=".45" stop-color="#f4cf6e"/><stop offset=".8" stop-color="#c88a26"/><stop offset="1" stop-color="#8a5414"/>'}</linearGradient></defs>`;
