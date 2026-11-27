@@ -486,6 +486,19 @@ test("乾淨的全過、每一種壞樣本都被 check-native.js 抓到；收據
   for (const k of EXPECTED_KINDS) { const j = kinds.indexOf(k); assert.ok(j > at, "壞樣本清單要包含測試裡寫死的每一個、順序不變（#135 審查④；W69 β 改成只能增加）：" + k); at = j }
 });
 
+/* W110 第二輪審查（#241）：把註解換成空白（換行留著），字串、反斜線跳脫的字元照舊；給 emitCalls 用，最外層的註解也不算 */
+function noComments(src) {
+  let o = "", i = 0;
+  while (i < src.length) {
+    const c = src[i];
+    if (c === "/" && src[i + 1] === "/") { while (i < src.length && src[i] !== "\n") { o += " "; i++ } continue }
+    if (c === "/" && src[i + 1] === "*") { const j = src.indexOf("*/", i + 2), e = j < 0 ? src.length : j + 2; o += src.slice(i, e).replace(/[^\n]/g, " "); i = e; continue }
+    if (c === '"' || c === "'" || c === "`") { let j = i + 1; while (j < src.length && src[j] !== c && !(c !== "`" && src[j] === "\n")) { if (src[j] === "\\") j++; j++ } o += src.slice(i, j + 1); i = j + 1; continue }
+    if (c === "\\") { o += src.slice(i, i + 2); i += 2; continue }
+    o += c; i++;
+  }
+  return o;
+}
 /* W110 複審（#241）：check-native.js 裡每一個送出錯誤的呼叫（check(、err(、fail(、bad.push(）的參數文字。
    跨行、略過字串與註解裡的括號、反斜線跳脫的字元；註解本身不算，函式定義不算 */
 function emitCalls(src) {
@@ -515,7 +528,7 @@ test("每個壞樣本的 expect 寫死、只能增加，而且都還在 check-na
   /* 只看送出錯誤的呼叫（註解、其他字串不算）：每句 expect 都要出現在某個呼叫裡；
      同一個呼叫不能含兩句不同的 expect（#241 審查：把埠號那條的訊息也寫進「系統亂數」那句，再刪掉系統亂數那條，原本照樣綠）。
      一句是另一句的一部分（例如「XQSpeech：語言」和「XQSpeech：語言 zh-TW」）不算兩句 */
-  const calls = emitCalls(fs.readFileSync(CHECK, "utf8")), lit = (s) => JSON.stringify(s).slice(1, -1);
+  const calls = emitCalls(noComments(fs.readFileSync(CHECK, "utf8"))), lit = (s) => JSON.stringify(s).slice(1, -1);
   const all = [...new Set(Object.values(EXPECTS))];
   for (const e of all) {
     if (COMPOSED_EXPECTS.includes(e)) continue;
@@ -526,6 +539,17 @@ test("每個壞樣本的 expect 寫死、只能增加，而且都還在 check-na
     const hit = all.filter((e) => c.includes(lit(e))), own = hit.filter((e) => !hit.some((x) => x !== e && x.includes(e)));
     for (let i = 0; i < own.length; i++) for (let j = i + 1; j < own.length; j++)
       assert.ok(shared(own[i], own[j]), "同一個送出錯誤的呼叫含兩句不同的 expect：一條判斷頂替了另一條（W110，#241 審查）：" + own[i] + "／" + own[j]);
+  }
+  /* 第二輪審查（#241）：原始碼看得到的只是字面，訊息可以用字串相加、變數帶出、註解裡放假的 check(…)。
+     所以再實際跑一次 check-native.js，看它印出的每一行「✔ 」：同一行不能含兩句不同的 expect（規則跟上面一樣，SHARED_EXPECTS 例外）。
+     有些句子只在失敗時才印、或要看環境（例如 node_modules），所以不要求每句都要出現 */
+  const run = cp.spawnSync(process.execPath, [CHECK], { encoding: "utf8", maxBuffer: 64e6, timeout: 120000 });
+  const okLines = String(run.stdout).split("\n").filter((l) => l.startsWith("✔ "));
+  assert.ok(okLines.length > 0, "check-native.js 沒有印出任何 ✔ 行，這項檢查不成立（W110）：" + run.stderr);
+  for (const l of okLines) {
+    const hit = all.filter((e) => l.includes(e)), own = hit.filter((e) => !hit.some((x) => x !== e && x.includes(e)));
+    for (let i = 0; i < own.length; i++) for (let j = i + 1; j < own.length; j++)
+      assert.ok(shared(own[i], own[j]), "check-native.js 實際印出的同一行含兩句不同的 expect：一條判斷頂替了另一條（W110，#241 第二輪審查）：" + own[i] + "／" + own[j]);
   }
   for (const e of COMPOSED_EXPECTS) assert.ok(all.includes(e), "組出來的訊息清單只能列寫死的 expect（W110）：" + e);
   for (const p of SHARED_EXPECTS) for (const e of p) assert.ok(all.includes(e), "同句兩個壞樣本的例外只能列寫死的 expect（W110）：" + e);
