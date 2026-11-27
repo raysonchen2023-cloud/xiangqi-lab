@@ -5,7 +5,8 @@
 //   ② 分支保護的必要檢查叫 verify：verify 工作要 needs 兩個工作、if: always()（被略過的必要檢查會被當成通過）；
 //   ③ 除了 verify 的 always()，沒有工作層的 if、沒有 continue-on-error（不准改成條件式略過或失敗照過）；
 //   ④ 實跑 verify 的彙整指令：兩個都 success 才結束代碼 0，失敗、取消、略過、空值都要 1；
-//   ⑤ 每一步的步驟層 if、id 照拆開前寫死；⑥ 彙整那一步不准有 if、shell、continue-on-error（#242 審查建議 1、2）。
+//   ⑤ 每一步的步驟層 if、id 照拆開前寫死；⑥ 彙整那一步不准有 if、shell、continue-on-error（#242 審查建議 1、2）；
+//   ⑦ 整份 verify.yml（不算整行註解）寫死雜湊；⑧ 只准最基本的 YAML 寫法，連雜湊一起改時也擋得住常見的繞法（#242 複審）。
 "use strict";
 const test = require("node:test"), assert = require("node:assert"), fs = require("fs"), path = require("path"), cp = require("child_process");
 const Y = fs.readFileSync(path.join(__dirname, "..", "workflows", "verify.yml"), "utf8");
@@ -239,6 +240,9 @@ const STEP_IF = [
   ]
 ];
 
+/* 找某個鍵的值：任意縮排、前面可以有「- 」（後面幾個空格都行）、鍵名可加單／雙引號、冒號前可以有空格 */
+const KEYRE = (k) => new RegExp("^\\s*(?:-\\s+)?(?:" + k + "|'" + k + "'|\"" + k + "\")\\s*:[ \\t]*(.*)$", "m");
+
 /* 切出某個工作的每一步：回傳 [{ key, if, id, text }] */
 function stepsOf(jobText) {
   const out = []; let cur = null;
@@ -249,7 +253,7 @@ function stepsOf(jobText) {
   return out.map((s) => {
     const t = s.join("\n");
     const run = (/^\s+run: (.*)$/m.exec(t) || [])[1], uses = (/^\s+(?:- )?uses: (.*)$/m.exec(t) || [])[1];
-    return { key: run ? "run:" + run : "uses:" + uses, if: (/^(?:        |      - )if: (.*)$/m.exec(t) || [])[1] || null, id: (/^(?:        |      - )id: (.*)$/m.exec(t) || [])[1] || null, text: t };   /* 「- if:」寫在步驟第一行也要認得 */
+    return { key: run ? "run:" + run : "uses:" + uses, if: (KEYRE("if").exec(t) || [])[1] || null, id: (KEYRE("id").exec(t) || [])[1] || null, text: t };   /* 任意縮排、「- 」後多空格、鍵名加引號、冒號前有空格都認得（#242 複審） */
   });
 }
 
@@ -269,7 +273,56 @@ test("⑤ 每一步的步驟層 if、id 都跟拆開前一樣（功能／發布�
 test("⑥ verify 彙整那一步：不准有步驟層 if、shell、continue-on-error、working-directory（步驟被略過或換了執行程式，工作會算成功）", () => {
   const S = stepsOf(jobs(Y).verify);
   assert.equal(S.length, 1, "verify 只有一步");
-  for (const k of ["if", "shell", "continue-on-error", "working-directory", "uses"]) assert.doesNotMatch(S[0].text, new RegExp("^\\s+(- )?" + k + ":", "m"), "彙整步驟不准有 " + k);
-  assert.doesNotMatch(jobs(Y).verify, /^    defaults:/m, "verify 不准用 defaults 改 shell");
-  assert.doesNotMatch(Y, /^defaults:/m, "workflow 不准用 defaults 改 shell");
+  for (const k of ["if", "shell", "continue-on-error", "working-directory", "uses"]) assert.doesNotMatch(S[0].text, KEYRE(k), "彙整步驟不准有 " + k);
+  assert.doesNotMatch(Y, KEYRE("defaults"), "任何層級都不准用 defaults 改 shell");
+});
+
+/* ⑦ 整份 verify.yml 寫死雜湊（#242 複審：鍵名比對怎麼寫都有合法 YAML 繞得過，改成整份鎖死）。
+   只略過整行註解（以 # 開頭的行），其他任何字元改了都要紅：on、env、shell、defaults、引號鍵、多空格……都包含。
+   要改 verify.yml：連這個雜湊一起改，同一個 PR 會被當成計分規則 PR 逐行審（AGENTS.md「PR 審查標準」）。
+   重算：node -e 'const c=require("crypto"),f=require("fs");console.log(c.createHash("sha256").update(f.readFileSync(".github/workflows/verify.yml","utf8").split("\n").filter(l=>!/^\s*#/.test(l)).join("\n")).digest("hex"))' */
+const VERIFY_YML_SHA256 = "9d0dcede6e5e3c0aa4151b06f82fcbb9406737da9c1c5dabd43f1f1d30e20431";
+const normYml = (y) => y.split("\n").filter((l) => !/^\s*#/.test(l)).join("\n");
+
+test("⑦ 整份 verify.yml（不算整行註解）跟寫死的雜湊一樣", () => {
+  assert.doesNotMatch(Y, /\r/, "不能有 CR");
+  const h = require("crypto").createHash("sha256").update(normYml(Y)).digest("hex");
+  assert.equal(h, VERIFY_YML_SHA256, "verify.yml 改了：要連這支測試的 VERIFY_YML_SHA256 一起改，並當計分規則 PR 逐行審");
+});
+
+/* ⑧ 結構保險：雜湊更新時給審查者的第二道防線。只准最基本的 YAML 寫法，看起來像在繞過的寫法一律擋。
+   run／path 這種「|」區塊的內容是指令文字，不檢查。 */
+function yamlProblems(y) {
+  const bad = [], lines = y.split("\n");
+  let block = -1;
+  lines.forEach((raw, i) => {
+    const n = i + 1, ind = /^(\s*)/.exec(raw)[1].length;
+    if (block >= 0) { if (raw.trim() === "" || ind > block) return; block = -1 }
+    if (raw.trim() === "" || /^\s*#/.test(raw)) return;
+    if (/\t/.test(/^\s*/.exec(raw)[0])) { bad.push(n + "：縮排有 tab"); return }
+    let s = raw.slice(ind), col = ind;
+    if (s.startsWith("-")) {
+      if (!/^- \S/.test(s)) { bad.push(n + "：「-」後面要剛好一個空格"); return }
+      s = s.slice(2); col += 2;
+    }
+    const m = /^([A-Za-z0-9_-]+):(?: (.*))?$/.exec(s);
+    if (!m) { if (raw.slice(ind).startsWith("- ") && !/[:{}&*!]/.test(s)) return; bad.push(n + "：不是「鍵: 值」的基本寫法（鍵名不准加引號、冒號前不准有空格）：" + s.slice(0, 40)); return }
+    const [, key, val = ""] = m;
+    if (["shell", "defaults", "continue-on-error"].includes(key)) bad.push(n + "：不准用 " + key);
+    if (key === "<<") bad.push(n + "：不准用合併鍵");
+    if (/^[{&*!]/.test(val) || /\s[&*!][A-Za-z]/.test(" " + val.replace(/\$\{\{[^}]*\}\}/g, ""))) bad.push(n + "：不准用 {…}、錨點、別名、標籤：" + val.slice(0, 40));
+    if (/^[|>][-+]?$/.test(val)) block = col;
+  });
+  return bad;
+}
+
+test("⑧ verify.yml 只用最基本的 YAML 寫法：沒有 shell、defaults、continue-on-error；鍵名不加引號、冒號前沒空格、「-」後一個空格；沒有 {…}、錨點、別名、標籤", () => {
+  assert.deepEqual(yamlProblems(Y), []);
+  /* 檢查器自己也要會抓（不然 ⑧ 永遠是綠的） */
+  for (const [what, y] of [
+    ["引號鍵", "jobs:\n  a:\n    steps:\n      - 'if': false\n"], ["雙引號鍵", "jobs:\n  a:\n    \"shell\": x\n"], ["冒號前空格", "a:\n  if  : false\n"],
+    ["- 後多空格", "s:\n  -   if: false\n"], ["shell", "s:\n  - run: x\n    shell: sh\n"], ["defaults", "defaults:\n  run:\n    shell: sh\n"],
+    ["continue-on-error", "s:\n  - run: x\n    continue-on-error: true\n"], ["flow mapping", "s:\n  - {run: x, if: false}\n"], ["錨點", "a: &x\n  b: 1\n"], ["別名", "a: *x\n"],
+    ["合併鍵", "a:\n  <<: *x\n"], ["標籤", "a: !!str x\n"], ["tab 縮排", "a:\n\tb: 1\n"]]) assert.notDeepEqual(yamlProblems(y), [], "⑧ 要抓到：" + what);
+  assert.deepEqual(yamlProblems("a:\n  run: |\n    echo \"x: y\" && 'q': 1\n  b: ${{ x || 'main' }}\n  c: [x, y]\n"), [], "| 區塊的內容、${{ }}、[a, b] 不能誤擋");
 });
