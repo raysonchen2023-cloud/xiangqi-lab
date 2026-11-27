@@ -123,6 +123,13 @@ let MODAL_HOLD=0,LAST_KFX=0;
 // ③0.35s 一道大墨痕由左往右刷過棋盤（配刷聲）④0.55s 金色「絕殺」像寫字一樣由左往右現出、重重落定（鼓＋鑼），墨點和金星噴開，一道光掃過字
 // ⑤1.2s 下面浮出勝方「紅方／黑方」⑥1.45s 朱印「勝／敗」蓋下 ⑦2.6s 全部淡出，才跳結果視窗
 let KILL_GLY=null,KILL_P=null;
+/* W192（11/27 開發者 iPhone 截圖「方 字體不完整」）：原本「絕殺」中心固定在容器高 44%、「紅方／黑方」固定在 69%，容器照棋盤比例（高約 1.107 寬），
+   「絕殺」寬 86% 的高度又照字形長寬比，10 版字形任何組合「絕殺」下緣都蓋到「紅方」頂端 5～28px，「方」上面那一點最先被蓋掉。
+   改成照實際尺寸算：W、H＝容器寬高，wh＝「絕殺」高，sh＝「紅方／黑方」高（沒有就 0），ch＝「你贏了！」那行的高。
+   「絕殺」照舊從 44% 起；「紅方」至少在 69%，但頂端要在「絕殺」下緣再空 2% 寬；「你贏了！」至少在 80%，也要在上一塊底下再空一格；
+   整組超出容器 97% 就一起往上移（「絕殺」頂端不高過 3%）。回傳 wy、sy＝中心，cy＝「你贏了！」的上緣，單位 px */
+function kxLayout(W,H,wh,sh,ch){const g=W*.02;let wy=H*.44;const wb=wy+wh/2;let sy=sh?Math.max(H*.69,wb+g+sh/2):wb,cy=Math.max(H*.8,(sh?sy+sh/2:wb)+g);
+  const over=cy+ch-H*.97;if(over>0){const up=Math.min(over,Math.max(0,wy-wh/2-H*.03));wy-=up;sy-=up;cy-=up}return{wy,sy,cy}}
 const loadKillGly=()=>KILL_P||(KILL_P=fetch("data/glyphs/kill.json").then(r=>r.json()).then(j=>KILL_GLY=j).catch(()=>{KILL_P=null}));
 setTimeout(loadKillGly,2500);
 // 公園 3D 棋盤時棋盤模式是藏起來的：特效改蓋在 3D 畫面上（意見回饋 234）
@@ -206,12 +213,12 @@ function killFx(svg,win,why,kIdx,flip,o){svg=fxHost(svg);const r=svg.getBounding
   const gid="kxg"+Math.random().toString(36).slice(2,7);
   const defs=`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">${lose?'<stop offset="0" stop-color="#f2f5f8"/><stop offset=".45" stop-color="#aab3bd"/><stop offset=".8" stop-color="#5e6670"/><stop offset="1" stop-color="#2c3238"/>':'<stop offset="0" stop-color="#fff7d6"/><stop offset=".45" stop-color="#f4cf6e"/><stop offset=".8" stop-color="#c88a26"/><stop offset="1" stop-color="#8a5414"/>'}</linearGradient></defs>`;
   // 主字：金色填色＋深色外框（Gemini 書法向量），沒下載到字形時退回系統字
-  const wW=.86,wd=d.appendChild(document.createElement("div"));wd.className="word";
-  if(kg){const [p,w,h]=kg,ww=W*wW,wh=ww*h/w;wd.style.cssText=`width:${ww}px;height:${wh}px`;
+  const wW=.86,wd=d.appendChild(document.createElement("div"));wd.className="word";let kxWh=W*.3,kxSh=0,kxSd=null;   /* W192：三塊的高，給 kxLayout 排位置 */
+  if(kg){const [p,w,h]=kg,ww=W*wW,wh=ww*h/w;kxWh=wh;wd.style.cssText=`width:${ww}px;height:${wh}px`;
     wd.innerHTML=`<div class="ww" style="width:100%;height:100%;position:relative"><svg viewBox="-3 -3 ${w+6} ${h+6}">${defs}<path d="${p}" fill="url(#${gid})" stroke="${lose?"#07090c":"#2a1206"}" stroke-width="2.2" stroke-linejoin="round" paint-order="stroke"/></svg><div class="gleam"></div></div>`}
   else{wd.innerHTML=`<div class="ww" style="font-family:var(--serif);font-weight:900;font-size:${W*.3}px;line-height:1;white-space:nowrap;background:linear-gradient(180deg,#fff6d8,#f3cf73 45%,#b77a1f);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-stroke:2px #3a1606">${word}</div>`}
   // 勝方：紅方用朱紅、黑方用墨黑，都描金邊
-  if(sg){const [p,w,h]=sg,sw=W*.4,sh=sw*h/w,sd=d.appendChild(document.createElement("div"));sd.className="kxs";sd.style.cssText=`width:${sw}px;height:${sh}px`;
+  if(sg){const [p,w,h]=sg,sw=W*.4,sh=sw*h/w,sd=d.appendChild(document.createElement("div"));sd.className="kxs";sd.style.cssText=`width:${sw}px;height:${sh}px`;kxSh=sh;kxSd=sd;
     sd.innerHTML=`<svg viewBox="-4 -4 ${w+8} ${h+8}" style="display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 2px 4px rgba(0,0,0,.7))"><path d="${p}" fill="${winSide==="r"?"#d0201a":"#120a06"}" stroke="#f3d27a" stroke-width="3" stroke-linejoin="round" paint-order="stroke"/></svg>`}
   // 墨點、金星
   let sp="";for(let i=0;i<(P3?8:18);i++){const a=Math.random()*Math.PI*2,R=.25+Math.random()*.3,z=(.008+Math.random()*.022).toFixed(3);sp+=`<i class="dot" style="width:${z}em;height:${z}em;--dx:${(Math.cos(a)*R).toFixed(3)}em;--dy:${(Math.sin(a)*R*.55).toFixed(3)}em"></i>`}
@@ -219,7 +226,8 @@ function killFx(svg,win,why,kIdx,flip,o){svg=fxHost(svg);const r=svg.getBounding
   if(!lose){sp='<i class="rays"></i>'+sp;for(let i=0;i<(P3?10:26);i++){const x=(Math.random()*100).toFixed(1),c=["#f3c64a","#d0201a","#fff2b0","#e8932a"][i%4];
       sp+=`<i class="conf" style="left:${x}%;background:${c};--dx:${((Math.random()-.5)*.3).toFixed(3)}em;--r:${(Math.random()*720-360)|0}deg;animation-delay:${(.75+Math.random()*.6).toFixed(2)}s"></i>`}}
   else{for(let i=0;i<7;i++){const x=(28+Math.random()*44).toFixed(1);sp+=`<i class="drip" style="left:${x}%;--h:${(.06+Math.random()*.14).toFixed(3)}em;animation-delay:${(1.05+Math.random()*.5).toFixed(2)}s"></i>`}}
-  d.insertAdjacentHTML("beforeend",sp+`<i class="seal" style="--sx:${(W*.36).toFixed(0)}px;--sy:${(W*.13).toFixed(0)}px;font-size:${W*.1}px">${win?"勝":"敗"}</i><div class="cap">${o.cap||(win?"你贏了！":word==="困斃"?"無路可走…":"這盤輸了…再接再厲")}</div>`);
+  const KL=kxLayout(W,H,kxWh,kxSh,W*.075*1.3);wd.style.top=KL.wy+"px";if(kxSd)kxSd.style.top=KL.sy+"px";   /* W192：三塊不重疊；朱印跟著「絕殺」 */
+  d.insertAdjacentHTML("beforeend",sp+`<i class="seal" style="top:${KL.wy.toFixed(1)}px;--sx:${(W*.36).toFixed(0)}px;--sy:${(W*.13).toFixed(0)}px;font-size:${W*.1}px">${win?"勝":"敗"}</i><div class="cap" style="top:${KL.cy.toFixed(1)}px">${o.cap||(win?"你贏了！":word==="困斃"?"無路可走…":"這盤輸了…再接再厲")}</div>`);
   vibrate([70,50,140]);setTimeout(()=>{els.forEach(e=>e.remove());svg.classList.remove("kx-board","kx-board3d")},3250);
   if(store.get("capSound",true)||store.get("mvSound",false))withAudio(()=>{const t=AC.currentTime+.02,out=AC.destination;
     const noise=(dur,pw)=>{const len=AC.sampleRate*dur|0,b=AC.createBuffer(1,len,AC.sampleRate),c=b.getChannelData(0);for(let i=0;i<len;i++)c[i]=(Math.random()*2-1)*Math.pow(1-i/len,pw);const s=AC.createBufferSource();s.buffer=b;return s};
