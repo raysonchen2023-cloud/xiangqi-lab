@@ -239,7 +239,7 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
    ・所以建包時不能另外帶 -xcconfig、環境變數或命令列設定，照 REBUILD.md 的指令建 */
 /* #147 審查①②：Xcode 把 U+2028、U+2029 當換行，pbxproj、xcconfig 的 // 註解後面接它再寫設定，解析器當成同一行註解、Xcode 卻讀得到。
    特殊換行、CR 和看不見的字元（跟 Swift 那段的 ODD_NL 同一組，另加 \r），pbxproj 和每一份 xcconfig 出現就拒絕。
-   #222 B3：U+00A0、U+3000 會被 \s 當成空白（pbxParse 的 ws、xcconfig 那行的 \s*），Xcode 不一定這樣讀，也拒絕（另用 LOCK_WS，LOCK_NL 原文不動，金絲雀改壞清單照舊對得上） */
+   #222 B3：U+00A0、U+1680、U+2000～U+200A、U+202F、U+205F、U+3000 會被 \s 當成空白（pbxParse 的 ws、xcconfig 那行的 \s*），Xcode 不一定這樣讀，也拒絕（另用 LOCK_WS，LOCK_NL 原文不動，金絲雀改壞清單照舊對得上） */
 const LOCK_NL = /[\r\u2028\u2029\u0085\u000B\u000C\uFEFF\u200B-\u200F\u2060-\u2064\u00AD\u0000-\u0008\u000E-\u001F\u007F\u202A-\u202E\u2066-\u206F]/;
 const LOCK_WS = /[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/;   /* #222 B3：會被 \s 當成空白、LOCK_NL 又沒擋的全部字元（#258 審查：U+1680、U+2000～U+200A、U+202F、U+205F 也要）；跟 LOCK_NL 不重疊，W110 改壞清單照舊各測各的 */
 function pbxParse(src) {
