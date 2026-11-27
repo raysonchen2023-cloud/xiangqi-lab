@@ -32,8 +32,9 @@ test("圖網址 → 鍵；條目要 ready、或開發用開關，載不到過的
   assert.equal(scwKey("https://x.test/data/redomap/redo_day_classic_l1610.webp"), RD + "_l1610");
   assert.equal(scwKey("data/redomap/redo_day.png"), "");
   assert.ok(scwEntry(RD), "錯棋重練經典白天已登記、ready");
-  assert.equal(scwEntry("redomap/redo_night"), null, "夜景（預設世界）還沒有橫式圖＝原圖");
-  assert.equal(scwEntry("redomap/redo_night_classic"), null, "夜景沒有橫式圖＝原圖");
+  assert.equal(scwEntry("redomap/redo_dawn"), null, "沒列在變體清單的照舊沒有橫式圖＝原圖（夜景 218 張 11/25 到齊）");   /* 11/25 夜景、四季 218 張到齊（test-w107-night-l1610.js），redo_night 等都有橫式圖了，這裡改用不在變體清單的 redo_dawn */
+  assert.equal(scwEntry("redomap/redo_night_classic").f, "redomap/redo_night_classic_l1610", "11/25 起經典夜景也有橫式圖（照日間條目複製）");
+  assert.equal(scwEntry("redomap/redo_dawn_classic"), null, "沒列在變體清單的照舊沒有橫式圖＝原圖");
   assert.equal(scwEntry("toString"), null, "原型上的名字不算");
   const C = load(), e = vm.runInContext("SCW_BAD['" + RD + "']=1;scwEntry('" + RD + "')", C);
   assert.equal(e, null, "載不到過＝退回原圖");
@@ -86,7 +87,7 @@ test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在
   for (const xy of [T.term, T.seal, T.censer.slice(0, 2), ...T.eave]) assert.ok(xy[0] >= 0 && xy[0] <= 2560 && xy[1] >= 0 && xy[1] <= 1600);
   // 朝代日間：座標沿用經典版的 35 張；學習、錯棋重練原圖另外量，還沒登記
   const ERA = { "hubmap/battle": 12, "lobbymap/lobby": 12, "cpuroom/cpuroom_day": 3, "canjumap/canju_day": 3, "todaymap/today_day": 4, "exammap/exam_day": 1 };
-  let n = 0; for (const [p, c] of Object.entries(ERA)) { const ks = Object.keys(SCW).filter(k => (k === p || k.startsWith(p + "_")) && !/classic/.test(k)); assert.equal(ks.length, c, p + " 朝代張數"); n += c;
+  let n = 0; for (const [p, c] of Object.entries(ERA)) { const ks = Object.keys(SCW).filter(k => (k === p || k.startsWith(p + "_")) && !/classic/.test(k) && !/_(night|spring|summer|autumn|winter)$/.test(k));   /* 季節、夜景另外數（test-w107-night-l1610.js） */ assert.equal(ks.length, c, p + " 朝代張數"); n += c;
     for (const k of ks) { assert.equal(SCW[k].f, k + "_l1610"); assert.match(SCW[k].base, /_classic$/) } }
   assert.equal(n, 35);
   // 學習原圖（書院）另一套座標、11 朝共用；錯棋重練原圖加洗墨池、晾冊竹竿
@@ -166,7 +167,7 @@ test("換圖：iPad 橫向原地換成橫式圖、入口和出口換座標；圖
   assert.equal(scwSync(V, P), null, "這次開 App 不再試，照原圖排"); assert.equal(P.dataset.scw, "");
   const d2 = { w: 956, h: 354 }, F = fakeDom(d2); vm.runInContext("scwMount", F.ctx)(F.P, { key: RD, src0: F.img._src, ids: [] });
   assert.equal(vm.runInContext("scwSync", F.ctx)(F.V, F.P), null, "手機橫放不換");
-  const F2 = fakeDom({ w: 1180, h: 734 }); vm.runInContext("scwMount", F2.ctx)(F2.P, { key: "redomap/redo_night", src0: F2.img._src, ids: [] });
+  const F2 = fakeDom({ w: 1180, h: 734 }); vm.runInContext("scwMount", F2.ctx)(F2.P, { key: "redomap/redo_dawn", src0: F2.img._src, ids: [] });
   assert.equal(vm.runInContext("scwSync", F2.ctx)(F2.V, F2.P), null, "沒登記的變體不換");
 });
 

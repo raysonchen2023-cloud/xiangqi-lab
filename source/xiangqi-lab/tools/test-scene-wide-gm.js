@@ -1,6 +1,6 @@
 // W107-L 第 2 批：特級大師畫像長廊（07y6）在 iPad 橫向換成 2560×1600 橫式圖（Windows Claude 1 量，output/w107-ipad/l1610/gmmap/gm_day_classic_l1610.json）。
 // 新圖牆上 7 幅（原本 6 幅）；經典世界一律 gm_day_classic；預設世界宋以後 gm_day（共用經典版座標）、秦～三國 gm_day_han（另給 qHan、走路目測）、
-// 魏晉～五代 gm_day_weijin（6 個木框，另給 qWeijin）。夜景、手機、iPad 直向照舊原圖。不開瀏覽器：07sw＋07y6 在 vm 跑。
+// 魏晉～五代 gm_day_weijin（6 個木框，另給 qWeijin）。手機、iPad 直向照舊原圖；夜景照日間條目登記（#173 scwVarInit）。不開瀏覽器：07sw＋07y6 在 vm 跑。
 // 用法 node --test xiangqi-lab/tools/test-scene-wide-gm.js
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");
@@ -15,12 +15,12 @@ const J = x => JSON.parse(JSON.stringify(x));
 const K = { cl: "gmmap/gm_day_classic", o: "gmmap/gm_day", han: "gmmap/gm_day_han", wei: "gmmap/gm_day_weijin" };
 const fakeP = key => ({ dataset: { scw: key ? "l1610" : "" }, _scw: { key: key || K.cl } });
 
-test("〔混合〕條目：經典版、原圖版、漢版、魏晉版四個白天鍵都登記、各自的圖；夜景沒有；SCW_CDN 還是 false＝正式玩家照舊原圖", () => {
+test("〔混合〕條目：經典版、原圖版、漢版、魏晉版四個白天鍵都登記、各自的圖；夜景照日間條目登記（#173）；SCW_CDN 還是 false＝正式玩家照舊原圖", () => {
   const C = load(true), SCW = vm.runInContext("SCW", C), ent = vm.runInContext("scwEntry", C);
   for (const [k, f] of [[K.cl, "gmmap/gm_day_classic_l1610"], [K.o, "gmmap/gm_day_l1610"], [K.han, "gmmap/gm_day_han_l1610"], [K.wei, "gmmap/gm_day_weijin_l1610"]]) {
     const e = SCW[k]; assert.ok(e && e.ready, k); assert.equal(e.f, f); assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.ok(ent(k));
   }
-  for (const k of ["gmmap/gm_night", "gmmap/gm_night_classic", "gmmap/gm_night_han", "gmmap/gm_night_weijin"]) assert.equal(ent(k), null, k);
+  const nt = (n, dd) => { const e = ent(n); assert.ok(e, n + " 夜景照日間條目登記（#173 scwVarInit）"); assert.equal(e.f, n + "_l1610", n); assert.equal(e.base, dd, n); assert.deepEqual(e.S, ent(dd).S, n + " 座標跟日間共用"); }; for (const x of ["", "_classic", "_han", "_weijin"]) nt("gmmap/gm_night" + x, "gmmap/gm_day" + x);
   assert.equal(vm.runInContext("scwEntry", load(false))(K.cl), null);
   /* 經典世界：07y xqClImg 把 _han／_weijin 換成 _classic，所以 gm_day_classic 一個鍵就涵蓋三組 */
   assert.match(M("m/07y-hubmap.js"), /return u\.replace\(\/\\\/\(\[a-z\]\+_\(\?:day\|night\)\)\(\?:_\[a-z\]\+\)\?\\\.webp\/,"\/\$1_classic\.webp"\)/);
