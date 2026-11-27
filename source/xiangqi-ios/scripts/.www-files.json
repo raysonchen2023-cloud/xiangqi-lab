@@ -1,6 +1,6 @@
 {
- "commit": "8cf646457e1504338a053a809844c2acc13daca7",
- "siteVersion": "20261126-0626",
+ "commit": "96fc4f322ebde87a75280db9d4d7087deda646fb",
+ "siteVersion": "20261127-1641",
  "files": {
   "BufferGeometryUtils.mjs": [
    31122,
@@ -259,8 +259,8 @@
    "c41e557afe04"
   ],
   "data/docs/architecture.md": [
-   91564,
-   "41fe7ef12a04"
+   92723,
+   "64dc86dd14b4"
   ],
   "data/docs/blitz.md": [
    15172,
@@ -335,16 +335,16 @@
    "07f6140d9b9f"
   ],
   "data/docs/history.md": [
-   27332,
-   "e5c1f318eec2"
+   27402,
+   "cb1e58f4b945"
   ],
   "data/docs/i18n.md": [
    21018,
    "38b6c6b0a074"
   ],
   "data/docs/limits.md": [
-   7943,
-   "44dd5e926349"
+   8903,
+   "ba65091ef1f9"
   ],
   "data/docs/power.md": [
    11810,
@@ -355,12 +355,12 @@
    "b2af522a273e"
   ],
   "data/docs/recordings.md": [
-   10050,
-   "ab22f5f48c76"
+   10120,
+   "b833dfb40a05"
   ],
   "data/docs/release-notes.md": [
-   4404,
-   "591b2d03d16b"
+   4700,
+   "42570e0f424b"
   ],
   "data/docs/resume-state.md": [
    31108,
@@ -371,20 +371,20 @@
    "fd4bdcc60e5a"
   ],
   "data/docs/rules.md": [
-   38987,
-   "591f7e7bce41"
+   39057,
+   "5ed537fbb4c6"
   ],
   "data/docs/screens.md": [
    12352,
    "158a6676bb3d"
   ],
   "data/docs/sound.md": [
-   14860,
-   "afa1137dcac8"
+   14970,
+   "b041cde06056"
   ],
   "data/docs/support.md": [
-   1875,
-   "894bf023e47f"
+   2117,
+   "3600b6611345"
   ],
   "data/docs/threat-model.md": [
    45986,
@@ -1979,8 +1979,8 @@
    "6ca5ae7acf07"
   ],
   "index.html": [
-   7330265,
-   "01a33c6e2852"
+   7846914,
+   "29f9bf1e46f9"
   ],
   "jsQR.min.js": [
    130594,
@@ -2059,8 +2059,8 @@
    "af08a4669afd"
   ],
   "park3d.js": [
-   484252,
-   "0196ea7bc4f6"
+   484432,
+   "27a4d92d285f"
   ],
   "pikafish-src/build-pinned.sh": [
    4148,
@@ -2603,12 +2603,12 @@
    "2d06c1f823f3"
   ],
   "release.json": [
-   6253,
-   "f2af03f65ed6"
+   7290,
+   "5b24a136d6b7"
   ],
   "sw.js": [
    15559,
-   "291720a74e16"
+   "18cc1294166e"
   ],
   "three-shim.mjs": [
    2170,
@@ -4638,9 +4638,25 @@
    159364,
    "2d0f40fdb863"
   ],
+  "data/campmap/camp_day_classic_l1610.webp": [
+   506274,
+   "f2c227c951d4"
+  ],
+  "data/campmap/camp_day_l1610.webp": [
+   547136,
+   "6b4c7e3ab9e6"
+  ],
   "data/campmap/camp_night_classic.webp": [
    137962,
    "c34304cab807"
+  ],
+  "data/campmap/camp_night_classic_l1610.webp": [
+   273648,
+   "d35ec05e085d"
+  ],
+  "data/campmap/camp_night_l1610.webp": [
+   273682,
+   "c65a24620799"
   ],
   "data/canal/barge.webp": [
    25806,
@@ -4650,25 +4666,57 @@
    125478,
    "41aa18219578"
   ],
+  "data/canjumap/canju_day_classic_l1610.webp": [
+   382744,
+   "9dc573c688ab"
+  ],
+  "data/canjumap/canju_day_l1610.webp": [
+   457202,
+   "c5de41d97ba5"
+  ],
   "data/canjumap/canju_day_tang.webp": [
    116952,
    "261e94c361f1"
+  ],
+  "data/canjumap/canju_day_tang_l1610.webp": [
+   453178,
+   "0ba0a1752e59"
   ],
   "data/canjumap/canju_day_weijin.webp": [
    113328,
    "c1660bed8168"
   ],
+  "data/canjumap/canju_day_weijin_l1610.webp": [
+   504158,
+   "ad99c0d068d4"
+  ],
   "data/canjumap/canju_night_classic.webp": [
    115196,
    "e286ca04fb1d"
+  ],
+  "data/canjumap/canju_night_classic_l1610.webp": [
+   303776,
+   "535df98aecfb"
+  ],
+  "data/canjumap/canju_night_l1610.webp": [
+   236782,
+   "b454657bea73"
   ],
   "data/canjumap/canju_night_tang.webp": [
    83160,
    "dd68e553298a"
   ],
+  "data/canjumap/canju_night_tang_l1610.webp": [
+   249020,
+   "9991f2df222b"
+  ],
   "data/canjumap/canju_night_weijin.webp": [
    80442,
    "abb39605972a"
+  ],
+  "data/canjumap/canju_night_weijin_l1610.webp": [
+   249786,
+   "ddb316436d5b"
   ],
   "data/canying/classic.webp": [
    74334,
@@ -5074,13 +5122,29 @@
    127728,
    "ffeb13a67655"
   ],
+  "data/cpuroom/cpuroom_day_classic_l1610.webp": [
+   362400,
+   "eedd099e787e"
+  ],
   "data/cpuroom/cpuroom_day_han.webp": [
    122156,
    "6bb4540c52fb"
   ],
+  "data/cpuroom/cpuroom_day_han_l1610.webp": [
+   381716,
+   "347070b4fe90"
+  ],
+  "data/cpuroom/cpuroom_day_l1610.webp": [
+   372758,
+   "37f118a208a6"
+  ],
   "data/cpuroom/cpuroom_day_song.webp": [
    106512,
    "464c48830c6a"
+  ],
+  "data/cpuroom/cpuroom_day_song_l1610.webp": [
+   376116,
+   "98e487282804"
   ],
   "data/crowd/cat_sleep.webp": [
    67412,
@@ -5110,33 +5174,73 @@
    118204,
    "2ef1a2374d5d"
   ],
+  "data/cupmap/cup_day_classic_l1610.webp": [
+   374474,
+   "e9eaf806e910"
+  ],
   "data/cupmap/cup_day_han.webp": [
    115490,
    "b13a9f01b405"
+  ],
+  "data/cupmap/cup_day_han_l1610.webp": [
+   411498,
+   "6b9d140b933e"
+  ],
+  "data/cupmap/cup_day_l1610.webp": [
+   413174,
+   "6c4f3c0642e0"
   ],
   "data/cupmap/cup_day_tang.webp": [
    123820,
    "7f9a4b6df6be"
   ],
+  "data/cupmap/cup_day_tang_l1610.webp": [
+   358578,
+   "7fc41f577274"
+  ],
   "data/cupmap/cup_day_weijin.webp": [
    117716,
    "00741434ed26"
+  ],
+  "data/cupmap/cup_day_weijin_l1610.webp": [
+   391506,
+   "1759bf720629"
   ],
   "data/cupmap/cup_night_classic.webp": [
    111130,
    "5d0a49509361"
   ],
+  "data/cupmap/cup_night_classic_l1610.webp": [
+   243140,
+   "bfcd2b425b73"
+  ],
   "data/cupmap/cup_night_han.webp": [
    88514,
    "9c3671a4f23e"
+  ],
+  "data/cupmap/cup_night_han_l1610.webp": [
+   261230,
+   "ecb3e6198352"
+  ],
+  "data/cupmap/cup_night_l1610.webp": [
+   231452,
+   "f4897a9e8a0d"
   ],
   "data/cupmap/cup_night_tang.webp": [
    91758,
    "b28df8b8ea3c"
   ],
+  "data/cupmap/cup_night_tang_l1610.webp": [
+   247864,
+   "a2847f4a9730"
+  ],
   "data/cupmap/cup_night_weijin.webp": [
    91816,
    "c506c0d3dd25"
+  ],
+  "data/cupmap/cup_night_weijin_l1610.webp": [
+   232022,
+   "e22f7b9bca68"
   ],
   "data/deskmap/desk_day_classic.webp": [
    91398,
@@ -5254,9 +5358,25 @@
    105480,
    "cbcbce6a813f"
   ],
+  "data/exammap/exam_day_classic_l1610.webp": [
+   319414,
+   "e5d82c774030"
+  ],
+  "data/exammap/exam_day_l1610.webp": [
+   412772,
+   "57fb22c7f544"
+  ],
   "data/exammap/exam_night_classic.webp": [
    78802,
    "2c63f107910e"
+  ],
+  "data/exammap/exam_night_classic_l1610.webp": [
+   219690,
+   "f4053dc094f6"
+  ],
+  "data/exammap/exam_night_l1610.webp": [
+   206202,
+   "267677a5868c"
   ],
   "data/feedback/bird/bird_goose_dn.svg": [
    2315,
@@ -5322,6 +5442,14 @@
    30516,
    "85bf128851c1"
   ],
+  "data/feedback/fb_day_l1610.webp": [
+   516908,
+   "209ea39686d1"
+  ],
+  "data/feedback/fb_night_l1610.webp": [
+   234368,
+   "0c3cf1de91e1"
+  ],
   "data/gmgames.json": [
    33668932,
    "6cdeef31b557"
@@ -5330,25 +5458,57 @@
    134228,
    "b29782556336"
   ],
+  "data/gmmap/gm_day_classic_l1610.webp": [
+   502036,
+   "c03f04d289f6"
+  ],
   "data/gmmap/gm_day_han.webp": [
    163032,
    "e08e4ac2702d"
+  ],
+  "data/gmmap/gm_day_han_l1610.webp": [
+   506918,
+   "0a90797153d8"
+  ],
+  "data/gmmap/gm_day_l1610.webp": [
+   436994,
+   "f270a1438789"
   ],
   "data/gmmap/gm_day_weijin.webp": [
    167582,
    "383cffb69d7c"
   ],
+  "data/gmmap/gm_day_weijin_l1610.webp": [
+   468232,
+   "3ed828322bfe"
+  ],
   "data/gmmap/gm_night_classic.webp": [
    73470,
    "54a3cd199078"
+  ],
+  "data/gmmap/gm_night_classic_l1610.webp": [
+   193608,
+   "3ddd8705aaca"
   ],
   "data/gmmap/gm_night_han.webp": [
    87894,
    "41920416f02d"
   ],
+  "data/gmmap/gm_night_han_l1610.webp": [
+   253258,
+   "a8d4e829cf9e"
+  ],
+  "data/gmmap/gm_night_l1610.webp": [
+   209100,
+   "88392aacab0d"
+  ],
   "data/gmmap/gm_night_weijin.webp": [
    89998,
    "cc15e95f48c2"
+  ],
+  "data/gmmap/gm_night_weijin_l1610.webp": [
+   221708,
+   "1b6d9bef5318"
   ],
   "data/guanxing/gx_tai.webp": [
    226506,
@@ -6318,9 +6478,17 @@
    294128,
    "fcfda9892d91"
   ],
+  "data/hubmap/battle_autumn_l1610.webp": [
+   773514,
+   "b03cda60323a"
+  ],
   "data/hubmap/battle_autumn_night.webp": [
    220266,
    "bb35c464f607"
+  ],
+  "data/hubmap/battle_autumn_night_l1610.webp": [
+   424414,
+   "adf743a09c54"
   ],
   "data/hubmap/battle_classic.webp": [
    229248,
@@ -6330,21 +6498,45 @@
    257510,
    "4c1b9a4fdd87"
   ],
+  "data/hubmap/battle_classic_autumn_l1610.webp": [
+   504332,
+   "00760a749634"
+  ],
   "data/hubmap/battle_classic_autumn_night.webp": [
    175958,
    "52758c29356f"
+  ],
+  "data/hubmap/battle_classic_autumn_night_l1610.webp": [
+   325834,
+   "a6b3ce9ccc91"
+  ],
+  "data/hubmap/battle_classic_l1610.webp": [
+   538868,
+   "08911900bdd4"
   ],
   "data/hubmap/battle_classic_night.webp": [
    124454,
    "5531d2a1f959"
   ],
+  "data/hubmap/battle_classic_night_l1610.webp": [
+   310922,
+   "67a96e76e380"
+  ],
   "data/hubmap/battle_classic_spring.webp": [
    249938,
    "86222defe491"
   ],
+  "data/hubmap/battle_classic_spring_l1610.webp": [
+   531688,
+   "881d924e392c"
+  ],
   "data/hubmap/battle_classic_spring_night.webp": [
    187302,
    "b14e37a565ef"
+  ],
+  "data/hubmap/battle_classic_spring_night_l1610.webp": [
+   329798,
+   "af2ed1d68975"
   ],
   "data/hubmap/battle_classic_summer.webp": [
    229248,
@@ -6358,9 +6550,17 @@
    244810,
    "15a3cf07a616"
   ],
+  "data/hubmap/battle_classic_winter_l1610.webp": [
+   506882,
+   "e7ed0ac1406f"
+  ],
   "data/hubmap/battle_classic_winter_night.webp": [
    198594,
    "4ac76d562872"
+  ],
+  "data/hubmap/battle_classic_winter_night_l1610.webp": [
+   420494,
+   "dd934188ddb8"
   ],
   "data/hubmap/battle_curtain_han.webp": [
    225530,
@@ -6414,21 +6614,45 @@
    290810,
    "95e1002deade"
   ],
+  "data/hubmap/battle_han_autumn_l1610.webp": [
+   670350,
+   "e681d44b340b"
+  ],
   "data/hubmap/battle_han_autumn_night.webp": [
    199978,
    "7aa6d210368d"
+  ],
+  "data/hubmap/battle_han_autumn_night_l1610.webp": [
+   401218,
+   "f7a39a3a1e16"
+  ],
+  "data/hubmap/battle_han_l1610.webp": [
+   589458,
+   "471241d297f0"
   ],
   "data/hubmap/battle_han_night.webp": [
    139884,
    "a2ec8a4eec29"
   ],
+  "data/hubmap/battle_han_night_l1610.webp": [
+   388160,
+   "c325b15100ce"
+  ],
   "data/hubmap/battle_han_spring.webp": [
    289160,
    "5e4485e3cf8d"
   ],
+  "data/hubmap/battle_han_spring_l1610.webp": [
+   681538,
+   "2f2044480085"
+  ],
   "data/hubmap/battle_han_spring_night.webp": [
    203890,
    "b821cff04e6f"
+  ],
+  "data/hubmap/battle_han_spring_night_l1610.webp": [
+   362882,
+   "a90d9b163b5c"
   ],
   "data/hubmap/battle_han_summer.webp": [
    227362,
@@ -6442,9 +6666,21 @@
    275834,
    "a442246c5509"
   ],
+  "data/hubmap/battle_han_winter_l1610.webp": [
+   715696,
+   "e2830c149884"
+  ],
   "data/hubmap/battle_han_winter_night.webp": [
    215436,
    "ca0bb0802c25"
+  ],
+  "data/hubmap/battle_han_winter_night_l1610.webp": [
+   449780,
+   "7c86a06bd747"
+  ],
+  "data/hubmap/battle_l1610.webp": [
+   713594,
+   "4351be73821a"
   ],
   "data/hubmap/battle_nanbei.webp": [
    220850,
@@ -6454,21 +6690,45 @@
    289654,
    "f2945354e722"
   ],
+  "data/hubmap/battle_nanbei_autumn_l1610.webp": [
+   795398,
+   "6e89ce78798c"
+  ],
   "data/hubmap/battle_nanbei_autumn_night.webp": [
    230126,
    "16430b836dd7"
+  ],
+  "data/hubmap/battle_nanbei_autumn_night_l1610.webp": [
+   492322,
+   "8e9b975c61a2"
+  ],
+  "data/hubmap/battle_nanbei_l1610.webp": [
+   752092,
+   "bc1eedd568e5"
   ],
   "data/hubmap/battle_nanbei_night.webp": [
    156906,
    "adb9883fc3a8"
   ],
+  "data/hubmap/battle_nanbei_night_l1610.webp": [
+   434952,
+   "721bb14889e0"
+  ],
   "data/hubmap/battle_nanbei_spring.webp": [
    284908,
    "02f74b7e3806"
   ],
+  "data/hubmap/battle_nanbei_spring_l1610.webp": [
+   778182,
+   "4ae14373ec13"
+  ],
   "data/hubmap/battle_nanbei_spring_night.webp": [
    224684,
    "966e3bd58917"
+  ],
+  "data/hubmap/battle_nanbei_spring_night_l1610.webp": [
+   506566,
+   "32714e9b8db9"
   ],
   "data/hubmap/battle_nanbei_summer.webp": [
    220850,
@@ -6482,9 +6742,21 @@
    268992,
    "55542c27f466"
   ],
+  "data/hubmap/battle_nanbei_winter_l1610.webp": [
+   761302,
+   "e9ebd9cd2806"
+  ],
   "data/hubmap/battle_nanbei_winter_night.webp": [
    240742,
    "f27935714e4d"
+  ],
+  "data/hubmap/battle_nanbei_winter_night_l1610.webp": [
+   638396,
+   "02886cee434f"
+  ],
+  "data/hubmap/battle_night_l1610.webp": [
+   395262,
+   "3c93b76a9684"
   ],
   "data/hubmap/battle_qin.webp": [
    213238,
@@ -6494,21 +6766,45 @@
    279532,
    "d6705cc8001b"
   ],
+  "data/hubmap/battle_qin_autumn_l1610.webp": [
+   740724,
+   "adc22b345c60"
+  ],
   "data/hubmap/battle_qin_autumn_night.webp": [
    218120,
    "bde48c83d3c5"
+  ],
+  "data/hubmap/battle_qin_autumn_night_l1610.webp": [
+   476272,
+   "271e77602f5d"
+  ],
+  "data/hubmap/battle_qin_l1610.webp": [
+   689812,
+   "8d83015ab295"
   ],
   "data/hubmap/battle_qin_night.webp": [
    152884,
    "4da3f1eafbf5"
   ],
+  "data/hubmap/battle_qin_night_l1610.webp": [
+   424072,
+   "723bfc359ff0"
+  ],
   "data/hubmap/battle_qin_spring.webp": [
    275256,
    "a810be6a09ee"
   ],
+  "data/hubmap/battle_qin_spring_l1610.webp": [
+   712290,
+   "af091fb3a6e5"
+  ],
   "data/hubmap/battle_qin_spring_night.webp": [
    222864,
    "2c7358e5880f"
+  ],
+  "data/hubmap/battle_qin_spring_night_l1610.webp": [
+   434752,
+   "007e2fcfad3b"
   ],
   "data/hubmap/battle_qin_summer.webp": [
    213238,
@@ -6522,9 +6818,17 @@
    259488,
    "96b717fdfa34"
   ],
+  "data/hubmap/battle_qin_winter_l1610.webp": [
+   743050,
+   "8509f4e53491"
+  ],
   "data/hubmap/battle_qin_winter_night.webp": [
    218212,
    "99967c534d40"
+  ],
+  "data/hubmap/battle_qin_winter_night_l1610.webp": [
+   565352,
+   "a11a9c2d68b3"
   ],
   "data/hubmap/battle_qing.webp": [
    229696,
@@ -6534,21 +6838,45 @@
    295264,
    "9195f88e628e"
   ],
+  "data/hubmap/battle_qing_autumn_l1610.webp": [
+   756228,
+   "1d71f7a52a0d"
+  ],
   "data/hubmap/battle_qing_autumn_night.webp": [
    230284,
    "c254a2c60f2d"
+  ],
+  "data/hubmap/battle_qing_autumn_night_l1610.webp": [
+   429516,
+   "5ed2bbd6066e"
+  ],
+  "data/hubmap/battle_qing_l1610.webp": [
+   732570,
+   "27b1581b9026"
   ],
   "data/hubmap/battle_qing_night.webp": [
    163066,
    "2b6c4cb8b63e"
   ],
+  "data/hubmap/battle_qing_night_l1610.webp": [
+   385918,
+   "84d6c35b96a0"
+  ],
   "data/hubmap/battle_qing_spring.webp": [
    293742,
    "3c36731f33e9"
   ],
+  "data/hubmap/battle_qing_spring_l1610.webp": [
+   775636,
+   "a532e042a34b"
+  ],
   "data/hubmap/battle_qing_spring_night.webp": [
    233594,
    "cf6bac0a36b3"
+  ],
+  "data/hubmap/battle_qing_spring_night_l1610.webp": [
+   471454,
+   "22dfc7e01e6a"
   ],
   "data/hubmap/battle_qing_summer.webp": [
    229696,
@@ -6562,9 +6890,17 @@
    264676,
    "d535b2cee6f2"
   ],
+  "data/hubmap/battle_qing_winter_l1610.webp": [
+   763204,
+   "e61536216b03"
+  ],
   "data/hubmap/battle_qing_winter_night.webp": [
    231846,
    "32c12e65546c"
+  ],
+  "data/hubmap/battle_qing_winter_night_l1610.webp": [
+   570806,
+   "50060906c190"
   ],
   "data/hubmap/battle_red_han.webp": [
    229856,
@@ -6618,21 +6954,45 @@
    285590,
    "c806c43c4bed"
   ],
+  "data/hubmap/battle_sanguo_autumn_l1610.webp": [
+   728006,
+   "59982694215e"
+  ],
   "data/hubmap/battle_sanguo_autumn_night.webp": [
    203314,
    "3487087db890"
+  ],
+  "data/hubmap/battle_sanguo_autumn_night_l1610.webp": [
+   414078,
+   "ac460eae65a9"
+  ],
+  "data/hubmap/battle_sanguo_l1610.webp": [
+   672424,
+   "711296b74f19"
   ],
   "data/hubmap/battle_sanguo_night.webp": [
    145066,
    "e9de025bb91b"
   ],
+  "data/hubmap/battle_sanguo_night_l1610.webp": [
+   359190,
+   "5e5eda0f6b81"
+  ],
   "data/hubmap/battle_sanguo_spring.webp": [
    285350,
    "ccdbbd517ca2"
   ],
+  "data/hubmap/battle_sanguo_spring_l1610.webp": [
+   718208,
+   "12463b9658d8"
+  ],
   "data/hubmap/battle_sanguo_spring_night.webp": [
    207634,
    "1190d9ce97ab"
+  ],
+  "data/hubmap/battle_sanguo_spring_night_l1610.webp": [
+   390012,
+   "80017cd59274"
   ],
   "data/hubmap/battle_sanguo_summer.webp": [
    222570,
@@ -6646,9 +7006,17 @@
    268594,
    "c8bbbc79ecb9"
   ],
+  "data/hubmap/battle_sanguo_winter_l1610.webp": [
+   692732,
+   "3638af1e51f2"
+  ],
   "data/hubmap/battle_sanguo_winter_night.webp": [
    203220,
    "e2fb2ac269f2"
+  ],
+  "data/hubmap/battle_sanguo_winter_night_l1610.webp": [
+   474232,
+   "ac5aebfd4939"
   ],
   "data/hubmap/battle_song.webp": [
    229512,
@@ -6658,21 +7026,45 @@
    292590,
    "8dcd14d0a3a3"
   ],
+  "data/hubmap/battle_song_autumn_l1610.webp": [
+   740216,
+   "08b8c089f5ca"
+  ],
   "data/hubmap/battle_song_autumn_night.webp": [
    228662,
    "06c2f07464a1"
+  ],
+  "data/hubmap/battle_song_autumn_night_l1610.webp": [
+   420818,
+   "0ca37ad2edf6"
+  ],
+  "data/hubmap/battle_song_l1610.webp": [
+   665814,
+   "900f73cb61a9"
   ],
   "data/hubmap/battle_song_night.webp": [
    157742,
    "dabf5af49a98"
   ],
+  "data/hubmap/battle_song_night_l1610.webp": [
+   421576,
+   "1fad9b6d39f8"
+  ],
   "data/hubmap/battle_song_spring.webp": [
    289464,
    "e1fbd9bd772f"
   ],
+  "data/hubmap/battle_song_spring_l1610.webp": [
+   728020,
+   "3d7b921406b0"
+  ],
   "data/hubmap/battle_song_spring_night.webp": [
    217286,
    "35a1d94ab8a9"
+  ],
+  "data/hubmap/battle_song_spring_night_l1610.webp": [
+   409554,
+   "6c794b4cb301"
   ],
   "data/hubmap/battle_song_summer.webp": [
    229512,
@@ -6686,17 +7078,33 @@
    285766,
    "e7558147aa57"
   ],
+  "data/hubmap/battle_song_winter_l1610.webp": [
+   740148,
+   "3fd898dbab25"
+  ],
   "data/hubmap/battle_song_winter_night.webp": [
    234902,
    "ccff572abc3a"
+  ],
+  "data/hubmap/battle_song_winter_night_l1610.webp": [
+   545396,
+   "e9d1ea9f8532"
   ],
   "data/hubmap/battle_spring.webp": [
    291308,
    "eb7ec75ad1a7"
   ],
+  "data/hubmap/battle_spring_l1610.webp": [
+   783724,
+   "32ae319f312e"
+  ],
   "data/hubmap/battle_spring_night.webp": [
    224132,
    "1015639aa39b"
+  ],
+  "data/hubmap/battle_spring_night_l1610.webp": [
+   422938,
+   "7e7509135600"
   ],
   "data/hubmap/battle_sui.webp": [
    224258,
@@ -6706,21 +7114,45 @@
    292944,
    "1130782c4e14"
   ],
+  "data/hubmap/battle_sui_autumn_l1610.webp": [
+   793548,
+   "55edda84ba18"
+  ],
   "data/hubmap/battle_sui_autumn_night.webp": [
    205760,
    "a1f83ebfeb6c"
+  ],
+  "data/hubmap/battle_sui_autumn_night_l1610.webp": [
+   451256,
+   "f26d3d1cd994"
+  ],
+  "data/hubmap/battle_sui_l1610.webp": [
+   729560,
+   "6582eeaa151f"
   ],
   "data/hubmap/battle_sui_night.webp": [
    135394,
    "62c59b2a1e86"
   ],
+  "data/hubmap/battle_sui_night_l1610.webp": [
+   391464,
+   "6863e3880390"
+  ],
   "data/hubmap/battle_sui_spring.webp": [
    282500,
    "ea86afe29945"
   ],
+  "data/hubmap/battle_sui_spring_l1610.webp": [
+   804754,
+   "6a9cab646542"
+  ],
   "data/hubmap/battle_sui_spring_night.webp": [
    213326,
    "a5eb42d0475a"
+  ],
+  "data/hubmap/battle_sui_spring_night_l1610.webp": [
+   489414,
+   "8c962f2faa42"
   ],
   "data/hubmap/battle_sui_summer.webp": [
    224258,
@@ -6734,9 +7166,17 @@
    273666,
    "7d51e886079c"
   ],
+  "data/hubmap/battle_sui_winter_l1610.webp": [
+   769374,
+   "93fb7d82e395"
+  ],
   "data/hubmap/battle_sui_winter_night.webp": [
    234132,
    "1e965d2758db"
+  ],
+  "data/hubmap/battle_sui_winter_night_l1610.webp": [
+   584496,
+   "c3f9c37cb175"
   ],
   "data/hubmap/battle_summer.webp": [
    228736,
@@ -6754,21 +7194,45 @@
    294284,
    "bfe201d1f495"
   ],
+  "data/hubmap/battle_tang_autumn_l1610.webp": [
+   711716,
+   "0de22adc00d5"
+  ],
   "data/hubmap/battle_tang_autumn_night.webp": [
    232912,
    "288a8c07cf84"
+  ],
+  "data/hubmap/battle_tang_autumn_night_l1610.webp": [
+   513718,
+   "97b41ff5eb7e"
+  ],
+  "data/hubmap/battle_tang_l1610.webp": [
+   672648,
+   "3fe12e98e1c2"
   ],
   "data/hubmap/battle_tang_night.webp": [
    157188,
    "673e66d7e680"
   ],
+  "data/hubmap/battle_tang_night_l1610.webp": [
+   381512,
+   "09891a769a7b"
+  ],
   "data/hubmap/battle_tang_spring.webp": [
    294054,
    "4d0a3844057c"
   ],
+  "data/hubmap/battle_tang_spring_l1610.webp": [
+   727450,
+   "9fa9615ab0e1"
+  ],
   "data/hubmap/battle_tang_spring_night.webp": [
    235564,
    "84fbd43ad785"
+  ],
+  "data/hubmap/battle_tang_spring_night_l1610.webp": [
+   466628,
+   "6b87326b1b9e"
   ],
   "data/hubmap/battle_tang_summer.webp": [
    226590,
@@ -6782,9 +7246,17 @@
    281496,
    "ab9463bf3fb3"
   ],
+  "data/hubmap/battle_tang_winter_l1610.webp": [
+   735438,
+   "4f68140608d9"
+  ],
   "data/hubmap/battle_tang_winter_night.webp": [
    231582,
    "ea150263d4c3"
+  ],
+  "data/hubmap/battle_tang_winter_night_l1610.webp": [
+   493984,
+   "ff698255ea9d"
   ],
   "data/hubmap/battle_weijin.webp": [
    225860,
@@ -6794,21 +7266,45 @@
    286672,
    "87499a3b5774"
   ],
+  "data/hubmap/battle_weijin_autumn_l1610.webp": [
+   750940,
+   "c89789f73279"
+  ],
   "data/hubmap/battle_weijin_autumn_night.webp": [
    219092,
    "064a067a0518"
+  ],
+  "data/hubmap/battle_weijin_autumn_night_l1610.webp": [
+   482456,
+   "db2f3ac8535e"
+  ],
+  "data/hubmap/battle_weijin_l1610.webp": [
+   748330,
+   "5a0c9894b2c5"
   ],
   "data/hubmap/battle_weijin_night.webp": [
    154896,
    "11c2e7a8719d"
   ],
+  "data/hubmap/battle_weijin_night_l1610.webp": [
+   454072,
+   "2cf7e53711e2"
+  ],
   "data/hubmap/battle_weijin_spring.webp": [
    291664,
    "d127d3ee817a"
   ],
+  "data/hubmap/battle_weijin_spring_l1610.webp": [
+   711574,
+   "1622d3c1f0cd"
+  ],
   "data/hubmap/battle_weijin_spring_night.webp": [
    217452,
    "98150b780b92"
+  ],
+  "data/hubmap/battle_weijin_spring_night_l1610.webp": [
+   477288,
+   "b75bfa909c72"
   ],
   "data/hubmap/battle_weijin_summer.webp": [
    225860,
@@ -6822,17 +7318,33 @@
    272000,
    "d24eed648eed"
   ],
+  "data/hubmap/battle_weijin_winter_l1610.webp": [
+   787662,
+   "e48c8529e6e6"
+  ],
   "data/hubmap/battle_weijin_winter_night.webp": [
    237800,
    "755fdc3560ef"
+  ],
+  "data/hubmap/battle_weijin_winter_night_l1610.webp": [
+   607918,
+   "026220108d6d"
   ],
   "data/hubmap/battle_winter.webp": [
    272020,
    "69a17e56fa65"
   ],
+  "data/hubmap/battle_winter_l1610.webp": [
+   721986,
+   "c4107f6609b2"
+  ],
   "data/hubmap/battle_winter_night.webp": [
    237130,
    "4b17b7981848"
+  ],
+  "data/hubmap/battle_winter_night_l1610.webp": [
+   572666,
+   "b64f6476d7a0"
   ],
   "data/hubmap/battle_wudai.webp": [
    221822,
@@ -6842,21 +7354,45 @@
    280950,
    "79a974dc6db7"
   ],
+  "data/hubmap/battle_wudai_autumn_l1610.webp": [
+   846938,
+   "a5115f7e1dca"
+  ],
   "data/hubmap/battle_wudai_autumn_night.webp": [
    203730,
    "a3213db543a4"
+  ],
+  "data/hubmap/battle_wudai_autumn_night_l1610.webp": [
+   473126,
+   "95f164473596"
+  ],
+  "data/hubmap/battle_wudai_l1610.webp": [
+   819822,
+   "6c2897693ad4"
   ],
   "data/hubmap/battle_wudai_night.webp": [
    143816,
    "2f06b443d71d"
   ],
+  "data/hubmap/battle_wudai_night_l1610.webp": [
+   389550,
+   "fd93ee70ce4b"
+  ],
   "data/hubmap/battle_wudai_spring.webp": [
    292252,
    "4a5f1c595b21"
   ],
+  "data/hubmap/battle_wudai_spring_l1610.webp": [
+   808744,
+   "6cf3d274203d"
+  ],
   "data/hubmap/battle_wudai_spring_night.webp": [
    210808,
    "64d0a4f667aa"
+  ],
+  "data/hubmap/battle_wudai_spring_night_l1610.webp": [
+   431760,
+   "f66ff8932ccf"
   ],
   "data/hubmap/battle_wudai_summer.webp": [
    221822,
@@ -6870,9 +7406,17 @@
    266768,
    "ecb4eb04fa8c"
   ],
+  "data/hubmap/battle_wudai_winter_l1610.webp": [
+   855150,
+   "ba0323ff6b7b"
+  ],
   "data/hubmap/battle_wudai_winter_night.webp": [
    224112,
    "f42ce55177b2"
+  ],
+  "data/hubmap/battle_wudai_winter_night_l1610.webp": [
+   595496,
+   "a0ef9441bad8"
   ],
   "data/hubmap/battle_yuan.webp": [
    225066,
@@ -6882,21 +7426,45 @@
    285944,
    "f25e5b1ca69b"
   ],
+  "data/hubmap/battle_yuan_autumn_l1610.webp": [
+   730450,
+   "50c9f93952cb"
+  ],
   "data/hubmap/battle_yuan_autumn_night.webp": [
    220164,
    "bc0f0bfa5b03"
+  ],
+  "data/hubmap/battle_yuan_autumn_night_l1610.webp": [
+   427048,
+   "5c03ecaf9b8f"
+  ],
+  "data/hubmap/battle_yuan_l1610.webp": [
+   708354,
+   "7b03af216b1d"
   ],
   "data/hubmap/battle_yuan_night.webp": [
    156532,
    "31582190b8a3"
   ],
+  "data/hubmap/battle_yuan_night_l1610.webp": [
+   388118,
+   "125b5d9b67a9"
+  ],
   "data/hubmap/battle_yuan_spring.webp": [
    293944,
    "2e28c27bbd23"
   ],
+  "data/hubmap/battle_yuan_spring_l1610.webp": [
+   736570,
+   "cea27e010e94"
+  ],
   "data/hubmap/battle_yuan_spring_night.webp": [
    226234,
    "fda1d1babc09"
+  ],
+  "data/hubmap/battle_yuan_spring_night_l1610.webp": [
+   414820,
+   "f3315c7c6564"
   ],
   "data/hubmap/battle_yuan_summer.webp": [
    225066,
@@ -6910,17 +7478,33 @@
    264552,
    "a1956c733164"
   ],
+  "data/hubmap/battle_yuan_winter_l1610.webp": [
+   730820,
+   "d1b05dacafe2"
+  ],
   "data/hubmap/battle_yuan_winter_night.webp": [
    237984,
    "f47a6360b6b9"
+  ],
+  "data/hubmap/battle_yuan_winter_night_l1610.webp": [
+   493792,
+   "3d7b288960b8"
   ],
   "data/hubmap/learn_autumn.webp": [
    258908,
    "b4367367c937"
   ],
+  "data/hubmap/learn_autumn_l1610.webp": [
+   607816,
+   "7154972e92ea"
+  ],
   "data/hubmap/learn_autumn_night.webp": [
    205010,
    "609e9f84bd88"
+  ],
+  "data/hubmap/learn_autumn_night_l1610.webp": [
+   346360,
+   "8817f7a1f384"
   ],
   "data/hubmap/learn_classic.webp": [
    187192,
@@ -6930,21 +7514,45 @@
    209734,
    "f0a4e844e239"
   ],
+  "data/hubmap/learn_classic_autumn_l1610.webp": [
+   490746,
+   "ce580558a6b8"
+  ],
   "data/hubmap/learn_classic_autumn_night.webp": [
    153212,
    "1a9ab0eb4d49"
+  ],
+  "data/hubmap/learn_classic_autumn_night_l1610.webp": [
+   310190,
+   "8f5ea765aff4"
+  ],
+  "data/hubmap/learn_classic_l1610.webp": [
+   480664,
+   "bfbb399dccf4"
   ],
   "data/hubmap/learn_classic_night.webp": [
    112542,
    "5c96bc165527"
   ],
+  "data/hubmap/learn_classic_night_l1610.webp": [
+   304644,
+   "73c0a732c2e6"
+  ],
   "data/hubmap/learn_classic_spring.webp": [
    207086,
    "5f6b800f1c29"
   ],
+  "data/hubmap/learn_classic_spring_l1610.webp": [
+   477126,
+   "b1b2b7ea9dc5"
+  ],
   "data/hubmap/learn_classic_spring_night.webp": [
    148908,
    "e24cbae4e329"
+  ],
+  "data/hubmap/learn_classic_spring_night_l1610.webp": [
+   273610,
+   "bf7808f4ba5a"
   ],
   "data/hubmap/learn_classic_summer.webp": [
    187192,
@@ -6958,9 +7566,17 @@
    202906,
    "2811be01aa04"
   ],
+  "data/hubmap/learn_classic_winter_l1610.webp": [
+   463558,
+   "3bbd613ca867"
+  ],
   "data/hubmap/learn_classic_winter_night.webp": [
    185030,
    "dc3317455e22"
+  ],
+  "data/hubmap/learn_classic_winter_night_l1610.webp": [
+   379778,
+   "bafd1335bc1d"
   ],
   "data/hubmap/learn_han.webp": [
    200696,
@@ -6970,21 +7586,45 @@
    259734,
    "2b586ddb92e1"
   ],
+  "data/hubmap/learn_han_autumn_l1610.webp": [
+   602664,
+   "9035afef2c4c"
+  ],
   "data/hubmap/learn_han_autumn_night.webp": [
    183530,
    "438fff85db70"
+  ],
+  "data/hubmap/learn_han_autumn_night_l1610.webp": [
+   330556,
+   "9a2a37629aa9"
+  ],
+  "data/hubmap/learn_han_l1610.webp": [
+   514272,
+   "d58972176c1c"
   ],
   "data/hubmap/learn_han_night.webp": [
    126222,
    "e71b304ef152"
   ],
+  "data/hubmap/learn_han_night_l1610.webp": [
+   275286,
+   "a2a43b85e4f7"
+  ],
   "data/hubmap/learn_han_spring.webp": [
    278314,
    "d6e7a541ad6f"
   ],
+  "data/hubmap/learn_han_spring_l1610.webp": [
+   544194,
+   "f18c92796414"
+  ],
   "data/hubmap/learn_han_spring_night.webp": [
    182868,
    "cdd70b0acf02"
+  ],
+  "data/hubmap/learn_han_spring_night_l1610.webp": [
+   312416,
+   "7254fac75b66"
   ],
   "data/hubmap/learn_han_summer.webp": [
    200696,
@@ -6998,9 +7638,21 @@
    240510,
    "81ce57b72fcc"
   ],
+  "data/hubmap/learn_han_winter_l1610.webp": [
+   534686,
+   "191ace8b930d"
+  ],
   "data/hubmap/learn_han_winter_night.webp": [
    210448,
    "a0b71e7c6880"
+  ],
+  "data/hubmap/learn_han_winter_night_l1610.webp": [
+   413154,
+   "26a047b87759"
+  ],
+  "data/hubmap/learn_l1610.webp": [
+   587182,
+   "53a701bd0199"
   ],
   "data/hubmap/learn_ming.webp": [
    207206,
@@ -7010,21 +7662,45 @@
    270022,
    "d9f3b6111419"
   ],
+  "data/hubmap/learn_ming_autumn_l1610.webp": [
+   680644,
+   "3499a03257cd"
+  ],
   "data/hubmap/learn_ming_autumn_night.webp": [
    198334,
    "9d3660f01c91"
+  ],
+  "data/hubmap/learn_ming_autumn_night_l1610.webp": [
+   357312,
+   "1307c3358040"
+  ],
+  "data/hubmap/learn_ming_l1610.webp": [
+   632258,
+   "4c1799bf3dc5"
   ],
   "data/hubmap/learn_ming_night.webp": [
    136694,
    "9cc71dad140b"
   ],
+  "data/hubmap/learn_ming_night_l1610.webp": [
+   358804,
+   "da67e459c723"
+  ],
   "data/hubmap/learn_ming_spring.webp": [
    270032,
    "addefe8a3b6a"
   ],
+  "data/hubmap/learn_ming_spring_l1610.webp": [
+   646644,
+   "3e61daecfab5"
+  ],
   "data/hubmap/learn_ming_spring_night.webp": [
    213522,
    "cd0a355c99e2"
+  ],
+  "data/hubmap/learn_ming_spring_night_l1610.webp": [
+   387200,
+   "2dd24d974833"
   ],
   "data/hubmap/learn_ming_summer.webp": [
    207206,
@@ -7038,9 +7714,17 @@
    249920,
    "29351bf53b6a"
   ],
+  "data/hubmap/learn_ming_winter_l1610.webp": [
+   629466,
+   "884072c4147e"
+  ],
   "data/hubmap/learn_ming_winter_night.webp": [
    204632,
    "9f6ef25c4f3f"
+  ],
+  "data/hubmap/learn_ming_winter_night_l1610.webp": [
+   463124,
+   "7b4ed1521513"
   ],
   "data/hubmap/learn_nanbei.webp": [
    200758,
@@ -7050,21 +7734,45 @@
    265030,
    "fb9be995a438"
   ],
+  "data/hubmap/learn_nanbei_autumn_l1610.webp": [
+   668258,
+   "70fd98705175"
+  ],
   "data/hubmap/learn_nanbei_autumn_night.webp": [
    197282,
    "083228fcd57b"
+  ],
+  "data/hubmap/learn_nanbei_autumn_night_l1610.webp": [
+   392360,
+   "6da95740f2dd"
+  ],
+  "data/hubmap/learn_nanbei_l1610.webp": [
+   605866,
+   "0f5a43d50940"
   ],
   "data/hubmap/learn_nanbei_night.webp": [
    134376,
    "a153be2c5b93"
   ],
+  "data/hubmap/learn_nanbei_night_l1610.webp": [
+   353162,
+   "7988a09bbe4e"
+  ],
   "data/hubmap/learn_nanbei_spring.webp": [
    260984,
    "c757606b1a8a"
   ],
+  "data/hubmap/learn_nanbei_spring_l1610.webp": [
+   633368,
+   "c9ad1cab3b09"
+  ],
   "data/hubmap/learn_nanbei_spring_night.webp": [
    188144,
    "c2abdc1685c0"
+  ],
+  "data/hubmap/learn_nanbei_spring_night_l1610.webp": [
+   404744,
+   "a01426febbae"
   ],
   "data/hubmap/learn_nanbei_summer.webp": [
    200758,
@@ -7078,9 +7786,21 @@
    240462,
    "fa250c66f6a3"
   ],
+  "data/hubmap/learn_nanbei_winter_l1610.webp": [
+   613804,
+   "1a154638b079"
+  ],
   "data/hubmap/learn_nanbei_winter_night.webp": [
    210700,
    "9a96c74cef87"
+  ],
+  "data/hubmap/learn_nanbei_winter_night_l1610.webp": [
+   425548,
+   "9686ccf41728"
+  ],
+  "data/hubmap/learn_night_l1610.webp": [
+   305882,
+   "4fb8b39a2cd9"
   ],
   "data/hubmap/learn_qin.webp": [
    194270,
@@ -7090,21 +7810,45 @@
    248028,
    "bce1312e5295"
   ],
+  "data/hubmap/learn_qin_autumn_l1610.webp": [
+   667026,
+   "8ccab9cfdb50"
+  ],
   "data/hubmap/learn_qin_autumn_night.webp": [
    178246,
    "b75de6a52c98"
+  ],
+  "data/hubmap/learn_qin_autumn_night_l1610.webp": [
+   341540,
+   "26a690499fde"
+  ],
+  "data/hubmap/learn_qin_l1610.webp": [
+   620790,
+   "7b7f99362146"
   ],
   "data/hubmap/learn_qin_night.webp": [
    120904,
    "9706539e62ba"
   ],
+  "data/hubmap/learn_qin_night_l1610.webp": [
+   345214,
+   "7196d2e98e43"
+  ],
   "data/hubmap/learn_qin_spring.webp": [
    259146,
    "25ce1f15a5e0"
   ],
+  "data/hubmap/learn_qin_spring_l1610.webp": [
+   650182,
+   "05d6c9057b20"
+  ],
   "data/hubmap/learn_qin_spring_night.webp": [
    176162,
    "4833c21ea98d"
+  ],
+  "data/hubmap/learn_qin_spring_night_l1610.webp": [
+   340604,
+   "0d966249bc86"
   ],
   "data/hubmap/learn_qin_summer.webp": [
    194270,
@@ -7118,9 +7862,17 @@
    235726,
    "de8d1ae14c50"
   ],
+  "data/hubmap/learn_qin_winter_l1610.webp": [
+   580688,
+   "7cb8f1654068"
+  ],
   "data/hubmap/learn_qin_winter_night.webp": [
    190388,
    "61748e7cf37c"
+  ],
+  "data/hubmap/learn_qin_winter_night_l1610.webp": [
+   438000,
+   "4b9ca58b0916"
   ],
   "data/hubmap/learn_qing.webp": [
    208858,
@@ -7130,21 +7882,45 @@
    267362,
    "0aad63110df8"
   ],
+  "data/hubmap/learn_qing_autumn_l1610.webp": [
+   669380,
+   "2c69c9a64995"
+  ],
   "data/hubmap/learn_qing_autumn_night.webp": [
    209316,
    "f52c558691e1"
+  ],
+  "data/hubmap/learn_qing_autumn_night_l1610.webp": [
+   420726,
+   "d512c12d0f69"
+  ],
+  "data/hubmap/learn_qing_l1610.webp": [
+   630254,
+   "a9bf4cede836"
   ],
   "data/hubmap/learn_qing_night.webp": [
    146084,
    "afa27299ee72"
   ],
+  "data/hubmap/learn_qing_night_l1610.webp": [
+   382858,
+   "f6855c483b84"
+  ],
   "data/hubmap/learn_qing_spring.webp": [
    271316,
    "ebb71d291446"
   ],
+  "data/hubmap/learn_qing_spring_l1610.webp": [
+   619824,
+   "62f7feda7558"
+  ],
   "data/hubmap/learn_qing_spring_night.webp": [
    211480,
    "b87e20a9f3a0"
+  ],
+  "data/hubmap/learn_qing_spring_night_l1610.webp": [
+   391664,
+   "b6001d673f58"
   ],
   "data/hubmap/learn_qing_summer.webp": [
    208858,
@@ -7158,9 +7934,17 @@
    252714,
    "602355123e25"
   ],
+  "data/hubmap/learn_qing_winter_l1610.webp": [
+   606922,
+   "62e153ca033f"
+  ],
   "data/hubmap/learn_qing_winter_night.webp": [
    213446,
    "b31a0283c81c"
+  ],
+  "data/hubmap/learn_qing_winter_night_l1610.webp": [
+   440060,
+   "a284050b3f63"
   ],
   "data/hubmap/learn_sanguo.webp": [
    206648,
@@ -7170,21 +7954,45 @@
    267706,
    "7888803273a2"
   ],
+  "data/hubmap/learn_sanguo_autumn_l1610.webp": [
+   643792,
+   "0218445a672e"
+  ],
   "data/hubmap/learn_sanguo_autumn_night.webp": [
    195980,
    "c4b6639b5e01"
+  ],
+  "data/hubmap/learn_sanguo_autumn_night_l1610.webp": [
+   375426,
+   "2a009d51da89"
+  ],
+  "data/hubmap/learn_sanguo_l1610.webp": [
+   615526,
+   "d20474be6f14"
   ],
   "data/hubmap/learn_sanguo_night.webp": [
    138126,
    "50d73e52d80c"
   ],
+  "data/hubmap/learn_sanguo_night_l1610.webp": [
+   336352,
+   "ea407e0abe2a"
+  ],
   "data/hubmap/learn_sanguo_spring.webp": [
    282370,
    "8dbf2cf483d0"
   ],
+  "data/hubmap/learn_sanguo_spring_l1610.webp": [
+   616624,
+   "1bc17910a375"
+  ],
   "data/hubmap/learn_sanguo_spring_night.webp": [
    209452,
    "80656212d79d"
+  ],
+  "data/hubmap/learn_sanguo_spring_night_l1610.webp": [
+   385080,
+   "2413ffc92126"
   ],
   "data/hubmap/learn_sanguo_summer.webp": [
    206648,
@@ -7198,17 +8006,33 @@
    251810,
    "e522c29c2baf"
   ],
+  "data/hubmap/learn_sanguo_winter_l1610.webp": [
+   561530,
+   "d0795504381a"
+  ],
   "data/hubmap/learn_sanguo_winter_night.webp": [
    219452,
    "b45f7ca20539"
+  ],
+  "data/hubmap/learn_sanguo_winter_night_l1610.webp": [
+   455014,
+   "0213fde1a82c"
   ],
   "data/hubmap/learn_spring.webp": [
    272420,
    "6d142bb577d0"
   ],
+  "data/hubmap/learn_spring_l1610.webp": [
+   615082,
+   "3903207d25c3"
+  ],
   "data/hubmap/learn_spring_night.webp": [
    221018,
    "f00d9a29d858"
+  ],
+  "data/hubmap/learn_spring_night_l1610.webp": [
+   374640,
+   "c16456291bc1"
   ],
   "data/hubmap/learn_sui.webp": [
    200534,
@@ -7218,21 +8042,45 @@
    253018,
    "c0d5627bb30a"
   ],
+  "data/hubmap/learn_sui_autumn_l1610.webp": [
+   633944,
+   "add33d6c300f"
+  ],
   "data/hubmap/learn_sui_autumn_night.webp": [
    210530,
    "dfabc8cf017a"
+  ],
+  "data/hubmap/learn_sui_autumn_night_l1610.webp": [
+   388498,
+   "1c9fa77ee47a"
+  ],
+  "data/hubmap/learn_sui_l1610.webp": [
+   606928,
+   "dae05a013eae"
   ],
   "data/hubmap/learn_sui_night.webp": [
    114914,
    "478f3a7a01b4"
   ],
+  "data/hubmap/learn_sui_night_l1610.webp": [
+   301064,
+   "3d0772ec9698"
+  ],
   "data/hubmap/learn_sui_spring.webp": [
    261822,
    "a6d2a179e27b"
   ],
+  "data/hubmap/learn_sui_spring_l1610.webp": [
+   601012,
+   "1da61a80e499"
+  ],
   "data/hubmap/learn_sui_spring_night.webp": [
    175688,
    "137d455ed792"
+  ],
+  "data/hubmap/learn_sui_spring_night_l1610.webp": [
+   382902,
+   "ad608e4aff5f"
   ],
   "data/hubmap/learn_sui_summer.webp": [
    200534,
@@ -7246,9 +8094,17 @@
    250058,
    "d4d2e17c0f82"
   ],
+  "data/hubmap/learn_sui_winter_l1610.webp": [
+   587402,
+   "50381d747b88"
+  ],
   "data/hubmap/learn_sui_winter_night.webp": [
    174114,
    "d8cdc407cc24"
+  ],
+  "data/hubmap/learn_sui_winter_night_l1610.webp": [
+   363824,
+   "e1cfb239f904"
   ],
   "data/hubmap/learn_summer.webp": [
    202664,
@@ -7266,21 +8122,45 @@
    267126,
    "ec152827e7ed"
   ],
+  "data/hubmap/learn_tang_autumn_l1610.webp": [
+   652352,
+   "4cfc7decbc00"
+  ],
   "data/hubmap/learn_tang_autumn_night.webp": [
    194098,
    "4c6251bd3d08"
+  ],
+  "data/hubmap/learn_tang_autumn_night_l1610.webp": [
+   344528,
+   "fd30307e6dcd"
+  ],
+  "data/hubmap/learn_tang_l1610.webp": [
+   615320,
+   "fee221199421"
   ],
   "data/hubmap/learn_tang_night.webp": [
    127638,
    "83ea1def79ae"
   ],
+  "data/hubmap/learn_tang_night_l1610.webp": [
+   311880,
+   "07a3c978a96f"
+  ],
   "data/hubmap/learn_tang_spring.webp": [
    276304,
    "23bcec9d9eab"
   ],
+  "data/hubmap/learn_tang_spring_l1610.webp": [
+   638556,
+   "8e895ba2a9d4"
+  ],
   "data/hubmap/learn_tang_spring_night.webp": [
    188238,
    "4ac62fcf4b05"
+  ],
+  "data/hubmap/learn_tang_spring_night_l1610.webp": [
+   399518,
+   "80f1328c227b"
   ],
   "data/hubmap/learn_tang_summer.webp": [
    204880,
@@ -7294,9 +8174,17 @@
    253000,
    "486f5665a023"
   ],
+  "data/hubmap/learn_tang_winter_l1610.webp": [
+   609658,
+   "8d6fba737481"
+  ],
   "data/hubmap/learn_tang_winter_night.webp": [
    203552,
    "987d39f4c32b"
+  ],
+  "data/hubmap/learn_tang_winter_night_l1610.webp": [
+   430364,
+   "14e2e886cd2a"
   ],
   "data/hubmap/learn_weijin.webp": [
    202334,
@@ -7306,21 +8194,45 @@
    260190,
    "ea801c110b48"
   ],
+  "data/hubmap/learn_weijin_autumn_l1610.webp": [
+   673174,
+   "86eedfa9b468"
+  ],
   "data/hubmap/learn_weijin_autumn_night.webp": [
    194942,
    "7372a14b0b8e"
+  ],
+  "data/hubmap/learn_weijin_autumn_night_l1610.webp": [
+   369804,
+   "f3430e14eb8b"
+  ],
+  "data/hubmap/learn_weijin_l1610.webp": [
+   623410,
+   "bb56f7ff26f3"
   ],
   "data/hubmap/learn_weijin_night.webp": [
    138934,
    "e7584ebd65f6"
   ],
+  "data/hubmap/learn_weijin_night_l1610.webp": [
+   344220,
+   "560f3b0ee02d"
+  ],
   "data/hubmap/learn_weijin_spring.webp": [
    271404,
    "1d792505ea3a"
   ],
+  "data/hubmap/learn_weijin_spring_l1610.webp": [
+   637700,
+   "03f3da4dd28f"
+  ],
   "data/hubmap/learn_weijin_spring_night.webp": [
    203234,
    "35a86086546a"
+  ],
+  "data/hubmap/learn_weijin_spring_night_l1610.webp": [
+   413998,
+   "3b504eda956a"
   ],
   "data/hubmap/learn_weijin_summer.webp": [
    202334,
@@ -7334,17 +8246,33 @@
    250080,
    "1810080b30e6"
   ],
+  "data/hubmap/learn_weijin_winter_l1610.webp": [
+   607620,
+   "7b29db57edef"
+  ],
   "data/hubmap/learn_weijin_winter_night.webp": [
    205856,
    "05d85b7b1e99"
+  ],
+  "data/hubmap/learn_weijin_winter_night_l1610.webp": [
+   425996,
+   "27f6517da513"
   ],
   "data/hubmap/learn_winter.webp": [
    233764,
    "9ad6121a839f"
   ],
+  "data/hubmap/learn_winter_l1610.webp": [
+   546964,
+   "ddb594602626"
+  ],
   "data/hubmap/learn_winter_night.webp": [
    191580,
    "f6e73ee9fc33"
+  ],
+  "data/hubmap/learn_winter_night_l1610.webp": [
+   398862,
+   "030f6102a251"
   ],
   "data/hubmap/learn_wudai.webp": [
    209092,
@@ -7354,21 +8282,45 @@
    270224,
    "2b49b5a9dfcb"
   ],
+  "data/hubmap/learn_wudai_autumn_l1610.webp": [
+   653198,
+   "230a9493fc5b"
+  ],
   "data/hubmap/learn_wudai_autumn_night.webp": [
    204530,
    "c53c1619119c"
+  ],
+  "data/hubmap/learn_wudai_autumn_night_l1610.webp": [
+   376180,
+   "62fab3fd0904"
+  ],
+  "data/hubmap/learn_wudai_l1610.webp": [
+   632386,
+   "79a9da0f4176"
   ],
   "data/hubmap/learn_wudai_night.webp": [
    141020,
    "c089292b7d46"
   ],
+  "data/hubmap/learn_wudai_night_l1610.webp": [
+   353166,
+   "8c1475b53e46"
+  ],
   "data/hubmap/learn_wudai_spring.webp": [
    266958,
    "af2ac7afbfc6"
   ],
+  "data/hubmap/learn_wudai_spring_l1610.webp": [
+   614334,
+   "cf14edac0172"
+  ],
   "data/hubmap/learn_wudai_spring_night.webp": [
    207998,
    "f69777da9aed"
+  ],
+  "data/hubmap/learn_wudai_spring_night_l1610.webp": [
+   329226,
+   "1aea7996f6d0"
   ],
   "data/hubmap/learn_wudai_summer.webp": [
    209092,
@@ -7382,9 +8334,17 @@
    254608,
    "028cbc302fab"
   ],
+  "data/hubmap/learn_wudai_winter_l1610.webp": [
+   599676,
+   "b5aaa6d82363"
+  ],
   "data/hubmap/learn_wudai_winter_night.webp": [
    223844,
    "8167d474fc44"
+  ],
+  "data/hubmap/learn_wudai_winter_night_l1610.webp": [
+   461986,
+   "21e506555db7"
   ],
   "data/hubmap/learn_yuan.webp": [
    198542,
@@ -7394,21 +8354,45 @@
    265344,
    "d01f76fdddf3"
   ],
+  "data/hubmap/learn_yuan_autumn_l1610.webp": [
+   687396,
+   "44d3279a97ae"
+  ],
   "data/hubmap/learn_yuan_autumn_night.webp": [
    181732,
    "c581cec3b6d0"
+  ],
+  "data/hubmap/learn_yuan_autumn_night_l1610.webp": [
+   372500,
+   "47e5cb7d4f9b"
+  ],
+  "data/hubmap/learn_yuan_l1610.webp": [
+   645400,
+   "3c0ba4be02c9"
   ],
   "data/hubmap/learn_yuan_night.webp": [
    121428,
    "87898ffea4ac"
   ],
+  "data/hubmap/learn_yuan_night_l1610.webp": [
+   285720,
+   "9433070201ca"
+  ],
   "data/hubmap/learn_yuan_spring.webp": [
    255430,
    "d8be36cd31fe"
   ],
+  "data/hubmap/learn_yuan_spring_l1610.webp": [
+   621556,
+   "3b45ddf162d8"
+  ],
   "data/hubmap/learn_yuan_spring_night.webp": [
    181360,
    "7357a143f513"
+  ],
+  "data/hubmap/learn_yuan_spring_night_l1610.webp": [
+   355030,
+   "fa744979da43"
   ],
   "data/hubmap/learn_yuan_summer.webp": [
    198542,
@@ -7422,9 +8406,17 @@
    248992,
    "973cd1d83829"
   ],
+  "data/hubmap/learn_yuan_winter_l1610.webp": [
+   651730,
+   "1650663c3f8d"
+  ],
   "data/hubmap/learn_yuan_winter_night.webp": [
    186040,
    "1053b3191357"
+  ],
+  "data/hubmap/learn_yuan_winter_night_l1610.webp": [
+   426006,
+   "8a6bc0078d4f"
   ],
   "data/hubmap/seasons.json": [
    1942,
@@ -11842,6 +12834,10 @@
    134784,
    "a3bec3b99531"
   ],
+  "data/jhgate/ming.webp": [
+   170732,
+   "b72ff95b0e49"
+  ],
   "data/legend/liu_nod.webp": [
    40262,
    "47c47695c7ce"
@@ -12318,49 +13314,101 @@
    182484,
    "4b1f2ed02b93"
   ],
+  "data/libmap/lib_classic_l1610.webp": [
+   447618,
+   "07bc03983924"
+  ],
   "data/libmap/lib_han.webp": [
    178400,
    "8c13ff1cbebc"
+  ],
+  "data/libmap/lib_han_l1610.webp": [
+   522026,
+   "48d4089b8d64"
+  ],
+  "data/libmap/lib_l1610.webp": [
+   657850,
+   "7d341cfb07ab"
   ],
   "data/libmap/lib_ming.webp": [
    186800,
    "b44a93bb171a"
   ],
+  "data/libmap/lib_ming_l1610.webp": [
+   579264,
+   "0e6a4dece875"
+  ],
   "data/libmap/lib_nanbei.webp": [
    189020,
    "2b4740043b72"
+  ],
+  "data/libmap/lib_nanbei_l1610.webp": [
+   554518,
+   "e8831adc5443"
   ],
   "data/libmap/lib_qin.webp": [
    180040,
    "8f64695a3d37"
   ],
+  "data/libmap/lib_qin_l1610.webp": [
+   510936,
+   "ae4bd461a251"
+  ],
   "data/libmap/lib_qing.webp": [
    193890,
    "9d118eabf34b"
+  ],
+  "data/libmap/lib_qing_l1610.webp": [
+   612394,
+   "e08a77fd3452"
   ],
   "data/libmap/lib_sanguo.webp": [
    185552,
    "a583928be3bc"
   ],
+  "data/libmap/lib_sanguo_l1610.webp": [
+   578832,
+   "0ef4f55b8c0f"
+  ],
   "data/libmap/lib_sui.webp": [
    184764,
    "ebc46ce95ed1"
+  ],
+  "data/libmap/lib_sui_l1610.webp": [
+   530362,
+   "efdd1120ba6d"
   ],
   "data/libmap/lib_tang.webp": [
    200294,
    "1560423bfd4b"
   ],
+  "data/libmap/lib_tang_l1610.webp": [
+   559670,
+   "4e83e7713901"
+  ],
   "data/libmap/lib_weijin.webp": [
    185662,
    "dee109512445"
+  ],
+  "data/libmap/lib_weijin_l1610.webp": [
+   573602,
+   "96d2adfd17bd"
   ],
   "data/libmap/lib_wudai.webp": [
    192876,
    "12c926d3bb07"
   ],
+  "data/libmap/lib_wudai_l1610.webp": [
+   584904,
+   "810bb9f24e38"
+  ],
   "data/libmap/lib_yuan.webp": [
    192952,
    "43edf1d5fa43"
+  ],
+  "data/libmap/lib_yuan_l1610.webp": [
+   551566,
+   "f8ec47d5a596"
   ],
   "data/lobbymap/fig_fan_han.webp": [
    11946,
@@ -12546,97 +13594,201 @@
    192198,
    "ff2ac3f6979b"
   ],
+  "data/lobbymap/lobby_classic_l1610.webp": [
+   571274,
+   "bfb89f025c04"
+  ],
   "data/lobbymap/lobby_classic_night.webp": [
    83084,
    "add3b2a1b78d"
+  ],
+  "data/lobbymap/lobby_classic_night_l1610.webp": [
+   240302,
+   "0099573b85f1"
   ],
   "data/lobbymap/lobby_han.webp": [
    158788,
    "75aa7240b8cd"
   ],
+  "data/lobbymap/lobby_han_l1610.webp": [
+   498054,
+   "aa3a9bf7deed"
+  ],
   "data/lobbymap/lobby_han_night.webp": [
    99872,
    "35fcf5150e7b"
+  ],
+  "data/lobbymap/lobby_han_night_l1610.webp": [
+   287330,
+   "12dd8abb6f3d"
+  ],
+  "data/lobbymap/lobby_l1610.webp": [
+   500366,
+   "bac66e07573e"
   ],
   "data/lobbymap/lobby_nanbei.webp": [
    177322,
    "527b5597f6dd"
   ],
+  "data/lobbymap/lobby_nanbei_l1610.webp": [
+   540554,
+   "6dd8d378f81f"
+  ],
   "data/lobbymap/lobby_nanbei_night.webp": [
    108510,
    "97775d035fcb"
+  ],
+  "data/lobbymap/lobby_nanbei_night_l1610.webp": [
+   309126,
+   "48692d76930c"
+  ],
+  "data/lobbymap/lobby_night_l1610.webp": [
+   290520,
+   "7e82fccebbb2"
   ],
   "data/lobbymap/lobby_qin.webp": [
    161546,
    "e188b672f04e"
   ],
+  "data/lobbymap/lobby_qin_l1610.webp": [
+   519224,
+   "3714c3511bbf"
+  ],
   "data/lobbymap/lobby_qin_night.webp": [
    89316,
    "c88ef63ea276"
+  ],
+  "data/lobbymap/lobby_qin_night_l1610.webp": [
+   256716,
+   "95e625bc6a4a"
   ],
   "data/lobbymap/lobby_qing.webp": [
    179908,
    "eff1233b79a4"
   ],
+  "data/lobbymap/lobby_qing_l1610.webp": [
+   527496,
+   "232889753031"
+  ],
   "data/lobbymap/lobby_qing_night.webp": [
    96760,
    "68da1f92a865"
+  ],
+  "data/lobbymap/lobby_qing_night_l1610.webp": [
+   288600,
+   "4962bfea7096"
   ],
   "data/lobbymap/lobby_sanguo.webp": [
    157642,
    "4bf15ad9ddf0"
   ],
+  "data/lobbymap/lobby_sanguo_l1610.webp": [
+   528418,
+   "5e11e0162080"
+  ],
   "data/lobbymap/lobby_sanguo_night.webp": [
    82446,
    "364906e98b6b"
+  ],
+  "data/lobbymap/lobby_sanguo_night_l1610.webp": [
+   261186,
+   "ab4e2f3b7ba3"
   ],
   "data/lobbymap/lobby_song.webp": [
    170736,
    "4d265423cdc0"
   ],
+  "data/lobbymap/lobby_song_l1610.webp": [
+   504640,
+   "3e79e338b577"
+  ],
   "data/lobbymap/lobby_song_night.webp": [
    102246,
    "5158f789efdc"
+  ],
+  "data/lobbymap/lobby_song_night_l1610.webp": [
+   298598,
+   "3480c2377866"
   ],
   "data/lobbymap/lobby_sui.webp": [
    156442,
    "18e1a657a798"
   ],
+  "data/lobbymap/lobby_sui_l1610.webp": [
+   514026,
+   "2f6da60eb2bc"
+  ],
   "data/lobbymap/lobby_sui_night.webp": [
    95834,
    "389f870bfbb1"
+  ],
+  "data/lobbymap/lobby_sui_night_l1610.webp": [
+   301952,
+   "2f0e1bb2ca22"
   ],
   "data/lobbymap/lobby_tang.webp": [
    164386,
    "7d25f23dc902"
   ],
+  "data/lobbymap/lobby_tang_l1610.webp": [
+   565790,
+   "e77b526051df"
+  ],
   "data/lobbymap/lobby_tang_night.webp": [
    99188,
    "22de337ced8e"
+  ],
+  "data/lobbymap/lobby_tang_night_l1610.webp": [
+   311712,
+   "9ab9e942e996"
   ],
   "data/lobbymap/lobby_weijin.webp": [
    171404,
    "4eb1241aced5"
   ],
+  "data/lobbymap/lobby_weijin_l1610.webp": [
+   516566,
+   "bae640c88470"
+  ],
   "data/lobbymap/lobby_weijin_night.webp": [
    105514,
    "e59b54b0ea29"
+  ],
+  "data/lobbymap/lobby_weijin_night_l1610.webp": [
+   292704,
+   "2b5e172cb4f1"
   ],
   "data/lobbymap/lobby_wudai.webp": [
    157878,
    "91e8defef482"
   ],
+  "data/lobbymap/lobby_wudai_l1610.webp": [
+   538384,
+   "f60645879054"
+  ],
   "data/lobbymap/lobby_wudai_night.webp": [
    96558,
    "11a021968cf7"
+  ],
+  "data/lobbymap/lobby_wudai_night_l1610.webp": [
+   317272,
+   "c8f9a09fe965"
   ],
   "data/lobbymap/lobby_yuan.webp": [
    164984,
    "ac6d53704922"
   ],
+  "data/lobbymap/lobby_yuan_l1610.webp": [
+   570902,
+   "dacc1db42743"
+  ],
   "data/lobbymap/lobby_yuan_night.webp": [
    103700,
    "ff066168908b"
+  ],
+  "data/lobbymap/lobby_yuan_night_l1610.webp": [
+   295824,
+   "b6a5a6ea7fa0"
   ],
   "data/lobbymap/table_empty_han.webp": [
    46618,
@@ -12769,6 +13921,38 @@
   "data/map3d/water.webp": [
    29280,
    "7ddcbc92e4c5"
+  ],
+  "data/maze/tex/central_floor.webp": [
+   2286,
+   "0c59b68bbc42"
+  ],
+  "data/maze/tex/central_wall.webp": [
+   1542,
+   "4801878f23b7"
+  ],
+  "data/maze/tex/cross_palace_floor.webp": [
+   1920,
+   "07f376dadf50"
+  ],
+  "data/maze/tex/cross_palace_wall.webp": [
+   2394,
+   "051e63fa5a5e"
+  ],
+  "data/maze/tex/elephant_floor.webp": [
+   1708,
+   "07f19138837d"
+  ],
+  "data/maze/tex/elephant_wall.webp": [
+   1740,
+   "e03b67701d62"
+  ],
+  "data/maze/tex/pawn_floor.webp": [
+   4102,
+   "c92f4a3328b2"
+  ],
+  "data/maze/tex/pawn_wall.webp": [
+   3184,
+   "793cd54b828f"
   ],
   "data/me_classic/hex_badge.webp": [
    14458,
@@ -14546,9 +15730,25 @@
    97834,
    "ade665528e2d"
   ],
+  "data/openmap/open_day_classic_l1610.webp": [
+   297670,
+   "c5e3e71246b2"
+  ],
+  "data/openmap/open_day_l1610.webp": [
+   378000,
+   "57f92e87344b"
+  ],
   "data/openmap/open_night_classic.webp": [
    85754,
    "96306a247c1c"
+  ],
+  "data/openmap/open_night_classic_l1610.webp": [
+   233168,
+   "3dbb52ce55c6"
+  ],
+  "data/openmap/open_night_l1610.webp": [
+   230630,
+   "ac469bf768e3"
   ],
   "data/pano/bridge_ground.webp": [
    155722,
@@ -16710,9 +17910,25 @@
    190240,
    "711a5b365f0e"
   ],
+  "data/redomap/redo_day_classic_l1610.webp": [
+   371860,
+   "aa946add3b25"
+  ],
+  "data/redomap/redo_day_l1610.webp": [
+   438672,
+   "158bef476262"
+  ],
   "data/redomap/redo_night_classic.webp": [
    175580,
    "3024f339e647"
+  ],
+  "data/redomap/redo_night_classic_l1610.webp": [
+   256138,
+   "136bced8a91a"
+  ],
+  "data/redomap/redo_night_l1610.webp": [
+   223628,
+   "2132a4e395b1"
   ],
   "data/relics/classic__classic_abacus.webp": [
    51530,
@@ -17306,9 +18522,25 @@
    147368,
    "ed35f1039265"
   ],
+  "data/setmap/set_day_classic_l1610.webp": [
+   395228,
+   "f5c97128bf45"
+  ],
+  "data/setmap/set_day_l1610.webp": [
+   472468,
+   "2cd13ace1321"
+  ],
   "data/setmap/set_night_classic.webp": [
    98468,
    "5a55dd98c07b"
+  ],
+  "data/setmap/set_night_classic_l1610.webp": [
+   227674,
+   "e9715148ce75"
+  ],
+  "data/setmap/set_night_l1610.webp": [
+   258448,
+   "fb5ebd2ce87b"
   ],
   "data/shipmap/book1_cover.webp": [
    128986,
@@ -17510,21 +18742,41 @@
    145414,
    "504588cae266"
   ],
+  "data/shipmap/page_bag_l1610.webp": [
+   611910,
+   "e611ec286456"
+  ],
   "data/shipmap/page_canju.webp": [
    180786,
    "cfd9750646c1"
+  ],
+  "data/shipmap/page_canju_l1610.webp": [
+   446828,
+   "727a13a04681"
   ],
   "data/shipmap/page_lesson.webp": [
    167796,
    "f3c53a746f99"
   ],
+  "data/shipmap/page_lesson_l1610.webp": [
+   542666,
+   "965cc21f2117"
+  ],
   "data/shipmap/page_sail.webp": [
    190982,
    "63a4fb5ef0b1"
   ],
+  "data/shipmap/page_sail_l1610.webp": [
+   591776,
+   "2129c4d3f160"
+  ],
   "data/shipmap/page_shelf.webp": [
    156280,
    "8086e0371338"
+  ],
+  "data/shipmap/page_shelf_l1610.webp": [
+   436484,
+   "75662aec9ba6"
   ],
   "data/shipmap/port_classic.webp": [
    201576,
@@ -17538,6 +18790,10 @@
    171298,
    "461f0899d05e"
   ],
+  "data/shipmap/port_classic_f_l1610.webp": [
+   539516,
+   "3bc3e8f5b300"
+  ],
   "data/shipmap/port_han.webp": [
    195860,
    "848491413d12"
@@ -17549,6 +18805,10 @@
   "data/shipmap/port_han_f.webp": [
    147886,
    "53cad7bf5d6d"
+  ],
+  "data/shipmap/port_han_f_l1610.webp": [
+   377594,
+   "0fa6baa5beae"
   ],
   "data/shipmap/port_ming.webp": [
    225110,
@@ -17562,6 +18822,10 @@
    171432,
    "e80f2f649b08"
   ],
+  "data/shipmap/port_ming_f_l1610.webp": [
+   492134,
+   "006b8754b033"
+  ],
   "data/shipmap/port_nanbei.webp": [
    232352,
    "32f95f991900"
@@ -17573,6 +18837,10 @@
   "data/shipmap/port_nanbei_f.webp": [
    149710,
    "c8a65fd65aba"
+  ],
+  "data/shipmap/port_nanbei_f_l1610.webp": [
+   486354,
+   "7214b919ebc9"
   ],
   "data/shipmap/port_qin.webp": [
    186890,
@@ -17586,6 +18854,10 @@
    131074,
    "8f15b5b6898d"
   ],
+  "data/shipmap/port_qin_f_l1610.webp": [
+   408872,
+   "3bfc99ef0972"
+  ],
   "data/shipmap/port_qing.webp": [
    200200,
    "7ec60b4cf612"
@@ -17597,6 +18869,10 @@
   "data/shipmap/port_qing_f.webp": [
    152050,
    "446e2a4a15ef"
+  ],
+  "data/shipmap/port_qing_f_l1610.webp": [
+   428974,
+   "22767852ee27"
   ],
   "data/shipmap/port_sanguo.webp": [
    223568,
@@ -17610,6 +18886,10 @@
    131372,
    "c0d3c4488f86"
   ],
+  "data/shipmap/port_sanguo_f_l1610.webp": [
+   379758,
+   "b18644d2cabe"
+  ],
   "data/shipmap/port_song.webp": [
    203060,
    "53e819214ab3"
@@ -17621,6 +18901,10 @@
   "data/shipmap/port_song_f.webp": [
    146600,
    "b98b9a4780ee"
+  ],
+  "data/shipmap/port_song_f_l1610.webp": [
+   437398,
+   "b96ce4070471"
   ],
   "data/shipmap/port_sui.webp": [
    232068,
@@ -17634,6 +18918,10 @@
    176712,
    "31abfaf02980"
   ],
+  "data/shipmap/port_sui_f_l1610.webp": [
+   506048,
+   "7bb59a2f0378"
+  ],
   "data/shipmap/port_tang.webp": [
    219888,
    "f359ee098da7"
@@ -17645,6 +18933,10 @@
   "data/shipmap/port_tang_f.webp": [
    165120,
    "1e8172f331a7"
+  ],
+  "data/shipmap/port_tang_f_l1610.webp": [
+   543718,
+   "a0cfd0bd1cb3"
   ],
   "data/shipmap/port_weijin.webp": [
    236922,
@@ -17658,6 +18950,10 @@
    171900,
    "9342d425b356"
   ],
+  "data/shipmap/port_weijin_f_l1610.webp": [
+   529134,
+   "c17e4c1167f6"
+  ],
   "data/shipmap/port_wudai.webp": [
    230938,
    "f9e88b67feea"
@@ -17670,6 +18966,10 @@
    133214,
    "cbfcd1aee0d4"
   ],
+  "data/shipmap/port_wudai_f_l1610.webp": [
+   393854,
+   "037b210adcc1"
+  ],
   "data/shipmap/port_yuan.webp": [
    214104,
    "e2fc0d7de9ec"
@@ -17681,6 +18981,10 @@
   "data/shipmap/port_yuan_f.webp": [
    138012,
    "35c36ac10d94"
+  ],
+  "data/shipmap/port_yuan_f_l1610.webp": [
+   418414,
+   "382039d14d2b"
   ],
   "data/shipmap/qq_ship.webp": [
    130474,
@@ -17786,9 +19090,25 @@
    133898,
    "e0d3c895eb83"
   ],
+  "data/statmap/stat_day_classic_l1610.webp": [
+   361894,
+   "ba9999edb082"
+  ],
+  "data/statmap/stat_day_l1610.webp": [
+   441608,
+   "f1f696587886"
+  ],
   "data/statmap/stat_night_classic.webp": [
    125602,
    "6ead3610d0b6"
+  ],
+  "data/statmap/stat_night_classic_l1610.webp": [
+   300494,
+   "e6c032700365"
+  ],
+  "data/statmap/stat_night_l1610.webp": [
+   243370,
+   "9d07ee1c225e"
   ],
   "data/stones/classic.webp": [
    31324,
@@ -18014,57 +19334,145 @@
    91978,
    "aed603990565"
   ],
+  "data/studymap/study_day_classic_l1610.webp": [
+   269244,
+   "a0e79bc77b8d"
+  ],
+  "data/studymap/study_day_l1610.webp": [
+   301148,
+   "124295dd4321"
+  ],
   "data/studymap/study_night_classic.webp": [
    103202,
    "ccf9382c0273"
+  ],
+  "data/studymap/study_night_classic_l1610.webp": [
+   203616,
+   "7e93650d14f0"
+  ],
+  "data/studymap/study_night_l1610.webp": [
+   147534,
+   "d6b69dce305c"
   ],
   "data/termsmap/terms_day_classic.webp": [
    131970,
    "25343e06a5f2"
   ],
+  "data/termsmap/terms_day_classic_l1610.webp": [
+   419588,
+   "99760e06c98a"
+  ],
+  "data/termsmap/terms_day_l1610.webp": [
+   535640,
+   "38ae84119e30"
+  ],
   "data/termsmap/terms_night_classic.webp": [
    127650,
    "f9bd3b00d95b"
+  ],
+  "data/termsmap/terms_night_classic_l1610.webp": [
+   313740,
+   "a5666b20b75a"
+  ],
+  "data/termsmap/terms_night_l1610.webp": [
+   314040,
+   "1451f1df1d9d"
   ],
   "data/thememap/theme_day_classic.webp": [
    162736,
    "1761e69783bc"
   ],
+  "data/thememap/theme_day_classic_l1610.webp": [
+   459176,
+   "e642af85a5f6"
+  ],
+  "data/thememap/theme_day_l1610.webp": [
+   545550,
+   "90ff161b8f9b"
+  ],
   "data/thememap/theme_night_classic.webp": [
    138048,
    "b6cda1f3e967"
+  ],
+  "data/thememap/theme_night_classic_l1610.webp": [
+   310432,
+   "04d8f1d24629"
+  ],
+  "data/thememap/theme_night_l1610.webp": [
+   320526,
+   "2e923761f9ad"
   ],
   "data/todaymap/today_day_classic.webp": [
    142648,
    "59571da75ece"
   ],
+  "data/todaymap/today_day_classic_l1610.webp": [
+   346430,
+   "682230d6a4d6"
+  ],
   "data/todaymap/today_day_han.webp": [
    179632,
    "8b35eae3fcc7"
+  ],
+  "data/todaymap/today_day_han_l1610.webp": [
+   410406,
+   "1a36877005d5"
+  ],
+  "data/todaymap/today_day_l1610.webp": [
+   475382,
+   "b8509ce61abb"
   ],
   "data/todaymap/today_day_tang.webp": [
    181294,
    "fc53249c16c3"
   ],
+  "data/todaymap/today_day_tang_l1610.webp": [
+   476944,
+   "2d68f96a5588"
+  ],
   "data/todaymap/today_day_weijin.webp": [
    178918,
    "89893c8b07d6"
+  ],
+  "data/todaymap/today_day_weijin_l1610.webp": [
+   459348,
+   "7ab547822908"
   ],
   "data/todaymap/today_night_classic.webp": [
    115180,
    "162911d0eb68"
   ],
+  "data/todaymap/today_night_classic_l1610.webp": [
+   237420,
+   "60dbc4bb5a98"
+  ],
   "data/todaymap/today_night_han.webp": [
    112318,
    "532b7a71577e"
+  ],
+  "data/todaymap/today_night_han_l1610.webp": [
+   253494,
+   "1a13552f5d90"
+  ],
+  "data/todaymap/today_night_l1610.webp": [
+   277690,
+   "9b0ba533c587"
   ],
   "data/todaymap/today_night_tang.webp": [
    110680,
    "860f8a9645b3"
   ],
+  "data/todaymap/today_night_tang_l1610.webp": [
+   273012,
+   "c76f56d0dc55"
+  ],
   "data/todaymap/today_night_weijin.webp": [
    110736,
    "1a64428eb895"
+  ],
+  "data/todaymap/today_night_weijin_l1610.webp": [
+   246456,
+   "e7c6a083aac7"
   ],
   "data/tour-1956-2010.json": [
    21765744,
@@ -18674,9 +20082,17 @@
    259764,
    "cc8983409a8a"
   ],
+  "data/ximarket/xm_day_l1610.webp": [
+   693130,
+   "bef30d861ee0"
+  ],
   "data/ximarket/xm_day_winter.webp": [
    282496,
    "dcb89e168030"
+  ],
+  "data/ximarket/xm_day_winter_l1610.webp": [
+   538966,
+   "a54e98a4277d"
   ],
   "data/ximarket/xm_night.webp": [
    211670,
@@ -18690,9 +20106,17 @@
    158466,
    "61a5984d058b"
   ],
+  "data/ximarket/xm_tea_l1610.webp": [
+   429274,
+   "df00d7af255b"
+  ],
   "data/ximarket/xm_tea_winter.webp": [
    179352,
    "2536f16653e2"
+  ],
+  "data/ximarket/xm_tea_winter_l1610.webp": [
+   379186,
+   "d4eddc0dfa2a"
   ],
   "data/yizhan/classic_c.webp": [
    142710,
@@ -18702,6 +20126,10 @@
    142710,
    "ad2261b2aafb"
   ],
+  "data/yizhan/classic_f_l1610.webp": [
+   352310,
+   "850750b05c27"
+  ],
   "data/yizhan/han_c.webp": [
    212214,
    "90153cb6567d"
@@ -18709,6 +20137,10 @@
   "data/yizhan/han_f.webp": [
    160848,
    "02f052190084"
+  ],
+  "data/yizhan/han_f_l1610.webp": [
+   481528,
+   "777e18e8d780"
   ],
   "data/yizhan/ming_c.webp": [
    205018,
@@ -18718,6 +20150,10 @@
    164556,
    "b2621f508af6"
   ],
+  "data/yizhan/ming_f_l1610.webp": [
+   477506,
+   "237d896186f7"
+  ],
   "data/yizhan/nanbei_c.webp": [
    186514,
    "bc1bd9cccecd"
@@ -18725,6 +20161,10 @@
   "data/yizhan/nanbei_f.webp": [
    133768,
    "5a5737acccfd"
+  ],
+  "data/yizhan/nanbei_f_l1610.webp": [
+   316612,
+   "4fa704b73c15"
   ],
   "data/yizhan/qin_c.webp": [
    159416,
@@ -18734,6 +20174,10 @@
    134460,
    "3f19498a16bc"
   ],
+  "data/yizhan/qin_f_l1610.webp": [
+   320098,
+   "be1c0916aeae"
+  ],
   "data/yizhan/qing_c.webp": [
    190198,
    "03e4e5404a47"
@@ -18741,6 +20185,10 @@
   "data/yizhan/qing_f.webp": [
    153000,
    "547aa4514ba5"
+  ],
+  "data/yizhan/qing_f_l1610.webp": [
+   485872,
+   "a33d2378b0ef"
   ],
   "data/yizhan/sanguo_c.webp": [
    219874,
@@ -18750,6 +20198,10 @@
    160672,
    "3409a14badc3"
   ],
+  "data/yizhan/sanguo_f_l1610.webp": [
+   467252,
+   "adee0237cab1"
+  ],
   "data/yizhan/song_c.webp": [
    202286,
    "83c5ddeaa5c3"
@@ -18757,6 +20209,10 @@
   "data/yizhan/song_f.webp": [
    140590,
    "ef71a09ec083"
+  ],
+  "data/yizhan/song_f_l1610.webp": [
+   346320,
+   "ca360d8f6dfb"
   ],
   "data/yizhan/sui_c.webp": [
    248872,
@@ -18766,6 +20222,10 @@
    177106,
    "dbcea589c1e4"
   ],
+  "data/yizhan/sui_f_l1610.webp": [
+   471212,
+   "a8f6c6b2537d"
+  ],
   "data/yizhan/tang_c.webp": [
    213648,
    "61180217d3d5"
@@ -18773,6 +20233,10 @@
   "data/yizhan/tang_f.webp": [
    157084,
    "92a11c69b154"
+  ],
+  "data/yizhan/tang_f_l1610.webp": [
+   404074,
+   "a205d7b80961"
   ],
   "data/yizhan/weijin_c.webp": [
    214440,
@@ -18782,6 +20246,10 @@
    156886,
    "748d2ab0e3f1"
   ],
+  "data/yizhan/weijin_f_l1610.webp": [
+   415730,
+   "81f35dfe275f"
+  ],
   "data/yizhan/wudai_c.webp": [
    209330,
    "589e56486b70"
@@ -18790,6 +20258,10 @@
    117068,
    "a0d88821ff53"
   ],
+  "data/yizhan/wudai_f_l1610.webp": [
+   369090,
+   "a6bf61f5d9a1"
+  ],
   "data/yizhan/yuan_c.webp": [
    205392,
    "1d92b1275c8c"
@@ -18797,6 +20269,10 @@
   "data/yizhan/yuan_f.webp": [
    142224,
    "00662abc485b"
+  ],
+  "data/yizhan/yuan_f_l1610.webp": [
+   440340,
+   "3dbb579dbff0"
   ],
   "data/zhanggui/idle.webp": [
    42002,
@@ -18810,81 +20286,85 @@
    331532,
    "503af7e0fd16"
   ],
+  "data/zmhall/advisor_corner_l1610.webp": [
+   871352,
+   "ad710bfed20d"
+  ],
   "data/zmhall/central.webp": [
    248076,
    "84bcb87e269b"
+  ],
+  "data/zmhall/central_l1610.webp": [
+   971026,
+   "557a1b4e9fd3"
   ],
   "data/zmhall/cross_palace.webp": [
    349954,
    "468f728b25dd"
   ],
+  "data/zmhall/cross_palace_l1610.webp": [
+   921306,
+   "5cea69a91c6e"
+  ],
   "data/zmhall/elephant.webp": [
    366806,
    "457ef5e5579b"
+  ],
+  "data/zmhall/elephant_l1610.webp": [
+   982820,
+   "a5870682c5b9"
   ],
   "data/zmhall/horse.webp": [
    354360,
    "3688bdd88a4a"
   ],
+  "data/zmhall/horse_l1610.webp": [
+   869368,
+   "5566278be462"
+  ],
   "data/zmhall/opposite_cannon.webp": [
    360790,
    "7468533bf97a"
+  ],
+  "data/zmhall/opposite_cannon_l1610.webp": [
+   911148,
+   "e4cffef88959"
   ],
   "data/zmhall/palace_horse.webp": [
    302292,
    "2a53d5caba0a"
   ],
+  "data/zmhall/palace_horse_l1610.webp": [
+   812316,
+   "3a4d79945689"
+  ],
   "data/zmhall/pawn.webp": [
    401082,
    "179a27d78f3d"
+  ],
+  "data/zmhall/pawn_l1610.webp": [
+   1032050,
+   "22d006f1e7b2"
   ],
   "data/zmhall/same_cannon.webp": [
    330414,
    "84740f403044"
   ],
+  "data/zmhall/same_cannon_l1610.webp": [
+   692502,
+   "0c4aabeeb8ca"
+  ],
   "data/zmhall/screen.webp": [
    315672,
    "1ccfc0939f11"
   ],
-  "data/jhgate/ming.webp": [
-   170732,
-   "b72ff95b0e49"
-  ],
-  "data/maze/tex/central_floor.webp": [
-   2286,
-   "0c59b68bbc42"
-  ],
-  "data/maze/tex/central_wall.webp": [
-   1542,
-   "4801878f23b7"
-  ],
-  "data/maze/tex/cross_palace_floor.webp": [
-   1920,
-   "07f376dadf50"
-  ],
-  "data/maze/tex/cross_palace_wall.webp": [
-   2394,
-   "051e63fa5a5e"
-  ],
-  "data/maze/tex/elephant_floor.webp": [
-   1708,
-   "07f19138837d"
-  ],
-  "data/maze/tex/elephant_wall.webp": [
-   1740,
-   "e03b67701d62"
-  ],
-  "data/maze/tex/pawn_floor.webp": [
-   4102,
-   "c92f4a3328b2"
-  ],
-  "data/maze/tex/pawn_wall.webp": [
-   3184,
-   "793cd54b828f"
+  "data/zmhall/screen_l1610.webp": [
+   1022296,
+   "9ee8f3fb74d3"
   ],
   "native-build.json": [
-   4081,
-   "e453ae265eb1"
+   4097,
+   "3a1116c0f6e6"
   ]
  }
 }

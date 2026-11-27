@@ -4,7 +4,7 @@
        自動走找路不走水坑（lv.canMove）；用方向鈕撞到水坑＝撞牆、不算回合，畫面提示去推桌子。
      ・破桌 X：跟考箱一樣推得動（後面是平地或水坑才推得動），也能拿來塞象眼。
      ・守衛「雙相疊加」：兩隻相（JH_MZ_KIND.elephant：田字、塞象眼、不過河）都在河的上半場，田字路線交錯。
-     ・殘局：石門「棄馬破象」照複核寫明兵收尾的殺題（3、4 步，開發者 11/26：第三層可到四步殺）；被抓照開發者選單「飛相照舊出解殺題」，
+     ・殘局：石門「小兵破宮」照複核寫明兵收尾的殺題（11/27 外部審核：原題名「棄馬破象」三題都對不上，改名）（3、4 步，開發者 11/26：第三層可到四步殺）；被抓照開發者選單「飛相照舊出解殺題」，
        取自 W95 大師對局、Pikafish 深度 22 驗過的解殺題，扣掉第一、二層用過的。
    共用程式在 m/07z9m-maze.js（jhMzLayer、onStep、canMove）；相的走法在 m/07z9m-elephant.js（m.html 排在前面）。
    修為：第三層 +60（共用）。收尾收藏品「童生考卷」、外觀「水墨貢院棋盤」出圖前要先問開發者，這一層寶箱先用現有獎勵。 */
@@ -50,12 +50,12 @@ const JH_MZ_ELE3_TRAP=[
 {"kind":"defend","zh":["被巡場的相攔住了","黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"],"en":["Stopped by the patrolling elephant","Black threatens mate next move. Red to move: find the only defence."],"fen":"2baka3/9/4b4/8R/p3c4/6P2/P2r4P/N3B4/5K3/2B6","line":["i6f6"],"src":{"book":"大師對局","title":"第12局-北京-張強-先負-湖北-李智屏","year":1997,"ply":68},"verify":{"engine":"Pikafish","depth":22,"after":{"cp":-195}}},
 {"kind":"defend","zh":["被巡場的相攔住了","黑方下一步就要將死紅方，紅方先走，找出唯一一步解圍。"],"en":["Stopped by the patrolling elephant","Black threatens mate next move. Red to move: find the only defence."],"fen":"2baka3/9/4b4/R7p/9/2P6/8P/4B4/5r3/1RBAKAr2","line":["d0e1"],"src":{"book":"大師對局","title":"07-GR0310","year":2007,"ply":66},"verify":{"engine":"Pikafish","depth":22,"after":{"cp":6}}}];
 /* ==/ELE3_TRAP== */
-/* 石門題庫（maze-puzzles.js 產生）：兵收尾的 3、4 步殺（棄馬破象），--multi。重跑指令見 PR 描述。 */
+/* 石門題庫（maze-puzzles.js 產生）：兵收尾的 3、4 步殺（小兵破宮；《當頭一喝》馬收尾也算對），--multi。重跑指令見 PR 描述。 */
 /* ==JH_MZ_POOL:JH_MZ_POOL_ELE3== */
 const JH_MZ_POOL_ELE3={door:[
-{"id":"gm1988-C54A44KAB2r","src":{"book":"特級大師對局","title":"全國象棋團體賽女子組"},"zh":["石門機關：棄馬破象","門上刻著一匹倒下的馬和一個兵。紅方先走，4 步將死黑方，門就會開。提示：最後一步由兵將死。"],"en":["Stone door: sacrifice the horse, break the elephants","A fallen horse and a soldier are carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the soldier delivers the final blow."],"fen":"3k1ab2/6N2/1r1a5/p1P5p/6C2/3R5/P2cr3P/3C5/4A4/4KAB2","line":["g5d5","d3d5","d2d5","d7e8","c6d6","e8d7","d6d7"]},
-{"id":"lk026","src":{"book":"爛柯神機","title":"當頭一喝"},"zh":["石門機關：棄馬破象","門上刻著一匹倒下的馬和一個兵。紅方先走，4 步將死黑方，門就會開。提示：最後一步由兵將死。"],"en":["Stone door: sacrifice the horse, break the elephants","A fallen horse and a soldier are carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the soldier delivers the final blow."],"fen":"9/3ka4/4Pa3/2p2C3/4N4/9/9/9/3pp2p1/5K3","line":["f6d6","e1e0","f0e0","d1d0","e0d0","h1h0","e7d7"],"alt":{"f6d6":["e1e0",{"f0e0":["d1d0",{"e0d0":["h1h0",{"e7d7":0,"e5d7":0}],"e0e1":["c6c5",{"e5d7":0,"e7d7":0}]}],"f0f1":["d1e1",{"f1e1":["c6c5",{"e5d7":0,"e7d7":0}],"f1f2":["c6c5",{"e5d7":0,"e7d7":0}]}]}]}},
-{"id":"lk142","src":{"book":"爛柯神機","title":"去其蝥賊"},"zh":["石門機關：棄馬破象","門上刻著一匹倒下的馬和一個兵。紅方先走，4 步將死黑方，門就會開。提示：最後一步由兵將死。"],"en":["Stone door: sacrifice the horse, break the elephants","A fallen horse and a soldier are carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the soldier delivers the final blow."],"fen":"3k5/4PP3/4bN3/9/9/9/9/3n5/4r1p2/2R2K3","line":["e8d8","d9d8","f8e8","d8d9","c0c9","e7c9","e8d8"],"alt":{"e8d8":["d9d8",{"f8e8":["d8d9",{"c0c9":["e7c9",{"e8d8":0}]}]}],"e8e9":["d9e9",{"f8e8":["e9d9",{"c0c9":["e7c9",{"e8d8":0}]}]}]}}],
+{"id":"gm1988-C54A44KAB2r","src":{"book":"特級大師對局","title":"全國象棋團體賽女子組"},"zh":["石門機關：小兵破宮","門上刻著一個衝進九宮的兵。紅方先走，4 步將死黑方，門就會開。提示：最後一步可以用兵將死。"],"en":["Stone door: the soldier storms the palace","A soldier charging into the palace is carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the soldier can deliver the final blow."],"fen":"3k1ab2/6N2/1r1a5/p1P5p/6C2/3R5/P2cr3P/3C5/4A4/4KAB2","line":["g5d5","d3d5","d2d5","d7e8","c6d6","e8d7","d6d7"]},
+{"id":"lk026","src":{"book":"爛柯神機","title":"當頭一喝"},"zh":["石門機關：小兵破宮","門上刻著一個衝進九宮的兵。紅方先走，4 步將死黑方，門就會開。提示：最後一步可以用兵將死。"],"en":["Stone door: the soldier storms the palace","A soldier charging into the palace is carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the soldier can deliver the final blow."],"fen":"9/3ka4/4Pa3/2p2C3/4N4/9/9/9/3pp2p1/5K3","line":["f6d6","e1e0","f0e0","d1d0","e0d0","h1h0","e7d7"],"alt":{"f6d6":["e1e0",{"f0e0":["d1d0",{"e0d0":["h1h0",{"e7d7":0,"e5d7":0}],"e0e1":["c6c5",{"e5d7":0,"e7d7":0}]}],"f0f1":["d1e1",{"f1e1":["c6c5",{"e5d7":0,"e7d7":0}],"f1f2":["c6c5",{"e5d7":0,"e7d7":0}]}]}]}},
+{"id":"lk142","src":{"book":"爛柯神機","title":"去其蝥賊"},"zh":["石門機關：小兵破宮","門上刻著一個衝進九宮的兵。紅方先走，4 步將死黑方，門就會開。提示：最後一步可以用兵將死。"],"en":["Stone door: the soldier storms the palace","A soldier charging into the palace is carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the soldier can deliver the final blow."],"fen":"3k5/4PP3/4bN3/9/9/9/9/3n5/4r1p2/2R2K3","line":["e8d8","d9d8","f8e8","d8d9","c0c9","e7c9","e8d8"],"alt":{"e8d8":["d9d8",{"f8e8":["d8d9",{"c0c9":["e7c9",{"e8d8":0}]}]}],"e8e9":["d9e9",{"f8e8":["e9d9",{"c0c9":["e7c9",{"e8d8":0}]}]}]}}],
 trap:[
 ]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_ELE3== */
@@ -70,7 +70,7 @@ jhMzLayer("elephant",3,{map:JH_MZ_ELE3_MAP,guards:JH_MZ_ELE3_GUARDS,pool:JH_MZ_E
   lore:[{title:["泗州祖陵","The ancestral tombs at Sizhou"],
     body:["泗州屢遭水患，城外明祖陵也受到威脅，朝廷為治水爭論不休。（遊戲整理）","Sizhou was flooded again and again; even the Ming ancestral tombs outside the city were threatened, and the court argued endlessly over how to tame the water. (Summarized for the game.)"],
     src:"遊戲整理，據《明史・河渠志》（清修）"}],
-  say:{door:["將死！棄了馬撕開相陣，兵一步收尾，石門往兩旁滑開。","Checkmate! The horse is sacrificed to tear open the elephants, a soldier finishes, and the door slides apart."],
+  say:{door:["將死！攻進九宮收尾，石門往兩旁滑開。","Checkmate! The attack breaks into the palace for the finish, and the door slides apart."],
     trap:["解圍了！巡場的相愣在原地，你趁機溜走。","Defended! The patrolling elephant stands stunned and you slip away."],
     retry:["你被押回了入口。<b>先把破桌推進水坑開出路，再用桌子塞象眼。</b>","You were marched back. <b>Push desks into the puddles to open a way, then use desks to block the elephants' eyes.</b>"],
     done:["你走到號舍最深處，飛相門的三層都走完了。","You reach the deepest cell: all three levels of the Elephant School are done."]}});

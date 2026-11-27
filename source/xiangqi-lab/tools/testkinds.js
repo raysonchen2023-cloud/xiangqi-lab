@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-emu-ready-1127.js",   /* 11/27 W190 Android P0 開跑前的模擬器預檢 emu-ready.js：每一項壞掉都擋在那一項、後面不再跑；健康的不誤擋；不合格時照 --retries 重開再檢查；用法錯誤回 2；改壞驗證 */
   "test-w107-night-l1610.js",   /* 11/25 W107-L 夜景、四季 218 張 iPad 橫式圖（07sw scwVarList／scwVarInit）：清單逐類寫死、日間晚登記接得上、各類對應、夏季夏夜、scwPre／scwSw7、不蓋掉已有條目（行為 4、混合 1） */
   "test-w131b-hub-fill.js",   /* 11/26 W131b iPad 直向：對戰、學習大廳的朝代殘影（.cy）算可以裁，大廳照樣填滿寬度、不留模糊底 */
   "test-w107-hall-l1610.js",   /* 11/25 W107-L 第 5 批：江湖會館十派門內頁（07z9b／07z9l／07z9c／07z9m）iPad 橫向橫式圖：十派條目與量好的點、jhHallUse 整套換與還原、迷宮入口位置（行為 3、原始碼 1） */
@@ -253,6 +254,7 @@ const CLASSIFIED = new Set([
   "test-w108-sel-glow-1125.js",   /* 11/25 W108 玩家回饋：選中的棋子底下加柔和光暈（主題強調色、不擋點擊、不動畫；01-board.js；原始碼 3） */
   "test-w126-ipcompat.js",   /* 11/26 W126 iPhone 版在 iPadOS 26 相容視窗裡頂欄讓出視窗鈕（00-util xqIpCompatOf、m.css #topbar 左內距）〔行為 2：vm 跑判斷與 resize 重算；原始碼 1：CSS 規則〕 */
   "test-w134-maze-joy.js",   /* 11/26 W134 開發者「重新設計地底迷宮的方向鍵」選虛擬搖桿：推的方向對到格子方向（平面上下左右、斜俯視四個斜角）、死區、換方向黏性、橫畫面放右下；迷宮頁掛上搖桿、方向鈕與鍵盤照舊 */
+  "test-kill-layout-1127.js",   /* 11/27 W192 殺棋動畫三塊位置（m/00-util.js kxLayout）：vm 跑真函式，手機直式、iPad、3D 公園 × kill.json 三組 10 版高寬比都不重疊、夠高不出界；改壞驗證換回固定百分比要抓到重疊；kxPick 隨機挑字跳過潦草的版 3、版 7（行為 4、原始碼 1） */
   "test-icon-onerror-1126.js",   /* 11/26 W152 圖示載不到時的備援（m/02-shell.js ETIMG）：組出 onerror 拿去 new Function 編譯並用假 img 實際跑（改抓經典版、換舊圖、換表情文字）；掃所有 m/*.js 的 onerror 不能有反斜線 */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);
@@ -299,10 +301,13 @@ function tally(mode) {
   const z = () => Object.assign(Object.fromEntries(KINDS.map(k => [k, { all: 0, pass: 0, skip: 0 }])), { todo: { all: 0, xpass: 0 } });
   const total = z(), files = [];
   for (const file of listFiles()) {
+    const t0 = Date.now();
     const items = (mode === "static" ? staticFile(file) : runFile(file)).map(x => ({ ...x, kind: kindOf(file, x.name) }));
     const n = z();
     for (const it of items) for (const o of [n, total]) { if (it.todo) { o.todo.all++; if (it.ok) o.todo.xpass++; continue } o[it.kind].all++; if (it.skip) o[it.kind].skip++; else if (it.ok) o[it.kind].pass++ }
-    files.push({ file, items, n });
+    /* W189 第一步（11/27）：實際跑的時候記下這支檔花了幾毫秒（ms），只寫進 XQ_TALLY_OUT 的逐項結果，畫面輸出不變
+       （驗證紀錄要跟 CI 重跑逐字比對，秒數每次不同，不能印出來）。下一步照這些秒數決定怎麼同時跑；判斷紅綠的規則都沒動 */
+    files.push(mode === "static" ? { file, items, n } : { file, items, n, ms: Date.now() - t0 });
   }
   return { files, total };
 }
