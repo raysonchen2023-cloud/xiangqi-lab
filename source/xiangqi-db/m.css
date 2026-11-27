@@ -1000,6 +1000,10 @@ html[data-theme=dark]:not([data-era]) .shp-rd strong.kl,html[data-era=qin] .shp-
 .shl-board b{font:900 3.8cqw/1.25 var(--serif,serif);text-align:center;margin-bottom:.4cqw}.shl-board p{margin:0}.shl-board .shl-k{color:#9b2b17;font-weight:800;text-align:center;margin-top:.3cqw}
 .shs-card{position:absolute;left:7%;right:7%;top:15%;padding:3.2cqw 4.4cqw;border-radius:14px;background:rgba(255,251,242,.88);border:1.5px solid #2a2018;color:#2a2018;box-shadow:0 4px 16px rgba(0,0,0,.25);font-size:3.4cqw;line-height:1.55;max-height:46%;overflow:auto}
 .shs-card b{display:block;font:900 4.6cqw/1.3 var(--serif,serif)}.shs-card p{margin:1cqw 0 0}.shs-card .muted{color:#6b5a48}.shs-card .shp-say{color:#5a3a22}
+/* W107-L 第 4 批：船上各頁換成 iPad 橫式圖（.scw-l，圖寬 2560）時，字級照圖寬（cqw）會變成直圖的近 3 倍：木牌照板面寬度比例縮（直圖 45%→橫式 29%，×0.65），說明卡縮一半 */
+.shp-page.scw-l .shl-board{gap:.32cqw;font-size:1.55cqw}.shp-page.scw-l .shl-board b{font-size:2.45cqw;margin-bottom:.26cqw}.shp-page.scw-l .shl-board .shl-k{margin-top:.2cqw}
+html:is([data-fz=l],[data-fz=xl],[data-fz=xxl],[data-fz=max]) .shp-page.scw-l .shl-board{font-size:calc(1.55cqw * var(--fz));padding:.78cqw 1.17cqw;min-height:0}html:is([data-fz=l],[data-fz=xl],[data-fz=xxl],[data-fz=max]) .shp-page.scw-l .shl-board b{font-size:calc(2.45cqw * var(--fz))}   /* 大字模式：橫式木牌字級照 --fz 放大（上面那條優先度比大字規則高，不另寫字會固定）；位置在 07f shpBoardFz */
+.shp-page.scw-l .shs-card{padding:1.6cqw 2.2cqw;font-size:1.7cqw}.shp-page.scw-l .shs-card b{font-size:2.3cqw}.shp-page.scw-l .shs-card p{margin-top:.5cqw}
 .shl-more{padding-top:10px}.shl-more .port-say{margin-bottom:8px}
 
 /* 意見回饋 712：渡口圖上的歷史景點（白底墨字小牌，跟金色的三扇門分開） */
