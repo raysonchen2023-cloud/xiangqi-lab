@@ -29,17 +29,24 @@ test("bot3d：figure 收 gch／gred，胸前字照指定顏色畫，用完重設
   assert.match(B, /meCh=PC\(\),meRd=PCR,/); assert.match(B, /glyTex\(meCh,meK,meRd\)/);
 });
 
-test("ring3d.json 有十位掌門的圓牌位置（數值合理），兩份一致", t => {
+test("ring3d.json 有十位掌門的圓牌位置（數值合理）", t => {
   /* 公開副本（source/）沒有 xiangqi-db/art 和 site：改讀倉庫根目錄的 data/tripo_app；glydepth.json 只在 CDN，沒有就不查 */
   let A = path.join(ROOT, "xiangqi-db", "art", "tripo_app"), S = path.join(ROOT, "xiangqi-lab", "site", "data", "tripo_app");
   if (!fs.existsSync(path.join(A, "ring3d.json"))) A = path.join(ROOT, "..", "data", "tripo_app");
+  if (!fs.existsSync(path.join(A, "ring3d.json"))) A = S;   /* W69 盤點高 7：公開倉庫的 run-tests 裡 xiangqi-lab/site＝倉庫根目錄，data/tripo_app/ring3d.json 就在那裡（素材原始資料不公開，兩份一致那句只在開發者電腦有意義） */
   if (!fs.existsSync(path.join(A, "ring3d.json"))) return t.skip("沒有 tripo_app/ring3d.json（公開副本的 run-tests 把 source/ 抄到暫存資料夾，倉庫的 data/ 也不在旁邊）");   /* W57：原本直接 return，會被算成通過 */
   const R = JSON.parse(rd(path.join(A, "ring3d.json")));
   for (const s of Object.keys(gch())) {
     const v = R["n_zm_" + s]; assert.ok(Array.isArray(v) && v.length >= 3, s);
     assert.ok(v[0] > .4 && v[0] < .6 && v[1] > .6 && v[1] < .8 && v[2] > .2 && v[2] < .32, s + " " + v);
   }
-  if (fs.existsSync(path.join(S, "ring3d.json"))) assert.equal(rd(path.join(S, "ring3d.json")), rd(path.join(A, "ring3d.json")));
+});
+test("ring3d.json 素材原始資料跟網站那一份一致", t => {   /* W69 盤點高 7（#96 審查③）：公開副本只有網站那一份，兩份是同一個檔時不比（自己跟自己比一定過），照實略過 */
+  let A = path.join(ROOT, "xiangqi-db", "art", "tripo_app"); const S = path.join(ROOT, "xiangqi-lab", "site", "data", "tripo_app");
+  if (!fs.existsSync(path.join(A, "ring3d.json"))) A = path.join(ROOT, "..", "data", "tripo_app");
+  if (!fs.existsSync(path.join(A, "ring3d.json")) || !fs.existsSync(path.join(S, "ring3d.json")) || fs.realpathSync(path.join(A, "ring3d.json")) === fs.realpathSync(path.join(S, "ring3d.json")))
+    return t.skip("沒有素材原始資料 tripo_app/ring3d.json（公開副本只有網站那一份，兩份一致只在開發者電腦驗）");
+  assert.equal(rd(path.join(S, "ring3d.json")), rd(path.join(A, "ring3d.json")));
 });
 test("深度表 glydepth.json 也算過十位掌門（W57：從上一支拆出）", t => {
   let A = path.join(ROOT, "xiangqi-db", "art", "tripo_app");
