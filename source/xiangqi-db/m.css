@@ -1013,6 +1013,8 @@ html[data-theme=dark]:not([data-era]) .shp-rd strong.kl,html[data-era=qin] .shp-
 .shp-page.scw-l .shl-board{gap:.32cqw;font-size:1.55cqw}.shp-page.scw-l .shl-board b{font-size:2.45cqw;margin-bottom:.26cqw}.shp-page.scw-l .shl-board .shl-k{margin-top:.2cqw}
 html:is([data-fz=l],[data-fz=xl],[data-fz=xxl],[data-fz=max]) .shp-page.scw-l .shl-board{font-size:calc(1.55cqw * var(--fz));padding:.78cqw 1.17cqw;min-height:0}html:is([data-fz=l],[data-fz=xl],[data-fz=xxl],[data-fz=max]) .shp-page.scw-l .shl-board b{font-size:calc(2.45cqw * var(--fz))}   /* 大字模式：橫式木牌字級照 --fz 放大（上面那條優先度比大字規則高，不另寫字會固定）；位置在 07f shpBoardFz */
 .shp-page.scw-l .shs-card{padding:1.6cqw 2.2cqw;font-size:1.7cqw}.shp-page.scw-l .shs-card b{font-size:2.3cqw}.shp-page.scw-l .shs-card p{margin-top:.5cqw}
+/* #255（11/27 iPad 13 吋直向起航）：07fl 直向填滿寬度時把圖上緣裁掉（--xflT），top:15% 的說明卡會跑到看得到的最上面，第一行被頂欄蓋住、跟左上站名條疊在一起；至少放在看得到的上緣＋站名條（64px）下面 */
+#view.xfl-port .shp-page .shs-card{top:max(15%, calc(var(--xflT,0px) + 64px))}
 .shl-more{padding-top:10px}.shl-more .port-say{margin-bottom:8px}
 
 /* 意見回饋 712：渡口圖上的歷史景點（白底墨字小牌，跟金色的三扇門分開） */

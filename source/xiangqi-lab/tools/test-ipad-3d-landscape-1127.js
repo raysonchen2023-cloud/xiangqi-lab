@@ -91,3 +91,9 @@ test("m.css＋05 stripFitV：平板橫向 #strip 排右欄最後、紅黑兩欄�
   { const { f, box } = mk(false, true); box.style.height = "300px"; f(box); assert.equal(box.style.height, "", "不是直式（手機、平板直向）就還原"); }
   { const { f, box } = mk(true, false); box.style.height = "300px"; f(box); assert.equal(box.style.height, ""); }
 });
+
+// ⑤ 起航說明卡（iPad 13 吋直向）：07fl 裁掉上緣時不跑進看不到的地方、不疊在站名條上
+test("m.css：#view.xfl-port 的 .shs-card 至少在 --xflT＋64px 下面（原本 top:15% 照舊是下限）", () => {
+  assert.match(CSS, /#view\.xfl-port \.shp-page \.shs-card\{top:max\(15%, calc\(var\(--xflT,0px\) \+ 64px\)\)\}/);
+  assert.match(CSS, /\.shs-card\{position:absolute;left:7%;right:7%;top:15%;/, "原本的 15% 不動");
+});
