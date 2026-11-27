@@ -3,7 +3,7 @@
      ・新地形「單向驛門」：j＝只能往東（右）穿過、k＝只能往北（上）穿過。人走進驛門那一格要照門的方向，反方向撞到＝撞牆、不算回合；
        自動走找路照這條規則（lv.canMove）。野馬不能落在驛門上，馬腿也不能踩在驛門上（驛門是窄窄的門框），所以可以用驛門逼野馬繞路。
      ・守衛「雙野馬」（wildhorse3）：兩匹循足跡追的野馬，一匹慢 2 步、一匹慢 4 步（G.lag），走法同第二層的追跡野馬，多了驛門的限制。
-     ・殘局照開發者 11/26 選單：殺題不用炮、車收尾、第三層可到四步殺、被抓一律殺題。石門「臥槽馬」、被抓「蹩腿困馬」都是馬收尾
+     ・殘局照開發者 11/26 選單：殺題不用炮、車收尾、第三層可到四步殺、被抓一律殺題。石門「掛角馬」、被抓「蹩腿困馬」都是馬收尾
        （複核：「絆馬索」不是象棋術語、對兒童不好，改名）。題庫排除十派第二層全部、起馬第一層。
    共用程式在 m/07z9m-maze.js（jhMzLayer、onStep、canMove）；日字跳法 jhMzHorseCan、JH_MZ_HORSE_DIR、屏風馬巡法在 m/07z9m-screen.js（m.html 排在前面）。
    修為：第三層 +60（共用）。收尾收藏品「急遞銅匣」、外觀「烽火驛站棋盤」出圖前要先問開發者，這一層寶箱先用現有獎勵。環境音照複核寫「拍板」。 */
@@ -60,9 +60,9 @@ for(const ch of["j","k"]){const[gx,gy]=JH_MZ_HORSE3_GATE[ch];
 /* 殘局題庫（maze-puzzles.js 產生）：馬收尾 3、4 步殺，--multi。重跑指令見 PR 描述。 */
 /* ==JH_MZ_POOL:JH_MZ_POOL_HORSE3== */
 const JH_MZ_POOL_HORSE3={door:[
-{"id":"sq126","src":{"book":"適情雅趣","title":"葉落歸秋"},"zh":["石門機關：臥槽馬","門上刻著一匹臥在槽位的馬。紅方先走，4 步將死黑方，門就會開。提示：最後一步由馬將死。"],"en":["Stone door: the horse in the trough","A horse resting in the trough square is carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the horse delivers the final blow."],"fen":"2ba2n2/4ak3/4b4/4R4/4N4/9/9/5C3/3rAp3/c1rAK4","line":["e6f6","e8f7","f6g6","f8e8","g6g8","e8e9","e5f7"]},
-{"id":"sq265","src":{"book":"適情雅趣","title":"入穴取虎"},"zh":["石門機關：臥槽馬","門上刻著一匹臥在槽位的馬。紅方先走，4 步將死黑方，門就會開。提示：最後一步由馬將死。"],"en":["Stone door: the horse in the trough","A horse resting in the trough square is carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the horse delivers the final blow."],"fen":"3k1a3/9/3a5/3rRN2C/9/9/9/6n2/5r3/4K4","line":["e6e9","d9d8","e9d9","d8d9","i6d6","d7e8","f6d7"]},
-{"id":"sq323","src":{"book":"適情雅趣","title":"臨難忘軀"},"zh":["石門機關：臥槽馬","門上刻著一匹臥在槽位的馬。紅方先走，4 步將死黑方，門就會開。提示：最後一步由馬將死。"],"en":["Stone door: the horse in the trough","A horse resting in the trough square is carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the horse delivers the final blow."],"fen":"3ak4/3RaP1N1/5c1Cc/9/1rb6/9/9/5C3/1p2r1p2/3K5","line":["h7h1","e1e0","d0e0","c5e7","f8f9","e8f9","h8f7"]}],
+{"id":"sq126","src":{"book":"適情雅趣","title":"葉落歸秋"},"zh":["石門機關：掛角馬","門上刻著一匹掛在九宮角上的馬。紅方先走，4 步將死黑方，門就會開。提示：最後一步由馬將死。"],"en":["Stone door: the horse on the palace corner","A horse hooked onto the palace corner is carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the horse delivers the final blow."],"fen":"2ba2n2/4ak3/4b4/4R4/4N4/9/9/5C3/3rAp3/c1rAK4","line":["e6f6","e8f7","f6g6","f8e8","g6g8","e8e9","e5f7"]},
+{"id":"sq265","src":{"book":"適情雅趣","title":"入穴取虎"},"zh":["石門機關：掛角馬","門上刻著一匹掛在九宮角上的馬。紅方先走，4 步將死黑方，門就會開。提示：最後一步由馬將死。"],"en":["Stone door: the horse on the palace corner","A horse hooked onto the palace corner is carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the horse delivers the final blow."],"fen":"3k1a3/9/3a5/3rRN2C/9/9/9/6n2/5r3/4K4","line":["e6e9","d9d8","e9d9","d8d9","i6d6","d7e8","f6d7"]},
+{"id":"sq323","src":{"book":"適情雅趣","title":"臨難忘軀"},"zh":["石門機關：掛角馬","門上刻著一匹掛在九宮角上的馬。紅方先走，4 步將死黑方，門就會開。提示：最後一步由馬將死。"],"en":["Stone door: the horse on the palace corner","A horse hooked onto the palace corner is carved on the door. Red to move: checkmate in 4 and the door opens. Hint: the horse delivers the final blow."],"fen":"3ak4/3RaP1N1/5c1Cc/9/1rb6/9/9/5C3/1p2r1p2/3K5","line":["h7h1","e1e0","d0e0","c5e7","f8f9","e8f9","h8f7"]}],
 trap:[
 {"id":"sq333","src":{"book":"適情雅趣","title":"策馬入城"},"zh":["被兩匹野馬堵住了","兩匹野馬把你堵在驛門邊：「蹩住腿也能困住馬，解得開就放你走。」紅方先走，4 步將死黑方。"],"en":["Cornered by two wild horses","Two wild horses corner you by a post gate: \"Block a leg and you can trap a horse. Solve it and you may go.\" Red to move: checkmate in 4."],"fen":"2bak1C2/3caP3/4b4/3N1Cn2/9/9/9/8n/4p4/5K3","line":["f8f9","e9f9","d6f7","g6f8","f7h8","f9e9","h8f9"]},
 {"id":"sq361","src":{"book":"適情雅趣","title":"視死如歸"},"zh":["被兩匹野馬堵住了","兩匹野馬把你堵在驛門邊：「蹩住腿也能困住馬，解得開就放你走。」紅方先走，4 步將死黑方。"],"en":["Cornered by two wild horses","Two wild horses corner you by a post gate: \"Block a leg and you can trap a horse. Solve it and you may go.\" Red to move: checkmate in 4."],"fen":"r2k5/9/2P6/9/6bN1/4R4/9/2np1pn2/4K4/9","line":["e4e9","d9d8","c7c8","d8d7","e9e7","g5e7","h5f6"]},
@@ -81,7 +81,7 @@ jhMzLayer("horse",3,{map:JH_MZ_HORSE3_MAP,guards:JH_MZ_HORSE3_GUARDS,pool:JH_MZ_
   lore:[{title:["整頓驛傳","Reforming the post relays"],
     body:["萬曆初年，張居正整頓驛傳，嚴禁官員濫用驛馬驛船，驛站的負擔才稍微減輕。（遊戲整理）","In the early Wanli years Zhang Juzheng reformed the post relays and forbade officials from misusing relay horses and boats, easing the stations' burden a little. (Summarized for the game.)"],
     src:"遊戲整理，據《萬曆起居注》"}],
-  say:{door:["將死！馬臥槽一將，石門往兩旁滑開。","Checkmate! The horse checks from the trough square and the door slides apart."],
+  say:{door:["將死！馬掛角一將，石門往兩旁滑開。","Checkmate! The horse checks from the palace corner and the door slides apart."],
     trap:["將死！兩匹野馬愣在原地，你趁機溜走。","Checkmate! Both wild horses freeze and you slip away."],
     retry:["你被拖回了入口。<b>穿過驛門，野馬就得繞遠路。</b>","You were dragged back. <b>Go through a post gate and the horses must take the long way.</b>"],
     done:["你走到暗房最深處，起馬門的三層都走完了。","You reach the deepest room of the vault: all three levels of the Horse School are done."]}});
