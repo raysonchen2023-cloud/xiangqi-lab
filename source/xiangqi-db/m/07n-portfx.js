@@ -60,6 +60,7 @@ function pfxTest(gl,draw,bw,bh,base,W,H,pts){draw();const c=document.createEleme
    WebGL 畫在畫布上會蓋住底下的 img，所以貼圖改用全彩版；剛下船那段暈開上色（07p 的 .pc-run）播完才啟動，同一頁不重複建畫布 */
 const pfxImg=()=>typeof PORTF_ON!=="undefined"&&PORTF_ON&&typeof PORTF_ERAS!=="undefined"&&PORTF_ERAS.includes("classic")?"port_classic_f.webp":"port_classic.webp";
 function portFx(v,k){const P=v&&v.querySelector(".shp-page.cq");if(!P||k!=="classic"||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  if(P.dataset.scw)return;   /* W107-L：船艙動態是照直圖量的，iPad 橫式圖先不掛 */
   if(P.querySelector(".pfx-gl"))return;if(P.classList.contains("pc-run")){let n=0;const w=()=>{if(!P.isConnected)return;if(P.classList.contains("pc-run")&&n++<40)return setTimeout(w,200);portFx(v,k)};setTimeout(w,200);return}
   pfxDev(P);if(!pfxOn())return;
   const base=P.querySelector(":scope>img"),spots=[...P.querySelectorAll(".shp-spot,.po-sight")],cv=document.createElement("canvas");if(!base)return;
@@ -67,7 +68,7 @@ function portFx(v,k){const P=v&&v.querySelector(".shp-page.cq");if(!P||k!=="clas
   const fail=()=>{cv.remove();P.classList.remove("pfx-on");base.style.visibility="";spots.forEach(b=>b.style.translate="")};
   if(!document.getElementById("pfxCss")){const s=document.createElement("style");s.id="pfxCss";s.textContent=".shp-page.pfx-on>.ifx{display:none}";document.head.append(s)}   /* WebGL 動態跑起來就不疊 07k-inkfx 的粒子層（兩套一起會重複閃、燈火位置對不上） */
   const ld=s=>new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src="data/shipmap/"+s});
-  Promise.all([pfxImg(),"layers/pm1_depth.png","layers/sm_mist_ink.webp","layers/sm_mist_fog.webp","port_classic.webp"].map(ld)).then(im=>{if(!P.isConnected)return;
+  Promise.all([pfxImg(),"layers/pm1_depth.png","layers/sm_mist_ink.webp","layers/sm_mist_fog.webp","port_classic.webp"].map(ld)).then(im=>{if(!P.isConnected||!cv.isConnected||P.dataset.scw)return;   /* 素材載完前轉成橫式圖（07f portScwStop 已拿掉畫布）：不再把底圖藏起來（審查 #165 第三輪） */
     if(im.some((m,i)=>m.naturalWidth!==PFX_SZ[i][0]||m.naturalHeight!==PFX_SZ[i][1]))throw 0;
     const G=pfxGl(cv,PFX_VS,PFX_FS,[["I",im[0]],["Dp",im[1],1],["Mi",im[2],1,1],["Mf",im[3],1,1],["Og",im[4]]]);if(!G)throw 0;
     const{gl,u}=G,U={par:u("par"),bob:u("bob"),t:u("t"),k:u("k")};

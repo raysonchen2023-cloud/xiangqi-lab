@@ -53,7 +53,7 @@ function sparkProblems(c) {
 test("登記：順炮第二層；兩個衝刺暗哨；灰燼是自動走要避開的地形、不擋路不擋光；碑刻一則；寶箱有頭像「霜鹽結晶」；修為 +40", () => {
   const c = load(), L = L2(c);
   assert.equal(L.layer, 2); assert.equal(c.jhMzLayers("same_cannon"), 2); assert.equal(L.guards.length, 2); for (const G of L.guards) assert.equal(G.kind, "flaredash");
-  assert.equal(L.avoid, "A"); assert.ok(!L.solid.includes("A") && !L.opaque.includes("A")); assert.ok(L.solid.includes("Z") && L.solid.includes("L"));
+  assert.equal(L.avoid, "A"); assert.ok(!L.solid.includes("A") && !L.opaque.includes("A")); assert.ok(L.solid.includes("s") && L.solid.includes("L"));
   assert.equal(typeof L.onStep, "function"); assert.equal(L.lore.length, 1); assert.match(L.lore[0].src, /^遊戲整理，據嘉靖《兩淮鹽法志》/);
   assert.deepEqual(Array.from(L.rew, (r) => r.k), ["gong", "page", "face"]); assert.match(L.rew[2].zh, /霜鹽結晶/);
   assert.equal(L.xp, 40); assert.equal(L.xpKey, "maze:same_cannon:2"); assert.equal(L.key, "jhMaze_same_cannon_L2");
@@ -92,7 +92,7 @@ test("地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓�
   for (const r of M) assert.equal(r.length, W);
   for (let x = 0; x < W; x++) { assert.equal(M[0][x], "#"); assert.equal(M[M.length - 1][x], "#") } for (const r of M) { assert.equal(r[0], "#"); assert.equal(r[W - 1], "#") }
   const cnt = (ch) => M.join("").split(ch).length - 1;
-  for (const ch of "@DP>") assert.equal(cnt(ch), 1, ch); assert.equal(cnt("C"), 3); assert.equal(cnt("L"), 1); assert.ok(cnt("A") >= 2); assert.ok(cnt("Z") >= 1);
+  for (const ch of "@DP>") assert.equal(cnt(ch), 1, ch); assert.equal(cnt("C"), 3); assert.equal(cnt("L"), 1); assert.ok(cnt("A") >= 2); assert.ok(cnt("s") >= 1);
   const S = c.jhMzNew(L), all = reach(c, S);
   M.forEach((r, y) => [...r].forEach((v, x) => { if ("PCD>A".includes(v)) assert.ok(all.has(y * W + x), v + " 走得到 " + x + "," + y) }));
   assert.ok(!c.jhMzCaught(S), "開局不會被抓");
