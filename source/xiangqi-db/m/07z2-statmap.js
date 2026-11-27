@@ -28,6 +28,9 @@ if(typeof SCW!=="undefined"){const e={ready:true,f:"statmap/stat_day_classic_l16
 function jz2G(P){const e=typeof scwCur==="function"?scwCur(P):null,f=e&&e.fx;if(!f||!f.board)return{W:768,H:1376,board:JZ2_BOARD,table:JZ2_TABLE,hitTbl:[74.7,71.5,24.2,7.8],lamp:JZ2_LAMP};
   return{W:e.w,H:e.h,board:f.board,table:f.table,hitTbl:f.hitTbl,lamp:f.lamp}}
 const jz2Box=(G,[l,t,r,b])=>`left:${(l/G.W*100).toFixed(2)}%;top:${(t/G.H*100).toFixed(2)}%;width:${((r-l)/G.W*100).toFixed(2)}%;height:${((b-t)/G.H*100).toFixed(2)}%`;
+/* 榜面、榜面熱區（第一個 .jz2-hit）、棋桌熱區（第二個）照現在用的那張圖擺 */
+function jz2Place(P){const G=jz2G(P),bx=jz2Box(G,G.board),[hl,ht,hw,hh]=G.hitTbl,h=P.querySelectorAll(".jz2-hit");
+  P.querySelector(".jz2-board").style.cssText=bx;h[0].style.cssText=bx;h[1].style.cssText=`left:${hl}%;top:${ht}%;width:${hw}%;height:${hh}%`}
 const jz2Dark=()=>{const t=store.get("pageTheme","auto"),h=new Date().getHours();return t==="dark"||(t==="auto"&&matchMedia("(prefers-color-scheme: dark)").matches)||(typeof xqNight==="function"?xqNight():h>=19||h<5)};   /* 11/17 開發者選單「日夜全部照實際日落」：原本固定 19～5 點，改問 00-util xqNight（跟首頁同一個判斷）；深色主題照舊 */
 function jz2M3(w,h,q){const[[x0,y0],[x1,y1],[x2,y2],[x3,y3]]=q,dx1=x1-x2,dx2=x3-x2,dx3=x0-x1+x2-x3,dy1=y1-y2,dy2=y3-y2,dy3=y0-y1+y2-y3,den=dx1*dy2-dx2*dy1;
   const g=(dx3*dy2-dx2*dy3)/den,hh=(dx1*dy3-dx3*dy1)/den,a=x1-x0+g*x1,b=x3-x0+hh*x3,d=y1-y0+g*y1,e=y3-y0+hh*y3;
@@ -80,8 +83,7 @@ function jz2Wrap(v,R0){if(!STAT_MAP_ON||!v.querySelector("#sTabs"))return R0;jz2
     ${sp("jz2Rank",354,330,"📋 總覽")}${sp("jz2Book",JZ2_BOOK[0],JZ2_BOOK[1]-48,"課簿・對局紀錄")}${sp("jz2Scroll",JZ2_SCROLL[0],JZ2_SCROLL[1]-48,"手卷・我的成長")}${sp("jz2Tbl",665,950,"棋桌・電腦")}${NET?sp("jz2Lamp",632,230,"紗燈・線上"):""}`;
   v.insertBefore(P,v.firstChild);
   /* 榜面、熱區、棋桌照現在用的那張圖擺（原圖照舊；換圖時 07sw 叫 apply 再擺一次） */
-  const tq=P.querySelector(".jz2-tq"),place=()=>{const G=jz2G(P),bx=jz2Box(G,G.board),[hl,ht,hw,hh]=G.hitTbl,h=P.querySelectorAll(".jz2-hit");
-    P.querySelector(".jz2-board").style.cssText=bx;h[0].style.cssText=bx;h[1].style.cssText=`left:${hl}%;top:${ht}%;width:${hw}%;height:${hh}%`},
+  const tq=P.querySelector(".jz2-tq"),place=()=>jz2Place(P),
     fit=()=>{const G=jz2G(P),k=P.clientWidth/G.W;if(!k)return;tq.style.transform=jz2M3(200,225,G.table.map(([x,y])=>[x*k,y*k]))};
   if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!P.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit();
   /* 回饋 828（開發者 11/9）：頁面只留滿版圖。原本接在圖下的戰績（四個分頁、對局紀錄、成長、電腦、線上）整塊收進一張面板（07w 的 xqSheet，照 812 修正紀錄的做法）：

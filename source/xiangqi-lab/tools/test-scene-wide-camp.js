@@ -1,5 +1,5 @@
 // W107-L 第 1 批（開發者 11/25「先做沒做的頁日間」）：新手訓練營「沙盤兵推圖」（07y2）在 iPad 橫向換成 2560×1600 橫式圖，
-// 經典版、原圖版共用一套座標（Windows Claude 1 量，output/w107-ipad/l1610/campmap/camp_day_classic_l1610.json）；夜景、手機、iPad 直向照舊原圖。
+// 經典版、原圖版共用一套座標（Windows Claude 1 量，output/w107-ipad/l1610/campmap/camp_day_classic_l1610.json）；手機、iPad 直向照舊原圖；夜景照日間條目登記（#173 scwVarInit）。
 // 13 面旗、31 個路線點；找旗腳最近的路線點時偏移照原本 ×(2560/768)；走路記憶名換成 campL（出口在左下營寨）。
 // 不開瀏覽器：07sw＋07y2 在 vm 跑。用法 node --test xiangqi-lab/tools/test-scene-wide-camp.js
 "use strict";
@@ -14,13 +14,13 @@ function load(dev, exits) {
 }
 const KC = "campmap/camp_day_classic", KO = "campmap/camp_day";
 
-test("條目：經典版、原圖版兩個白天鍵都登記（共用座標、各自的圖）；夜景沒有；SCW_CDN 還是 false＝正式玩家照舊原圖", () => {
+test("條目：經典版、原圖版兩個白天鍵都登記（共用座標、各自的圖）；夜景照日間條目登記（#173）；SCW_CDN 還是 false＝正式玩家照舊原圖", () => {
   const C = load(true), SCW = vm.runInContext("SCW", C), ent = vm.runInContext("scwEntry", C);
   for (const [k, f] of [[KC, "campmap/camp_day_classic_l1610"], [KO, "campmap/camp_day_l1610"]]) {
     const e = SCW[k]; assert.ok(e && e.ready, k); assert.equal(e.f, f); assert.equal(e.w, 2560); assert.equal(e.h, 1600); assert.ok(ent(k));
   }
   assert.equal(SCW[KO].S, SCW[KC].S); assert.equal(SCW[KO].walk, SCW[KC].walk);
-  assert.equal(ent("campmap/camp_night_classic"), null); assert.equal(ent("campmap/camp_night"), null);
+  const nt = (n, dd) => { const e = ent(n); assert.ok(e, n + " 夜景照日間條目登記（#173 scwVarInit）"); assert.equal(e.f, n + "_l1610", n); assert.equal(e.base, dd, n); assert.deepEqual(e.S, ent(dd).S, n + " 座標跟日間共用"); }; nt("campmap/camp_night_classic", "campmap/camp_day_classic"); nt("campmap/camp_night", "campmap/camp_day");
   assert.equal(vm.runInContext("scwEntry", load(false))(KC), null);
 });
 
@@ -44,7 +44,7 @@ test("走路：每面旗對到離旗腳最近的路線點（偏移 ×2560/768）
     const c = cfgL(cur), o = cfg0(cur);
     assert.equal(c.home, "w" + NL[Math.max(0, Math.min(11, cur - 1))]); assert.ok(c.N[c.home]);
     assert.deepEqual(Object.keys(c.HS).sort(), Object.keys(o.HS).sort(), "入口跟原本同一組"); for (const h of Object.values(c.HS)) { assert.ok(c.N[h[0]]); assert.equal(h[3], "bow") }
-    assert.equal(c.N.w0[0], +(L.path[0][0] / 25.6).toFixed(2)); assert.equal(Object.keys(c.N).length, 31); assert.equal(c.E.split(" ").length, 30);
+    assert.equal(c.N.w0[0], +(L.path[0][0] / 25.6).toFixed(2)); assert.equal(Object.keys(c.N).length, 31); assert.equal(c.E.split(" ").length, 31);   /* 31 段：環線 30 段＋W164（11/26）補上最後一段 w30-w0，結業不再繞大半圈 */
     assert.deepEqual([c.W, c.H, c.el], [2560, 1600, o.el]); assert.ok(c.h[0] > o.h[0], "小人身高放大");
   }
   assert.deepEqual(cfg0(3).home, "w" + NODE0[2], "原圖照舊");
@@ -59,16 +59,22 @@ test("出口：橫式圖記憶名 campL:*，從 w0（左下營寨）往左走出
   const X2 = { "campL:*": false }; load(true, X2); assert.equal(X2["campL:*"], false, "已經有的不蓋掉");
 });
 
+test("座標照量好的 json（output/w107-ipad/l1610/campmap/camp_day_classic_l1610.json）：頭尾和中間幾個點寫死比對", () => {
+  const L = vm.runInContext("CP_L", load(true)), J = x => JSON.parse(JSON.stringify(x));
+  assert.deepEqual(J([L.flags[0], L.flags[5], L.flags[12]]), [[862, 866], [1716, 292], [736, 1062]]);
+  assert.deepEqual(J([L.path[0], L.path[15], L.path[30]]), [[666, 1167], [1926, 376], [750, 1177]]);
+});
+
 test("〔混合〕07y2 接線：開頁先量（scwPre）、掛 07sw（13 面旗）、換圖重掛走路時換成這一課的 cpCfgL 和記憶名；旗在橫式圖上換小一點", () => {
   assert.match(CP, /pre=typeof scwPre==="function"\?scwPre\(v,src\):\{src,k:""\};/);
   assert.match(CP, /<img src="\$\{pre\.src\}"/);
   assert.match(CP, /ids:CP_FLAGS\.map\(\(_,i\)=>"cpF"\+\(i\+1\)\),pfx:mem,cfg0:cfg,/);
-  assert.match(CP, /onCfg:x=>\{const L=x\.W===2560;if\(L\)Object\.assign\(x,cpCfgL\(c\)\);o\.pfx=\(L\?"campL:":"camp:"\)\+c\}/);
+  assert.match(CP, /onCfg:x=>cpOnCfg\(o,c,x\)\}/);
   assert.match(CP, /if\(pre\.k\)\{cfgNow=Object\.assign\(scwWalkCfg\(o,scwCur\(P\)\),cpCfgL\(c\)\);mem=o\.pfx="campL:"\+c;P\._scwW="l"\}/);
   assert.match(CP, /shwPage\(v,cfgNow,mem\)/);
   assert.match(CP, /\.camp-page\.scw-l \.shp-spot\.cp-flag\{width:2\.2%;height:3\.6%\}/);
-  /* onCfg 實際跑一次：橫式設定補上這一課的起點、記憶名換 campL；換回原圖記憶名換回 camp */
-  const C = load(true), cfgL = vm.runInContext("cpCfgL", C), o = { pfx: "camp:3" }, x = { W: 2560 };
-  const onCfg = xx => { const L = xx.W === 2560; if (L) Object.assign(xx, cfgL(3)); o.pfx = (L ? "campL:" : "camp:") + 3 };
-  onCfg(x); assert.equal(o.pfx, "campL:3"); assert.equal(x.home, cfgL(3).home); onCfg({ W: 768 }); assert.equal(o.pfx, "camp:3");
+  /* 07y2 的 cpOnCfg 實際跑（#159 審查建議 5：不抄進測試）：橫式設定補上這一課的起點、記憶名換 campL；換回原圖記憶名換回 camp、設定不動 */
+  const C = load(true), [cfgL, on] = vm.runInContext("[cpCfgL, cpOnCfg]", C), o = { pfx: "camp:3" }, x = { W: 2560 };
+  on(o, 3, x); assert.equal(o.pfx, "campL:3"); assert.equal(x.home, cfgL(3).home); assert.equal(Object.keys(x.N).length, 31);
+  const y = { W: 768, home: "w2" }; on(o, 3, y); assert.equal(o.pfx, "camp:3"); assert.equal(y.home, "w2");
 });

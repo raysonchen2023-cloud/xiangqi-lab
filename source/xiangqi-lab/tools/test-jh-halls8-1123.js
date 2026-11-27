@@ -46,7 +46,9 @@ function load(o = {}) {
     c.window.addEventListener = (t, f) => { if (t === "xqflags") o.flags.listen = f };
   }
   for (const fn of Object.keys(MOD)) if (!(o.missing || []).includes(fn)) c.window[fn] = (lv) => called.push([fn, lv]);
-  vm.createContext(c); vm.runInContext(SRC + "\n;this.JH_HALLS8=JH_HALLS8;", c);
+  /* 順風小字的位置改由 07z9b 的 jhNoteAt 算（W107-L 橫式圖，審查 #170）：載真的那一段，直圖 768×1376 */
+  const B = rd("xiangqi-db/m/07z9b-jianghu.js"), i = B.indexOf("const jhNoteAt="), j = B.indexOf("};", i);
+  vm.createContext(c); vm.runInContext("let JH_HALL_W=768,JH_HALL_H=1376;" + B.slice(i, j + 2) + "\n" + SRC + "\n;this.JH_HALLS8=JH_HALLS8;", c);
   return { c, called, toasts, wrapped };
 }
 
