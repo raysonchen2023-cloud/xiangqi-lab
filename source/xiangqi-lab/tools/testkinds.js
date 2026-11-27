@@ -17,6 +17,7 @@ const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 const CLASSIFIED = new Set([
   "test-emu-ready-1127.js",   /* 11/27 W190 Android P0 開跑前的模擬器預檢 emu-ready.js：每一項壞掉都擋在那一項、後面不再跑；健康的不誤擋；不合格時照 --retries 重開再檢查；用法錯誤回 2；改壞驗證 */
   "test-w107-night-l1610.js",   /* 11/25 W107-L 夜景、四季 218 張 iPad 橫式圖（07sw scwVarList／scwVarInit）：清單逐類寫死、日間晚登記接得上、各類對應、夏季夏夜、scwPre／scwSw7、不蓋掉已有條目（行為 4、混合 1） */
+  "test-ipad-3d-landscape-1127.js",   /* 11/27 #255 iPad 橫向對局頁 3D 撐滿左欄高度（room() 只扣同一欄）、左欄把寬度讓給 3D（m.css；平面棋盤照舊） */
   "test-w131b-hub-fill.js",   /* 11/26 W131b iPad 直向：對戰、學習大廳的朝代殘影（.cy）算可以裁，大廳照樣填滿寬度、不留模糊底 */
   "test-w107-hall-l1610.js",   /* 11/25 W107-L 第 5 批：江湖會館十派門內頁（07z9b／07z9l／07z9c／07z9m）iPad 橫向橫式圖：十派條目與量好的點、jhHallUse 整套換與還原、迷宮入口位置（行為 3、原始碼 1） */
   "test-scene-wide-xsm.js",   /* 11/25 W107-L 第 4 批：西市（07xsm）iPad 橫向橫式圖——外景、冬景、茶坊、茶坊冬景四個條目、座標整組照量好的值、藏點與茶坊禁區照當下的圖、日夜換季換圖照 07sw 的鍵重選、開頁就是橫式圖與換圖失敗實跑真的 07sw、開頁 xsmPre／xsmPageScw 實跑、00-util 補抓 CDN 後每分鐘換圖（行為 8、〔混合〕1、〔原始碼〕1） */
