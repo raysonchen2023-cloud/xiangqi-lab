@@ -6,13 +6,13 @@ const assert = require("node:assert/strict"), test = skipMissing(require("node:t
 const ROOT = path.join(__dirname, "..", "..");
 /* 11/18 公開證據（0319）：公開副本（ROOT 有 STAGE-MANIFEST.json）沒有 xiangqi-ios、xiangqi-lab/site、xiangqi-lab/src 的支援／隱私頁、xiangqi-db/art/docs、xiangqi-db/i18n-en.json（只放 CDN）。
    site 的檔、文件原稿、支援／隱私頁退回倉庫根目錄那一份（跟線上同一份：../、../data/docs/、../support.html）；還是找不到的子測試照實標略過、寫原因。開發者電腦上（沒有 STAGE-MANIFEST.json）照常跑，缺檔照樣失敗 */
-const PUB = fs.existsSync(path.join(ROOT, "STAGE-MANIFEST.json")) || !fs.existsSync(path.join(ROOT, "xiangqi-ios"));   /* 公開副本的 run-tests 會把 source/ 抄到暫存資料夾（沒有 STAGE-MANIFEST.json），所以也看有沒有 xiangqi-ios */
+const PUB = fs.existsSync(path.join(ROOT, "STAGE-MANIFEST.json")) || process.env.XQ_PUBLIC_COPY === "1";   /* 公開副本：倉庫的 source/run-tests.js 會設 XQ_PUBLIC_COPY=1（W69 盤點高 7：以前用「沒有 xiangqi-ios」判斷，run-tests 複製 iOS 後就判錯） */
 function alt(p) { p = String(p); if (!PUB || fs.existsSync(path.join(ROOT, p))) return p;
   for (const [re, to] of [[/^xiangqi-lab\/site\//, "../"], [/^xiangqi-db\/art\/docs(\/|$)/, "../data/docs$1"], [/^xiangqi-lab\/src\/(support|privacy)\.html$/, "../$1.html"]]) if (re.test(p)) { const q = p.replace(re, to); if (fs.existsSync(path.join(ROOT, q))) return q }
   return p }
 function skipMissing(t0) {
   const why = p => { const s = String(p || "").split(String.fromCharCode(92)).join("/");
-    return /xiangqi-ios/.test(s) ? "沒有 xiangqi-ios（公開副本不含）" : /i18n-en\.json/.test(s) ? "沒有 xiangqi-db/i18n-en.json（只放 CDN）" : /xiangqi-db\/art\/docs/.test(s) ? "沒有 xiangqi-db/art/docs 文件原稿（公開副本不含）" : /xiangqi-lab\/(site|src)\//.test(s) ? "沒有 " + s.slice(s.indexOf("xiangqi-lab/")) + "（公開副本不含）" : "" };
+    return /xiangqi-ios[\\/](www([\\/]|$)|ios[\\/]App[\\/]App[\\/](public([\\/]|$)|capacitor\.config\.json))/.test(s) ? "沒有 iOS 建置產物 xiangqi-ios/www、ios/App/App/public、capacitor.config.json（cap sync 產生，.gitignore 不進倉庫）" : /xiangqi-ios[\\/]appstore/.test(s) ? "沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦）" : /xiangqi-ios/.test(s) ? "沒有 xiangqi-ios（公開副本不含）" : /i18n-en\.json/.test(s) ? "沒有 xiangqi-db/i18n-en.json（只放 CDN）" : /xiangqi-db\/art\/docs/.test(s) ? "沒有 xiangqi-db/art/docs 文件原稿（公開副本不含）" : /xiangqi-lab\/(site|src)\//.test(s) ? "沒有 " + s.slice(s.indexOf("xiangqi-lab/")) + "（公開副本不含）" : "" };
   const w = (name, opt, fn) => { if (typeof opt === "function") { fn = opt; opt = undefined }
     const run = async t => { try { return await fn(t) } catch (e) { const r = PUB && e && e.code === "ENOENT" ? (why(e.path) || "公開副本沒有這個檔：" + String(e.path || "").split(String.fromCharCode(92)).join("/").split("/").slice(-2).join("/")) : ""; if (r) { t.skip(r); return } throw e } };
     return opt ? t0(name, opt, run) : t0(name, run) };
@@ -21,6 +21,7 @@ const rd = p => fs.readFileSync(path.join(ROOT, alt(p)), "utf8").replace(/\r\n/g
 const M = f => rd("xiangqi-db/m/" + f);
 const between = (s, a, b, incl) => { const i = s.indexOf(a), j = s.indexOf(b, i + 1); assert.ok(i >= 0 && j > i, "切不到：" + a.slice(0, 40)); return s.slice(i, incl ? j + b.length : j) };
 const IOS = fs.existsSync(path.join(ROOT, "xiangqi-ios")) ? false : "沒有 xiangqi-ios";
+const SKIP_STORE = fs.existsSync(path.join(ROOT, "xiangqi-ios", "appstore")) ? false : "沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦）";   /* W69 盤點高 7：iOS 專案在公開倉庫裡，appstore/ 不在；讀 appstore/ 的檢查拆成獨立一項（#96 審查②） */
 const U = M("00-util.js");
 const TAP = vm.runInNewContext(between(U, "const TAP44_CSS=", ";\n").replace("const TAP44_CSS=", ""));
 
@@ -182,14 +183,18 @@ test("開關定案：問小帥的 Google AI／Gemini 兩版都拿掉（ASK_EXT_A
   assert.ok(!/按「Google」「Gemini」會打開外部網站|App 版沒有「Google AI 回答」|不顯示 Google／Gemini 按鈕/.test(P));
   assert.ok(H.includes("問小帥沒有「Google AI 回答」「問 Gemini」這兩顆") && H.includes('Ask Xiao Shuai has no "Google AI answer" or "Ask Gemini" buttons') && !/On the web, the "Google"|網頁版按「Google」/.test(H));
   assert.ok(!F.includes("「🔎 Google AI 回答」「✨ 問 Gemini」按鈕不顯示。"), "家長文件不再說「兒童模式才不顯示」");
-  if (!IOS) assert.ok(rd("xiangqi-ios/appstore/app-privacy.md").includes("問小帥的 Google／Gemini 按鈕 11/17 已經拿掉"));
+});
+test("〔原始碼〕iOS 隱私申報 app-privacy.md 也寫了問小帥的 Google／Gemini 按鈕已經拿掉", { skip: SKIP_STORE }, () => {   /* W69 盤點高 7（#96 審查②）：從上一項拆出來 */
+  assert.ok(rd("xiangqi-ios/appstore/app-privacy.md").includes("問小帥的 Google／Gemini 按鈕 11/17 已經拿掉"));
 });
 
-test("檢舉 7 天內處理：limits.md、支援頁、審核備註同一個說法；metadata 待勾項目勾掉", () => {
+test("檢舉 7 天內處理：limits.md、支援頁同一個說法（審核備註那一半拆到下一項）", () => {
   const L = rd("xiangqi-db/art/docs/limits.md"); assert.equal(L, rd("xiangqi-lab/site/data/docs/limits.md"));
   assert.ok(L.includes("- 目前沒有即時客服；開發者逐筆看，檢舉 7 天內處理。") && !L.includes("處理時間沒有保證"));
   assert.ok(rd("xiangqi-lab/src/support.html").includes("目標在 7 天內處理"));
-  if (!IOS) { const MD = rd("xiangqi-ios/appstore/metadata.md"); assert.ok(MD.includes("> ☑ 檢舉處理時限「7 天」：開發者 11/17 回覆「檢舉 7 天內可以處理」") && !MD.includes("檢舉處理時限「7 天」要開發者確認做得到")); assert.ok(MD.includes("Reports are handled within 7 days.")) }
+});
+test("〔原始碼〕App Store 審查備註 metadata.md：檢舉 7 天的待勾項目勾掉、英文也寫", { skip: SKIP_STORE }, () => {   /* W69 盤點高 7（#96 審查②）：從上一項拆出來 */
+  { const MD = rd("xiangqi-ios/appstore/metadata.md"); assert.ok(MD.includes("> ☑ 檢舉處理時限「7 天」：開發者 11/17 回覆「檢舉 7 天內可以處理」") && !MD.includes("檢舉處理時限「7 天」要開發者確認做得到")); assert.ok(MD.includes("Reports are handled within 7 days.")) }
 });
 
 test("K P2-3：被相機切到的字——石桌往事封面直排標題、開場名句、找棋子提示列讓開側邊安全區；殘篇閣說明在 .view 裡（.view 已讓開）；找棋子的提示鈕 44", () => {
