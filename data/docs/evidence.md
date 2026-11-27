@@ -1,11 +1,11 @@
-# 驗證紀錄（版本 20261126-1111）
+# 驗證紀錄（版本 20261127-1641）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 執行編號：gh-45747410733-1（Node.js v24.22.3；這一頁、驗證紀錄 verify-all.js、測試分類報表是同一次執行產生的；比對時這一行與下一行不算）
-- 產生時間：2026-11-26 11:24:08（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 3348 項＝**通過 3201**、**失敗 0**、**略過 147**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（848 個檔，樹雜湊 SHA-256 `afd1bd4456780368b041748fe9218d7043b19818e1871cf2054e2c2160204ce0`），對應的發布版：`20261126-1111`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 執行編號：gh-45967665367-1（Node.js v24.22.3；這一頁、驗證紀錄 verify-all.js、測試分類報表是同一次執行產生的；比對時這一行與下一行不算）
+- 產生時間：2026-11-27 16:42:11（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 3774 項＝**通過 3618**、**失敗 0**、**略過 156**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（934 個檔，樹雜湊 SHA-256 `a7459b7ab06ec7d1f81ca953c42f947a9d37028b99c13a4bddc45eba634cac44`），對應的發布版：`20261127-1641`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔有 37 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -60,20 +60,24 @@
 - ﹣ 〔全部對檔〕每個圖示名 × 每一朝：icoSrc 要的檔都在（不再先 404 才借）（test-icon-gap-1117.js；沒有 data/icons 圖示（只放 CDN，公開副本沒有））
 - ﹣ 〔對照〕拿掉修補（舊 icoSrc）就會要到不存在的檔（test-icon-gap-1117.js；沒有 data/icons 圖示（只放 CDN，公開副本沒有））
 - ﹣ G-2（P1）：相機權限說明照實際用途（意見回饋附圖選「拍照」）；換手機掃 QR 已經沒有入口；四個地方一致（test-imac-g1514.js；沒有 xiangqi-ios）
-- ﹣ G-4：審查備註、App 隱私申報照建置內容：Notes 不寫 Game Center、小工具（另外放「裝了 --gc-widget 才換上」那一段）；申報表標註只有那種建置才有（test-imac-g1514.js；沒有 xiangqi-ios）
-- ﹣ H P2（準則 2.3）：商店描述照畫面寫 18 級（新手～專3・全力），不再寫「入門到大師共八個難度」；其他數字對過（test-imac-h1514.js；沒有 xiangqi-ios）
+- ﹣ 〔原始碼〕G-2（P1）：App 隱私申報 app-privacy.md 也照實際用途寫相機（拍照附圖），沒有掃 QR 的舊說法（test-imac-g1514.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
+- ﹣ G-4：審查備註、App 隱私申報照建置內容：Notes 不寫 Game Center、小工具（另外放「裝了 --gc-widget 才換上」那一段）；申報表標註只有那種建置才有（test-imac-g1514.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
+- ﹣ 〔原始碼〕D1：App Store 上架文案（metadata.md、app-privacy.md）也沒有 hungshengc（test-imac-g1514.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
+- ﹣ 〔原始碼〕D2：App 隱私申報保留三個匿名開關並寫理由；商店描述也寫了（appstore/）（test-imac-g1514.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
+- ﹣ H P2（準則 2.3）：商店描述照畫面寫 18 級（新手～專3・全力），不再寫「入門到大師共八個難度」；其他數字對過（test-imac-h1514.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ K P2-5：全站地圖、今日推薦、棋理頁不再寫「小實驗：」；英文同步；功能（網址）不動（test-imac-hfk-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ K P3-4：原生包不放 source/（App 內沒有地方讀本機 source/，GPL 原始碼連到公開倉庫）（test-imac-hfk-1117.js；沒有 xiangqi-ios）
-- ﹣ 檢舉 7 天內處理：limits.md、支援頁、審核備註同一個說法；metadata 待勾項目勾掉（test-imac-hfk-1117.js；沒有 xiangqi-lab/src/support.html（公開副本不含））
-- ﹣ 素材授權四項：圖片只寫工具、音樂照 Google 生成式 AI 條款（不做相似度檢查）、大師小傳畫面標出處、Pikafish 完整原始碼包已整理；「資料補齊中」拿掉（test-imac-i1757.js；公開副本沒有這個檔：data/gmbios.json）
+- ﹣ 〔原始碼〕iOS 隱私申報 app-privacy.md 也寫了問小帥的 Google／Gemini 按鈕已經拿掉（test-imac-hfk-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
+- ﹣ 檢舉 7 天內處理：limits.md、支援頁同一個說法（審核備註那一半拆到下一項）（test-imac-hfk-1117.js；沒有 xiangqi-lab/src/support.html（公開副本不含））
+- ﹣ 〔原始碼〕App Store 審查備註 metadata.md：檢舉 7 天的待勾項目勾掉、英文也寫（test-imac-hfk-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ I P2：英文誤譯（家長設定「分」→ min、存好 → Save）、音效圖鑑與換手機說明、3D 泡泡、驛路文牒字太小、官印英文直排、首頁頂欄英文換行、狀態列跟著畫面亮暗（test-imac-i1757.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
-- ﹣ P2：商店描述照實寫「錯棋重練」只收跟電腦對局裡走錯的步（中英）（test-imac-j1757.js；沒有 xiangqi-ios）
+- ﹣ P2：商店描述照實寫「錯棋重練」只收跟電腦對局裡走錯的步（中英）（test-imac-j1757.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ P2-1：術語碑介面英文——分類鈕（含「棋形」「俗語」）、搜尋提示；「目前選哪個」看 data-c 不看鈕上的字；示範鈕（test-imac-v1514.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ 先 install-native、再模擬 cap sync 重寫 capacitor.config.json：XQSpeech 的註冊仍然在（在 App 的 XQBridgeViewController.swift 裡，不靠 packageClassList）（test-ios-capsync-1118.js；沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
 - ﹣ Game Center、小工具（--gc-widget）也一樣：檔案裝進去、packageClassList 不列；BridgeVC 有編進 App 才用 NSClassFromString 註冊（test-ios-capsync-1118.js；沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
 - ﹣ 〔混合〕漕船圖（開發者 11/22「這船太醜了 找gemini畫圖」）：原檔 webp、大小合理；讀不到退回程式畫的 SVG（test-jh-canal-1122.js；沒有 xiangqi-db/art/canal/barge.webp（美術原檔只在開發者電腦，公開副本沒有））
 - ﹣ 圖：art/yunhe/pano.webp 在、大小合理（test-jianghu-1118.js；沒有 xiangqi-db/art/yunhe/pano.webp（美術原檔只在開發者電腦，公開副本沒有））
-- ﹣ 審查備註：改成「照手機系統語言、要看中文到設定切換」，中英都有；CRLF 也在 4000 字內（test-lang-default-1117.js；沒有 xiangqi-ios（公開副本不含））
+- ﹣ 審查備註：改成「照手機系統語言、要看中文到設定切換」，中英都有；CRLF 也在 4000 字內（test-lang-default-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ iOS 包排除 data/docs/android.md（網頁版照舊）；其他說明文件照包（test-lang-default-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 原生：回前景重驗通過在 console 印一行；check-native.js 全部通過（test-lang-default-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 必改 1：真實引擎資料（xiangqi-db/analysis-cache.json）裡走進殺棋的步，還原後都不是正著、穩著（test-mathmodel-1046.js；沒有 analysis-cache.json）
@@ -85,6 +89,8 @@
 - ﹣ 〔原始碼〕外部公式參考 v2：殺棋整點寫成跟 Lichess 相同、封頂維持 ±2000；三種對照算法各有定義、固定的出處與適用限制（test-mathmodel-81.js；沒有 story/數學模型_外部公式參考.md（文件只在開發者電腦，公開副本沒有））
 - ﹣ 〔原始碼〕預先驗證方案 v1.3：三類證據分開、分流數字不是通過條件、mm 的名稱、便利樣本、總結的精確規格、併入開發者決定；v1.2 凍結不動（雜湊跟紀錄一樣）（test-mathmodel-82.js；沒有 story/數學模型_預先驗證方案_v1.3.md（文件只在開發者電腦，公開副本沒有））
 - ﹣ 預算敏感度的結果文件寫明它只檢查分析可靠性（W57：從上一支拆出，沒有文件時明列略過）（test-mathmodel-82.js；沒有 story/數學模型_引擎預算敏感度_1115.md（故事稿資料夾不公開））
+- ﹣ 〔原始碼〕iOS native-bridge 的轉向照舊（data/banlist.json、data/fixes.json）（test-netfetch-1117.js；沒有 xiangqi-ios（run-tests 還沒複製 iOS 專案））
+- ﹣ 〔原始碼〕App 隱私申報 app-privacy.md 跟 privacy.md 同一套說法（送過意見回饋才在開 App 時下載修正清單；隱私標籤不另外勾選）（test-netfetch-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 千秋盃虛擬棋客由裁判台代簽：開局寫棋客座位的一次性公開金鑰（sv 2）；棋客的棋步、認輸有簽名，真人、觀眾、裁判台都收；簽好名的盤照常計分（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
 - ﹣ 冒充棋客、重放：沒簽名的棋客認輸、用自己的金鑰冒簽、把棋客在別盤的真簽名搬過來、把棋客舊的那步換更大的 rev 重送——真人、觀眾、裁判台都不收，積分和賽果都不變（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
 - ﹣ 簽署完成前禁止計分入口：舊裁判台（sv 1）開的盤、棋客座位沒有金鑰——棋客沒簽名的認輸照舊收（相容），但這盤不進正式積分（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
@@ -94,18 +100,18 @@
 - ﹣ 渡口上色圖都在（場景圖只放 CDN）（test-port-yz-color-1116.js；沒有 data/shipmap 場景圖（只放 CDN，公開副本沒有））
 - ﹣ D P2-1：開場、選格、存檔讀檔畫面的字都翻得出（組合字串用 pat）（test-r18-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ D P3-2：大廳「📜 名冊 N」每個數字都翻成 Roster N（test-r18-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
-- ﹣ E-1：審查備註照實際畫面（沒有底部分頁列、🗺 地圖、新手練習），Notes 不超過 4000 字（test-r18-1117.js；沒有 xiangqi-ios（公開副本不含））
+- ﹣ E-1：審查備註照實際畫面（沒有底部分頁列、🗺 地圖、新手練習），Notes 不超過 4000 字（test-r18-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ D P2-2：開場電影字幕（OP_FILM1／2、分頁版、標題、序局提示）、序局視窗的操作說明全部翻得出（test-r19-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ D P2-3：省電模式、四顆靜音鈕的 aria-label 有英文（test-r19-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ D P2-4：我的角色牆上的東西（名稱＋會變的數字）、快速對局視角鈕、古戰場的 aria-label 都翻得出（test-r19-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ D P2-4：主要頁面的 aria-label／title 純文字值，英文介面都翻得出（07i18n 外掛字典合起來掃）（test-r19-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
-- ﹣ E19-2／E19-3：審查備註 Native 段寫 Game Center、每日提醒、今日茶單的位置；設定標籤點兩下、對局中換頁確認；Notes 在 4000 字內（test-r19-1117.js；沒有 xiangqi-ios（公開副本不含））
+- ﹣ E19-2／E19-3：審查備註 Native 段寫 Game Center、每日提醒、今日茶單的位置；設定標籤點兩下、對局中換頁確認；Notes 在 4000 字內（test-r19-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ E19-5：每日同題題頭（編號、一口／一盞／一壺、再解一次／補玩）和古譜出處（書名＋局號）都翻成英文（test-r19-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ D N4：測試員 D 畫面掃描抓到的動態 aria-label，英文都翻得出（名字、古譜題名照原文的除外）（test-r20-dbe-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ D N5：codex、guess、coop、arena、xiaohan、weekly、返回鈕、大廳取名、today 的介面文字有英文（test-r20-dbe-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ B N20-3／N20-4：卡冊 Lv 100 寫「已滿級」不寫分數；＋星輝、陪你走按鈕 44 高（test-r20-dbe-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ B N20-6：星門圍城第一次破關的結算分開標首勝獎勵（成長列另含闖關星）；獎勵邏輯不動（test-r20-dbe-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
-- ﹣ E N20-2／N20-6：審查備註照實際行為寫（點一下就走過去、選了目的地才問、取名視窗）；CRLF 算也 ≤4000（test-r20-dbe-1117.js；沒有 xiangqi-ios（公開副本不含））
+- ﹣ E N20-2／N20-6：審查備註照實際行為寫（點一下就走過去、選了目的地才問、取名視窗）；CRLF 算也 ≤4000（test-r20-dbe-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 77：組起來的讀螢幕名稱分段翻（翻不出的局名留原文，旁邊是中文用「，」）；canvas 的 aria 也翻；字典晚到時重算 axm 名字（test-r21-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ 78：#/pos 擺局頁說明整句有英文（test-r21-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ 74：合作殘譜英文：說明、7 題目標、殘篇閣標題（🧩 換成圖之後）；粗體後面接的字前面有空格（test-r21-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
@@ -144,30 +150,33 @@
 - ﹣ 快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡；暖機 WS 那段 11/18 第 36 輪又改過，不比）（test-r40-1118.js；沒有 1010 快照（只在這台電腦的暫存區））
 - ﹣ 8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 10 原生設定：loggingBehavior＝none、CFBundleLocalizations 有 en、CAPACITOR_DEBUG 只在 Debug 設定檔（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
-- ﹣ 11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
+- ﹣ 11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（test-review-e-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 13 大廳安全須知寫實際的按鈕名稱；系統分頁隱私卡片直接有「刪除這支手機的全部資料」（兩版都有，沿用兩次確認）（test-review-e-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ 兩頁存在、是完整的 HTML（doctype、charset、viewport、標題），中英對照（test-support-pages-1117.js；沒有 xiangqi-lab/src/support.html（公開副本不含））
 - ﹣ 沒有開發用字：test-*.js、網頁版用的欄位、測試項數、只在 App 裡看得懂的「見第 N 項」（test-support-pages-1117.js；沒有 xiangqi-lab/src/support.html（公開副本不含））
 - ﹣ 不載入任何外部資源：沒有 script、外部樣式、圖片、字型、iframe、CSS url()／@import；favicon 用 data:（test-support-pages-1117.js；沒有 xiangqi-lab/src/support.html（公開副本不含））
 - ﹣ 有聯絡信箱（可點的 mailto）、互相有連結；支援頁有四個常見問題（test-support-pages-1117.js；沒有 xiangqi-lab/src/support.html（公開副本不含））
-- ﹣ metadata.md：支援網址、隱私權政策網址換成新網頁；聯絡人姓名、信箱；電話留給開發者本人填；賣家名稱（test-support-pages-1117.js；沒有 xiangqi-ios）
+- ﹣ 〔原始碼〕檢舉時限跟 App Store 審查備註同一個數字（appstore/metadata.md）（test-support-pages-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
+- ﹣ 〔原始碼〕iOS 隱私申報 app-privacy.md 也有同一句修正清單說明（test-support-pages-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
+- ﹣ 〔原始碼〕iOS 包不放支援頁、隱私頁（copy-www 的 SKIP）（test-support-pages-1117.js；沒有 xiangqi-ios）
+- ﹣ metadata.md：支援網址、隱私權政策網址換成新網頁；聯絡人姓名、信箱；電話留給開發者本人填；賣家名稱（test-support-pages-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 7 個檔都在（art 來源、site/data、iOS www 三處內容一樣）、尺寸跟原圖一樣；原圖沒動（test-winter-scenes-1117.js；沒有 xiangqi-db/art 原圖和 xiangqi-ios（公開副本不含；三處比對只在開發者電腦跑））
 - ﹣ preload.json：7 張都在、大小和內容指紋對，版本 v 照全部項目重算（手機看到新指紋才會下載）（test-winter-scenes-1117.js；沒有 xiangqi-lab/site/data/ximarket/xm_day_winter.webp（公開副本不含））
 - ﹣ iOS：scripts/.www-files.json 有 7 張、大小對；www/native-build.json 的資料夾大小算進去（test-winter-scenes-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 英文：櫃坊新字串併進外掛字典後都翻得出（掌櫃、七星的信照 {你}／{名} 換過的樣子）（test-xsm-counter-1116.js；沒有 xiangqi-db/i18n-en.json 英文外掛字典（只放 CDN，公開副本沒有））
 - ﹣ 西市借的三首配樂檔都在（mp3 只放 CDN）（test-xsm-stalls-1116.js；沒有 data/bgm 的 mp3（只放 CDN，公開副本沒有））
 - ﹣ 門內圖原檔（只在開發者電腦；發布時才放上 CDN）：尺寸 768×1376、大小合理（test-zm-hall-1121.js；沒有 xiangqi-db/art/zmhall/central.webp（美術原檔只在開發者電腦，公開副本沒有））
-- ﹣ ring3d.json 有十位掌門的圓牌位置（數值合理），兩份一致（test-zm-medallion-1118.js；沒有 tripo_app/ring3d.json（公開副本的 run-tests 把 source/ 抄到暫存資料夾，倉庫的 data/ 也不在旁邊））
+- ﹣ ring3d.json 素材原始資料跟網站那一份一致（test-zm-medallion-1118.js；沒有素材原始資料 tripo_app/ring3d.json（公開副本只有網站那一份，兩份一致只在開發者電腦驗））
 - ﹣ 深度表 glydepth.json 也算過十位掌門（W57：從上一支拆出）（test-zm-medallion-1118.js；沒有 tripo_app/glydepth.json（只放 CDN））
 
 ## 先看這三個數字（不要只看總數）
 
 | 類別 | 項數 | 這類測試證明了什麼 |
 |---|---:|---|
-| 行為 | 1907 項（通過 1900、略過 7） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
-| 混合 | 91 項（通過 89、略過 2） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
-| 原始碼比對 | 309 項（通過 303、略過 6） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 1041 項（通過 909、略過 132） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-refit-1118.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-film-tap-1118.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-jh-fade-1118.js`、`test-jianghu-1118.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-pvp-faceoff-1121.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js`、`test-zm-medallion-1118.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 行為 | 2249 項（通過 2242、略過 7） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
+| 混合 | 122 項（通過 120、略過 2） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
+| 原始碼比對 | 349 項（通過 343、略過 6） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
+| 待分類 | 1054 項（通過 913、略過 141） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-refit-1118.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-film-tap-1118.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-jh-fade-1118.js`、`test-jianghu-1118.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-pvp-faceoff-1121.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js`、`test-zm-medallion-1118.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -270,12 +279,14 @@
 ### E05 失著說出分析線支持的具體後果
 
 - 從哪一版：2300
-- 自動測試：34 項（行為 27、混合 1、原始碼比對 3、待分類 3）
+- 自動測試：37 項（行為 30、混合 1、原始碼比對 3、待分類 3）
   - ✔ 〔行為〕原生 App、有隔離但沒有 SharedArrayBuffer 也算太舊；引擎的 load／search／prefetch 都直接回那句話（不再叫人關掉重開、不抓引擎檔）
   - ✔ 〔行為〕讀取輪分段跑（#74 Android 12 第三次重跑：一次 evaluate 超過 cdp.js 的 30 秒）：背景開跑、短呼叫取回；做完回結果、逾時回 error＋做到一半的；每個檔記時間
   - ✔ 〔待分類〕監聽在捕獲階段（error 不冒泡，SVG <image> 的錯誤也要抓得到）
   - ✔ 〔行為〕退路：iPhone 一次建不起 384 MB（建構子丟 RangeError）→ 退回 192 MB 起跳＋1 條執行緒，引擎照樣啟動、建構子有換回
   - ✔ 〔原始碼〕挑戰電腦落子、提示都用 engPos；畫面訊息不放 e.message，細節留在 P.engErr
+  - ✔ 〔行為〕ETIMG 組出來的 onerror 編譯得過（不是語法錯誤）
+  - ✔ 〔行為〕所有 m/*.js 的 onerror 都沒有反斜線（寫在字串裡會被當成跳脫吃掉）
   - ✔ 〔行為〕第 4 項：t 臨界值（Cornish–Fisher）跟精確值對照——df 9 以上差 < 0.005、df 4 差 < 0.08；df 無限大＝常態值；Bonferroni 的常態值 3 組 2.394／2.128、6 組 2.638／2.394
   - ✔ 〔原始碼〕P2：HAC、重抽、區塊重抽只在離線模擬裡；App 的 skillPick 仍然是配對估計＋Bonferroni＋t（這一輪沒有換）
   - ✔ 〔行為〕鏡像河界層 BRV：仰角 40° 以上不畫（全局俯視不重影）、20° 以下照舊 .95（低角度看倒影時還在），中間漸變；只在 gntMirror 每幀調
@@ -304,6 +315,7 @@
   - ✔ 〔行為〕後果文字（黑方）：將軍、將死
   - ✔ 〔行為〕對局紀錄清單：pend＝我方還有幾步沒評（對方的步不算）；舊存檔沒有 rr 照常讀
   - ✔ 〔行為〕/db/grades：後來評好的補進存檔（帶 rr）；f、t 對不上的不補、已經有評等的不動；補完清單的 pend 跟著少
+  - ✔ 〔行為〕審查 #155：開頁時就是橫式圖（scwPre），圖載不到要退回原圖；onerror 沒接到、scwSync 看到載完沒寬也一樣退回
   - ✔ 〔混合〕開頁就是寬版（07z Home 開頁那條路）：onerror 也走 hmwFail，一樣先等 CDN
 - 截圖：[06_結算說出失著具體後果.png](evidence/06_%E7%B5%90%E7%AE%97%E8%AA%AA%E5%87%BA%E5%A4%B1%E8%91%97%E5%85%B7%E9%AB%94%E5%BE%8C%E6%9E%9C.png)
 - 怎麼操作：挑戰電腦第 1 級，故意把子送到對方吃得到的地方，下 3 步以上認輸。
@@ -407,7 +419,7 @@
 ### E14 檢舉追蹤編號與狀態
 
 - 從哪一版：2330
-- 自動測試：35 項（行為 22、原始碼比對 4、待分類 9）
+- 自動測試：37 項（行為 22、原始碼比對 4、待分類 11）
   - ✔ 〔原始碼〕01-board 的格子說明用 axmCellLabel（翻轉時用畫面上的格子編號 k）
   - ✔ 〔行為〕清單齊全：英文六個畫面＋繁中六個功能、編號不重複、每項都寫要證明什麼與評審細項
   - ✔ 〔行為〕檔名：B<編號>-<id>-<尺寸>.png，符合 manifest 的檔名規則；防爆版頁面都有名字
@@ -416,7 +428,8 @@
   - ✔ 〔行為〕意見回饋：兒童模式時 postForm 只送文字；玩家登記直接吞掉不送；檢舉照送
   - ﹣ 略過 〔待分類〕第 15 批 古戰場橫式（812×375、844×390 抽屜開／沒開）每朝每卷、中英文：不輸出戰役名、引線，只有編號（字至少 11px）；點與編號不進分頁列、清單鈕；地名不壓點、不互壓；同一卷排兩次一樣（略過原因：沒有 xiangqi-db/i18n-en.json 英文外掛字典（只放 CDN，公開副本沒有））
   - ✔ 〔待分類〕G-1（P1）：名帖的「🚩 檢舉」「🚫 封鎖」「解除封鎖」鈕自帶深底淺字＋框線，不管名帖底色都看得清楚（對比 ≥ 4.5:1）、高 44；網頁版同一支程式
-  - ﹣ 略過 〔待分類〕檢舉 7 天內處理：limits.md、支援頁、審核備註同一個說法；metadata 待勾項目勾掉（略過原因：沒有 xiangqi-lab/src/support.html（公開副本不含））
+  - ﹣ 略過 〔待分類〕檢舉 7 天內處理：limits.md、支援頁同一個說法（審核備註那一半拆到下一項）（略過原因：沒有 xiangqi-lab/src/support.html（公開副本不含））
+  - ﹣ 略過 〔待分類〕〔原始碼〕App Store 審查備註 metadata.md：檢舉 7 天的待勾項目勾掉、英文也寫（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
   - ✔ 〔待分類〕N2 reportPlayer：本機網址不送的判斷要排除 App
   - ✔ 〔行為〕讀驗證紀錄：執行編號、時間、版本、source/ 樹雜湊、run-tests 狀態
   - ✔ 〔行為〕同一次執行才產生：執行編號不同、缺編號、run-tests 沒跑都拒絕
@@ -439,8 +452,9 @@
   - ✔ 〔行為〕刪除請求：送一筆「🗑 刪除請求」（編號＋裝置代號）、清掉大廳上線狀態與戰績摘要、關掉玩家登記、手機記住編號
   - ✔ 〔行為〕sheet-retention.gs：RET_APPLY＝true 整列清空（列號不動）；停權名單讀不到就不清檢舉
   - ✔ 〔行為〕sheet-retention.gs：刪除請求依裝置代號清（刪除請求那列留著、標成處理完；別人檢舉他的不清）
-  - ﹣ 略過 〔待分類〕11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（略過原因：沒有 xiangqi-ios（公開副本不含））
+  - ﹣ 略過 〔待分類〕11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
   - ✔ 〔行為〕--report：把資料夾裡的結果合併出總表（同一局不重複算）
+  - ﹣ 略過 〔待分類〕〔原始碼〕檢舉時限跟 App Store 審查備註同一個數字（appstore/metadata.md）（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
   - ✔ 〔原始碼〕threat-model.md 的對照表：每一列都有編號、寫到的 net.js 名稱都存在、測試檔都存在
   - ✔ 〔原始碼〕defs 和畫棋子用的是同一個編號（boardBG 收到的就是 uid）
 - 截圖：（無）
@@ -474,7 +488,7 @@
 ### E18 分析一致性案例庫：34 個真實局面，評等字、兵數、局面句、原因句互相一致
 
 - 從哪一版：2400（下一版）
-- 自動測試：54 項（行為 52、待分類 2）
+- 自動測試：55 項（行為 53、待分類 2）
   - ✔ 〔行為〕棋盤格念的路數跟著法一致：開局紅炮在 h2＝炮二、紅傌在 b0＝傌八
   - ✔ 〔行為〕案例庫：至少 24 個、紅黑各半左右、該有的情況都有
   - ✔ 〔行為〕r01 紅 炮二平五【正著】：一致性
@@ -516,6 +530,7 @@
   - ✔ 〔行為〕入口貼著圖的最上和最下：退回整張圖完整顯示（等於原本 r07-fit），不裁
   - ✔ 〔行為〕包裝：手機直向（402×874）照原本的 r07Wide 走、圖框樣式不動；iPad 直向（820×1180）由 07fl 接手、填滿寬度
   - ✔ 〔行為〕意見回饋 885：「我的角色」書齋牆（.mz-wall）在 iPad 直向不縮成一屏、照手機滿寬往下捲；橫向照原本的 r07Wide
+  - ✔ 〔行為〕巡法固定案例（#196 審查第 1 點：銅人不動、改成逆時針都要抓得到）：空房間照目前方向跳；馬腿被蹩就順時針換下一個方向；上廳銅人的巡場路線固定
   - ﹣ 略過 〔行為〕必改 1：真實引擎資料（xiangqi-db/analysis-cache.json）裡走進殺棋的步，還原後都不是正著、穩著（略過原因：沒有 analysis-cache.json）
   - ✔ 〔行為〕P1：重評重現的案例——score＝999、base＝80 的紀錄：工具標「不一致」，而且任何統計都沒有算進去（有它、沒有它，驗證母體的每一個數字都一樣）
   - ✔ 〔行為〕P1：重評重現的案例——full:0（我方沒有每一步都評完）的紀錄：標出來，而且不計入驗證母體的 base.n、score.n；只在「描述」那一段出現
@@ -536,7 +551,7 @@
 ### E19 續局與分頁衝突：Web Locks 讓會改盤面的動作排隊、版本號防覆蓋、換盤備份可救回、存檔壞掉改讀上一份、看得到的對局保存紀錄
 
 - 從哪一版：2400（下一版）
-- 自動測試：49 項（行為 22、混合 3、原始碼比對 3、待分類 21）
+- 自動測試：50 項（行為 23、混合 3、原始碼比對 3、待分類 21）
   - ✔ 〔待分類〕〔原始碼〕接線：設定頁角色分頁呼叫 dglSetRow；觀星臺 gxtSky 開 dglXiuSheet；包一層 setTop 放兩條；角色卡寫到星圖；新字有英文
   - ✔ 〔原始碼〕只開一個瀏覽器、finally 一定關、每個分頁都設測試房 xq_test、檔名不是 test- 開頭
   - ✔ 〔行為〕開 App 時能不能直接回去：6 小時內、同一盤還在還沒下完；過期、換盤、下完、已過關、網址怪的都不行
@@ -555,7 +570,7 @@
   - ✔ 〔行為〕九關都在序章（第一個分頁）、關名 A1～C3、擺法合法；主線第 1～12 關沒動
   - ✔ 〔待分類〕D P3-1：英文時設定分頁縮字不切、清單小字可以換行（只在 html[lang=en]）
   - ✔ 〔待分類〕點擊區 CSS：設定分頁、開關、開關列、說明文件鈕、怎麼判、檢查更新、城市選單、收起畫軸、文牒、存檔鈕、規則、＋星輝、平面棋盤、鏡頭鈕
-  - ﹣ 略過 〔待分類〕E-1：審查備註照實際畫面（沒有底部分頁列、🗺 地圖、新手練習），Notes 不超過 4000 字（略過原因：沒有 xiangqi-ios（公開副本不含））
+  - ﹣ 略過 〔待分類〕E-1：審查備註照實際畫面（沒有底部分頁列、🗺 地圖、新手練習），Notes 不超過 4000 字（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
   - ﹣ 略過 〔待分類〕D P2-2：開場電影字幕（OP_FILM1／2、分頁版、標題、序局提示）、序局視窗的操作說明全部翻得出（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
   - ✔ 〔待分類〕N27-1：標題裡有按鈕／分頁鈕（挑戰電腦 .cpu-seg）不限高——照 CSS 算鈕實際露出的高度：320／375／393／430 寬、中英都是完整 44px（斷網只影響寬度、不影響高度；畫面上實際能點的高度仍請瀏覽器複驗）
   - ✔ 〔待分類〕N27-2：挑戰電腦的兩顆分頁鈕放不下就拿掉小圖示、縮字（12px，再不行 11px 換行）；標題字和返回鈕不動；放得下不縮
@@ -581,6 +596,7 @@
   - ✔ 〔行為〕保存紀錄：事件順序（新的在前）、連續自動存檔合成一筆、最多 20 筆、不存棋譜
   - ✔ 〔原始碼〕開頭畫面 menu 照 tsmMenu 排、fwNeed 走 tsmFirst、journeyStart 只在 had 或沒進度時清、local.js 舊分頁不寫回
   - ﹣ 略過 〔待分類〕13 大廳安全須知寫實際的按鈕名稱；系統分頁隱私卡片直接有「刪除這支手機的全部資料」（兩版都有，沿用兩次確認）（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
+  - ✔ 〔行為〕8 塊牌：四角在圖內、左上右上右下左下；順序照 TM_Q（近到遠、左右交錯：偶數在左、奇數在右，越遠越小）
   - ✔ 〔混合〕整場只有一個 3D 實例：開 3D 時先把對局頁那個收掉；之後重畫、換盤、換視角、再開一場都不再建；3D 開著時 whl3dOn＝true（對局頁的 parkDraw 不建新的）
   - ✔ 〔行為〕換盤：park3d 拿到的是新那一盤的局面，ex.bkey 換成那一盤的（同一盤重畫不變）；被吃子、開局照那一盤算；選取不帶過去
   - ✔ 〔混合〕park3d 換盤直接擺好：bkey 變了＝不拿上一盤比對（prevB 清掉 → 整盤重擺，不會把碰巧對得上的子當成走過去）、進行中的動畫當場收尾、拖到一半的子放下；第一次給 bkey、同一盤都不動
@@ -624,7 +640,7 @@
 ### E21 無障礙：螢幕報讀與鍵盤模式、高對比主題（對比 ≥7:1）、字級最大 2 倍與跟著系統字級、靜態稽核
 
 - 從哪一版：0100（下一版）
-- 自動測試：53 項（行為 23、混合 4、原始碼比對 8、待分類 18）
+- 自動測試：56 項（行為 24、混合 5、原始碼比對 9、待分類 18）
   - ✔ 〔行為〕axsPan：翻轉棋盤（執黑）左右對調；路數跟 11b axmPos 念的一樣（一路在右）
   - ✔ 〔行為〕axsLoadStep：超過 0.8 秒才念「載入中…」，好了念「載入完成」；很快就好不念；標籤跟著工作
   - ✔ 〔原始碼〕空間導覽：XQDOC 有 tour；a11y-tour.md 兩邊一樣、寫到首頁、茶肆、大廳、棋譜庫、園子和園子地點清單；不含會被當成載入提示的字
@@ -677,6 +693,9 @@
   - ✔ 〔待分類〕第 10 批 D-5 播報區：英文、視窗的字還有中文（外掛字典還沒載完）先不念，載完翻好只念一次；英文的直接念一次；任何一顆按鈕關視窗清掉念過的每一句；3 秒內同一句（去掉圖示）不管中間插了什麼都不再寫
   - ✔ 〔待分類〕第 12 批 古戰場字級照實際像素：橫式（829、490 寬）的戰役名、地名、戰役點跟直式（390 寬）差不多大，不再大一倍
   - ✔ 〔行為〕拉滑桿（sxmApply）：每條匯流排平滑換到新音量（setTargetAtTime 15ms）、背景音樂播放器音量跟著、語音 0 就停念
+  - ✔ 〔行為〕smScene 用橫式圖：琴囊、棋盤框、高對比描金照條目；原圖照 SM_BOARD 的像素
+  - ✔ 〔混合〕大字模式：橫式木牌以板面中心為準、寬度放大 58/45、top 寫中心、高度交回 CSS；一般字級照條目；m.css 字級照 --fz 放大
+  - ✔ 〔原始碼〕5 頁都掛 shpScw；m.css 橫式字級縮小
   - ✔ 〔行為〕〔行為〕每一宿都有星官示意、點選範圍；點亮的有 on、選取的有 sel；讀屏念宿名
 - 截圖：（無）
 - 怎麼操作：設定 → 系統 → ♿ 無障礙：開螢幕報讀與鍵盤模式；對局按 B 跳到棋盤、方向鍵移動、Enter 選子落子、R 讀盤面；開高對比主題；字級選「最大」。稽核報告見 /data/docs/a11y.md。
@@ -685,7 +704,7 @@
 ### E22 教練功能：PGN／中文記譜匯出、殘局 621 題戰術主題標籤與依主題選題、作業連結（不收集資料）
 
 - 從哪一版：0100（下一版）
-- 自動測試：28 項（行為 14、原始碼比對 9、待分類 5）
+- 自動測試：29 項（行為 15、原始碼比對 9、待分類 5）
   - ✔ 〔行為〕高對比主題：文字、按鈕、棋盤線、棋子字都 7:1 以上
   - ✔ 〔行為〕高對比棋子（hiCon）或高對比主題開著：不重複畫黑環和將字牌，只把上一步改朱橘
   - ✔ 〔待分類〕全部經過同一個判斷（改 07w7 一處全部一起變）；退路；深色主題照舊；時辰鐘、黑洞檔沒動
@@ -709,6 +728,7 @@
   - ✔ 〔原始碼〕殺法沒分數時按鈕改「做棋力測驗」，有分數才去主題訓練
   - ✔ 〔原始碼〕對局頁（主題訓練、古戰場…共用的 boardPage）：說明 #note 後面的空白 div 是 flex-grow .001，不再跟說明平分高度
   - ✔ 〔原始碼〕初次提示改成讓真的出口外框亮起（shwXHi/.ex-hi），不再放像按鈕的假「出去」提示
+  - ✔ 〔行為〕主題小牌、走路小動作：照原本的算法從 tmq 算（小牌離牌緣 53px，閃擊、牽制在下方）；都在安全區內
   - ✔ 〔行為〕名稱不撞：07bhw-wheel.js 宣告的頂層名字，m/ 和 src/ 其他檔都沒有宣告
   - ✔ 〔行為〕e mqtt-prune judgeX：過期（加 10 分鐘寬限）、沒有期限、只剩分段的整組清；期限內的、其他主題不動
   - ✔ 〔行為〕主題 id、回條不能再用一次 SHA-256 反推：跟 v3 算法不同，而且是 PBKDF2-SHA512 30 萬次以上導出
@@ -746,7 +766,7 @@
 | test-a11y-audio.js | — | 15 | 0 | 3 |  | 18／18 |
 | test-a11y-emoji.js | — | 4 | 0 | 1 |  | 5／5 |
 | test-a11y.js | — | 11 | 2 | 3 |  | 16／16 |
-| test-aab-assets-check-1121.js | — | 8 | 0 | 0 |  | 8／8 |
+| test-aab-assets-check-1121.js | — | 9 | 0 | 0 |  | 9／9 |
 | test-aab-diff-1123.js | — | 60 | 0 | 2 |  | 62／62 |
 | test-ai-think.js | — | 6 | 0 | 2 |  | 8／8 |
 | test-analysis-cases.js | — | 38 | 0 | 0 |  | 38／38 |
@@ -787,6 +807,7 @@
 | test-cpuroom-copy.js | — | 0 | 7 | 2 |  | 9／9 |
 | test-daynight-1117.js | — | 0 | 0 | 0 | 9 | 7／9（略過 2） |
 | test-delay-reward-1125.js | — | 3 | 0 | 3 |  | 6／6 |
+| test-delete-focus-1126.js | — | 3 | 0 | 0 |  | 3／3 |
 | test-device-checks-1121.js | — | 11 | 0 | 3 |  | 14／14 |
 | test-devmode-native-1124.js | — | 3 | 0 | 0 |  | 3／3 |
 | test-devview-1116.js | — | 1 | 0 | 2 |  | 3／3 |
@@ -835,7 +856,7 @@
 | test-home-bar-1115.js | — | 0 | 0 | 3 |  | 3／3 |
 | test-home-c1-tap-1117.js | — | 0 | 0 | 0 | 2 | 2／2 |
 | test-home-order.js | — | 5 | 0 | 1 |  | 6／6 |
-| test-home-pano.js | — | 0 | 0 | 0 | 10 | 9／10（略過 1） |
+| test-home-pano.js | — | 0 | 0 | 0 | 12 | 11／12（略過 1） |
 | test-homeclamp.js | — | 3 | 0 | 0 |  | 3／3 |
 | test-human-ai.js | — | 11 | 0 | 2 |  | 13／13 |
 | test-human-p1.js | — | 0 | 2 | 1 |  | 3／3 |
@@ -844,33 +865,64 @@
 | test-i18n-story.js | — | 0 | 0 | 0 | 8 | 8／8 |
 | test-i18n.js | — | 55 | 4 | 4 |  | 63／63 |
 | test-icon-gap-1117.js | — | 0 | 0 | 0 | 4 | 1／4（略過 3） |
-| test-imac-g1514.js | — | 0 | 0 | 0 | 10 | 8／10（略過 2） |
+| test-icon-onerror-1126.js | — | 4 | 0 | 0 |  | 4／4 |
+| test-imac-g1514.js | — | 0 | 0 | 0 | 13 | 8／13（略過 5） |
 | test-imac-h1514.js | — | 0 | 0 | 0 | 4 | 3／4（略過 1） |
-| test-imac-hfk-1117.js | — | 0 | 0 | 0 | 21 | 18／21（略過 3） |
-| test-imac-i1757.js | — | 0 | 0 | 0 | 9 | 7／9（略過 2） |
+| test-imac-hfk-1117.js | — | 0 | 0 | 0 | 23 | 18／23（略過 5） |
+| test-imac-i1757.js | — | 0 | 0 | 0 | 9 | 8／9（略過 1） |
 | test-imac-j1757.js | — | 0 | 0 | 0 | 6 | 5／6（略過 1） |
 | test-imac-v1514.js | — | 0 | 0 | 0 | 8 | 7／8（略過 1） |
 | test-inst-stq-1117.js | — | 0 | 0 | 0 | 5 | 5／5 |
 | test-ios-capsync-1118.js | — | 0 | 0 | 0 | 2 | 0／2（略過 2） |
 | test-ios-native-1116.js | — | 0 | 0 | 0 | 6 | 6／6 |
 | test-ipad-fill.js | — | 12 | 0 | 1 |  | 13／13 |
+| test-ipad-scene-review-1126.js | — | 5 | 0 | 0 |  | 5／5 |
 | test-jh-canal-1122.js | — | 8 | 1 | 2 |  | 10／11（略過 1） |
+| test-jh-central2-1126.js | — | 9 | 0 | 1 |  | 10／10 |
+| test-jh-central3-1126.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-jh-corner-1126.js | — | 8 | 0 | 1 |  | 9／9 |
+| test-jh-corner2-1126.js | — | 6 | 0 | 1 |  | 7／7 |
+| test-jh-corner3-1126.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-jh-cross-1124.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-jh-cross2-1126.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-jh-cross3-1126.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-jh-elephant2-1126.js | — | 4 | 0 | 0 |  | 4／4 |
+| test-jh-elephant3-1126.js | — | 4 | 0 | 0 |  | 4／4 |
 | test-jh-fade-1118.js | — | 0 | 0 | 0 | 2 | 2／2 |
 | test-jh-fanggong-1122.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-jh-feixiang-1122.js | — | 6 | 0 | 1 |  | 7／7 |
 | test-jh-fxqm-legal-1123.js | — | 3 | 0 | 0 |  | 3／3 |
 | test-jh-gong-1122.js | — | 5 | 0 | 1 |  | 6／6 |
 | test-jh-halls8-1123.js | — | 8 | 0 | 1 |  | 9／9 |
+| test-jh-horse-1126.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-jh-horse2-1126.js | — | 4 | 0 | 0 |  | 4／4 |
+| test-jh-horse3-1126.js | — | 4 | 0 | 0 |  | 4／4 |
 | test-jh-kick-1122.js | — | 11 | 0 | 2 |  | 13／13 |
 | test-jh-liepao-1122.js | — | 5 | 0 | 1 |  | 6／6 |
 | test-jh-maze-1123.js | — | 54 | 0 | 2 |  | 56／56 |
 | test-jh-maze-fall-1124.js | — | 6 | 0 | 0 |  | 6／6 |
+| test-jh-maze-layers-1126.js | — | 11 | 0 | 1 |  | 12／12 |
 | test-jh-maze-lore-content-1124.js | — | 2 | 0 | 0 |  | 2／2 |
+| test-jh-maze-multisol-1126.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-jh-maze-render-1124.js | — | 7 | 4 | 2 |  | 13／13 |
 | test-jh-maze-sack-1124.js | — | 3 | 0 | 0 |  | 3／3 |
+| test-jh-maze-save-1126.js | — | 5 | 0 | 1 |  | 6／6 |
+| test-jh-opp-1126.js | — | 8 | 0 | 1 |  | 9／9 |
+| test-jh-opp2-1126.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-jh-opp3-1126.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-jh-palace-1126.js | — | 8 | 0 | 1 |  | 9／9 |
+| test-jh-palace2-1126.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-jh-palace3-1126.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-jh-pawn2-1126.js | — | 4 | 0 | 0 |  | 4／4 |
+| test-jh-pawn3-1126.js | — | 4 | 0 | 0 |  | 4／4 |
 | test-jh-qima-1122.js | — | 5 | 0 | 1 |  | 6／6 |
+| test-jh-same-1126.js | — | 10 | 0 | 1 |  | 11／11 |
+| test-jh-same2-1126.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-jh-same3-1126.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-jh-screen-1122.js | — | 14 | 1 | 1 |  | 16／16 |
+| test-jh-screen-1126.js | — | 8 | 0 | 1 |  | 9／9 |
+| test-jh-screen2-1126.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-jh-screen3-1126.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-jh-shunpao-1122.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-jh-xianren-1122.js | — | 6 | 0 | 1 |  | 7／7 |
 | test-jh-zm-engine-1123.js | — | 5 | 0 | 1 |  | 6／6 |
@@ -879,10 +931,12 @@
 | test-jret-1123.js | — | 13 | 0 | 1 |  | 14／14 |
 | test-kaiju-late-1125.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-kid-time-maze-1125.js | — | 4 | 0 | 1 |  | 5／5 |
+| test-kill-layout-1127.js | — | 4 | 0 | 1 |  | 5／5 |
 | test-land3d.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-lang-default-1117.js | — | 0 | 0 | 0 | 7 | 4／7（略過 3） |
 | test-layout-r16.js | — | 5 | 1 | 5 |  | 11／11 |
 | test-lefty.js | — | 10 | 0 | 2 |  | 12／12 |
+| test-legend-keep-1126.js | — | 2 | 0 | 0 |  | 2／2 |
 | test-legend-wording-1124.js | — | 0 | 1 | 0 |  | 1／1 |
 | test-make-evidence.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-mathmodel-1046.js | — | 20 | 5 | 1 |  | 23／26（略過 3） |
@@ -890,7 +944,9 @@
 | test-mathmodel-80.js | — | 13 | 0 | 2 |  | 14／15（略過 1） |
 | test-mathmodel-81.js | — | 14 | 3 | 4 |  | 19／21（略過 2） |
 | test-mathmodel-82.js | — | 7 | 1 | 2 |  | 8／10（略過 2） |
+| test-maze-chars-1126.js | — | 8 | 0 | 0 |  | 8／8 |
 | test-maze-illegal-1125.js | — | 3 | 0 | 1 |  | 4／4 |
+| test-maze-review-1126.js | — | 4 | 0 | 0 |  | 4／4 |
 | test-mnq-at-1117.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-mnq-skipall-1117.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-mp-p2.js | — | 7 | 0 | 1 |  | 8／8 |
@@ -905,7 +961,7 @@
 | test-net-reconnect.js | — | 16 | 0 | 0 |  | 16／16 |
 | test-net-sign.js | — | 12 | 0 | 1 |  | 13／13 |
 | test-net-start.js | — | 4 | 0 | 0 |  | 4／4 |
-| test-netfetch-1117.js | — | 0 | 0 | 0 | 10 | 10／10 |
+| test-netfetch-1117.js | — | 0 | 0 | 0 | 12 | 10／12（略過 2） |
 | test-newjourney-entry-1116.js | — | 4 | 0 | 2 |  | 6／6 |
 | test-noscore.js | — | 0 | 0 | 0 | 14 | 10／14（略過 4） |
 | test-opening-order-1117.js | — | 0 | 0 | 0 | 21 | 21／21 |
@@ -993,6 +1049,14 @@
 | test-ruleset-cases.js | — | 61 | 0 | 1 |  | 62／62 |
 | test-ruleset.js | — | 19 | 1 | 2 |  | 22／22 |
 | test-save-file.js | — | 5 | 0 | 1 |  | 6／6 |
+| test-scene-wide-camp.js | — | 5 | 1 | 0 |  | 6／6 |
+| test-scene-wide-gm.js | — | 3 | 2 | 0 |  | 5／5 |
+| test-scene-wide-l1610.js | — | 12 | 1 | 0 |  | 13／13 |
+| test-scene-wide-open.js | — | 5 | 1 | 0 |  | 6／6 |
+| test-scene-wide-stat.js | — | 6 | 1 | 0 |  | 7／7 |
+| test-scene-wide-study.js | — | 7 | 1 | 0 |  | 8／8 |
+| test-scene-wide-xsm.js | — | 8 | 1 | 1 |  | 10／10 |
+| test-scene-wide-yz.js | — | 8 | 1 | 1 |  | 10／10 |
 | test-season-card-1117.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-season-queue-1117.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-season-say-1117.js | — | 0 | 0 | 0 | 4 | 4／4 |
@@ -1019,7 +1083,7 @@
 | test-stats-kill.js | — | 0 | 2 | 3 |  | 5／5 |
 | test-still-here-1125.js | — | 7 | 0 | 2 |  | 9／9 |
 | test-stk-testenv-1124.js | — | 2 | 0 | 0 |  | 2／2 |
-| test-support-pages-1117.js | — | 0 | 0 | 0 | 9 | 4／9（略過 5） |
+| test-support-pages-1117.js | — | 0 | 0 | 0 | 12 | 4／12（略過 8） |
 | test-sw-offline.js | — | 0 | 0 | 2 |  | 2／2 |
 | test-td-orbit.js | — | 1 | 0 | 3 |  | 4／4 |
 | test-telemetry.js | — | 12 | 0 | 2 |  | 14／14 |
@@ -1037,9 +1101,23 @@
 | test-w102-master-gate-1124.js | — | 6 | 0 | 1 |  | 7／7 |
 | test-w104-jhgate-1124.js | — | 3 | 0 | 1 |  | 4／4 |
 | test-w106-maze-tex-cdn-1124.js | — | 4 | 0 | 0 |  | 4／4 |
+| test-w107-cupmap-l1610.js | — | 5 | 1 | 1 |  | 7／7 |
+| test-w107-feedback-l1610.js | — | 6 | 1 | 1 |  | 8／8 |
+| test-w107-hall-l1610.js | — | 3 | 3 | 1 |  | 7／7 |
+| test-w107-libmap-l1610.js | — | 6 | 0 | 1 |  | 7／7 |
+| test-w107-night-l1610.js | — | 4 | 1 | 0 |  | 5／5 |
+| test-w107-port-l1610.js | — | 8 | 10 | 1 |  | 19／19 |
+| test-w107-setmap-l1610.js | — | 7 | 0 | 1 |  | 8／8 |
+| test-w107-shippages-l1610.js | — | 1 | 6 | 1 |  | 8／8 |
+| test-w107-tablet-board-1125.js | — | 3 | 0 | 1 |  | 4／4 |
+| test-w107-termsmap-l1610.js | — | 4 | 0 | 1 |  | 5／5 |
+| test-w107-thememap-l1610.js | — | 4 | 0 | 1 |  | 5／5 |
 | test-w108-sel-glow-1125.js | — | 0 | 0 | 3 |  | 3／3 |
 | test-w109-home-cdn.js | — | 3 | 2 | 0 |  | 5／5 |
 | test-w126-ipcompat.js | — | 2 | 0 | 1 |  | 3／3 |
+| test-w131b-hub-fill.js | — | 2 | 0 | 1 |  | 3／3 |
+| test-w134-maze-joy.js | — | 7 | 0 | 2 |  | 9／9 |
+| test-w66-cdn-recheck-1126.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-w89-mentor-1124.js | — | 5 | 0 | 1 |  | 6／6 |
 | test-w92-oldwv-fallback-1124.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-watcher-sway-1115.js | — | 0 | 0 | 3 |  | 3／3 |
@@ -1058,7 +1136,7 @@
 | test-zh-canvas-1124.js | — | 5 | 1 | 0 |  | 6／6 |
 | test-zm-hall-1121.js | — | 24 | 0 | 6 |  | 29／30（略過 1） |
 | test-zm-intel-1121.js | — | 6 | 0 | 3 |  | 9／9 |
-| test-zm-medallion-1118.js | — | 0 | 0 | 0 | 5 | 3／5（略過 2） |
+| test-zm-medallion-1118.js | — | 0 | 0 | 0 | 6 | 4／6（略過 2） |
 | test-zm-screen-data-1122.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-zm-shijiao-1122.js | — | 9 | 0 | 0 |  | 9／9 |
 
@@ -1122,6 +1200,7 @@
 - ✔ 〔行為〕PR #11 審查：通用字串只出現一部分不算切塊接回；原生加了專用標記就直接認
 - ✔ 〔行為〕PR #11 審查：缺驗不能送審——結束代碼 有 ✘＝1、加 --cdn 有沒確認到的＝3、沒加 --cdn 不算缺驗＝0，並提醒要加 --cdn
 - ✔ 〔行為〕大檔放進包裡（全離線版）就不需要切塊接回 → 綠燈
+- ✔ 〔行為〕W66c：加 --cdn 跑整支工具，CDN 回 404 的圖要算 ✘、結束代碼 1；改壞驗證：主流程不把 404 推進 R.red 一定抓得到
 
 ### test-aab-diff-1123.js
 
@@ -1794,6 +1873,12 @@
 - ✔ 〔原始碼〕千秋起手式修成：修為、珍品當下發，開箱特效延後（chdGiveRelic 的 fxDelay）
 - ✔ 〔原始碼〕鏡像關卡電腦走子：0.7 秒後走之前比對同一盤、同一步、走法合法
 
+### test-delete-focus-1126.js
+
+- ✔ 〔行為〕第二層確認：「不要刪」帶 ax-first、「全部刪除」沒有
+- ✔ 〔行為〕axmDlgAdd：報讀模式先聚焦 ax-first；沒有就照舊第一顆
+- ✔ 〔行為〕改壞驗證：不看 ax-first 時檢查要抓得到
+
 ### test-device-checks-1121.js
 
 - ✔ 〔行為〕升級測試：升級後一切正常 → 沒有任何一項不符
@@ -2441,6 +2526,8 @@
 - ✔ 〔待分類〕〔原始碼〕接點：07z 開頁呼叫 hmpInit、縮放傳 ext、換寬版呼叫 hmpSet、hmClamp 扣鏡頭位移；07t3、07w、07x 各一處；m.html 載入順序
 - ✔ 〔待分類〕〔原始碼〕11/14 開發者：長卷開著時中間橋頭「← 西市」「觀星臺 →」藏起來（太佔版面），只靠兩側 ‹ › 指引；藏起來時兩側箭頭不再當成重複、旁白照念
 - ✔ 〔待分類〕〔原始碼〕11/15 開發者「西市和觀星臺交界處的背景顏色深淺不一致」：效果層蓋滿三屏時，兩側不再疊第二份飄雲與霧，飄雲維持每一屏重複一次
+- ✔ 〔待分類〕W132 鏡頭位移：手機直放、側欄模式照舊移一整屏；寬螢幕置中只移到那一屏外緣貼齊外框，不露出外面的空白
+- ✔ 〔待分類〕〔原始碼〕W132 鏡頭位移都走 hmpShift（hmpPlace、hmpCam 不再寫死 -i*w）
 
 ### test-homeclamp.js
 
@@ -2600,15 +2687,25 @@
 - ✔ 〔待分類〕〔照舊〕當朝有畫的照舊用當朝那張（只有缺的才換）
 - ﹣ 略過 〔待分類〕〔對照〕拿掉修補（舊 icoSrc）就會要到不存在的檔（略過原因：沒有 data/icons 圖示（只放 CDN，公開副本沒有））
 
+### test-icon-onerror-1126.js
+
+- ✔ 〔行為〕ETIMG 組出來的 onerror 編譯得過（不是語法錯誤）
+- ✔ 〔行為〕備援真的會跑：沒有舊圖時，第一次失敗改抓經典版圖示，經典版也失敗就換成表情文字
+- ✔ 〔行為〕備援真的會跑：有舊圖時，經典版失敗後先換舊圖、舊圖也失敗才換表情文字；本來就是經典版的不再抓一次經典版
+- ✔ 〔行為〕所有 m/*.js 的 onerror 都沒有反斜線（寫在字串裡會被當成跳脫吃掉）
+
 ### test-imac-g1514.js
 
 - ✔ 〔待分類〕G-1（P1）：名帖的「🚩 檢舉」「🚫 封鎖」「解除封鎖」鈕自帶深底淺字＋框線，不管名帖底色都看得清楚（對比 ≥ 4.5:1）、高 44；網頁版同一支程式
 - ﹣ 略過 〔待分類〕G-2（P1）：相機權限說明照實際用途（意見回饋附圖選「拍照」）；換手機掃 QR 已經沒有入口；四個地方一致（略過原因：沒有 xiangqi-ios）
+- ﹣ 略過 〔待分類〕〔原始碼〕G-2（P1）：App 隱私申報 app-privacy.md 也照實際用途寫相機（拍照附圖），沒有掃 QR 的舊說法（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕G-4：隱私、家長文件裡的 Game Center、桌面小工具，只在原生 App 真的有那個外掛（XQNative.has）時才顯示；目前的建置兩個都沒有 → 不寫
-- ﹣ 略過 〔待分類〕G-4：審查備註、App 隱私申報照建置內容：Notes 不寫 Game Center、小工具（另外放「裝了 --gc-widget 才換上」那一段）；申報表標註只有那種建置才有（略過原因：沒有 xiangqi-ios）
+- ﹣ 略過 〔待分類〕G-4：審查備註、App 隱私申報照建置內容：Notes 不寫 Game Center、小工具（另外放「裝了 --gc-widget 才換上」那一段）；申報表標註只有那種建置才有（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕#/fbadmin：原生 App 直接擋掉（回首頁），網頁版照舊
 - ✔ 〔待分類〕D1：關於頁的開發者寫「Hung-Sheng Chen」（跟 App Store 賣家名稱一致）；玩家看得到的地方不再有 hungshengc
+- ﹣ 略過 〔待分類〕〔原始碼〕D1：App Store 上架文案（metadata.md、app-privacy.md）也沒有 hungshengc（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕D2：原生 App 三個匿名開關（卡住的地方、對局評分、學習進度）全新安裝預設關；已經有存檔的照原本（開著）；自己切過的不動；網頁版照舊
+- ﹣ 略過 〔待分類〕〔原始碼〕D2：App 隱私申報保留三個匿名開關並寫理由；商店描述也寫了（appstore/）（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕G P3-1：第 9 項寫「送過回饋才在開 App 時抓修正清單、進大廳才抓停權名單」；同一個資料檔同一次開 App 只真的抓一次
 - ✔ 〔待分類〕G P3-2／P3-3：設定房間的「🔒 隱私・家長」寫出字；文牒 ✕、名冊 ✕、「隱私說明 ›」可點範圍撐到 44
 - ✔ 〔待分類〕G P3-4／P3-5／P3-6／P3-8／P3-9／P3-10：不寫死 iPhone、換手機路徑、App 版藏開發用字、入口標籤在角色上面、回棋鎮回首頁、地圖頁狀態列深色字
@@ -2617,7 +2714,7 @@
 
 - ✔ 〔待分類〕H P1：右側安全區 84px（iPhone Duo 466 寬）——頂欄右邊的鈕、底部卡片 ✕、滑出面板（全部錯棋）都在安全區外；沒有側邊安全區時位置不變
 - ✔ 〔待分類〕H P1：滑出面板可以往下滑關、點外面關（遮罩被別的圖層蓋住也一樣）
-- ﹣ 略過 〔待分類〕H P2（準則 2.3）：商店描述照畫面寫 18 級（新手～專3・全力），不再寫「入門到大師共八個難度」；其他數字對過（略過原因：沒有 xiangqi-ios）
+- ﹣ 略過 〔待分類〕H P2（準則 2.3）：商店描述照畫面寫 18 級（新手～專3・全力），不再寫「入門到大師共八個難度」；其他數字對過（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕H P2（準則 2.5.2 觀感）：原生 App 的引擎是從本機讀——進度寫「準備」、讀完不跳「下載完成」；網頁版照舊
 
 ### test-imac-hfk-1117.js
@@ -2636,7 +2733,9 @@
 - ✔ 〔待分類〕K P3-6：直接開 #/legend（沒帶哪一段）補一句從哪裡進、一顆去書架；#/ouyu、#/qqev 本來就有說明卡
 - ✔ 〔待分類〕K P3-9：護眼／休息提醒在剛換進對局頁時不跳（等這盤下完）；第二次 16 分鐘是「等一下再說」的 15 分鐘再提醒
 - ✔ 〔待分類〕開關定案：問小帥的 Google AI／Gemini 兩版都拿掉（ASK_EXT_AI_WEB＝false）、古譜講解只給開發者（AN_LLM_WEB＝false）；說明文件不再分 App 版和網頁版
-- ﹣ 略過 〔待分類〕檢舉 7 天內處理：limits.md、支援頁、審核備註同一個說法；metadata 待勾項目勾掉（略過原因：沒有 xiangqi-lab/src/support.html（公開副本不含））
+- ﹣ 略過 〔待分類〕〔原始碼〕iOS 隱私申報 app-privacy.md 也寫了問小帥的 Google／Gemini 按鈕已經拿掉（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
+- ﹣ 略過 〔待分類〕檢舉 7 天內處理：limits.md、支援頁同一個說法（審核備註那一半拆到下一項）（略過原因：沒有 xiangqi-lab/src/support.html（公開副本不含））
+- ﹣ 略過 〔待分類〕〔原始碼〕App Store 審查備註 metadata.md：檢舉 7 天的待勾項目勾掉、英文也寫（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕K P2-3：被相機切到的字——石桌往事封面直排標題、開場名句、找棋子提示列讓開側邊安全區；殘篇閣說明在 .view 裡（.view 已讓開）；找棋子的提示鈕 44
 - ✔ 〔待分類〕K P2-4：石桌往事封面下的「讀第一回／闖關」留出底部安全區；滿版圖頁可以往下捲出安全區；捲不動的頁面，靠下的入口自己往上挪
 - ✔ 〔待分類〕F P3-2：棋話一頁（.shl-board）、古戰場（.bt2）不顯示甲板上走路的小人（body 直屬的 .xqbot）
@@ -2650,7 +2749,7 @@
 - ✔ 〔待分類〕P1-2：驛路文牒「隱私說明」照這支手機的實際開關寫，中英一致；不再有「沒有送出任何資料／sends no data」
 - ✔ 〔待分類〕P1-3：App 內顯示的說明文件（全部 data/docs）藏起開發用內容——test-*.js、原始碼檔名與行號、「沒有真人試玩」、「待開發者確認」
 - ✔ 〔待分類〕P1-4：素材與授權頁不再有「待開發者確認」；NNUE 照實寫（作者條款禁止商用、本 App 免費非商業、11/17 已寄信詢問）；兩份正本一樣；關於與開源授權有 iOS 入口
-- ﹣ 略過 〔待分類〕素材授權四項：圖片只寫工具、音樂照 Google 生成式 AI 條款（不做相似度檢查）、大師小傳畫面標出處、Pikafish 完整原始碼包已整理；「資料補齊中」拿掉（略過原因：公開副本沒有這個檔：data/gmbios.json）
+- ✔ 〔待分類〕素材授權四項：圖片只寫工具、音樂照 Google 生成式 AI 條款（不做相似度檢查）、大師小傳畫面標出處、Pikafish 完整原始碼包已整理；「資料補齊中」拿掉
 - ﹣ 略過 〔待分類〕I P2：英文誤譯（家長設定「分」→ min、存好 → Save）、音效圖鑑與換手機說明、3D 泡泡、驛路文牒字太小、官印英文直排、首頁頂欄英文換行、狀態列跟著畫面亮暗（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ✔ 〔待分類〕I P3：換手機產生轉移碼前先確認（照實際規則）、點擊區、朝代配色提示看得到、面板高度跟內容、簡體用詞、彈窗避開動態島、護眼文案、冷啟動字級、最大字級版面、音效圖鑑不寫平台名、裝置代號看得到、切開關後面板留著
 - ✔ 〔待分類〕05-settings 藏起來的三個設定（3D 園子棋盤、對手形象、棋子樣式）連程式拿掉，照 reps 流程（不直接改線上檔）
@@ -2663,7 +2762,7 @@
 - ✔ 〔待分類〕P1-1 全站：一般玩家看得到的地方沒有「要連電腦、裁判程式、--tunnel、額度」這類開發者字樣
 - ✔ 〔待分類〕P1-2：分享連結的開頭（xqShareBase）原生版、127.0.0.1、localhost 一律用公開網址；網頁版用自己的網址
 - ✔ 〔待分類〕P1-2 全站：組分享連結的地方不再直接用 location.href／location.origin
-- ﹣ 略過 〔待分類〕P2：商店描述照實寫「錯棋重練」只收跟電腦對局裡走錯的步（中英）（略過原因：沒有 xiangqi-ios）
+- ﹣ 略過 〔待分類〕P2：商店描述照實寫「錯棋重練」只收跟電腦對局裡走錯的步（中英）（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 
 ### test-imac-v1514.js
 
@@ -2714,6 +2813,14 @@
 - ✔ 〔行為〕W131 只要有一個入口推不動（不是 .shp-spot），照舊少放大、入口全部看得到
 - ✔ 〔行為〕W131 xflItems 會記下哪些入口是 .shp-spot
 
+### test-ipad-scene-review-1126.js
+
+- ✔ 〔行為〕W164 營地橫式：完成第 12 課後走到結業旗不繞遠
+- ✔ 〔行為〕W165 書齋：07z4 交給 07w6 的橫式座標逐格對到 MZ_L.cells、器物順序跟 MZ_RELIC 一樣
+- ✔ 〔行為〕W165 書齋：橫放、直向手點 12 格都跳對應的器物說明
+- ✔ 〔行為〕W165 書齋橫式：亮格 12 格不被熱區按鈕蓋住
+- ✔ 〔行為〕改壞驗證：營地少接環線、書齋沒給橫式座標，檢查都要抓得到
+
 ### test-jh-canal-1122.js
 
 - ✔ 〔行為〕運河四州由北往南：徐州（起馬）→泗州（飛相）→淮安（中炮）→揚州（仙人指路）；停靠點在長卷圖內
@@ -2728,6 +2835,63 @@
 - ﹣ 略過 〔混合〕漕船圖（開發者 11/22「這船太醜了 找gemini畫圖」）：原檔 webp、大小合理；讀不到退回程式畫的 SVG（略過原因：沒有 xiangqi-db/art/canal/barge.webp（美術原檔只在開發者電腦，公開副本沒有））
 - ✔ 〔原始碼〕11/22 開發者實機截圖「這船重疊了，而且很像飄起來」：停靠點避開長卷上原有的船與岸；船貼著水面
 
+### test-jh-central2-1126.js
+
+- ✔ 〔行為〕登記：中炮門第二層；雙炮衛兩個（一個前衛）；水窪是自動走要避開的地形；有走水窪的機關、碑刻一則；寶箱有稱號「逆水行舟」；修為 +40
+- ✔ 〔行為〕雙炮衛的規則都符合（看 3 格、另一個炮衛擋住就看不到、牆擋住、前衛不踩水窪、後衛會踩、不走進對方那一格）
+- ✔ 〔行為〕提示文字（#212 第四輪）：不踩水窪的是 front 標記的那個，往回走時它不一定在前面，warn、retry 不能寫「前面那個不踩水窪」
+- ✔ 〔行為〕改壞驗證（水窪）：以前的四種寫法、耗的那一回合不照共用規則，檢查一定抓得到
+- ✔ 〔行為〕改壞驗證：穿過守衛看、看 5 格、前衛踩水窪、走進對方那一格、不擋牆，規則檢查一定抓得到
+- ✔ 〔行為〕淺水窪：走進去多耗一回合（守衛多走一步、照原地等一回合的規則，守衛才看到就先提醒）；走出來照常一回合；自動走繞開水窪、點的終點是水窪可以走；被雙炮衛直接看到照樣會被抓
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、至少兩個水窪；全部走得到；炮衛走廊是必經；炮衛在同一列、開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被炮衛看到的路，先踩踏板、再走到石門前；任一個炮衛慢 1～7 回合（被抓解題後停 4 回合也在裡面）都走得過
+- ✔ 〔行為〕題庫：石門 3 題（兵收尾：中兵突破）、被抓至少 5 題（馬收尾的殺題；開發者 11/26 選「換成馬、兵收尾」）；core.js 獨立重算——每步合法、走完將死、最後一步是對的子、沒有更短的殺法；不跟中炮門第一層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-central2.js：LF、沒有控制字元、沒有行內 // 註解；新的全域名稱都有 JH_MZ_CENTRAL2／jhMzCentral2 前綴；開場說明用搖桿的新說法
+
+### test-jh-central3-1126.js
+
+- ✔ 〔行為〕登記：中炮門第三層；車衛（看 7 格）＋兩個雙炮衛；糧桶擋路擋光；碑刻一則（《明史》寫明清修）；寶箱有收藏品「鎮河鐵卷」；修為 +60；結尾寫三層都走完
+- ✔ 〔行為〕糧桶規則都符合（滾到底、碰到寶箱踏板壁燈樓梯守衛糧桶停在前一格、推不動算撞牆、擋車衛和炮衛的視線、守衛碰到會掉頭）
+- ✔ 〔行為〕改壞驗證：只滾一格、滾過寶箱、滾過守衛、糧桶不擋視線，規則檢查一定抓得到
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、兩個糧桶；全部走得到（糧桶推得開）；碑刻旁有可站的格子；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被守衛看到的路，先踩踏板、再走到石門前；任一個守衛慢 1～7 回合都走得過
+- ✔ 〔行為〕被抓拖回入口：糧桶照第一層的規則擺回原位（推錯不會卡死）
+- ✔ 〔行為〕題庫：石門 3 題（兵收尾的三步殺：炮兵協同）、被抓至少 5 題（馬收尾的三、四步殺，不用炮車收尾）；core.js 獨立重算；不跟中炮門第一、二層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜；說明的步數＝line
+- ✔ 〔原始碼〕07z9m-central3.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_CENTRAL3／jhMzCentral3 前綴；m.html 排在中炮門第二層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
+
+### test-jh-corner-1126.js
+
+- ✔ 〔行為〕登記：仕角炮門有登記、路由 #/jianghu/maze/advisor_corner；三個朝奉機關各守一間；不能跳；有銅鏡機關；門內頁有入口；三個寶箱
+- ✔ 〔行為〕朝奉機關的規則都符合（只看正在走的那一條斜線、另一條看不到、每一邊正中間永遠看不到、出了那一間看不到、擋光、斜走一格繞回中心）
+- ✔ 〔行為〕改壞驗證：兩條斜線都看、看直的四格、穿牆看、直著走、跑出那一間，規則檢查一定抓得到
+- ✔ 〔行為〕銅鏡：走到銅鏡旁邊，沿鏡子方向的整條直線（到被擋光的東西為止）都看得到；撞牆不算；走到別的地面不會
+- ✔ 〔行為〕會被抓：站在朝奉正在走的那一條斜線上會被發現；站在每一邊正中間、或另一條斜線的角就沒事
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、至少兩面銅鏡；全部走得到；每個朝奉那一間 3×3 都是地面、開局不會被抓；銅鏡的位置真的是 O、旁邊走得到
+- ✔ 〔行為〕走一趟：一定有一條不被朝奉看到的路，先踩踏板、再走到石門前；三個朝奉的步調不管怎麼錯開（任一個停 4 回合、或全部 8×8×8 種）都走得過
+- ✔ 〔行為〕題庫：石門 3 題、陷阱至少 5 題，都是馬收尾；core.js 獨立重算——每步合法、走完將死、最後一步是馬、沒有更短的殺法；不跟別派重複（含順炮、列炮兩段）、兩段不重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-corner.js：LF、沒有控制字元、沒有行內 // 註解；新的全域名稱都有 JH_MZ_CORNER／jhMzCorner 前綴；m.html 排在共用程式後面；開場說明用搖桿的新說法
+
+### test-jh-corner2-1126.js
+
+- ✔ 〔行為〕登記：仕角炮第二層；三個朝奉（照第一層）；三面可轉銅鏡都嵌在牆裡（擋路擋光）；碑刻一則；寶箱有頭像框「算盤珠璣」；修為 +40
+- ✔ 〔行為〕可轉銅鏡的規則都符合（順時針轉、人不動、算一回合、光束照亮、照到的朝奉眩暈 2 回合、不在光束上不暈、被牆擋住、走到旁邊只照亮不暈、撞一般牆照常）
+- ✔ 〔行為〕改壞驗證：鏡子不轉、逆時針轉、光束照不暈、走到旁邊也照暈、轉鏡不算回合，規則檢查一定抓得到
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻；全部走得到；每面銅鏡旁邊都站得到人、一開始射不進朝奉房、順時針轉一次就射進一間；朝奉那一間都是地面；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被朝奉看到的路，先踩踏板、再走到石門前；任一個朝奉慢 1～7 回合都走得過
+- ✔ 〔行為〕題庫：石門 3 題（兵收尾：仕角支點）、被抓至少 5 題（馬收尾的殺題；開發者 11/26 選「換成馬、兵收尾」）；core.js 獨立重算；不跟仕角炮第一層重複（只在同一派各層不重複）、兩段不重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-corner2.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_CORNER2／jhMzCorner2 前綴；m.html 排在仕角炮第一層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
+
+### test-jh-corner3-1126.js
+
+- ✔ 〔行為〕登記：仕角炮門第三層；朝奉＋外圍車衛；降下的鐵柵擋路不擋光；碑刻一則（遊戲整理）；寶箱有收藏品「大明御製棋子」；修為 +60；結尾寫三層都走完
+- ✔ 〔行為〕鐵柵規則都符合（踩踏板封兩個角、鐵柵都降下、只做一次、擋路不擋光、朝奉跳過封住的角、沒封照舊）
+- ✔ 〔行為〕改壞驗證：踏板不封角、鐵柵不擋路、朝奉碰到封角就停、跳過時停在中心，規則檢查一定抓得到
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、一個鐵柵踏板；全部走得到；碑刻旁有可站的格子；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被守衛看到的路，先踩踏板、再走到石門前；任一個守衛慢 1～7 回合都走得過
+- ✔ 〔行為〕被抓拖回入口：鐵柵照共用規則收回
+- ✔ 〔行為〕題庫：石門 3 題（牽制成殺、馬收尾的三步殺）、被抓至少 5 題（兵收尾的三、四步殺，不用炮車收尾）；core.js 獨立重算；不跟仕角炮門第一、二層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜；說明的步數＝line
+- ✔ 〔原始碼〕07z9m-corner3.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_CORNER3／jhMzCorner3 前綴；m.html 排在仕角炮門第二層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
+
 ### test-jh-cross-1124.js
 
 - ✔ 〔行為〕登記：過宮炮門有登記、路由 #/jianghu/maze/cross_palace；護院用炮的走法；宣紙架擋路不擋光、碑刻和暗門擋路也擋光
@@ -2738,6 +2902,42 @@
 - ✔ 〔行為〕題庫：石門 3 題、陷阱至少 5 題；core.js 獨立重算——主變每步合法、走完將死、最後一步是炮、最短就是這個步數；沒有跟中炮門重複；題目都出自古譜並記出處
 - ✔ 〔原始碼〕07z9m-cross.js：LF、沒有控制字元、沒有行內 // 註解；m.html 登記在 07z9m-maze.js 後面
 - ✔ 〔行為〕碑刻文書（照 #108 的格式）：3 件對應地圖上 3 個 L；每件有種類（碑刻／殘簡／文書）、中英標題與內文、出處；出處寫明哪些是遊戲整理或虛構；毛邊紙一說標「相傳」、涇縣寫寧國府
+
+### test-jh-cross2-1126.js
+
+- ✔ 〔行為〕登記：過宮炮第二層；三個炮衛（照第一層的看法加蒸氣）；蒸氣口是自動走要避開的地形；噴著擋光不擋路；碑刻一則；寶箱有稱號「紙背透匣」；修為 +40
+- ✔ 〔行為〕蒸氣和炮衛的規則都符合（沒噴時隔紙架看 3 格、奇數回合噴、噴著擋視線、偶數回合停、沒紙架看不到、噴著擋光不擋路、走一步和原地等都會換）
+- ✔ 〔行為〕改壞驗證：蒸氣不擋視線、蒸氣不會換、蒸氣擋路、沒紙架也看得到，規則檢查一定抓得到
+- ✔ 〔行為〕自動走繞開蒸氣口、點的終點是蒸氣口可以走；站在噴著的蒸氣裡，隔紙架的炮衛看不到
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、至少四個蒸氣口；全部走得到；中廳往上只能踩紙架旁的蒸氣口；蒸氣永遠不噴就走不過；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被炮衛看到的路，先踩踏板、再走到石門前；任一個炮衛慢 1～7 回合都走得過
+- ✔ 〔行為〕題庫：石門 3 題（馬收尾：炮牽制馬殺）、被抓至少 5 題（馬收尾的殺題，兵收尾錯開後不夠；開發者 11/26 選「換成馬、兵收尾」）；core.js 獨立重算；不跟過宮炮第一層重複（只在同一派各層不重複）、兩段不重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-cross2.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_CROSS2／jhMzCross2 前綴；m.html 排在過宮炮第一層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
+
+### test-jh-cross3-1126.js
+
+- ✔ 〔行為〕登記：過宮炮門第三層；兩個炮衛；油布是炮架（screen）、不擋路不擋光；碑刻一則（不跟第一層重複）；寶箱有收藏品「仿澄心堂紙殘卷」；修為 +60；結尾寫三層都走完
+- ✔ 〔行為〕油布規則都符合（掀起來變空地、照亮、人不動、算一回合；垂著時是炮架；掀掉後安全；炮衛走得過）
+- ✔ 〔行為〕改壞驗證：油布掀不掉、油布不算炮架、掀油布不算回合、掀了不亮，規則檢查一定抓得到
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、兩片油布；全部走得到；碑刻旁有可站的格子；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被守衛看到的路，先踩踏板、再走到石門前；任一個守衛慢 1～7 回合都走得過
+- ✔ 〔行為〕被抓拖回入口：油布照共用規則垂回原位
+- ✔ 〔行為〕題庫：石門 3 題（炮掩兵進、兵收尾的三步殺）、被抓至少 5 題（馬收尾的三、四步殺，不用炮車收尾）；core.js 獨立重算；不跟過宮炮門第一、二層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜；說明的步數＝line
+- ✔ 〔原始碼〕07z9m-cross3.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_CROSS3／jhMzCross3 前綴；m.html 排在過宮炮門第二層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
+
+### test-jh-elephant2-1126.js
+
+- ✔ 〔行為〕飛相第二層：登記、淤泥滑行、考箱煞車、自動走、走得過
+- ✔ 〔行為〕飛相第二層：石門 3 題馬收尾、被抓 6 題解殺題、不跟第一層重複
+- ✔ 〔行為〕飛相第二層：修為 +40、存檔鍵分層、碑刻標「遊戲整理」
+- ✔ 〔行為〕改壞驗證：淤泥不滑、考箱推不進淤泥、自動走會踩淤泥，檢查都要抓得到
+
+### test-jh-elephant3-1126.js
+
+- ✔ 〔行為〕飛相第三層：登記、小水坑、破桌填坑、自動走、雙相、走得過
+- ✔ 〔行為〕飛相第三層：石門 3 題兵收尾、被抓 6 題解殺題、不跟前兩層重複
+- ✔ 〔行為〕飛相第三層：修為 +60、存檔鍵分層、碑刻標「遊戲整理」與清修
+- ✔ 〔行為〕改壞驗證：水坑可以走、桌子推不進水坑、自動走會走水坑，檢查都要抓得到
 
 ### test-jh-fade-1118.js
 
@@ -2791,6 +2991,31 @@
 - ✔ 〔行為〕門內頁畫完：補上玩法入口（插在地點標籤前面）、出口改「出山門」、換圖說；點入口呼叫那一派的玩法函式
 - ✔ 〔行為〕中炮、屏風馬不受影響；玩法函式沒載到時只跳提示、不當掉；英文標籤
 - ✔ 〔原始碼〕玩法函式名稱都真的在各派模組裡定義；m.html 在八派模組之後載入 07z9l；過宮炮改叫焙紙牆（史學顧問 192）
+
+### test-jh-horse-1126.js
+
+- ✔ 〔行為〕登記：起馬門有登記、路由 #/jianghu/maze/horse；一匹無韁野馬；不能跳；門內頁有入口；三個寶箱
+- ✔ 〔行為〕野馬的視線跟屏風馬門的銅人一樣：下一步跳得到的日字落點；玩家站在馬腿上那兩個方向看不到
+- ✔ 〔行為〕循足跡追（#198 審查①）：玩家每回合往右走一格，野馬朝 LAG 步以前那一格跳——逐回合用「落點離那一格最近、跳了不會更遠」獨立算出該落在哪裡；這個情境裡「不延遲」會跳到不同的地方
+- ✔ 〔行為〕蹩馬腿困住野馬（#198 審查②）：只有四個馬腿是牆、八個落點都是空地時跳不出去；玩家站在馬腿上，那兩個方向跳不過去
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子；全部走得到；開局不會被抓、野馬站在走得到的格子
+- ✔ 〔行為〕走一趟：一定有一條不被野馬撞倒的路，先踩踏板、再走到石門前（狀態含野馬記的足跡）
+- ✔ 〔行為〕題庫：石門 3 題、陷阱至少 5 題；core.js 獨立重算——每步合法、走完將死、最後一步是馬、沒有更短的殺法；不跟中炮、過宮炮、仙人指路、屏風馬重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-horse.js：LF、沒有控制字元、沒有行內 // 註解；m.html 排在 07z9m-screen.js 後面；開場說明用搖桿的新說法
+
+### test-jh-horse2-1126.js
+
+- ✔ 〔行為〕起馬第二層：登記、野馬慢 2 步、碎瓦片、自動走、走得過
+- ✔ 〔行為〕起馬第二層：題庫 3＋6 題、每題有棋譜、不跟第一層重複
+- ✔ 〔行為〕起馬第二層：修為 +40、存檔鍵分層、碑刻標「遊戲整理」與清修
+- ✔ 〔行為〕改壞驗證：野馬慢 3 步、瓦片不讓野馬多跳、自動走會踩瓦片，檢查都要抓得到
+
+### test-jh-horse3-1126.js
+
+- ✔ 〔行為〕起馬第三層：登記、單向驛門、自動走、野馬與驛門、走得過
+- ✔ 〔行為〕起馬第三層：題庫 3＋6 題、不跟前兩層重複
+- ✔ 〔行為〕起馬第三層：修為 +60、存檔鍵分層、碑刻標「遊戲整理」、沒有「絆馬索」
+- ✔ 〔行為〕改壞驗證：驛門兩邊都能走、野馬能落在驛門上、自動走不看驛門方向，檢查都要抓得到
 
 ### test-jh-kick-1122.js
 
@@ -2885,10 +3110,36 @@
 - ✔ 〔行為〕減少動態：不捲、不震，只淡入淡出標題，0.9 秒收掉
 - ✔ 〔行為〕主執行緒忙、第一段晚觸發時，標題卡照樣停 1.1 秒（每段等上一段真的發生才起算；Windows Claude 1 #129 Android 預驗 P2）
 
+### test-jh-maze-layers-1126.js
+
+- ✔ 〔行為〕登記多層：jhMzLayer 不動第一層；沒寫的欄位照第一層（寶箱、回門派、入口、材質、擋路字元），存檔鍵、修為鍵分開；say 疊在第一層上面；層數不對回 null
+- ✔ 〔行為〕網址：第一層照舊，第二層以後加 ?l=；路由認得出派；層數讀得出來（沒寫、亂寫＝第一層）
+- ✔ 〔行為〕存檔分層：第二層走完存在 jhMaze_L2、不動第一層；第一次走完給第二層的修為與去重鍵；建狀態、題目指標都收層物件
+- ✔ 〔行為〕最深層：沒存檔＝1；記了只會往深、不會變淺；壞值當沒有；舊存檔（沒有 jhMzDeep）照各層通關推；只有一層的派永遠 1；跟旅程走（JOURNEY_KEYS 有 m_jhMzDeep）
+- ✔ 〔行為〕選層：列出每一層的名字；沒到過的鎖住、點了沒反應；到過的點了就換到那一層的網址；點外面或「先不下去」關掉
+- ✔ 〔行為〕門內頁入口：只有一層、或還沒到過第二層＝直接進第一層（跟以前一樣）；到過第二層＝先跳選層
+- ✔ 〔行為〕下墜轉場：標題照層數（地底・第二層／Level 2）；從大廳來、或同一派從淺的層換到深的層才播；同層、變淺、換派、從別處都不播
+- ✔ 〔行為〕新地形停下（原始碼）：走到 avoid 的格子、或機關回傳 stop，自動走和按住搖桿都停；沒寫 avoid 的層照第一層
+- ✔ 〔行為〕過關畫面（原始碼）：有下一層就記到過下一層、多一顆「往下走・第N層」換到下一層的網址；標題寫第幾層；沒有下一層照舊回門派
+- ✔ 〔行為〕第二層示範地圖：走得完、有不被抓的路、先踩踏板再到石門
+- ✔ 〔行為〕改壞驗證：第二層蓋掉第一層、最深層不看舊存檔、選層不鎖、自動走踩水窪、say 沒疊在第一層上面，規則檢查一定抓得到
+- ✔ 〔原始碼〕LF、沒有控制字元；07z9m-central2.js 全域名稱有 JH_MZ_CENTRAL2／jhMzCentral2 前綴、排在 07z9m-lore.js 後面（碑刻才包得到）、07z9m-fall.js 前面
+
 ### test-jh-maze-lore-content-1124.js
 
 - ✔ 〔行為〕pawn：碑刻件數跟地圖一致、內容齊全、走過去讀得到；材質路徑接上
 - ✔ 〔行為〕elephant：碑刻件數跟地圖一致、內容齊全、走過去讀得到；材質路徑接上
+
+### test-jh-maze-multisol-1126.js
+
+- ✔ 〔行為〕迷宮殘局接受所有最快殺法：主變、第二種殺法都算對；走第二種殺法時黑方照那一條應、提示照那一條；走錯分支、不是最快殺都不算；沒有 alt 的舊題照舊只認主變
+- ✔ 〔行為〕alt 樹用 core.js 獨立重算：每一層收齊所有最快殺、只收最快殺、沒有更短殺法、黑方應著合法而且撐最久、終點將死、主變在樹裡
+- ✔ 〔行為〕改壞驗證（程式）：不看 alt、走了分支不往下、黑方應著照主變、提示照主變，檢查一定抓得到
+- ✔ 〔行為〕改壞驗證（題庫）：少收一種最快殺、多收一步不是最快殺、黑方應著不合法、主變不在樹裡、最後一步不是將死，檢查一定抓得到
+- ✔ 〔行為〕題庫裡每一棵 alt 樹（--multi 出的多解，遊戲照它判斷對錯）都用 core.js 獨立重算：收齊所有最快殺、只收最快殺、黑方應著合法而且撐最久、終點將死、主變在樹裡
+- ✔ 〔行為〕題庫裡帶 alt 的每一題（各派第二層），真的 jhMzTry 走遍 alt 樹：每一條最快殺都算對、黑方照那一條應、走完將死，其他著法都判錯；改壞驗證：拿掉 alt 一定抓得到
+- ✔ 〔行為〕第二層題目（各派石門＋被抓）彼此不重複；改壞驗證：被抓題撞被抓題、石門撞別派石門、石門撞別派被抓題，一定抓得到
+- ✔ 〔原始碼〕maze-puzzles.js：有 --multi；不加 --multi 照舊用唯一解的 verify（既有題庫 --check 逐字相同）；只有真的有第二種殺法才寫 alt；07z9m-maze.js LF、沒有控制字元
 
 ### test-jh-maze-render-1124.js
 
@@ -2912,6 +3163,97 @@
 - ✔ 〔行為〕一般的牆不帶 block；跳得過的糧袋照樣跳過去
 - ✔ 〔行為〕畫面：block 是 jump 時說「炮只能隔一個子跳」，其他牆照舊說「前面過不去。」（中英文都有）
 
+### test-jh-maze-save-1126.js
+
+- ✔ 〔行為〕清單：十派每一層（含第二層示範、還沒做的第三層）的通關紀錄和題目指標、最深層都跟旅程走；帳號層的鍵沒放進去；沒有重複
+- ✔ 〔行為〕兩段旅程互不影響：旅程 A 的迷宮進度存在 A 格；開新旅程 B 從頭開始；B 走的不會跑進 A；讀回 A 是 A 的進度
+- ✔ 〔行為〕舊存檔升上來：迷宮鍵原本整支手機共用；升級後第一次存檔，現有進度歸給當時正在玩的那段旅程；舊的別格沒有迷宮鍵＝從頭開始；切回來進度還在
+- ✔ 〔行為〕讀檔、開新旅程之前都先存目前這一格（舊玩家第一次切換時，現有迷宮進度才會先存進正在玩的那段旅程）
+- ✔ 〔行為〕改壞驗證：拿掉迷宮那一行、漏掉題目指標、少一派、帳號層混進來，清單檢查一定抓得到
+- ✔ 〔原始碼〕05b-save.js：LF、沒有控制字元；迷宮那一段的全域名稱有 JH_MZ_SAVE 前綴、別的檔沒有同名
+
+### test-jh-opp-1126.js
+
+- ✔ 〔行為〕登記：列炮門有登記、路由 #/jianghu/maze/opposite_cannon；兩個淨面戲軸；不能跳；有冷光柱機關；門內頁有入口；三個寶箱
+- ✔ 〔行為〕淨面戲軸的規則都符合（緊鄰四格、飛將看整欄、隔水溝也看得到、戲箱擋住、橫的不飛、繞九宮外圈一格一格走）
+- ✔ 〔行為〕改壞驗證：拿掉飛將、穿過戲箱看、跑出九宮、斜著走，規則檢查一定抓得到
+- ✔ 〔行為〕冷光柱：走進光柱那一格，整條直行（上下到被擋光的東西為止）都看得到，越過水溝；撞牆不算；走到別的地面不會
+- ✔ 〔行為〕會被抓：站在戲軸同一欄、中間沒有戲箱，隔很遠也會被發現；躲到戲箱後面就沒事
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、光柱、水溝、戲箱都有；全部走得到；兩個戲軸各在一個 3×3 九宮、開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被戲軸看到的路，先踩踏板、再走到石門前；兩個戲軸的步調差換成 7（被抓解題、其中一個停 4 回合後）也走得過
+- ✔ 〔行為〕題庫：石門 3 題（炮收尾、紅方雙炮優先）、陷阱至少 5 題；core.js 獨立重算——每步合法、走完將死、最後一步是對的子、沒有更短的殺法；不跟別派重複、兩段不重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-opp.js：LF、沒有控制字元、沒有行內 // 註解；新的全域名稱都有 JH_MZ_OPP／jhMzOpp 前綴；m.html 排在共用程式後面；開場說明用搖桿的新說法
+
+### test-jh-opp2-1126.js
+
+- ✔ 〔行為〕登記：列炮第二層；車衛看整排、將衛照第一層；繩扣是自動走要避開的地形；布景擋路擋光；碑刻一則；寶箱有稱號「粉墨登場」；修為 +40
+- ✔ 〔行為〕墜落布景的規則都符合（走進繩扣落下、繩扣變回地面、布景擋路擋光、有守衛的格不落、截斷車衛視線、拖回入口還原）
+- ✔ 〔行為〕改壞驗證：布景不擋光、不擋路、有守衛也落、繩扣不會消失，規則檢查一定抓得到
+- ✔ 〔行為〕自動走繞開繩扣、點的終點是繩扣可以走
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯、繩扣各一個；三個箱子、一塊碑刻；全部走得到；車衛那條長廊必經；布景落下後還到得了石門；將衛的九宮都是地面；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被守衛看到的路，先踩踏板、再走到石門前；任一個守衛慢 1～7 回合都走得過
+- ✔ 〔行為〕題庫：石門 3 題（馬收尾：側翼突破）、被抓至少 5 題（兵收尾的殺題；開發者 11/26 選「換成馬、兵收尾」）；core.js 獨立重算；不跟列炮第一層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-opp2.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_OPP2／jhMzOpp2 前綴；m.html 排在列炮第一層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
+
+### test-jh-opp3-1126.js
+
+- ✔ 〔行為〕登記：列炮門第三層；兩個將衛＋一個車衛（208 複核⑦：跟第二層的車衛＋將衛不一樣）；放下的戲帳擋光不擋路；碑刻一則（《陶庵夢憶》、不用《金陵瑣事》）；寶箱有收藏品「絕密戲曲殘譜」；修為 +60；結尾寫三層都走完
+- ✔ 〔行為〕戲帳規則都符合（踩踏板整排放下、再踩收起、放下不擋路、擋車衛和將衛的視線、收起不擋、守衛鑽得過）
+- ✔ 〔行為〕改壞驗證：踏板不換戲帳、戲帳擋路、車衛看穿戲帳、戲帳不擋光，規則檢查一定抓得到
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、一個戲帳踏板、至少四片戲帳；全部走得到；碑刻旁有可站的格子；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被守衛看到的路，先踩踏板、再走到石門前；任一個守衛慢 1～7 回合都走得過
+- ✔ 〔行為〕被抓拖回入口：戲帳照共用規則回到收起的樣子
+- ✔ 〔行為〕題庫：石門 3 題（馬兵鎖門、兵收尾的三步殺）、被抓至少 5 題（兵收尾的三、四步殺，不用炮車收尾）；core.js 獨立重算；不跟列炮門第一、二層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜；說明的步數＝line
+- ✔ 〔原始碼〕07z9m-opp3.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_OPP3／jhMzOpp3 前綴；m.html 排在列炮門第二層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
+
+### test-jh-palace-1126.js
+
+- ✔ 〔行為〕登記：反宮馬門有登記、路由 #/jianghu/maze/palace_horse；兩個墨工傀儡各管一片工坊；不能跳；墨池走得過去、擋光；門內頁有入口；三個寶箱
+- ✔ 〔行為〕墨工傀儡的規則都符合（八個日字落點、蹩馬腿、玩家站馬腿、墨池裡看不到也抓不到、反宮挑最遠的落點、只跳日字、不出工坊、不踩墨池、不馬上跳回去）
+- ✔ 〔行為〕改壞驗證：不蹩馬腿、看得到墨池裡、往中心跳、跳出工坊、踩墨池、直走一格，規則檢查一定抓得到
+- ✔ 〔行為〕廢墨池：玩家燈火照得到墨池本身、照不到墨池後面；走得進去；站在墨池裡傀儡的落點正好是你也不會被抓
+- ✔ 〔行為〕會被抓：站在傀儡的日字落點上一直不走會被逮到；站在牠的馬腿上沒事
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、至少四個墨池；全部走得到；兩個傀儡的工坊不重疊、起點在工坊裡、開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被傀儡看到的路，先踩踏板、再走到石門前；任一個傀儡慢 1～7 回合（被抓解題後停 4 回合也在裡面）都走得過
+- ✔ 〔行為〕題庫：石門 3 題（紅方有炮、馬收尾：馬後炮）、陷阱至少 5 題（兵收尾）；core.js 獨立重算——每步合法、走完將死、最後一步是對的子、沒有更短的殺法；不跟別派重複（含仕角炮兩段）、兩段不重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-palace.js：LF、沒有控制字元、沒有行內 // 註解；新的全域名稱都有 JH_MZ_PALACE／jhMzPalace 前綴；m.html 排在共用程式和屏風馬門後面；開場說明用搖桿的新說法
+
+### test-jh-palace2-1126.js
+
+- ✔ 〔行為〕登記：反宮馬第二層；兩個墨工傀儡（照第一層）；墨閘踏板一個、它管的閘墨池一開始都漲滿；漲滿擋路擋光、廢墨池照舊走得進去擋光；碑刻一則；寶箱有稱號「墨隱刀鋒」；修為 +40
+- ✔ 〔行為〕墨閘的規則都符合（走進踏板切換、原地等不切換、再走進切回去、漲滿走不進去也擋光、有傀儡站著的那一格不漲）
+- ✔ 〔行為〕改壞驗證：只會乾不會漲、有傀儡也漲、漲滿可以走、漲滿不擋光，規則檢查一定抓得到
+- ✔ 〔行為〕墨閘一變，傀儡的路線跟著變（引開傀儡）；被拖回入口墨閘照地圖原樣；廢墨池照舊能躲
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯、墨閘踏板各一個；三個箱子、一塊碑刻、至少四個廢墨池；一開始到不了石門（閘墨池擋著），閘墨池乾了全部走得到；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被傀儡看到的路，踩墨閘、踩機關踏板、走到石門前；任一個傀儡慢 1～7 回合都走得過
+- ✔ 〔行為〕題庫：石門 3 題（兵收尾：馬兵聯攻）、被抓至少 5 題（馬收尾的殺題；開發者 11/26 選「換成馬、兵收尾」）；core.js 獨立重算；不跟反宮馬第一層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-palace2.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_PALACE2／jhMzPalace2 前綴；m.html 排在反宮馬第一層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
+
+### test-jh-palace3-1126.js
+
+- ✔ 〔行為〕登記：反宮馬門第三層；一快一慢兩隻傀儡；墨口是自動走要避開的地形、不擋路；碑刻一則（遊戲整理、不引宗譜）；寶箱有收藏品「萬曆孤本雕版」；修為 +60；結尾寫三層都走完
+- ✔ 〔行為〕墨口與雙速傀儡的規則都符合（人踩墨口冒到另一頭、另一頭有人冒不出來、傀儡被捲走換工坊、慢的隔回合跳、自動走繞開墨口）
+- ✔ 〔行為〕改壞驗證：人踩墨口不會冒出去、另一頭有人照樣冒、慢的每回合都跳、傀儡不會被墨口捲走，規則檢查一定抓得到
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、四個墨口；全部走得到；碑刻旁有可站的格子；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被守衛看到的路，先踩踏板、再走到石門前；任一個守衛慢 1～7 回合都走得過
+- ✔ 〔行為〕被抓拖回入口：傀儡回到原本的工坊（照共用規則重擺）
+- ✔ 〔行為〕題庫：石門 3 題（馬收尾的三步殺：退馬反擊）、被抓至少 5 題（馬收尾的三、四步殺，不用炮車收尾）；core.js 獨立重算；不跟反宮馬門第一、二層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜；說明的步數＝line
+- ✔ 〔原始碼〕07z9m-palace3.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_PALACE3／jhMzPalace3 前綴；m.html 排在反宮馬門第二層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
+
+### test-jh-pawn2-1126.js
+
+- ✔ 〔行為〕仙人指路第二層：登記、竹林、自動走、視線、走得過
+- ✔ 〔行為〕仙人指路第二層：題庫 3＋6 題、每題有棋譜、不跟第一層重複
+- ✔ 〔行為〕仙人指路第二層：修為 +40、存檔鍵分層、碑刻標「遊戲整理」
+- ✔ 〔行為〕改壞驗證：竹林可以橫走、自動走不看竹林、過河沒加左右視線，檢查都要抓得到
+
+### test-jh-pawn3-1126.js
+
+- ✔ 〔行為〕仙人指路第三層：登記、流水石階、自動走、三隻兵卒、走得過
+- ✔ 〔行為〕仙人指路第三層：題庫 3＋3 題（sq068、lk190、sq082 拿掉，W186）、不跟第一、二層重複
+- ✔ 〔行為〕仙人指路第三層：修為 +60、存檔鍵分層、碑刻標「遊戲整理」
+- ✔ 〔行為〕改壞驗證：水不沖、自動走會踩流水、只剩兩隻兵，檢查都要抓得到
+
 ### test-jh-qima-1122.js
 
 - ✔ 〔行為〕傌照真的走法：蹩馬腿走不過去；不吃子
@@ -2920,6 +3262,42 @@
 - ✔ 〔行為〕出題：三級每天都出得滿三題；黑子數、最短步數都在這一級範圍；起點與終點都安全；雙方都沒被將軍；同一天固定
 - ✔ 〔行為〕每天全對只給一次修為 +10；換日再給；存檔記住上次選的難度
 - ✔ 〔原始碼〕m.html 在 07z9d 之後引入 07z9f；存檔清單有 m_jhQima；沒有 CR；一行程式後面沒有 // 註解
+
+### test-jh-same-1126.js
+
+- ✔ 〔行為〕登記：順炮門有登記、路由 #/jianghu/maze/same_cannon；三個鹽道暗哨；不能跳；有鹽灶機關；門內頁有入口；三個寶箱
+- ✔ 〔行為〕鹽道暗哨的規則都符合（衝兩格、第二格擋只走一格、撞牆花一回合轉身、衝到玩家就停、只看正前方 RANGE 格）
+- ✔ 〔行為〕跟中炮門的暗匪不一樣：同一條空廊，暗哨一回合衝兩格、暗匪一格；撞牆時暗匪當回合就往回走、暗哨原地轉身
+- ✔ 〔行為〕改壞驗證：暗哨改成中炮門那種走法（一格、撞牆當回合掉頭），或連背後都看得到，規則檢查一定抓得到
+- ✔ 〔行為〕視線：被鹽灶擋住就看不到後面；最遠 RANGE 格（長廊比 RANGE 長時看不到盡頭）
+- ✔ 〔行為〕鹽灶：走到旁邊（上下左右）就點亮、記在 S.lit、之後一直亮；撞牆不算；鹽灶本身走不進去
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、至少兩座鹽灶；全部走得到；暗哨各自在一條直的長廊上、開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被暗哨逮到的路，先踩踏板、再走到石門前
+- ✔ 〔行為〕會被抓：玩家站在長廊上、暗哨面向玩家又在 RANGE 內＝被看到（spot），下一回合還在就逮到（trap）
+- ✔ 〔行為〕題庫：石門 3 題（雙炮）、陷阱至少 5 題；core.js 獨立重算——每步合法、走完將死、最後一步是炮、沒有更短的殺法；不跟別派重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-same.js：LF、沒有控制字元、沒有行內 // 註解；新的全域名稱都有 JH_MZ_SAME／jhMzSame 前綴；m.html 排在共用程式後面；開場說明用搖桿的新說法
+
+### test-jh-same2-1126.js
+
+- ✔ 〔行為〕登記：順炮第二層；兩個衝刺暗哨；灰燼是自動走要避開的地形、不擋路不擋光；碑刻一則；寶箱有頭像「霜鹽結晶」；修為 +40
+- ✔ 〔行為〕火星和衝刺暗哨的規則都符合（沒火星照第一層、同一直線轉向衝、衝到火星停、牆擋不理、不同直線不理、亮 2 回合、灰燼激起火星照亮 5 格、牆後照不到）
+- ✔ 〔行為〕改壞驗證：火星不會熄、隔牆也被吸引、斜的也被吸引、火星不照亮，規則檢查一定抓得到
+- ✔ 〔行為〕自動走繞開灰燼、點的終點是灰燼可以走；暗哨被火星引過來時照樣會抓人
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、至少兩堆灰燼、一座鹽灶；全部走得到；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被暗哨看到的路，先踩踏板、再走到石門前；任一個暗哨慢 1～7 回合都走得過
+- ✔ 〔行為〕題庫：石門 3 題（馬收尾：棄子搶攻）、被抓至少 5 題（兵收尾的殺題；開發者 11/26 選「換成馬、兵收尾」）；core.js 獨立重算；不跟順炮第一層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-same2.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_SAME2／jhMzSame2 前綴；m.html 排在順炮第一層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
+
+### test-jh-same3-1126.js
+
+- ✔ 〔行為〕登記：順炮門第三層；三個衝刺暗哨；鹽箱擋路擋光、會移動；碑刻一則（遊戲整理、不引《明儒學案》）；寶箱有收藏品「灶戶的鹽票」；修為 +60；結尾寫三層都走完
+- ✔ 〔行為〕鹽箱規則都符合（推一格、後面不是空地或有守衛推不動、擋暗哨視線、暗哨碰到會轉身）
+- ✔ 〔行為〕改壞驗證：推了鹽箱不動、推進寶箱格、推到守衛身上、鹽箱不擋視線，規則檢查一定抓得到
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、四個鹽箱；全部走得到（鹽箱推得開）；碑刻旁有可站的格子；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被守衛看到的路，先踩踏板、再走到石門前；任一個守衛慢 1～7 回合都走得過
+- ✔ 〔行為〕被抓拖回入口：鹽箱照共用規則擺回原位（推錯不會卡死）
+- ✔ 〔行為〕題庫：石門 3 題（馬兵聯手、兵收尾的三步殺）、被抓至少 5 題（馬收尾的三、四步殺，不用炮車收尾）；core.js 獨立重算；不跟順炮門第一、二層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜；說明的步數＝line
+- ✔ 〔原始碼〕07z9m-same3.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_SAME3／jhMzSame3 前綴；m.html 排在順炮門第二層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
 
 ### test-jh-screen-1122.js
 
@@ -2939,6 +3317,40 @@
 - ✔ 〔行為〕門內設定：前院不站門人、沒有前院入口；石馬、算盤兩個入口；中炮門不受影響
 - ✔ 〔行為〕3D 走路：起點叫 dock（07z9b 傳 home:"dock"）、每個入口的停靠點都在路網上、路網連通
 - ✔ 〔原始碼〕m.html 在 07z9b 之後引入 07z9c；存檔清單有 m_jhScreen；一行程式沒有 // 註解
+
+### test-jh-screen-1126.js
+
+- ✔ 〔行為〕登記：屏風馬門有登記、路由 #/jianghu/maze/screen；兩隻銅人都用馬的走法；石鼓擋路不擋光；不能跳；門內頁有入口
+- ✔ 〔行為〕馬的視線：空房間中間看得到八個日字落點；靠牆只剩房間裡的那幾個
+- ✔ 〔行為〕蹩馬腿：馬腿被石鼓擋住、或玩家站在馬腿上，那兩個方向都跳不過去、也看不到；落點是石鼓也不行
+- ✔ 〔行為〕馬的走法：照目前方向跳日字、跳不過去就順時針換方向；巡 60 回合都停在走得到的格子、不穿牆、不越廳；開局不會一開始就被抓
+- ✔ 〔行為〕巡法固定案例（#196 審查第 1 點：銅人不動、改成逆時針都要抓得到）：空房間照目前方向跳；馬腿被蹩就順時針換下一個方向；上廳銅人的巡場路線固定
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子；全部走得到
+- ✔ 〔行為〕走一趟：一定有一條不被銅人逮到的路，先踩踏板、再走到石門前
+- ✔ 〔行為〕題庫：石門 3 題、陷阱至少 5 題；core.js 獨立重算——主變每步合法、走完將死、最後一步是馬、最短就是這個步數；不跟中炮、過宮炮、仙人指路重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-screen.js：LF、沒有控制字元、沒有行內 // 註解；m.html 登記在 07z9m-maze.js 後面；開場說明用搖桿的新說法
+
+### test-jh-screen2-1126.js
+
+- ✔ 〔行為〕登記：屏風馬第二層；兩隻銅人馬衛各巡一廳；地裂擋路不擋光；碑刻一則；寶箱有頭像框「中都石獸」；修為 +40
+- ✔ 〔行為〕銅人馬衛的規則都符合（八個落點、地裂不擋馬腿、石鼓擋、落不到地裂、玩家站馬腿、不出廳、照第一層的巡法）
+- ✔ 〔行為〕改壞驗證：地裂擋馬腿、能落在地裂上、石鼓不擋腿、跳出自己那一廳、玩家站馬腿也照跳，規則檢查一定抓得到
+- ✔ 〔行為〕地裂：玩家走不過去、燈火照得到對面；銅人落不到地裂上，地裂旁邊那一格銅人跳得到就會被看到
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、兩條地裂；全部走得到；拿掉石橋就到不了石門；銅人起點在自己那一廳、開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被銅人看到的路，先踩踏板、再走到石門前；任一隻銅人慢 1～7 回合都走得過
+- ✔ 〔行為〕題庫：石門 3 題（馬收尾，雙馬優先、至少兩題雙馬：雙馬聯攻）、被抓至少 5 題（馬收尾的殺題）；core.js 獨立重算；不跟屏風馬第一層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜
+- ✔ 〔原始碼〕07z9m-screen2.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_SCREEN2／jhMzScreen2 前綴；m.html 排在屏風馬第一層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
+
+### test-jh-screen3-1126.js
+
+- ✔ 〔行為〕登記：屏風馬門第三層；兩隻連環馬衛；石鼓擋路不擋光；碑刻一則（《御製皇陵碑》）；寶箱有收藏品「殘局銅盤」；修為 +60；結尾寫三層都走完
+- ✔ 〔行為〕石鼓和連環馬衛的規則都符合（轉 90 度花一回合、凸起格人能走、凸起蹩馬腿、兩隻同方向跳、蹩住一隻兩隻一起換方向、暈的不跟、石鼓擋路不擋光）
+- ✔ 〔行為〕改壞驗證：石鼓不轉、凸起不蹩腿、兩隻各跳各的、轉石鼓不算回合，規則檢查一定抓得到
+- ✔ 〔行為〕地圖：每列一樣寬、四周是牆；入口、石門、踏板、樓梯各一個；三個箱子、一塊碑刻、四個石鼓；全部走得到；碑刻旁有可站的格子；開局不會被抓
+- ✔ 〔行為〕走一趟：一定有一條不被守衛看到的路，先踩踏板、再走到石門前；任一個守衛慢 1～7 回合都走得過
+- ✔ 〔行為〕被抓拖回入口：轉過的石鼓還是那個方向（記在 S.drum3，跟仕角炮第二層的銅鏡一樣）
+- ✔ 〔行為〕題庫：石門 3 題（雙馬、馬收尾的三步殺：雙馬飲泉）、被抓至少 5 題（兵收尾的三、四步殺，不用炮車收尾）；core.js 獨立重算；不跟屏風馬門第一、二層重複（開發者 11/26：只在同一派各層不重複）、兩段不重複；都出自古譜；說明的步數＝line
+- ✔ 〔原始碼〕07z9m-screen3.js：LF、沒有控制字元、沒有行內 // 註解；全域名稱有 JH_MZ_SCREEN3／jhMzScreen3 前綴；m.html 排在屏風馬門第二層、碑刻後面，下墜轉場前面；開場說明用搖桿的新說法
 
 ### test-jh-shunpao-1122.js
 
@@ -3036,6 +3448,14 @@
 - ✔ 〔行為〕兒童模式或家長關線上大廳：啟動時不連大廳；平常照連
 - ✔ 〔原始碼〕迷宮：判負（拖回入口）後不再接受落子、提示鈕關掉
 
+### test-kill-layout-1127.js
+
+- ✔ 〔行為〕三塊不重疊、夠高的容器不出界：手機直式、iPad、3D 公園 × 絕殺 10 版 ×（紅方 10、黑方 10、沒有勝方字）
+- ✔ 〔行為〕手機直式 359×397：「紅方」頂端到「絕殺」下緣至少空 2% 寬；版面沒有被不必要地推動（不重疊時位置照舊 44%／69%／80%）
+- ✔ 〔行為〕改壞驗證：換回原本的固定百分比（44%、69%、80%），手機直式一定抓得到「絕殺」蓋到「紅方」
+- ✔ 〔行為〕隨機挑字跳過版 3（墨團）、版 7（重飛白）：10 版的陣列挑 3000 次不會出現 3、7，其他 8 版都輪得到；陣列只有 2 版時照常；改壞驗證：拿掉跳過要抓到
+- ✔ 〔原始碼〕killFx 真的用 kxLayout 的結果擺「絕殺」、勝方字、朱印、「你贏了」
+
 ### test-land3d.js
 
 - ✔ 〔行為〕落子聲：預設 3D 落地敲一聲（不是吃子聲）
@@ -3048,7 +3468,7 @@
 - ✔ 〔待分類〕第一次打開（沒有任何存檔）：英文系統 → English；繁中系統 → 繁中（不寫）；簡中系統 → 簡中（zh.js 的 xq_zhMode）；都記 m_langAuto，用 XQSave.soft 寫
 - ✔ 〔待分類〕選過語言的、老玩家（已經有存檔）、已經自動決定過的：一律不動
 - ✔ 〔待分類〕順序：存檔雙份那段之後、zh.js 和主程式之前；存檔被系統清掉的老玩家，從 IndexedDB 搬回來時自動選的語言不算數
-- ﹣ 略過 〔待分類〕審查備註：改成「照手機系統語言、要看中文到設定切換」，中英都有；CRLF 也在 4000 字內（略過原因：沒有 xiangqi-ios（公開副本不含））
+- ﹣ 略過 〔待分類〕審查備註：改成「照手機系統語言、要看中文到設定切換」，中英都有；CRLF 也在 4000 字內（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 略過 〔待分類〕iOS 包排除 data/docs/android.md（網頁版照舊）；其他說明文件照包（略過原因：沒有 xiangqi-ios（公開副本不含））
 - ﹣ 略過 〔待分類〕原生：回前景重驗通過在 console 印一行；check-native.js 全部通過（略過原因：沒有 xiangqi-ios（公開副本不含））
 
@@ -3080,6 +3500,11 @@
 - ✔ 〔行為〕拇指熱區模型（touch-stress.js）：左右手對稱、下方中間易及、對角上方角落難及、大手機上方更遠
 - ✔ 〔原始碼〕左撇子樣式只搬按鈕：不鏡像棋盤、不改文字方向；m.html 在觸覺回饋後面 include；lh 前綴沒撞名
 - ✔ 〔原始碼〕F2：剩下的小目標修正還在（外觀不變、點選範圍 ≥44）
+
+### test-legend-keep-1126.js
+
+- ✔ 〔行為〕函谷關類的保護任務：提早結束也要檢查保護的子
+- ✔ 〔行為〕改壞驗證：拿掉保護子檢查時要抓得到
 
 ### test-legend-wording-1124.js
 
@@ -3207,12 +3632,30 @@
 - ✔ 〔原始碼〕預算敏感度工具只讀 App 的檔、用節點數當預算、不送任何東西；結果文件寫明它只檢查分析可靠性
 - ﹣ 略過 〔行為〕預算敏感度的結果文件寫明它只檢查分析可靠性（W57：從上一支拆出，沒有文件時明列略過）（略過原因：沒有 story/數學模型_引擎預算敏感度_1115.md（故事稿資料夾不公開））
 
+### test-maze-chars-1126.js
+
+- ✔ 〔行為〕載入順序照 m.html（迷宮檔都有載到）
+- ✔ 〔行為〕迷宮地圖字元不跨檔撞名（直接寫入、if(!…) 守衛兩種都算）
+- ✔ 〔行為〕改壞驗證：三種撞法都要抓得到
+- ✔ 〔行為〕每層地圖只用共用字元、說明碑 L／H、自己或同派前幾層登記的字元；門派檔不准登記共用字元
+- ✔ 〔行為〕改壞驗證：地圖借別派字元、門派檔登記共用字元，都要抓得到
+- ✔ 〔行為〕整串載入：已登記的字元不會被後面的檔換掉或弄丟；說明碑 L、H 是 lore.js 那份
+- ✔ 〔行為〕改壞驗證：過宮炮拿掉守衛、真的蓋掉說明碑；或門派檔直接蓋掉別人的字元，都要抓得到
+- ✔ 〔行為〕改壞驗證：不可列舉的新鍵、非函式的值、改原型，都要抓得到（#239 第四輪 e4a、e4c、e7a、e7b）
+
 ### test-maze-illegal-1125.js
 
 - ✔ 〔行為〕不合棋規的落點判成不合法；合法的照常放行
 - ✔ 〔行為〕走完自己被將軍的那一步也算不合法（照真正的規則核心）
 - ✔ 〔行為〕規則核心不在時照舊放行（不會擋住解題）
 - ✔ 〔原始碼〕點擊流程：先核對合不合法、不合法就提示並 return，之後才交給 jhMzTry 算對錯
+
+### test-maze-review-1126.js
+
+- ✔ 〔行為〕W153 過關那句話：有下一層就說通到下一層、沒有才用自己的
+- ✔ 〔行為〕W154 飛相第二層石門：每一題紅方都要有相
+- ✔ 〔行為〕W155 有其他正解的題，題面不寫死「最後一步」；反宮馬不標「馬後炮」
+- ✔ 〔行為〕改壞驗證：過關那句話回到「有寫就用自己的」時要抓得到
 
 ### test-mnq-at-1117.js
 
@@ -3387,6 +3830,8 @@
 - ✔ 〔待分類〕兒童模式、家長關閉線上大廳：開 App、進大廳、打開意見回饋，banlist.json 和 fixes.json 都不出現（送過回饋也一樣）
 - ✔ 〔待分類〕舊存檔（這版以前送過，沒有 fbSentAt）：有 fbMine 且不是全部在排隊、或有已送出的檢舉 → 當送過，開 App 抓一次；只有排隊中的 → 不算
 - ✔ 〔待分類〕原始碼：只改「什麼時候叫」——native-bridge 的轉向照舊；開 App 不再無條件抓停權名單；三處說明同一套說法
+- ﹣ 略過 〔待分類〕〔原始碼〕iOS native-bridge 的轉向照舊（data/banlist.json、data/fixes.json）（略過原因：沒有 xiangqi-ios（run-tests 還沒複製 iOS 專案））
+- ﹣ 略過 〔待分類〕〔原始碼〕App 隱私申報 app-privacy.md 跟 privacy.md 同一套說法（送過意見回饋才在開 App 時下載修正清單；隱私標籤不另外勾選）（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 
 ### test-newjourney-entry-1116.js
 
@@ -3949,7 +4394,7 @@
 - ✔ 〔待分類〕E-6：原生版「關於」不寫整包下載大小，網頁版照舊
 - ✔ 〔待分類〕E-7：iOS 原生 App 的電腦棋手失敗提示不說「iOS 太舊」、不顯示 WebView 版本；Android 照舊
 - ✔ 〔待分類〕E-3：privacy.md、family.md 原生版看不到瀏覽器／GitHub Pages／開發者模式的寫法；網頁版照舊；兩份一致
-- ﹣ 略過 〔待分類〕E-1：審查備註照實際畫面（沒有底部分頁列、🗺 地圖、新手練習），Notes 不超過 4000 字（略過原因：沒有 xiangqi-ios（公開副本不含））
+- ﹣ 略過 〔待分類〕E-1：審查備註照實際畫面（沒有底部分頁列、🗺 地圖、新手練習），Notes 不超過 4000 字（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 
 ### test-r19-1117.js
 
@@ -3964,7 +4409,7 @@
 - ✔ 〔待分類〕Q3：古戰場橫式（812×375、844×390、667×375）用右側抽屜；直式照舊從下面升起
 - ✔ 〔待分類〕E19-1：原生版白名單外的 [data-xqdoc] 全站藏起來；英文介面說明、各級怎麼下、音效設計各自也不畫
 - ✔ 〔待分類〕E19-2：隱私、家長文件用 app-only 補 Game Center、每日提醒、小工具、兒童模式不回報；兩份一致；網頁版看不到
-- ﹣ 略過 〔待分類〕E19-2／E19-3：審查備註 Native 段寫 Game Center、每日提醒、今日茶單的位置；設定標籤點兩下、對局中換頁確認；Notes 在 4000 字內（略過原因：沒有 xiangqi-ios（公開副本不含））
+- ﹣ 略過 〔待分類〕E19-2／E19-3：審查備註 Native 段寫 Game Center、每日提醒、今日茶單的位置；設定標籤點兩下、對局中換頁確認；Notes 在 4000 字內（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕E19-4：青銅匭三個口在 393 寬都在畫面內、各自至少 44×44、互不重疊（有兵印、兵印量不到都一樣）
 - ﹣ 略過 〔待分類〕E19-5：每日同題題頭（編號、一口／一盞／一壺、再解一次／補玩）和古譜出處（書名＋局號）都翻成英文（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
 
@@ -3989,7 +4434,7 @@
 - ﹣ 略過 〔待分類〕B N20-3／N20-4：卡冊 Lv 100 寫「已滿級」不寫分數；＋星輝、陪你走按鈕 44 高（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ 略過 〔待分類〕B N20-6：星門圍城第一次破關的結算分開標首勝獎勵（成長列另含闖關星）；獎勵邏輯不動（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ✔ 〔待分類〕E N20-1：🗺 總覽英文區域標籤改橫排；搜尋提示、你現在在、對局警告、總覽入口、未開放入口有英文
-- ﹣ 略過 〔待分類〕E N20-2／N20-6：審查備註照實際行為寫（點一下就走過去、選了目的地才問、取名視窗）；CRLF 算也 ≤4000（略過原因：沒有 xiangqi-ios（公開副本不含））
+- ﹣ 略過 〔待分類〕E N20-2／N20-6：審查備註照實際行為寫（點一下就走過去、選了目的地才問、取名視窗）；CRLF 算也 ≤4000（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕E N20-6：第一次取名視窗照玩家登記的設定寫（原生版預設關）；網頁版原文
 - ✔ 〔待分類〕E N20-7：大師對局出處英文＝年份＋英文賽事名（翻不出寫 Grandmaster game）；中文照舊
 - ✔ 〔待分類〕E N20-8：privacy.md、family.md 最後核對日期兩份一致，跟 privacy.html 的最後更新同一天（11/17 那句只在 App 版）
@@ -4484,7 +4929,7 @@
 - ﹣ 略過 〔待分類〕8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（略過原因：沒有 xiangqi-ios（公開副本不含））
 - ✔ 〔待分類〕9 開場畫面「⚔ 新的旅程」切英文有翻譯（內建字典，原生、網頁都一樣）
 - ﹣ 略過 〔待分類〕10 原生設定：loggingBehavior＝none、CFBundleLocalizations 有 en、CAPACITOR_DEBUG 只在 Debug 設定檔（略過原因：沒有 xiangqi-ios（公開副本不含））
-- ﹣ 略過 〔待分類〕11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（略過原因：沒有 xiangqi-ios（公開副本不含））
+- ﹣ 略過 〔待分類〕11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕12a 首頁入口、設定房間、新手營、意見回饋的場景標籤都是 .shp-spot，07z 的透明點選範圍（至少 44×44、不重疊）照樣套到
 - ✔ 〔待分類〕12b 意見回饋：青銅匭三個口、類型小籤加透明點選範圍（看起來不變），算出來不重疊、比原本大
 - ✔ 〔待分類〕12c 3D 棋盤鏡頭鈕（34×34、間隔 6）、🎥 視角鈕：透明點選範圍 44 寬、相鄰剛好不重疊；樣式在 06-cpu 自己注入
@@ -4597,6 +5042,95 @@
 - ✔ 〔行為〕〔存檔檔案〕v1 舊檔（沒有檢查碼）照收，但標「未驗證」；不是存檔、比這版新的拒收
 - ✔ 〔行為〕〔存檔檔案〕不能算 SHA-256 的瀏覽器：匯出時 sha 寫 null、讀入照收但標未驗證；它匯出的檔案到能驗的手機也照收（未驗證）
 - ✔ 〔原始碼〕〔存檔檔案〕匯出用 saveFilePack、讀入用 saveFileRead，讀入失敗用視窗說原因
+
+### test-scene-wide-camp.js
+
+- ✔ 〔行為〕條目：經典版、原圖版兩個白天鍵都登記（共用座標、各自的圖）；夜景照日間條目登記（#173）；SCW_CDN 還是 false＝正式玩家照舊原圖
+- ✔ 〔行為〕橫式座標：13 面旗（跟原本一樣多）、31 個路線點都在圖裡；入口 cpF1～cpF13 照旗面算 %；相鄰路線點不會隔太遠（一條連續的路）
+- ✔ 〔行為〕走路：每面旗對到離旗腳最近的路線點（偏移 ×2560/768），旗腳點大致沿著路線前進；這一課的起點、看的方向照原本的規則
+- ✔ 〔行為〕出口：橫式圖記憶名 campL:*，從 w0（左下營寨）往左走出去；原圖的 camp:* 不動
+- ✔ 〔行為〕座標照量好的 json（output/w107-ipad/l1610/campmap/camp_day_classic_l1610.json）：頭尾和中間幾個點寫死比對
+- ✔ 〔混合〕07y2 接線：開頁先量（scwPre）、掛 07sw（13 面旗）、換圖重掛走路時換成這一課的 cpCfgL 和記憶名；旗在橫式圖上換小一點
+
+### test-scene-wide-gm.js
+
+- ✔ 〔混合〕條目：經典版、原圖版、漢版、魏晉版四個白天鍵都登記、各自的圖；夜景照日間條目登記（#173）；SCW_CDN 還是 false＝正式玩家照舊原圖
+- ✔ 〔行為〕畫心四角照量好的 json：經典版、原圖版 7 幅共用、漢版另給 7 幅、魏晉版 6 幅；每幅凸四邊形、順時針、在圖裡；越往長廊深處越小
+- ✔ 〔行為〕gm2G：原圖照 GM2_Q（768 寬、6 幅），橫式圖照各自條目的 q（7／7／6 幅）；沒開開關照原圖
+- ✔ 〔行為〕入口與走路：入口在第三幅畫前、走路節點在圖裡、點入口要去的節點都有；漢版另一套（對齊不可信）；小人越近越大
+- ✔ 〔混合〕07y6 接線：開頁先量（scwPre）、畫心幾幅照現在用的那張圖（換圖時 apply 重排、i%款數輪流貼）、掛 07sw（入口 gm2Go、走路前綴 gm2）、橫式圖用條目的走路設定
+
+### test-scene-wide-l1610.js
+
+- ✔ 〔行為〕選圖：iPad 橫向、Duo 攤開橫拿換橫式圖；手機橫放、iPad 直向、接近正方形、太矮都照舊原圖
+- ✔ 〔行為〕圖網址 → 鍵；條目要 ready、或開發用開關，載不到過的不再用
+- ✔ 〔行為〕錯棋重練條目：座標都在圖內、走路的邊和小動作都接得到節點、入口四個都有
+- ✔ 〔行為〕每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在圖內、走路的邊和小動作接得到節點、每個入口都有角色走過去（有走路角色的頁）
+- ✔ 〔行為〕07w7 天氣：登記表裡的橫式圖用自己的範圍（像素＝橫式圖），首頁 home_l1610 照原本找
+- ✔ 〔行為〕換圖：iPad 橫向原地換成橫式圖、入口和出口換座標；圖載好才排；轉回直向換回原圖、座標還原；載不到退回原圖
+- ✔ 〔行為〕審查 #155：開頁時就是橫式圖（scwPre），圖載不到要退回原圖；onerror 沒接到、scwSync 看到載完沒寬也一樣退回
+- ✔ 〔行為〕審查 #155 複審：載入 00-util 真正的 CDN 補抓監聽；橫式圖同源 404 時先等 CDN 那次，CDN 也失敗才退回原圖，退回後原圖還能再去 CDN 補抓
+- ✔ 〔行為〕Android 平板預驗：開頁就是橫式圖、圖還在載時，載好要叫 07fl 再排一次（不然停在未排版、標籤看起來偏掉）
+- ✔ 〔行為〕審查 #155：手機、直向從來沒換過圖時，07sw 不動標籤和出口（不清 00-util、07w9 記的原位）
+- ✔ 〔行為〕走路設定：橫式圖換節點、邊、小動作，其他照原圖那份；原圖那份不被改到
+- ✔ 〔混合〕原始碼：07fl 排版前先問 scwSync、安全區照條目；07w7、07w6、07y8 接上；m.html 在 07fl 前面載入
+- ✔ 〔行為〕千秋盃報名紅幔、垂簾布幕：直式換直圖、iPad 橫向換 _l1610；圖載好時橫直已經切換就不換；垂簾的燈照條目 fx.lamp，原圖照 HUB_LAMP.battle
+
+### test-scene-wide-open.js
+
+- ✔ 〔行為〕條目：經典版、原圖版兩個白天鍵都登記（共用座標、各自的圖）；夜景照日間條目登記（#173）；SCW_CDN 還是 false＝正式玩家照舊原圖
+- ✔ 〔行為〕橫式座標：5 個入口、出口在圖裡；棋枰、紙籤四角是凸四邊形、順時針；兩冊、手卷在圖裡；朱冊在棋枰左、墨冊在棋枰右
+- ✔ 〔行為〕走路設定：節點在圖裡、邊與跳點只用到有的節點、點入口要去的節點都有；動作照原本（招牌開局歡呼、其他待機）
+- ✔ 〔行為〕照現在用的那張圖擺：原圖照 KJ2_*（跟改之前 kj2Pc 一樣），橫式圖照條目 fx，偏移 ×(2560/768)
+- ✔ 〔行為〕座標照量好的 json（output/w107-ipad/l1610/openmap/open_day_classic_l1610.json）：抽幾個點寫死比對
+- ✔ 〔混合〕07z3 接線：開頁先量（scwPre）、掛 07sw（5 個入口、走路前綴 kj2、換圖時重貼棋枰紙籤和印記）、橫式圖用條目的走路設定；換了走路設定最會輸那一冊照舊揮手
+
+### test-scene-wide-stat.js
+
+- ✔ 〔行為〕條目：經典版、原圖版兩個白天鍵都登記（共用座標、各自的圖）；夜景照日間條目登記（#173）；SCW_CDN 還是 false＝正式玩家照舊原圖
+- ✔ 〔行為〕橫式座標：5 個入口、出口在圖裡；榜面是長方形、比例跟原圖榜面相近（SVG 不會被壓扁太多）；棋桌四角凸、順時針、在榜面右下；棋桌熱區蓋住棋桌；紗燈在榜面右上
+- ✔ 〔行為〕走路設定：節點在圖裡、邊只用到有的節點、點入口要去的節點都有；動作照原本（待機）
+- ✔ 〔行為〕照現在用的那張圖擺：原圖照 JZ2_*（榜面位置跟改之前 /7.68、/13.76 一樣，棋桌熱區照原本 74.7／71.5／24.2／7.8），橫式圖照條目 fx
+- ✔ 〔行為〕座標照量好的 json（output/w107-ipad/l1610/statmap/stat_day_classic_l1610.json）：抽幾個點寫死比對
+- ✔ 〔行為〕jz2Place 實跑：榜面和榜面熱區（第一個 .jz2-hit）同一格、棋桌熱區（第二個）照 hitTbl；原圖照舊、橫式圖照條目（#159 審查建議 1：兩個熱區對調要紅）
+- ✔ 〔混合〕07z2 接線：開頁先量（scwPre）、掛 07sw（5 個入口、走路前綴 jz2、換圖時重擺榜面熱區棋桌、重畫紗燈字）、橫式圖用條目的走路設定
+
+### test-scene-wide-study.js
+
+- ✔ 〔行為〕條目：經典版、原圖版兩個白天鍵都登記（共用一套座標、各自的圖）；夜景照日間條目登記（#173）
+- ✔ 〔行為〕橫式座標：14 個入口跟原圖同一組 id、都在 2560×1600 裡、錨點在範圍上緣；亮格 12 格；消寒圖、輿圖、爐煙、新信朱點都落在各自入口的範圍裡
+- ✔ 〔行為〕原圖照舊：消寒圖素梅、輿圖 13 站畫出來跟改之前一樣；橫式圖用自己那一框、viewBox 換成 2560×1600
+- ✔ 〔行為〕選圖照整個畫面量：iPad 橫向換橫式圖（換完重畫疊圖），轉回直向換回原圖；手機橫放、沒開開關照舊原圖
+- ✔ 〔行為〕07fl 問 scwSync：書齋牆用橫式圖回 "wait"（滿寬往下捲，不 cover）、原圖回 null；別頁照 07sw 原本的 scwSync
+- ✔ 〔行為〕橫式圖載不到：記 SCW_BAD、退回原圖；這次開 App 不再試
+- ✔ 〔行為〕座標照量好的 json（output/w107-ipad/l1610/studymap/study_day_classic_l1610.json）：抽幾個點寫死比對；輿圖圈照畫心寬等比放大（#159 審查建議 3）
+- ✔ 〔混合〕07z4 接線：開頁先量（scwPre）、掛 07sw（換圖時 apply 重畫疊圖）、轉向自己再問一次；走路角色只在原圖掛；物件說明照原圖座標（07w6 遇到橫式圖自己關）
+
+### test-scene-wide-xsm.js
+
+- ✔ 〔行為〕條目：外景白天、冬景、茶坊、茶坊冬景四個鍵都登記、各自的圖；外景兩張、茶坊兩張各自共用座標；夜景沒有；SCW_CDN 還是 false＝正式玩家照舊原圖
+- ✔ 〔行為〕座標整組照量好的值：外景 5 個入口、13 個藏點（數量跟原圖一樣）、走路 look0／N／E／HS；茶坊暗棋、4 塊小帥禁區
+- ✔ 〔行為〕藏點、茶坊禁區照現在用的那張圖：原圖照 XSM_HIDE、XSM_TEA_NOBOT，橫式圖照條目
+- ✔ 〔行為〕日夜、換季換圖（xsmScwTo）：橫向白天→換成橫式圖；轉夜景（沒條目）→ 07sw 退回原圖；冬景↔白天都是橫式圖時直接換成另一張橫式圖；沒掛 07sw＝照舊原圖網址
+- ✔ 〔原始碼〕07xsm 接線：外景、茶坊開頁先量（scwPre）、圖照 pre.src、掛 07sw（入口、apply 重擺棋子／重畫禁區）；每分鐘換圖走 xsmScwTo；找棋子照當下的藏點；橫式茶坊不畫雨
+- ✔ 〔混合〕外景開頁就是橫式圖：xsmScwO 建的設定交給真的 07sw scwMount → 5 個入口照條目擺、走路照條目、apply 重擺棋子；橫式圖載不到退回原圖 src0、記 SCW_BAD
+- ✔ 〔行為〕外景換圖預載失敗（xsmSwapBad）：橫式冬景圖壞了＝記 SCW_BAD、退回原圖，不把白天原圖記成壞的；原圖冬景壞了才照 11/17 記 XSM_BAD.wd、白天原圖壞了記 d
+- ✔ 〔行為〕茶坊每分鐘（xsmTeaTick）：沒掛 07sw＝原圖網址；掛著、橫向＝照鍵換成冬景的橫式圖、記冬天；要 07sw 換的（回 null）不自己動 img；網址一樣不動
+- ✔ 〔行為〕開頁（xsmPre、xsmImg、xsmPageScw）實跑：橫向＝圖框帶 data-scw、圖一開始就是橫式圖、入口照條目、走路照條目、擺今天那顆棋子；直向＝原圖、入口不動
+- ✔ 〔行為〕00-util 補抓過 CDN 之後（cdnTry、src 是 XQ_CDN＋相對路徑）：外景 xsmSwap、茶坊 xsmTeaTick 每分鐘不會把好好的圖當壞圖；換季照 CDN 網址預載、換上
+
+### test-scene-wide-yz.js
+
+- ✔ 〔行為〕條目：13 朝都登記（鍵＝原圖 yizhan/<朝>_f、圖 <朝>_f_l1610），跟 YZ_READY 一致；SCW_CDN 還是 false＝正式玩家照舊原圖
+- ✔ 〔行為〕入口：經典有點將台、沒有景點；其他 12 朝有景點、沒有點將台；都在圖裡；量好的點寫死比對（清版景點挪開信箱）
+- ✔ 〔行為〕走路：每朝節點在圖裡、邊只用到有的節點、點入口要去的節點都有、動作（旅人鞠躬、其他揮手、點將台歡呼）；有 look0（沒給的看向旅人）
+- ✔ 〔行為〕13 朝座標整組照量好的值：入口 S、走路 h／N／E／HS 逐一相同
+- ✔ 〔行為〕開頁就是橫式圖：yzScwTag 讓圖框一開始就帶 data-scw，07sw scwMount 一掛上入口就照條目擺；原圖照舊（#166 審查建議 2）
+- ✔ 〔混合〕掛 07sw 的設定 yzScwO：key、src0 是原圖網址；開頁就是橫式圖、圖載不到時退回原圖（src0）；yzInn 用原圖 src 建它（#166 複審建議 1、2）
+- ✔ 〔行為〕載入順序：07m 比 07w 早載入，最上層碰 SHW_YZ 會碰到暫時死區——SHW_YZ 一讀就丟錯也要能載入
+- ✔ 〔行為〕記憶名：換圖重掛走路時，橫式圖用 yzL:<朝>（不套原圖的 yz:<朝> 出口表），原圖照舊 yz:<朝>
+- ✔ 〔行為〕07p yzColor：用橫式圖（P.dataset.scw）不播進門水墨暈開；原圖照舊播
+- ✔ 〔原始碼〕07m 接線：開頁先量（scwPre）、圖照 pre.src、掛 07sw（五種入口）、開頁就是橫式圖時先照條目掛走路（記憶名 yzL）；景點標籤在橫式圖縮成 2cqw
 
 ### test-season-card-1117.js
 
@@ -4870,11 +5404,14 @@
 - ﹣ 略過 〔待分類〕沒有開發用字：test-*.js、網頁版用的欄位、測試項數、只在 App 裡看得懂的「見第 N 項」（略過原因：沒有 xiangqi-lab/src/support.html（公開副本不含））
 - ﹣ 略過 〔待分類〕不載入任何外部資源：沒有 script、外部樣式、圖片、字型、iframe、CSS url()／@import；favicon 用 data:（略過原因：沒有 xiangqi-lab/src/support.html（公開副本不含））
 - ﹣ 略過 〔待分類〕有聯絡信箱（可點的 mailto）、互相有連結；支援頁有四個常見問題（略過原因：沒有 xiangqi-lab/src/support.html（公開副本不含））
+- ﹣ 略過 〔待分類〕〔原始碼〕檢舉時限跟 App Store 審查備註同一個數字（appstore/metadata.md）（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕隱私權政策公開版：這次的修正都寫進去（需要時才抓、飛鴿規則、App 版匿名開關預設關、Game Center 和小工具看建置內容）
-- ✔ 〔待分類〕三處說法一致：App 內設定的隱私卡片（07x4）、privacy.md、privacy.html、iOS app-privacy.md 都有同一句修正清單說明
+- ✔ 〔待分類〕三處說法一致：App 內設定的隱私卡片（07x4）、privacy.md、privacy.html 都有同一句修正清單說明（iOS app-privacy.md 拆到下一項）
+- ﹣ 略過 〔待分類〕〔原始碼〕iOS 隱私申報 app-privacy.md 也有同一句修正清單說明（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕sw.js：這兩頁（含不帶 .html）直接問網路，不會被換成 App 的 index.html；App 本身照舊
 - ✔ 〔待分類〕build-site 把 src/ 整個複製進 site/（兩頁跟著進網站根目錄）；iOS 包不放這兩頁
-- ﹣ 略過 〔待分類〕metadata.md：支援網址、隱私權政策網址換成新網頁；聯絡人姓名、信箱；電話留給開發者本人填；賣家名稱（略過原因：沒有 xiangqi-ios）
+- ﹣ 略過 〔待分類〕〔原始碼〕iOS 包不放支援頁、隱私頁（copy-www 的 SKIP）（略過原因：沒有 xiangqi-ios）
+- ﹣ 略過 〔待分類〕metadata.md：支援網址、隱私權政策網址換成新網頁；聯絡人姓名、信箱；電話留給開發者本人填；賣家名稱（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 
 ### test-sw-offline.js
 
@@ -5060,6 +5597,122 @@
 - ✔ 〔行為〕CDN 也載不到：只重試一次，不會一直重試（照舊用程式畫的磚紋）
 - ✔ 〔行為〕不是 data/ 底下的網址（xqCdnRel 回空字串）：不往 CDN 要
 
+### test-w107-cupmap-l1610.js
+
+- ✔ 〔行為〕條目：經典、原圖、漢、唐、魏晉 5 張都登記、共用座標；檔名各自加 _l1610；07y7 的圖網址找得到；夜版沒有登記
+- ✔ 〔行為〕疊圖座標：跟原本常數同格式；三扇屏風左中右、中扇最大；大掛板在屏風右邊；英雄帖在中扇下方；都在圖內
+- ✔ 〔混合〕燈掛在帳額兩端的掛環正下方（json 的燈鉤），燈寬 2.6%；右燈只蓋到大掛板右上角的留白（不超過 60×50px）
+- ✔ 〔行為〕量好的點照 json 寫死：屏風中扇左上、大掛板左上、英雄帖左上、綵球、入口、出口（抄錯就紅）
+- ✔ 〔行為〕cp2Geo：橫式圖給條目 fx 和 2560×1600；原圖給原本的常數和 768×1376
+- ✔ 〔行為〕走路：邊的兩端、小動作的站點都是節點；從 home 走得到每個節點；入口都在安全區內
+- ✔ 〔原始碼〕開頁照 scwPre 選圖；fit、燈、綵球照 cp2Geo；掛 scwMount（apply＝draw，換圖時 onCfg 換走路設定並馬上 draw）
+
+### test-w107-feedback-l1610.js
+
+- ✔ 〔行為〕條目：fb_day 登記在 07sw 的 SCW，檔名加 _l1610、2560×1600；07s3 的圖網址找得到它；夜版沒有登記（照舊直圖）
+- ✔ 〔行為〕銅匭：三口的類型、名稱、圖示、順序跟原本 FBP_SLOT 一樣，座標由左到右；送出時照 ty() 的序號投進對的那一口
+- ✔ 〔行為〕疊圖座標：信箋三點、印、待送數、附件、回條、類型小籤都在圖內；信箋 o→x 往右、o→y 往下
+- ✔ 〔行為〕走路：邊的兩端都是節點、每個節點接得到 home；書桌桌面跳點接到節點
+- ✔ 〔混合〕飛鴿：橫式圖（data-scw 有值）不飛、回 false，照舊投進銅匭；原圖照舊往下走（不被這條擋）
+- ✔ 〔行為〕座標組 GEO：橫式圖用條目 fx（2560×1600、類型小籤 tyY 760），原圖用原本的常數（768×1376、520）；兩組每一欄都有
+- ✔ 〔行為〕走路出口：橫式圖的記憶名 fbpL 登記自己的出口（json 建議的位置），不動直圖的 fbp
+- ✔ 〔原始碼〕render 照 scwPre 選圖；換圖用 place() 原地重放（不整頁重畫）；掛 scwMount（記憶名照圖換 fbp／fbpL）；類型小籤橫式時往內收
+
+### test-w107-hall-l1610.js
+
+- ✔ 〔行為〕條目：十派都登記在 SCW（鍵 zmhall/<派>），檔名加 _l1610；量好的點照 json 寫死
+- ✔ 〔行為〕jhHallUse：換成橫式時每一套都換對；換回直式全部還原成原值（直式原值存起來，不被弄丟）
+- ✔ 〔行為〕迷宮入口（Windows Claude 1 補量）照量好的點寫死、都在圖內、不跟同一派的地點和玩法入口疊在一起（相距超過 80px）
+- ✔ 〔原始碼〕JhHall 開頁照 scwPre 決定整套用哪一種；轉向（apply）整頁重畫；JH_HALL_W／H、JH_MATE_W 改成 let
+- ✔ 〔混合〕順風小字：直式、橫式都放在這一派大廳標籤正下方、在圖內；八派門內頁實跑 jhHalls8Hall 不再用 768／1376 當除數（審查 #170）
+- ✔ 〔混合〕jhHallUse 整個物件比對：十派 JH_HALL 的 seat／w／cut／spots／mates／extra、八派 spots／play.at、兩套走路 N／E／HS／h／look0／W／H 換過去全對，換回直式整個物件等於原值（含 screen）
+- ✔ 〔混合〕JhHall 開頁實跑真的 07sw：iPad 橫向開頁用橫式圖、橫式圖載不到退回直圖（不把玩家踢回長卷）；直圖載不到才照舊退回長卷、記 JH_HALL_BAD
+
+### test-w107-libmap-l1610.js
+
+- ✔ 〔行為〕條目：書閣＋11 朝共用一套、石窟另一套，13 張都登記、檔名加 _l1610；10b 的圖網址找得到
+- ✔ 〔行為〕量好的點照 json 寫死（抄錯就紅）：書閣六格、三口箱、入口；石窟六片古譜、10 片玉冊、整捆竹簡、入口
+- ✔ 〔行為〕石窟玉冊：右 6 片＝六部古譜（cells 就是 slips 的後 6 片）、左 4 片中間是特級大師入口；古譜點選區只蓋右 6 片、不蓋到特級大師
+- ✔ 〔行為〕走路：兩套的邊、小動作站點都是節點、從 home 走得到；六格古譜都有小動作；石窟沒有燈檠節點也不用；人物二樓比一樓小
+- ✔ 〔行為〕出口：橫式圖的記憶名 libL（書閣往右）、libCL（石窟往左）登記自己的出口，不動直圖的 lib；接的節點都在各自的路網裡
+- ✔ 〔行為〕lbGeo：橫式圖給條目 fx；原圖書閣給 LB_CELLS、LB_BOX 和原本的點選區；原圖石窟給 LB_CL
+- ✔ 〔原始碼〕開頁照 scwPre 選圖；place 照 lbGeo 重放古譜、木箱、點選區、小棋盤、厚度；掛 scwMount（apply＝place，記憶名照圖換）
+
+### test-w107-night-l1610.js
+
+- ✔ 〔行為〕清單：會用到的檔逐類寫死，合起來 218 張（215＋重畫、重出的 study_night_classic、canju_night_classic、study_night）全部到齊；鍵不重複
+- ✔ 〔行為〕日間條目晚登記也接得上：先查不到，日間那條登記後就複製一份（座標、安全區、疊圖、天氣同一份，只換檔名、記 base）
+- ✔ 〔行為〕各類對應：夜景 <名>_night<後綴>←<名>_day<後綴>；大廳 lobby<後綴>_night←lobby<後綴>；對戰、學習 <名>[_朝代]_<季>[_night]←<名>[_朝代]，夏季用日間那張、夏夜用夜景那張
+- ✔ 〔混合〕scwPre 開頁就選到夜景橫式圖（iPad 橫向）；scwSw7 用夜景橫式圖網址找得到天氣條目；直向照舊原圖
+- ✔ 〔行為〕各頁自己寫好的條目不蓋掉；登記完的不再處理（清單變短），沒新增時清單照舊
+
+### test-w107-port-l1610.js
+
+- ✔ 〔行為〕條目：13 朝都登記，鍵是全彩直圖 port_<朝>_f、檔名加 _l1610；船艙有千秋石桌、其他朝有古戰場；夜景、淡彩沒有登記
+- ✔ 〔行為〕座標：三扇門 3 個、景點數量跟 PORT_SIGHT 一樣、碼頭盡頭跟 PH4_PIER 同格式；都在圖內
+- ✔ 〔行為〕路網：13 朝的邊都接在節點上、從 home 走得到每個節點（含碼頭盡頭）；門、景點、上星槎都有小動作
+- ✔ 〔行為〕明朝：home 不直接連 i1（會擦到內湖），改經石堤頂沙路的 m1
+- ✔ 〔行為〕走路出口（上星槎）：渡口橫式圖（路網 W＝2560）走出去上橫式圖的船，直圖照舊上 PH4_PIER 的船（審查 #165 第 1 項）
+- ✔ 〔行為〕上色過場：轉成橫式圖（圖框 data-scw 有值）時 pcSet 不換圖；直圖照舊換上全彩
+- ✔ 〔原始碼〕開頁照 scwPre 選全彩圖；上色過場、風、船艙動態在橫式圖不掛（轉成橫式時藏起來）；走路、渡口主人照條目；景點、碼頭標籤走 scwPut
+- ✔ 〔混合〕轉成橫式圖收掉直圖的動態：上色過場停播、疊層和風／WebGL 畫布拿掉、底圖恢復可見（不再 hidden、沒有灰階濾鏡）、按鈕位移清掉、SPX 放手
+- ✔ 〔混合〕上色過場：圖框已是橫式圖就不播、拿掉 pc-run；播的時候留 _pcStop 給轉向收掉（停迴圈、拿掉疊層）
+- ✔ 〔混合〕風、船艙動態的素材載完時：圖框已換成橫式圖、或畫布已被收掉，就不再把底圖藏起來（直向開頁、素材載到一半轉橫向；審查 #165 第三輪）
+- ✔ 〔混合〕ph4Cfg：直圖照 SHW_PORT（身高乘 SHW_PORT_K）、橫式圖照條目路網（W 2560、home 照條目）；主人泡泡 ph4Line、07w5 偶遇的信 oyCfg 都走 ph4Cfg（審查 #165 第四輪）
+- ✔ 〔混合〕07w5 偶遇轉向重放：信照當下的路網重找位置；3D 小人收掉舊的、照新路網重掛；07f place 只在直橫換了才叫（審查 #165 第五輪）
+- ✔ 〔混合〕4:3 iPad 橫向：07f 照 07fl 推出去的 marginLeft 算 --pcL，標題條往內縮；直圖、16:10 是 0；不改 07fl（審查 #165 第六、七輪）
+- ✔ 〔混合〕轉回直向：只重掛風本身（portWindCore，不叫外面包了好幾層的 portWind）和船艙 WebGL；墨粒子補上 fx-map 再掛；只在橫→直那一次（審查 #165 第六、七輪）
+- ✔ 〔混合〕旅伴「！」：iPad 轉向時渡口主人重掛、點擊區換一顆，「！」接到新的那顆、不退回看不到的小卡；等 6 秒還沒有才退回（審查 #165 第八輪）
+- ✔ 〔混合〕渡口主人載入中被轉向重掛：ph4Load 提早結束時點擊區、泡泡一起收，不留孤兒；07f 重掛時舊的點擊區、泡泡也一起拿掉（審查 #165 第八輪）
+- ✔ 〔行為〕天氣：13 朝橫式圖照條目 sw7 下雨雪（m:out，不再被當成室內）、地點照直圖、W／H 2560×1600；落葉樹冠只有唐宋元明清 5 朝、用橫式圖的座標，其他朝不沿用直圖的
+- ✔ 〔行為〕木匣：sw7BoxKey 認得橫式圖（回第 3 欄 1）、直圖照舊；橫式圖座標照 json、寬 6%；經典不放
+- ✔ 〔混合〕sw7Box：橫式圖放橫式座標、寬 6%、元素鍵加 :l（轉向會換一個）；直圖照舊 10%；存檔的鍵兩邊都是 port:<朝>
+
+### test-w107-setmap-l1610.js
+
+- ✔ 〔行為〕條目：經典版、原圖兩張都登記在 07sw 的 SCW，共用座標、檔名各自加 _l1610
+- ✔ 〔行為〕入口：16 個器物都有橫式座標和走路小動作，都在安全區內；出口在圖內
+- ✔ 〔行為〕走路：邊的兩端、小動作的站點都是節點；從 home 走得到每個節點
+- ✔ 〔行為〕疊圖座標：棋盤四角在圖內、左上左下右下右上；琴囊、3 盞燈在圖內
+- ✔ 〔行為〕smScene 用橫式圖：深色不換夜版直圖（換了會把橫式圖蓋掉），疊調暗層＋條目的 3 盞燈；原圖照舊去載夜版
+- ✔ 〔行為〕smScene 用橫式圖：琴囊、棋盤框、高對比描金照條目；原圖照 SM_BOARD 的像素
+- ✔ 〔原始碼〕開頁照 scwPre 選圖、掛 scwMount（入口＝SM_SPOTS、apply 重畫疊圖）、走路照條目
+- ✔ 〔行為〕設定頁夜圖：開頁是原圖、深色先去載夜版；夜版載好時已經轉成橫式圖就不蓋（審查 #158 第 4 項），還是原圖就換上
+
+### test-w107-shippages-l1610.js
+
+- ✔ 〔混合〕條目：起航、書架、棋話、行囊、幻影指導局 5 頁都登記、檔名加 _l1610；入口 id 照原表
+- ✔ 〔行為〕量好的點照 json 寫死（抄錯就紅）；說明卡、木牌的位置
+- ✔ 〔混合〕shpScw 用真的 07sw：iPad 橫向開頁就換橫式圖、入口和說明卡照條目；轉成直向換回原圖、清掉 style；橫式圖載不到退回原圖
+- ✔ 〔混合〕大字模式：橫式木牌以板面中心為準、寬度放大 58/45、top 寫中心、高度交回 CSS；一般字級照條目；m.css 字級照 --fz 放大
+- ✔ 〔混合〕石桌棋盤頁 #/ship/pz：iPad 橫向用橫式圖，四角、三團星光照 json；換回直圖全部還原；svg 的 viewBox 跟著換、已擺的棋子重畫；載不到退回
+- ✔ 〔混合〕石桌棋盤頁載入 00-util 真的 CDN 補抓監聽：開頁就是橫式圖、同源 404 先等 CDN 那次，CDN 也失敗才退回直圖；退回時清 cdnTry，直圖（只在 CDN）還能再去補抓（審查 #168 第二輪）
+- ✔ 〔混合〕石桌棋盤頁重開不累積 resize 監聽
+- ✔ 〔原始碼〕5 頁都掛 shpScw；m.css 橫式字級縮小
+
+### test-w107-tablet-board-1125.js
+
+- ✔ 〔行為〕m.css 有 W107 段，裡面一條直向、一條橫向的 @media
+- ✔ 〔行為〕手機（直向、橫放）和分割畫面：兩條都套不到，版面跟以前一樣
+- ✔ 〔行為〕平板：直向套直向那條、橫向套橫向那條，不會兩條同時套到
+- ✔ 〔原始碼〕只套有棋盤的頁、棋盤高度用容器查詢、寬度照 560:620
+
+### test-w107-termsmap-l1610.js
+
+- ✔ 〔行為〕條目：經典版、原圖都登記在 SCW、共用；檔名加 _l1610；07y4 的圖網址找得到；夜版沒有登記
+- ✔ 〔行為〕三通碑：跟 TB_STELE 同格式、同順序（棋規、記譜、術語由左到右）；碑面、碑額、標題牌在圖內，標題牌在碑額上方
+- ✔ 〔行為〕標題牌、走路小動作照原本的算法從 stele 算；在安全區內；走路路網接得起來
+- ✔ 〔行為〕tbGeo：橫式圖給條目的碑和 2560×1600 換算；原圖給 TB_STELE 和 768×1376
+- ✔ 〔原始碼〕開頁照 scwPre 選圖；place 照 tbGeo 放青苔和碑面；拓碑動畫照 tbGeo；掛 scwMount（apply＝place）
+
+### test-w107-thememap-l1610.js
+
+- ✔ 〔行為〕條目：經典版、原圖都登記在 SCW、共用座標；檔名各自加 _l1610；07y3 的圖網址找得到
+- ✔ 〔行為〕8 塊牌：四角在圖內、左上右上右下左下；順序照 TM_Q（近到遠、左右交錯：偶數在左、奇數在右，越遠越小）
+- ✔ 〔行為〕主題小牌、走路小動作：照原本的算法從 tmq 算（小牌離牌緣 53px，閃擊、牽制在下方）；都在安全區內
+- ✔ 〔行為〕走路：邊的兩端、小動作的站點都是節點；從 home 走得到每個節點；天氣範圍在圖內
+- ✔ 〔原始碼〕開頁照 scwPre 選圖；fit 照當下的圖（條目或 TM_Q）放牌面和流蘇；掛 scwMount（apply＝fit）；小動作照練習狀態
+
 ### test-w108-sel-glow-1125.js
 
 - ✔ 〔原始碼〕defs 有選中光暈的放射漸層：暖金色（亮起來，不是深色像影子），外圈淡到透明
@@ -5079,6 +5732,30 @@
 - ✔ 〔行為〕判斷：只有原生 App 在 iPad 相容視窗（手機寬）才加；iPhone、真 iPad 寬度、Safari 網頁版、Android、沒觸控的 Mac 都不加
 - ✔ 〔行為〕轉向、改視窗大小時重算：手機寬→寬→手機寬，class 跟著加、拿掉、再加
 - ✔ 〔原始碼〕m.css：xq-ipcompat 時 #topbar 左邊留 76px，寫在檔尾、!important，蓋得過 html body.bh-field #topbar 的內距
+
+### test-w131b-hub-fill.js
+
+- ✔ 〔原始碼〕xflItems：.shp-spot 和 .cy（朝代殘影）都算可以裁
+- ✔ 〔行為〕入口是 .shp-spot 加天上的 .cy：照樣填滿寬度（820×1180 大廳）
+- ✔ 〔行為〕大塊點選區（棋譜庫古譜書架，高 ≥100）加推得動的入口：照樣填滿，大塊的中間那段一定看得到；大塊擺不進就照原本少放大
+
+### test-w134-maze-joy.js
+
+- ✔ 〔行為〕中間死區不算推：拇指剛按下、還沒推出去不會走
+- ✔ 〔行為〕平面版：上下左右（畫面座標往下為正）
+- ✔ 〔行為〕斜俯視：北在右上、東在右下、南在左下、西在左上（跟畫面上的菱形格子同方向）
+- ✔ 〔行為〕換方向有黏性：在交界附近抖動不會一直換，推過交界夠多才換
+- ✔ 〔行為〕橫的畫面放右下（右手拇指），直的放左下
+- ✔ 〔原始碼〕迷宮頁掛上搖桿；原本的方向鈕、鍵盤方向鍵照舊；m.html 在迷宮後面載入
+- ✔ 〔行為〕搖桿位置可以自己放（開發者 11/26「左邊或是右邊或是任何地方」）：存比例、換尺寸照比例放、整個圓盤含把手都留在框裡
+- ✔ 〔行為〕點一下把手換位置：左下 → 右下 → 預設 → 左下
+- ✔ 〔原始碼〕把手：拖＝搬到任何位置並記住（直的、橫的各一份）；點一下換左右；拖的時候不會走
+
+### test-w66-cdn-recheck-1126.js
+
+- ✔ 〔行為〕CDN 偶發連不上：全部問完後低並行再問一輪；重問連上算有、拿到 404 算 ✘、還是連不上照樣 △；CDN 全斷仍是結束代碼 3
+- ✔ 〔行為〕改壞驗證：拿掉重問、連不上當成有、連不上當成沒有、重問全開 6 個並行、CDN 全斷也全部重問、部分斷也提早結束（W66b），檢查一定抓得到
+- ✔ 〔原始碼〕主流程用 askCdn 問 CDN（同一個金絲雀探測檔排在同一個佇列）、報告寫進 cdnRecheck；LF、沒有控制字元
 
 ### test-w89-mentor-1124.js
 
@@ -5340,7 +6017,8 @@
 - ✔ 〔待分類〕門派字＝派名第一個字，十派各一、不重複
 - ✔ 〔待分類〕掌門對局的外觀帶 gch，紅黑跟掌門執子方一致（黑方四派黑字）
 - ✔ 〔待分類〕bot3d：figure 收 gch／gred，胸前字照指定顏色畫，用完重設
-- ﹣ 略過 〔待分類〕ring3d.json 有十位掌門的圓牌位置（數值合理），兩份一致（略過原因：沒有 tripo_app/ring3d.json（公開副本的 run-tests 把 source/ 抄到暫存資料夾，倉庫的 data/ 也不在旁邊））
+- ✔ 〔待分類〕ring3d.json 有十位掌門的圓牌位置（數值合理）
+- ﹣ 略過 〔待分類〕ring3d.json 素材原始資料跟網站那一份一致（略過原因：沒有素材原始資料 tripo_app/ring3d.json（公開副本只有網站那一份，兩份一致只在開發者電腦驗））
 - ﹣ 略過 〔待分類〕深度表 glydepth.json 也算過十位掌門（W57：從上一支拆出）（略過原因：沒有 tripo_app/glydepth.json（只放 CDN））
 
 ### test-zm-screen-data-1122.js
