@@ -37,6 +37,15 @@ node scripts/build-variant.js --repo <公開倉庫> --tag web-<版號> --variant
 node scripts/aab-to-apk.js --aab <上一步的 AAB> --signing <signing.properties> --out <資料夾> --bundletool <bundletool-all.jar>
 
 # 3. P0 三項都綁這個 AAB（P0-UPD／P0-3D 帶第 2 步的 aab-apk.json，工具自己算實際 APK 的雜湊來比，不符＝測試不成立）
+#    先做預檢（W190，2026-11-27）：每一台要跑 P0-UPD／P0-3D 的模擬器，裝好第 2 步的 APK 之後，開跑前先跑這支；結束代碼 0 才開跑。
+#    它依序確認 adb、在線、shell 有回應、是模擬器、開機完成、WebView、手機上的 APK 是送審 AAB 產生的、CDP 連得上而且版號對，前一項不過就停。
+#    adb 不能用、不是模擬器、裝錯 APK、版號不對這幾種，重開也不會好，就算加了 --restart-avd 也不重開，直接判不就緒。
+#    重開前會先確認 emulator 執行檔在、AVD 列得到，才關掉舊的；任一項不對就不關、直接回報。AVD 不在預設位置（$HOME/.android/avd）時要先設
+#    ANDROID_AVD_HOME；Windows 上 --emulator 要用 C:/… 或 C:\… 開頭的路徑（Git Bash 的 /c/… 路徑 node 認不得）。
+#    只做檢查，不寫 P0 報告，p0-gate.js 也不收它；P0 的判斷和「連續 2 輪」規定都不變。
+#    加 --restart-avd <AVD 名稱> 才會在不合格時自動重開那台模擬器再檢查（最多 --retries 次，預設 2）；重開前照 AGENTS.md 先問同機另一位有沒有在用。
+node scripts/emu-ready.js --serial <emulator-5554> --aab-apk <第 2 步的 aab-apk.json> --build <版號> [--restart-avd <AVD 名稱>] --out emu-ready.json
+#    P0-IMG（check-aab-assets.js）和它的金絲雀只讀 AAB、問 CDN，不用模擬器：可以跟 P0-UPD／P0-3D 同時跑，不用排在它們後面。
 node scripts/check-aab-assets.js --aab <AAB> --cdn --out p0-img.json                         # P0-IMG（報告自己算 AAB 雜湊）
 node scripts/check-upgrade.js --old <上一版 APK> --new <第 2 步的 APK> … --aab-apk <第 2 步的 aab-apk.json> --out <資料夾>   # P0-UPD（upgrade.json）
 node scripts/check-3d.js --build <版號> --aab-apk <第 2 步的 aab-apk.json> …              # P0-3D（W67；先把第 2 步的 APK 裝到模擬器，工具會拉回手機上的 base.apk 核對；預設連跑 2 輪，兩輪都全過才算，每次嘗試記在 attempts.jsonl）

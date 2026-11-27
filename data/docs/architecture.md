@@ -1,6 +1,6 @@
 # 連線與資料架構
 
-最後核對：2026 年 11 月 18 日（對應版本 20261118-1041）。連線、同步、簽名、換手機各節是 11/11～11/13 逐項對照 App 程式寫的（`xiangqi-lab/src/net.js`、`site/sw.js`、`m/05-settings.js`、`m/05b-save.js`、`m/07x4-lobbysafe.js`、`tools/mqtt-prune.js`），這次沒有改；11/17 補了「App 玩法模組」「電腦引擎的分工」「只放 CDN 的資料」三節（對照 `m/07sg2-siege2.js`、`m/07pty-party.js`、`m/07gxt-guanxing.js`、`m/07gxd-daily.js`、`m/07xsm-ximarket.js`、`src/local.js`、`src/varengine.js` 等）。
+最後核對：2026 年 11 月 27 日（11/27 發布的那一版；補了地底迷宮的存檔鍵、iPad 橫式場景圖與首頁橫式長卷兩項只放 CDN 的資料，其他各節重新核對，內容沒變）。連線、同步、簽名、換手機各節是 11/11～11/13 逐項對照 App 程式寫的（`xiangqi-lab/src/net.js`、`site/sw.js`、`m/05-settings.js`、`m/05b-save.js`、`m/07x4-lobbysafe.js`、`tools/mqtt-prune.js`），這次沒有改；11/17 補了「App 玩法模組」「電腦引擎的分工」「只放 CDN 的資料」三節（對照 `m/07sg2-siege2.js`、`m/07pty-party.js`、`m/07gxt-guanxing.js`、`m/07gxd-daily.js`、`m/07xsm-ximarket.js`、`src/local.js`、`src/varengine.js` 等）。
 
 這份說明《象棋千秋》哪些東西在手機、哪些經過網路、斷線或伺服器出事時各功能會怎樣，以及**哪些事目前不保證**。隱私面（送什麼、留多久、怎麼刪）請看「🔒 隱私與資料使用」。
 
@@ -34,6 +34,7 @@
 - 線上積分和最近 100 盤線上戰績（每盤帶棋步）：localStorage。**積分是自己手機算的**，別人看到的是你手機公開出去的數字。
 - 下載過的圖片、引擎、古譜：瀏覽器快取。
 - 11/13～11/16 新玩法的進度也都是 localStorage，而且跟著存檔格走（`m/05b-save.js` 的 `JOURNEY_KEYS`，換存檔格、開新旅程會一起換）：`party`（雲河七星隊伍、各自經驗、星輝）、`gsv`（星門圍城各關各難度的勝和敗、星數）、`sg2Tal`（點亮的天賦）、`bhtdDust`（星塵）、`dgl`（二十八宿點亮紀錄；人間體力已關閉、資料保留）、`gxtSeen`、`xsmSeen`、`xsmStall`（西市各攤、櫃坊的帖與包裹）、`gxdOmen`／`gxdFree`／`gxdDone`（今日異象、自由擺陣）、`xsdRec`／`xsdRun`／`xsdLv`（暗棋）、`bhDrift1`（這一趟第一次起航的必定偏航用過沒）。舊黑洞玩法的 `bhtd`、`bhtl` 留著讀舊存檔。都不經過網路。
+- 江湖會館十派的地底迷宮（11/26 起每派三層）也跟著存檔格走：中炮門是 `jhMaze`，其他派是 `jhMaze_<派>`，第二、三層再加 `_L2`、`_L3`；每一層另有一個題目指標（鍵名後面加 `Ptr`）。十派、三層的名單寫在 `m/05b-save.js`（`JH_MZ_SAVE_SIDS`、`JH_MZ_SAVE_LAYERS`）。一樣不經過網路。
 
 ### 只放 CDN 的資料
 
@@ -47,9 +48,12 @@
 | `data/guanxing/`（`gx_tai`、`gx_tai_w`、白天版、`xiu_sky`）、`data/ximarket/`（`xm_day`、`xm_night`、`xm_tea`） | 觀星臺、二十八宿星圖、西市與茶坊的場景圖 | `07gxt-guanxing.js`、`07dgl-stamina.js`、`07xsm-ximarket.js`、`07ulk-unlockfx.js` |
 | `data/i18n-en.json` | 英文外掛字典（正本 `xiangqi-db/i18n-en.json`；選 English 才下載） | `07i18n.js` |
 | `data/varengine/weights.json` | Magellan 的評估權重（讀不到就用引擎內建的預設權重） | `src/varengine-worker.js` |
+| `data/homemap/home_l1610.webp`、`home_p34.webp` | 首頁長卷的橫版（iPad 橫放）與直版（iPad 直向） | `m/07z-homemap.js` |
+| `data/<各場景資料夾>/*_l1610.webp`（例如 `redomap/redo_day_classic_l1610`） | iPad 橫放時各場景頁的橫式專用圖，含季節、夜景版（11/27 這一版起打開） | `m/07sw-scenewide.js`（登記表 `SCW`） |
 
 - 公開副本沒有這些檔，相關測試會跳過那部分檢查（有幾支是直接算通過）；外人只能在正式站上看。
 - CDN 掛掉時改抓 GitHub 的退路，對這些檔沒有用（GitHub 上沒有），會缺圖或沒有配樂；過場圖載不到會跳過那張，Magellan 改用內建權重。
+- 首頁和各場景的橫式圖載不到時，退回原本的直式圖，而且這次開 App 不再試（`HMW_BAD`、`SCW_BAD`）。手機直拿、手機橫放都照舊用直式圖，只有畫面夠寬（可用寬 ÷ 可用高 > 1.04，而且短邊 ≥ 600）才用橫式圖。
 
 ### 經過 MQTT 伺服器
 

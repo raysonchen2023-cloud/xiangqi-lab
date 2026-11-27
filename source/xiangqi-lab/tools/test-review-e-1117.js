@@ -6,7 +6,7 @@ const assert = require("node:assert/strict"), test = skipMissing(require("node:t
 /* 公開副本沒有 iOS 專案（xiangqi-ios）、文件原稿（xiangqi-db/art/docs）、英文外掛字典（只放 CDN）：讀不到這幾類檔時標成略過、寫原因；其他錯誤照樣失敗（1144 公開證據補） */
 function skipMissing(t0) {
   const why = p => { const s = String(p || "").split(String.fromCharCode(92)).join("/");
-    return /xiangqi-ios/.test(s) ? "沒有 xiangqi-ios（公開副本不含）" : /xiangqi-db\/art\/docs/.test(s) ? "沒有 xiangqi-db/art/docs 文件原稿（公開副本不含）" : /i18n-en\.json/.test(s) ? "沒有 xiangqi-db/i18n-en.json（只放 CDN）" : "" };
+    return /xiangqi-ios[\\/](www([\\/]|$)|ios[\\/]App[\\/]App[\\/](public([\\/]|$)|capacitor\.config\.json))/.test(s) ? "沒有 iOS 建置產物 xiangqi-ios/www、ios/App/App/public、capacitor.config.json（cap sync 產生，.gitignore 不進倉庫）" : /xiangqi-ios[\\/]appstore/.test(s) ? "沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦）" : /xiangqi-ios/.test(s) ? "沒有 xiangqi-ios（公開副本不含）" : /xiangqi-db\/art\/docs/.test(s) ? "沒有 xiangqi-db/art/docs 文件原稿（公開副本不含）" : /i18n-en\.json/.test(s) ? "沒有 xiangqi-db/i18n-en.json（只放 CDN）" : "" };
   const w = (name, opt, fn) => { if (typeof opt === "function") { fn = opt; opt = undefined }
     const run = async t => { try { return await fn(t) } catch (e) { const r = e && e.code === "ENOENT" ? why(e.path) : ""; if (r) { t.skip(r); return } throw e } };
     return opt ? t0(name, opt, run) : t0(name, run) };
