@@ -34,10 +34,12 @@ function env(bad = {}, extra = {}) {
       if (a.startsWith("shell getprop ro.")) { if (bad.emulator) return ""; return a.endsWith("ro.kernel.qemu") ? "1" : "" }
       if (a === "shell echo ok") { if (bad.shell === "timeout") throw timeout(); if (bad.shell === "weird") return "okay"; return "ok" }
       if (a === "shell getprop sys.boot_completed") { if (bad.boot) return bad.boot === "empty" ? "" : "0"; return "1" }
+      if (a === "shell dumpsys package com.google.android.webview") return bad.webview === "disabled" ? "    User 0: ceDataInode=1 installed=true hidden=false stopped=false enabled=3 instant=false\n" : "    User 0: ceDataInode=1 installed=true hidden=false stopped=false enabled=0 instant=false\n";
       if (a === "shell dumpsys webviewupdate") {
         if (bad.webview === "none") return "Current WebView Update Service state\n  Fallback logic enabled: false\n  WebView package dirty: false\n";
         if (bad.webview === "nullpkg") return "Current WebView Update Service state\n  Current WebView package (name, version): (null, null)\n";
         if (bad.webview === "fail") throw new Error("dumpsys 失敗");
+        if (bad.webview === "disabled") return "Current WebView Update Service state\n  Fallback logic enabled: false\n";
         return "Current WebView Update Service state\n  Current WebView package (name, version): (com.google.android.webview, 136.0.7103.125)\n  Minimum targetSdkVersion: 33\n";
       }
       throw new Error("假 adb 不認得：" + a);
@@ -71,6 +73,7 @@ test("每一項單獨壞掉：擋在那一項、原因寫得出來、後面的�
     [{ shell: "timeout" }, "shell", /15 秒內 shell 沒回應/], [{ shell: "weird" }, "shell", /不是 ok/],
     [{ boot: "0" }, "boot", /還沒開機完成/], [{ boot: "empty" }, "boot", /還沒開機完成/],
     [{ webview: "none" }, "webview", /沒有可用的 WebView/], [{ webview: "nullpkg" }, "webview", /沒有可用的 WebView/], [{ webview: "fail" }, "webview", /讀不到 WebView/],
+    [{ webview: "disabled" }, "webview", /WebView 被停用了.*pm enable/],
     [{ apk: true }, "apk", /不是 aab-apk\.json 記的那一個/],
     [{ start: true }, "cdp", /App 開不起來/], [{ cdp: true }, "cdp", /socket hang up/], [{ build: true }, "cdp", /不是要驗的/],
   ];
@@ -129,7 +132,7 @@ test("不合格時重開再檢查：重開後好了就放行；一直壞就在 -
 
 test("重開也不會好的（adb 不能用、不是模擬器、裝錯 APK、版號不對）不重開、直接判不就緒；模擬器卡住的（shell、開機、CDP）照樣重開", async () => {
   const M = load();
-  for (const bad of [{ adb: "missing" }, { emulator: true }, { apk: true }, { build: true }]) {
+  for (const bad of [{ adb: "missing" }, { emulator: true }, { apk: true }, { build: true }, { webview: "disabled" }]) {
     let n = 0; const R = await M.checkReady(OPT, env(bad, { restart: async () => { n++; return { ok: true } } }));
     assert.equal(R.ready, false, JSON.stringify(bad)); assert.equal(n, 0, JSON.stringify(bad) + " 不該重開");
     assert.equal(R.rounds[0].verdict.retryable, false, JSON.stringify(bad));
@@ -214,7 +217,7 @@ test("改壞驗證：判斷改鬆了，上面的測試要抓得到", async () =>
     ["CDP 沒就緒照樣過", 'add("cdp", c.ok, c.msg, c.retryable);', 'add("cdp", true, c.msg);'],
     ["不合格也不重開", "if (vd.ready || !vd.retryable || !env.restart || i >= opt.retries)", "if (true)"],
     ["不是模擬器也放行", 'if (!add("emulator", g.ok,', 'if (!add("emulator", true,'],
-    ["WebView 沒有也放行", 'if (!add("webview", !!wm,', 'if (!add("webview", true,'],
+    ["WebView 沒有也放行", "  if (!wm) {\n", "  if (false) {\n"],
   ];
   /* 另一種改壞：重開也不會好的照樣重開（浪費時間，而且「重開後版號就對了」不可能發生） */
   const from2 = "if (vd.ready || !vd.retryable || !env.restart", to2 = "if (vd.ready || !env.restart";

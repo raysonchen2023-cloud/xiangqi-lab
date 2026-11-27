@@ -62,7 +62,15 @@ async function checkOnce(opt, env) {
   /* 看系統實際在用的 WebView（dumpsys webviewupdate 的 Current WebView package），不只看套件裝了沒：套件被停用時版本照樣讀得到 */
   const wv = run(["-s", opt.serial, "shell", "dumpsys", "webviewupdate"], 30000);
   const wm = wv.ok ? /Current WebView package \(name, version\): \(([^,()\s]+), ([^()\s]*\d[^()\s]*)\)/.exec(wv.s) : null;
-  if (!add("webview", !!wm, wm ? "WebView " + wm[1] + " " + wm[2] : (wv.ok ? "系統沒有可用的 WebView（dumpsys webviewupdate 沒有 Current WebView package）" : "讀不到 WebView：" + wv.s.slice(0, 120)))) return out;
+  if (!wm) {
+    /* 沒有可用的 WebView 時再看是不是被停用了（pm disable-user）：停用的重開模擬器也不會好（#245 驗收建議，Windows Claude 1 在 Android 12 實測） */
+    const pk = wv.ok ? run(["-s", opt.serial, "shell", "dumpsys", "package", "com.google.android.webview"], 30000) : null;
+    const disabled = !!(pk && pk.ok && /\benabled=[23]\b/.test(pk.s));
+    add("webview", false, disabled ? "WebView 被停用了：先用 adb shell pm enable com.google.android.webview 打開（重開模擬器也不會好）" :
+      (wv.ok ? "系統沒有可用的 WebView（dumpsys webviewupdate 沒有 Current WebView package）" : "讀不到 WebView：" + lastLine(wv.s).slice(0, 120)), disabled ? false : undefined);
+    return out;
+  }
+  add("webview", true, "WebView " + wm[1] + " " + wm[2]);
   if (opt.aabApk) {
     const b = env.bindApk(opt.aabApk);
     if (!add("apk", b.ok, b.msg, b.retryable)) return out;
