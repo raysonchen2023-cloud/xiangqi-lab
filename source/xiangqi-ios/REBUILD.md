@@ -8,11 +8,11 @@ App 依 GPL-3.0-or-later 授權；象棋引擎 Pikafish 是 GPL-3。這個資料
 
 | 項目 | 值 |
 | --- | --- |
-| App 內版號（`XQ_BUILD`） | `20261123-1652` |
-| 網頁基底：本倉庫的提交 | `c1ecf3fd8f9db36c936ecd607eaf66e04dfa6063`（標籤 `web-20261123-1652`） |
-| iOS 原生專案：本倉庫的提交 | `58e0de2fae0b0da7272bacfe072f6ff1529844d0`（`source/xiangqi-ios`；比網頁標籤多了 #86：iOS 包不放 `AGENTS.md`、`releases/`、`data/docs/verification-log.txt`） |
-| 重建後 `www/index.html` 的 SHA-256 | `7b8995890a4ac2beff16083dbc8705b33f7775e279efee424242a5115ff85b8c` |
-| 候選安裝包 | 2026-11-23 從標籤 `web-20261123-1652` 建（開發簽章，iOS 候選驗收中；還沒上 TestFlight 或 App Store），共 4,712 個檔。上一版 `20261122-0804` 見 [VERSIONS.md](VERSIONS.md) |
+| App 內版號（`XQ_BUILD`） | `20261126-0626`（TestFlight 建置號 1） |
+| 網頁基底：本倉庫的提交 | `8cf646457e1504338a053a809844c2acc13daca7`（標籤 `web-20261126-0626`） |
+| iOS 原生專案：本倉庫的提交 | `8cf646457e1504338a053a809844c2acc13daca7`（同一個標籤的 `source/xiangqi-ios`） |
+| 重建後 `www/index.html` 的 SHA-256 | `234487ab5c58c91544931db83cd30ff5084f221144b8b04b17503327acb454ca` |
+| 安裝包 | 2026-11-26 從標籤 `web-20261126-0626` 建，上傳 TestFlight（建置號 1，只給內部測試群組；還沒上 App Store），`App.ipa` SHA-256 `bf2677b1…6f1da`。上一版 `20261123-1652` 見 [VERSIONS.md](VERSIONS.md) |
 
 其他版本請見 [VERSIONS.md](VERSIONS.md)。
 
@@ -25,7 +25,7 @@ App 依 GPL-3.0-or-later 授權；象棋引擎 Pikafish 是 GPL-3。這個資料
 | Node.js | 26.13.1（`package.json` 要求 ≥ 22） |
 | npm | 11.20.0 |
 | Capacitor | core、ios、cli 8.6.2（Swift Package Manager，`package-lock.json` 已釘住） |
-| 最低 iOS | 17.0，只支援 iPhone |
+| 最低 iOS | 17.0，支援 iPhone 和 iPad（`TARGETED_DEVICE_FAMILY = 1,2`，W107 #152 起；之前的建置只支援 iPhone） |
 
 ## 三、步驟
 
@@ -117,6 +117,7 @@ xcodebuild -project ios/App/App.xcodeproj -scheme App -configuration Release -de
 
 ## 四、已知差異
 
+- 2026-11-26（`20261126-0626`，TestFlight 建置號 1）：照本流程從標籤 `web-20261126-0626` 建（`8cf6464`，原生專案用同一個標籤的本資料夾），`index.html` 是 `234487ab…`，共 4,721 個檔。`web-overlay/release.json`、`native-build.json` 換成 0626 版（跟 `App.ipa` 裡的逐位元相同，2026-11-27 補進本倉庫）。建包時另外照當天清單做了三步，都已在本倉庫：迷宮材質 8 張登記在 `scripts/.www-files.json`、根目錄 `zh.js` 在標籤上已跟 `source/xiangqi-lab/src/zh.js` 相同（跟包裡的也相同）、pbxproj 的 `TARGETED_DEVICE_FAMILY = 1`。
 - 2026-11-23（`20261123-1652`）：iOS 候選包照本流程從標籤 `web-20261123-1652` 建，原生專案用 `58e0de2`（同樣用 iMac 本機的 `tools-imac/stage-from-tag.sh` 串步驟），`index.html` 是 `7b899589…`，共 4,712 個檔。這一版的 `web-overlay/release.json`、`native-build.json` 已換成 1652 版。
 - 2026-11-22（`20261122-0804`）：iOS 候選包直接照本流程從標籤 `web-20261122-0804` 建（iMac 本機的輔助腳本 `tools-imac/stage-from-tag.sh`，不在本倉庫；它只是把本節步驟串起來，照第三節「步驟」的指令手動做，結果相同），所以安裝包和本流程的重建結果相同：`index.html` 是 `0b3d774b…`，共 4,700 個檔；Release 實機版、Debug 模擬器版 `xcodebuild` 都成功。
 - `web-overlay/release.json`、`native-build.json` 是「這一版」iOS 包的版本清單，每一版重產：`release.json` 是標籤的網頁版 `release.json` 加上原生欄位（`html` 是套補丁後 `index.html` 的 sha1，另有 `sharedWebCommit`、`packageFiles` 的 SHA-256）；`native-build.json` 是 `copy-www.js` 產生的。0804 這份的 `bytes`（119,126,859）少算了 `--cdn-fetch` 從 CDN 換進來的檔，實際安裝內容約 962 MB；這是 `copy-www.js` 先算大小、後下載 CDN 檔造成的，下一版起已修正（`bytes`、`byDir` 會在寫檔前重算）。0804 的這份清單保留原樣，因為它就是候選包裡的那一份，改了就和安裝包不一致。`scripts/.www-files.json` 裡 `index.html`、`release.json`、`native-build.json` 這三筆已經是套用覆蓋後的大小，所以直接用本倉庫存的這份清單時，`check-www.js` 不會報大小不符（和上方「自己跑 `copy-www.js` 新產生的清單」那種情況不同）。
