@@ -20,7 +20,7 @@ for (const [sid, file] of SIDS) test(sid + "：碑刻件數跟地圖一致、內
   }
   const S = X.jhMzNew(sid), got = [];
   for (const [x, y] of L) for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-    const px = x - dx, py = y - dy, c = S.lv.map[py] && S.lv.map[py][px]; if (!c || /[#DRHLWX~]/.test(c)) continue;
+    const px = x - dx, py = y - dy, c = S.lv.map[py] && S.lv.map[py][px]; if (!c || /[#DRHLWX~os]/.test(c)) continue;   /* o＝列炮戲箱、s＝順炮鹽灶（11/26 撞字元改名，原本是 X、Z） */
     S.player.x = px; S.player.y = py; const e = X.jhMzStep(S, dx, dy); assert.equal(e.ev, "lore"); got.push(e.id); break;
   }
   assert.deepEqual(got, lv.lore.map((x) => x.id), "地圖上由上到下讀到的就是 lore 的順序");

@@ -8,7 +8,7 @@ const SW = M("m/07sw-scenewide.js"), YZ = M("m/07m-yizhan.js"), PC = M("m/07p-po
 const ERAS = ["classic", "qin", "han", "sanguo", "weijin", "nanbei", "sui", "tang", "wudai", "song", "yuan", "ming", "qing"];
 function load(dev, extra) {
   const ctx = vm.createContext(Object.assign({ setTimeout: () => 0, clearTimeout: () => { }, addEventListener: () => { }, isFinite, Math, Object, String, JSON, Set, localStorage: { getItem: k => dev && k === "xqScwDev" ? "1" : null } }, extra || {}));
-  vm.runInContext(SW, ctx); vm.runInContext(YZ, ctx);
+  vm.runInContext(SW, ctx); if (!dev) vm.runInContext("SCW_CDN=false", ctx);   /* 沒開開發用開關的那一組，模擬「圖還沒上 CDN」，照舊測把關（這版 SCW_CDN 已改 true） */ vm.runInContext(YZ, ctx);
   return ctx;
 }
 const J = x => JSON.parse(JSON.stringify(x));

@@ -3,7 +3,7 @@
    共用程式在 m/07z9m-maze.js（jhMzDef、JH_MZ_KIND、JH_MZ_OBJ、JH_MZ_TILE）；這支只登記仙人指路這一層，不改共用程式。
    玩法跟中炮門一樣（全黑、燈火一圈、回合制、踩機關踏板才解得開石門、三個箱子），不一樣的地方：
      ・地圖空曠、到處是太湖石（R）：擋路，但「不擋光、不擋視線」（R 放進 solid、不放進 opaque）——躲在石頭後面躲不過兵卒的眼睛，要算準他走到哪一格；
-     ・地圖中段一條河（~）：人走得過，兵卒照「過河」改走法；
+     ・地圖中段一條河（r）：人走得過，兵卒照「過河」改走法；
      ・兵卒守衛（JH_MZ_KIND.pawn）：沒過河只能往前一步一步走、只看得到正前方；過了河就改成左右來回巡，看得到正前方和面向的那一側；
        前面被擋住（沒過河）就原地等，不會往回走（兵不回頭）；
      ・殘局：古譜裡兵卒收尾的殺法（開發者 11/24：「你也可以從古譜找題目 比較可靠 古譜+pikafish」），全部「紅方先走、3 步將死」，每題記出處；
@@ -21,8 +21,8 @@ const JH_MZ_PAWN_MAP=[
 "#..R..P#.R..C.#",
 "#.R....#L...R.#",
 "#T.....R.....T#",
-"#~~~~~~~~~~~~~#",
-"#~~~~~~~~~~~~~#",
+"#rrrrrrrrrrrrr#",
+"#rrrrrrrrrrrrr#",
 "#.............#",
 "#.###.###.###.#",
 "#.#L..#C..#...#",
@@ -53,12 +53,12 @@ JH_MZ_KIND.pawn={
 JH_MZ_OBJ.R=H=>{const{T3,mesh,lam}=H,g=new T3.Group(),m1=lam("#8f9a9a"),m2=lam("#6f7b7c");
   for(const[a,b,z,s,m]of[[-.12,.2,.05,.24,m1],[.13,.3,-.06,.2,m2],[-.02,.52,.02,.17,m1],[.08,.72,.06,.12,m2],[-.16,.62,-.08,.1,m2]]){const o=mesh(new T3.IcosahedronGeometry(s,0),m,a,b,z);o.rotation.set(a*4,z*6,b*3);g.add(o)}
   return g};
-JH_MZ_OBJ["~"]=H=>{const{T3,mesh,lam}=H,g=new T3.Group(),w=mesh(new T3.BoxGeometry(1,.03,1),lam("#4f7f8c"),0,.018,0);g.add(w);return g};
+JH_MZ_OBJ["r"]=H=>{const{T3,mesh,lam}=H,g=new T3.Group(),w=mesh(new T3.BoxGeometry(1,.03,1),lam("#4f7f8c"),0,.018,0);g.add(w);return g};
 /* 平面版（3D 載不起來時） */
 JH_MZ_TILE.R=(cx,px,py,T)=>{cx.fillStyle="rgba(0,0,0,.35)";cx.beginPath();cx.ellipse(px+T*.5,py+T*.88,T*.4,T*.09,0,0,7);cx.fill();
   cx.fillStyle="#8f9a9a";cx.strokeStyle="#3f4848";cx.lineWidth=1.8;cx.beginPath();cx.moveTo(px+T*.22,py+T*.85);cx.lineTo(px+T*.3,py+T*.4);cx.lineTo(px+T*.45,py+T*.18);cx.lineTo(px+T*.62,py+T*.3);cx.lineTo(px+T*.78,py+T*.55);cx.lineTo(px+T*.72,py+T*.85);cx.closePath();cx.fill();cx.stroke();
   cx.fillStyle="#3f4848";for(const[a,b,r]of[[.45,.45,.07],[.6,.62,.05]]){cx.beginPath();cx.arc(px+a*T,py+b*T,r*T,0,7);cx.fill()}};
-JH_MZ_TILE["~"]=(cx,px,py,T)=>{cx.fillStyle="#4f7f8c";cx.fillRect(px,py,T,T);cx.strokeStyle="rgba(220,240,245,.5)";cx.lineWidth=1.4;cx.beginPath();cx.moveTo(px+T*.15,py+T*.4);cx.quadraticCurveTo(px+T*.35,py+T*.3,px+T*.55,py+T*.4);cx.moveTo(px+T*.45,py+T*.7);cx.quadraticCurveTo(px+T*.65,py+T*.6,px+T*.85,py+T*.7);cx.stroke()};
+JH_MZ_TILE["r"]=(cx,px,py,T)=>{cx.fillStyle="#4f7f8c";cx.fillRect(px,py,T,T);cx.strokeStyle="rgba(220,240,245,.5)";cx.lineWidth=1.4;cx.beginPath();cx.moveTo(px+T*.15,py+T*.4);cx.quadraticCurveTo(px+T*.35,py+T*.3,px+T*.55,py+T*.4);cx.moveTo(px+T*.45,py+T*.7);cx.quadraticCurveTo(px+T*.65,py+T*.6,px+T*.85,py+T*.7);cx.stroke()};
 /* 殘局題庫：古譜（橘中秘、爛柯神機）裡兵收尾的 3 步殺，Windows Claude 1 的出題工具 maze-puzzles.js 挑題、Pikafish（深度 20）驗證紅方每步唯一、黑方應著撐最久；
    標記中間那一段由工具產生，標題、說明照仙人指路的兵卒守衛改過字。重跑比對（在 source/ 底下，逐字相同才回 0）：
      node xiangqi-lab/tools/maze-puzzles.js --name JH_MZ_POOL_PAWN --out xiangqi-db/m/07z9m-pawn.js --mate P --door 3 --trap 5 --check

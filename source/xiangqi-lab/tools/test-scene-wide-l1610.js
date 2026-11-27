@@ -9,7 +9,8 @@ const SRC = M("m/07sw-scenewide.js");
 function load(extra) {
   const ctx = vm.createContext(Object.assign({ setTimeout: () => 0, clearTimeout: () => { }, requestAnimationFrame: () => 0, addEventListener: () => { }, isFinite, Math, Object, String, localStorage: { getItem: () => null } }, extra || {}));
   vm.runInContext(SRC, ctx);
-  if (!(extra && extra.__noCdn)) vm.runInContext("SCW_CDN=true", ctx);   // 測座標和行為時當作圖已經上 CDN
+  if (extra && extra.__noCdn) vm.runInContext("SCW_CDN=false", ctx);   // 模擬圖還沒上 CDN，測把關
+  else if (!(extra && extra.__raw)) vm.runInContext("SCW_CDN=true", ctx);   // 測座標和行為時當作圖已經上 CDN（__raw＝照檔案裡的預設值）
   return ctx;
 }
 const C0 = load(), [scwKind, scwKey, scwEntry, scwSw7, SCW, SCW_BAD] = vm.runInContext("[scwKind, scwKey, scwEntry, scwSw7, SCW, SCW_BAD]", C0);
@@ -32,8 +33,9 @@ test("圖網址 → 鍵；條目要 ready、或開發用開關，載不到過的
   assert.equal(scwKey("https://x.test/data/redomap/redo_day_classic_l1610.webp"), RD + "_l1610");
   assert.equal(scwKey("data/redomap/redo_day.png"), "");
   assert.ok(scwEntry(RD), "錯棋重練經典白天已登記、ready");
-  assert.equal(scwEntry("redomap/redo_night"), null, "夜景（預設世界）還沒有橫式圖＝原圖");
-  assert.equal(scwEntry("redomap/redo_night_classic"), null, "夜景沒有橫式圖＝原圖");
+  assert.equal(scwEntry("redomap/redo_dawn"), null, "沒列在變體清單的照舊沒有橫式圖＝原圖（夜景 218 張 11/25 到齊）");   /* 11/25 夜景、四季 218 張到齊（test-w107-night-l1610.js），redo_night 等都有橫式圖了，這裡改用不在變體清單的 redo_dawn */
+  assert.equal(scwEntry("redomap/redo_night_classic").f, "redomap/redo_night_classic_l1610", "11/25 起經典夜景也有橫式圖（照日間條目複製）");
+  assert.equal(scwEntry("redomap/redo_dawn_classic"), null, "沒列在變體清單的照舊沒有橫式圖＝原圖");
   assert.equal(scwEntry("toString"), null, "原型上的名字不算");
   const C = load(), e = vm.runInContext("SCW_BAD['" + RD + "']=1;scwEntry('" + RD + "')", C);
   assert.equal(e, null, "載不到過＝退回原圖");
@@ -43,8 +45,10 @@ test("圖網址 → 鍵；條目要 ready、或開發用開關，載不到過的
   const C3 = load(); vm.runInContext("SCW['" + RD + "'].ready=false", C3);
   assert.equal(vm.runInContext("scwEntry('" + RD + "')", C3), null);
   // 審查 #155：圖還沒上 CDN（SCW_CDN=false）時正式玩家一律原圖，只有開發用開關才用
-  const C4 = load({ __noCdn: 1 }); assert.equal(vm.runInContext("SCW_CDN", C4), false, "預設還沒上 CDN"); assert.equal(vm.runInContext("scwEntry('" + RD + "')", C4), null);
+  const C4 = load({ __noCdn: 1 }); assert.equal(vm.runInContext("SCW_CDN", C4), false, "模擬還沒上 CDN"); assert.equal(vm.runInContext("scwEntry('" + RD + "')", C4), null);
   const C5 = load({ __noCdn: 1, localStorage: { getItem: k => k === "xqScwDev" ? "1" : null } }); assert.ok(vm.runInContext("scwEntry('" + RD + "')", C5), "開發用開關照樣看得到");
+  // W107-L 發布：橫式圖已上 CDN，檔案預設 SCW_CDN=true，正式玩家沒開開發用開關也用橫式圖
+  const C6 = load({ __raw: 1 }); assert.equal(vm.runInContext("SCW_CDN", C6), true, "這版預設已上 CDN"); assert.ok(vm.runInContext("scwEntry('" + RD + "')", C6), "正式玩家看得到橫式圖");
 });
 
 test("錯棋重練條目：座標都在圖內、走路的邊和小動作都接得到節點、入口四個都有", () => {
@@ -86,7 +90,7 @@ test("每一頁條目：檔名是原圖加 _l1610、2560×1600、入口出口在
   for (const xy of [T.term, T.seal, T.censer.slice(0, 2), ...T.eave]) assert.ok(xy[0] >= 0 && xy[0] <= 2560 && xy[1] >= 0 && xy[1] <= 1600);
   // 朝代日間：座標沿用經典版的 35 張；學習、錯棋重練原圖另外量，還沒登記
   const ERA = { "hubmap/battle": 12, "lobbymap/lobby": 12, "cpuroom/cpuroom_day": 3, "canjumap/canju_day": 3, "todaymap/today_day": 4, "exammap/exam_day": 1 };
-  let n = 0; for (const [p, c] of Object.entries(ERA)) { const ks = Object.keys(SCW).filter(k => (k === p || k.startsWith(p + "_")) && !/classic/.test(k)); assert.equal(ks.length, c, p + " 朝代張數"); n += c;
+  let n = 0; for (const [p, c] of Object.entries(ERA)) { const ks = Object.keys(SCW).filter(k => (k === p || k.startsWith(p + "_")) && !/classic/.test(k) && !/_(night|spring|summer|autumn|winter)$/.test(k));   /* 季節、夜景另外數（test-w107-night-l1610.js） */ assert.equal(ks.length, c, p + " 朝代張數"); n += c;
     for (const k of ks) { assert.equal(SCW[k].f, k + "_l1610"); assert.match(SCW[k].base, /_classic$/) } }
   assert.equal(n, 35);
   // 學習原圖（書院）另一套座標、11 朝共用；錯棋重練原圖加洗墨池、晾冊竹竿
@@ -166,7 +170,7 @@ test("換圖：iPad 橫向原地換成橫式圖、入口和出口換座標；圖
   assert.equal(scwSync(V, P), null, "這次開 App 不再試，照原圖排"); assert.equal(P.dataset.scw, "");
   const d2 = { w: 956, h: 354 }, F = fakeDom(d2); vm.runInContext("scwMount", F.ctx)(F.P, { key: RD, src0: F.img._src, ids: [] });
   assert.equal(vm.runInContext("scwSync", F.ctx)(F.V, F.P), null, "手機橫放不換");
-  const F2 = fakeDom({ w: 1180, h: 734 }); vm.runInContext("scwMount", F2.ctx)(F2.P, { key: "redomap/redo_night", src0: F2.img._src, ids: [] });
+  const F2 = fakeDom({ w: 1180, h: 734 }); vm.runInContext("scwMount", F2.ctx)(F2.P, { key: "redomap/redo_dawn", src0: F2.img._src, ids: [] });
   assert.equal(vm.runInContext("scwSync", F2.ctx)(F2.V, F2.P), null, "沒登記的變體不換");
 });
 

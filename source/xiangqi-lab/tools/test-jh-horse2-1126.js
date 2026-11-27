@@ -56,8 +56,8 @@ function problems(c) {
   if (G.tr.length !== 3 || G.tr[0][0] !== 6) bad.push("野馬只記 LAG+1＝3 格足跡（只慢 2 步，走 4 步後最舊那格要丟掉）");
   /* 碎瓦片：踩了碎成平地、野馬那一回合多跳一步、回 stop:true（跟同一局面但瓦片換成平地比） */
   const mk = (tile) => { const X = c.jhMzNew(L); X.grid[10][4] = tile; X.guards = [{ kind: "wildhorse2", x: 2, y: 16, dx: -2, dy: -1, tr: [[9, 12], [7, 12], [5, 12]] }]; X.player = { x: 5, y: 10, face: 1 }; return X };
-  const T = mk("V"), U = mk("."), before = cell(T, 4, 10), r = c.jhMzStep(T, -1, 0); c.jhMzStep(U, -1, 0);
-  if (before !== "V") bad.push("測試地圖：(4,10) 要是瓦片");
+  const T = mk("t"), U = mk("."), before = cell(T, 4, 10), r = c.jhMzStep(T, -1, 0); c.jhMzStep(U, -1, 0);
+  if (before !== "t") bad.push("測試地圖：(4,10) 要是瓦片");
   if (cell(T, 4, 10) !== ".") bad.push("瓦片踩過要碎成平地");
   if (!r.stop) bad.push("踩到瓦片要回 stop:true（自動走停下）");
   if (T.guards[0].x === U.guards[0].x && T.guards[0].y === U.guards[0].y) bad.push("踩到瓦片那一回合野馬要多跳一步（位置要跟沒踩瓦片不同）");
@@ -96,7 +96,7 @@ test("改壞驗證：野馬慢 3 步、瓦片不讓野馬多跳、自動走會�
   const cases = [
     ["野馬慢 3 步", { "07z9m-horse2.js": (s) => s.replace("const JH_MZ_HORSE2_LAG=2;", "const JH_MZ_HORSE2_LAG=3;") }],
     ["瓦片不讓野馬多跳", { "07z9m-horse2.js": (s) => s.replace("if(G.kind===\"wildhorse2\")G.rush=1;", "") }],
-    ["自動走會踩瓦片", { "07z9m-horse2.js": (s) => s.replace("avoid:\"V\",", "") }],
+    ["自動走會踩瓦片", { "07z9m-horse2.js": (s) => s.replace("avoid:\"t\",", "") }],
   ];
   for (const [name, patch] of cases) {
     const f = Object.keys(patch)[0], orig = rd(f); assert.notEqual(patch[f](orig), orig, name + "：改壞的程式要真的有改到");
