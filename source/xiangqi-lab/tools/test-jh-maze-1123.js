@@ -542,7 +542,7 @@ test("仙人指路地圖：每行一樣寬、外框是牆；一個起點、一�
   for (const r of M) { assert.equal(r.length, W); assert.ok(r[0] === "#" && r[W - 1] === "#") }
   assert.ok(/^#+$/.test(M[0]) && /^#+$/.test(M[M.length - 1]));
   assert.deepEqual([cnt("@"), cnt("D"), cnt(">"), cnt("P"), cnt("C")], [1, 1, 1, 1, 3]); assert.ok(cnt("T") >= 4); assert.ok(cnt("R") >= 10, "很多太湖石"); assert.ok(cnt("H") >= 1, "至少一道暗門"); assert.equal(cnt("L"), 3, "三件碑刻文書");
-  for (const y of c.JH_MZ_PAWN_RIVER) assert.ok(/^#~+#$/.test(M[y]), "河整行橫貫");
+  for (const y of c.JH_MZ_PAWN_RIVER) assert.ok(/^#r+#$/.test(M[y]), "河整行橫貫");
   const S = c.jhMzNew("pawn"), D = new Set([S.start.y * W + S.start.x]), q = [[S.start.x, S.start.y]];
   while (q.length) { const [x, y] = q.shift(); for (const [a, b] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + a, ny = y + b, k = ny * W + nx; if (D.has(k) || c.jhMzSolid(S, nx, ny) || M[ny][nx] === ">") continue; D.add(k); q.push([nx, ny]) } }
   const at = (ch) => { const o = []; M.forEach((r, y) => [...r].forEach((v, x) => { if (v === ch) o.push(y * W + x) })); return o };

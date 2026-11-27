@@ -4,7 +4,7 @@
    玩法跟中炮門一樣（全黑、燈火一圈、回合制、踩機關踏板才解得開石門、三個箱子），不一樣的地方：
      ・地圖被中間一條地下水溝（~，像楚河漢界）分成上下對稱的兩半，整條都是水，只有兩座小橋（第 4、10 欄）過得去；水溝擋路、不擋視線。
      ・淨面戲軸（JH_MZ_KIND.king）照將帥的規矩：只在自己那一側的 3×3 九宮裡巡，一回合走一格直線（繞九宮外圈）。
-       看得到的＝上下左右緊鄰的四格，再加上「飛將」：跟牠同一條直行（同一欄）、中間沒有戲箱（X）或牆擋著，不管多遠都看得到，隔著水溝也一樣。
+       看得到的＝上下左右緊鄰的四格，再加上「飛將」：跟牠同一條直行（同一欄）、中間沒有戲箱（o）或牆擋著，不管多遠都看得到，隔著水溝也一樣。
        所以穿過九宮那幾欄時，要躲在戲箱後面，或趁牠走到別欄的時候。
      ・冷光柱（M）：戲台地板縫隙透下來的月光。站進光柱，整條直行（上下到被擋住為止，越過水溝）都看得清楚——先看清對岸戲軸在哪一欄再過去。
    還沒做（之後補）：碑刻文書 L 與暗門 H（要先請 Gemini 查史料、iMac Claude 1 複核）、像素材質（每派一套，出圖要先問開發者）。 */
@@ -14,17 +14,17 @@ const JH_MZ_OPP_MAP=[
 "#####...#######",
 "######D########",
 "#T...........T#",
-"#..X.......X..#",
+"#..o.......o..#",
 "#.M.........M.#",
-"#..X.......X..#",
+"#..o.......o..#",
 "#C..........P.#",
-"#..X..X.X..X..#",
+"#..o..o.o..o..#",
 "#.............#",
 "#~~~.~~~~~.~~~#",
 "#.............#",
-"#..X..X.X..X..#",
+"#..o..o.o..o..#",
 "#.M.........M.#",
-"#..X.......X..#",
+"#..o.......o..#",
 "#C...........C#",
 "#.............#",
 "#T.@.......T..#",
@@ -46,12 +46,12 @@ JH_MZ_KIND.king={
 function jhMzOppMoon(S,dx,dy){const P=S.player,nx=P.x+dx,ny=P.y+dy;if(jhMzSolid(S,nx,ny)||jhMzCell(S,nx,ny)!=="M")return null;
   for(const d of[-1,1])for(let y=ny;y>0&&y<S.H-1;y+=d){if(y!==ny&&jhMzOpaque(S,nx,y))break;S.seen.add(y*S.W+nx)}return null}
 /* 3D：戲箱（朱漆木箱、銅角）、水溝（深色水面）、冷光柱（很淡的光圈）；平面版各自的樣子 */
-if(!JH_MZ_OBJ.X)JH_MZ_OBJ.X=H=>{const{T3,mesh,lam}=H,g=new T3.Group(),rd=lam("#8a2e24"),br=lam("#b88a3a");
+if(!JH_MZ_OBJ["o"])JH_MZ_OBJ["o"]=H=>{const{T3,mesh,lam}=H,g=new T3.Group(),rd=lam("#8a2e24"),br=lam("#b88a3a");
   g.add(mesh(new T3.BoxGeometry(.8,.56,.6),rd,0,.28,0));g.add(mesh(new T3.BoxGeometry(.84,.06,.64),br,0,.56,0));
   for(const s of[-1,1])g.add(mesh(new T3.BoxGeometry(.06,.5,.62),br,s*.38,.27,0));return g};
 if(!JH_MZ_OBJ["~"])JH_MZ_OBJ["~"]=H=>{const{T3,mesh}=H,g=new T3.Group();g.add(mesh(new T3.BoxGeometry(1,.04,1),new T3.MeshLambertMaterial({color:0x1d3346,transparent:true,opacity:.92}),0,.02,0));return g};
 if(!JH_MZ_OBJ.M)JH_MZ_OBJ.M=H=>{const{T3,mesh}=H,g=new T3.Group();g.add(mesh(new T3.CylinderGeometry(.42,.42,.02,24),new T3.MeshBasicMaterial({color:0xcfe0ee,transparent:true,opacity:.35}),0,.012,0));return g};
-if(!JH_MZ_TILE.X)JH_MZ_TILE.X=(cx,px,py,T)=>{cx.fillStyle="#8a2e24";cx.fillRect(px+T*.1,py+T*.2,T*.8,T*.6);cx.strokeStyle="#b88a3a";cx.lineWidth=2;cx.strokeRect(px+T*.1,py+T*.2,T*.8,T*.6)};
+if(!JH_MZ_TILE["o"])JH_MZ_TILE["o"]=(cx,px,py,T)=>{cx.fillStyle="#8a2e24";cx.fillRect(px+T*.1,py+T*.2,T*.8,T*.6);cx.strokeStyle="#b88a3a";cx.lineWidth=2;cx.strokeRect(px+T*.1,py+T*.2,T*.8,T*.6)};
 if(!JH_MZ_TILE["~"])JH_MZ_TILE["~"]=(cx,px,py,T)=>{cx.fillStyle="#1d3346";cx.fillRect(px,py,T,T);cx.strokeStyle="rgba(160,190,210,.5)";cx.beginPath();cx.moveTo(px+T*.15,py+T*.5);cx.quadraticCurveTo(px+T*.5,py+T*.3,px+T*.85,py+T*.5);cx.stroke()};
 if(!JH_MZ_TILE.M)JH_MZ_TILE.M=(cx,px,py,T)=>{cx.fillStyle="#3b3428";cx.fillRect(px,py,T,T);cx.fillStyle="rgba(207,224,238,.35)";cx.beginPath();cx.arc(px+T/2,py+T/2,T*.42,0,Math.PI*2);cx.fill()};
 /* 殘局題庫（maze-puzzles.js 產生，不要手改），分兩段出：炮收尾的 2～3 步古譜題被前幾派用到只剩 4 題，只夠石門。
@@ -83,7 +83,7 @@ trap:[
 {"id":"lk084","src":{"book":"爛柯神機","title":"捐軀成義"},"zh":["被淨面戲軸逮住了","戲軸攔在你面前，唱了一句：「解得開這局，就放你走。」紅方先走，3 步將死黑方。提示：兩個將帥不能在同一條直線上照面（飛將），自己的帥也能幫忙看住一條線。"],"en":["Caught by a painted-face puppet","The puppet blocks your way and sings: \"Solve this and you can go.\" Red to move: checkmate in 3. Hint: the two generals may never face each other on an open file, so your own general can help guard a line."],"fen":"7C1/3k3C1/3a1P3/9/9/9/9/9/2nr1r3/1R2K4","line":["f7f8","d7e8","f8e8","d8d9","b0b9"]}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_OPP_TRAP== */
 jhMzDef("opposite_cannon",{map:JH_MZ_OPP_MAP,guards:JH_MZ_OPP_GUARDS,pool:{door:JH_MZ_POOL_OPP.door,trap:JH_MZ_POOL_OPP_TRAP.trap},
-  puz:{door:JH_MZ_POOL_OPP.door[0],trap:JH_MZ_POOL_OPP_TRAP.trap[0]},solid:"#DX~",opaque:"#DX",jump:"",onStep:jhMzOppMoon,
+  puz:{door:JH_MZ_POOL_OPP.door[0],trap:JH_MZ_POOL_OPP_TRAP.trap[0]},solid:"#Do~",opaque:"#Do",jump:"",onStep:jhMzOppMoon,
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"列炮譜殘頁",en:"Opposite Cannons manual page"},{k:"box",zh:"崑曲生旦棋子",en:"Kunqu opera character pieces"}],
   title:["🎭 戲台底閣","🎭 Under the opera stage"],lvName:["戲台底閣・第一層","Under the opera stage · Level 1"],back:["回列炮門","Back to the Opposite Cannons School"],
   hall:{at:[600,1060],zh:"🎭 鼓架下・戲台底閣",en:"🎭 Below the drum · Under the stage"},
