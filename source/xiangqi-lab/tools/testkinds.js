@@ -15,6 +15,15 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-w107-night-l1610.js",   /* 11/25 W107-L 夜景、四季 218 張 iPad 橫式圖（07sw scwVarList／scwVarInit）：清單逐類寫死、日間晚登記接得上、各類對應、夏季夏夜、scwPre／scwSw7、不蓋掉已有條目（行為 4、混合 1） */
+  "test-w131b-hub-fill.js",   /* 11/26 W131b iPad 直向：對戰、學習大廳的朝代殘影（.cy）算可以裁，大廳照樣填滿寬度、不留模糊底 */
+  "test-w107-hall-l1610.js",   /* 11/25 W107-L 第 5 批：江湖會館十派門內頁（07z9b／07z9l／07z9c／07z9m）iPad 橫向橫式圖：十派條目與量好的點、jhHallUse 整套換與還原、迷宮入口位置（行為 3、原始碼 1） */
+  "test-scene-wide-xsm.js",   /* 11/25 W107-L 第 4 批：西市（07xsm）iPad 橫向橫式圖——外景、冬景、茶坊、茶坊冬景四個條目、座標整組照量好的值、藏點與茶坊禁區照當下的圖、日夜換季換圖照 07sw 的鍵重選、開頁就是橫式圖與換圖失敗實跑真的 07sw、開頁 xsmPre／xsmPageScw 實跑、00-util 補抓 CDN 後每分鐘換圖（行為 8、〔混合〕1、〔原始碼〕1） */
+  "test-w107-shippages-l1610.js",   /* 11/25 W107-L 第 4 批：星槎船上各頁（07f 起航、書架、棋話、行囊、幻影指導局）iPad 橫向橫式圖：5 頁條目、量好的點寫死、shpScw 用真的 07sw（開頁、轉向、載不到退回）、大字木牌、石桌棋盤頁換圖、CDN 補抓（00-util 真監聽）、resize 不累積、橫式字級（行為 1、混合 6、原始碼 1） */
+  "test-scene-wide-yz.js",   /* 11/25 W107-L 第 3 批：驛站（07m）iPad 橫向橫式圖——13 朝條目、入口（經典點將台／其他景點）與量好的點、走路節點與動作、07m 最上層不碰 SHW_YZ（暫時死區）、記憶名 yzL、07p 橫式圖不播水墨、13 朝座標整組寫死、開頁 yzScwTag 實跑、yzScwO 的 key／src0 與載不到退回原圖（行為 8、〔混合〕1、〔原始碼〕1） */
+  "test-w107-port-l1610.js",   /* 11/25 W107-L 第 3 批：渡口（07f）iPad 橫向橫式圖：13 朝條目、門景點碼頭格式（多朝寫死）、路網與小動作、明朝繞開內湖、出口上橫式的船、上色過場不換回直圖、各模組接法（行為 6、原始碼 1） */
+  "test-w107-libmap-l1610.js",   /* 11/25 W107-L 第 3 批：棋譜庫（10b）iPad 橫向橫式圖：書閣＋11 朝、石窟兩套條目、量好的點寫死、石窟 10 片玉冊分法、走路、出口 libL／libCL、lbGeo（行為 6、原始碼 1） */
+  "test-w107-cupmap-l1610.js",   /* 11/25 W107-L 第 2 批：千秋盃頁（07y7）iPad 橫向橫式圖：5 張條目、屏風掛板英雄帖燈綵球座標、燈掛在掛環下、量好的點寫死、cp2Geo、走路（行為 5、混合 1、原始碼 1） */
   "test-eye-p3-1125.js",   /* 11/25 W121 真人視角第一輪 P3（平面）：隨行小人不站上棋盤（src/bot3d.js）、輪到電腦時狀態列不寫「輪到你」（m/08b-cpugame.js）、評等說明泡泡自己跳出時不蓋棋盤（m/01-board.js tmxBub av）。14 項行為、2 項〔原始碼〕 */
   "test-eye-3d-1125.js",   /* 11/25 W121 真人視角第一輪 P3（3D）：玩家碰過畫面或按過鍵就不再跳「拖曳轉身」教學（m/06-cpu.js）、3D 操作提示抬到按鈕和小紙條上方（src/park3d.js）。7 項行為、3 項〔原始碼〕 */
   "test-censer-3d-1125.js",   /* 11/25 開發者 iPad 截圖「香爐看起來沒有平放在桌子上、會飄起來」：石桌香爐從往後仰的 2D 立牌換成 3D 青瓷三足爐（src/park3d.js censer3d），三隻腳踩桌面、不出桌緣、不進棋盤木框、白煙從香頭起 */
@@ -62,6 +71,7 @@ const CLASSIFIED = new Set([
   "test-aab-assets-check-1121.js",   /* 11/21 W41① 送審前安裝包內容檢查 xiangqi-android/scripts/check-aab-assets.js（封測 P0-IMG：W21 缺素材、W30 切塊大檔接不回、舊檔；行為 6） */
   "test-p0-aab-bound-1122.js",   /* 11/22 W69 流程盤點第 3 項：P0 證據綁住送審 AAB（p0-gate 三份報告同一個 AAB 雜湊、P0-IMG 要 --cdn 且 0、P0-UPD 不准 --no-old-worker）、包裡素材跟 CDN 現行版交叉核對、建包只換清單內舊副本、簽章密碼不上命令列、建包腳本 --home-art 必填；PR #42 審查：版號要等於送審版號、P0-3D Android 12／16 各一份且完整跑、已知問題清單用倉庫那份（行為 7、原始碼 1） */
   "test-p0-canary-1123.js",   /* 11/23 AGENTS.md「P0 出口驗證要難作假」：P0 工具鎖定 tool-pin.js（報告記工具雜湊、閘門比 origin/main）、三項金絲雀（破圖拿掉首頁素材／改雜湊／CDN 404、更新檢查假視窗、3D 自我反測遮罩）、閘門收 Android 12／16 金絲雀；行為 36、混合 2、原始碼 6 */
+  "test-w66-cdn-recheck-1126.js",   /* 11/26 W66 P0-IMG check-aab-assets.js 問 CDN：全部問完後沒確認到的低並行再問一輪（askCdn）；只有 404／410 算 ✘、還是連不上照樣 △（行為 2、原始碼 1） */
   "test-app-assets-check-1122.js",   /* 11/22 W69② iOS 送審前安裝包素材檢查 xiangqi-ios/scripts/check-app-assets.js（對應 Android W41①：首頁必要素材、清單 SHA-1、缺圖與切塊大檔、跟 CDN 清單比對、.ipa；反測必紅；--gate 送審閘門沒核對 CDN 就擋、.ipa 出錯也清暫存（PR #41 審查）；行為 8、原始碼 1） */
   "test-preview-build-1121.js",   /* 11/21 W43 Cloudflare PR 預覽建置 source/preview-build.js（版號跟 sw.js 一致、刪超過 25 MB 的檔、寫 404.html；行為 5） */
   "test-device-checks-1121.js",   /* 11/21 W41②③ 升級測試 check-upgrade.js 與 44 畫面破圖掃描 check-scenes.js 的判斷規則（P0-UPD、P0-IMG；離線只算看得到的破圖；測不成立回 2；只准模擬器；更新視窗看 20 秒；行為 12、原始碼 3） */
@@ -124,6 +134,11 @@ const CLASSIFIED = new Set([
   "test-ui-1113.js",   /* 11/13 hspx：看我的棋力沒反應（P0）、toast 換行規矩、幻影台詞、漂浮畫卷 */
   "test-home-wide.js",   /* 11/13 首頁接 iPad 寬版圖 home_p34／home_l1610：挑圖、退回原圖、座標表、走路節點、網址版本、cover 填滿（07z HMW、07fl xflCover；行為 8、混合 1） */
   "test-ipad-fill.js",   /* 11/13 遊戲畫面都要滿版：iPad／Duo 直向填滿寬度、橫向兩側模糊底（07fl；行為 8、原始碼 1） */
+  "test-scene-wide-gm.js",   /* 11/25 W107-L 第 2 批：特級大師畫像長廊（07y6）iPad 橫向橫式圖——經典／原圖／漢／魏晉四個條目、畫心 7／7／6 幅照量好的四角（凸、越深越小）、gm2G 原圖照 GM2_Q、入口在第三幅前、漢版走路另一套、魏晉共用（行為 3、〔混合〕2） */
+  "test-scene-wide-camp.js",   /* 11/25 W107-L 第 1 批：新手訓練營沙盤（07y2）iPad 橫向橫式圖——兩個條目共用座標、13 面旗與 31 個路線點落點、旗腳偏移 ×2560/768 找最近路線點、這一課起點照原本規則、出口記憶名 campL（左下營寨）、原圖照舊（行為 4、〔混合〕1） */
+  "test-scene-wide-stat.js",   /* 11/25 W107-L 第 1 批：我的戰績（07z2）iPad 橫向橫式圖——兩個條目共用座標、榜面比例／棋桌四角／熱區／紗燈落點、走路節點與動作照原本、原圖照 JZ2_*（榜面、棋桌熱區位置不變）（行為 4、〔混合〕1） */
+  "test-scene-wide-open.js",   /* 11/25 W107-L 第 1 批：我的開局（07z3）iPad 橫向橫式圖——兩個條目共用座標、入口／棋枰紙籤四角／兩冊手卷落點、走路節點與動作照原本、原圖照 KJ2_*（朱印、待補籤位置不變）、橫式圖偏移 ×(2560/768)（行為 4、〔混合〕1） */
+  "test-scene-wide-study.js",   /* 11/25 W107-L 第 1 批：我的角色書齋牆（07z4）iPad 橫向橫式圖——經典版、原圖版共用座標的兩個條目、14 入口／亮格／消寒圖／輿圖／爐煙／朱點落點、原圖消寒圖與輿圖畫法不變、選圖照整個畫面量（直向不誤換）、07fl 問 scwSync 時滿寬不 cover、載不到退回（行為 6、〔混合〕1） */
   "test-w109-home-cdn.js",   /* 11/25 W109 首頁寬版圖同源 404 時先等 00-util 的 CDN 補抓、CDN 也失敗才退回原圖（07z hmwFail；載入 07z 和 00-util 真正的監聽，行為 3、〔混合〕2） */
   "test-scene-wide-l1610.js",   /* 11/25 W107-L 場景頁 iPad 橫向專用橫式圖（07sw，第一頁錯棋重練經典白天）：選圖門檻、鍵與條目、座標範圍、天氣範圍、原地換圖與退回（含開頁就是橫式圖、00-util CDN 補抓）、手機不動標籤、走路設定；〔混合〕原始碼接線 */
   "test-w107-setmap-l1610.js",   /* 11/25 W107-L 第 1 批：設定頁（07s2）iPad 橫向橫式圖：條目、入口與走路、疊圖座標、smScene 橫式不換日夜圖且疊圖照條目（行為 7、原始碼 1） */
@@ -200,6 +215,11 @@ const CLASSIFIED = new Set([
   "test-jh-horse2-1126.js",   /* 11/26 W87-2 起馬地底迷宮第二層「烽火暗驛」（m/07z9m-horse2.js）：vm 跑追跡野馬只慢 2 步、碎瓦片踩碎＋野馬那一回合多跳一步＋stop、自動走不踩瓦片、用真的 jhMzStep 搜尋走得過、題庫與改壞驗證 */
   "test-jh-elephant2-1126.js",   /* 11/26 W87-2 飛相地底迷宮第二層「淤泥闈場」（m/07z9m-elephant2.js、jhMzStep 的 afterMove）：vm 跑淤泥一路滑到底、考箱推進淤泥當煞車與還原、自動走不踩淤泥、用真的 jhMzStep 搜尋走得過、題庫（馬收尾殺題＋解殺題）與改壞驗證 */
   "test-jh-pawn2-1126.js",   /* 11/26 W87-2 仙人指路地底迷宮第二層「漏月迷陣」（m/07z9m-pawn2.js、jhMzPath 的 lv.canMove）：vm 跑竹林只能上下直走（onStep 與自動走）、巡竹兵卒過河加左右視線、逐回合模擬走得過（守衛慢 1～7 回合也一樣）、題庫與改壞驗證 */
+  "test-ipad-scene-review-1126.js",   /* 11/26 W164、W165 外部複審：營地橫式結業路線補上環線最後一段（vm 跑 cpCfgL＋shwPath 量長度）、書齋橫式點亮格器物照 D.wide 跳說明（vm 跑 sciMount），含改壞驗證 */
+  "test-maze-review-1126.js",   /* 11/26 W153～W155 外部複審：迷宮過關那句話有下一層就說通到下一層（jhMzDoneText）、飛相第二層石門紅方要有相、多解題題面不寫死最後一步、反宮馬不標馬後炮；vm 跑十派第一、二層，含改壞驗證 */
+  "test-maze-chars-1126.js",   /* 11/26 迷宮地圖字元不跨檔撞名：依序載入全部 m/07z9m-*.js，每載一個就比對 JH_MZ_OBJ／JH_MZ_TILE 有沒有被後面的檔蓋掉；含改壞驗證 */
+  "test-legend-keep-1126.js",   /* 11/26 W157 外部複審：古戰場自由段保護任務（函谷關）提早結束時也要檢查保護的子；vm 跑 07-legend.js 的判斷，含改壞驗證 */
+  "test-delete-focus-1126.js",   /* 11/26 W156 外部複審：刪除本機資料第二層確認，報讀模式先聚焦「不要刪」（ax-first）；vm 跑 11b-a11y.js 的 axmDlgAdd，含改壞驗證 */
   "test-jh-maze-layers-1126.js",   /* 11/26 W87-2 地底迷宮換層（m/07z9m-maze.js jhMzLayer／jhMzDeep／jhMzPick、07z9m-fall.js 層數標題、07z9m-central2.js 中炮門第二層示範）：vm 跑登記多層不動第一層、存檔分層、最深層含舊存檔、選層鎖住、門內頁入口、轉場何時播（含改壞驗證） */
   "test-jh-central3-1126.js",   /* 11/26 W87-3 中炮門地底迷宮第三層（m/07z9m-central3.js）：滾動糧桶（滾到底、停在不是空地或有守衛的前一格、擋路擋光擋視線）、車衛＋雙炮衛、地圖與安全路線、題庫 core.js 重算（行為 7、原始碼 1） */
   "test-jh-screen3-1126.js",   /* 11/26 W87-3 屏風馬門地底迷宮第三層（m/07z9m-screen3.js）：轉向石鼓（轉 90 度花一回合、凸起蓋住的格子蹩馬腿、人照樣能走）、連環馬衛（兩隻同方向跳、蹩住一隻一起換方向）、地圖與安全路線、題庫 core.js 重算（行為 7、原始碼 1） */
@@ -228,6 +248,7 @@ const CLASSIFIED = new Set([
   "test-w107-tablet-board-1125.js",   /* 11/25 W107 開發者「為大螢幕好好設計」第一步：對局頁 iPad 直向放大、橫向兩欄；手機與分割畫面不受影響（m.css；行為 3、原始碼 1） */
   "test-w108-sel-glow-1125.js",   /* 11/25 W108 玩家回饋：選中的棋子底下加柔和光暈（主題強調色、不擋點擊、不動畫；01-board.js；原始碼 3） */
   "test-w126-ipcompat.js",   /* 11/26 W126 iPhone 版在 iPadOS 26 相容視窗裡頂欄讓出視窗鈕（00-util xqIpCompatOf、m.css #topbar 左內距）〔行為 2：vm 跑判斷與 resize 重算；原始碼 1：CSS 規則〕 */
+  "test-w134-maze-joy.js",   /* 11/26 W134 開發者「重新設計地底迷宮的方向鍵」選虛擬搖桿：推的方向對到格子方向（平面上下左右、斜俯視四個斜角）、死區、換方向黏性、橫畫面放右下；迷宮頁掛上搖桿、方向鈕與鍵盤照舊 */
   "test-icon-onerror-1126.js",   /* 11/26 W152 圖示載不到時的備援（m/02-shell.js ETIMG）：組出 onerror 拿去 new Function 編譯並用假 img 實際跑（改抓經典版、換舊圖、換表情文字）；掃所有 m/*.js 的 onerror 不能有反斜線 */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);

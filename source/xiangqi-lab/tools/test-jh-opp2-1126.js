@@ -63,8 +63,8 @@ test("墜落布景的規則都符合（走進繩扣落下、繩扣變回地面�
 });
 
 test("改壞驗證：布景不擋光、不擋路、有守衛也落、繩扣不會消失，規則檢查一定抓得到", () => {
-  const P1 = (s) => s.replace('solid:"#DXYL",opaque:"#DXYL"', 'solid:"#DXYL",opaque:"#DXL"');
-  const P2 = (s) => s.replace('solid:"#DXYL",opaque:"#DXYL"', 'solid:"#DXL",opaque:"#DXYL"');
+  const P1 = (s) => s.replace('solid:"#DoYL",opaque:"#DoYL"', 'solid:"#DoYL",opaque:"#DoL"');
+  const P2 = (s) => s.replace('solid:"#DoYL",opaque:"#DoYL"', 'solid:"#DoL",opaque:"#DoYL"');
   const P3 = (s) => s.replace("if((S.guards||[]).some(G=>G.x===x&&G.y===y))continue;", "");
   const P4 = (s) => s.replace('S.grid[ny][nx]=".";S.dropN', "S.dropN");
   for (const P of [P1, P2, P3, P4]) assert.notEqual(P(SRC), SRC, "改壞的字串要真的找得到");

@@ -54,7 +54,7 @@ trap:[
 {"id":"lk258c4","src":{"book":"爛柯神機","title":"作繭自縛"},"zh":["被暗哨逮住了","暗哨把你按在鹽箱堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a sentry","The sentry pins you by the salt crates: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"1cR6/r4n2C/3ak4/5N3/9/1N7/9/5p3/4p3r/3p1K3","line":["b4c6","e7f7","c6e5","f7e7","f6d5"]},
 {"id":"mr001","src":{"book":"夢入神機","title":"由中應外"},"zh":["被暗哨逮住了","暗哨把你按在鹽箱堆旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a sentry","The sentry pins you by the salt crates: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"1RN1k4/3P3rC/6n2/9/9/9/9/4p4/3p5/c1rAK4","line":["d8e8","e9d9","e8e9","d9e9","c9d7"]}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_SAME3_TRAP== */
-jhMzLayer("same_cannon",3,{map:JH_MZ_SAME3_MAP,guards:JH_MZ_SAME3_GUARDS,solid:"#DZLx",opaque:"#DZLx",dyn:"x",onStep:jhMzSame3Push,
+jhMzLayer("same_cannon",3,{map:JH_MZ_SAME3_MAP,guards:JH_MZ_SAME3_GUARDS,solid:"#DsLx",opaque:"#DsLx",dyn:"x",onStep:jhMzSame3Push,
   pool:{door:JH_MZ_POOL_SAME3.door,trap:JH_MZ_POOL_SAME3_TRAP.trap},puz:{door:JH_MZ_POOL_SAME3.door[0],trap:JH_MZ_POOL_SAME3_TRAP.trap[0]},
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"古譜殘頁",en:"Old manual page"},{k:"relic",zh:"收藏品「灶戶的鹽票」",en:"Keepsake: a salt-boiler's salt ticket"}],
   lore:[{id:"sm5",kind:"stele",title:["灶丁講學碑","The salt-boiler teacher's stele"],

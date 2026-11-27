@@ -62,7 +62,7 @@ test("改壞驗證：推了鹽箱不動、推進寶箱格、推到守衛身上�
   const P1 = (s) => s.replace('S.grid[y2][x2]="x";S.grid[y1][x1]=".";return null}', "return null}");
   const P2 = (s) => s.replace('if(jhMzCell(S,x2,y2)!=="."||', "if(jhMzSolid(S,x2,y2)||");
   const P3 = (s) => s.replace("||(S.guards||[]).some(G=>G.x===x2&&G.y===y2))return{ev:\"wall\"", ")return{ev:\"wall\"");
-  const P4 = (s) => s.replace('solid:"#DZLx",opaque:"#DZLx"', 'solid:"#DZL",opaque:"#DZL"');
+  const P4 = (s) => s.replace('solid:"#DsLx",opaque:"#DsLx"', 'solid:"#DsL",opaque:"#DsL"');
   for (const P of [P1, P2, P3, P4]) assert.notEqual(P(SRC), SRC, "改壞的字串要真的找得到");
   assert.ok(crateProblems(load(P1)).some((s) => s.startsWith("①")), "推了鹽箱不動");
   assert.ok(crateProblems(load(P2)).some((s) => s.startsWith("②")), "推進寶箱格");

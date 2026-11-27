@@ -62,9 +62,9 @@ test("戲帳規則都符合（踩踏板整排放下、再踩收起、放下不�
 
 test("改壞驗證：踏板不換戲帳、戲帳擋路、車衛看穿戲帳、戲帳不擋光，規則檢查一定抓得到", () => {
   const P1 = (s) => s.replace('if(c==="v"){S.grid[y][x]="w";down=true}else if(c==="w")S.grid[y][x]="v"', "");
-  const P2 = (s) => s.replace('solid:"#DXL",opaque:"#DXLw"', 'solid:"#DXLw",opaque:"#DXLw"');
+  const P2 = (s) => s.replace('solid:"#DoL",opaque:"#DoLw"', 'solid:"#DoLw",opaque:"#DoLw"');
   const P3 = (s) => s.replace("if(jhMzSolid(S,x,y)||jhMzOpaque(S,x,y))break;", "if(jhMzSolid(S,x,y))break;");
-  const P4 = (s) => s.replace('solid:"#DXL",opaque:"#DXLw"', 'solid:"#DXL",opaque:"#DXL"');
+  const P4 = (s) => s.replace('solid:"#DoL",opaque:"#DoLw"', 'solid:"#DoL",opaque:"#DoL"');
   for (const P of [P1, P2, P3, P4]) assert.notEqual(P(SRC), SRC, "改壞的字串要真的找得到");
   assert.ok(curtainProblems(load(P1)).some((s) => s.startsWith("①")), "踏板不換戲帳");
   assert.ok(curtainProblems(load(P2)).some((s) => s.startsWith("②")), "戲帳擋路");
