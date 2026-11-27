@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-emu-ready-1127.js",   /* 11/27 W190 Android P0 開跑前的模擬器預檢 emu-ready.js：每一項壞掉都擋在那一項、後面不再跑；健康的不誤擋；不合格時照 --retries 重開再檢查；用法錯誤回 2；改壞驗證 */
   "test-w107-night-l1610.js",   /* 11/25 W107-L 夜景、四季 218 張 iPad 橫式圖（07sw scwVarList／scwVarInit）：清單逐類寫死、日間晚登記接得上、各類對應、夏季夏夜、scwPre／scwSw7、不蓋掉已有條目（行為 4、混合 1） */
   "test-w131b-hub-fill.js",   /* 11/26 W131b iPad 直向：對戰、學習大廳的朝代殘影（.cy）算可以裁，大廳照樣填滿寬度、不留模糊底 */
   "test-w107-hall-l1610.js",   /* 11/25 W107-L 第 5 批：江湖會館十派門內頁（07z9b／07z9l／07z9c／07z9m）iPad 橫向橫式圖：十派條目與量好的點、jhHallUse 整套換與還原、迷宮入口位置（行為 3、原始碼 1） */
