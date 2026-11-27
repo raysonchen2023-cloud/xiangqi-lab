@@ -232,10 +232,16 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
    ① 每個 XCBuildConfiguration 只能有 isa、buildSettings、name、baseConfigurationReference 四個欄位（Xcode 16 的 baseConfigurationReferenceAnchor 這類新寫法一律不行）
    ② buildSettings 裡名字有 SWIFT 的設定只能是 SW_OK 的值（值寫死，陣列、$(變數) 拼不出別的旗標）；SWIFT_VERSION 至少一處；任何地方都不能有 COMPILER_FLAGS
    ③ baseConfigurationReference 照 sourceTree 和群組階層算出真正的路徑（只認 <group>、SOURCE_ROOT）；PBXProject 的 projectDirPath、projectRoot 要是空的
-   ④ 算出來的、以及 ios/、ios/App/、ios/App/App/ 底下的 .xcconfig，每一行只能是空白、// 註解或 CAPACITOR_DEBUG = true／false；#include 一律不行；引用的檔要存在 */
+   ④ 算出來的、以及 ios/、ios/App/、ios/App/App/ 底下的 .xcconfig，每一行只能是空白、// 註解或 CAPACITOR_DEBUG = true／false；#include 一律不行；引用的檔要存在
+   #222 B4 設計上的限制（鎖管不到，要靠建置流程自己顧）：
+   ・建置機的環境變數、命令列傳給 xcodebuild 的設定，經 $(inherited) 繼承進來，這裡看不到；
+   ・名字不含 SWIFT 的設定（例如 TOOLCHAINS、DEVELOPER_DIR）能換掉整套編譯器，不在白名單檢查的範圍；
+   ・所以建包時不能另外帶 -xcconfig、環境變數或命令列設定，照 REBUILD.md 的指令建 */
 /* #147 審查①②：Xcode 把 U+2028、U+2029 當換行，pbxproj、xcconfig 的 // 註解後面接它再寫設定，解析器當成同一行註解、Xcode 卻讀得到。
-   特殊換行、CR 和看不見的字元（跟 Swift 那段的 ODD_NL 同一組，另加 \r），pbxproj 和每一份 xcconfig 出現就拒絕 */
+   特殊換行、CR 和看不見的字元（跟 Swift 那段的 ODD_NL 同一組，另加 \r），pbxproj 和每一份 xcconfig 出現就拒絕。
+   #222 B3：U+00A0、U+3000 會被 \s 當成空白（pbxParse 的 ws、xcconfig 那行的 \s*），Xcode 不一定這樣讀，也拒絕（另用 LOCK_WS，LOCK_NL 原文不動，金絲雀改壞清單照舊對得上） */
 const LOCK_NL = /[\r\u2028\u2029\u0085\u000B\u000C\uFEFF\u200B-\u200F\u2060-\u2064\u00AD\u0000-\u0008\u000E-\u001F\u007F\u202A-\u202E\u2066-\u206F]/;
+const LOCK_WS = /[\u00A0\u3000]/;   /* #222 B3 */
 function pbxParse(src) {
   let i = 0;
   const fail = (m) => { throw new Error(m + "（第 " + src.slice(0, i).split("\n").length + " 行）") };
@@ -267,16 +273,20 @@ function pbxParse(src) {
   let P = null, svN = 0;
   if (!fs.existsSync(pbxSV)) swBad.push("找不到 pbxproj");
   else { const raw = rd(pbxSV); if (LOCK_NL.test(raw)) swBad.push("pbxproj 有特殊換行或看不見的字元（Xcode 把 U+2028／U+2029 當換行，// 註解後面的設定斷詞看不到）");
+    if (LOCK_WS.test(raw)) swBad.push("pbxproj 有 U+00A0／U+3000 這類特殊空白");
     try { P = pbxParse(raw) } catch (e) { swBad.push("pbxproj 看不懂：" + e.message) } }   /* 看不懂時 P 是 null、svN 是 0，下面的 check 也一定紅（雙保險；這行只是讓訊息好讀） */
   if (P) {
     const O = P.objects || {}, parent = {};
+    /* #222 B1：同一個項目掛在兩個群組底下（或同一群組掛兩次），這裡只記得最後一個上層、Xcode 卻打不開專案，兩邊判斷不一致，直接判錯 */
     for (const [id, o] of Object.entries(O)) if (Array.isArray(o.children)) for (const c of o.children) parent[c] = id;
+    { const seen = new Set(); for (const g of Object.values(O)) if (Array.isArray(g.children)) for (const c of g.children) { if (seen.has(c)) swBad.push("同一個項目 " + c + " 掛在兩個群組底下"); seen.add(c) } }
     /* #147 審查④：只取第一個 PBXProject 會被「第二個 PBXProject 當 rootObject」騙過（PROJECT_DIR、SRCROOT 都換掉）。改成照 rootObject 取，而且整份只能有一個 PBXProject */
     const projN = Object.values(O).filter((o) => o.isa === "PBXProject").length, proj = (typeof P.rootObject === "string" && O[P.rootObject] && O[P.rootObject].isa === "PBXProject") ? O[P.rootObject] : {};
     if (projN !== 1 || proj.isa !== "PBXProject") swBad.push("PBXProject 要剛好一個，而且就是 rootObject（現在 " + projN + " 個）");
     if ((proj.projectDirPath || "") !== "" || (proj.projectRoot || "") !== "") swBad.push("PBXProject 的 projectDirPath／projectRoot 不是空的");
     /* #147 審查③：檔案參照、群組的 path／name 裡有 $（例如 $(SRCROOT)），Xcode 會展開、這裡不會，兩邊讀到不同的檔，一律看不懂 */
-    const dirOf = (id, depth) => { const o = O[id]; if (!o || depth > 40) return null; if (/\$/.test(String(o.path || "") + String(o.name || ""))) return null;
+    /* #222 B2：path 有寫但不是字串（陣列、字典），原本會被當成空路徑、解到資料夾，讀檔時 EISDIR 當掉；改成看不懂 */
+    const dirOf = (id, depth) => { const o = O[id]; if (!o || depth > 40) return null; if (o.path != null && typeof o.path !== "string") return null; if (/\$/.test(String(o.path || "") + String(o.name || ""))) return null;
       let base;
       if (o.sourceTree === "<group>") base = parent[id] ? dirOf(parent[id], depth + 1) : (id === proj.mainGroup ? projDir : null);
       else if (o.sourceTree === "SOURCE_ROOT") base = projDir;
@@ -302,7 +312,9 @@ function pbxParse(src) {
   const xcFiles = [...new Set([...xcRefs, ...xcDirs.flatMap((d) => fs.existsSync(d) ? fs.readdirSync(d).filter((f) => f.endsWith(".xcconfig")).map((f) => path.join(d, f)) : [])])];
   for (const f of xcFiles) {
     if (!fs.existsSync(f)) { swBad.push("找不到 " + path.relative(HERE, f)); continue }
+    if (!fs.statSync(f).isFile()) { swBad.push(path.relative(HERE, f) + " 不是一般檔案"); continue }   /* #222 B2 雙保險：參照解到資料夾也不當掉 */
     const xraw = rd(f); if (LOCK_NL.test(xraw)) swBad.push(path.relative(HERE, f) + " 有特殊換行或看不見的字元");
+    if (LOCK_WS.test(xraw)) swBad.push(path.relative(HERE, f) + " 有 U+00A0／U+3000 這類特殊空白");
     for (const l of xraw.split("\n")) if (l.trim() && !/^\s*\/\//.test(l) && !/^\s*CAPACITOR_DEBUG\s*=\s*(true|false)\s*$/.test(l)) swBad.push(path.relative(HERE, f) + "：" + l.trim());
   }
   check(svN > 0 && swBad.length === 0,
