@@ -22,6 +22,7 @@ try {
   fs.cpSync(path.join(SRC, "xiangqi-lab"), path.join(WS, "xiangqi-lab"), { recursive: true });
   fs.copyFileSync(path.join(SRC, "xiangqi-referee.js"), path.join(WS, "xiangqi-referee.js"));
   if (fs.existsSync(path.join(SRC, "xiangqi-android"))) fs.cpSync(path.join(SRC, "xiangqi-android"), path.join(WS, "xiangqi-android"), { recursive: true });   /* Android 建置鏈（11/13 第 17 輪起公開） */
+  if (fs.existsSync(path.join(SRC, "xiangqi-ios"))) fs.cpSync(path.join(SRC, "xiangqi-ios"), path.join(WS, "xiangqi-ios"), { recursive: true });   /* W69 高 7 第 3 步（#62 拆出）：iOS 原生專案、appstore/ 在公開倉庫裡，測試照開發者電腦的配置找 xiangqi-ios/，不再當成「公開副本沒有」略過 */
   link(REPO, path.join(WS, "xiangqi-lab", "site"));
   if (fs.existsSync(path.join(REPO, "data", "docs"))) link(path.join(REPO, "data", "docs"), path.join(WS, "xiangqi-db", "art", "docs"));
   const env = { ...process.env, XQ_CUP_KEY_DIR: KEYS, XQ_CUP_LEGACY_DIR: KEYS, XQ_PUBLIC_COPY: "1" };   /* XQ_PUBLIC_COPY：告訴測試這是公開副本（缺只放 CDN、只在開發者電腦的檔就略過）。W69 盤點高 7 第 1 步：先只加這個變數，之後的測試改看它、不再用「有沒有 xiangqi-ios」猜 */
