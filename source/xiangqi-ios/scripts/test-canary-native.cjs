@@ -361,7 +361,6 @@ const MUT = [
   ["Swift 設定（放寬）：CAP 值 (true|false) 開頭就好（拿掉 \\s*$ 的 $）","CAPACITOR_DEBUG\\s*=\\s*(true|false)\\s*$/","CAPACITOR_DEBUG\\s*=\\s*(true|false)\\b/","swiftXcCapCmt"],
   ["Swift 設定（放寬）：CAP \\s* → [\\s\\S]*（= 前）","CAPACITOR_DEBUG\\s*=\\s*(true|false)\\s*$/","CAPACITOR_DEBUG[\\s\\S]*=\\s*(true|false)\\s*$/","swiftXcCapKey"],
   ["Swift 設定（放寬）：xcconfig 行先 trim 掉 #include 再判","for (const l of xraw.split(\"\\n\"))","for (const l of xraw.split(\"\\n\").filter((x) => !/^\\s*#include/.test(x)))","swiftIncHidden"],
-  ["Swift 設定（放寬）：parent 只記每個群組的第一個 children","for (const c of o.children) parent[c] = id;","for (const c of o.children.slice(0, 1)) parent[c] = id;","swiftTwoParentsSecond"],
   ["Swift 設定（放寬）：dirOf 上層群組 $ 只看 name 以外（上層只看 path 開頭）","if (/\\$/.test(String(o.path || \"\") + String(o.name || \"\"))) return null;","if (/\\$/.test(depth > 0 ? String(o.path || \"\").slice(0, 1) : String(o.path || \"\") + String(o.name || \"\"))) return null;","swiftGroupDollarMid"],
   ["Swift 設定（放寬）：dirOf 上層群組 sourceTree 只擋 BUILT_PRODUCTS_DIR","else if (o.sourceTree === \"SOURCE_ROOT\") base = projDir;","else if (o.sourceTree === \"SOURCE_ROOT\" || depth > 0 && o.sourceTree !== \"BUILT_PRODUCTS_DIR\") base = projDir;","swiftParentSdk"],
   ["Swift 設定（放寬）：xcconfig 逐行 跳過太長的行","for (const l of xraw.split(\"\\n\"))","for (const l of xraw.split(\"\\n\").filter((x) => x.length < 1000))","swiftXcLongLine"],
@@ -381,7 +380,6 @@ const MUT = [
   ["Swift 設定（放寬）：M7 裸字加 #","const m = /[A-Za-z0-9_$+/:.-]+/y;","const m = /[A-Za-z0-9_$+/:.#-]+/y;","swiftPbxChHash"],
   ["Swift 設定（放寬）：M7 裸字加 ?","const m = /[A-Za-z0-9_$+/:.-]+/y;","const m = /[A-Za-z0-9_$+/:.?-]+/y;","swiftPbxChQ"],
   ["Swift 設定（放寬）：M7 裸字加 \\\\","const m = /[A-Za-z0-9_$+/:.-]+/y;","const m = /[A-Za-z0-9_$+/:.\\\\-]+/y;","swiftPbxChBslash"],
-  ["Swift 設定（放寬）：M3 parent 先到先得","for (const c of o.children) parent[c] = id;","for (const c of o.children) if (!(c in parent)) parent[c] = id;","swiftTwoParentsLast"],
   ["Swift 設定（放寬）：M10 bare NO 只查有 name 的","if ((o.buildSettings || {}).SWIFT_ENABLE_BARE_SLASH_REGEX !== \"NO\")","if (o.name && (o.buildSettings || {}).SWIFT_ENABLE_BARE_SLASH_REGEX !== \"NO\")","swiftCfgNoName"],
   ["Swift 設定（放寬）：M16 字串 \\\\ 解成空","else if (e === \"\\\"\" || e === \"\\\\\") s += e;","else if (e === \"\\\"\") s += e; else if (e === \"\\\\\") s += \"\";","swiftEscBsEmpty"],
   ["Swift 設定（放寬）：M7 裸字加 !","const m = /[A-Za-z0-9_$+/:.-]+/y;","const m = /[A-Za-z0-9_$+/:.!-]+/y;","swiftPbxChBang"],
@@ -452,6 +450,8 @@ const REDUNDANT = [
   ["Swift 設定（放寬）：M7 裸字加 ,","const m = /[A-Za-z0-9_$+/:.-]+/y;","const m = /[A-Za-z0-9_$+/:.,-]+/y;","乾淨的副本就判失敗（金絲雀回 2，實跑），只會更嚴"],
   ["Swift 設定（放寬）：M5 */ 後 i=e+3","i = e + 2; continue","i = e + 3; continue","乾淨的副本就判失敗（金絲雀回 2，實跑），只會更嚴"],
   ["Swift 設定（放寬）：M18 SWIFT_VERSION 計數只在白名單內","if (k === \"SWIFT_VERSION\") svN++;","if (k === \"SWIFT_VERSION\" && v === \"5.0\") svN++;","SWIFT_VERSION 不是 5.0 時本來就被 SW_OK 白名單推進 swBad，差別只在 svN 有沒有加一，最後一樣判紅"],
+  ["Swift 設定（放寬）：parent 只記每個群組的第一個 children（#222 B1 後）", "for (const c of o.children) parent[c] = id;", "for (const c of o.children.slice(0, 1)) parent[c] = id;", "#222 B1 先用「同一個項目掛在兩個群組底下」擋掉所有兩個上層的樣本，parent 怎麼記都不再構成繞過；B1 本身的壞樣本 swiftTwoParentsFirst 跟它的改壞項放在 #222 A 段（先合鎖、再合壞樣本，guard-base 才不會紅）"],
+  ["Swift 設定（放寬）：M3 parent 先到先得（#222 B1 後）", "for (const c of o.children) parent[c] = id;", "for (const c of o.children) if (!(c in parent)) parent[c] = id;", "同上：B1 先擋掉兩個上層的樣本；swiftTwoParentsLast、swiftTwoParentsSecond 都由 B1 抓"],
 ];
 /* #135 審查④：盲測（每條判斷整條改成恆真）只能增加：總條數不能比 BLIND_N 少，而且 BLIND_KINDS 寫死的每一種都要還在盲測裡
    （#148 審查①：只比總數的話，拆掉一條判斷再補一種照抄的壞樣本，總數不變、保護卻少了一條） */
@@ -581,7 +581,7 @@ test("check-native.js 每一條判斷改成恆真，對應的壞樣本都要回 
 
 test("子條件改壞清單：每一條只拿掉一個子條件或一個字，指定的壞樣本要回 4；重疊清單的原文還在（#135 審查①②③）", () => {
   const { canary, check } = repoCopy(), orig = fs.readFileSync(check, "utf8");
-  assert.equal(MUT.length, 385); assert.equal(REDUNDANT.length, 46);
+  assert.equal(MUT.length, 383); assert.equal(REDUNDANT.length, 48);
   for (const [name, from, to, kind] of MUT) {
     assert.equal(orig.split(from).length - 1, 1, name + "：要改的原文在 check-native.js 裡要剛好一處");
     assert.ok(KINDS[kind], name + "：指定的壞樣本 " + kind + " 要存在");
