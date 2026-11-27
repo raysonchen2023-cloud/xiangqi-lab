@@ -243,6 +243,17 @@ const STEP_IF = [
 /* 找某個鍵的值：任意縮排、前面可以有「- 」（後面幾個空格都行）、鍵名可加單／雙引號、冒號前可以有空格 */
 const KEYRE = (k) => new RegExp("^\\s*(?:-\\s+)?(?:" + k + "|'" + k + "'|\"" + k + "\")\\s*:[ \\t]*(.*)$", "m");
 
+/* 步驟層的鍵：只認步驟本身那一層（第一行「      - 」後面，或剛好縮排 8 格），鍵名加引號、冒號前有空格也認得。
+   env 底下、run 區塊裡同名的行縮排比較深，不算（#242 第三輪：誘餌 if 放在 env 底下，會被「整步第一個符合的行」誤認）。
+   同一步出現兩次以上就回傳一個不可能的值，讓 ⑤ 判失敗。
+   「- 」後多空格、整份的怪寫法由 ⑧ 擋。 */
+function stepKey(t, k) {
+  const re = new RegExp("^(?:        |      - )(?:" + k + "|'" + k + "'|\"" + k + "\")\\s*:[ \\t]*(.*)$", "gm");
+  const all = [...t.matchAll(re)].map((m) => m[1]);
+  if (all.length > 1) return "〔" + k + " 出現 " + all.length + " 次〕";
+  return all[0] || null;
+}
+
 /* 切出某個工作的每一步：回傳 [{ key, if, id, text }] */
 function stepsOf(jobText) {
   const out = []; let cur = null;
@@ -253,7 +264,7 @@ function stepsOf(jobText) {
   return out.map((s) => {
     const t = s.join("\n");
     const run = (/^\s+run: (.*)$/m.exec(t) || [])[1], uses = (/^\s+(?:- )?uses: (.*)$/m.exec(t) || [])[1];
-    return { key: run ? "run:" + run : "uses:" + uses, if: (KEYRE("if").exec(t) || [])[1] || null, id: (KEYRE("id").exec(t) || [])[1] || null, text: t };   /* 任意縮排、「- 」後多空格、鍵名加引號、冒號前有空格都認得（#242 複審） */
+    return { key: run ? "run:" + run : "uses:" + uses, if: stepKey(t, "if"), id: stepKey(t, "id"), text: t };
   });
 }
 
@@ -278,22 +289,25 @@ test("⑥ verify 彙整那一步：不准有步驟層 if、shell、continue-on-e
 });
 
 /* ⑦ 整份 verify.yml 寫死雜湊（#242 複審：鍵名比對怎麼寫都有合法 YAML 繞得過，改成整份鎖死）。
-   只略過整行註解（以 # 開頭的行），其他任何字元改了都要紅：on、env、shell、defaults、引號鍵、多空格……都包含。
+   整份逐位元組算，註解也算（#242 第三輪：略過註解行的話，註解行裡夾 U+0085 就能藏進真的鍵）。
+   任何字元改了都要紅：on、env、shell、defaults、引號鍵、多空格、註解……都包含。
    要改 verify.yml：連這個雜湊一起改，同一個 PR 會被當成計分規則 PR 逐行審（AGENTS.md「PR 審查標準」）。
-   重算：node -e 'const c=require("crypto"),f=require("fs");console.log(c.createHash("sha256").update(f.readFileSync(".github/workflows/verify.yml","utf8").split("\n").filter(l=>!/^\s*#/.test(l)).join("\n")).digest("hex"))' */
-const VERIFY_YML_SHA256 = "9d0dcede6e5e3c0aa4151b06f82fcbb9406737da9c1c5dabd43f1f1d30e20431";
-const normYml = (y) => y.split("\n").filter((l) => !/^\s*#/.test(l)).join("\n");
-
-test("⑦ 整份 verify.yml（不算整行註解）跟寫死的雜湊一樣", () => {
+   重算：用 sha256 算 .github/workflows/verify.yml 整個檔（例如 sha256sum） */
+const VERIFY_YML_SHA256 = "1667ea710b491bf5967a4134a407b257236bbc917cbeb67225e4ecf5bc749533";
+test("⑦ 整份 verify.yml（逐位元組，註解也算）跟寫死的雜湊一樣", () => {
   assert.doesNotMatch(Y, /\r/, "不能有 CR");
-  const h = require("crypto").createHash("sha256").update(normYml(Y)).digest("hex");
+  const h = require("crypto").createHash("sha256").update(fs.readFileSync(path.join(__dirname, "..", "workflows", "verify.yml"))).digest("hex");
   assert.equal(h, VERIFY_YML_SHA256, "verify.yml 改了：要連這支測試的 VERIFY_YML_SHA256 一起改，並當計分規則 PR 逐行審");
 });
 
 /* ⑧ 結構保險：雜湊更新時給審查者的第二道防線。只准最基本的 YAML 寫法，看起來像在繞過的寫法一律擋。
    run／path 這種「|」區塊的內容是指令文字，不檢查。 */
 function yamlProblems(y) {
-  const bad = [], lines = y.split("\n");
+  const bad = [];
+  /* YAML 也會當成換行或特殊字元的：CR、C1 控制字元（含 U+0085 NEL）、U+2028／2029、U+FEFF。一律不准（#242 第三輪） */
+  const odd = /[\r\u0080-\u009f\u2028\u2029\ufeff]/.exec(y);
+  if (odd) bad.push("有不准用的字元 U+" + odd[0].charCodeAt(0).toString(16).toUpperCase().padStart(4, "0"));
+  const lines = y.split("\n");
   let block = -1;
   lines.forEach((raw, i) => {
     const n = i + 1, ind = /^(\s*)/.exec(raw)[1].length;
@@ -323,6 +337,7 @@ test("⑧ verify.yml 只用最基本的 YAML 寫法：沒有 shell、defaults、
     ["引號鍵", "jobs:\n  a:\n    steps:\n      - 'if': false\n"], ["雙引號鍵", "jobs:\n  a:\n    \"shell\": x\n"], ["冒號前空格", "a:\n  if  : false\n"],
     ["- 後多空格", "s:\n  -   if: false\n"], ["shell", "s:\n  - run: x\n    shell: sh\n"], ["defaults", "defaults:\n  run:\n    shell: sh\n"],
     ["continue-on-error", "s:\n  - run: x\n    continue-on-error: true\n"], ["flow mapping", "s:\n  - {run: x, if: false}\n"], ["錨點", "a: &x\n  b: 1\n"], ["別名", "a: *x\n"],
-    ["合併鍵", "a:\n  <<: *x\n"], ["標籤", "a: !!str x\n"], ["tab 縮排", "a:\n\tb: 1\n"]]) assert.notDeepEqual(yamlProblems(y), [], "⑧ 要抓到：" + what);
+    ["合併鍵", "a:\n  <<: *x\n"], ["標籤", "a: !!str x\n"], ["tab 縮排", "a:\n\tb: 1\n"],
+    ["註解行夾 U+0085", "a:\n  # 註解\u0085  if: false\n"], ["U+2028", "a: 1\u2028b: 2\n"], ["U+2029", "a: 1\u2029b: 2\n"], ["U+FEFF", "\ufeffa: 1\n"], ["CR", "a: 1\r\n"]]) assert.notDeepEqual(yamlProblems(y), [], "⑧ 要抓到：" + what);
   assert.deepEqual(yamlProblems("a:\n  run: |\n    echo \"x: y\" && 'q': 1\n  b: ${{ x || 'main' }}\n  c: [x, y]\n"), [], "| 區塊的內容、${{ }}、[a, b] 不能誤擋");
 });
