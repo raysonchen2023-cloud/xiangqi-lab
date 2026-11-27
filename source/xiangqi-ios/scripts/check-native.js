@@ -241,7 +241,7 @@ if (extAt.length) pinBad.push("extension XQLoopbackServer（" + extAt.join("、"
    特殊換行、CR 和看不見的字元（跟 Swift 那段的 ODD_NL 同一組，另加 \r），pbxproj 和每一份 xcconfig 出現就拒絕。
    #222 B3：U+00A0、U+3000 會被 \s 當成空白（pbxParse 的 ws、xcconfig 那行的 \s*），Xcode 不一定這樣讀，也拒絕（另用 LOCK_WS，LOCK_NL 原文不動，金絲雀改壞清單照舊對得上） */
 const LOCK_NL = /[\r\u2028\u2029\u0085\u000B\u000C\uFEFF\u200B-\u200F\u2060-\u2064\u00AD\u0000-\u0008\u000E-\u001F\u007F\u202A-\u202E\u2066-\u206F]/;
-const LOCK_WS = /[\u00A0\u3000]/;   /* #222 B3 */
+const LOCK_WS = /[\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]/;   /* #222 B3：會被 \s 當成空白、LOCK_NL 又沒擋的全部字元（#258 審查：U+1680、U+2000～U+200A、U+202F、U+205F 也要）；跟 LOCK_NL 不重疊，W110 改壞清單照舊各測各的 */
 function pbxParse(src) {
   let i = 0;
   const fail = (m) => { throw new Error(m + "（第 " + src.slice(0, i).split("\n").length + " 行）") };
@@ -273,7 +273,7 @@ function pbxParse(src) {
   let P = null, svN = 0;
   if (!fs.existsSync(pbxSV)) swBad.push("找不到 pbxproj");
   else { const raw = rd(pbxSV); if (LOCK_NL.test(raw)) swBad.push("pbxproj 有特殊換行或看不見的字元（Xcode 把 U+2028／U+2029 當換行，// 註解後面的設定斷詞看不到）");
-    if (LOCK_WS.test(raw)) swBad.push("pbxproj 有 U+00A0／U+3000 這類特殊空白");
+    if (LOCK_WS.test(raw)) swBad.push("pbxproj 有特殊空白（U+00A0、U+3000 這類）");
     try { P = pbxParse(raw) } catch (e) { swBad.push("pbxproj 看不懂：" + e.message) } }   /* 看不懂時 P 是 null、svN 是 0，下面的 check 也一定紅（雙保險；這行只是讓訊息好讀） */
   if (P) {
     const O = P.objects || {}, parent = {};
@@ -314,7 +314,7 @@ function pbxParse(src) {
     if (!fs.existsSync(f)) { swBad.push("找不到 " + path.relative(HERE, f)); continue }
     if (!fs.statSync(f).isFile()) { swBad.push(path.relative(HERE, f) + " 不是一般檔案"); continue }   /* #222 B2 雙保險：參照解到資料夾也不當掉 */
     const xraw = rd(f); if (LOCK_NL.test(xraw)) swBad.push(path.relative(HERE, f) + " 有特殊換行或看不見的字元");
-    if (LOCK_WS.test(xraw)) swBad.push(path.relative(HERE, f) + " 有 U+00A0／U+3000 這類特殊空白");
+    if (LOCK_WS.test(xraw)) swBad.push(path.relative(HERE, f) + " 有特殊空白（U+00A0、U+3000 這類）");
     for (const l of xraw.split("\n")) if (l.trim() && !/^\s*\/\//.test(l) && !/^\s*CAPACITOR_DEBUG\s*=\s*(true|false)\s*$/.test(l)) swBad.push(path.relative(HERE, f) + "：" + l.trim());
   }
   check(svN > 0 && swBad.length === 0,
