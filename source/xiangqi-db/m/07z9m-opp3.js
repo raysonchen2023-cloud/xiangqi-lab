@@ -65,7 +65,7 @@ trap:[
 {"id":"sq008c6","src":{"book":"適情雅趣","title":"珠藏韞櫃"},"zh":["被守衛逮住了","守衛把你押在戲箱旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a guard","The guard pins you by the costume chests: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"C2a1a1N1/r2k5/4P2n1/1rP6/2N3p2/9/9/2n6/5p3/4Kc3","line":["e7d7","d8d7","c6c7","d7d8","c7d7"],"alt":{"e7d7":["d8d7",{"c6c7":["d7d8",{"c7d7":0}],"c6d6":["d7d8",{"d6d7":0}]}]}},
 {"id":"sq030c6","src":{"book":"適情雅趣","title":"國庶兵強"},"zh":["被守衛逮住了","守衛把你押在戲箱旁：「解得開這局，就放你走。」紅方先走，3 步將死黑方。"],"en":["Caught by a guard","The guard pins you by the costume chests: \"Solve this and you can go.\" Red to move: checkmate in 3."],"fen":"5k1P1/c3P4/4b1P1r/6n2/4n1bN1/9/5C3/9/1r1p1p3/4K4","line":["g7f7","e5f3","h9g9","e7g9","e8e9"],"alt":{"g7f7":["e5f3",{"h9g9":["e7g9",{"e8e9":0}],"f7f8":["a8f8",{"h9g9":0}]}],"h9g9":["e7g9",{"g7f7":["e5f3",{"e8e9":0}]}]}}]};
 /* ==/JH_MZ_POOL:JH_MZ_POOL_OPP3_TRAP== */
-jhMzLayer("opposite_cannon",3,{map:JH_MZ_OPP3_MAP,guards:JH_MZ_OPP3_GUARDS,solid:"#DXL",opaque:"#DXLw",afterMove:jhMzOpp3After,
+jhMzLayer("opposite_cannon",3,{map:JH_MZ_OPP3_MAP,guards:JH_MZ_OPP3_GUARDS,solid:"#DoL",opaque:"#DoLw",afterMove:jhMzOpp3After,
   pool:{door:JH_MZ_POOL_OPP3.door,trap:JH_MZ_POOL_OPP3_TRAP.trap},puz:{door:JH_MZ_POOL_OPP3.door[0],trap:JH_MZ_POOL_OPP3_TRAP.trap[0]},
   rew:[{k:"gong",zh:"門派貢獻",en:"School merit"},{k:"page",zh:"古譜殘頁",en:"Old manual page"},{k:"relic",zh:"收藏品「絕密戲曲殘譜」",en:"Keepsake: a secret opera score fragment"}],
   lore:[{id:"op5",kind:"stele",title:["月宮布景碑","The moon-palace scenery stele"],

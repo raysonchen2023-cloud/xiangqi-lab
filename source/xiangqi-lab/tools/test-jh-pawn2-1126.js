@@ -77,7 +77,7 @@ function problems(c) {
   const A = c.jhMzNew(L); for (let y = 0; y < A.H; y++) for (let x = 0; x < A.W; x++) A.seen.add(y * A.W + x);
   A.player = { x: 5, y: 15 }; const pa = c.jhMzPath(A, 3, 15);   /* 沒有竹林規則時，最短路會從 (4,15) 橫穿竹林 */
   if (!pa) bad.push("自動走：要找得到路繞進竹林 (3,15)");
-  else { let px = 5, py = 15; for (const [x, y] of pa) { if (x !== px && (cell(A, px, py) === "Z" || cell(A, x, y) === "Z")) { bad.push(`自動走：在 (${px},${py})→(${x},${y}) 橫著穿竹林`); break } px = x; py = y } }
+  else { let px = 5, py = 15; for (const [x, y] of pa) { if (x !== px && (cell(A, px, py) === "z" || cell(A, x, y) === "z")) { bad.push(`自動走：在 (${px},${py})→(${x},${y}) 橫著穿竹林`); break } px = x; py = y } }
   /* 視線：沒過河只看正前方；過了河加左右各 1 格；竹林擋視線 */
   const V = c.jhMzNew(L), sg = (g) => K(c)(g).sight(V, g).map((q) => q.x + "," + q.y);
   const before = sg({ kind: "pawn2", x: 3, y: 4, dx: 1, dy: 1 });
