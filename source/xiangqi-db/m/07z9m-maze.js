@@ -621,7 +621,7 @@ function JhMaze(v,sid,n){jhCss();jhMzCss();const LV=jhMzLvN(sid,n||jhMzLayerOf(l
   const shut=o=>{if(o===trapO){trapO=null;escPop()}o.remove();busy=false};
   /* W87c（飛相門解殺題，iMac Claude 1 寫題）：題目 kind:"defend"＝解殺題——紅方找唯一一步解圍，不是殺棋：不顯示「N 步殺」那行，答對說「解圍了」、答錯說「解不了圍」（派別的 say.door／say.trap 照舊優先）
      W87：題目照該派題庫挑（jhMzPuz）；多步殺一步一步走：走對、還沒將死＝棋盤上照解答走黑方那一步、再換玩家；走錯＝回到開局重來。提示點亮的是「現在」該走的那一步 */
-  const puzzle=id=>{S.hintOn=null;jhMzPtrSet(LV,jhMzEncounter(S,id));const P=jhMzPuz(S,id);if(!P)return;const L=jhMzLine(P),N=(L.length+1)>>1,DEF=P.kind==="defend",t=jhL(P.zh[0],P.en[0]),p=jhL(P.zh[1],P.en[1]);let pcs=jhMzFen(P.fen),sel=null,won=false,mzLost=false,last=null,axK=85;S.pz=null;
+  const puzzle=id=>{S.hintOn=null;jhMzPtrSet(LV,jhMzEncounter(S,id));const P=jhMzPuz(S,id);if(!P)return;const L=jhMzLine(P),N=(L.length+1)>>1,DEF=P.kind==="defend",t=jhL(P.zh[0],P.en[0]),p=jhL(P.zh[1],P.en[1]);let pcs=jhMzFen(P.fen),sel=null,won=false,mzLost=false,last=null;S.pz=null;let axK=85;   /* W198：報讀棋盤現在聚焦哪一格（0～89，預設帥） */
     const o=ov(`<h2>${esc(t)}</h2><p>${esc(p)}</p>${N>1&&!DEF?`<p class="muted">${esc(jhL(`紅方先走，${N} 步殺：每一步都要將軍或逼著對方，黑方會照最頑強的方式應。`,`Red to move: mate in ${N}. Black answers with the toughest defence.`))}</p>`:""}<div class="jh-mz-bd"></div><div class="jh-mz-res" aria-live="polite">${esc(jhL("點紅方的棋子，再點要走到的位置。","Tap a red piece, then tap where it goes."))}</div>
       <div class="jh-mz-row"><button type="button" data-a="hint">${esc(jhL(HELP[0]+"的提示",HELP[1]+"'s hint"))}</button>${id==="door"?`<button type="button" data-a="back">${esc(jhL("先退開","Step back"))}</button>`:""}</div>${id==="trap"?`<div class="jh-mz-esc">${escIdle()}</div>`:""}`);
     if(id==="trap"){trapO=o;escPush();escBind()}
