@@ -621,7 +621,7 @@ function JhMaze(v,sid,n){jhCss();jhMzCss();const LV=jhMzLvN(sid,n||jhMzLayerOf(l
   const shut=o=>{if(o===trapO){trapO=null;escPop()}o.remove();busy=false};
   /* W87c（飛相門解殺題，iMac Claude 1 寫題）：題目 kind:"defend"＝解殺題——紅方找唯一一步解圍，不是殺棋：不顯示「N 步殺」那行，答對說「解圍了」、答錯說「解不了圍」（派別的 say.door／say.trap 照舊優先）
      W87：題目照該派題庫挑（jhMzPuz）；多步殺一步一步走：走對、還沒將死＝棋盤上照解答走黑方那一步、再換玩家；走錯＝回到開局重來。提示點亮的是「現在」該走的那一步 */
-  const puzzle=id=>{S.hintOn=null;jhMzPtrSet(LV,jhMzEncounter(S,id));const P=jhMzPuz(S,id);if(!P)return;const L=jhMzLine(P),N=(L.length+1)>>1,DEF=P.kind==="defend",t=jhL(P.zh[0],P.en[0]),p=jhL(P.zh[1],P.en[1]);let pcs=jhMzFen(P.fen),sel=null,won=false,mzLost=false,last=null;S.pz=null;
+  const puzzle=id=>{S.hintOn=null;jhMzPtrSet(LV,jhMzEncounter(S,id));const P=jhMzPuz(S,id);if(!P)return;const L=jhMzLine(P),N=(L.length+1)>>1,DEF=P.kind==="defend",t=jhL(P.zh[0],P.en[0]),p=jhL(P.zh[1],P.en[1]);let pcs=jhMzFen(P.fen),sel=null,won=false,mzLost=false,last=null;S.pz=null;let axK=85;   /* W198：報讀棋盤現在聚焦哪一格（0～89，預設帥） */
     const o=ov(`<h2>${esc(t)}</h2><p>${esc(p)}</p>${N>1&&!DEF?`<p class="muted">${esc(jhL(`紅方先走，${N} 步殺：每一步都要將軍或逼著對方，黑方會照最頑強的方式應。`,`Red to move: mate in ${N}. Black answers with the toughest defence.`))}</p>`:""}<div class="jh-mz-bd"></div><div class="jh-mz-res" aria-live="polite">${esc(jhL("點紅方的棋子，再點要走到的位置。","Tap a red piece, then tap where it goes."))}</div>
       <div class="jh-mz-row"><button type="button" data-a="hint">${esc(jhL(HELP[0]+"的提示",HELP[1]+"'s hint"))}</button>${id==="door"?`<button type="button" data-a="back">${esc(jhL("先退開","Step back"))}</button>`:""}</div>${id==="trap"?`<div class="jh-mz-esc">${escIdle()}</div>`:""}`);
     if(id==="trap"){trapO=o;escPush();escBind()}
@@ -630,12 +630,27 @@ function JhMaze(v,sid,n){jhCss();jhMzCss();const LV=jhMzLvN(sid,n||jhMzLayerOf(l
     const apply=mv=>{const a=jhMzSq(mv.slice(0,2)),b=jhMzSq(mv.slice(2));pcs=pcs.filter(x=>!(x.c===b.c&&x.r===b.r));const me=pcs.find(x=>x.c===a.c&&x.r===a.r);if(me){me.c=b.c;me.r=b.r}last=[a,b]};
     const restart=()=>{pcs=jhMzFen(P.fen);last=null};
     const draw=()=>{const Z=40,ox=24,oy=24,Wd=ox*2+Z*8,Hd=oy*2+Z*9;
-      let s=`<svg viewBox="0 0 ${Wd} ${Hd}" role="img" aria-label="${esc(jhL("象棋殘局","Xiangqi puzzle"))}">`+jhMzGrid(Z,ox,oy);const hint=S.hintOn===id&&!won,mv=now(),a=jhMzSq(mv.slice(0,2)),b=jhMzSq(mv.slice(2));
-      for(let r=0;r<10;r++)for(let c=0;c<9;c++)s+=`<rect x="${ox+c*Z-Z/2}" y="${oy+r*Z-Z/2}" width="${Z}" height="${Z}" fill="transparent" data-c="${c}" data-r="${r}"/>`;
-      if(last)for(const q of last)s+=`<rect x="${ox+q.c*Z-Z/2+3}" y="${oy+q.r*Z-Z/2+3}" width="${Z-6}" height="${Z-6}" fill="none" stroke="#c9a466" stroke-width="2" stroke-dasharray="4 3" pointer-events="none"/>`;
+      /* W198／W128／W162（外部審核：迷宮殘局對報讀器是一張圖，90 格不能逐格聚焦落子）：比照 01-board 的報讀棋盤——
+         90 個透明格子是 role=button、有名稱（「紅方 俥，九路，第一排」，11b axmCellLabel；選取、剛走到、提示加後綴），一次只有一格 tabindex=0，
+         方向鍵移動焦點、Enter／空白鍵＝點這一格；格線、棋子、虛線框一律 aria-hidden。重畫後焦點回到剛才那一格 */
+      const fo=(()=>{const bd0=o.querySelector(".jh-mz-bd"),ae=document.activeElement;return!!(bd0&&ae&&bd0.contains(ae))})();
+      const en=typeof i18nLang==="function"&&i18nLang()==="en",SUF=typeof AX_SUF!=="undefined"?AX_SUF[en?1:0]:null;
+      const lab=(c,r)=>{const q=pcs.find(x=>x.c===c&&x.r===r),k=r*9+c;let t=typeof axmCellLabel==="function"?axmCellLabel(q?q.p:"",k):(q?q.p:"")+" "+(9-c)+"-"+(10-r);
+        if(SUF&&sel&&sel.c===c&&sel.r===r)t+=SUF[0];if(SUF&&last&&last[1].c===c&&last[1].r===r&&q)t+=SUF[5];if(hint&&q&&q.c===a.c&&q.r===a.r)t+=jhL("，提示要動這顆",", hint: move this piece");return t};
+      const hint=S.hintOn===id&&!won,mv=now(),a=jhMzSq(mv.slice(0,2)),b=jhMzSq(mv.slice(2));
+      let s=`<svg viewBox="0 0 ${Wd} ${Hd}" role="group" aria-label="${esc(jhL("象棋殘局棋盤，每一格可以點選；方向鍵移動，Enter 點選","Xiangqi puzzle board. Every square can be selected; arrow keys move, Enter selects"))}"><g aria-hidden="true">`+jhMzGrid(Z,ox,oy)+`</g>`;
+      for(let r=0;r<10;r++)for(let c=0;c<9;c++)s+=`<rect x="${ox+c*Z-Z/2}" y="${oy+r*Z-Z/2}" width="${Z}" height="${Z}" fill="transparent" data-c="${c}" data-r="${r}" role="button" tabindex="${r*9+c===axK?0:-1}" aria-label="${esc(lab(c,r))}"/>`;
+      if(last)for(const q of last)s+=`<rect aria-hidden="true" x="${ox+q.c*Z-Z/2+3}" y="${oy+q.r*Z-Z/2+3}" width="${Z-6}" height="${Z-6}" fill="none" stroke="#c9a466" stroke-width="2" stroke-dasharray="4 3" pointer-events="none"/>`;
       for(const q of pcs){const red=q.p===q.p.toUpperCase(),ch=red?JH_MZ_PN.r[q.p]:JH_MZ_PN.b[q.p],on=sel&&sel.r===q.r&&sel.c===q.c,hi=hint&&q.r===a.r&&q.c===a.c;
-        s+=`<g data-c="${q.c}" data-r="${q.r}"><circle cx="${ox+q.c*Z}" cy="${oy+q.r*Z}" r="17" fill="#f3e3c0" stroke="${on?"#2a7":hi?"#3f8f5f":red?"#b3261e":"#222"}" stroke-width="${on||hi?4:2}"/><text x="${ox+q.c*Z}" y="${oy+q.r*Z+6.5}" text-anchor="middle" font-size="19" font-weight="900" fill="${red?"#b3261e":"#1a1a1a"}" pointer-events="none">${ch}</text></g>`}
-      const bd=o.querySelector(".jh-mz-bd");bd.innerHTML=s+"</svg>";bd.querySelectorAll("[data-c]").forEach(el=>el.addEventListener("click",ev=>{ev.stopPropagation();pick(+el.dataset.c,+el.dataset.r)}))};
+        s+=`<g data-c="${q.c}" data-r="${q.r}" aria-hidden="true"><circle cx="${ox+q.c*Z}" cy="${oy+q.r*Z}" r="17" fill="#f3e3c0" stroke="${on?"#2a7":hi?"#3f8f5f":red?"#b3261e":"#222"}" stroke-width="${on||hi?4:2}"/><text x="${ox+q.c*Z}" y="${oy+q.r*Z+6.5}" text-anchor="middle" font-size="19" font-weight="900" fill="${red?"#b3261e":"#1a1a1a"}" pointer-events="none">${ch}</text></g>`}
+      const bd=o.querySelector(".jh-mz-bd");bd.innerHTML=s+"</svg>";bd.querySelectorAll("[data-c]").forEach(el=>el.addEventListener("click",ev=>{ev.stopPropagation();if(el.tagName==="rect")axK=(+el.dataset.r)*9+(+el.dataset.c);pick(+el.dataset.c,+el.dataset.r)}));
+      const sv=bd.querySelector("svg");sv.addEventListener("keydown",ev=>{const q=ev.target&&ev.target.closest&&ev.target.closest("rect[role=button]");if(!q)return;let k=(+q.dataset.r)*9+(+q.dataset.c);
+        if(ev.key==="Enter"||ev.key===" "){ev.preventDefault();q.dispatchEvent(new MouseEvent("click",{bubbles:true}));return}
+        const d={ArrowLeft:-1,ArrowRight:1,ArrowUp:-9,ArrowDown:9}[ev.key];if(d==null)return;ev.preventDefault();
+        if((d===-1&&k%9===0)||(d===1&&k%9===8)||k+d<0||k+d>89)return;k+=d;axK=k;
+        sv.querySelectorAll("rect[role=button]").forEach(x=>x.setAttribute("tabindex",(+x.dataset.r)*9+(+x.dataset.c)===k?"0":"-1"));const n=sv.querySelector(`rect[data-c="${k%9}"][data-r="${k/9|0}"]`);if(n)n.focus()});
+      sv.addEventListener("focusin",ev=>{const q=ev.target&&ev.target.closest&&ev.target.closest("rect[role=button]");if(q)axK=(+q.dataset.r)*9+(+q.dataset.c)});
+      if(fo){const n=sv.querySelector(`rect[data-c="${axK%9}"][data-r="${axK/9|0}"]`);if(n)n.focus()}};
     const row=h=>{const r=o.querySelector(".jh-mz-row");r.innerHTML=h;return r};
     const pick=(c,r)=>{if(won||mzLost)return;   /* 11/25 審核：陷阱題第 4 次答錯、叫你回入口之後，棋盤原本還能下；再走正解按「繼續」就留在原地、保住寶物、守衛反被暈眩。判負後（mzLost；不叫 lost，下面「回到入口」那段有 const lost＝丟回箱子的寶物）不再接受落子 */const q=pcs.find(x=>x.c===c&&x.r===r);if(q&&q.p===q.p.toUpperCase()){sel={c,r};draw();return}
       if(!sel){res(jhL("先點一顆紅方的棋子。","Tap a red piece first."));return}

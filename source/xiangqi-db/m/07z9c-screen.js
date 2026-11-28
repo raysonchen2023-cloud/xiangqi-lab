@@ -97,7 +97,7 @@ async function jhScrErrata(i0){const L=await jhScrLoad("errata");if(!L){toast(jh
   sheet(jhL("📖 女塾課堂・幫學童挑錯著","📖 Classroom · Find the slip"),b=>{
     b.innerHTML=`<p id="jhEq">${esc(jhL("一位學童照本派的開局課下了這一盤，執黑的她有一步走錯了。用「‹ ›」一步一步看，找到那一步就按「就是這步」。","A pupil played this game from our opening lessons. Playing Black, she slipped once. Step through with ‹ ›, then tap \"This one\" on the slip."))}</p>
       <div id="jhEb" class="jh-scr-bd"></div><p id="jhEn" class="muted" style="text-align:center;margin:4px 0"></p>
-      <div class="jh-actions" id="jhEa"><button class="btn ghost" id="jhEp">‹</button><button class="btn ghost" id="jhEx">›</button><button class="btn" id="jhEk">${esc(jhL("就是這步","This one"))}</button></div>
+      <div class="jh-actions" id="jhEa"><button class="btn ghost" id="jhEp" aria-label="${esc(jhL("上一步","Previous move"))}">‹</button><button class="btn ghost" id="jhEx" aria-label="${esc(jhL("下一步","Next move"))}">›</button><button class="btn" id="jhEk">${esc(jhL("就是這步","This one"))}</button></div>
       <p id="jhEs" class="jh-mate-say" style="display:none"></p>
       <div class="jh-actions"><button class="jh-link" id="jhEnew">${esc(jhL("換一題","Another one"))}</button></div>`;
     const $=s=>b.querySelector(s);let bd=null;

@@ -15,6 +15,7 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-jh-maze-a11y-1128.js",   /* 11/28 W198／W128／W162 迷宮殘局報讀棋盤（07z9m-maze.js draw）：90 格 role=button、名稱各不相同、一次一格 tabindex=0、選取／剛走到／提示後綴、格線棋子虛線框 aria-hidden；方向鍵、Enter；屏風馬女塾 ‹ › 名稱（07z9c-screen.js）；改壞驗證 5 種（行為 3、原始碼 2） */
   "test-ship-map-l1610-1128.js",   /* 11/28 #255 第 2 項 星槎主畫面 iPad 橫向橫式圖 ship_map_l1610（07f SHPM_L1610、shpLKind、shpLMount；07w shipWalk 照 shpWalkCfg）：條目 ready:false、量好的點寫死、13／11 吋不被裁、路網連通、真的 07sw scwKind 判斷、載不到等 CDN 再退回、晚掛標籤換位置、改壞驗證（行為 7、原始碼 1、混合 1） */
   "test-jh-maze-vault-1127.js",   /* 11/27 W172 漕運鑰匙開地底迷宮的隱藏密室（m/07z9m-vault.js、07z9b-jianghu.js jhCanalMark）：只發給第二層有密室的派、只發一次；銅鎖門沒鑰匙打不開、開過永久開；殘譜架第一次給修為；鑰匙不開石門、不改水窪；改壞驗證四種 */
   "test-emu-ready-1127.js",   /* 11/27 W190 Android P0 開跑前的模擬器預檢 emu-ready.js：每一項壞掉都擋在那一項、後面不再跑；健康的不誤擋；不合格時照 --retries 重開再檢查；用法錯誤回 2；改壞驗證 */
