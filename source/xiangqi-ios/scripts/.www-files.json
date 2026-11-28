@@ -1,6 +1,6 @@
 {
- "commit": "96fc4f322ebde87a75280db9d4d7087deda646fb",
- "siteVersion": "20261127-1641",
+ "commit": "c9c68392b438650568508a1c65888c8c3449b4b5",
+ "siteVersion": "20261128-1712",
  "files": {
   "BufferGeometryUtils.mjs": [
    31122,
@@ -259,8 +259,8 @@
    "c41e557afe04"
   ],
   "data/docs/architecture.md": [
-   92723,
-   "64dc86dd14b4"
+   93594,
+   "9bade5b37730"
   ],
   "data/docs/blitz.md": [
    15172,
@@ -343,8 +343,8 @@
    "38b6c6b0a074"
   ],
   "data/docs/limits.md": [
-   8903,
-   "ba65091ef1f9"
+   9121,
+   "0ba312afe010"
   ],
   "data/docs/power.md": [
    11810,
@@ -359,8 +359,8 @@
    "b833dfb40a05"
   ],
   "data/docs/release-notes.md": [
-   4700,
-   "42570e0f424b"
+   4691,
+   "e95e8e2c0043"
   ],
   "data/docs/resume-state.md": [
    31108,
@@ -1979,8 +1979,8 @@
    "6ca5ae7acf07"
   ],
   "index.html": [
-   7846914,
-   "29f9bf1e46f9"
+   7872359,
+   "918b15227fb1"
   ],
   "jsQR.min.js": [
    130594,
@@ -2059,8 +2059,8 @@
    "af08a4669afd"
   ],
   "park3d.js": [
-   484432,
-   "27a4d92d285f"
+   485671,
+   "94de49fb7d0f"
   ],
   "pikafish-src/build-pinned.sh": [
    4148,
@@ -2603,12 +2603,12 @@
    "2d06c1f823f3"
   ],
   "release.json": [
-   7290,
-   "5b24a136d6b7"
+   7326,
+   "a5da89f13977"
   ],
   "sw.js": [
    15559,
-   "18cc1294166e"
+   "2ba1cfef971d"
   ],
   "three-shim.mjs": [
    2170,
@@ -5662,9 +5662,17 @@
    202138,
    "8861a6eaf0b3"
   ],
+  "data/homemap/home_classic_autumn_l1610.webp": [
+   1318802,
+   "f036bab69e35"
+  ],
   "data/homemap/home_classic_autumn_night.webp": [
    93366,
    "6e2df0bc2a44"
+  ],
+  "data/homemap/home_classic_autumn_night_l1610.webp": [
+   727896,
+   "13e825088de7"
   ],
   "data/homemap/home_classic_autumn_night_pano_l.webp": [
    118992,
@@ -5694,9 +5702,17 @@
    201642,
    "8e2e7df3ecd6"
   ],
+  "data/homemap/home_classic_spring_l1610.webp": [
+   1163852,
+   "3d8295109c9f"
+  ],
   "data/homemap/home_classic_spring_night.webp": [
    109616,
    "59b18284f5ce"
+  ],
+  "data/homemap/home_classic_spring_night_l1610.webp": [
+   767546,
+   "8969b13298b2"
   ],
   "data/homemap/home_classic_spring_night_pano_l.webp": [
    122080,
@@ -5718,9 +5734,17 @@
    201642,
    "8e2e7df3ecd6"
   ],
+  "data/homemap/home_classic_summer_l1610.webp": [
+   1215532,
+   "3c270238bc56"
+  ],
   "data/homemap/home_classic_summer_night.webp": [
    104440,
    "0d58c53b0a76"
+  ],
+  "data/homemap/home_classic_summer_night_l1610.webp": [
+   490238,
+   "6c1aca2b2ef7"
   ],
   "data/homemap/home_classic_summer_night_pano_l.webp": [
    116104,
@@ -5742,9 +5766,17 @@
    201700,
    "da31d3567c5f"
   ],
+  "data/homemap/home_classic_winter_l1610.webp": [
+   1150564,
+   "14615293f8f2"
+  ],
   "data/homemap/home_classic_winter_night.webp": [
    90688,
    "0478503bbed4"
+  ],
+  "data/homemap/home_classic_winter_night_l1610.webp": [
+   697168,
+   "69f6b79a0646"
   ],
   "data/homemap/home_classic_winter_night_pano_l.webp": [
    112328,
@@ -18994,6 +19026,10 @@
    253944,
    "bcfd286f721f"
   ],
+  "data/shipmap/ship_map_l1610.webp": [
+   1129152,
+   "db4aaf8c3219"
+  ],
   "data/simul/simul_b10.webp": [
    22162,
    "02bfb622e4c5"
@@ -20364,7 +20400,7 @@
   ],
   "native-build.json": [
    4097,
-   "3a1116c0f6e6"
+   "9a0bf9909ef8"
   ]
  }
 }
