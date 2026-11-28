@@ -78,27 +78,41 @@ const SHW_HOMEMAP_L1610={W:2560,H:1600,el:40,h:[.052,70,.0008],look0:[50,99],
   HS:{hmShip:["ship",54,33,"wave"],hmBattle:["arch",31,38,"bow"],hmLearn:["gate",79,40,"bow"],hmRec:["brd",29,63,"wave"],hmQuick:["tbl",50,68,"bow"]}};
 const HMW={p34:{f:"home_p34",w:1536,h:2048,S:HM_SPOTS_P34,sl:1.4,safe:{l:.06,r:.06,t:.06,b:.10},walk:SHW_HOMEMAP_P34},
   l1610:{f:"home_l1610",w:2560,h:1600,S:HM_SPOTS_L1610,sl:1.4,safe:{l:.12,r:.12,t:.05,b:.10},walk:SHW_HOMEMAP_L1610}};
+/* 11/28 #255 第 4 項（開發者 iPad 實機：經典世界首頁橫向只有中間一條）：千秋時光之苑的四季日夜 8 張也有橫版 home_classic_<季>[_night]_l1610（2560×1600，Windows Claude 1 出圖，
+   構圖對齊 home_l1610，所以入口、主張紙條、走路節點都沿用 l1610 那一組；只有秋夜的書院山門（hmLearn）畫偏了，往右 9、往上 22 像素＝x +0.35%、y −1.4%）。
+   經典世界的 sw7HomeWx() 一定回傳 classic_<季>[_night]，在這 8 個裡面就換橫版；直版（p34）沒有經典世界的圖，照舊用直式變體。
+   圖跟 home_l1610 一樣不在公開倉庫，照發布流程上 CDN；HMW_CL_CDN＝false 時正式玩家照舊，只有開發用開關（localStorage xqScwDev=1，跟 07sw 同一個）才用；上 CDN 的同一個 PR 改成 true */
+let HMW_CL_CDN=false;
+const HMW_CL=new Set(["classic_spring","classic_spring_night","classic_summer","classic_summer_night","classic_autumn","classic_autumn_night","classic_winter","classic_winter_night"]),HMW_CL_IMGV="1128";
+const HMW_CL_FIX={classic_autumn_night:{hmLearn:[.35,-1.4]}};
+function hmwClOn(){if(HMW_CL_CDN)return true;try{return localStorage.getItem("xqScwDev")==="1"}catch(e){return false}}
+function hmwWv(){try{return typeof sw7HomeWx==="function"?sw7HomeWx()||"":""}catch(e){return""}}
+/* 現在這一刻首頁該用經典世界的哪張橫版（不是經典世界、沒開、或這張載不到過＝""） */
+function hmwClWv(){const wv=hmwWv();return wv&&HMW_CL.has(wv)&&hmwClOn()&&!HMW_BAD.cl?wv:""}
 const HMW_BAD={};   /* 這次開 App 載不到的寬版（退回原圖，不再試） */
 /* W109（iMac Claude 2 審 #155 時發現，線上就有）：00-util 在 window 用擷取監聽，同源圖片載不到時先把 src 改成 XQ_CDN、記 cdnTry=1，
    同一次事件接著輪到這裡的 onerror。以前這裡馬上退回原圖，就把 CDN 補抓蓋掉了。現在（跟 PR #155 場景頁 07sw 的做法一樣）：src 已經指向 XQ_CDN、cdnTry 剛設好時
    記住正在等的網址、先不退回；CDN 那次也失敗（同一個網址再錯一次）才記 HMW_BAD、退回原圖 */
-function hmwFail(P){const kk=P&&P.dataset.hmw;if(!kk||!HMW[kk])return;const im=P.querySelector(":scope>img"),u=im?String(im.getAttribute("src")||im.src||""):"";
+function hmwFail(P){let kk=P&&P.dataset.hmw;if(!kk||!HMW[kk])return;const im=P.querySelector(":scope>img"),u=im?String(im.getAttribute("src")||im.src||""):"";
   if(im&&im.dataset&&im.dataset.cdnTry&&typeof XQ_CDN==="string"&&u.indexOf(XQ_CDN)===0&&im._hmwCdn!==u){im._hmwCdn=u;return}
+  if(kk==="l1610"&&HMW_CL.has(P._hmWv||""))kk="cl";   /* 11/28：經典世界的橫版載不到只關經典那 8 張，不連累原圖的 home_l1610 */
   HMW_BAD[kk]=1;hmwSet(P,"")}
 /* 純計算：W 可用寬、av 可用高、vw #view 寬、vh 畫面高 → "p34"／"l1610"／""（原圖） */
 function hmwKind(W,av,vw,vh){if(!HMW_ON||!(W>0&&av>=120))return"";const r=W/av;
   if(r>=HMW_PORT[0]&&r<=HMW_PORT[1]&&(vw>=600||vw>av))return HMW_BAD.p34?"":"p34";   /* 回饋 889：0.85～0.89 也用直版；0.89～1.04＝原圖交給 07fl 填滿寬度 */
   if(r>HMW_SQ&&Math.min(vw,vh)>=HMW_LMIN)return HMW_BAD.l1610?"":"l1610";return""}   /* 回饋 889：1.04～1.3 也用橫版（原本 HMW_LAND＝1.3 起） */
 /* 現在這頁該用原圖（沒有變體）才有寬版：經典世界、季節／晨昏／夜景／雨雪圖都不換 */
-function hmwBase(){try{return!(typeof sw7HomeWx==="function"&&sw7HomeWx())}catch(e){return true}}   /* 開發者 11/15「首頁天氣的問題」→ 選「用四季長卷拼成寬版」：首頁有季節／夜景／雨雪變體（07w7 sw7HomeWx 有回傳）就用那張變體＋三屏長卷鋪滿 iPad，跟學習、對戰同一季；沒有變體才用寬版原圖。以下是 11/13 舊說明：開發者 11/13 選「iPad 先一律用寬版原圖」：寬版只有原圖（白天、預設世界）一張；原本經典世界、節氣天氣（季節、雨雪）時退回直式變體圖，iPad 上幾乎看不到寬版。改成 iPad／摺疊機寬版一律優先（暫時沒有季節、日夜變化），手機照舊 */
-const hmwSrc=k=>HMW[k]?`data/homemap/${HMW[k].f}.webp?v=${HMW_IMGV}`:`data/homemap/home.webp?v=${HM_IMGV}`;
-/* 入口座標表（含大字）：寬版用寬版那組座標，大字照 HM_SPOTS */
-const hmwSpots=k=>HMW[k]?HMW[k].S.map(([id,x,y])=>[id,x,y,(HM_SPOTS.find(s=>s[0]===id)||[])[3]]):HM_SPOTS;
+function hmwBase(){try{return!(typeof sw7HomeWx==="function"&&sw7HomeWx())||!!hmwClWv()}catch(e){return true}}   /* 11/28：經典世界有橫版的變體也算 */   /* 開發者 11/15「首頁天氣的問題」→ 選「用四季長卷拼成寬版」：首頁有季節／夜景／雨雪變體（07w7 sw7HomeWx 有回傳）就用那張變體＋三屏長卷鋪滿 iPad，跟學習、對戰同一季；沒有變體才用寬版原圖。以下是 11/13 舊說明：開發者 11/13 選「iPad 先一律用寬版原圖」：寬版只有原圖（白天、預設世界）一張；原本經典世界、節氣天氣（季節、雨雪）時退回直式變體圖，iPad 上幾乎看不到寬版。改成 iPad／摺疊機寬版一律優先（暫時沒有季節、日夜變化），手機照舊 */
+const hmwSrc=k=>{const cw=k==="l1610"?hmwClWv():"";if(cw)return`data/homemap/home_${cw}_l1610.webp?v=${HMW_CL_IMGV}`;return HMW[k]?`data/homemap/${HMW[k].f}.webp?v=${HMW_IMGV}`:`data/homemap/home.webp?v=${HM_IMGV}`};
+/* 入口座標表（含大字）：寬版用寬版那組座標，大字照 HM_SPOTS；經典世界橫版照 HMW_CL_FIX 微調（%） */
+function hmwSpotsW(k){const F=k==="l1610"&&HMW_CL_FIX[hmwClWv()]||{};
+  return HMW[k].S.map(([id,x,y])=>{const d=F[id]||[0,0];return[id,+(x+d[0]).toFixed(2),+(y+d[1]).toFixed(2),(HM_SPOTS.find(s=>s[0]===id)||[])[3]]})}
+const hmwSpots=k=>HMW[k]?hmwSpotsW(k):HM_SPOTS;
 const hmwWalkCfg=(k,P)=>{const c=Object.assign({},SHW_PG0,HMW[k]?HMW[k].walk:SHW_HOMEMAP);return!HMW[k]&&P&&P.dataset&&P.dataset.hmp&&typeof hmpWalk==="function"?hmpWalk(c):c};   /* 11/14 三屏長卷（07hmp-pano.js）：原圖、這一頁有長卷時，路網延伸到左邊西市、右邊觀星臺 */
 /* 量 P 在 #view 裡的可用寬高（跟 07t3 r07Wide、07fl xflPort 同一套算法） */
 function hmwMeasure(V,P){const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0;
   return{W:pr.width,av:V.clientHeight-pb-(pr.top-vr.top+V.scrollTop),vw:V.clientWidth,vh:document.documentElement.clientHeight||innerHeight}}
-const hmwPick=m=>hmwBase()?hmwKind(m.W,m.av,m.vw,m.vh):"";
+const hmwPick=m=>{if(!hmwBase())return"";const k=hmwKind(m.W,m.av,m.vw,m.vh);return k!=="l1610"&&hmwClWv()?"":k};   /* 11/28：經典世界只有橫版，直版那段照舊用直式變體 */
 /* 原地換圖、換入口座標、主張紙條、走路角色；k＝""＝換回原圖 */
 function hmwSet(P,k){const im=P.querySelector(":scope>img");if(!im)return;P.dataset.hmw=k;
   for(const[id,x,y]of hmwSpots(k)){const b=P.querySelector("#"+id);if(!b)continue;b.style.left=x+"%";b.style.top=y+"%";delete b.dataset.ttL;b.style.marginLeft=""}   /* ttL 是 07t3 記的原位，換座標要清掉，不然會被還原回舊位置 */
@@ -211,10 +225,12 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   let hk="";try{if(HMW_ON&&hmwBase()){const t=document.createElement("div");t.className="shp-page cq home-page";v.insertBefore(t,home);hk=hmwPick(hmwMeasure(v,t));t.remove()}}catch(e){hk=""}
   const wv=typeof sw7HomeWx==="function"&&!hk?sw7HomeWx():"";   /* 11/14：季節／夜景變體先算好（三屏長卷要照這張挑左右兩屏） */
   d.innerHTML=`<div class="shp-page cq home-page" data-hmw="${hk}"${hk?` style="--hmSlT:${HMW[hk].sl}%"`:""}><img src="${hk?hmwSrc(hk):`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true"></div>${hmFocusOrder(hmwSpots(hk)).map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%" aria-label="${esc(id==="hmQuick"?HM_PVP_AL:hmAl(lab(id)))}"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst" aria-label="加到主畫面">📲 加到主畫面</button>':""}</div>`;
-  const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");P._hmSrc0=hk?`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`:P.querySelector(":scope>img").getAttribute("src");
+  const cw=hk==="l1610"?hmwClWv():"";   /* 11/28：經典世界用橫版＝記住是哪個變體；退回原圖時退回這個變體的直式圖 */
+  const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");P._hmSrc0=cw?`data/homemap/home_${cw}.webp?v=${HM_IMGV}`:hk?`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`:P.querySelector(":scope>img").getAttribute("src");if(cw)P._hmWv=cw;
   if(hk){const im1=P.querySelector(":scope>img");im1.onerror=()=>hmwFail(P)}   /* 寬版載不到＝先等 00-util 的 CDN 補抓，CDN 也失敗才退回原圖（W109） */if(typeof hbCss==="function")hbCss();else home.style.display="none";
   try{if(typeof hmpInit==="function")hmpInit(P,hk,wv)}catch(e){}   /* 11/14 三屏長卷（07hmp-pano.js）：千秋時光之苑、原圖、這個變體有長卷＝左右各接一屏 */
   {const im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;P._hmSrc0=pre.src;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}
+  if(cw){const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}try{hmWvRefresh(P)}catch(e){}},60000)}   /* 11/28：經典世界橫版也每分鐘問一次（跨入夜換下一張橫版，hmWvRefreshCl） */
   if(!hk){P._hmWv=wv;const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}try{hmWvRefresh(P)}catch(e){}},60000)}   /* 11/17 第 28 輪 N28-1：首頁開著跨過入夜／天亮也換圖（hmWvRefresh） */   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;   /* 寬版只換座標，id 跟點了去哪都一樣 */
@@ -289,7 +305,12 @@ html[data-hicon] .shp-spot.hot::before,html[data-hicon] .shp-hs.hot::before{left
 /* 11/17 第 28 輪 N28-1（測試員 B）：首頁開著跨過入夜（17:31）只蓋了月夜層，底圖還是白天那張，重新開首頁才是畫好的夜景圖；西市、觀星臺會當場換 →
    首頁每分鐘問一次 07w7 sw7HomeWx()（季節、晨昏、夜景、雨雪變體），跟開頁時挑的不一樣就換：先把新的中間那張、長卷左右兩屏（07hmp，有的話）都載好再一起換，不閃白；
    載不到就留原來那張。換好之後 07w7 重畫一次（月夜層只在沒換到夜景圖時才蓋，換到了就拿掉）。天亮、換季、晨昏同樣處理。寬版（07z hmw，沒有變體時才用）不在這裡換 */
-function hmWvRefresh(P){if(!P||!P.isConnected||P.dataset.hmw||P._hmWvBusy)return false;const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"";if(!wv||wv===P._hmWv)return false;
+/* 11/28：經典世界橫版開著跨過入夜／天亮：先載好下一張橫版，再原地換圖和入口（秋夜的山門位置不同）；載不到就留著現在這張 */
+function hmWvRefreshCl(P){const wv=hmwClWv();if(!wv||wv===P._hmWv)return false;const s=hmwSrc("l1610"),im=new Image();P._hmWvBusy=true;
+  im.onload=()=>{P._hmWvBusy=false;if(!P.isConnected||P.dataset.hmw!=="l1610")return;P._hmWv=wv;hmwSet(P,"l1610");try{if(typeof sw7Tick==="function")sw7Tick()}catch(e){}};
+  im.onerror=()=>{P._hmWvBusy=false};im.src=s;return true}
+function hmWvRefresh(P){if(P&&P.isConnected&&!P._hmWvBusy&&P.dataset.hmw==="l1610"&&HMW_CL.has(P._hmWv||""))return hmWvRefreshCl(P);
+  if(!P||!P.isConnected||P.dataset.hmw||P._hmWvBusy)return false;const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"";if(!wv||wv===P._hmWv)return false;
   const im0=P.querySelector(":scope>img");if(!im0)return false;let cl=false;try{cl=typeof hbIsCl==="function"&&hbIsCl()}catch(e){}
   const pv=typeof hmpVar==="function"?hmpVar("",wv,cl):"",srcs=["data/homemap/home_"+wv+".webp?v="+HM_IMGV].concat(pv&&typeof hmpSrc==="function"?[hmpSrc(pv,"l"),hmpSrc(pv,"r")]:[]);
   P._hmWvBusy=true;let left=srcs.length,fail=false;const done=()=>{if(--left)return;P._hmWvBusy=false;if(fail||!P.isConnected)return;
