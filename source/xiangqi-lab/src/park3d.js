@@ -644,6 +644,15 @@
 
   // 家具本體：EK＝朝代；X＝場景裡共用的東西（sc、M、地面高度、長椅位置、石材、鐵）
   /* 星空環景（黑洞、幻譜星門那張 360 圖：data/park/blackhole_*.webp、bh_*.webp）＝今日異象、自由擺陣、十三星系、黑洞的對局；園子、橋上、棋館、雲河鎮的環景不算 */
+  /* W219（11/28，Android 12 P0-3D 黑洞背面）：iMac 在 Android 12 模擬器記錄每一下點擊，失敗那幾輪頁面隔 600～900 ms 才收到 pointerup（主執行緒忙著跑 3D），
+     之後瀏覽器就不再合成 click；十字鍵五顆鈕原本只掛 onclick，所以 ▲ 沒動、落子沒送出。慢手機上的玩家也會碰到。
+     改成：同一顆鈕先收到 pointerdown、再收到同一根手指的 pointerup，就在 pointerup 當下動作；之後由觸控合成的 click（detail>0）略過一次，避免動兩次。
+     鍵盤 Enter／空白鍵、報讀器觸發的 click 沒有先經過 pointerdown，照舊由 click 動作。pointercancel、手指移出去放開＝不動作。 */
+  function p3TapBtn(b,fn){let arm=null,skip=false;
+    b.addEventListener("pointerdown",e=>{e.stopPropagation();arm=e.pointerId;skip=false});
+    b.addEventListener("pointercancel",()=>{arm=null});
+    b.addEventListener("pointerup",e=>{e.stopPropagation();if(arm===null||arm!==e.pointerId)return;arm=null;skip=true;fn(e)});
+    b.onclick=e=>{e.stopPropagation();if(skip&&e.detail>0){skip=false;return}skip=false;fn(e)};return b}
   function parkSkyBg(bg){return/(^|\/)(blackhole|bh)_[\w-]*\.webp(\?|$)/.test(String(bg||""))}
   function buildFurn(EK,E,X){const{sc,M,GY,SY,BZ,BL}=X,K=new Kit(),root=new T.Group();sc.add(root);const YS=SY+.22,flames=[];let OX=0,OZ=0;
     const mm=(map,o)=>M(0xffffff,Object.assign({map},o||{}));
@@ -2268,11 +2277,10 @@
     const padUI=()=>{if(PAD)return PAD;if(!sc.children.includes(padRing))sc.add(padRing,padBeam);PAD=document.createElement("div");PAD.className="gpad";PAD.setAttribute("role","group");PAD.setAttribute("aria-label","搖桿：移動要去的格子");
       PAD.style.cssText="position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:4;display:none;grid-template-columns:44px 54px 44px;grid-template-rows:40px 44px 40px auto;gap:3px;align-items:center;justify-items:center;touch-action:manipulation";
       const B=(t,l,ar,ac,st)=>{const b=document.createElement("button");b.type="button";b.textContent=t;b.setAttribute("aria-label",l);b.style.cssText="width:44px;height:40px;border-radius:12px;border:1px solid rgba(255,224,138,.55);background:rgba(16,14,34,.78);color:#FFE08A;font:900 18px/1 system-ui;padding:0;cursor:pointer;"+(st||"");
-        b.addEventListener("pointerdown",e=>e.stopPropagation());b.addEventListener("pointerup",e=>e.stopPropagation());b.onclick=e=>{e.stopPropagation();padMove(ar,ac)};return b};
+        p3TapBtn(b,()=>padMove(ar,ac));return b};   /* W219：pointerup 就動作（p3TapBtn） */
       const up=B("▲","往上（對方陣地）",-1,0,"grid-column:2;grid-row:1"),lf=B("◀","往左",0,-1,"grid-column:1;grid-row:2"),rt=B("▶","往右",0,1,"grid-column:3;grid-row:2"),dn=B("▼","往下（自己陣地）",1,0,"grid-column:2;grid-row:3");
       const go=document.createElement("button");go.type="button";go.className="pad-go";go.textContent="落子";go.setAttribute("aria-label","落子");go.style.cssText="grid-column:2;grid-row:2;width:54px;height:44px;border-radius:50%;border:2px solid #7CFFB0;background:#1E6B45;color:#fff;font:900 15px/1 var(--serif,serif);padding:0;cursor:pointer";
-      go.addEventListener("pointerdown",e=>e.stopPropagation());go.addEventListener("pointerup",e=>e.stopPropagation());
-      go.onclick=e=>{e.stopPropagation();if(go.disabled||!padT.includes(padCur)){vibrate(12);return}vibrate(8);const i=padCur;if(opt.onTap)opt.onTap(i)};
+      p3TapBtn(go,()=>{if(go.disabled||!padT.includes(padCur)){vibrate(12);return}vibrate(8);const i=padCur;if(opt.onTap)opt.onTap(i)});
       const tip=document.createElement("div");tip.className="pad-tip";tip.setAttribute("aria-live","polite");tip.style.cssText="grid-column:1/4;grid-row:4;font:700 12px/1.3 system-ui;color:#FFE08A;text-shadow:0 0 3px #000;white-space:nowrap";
       PAD.append(up,lf,go,rt,dn,tip);el.append(PAD);
       const style=document.createElement("style");style.textContent=".gpad .pad-go[disabled]{opacity:.4;filter:grayscale(1);border-color:#888!important}";PAD.append(style);return PAD};
@@ -2452,7 +2460,7 @@
       const tip=document.createElement("span");tip.textContent="選哪顆？";tip.style.cssText="align-self:center;color:#3a2618;font-size:13px;margin-right:2px";stkMenu.append(tip);
       for(const k of own){const b=document.createElement("button");b.type="button";b.setAttribute("role","menuitem");const p=B[k];b.textContent=(NAMES[sideOf(p)]||{})[p.toUpperCase()]||p;
         b.style.cssText="min-width:40px;min-height:40px;border-radius:50%;border:2px solid #8a6a3a;background:#f7ecd2;color:"+(sideOf(p)==="r"?"#b0261c":"#222")+";font:800 18px/1 serif;cursor:pointer";
-        b.onpointerdown=b.onpointerup=e=>e.stopPropagation();b.onclick=e=>{e.stopPropagation();stkClose();if(opt.onTap)opt.onTap(k)};stkMenu.append(b)}
+        p3TapBtn(b,()=>{stkClose();if(opt.onTap)opt.onTap(k)});stkMenu.append(b)}
       el.append(stkMenu);stkT=setTimeout(stkClose,4000);return true};
     /* 點到一顆子：背面、還沒選子、正後方疊了別的子 → 跳選單；其他情況照舊 */
     const tapPiece=(i,x,y)=>{stkClose();if(selI<0&&UNDER&&GIANT){const L=gntStack(i),B=SNAP.b||[],own=L.filter(k=>B[k]&&sideOf(B[k])===SNAP.me);   /* PR #38 審查（iMac Claude 1）：自己的子只有一顆就直接選它（就算點到的是擋在前面的對方子），兩顆以上才跳選單 */
