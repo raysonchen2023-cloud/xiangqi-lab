@@ -375,7 +375,7 @@ if(typeof Lobby==="function"){const f0=Lobby;Lobby=function(v){const was=window.
 function lbsParentOffPage(v){setTop("線上大廳",false);setTabs(true,"#/lobby");
   if(typeof fmKid==="function"&&fmKid()){   /* 評比第 4 輪 P20：兒童模式（07m5-family.js）——不跟陌生人互動，同桌對弈照常 */
     v.innerHTML=`<div class="pad"><div class="card" style="text-align:center;padding:26px 18px;margin-top:14px;line-height:1.8"><div style="font-size:44px">👧</div>
-      <h2 style="font-family:var(--serif);margin:6px 0 8px">兒童模式：線上大廳關著</h2><p style="margin:0 0 6px">兒童模式不跟陌生人互動：線上大廳、千秋盃、觀戰都不開，資料也不送出去。</p>
+      <h2 style="font-family:var(--serif);margin:6px 0 8px">兒童模式：線上大廳關著</h2><p style="margin:0 0 6px">兒童模式不跟陌生人互動：線上大廳、千秋盃、觀戰都不開，也不送使用資料（意見回饋只送文字，換手機要家長驗證）。</p>
       <p style="margin:0 0 6px">想跟家人朋友下棋，可以用<b>同桌對弈</b>（同一支手機兩個人輪流下）；挑戰電腦、石桌往事、殘局、棋譜都照常可以玩。</p>
       <p class="muted" style="font-size:13.5px;margin:0 0 14px">想打開，請家長到「設定房間的 🔒 系統・隱私・家長 → 👪 家長與護眼 → 👧 兒童模式」。</p>
       <button class="btn" id="lbpPvp">👥 同桌對弈</button><button class="btn ghost" id="lbpSet" style="margin-top:8px">⚙ 到設定</button><button class="btn ghost" id="lbpHome" style="margin-top:8px">回首頁</button></div></div>`;
@@ -395,7 +395,7 @@ function lbsIntro(again){lbsCss();try{store.set("lbIntro",+store.get("lbIntro",0
     <p>💬 <b>只能用快捷語</b>：大廳和對局裡不能打字，大家都只能用 App 內建的快捷語和表情。</p>
     <p>🙈 <b>不要給個資</b>：名字預設用系統給的「稱號」。不要把真名、學校、電話、住址、LINE、照片告訴任何人，也不要跟陌生人約到 App 外面。</p>
     <p>🚩 <b>不舒服就檢舉、封鎖</b>：點對方的名字，資料卡最下面有「🚩 檢舉」「🚫 封鎖」。對方不會知道是誰檢舉的；封鎖後他的邀請、表情、聊天都不會出現。下棋時不想下了，可以直接認輸離開。</p>
-    <p>👪 <b>家長可以關掉大廳</b>：「設定房間的 🔒 系統・隱私・家長 → 👪 家長與護眼」可以關閉線上大廳，或打開「👧 兒童模式」（不跟陌生人互動、資料不送出、提醒休息）。</p></div>
+    <p>👪 <b>家長可以關掉大廳</b>：「設定房間的 🔒 系統・隱私・家長 → 👪 家長與護眼」可以關閉線上大廳，或打開「👧 兒童模式」（不跟陌生人互動、不送使用資料、提醒休息）。</p></div>
     <p class="muted" style="font-size:12.5px;margin:4px 0 0">${again?"":"這張說明只會自動跳一次；"}之後可以在「設定房間的 🔒 系統・隱私・家長 → 🛡 大廳安全須知」再看。</p>`,[["我知道了",null]])}
 if(typeof Lobby==="function"){const f2=Lobby;Lobby=function(v){const r=f2.apply(this,arguments);
   try{if(!store.get("lbIntro",0)&&!window.XQ_SELFBANNED())setTimeout(()=>{try{if(/^#\/lobby/.test(location.hash)&&!store.get("lbIntro",0)&&!window.XQ_SELFBANNED())lbsIntro(false)}catch(e){}},700)}catch(e){}return r}}

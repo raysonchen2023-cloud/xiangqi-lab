@@ -105,11 +105,16 @@ async function main() {
     throw new Error("首頁沒有掛載（App 沒起來或卡住）");
   };
   const waitHome = async () => { for (let t = 0; t < 60; t++) { try { if (await c.ev('typeof route==="function"&&Boolean(document.querySelector(".home-page"))')) return true } catch (e) { } await sleep(1000) } return false };
-  const cold = async (clearSaved) => {
+  /* restore：要寫回的 localStorage.xqFlags（字串）。11/28 26112801 實跑發現：am start 到接上攔截之間（--wait 那幾秒），App 已向真網址讀到 main 的開關檔，
+     存進 xqFlags 蓋掉上一次的「關」；之後 reload 才讀不到，App 沿用的是剛存的全開 → ④「沿用上一次」誤判失敗。所以接上攔截後、reload 前把上一次的值寫回去。
+     beforeRestore 記下寫回前讀到的值，寫進報告當證據 */
+  let beforeRestore = null;
+  const cold = async (clearSaved, restore) => {
     if (c) { try { c.close() } catch (e) { } }
     adb("shell", "am", "force-stop", PKG); adb("shell", "am", "start", "-n", PKG + "/.MainActivity"); await sleep(4000);
     c = await attach(); log = await routeCdn(c, ro);
     if (clearSaved) await c.ev('localStorage.removeItem("xqFlags")');
+    if (typeof restore === "string") { beforeRestore = await c.ev('localStorage.getItem("xqFlags")'); await c.ev(`localStorage.setItem("xqFlags",${JSON.stringify(restore)})`) }
     await c.send("Page.reload", {}); await sleep(2000);
     if (!(await waitHome())) throw new Error("重新載入後首頁 60 秒沒掛好");
     if (!(await waitPreload(c, 180000))) throw new Error("預載頁 3 分鐘還沒收掉");
@@ -174,10 +179,14 @@ async function main() {
 
     /* ④ 讀不到開關檔：拿第一個代號 */
     const k = want[0], plan = planFor(k, codes);
-    ro.flags = { v: 1, off: { [k]: "W76 驗證（上一次）" } }; await cold(true); await flagIs(k, false);
-    ro.flags = "fail"; await cold(false);
+    ro.flags = { v: 1, off: { [k]: "W76 驗證（上一次）" } }; await cold(true);
+    const setOff = await flagIs(k, false);
+    const saved = setOff ? await c.ev('localStorage.getItem("xqFlags")') : null;
+    ro.flags = "fail"; await cold(false, saved || undefined);
+    R.staleFlags = { savedOff: saved, readBeforeRestore: beforeRestore };   /* 寫回前讀到的值跟 saved 不同＝App 在接上攔截前已讀到真網址 */
     let row = await runSteps(k, "讀不到・沿用上一次", plan.off);
-    if (!(await flagIs(k, false, 5000))) { row.ok = false; row.problems.unshift("讀不到時沒沿用上一次的「關」") }
+    if (!setOff || !saved || !String(saved).includes(JSON.stringify(k))) { row.invalid = true; row.ok = false; row.problems.unshift("上一次的「關」沒套上或沒存進 xqFlags：這段不成立") }
+    else if (!(await flagIs(k, false, 5000))) { row.ok = false; row.problems.unshift("讀不到時沒沿用上一次的「關」") }
     R.rows.push(row); save(); console.log(`[${k}] 讀不到・沿用上一次 ${row.ok ? "✔" : "✘ " + row.problems.join("；")}`);
     await cold(true);
     row = await runSteps(k, "讀不到・從沒抓到過", plan.on);
