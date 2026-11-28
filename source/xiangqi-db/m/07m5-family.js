@@ -242,7 +242,7 @@ function fmMore(){const ov=fmOverlay(`<div class="fm-card fm-pad"><div style="fo
 
 /* ---------- 設定頁「系統」分頁：👪 家長與護眼 ---------- */
 function fmSetBody(){const c=fmCfg(),u=Math.round(fmUsed()),L=fmLeft();
-  return`<div class="fm-row"><span>👧 兒童模式</span><b>${c.kid?"開（不連線、資料不送出）":"關"}</b></div>
+  return`<div class="fm-row"><span>👧 兒童模式</span><b>${c.kid?"開（不連線上大廳、不送使用資料）":"關"}</b></div>
     ${c.kid?`<div class="fm-row"><span>⏰ 每次玩多久提醒休息</span><b>${c.ses} 分鐘</b></div><div class="fm-row"><span>🌙 晚上提醒早點睡</span><b>${c.night?esc(c.night)+" 以後":"不提醒"}</b></div>`
       :`<label class="fm-sw"><span>⏰ 連續玩 ${FM_GEN_MIN} 分鐘提醒休息</span><input type="checkbox" class="sw" id="fmGen"${store.get("fmGenOff",false)?"":" checked"}></label>`}
     <div class="fm-row"><span>👁 護眼提醒</span><b>${c.eye?`開（每玩 ${FM_EYE_MIN} 分鐘，看遠方 ${FM_EYE_SEC} 秒）`:"關"}</b></div>
@@ -263,7 +263,7 @@ function fmKidEdit(card){const c=fmCfg(),N={kid:c.kid?1:0,ses:c.ses,lim:c.lim,ni
   const opt=(k,L)=>`<div class="opt" data-k="${k}">${L.map(([v,l])=>`<button data-v="${v}"${String(N[k])===String(v)?' class="on"':""}>${l}</button>`).join("")}</div>`;
   const ov=fmOverlay(`<div class="fm-card fm-pad"><div style="font-size:40px">👧</div><h2>兒童模式</h2><div class="fm-ed">
     ${opt("kid",[[1,"開"],[0,"關"]])}
-    <ul class="fm-kidl"><li>🔒 資料零收集：匿名資料、玩家登記都不送，手機裡排隊中的也丟掉</li><li>🙅 不跟陌生人互動：線上大廳、千秋盃、觀戰關閉；同桌對弈照常</li><li>🌐 不開外站：問小帥只用 App 裡的內容，不顯示 Google、Gemini、維基百科</li><li>✉ 意見回饋只送文字，不附截圖、聯絡方式</li></ul>
+    <ul class="fm-kidl"><li>🔒 資料零收集：匿名資料、玩家登記都不送，手機裡排隊中的也丟掉</li><li>🙅 不跟陌生人互動：線上大廳、千秋盃、觀戰關閉；同桌對弈照常</li><li>🌐 不開外站：問小帥只用 App 裡的內容，不顯示 Google、Gemini、維基百科</li><li>✉ 意見回饋只送文字，不附截圖、聯絡方式</li><li>📲 換手機要家長驗證：驗證後才會把加密的存檔暫存到伺服器，新手機收完就刪</li><li>⬇ 棋子圖、引擎這類公開檔案照常下載，不帶任何個人資料</li></ul>
     <div class="sec-t">⏰ 每次玩多久提醒休息</div>${opt("ses",FM_KID_SES.map(v=>[v,v+" 分鐘"]))}
     <p class="muted" style="font-size:12.5px;margin:4px 0 0">時間到了會等這盤下完，才溫和提醒「休息一下吧」，不會打斷棋局。</p>
     <div class="sec-t">⏱ 每天最多玩（可不設）</div>${opt("lim",FM_LIM_OPT.map(v=>[v,v?v+" 分鐘":"不限制"]))}
