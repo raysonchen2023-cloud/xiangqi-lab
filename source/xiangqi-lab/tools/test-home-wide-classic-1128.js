@@ -10,7 +10,7 @@ const SEAS = ["spring", "summer", "autumn", "winter"];
 const ALL8 = SEAS.flatMap(s => ["classic_" + s, "classic_" + s + "_night"]);
 
 /* 每次新開一份：wv＝sw7HomeWx() 回傳值；dev＝localStorage xqScwDev；cdn＝把 HMW_CL_CDN 打開 */
-function load({ wv = "", dev = false, cdn = false } = {}) {
+function load({ wv = "", dev = false, cdn } = {}) {   /* cdn：true 強制打開、false 強制關掉、沒帶＝照原始碼（11/28 #267 起預設打開） */
   const imgs = [], sets = [];
   const ctx = {
     sw7HomeWx: () => ctx._wv, _wv: wv,
@@ -22,7 +22,7 @@ function load({ wv = "", dev = false, cdn = false } = {}) {
     document: { documentElement: { clientHeight: 820 } }, innerHeight: 820
   };
   vm.createContext(ctx);
-  vm.runInContext(SEG + "\n" + RF + "\n" + (cdn ? "HMW_CL_CDN=true;" : "") +
+  vm.runInContext(SEG + "\n" + RF + "\n" + (cdn === true ? "HMW_CL_CDN=true;" : cdn === false ? "HMW_CL_CDN=false;" : "")   /* 11/28 #267：原始碼預設已是 true；cdn:false＝強制關掉（例如 CDN 出事退回），沒帶＝照原始碼 */ +
     "this.api={HMW,HMW_CL,HMW_BAD,hmwKind,hmwBase,hmwPick,hmwSrc,hmwSpots,hmwClWv,hmwFail,hmWvRefreshCl,HM_SPOTS_L1610}", ctx);
   return { ctx, api: ctx.api, imgs, sets };
 }
@@ -42,14 +42,16 @@ test("8 個變體都登記，名字跟 07w7 sw7HomeWx 經典世界回傳的一�
   assert.match(W7, /if\(typeof hbIsCl==="function"&&hbIsCl\(\)\)return"classic_"\+s2\+nt;/);
 });
 
-test("上 CDN 以前（HMW_CL_CDN＝false）：正式玩家經典世界照舊不換橫版；開發用開關 xqScwDev＝1 才換", () => {
-  const off = load({ wv: "classic_autumn" });
+test("開關關掉時（HMW_CL_CDN＝false）：正式玩家經典世界照舊不換橫版；開發用開關 xqScwDev＝1 才換（11/28 #267 起原始碼預設打開）", () => {
+  const off = load({ wv: "classic_autumn", cdn: false });
   assert.equal(off.api.hmwBase(), false); assert.equal(off.api.hmwPick(LAND), ""); assert.equal(off.api.hmwClWv(), "");
-  assert.match(Z, /let HMW_CL_CDN=false;/, "合併時預設關著，上 CDN 的 PR 才打開");
-  const dev = load({ wv: "classic_autumn", dev: true });
+  assert.match(Z, /let HMW_CL_CDN=true;/, "11/28 圖已上 CDN（#255），#267 打開；要退回就改回 false");
+  const dev = load({ wv: "classic_autumn", dev: true, cdn: false });
   assert.equal(dev.api.hmwBase(), true); assert.equal(dev.api.hmwPick(LAND), "l1610");
   const on = load({ wv: "classic_autumn", cdn: true });
   assert.equal(on.api.hmwPick(LAND), "l1610", "打開以後不用開發開關");
+  const def = load({ wv: "classic_autumn" });
+  assert.equal(def.api.hmwPick(LAND), "l1610", "照原始碼（預設打開）：正式玩家橫向就換");
 });
 
 test("經典世界只有橫版：橫向換 l1610；直向、近正方形照舊用直式變體（不能拿原圖的 home_p34 頂替）", () => {
