@@ -3,12 +3,12 @@
 
    為什麼：testkinds.js 把約 380 支測試檔一支一支跑（execFileSync），CI 的完整驗證大半時間只用到一個核心。
    這支只負責「同時跑、結果照原本順序排回」，怎麼跑一支檔、怎麼解析 TAP、怎麼分類都由呼叫的人（testkinds.js）傳進來，
-   計數規則照 testkinds.js 的 tally() 抄一份（todo 另計、略過不算通過），兩邊要一致（test-test-pool-1128.js 拿同一份項目比對）。
+   計數規則照 testkinds.js 的 tally() 抄一份（todo 另計、略過不算通過），兩邊要一致（test-tk-pool-1128.js 拿同一份項目比對）。
    拆 PR 的順序（AGENTS.md「guard-base 紅燈不越過」：改守門程式又有測試要靠新版才會過，要拆成依序合併的 PR）：
      ① 這支模組＋它自己的測試（testkinds.js 還沒接上，行為不變）
      ② testkinds.js 直接執行時改用 runPool
      ③ 把這支加進 .github/scripts/base-guard.cjs 的 GUARD 清單
-   用法：const { runPool, testJobs } = require("./test-pool.js");
+   用法：const { runPool, testJobs } = require("./tk-pool.js");
      await runPool({ list, jobs, run: async (file, env) => [{name, ok, skip, todo, why}], kindOf, KINDS, env })
      ・list：測試檔名，結果照這個順序。
      ・jobs：同時跑幾支（正整數）；testJobs(env) 照環境變數 XQ_TEST_JOBS 或 CPU 核心數算。

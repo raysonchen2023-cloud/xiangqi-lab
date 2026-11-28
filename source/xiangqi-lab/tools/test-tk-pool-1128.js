@@ -1,4 +1,4 @@
-/* W189 第二步①（11/28）：同時跑測試檔的工作池 test-pool.js（runPool、testJobs）。testkinds.js 還沒接上（下一支 PR 才接），這支只測模組本身。
+/* W189 第二步①（11/28）：同時跑測試檔的工作池 tk-pool.js（runPool、testJobs）。testkinds.js 還沒接上（下一支 PR 才接），這支只測模組本身。
    用假的跑法（故意讓排前面的最慢、記錄同時在跑幾支），不真的跑 380 支測試。分類用 testkinds.js 的 kindOf、KINDS（main 版本來就有匯出，換回 main 版也照樣能跑）。
    檢查：結果照清單順序排回；每支只跑一次；計數（行為／混合／原始碼／待分類、略過、預期失敗）跟同一份項目用 testkinds.js tally() 的規則算出來一樣；
    同時在跑的數量剛好到 jobs 上限；有 XQ_CUP_KEY_DIR 時每支檔各一個子資料夾（跑的時候存在、彼此不同、LEGACY 跟著同一個）、跑完刪掉，沒給就不動；
@@ -6,9 +6,9 @@
    「改壞驗證」：照完成順序放回、不限同時數量、全部共用同一個金鑰資料夾、XQ_TEST_JOBS 收 0，都要抓得到。 */
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), os = require("os"), vm = require("vm");
-const POOL_FILE = path.join(__dirname, "test-pool.js"), POOL_SRC = fs.readFileSync(POOL_FILE, "utf8");
+const POOL_FILE = path.join(__dirname, "tk-pool.js"), POOL_SRC = fs.readFileSync(POOL_FILE, "utf8");
 const TK = (() => { const k = process.env.NODE_TEST_CONTEXT; process.env.NODE_TEST_CONTEXT = k || "child"; try { return require("./testkinds.js") } finally { if (k === undefined) delete process.env.NODE_TEST_CONTEXT } })();
-/* 載入 test-pool.js：可以先把原始碼改壞（改壞驗證用） */
+/* 載入 tk-pool.js：可以先把原始碼改壞（改壞驗證用） */
 function loadPool(patch) {
   let src = POOL_SRC;
   if (patch) { assert.ok(src.includes(patch[0]), "改壞點不存在：" + patch[0].slice(0, 60)); src = src.replace(patch[0], patch[1]) }
