@@ -8,7 +8,7 @@
    另外照 m.html 順序整串載入一次（不清表）：每載完一個檔，之前已有的字元都要還是同一個函式、不能少；白名單的字元最後要是正本那份。
    另有地圖字元檢查（每層地圖只能用共用字元、說明碑、自己或同派前幾層登記的）。都含改壞驗證。 */
 "use strict";
-const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");
+const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm"), { isProxy } = require("util").types;
 const DB = path.join(__dirname, "..", "..", "xiangqi-db"), M = path.join(DB, "m"), rd = (f) => fs.readFileSync(path.join(M, f), "utf8");
 const SKIP = ["07z9m-fall.js"];
 
@@ -30,8 +30,12 @@ function mkCtx() {
   };
   c.window = c; c.window.matchMedia = () => ({ matches: false }); c.location = { href: "http://x/index.html#/", hash: "#/" };
   vm.createContext(c);
+  OP_BASE.set(c, vm.runInContext("Reflect.ownKeys(Object.getPrototypeOf({})).map(String)", c));   /* W181：記下這個 context 自己的原型（物件字面值用的那個）有哪些自有鍵 */
   return c;
 }
+/* W181：mkCtx 把外層的 Object 傳進去，迷宮檔寫 Object.prototype 時改到的其實是測試程式本身的原型；兩個原型都要比。外層的基準在檔案一載入就記，改壞驗證跑完要清掉 */
+const OP_BASE = new WeakMap(), OUTER_OP_BASE = Reflect.ownKeys(Object.prototype).map(String);
+const cleanOuterOP = () => { for (const k of Reflect.ownKeys(Object.prototype)) if (!OUTER_OP_BASE.includes(String(k))) delete Object.prototype[k] };
 
 /* 列鍵一律用 Reflect.ownKeys（含不可列舉、Symbol 鍵；#239 第四輪複審）；snap 記下每個自有屬性的描述 */
 const keysOf = (T) => Reflect.ownKeys(T);
@@ -39,8 +43,13 @@ const snap = (T) => { const o = new Map(); for (const ch of keysOf(T)) o.set(ch,
 /* 兩張表的形狀：原型是 context 自己的 Object.prototype（擋 setPrototypeOf），每個自有屬性都可列舉、而且是函式 */
 function shapeProblems(c, f) {
   const bad = [], OP = vm.runInContext("Object.getPrototypeOf({})", c);
+  /* W181（#239 第五輪審查列的後續）：汙染 Object.prototype（例如在原型上掛 y）時，查表 JH_MZ_OBJ["y"] 會拿到原型上的函式，自有鍵檢查看不到 */
+  const base = OP_BASE.get(c) || [], now = vm.runInContext("Reflect.ownKeys(Object.getPrototypeOf({})).map(String)", c);
+  for (const k of now) if (!base.includes(k)) bad.push(`載完 ${f}：Object.prototype 多了自有屬性「${k}」`);
+  for (const k of Reflect.ownKeys(Object.prototype).map(String)) if (!OUTER_OP_BASE.includes(k)) bad.push(`載完 ${f}：Object.prototype 多了自有屬性「${k}」（外層）`);
   for (const k of ["OBJ", "TILE"]) {
     const T = vm.runInContext("JH_MZ_" + k, c);
+    if (isProxy(T)) bad.push(`載完 ${f}：JH_MZ_${k} 是 Proxy（鍵和值可以被攔截改寫）`);
     if (Object.getPrototypeOf(T) !== OP) bad.push(`載完 ${f}：JH_MZ_${k} 的原型被換掉`);
     for (const ch of keysOf(T)) {
       const d = Object.getOwnPropertyDescriptor(T, ch);
@@ -200,7 +209,7 @@ test("改壞驗證：過宮炮拿掉守衛、真的蓋掉說明碑；或門派�
   assert.ok(clashes(dup).some((m) => m.includes('["y"]')), "兩個檔登記一模一樣的程式也要抓得到");
 });
 
-test("改壞驗證：不可列舉的新鍵、非函式的值、改原型，都要抓得到（#239 第四輪 e4a、e4c、e7a、e7b）", () => {
+test("改壞驗證：不可列舉的新鍵、非函式的值、改原型、汙染 Object.prototype、整張換成 Proxy，都要抓得到（#239 第四輪 e4a、e4c、e7a、e7b；W181）", () => {
   const add = (line) => (s) => s + "\n" + line + "\n";
   const hidden = 'Object.defineProperty(JH_MZ_OBJ,"y",{value:H=>null,enumerable:false,writable:true,configurable:true});';
   const cases = [
@@ -209,10 +218,14 @@ test("改壞驗證：不可列舉的新鍵、非函式的值、改原型，都�
     ["e7a 仙人指路第二層寫入非函式 y=1", { "07z9m-pawn2.js": add("JH_MZ_OBJ.y=1;") }, "不是函式"],
     ["e7b y=1 之後，起馬第二層用 if(!…) 守衛寫 y（自己的沒生效）", { "07z9m-pawn2.js": add("JH_MZ_OBJ.y=1;"), "07z9m-horse2.js": add("if(!JH_MZ_OBJ.y)JH_MZ_OBJ.y=H=>null;") }, "不是函式"],
     ["改原型：仙人指路第二層把 y 藏在原型上", { "07z9m-pawn2.js": add("Object.setPrototypeOf(JH_MZ_OBJ,{y:H=>null});") }, "原型被換掉"],
+    ["W181 汙染 Object.prototype：仙人指路第二層在所有物件的原型上掛 y", { "07z9m-pawn2.js": add("Object.prototype.y=H=>null;") }, "Object.prototype 多了自有屬性「y」"],
+    ["W181 汙染 Object.prototype（不可列舉）：用 defineProperty 掛 y", { "07z9m-pawn2.js": add("Object.defineProperty(Object.prototype,\"y\",{value:H=>null,enumerable:false,configurable:true,writable:true});") }, "Object.prototype 多了自有屬性「y」"],
+    ["W181 整張換成 Proxy：07z9m-maze.js 宣告時就包一層", { "07z9m-maze.js": (s) => s.replace("JH_MZ_OBJ={},JH_MZ_TILE={};", "JH_MZ_OBJ=new Proxy({},{}),JH_MZ_TILE=new Proxy({},{get:(t,k)=>t[k]});") }, "是 Proxy"],
   ];
   for (const [name, patch, key] of cases) {
     for (const f of Object.keys(patch)) assert.notEqual(patch[f](rd(f)), rd(f), name + "：改壞的程式要真的有改到");
-    assert.ok(fullLoad(patch).some((m) => m.includes(key)), name + "：要抓得到（" + key + "）");
+    let got; try { got = fullLoad(patch) } finally { cleanOuterOP() }
+    assert.ok(got.some((m) => m.includes(key)), name + "：要抓得到（" + key + "）");
   }
   /* e4c、e7b 在 regs 這邊也要記成兩個檔都登記 y */
   assert.ok(clashes({ "07z9m-pawn2.js": add(hidden), "07z9m-horse2.js": add("JH_MZ_OBJ.y=H=>1;") }).some((m) => m.includes('["y"]')), "e4c：撞名檢查也要看得到不可列舉的 y");
