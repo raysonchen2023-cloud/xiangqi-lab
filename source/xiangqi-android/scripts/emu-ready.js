@@ -186,6 +186,17 @@ function makeRestart(opt, d) {
     d.log("↻ 重開模擬器 " + opt.avd + "（" + opt.serial + "）");
     try { d.adb(["-s", opt.serial, "emu", "kill"], 30000) } catch (e) { }
     for (let i = 0; i < 30; i++) { await d.sleep(1000); try { if (String(d.adb(["-s", opt.serial, "get-state"], 5000)).trim() !== "device") break } catch (e) { break } }
+    /* W218（11/28）：卡死的模擬器 emu kill 關不掉，程序還在，新開的會被「同一個 AVD 不能開兩台」擋下。
+       emu kill 之後，命令列帶著 -avd <這個 AVD> 的模擬器程序還在就強制結束（只動這個 AVD，別的 AVD 不碰），結束不掉就不開新的 */
+    if (typeof d.avdPids === "function") {
+      let pids = []; try { pids = d.avdPids(opt.avd) } catch (e) { return { ok: false, msg: "查不到 AVD「" + opt.avd + "」的模擬器程序：" + lastLine(e.message || e).slice(0, 120) + "。沒有開新的" } }
+      if (pids.length) {
+        d.log("↻ emu kill 之後 AVD「" + opt.avd + "」的模擬器程序還在（" + pids.join("、") + "），強制結束");
+        try { d.killPids(pids) } catch (e) { }
+        for (let i = 0; i < 10; i++) { await d.sleep(1000); try { pids = d.avdPids(opt.avd) } catch (e) { } if (!pids.length) break }
+        if (pids.length) return { ok: false, msg: "舊的模擬器程序關不掉（" + pids.join("、") + "），沒有開新的；請手動結束後再跑" };
+      }
+    }
     const child = d.spawn(exe, ["-avd", opt.avd, "-port", port, "-no-snapshot-load"]);
     if (child.error) return { ok: false, msg: "開不了模擬器（" + exe + "）：" + child.error };
     for (let i = 0; i < 150; i++) {   /* 最多 5 分鐘等開機 */
@@ -197,6 +208,21 @@ function makeRestart(opt, d) {
   };
 }
 
+/* W218：程序清單 [{pid, name, cmd}] 裡，挑出這個 AVD 的模擬器。-avd 後面要剛好是這個名字（xq_a12 不會配到 xq_a12_play），
+   執行檔要是 emulator 或 qemu-system（不會誤殺 bash、PowerShell 這些剛好在命令列提到 AVD 名字的程序） */
+function avdPidsFrom(procs, avd) {
+  const re = new RegExp("(^|\\s)-avd\\s+\"?" + String(avd).replace(/[.*+?^${}()|[\]\\]/g, (ch) => "\\" + ch) + "\"?(\\s|$)");
+  return procs.filter((p) => /(^|[\\/])(emulator|qemu-system[\w.-]*)(\.exe)?$/i.test(String(p.name || "")) && re.test(String(p.cmd || ""))).map((p) => Number(p.pid)).filter((n) => Number.isInteger(n) && n > 0 && n !== process.pid);
+}
+/* 列出程序：Windows 用 PowerShell 的 Win32_Process（要有命令列），其他系統用 ps */
+function listProcs() {
+  if (process.platform === "win32") {
+    const out = cp.execFileSync("powershell", ["-NoProfile", "-Command", "Get-CimInstance Win32_Process | Where-Object { $_.Name -match 'emulator|qemu-system' } | ForEach-Object { '' + $_.ProcessId + [char]9 + $_.Name + [char]9 + $_.CommandLine }"], { encoding: "utf8", timeout: 30000 });
+    return String(out).split(/\r?\n/).filter(Boolean).map((l) => { const [pid, name, ...rest] = l.split("\t"); return { pid, name, cmd: rest.join("\t") } });
+  }
+  const out = cp.execFileSync("ps", ["-axo", "pid=,comm=,args="], { encoding: "utf8", timeout: 30000 });
+  return String(out).split(/\r?\n/).map((l) => l.trim().match(/^(\d+)\s+(\S+)\s+(.*)$/)).filter(Boolean).map((m) => ({ pid: m[1], name: m[2], cmd: m[3] }));
+}
 function realRestartDeps() {
   const home = process.env.ANDROID_HOME || process.env.ANDROID_SDK_ROOT || "";
   return {
@@ -204,6 +230,8 @@ function realRestartDeps() {
     exists: (f) => { try { return fs.statSync(f).isFile() } catch (e) { return false } },
     listAvds: (exe) => String(cp.execFileSync(exe, ["-list-avds"], { encoding: "utf8", timeout: 30000 })).split(/\r?\n/).map((s) => s.trim()).filter((s) => s && !/^(INFO|WARNING|ERROR)\b/.test(s)),
     adb: realAdb, sleep, log: (s) => console.log(s),
+    avdPids: (avd) => avdPidsFrom(listProcs(), avd),
+    killPids: (pids) => { for (const p of pids) { try { process.kill(p, "SIGKILL") } catch (e) { } } },
     spawn: (exe, args) => {
       const logf = path.join(os.tmpdir(), "xq-emu-ready-emulator-" + process.pid + ".log");
       let exited = false, error = "";
@@ -240,4 +268,4 @@ if (require.main === module) {
   }).catch((e) => { console.error("✘ 預檢本身出錯：" + (e && e.stack || e)); process.exit(1) });
 }
 
-module.exports = { STEPS, verdict, checkOnce, checkReady, parseArgs, makeRestart };
+module.exports = { STEPS, verdict, checkOnce, checkReady, parseArgs, makeRestart, avdPidsFrom };
