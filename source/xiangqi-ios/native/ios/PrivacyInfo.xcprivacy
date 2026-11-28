@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <!--
-  象棋千秋 App 本體的隱私清單（Privacy Manifest）。依據：xiangqi-db/story/上架_隱私資料盤點.md、site/data/docs/privacy.md（2026-11-12 核對版）。
-  說明與理由見 xiangqi-ios/appstore/app-privacy.md。改了資料流就要一起改這份和 App Store Connect 的「App 隱私權」。
+  象棋千秋 App 本體的隱私清單（Privacy Manifest）。依據：data/docs/privacy.md（App 內「隱私與資料使用」，2026-11-25 核對版）逐項對照。
+  改了資料流就要一起改這份、兩份 PrivacyInfo.xcprivacy（native/ios 和 ios/App/App 要相同）和 App Store Connect 的「App 隱私權」。
+  W34（2026-11-28，iMac Claude 2）對照隱私政策補三項：
+      PerformanceData（第 10 項匿名健康摘要：啟動時間中位數、卡頓次數；不連到個人，所以 Linked＝false）
+      OtherUserContactInfo（第 6 項意見回饋的聯絡方式可以填 LINE ID）
+      PhotosorVideos（第 6 項意見回饋可以附截圖或拍照）
   - 不追蹤（沒有廣告、沒有資料經紀、沒有跨 App 追蹤），所以 NSPrivacyTracking＝false、沒有追蹤網域。
   - Required Reason API：
       UserDefaults → CA92.1（只讀寫自己 App 的設定：@capacitor/preferences、Capacitor 本身）
@@ -158,6 +162,43 @@
 			<array>
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePerformanceData</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeOtherUserContactInfo</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePhotosorVideos</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
 	</array>
