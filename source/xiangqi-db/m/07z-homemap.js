@@ -307,7 +307,7 @@ html[data-hicon] .shp-spot.hot::before,html[data-hicon] .shp-hs.hot::before{left
    載不到就留原來那張。換好之後 07w7 重畫一次（月夜層只在沒換到夜景圖時才蓋，換到了就拿掉）。天亮、換季、晨昏同樣處理。寬版（07z hmw，沒有變體時才用）不在這裡換 */
 /* 11/28：經典世界橫版開著跨過入夜／天亮：先載好下一張橫版，再原地換圖和入口（秋夜的山門位置不同）；載不到就留著現在這張 */
 function hmWvRefreshCl(P){const wv=hmwClWv();if(!wv||wv===P._hmWv)return false;const s=hmwSrc("l1610"),im=new Image();P._hmWvBusy=true;
-  im.onload=()=>{P._hmWvBusy=false;if(!P.isConnected||P.dataset.hmw!=="l1610")return;P._hmWv=wv;hmwSet(P,"l1610");try{if(typeof sw7Tick==="function")sw7Tick()}catch(e){}};
+  im.onload=()=>{P._hmWvBusy=false;if(!P.isConnected||P.dataset.hmw!=="l1610")return;P._hmWv=wv;P._hmSrc0=`data/homemap/home_${wv}.webp?v=${HM_IMGV}`;hmwSet(P,"l1610");   /* 退回直式時退回新的這個變體（iMac Claude 2 驗 #256：原本退回開頁時那張白天圖） */try{if(typeof sw7Tick==="function")sw7Tick()}catch(e){}};
   im.onerror=()=>{P._hmWvBusy=false};im.src=s;return true}
 function hmWvRefresh(P){if(P&&P.isConnected&&!P._hmWvBusy&&P.dataset.hmw==="l1610"&&HMW_CL.has(P._hmWv||""))return hmWvRefreshCl(P);
   if(!P||!P.isConnected||P.dataset.hmw||P._hmWvBusy)return false;const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"";if(!wv||wv===P._hmWv)return false;

@@ -106,6 +106,7 @@ test("橫版開著跨過入夜：先載好下一張橫版才換（hmwSet），�
   assert.equal(P._hmWvBusy, true); assert.deepEqual(t.sets, [], "圖還沒載好不換");
   t.imgs[0].onload();
   assert.equal(P._hmWv, "classic_summer_night"); assert.deepEqual(t.sets, ["l1610"]); assert.equal(P._hmWvBusy, false);
+  assert.equal(P._hmSrc0, "data/homemap/home_classic_summer_night.webp?v=hm", "之後轉直向退回的是新的這個變體（iMac Claude 2 驗 #256）");
   t.ctx._wv = "classic_autumn";
   t.api.hmWvRefreshCl(P); t.imgs[1].onerror();
   assert.equal(P._hmWv, "classic_summer_night", "載不到留著"); assert.deepEqual(t.sets, ["l1610"]);
