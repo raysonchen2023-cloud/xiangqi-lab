@@ -74,9 +74,14 @@ function chkWalkAfter(c, sid = "central") {   /* W217：開過密室後在石門
   let d = null; for (let y = 0; y < S.H && !d; y++) for (let x = 0; x < S.W; x++) if (cell(S, x, y) === "D") { d = { x, y }; break }
   if (!d) return false; S.guards = []; S.player = { x: d.x, y: d.y + 1, face: 1 }; return c.jhMzStep(S, 0, -1).ev === "locked";
 }
-function chkKeyOwnOnly(c, sid, other) {   /* 只拿到 sid 的鑰匙：朝 other 的銅鎖門走，照樣擋住、說 other 的州名、格子還是 N；自己那一派的門照樣打得開 */
-  c.jhMzVaultGive(sid); const X = atDoor(c, other), r = c.jhMzStep(X, 1, 0);
-  if (r.ev !== "bump" || cell(X, 8, 2) !== "N" || X.player.x !== 7) return false;
+function chkKeyOwnOnly(c, sid, other) {   /* 只拿到 sid 的鑰匙：存檔裡只有 sid 有 got；朝 other 的銅鎖門連撞 3 次、重建格子後再撞 1 次，每次都擋住、格子還是 N、人沒動；other 也沒被記成開過；自己那一派的門照樣打得開 */
+  c.jhMzVaultGive(sid);
+  const rec = JSON.parse(JSON.stringify(c.jhMzVaultGet())); if (Object.keys(rec).filter((k) => rec[k] && rec[k].got).join() !== sid) return false;
+  const X = atDoor(c, other);
+  const knock = () => { X.player = { x: 7, y: 2, face: 1 }; X.guards = []; const r = c.jhMzStep(X, 1, 0); return r.ev === "bump" && cell(X, 8, 2) === "N" && X.player.x === 7 };
+  for (let i = 0; i < 3; i++) if (!knock()) return false;
+  c.jhMzReset(X, false); if (!knock()) return false;
+  if (c.jhMzVaultOf(other).open) return false;
   const S = atDoor(c, sid); return c.jhMzStep(S, 1, 0).ev === "secret";
 }
 function chkNeedsDoor(patch = {}) {   /* 地圖上沒有密室門 N 的派不發鑰匙：把仙人指路第二層的密室填回牆，仙人指路就拿不到；起馬照樣拿得到 */
@@ -119,7 +124,7 @@ test("發鑰匙：只發給第二層有密室的派（地圖上要真的有密�
 
 test("有鑰匙：打開銅鎖門走得進去；重建格子（被拖回入口、重新開局）門還開著；沒開過的派照舊是門；別派的鑰匙開不了這一派的門", () => {
   for (const sid of VSIDS) assert.ok(chkOpenStays(load().c, sid, sid === "central" ? "elephant" : "central"), sid);
-  VSIDS.forEach((sid, i) => { const other = VSIDS[(i + 1) % VSIDS.length]; assert.ok(chkKeyOwnOnly(load().c, sid, other), sid + " 的鑰匙不能開 " + other + " 的密室") });
+  for (const sid of VSIDS) for (const other of VSIDS) if (sid !== other) assert.ok(chkKeyOwnOnly(load().c, sid, other), sid + " 的鑰匙不能開 " + other + " 的密室");   /* 12 組有順序的配對全測 */
 });
 
 test("殘譜架：第一次讀跳卡片、給修為一次（vault:<派>）；之後照樣讀得到、不再給", () => {
@@ -164,7 +169,7 @@ test("漕運：解開那一班就發那一派的密室鑰匙並在結果寫出�
   assert.match(X.done({ first: true, key: { zh: "中炮門", en: "Central Cannon" } }), /密室/); assert.doesNotMatch(X.done({ first: true }), /密室/);
 });
 
-test("改壞驗證：沒鑰匙也開、重建後門又關上、鑰匙重複發、鑰匙順便開石門、開密室順便算踩過踏板、重建時連石門一起拆、開過密室後每走一步才算踩過踏板（四派）、漕運沒發鑰匙時多帶 key、別派鑰匙也能開、不看地圖就發鑰匙，上面的檢查都要抓得到", () => {
+test("改壞驗證：沒鑰匙也開、重建後門又關上、鑰匙重複發、鑰匙順便開石門、開密室順便算踩過踏板、重建時連石門一起拆、開過密室後每走一步才算踩過踏板（四派）、漕運沒發鑰匙時多帶 key、別派鑰匙也能開（全部、只有某一組、第二次撞門才開）、不看地圖就發鑰匙，上面的檢查都要抓得到", () => {
   const V = rd("07z9m-vault.js"), P = (from, to) => ({ "07z9m-vault.js": (s) => { assert.ok(s.includes(from), "改壞點不存在：" + from); return s.replace(from, to) } });
   { const k = load(P("if (!m.got && !m.open) return {", "if (false) return {")); assert.equal(chkLocked(k.c), false, "沒鑰匙也開") }
   { const k = load(P("jhMzReset = function (S, full) {", "jhMzResetX = function (S, full) {")); assert.equal(chkOpenStays(k.c), false, "重建後門又關上") }
@@ -182,6 +187,13 @@ test("改壞驗證：沒鑰匙也開、重建後門又關上、鑰匙重複發�
     assert.equal(chkWalkAfter(k.c, sid), false, sid + "：開過密室後走離密室才偷偷打開石門") }
   { const k = load(P("const m = jhMzVaultOf(S.lv.sid);\n    /* ev 不用", "const m = Object.values(jhMzVaultGet()).find((o) => o && o.got) || jhMzVaultOf(S.lv.sid);\n    /* ev 不用"));
     assert.equal(chkKeyOwnOnly(k.c, "central", "elephant"), false, "任何一派拿過鑰匙，四派密室都開（#263 複審問題 1）") }
+  { /* 只有特定配對漏掉（第三輪問題 1）：中炮的鑰匙能開起馬的門；只測相鄰一圈的話抓不到，12 組全測才抓得到 */
+    const MUT = P("const m = jhMzVaultOf(S.lv.sid);\n    /* ev 不用", "const m = (S.lv.sid === \"horse\" && jhMzVaultOf(\"central\").got) ? jhMzVaultOf(\"central\") : jhMzVaultOf(S.lv.sid);\n    /* ev 不用");
+    let caught = false; for (const sid of VSIDS) for (const other of VSIDS) if (sid !== other && !chkKeyOwnOnly(load(MUT).c, sid, other)) caught = true;
+    assert.equal(caught, true, "中炮的鑰匙能開起馬的門") }
+  { /* 第二次撞門才用別派的鑰匙開（第三輪問題 2）：只撞一次的話抓不到 */
+    const k = load(P("const m = jhMzVaultOf(S.lv.sid);\n    /* ev 不用", "S._vk = (S._vk || 0) + 1; const m = S._vk >= 2 ? Object.values(jhMzVaultGet()).find((o) => o && o.got) || jhMzVaultOf(S.lv.sid) : jhMzVaultOf(S.lv.sid);\n    /* ev 不用"));
+    assert.equal(chkKeyOwnOnly(k.c, "central", "elephant"), false, "第二次撞門才用別派的鑰匙開") }
   { const from = 'L.map.some((r) => String(r).includes("N"))'; assert.ok(V.includes(from), "改壞點不存在：jhMzVaultHas");
     assert.equal(chkNeedsDoor({ "07z9m-vault.js": (s) => s.replace(from, "true") }), false, "不看地圖有沒有密室門就發鑰匙") }
   { const k = load({ canal: (s) => { assert.ok(s.includes("return{first:true,...K}}"), "改壞點不存在：漕運回傳值"); return s.replace("return{first:true,...K}}", "return{first:true,key}}") } }, { canal: true });
