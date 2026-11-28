@@ -902,12 +902,17 @@ function jhCanalXM(sid,day,pid){const st=jhCanalOf(sid),back=()=>"#/jianghu";if(
   return{id:pid,rk:"cjRunCy",back,top:jhL("🏮 漕運殘局","🏮 Canal Puzzle"),icon:"🏮",
     ans:re?jhL("這一班今天已經解開了，看答案不影響。確定？","Already solved today; viewing the answer changes nothing. Sure?"):jhL("看答案這一班就不算解開、沒有額外修為，確定？","Viewing the answer means no extra XP for this barge. Sure?"),
     head:P=>`<b>🏮 ${esc(jhL(`漕船・${st.zh}`,`Barge at ${st.en}`))}</b>・${esc(P.t)}・${typeof cjLv==="function"?cjLv(P.d):""}`,
-    mark:o=>jhCanalMark(sid,day,o),done:(xs)=>xs&&xs.first?`<p class="jh-windnote">${esc(jhL(`漕船脫困！修為 +${JH_CANAL_XP}`,`The barge is free! +${JH_CANAL_XP} XP`))}</p>`:"",
+    mark:o=>jhCanalMark(sid,day,o),done:(xs)=>(xs&&xs.first?`<p class="jh-windnote">${esc(jhL(`漕船脫困！修為 +${JH_CANAL_XP}`,`The barge is free! +${JH_CANAL_XP} XP`))}</p>`:"")+
+      (xs&&xs.key?`<p class="jh-windnote">${esc(jhL(`🗝 船工送你一把銅鑰匙：打得開${xs.key.zh}地底迷宮第二層的密室。`,`🗝 The boatman hands you a brass key: it opens the hidden room on level 2 of the ${xs.key.en} underground maze.`))}</p>`:""),   /* W172：漕運鑰匙（07z9m-vault.js） */
     next:back,nextL:()=>jhL("回十州棋館","Back to the Ten Prefectures")}}
-function jhCanalMark(sid,day,o){if(day!==jhCanalDay())return{first:false};const S=jhCanalGet(day);if(S.s[sid])return{first:false};
+function jhCanalMark(sid,day,o){if(day!==jhCanalDay())return{first:false};
+  /* W172（11/27）：解開這一班就發那一派的密室鑰匙（07z9m-vault.js 的 jhMzVaultGive；那一派有密室、還沒拿過才發）。
+     放在「今天解過沒」之前：功能上線前今天已經解過的，再解一次也拿得到 */
+  const key=typeof jhMzVaultGive==="function"?jhMzVaultGive(sid):null,K=key?{key}:{};   /* 沒發鑰匙就不帶 key 欄位，回傳值跟原本一樣 */
+  const S=jhCanalGet(day);if(S.s[sid])return{first:false,...K};
   S.s[sid]={t:Date.now(),p:o&&o.perfect?1:0};store.set("jhCanal",S);
   if(typeof addXP==="function")try{addXP(JH_CANAL_XP,jhL("漕運殘局","Canal puzzle"),"cy:"+day+":"+sid,{chipDelay:1600})}catch(e){}   /* W119：修為當下發，小標籤照舊 1.6 秒後 */
-  return{first:true}}
+  return{first:true,...K}}
 try{if(typeof cjXMode==="function"&&!cjXMode.jhCanal){const x0=cjXMode;cjXMode=function(id){const m=/^cy\/(\w+)\/(\d{4}-\d{2}-\d{2})\/(.+)$/.exec(String(id||""));if(m)return jhCanalXM(m[1],m[2],decodeURIComponent(m[3]));return x0.apply(this,arguments)};cjXMode.jhCanal=1}}catch(e){}
 const JH_CANAL_IMG="data/canal/barge.webp";
 /* 漕船圖：讀不到（還沒上 CDN、離線缺檔）就換成程式畫的 SVG，不留破圖 */

@@ -564,6 +564,12 @@ body.bhx-full.bhx-me .view.fixed>#bbox{box-shadow:inset 0 0 0 2px rgba(255,214,1
 @media (prefers-reduced-motion:reduce){#bhxOpp,#bhxTurn,body.bhx-full .view.fixed>#bbox{transition:none!important}}`;document.head.append(s)}
 function bhxFullOff(){try{if(typeof document==="undefined"||!document.body)return;const b=document.body,was=b.classList.contains("bhx-full");b.classList.remove("bhx-full","bhx-me");for(const id of["bhxMo","bhxTurn","bhxOpp"]){const e=document.getElementById(id);if(e)e.remove()}
   BHXF.on=false;if(was)setTimeout(()=>{try{dispatchEvent(new Event("resize"))}catch(e){}},0)}catch(e){}}   /* 3D 畫布照新的大小重排 */
+/* 11/27 Android 12 P0-3D bhx-back「十字鍵移完，落子按不下去」（iMac Claude 1 查）：#bhxTurn 為了不讓點擊穿透到齊轍模型，pointer-events:auto 而且把 pointerdown／click 全部攔下；
+   搖桿出來時原本固定移到 bottom:150px（.up），在 Android 12 量到標籤下緣 601、▲ 上緣 593，壓住 ▲ 上緣一截，字型、安全區不同時還可能更多，點 ▲ 就被標籤吃掉、游標不動。
+   改成照搖桿實際的上緣擺：標籤下緣在 ▲ 上面 8px；搖桿出現、收起（style 變）時馬上重擺，不等下一次 bhxFullSync。量不到（測試的假 DOM、還沒排版）就照舊用 .up 的 150px */
+function bhxTurnPos(tn,gp){const on=!!gp&&getComputedStyle(gp).display!=="none";tn.classList.toggle("up",on);let b="";
+  if(on&&typeof innerHeight==="number"&&gp.getBoundingClientRect){const r=gp.getBoundingClientRect();if(r&&r.height>0)b=Math.max(0,Math.round(innerHeight-r.top+8))+"px"}
+  if(tn.style&&tn.style.bottom!==b)tn.style.bottom=b}
 function bhxFullSync(st){try{if(typeof document==="undefined"||!document.body)return;if(!bhxFullOn(st)){if(BHXF.on||document.body.classList.contains("bhx-full"))bhxFullOff();return}
   const b=document.body,fresh=!b.classList.contains("bhx-full");BHXF_ST=st;bhxFullCss();b.classList.add("bhx-full");BHXF.on=true;if(fresh)setTimeout(()=>{try{dispatchEvent(new Event("resize"))}catch(e){}},0);
   let mo=document.getElementById("bhxMo");if(!mo){mo=document.createElement("button");mo.type="button";mo.id="bhxMo";mo.textContent="⋯";mo.setAttribute("aria-label","更多：回開頭畫面、本關棋規、聲音、寶物");mo.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}bhxFullMenu()};b.append(mo)}
@@ -571,7 +577,7 @@ function bhxFullSync(st){try{if(typeof document==="undefined"||!document.body)re
   /* ChatGPT 接手 11/19：狀態標籤不開角色卡，也不能穿透到下面的齊轍模型。只存在於第一戰。 */
   for(const k of["onpointerdown","onpointerup","onpointermove","onclick","oncontextmenu"])tn[k]=e=>{e.preventDefault();e.stopPropagation()};
   const me=!st.result&&st.turn===st.human,txt=st.result?"":me?"輪到你":"星樞思考中…";if(tn.dataset.k!==txt){tn.dataset.k=txt;tn.textContent=txt}   /* 英文介面會被換成英文：照原文記在 data-k 比，不要每次重寫 */tn.hidden=!txt;tn.classList.toggle("me",me);b.classList.toggle("bhx-me",me);
-  try{const gp=document.querySelector(".view.fixed>#bbox .gpad");tn.classList.toggle("up",!!gp&&getComputedStyle(gp).display!=="none")}catch(e){}   /* 搖桿出來時標籤往上讓 */
+  try{const gp=document.querySelector(".view.fixed>#bbox .gpad");bhxTurnPos(tn,gp);if(gp&&!gp._bhxTo&&typeof MutationObserver==="function"){gp._bhxTo=new MutationObserver(()=>{const t=document.getElementById("bhxTurn");if(t)bhxTurnPos(t,gp)});gp._bhxTo.observe(gp,{attributes:true,attributeFilter:["style"]})}}catch(e){}   /* 搖桿出來時標籤往上讓（bhxTurnPos） */
   if(BHXF.intro!==st.id){BHXF.intro=st.id;let op=document.getElementById("bhxOpp");if(!op){op=document.createElement("div");op.id="bhxOpp";op.setAttribute("aria-hidden","true");b.append(op)}op.textContent="星樞・黑洞星盤";
     const rm=bhxFullRm();if(rm){op.classList.add("on");setTimeout(()=>{op.classList.remove("on")},2000)}else{setTimeout(()=>op.classList.add("on"),30);setTimeout(()=>op.classList.remove("on"),2530)}setTimeout(()=>{if(op.isConnected&&!op.classList.contains("on"))op.remove()},rm?2100:3100)}}catch(e){}}
 /* 「⋯」裡的選項（純函式：給測試看有哪些）；locked＝序局還沒打完 */
