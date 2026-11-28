@@ -22,6 +22,14 @@ const JH_MZ_VAULT = {
     title: ["泗州茶棚私記・先守後攻", "Sizhou Teahouse Notes: Defend First, Then Strike"],
     body: ["飛相門掌門當年在泗州考場外的茶棚，看幾個落第的老考生下棋，悟出一句話，寫在帳本背面：「先把相飛起來，把中路守住，不急著出手。等人家把子一顆一顆壓過河，再用車馬從兩邊包回去。守得住，才有本錢反攻。」字跡旁邊有一圈茶漬，看得出是邊喝茶邊寫的。",
       "Years ago, outside the Sizhou exam hall, the Flying Elephant master watched a few failed old candidates play in a tea stall, and wrote one line on the back of a ledger: \"Fly the elephant first and hold the centre; don't rush. Let them push their pieces across the river one by one, then swing your chariots and horses round both flanks. Only if you can hold do you have anything to counterattack with.\" A ring of tea stain sits beside the writing."] },
+  horse: { zh: "起馬門", en: "Horse Opening", port: ["徐州", "Xuzhou"],
+    title: ["徐州渡口私記・馬先出、看人走", "Xuzhou Ferry Notes: Horse First, Then Watch"],
+    body: ["起馬門掌門年輕時在徐州渡口等船，跟擺渡的老船夫下了一整個下午的棋，回來記了一段：「第一步先跳馬，不急著表態。對面架中炮，這匹馬正好護住中兵；對面也起馬，就再出另一匹馬，慢慢下。先看清楚人家要走哪條路，再決定車往哪邊開。」紙角還記著那天的船錢：十二文。",
+      "When the Horse Opening master was young, he waited for a boat at the Xuzhou ferry and played the old ferryman all afternoon, then wrote: \"Move a horse first and don't show your hand. If they set up a central cannon, that horse already guards your middle pawn; if they bring out a horse too, bring out your other one and take it slow. See which road they mean to take before you decide where your chariot goes.\" In the corner he noted that day's fare: twelve coins."] },
+  pawn: { zh: "仙人指路門", en: "Immortal Points the Way", port: ["揚州", "Yangzhou"],
+    title: ["揚州酒樓私記・兵是問路的", "Yangzhou Tavern Notes: The Pawn Asks the Way"],
+    body: ["仙人指路門掌門在揚州運河邊的酒樓，看鹽商和漕幫的帳房下棋，在菜單背面寫了一句：「第一步挺兵，是在問路。看對面怎麼回：架中炮，就跳馬護兵；也挺卒，就把馬接著跳出來。這顆兵不急著過河，它是替後面的馬把路讓出來的。」菜單上還圈了一道「清燉獅子頭」。",
+      "At a tavern by the Yangzhou canal, the master of Immortal Points the Way watched a salt merchant play a canal guild clerk, and wrote on the back of the menu: \"Pushing the pawn first is asking the way. See how they answer: if they set up a central cannon, bring out a horse to guard the pawn; if they push a pawn too, bring the horse out next. This pawn is in no hurry to cross the river; it is clearing the road for the horse behind it.\" A dish on the menu is circled: braised lion's-head meatballs."] },
 };
 /* 紀錄：{派:{got,open,read}} */
 function jhMzVaultGet() { let o = null; try { o = store.get(JH_MZ_VAULT_KEY, null) } catch (e) { } return o && typeof o === "object" && !Array.isArray(o) ? o : {} }
