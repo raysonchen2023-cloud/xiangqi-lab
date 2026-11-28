@@ -464,7 +464,13 @@ function shpScw(v,pg){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.queryS
 function shpPage(img,cap,sub,spots,over){return`<div class="shp-page cq"><img src="data/shipmap/${img}.webp" alt="">${over||""}<div class="shp-cap"><b>${cap}</b><small>${sub}</small></div>${spots.map(([id,x,y,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${x}%;top:${y}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}</div>`}
 const shpOn=(v,q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
 /* 入口按鈕靠圖邊時往裡推，不超出圖（字長短不一，例如擂主名字） */
-function shpFit(v){requestAnimationFrame(()=>{const P=v.querySelector(".shp-page.cq");if(!P||P.dataset.hmc)return;const R=P.getBoundingClientRect();if(!R.width)return;P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{const r=b.getBoundingClientRect(),m=6;let d=0;if(r.left<R.left+m)d=R.left+m-r.left;else if(r.right>R.right-m)d=R.right-m-r.right;if(d)b.style.left="calc("+b.style.left+" + "+Math.round(d)+"px)"})})}
+/* #255（11/27 iPad 13 吋橫向星槎書架）：07fl 把橫式圖往左推裁掉左邊時，標題條（.shp-cap）的「船艙書架」被切掉一半。照渡口（portScw，審查 #165 第七輪）的 --pcL 同一招套到星槎船上每一頁：
+   照 style.marginLeft 負值算 --pcL、標題條往內縮；直圖是 0。渡口已經掛過（P._pcLmo）就不重掛；不改 07fl（工單範圍） */
+function shpCapL(P){try{if(!P||P._pcLmo||!window.MutationObserver)return;
+  if(!document.getElementById("shpCapCss")){const st=document.createElement("style");st.id="shpCapCss";st.textContent=".shp-page.scw-l>.shp-cap{padding-left:calc(16px + var(--pcL,0px))}";document.head.append(st)}
+  const fit=()=>{const ml=parseFloat(P.style.marginLeft)||0,v2=P.dataset.scw?Math.max(0,-ml)+"px":"0px";if(P.style.getPropertyValue("--pcL")!==v2)P.style.setProperty("--pcL",v2)};
+  P._pcLmo=new MutationObserver(fit);P._pcLmo.observe(P,{attributes:true,attributeFilter:["style","data-scw"]});fit()}catch(e){}}
+function shpFit(v){try{shpCapL(v.querySelector(".shp-page.cq"))}catch(e){}requestAnimationFrame(()=>{const P=v.querySelector(".shp-page.cq");if(!P||P.dataset.hmc)return;const R=P.getBoundingClientRect();if(!R.width)return;P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{const r=b.getBoundingClientRect(),m=6;let d=0;if(r.left<R.left+m)d=R.left+m-r.left;else if(r.right>R.right-m)d=R.right-m-r.right;if(d)b.style.left="calc("+b.style.left+" + "+Math.round(d)+"px)"})})}
 /* 棋話一頁 #/ship/lesson（意見回饋 732：原名「這站棋理」）：船頭、說書人的燈籠和木牌；木牌上寫棋理卡，三團星光＝看示範棋局、這一朝的棋、讀這一章 */
 function ShipLesson(v){setTop("📘 棋話一頁","#/adventure");setTabs(false);v.className="view";const k=shipHere(),_ls=(()=>{try{const L=store.get("shipLessonSeen",{})||{};if(!L[k]){L[k]=Date.now();store.set("shipLessonSeen",L)}}catch(e){}})(),T=SHIP_STOP[k]||{},Ls=SHIP_LESSON[k]||{},ap=shipAppr(),lrn=shipLearned(k),H=typeof HIST!=="undefined"?HIST[k]:null,ch=SHIP_PLAN[k]&&SHIP_PLAN[k].ch,Wo=shipWho(k,Ls.openBy),Wd=shipWho(k,Ls.doneBy);
   const board=`<div class="shl-board"><b>${esc(Ls.t||T.img||"")}${lrn?" ✅":""}</b>${(Ls.x||[]).map(x=>`<p>${esc(x)}</p>`).join("")}${Ls.k?`<p class="shl-k">口訣：${esc(Ls.k)}</p>`:""}</div>`;
@@ -672,10 +678,45 @@ try{document.addEventListener("change",e=>{const t=e.target;if(!t||t.id!=="shpTi
 function shpGyroTry(){return new Promise(ok=>{const f=e=>{if(e.beta==null)return;clearTimeout(t);removeEventListener("deviceorientation",f);ok(true)},
   t=setTimeout(()=>{removeEventListener("deviceorientation",f);ok(false)},1200);addEventListener("deviceorientation",f)})}   /* 電腦或沒有陀螺儀的手機收不到資料，就提示改用拖動 */
 
+/* #255 第 2 項（開發者 11/27 iPad 實機：「星槎的頭尾都被切斷，重繪製一張橫向的」）：iPad 橫向時星槎主畫面改用橫式圖 ship_map_l1610（2560×1600，Windows Claude 1 出圖，#255 最後一則留言）。
+   座標是 iMac Claude 2 在瀏覽器量的圖的 %（hs 入口標籤、late 別的模組晚掛的標籤、walk 走路節點；身高照圖上石桌比原圖大約 1.2 倍）。
+   判斷照 07sw scwKind（可用寬 ÷ 可用高 > 1.04、短邊 ≥ 600）；轉向跨過門檻就整頁重畫（走路角色、入口、視差層都照新的那張重掛）。
+   橫式圖上不掛 WebGL 立體視差（sm2_* 圖層和深度圖都是照 896×1200 做的，照渡口 PORT_L1610 的做法），07w6 物件說明先關（.shp-in 標 data-scw，座標是原圖像素）。
+   登記在 07sw 的 SCW：07w7 的天氣照它找到原本的 shipMap（固定顏色 fix 照舊），開發用開關、SCW_CDN、載不到記 SCW_BAD 都照 07sw。
+   橫式圖跟其他 l1610 一樣不進公開倉庫，發布時上 CDN；載不到（同源 404 → 00-util 改 CDN 也失敗）就退回原圖重畫 */
+const SHP_LKEY="shipmap/ship_map";
+const SHPM_L1610={f:"shipmap/ship_map_l1610",w:2560,h:1600,
+  hs:{parks:[19,27],lesson:[75,17],pz:[51,52],shelf:[33,47],read:[36,64],bag:[46,80],sail:[16,84],port:[70,75]},late:{"lk-w":[48.5,55],"ex-set":[59,41],"ex-home":[66,93]},
+  walk:{W:2560,H:1600,el:35,h:[.105,67,.0012],home:"home",look0:[52,72],
+    N:{home:[58,68],pz:[52,67.5],bag:[49,71.5],read:[44,68.5],shelf:[40,62],parks:[39,58],d1:[42,76],sail:[30,73],g1:[62,68],port:[66.5,74],r1:[63,58],r2:[69,50],r3:[73,40.5],lesson:[74,31.5]},
+    E:"home-pz pz-bag bag-read read-shelf shelf-parks read-d1 d1-sail home-g1 pz-g1 g1-port g1-r1 r1-r2 r2-r3 r3-lesson",
+    HS:{pz:["pz",51,58,"bow"],bag:["bag",46,76,"wave"],read:["read",38,68,"bow"],shelf:["shelf",37,53,"wave"],parks:["parks",22,33,"wave"],sail:["sail",19,80,"cheer"],port:["port",72,80,"wave"],lesson:["lesson",75,24,"bow"]}}};
+/* ready:false＝圖還沒上 CDN：只有開發用開關（localStorage xqScwDev=1）才用；發布時 Windows Claude 1 把 ship_map_l1610.webp 上 CDN 的同一個 PR 改成 true（照 07sw 條目的 ready、07z HMW_CL_CDN） */
+if(typeof SCW!=="undefined")SCW[SHP_LKEY]={ready:false,f:SHPM_L1610.f,w:SHPM_L1610.w,h:SHPM_L1610.h,S:{},exit:null,safe:{l:.06,r:.06,t:.04,b:.06},walk:SHPM_L1610.walk,fx:null,sw7:{}};
+/* 現在可用的寬高（框 M 還沒放進去時照視窗估：頂欄約 56、底部選單約 64）→ "l1610"／"" */
+function shpLKind(M){if(typeof scwEntry!=="function"||typeof scwKind!=="function"||!scwEntry(SHP_LKEY))return"";const de=document.documentElement,vw=de.clientWidth||innerWidth,vh=de.clientHeight||innerHeight;
+  if(!M||!M.isConnected)return scwKind(vw,vh-120,vw,vh);
+  const tb=document.getElementById("tabbar"),r=M.getBoundingClientRect(),bot=tb&&tb.offsetParent!==null&&tb.getBoundingClientRect().height?tb.getBoundingClientRect().top:innerHeight;
+  return scwKind(r.width,Math.max(320,Math.round(bot-r.top)),vw,vh)}
+/* 07w shipWalk 問這裡：橫式圖時用橫式圖的走路設定 */
+function shpWalkCfg(M){return M&&M.dataset&&M.dataset.shpL?SHPM_L1610.walk:null}
+/* 開頁後：橫式圖載不到就退回原圖（等 00-util 的 CDN 補抓也失敗才退，照 07sw scwFail）；07w8 爛柯懸棋掛上來時換到橫式圖的石桌 */
+function shpLMount(v,paint){const M=v.querySelector(".shp-map.full");if(!M||!M.dataset.shpL)return;const im=M.querySelector("img.shp-base"),hl=M.querySelector(".shp-hl");
+  /* 8 個入口換到橫式圖的位置（Voyage 模板照舊寫原圖的 %，test-toast-pass-1117 等既有測試看它；07sp、07x 推回畫面內照舊從這裡的位置算） */
+  M.querySelectorAll(".shp-hl>[data-hs]").forEach(b=>{const p=SHPM_L1610.hs[b.dataset.hs];if(p){b.style.left=p[0]+"%";b.style.top=p[1]+"%"}});
+  if(im){const bad=()=>{const u=String(im.getAttribute("src")||"");if(im.dataset&&im.dataset.cdnTry&&typeof XQ_CDN==="string"&&u.indexOf(XQ_CDN)===0&&im._scwCdn!==u){im._scwCdn=u;return}
+      if(typeof SCW_BAD!=="undefined")SCW_BAD[SHP_LKEY]=1;v._shpL="";if(v.isConnected&&M.isConnected)paint()};
+    im.onerror=bad;if(im.complete&&!im.naturalWidth&&im.getAttribute("src"))bad()}
+  /* 別的模組晚一點掛進 .shp-hl、照原圖 % 擺的：07w8 爛柯懸棋 .lk-w、07w9 天字客房 .ex-set、回首頁 .ex-home（這兩個檔不改，掛上來時換到橫式圖的位置） */
+  if(hl){const put=()=>{for(const c in SHPM_L1610.late){const w=hl.querySelector(":scope>."+c);if(w&&w.dataset.shpL!=="1"){w.dataset.shpL="1";w.style.left=SHPM_L1610.late[c][0]+"%";w.style.top=SHPM_L1610.late[c][1]+"%"}}};
+    put();if(window.MutationObserver)new MutationObserver(put).observe(hl,{childList:true})}}
+
 /* 意見回饋 726（開發者 11/7）：星槎圖滿版——圖（3:4）蓋滿頂欄到底部選單之間，左右多出來的裁掉；入口照圖的百分比放在 .shp-in 裡，裁到邊的入口往內推，一律看得到 */
 function shpMapFit(v){requestAnimationFrame(()=>{const M=v.querySelector&&v.querySelector(".shp-map.full");if(!M||!M.isConnected)return;const I=M.querySelector(".shp-in");
+  {const V=M.closest(".view"),k=shpLKind(M);if(V&&V._shpPaint&&k!==(M.dataset.shpL||"")){V._shpL=k;V._shpPaint();try{if(typeof exSync==="function")exSync()}catch(e){}return}}   /* #255：轉向跨過門檻＝整頁照另一張圖重畫；07w9 的天字客房、回首頁只在換頁時放，重畫完叫它再放一次 */
+  const IW=M.dataset.shpL?SHPM_L1610.w:896,IH=M.dataset.shpL?SHPM_L1610.h:1200;
   const tb=document.getElementById("tabbar"),r=M.getBoundingClientRect(),bot=tb&&tb.offsetParent!==null&&tb.getBoundingClientRect().height?tb.getBoundingClientRect().top:innerHeight;
-  const W=r.width,H=Math.max(320,Math.round(bot-r.top));M.style.height=H+"px";const s=Math.max(W/896,H/1200),w=896*s,h=1200*s;
+  const W=r.width,H=Math.max(320,Math.round(bot-r.top));M.style.height=H+"px";const s=Math.max(W/IW,H/IH),w=IW*s,h=IH*s;
   Object.assign(I.style,{width:w+"px",height:h+"px",left:Math.round((W-w)/2)+"px",top:Math.round((H-h)/2)+"px"});
   const R=M.getBoundingClientRect(),m=8,capH=(M.querySelector(".shp-cap")||{}).offsetHeight||0;I.querySelectorAll(".shp-hs").forEach(b=>{b.style.marginLeft="";b.style.marginTop="";const q=b.getBoundingClientRect();let dx=0,dy=0;
     if(q.left<R.left+m)dx=R.left+m-q.left;else if(q.right>R.right-m)dx=R.right-m-q.right;if(q.top<R.top+capH+m)dy=R.top+capH+m-q.top;else if(q.bottom>R.bottom-m)dy=R.bottom-m-q.bottom;
@@ -684,8 +725,9 @@ function shpMapFit(v){requestAnimationFrame(()=>{const M=v.querySelector&&v.quer
 /* ---------- 星槎頁 #/adventure ---------- */
 function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.className="view";if(typeof bhDockLate==="function")bhDockLate();   /* 11/16：偏航打完沒按回航、從左上角回來，補跑到站（07bh） */
   const paint=()=>{const ap=shipAppr(),D=shipDocked(),k=shipHere(),T=SHIP_STOP[k],O=ap?SHIP_ROUTE:shipOrder(),I=xpInfo(),nx=ap?null:shipNextStop();
+    if(v._shpL===undefined)v._shpL=shpLKind(null);const LE=v._shpL&&typeof scwEntry==="function"?scwEntry(SHP_LKEY):null;if(!LE)v._shpL="";   /* #255 iPad 橫向用橫式圖 */
     v.innerHTML=`<div class="pad shp">
-      <div class="shp-map full"><div class="shp-in"><img class="shp-base" src="data/shipmap/ship_map.webp?v=${SHP_IMGV}" alt="雲河星槎">${shpPxHtml()}<div class="px-sw px-hw"><div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs${shipLearned(k)?"":" hot"}" data-hs="pz" style="left:50%;top:43%${typeof shipMoreGold==="function"?shipMoreGold(k):""}">♟ 千秋殘局${shipLearned(k)?(typeof shipMoreHs==="function"?shipMoreHs(k):" ✓"):""}</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs${shipLearned(k)&&nx?" hot":""}" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
+      <div class="shp-map full${LE?" shp-l":""}"${LE?' data-shp-l="l1610"':""}><div class="shp-in"${LE?' data-scw="l1610"':""}><img class="shp-base" src="${LE?scwSrc(LE):"data/shipmap/ship_map.webp?v="+SHP_IMGV}" alt="雲河星槎">${LE?"":shpPxHtml()}<div class="px-sw px-hw"><div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs${shipLearned(k)?"":" hot"}" data-hs="pz" style="left:50%;top:43%${typeof shipMoreGold==="function"?shipMoreGold(k):""}">♟ 千秋殘局${shipLearned(k)?(typeof shipMoreHs==="function"?shipMoreHs(k):" ✓"):""}</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs${shipLearned(k)&&nx?" hot":""}" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
       ${ap?`<div class="card shp-ap"><b>📜 你是說書人的學徒</b><p class="muted">十三站都能去，各站的主場角色不會跟你說話。想用雲河七星的眼睛走一趟？開新的旅程會存到另一格，這段旅程不會被蓋掉。</p><button class="btn" id="spNew" style="width:100%">⚔ 開新的旅程</button></div>`:""}
       <div class="shp-route-x" hidden>${O.map((e,i)=>{const dk=D.includes(e),on=e===k,ok=shipLearned(e),isN=e===nx;return`<button class="shp-st${dk?" dk":" lk"}${on?" on":""}${ok?" ok":""}${isN?" nx":""}" data-st="${e}"><i>${dk?esc((ARENA[e]||{}).seal||"棋"):isN?"⛵":"🔒"}</i><span>${i+1}・${esc(shipShort(e))}</span></button>`}).join("")}</div>
       ${mainDoneHTML()}<div id="spRes"></div>
@@ -702,7 +744,7 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
     on("#spNew",shipNewJourney);on("#spPort",()=>shipPort(k));on("#spParks",()=>{location.hash="#/journey/park"});
     if(typeof chdHomeMark==="function")chdHomeMark(v,k);   /* 意見回饋 774 故國舊夢：家鄉那一站的「🏠 故鄉」小標記 */
     if(typeof shipWalk==="function")shipWalk(v,k);   /* 開發者 11/8：玩家角色在甲板上走到入口再開（07w-shipwalk.js） */
-    shpMapFit(v);shpPx(v.querySelector(".shp-map.full"));if(!Voyage.rs){Voyage.rs=1;addEventListener("resize",()=>{const w=document.querySelector(".shp-map.full");if(w)shpMapFit(w.closest(".view")||document)})}
+    v._shpPaint=paint;shpLMount(v,paint);shpMapFit(v);shpPx(v.querySelector(".shp-map.full"));if(!Voyage.rs){Voyage.rs=1;addEventListener("resize",()=>{const w=document.querySelector(".shp-map.full");if(w)shpMapFit(w.closest(".view")||document)})}
     v.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{const e=b.dataset.st;if(!D.includes(e)){vibrate(8);return toast(e===nx?"⛵ 圖上的「起航」就能開往"+shipShort(e):eraLockMsg(e))}vibrate(5);if(e===k)return;shipGoTo(e,()=>{if(v.isConnected)paint()})});   /* 意見回饋 697：航線換站＝換朝代（era 跟著換），播千秋穿梭 */
     {const r=v.querySelector("#spRoute .on");if(r)try{r.scrollIntoView({block:"nearest",inline:"center"})}catch(e){}}
     mainDoneBind(v);jResume(v.querySelector("#spRes"));if(typeof v7Try==="function")v7Try(v,"ship")};   /* 七星來訪（07j-visit.js）：沒選的六位偶爾來串門子 */
