@@ -2,7 +2,7 @@
    用 vm 跑真的程式（m.html 裡全部 07z9m-*，加上漕運那一段），存檔、修為用假的記下呼叫。
    規則：漕船停在那一州時解題拿鑰匙（只發給第二層有密室的派、只發一次）；N＝銅鎖門，有鑰匙才開、開過永久開；p＝殘譜架，第一次讀給修為；
    鑰匙只開密室：石門、水窪、各派機關照舊。
-   「改壞驗證」：同一組檢查拿去跑改壞的程式（沒鑰匙也開、重建後門又關上、鑰匙重複發、鑰匙順便開石門、開密室順便算踩過踏板、重建時連石門一起拆、開過密室後每走一步才偷偷算踩過踏板），一定要抓得到。
+   「改壞驗證」：同一組檢查拿去跑改壞的程式（沒鑰匙也開、重建後門又關上、鑰匙重複發、鑰匙順便開石門、開密室順便算踩過踏板、重建時連石門一起拆、開過密室後每走一步才偷偷算踩過踏板、漕運沒發鑰匙時回傳值多帶 key），一定要抓得到。
    四派（漕船停的四州）：淮安＝中炮、泗州＝飛相、徐州＝起馬、揚州＝仙人指路；screen 有第二層但不在漕運航線上，當「沒有密室」的對照。 */
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");
@@ -74,10 +74,15 @@ function chkWalkAfter(c, sid = "central") {   /* W217：開過密室後在石門
   let d = null; for (let y = 0; y < S.H && !d; y++) for (let x = 0; x < S.W; x++) if (cell(S, x, y) === "D") { d = { x, y }; break }
   if (!d) return false; S.guards = []; S.player = { x: d.x, y: d.y + 1, face: 1 }; return c.jhMzStep(S, 0, -1).ev === "locked";
 }
+function chkCanalNoKey(k) {   /* 漕運：這一派已經拿過鑰匙（之前停靠時拿的），今天第一次解題只算解題、不再發鑰匙，回傳值要剛好是 { first: true }、不多帶 key 欄位 */
+  k.mem.jhMzKey = JSON.stringify({ horse: { got: 1 } });
+  return JSON.stringify(k.c.R.jhCanalMark("horse", DAY, {})) === JSON.stringify({ first: true });
+}
 
 test("登記：07z9m-vault.js 排在 m.html 全部迷宮檔最後；只包漕船停靠四派（中炮、飛相、起馬、仙人指路）的第二層；N 擋路擋視線、p 擋路不擋視線；3D、平面畫法都有", () => {
   assert.equal(FILES[FILES.length - 1], "07z9m-vault.js");
-  { const k = load(); assert.equal(k.c.jhMzLvN("screen", 2).layer, 2, "對照組 screen 要有第二層"); assert.notEqual(k.c.jhMzLvN("screen", 2)._vault, 1) } assert.ok(FILES.indexOf("07z9m-fall.js") < FILES.indexOf("07z9m-vault.js"));
+  assert.ok(FILES.indexOf("07z9m-fall.js") < FILES.indexOf("07z9m-vault.js"));
+  { const k = load(); assert.equal(k.c.jhMzLvN("screen", 2).layer, 2, "對照組 screen 要有第二層"); assert.notEqual(k.c.jhMzLvN("screen", 2)._vault, 1, "對照組 screen 不該被包") }
   const { c } = load(), G = (n) => vm.runInContext(n, c);   /* const 宣告的全域，vm 外拿不到，要在裡面取 */
   for (const ch of "Np") { assert.equal(typeof G("JH_MZ_OBJ")[ch], "function", "3D " + ch); assert.equal(typeof G("JH_MZ_TILE")[ch], "function", "平面 " + ch) }
   assert.deepEqual(Object.keys(G("JH_MZ_VAULT")).sort(), [...VSIDS].sort(), "密室資料剛好四派");
@@ -129,7 +134,7 @@ test("鑰匙只開密室：開密室不動踏板和石門；開過以後再正�
   assert.equal(run(true), run(false));
 });
 
-test("漕運：解開那一班就發那一派的密室鑰匙並在結果寫出來（四州都有）；今天已經解過的再解也拿得到；沒發鑰匙時回傳值跟原本一樣", () => {
+test("漕運：解開那一班就發那一派的密室鑰匙並在結果寫出來（四州都有）；今天已經解過的再解也拿得到；已經拿過鑰匙、沒發鑰匙時回傳值剛好是 { first: true }", () => {
   const { c, R, V } = (() => { const k = load({}, { canal: true }); return { ...k, R: k.c.R } })();
   const a = JSON.parse(JSON.stringify(R.jhCanalMark("central", DAY, {})));
   assert.equal(a.first, true); assert.deepEqual(a.key, { zh: "中炮門", en: "Central Cannon" }); assert.ok(V().central.got);
@@ -137,6 +142,7 @@ test("漕運：解開那一班就發那一派的密室鑰匙並在結果寫出�
   assert.deepEqual(JSON.parse(JSON.stringify(R.jhCanalMark("horse", DAY, {}))), { first: true, key: { zh: "起馬門", en: "Horse Opening" } }, "徐州：起馬門的鑰匙");
   assert.deepEqual(JSON.parse(JSON.stringify(R.jhCanalMark("pawn", DAY, {}))), { first: true, key: { zh: "仙人指路門", en: "Immortal Points the Way" } }, "揚州：仙人指路門的鑰匙");
   assert.ok(V().horse.got && V().pawn.got);
+  assert.ok(chkCanalNoKey(load({}, { canal: true })), "已經拿過鑰匙的派，第一次解題回傳值要剛好是 { first: true }");
   assert.deepEqual(JSON.parse(JSON.stringify(R.jhCanalMark("central", "2026-11-01", {}))), { first: false }, "不是今天");
   /* 今天已經解過（功能上線前），再解一次也發 */
   const k2 = load({}, { canal: true }); k2.mem.jhCanal = JSON.stringify({ d: DAY, s: { elephant: { t: 1, p: 0 } }, pick: {} });
@@ -147,7 +153,7 @@ test("漕運：解開那一班就發那一派的密室鑰匙並在結果寫出�
   assert.match(X.done({ first: true, key: { zh: "中炮門", en: "Central Cannon" } }), /密室/); assert.doesNotMatch(X.done({ first: true }), /密室/);
 });
 
-test("改壞驗證：沒鑰匙也開、重建後門又關上、鑰匙重複發、鑰匙順便開石門、開密室順便算踩過踏板、重建時連石門一起拆、開過密室後每走一步才算踩過踏板，上面的檢查都要抓得到", () => {
+test("改壞驗證：沒鑰匙也開、重建後門又關上、鑰匙重複發、鑰匙順便開石門、開密室順便算踩過踏板、重建時連石門一起拆、開過密室後每走一步才算踩過踏板（四派）、漕運沒發鑰匙時多帶 key，上面的檢查都要抓得到", () => {
   const V = rd("07z9m-vault.js"), P = (from, to) => ({ "07z9m-vault.js": (s) => { assert.ok(s.includes(from), "改壞點不存在：" + from); return s.replace(from, to) } });
   { const k = load(P("if (!m.got && !m.open) return {", "if (false) return {")); assert.equal(chkLocked(k.c), false, "沒鑰匙也開") }
   { const k = load(P("jhMzReset = function (S, full) {", "jhMzResetX = function (S, full) {")); assert.equal(chkOpenStays(k.c), false, "重建後門又關上") }
@@ -158,9 +164,13 @@ test("改壞驗證：沒鑰匙也開、重建後門又關上、鑰匙重複發�
   { const k = load(P('S.grid[ny][nx] = ".";', 'S.grid[ny][nx] = "."; S.plate = true;')); assert.equal(chkNoBypass(k.c), false, "開密室時順便算成踩過踏板") }
   { const k = load(P('if (S.grid[y][x] === "N") S.grid[y][x] = ".";', 'if (S.grid[y][x] === "N" || S.grid[y][x] === "D") S.grid[y][x] = ".";')); assert.equal(chkNoBypass(k.c), false, "重建格子時連石門一起拆掉") }
   { const k = load(P("  return typeof prev === \"function\" ? prev(S, dx, dy, c) : null;", "  if (jhMzVaultOf(S.lv.sid).open) S.plate = true; return typeof prev === \"function\" ? prev(S, dx, dy, c) : null;"));
-    assert.equal(chkNoBypass(k.c), true, "延後版：開門那一下沒動踏板，舊的檢查抓不到（W217 的起因）"); assert.equal(chkWalkAfter(k.c), false, "開過密室後每走一步才偷偷算踩過踏板") }
-  { const k = load(P("  return typeof prev === \"function\" ? prev(S, dx, dy, c) : null;", "  if (jhMzVaultOf(S.lv.sid).open && S.player.x < 7) S.doorOpen = true; return typeof prev === \"function\" ? prev(S, dx, dy, c) : null;"));
-    assert.equal(chkWalkAfter(k.c), false, "開過密室後走離密室才偷偷打開石門") }
+    assert.equal(chkNoBypass(k.c), true, "延後版：開門那一下沒動踏板，舊的檢查抓不到（W217 的起因）") }
+  for (const sid of VSIDS) { const k = load(P("  return typeof prev === \"function\" ? prev(S, dx, dy, c) : null;", "  if (jhMzVaultOf(S.lv.sid).open) S.plate = true; return typeof prev === \"function\" ? prev(S, dx, dy, c) : null;"));
+    assert.equal(chkWalkAfter(k.c, sid), false, sid + "：開過密室後每走一步才偷偷算踩過踏板") }
+  for (const sid of VSIDS) { const k = load(P("  return typeof prev === \"function\" ? prev(S, dx, dy, c) : null;", "  if (jhMzVaultOf(S.lv.sid).open && S.player.x < 7) S.doorOpen = true; return typeof prev === \"function\" ? prev(S, dx, dy, c) : null;"));
+    assert.equal(chkWalkAfter(k.c, sid), false, sid + "：開過密室後走離密室才偷偷打開石門") }
+  { const k = load({ canal: (s) => { assert.ok(s.includes("return{first:true,...K}}"), "改壞點不存在：漕運回傳值"); return s.replace("return{first:true,...K}}", "return{first:true,key}}") } }, { canal: true });
+    assert.equal(chkCanalNoKey(k), false, "漕運沒發鑰匙時回傳值多帶 key 欄位（#263 審查問題 1）") }
   assert.ok(V.includes("jhMzReset = function (S, full)"));
 });
 
