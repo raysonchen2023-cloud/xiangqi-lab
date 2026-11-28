@@ -335,7 +335,7 @@ async function jhMzWorld3(box,c,S){
 /* ===== 純邏輯（測試用 vm 直接跑這一段）===== */
 /* sid＝哪一派（沒給＝中炮門）；run＝這是第幾次走；ptr＝題庫指標 {door,trap}（存檔帶進來：上一輪出到哪一題，這一輪接著出，換輪第一題不會跟上一輪最後一題一樣；沒給就用 run） */
 function jhMzNew(sid,run,ptr){const lv=jhMzLv(sid),bag={};for(const r of lv.rew)bag[r.k]=0;
-  const S={lv,sid:lv.sid,W:lv.map[0].length,H:lv.map.length,seen:new Set(),lit:new Set(),bag,doorOpen:false,plate:false,got:[],fails:{door:0,trap:0},turn:0,done:false,chests:new Set(),run:Math.max(0,Math.floor(+run||0)),pick:{door:0,trap:0},cur:{},pz:null};
+  const S={lv,sid:lv.sid,W:lv.map[0].length,H:lv.map.length,seen:new Set(),lit:new Set(),bag,doorOpen:false,plate:false,got:[],fails:{door:0,trap:0},turn:0,done:false,chests:new Set(),run:Math.max(0,Math.floor(+run||0)),pick:{door:0,trap:0},cur:{},pz:null,hintUsed:false};   /* W195（外部審核第 8 項）：明寫 hintUsed:false。「再走一次」用 Object.assign(S, jhMzNew(…)) 接新一趟，沒寫的欄位會留著上一趟的值，新一趟第一次提示就被扣貢獻 */
   /* #105 審查建議：ptr 不是物件（null、數字）就當沒給；超過 1e6 的指標當壞值（加 1 會被精度吃掉、一直出同一題） */
   const R=S.run,pp=ptr&&typeof ptr==="object"?ptr:{},okp=v=>v!=null&&v!==""&&Number.isFinite(+v)&&+v>=0&&+v<1e6;S.base={door:okp(pp.door)?Math.floor(+pp.door):R,trap:okp(pp.trap)?Math.floor(+pp.trap):R};
   jhMzReset(S,true);return S}
