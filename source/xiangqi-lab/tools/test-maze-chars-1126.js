@@ -45,7 +45,7 @@ function shapeProblems(c, f) {
   const bad = [], OP = vm.runInContext("Object.getPrototypeOf({})", c);
   /* W181（#239 第五輪審查列的後續）：汙染 Object.prototype（例如在原型上掛 y）時，查表 JH_MZ_OBJ["y"] 會拿到原型上的函式，自有鍵檢查看不到 */
   const base = OP_BASE.get(c) || [], now = vm.runInContext("Reflect.ownKeys(Object.getPrototypeOf({})).map(String)", c);
-  for (const k of now) if (!base.includes(k)) bad.push(`載完 ${f}：Object.prototype 多了自有屬性「${k}」`);
+  for (const k of now) if (!base.includes(k)) bad.push(`載完 ${f}：Object.prototype 多了自有屬性「${k}」（context 內）`);
   for (const k of Reflect.ownKeys(Object.prototype).map(String)) if (!OUTER_OP_BASE.includes(k)) bad.push(`載完 ${f}：Object.prototype 多了自有屬性「${k}」（外層）`);
   for (const k of ["OBJ", "TILE"]) {
     const T = vm.runInContext("JH_MZ_" + k, c);
@@ -218,9 +218,11 @@ test("改壞驗證：不可列舉的新鍵、非函式的值、改原型、汙�
     ["e7a 仙人指路第二層寫入非函式 y=1", { "07z9m-pawn2.js": add("JH_MZ_OBJ.y=1;") }, "不是函式"],
     ["e7b y=1 之後，起馬第二層用 if(!…) 守衛寫 y（自己的沒生效）", { "07z9m-pawn2.js": add("JH_MZ_OBJ.y=1;"), "07z9m-horse2.js": add("if(!JH_MZ_OBJ.y)JH_MZ_OBJ.y=H=>null;") }, "不是函式"],
     ["改原型：仙人指路第二層把 y 藏在原型上", { "07z9m-pawn2.js": add("Object.setPrototypeOf(JH_MZ_OBJ,{y:H=>null});") }, "原型被換掉"],
-    ["W181 汙染 Object.prototype：仙人指路第二層在所有物件的原型上掛 y", { "07z9m-pawn2.js": add("Object.prototype.y=H=>null;") }, "Object.prototype 多了自有屬性「y」"],
-    ["W181 汙染 Object.prototype（不可列舉）：用 defineProperty 掛 y", { "07z9m-pawn2.js": add("Object.defineProperty(Object.prototype,\"y\",{value:H=>null,enumerable:false,configurable:true,writable:true});") }, "Object.prototype 多了自有屬性「y」"],
-    ["W181 整張換成 Proxy：07z9m-maze.js 宣告時就包一層", { "07z9m-maze.js": (s) => s.replace("JH_MZ_OBJ={},JH_MZ_TILE={};", "JH_MZ_OBJ=new Proxy({},{}),JH_MZ_TILE=new Proxy({},{get:(t,k)=>t[k]});") }, "是 Proxy"],
+    ["W181 汙染外層 Object.prototype：仙人指路第二層寫 Object.prototype.y（mkCtx 傳進去的是外層的 Object）", { "07z9m-pawn2.js": add("Object.prototype.y=H=>null;") }, "Object.prototype 多了自有屬性「y」（外層）"],
+    ["W181 汙染外層 Object.prototype（不可列舉）：用 defineProperty 掛 y", { "07z9m-pawn2.js": add("Object.defineProperty(Object.prototype,\"y\",{value:H=>null,enumerable:false,configurable:true,writable:true});") }, "Object.prototype 多了自有屬性「y」（外層）"],
+    ["W181 汙染 context 內的原型（查表 JH_MZ_OBJ[\"z\"] 真正會查到的那個）：Object.getPrototypeOf({}).z", { "07z9m-pawn2.js": add("Object.getPrototypeOf({}).z=H=>null;") }, "Object.prototype 多了自有屬性「z」（context 內）"],
+    ["W181 只把 JH_MZ_OBJ 換成 Proxy：07z9m-maze.js 宣告時包一層", { "07z9m-maze.js": (s) => s.replace("JH_MZ_OBJ={},JH_MZ_TILE={};", "JH_MZ_OBJ=new Proxy({},{}),JH_MZ_TILE={};") }, "JH_MZ_OBJ 是 Proxy"],
+    ["W181 只把 JH_MZ_TILE 換成 Proxy：07z9m-maze.js 宣告時包一層", { "07z9m-maze.js": (s) => s.replace("JH_MZ_OBJ={},JH_MZ_TILE={};", "JH_MZ_OBJ={},JH_MZ_TILE=new Proxy({},{get:(t,k)=>t[k]});") }, "JH_MZ_TILE 是 Proxy"],
   ];
   for (const [name, patch, key] of cases) {
     for (const f of Object.keys(patch)) assert.notEqual(patch[f](rd(f)), rd(f), name + "：改壞的程式要真的有改到");
