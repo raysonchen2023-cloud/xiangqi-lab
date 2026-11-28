@@ -9,6 +9,9 @@ const SRC = fs.readFileSync(path.join(__dirname, "../src/park3d.js"), "utf8").re
 const a = SRC.indexOf("    const gntStack=i=>"), b = SRC.indexOf("    /* 望遠鏡：站在預設視角的位置", a);
 assert.ok(a > 0 && b > a, "park3d.js 找得到 W68 那段");
 const CODE = SRC.slice(a, b);
+/* W223（11/28）：選單按鈕改用 p3TapBtn（pointerup 就動作），一起抽出來放進 vm */
+const TAP = (/\n  function p3TapBtn\(b,fn\)\{[\s\S]*?return b\}\n/.exec(SRC) || [""])[0];
+assert.ok(TAP, "park3d.js 找得到 p3TapBtn");
 
 /* 黑洞第一戰的局面（BHX_FEN）：中路由上到下 4 將、13 士、22 俥、31 炮；85 帥在最下面 */
 const FEN = "4k4/4a4/2N1R1N2/4C4/8P/9/9/9/9/4KAB2";
@@ -17,7 +20,7 @@ function board(fen) { const b = Array(90).fill(null); (fen || FEN).split("/").fo
 const scr = (i) => ({ x: 40 + (i % 9) * 40, y: 300 + Math.floor(i / 9) * 24 });
 function load(o = {}) {
   const made = [], taps = [];
-  const mk = (tag) => { const e = { tag, style: {}, attrs: {}, kids: [], textContent: "", setAttribute(k, v) { this.attrs[k] = v }, append(...x) { this.kids.push(...x) }, remove() { this.removed = true }, onclick: null, onpointerdown: null }; made.push(e); return e };
+  const mk = (tag) => { const e = { tag, style: {}, attrs: {}, kids: [], textContent: "", setAttribute(k, v) { this.attrs[k] = v }, append(...x) { this.kids.push(...x) }, remove() { this.removed = true }, onclick: null, onpointerdown: null, h: {}, addEventListener(t, f) { (this.h[t] = this.h[t] || []).push(f) }, fire(t, o) { for (const f of this.h[t] || []) f(Object.assign({ stopPropagation() { this.stopped = (this.stopped || 0) + 1 } }, o)) } }; made.push(e); return e };
   const B = board(o.fen), pieces = {}; B.forEach((p, i) => { if (p) pieces[i] = { visible: true } });
   const c = {
     UNDER: o.under !== false, GIANT: true, selI: o.sel == null ? -1 : o.sel, SNAP: { b: B, me: "r" }, pieces,
@@ -29,7 +32,7 @@ function load(o = {}) {
     document: { createElement: mk }, setTimeout: () => 0, clearTimeout() {},
   };
   vm.createContext(c);
-  vm.runInContext(CODE + ";this.R={gntStack,showStack,tapPiece,stkClose}", c);
+  vm.runInContext(TAP + CODE + ";this.R={gntStack,showStack,tapPiece,stkClose}", c);
   return { R: c.R, c, made, taps };
 }
 
@@ -83,5 +86,17 @@ test("PR #38 審查：疊子裡自己的子只有一顆＝直接選它，不跳�
 
 test("〔原始碼〕PR #38 審查：點棋盤任何地方（含空白處）都先收起疊子選單；選單按鈕的 pointerup 不往棋盤傳", () => {
   assert.equal(SRC.split("stkClose();const i=pick(e.clientX,e.clientY);").length - 1, 2, "兩處點擊處理在 pick 之前都收選單");
-  assert.ok(SRC.includes("b.onpointerdown=b.onpointerup=e=>e.stopPropagation();"), "選單按鈕的 pointerup 不往棋盤傳");
+  assert.ok(SRC.includes("p3TapBtn(b,()=>{stkClose();if(opt.onTap)opt.onTap(k)});stkMenu.append(b)"), "選單按鈕用 p3TapBtn（W223）");
+  assert.match(TAP, /addEventListener\("pointerdown",e=>\{e\.stopPropagation\(\);/, "p3TapBtn 的 pointerdown 不往棋盤傳");
+  assert.match(TAP, /addEventListener\("pointerup",e=>\{e\.stopPropagation\(\);/, "p3TapBtn 的 pointerup 不往棋盤傳");
+});
+
+test("W223：慢機沒有 click（只有 pointerdown→pointerup）也選得到疊住的子；之後補送的 click 不會再選一次", () => {
+  const { R, c, taps } = load();
+  R.tapPiece(31, 200, 400);
+  const btns = c.el.last.kids.filter((k) => k.tag === "button");
+  btns[1].fire("pointerdown", { pointerId: 7 }); btns[1].fire("pointerup", { pointerId: 7 });
+  assert.deepEqual(taps, [22], "pointerup 就選到俥");
+  btns[1].onclick({ detail: 1, stopPropagation() {} });
+  assert.deepEqual(taps, [22], "觸控合成的 click 略過，不會選兩次");
 });

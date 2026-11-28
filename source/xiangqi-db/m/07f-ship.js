@@ -692,7 +692,7 @@ const SHPM_L1610={f:"shipmap/ship_map_l1610",w:2560,h:1600,
     E:"home-pz pz-bag bag-read read-shelf shelf-parks read-d1 d1-sail home-g1 pz-g1 g1-port g1-r1 r1-r2 r2-r3 r3-lesson",
     HS:{pz:["pz",51,58,"bow"],bag:["bag",46,76,"wave"],read:["read",38,68,"bow"],shelf:["shelf",37,53,"wave"],parks:["parks",22,33,"wave"],sail:["sail",19,80,"cheer"],port:["port",72,80,"wave"],lesson:["lesson",75,24,"bow"]}}};
 /* ready:false＝圖還沒上 CDN：只有開發用開關（localStorage xqScwDev=1）才用；發布時 Windows Claude 1 把 ship_map_l1610.webp 上 CDN 的同一個 PR 改成 true（照 07sw 條目的 ready、07z HMW_CL_CDN） */
-if(typeof SCW!=="undefined")SCW[SHP_LKEY]={ready:false,f:SHPM_L1610.f,w:SHPM_L1610.w,h:SHPM_L1610.h,S:{},exit:null,safe:{l:.06,r:.06,t:.04,b:.06},walk:SHPM_L1610.walk,fx:null,sw7:{}};
+if(typeof SCW!=="undefined")SCW[SHP_LKEY]={ready:true,f:SHPM_L1610.f,w:SHPM_L1610.w,h:SHPM_L1610.h,S:{},exit:null,safe:{l:.06,r:.06,t:.04,b:.06},walk:SHPM_L1610.walk,fx:null,sw7:{}};
 /* 現在可用的寬高（框 M 還沒放進去時照視窗估：頂欄約 56、底部選單約 64）→ "l1610"／"" */
 function shpLKind(M){if(typeof scwEntry!=="function"||typeof scwKind!=="function"||!scwEntry(SHP_LKEY))return"";const de=document.documentElement,vw=de.clientWidth||innerWidth,vh=de.clientHeight||innerHeight;
   if(!M||!M.isConnected)return scwKind(vw,vh-120,vw,vh);
