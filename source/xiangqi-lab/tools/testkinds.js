@@ -261,6 +261,7 @@ const CLASSIFIED = new Set([
   "test-w134-maze-joy.js",   /* 11/26 W134 開發者「重新設計地底迷宮的方向鍵」選虛擬搖桿：推的方向對到格子方向（平面上下左右、斜俯視四個斜角）、死區、換方向黏性、橫畫面放右下；迷宮頁掛上搖桿、方向鈕與鍵盤照舊 */
   "test-kill-layout-1127.js",   /* 11/27 W192 殺棋動畫三塊位置（m/00-util.js kxLayout）：vm 跑真函式，手機直式、iPad、3D 公園 × kill.json 三組 10 版高寬比都不重疊、夠高不出界；改壞驗證換回固定百分比要抓到重疊；kxPick 隨機挑字跳過潦草的版 3、版 7（行為 4、原始碼 1） */
   "test-pad-pointerup-1128.js",   /* 11/28 W219 黑洞背面十字鍵在 Android 12 慢機 pointerup 晚到、沒有 click：park3d.js p3TapBtn 改成 pointerup 就動作、略過之後的合成 click，鍵盤照舊；vm 跑真函式九種事件順序＋改壞驗證 */
+  "test-w203-map-same-1128.js",   /* 11/28 W203 古戰場地圖兩場座標完全一樣（邯鄲）時推不開：07g-battle.js btPushApart 重疊給固定方向；vm 跑真函式＋改壞驗證 */
   "test-icon-onerror-1126.js",   /* 11/26 W152 圖示載不到時的備援（m/02-shell.js ETIMG）：組出 onerror 拿去 new Function 編譯並用假 img 實際跑（改抓經典版、換舊圖、換表情文字）；掃所有 m/*.js 的 onerror 不能有反斜線 */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */
 ]);

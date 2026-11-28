@@ -125,6 +125,9 @@ function btMapName(c){const sx=/之戰$|之役$|之圍$/.test(c.name),en=btEn(c.
 function btWrap(s,n){const W=String(s).split(" "),L=[];let cur="";for(const x of W){if(cur&&(cur+" "+x).length>n){L.push(cur);cur=x}else cur=cur?cur+" "+x:x}if(cur)L.push(cur);
   while(L.length>4){const a=L.pop();L[L.length-1]+=" "+a}return L}
 function btMapAria(c,st){const en=btEn(c.name),se=en&&btEn(st);return en?en+" · "+(se||st):c.name+"・"+st}
+/* 太近的點推開（從 battleMapHTML 抽出來）。W203（11/28 外部審核第 17 項）：秦卷三「竊符救趙」「王翦滅趙」都在邯鄲、座標一模一樣，
+   原本 dx、dy 都是 0，推開的方向也是 0，兩個點永遠疊在一起。完全重疊時給一個固定方向（右下），其他情況照原本的算法 */
+function btPushApart(Q,need){for(let it=0;it<24;it++)for(let a=0;a<Q.length;a++)for(let b=a+1;b<Q.length;b++){let dx=Q[b][0]-Q[a][0],dy=Q[b][1]-Q[a][1];if(!dx&&!dy){dx=.6;dy=.8}const d=Math.hypot(dx,dy);if(d<need){const m=(need-d)/2;Q[a][0]-=dx/d*m;Q[a][1]-=dy/d*m;Q[b][0]+=dx/d*m;Q[b][1]+=dy/d*m}}return Q}
 function battleMapHTML(k,cards,S,RJ,LJ,op){op=op||{};if(op.px&&op.px<60)op=Object.assign({},op,{px:0});
   if(op.top>0||op.bot>0)op=Object.assign({},op,{top:op.top>0?Math.ceil(op.top/8)*8:0,bot:op.bot>0?Math.ceil(op.bot/8)*8:0});   /* 11/17 測試員 D 第 15 輪：同一卷每次進來排得不一樣——頁名條、卷分頁、清單鈕量到的高度差幾 px（字型載入前後）就會換位置 → 以 8px 為一格 */
   const LAND=!!op.land;   /* 11/17 開發者選單（第 15 輪）：橫式（含寬螢幕）地圖上只標編號 1～5，不畫戰役名和引線；名字看右邊抽屜和「☰ 戰役清單」；讀螢幕名稱照舊是完整戰役名 */   /* 11/17 測試員 B 第 10 輪 N10-1：容器還沒撐開時量到的寬度（約 10px）不能拿來算觸控熱區和上緣，當作沒量到 */
@@ -135,7 +138,7 @@ function battleMapHTML(k,cards,S,RJ,LJ,op){op=op||{};if(op.px&&op.px<60)op=Objec
   let vx=(Math.max(...xs)+Math.min(...xs))/2-w/2,vy=(Math.max(...ys)+Math.min(...ys))/2-h*(1+ft-fb)/2;if(w<=100)vx=Math.max(0,Math.min(100-w,vx));else vx=50-w/2;if(ft||fb){if(h<=100)vy=Math.max(0,Math.min(100-h,vy));vy=Math.max(Math.max(...ys)+pad-h+fb*h,Math.min(Math.min(...ys)-pad-ft*h,vy))}else if(h<=100)vy=Math.max(0,Math.min(100-h,vy));else vy=50-h/2;{const mg=.075*w;vx=Math.max(Math.max(...xs)+mg-w,Math.min(Math.min(...xs)-mg,vx))}   /* 11/17 測試員 D 第 12 輪：靠底圖邊上的戰役點（漢「大宛」「郅支」）原本被取景框切掉半個圓圈 → 左右至少留 7.5%（寧可露一點米色） */   /* 11/17 測試員 B 第 10 輪 N10-2：取景框比底圖寬（橫式手機）時底圖置中，不再靠左、右半邊整片米色（點的座標都在 0～100，置中後一定在框裡） */
   const kk=op.px>0?Math.min(op.k||1,560/op.px):(op.k||1),r=w*0.021*kk,f=n=>+n.toFixed(2),mob=(()=>{try{return matchMedia("(pointer:coarse)").matches||innerWidth<820}catch(e){return false}})();
   /* 太近的兩個點（例如長治、高平）推開一點，免得印疊在一起 */
-  const Q=P.map(p=>p.slice());for(let it=0;it<24;it++)for(let a=0;a<Q.length;a++)for(let b=a+1;b<Q.length;b++){const dx=Q[b][0]-Q[a][0],dy=Q[b][1]-Q[a][1],d=Math.hypot(dx,dy)||.01,need=r*2.7;if(d<need){const m=(need-d)/2;Q[a][0]-=dx/d*m;Q[a][1]-=dy/d*m;Q[b][0]+=dx/d*m;Q[b][1]+=dy/d*m}}
+  const Q=btPushApart(P.map(p=>p.slice()),r*2.7);
   const G=i=>op.idx?op.idx[i]:i,open=cards.map((c,i)=>battleOpen(k,G(i),S));let e=0;for(let i=0;i<cards.length;i++)if(open[i])e=i;
   /* 11/17 測試員 B／D 第 13 輪：每個戰役點實際畫出來的外圈（含光暈）——可以打的星形＋光暈約 2.6 個 rr、打下的約 1.9、旗艦金圈 2.15、還沒開 .9；標籤、地名都不能壓到（含自己那個） */
   const VR=j=>{const c=cards[j],rr=c.flag?r*1.3:r;return Math.max(S[G(j)]?rr*1.9:open[j]?rr*2.6:rr*.9,c.flag?rr*2.15:0)};
