@@ -57,7 +57,7 @@ function capFake(R, o = {}) {
 function gcInstalled(R) {
   fs.appendFileSync(iosp(R, "ios/App/App.xcodeproj/project.pbxproj"), "\n/* XQGameCenterPlugin.swift */\n/* XQWidgetDataPlugin.swift */\n");
   for (const f of [GC, WD]) fs.copyFileSync(iosp(R, "native/ios/" + f), iosp(R, "ios/App/App/" + f));
-  const ip = iosp(R, "ios/App/App/Info.plist"), s = fs.readFileSync(ip, "utf8"); if (!s.includes("<string>xqqianqiu</string>")) fs.writeFileSync(ip, s.replace("</dict>\n</plist>", "\t<key>XQScheme</key>\n\t<string>xqqianqiu</string>\n</dict>\n</plist>"));
+  const ip = iosp(R, "ios/App/App/Info.plist"), s = fs.readFileSync(ip, "utf8").replace(/\r\n/g, "\n");   /* #262 第五輪：Windows autocrlf 的副本是 CRLF，不先換 LF 下面那段找不到、網址就沒加上 */ if (!s.includes("<string>xqqianqiu</string>")) fs.writeFileSync(ip, s.replace("</dict>\n</plist>", "\t<key>XQScheme</key>\n\t<string>xqqianqiu</string>\n</dict>\n</plist>"));
 }
 /* 每一個壞樣本：break 在副本上弄壞一處；expect 是 check-native 錯誤（✘ 那一行）裡要出現的字 */
 /* #204 第四輪：Swift 設定鎖放寬型壞樣本的小工具（pbxproj 在 Debug 目標那組 SWIFT_VERSION 後面插一行；debug.xcconfig 加一行、改 CAPACITOR_DEBUG 那行；#include 引用不掃描的 ios/XQInc/） */
@@ -523,6 +523,39 @@ const KINDS = {
   install: { break: (R) => edit(R, "scripts/install-native.js", rep('"XQBridgeViewController.swift"', '"XQBridgeVC.swift"')), expect: "install-native.js 會複製兩支 Swift" },
 };
 
+/* W187（#262 第五輪審查）：新壞樣本只能加在 canary-native-kinds.json，是純資料，不是程式。
+   每項只有 name、files、find、replace、expect 五個欄位：在 files 列的每個檔（相對 source/xiangqi-ios）把第一個 find 換成 replace。
+   files 不准有 ..、絕對路徑、反斜線，也不准指到 scripts/、node_modules/（不分大小寫），name 不准跟既有的重複（不分大小寫）、不准叫 clean 或 Object.prototype 上的名字（constructor、toString…），解析後要在這個副本的 source/xiangqi-ios 裡（連結也不算）；
+   找不到檔或找不到 find 就丟錯。本檔的程式碼由 test-canary-native.cjs 整支寫死，要改程式就是計分規則 PR */
+const DATA_KINDS_FILE = path.join(__dirname, "canary-native-kinds.json");
+const DATA_FIELDS = "expect,files,find,name,replace";
+function dataKind(d, i) {
+  const bad = (why) => new Error("canary-native-kinds.json 第 " + (i + 1) + " 項" + why);
+  if (!d || typeof d !== "object" || Array.isArray(d) || Object.keys(d).sort().join() !== DATA_FIELDS) throw bad("的欄位只能是 " + DATA_FIELDS);
+  if (typeof d.name !== "string" || !/^[a-z][A-Za-z0-9]{1,40}$/.test(d.name)) throw bad("的 name 只能是英文字母和數字，小寫開頭");
+  /* #262 第六輪：大小寫不同也算重複（macOS 檔名不分大小寫，run() 每個壞樣本用名字當資料夾）；clean 是 run() 乾淨副本的資料夾名，保留不准用 */
+  if (Object.keys(KINDS).some((k) => k.toLowerCase() === d.name.toLowerCase()) || d.name.toLowerCase() === "clean" || d.name in Object.prototype) throw bad("的 name 已經有了或是保留名稱：" + d.name);
+  for (const k of ["find", "replace", "expect"]) if (typeof d[k] !== "string" || !d[k]) throw bad("的 " + k + " 要是不空的字串");
+  if (d.find === d.replace) throw bad("的 find 跟 replace 一樣，什麼都沒改");
+  const okFile = (f) => typeof f === "string" && /^[A-Za-z0-9_.@ +\-\/]+$/.test(f) && path.posix.normalize(f) === f && !f.startsWith("/") && !/(^|\/)\.\.?(\/|$)/.test(f) && !/^(scripts|node_modules)(\/|$)/i.test(f);
+  if (!Array.isArray(d.files) || !d.files.length || d.files.length > 4 || !d.files.every(okFile) || new Set(d.files).size !== d.files.length) throw bad("的 files 要是 1～4 個相對 source/xiangqi-ios 的路徑（不准有 ..、絕對路徑、反斜線、scripts/、node_modules/）");
+  const files = d.files.slice(), find = d.find, replace = d.replace;
+  return { break: (R) => {
+    const root = fs.realpathSync(path.join(R, "source", "xiangqi-ios"));
+    for (const f of files) {
+      const p = path.join(root, ...f.split("/"));
+      if (!fs.existsSync(p) || fs.lstatSync(p).isSymbolicLink() || !fs.lstatSync(p).isFile()) throw new Error("找不到 " + f);
+      if (!fs.realpathSync(p).startsWith(root + path.sep)) throw new Error(f + " 不在副本的 source/xiangqi-ios 裡");
+      const s = fs.readFileSync(p, "utf8").replace(/\r\n/g, "\n");
+      if (!s.includes(find)) throw new Error(f + " 找不到「" + find.slice(0, 40) + "」");
+      fs.writeFileSync(p, s.replace(find, () => replace));
+    }
+  }, expect: d.expect, data: true };
+}
+{ const list = JSON.parse(fs.readFileSync(DATA_KINDS_FILE, "utf8"));
+  if (!Array.isArray(list)) throw new Error("canary-native-kinds.json 要是陣列");
+  list.forEach((d, i) => { KINDS[d && d.name] = dataKind(d, i) }) }
+
 function copyTree(R) {
   const dst = path.join(R, "source", "xiangqi-ios");
   /* #135 審查⑤：path.relative 算出來沒有前導斜線，最上層的 node_modules、build 原本排除不到；ios/App/App/public（網頁副本，幾百 MB）check-native 不讀，也排除 */
@@ -580,7 +613,7 @@ function run({ only = null, tmp = os.tmpdir(), log = console.log } = {}) {
     const pass = results.length === want.length && results.every((x) => x.caught === true), code = exitOf(results, pass);
     const receipt = {
       tool: "P0-native-canary", platform: "ios", at: new Date().toISOString(), kinds: want, results, pass, code,
-      toolPins: { "source/xiangqi-ios/scripts/check-native.js": toolSha(CHECK), "source/xiangqi-ios/scripts/canary-native.js": toolSha(__filename) },
+      toolPins: { "source/xiangqi-ios/scripts/check-native.js": toolSha(CHECK), "source/xiangqi-ios/scripts/canary-native.js": toolSha(__filename), "source/xiangqi-ios/scripts/canary-native-kinds.json": toolSha(DATA_KINDS_FILE) },
       /* #135 審查（不擋）：比照 canary-www，記 origin/main 上兩支工具的雜湊和提交（拿不到就是 null），CI 可以核對收據用的是不是 main 版工具 */
       mainToolPins: Object.fromEntries(["source/xiangqi-ios/scripts/check-native.js", "source/xiangqi-ios/scripts/canary-native.js"].map((f) => [f, fromMain(f)])),
       mainCommit: fromMain("@commit"),
