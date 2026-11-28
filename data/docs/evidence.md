@@ -1,11 +1,11 @@
-# 驗證紀錄（版本 20261127-1641）
+# 驗證紀錄（版本 20261128-1712）
 
 這一頁讓任何人核對：這一版的程式跑過下面這些自動測試，以及每一項測試到底驗了什麼。
 
-- 執行編號：gh-45967665367-1（Node.js v24.22.3；這一頁、驗證紀錄 verify-all.js、測試分類報表是同一次執行產生的；比對時這一行與下一行不算）
-- 產生時間：2026-11-27 16:42:11（臺灣時間）
-- 結果（四欄分開，不要只看總數）：共 3774 項＝**通過 3618**、**失敗 0**、**略過 156**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
-- 測試對象：公開倉庫的 `source/`（934 個檔，樹雜湊 SHA-256 `a7459b7ab06ec7d1f81ca953c42f947a9d37028b99c13a4bddc45eba634cac44`），對應的發布版：`20261127-1641`。開發者電腦上還沒發布的修改不在這份測試裡。
+- 執行編號：gh-46129401922-1（Node.js v24.22.3；這一頁、驗證紀錄 verify-all.js、測試分類報表是同一次執行產生的；比對時這一行與下一行不算）
+- 產生時間：2026-11-28 17:13:22（臺灣時間）
+- 結果（四欄分開，不要只看總數）：共 3827 項＝**通過 3680**、**失敗 0**、**略過 147**（這個環境跑不了、沒有執行，不算通過；逐項原因見〈略過〉）；另有**預期失敗 0**
+- 測試對象：公開倉庫的 `source/`（943 個檔，樹雜湊 SHA-256 `3690cfe428ff6c8796877b49451f055d197db93a1bde5a7b6cc80c538edc352b`），對應的發布版：`20261128-1712`。開發者電腦上還沒發布的修改不在這份測試裡。
 - `source/` 沒放的測試檔有 37 個（要讀不公開的資料、要接不公開的營運程式，或指令排除），原因逐檔寫在 `source/STAGE-MANIFEST.json` 的 excludedTests。
 
 ## 略過（沒有執行，不算通過）
@@ -59,27 +59,21 @@
 - ﹣ 〔重現〕測試員看到的三個 404：漢朝 🎉、經典 🎉、漢朝 📱 都改要有畫的那一朝（test-icon-gap-1117.js；沒有 data/icons 圖示（只放 CDN，公開副本沒有））
 - ﹣ 〔全部對檔〕每個圖示名 × 每一朝：icoSrc 要的檔都在（不再先 404 才借）（test-icon-gap-1117.js；沒有 data/icons 圖示（只放 CDN，公開副本沒有））
 - ﹣ 〔對照〕拿掉修補（舊 icoSrc）就會要到不存在的檔（test-icon-gap-1117.js；沒有 data/icons 圖示（只放 CDN，公開副本沒有））
-- ﹣ G-2（P1）：相機權限說明照實際用途（意見回饋附圖選「拍照」）；換手機掃 QR 已經沒有入口；四個地方一致（test-imac-g1514.js；沒有 xiangqi-ios）
 - ﹣ 〔原始碼〕G-2（P1）：App 隱私申報 app-privacy.md 也照實際用途寫相機（拍照附圖），沒有掃 QR 的舊說法（test-imac-g1514.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ G-4：審查備註、App 隱私申報照建置內容：Notes 不寫 Game Center、小工具（另外放「裝了 --gc-widget 才換上」那一段）；申報表標註只有那種建置才有（test-imac-g1514.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 〔原始碼〕D1：App Store 上架文案（metadata.md、app-privacy.md）也沒有 hungshengc（test-imac-g1514.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 〔原始碼〕D2：App 隱私申報保留三個匿名開關並寫理由；商店描述也寫了（appstore/）（test-imac-g1514.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ H P2（準則 2.3）：商店描述照畫面寫 18 級（新手～專3・全力），不再寫「入門到大師共八個難度」；其他數字對過（test-imac-h1514.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ K P2-5：全站地圖、今日推薦、棋理頁不再寫「小實驗：」；英文同步；功能（網址）不動（test-imac-hfk-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
-- ﹣ K P3-4：原生包不放 source/（App 內沒有地方讀本機 source/，GPL 原始碼連到公開倉庫）（test-imac-hfk-1117.js；沒有 xiangqi-ios）
 - ﹣ 〔原始碼〕iOS 隱私申報 app-privacy.md 也寫了問小帥的 Google／Gemini 按鈕已經拿掉（test-imac-hfk-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 檢舉 7 天內處理：limits.md、支援頁同一個說法（審核備註那一半拆到下一項）（test-imac-hfk-1117.js；沒有 xiangqi-lab/src/support.html（公開副本不含））
 - ﹣ 〔原始碼〕App Store 審查備註 metadata.md：檢舉 7 天的待勾項目勾掉、英文也寫（test-imac-hfk-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ I P2：英文誤譯（家長設定「分」→ min、存好 → Save）、音效圖鑑與換手機說明、3D 泡泡、驛路文牒字太小、官印英文直排、首頁頂欄英文換行、狀態列跟著畫面亮暗（test-imac-i1757.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ P2：商店描述照實寫「錯棋重練」只收跟電腦對局裡走錯的步（中英）（test-imac-j1757.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ P2-1：術語碑介面英文——分類鈕（含「棋形」「俗語」）、搜尋提示；「目前選哪個」看 data-c 不看鈕上的字；示範鈕（test-imac-v1514.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
-- ﹣ 先 install-native、再模擬 cap sync 重寫 capacitor.config.json：XQSpeech 的註冊仍然在（在 App 的 XQBridgeViewController.swift 裡，不靠 packageClassList）（test-ios-capsync-1118.js；沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
-- ﹣ Game Center、小工具（--gc-widget）也一樣：檔案裝進去、packageClassList 不列；BridgeVC 有編進 App 才用 NSClassFromString 註冊（test-ios-capsync-1118.js；沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
 - ﹣ 〔混合〕漕船圖（開發者 11/22「這船太醜了 找gemini畫圖」）：原檔 webp、大小合理；讀不到退回程式畫的 SVG（test-jh-canal-1122.js；沒有 xiangqi-db/art/canal/barge.webp（美術原檔只在開發者電腦，公開副本沒有））
 - ﹣ 圖：art/yunhe/pano.webp 在、大小合理（test-jianghu-1118.js；沒有 xiangqi-db/art/yunhe/pano.webp（美術原檔只在開發者電腦，公開副本沒有））
 - ﹣ 審查備註：改成「照手機系統語言、要看中文到設定切換」，中英都有；CRLF 也在 4000 字內（test-lang-default-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
-- ﹣ iOS 包排除 data/docs/android.md（網頁版照舊）；其他說明文件照包（test-lang-default-1117.js；沒有 xiangqi-ios（公開副本不含））
-- ﹣ 原生：回前景重驗通過在 console 印一行；check-native.js 全部通過（test-lang-default-1117.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 必改 1：真實引擎資料（xiangqi-db/analysis-cache.json）裡走進殺棋的步，還原後都不是正著、穩著（test-mathmodel-1046.js；沒有 analysis-cache.json）
 - ﹣ 必改 4：calibrate-grades.js 只用最新 MXS 版本的盤（v1、v2 的新總分算法不同，不混算）（test-mathmodel-1046.js；沒有 calibrate-grades.js（校正工具只在開發者電腦，公開副本沒有））
 - ﹣ ChatGPT 重評 ②：calibrate-grades.js 遇到同分堆積（80 盤 79 分、20 盤 95 分）門檻不重疊——原本 [95,79,79,79]，現在強制各差 1 分並警告不可靠（test-mathmodel-1046.js；沒有 calibrate-grades.js（校正工具只在開發者電腦，公開副本沒有））
@@ -89,7 +83,6 @@
 - ﹣ 〔原始碼〕外部公式參考 v2：殺棋整點寫成跟 Lichess 相同、封頂維持 ±2000；三種對照算法各有定義、固定的出處與適用限制（test-mathmodel-81.js；沒有 story/數學模型_外部公式參考.md（文件只在開發者電腦，公開副本沒有））
 - ﹣ 〔原始碼〕預先驗證方案 v1.3：三類證據分開、分流數字不是通過條件、mm 的名稱、便利樣本、總結的精確規格、併入開發者決定；v1.2 凍結不動（雜湊跟紀錄一樣）（test-mathmodel-82.js；沒有 story/數學模型_預先驗證方案_v1.3.md（文件只在開發者電腦，公開副本沒有））
 - ﹣ 預算敏感度的結果文件寫明它只檢查分析可靠性（W57：從上一支拆出，沒有文件時明列略過）（test-mathmodel-82.js；沒有 story/數學模型_引擎預算敏感度_1115.md（故事稿資料夾不公開））
-- ﹣ 〔原始碼〕iOS native-bridge 的轉向照舊（data/banlist.json、data/fixes.json）（test-netfetch-1117.js；沒有 xiangqi-ios（run-tests 還沒複製 iOS 專案））
 - ﹣ 〔原始碼〕App 隱私申報 app-privacy.md 跟 privacy.md 同一套說法（送過意見回饋才在開 App 時下載修正清單；隱私標籤不另外勾選）（test-netfetch-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 千秋盃虛擬棋客由裁判台代簽：開局寫棋客座位的一次性公開金鑰（sv 2）；棋客的棋步、認輸有簽名，真人、觀眾、裁判台都收；簽好名的盤照常計分（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
 - ﹣ 冒充棋客、重放：沒簽名的棋客認輸、用自己的金鑰冒簽、把棋客在別盤的真簽名搬過來、把棋客舊的那步換更大的 rev 重送——真人、觀眾、裁判台都不收，積分和賽果都不變（test-noscore.js；要千秋盃裁判台 cup-host.js 和 lobby-bots.js（營運程式，不公開；開發者電腦上照跑））
@@ -142,14 +135,13 @@
 - ﹣ R30-2：英文序局走對那一步的提示、小帥勝負和泡泡、齊轍台詞都翻得出（內建字典，外掛字典還沒到也有）（test-r30-1118.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ R30-2、R30-3：英文介面小帥閒聊翻不成整句英文就不冒（xq-bot-said 攔下、小帥自己的泡泡藏起來），翻得出的照常（test-r30-1118.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ iMac P3：preload.json 四個七星模型（x_bing、x_martialgirl、x_spiritgirl、x_swordboy.glb）的大小、指紋照 site 實際的檔；v 照全部項目重算（test-r31-1118.js；沒有 xiangqi-lab/site/data/tripo_app/x_bing.glb（公開副本不含））
-- ﹣ 語音（原生）：XQSpeech 外掛的靜態檢查（check-native.js 第 8 節）——背景佇列、先回傳、啟動後先初始化、zh-TW→zh-Hant→zh-HK、.ambient＋usesApplicationAudioSession、進背景 stopSpeaking；install-native 預設裝（test-r32-1118.js；沒有 xiangqi-ios（公開副本不含））
 - ﹣ 同步：語音 12 檔三處都刪了；preload.json 沒有 data/voice、四張經典圖示是新指紋、v／bytes 照算法；sw.js 不再列 voice（test-r33-1118.js；沒有 xiangqi-lab/site/data/icons/classic/e_save.webp（公開副本不含））
 - ﹣ N33-1 射線：真的棋子人模型（x_bing、x_shuai 有骨架、擺過姿勢；xs_zu 黑卒沒骨架）每條射線結果相同，而且快很多（沒有模型檔＝略過）（test-r35-1118.js；沒有模型檔（只在 CDN））
 - ﹣ 真實模型＋墨線開著：每條射線新舊結果相同；每一面牌子 glyPzCalc＝改之前 mk 的算法（x_bing、x_shuai、xs_zu、x_wood 全格掃；黑洞巨盤 15 種棋子人兩面都比）（test-r37-1118.js；沒有模型原檔或 src（只在開發者電腦上；公開副本不含））
 - ﹣ 先算好的深度 glydepth.json：跟現在的模型檔（SHA-1）、bot3d 程式、牌子參數重算出來的一模一樣（tools/gly-depth.js --check）；黑洞巨盤 15 種兩面都在（test-r37-1118.js；沒有模型原檔或 src（只在開發者電腦上；公開副本不含））
 - ﹣ 快照跟工作區這輪改的段落一字不差（工作區另外多了下一版的滿版 FULLV，不在這些段落裡；暖機 WS 那段 11/18 第 36 輪又改過，不比）（test-r40-1118.js；沒有 1010 快照（只在這台電腦的暫存區））
-- ﹣ 8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
-- ﹣ 10 原生設定：loggingBehavior＝none、CFBundleLocalizations 有 en、CAPACITOR_DEBUG 只在 Debug 設定檔（test-review-e-1117.js；沒有 xiangqi-ios（公開副本不含））
+- ﹣ 8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（test-review-e-1117.js；沒有 iOS 建置產物 xiangqi-ios/www、ios/App/App/public、capacitor.config.json（cap sync 產生，.gitignore 不進倉庫））
+- ﹣ 10 原生設定：loggingBehavior＝none、CFBundleLocalizations 有 en、CAPACITOR_DEBUG 只在 Debug 設定檔（test-review-e-1117.js；沒有 iOS 建置產物 xiangqi-ios/www、ios/App/App/public、capacitor.config.json（cap sync 產生，.gitignore 不進倉庫））
 - ﹣ 11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（test-review-e-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 13 大廳安全須知寫實際的按鈕名稱；系統分頁隱私卡片直接有「刪除這支手機的全部資料」（兩版都有，沿用兩次確認）（test-review-e-1117.js；沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ﹣ 兩頁存在、是完整的 HTML（doctype、charset、viewport、標題），中英對照（test-support-pages-1117.js；沒有 xiangqi-lab/src/support.html（公開副本不含））
@@ -158,11 +150,10 @@
 - ﹣ 有聯絡信箱（可點的 mailto）、互相有連結；支援頁有四個常見問題（test-support-pages-1117.js；沒有 xiangqi-lab/src/support.html（公開副本不含））
 - ﹣ 〔原始碼〕檢舉時限跟 App Store 審查備註同一個數字（appstore/metadata.md）（test-support-pages-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 〔原始碼〕iOS 隱私申報 app-privacy.md 也有同一句修正清單說明（test-support-pages-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
-- ﹣ 〔原始碼〕iOS 包不放支援頁、隱私頁（copy-www 的 SKIP）（test-support-pages-1117.js；沒有 xiangqi-ios）
 - ﹣ metadata.md：支援網址、隱私權政策網址換成新網頁；聯絡人姓名、信箱；電話留給開發者本人填；賣家名稱（test-support-pages-1117.js；沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ﹣ 7 個檔都在（art 來源、site/data、iOS www 三處內容一樣）、尺寸跟原圖一樣；原圖沒動（test-winter-scenes-1117.js；沒有 xiangqi-db/art 原圖和 xiangqi-ios（公開副本不含；三處比對只在開發者電腦跑））
 - ﹣ preload.json：7 張都在、大小和內容指紋對，版本 v 照全部項目重算（手機看到新指紋才會下載）（test-winter-scenes-1117.js；沒有 xiangqi-lab/site/data/ximarket/xm_day_winter.webp（公開副本不含））
-- ﹣ iOS：scripts/.www-files.json 有 7 張、大小對；www/native-build.json 的資料夾大小算進去（test-winter-scenes-1117.js；沒有 xiangqi-ios（公開副本不含））
+- ﹣ iOS：scripts/.www-files.json 有 7 張、大小對；www/native-build.json 的資料夾大小算進去（test-winter-scenes-1117.js；沒有 iOS 建置產物 xiangqi-ios/www、ios/App/App/public、capacitor.config.json（cap sync 產生，.gitignore 不進倉庫））
 - ﹣ 英文：櫃坊新字串併進外掛字典後都翻得出（掌櫃、七星的信照 {你}／{名} 換過的樣子）（test-xsm-counter-1116.js；沒有 xiangqi-db/i18n-en.json 英文外掛字典（只放 CDN，公開副本沒有））
 - ﹣ 西市借的三首配樂檔都在（mp3 只放 CDN）（test-xsm-stalls-1116.js；沒有 data/bgm 的 mp3（只放 CDN，公開副本沒有））
 - ﹣ 門內圖原檔（只在開發者電腦；發布時才放上 CDN）：尺寸 768×1376、大小合理（test-zm-hall-1121.js；沒有 xiangqi-db/art/zmhall/central.webp（美術原檔只在開發者電腦，公開副本沒有））
@@ -173,10 +164,10 @@
 
 | 類別 | 項數 | 這類測試證明了什麼 |
 |---|---:|---|
-| 行為 | 2249 項（通過 2242、略過 7） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
-| 混合 | 122 項（通過 120、略過 2） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
-| 原始碼比對 | 349 項（通過 343、略過 6） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
-| 待分類 | 1054 項（通過 913、略過 141） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-refit-1118.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-film-tap-1118.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-jh-fade-1118.js`、`test-jianghu-1118.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-pvp-faceoff-1121.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js`、`test-zm-medallion-1118.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
+| 行為 | 2297 項（通過 2290、略過 7） | 真的把 App 的程式跑起來（載入網站上的模組、抽出函式呼叫、用假的畫面／計時器／伺服器走一遍流程），再檢查結果對不對。 |
+| 混合 | 123 項（通過 121、略過 2） | 一半真的執行程式，一半只是檢查原始碼裡有沒有某段字。 |
+| 原始碼比對 | 353 項（通過 347、略過 6） | 只檢查原始碼裡有沒有某段字（例如某個按鈕的程式碼、某條樣式規則）。**只證明程式碼存在，不證明功能會動。** |
+| 待分類 | 1054 項（通過 922、略過 132） | `test-bh-loading-1117.js`、`test-bh-sg-bgm-1116.js`、`test-bh-sg-bgm-1117b.js`、`test-bhfx.js`、`test-bhtd-combo.js`、`test-bhtd-r2.js`、`test-bhtd-rules.js`、`test-bhtl.js`、`test-bhx-allstars-1116.js`、`test-bhx-hold-1116.js`、`test-bhx-refit-1118.js`、`test-bhx-resume-1116.js`、`test-bhx-skip-1116.js`、`test-cap-crop-1117.js`、`test-cdn-svg-1117.js`、`test-daynight-1117.js`、`test-dgl.js`、`test-eng-over-1116.js`、`test-extra-bgm-1116.js`、`test-film-tap-1118.js`、`test-gc-native-1117.js`、`test-ghost-game-1116.js`、`test-grw-lv-1117.js`、`test-gsv-rules-1117.js`、`test-gxd-daily-1116.js`、`test-gxt-exit-1117.js`、`test-gxt-where-1117.js`、`test-home-c1-tap-1117.js`、`test-home-pano.js`、`test-i18n-ext-1117.js`、`test-i18n-select-1117.js`、`test-i18n-story.js`、`test-icon-gap-1117.js`、`test-imac-g1514.js`、`test-imac-h1514.js`、`test-imac-hfk-1117.js`、`test-imac-i1757.js`、`test-imac-j1757.js`、`test-imac-v1514.js`、`test-inst-stq-1117.js`、`test-ios-capsync-1118.js`、`test-ios-native-1116.js`、`test-jh-fade-1118.js`、`test-jianghu-1118.js`、`test-lang-default-1117.js`、`test-mnq-at-1117.js`、`test-mnq-skipall-1117.js`、`test-n33-warm-1118.js`、`test-netfetch-1117.js`、`test-noscore.js`、`test-opening-order-1117.js`、`test-osc-en-1118.js`、`test-park3d-capbase.js`、`test-park3d-ghostptr-1116.js`、`test-pjc-joincut-1116.js`、`test-port-yz-color-1116.js`、`test-pty-events-1116.js`、`test-pty-hint-wait-1117.js`、`test-pty-join-1117.js`、`test-pvp-faceoff-1121.js`、`test-r11-1117.js`、`test-r17-qa.js`、`test-r18-1117.js`、`test-r19-1117.js`、`test-r20-1117.js`、`test-r20-dbe-1117.js`、`test-r21-1117.js`、`test-r22-1117.js`、`test-r23-1117.js`、`test-r24-1117.js`、`test-r25-1117.js`、`test-r26-1117.js`、`test-r27-1117.js`、`test-r28-1117.js`、`test-r29b-1117.js`、`test-r29d-1117.js`、`test-r29e-1117.js`、`test-r30-1118.js`、`test-r31-1118.js`、`test-r32-1118.js`、`test-r33-1118.js`、`test-r34-1118.js`、`test-r35-1118.js`、`test-r36-1118.js`、`test-r37-1118.js`、`test-r38-1118.js`、`test-r39-1118.js`、`test-r4-1117.js`、`test-r40-1118.js`、`test-review-e-1117.js`、`test-season-card-1117.js`、`test-season-queue-1117.js`、`test-season-say-1117.js`、`test-sg2-def-1117b.js`、`test-sg2-drift-result-1117.js`、`test-sg2-edge-1117b.js`、`test-sg2-hud-1117.js`、`test-sg2-layout-1117b.js`、`test-sg2-premove-1117.js`、`test-sg2-select-1117.js`、`test-sg2-title-1117b.js`、`test-siege2-local.js`、`test-siege2.js`、`test-sitemap-places-1116.js`、`test-slot-msg-1117.js`、`test-support-pages-1117.js`、`test-toast-pass-1117.js`、`test-upd-notitle-1116.js`、`test-visit-place-1117.js`、`test-winter-scenes-1117.js`、`test-xsm-counter-1116.js`、`test-xsm-dark.js`、`test-xsm-stalls-1116.js`、`test-zm-medallion-1118.js` 這幾個檔還沒逐項分類，暫不算進上面三類。 |
 
 - 測試名稱開頭有〔原始碼〕〔混合〕就是那一類；沒有標籤的是行為類（下面的索引另外標〔行為〕）。
 - **測試由開發用的 AI 撰寫，不等於第三方驗證；原始碼比對只證明程式碼存在。**
@@ -279,10 +270,11 @@
 ### E05 失著說出分析線支持的具體後果
 
 - 從哪一版：2300
-- 自動測試：37 項（行為 30、混合 1、原始碼比對 3、待分類 3）
+- 自動測試：38 項（行為 31、混合 1、原始碼比對 3、待分類 3）
   - ✔ 〔行為〕原生 App、有隔離但沒有 SharedArrayBuffer 也算太舊；引擎的 load／search／prefetch 都直接回那句話（不再叫人關掉重開、不抓引擎檔）
   - ✔ 〔行為〕讀取輪分段跑（#74 Android 12 第三次重跑：一次 evaluate 超過 cdp.js 的 30 秒）：背景開跑、短呼叫取回；做完回結果、逾時回 error＋做到一半的；每個檔記時間
   - ✔ 〔待分類〕監聽在捕獲階段（error 不冒泡，SVG <image> 的錯誤也要抓得到）
+  - ✔ 〔行為〕參數：用法錯誤要回 err；預設值合理；--restart-avd 只准模擬器
   - ✔ 〔行為〕退路：iPhone 一次建不起 384 MB（建構子丟 RangeError）→ 退回 192 MB 起跳＋1 條執行緒，引擎照樣啟動、建構子有換回
   - ✔ 〔原始碼〕挑戰電腦落子、提示都用 engPos；畫面訊息不放 e.message，細節留在 P.engErr
   - ✔ 〔行為〕ETIMG 組出來的 onerror 編譯得過（不是語法錯誤）
@@ -791,6 +783,7 @@
 | test-bhtl.js | — | 0 | 0 | 0 | 18 | 18／18 |
 | test-bhx-allstars-1116.js | — | 0 | 0 | 0 | 4 | 4／4 |
 | test-bhx-hold-1116.js | — | 0 | 0 | 0 | 4 | 4／4 |
+| test-bhx-pad-turn-1128.js | — | 4 | 0 | 0 |  | 4／4 |
 | test-bhx-refit-1118.js | — | 0 | 0 | 0 | 1 | 1／1 |
 | test-bhx-resume-1116.js | — | 0 | 0 | 0 | 3 | 3／3 |
 | test-bhx-skip-1116.js | — | 0 | 0 | 0 | 4 | 4／4 |
@@ -815,6 +808,7 @@
 | test-dgl.js | — | 0 | 0 | 0 | 45 | 45／45 |
 | test-docbtns.js | — | 1 | 0 | 1 |  | 2／2 |
 | test-docs-md.js | — | 2 | 1 | 0 |  | 3／3 |
+| test-emu-ready-1127.js | — | 11 | 0 | 1 |  | 12／12 |
 | test-eng-over-1116.js | — | 0 | 0 | 0 | 3 | 3／3 |
 | test-engine-budget-pgn.js | — | 8 | 0 | 1 |  | 9／9 |
 | test-engine-ios-threads.js | — | 6 | 0 | 0 |  | 6／6 |
@@ -857,6 +851,7 @@
 | test-home-c1-tap-1117.js | — | 0 | 0 | 0 | 2 | 2／2 |
 | test-home-order.js | — | 5 | 0 | 1 |  | 6／6 |
 | test-home-pano.js | — | 0 | 0 | 0 | 12 | 11／12（略過 1） |
+| test-home-wide-classic-1128.js | — | 8 | 0 | 0 |  | 8／8 |
 | test-homeclamp.js | — | 3 | 0 | 0 |  | 3／3 |
 | test-human-ai.js | — | 11 | 0 | 2 |  | 13／13 |
 | test-human-p1.js | — | 0 | 2 | 1 |  | 3／3 |
@@ -866,15 +861,16 @@
 | test-i18n.js | — | 55 | 4 | 4 |  | 63／63 |
 | test-icon-gap-1117.js | — | 0 | 0 | 0 | 4 | 1／4（略過 3） |
 | test-icon-onerror-1126.js | — | 4 | 0 | 0 |  | 4／4 |
-| test-imac-g1514.js | — | 0 | 0 | 0 | 13 | 8／13（略過 5） |
+| test-imac-g1514.js | — | 0 | 0 | 0 | 13 | 9／13（略過 4） |
 | test-imac-h1514.js | — | 0 | 0 | 0 | 4 | 3／4（略過 1） |
-| test-imac-hfk-1117.js | — | 0 | 0 | 0 | 23 | 18／23（略過 5） |
+| test-imac-hfk-1117.js | — | 0 | 0 | 0 | 23 | 19／23（略過 4） |
 | test-imac-i1757.js | — | 0 | 0 | 0 | 9 | 8／9（略過 1） |
 | test-imac-j1757.js | — | 0 | 0 | 0 | 6 | 5／6（略過 1） |
 | test-imac-v1514.js | — | 0 | 0 | 0 | 8 | 7／8（略過 1） |
 | test-inst-stq-1117.js | — | 0 | 0 | 0 | 5 | 5／5 |
-| test-ios-capsync-1118.js | — | 0 | 0 | 0 | 2 | 0／2（略過 2） |
+| test-ios-capsync-1118.js | — | 0 | 0 | 0 | 2 | 2／2 |
 | test-ios-native-1116.js | — | 0 | 0 | 0 | 6 | 6／6 |
+| test-ipad-3d-landscape-1127.js | — | 7 | 0 | 0 |  | 7／7 |
 | test-ipad-fill.js | — | 12 | 0 | 1 |  | 13／13 |
 | test-ipad-scene-review-1126.js | — | 5 | 0 | 0 |  | 5／5 |
 | test-jh-canal-1122.js | — | 8 | 1 | 2 |  | 10／11（略過 1） |
@@ -907,6 +903,7 @@
 | test-jh-maze-render-1124.js | — | 7 | 4 | 2 |  | 13／13 |
 | test-jh-maze-sack-1124.js | — | 3 | 0 | 0 |  | 3／3 |
 | test-jh-maze-save-1126.js | — | 5 | 0 | 1 |  | 6／6 |
+| test-jh-maze-vault-1127.js | — | 8 | 0 | 1 |  | 9／9 |
 | test-jh-opp-1126.js | — | 8 | 0 | 1 |  | 9／9 |
 | test-jh-opp2-1126.js | — | 7 | 0 | 1 |  | 8／8 |
 | test-jh-opp3-1126.js | — | 7 | 0 | 1 |  | 8／8 |
@@ -933,7 +930,7 @@
 | test-kid-time-maze-1125.js | — | 4 | 0 | 1 |  | 5／5 |
 | test-kill-layout-1127.js | — | 4 | 0 | 1 |  | 5／5 |
 | test-land3d.js | — | 2 | 0 | 1 |  | 3／3 |
-| test-lang-default-1117.js | — | 0 | 0 | 0 | 7 | 4／7（略過 3） |
+| test-lang-default-1117.js | — | 0 | 0 | 0 | 7 | 6／7（略過 1） |
 | test-layout-r16.js | — | 5 | 1 | 5 |  | 11／11 |
 | test-lefty.js | — | 10 | 0 | 2 |  | 12／12 |
 | test-legend-keep-1126.js | — | 2 | 0 | 0 |  | 2／2 |
@@ -961,7 +958,7 @@
 | test-net-reconnect.js | — | 16 | 0 | 0 |  | 16／16 |
 | test-net-sign.js | — | 12 | 0 | 1 |  | 13／13 |
 | test-net-start.js | — | 4 | 0 | 0 |  | 4／4 |
-| test-netfetch-1117.js | — | 0 | 0 | 0 | 12 | 10／12（略過 2） |
+| test-netfetch-1117.js | — | 0 | 0 | 0 | 12 | 11／12（略過 1） |
 | test-newjourney-entry-1116.js | — | 4 | 0 | 2 |  | 6／6 |
 | test-noscore.js | — | 0 | 0 | 0 | 14 | 10／14（略過 4） |
 | test-opening-order-1117.js | — | 0 | 0 | 0 | 21 | 21／21 |
@@ -973,6 +970,7 @@
 | test-p0-aab-bound-1122.js | — | 16 | 0 | 3 |  | 19／19 |
 | test-p0-canary-1123.js | — | 38 | 2 | 6 |  | 46／46 |
 | test-p0-regress.js | — | 12 | 0 | 1 |  | 13／13 |
+| test-pad-pointerup-1128.js | — | 3 | 0 | 1 |  | 4／4 |
 | test-park-firstflat.js | — | 8 | 0 | 1 |  | 9／9 |
 | test-park-garden-1115.js | — | 1 | 1 | 2 |  | 4／4 |
 | test-park-weather.js | — | 3 | 0 | 1 |  | 4／4 |
@@ -1025,7 +1023,7 @@
 | test-r29e-1117.js | — | 0 | 0 | 0 | 7 | 7／7 |
 | test-r30-1118.js | — | 0 | 0 | 0 | 4 | 2／4（略過 2） |
 | test-r31-1118.js | — | 0 | 0 | 0 | 5 | 4／5（略過 1） |
-| test-r32-1118.js | — | 0 | 0 | 0 | 18 | 17／18（略過 1） |
+| test-r32-1118.js | — | 0 | 0 | 0 | 18 | 18／18 |
 | test-r33-1118.js | — | 0 | 0 | 0 | 4 | 3／4（略過 1） |
 | test-r34-1118.js | — | 0 | 0 | 0 | 16 | 16／16 |
 | test-r35-1118.js | — | 0 | 0 | 0 | 7 | 6／7（略過 1） |
@@ -1070,6 +1068,7 @@
 | test-sg2-select-1117.js | — | 0 | 0 | 0 | 5 | 5／5 |
 | test-sg2-talsheet-1116.js | — | 2 | 0 | 1 |  | 3／3 |
 | test-sg2-title-1117b.js | — | 0 | 0 | 0 | 4 | 4／4 |
+| test-ship-map-l1610-1128.js | — | 7 | 1 | 1 |  | 9／9 |
 | test-ship-tasklist-1116.js | — | 4 | 1 | 1 |  | 6／6 |
 | test-ship-tilt.js | — | 6 | 0 | 1 |  | 7／7 |
 | test-siege-wheel-bench.js | — | 9 | 0 | 1 |  | 10／10 |
@@ -1083,7 +1082,7 @@
 | test-stats-kill.js | — | 0 | 2 | 3 |  | 5／5 |
 | test-still-here-1125.js | — | 7 | 0 | 2 |  | 9／9 |
 | test-stk-testenv-1124.js | — | 2 | 0 | 0 |  | 2／2 |
-| test-support-pages-1117.js | — | 0 | 0 | 0 | 12 | 4／12（略過 8） |
+| test-support-pages-1117.js | — | 0 | 0 | 0 | 12 | 5／12（略過 7） |
 | test-sw-offline.js | — | 0 | 0 | 2 |  | 2／2 |
 | test-td-orbit.js | — | 1 | 0 | 3 |  | 4／4 |
 | test-telemetry.js | — | 12 | 0 | 2 |  | 14／14 |
@@ -1648,6 +1647,13 @@
 - ✔ 〔待分類〕右上頭像：序局鎖著點了沒反應（#meChip、#dglLoc），其他按鈕不管；打完恢復
 - ✔ 〔待分類〕08b 每次重畫都問 bhxHold(bhxLocked(st))；07bh 不碰 hashchange／02-shell
 
+### test-bhx-pad-turn-1128.js
+
+- ✔ 〔行為〕bhxTurnPos：搖桿出來時，標籤下緣放在搖桿上緣上面 8px（Android 12 量到搖桿上緣 593、視窗高 751 → bottom 166px），不再壓住 ▲
+- ✔ 〔行為〕bhxTurnPos：搖桿收起就拿掉 .up、bottom 還原；量不到（高 0、假 DOM）就照舊用 .up 的 150px
+- ✔ 〔行為〕bhxFullSync 用 bhxTurnPos 擺標籤，並在搖桿 style 變的時候重擺（MutationObserver），不等下一次同步
+- ✔ 〔行為〕英文字典：十字鍵的「落子」用短字 Move（54×44 圓鈕放得下），提示三句都有英文；放在內建字典（外掛字典蓋不過）
+
 ### test-bhx-refit-1118.js
 
 - ✔ 〔待分類〕park3d：每 60 格的版面檢查在黑洞滿版時以可用高度為準（不會週期性重跑 fit）
@@ -1972,6 +1978,21 @@
 - ✔ 〔混合〕全部說明文件：沒有原樣的方括號連結、沒有三個反引號的程式碼框
 - ✔ 〔行為〕〔規則〕相對連結：別份說明在 App 內打開、截圖變圖片、路徑不安全就只留字
 - ✔ 〔行為〕〔規則〕程式碼區塊原樣等寬、HTML 不會被執行；--- 畫成分隔線
+
+### test-emu-ready-1127.js
+
+- ✔ 〔行為〕健康的模擬器：8 項全過、照順序、就緒；帶 --aab-apk 會核對 APK、帶 --build 會傳給 CDP 檢查
+- ✔ 〔行為〕每一項單獨壞掉：擋在那一項、原因寫得出來、後面的檢查不再跑
+- ✔ 〔行為〕模擬器卡死（每個 shell 指令都逾時）：擋在 shell、可以重開；不能被誤判成「不是模擬器」而不重開（11/27 實測抓到的）
+- ✔ 〔行為〕沒帶 --aab-apk：不核對 APK、那一項照樣算過但寫明沒核對；沒帶 --build 時 CDP 不比版號
+- ✔ 〔行為〕不合格時重開再檢查：重開後好了就放行；一直壞就在 --retries 次後停；重開失敗也停；沒給重開就不重試
+- ✔ 〔行為〕重開也不會好的（adb 不能用、不是模擬器、裝錯 APK、版號不對）不重開、直接判不就緒；模擬器卡住的（shell、開機、CDP）照樣重開
+- ✔ 〔行為〕重開：確認開得回來（執行檔在、AVD 在清單）才關舊的；正常時用 -avd、-port、冷開機重開並等到開機完成
+- ✔ 〔行為〕重開：模擬器一啟動就結束要馬上判失敗、附上輸出；開不了、一直沒開機完成也判失敗
+- ✔ 〔行為〕參數：用法錯誤要回 err；預設值合理；--restart-avd 只准模擬器
+- ✔ 〔行為〕命令列實跑：用法錯誤回 2；adb 找不到回 1（不就緒），不會回 0
+- ✔ 〔行為〕改壞驗證：判斷改鬆了，上面的測試要抓得到
+- ✔ 〔原始碼〕emu-ready.js：LF、沒有控制字元；只檢查、不改 P0 工具（不 require、不寫 p0-gate／check-3d）
 
 ### test-eng-over-1116.js
 
@@ -2529,6 +2550,17 @@
 - ✔ 〔待分類〕W132 鏡頭位移：手機直放、側欄模式照舊移一整屏；寬螢幕置中只移到那一屏外緣貼齊外框，不露出外面的空白
 - ✔ 〔待分類〕〔原始碼〕W132 鏡頭位移都走 hmpShift（hmpPlace、hmpCam 不再寫死 -i*w）
 
+### test-home-wide-classic-1128.js
+
+- ✔ 〔行為〕8 個變體都登記，名字跟 07w7 sw7HomeWx 經典世界回傳的一樣（classic_<季>[_night]），檔名照 home_<變體>_l1610
+- ✔ 〔行為〕開關關掉時（HMW_CL_CDN＝false）：正式玩家經典世界照舊不換橫版；開發用開關 xqScwDev＝1 才換（11/28 #267 起原始碼預設打開）
+- ✔ 〔行為〕經典世界只有橫版：橫向換 l1610；直向、近正方形照舊用直式變體（不能拿原圖的 home_p34 頂替）
+- ✔ 〔行為〕不是經典世界的變體（宋的季節、朝代、雨雪、晨昏）照舊不換；沒有變體照舊用原圖的寬版
+- ✔ 〔行為〕入口座標沿用 l1610；只有秋夜的書院山門（hmLearn）x +0.35%、y −1.4%，其他 7 張、其他入口不動
+- ✔ 〔行為〕經典橫版載不到（CDN 也失敗）：只關經典那 8 張（HMW_BAD.cl），原圖的 home_l1610 照用
+- ✔ 〔行為〕橫版開著跨過入夜：先載好下一張橫版才換（hmwSet），載不到留著現在這張；同一張不重載
+- ✔ 〔行為〕homeMap、hmWvRefresh 接上了：退回原圖時退回這個變體的直式圖；有經典橫版也掛每分鐘換圖；hmWvRefresh 先問經典橫版
+
 ### test-homeclamp.js
 
 - ✔ 〔行為〕貼邊標籤推回畫面內 8px，右邊超出的往左推
@@ -2697,7 +2729,7 @@
 ### test-imac-g1514.js
 
 - ✔ 〔待分類〕G-1（P1）：名帖的「🚩 檢舉」「🚫 封鎖」「解除封鎖」鈕自帶深底淺字＋框線，不管名帖底色都看得清楚（對比 ≥ 4.5:1）、高 44；網頁版同一支程式
-- ﹣ 略過 〔待分類〕G-2（P1）：相機權限說明照實際用途（意見回饋附圖選「拍照」）；換手機掃 QR 已經沒有入口；四個地方一致（略過原因：沒有 xiangqi-ios）
+- ✔ 〔待分類〕G-2（P1）：相機權限說明照實際用途（意見回饋附圖選「拍照」）；換手機掃 QR 已經沒有入口；四個地方一致
 - ﹣ 略過 〔待分類〕〔原始碼〕G-2（P1）：App 隱私申報 app-privacy.md 也照實際用途寫相機（拍照附圖），沒有掃 QR 的舊說法（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕G-4：隱私、家長文件裡的 Game Center、桌面小工具，只在原生 App 真的有那個外掛（XQNative.has）時才顯示；目前的建置兩個都沒有 → 不寫
 - ﹣ 略過 〔待分類〕G-4：審查備註、App 隱私申報照建置內容：Notes 不寫 Game Center、小工具（另外放「裝了 --gc-widget 才換上」那一段）；申報表標註只有那種建置才有（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
@@ -2729,7 +2761,7 @@
 - ✔ 〔待分類〕K P1-2、P1-3、P2-1、P2-2：頁面內容區（棋盤、3D、車輪戰）讓開側邊安全區；首頁節氣章讓開；底部抽屜 ✕ 44×44；暗幕一點就關；角色小選單、暱稱 44；角色選單不跑出畫面
 - ﹣ 略過 〔待分類〕K P2-5：全站地圖、今日推薦、棋理頁不再寫「小實驗：」；英文同步；功能（網址）不動（略過原因：沒有 xiangqi-db/i18n-en.json（只放 CDN））
 - ✔ 〔待分類〕K P3-3：殘篇閣的「🧪 測試房」只在測試房出現；正式房（xq_netRoot 沒設、或設成 xq_test 以外的正式值）不會出現
-- ﹣ 略過 〔待分類〕K P3-4：原生包不放 source/（App 內沒有地方讀本機 source/，GPL 原始碼連到公開倉庫）（略過原因：沒有 xiangqi-ios）
+- ✔ 〔待分類〕K P3-4：原生包不放 source/（App 內沒有地方讀本機 source/，GPL 原始碼連到公開倉庫）
 - ✔ 〔待分類〕K P3-6：直接開 #/legend（沒帶哪一段）補一句從哪裡進、一顆去書架；#/ouyu、#/qqev 本來就有說明卡
 - ✔ 〔待分類〕K P3-9：護眼／休息提醒在剛換進對局頁時不跳（等這盤下完）；第二次 16 分鐘是「等一下再說」的 15 分鐘再提醒
 - ✔ 〔待分類〕開關定案：問小帥的 Google AI／Gemini 兩版都拿掉（ASK_EXT_AI_WEB＝false）、古譜講解只給開發者（AN_LLM_WEB＝false）；說明文件不再分 App 版和網頁版
@@ -2785,8 +2817,8 @@
 
 ### test-ios-capsync-1118.js
 
-- ﹣ 略過 〔待分類〕先 install-native、再模擬 cap sync 重寫 capacitor.config.json：XQSpeech 的註冊仍然在（在 App 的 XQBridgeViewController.swift 裡，不靠 packageClassList）（略過原因：沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
-- ﹣ 略過 〔待分類〕Game Center、小工具（--gc-widget）也一樣：檔案裝進去、packageClassList 不列；BridgeVC 有編進 App 才用 NSClassFromString 註冊（略過原因：沒有 xiangqi-ios/ios/App（只在開發者電腦上；公開副本不含））
+- ✔ 〔待分類〕先 install-native、再模擬 cap sync 重寫 capacitor.config.json：XQSpeech 的註冊仍然在（在 App 的 XQBridgeViewController.swift 裡，不靠 packageClassList）
+- ✔ 〔待分類〕Game Center、小工具（--gc-widget）也一樣：檔案裝進去、packageClassList 不列；BridgeVC 有編進 App 才用 NSClassFromString 註冊
 
 ### test-ios-native-1116.js
 
@@ -2796,6 +2828,16 @@
 - ✔ 〔待分類〕N4 updCheck：App 裡說明由 App Store 更新
 - ✔ 〔待分類〕N5 wipeAllData：一併取消每日提醒
 - ✔ 〔待分類〕App 首頁不顯示「📲 加到主畫面」（11/16 iMac 實機）：isStandalone() 認得原生 App 的 UA，首頁兩處改用它
+
+### test-ipad-3d-landscape-1127.js
+
+- ✔ 〔行為〕room()：兩欄（iPad 橫向 1180×820）右欄的名牌、狀態、按鈕不扣，3D 撐滿左欄 749 高
+- ✔ 〔行為〕room()：單欄（手機直向）上下的兄弟照舊扣掉；藏起來的（寬 0）不影響；撐開空白的 flex:1 不扣
+- ✔ 〔行為〕反證：把「不同欄就不扣」那段拿掉，兩欄時就會少掉右欄的高度（測試抓得到退回原本寫法）
+- ✔ 〔行為〕m.css：寬螢幕兩欄、3D 顯示中，#bbox 用剩下的寬度（右欄 320～400）；平面棋盤（.park3d display:none）不套
+- ✔ 〔行為〕07f shpCapL：shpFit 每頁都掛；照 marginLeft 算 --pcL、直圖 0；渡口掛過就不重掛；07fl 不改
+- ✔ 〔行為〕m.css＋05 stripFitV：平板橫向 #strip 排右欄最後、紅黑兩欄、黑先走放右欄、空的寫提示；高度量到右欄底
+- ✔ 〔行為〕m.css：#view.xfl-port 的 .shs-card 至少在 --xflT＋64px 下面（原本 top:15% 照舊是下限）
 
 ### test-ipad-fill.js
 
@@ -3172,6 +3214,18 @@
 - ✔ 〔行為〕改壞驗證：拿掉迷宮那一行、漏掉題目指標、少一派、帳號層混進來，清單檢查一定抓得到
 - ✔ 〔原始碼〕05b-save.js：LF、沒有控制字元；迷宮那一段的全域名稱有 JH_MZ_SAVE 前綴、別的檔沒有同名
 
+### test-jh-maze-vault-1127.js
+
+- ✔ 〔行為〕登記：07z9m-vault.js 排在 m.html 全部迷宮檔最後；只包中炮、飛相第二層；N 擋路擋視線、p 擋路不擋視線；3D、平面畫法都有
+- ✔ 〔行為〕沒鑰匙：朝銅鎖門走只說漕船停在哪一州能拿鑰匙，不開門、不動、不算回合
+- ✔ 〔行為〕發鑰匙：只發給第二層有密室的派、只發一次；密室開過也不再發
+- ✔ 〔行為〕有鑰匙：打開銅鎖門走得進去；重建格子（被拖回入口、重新開局）門還開著；沒開過的派照舊是門
+- ✔ 〔行為〕殘譜架：第一次讀跳卡片、給修為一次（vault:<派>）；之後照樣讀得到、不再給
+- ✔ 〔行為〕鑰匙只開密室：開密室不動踏板和石門；重建、新開局後石門還在、沒踩踏板照樣打不開；水窪等該派機關的結果跟沒鑰匙時一樣
+- ✔ 〔行為〕漕運：解開那一班就發那一派的密室鑰匙並在結果寫出來；今天已經解過的再解也拿得到；沒密室的派、沒發鑰匙時回傳值跟原本一樣
+- ✔ 〔行為〕改壞驗證：沒鑰匙也開、重建後門又關上、鑰匙重複發、鑰匙順便開石門、開密室順便算踩過踏板、重建時連石門一起拆，上面的檢查都要抓得到
+- ✔ 〔原始碼〕07z9m-vault.js：LF、沒有控制字元、沒有 // 註解；全域名稱都有 JH_MZ_VAULT／jhMzVault 前綴；存檔清單加了 m_jhMzKey
+
 ### test-jh-opp-1126.js
 
 - ✔ 〔行為〕登記：列炮門有登記、路由 #/jianghu/maze/opposite_cannon；兩個淨面戲軸；不能跳；有冷光柱機關；門內頁有入口；三個寶箱
@@ -3469,8 +3523,8 @@
 - ✔ 〔待分類〕選過語言的、老玩家（已經有存檔）、已經自動決定過的：一律不動
 - ✔ 〔待分類〕順序：存檔雙份那段之後、zh.js 和主程式之前；存檔被系統清掉的老玩家，從 IndexedDB 搬回來時自動選的語言不算數
 - ﹣ 略過 〔待分類〕審查備註：改成「照手機系統語言、要看中文到設定切換」，中英都有；CRLF 也在 4000 字內（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
-- ﹣ 略過 〔待分類〕iOS 包排除 data/docs/android.md（網頁版照舊）；其他說明文件照包（略過原因：沒有 xiangqi-ios（公開副本不含））
-- ﹣ 略過 〔待分類〕原生：回前景重驗通過在 console 印一行；check-native.js 全部通過（略過原因：沒有 xiangqi-ios（公開副本不含））
+- ✔ 〔待分類〕iOS 包排除 data/docs/android.md（網頁版照舊）；其他說明文件照包
+- ✔ 〔待分類〕原生：回前景重驗通過在 console 印一行；check-native.js 全部通過
 
 ### test-layout-r16.js
 
@@ -3830,7 +3884,7 @@
 - ✔ 〔待分類〕兒童模式、家長關閉線上大廳：開 App、進大廳、打開意見回饋，banlist.json 和 fixes.json 都不出現（送過回饋也一樣）
 - ✔ 〔待分類〕舊存檔（這版以前送過，沒有 fbSentAt）：有 fbMine 且不是全部在排隊、或有已送出的檢舉 → 當送過，開 App 抓一次；只有排隊中的 → 不算
 - ✔ 〔待分類〕原始碼：只改「什麼時候叫」——native-bridge 的轉向照舊；開 App 不再無條件抓停權名單；三處說明同一套說法
-- ﹣ 略過 〔待分類〕〔原始碼〕iOS native-bridge 的轉向照舊（data/banlist.json、data/fixes.json）（略過原因：沒有 xiangqi-ios（run-tests 還沒複製 iOS 專案））
+- ✔ 〔待分類〕〔原始碼〕iOS native-bridge 的轉向照舊（data/banlist.json、data/fixes.json）
 - ﹣ 略過 〔待分類〕〔原始碼〕App 隱私申報 app-privacy.md 跟 privacy.md 同一套說法（送過意見回饋才在開 App 時下載修正清單；隱私標籤不另外勾選）（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 
 ### test-newjourney-entry-1116.js
@@ -4003,6 +4057,13 @@
 - ✔ 〔行為〕報告與結束碼：全部通過 0；任一項失敗或沒跑 1；markdown 列出版本、每項檢查、控制台錯誤、截圖
 - ✔ 〔行為〕時間：twDate 用臺灣日期（UTC 16:30 已是隔天）、twTime 標臺灣
 - ✔ 〔原始碼〕只開一個瀏覽器、開之前先等別的無頭瀏覽器、每個分頁設測試房、finally 一定關、有失敗結束碼 1、檔名不是 test- 開頭
+
+### test-pad-pointerup-1128.js
+
+- ✔ 〔行為〕p3TapBtn 各種事件順序
+- ✔ 〔行為〕事件不往上傳（不會穿透到畫布／齊轍模型）
+- ✔ 〔原始碼〕十字鍵五顆鈕都用 p3TapBtn
+- ✔ 〔行為〕改壞驗證：換回只靠 click 的寫法，測試要抓得到
 
 ### test-park-firstflat.js
 
@@ -4600,7 +4661,7 @@
 - ✔ 〔待分類〕語音：程式不再讀 data/voice，組版不再複製、預存清單不列；設定頁試聽直接念；音效圖鑑、關於頁照實寫
 - ✔ 〔待分類〕語音：挑語音只用 getVoices——中文介面 zh-TW／zh-Hant 優先、英文介面挑 en（en-US 優先），挑不到這個語言就是 null（不出聲）
 - ✔ 〔待分類〕語音：原生 App 有 XQSpeech 外掛就用它（不碰 speechSynthesis）；網頁版第一次排到空檔、挑不到語音不念、3 秒沒開始就記住這支手機的系統語音不可靠
-- ﹣ 略過 〔待分類〕語音（原生）：XQSpeech 外掛的靜態檢查（check-native.js 第 8 節）——背景佇列、先回傳、啟動後先初始化、zh-TW→zh-Hant→zh-HK、.ambient＋usesApplicationAudioSession、進背景 stopSpeaking；install-native 預設裝（略過原因：沒有 xiangqi-ios（公開副本不含））
+- ✔ 〔待分類〕語音（原生）：XQSpeech 外掛的靜態檢查（check-native.js 第 8 節）——背景佇列、先回傳、啟動後先初始化、zh-TW→zh-Hant→zh-HK、.ambient＋usesApplicationAudioSession、進背景 stopSpeaking；install-native 預設裝
 - ✔ 〔待分類〕P3 序局將死：當下蓋透明鎖（點一下＝馬上出結果卡）、4.5 秒內一定出「星盤暫合」；結果卡出來時拿掉鎖；一般黑洞局照舊
 - ✔ 〔待分類〕P3 練習頁：回開頭畫面再繼續，同一課接回做到的那一小題（walk／eat 照前面幾格走過、check／mate 換到那一題）；這課做完就清掉
 - ✔ 〔待分類〕P3「更多玩法」不綁第一章：看過開場、楔子還沒看完時，首頁主按鈕下面多一顆「更多玩法 ›」（裡面有重看開場）；設定的入口照舊
@@ -4926,9 +4987,9 @@
 - ✔ 〔待分類〕6 已知限制、隱私：原生版顯示原生版的寫法；網頁版照舊
 - ✔ 〔待分類〕7 星樞棋局直橫皆滿版；塔防原生版不顯示轉向提示
 - ✔ 〔待分類〕8a 00-util：原生版只替 data/ 向 CDN 補抓，engine/ 不補；網頁版 data/、engine/ 都補
-- ﹣ 略過 〔待分類〕8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（略過原因：沒有 xiangqi-ios（公開副本不含））
+- ﹣ 略過 〔待分類〕8b native-bridge.js：本機抓不到時，data/ 改抓 CDN，engine/ 照原本的錯誤回報、不向網路要；三份副本一樣（略過原因：沒有 iOS 建置產物 xiangqi-ios/www、ios/App/App/public、capacitor.config.json（cap sync 產生，.gitignore 不進倉庫））
 - ✔ 〔待分類〕9 開場畫面「⚔ 新的旅程」切英文有翻譯（內建字典，原生、網頁都一樣）
-- ﹣ 略過 〔待分類〕10 原生設定：loggingBehavior＝none、CFBundleLocalizations 有 en、CAPACITOR_DEBUG 只在 Debug 設定檔（略過原因：沒有 xiangqi-ios（公開副本不含））
+- ﹣ 略過 〔待分類〕10 原生設定：loggingBehavior＝none、CFBundleLocalizations 有 en、CAPACITOR_DEBUG 只在 Debug 設定檔（略過原因：沒有 iOS 建置產物 xiangqi-ios/www、ios/App/App/public、capacitor.config.json（cap sync 產生，.gitignore 不進倉庫））
 - ﹣ 略過 〔待分類〕11 審查備註：檢舉封鎖、入口名稱照實際畫面，中英都有，4000 字以內（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕12a 首頁入口、設定房間、新手營、意見回饋的場景標籤都是 .shp-spot，07z 的透明點選範圍（至少 44×44、不重疊）照樣套到
 - ✔ 〔待分類〕12b 意見回饋：青銅匭三個口、類型小籤加透明點選範圍（看起來不變），算出來不重疊、比原本大
@@ -5235,6 +5296,18 @@
 - ✔ 〔待分類〕〔提示次數〕非序章：打不動的短提示每盤只跳前 2 次，之後只有跳字
 - ✔ 〔待分類〕〔提示次數〕序章：第一次教學句、第二次短提示，第三次起不跳；換一盤重新算
 
+### test-ship-map-l1610-1128.js
+
+- ✔ 〔行為〕條目：登記在 07sw SCW、檔名 ship_map_l1610、2560×1600；11/28 已上 CDN＝ready:true，正式玩家也用（退回 false 時只有開發用開關才用）
+- ✔ 〔行為〕量好的點寫死（抄錯、改錯就紅）：入口標籤、晚掛的標籤、走路節點和路網
+- ✔ 〔混合〕8 個入口都換、名字跟 Voyage 原本的 data-hs 一樣；每個點都在 iPad 13 吋（1366×904）和 11 吋（1194×714）cover 之後看得到的範圍
+- ✔ 〔行為〕走路：路網連通、每個入口的停靠點都在路網上；HS 對到 8 個入口
+- ✔ 〔行為〕shpLKind 用真的 07sw scwKind：iPad 13、11 吋橫向換橫式圖；直向、分割畫面、手機橫放、沒開開關照舊
+- ✔ 〔行為〕載不到退回原圖：等 00-util 改 CDN 也失敗才退、記 SCW_BAD、重畫；開頁時已經失敗也退
+- ✔ 〔行為〕8 個入口換到橫式圖的位置；別的模組晚掛的標籤（07w8 爛柯懸棋、07w9 天字客房、回首頁）掛上來時也換
+- ✔ 〔原始碼〕Voyage 用橫式圖時：不掛 WebGL 視差、.shp-in 標 data-scw（07w6 物件說明先關）、圖照 scwSrc；shpMapFit 尺寸照圖、跨門檻整頁重畫並叫 07w9 再放出口；07w 走路照 shpWalkCfg
+- ✔ 〔行為〕改壞驗證：條目改回 ready:false、點抄錯、判斷門檻放寬、退回不等 CDN，都會被抓到
+
 ### test-ship-tasklist-1116.js
 
 - ✔ 〔行為〕〔行為〕解局的進度照舊只算自己解開的題；看答案走完的不算，清單的說明會講有幾題
@@ -5410,7 +5483,7 @@
 - ﹣ 略過 〔待分類〕〔原始碼〕iOS 隱私申報 app-privacy.md 也有同一句修正清單說明（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 - ✔ 〔待分類〕sw.js：這兩頁（含不帶 .html）直接問網路，不會被換成 App 的 index.html；App 本身照舊
 - ✔ 〔待分類〕build-site 把 src/ 整個複製進 site/（兩頁跟著進網站根目錄）；iOS 包不放這兩頁
-- ﹣ 略過 〔待分類〕〔原始碼〕iOS 包不放支援頁、隱私頁（copy-www 的 SKIP）（略過原因：沒有 xiangqi-ios）
+- ✔ 〔待分類〕〔原始碼〕iOS 包不放支援頁、隱私頁（copy-www 的 SKIP）
 - ﹣ 略過 〔待分類〕metadata.md：支援網址、隱私權政策網址換成新網頁；聯絡人姓名、信箱；電話留給開發者本人填；賣家名稱（略過原因：沒有 xiangqi-ios/appstore（App Store 上架文案與隱私申報有聯絡人資料，只在開發者電腦））
 
 ### test-sw-offline.js
@@ -5852,7 +5925,7 @@
 - ﹣ 略過 〔待分類〕7 個檔都在（art 來源、site/data、iOS www 三處內容一樣）、尺寸跟原圖一樣；原圖沒動（略過原因：沒有 xiangqi-db/art 原圖和 xiangqi-ios（公開副本不含；三處比對只在開發者電腦跑））
 - ✔ 〔待分類〕版本號有變（1113 → 1117），圖網址都帶 ?v=
 - ﹣ 略過 〔待分類〕preload.json：7 張都在、大小和內容指紋對，版本 v 照全部項目重算（手機看到新指紋才會下載）（略過原因：沒有 xiangqi-lab/site/data/ximarket/xm_day_winter.webp（公開副本不含））
-- ﹣ 略過 〔待分類〕iOS：scripts/.www-files.json 有 7 張、大小對；www/native-build.json 的資料夾大小算進去（略過原因：沒有 xiangqi-ios（公開副本不含））
+- ﹣ 略過 〔待分類〕iOS：scripts/.www-files.json 有 7 張、大小對；www/native-build.json 的資料夾大小算進去（略過原因：沒有 iOS 建置產物 xiangqi-ios/www、ios/App/App/public、capacitor.config.json（cap sync 產生，.gitignore 不進倉庫））
 - ✔ 〔待分類〕素材授權紀錄：credits.md 與 ai-assets.md（art 來源、site 兩份一樣）記上 gpt-image-2、以原圖編輯、2026-11-17、7 個檔名
 
 ### test-xfer.js
