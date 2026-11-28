@@ -8,7 +8,7 @@ const assert = require("node:assert/strict"), test = require("node:test"), fs = 
 const CF = path.join(__dirname, "..", "..", "xiangqi-android", "scripts", "check-flags.js");
 const S = fs.readFileSync(CF, "utf8").replace(/\r\n/g, "\n");
 
-test("cold()：寫回上一次的 xqFlags 在接上攔截之後、重新載入之前", () => {
+test("〔原始碼〕cold()：寫回上一次的 xqFlags 在接上攔截之後、重新載入之前", () => {
   const a = S.indexOf("const cold = async (clearSaved, restore) => {"); assert.ok(a > 0, "cold 要收 restore 參數");
   const body = S.slice(a, S.indexOf("};", a));
   const route = body.indexOf("log = await routeCdn(c, ro);"), put = body.indexOf('localStorage.setItem("xqFlags"'), reload = body.indexOf('c.send("Page.reload"');
@@ -17,7 +17,7 @@ test("cold()：寫回上一次的 xqFlags 在接上攔截之後、重新載入�
   assert.match(body, /beforeRestore = await c\.ev\('localStorage\.getItem\("xqFlags"\)'\)/, "寫回前要記下當時讀到的值（報告證據）");
 });
 
-test("④ 沿用上一次：上一次的「關」要確認有套上、存下來，再帶進第二次冷啟；沒套上就是測不成立", () => {
+test("〔原始碼〕④ 沿用上一次：上一次的「關」要確認有套上、存下來，再帶進第二次冷啟；沒套上就是測不成立", () => {
   const a = S.indexOf("/* ④ 讀不到開關檔"), seg = S.slice(a, S.indexOf('讀不到・從沒抓到過", plan.on', a));
   assert.match(seg, /const setOff = await flagIs\(k, false\);/, "第一步的 flagIs 回傳值要接住");
   assert.match(seg, /await cold\(false, saved \|\| undefined\);/, "第二次冷啟要帶上一次存的值");
@@ -26,7 +26,7 @@ test("④ 沿用上一次：上一次的「關」要確認有套上、存下來�
   assert.match(seg, /R\.staleFlags = \{ savedOff: saved, readBeforeRestore: beforeRestore \}/, "報告要記寫回前後的值");
 });
 
-test("「從沒抓到過」那段不受影響：照舊 cold(true) 清掉存檔，讀不到要全開", () => {
+test("〔原始碼〕「從沒抓到過」那段不受影響：照舊 cold(true) 清掉存檔，讀不到要全開", () => {
   assert.match(S, /await cold\(true\);\n    row = await runSteps\(k, "讀不到・從沒抓到過", plan\.on\);/);
   assert.match(S, /從沒抓到過又讀不到時，應該全開/);
 });
