@@ -20,6 +20,8 @@ test("〔原始碼〕cold()：寫回上一次的 xqFlags 在接上攔截之後�
 test("〔原始碼〕④ 沿用上一次：上一次的「關」要確認有套上、存下來，再帶進第二次冷啟；沒套上就是測不成立", () => {
   const a = S.indexOf("/* ④ 讀不到開關檔"), seg = S.slice(a, S.indexOf('讀不到・從沒抓到過", plan.on', a));
   assert.match(seg, /const setOff = await flagIs\(k, false\);/, "第一步的 flagIs 回傳值要接住");
+  /* #287 複審：saved 一定要讀 App 自己存的 xqFlags；工具自己造一份「關」的話，App 沒存下來也會被判通過 */
+  assert.match(seg, /const saved = setOff \? await c\.ev\('localStorage\.getItem\("xqFlags"\)'\) : null;/, "上一次的值要讀 App 自己存的 localStorage.xqFlags，不能由工具自己造");
   assert.match(seg, /await cold\(false, saved \|\| undefined\);/, "第二次冷啟要帶上一次存的值");
   assert.match(seg, /row\.invalid = true; row\.ok = false; row\.problems\.unshift\("上一次的「關」沒套上或沒存進 xqFlags：這段不成立"\)/, "沒套上＝測不成立");
   assert.match(seg, /else if \(!\(await flagIs\(k, false, 5000\)\)\) \{ row\.ok = false; row\.problems\.unshift\("讀不到時沒沿用上一次的「關」"\) \}/, "套上了卻沒沿用，照舊判失敗");
