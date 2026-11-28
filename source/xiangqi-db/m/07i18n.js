@@ -460,7 +460,7 @@ const I18N_EN={
   "很少失誤":"rarely makes mistakes","幾乎不失誤":"almost never makes mistakes","不放水":"no mercy","人類幾乎贏不了":"nearly unbeatable for humans","段位與開新局":"Rank and new game","換難度":"Change level",
   /* 對局頁：工具列、狀態列、確認框 */
   "寶物":"Items","悔棋":"Undo","新局":"New","認輸":"Resign","檢討":"Review","擺盤":"Setup","偷看":"Peek","思考中":"Thinking","已預走":"Premove set","被將軍":"in check","⚠ 被將軍！":"⚠ Check!",
-  "提示":"Hint","輪到你":"Your move","輪到你走":"Your move","輪到電腦":"Computer's move","等電腦":"Waiting for the computer","電腦想太久了？":"Computer taking too long?","重新開一局":"Start a new game","還原大小":"Reset zoom","兩指往內捏，就能縮回原本大小":"Pinch in with two fingers to zoom back out","確定認輸？":"Resign this game?",
+  "提示":"Hint","輪到你":"Your move","落子":"Move","可以走這裡":"You can move here","移到要去的格子":"Move to your target","這裡不能走":"Can't move here","輪到你走":"Your move","輪到電腦":"Computer's move","等電腦":"Waiting for the computer","電腦想太久了？":"Computer taking too long?","重新開一局":"Start a new game","還原大小":"Reset zoom","兩指往內捏，就能縮回原本大小":"Pinch in with two fingers to zoom back out","確定認輸？":"Resign this game?",
   "悔棋以後，這一盤不算進「我的棋力」（輸贏照常算）。":"After an undo, this game no longer counts toward \"My strength\" (the result still counts).","用悔棋符":"Use undo token",
   "你還沒走棋，不用悔棋":"You haven't moved yet; nothing to undo","沒有悔棋符了":"No undo tokens left","這個難度不限次數":"unlimited at this difficulty",
   "均勢":"Even","雙方差不多":"roughly equal","領先非常多":"far ahead","能將死對方":"can force checkmate",

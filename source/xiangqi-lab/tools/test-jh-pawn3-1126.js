@@ -1,7 +1,7 @@
 /* W87-2（11/26）仙人指路地底迷宮第三層「聽泉幽窟」（m/07z9m-pawn3.js；共用 m/07z9m-maze.js 的 jhMzLayer、afterMove、avoid）：
    用 vm 跑真的程式（共用程式、碑刻、十派第一層、仙人指路第二、三層）：
    登記成第三層（不動第一、二層）、流水石階把人往下沖一格（下面擋住就不動）、滑完回 stop:true、往上游一踩就被沖回來、自動走不主動踩、
-   三隻兵卒陣列；用真的 jhMzStep 搜尋從入口走得到踏板、再走得到石門前（途中沒被抓、沒被看到）；題庫 3＋5 題馬收尾（被抓題原本 6 題，sq068 拿掉，W186）、修為 +60。
+   三隻兵卒陣列；用真的 jhMzStep 搜尋從入口走得到踏板、再走得到石門前（途中沒被抓、沒被看到）；題庫 3＋3 題馬收尾（被抓題原本 6 題，sq068、lk190、sq082 重算太慢拿掉，W186）、修為 +60。
    「改壞驗證」：同一組檢查拿去跑改壞的程式（水不沖、自動走會踩流水、只剩兩隻兵），一定要抓得到。 */
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");
@@ -76,10 +76,11 @@ test("仙人指路第三層：登記、流水石階、自動走、三隻兵卒�
   assert.deepEqual(problems(load()), []);
 });
 
-test("仙人指路第三層：題庫 3＋5 題（sq068 拿掉，W186）、不跟第一、二層重複", () => {
+test("仙人指路第三層：題庫 3＋3 題（sq068、lk190、sq082 拿掉，W186）、不跟第一、二層重複", () => {
   const c = load(), P3 = vm.runInContext("JH_MZ_POOL_PAWN3", c), P1 = vm.runInContext("JH_MZ_POOL_PAWN", c), P2 = vm.runInContext("JH_MZ_POOL_PAWN2", c);
-  assert.equal(P3.door.length, 3); assert.equal(P3.trap.length, 5);
-  assert.ok(!P3.trap.some((x) => x.id === "sq068"), "sq068 多解樹重算要 24 分鐘，不能再收進題庫（W186）");
+  assert.equal(P3.door.length, 3); assert.equal(P3.trap.length, 3);
+  for (const [id, why] of [["sq068", "多解樹重算要 24 分鐘"], ["lk190", "多解樹重算約 3 分鐘"], ["sq082", "多解樹重算約 2 分鐘"]])
+    assert.ok(!P3.trap.some((x) => x.id === id), id + why + "，CI 全部測試會逼近 1800 秒上限，不能再收進題庫（W186）");
   const old = new Set([...P1.door, ...P1.trap, ...P2.door, ...P2.trap].map((q) => q.id)), ids = [...P3.door, ...P3.trap].map((q) => q.id);
   assert.equal(new Set(ids).size, ids.length); for (const id of ids) assert.ok(!old.has(id), "跟前兩層重複：" + id);
   for (const q of [...P3.door, ...P3.trap]) assert.ok(q.fen && q.line.length % 2 === 1, q.id);
