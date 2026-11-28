@@ -1,7 +1,7 @@
 // W219（11/28）：黑洞背面十字鍵在 Android 12 慢機上「▲ 沒作用、落子按不下去」。
 // iMac 在 Android 12 模擬器記錄點擊：失敗那幾輪 pointerup 晚 600～900 ms 才到，之後沒有 click；十字鍵原本只靠 onclick。
 // 修法（park3d.js p3TapBtn）：同一顆鈕 pointerdown→同一根手指 pointerup 就動作；之後觸控合成的 click 略過一次；鍵盤／報讀器的 click 照舊動作。
-// 這裡用 vm 單獨跑 p3TapBtn，配假按鈕驗各種事件順序；再檢查十字鍵五顆鈕與疊子選單都改用它；最後做改壞驗證（換回只靠 click 的寫法要抓得到）。
+// 這裡用 vm 單獨跑 p3TapBtn，配假按鈕驗各種事件順序；再檢查十字鍵五顆鈕都改用它（疊子選單綁著既有測試 test-park3d-stack-1122，另開計分規則 PR）；最後做改壞驗證（換回只靠 click 的寫法要抓得到）。
 // 用法：node --test xiangqi-lab/tools/test-pad-pointerup-1128.js
 "use strict";
 const assert = require("node:assert/strict"), test = require("node:test"), fs = require("fs"), path = require("path"), vm = require("vm");
@@ -28,10 +28,9 @@ const CASES = [
 test("p3TapBtn 各種事件順序", () => { const tap = load(grab(P3)); for (const [why, seq, want] of CASES) assert.equal(run(tap, seq), want, why) });
 test("事件不往上傳（不會穿透到畫布／齊轍模型）", () => { const tap = load(grab(P3)); const b = fakeBtn(); tap(b, () => {});
   for (const [t, o] of [D(1), U(1), C()]) assert.equal(b.fire(t, o).stopped, 1, t + " 要 stopPropagation") });
-test("〔原始碼〕十字鍵五顆鈕與疊子選單都用 p3TapBtn", () => {
+test("〔原始碼〕十字鍵五顆鈕都用 p3TapBtn", () => {
   assert.match(P3, /p3TapBtn\(b,\(\)=>padMove\(ar,ac\)\)/, "▲◀▶▼ 要用 p3TapBtn");
   assert.match(P3, /p3TapBtn\(go,\(\)=>\{if\(go\.disabled\|\|!padT\.includes\(padCur\)\)/, "落子要用 p3TapBtn，而且照舊檢查 disabled 與能不能走");
-  assert.match(P3, /p3TapBtn\(b,\(\)=>\{stkClose\(\);if\(opt\.onTap\)opt\.onTap\(k\)\}\)/, "疊子選單要用 p3TapBtn");
   assert.ok(!/b\.onclick=e=>\{e\.stopPropagation\(\);padMove/.test(P3), "十字鍵不能再只靠 onclick");
   assert.ok(!/go\.onclick=/.test(P3), "落子不能再只靠 onclick");
 });

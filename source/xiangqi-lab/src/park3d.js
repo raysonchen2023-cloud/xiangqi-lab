@@ -2460,7 +2460,7 @@
       const tip=document.createElement("span");tip.textContent="選哪顆？";tip.style.cssText="align-self:center;color:#3a2618;font-size:13px;margin-right:2px";stkMenu.append(tip);
       for(const k of own){const b=document.createElement("button");b.type="button";b.setAttribute("role","menuitem");const p=B[k];b.textContent=(NAMES[sideOf(p)]||{})[p.toUpperCase()]||p;
         b.style.cssText="min-width:40px;min-height:40px;border-radius:50%;border:2px solid #8a6a3a;background:#f7ecd2;color:"+(sideOf(p)==="r"?"#b0261c":"#222")+";font:800 18px/1 serif;cursor:pointer";
-        p3TapBtn(b,()=>{stkClose();if(opt.onTap)opt.onTap(k)});stkMenu.append(b)}
+        b.onpointerdown=b.onpointerup=e=>e.stopPropagation();b.onclick=e=>{e.stopPropagation();stkClose();if(opt.onTap)opt.onTap(k)};stkMenu.append(b)}
       el.append(stkMenu);stkT=setTimeout(stkClose,4000);return true};
     /* 點到一顆子：背面、還沒選子、正後方疊了別的子 → 跳選單；其他情況照舊 */
     const tapPiece=(i,x,y)=>{stkClose();if(selI<0&&UNDER&&GIANT){const L=gntStack(i),B=SNAP.b||[],own=L.filter(k=>B[k]&&sideOf(B[k])===SNAP.me);   /* PR #38 審查（iMac Claude 1）：自己的子只有一顆就直接選它（就算點到的是擋在前面的對方子），兩顆以上才跳選單 */
