@@ -175,9 +175,9 @@ function shwHop(S,a,b,u,h0,h1){S.hy=h0+(h1-h0)*u;if(shwRM()){S.x=a[0]+(b[0]-a[0]
   if(u<p0){const k=u/p0;S.x=a[0];S.y=a[1];S.sq=[1+.12*k,1-.16*k];S.hy=h0}
   else if(u<p1){const v=(u-p0)/(p1-p0),s=Math.sin(Math.PI*v),hA=2.2+Math.abs(b[1]-a[1])*.35;S.x=a[0]+(b[0]-a[0])*v;S.y=a[1]+(b[1]-a[1])*v-hA*s;S.sq=[1-.08*s,1+.12*s];S.hy=h0+(h1-h0)*v}
   else{const k=(u-p1)/(1-p1),s=Math.sin(Math.PI*k);S.x=b[0];S.y=b[1];S.sq=[1+.1*s,1-.12*s];S.hy=h1}}
-/* 星槎主畫面（07f-ship.js 的 Voyage 呼叫） */
+/* 星槎主畫面（07f-ship.js 的 Voyage 呼叫）。#255：iPad 橫向用橫式圖時，走路設定照 07f shpWalkCfg（SHPM_L1610.walk，2560×1600） */
 function shipWalk(v,k){if(!SHIP_WALK_ON)return;const M=v.querySelector(".shp-map.full"),hl=M&&M.querySelector(".shp-hl");if(!hl)return;
-  shwMount({v,cfg:SHW_SHIP,root:M,frame:M.querySelector(".shp-in"),layer:hl,before:hl.firstChild,sel:"[data-hs]",keyOf:b=>b.dataset.hs,find:h=>v.querySelector(`[data-hs="${h}"]`),mem:"ship"})}
+  shwMount({v,cfg:(typeof shpWalkCfg==="function"&&shpWalkCfg(M))||SHW_SHIP,root:M,frame:M.querySelector(".shp-in"),layer:hl,before:hl.firstChild,sel:"[data-hs]",keyOf:b=>b.dataset.hs,find:h=>v.querySelector(`[data-hs="${h}"]`),mem:"ship"})}
 /* 渡口、驛站：滿版圖 .shp-page.cq（圖寬 100%，框＝圖的大小），入口是 .shp-spot（id）和 .po-sight（渡口 data-ps、驛站 id） */
 function shwPage(v,cfg,mem,gate){const P=v&&v.querySelector(".shp-page.cq");if(!P||!cfg)return;
   const kOf=b=>b.id||(b.dataset.ps!=null?"ps"+b.dataset.ps:""),fd=h=>/^ps\d+$/.test(h)?P.querySelector(`[data-ps="${h.slice(2)}"]`):P.querySelector("#"+h);
