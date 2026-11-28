@@ -99,13 +99,18 @@ test("參數不齊、jobs 不是正整數：直接報錯，不當成跑完", asy
 
 test("TAP 解析：tapParse 照 testkinds.js runFile 的規則（ok／not ok、SKIP 不算通過、TODO 另計、\\# 與 \\\\ 還原、子測試不算、只報檔名＝0 項、載入就壞＝1 項失敗）", () => { assert.ok(chkTap(loadPool())) });
 test("跟舊程式對答案：runFileAsync 跟 testkinds.js runFile 跑同一支真的測試檔（含略過的），結果一模一樣", async () => {
-  const P = loadPool();
-  for (const file of REAL_FILES) {
-    assert.ok(fs.existsSync(path.join(__dirname, file)), "拿來對照的測試檔不見了：" + file);
-    const a = TK.runFile(file), b = await P.runFileAsync(file, process.env, __dirname);
-    assert.ok(a.length > 0, file + " 要真的跑出項目");
-    assert.deepEqual(JSON.parse(JSON.stringify(b)), JSON.parse(JSON.stringify(a)), file);
-  }
+  /* 這支測試自己在 node --test 底下跑時，環境變數有 NODE_TEST_CONTEXT；子行程繼承到它就不輸出 TAP（兩邊都拿到 0 項）。
+     testkinds.js 平常是直接執行、沒有這個變數，所以這裡暫時拿掉，照真實情況比，跑完放回去 */
+  const P = loadPool(), keep = process.env.NODE_TEST_CONTEXT;
+  delete process.env.NODE_TEST_CONTEXT;
+  try {
+    for (const file of REAL_FILES) {
+      assert.ok(fs.existsSync(path.join(__dirname, file)), "拿來對照的測試檔不見了：" + file);
+      const a = TK.runFile(file), b = await P.runFileAsync(file, { ...process.env }, __dirname);
+      assert.ok(a.length > 0, file + " 要真的跑出項目");
+      assert.deepEqual(JSON.parse(JSON.stringify(b)), JSON.parse(JSON.stringify(a)), file);
+    }
+  } finally { if (keep !== undefined) process.env.NODE_TEST_CONTEXT = keep }
 });
 
 test("改壞驗證：照完成順序放回、不限同時數量、全部共用同一個金鑰資料夾、XQ_TEST_JOBS 收 0、SKIP 算成通過、檔名那一項不還原成 0 項，上面的檢查都要抓得到", async () => {
