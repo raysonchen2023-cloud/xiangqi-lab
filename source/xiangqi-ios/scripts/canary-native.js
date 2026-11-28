@@ -525,7 +525,7 @@ const KINDS = {
 
 /* W187（#262 第五輪審查）：新壞樣本只能加在 canary-native-kinds.json，是純資料，不是程式。
    每項只有 name、files、find、replace、expect 五個欄位：在 files 列的每個檔（相對 source/xiangqi-ios）把第一個 find 換成 replace。
-   files 不准有 ..、絕對路徑、反斜線，也不准指到 scripts/、node_modules/（不分大小寫），name 不准跟既有的重複（不分大小寫）、不准叫 clean，解析後要在這個副本的 source/xiangqi-ios 裡（連結也不算）；
+   files 不准有 ..、絕對路徑、反斜線，也不准指到 scripts/、node_modules/（不分大小寫），name 不准跟既有的重複（不分大小寫）、不准叫 clean 或 Object.prototype 上的名字（constructor、toString…），解析後要在這個副本的 source/xiangqi-ios 裡（連結也不算）；
    找不到檔或找不到 find 就丟錯。本檔的程式碼由 test-canary-native.cjs 整支寫死，要改程式就是計分規則 PR */
 const DATA_KINDS_FILE = path.join(__dirname, "canary-native-kinds.json");
 const DATA_FIELDS = "expect,files,find,name,replace";
@@ -534,7 +534,7 @@ function dataKind(d, i) {
   if (!d || typeof d !== "object" || Array.isArray(d) || Object.keys(d).sort().join() !== DATA_FIELDS) throw bad("的欄位只能是 " + DATA_FIELDS);
   if (typeof d.name !== "string" || !/^[a-z][A-Za-z0-9]{1,40}$/.test(d.name)) throw bad("的 name 只能是英文字母和數字，小寫開頭");
   /* #262 第六輪：大小寫不同也算重複（macOS 檔名不分大小寫，run() 每個壞樣本用名字當資料夾）；clean 是 run() 乾淨副本的資料夾名，保留不准用 */
-  if (Object.keys(KINDS).some((k) => k.toLowerCase() === d.name.toLowerCase()) || d.name.toLowerCase() === "clean") throw bad("的 name 已經有了或是保留名稱：" + d.name);
+  if (Object.keys(KINDS).some((k) => k.toLowerCase() === d.name.toLowerCase()) || d.name.toLowerCase() === "clean" || d.name in Object.prototype) throw bad("的 name 已經有了或是保留名稱：" + d.name);
   for (const k of ["find", "replace", "expect"]) if (typeof d[k] !== "string" || !d[k]) throw bad("的 " + k + " 要是不空的字串");
   if (d.find === d.replace) throw bad("的 find 跟 replace 一樣，什麼都沒改");
   const okFile = (f) => typeof f === "string" && /^[A-Za-z0-9_.@ +\-\/]+$/.test(f) && path.posix.normalize(f) === f && !f.startsWith("/") && !/(^|\/)\.\.?(\/|$)/.test(f) && !/^(scripts|node_modules)(\/|$)/i.test(f);
