@@ -216,12 +216,16 @@ function bdPort(v,k){if(!bdOk())return;const P=v&&v.querySelector(".shp-page.cq"
   hit.setAttribute("aria-label",nk+(evOn?"：她闖禍了，點她聽她說":"：她在等你"));
   const cap=e=>{if(!mk.isConnected){v.removeEventListener("click",cap,true);return}if(e.target!==hit||P.dataset.bdFind)return;e.stopPropagation();e.preventDefault();if(typeof vibrate==="function")vibrate(5);act()};
   v.addEventListener("click",cap,true);
-  let n=0,lost=0;const stop=()=>{mk.remove();v.removeEventListener("click",cap,true)};
+  let n=0,lost=0,mo=null;const stop=()=>{mk.remove();v.removeEventListener("click",cap,true);if(mo)mo.disconnect()};
   /* W107-L：iPad 轉向時 07f 會把渡口主人拿掉重掛，點擊區換了一顆：重抓新的，「！」接到新的上面；等 6 秒還沒有才退回小卡（審查 #165 第八輪） */
+  const regrab=()=>{if(hit.isConnected)return true;const h2=P.querySelector(".ph4-hit");if(!h2)return false;hit=h2;lost=0;n=0;hit.setAttribute("aria-label",nk+(evOn?"：她闖禍了，點她聽她說":"：她在等你"));return true};   /* #175 第 6 項：換了新點擊區，藏起來的計數 n 也歸零 */
+  const place=()=>{const on=hit.isConnected&&hit.style.display!=="none"&&!P.classList.contains("pc-run")&&!document.querySelector(".walkc");
+    if(on){mk.style.display="";mk.style.left=(parseFloat(hit.style.left)+parseFloat(hit.style.width)/2)+"px";mk.style.top=(parseFloat(hit.style.top)-2)+"px"}else mk.style.display="none";return on};
+  /* #175 第 6 項：點擊區一被拿掉或換新，馬上藏起來或搬到新的上面，不等下一次 tick（原本最多 400ms 停在舊位置） */
+  try{if(typeof MutationObserver==="function"){mo=new MutationObserver(()=>{if(!mk.isConnected){mo.disconnect();return}regrab();place()});mo.observe(P,{childList:true})}}catch(e){mo=null}
   const tick=()=>{if(!P.isConnected||!mk.isConnected){stop();return}if(evOn&&(bdSt().ev[k]||{}).done){stop();return}
-    if(!hit.isConnected){const h2=P.querySelector(".ph4-hit");if(h2){hit=h2;lost=0;hit.setAttribute("aria-label",nk+(evOn?"：她闖禍了，點她聽她說":"：她在等你"))}else{mk.style.display="none";if(++lost>=15){stop();addCard();return}setTimeout(tick,400);return}}
-    const on=hit.style.display!=="none"&&!P.classList.contains("pc-run")&&!document.querySelector(".walkc");
-    if(on){mk.style.display="";mk.style.left=(parseFloat(hit.style.left)+parseFloat(hit.style.width)/2)+"px";mk.style.top=(parseFloat(hit.style.top)-2)+"px"}else{mk.style.display="none";if(++n===50)addCard()}
+    if(!regrab()){mk.style.display="none";if(++lost>=15){stop();addCard();return}setTimeout(tick,400);return}
+    if(!place()&&++n===50)addCard();
     setTimeout(tick,400)};
   tick()}
 /* 解題頁設定（07c-canju.js CanjuPlay 的 XM） */

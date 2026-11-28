@@ -334,6 +334,13 @@ if(typeof SCW!=="undefined")for(const k in PORT_L1610){const T=PORT_L1610[k],S={
 function portScwStop(P,img){if(typeof P._pcStop==="function")P._pcStop();if(typeof SPX!=="undefined"&&SPX&&SPX.el===P)SPX.el=null;
   P.querySelectorAll(":scope>.pc-col,:scope>.pw-gl,:scope>.pfx-gl").forEach(e=>e.remove());P.classList.remove("pc-run","pc-in","pw-on","pfx-on");
   img.style.filter="";img.style.visibility="";P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>b.style.translate="")}
+/* #175 第 3 項（4:3 iPad 橫向）：07fl 用 cover 把 16:10 的橫式圖左右裁掉，靠邊的景點（清朝景點 2 超出 1～14px）、渡口主人的 3D 畫布（超出 8～24px）會跑到畫面外。
+   量看得到的範圍（頁框的父層 #view），超出的就用 translate 往內推回來，留 6px；主人的畫布、點擊區、泡泡一起推同樣的距離。直圖（沒有 data-scw）一律清掉。純量測，不改 07fl */
+function portEdge(P){if(!P||!P.isConnected)return;const V=P.parentNode;if(!V||!V.getBoundingClientRect)return;const on=!!P.dataset.scw,vr=V.getBoundingClientRect(),M=6;
+  const dx=r=>r.width?(r.left<vr.left+M?vr.left+M-r.left:r.right>vr.right-M?vr.right-M-r.right:0):0;
+  for(const b of P.querySelectorAll(":scope>.po-sight,:scope>.shp-spot,:scope>#poBoard")){b.style.translate="";if(!on)continue;const d=dx(b.getBoundingClientRect());if(d)b.style.translate=Math.round(d)+"px 0"}
+  const G=[...P.querySelectorAll(":scope>.ph4,:scope>.ph4-hit,:scope>.ph4-say")];G.forEach(e=>e.style.translate="");const host=P.querySelector(":scope>.ph4");
+  if(on&&host){const d=dx(host.getBoundingClientRect());if(d)G.forEach(e=>e.style.translate=Math.round(d)+"px 0")}}
 function portScw(v,k){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.querySelector(":scope>img");if(!img||typeof scwPre!=="function")return;
   const full=typeof PORTF_ON!=="undefined"&&PORTF_ON&&typeof PORTF_ERAS!=="undefined"&&PORTF_ERAS.includes(k),src0="data/shipmap/port_"+k+(full?"_f":"")+".webp",pre=scwPre(v,src0);
   if(pre.k){img.src=pre.src;P.dataset.scw=pre.k;P.classList.add("scw-l")}
@@ -348,6 +355,7 @@ function portScw(v,k){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.queryS
     P.querySelectorAll(".po-sight").forEach(b=>{const s=X&&X.sight[+b.dataset.ps];scwPut(b,s||null)});
     const A=X?X.pier:(typeof PH4_PIER!=="undefined"?PH4_PIER[k]:null),b=P.querySelector("#poBoard"),z=P.querySelector(".ph4-pz");
     if(b)scwPut(b,X?X.pier.at:null);if(A&&z){const q=A.N.pier;z.style.left=(q[0]-9)+"%";z.style.top=(q[1]-4.5)+"%"}
+    setTimeout(()=>portEdge(P),0);   /* #175 第 3 項 */
     /* 渡口主人（07w4）的站位只在掛上時算一次：轉向換了圖就拿掉重掛（3D 迴圈看到框不在了會自己釋放；審查 #165 第 2 項） */
     /* 07w5 偶遇（信、小人）開頁時照當時的路網找位置：轉向換了圖就叫它重放（審查 #165 第五輪） */
     /* 轉回直向：風、船艙 WebGL 只在開頁時掛，轉成橫式時 portScwStop 收掉了，這裡重掛回來（審查 #165 第六輪） */
@@ -355,6 +363,8 @@ function portScw(v,k){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.queryS
       if(typeof pcIfx==="function")pcIfx().then(()=>{try{if(P.isConnected&&!P.dataset.scw&&typeof ifxSeen==="function")ifxSeen(img)}catch(e){}})}catch(e){}},0);P._fxL=!!X;   /* 墨粒子：開頁就是橫式圖、或上色過場中轉向時 pcSet 沒跑，fx-map 沒補上 _f 的對照，這裡補上再掛一次（審查 #165 第七輪） */
     if(P._oyL!=null&&P._oyL!==!!X&&typeof P._oyRe==="function")setTimeout(()=>{try{if(P.isConnected&&P._oyRe)P._oyRe()}catch(e){}},0);P._oyL=!!X;
     if(P.dataset.ph4&&P._ph4L!=null&&P._ph4L!==!!X&&typeof ph4Mount==="function"){P.querySelectorAll(":scope>.ph4,:scope>.ph4-hit,:scope>.ph4-say").forEach(e=>e.remove());delete P.dataset.ph4;const V=P.parentNode;setTimeout(()=>{try{if(P.isConnected)ph4Mount(V,k)}catch(e){}},0)}};
+  /* #175 第 3 項：07fl 推圖（style）、轉向（data-scw）、主人（07w4）晚一點才掛上來時，都量一次邊緣 */
+  if(window.MutationObserver&&!P._pcEmo){P._pcEmo=new MutationObserver(es=>{if(es.some(e=>e.type==="attributes"||[...e.addedNodes].some(n=>n.classList&&n.classList.contains("ph4"))))setTimeout(()=>portEdge(P),50)});P._pcEmo.observe(P,{attributes:true,attributeFilter:["style","data-scw"],childList:true})}
   P._portPlace=place;
   if(typeof scwMount==="function"&&typeof SHW_PORT!=="undefined"&&SHW_PORT[k]){const C=shwCfg(SHW_PORT[k],SHW_PSX[k]);if(Array.isArray(C.h))C.h=[C.h[0]*SHW_PORT_K,C.h[1],C.h[2]*SHW_PORT_K];
     scwMount(P,{key:scwKey(src0),src0,ids:["poPark","poInn","poArena","poBattle","poPh"],pfx:"port:"+k,cfg0:C,apply:place});if(pre.k)P._scwW="l"}
