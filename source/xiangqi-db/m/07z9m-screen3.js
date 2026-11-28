@@ -2,7 +2,7 @@
    規格：208 號補件的屏風馬門第三層，照 207、208 複核和開發者 11/26 的決定改：
      ・轉向石鼓（U，208 複核⑧「凸起佔哪一格要寫清楚」）：石鼓本身佔一格（擋路、不擋光）；鼓側有一塊凸起，朝東南西北其中一邊，
        凸起蓋住的是石鼓旁邊那一格的地面——那一格人照樣能走、馬也照樣能落，但當馬腿時算被蹩住（跟第一層的石鼓、玩家站在馬腿一樣）。
-       往石鼓走＝把它順時針轉 90 度（凸起換到下一邊），花一回合、人留在原地；石鼓朝哪記在 S.drum3（被拖回入口時不變：轉過的還是那個方向）。
+       往石鼓走＝把它順時針轉 90 度（凸起換到下一邊），花一回合、人留在原地；石鼓朝哪記在 S.drum3（被拖回入口時不變：轉過的還是那個方向；「再走一次」開新的一趟時回到地圖原本的方向，W196）。
      ・連環馬衛（JH_MZ_KIND.linkhorse，208 複核⑧「蹩斷連繫要說清楚」）：兩隻馬衛用鐵鍊連著，每一回合一起往「同一個方向」跳，
        選方向照順時針找「兩隻都跳得過去」的那一個；其中一隻的馬腿被凸起蹩住，那個方向兩隻都不能跳，只好一起換方向（＝蹩斷連繫，整組的巡邏路線跟著改）。
        看得到的格子照第一層馬衛（下一步跳得到的日字落點，被蹩住的方向就沒有）。
@@ -90,3 +90,13 @@ jhMzLayer("screen",3,{map:JH_MZ_SCREEN3_MAP,guards:JH_MZ_SCREEN3_GUARDS,solid:"#
     locked:["石門被機關鎖住了。<b>先在祭壇裡找到機關踏板踩下去。</b>","The stone door is locked by a mechanism. <b>Find the pressure plate somewhere around the altar first.</b>"],
     spot:["<b>馬衛轉過頭來看見你了！</b>趕快離開紅點——下一步還在紅點上就會被逮住。","<b>A horse guard turns and spots you!</b> Get off the red dots now: if you are still on one next turn, you are caught."],
     done:["三層都走完了，神道底下已經走到盡頭。","All three levels are done: this is the very bottom of the spirit way."]}});
+/* W196（11/28，外部審核第 9 項）：「再走一次」是 Object.assign(S, jhMzNew(...))，新開局的物件裡還沒有 drum3（第一次轉石鼓才建），
+   蓋不掉上一趟轉過的方向。包住 jhMzReset：完整重建（只有 jhMzNew 會用 full＝true）時，屏風馬第三層的石鼓放回 JH_MZ_SCREEN3_DRUM0；
+   被拖回入口（full＝false）照舊保留。不改共用的 07z9m-maze.js（照 07z9m-vault.js 的包法，各自加標記，不會重複包）。 */
+try {
+  if (typeof jhMzReset === "function" && !jhMzReset.screen3) {
+    const r0 = jhMzReset;
+    jhMzReset = function (S, full) { const v = r0(S, full); if (full && S && S.lv && S.lv.sid === "screen" && S.lv.layer === 3) S.drum3 = Object.assign({}, JH_MZ_SCREEN3_DRUM0); return v };
+    jhMzReset.screen3 = 1;
+  }
+} catch (e) { }
