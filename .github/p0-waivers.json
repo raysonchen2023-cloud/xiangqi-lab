@@ -1,4 +1,17 @@
 {
  "note": "P0 送審豁免（W69 流程盤點第 5 項，開發者 2026-11-23 選「寫進倉庫豁免檔」）。p0-gate.js 只認這一份；別處轉述的決定一律不算。只能豁免 P0-IMG/cdn、P0-UPD/old-worker、P0-3D/partial、P0-3D/rounds 四種；每筆要綁要送審 AAB 的 aabSha256（64 碼小寫）、寫 reason（≥4 字）、decidedBy（哪位開發者、在哪位 Claude 那邊說的）、decidedAt（YYYY-MM-DD）；P0-3D 的可加 android（12／16）只豁免那一個版本。新增要走 PR、iMac Claude 2 逐行審，並附開發者原話。",
- "items": []
+ "items": [
+  {
+   "code": "P0-3D/partial",
+   "android": "12",
+   "aabSha256": "95a90b6f0793e2d30f2f3db4e0ef3b29d45a558cd173db5f5a1f3744c8befa12",
+   "build": "20261128-1712",
+   "versionCode": "26112801",
+   "expires": "2026-12-05",
+   "reason": "Android 12 模擬器（WebView 91）跑完整 3D 會在 cpu 情境卡死（11/28 連兩次 CDP 逾時、shell 不回應；上一版 1641 也一樣），這版 Android 12 只驗 W219 黑洞背面（--only bhx-back），Android 16 跑完整九情境＋金絲雀；只限 26112801，12/5 到期，下一版回到全套。代價：Android 12 的其他 3D 情境這版沒驗到。模擬器問題由 Windows Claude 2 同時修（W218 系列）。",
+   "decidedBy": "開發者（2026-11-28 在 Windows Claude 1 那邊用選單選「這版照改，記成有期限的豁免（推薦）」）",
+   "decidedAt": "2026-11-28",
+   "quote": "Android 12 只驗黑洞背面、Android 16 全套；寫進 .github/p0-waivers.json，只限 26112801、寫明原因和到期日（12/5），走計分規則 PR 由 iMac Claude 2 審。代價：Android 12 的其他 3D 情境這版沒驗到；Windows Claude 2 同時修模擬器（W218 系列），下一版回到全套。約 1 小時內可以送封測（送審另外問你）。"
+  }
+ ]
 }
