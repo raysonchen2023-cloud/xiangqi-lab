@@ -263,6 +263,7 @@ const CLASSIFIED = new Set([
   "test-kill-layout-1127.js",   /* 11/27 W192 殺棋動畫三塊位置（m/00-util.js kxLayout）：vm 跑真函式，手機直式、iPad、3D 公園 × kill.json 三組 10 版高寬比都不重疊、夠高不出界；改壞驗證換回固定百分比要抓到重疊；kxPick 隨機挑字跳過潦草的版 3、版 7（行為 4、原始碼 1） */
   "test-w158c-kidtext-1128.js",   /* 11/28 W158③ 兒童模式說明文字跟實際行為一致（不連線上大廳、不送使用資料；換手機要家長驗證、公開檔案照常下載），中英文都在內建字典 */
   "test-pad-pointerup-1128.js",   /* 11/28 W219 黑洞背面十字鍵在 Android 12 慢機 pointerup 晚到、沒有 click：park3d.js p3TapBtn 改成 pointerup 就動作、略過之後的合成 click，鍵盤照舊；vm 跑真函式九種事件順序＋改壞驗證 */
+  "test-w158b-xfer-1128.js",   /* 11/28 W158② 換機兩端一致（按取消不用掉碼、寫完才寫回條）、產碼 5-5＝書箱認得出、兒童模式產碼要家長確認、開機 9 秒不替沒確認的那筆連線；vm 跑真模組＋改壞驗證 */
   "test-w158a-report-1128.js",   /* 11/28 W158① App Store 1.2、5.1.1：檢舉、刪除請求在線但傳輸全部失敗不說已送出（postForm 帶 rid 兩條路都失敗就丟錯），待送佇列不讓檢舉、刪除請求被擠掉、真的擠掉照實標沒送出；vm 跑真程式＋改壞驗證 */
   "test-icon-onerror-1126.js",   /* 11/26 W152 圖示載不到時的備援（m/02-shell.js ETIMG）：組出 onerror 拿去 new Function 編譯並用假 img 實際跑（改抓經典版、換舊圖、換表情文字）；掃所有 m/*.js 的 onerror 不能有反斜線 */
   "test-preload-bg.js"   /* 11/14 評比第 17、18 輪第 5 項背景暫停與按需預載：00-util bgpEvery／bgpOn、09b 預載前景／背景／恢復三段、分區 z:<分區>、別朝代先不下載、閒置才補選讀、省流量、preload-list --retier（行為 12、混合 1、原始碼 1） */

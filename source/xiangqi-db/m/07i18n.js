@@ -842,6 +842,17 @@ const I18N_EN={
   "這是舊版的 8 碼轉移碼，已經停用。請在舊手機打開 App（會自動更新），重新產生一組新的轉移碼。":"This is an old 8-character transfer code and it is no longer accepted. Open the app on your old phone (it updates itself) and create a new transfer code.",
   "這是舊版的 8 碼轉移碼，已經停用。":"This is an old 8-character transfer code and it is no longer accepted.","轉移碼是 10 碼":"Transfer codes have 10 characters","輸入舊手機上顯示的 10 碼轉移碼":"Enter the 10-character transfer code shown on your old phone",
   "輸入轉移碼":"Enter transfer code","下載資料":"Download data","連線中…":"Connecting…",
+  /* W158②（11/28）：換機兩端一致（按取代、寫好才用掉碼）、兒童模式產碼要家長確認 */
+  "用舊手機的資料取代這支手機？":"Replace this phone's data with the old phone's?",
+  "取代並重新開啟":"Replace and restart",
+  "這支手機原本的修為、戰績和設定會被換掉；棋譜是合併，這支手機原有的不會刪。這支手機會保留自己的裝置代號。":"This phone's progress, record and settings will be replaced; game records are merged, so the ones already on this phone stay. This phone keeps its own device ID.",
+  "按「取代並重新開啟」、資料寫好以後，這組轉移碼才會用掉；按「取消」不會用掉，期限內還能再輸入。":"The transfer code is used up only after you tap \"Replace and restart\" and the data has been written. Tapping \"Cancel\" does not use it, and you can enter it again before it expires.",
+  "已取消：這組轉移碼沒有用掉，期限內還能再輸入。":"Cancelled: the transfer code was not used, and you can enter it again before it expires.",
+  "這組轉移碼已經轉到另一支手機，這支手機沒有被改動。要再搬一次，請在舊手機重新產生":"This transfer code has already been used by another phone. Nothing on this phone was changed. To move again, create a new code on the old phone.",
+  "這組轉移碼已經過期或作廢，這支手機沒有被改動。請在舊手機重新產生":"This transfer code has expired or was cancelled. Nothing on this phone was changed. Create a new code on the old phone.",
+  "連不上線上伺服器，這支手機沒有被改動。等一下再輸入一次轉移碼":"Can't reach the online server. Nothing on this phone was changed. Enter the transfer code again in a moment.",
+  "兒童模式要先通過家長確認，才能產生轉移碼。":"In Kids Mode, a parent check is needed before creating a transfer code.",
+  "兒童模式：轉移碼會把整份存檔加密後暫放到線上伺服器，請家長先答一題。":"Kids Mode: a transfer code encrypts the whole save and holds it on the online server for a while. A parent needs to answer one question first.",
   /* 所有頁面共用的頂欄（開發者 11/14 選定）：時辰鐘旁的小字（07w8-shichen.js clkPaint）、登船天數與節氣、右上角的官階與修為（07-legend.js meChip、06-cpu.js RANKT）。
      時辰全站一律寫成現代鐘點（11 pm–1 am…），英文玩家一看就懂；鐘面上的地支是 SVG 圖案，照舊 */
   "子時":"11 pm–1 am","丑時":"1–3 am","寅時":"3–5 am","卯時":"5–7 am","辰時":"7–9 am","巳時":"9–11 am","午時":"11 am–1 pm","未時":"1–3 pm","申時":"3–5 pm","酉時":"5–7 pm","戌時":"7–9 pm","亥時":"9–11 pm",
