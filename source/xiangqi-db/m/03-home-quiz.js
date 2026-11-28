@@ -42,7 +42,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
     ${T("k1","#/stats","🏅","我的戰績","","勝負・段位・🎯 我的棋力")}
     ${T("k3","#/openings","📊","我的開局","","你常用的開局・勝率・中局正招")}
     ${T("k2","#/redo","🔁","錯棋重練","","從下錯的那一步再下一次，練到對")}
-    ${T("k3","#/quiz","🎯","棋力測驗","hQuiz","每級 2 題・估出你的段位（新手～專2）")}
+    ${T("k3","#/quiz","🎯","棋力測驗","hQuiz","約 8～20 題・估出你的段位（新手～專2）")}
     ${T("k1","#/theme","🧠","主題訓練","","將軍・捉雙・抽將・牽制…選一個主題連做 10 題")}
     ${T("k1","#/canju","🍵","一盞茶殘局","","每天 3 題・5～8 分鐘・古譜與大師殘局")}
     ${T("k1","#/guess","🎓","猜著法","hGuess","跟著大師名局一步步猜下一手・練局面判斷")}
@@ -95,7 +95,7 @@ ${OFF?(()=>{const n=Object.keys(arenaStamps()).length,t=arenaTitle();return`<but
   if(!OFF)api("/state").then(st=>{const e=v.querySelector("#hAi");if(e)e.innerHTML=st.running?'<span class="live">直播中</span>':st.result?"上一盤："+(st.result.w?PLAYER[st.result.w]+"勝":"和局"):"按進去可以開始"}).catch(()=>{});
   return{stop:()=>offNet.forEach(f=>f())}}
 
-// ================= 棋力測驗：11 個等級（業1～業9、專1、專2）各出 2 題，由淺到深 =================
+// ================= 棋力測驗（原本 11 個等級各出 2 題；意見回饋 301 起改成下面的自適應，約 8～20 題；W207 改了首頁入口那句） =================
 // 題目來自公版古譜，答案由 Pikafish 算好存在題庫裡（離線也能測）。等級只是估計，不是正式段位。
 /* ================= 棋力測驗：自適應（CAT，意見回饋 301） =================
    題目參數（3PL 試題反應理論）：難度 b＝(等級−7)×0.55、鑑別度 a 由「最佳著比第二好多幾分 gap」推、猜對率 c＝0.05；
@@ -119,6 +119,9 @@ const QZ_TAG_ORDER=["抽將","捉雙","閃擊","牽制","引離","悶宮","殺�
 function qzTag(q){const T=(q&&q.tags)||[];return QZ_TAG_ORDER.find(k=>T.includes(k))||""}
 function qzTagDesc(k){try{const T=typeof THEMES!=="undefined"&&THEMES.find(x=>x[0]===k);return T?T[1]+"。":""}catch(e){return""}}
 function qzWeak(A){const c={};for(const x of A||[])if(!x.ok&&x.tg)c[x.tg]=(c[x.tg]||0)+1;const L=Object.entries(c).sort((a,b)=>b[1]-a[1]||QZ_TAG_ORDER.indexOf(a[0])-QZ_TAG_ORDER.indexOf(b[0]));return L[0]||null}
+/* W207（外部審核第 21 項）：題庫裡有盤面、輪走方、答案（f→t）都一樣的題（q60／q80 一題標業 3、一題標業 4，另外 q2／q4、q6／q10、q95／q103），
+   同一份測驗可能出兩次、兩個等級互相打架。載入時去掉重複的，只留先出現（題號小）的那一題 */
+function qzDedup(items){const seen=new Set(),out=[];for(const x of items||[]){const k=x.board+"|"+x.side+"|"+x.f+"|"+x.t;if(seen.has(k))continue;seen.add(k);out.push(x)}return out}
 function Quiz(v){
   setTop("棋力測驗","#/");setTabs(false);
   let D=null,ans=[],sel=-1,LEGAL=[],q=null,board=null,answered=false,mu=0,est={th:0,se:1},asked=new Set(),t0=0,share=true,sid=0;   /* 意見回饋 302：不再顯示匿名分享的勾選框 */
@@ -146,7 +149,7 @@ function Quiz(v){
     {const gr=v.querySelector("#goR");if(gr)gr.onclick=()=>resume()}   /* 回饋 838（開發者 11/9 選：全模式中斷接續） */
     (v.querySelector("#go")||{}).onclick=()=>start(-3);(v.querySelector("#go2")||{}).onclick=()=>start(-1.2);const g3=v.querySelector("#go3");if(g3)g3.onclick=()=>start(last.th)}
   const RK=["新手","入門1","入門2","入門3","業1","業2","業3","業4","業5","業6","業7","業8","業9","專1","專2"],D0rank=th=>RK[qzTier(th,RK.length)];
-  const cal=()=>{const CAL=store.get("calib",null);if(CAL&&CAL.irt)for(const it of D.items){const k=CAL.irt[it.id];if(k&&isFinite(k.a)&&isFinite(k.b)){it.ca=k.a;it.cb=k.b}}};
+  const cal=()=>{if(D&&!D._dd){D.items=qzDedup(D.items);D._dd=1}const CAL=store.get("calib",null);if(CAL&&CAL.irt)for(const it of D.items){const k=CAL.irt[it.id];if(k&&isFinite(k.a)&&isFinite(k.b)){it.ca=k.a;it.cb=k.b}}};
   async function start(m0){try{D=D||await api("/quiz/data")}catch(e){return toast(e.message)}
     cal();runClear();   /* 回饋 838（開發者 11/9 選：全模式中斷接續）：開新的一份＝上一份沒做完的就不接了（照原本：答過的題已經記進 quizLog，下次打開再送去校正） */
     mu=m0;ans=[];asked=new Set();est={th:m0,se:1};sid=Date.now();layout();next()}
