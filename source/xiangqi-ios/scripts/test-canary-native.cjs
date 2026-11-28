@@ -555,7 +555,8 @@ function repoCopy() {
 function breakFx() {
   const { R: P } = repoCopy(), d = tmp("xq-w187c-"), runJs = path.join(d, "fx-run.cjs"), cmpJs = path.join(d, "fx-cmp.cjs");
   fs.writeFileSync(runJs, BREAK_FX_RUN); fs.writeFileSync(cmpJs, BREAK_FX_CMP);
-  const env = { PATH: process.env.PATH, HOME: process.env.HOME, TMPDIR: process.env.TMPDIR || "" };
+  /* #262 第八輪：Windows 的 os.tmpdir() 看 TEMP、TMP、SystemRoot（還有 windir、USERPROFILE），沒帶就 mkdtemp 失敗；只帶有值的，不帶 undefined */
+  const env = Object.fromEntries(["PATH", "HOME", "TMPDIR", "TEMP", "TMP", "SystemRoot", "windir", "USERPROFILE"].filter((k) => process.env[k] != null).map((k) => [k, process.env[k]]));
   const go = (js, args, what) => { const r = cp.spawnSync(process.execPath, [js, ...args], { encoding: "utf8", maxBuffer: 64e6, timeout: 600000, env }); if (r.status !== 0) throw new Error("行為鎖的子行程沒跑完（" + what + "）：" + r.stdout + r.stderr) };
   const keys = path.join(d, "keys.json"), out = path.join(d, "fx.json"), errs = path.join(d, "errs.json");
   go(runJs, ["keys", CANARY, "-", keys], "列壞樣本");
@@ -579,11 +580,13 @@ const PRE = (() => {
   if (!Array.isArray(list) || list.length < DATA_LOCK.length) dataErr.push("項目不准刪");
   else DATA_LOCK.forEach((h, i) => { if (sha(JSON.stringify(list[i])).slice(0, 16) !== h) dataErr.push("第 " + (i + 1) + " 項改了或順序換了") });
   for (const x of dataErr) errs.push("canary-native-kinds.json " + x);
-  const got = breakFx(), fxBad = [];
+  let got; try { got = breakFx() } catch (e) { for (const d of made) try { fs.rmSync(d, { recursive: true, force: true }) } catch (x) {} throw e }
+  const fxBad = [];
   for (const [k, hh] of Object.entries(BREAK_FX)) if (!(k in got) || sha(got[k].join("\n")).slice(0, 16) !== hh) fxBad.push(k);
   for (const k of Object.keys(got)) if (!got[k].length) fxBad.push(k + "（什麼檔都沒改到）");
   if (fxBad.length) errs.push("壞樣本實際改的檔或內容變了（行為鎖）：" + fxBad.join("、"));
-  if (errs.length) throw new Error("載入 canary-native.js 之前的完整性檢查沒過（#262 第七輪）：\n" + errs.join("\n"));
+  /* #262 第八輪：丟錯時測試檔沒載完，test.after 不會跑，暫存副本（約 8.5 MB）要在這裡先清掉 */
+  if (errs.length) { for (const d of made) try { fs.rmSync(d, { recursive: true, force: true }) } catch (e) {} throw new Error("載入 canary-native.js 之前的完整性檢查沒過（#262 第七輪）：\n" + errs.join("\n")) }
   return { u2028, whole, now, list, dataErr, got, fxBad };
 })();
 ({ KINDS, exitOf, toolSha, run } = require("./canary-native.js"));
