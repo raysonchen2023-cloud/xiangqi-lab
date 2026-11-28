@@ -189,6 +189,15 @@ input,select{font:inherit;font-size:16px;color:inherit}
   .view.fixed:has(> #bbox)>*{grid-column:2;min-width:0}
   .view.fixed:has(> #bbox)>#bbox{grid-column:1;grid-row:1 / span 30;align-self:start;padding:6px 0;height:calc(100cqh - 12px);width:calc((100cqh - 24px) * 560 / 620)}
   .view.fixed:has(> #bbox)>#bbox svg{height:100%;width:100%;max-width:none;max-height:none}
+  /* #255（11/27 開發者 iPad 實機：「3D場景切換沒有滿版 重新設計」）：3D 模式左欄不照平面棋盤 560:620 的比例，改成把寬度讓給 3D，右欄只留控制項要的寬（至少 320、最多 400、平常 30%；1180 寬時 3D 769×749、按鈕一列排得下），3D 上下撐滿。切回平面棋盤時 .park3d 只是 style display:none（還在 #bbox 裡），所以要排除，平面棋盤照原本 560:620 */
+  .view.fixed:has(> #bbox > .park3d:not([style*="display: none"]):not([style*="display:none"]))>#bbox{width:calc(100cqw - 24px - 16px - clamp(320px, 30cqw, 400px))}
+  /* #255（11/27 開發者選「直式著法紀錄撐滿」）：右欄下面不再空 3／4。著法條排到右欄最後（order:1，在按鈕列之後），改成紅黑兩欄、一回合一行的直式著法表，
+     高度由 05-settings stripFitV 量到右欄底（CSS 量不到前面幾格多高）、可上下捲；黑方先走時第一步放右欄。還沒下棋時寫「著法會記在這裡」 */
+  .view.fixed:has(> #bbox)>#strip{order:1;display:grid;grid-template-columns:1fr 1fr;align-content:start;gap:5px 6px;overflow-x:hidden;overflow-y:auto;padding:8px 4px;min-height:0;border-top:1px solid var(--line);margin-top:6px}
+  .view.fixed:has(> #bbox)>#strip>.chip{border-radius:10px;text-align:left;overflow:hidden;text-overflow:ellipsis}
+  .view.fixed:has(> #bbox)>#strip>.chip.b:first-child{grid-column:2}
+  .view.fixed:has(> #bbox)>#strip:empty::before{content:"著法會記在這裡";grid-column:1 / -1;padding:10px 6px;color:var(--muted);font-size:13px}
+  html[lang^=en] .view.fixed:has(> #bbox)>#strip:empty::before{content:"Moves will appear here"}
 }
 .evline{flex:none;height:6px;margin:0 10px;border-radius:3px;background:var(--blk);overflow:hidden;display:flex}
 .evline div{background:var(--red);height:100%;width:50%;transition:width .5s}
@@ -1028,6 +1037,8 @@ html[data-theme=dark]:not([data-era]) .shp-rd strong.kl,html[data-era=qin] .shp-
 .shp-page.scw-l .shl-board{gap:.32cqw;font-size:1.55cqw}.shp-page.scw-l .shl-board b{font-size:2.45cqw;margin-bottom:.26cqw}.shp-page.scw-l .shl-board .shl-k{margin-top:.2cqw}
 html:is([data-fz=l],[data-fz=xl],[data-fz=xxl],[data-fz=max]) .shp-page.scw-l .shl-board{font-size:calc(1.55cqw * var(--fz));padding:.78cqw 1.17cqw;min-height:0}html:is([data-fz=l],[data-fz=xl],[data-fz=xxl],[data-fz=max]) .shp-page.scw-l .shl-board b{font-size:calc(2.45cqw * var(--fz))}   /* 大字模式：橫式木牌字級照 --fz 放大（上面那條優先度比大字規則高，不另寫字會固定）；位置在 07f shpBoardFz */
 .shp-page.scw-l .shs-card{padding:1.6cqw 2.2cqw;font-size:1.7cqw}.shp-page.scw-l .shs-card b{font-size:2.3cqw}.shp-page.scw-l .shs-card p{margin-top:.5cqw}
+/* #255（11/27 iPad 13 吋直向起航）：07fl 直向填滿寬度時把圖上緣裁掉（--xflT），top:15% 的說明卡會跑到看得到的最上面，第一行被頂欄蓋住、跟左上站名條疊在一起；至少放在看得到的上緣＋站名條（64px）下面 */
+#view.xfl-port .shp-page .shs-card{top:max(15%, calc(var(--xflT,0px) + 64px))}
 .shl-more{padding-top:10px}.shl-more .port-say{margin-bottom:8px}
 
 /* 意見回饋 712：渡口圖上的歷史景點（白底墨字小牌，跟金色的三扇門分開） */
@@ -1731,7 +1742,7 @@ html.xq-ipcompat body #topbar{padding-left:76px!important}
       if(!window.caches)return go();caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k.indexOf("xqlab-app-")===0}).map(function(k){return caches.delete(k)}))})
         .then(function(){return navigator.serviceWorker&&navigator.serviceWorker.getRegistration()}).then(function(r){return r&&r.update()}).catch(function(){}).then(go)}};setTimeout(chk,4000)})();
 </script>
-<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261127-1641";</script>
+<script>window.XQ_OFFLINE=true;window.XQ_BUILD="20261128-1606";</script>
 <script src="core.js"></script>
 <script src="engine.js"></script>
 <script src="local.js"></script>
@@ -6459,7 +6470,16 @@ function renderStrip(box,moves,curIdx,onPick){
   const key=moves.map(m=>m.cn+(m.q||"")).join()+"|"+curIdx;if(box.dataset.k===key)return;box.dataset.k=key;box.innerHTML="";
   moves.forEach((m,i)=>{const c=document.createElement("button");c.className="chip "+(m.by||(i%2?"b":"r"))+(i===curIdx?" on":"");
     c.innerHTML=`<span class="n">${i+1}</span>${esc(m.cn)}${m.q&&m.q!=="—"?`<span class="q" style="color:${QC[m.q]}">${m.q}</span>`:""}`;if(onPick)c.onclick=()=>onPick(i);box.append(c)});
-  const on=box.children[curIdx<0?box.children.length-1:curIdx];if(on)box.scrollLeft=on.offsetLeft-box.clientWidth/2+on.offsetWidth/2;else box.scrollLeft=box.scrollWidth}
+  const on=box.children[curIdx<0?box.children.length-1:curIdx];if(on)box.scrollLeft=on.offsetLeft-box.clientWidth/2+on.offsetWidth/2;else box.scrollLeft=box.scrollWidth;
+  if(typeof stripFitV==="function")stripFitV(box,on)}   /* test-i18n 等只抽 renderStrip 出來跑，沒有 stripFitV 也不能壞 */
+/* #255（11/27 開發者選「直式著法紀錄撐滿」）：平板橫向兩欄時（m.css 把 #strip 改成直式兩欄），高度量到右欄底、捲到目前那一步；不是直式就把高度還原 */
+const STRIP_V_MQ="(orientation:landscape) and (min-width:900px) and (min-height:600px)";
+function stripFitV(box,on){try{if(!box)return;const v=box.parentElement;
+  if(!v||typeof matchMedia!=="function"||!matchMedia(STRIP_V_MQ).matches||getComputedStyle(box).display!=="grid"){if(box.style.height)box.style.height="";return}
+  box.style.height="0px";const vr=v.getBoundingClientRect(),pb=parseFloat(getComputedStyle(v).paddingBottom)||0,t=box.getBoundingClientRect().top;
+  box.style.height=Math.max(96,Math.floor(vr.top+v.clientHeight-pb-t-8))+"px";
+  const c=on||box.lastElementChild;if(c){const br=box.getBoundingClientRect(),cr=c.getBoundingClientRect();box.scrollTop+=cr.top-br.top-box.clientHeight/2+cr.height/2}}catch(e){}}
+if(typeof addEventListener==="function")addEventListener("resize",()=>{try{const b=document.getElementById("strip");if(b)stripFitV(b)}catch(e){}});
 function actionBar(box,items){box.innerHTML="";const out={};for(const[id,icon,label,fn,pri]of items){const b=document.createElement("button");if(pri)b.className="pri";
   b.innerHTML=`<span class="ic" aria-hidden="true">${icon}</span>${label}`;b.setAttribute("aria-label",String(label).replace(/<[^>]*>/g,""));b.dataset.act=id;b.onclick=()=>{vibrate(8);fn()};   /* 11/17 第 20 輪 D N4：data-act＝按鈕的代號（bag、undo…），07bht、07bhg 用它找悔棋、寶物鈕（英文介面 aria-label 是 Undo／Items） */
   if(/（剩 0）/.test(String(label))){b.disabled=true;b.title="用完了"}   /* 11/11 AI 模擬玩家報告問題 7：提示棋、悔棋符這類寫著「（剩 0）」的按鈕直接停用，不讓人按了才說沒有 */
@@ -6812,6 +6832,7 @@ JOURNEY_KEYS.push("m_jhMzDeep");   /* W87-2 換層（11/26，07z9m-maze.js jhMzD
    其他舊存檔格沒有這些鍵，讀進來就是迷宮從頭開始（以前沒分開記，分不出是哪段旅程的）。 */
 const JH_MZ_SAVE_SIDS=["central","cross_palace","pawn","elephant","screen","horse","same_cannon","opposite_cannon","advisor_corner","palace_horse"],JH_MZ_SAVE_LAYERS=3;
 for(const s of JH_MZ_SAVE_SIDS)for(let n=1;n<=JH_MZ_SAVE_LAYERS;n++){const k="m_"+(s==="central"?"jhMaze":"jhMaze_"+s)+(n>1?"_L"+n:"");JOURNEY_KEYS.push(k,k+"Ptr")}
+JOURNEY_KEYS.push("m_jhMzKey");   /* W172（11/27，07z9m-vault.js）：jhMzKey＝各派的漕運密室鑰匙拿到沒、密室開了沒、殘譜讀過沒，跟旅程走。另外加一行，不動上面清單的字 */
 const JK=new Set(JOURNEY_KEYS),SLOT_N=3;
 /* 意見回饋 668：舊玩家判斷要在首頁畫出來以前做（首頁會順手寫一些旅程鍵，例如 lingN），所以這裡直接讀 localStorage；null＝已經過渡過了 */
 /* 開發者 11/6 修：全新玩家第一次打開，開機時就會寫進 era、jStars、playSec 這些鍵，原本的判斷會把新玩家當成舊玩家，跳出「存檔功能上線了、角色是小帥Q版」。改成只看真的玩過才會有的鍵（新手引導做完、修為、戰績、故事進度） */
@@ -11278,7 +11299,13 @@ function shpScw(v,pg){const P=v&&v.querySelector(".shp-page.cq"),img=P&&P.queryS
 function shpPage(img,cap,sub,spots,over){return`<div class="shp-page cq"><img src="data/shipmap/${img}.webp" alt="">${over||""}<div class="shp-cap"><b>${cap}</b><small>${sub}</small></div>${spots.map(([id,x,y,b,sm,cl])=>`<button class="shp-spot${cl?" "+cl:""}" id="${id}" style="left:${x}%;top:${y}%"><b>${b}</b>${sm?`<small>${sm}</small>`:""}</button>`).join("")}</div>`}
 const shpOn=(v,q,fn)=>{const e=v.querySelector(q);if(e)e.onclick=()=>{vibrate(5);fn()}};
 /* 入口按鈕靠圖邊時往裡推，不超出圖（字長短不一，例如擂主名字） */
-function shpFit(v){requestAnimationFrame(()=>{const P=v.querySelector(".shp-page.cq");if(!P||P.dataset.hmc)return;const R=P.getBoundingClientRect();if(!R.width)return;P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{const r=b.getBoundingClientRect(),m=6;let d=0;if(r.left<R.left+m)d=R.left+m-r.left;else if(r.right>R.right-m)d=R.right-m-r.right;if(d)b.style.left="calc("+b.style.left+" + "+Math.round(d)+"px)"})})}
+/* #255（11/27 iPad 13 吋橫向星槎書架）：07fl 把橫式圖往左推裁掉左邊時，標題條（.shp-cap）的「船艙書架」被切掉一半。照渡口（portScw，審查 #165 第七輪）的 --pcL 同一招套到星槎船上每一頁：
+   照 style.marginLeft 負值算 --pcL、標題條往內縮；直圖是 0。渡口已經掛過（P._pcLmo）就不重掛；不改 07fl（工單範圍） */
+function shpCapL(P){try{if(!P||P._pcLmo||!window.MutationObserver)return;
+  if(!document.getElementById("shpCapCss")){const st=document.createElement("style");st.id="shpCapCss";st.textContent=".shp-page.scw-l>.shp-cap{padding-left:calc(16px + var(--pcL,0px))}";document.head.append(st)}
+  const fit=()=>{const ml=parseFloat(P.style.marginLeft)||0,v2=P.dataset.scw?Math.max(0,-ml)+"px":"0px";if(P.style.getPropertyValue("--pcL")!==v2)P.style.setProperty("--pcL",v2)};
+  P._pcLmo=new MutationObserver(fit);P._pcLmo.observe(P,{attributes:true,attributeFilter:["style","data-scw"]});fit()}catch(e){}}
+function shpFit(v){try{shpCapL(v.querySelector(".shp-page.cq"))}catch(e){}requestAnimationFrame(()=>{const P=v.querySelector(".shp-page.cq");if(!P||P.dataset.hmc)return;const R=P.getBoundingClientRect();if(!R.width)return;P.querySelectorAll(".shp-spot,.po-sight").forEach(b=>{const r=b.getBoundingClientRect(),m=6;let d=0;if(r.left<R.left+m)d=R.left+m-r.left;else if(r.right>R.right-m)d=R.right-m-r.right;if(d)b.style.left="calc("+b.style.left+" + "+Math.round(d)+"px)"})})}
 /* 棋話一頁 #/ship/lesson（意見回饋 732：原名「這站棋理」）：船頭、說書人的燈籠和木牌；木牌上寫棋理卡，三團星光＝看示範棋局、這一朝的棋、讀這一章 */
 function ShipLesson(v){setTop("📘 棋話一頁","#/adventure");setTabs(false);v.className="view";const k=shipHere(),_ls=(()=>{try{const L=store.get("shipLessonSeen",{})||{};if(!L[k]){L[k]=Date.now();store.set("shipLessonSeen",L)}}catch(e){}})(),T=SHIP_STOP[k]||{},Ls=SHIP_LESSON[k]||{},ap=shipAppr(),lrn=shipLearned(k),H=typeof HIST!=="undefined"?HIST[k]:null,ch=SHIP_PLAN[k]&&SHIP_PLAN[k].ch,Wo=shipWho(k,Ls.openBy),Wd=shipWho(k,Ls.doneBy);
   const board=`<div class="shl-board"><b>${esc(Ls.t||T.img||"")}${lrn?" ✅":""}</b>${(Ls.x||[]).map(x=>`<p>${esc(x)}</p>`).join("")}${Ls.k?`<p class="shl-k">口訣：${esc(Ls.k)}</p>`:""}</div>`;
@@ -11486,10 +11513,45 @@ try{document.addEventListener("change",e=>{const t=e.target;if(!t||t.id!=="shpTi
 function shpGyroTry(){return new Promise(ok=>{const f=e=>{if(e.beta==null)return;clearTimeout(t);removeEventListener("deviceorientation",f);ok(true)},
   t=setTimeout(()=>{removeEventListener("deviceorientation",f);ok(false)},1200);addEventListener("deviceorientation",f)})}   /* 電腦或沒有陀螺儀的手機收不到資料，就提示改用拖動 */
 
+/* #255 第 2 項（開發者 11/27 iPad 實機：「星槎的頭尾都被切斷，重繪製一張橫向的」）：iPad 橫向時星槎主畫面改用橫式圖 ship_map_l1610（2560×1600，Windows Claude 1 出圖，#255 最後一則留言）。
+   座標是 iMac Claude 2 在瀏覽器量的圖的 %（hs 入口標籤、late 別的模組晚掛的標籤、walk 走路節點；身高照圖上石桌比原圖大約 1.2 倍）。
+   判斷照 07sw scwKind（可用寬 ÷ 可用高 > 1.04、短邊 ≥ 600）；轉向跨過門檻就整頁重畫（走路角色、入口、視差層都照新的那張重掛）。
+   橫式圖上不掛 WebGL 立體視差（sm2_* 圖層和深度圖都是照 896×1200 做的，照渡口 PORT_L1610 的做法），07w6 物件說明先關（.shp-in 標 data-scw，座標是原圖像素）。
+   登記在 07sw 的 SCW：07w7 的天氣照它找到原本的 shipMap（固定顏色 fix 照舊），開發用開關、SCW_CDN、載不到記 SCW_BAD 都照 07sw。
+   橫式圖跟其他 l1610 一樣不進公開倉庫，發布時上 CDN；載不到（同源 404 → 00-util 改 CDN 也失敗）就退回原圖重畫 */
+const SHP_LKEY="shipmap/ship_map";
+const SHPM_L1610={f:"shipmap/ship_map_l1610",w:2560,h:1600,
+  hs:{parks:[19,27],lesson:[75,17],pz:[51,52],shelf:[33,47],read:[36,64],bag:[46,80],sail:[16,84],port:[70,75]},late:{"lk-w":[48.5,55],"ex-set":[59,41],"ex-home":[66,93]},
+  walk:{W:2560,H:1600,el:35,h:[.105,67,.0012],home:"home",look0:[52,72],
+    N:{home:[58,68],pz:[52,67.5],bag:[49,71.5],read:[44,68.5],shelf:[40,62],parks:[39,58],d1:[42,76],sail:[30,73],g1:[62,68],port:[66.5,74],r1:[63,58],r2:[69,50],r3:[73,40.5],lesson:[74,31.5]},
+    E:"home-pz pz-bag bag-read read-shelf shelf-parks read-d1 d1-sail home-g1 pz-g1 g1-port g1-r1 r1-r2 r2-r3 r3-lesson",
+    HS:{pz:["pz",51,58,"bow"],bag:["bag",46,76,"wave"],read:["read",38,68,"bow"],shelf:["shelf",37,53,"wave"],parks:["parks",22,33,"wave"],sail:["sail",19,80,"cheer"],port:["port",72,80,"wave"],lesson:["lesson",75,24,"bow"]}}};
+/* ready:false＝圖還沒上 CDN：只有開發用開關（localStorage xqScwDev=1）才用；發布時 Windows Claude 1 把 ship_map_l1610.webp 上 CDN 的同一個 PR 改成 true（照 07sw 條目的 ready、07z HMW_CL_CDN） */
+if(typeof SCW!=="undefined")SCW[SHP_LKEY]={ready:true,f:SHPM_L1610.f,w:SHPM_L1610.w,h:SHPM_L1610.h,S:{},exit:null,safe:{l:.06,r:.06,t:.04,b:.06},walk:SHPM_L1610.walk,fx:null,sw7:{}};
+/* 現在可用的寬高（框 M 還沒放進去時照視窗估：頂欄約 56、底部選單約 64）→ "l1610"／"" */
+function shpLKind(M){if(typeof scwEntry!=="function"||typeof scwKind!=="function"||!scwEntry(SHP_LKEY))return"";const de=document.documentElement,vw=de.clientWidth||innerWidth,vh=de.clientHeight||innerHeight;
+  if(!M||!M.isConnected)return scwKind(vw,vh-120,vw,vh);
+  const tb=document.getElementById("tabbar"),r=M.getBoundingClientRect(),bot=tb&&tb.offsetParent!==null&&tb.getBoundingClientRect().height?tb.getBoundingClientRect().top:innerHeight;
+  return scwKind(r.width,Math.max(320,Math.round(bot-r.top)),vw,vh)}
+/* 07w shipWalk 問這裡：橫式圖時用橫式圖的走路設定 */
+function shpWalkCfg(M){return M&&M.dataset&&M.dataset.shpL?SHPM_L1610.walk:null}
+/* 開頁後：橫式圖載不到就退回原圖（等 00-util 的 CDN 補抓也失敗才退，照 07sw scwFail）；07w8 爛柯懸棋掛上來時換到橫式圖的石桌 */
+function shpLMount(v,paint){const M=v.querySelector(".shp-map.full");if(!M||!M.dataset.shpL)return;const im=M.querySelector("img.shp-base"),hl=M.querySelector(".shp-hl");
+  /* 8 個入口換到橫式圖的位置（Voyage 模板照舊寫原圖的 %，test-toast-pass-1117 等既有測試看它；07sp、07x 推回畫面內照舊從這裡的位置算） */
+  M.querySelectorAll(".shp-hl>[data-hs]").forEach(b=>{const p=SHPM_L1610.hs[b.dataset.hs];if(p){b.style.left=p[0]+"%";b.style.top=p[1]+"%"}});
+  if(im){const bad=()=>{const u=String(im.getAttribute("src")||"");if(im.dataset&&im.dataset.cdnTry&&typeof XQ_CDN==="string"&&u.indexOf(XQ_CDN)===0&&im._scwCdn!==u){im._scwCdn=u;return}
+      if(typeof SCW_BAD!=="undefined")SCW_BAD[SHP_LKEY]=1;v._shpL="";if(v.isConnected&&M.isConnected)paint()};
+    im.onerror=bad;if(im.complete&&!im.naturalWidth&&im.getAttribute("src"))bad()}
+  /* 別的模組晚一點掛進 .shp-hl、照原圖 % 擺的：07w8 爛柯懸棋 .lk-w、07w9 天字客房 .ex-set、回首頁 .ex-home（這兩個檔不改，掛上來時換到橫式圖的位置） */
+  if(hl){const put=()=>{for(const c in SHPM_L1610.late){const w=hl.querySelector(":scope>."+c);if(w&&w.dataset.shpL!=="1"){w.dataset.shpL="1";w.style.left=SHPM_L1610.late[c][0]+"%";w.style.top=SHPM_L1610.late[c][1]+"%"}}};
+    put();if(window.MutationObserver)new MutationObserver(put).observe(hl,{childList:true})}}
+
 /* 意見回饋 726（開發者 11/7）：星槎圖滿版——圖（3:4）蓋滿頂欄到底部選單之間，左右多出來的裁掉；入口照圖的百分比放在 .shp-in 裡，裁到邊的入口往內推，一律看得到 */
 function shpMapFit(v){requestAnimationFrame(()=>{const M=v.querySelector&&v.querySelector(".shp-map.full");if(!M||!M.isConnected)return;const I=M.querySelector(".shp-in");
+  {const V=M.closest(".view"),k=shpLKind(M);if(V&&V._shpPaint&&k!==(M.dataset.shpL||"")){V._shpL=k;V._shpPaint();try{if(typeof exSync==="function")exSync()}catch(e){}return}}   /* #255：轉向跨過門檻＝整頁照另一張圖重畫；07w9 的天字客房、回首頁只在換頁時放，重畫完叫它再放一次 */
+  const IW=M.dataset.shpL?SHPM_L1610.w:896,IH=M.dataset.shpL?SHPM_L1610.h:1200;
   const tb=document.getElementById("tabbar"),r=M.getBoundingClientRect(),bot=tb&&tb.offsetParent!==null&&tb.getBoundingClientRect().height?tb.getBoundingClientRect().top:innerHeight;
-  const W=r.width,H=Math.max(320,Math.round(bot-r.top));M.style.height=H+"px";const s=Math.max(W/896,H/1200),w=896*s,h=1200*s;
+  const W=r.width,H=Math.max(320,Math.round(bot-r.top));M.style.height=H+"px";const s=Math.max(W/IW,H/IH),w=IW*s,h=IH*s;
   Object.assign(I.style,{width:w+"px",height:h+"px",left:Math.round((W-w)/2)+"px",top:Math.round((H-h)/2)+"px"});
   const R=M.getBoundingClientRect(),m=8,capH=(M.querySelector(".shp-cap")||{}).offsetHeight||0;I.querySelectorAll(".shp-hs").forEach(b=>{b.style.marginLeft="";b.style.marginTop="";const q=b.getBoundingClientRect();let dx=0,dy=0;
     if(q.left<R.left+m)dx=R.left+m-q.left;else if(q.right>R.right-m)dx=R.right-m-q.right;if(q.top<R.top+capH+m)dy=R.top+capH+m-q.top;else if(q.bottom>R.bottom-m)dy=R.bottom-m-q.bottom;
@@ -11498,8 +11560,9 @@ function shpMapFit(v){requestAnimationFrame(()=>{const M=v.querySelector&&v.quer
 /* ---------- 星槎頁 #/adventure ---------- */
 function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.className="view";if(typeof bhDockLate==="function")bhDockLate();   /* 11/16：偏航打完沒按回航、從左上角回來，補跑到站（07bh） */
   const paint=()=>{const ap=shipAppr(),D=shipDocked(),k=shipHere(),T=SHIP_STOP[k],O=ap?SHIP_ROUTE:shipOrder(),I=xpInfo(),nx=ap?null:shipNextStop();
+    if(v._shpL===undefined)v._shpL=shpLKind(null);const LE=v._shpL&&typeof scwEntry==="function"?scwEntry(SHP_LKEY):null;if(!LE)v._shpL="";   /* #255 iPad 橫向用橫式圖 */
     v.innerHTML=`<div class="pad shp">
-      <div class="shp-map full"><div class="shp-in"><img class="shp-base" src="data/shipmap/ship_map.webp?v=${SHP_IMGV}" alt="雲河星槎">${shpPxHtml()}<div class="px-sw px-hw"><div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs${shipLearned(k)?"":" hot"}" data-hs="pz" style="left:50%;top:43%${typeof shipMoreGold==="function"?shipMoreGold(k):""}">♟ 千秋殘局${shipLearned(k)?(typeof shipMoreHs==="function"?shipMoreHs(k):" ✓"):""}</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs${shipLearned(k)&&nx?" hot":""}" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
+      <div class="shp-map full${LE?" shp-l":""}"${LE?' data-shp-l="l1610"':""}><div class="shp-in"${LE?' data-scw="l1610"':""}><img class="shp-base" src="${LE?scwSrc(LE):"data/shipmap/ship_map.webp?v="+SHP_IMGV}" alt="雲河星槎">${LE?"":shpPxHtml()}<div class="px-sw px-hw"><div class="shp-hl"><button class="shp-hs" data-hs="parks" style="left:13%;top:37%">🪨 千秋石枰</button><button class="shp-hs" data-hs="lesson" style="left:80%;top:17%">📘 棋話一頁</button><button class="shp-hs${shipLearned(k)?"":" hot"}" data-hs="pz" style="left:50%;top:43%${typeof shipMoreGold==="function"?shipMoreGold(k):""}">♟ 千秋殘局${shipLearned(k)?(typeof shipMoreHs==="function"?shipMoreHs(k):" ✓"):""}</button><button class="shp-hs" data-hs="shelf" style="left:22%;top:53%">📚 書架</button><button class="shp-hs" data-hs="read" style="left:33%;top:73%">📖 讀這一章</button><button class="shp-hs" data-hs="bag" style="left:52%;top:79%">🎒 行囊</button><button class="shp-hs${shipLearned(k)&&nx?" hot":""}" data-hs="sail" style="left:17%;top:85%">⛵ 起航</button><button class="shp-hs" data-hs="port" style="left:80%;top:73%">⚓ 下船</button></div></div></div><div class="hc shp-cap"><b>⛵ ${esc(shipShort(k))}・${esc(T.place)}</b><small>🀄 Lv ${I.L}・《千秋棋話》${shipPages()}／13 頁・停靠 ${D.length}／13・🎚 ${esc(diffOf().n)}</small></div></div>
       ${ap?`<div class="card shp-ap"><b>📜 你是說書人的學徒</b><p class="muted">十三站都能去，各站的主場角色不會跟你說話。想用雲河七星的眼睛走一趟？開新的旅程會存到另一格，這段旅程不會被蓋掉。</p><button class="btn" id="spNew" style="width:100%">⚔ 開新的旅程</button></div>`:""}
       <div class="shp-route-x" hidden>${O.map((e,i)=>{const dk=D.includes(e),on=e===k,ok=shipLearned(e),isN=e===nx;return`<button class="shp-st${dk?" dk":" lk"}${on?" on":""}${ok?" ok":""}${isN?" nx":""}" data-st="${e}"><i>${dk?esc((ARENA[e]||{}).seal||"棋"):isN?"⛵":"🔒"}</i><span>${i+1}・${esc(shipShort(e))}</span></button>`}).join("")}</div>
       ${mainDoneHTML()}<div id="spRes"></div>
@@ -11516,7 +11579,7 @@ function Voyage(v){setTop("⛵ 雲河星槎","#/");setTabs(true,"#/");v.classNam
     on("#spNew",shipNewJourney);on("#spPort",()=>shipPort(k));on("#spParks",()=>{location.hash="#/journey/park"});
     if(typeof chdHomeMark==="function")chdHomeMark(v,k);   /* 意見回饋 774 故國舊夢：家鄉那一站的「🏠 故鄉」小標記 */
     if(typeof shipWalk==="function")shipWalk(v,k);   /* 開發者 11/8：玩家角色在甲板上走到入口再開（07w-shipwalk.js） */
-    shpMapFit(v);shpPx(v.querySelector(".shp-map.full"));if(!Voyage.rs){Voyage.rs=1;addEventListener("resize",()=>{const w=document.querySelector(".shp-map.full");if(w)shpMapFit(w.closest(".view")||document)})}
+    v._shpPaint=paint;shpLMount(v,paint);shpMapFit(v);shpPx(v.querySelector(".shp-map.full"));if(!Voyage.rs){Voyage.rs=1;addEventListener("resize",()=>{const w=document.querySelector(".shp-map.full");if(w)shpMapFit(w.closest(".view")||document)})}
     v.querySelectorAll("[data-st]").forEach(b=>b.onclick=()=>{const e=b.dataset.st;if(!D.includes(e)){vibrate(8);return toast(e===nx?"⛵ 圖上的「起航」就能開往"+shipShort(e):eraLockMsg(e))}vibrate(5);if(e===k)return;shipGoTo(e,()=>{if(v.isConnected)paint()})});   /* 意見回饋 697：航線換站＝換朝代（era 跟著換），播千秋穿梭 */
     {const r=v.querySelector("#spRoute .on");if(r)try{r.scrollIntoView({block:"nearest",inline:"center"})}catch(e){}}
     mainDoneBind(v);jResume(v.querySelector("#spRes"));if(typeof v7Try==="function")v7Try(v,"ship")};   /* 七星來訪（07j-visit.js）：沒選的六位偶爾來串門子 */
@@ -12477,6 +12540,12 @@ body.bhx-full.bhx-me .view.fixed>#bbox{box-shadow:inset 0 0 0 2px rgba(255,214,1
 @media (prefers-reduced-motion:reduce){#bhxOpp,#bhxTurn,body.bhx-full .view.fixed>#bbox{transition:none!important}}`;document.head.append(s)}
 function bhxFullOff(){try{if(typeof document==="undefined"||!document.body)return;const b=document.body,was=b.classList.contains("bhx-full");b.classList.remove("bhx-full","bhx-me");for(const id of["bhxMo","bhxTurn","bhxOpp"]){const e=document.getElementById(id);if(e)e.remove()}
   BHXF.on=false;if(was)setTimeout(()=>{try{dispatchEvent(new Event("resize"))}catch(e){}},0)}catch(e){}}   /* 3D 畫布照新的大小重排 */
+/* 11/27 Android 12 P0-3D bhx-back「十字鍵移完，落子按不下去」（iMac Claude 1 查）：#bhxTurn 為了不讓點擊穿透到齊轍模型，pointer-events:auto 而且把 pointerdown／click 全部攔下；
+   搖桿出來時原本固定移到 bottom:150px（.up），在 Android 12 量到標籤下緣 601、▲ 上緣 593，壓住 ▲ 上緣一截，字型、安全區不同時還可能更多，點 ▲ 就被標籤吃掉、游標不動。
+   改成照搖桿實際的上緣擺：標籤下緣在 ▲ 上面 8px；搖桿出現、收起（style 變）時馬上重擺，不等下一次 bhxFullSync。量不到（測試的假 DOM、還沒排版）就照舊用 .up 的 150px */
+function bhxTurnPos(tn,gp){const on=!!gp&&getComputedStyle(gp).display!=="none";tn.classList.toggle("up",on);let b="";
+  if(on&&typeof innerHeight==="number"&&gp.getBoundingClientRect){const r=gp.getBoundingClientRect();if(r&&r.height>0)b=Math.max(0,Math.round(innerHeight-r.top+8))+"px"}
+  if(tn.style&&tn.style.bottom!==b)tn.style.bottom=b}
 function bhxFullSync(st){try{if(typeof document==="undefined"||!document.body)return;if(!bhxFullOn(st)){if(BHXF.on||document.body.classList.contains("bhx-full"))bhxFullOff();return}
   const b=document.body,fresh=!b.classList.contains("bhx-full");BHXF_ST=st;bhxFullCss();b.classList.add("bhx-full");BHXF.on=true;if(fresh)setTimeout(()=>{try{dispatchEvent(new Event("resize"))}catch(e){}},0);
   let mo=document.getElementById("bhxMo");if(!mo){mo=document.createElement("button");mo.type="button";mo.id="bhxMo";mo.textContent="⋯";mo.setAttribute("aria-label","更多：回開頭畫面、本關棋規、聲音、寶物");mo.onclick=e=>{e.stopPropagation();try{vibrate(5)}catch(x){}bhxFullMenu()};b.append(mo)}
@@ -12484,7 +12553,7 @@ function bhxFullSync(st){try{if(typeof document==="undefined"||!document.body)re
   /* ChatGPT 接手 11/19：狀態標籤不開角色卡，也不能穿透到下面的齊轍模型。只存在於第一戰。 */
   for(const k of["onpointerdown","onpointerup","onpointermove","onclick","oncontextmenu"])tn[k]=e=>{e.preventDefault();e.stopPropagation()};
   const me=!st.result&&st.turn===st.human,txt=st.result?"":me?"輪到你":"星樞思考中…";if(tn.dataset.k!==txt){tn.dataset.k=txt;tn.textContent=txt}   /* 英文介面會被換成英文：照原文記在 data-k 比，不要每次重寫 */tn.hidden=!txt;tn.classList.toggle("me",me);b.classList.toggle("bhx-me",me);
-  try{const gp=document.querySelector(".view.fixed>#bbox .gpad");tn.classList.toggle("up",!!gp&&getComputedStyle(gp).display!=="none")}catch(e){}   /* 搖桿出來時標籤往上讓 */
+  try{const gp=document.querySelector(".view.fixed>#bbox .gpad");bhxTurnPos(tn,gp);if(gp&&!gp._bhxTo&&typeof MutationObserver==="function"){gp._bhxTo=new MutationObserver(()=>{const t=document.getElementById("bhxTurn");if(t)bhxTurnPos(t,gp)});gp._bhxTo.observe(gp,{attributes:true,attributeFilter:["style"]})}}catch(e){}   /* 搖桿出來時標籤往上讓（bhxTurnPos） */
   if(BHXF.intro!==st.id){BHXF.intro=st.id;let op=document.getElementById("bhxOpp");if(!op){op=document.createElement("div");op.id="bhxOpp";op.setAttribute("aria-hidden","true");b.append(op)}op.textContent="星樞・黑洞星盤";
     const rm=bhxFullRm();if(rm){op.classList.add("on");setTimeout(()=>{op.classList.remove("on")},2000)}else{setTimeout(()=>op.classList.add("on"),30);setTimeout(()=>op.classList.remove("on"),2530)}setTimeout(()=>{if(op.isConnected&&!op.classList.contains("on"))op.remove()},rm?2100:3100)}}catch(e){}}
 /* 「⋯」裡的選項（純函式：給測試看有哪些）；locked＝序局還沒打完 */
@@ -21101,9 +21170,9 @@ function shwHop(S,a,b,u,h0,h1){S.hy=h0+(h1-h0)*u;if(shwRM()){S.x=a[0]+(b[0]-a[0]
   if(u<p0){const k=u/p0;S.x=a[0];S.y=a[1];S.sq=[1+.12*k,1-.16*k];S.hy=h0}
   else if(u<p1){const v=(u-p0)/(p1-p0),s=Math.sin(Math.PI*v),hA=2.2+Math.abs(b[1]-a[1])*.35;S.x=a[0]+(b[0]-a[0])*v;S.y=a[1]+(b[1]-a[1])*v-hA*s;S.sq=[1-.08*s,1+.12*s];S.hy=h0+(h1-h0)*v}
   else{const k=(u-p1)/(1-p1),s=Math.sin(Math.PI*k);S.x=b[0];S.y=b[1];S.sq=[1+.1*s,1-.12*s];S.hy=h1}}
-/* 星槎主畫面（07f-ship.js 的 Voyage 呼叫） */
+/* 星槎主畫面（07f-ship.js 的 Voyage 呼叫）。#255：iPad 橫向用橫式圖時，走路設定照 07f shpWalkCfg（SHPM_L1610.walk，2560×1600） */
 function shipWalk(v,k){if(!SHIP_WALK_ON)return;const M=v.querySelector(".shp-map.full"),hl=M&&M.querySelector(".shp-hl");if(!hl)return;
-  shwMount({v,cfg:SHW_SHIP,root:M,frame:M.querySelector(".shp-in"),layer:hl,before:hl.firstChild,sel:"[data-hs]",keyOf:b=>b.dataset.hs,find:h=>v.querySelector(`[data-hs="${h}"]`),mem:"ship"})}
+  shwMount({v,cfg:(typeof shpWalkCfg==="function"&&shpWalkCfg(M))||SHW_SHIP,root:M,frame:M.querySelector(".shp-in"),layer:hl,before:hl.firstChild,sel:"[data-hs]",keyOf:b=>b.dataset.hs,find:h=>v.querySelector(`[data-hs="${h}"]`),mem:"ship"})}
 /* 渡口、驛站：滿版圖 .shp-page.cq（圖寬 100%，框＝圖的大小），入口是 .shp-spot（id）和 .po-sight（渡口 data-ps、驛站 id） */
 function shwPage(v,cfg,mem,gate){const P=v&&v.querySelector(".shp-page.cq");if(!P||!cfg)return;
   const kOf=b=>b.id||(b.dataset.ps!=null?"ps"+b.dataset.ps:""),fd=h=>/^ps\d+$/.test(h)?P.querySelector(`[data-ps="${h.slice(2)}"]`):P.querySelector("#"+h);
@@ -22715,27 +22784,41 @@ const SHW_HOMEMAP_L1610={W:2560,H:1600,el:40,h:[.052,70,.0008],look0:[50,99],
   HS:{hmShip:["ship",54,33,"wave"],hmBattle:["arch",31,38,"bow"],hmLearn:["gate",79,40,"bow"],hmRec:["brd",29,63,"wave"],hmQuick:["tbl",50,68,"bow"]}};
 const HMW={p34:{f:"home_p34",w:1536,h:2048,S:HM_SPOTS_P34,sl:1.4,safe:{l:.06,r:.06,t:.06,b:.10},walk:SHW_HOMEMAP_P34},
   l1610:{f:"home_l1610",w:2560,h:1600,S:HM_SPOTS_L1610,sl:1.4,safe:{l:.12,r:.12,t:.05,b:.10},walk:SHW_HOMEMAP_L1610}};
+/* 11/28 #255 第 4 項（開發者 iPad 實機：經典世界首頁橫向只有中間一條）：千秋時光之苑的四季日夜 8 張也有橫版 home_classic_<季>[_night]_l1610（2560×1600，Windows Claude 1 出圖，
+   構圖對齊 home_l1610，所以入口、主張紙條、走路節點都沿用 l1610 那一組；只有秋夜的書院山門（hmLearn）畫偏了，往右 9、往上 22 像素＝x +0.35%、y −1.4%）。
+   經典世界的 sw7HomeWx() 一定回傳 classic_<季>[_night]，在這 8 個裡面就換橫版；直版（p34）沒有經典世界的圖，照舊用直式變體。
+   圖跟 home_l1610 一樣不在公開倉庫，照發布流程上 CDN；HMW_CL_CDN＝false 時正式玩家照舊，只有開發用開關（localStorage xqScwDev=1，跟 07sw 同一個）才用；上 CDN 的同一個 PR 改成 true */
+let HMW_CL_CDN=true;
+const HMW_CL=new Set(["classic_spring","classic_spring_night","classic_summer","classic_summer_night","classic_autumn","classic_autumn_night","classic_winter","classic_winter_night"]),HMW_CL_IMGV="1128";
+const HMW_CL_FIX={classic_autumn_night:{hmLearn:[.35,-1.4]}};
+function hmwClOn(){if(HMW_CL_CDN)return true;try{return localStorage.getItem("xqScwDev")==="1"}catch(e){return false}}
+function hmwWv(){try{return typeof sw7HomeWx==="function"?sw7HomeWx()||"":""}catch(e){return""}}
+/* 現在這一刻首頁該用經典世界的哪張橫版（不是經典世界、沒開、或這張載不到過＝""） */
+function hmwClWv(){const wv=hmwWv();return wv&&HMW_CL.has(wv)&&hmwClOn()&&!HMW_BAD.cl?wv:""}
 const HMW_BAD={};   /* 這次開 App 載不到的寬版（退回原圖，不再試） */
 /* W109（iMac Claude 2 審 #155 時發現，線上就有）：00-util 在 window 用擷取監聽，同源圖片載不到時先把 src 改成 XQ_CDN、記 cdnTry=1，
    同一次事件接著輪到這裡的 onerror。以前這裡馬上退回原圖，就把 CDN 補抓蓋掉了。現在（跟 PR #155 場景頁 07sw 的做法一樣）：src 已經指向 XQ_CDN、cdnTry 剛設好時
    記住正在等的網址、先不退回；CDN 那次也失敗（同一個網址再錯一次）才記 HMW_BAD、退回原圖 */
-function hmwFail(P){const kk=P&&P.dataset.hmw;if(!kk||!HMW[kk])return;const im=P.querySelector(":scope>img"),u=im?String(im.getAttribute("src")||im.src||""):"";
+function hmwFail(P){let kk=P&&P.dataset.hmw;if(!kk||!HMW[kk])return;const im=P.querySelector(":scope>img"),u=im?String(im.getAttribute("src")||im.src||""):"";
   if(im&&im.dataset&&im.dataset.cdnTry&&typeof XQ_CDN==="string"&&u.indexOf(XQ_CDN)===0&&im._hmwCdn!==u){im._hmwCdn=u;return}
+  if(kk==="l1610"&&HMW_CL.has(P._hmWv||""))kk="cl";   /* 11/28：經典世界的橫版載不到只關經典那 8 張，不連累原圖的 home_l1610 */
   HMW_BAD[kk]=1;hmwSet(P,"")}
 /* 純計算：W 可用寬、av 可用高、vw #view 寬、vh 畫面高 → "p34"／"l1610"／""（原圖） */
 function hmwKind(W,av,vw,vh){if(!HMW_ON||!(W>0&&av>=120))return"";const r=W/av;
   if(r>=HMW_PORT[0]&&r<=HMW_PORT[1]&&(vw>=600||vw>av))return HMW_BAD.p34?"":"p34";   /* 回饋 889：0.85～0.89 也用直版；0.89～1.04＝原圖交給 07fl 填滿寬度 */
   if(r>HMW_SQ&&Math.min(vw,vh)>=HMW_LMIN)return HMW_BAD.l1610?"":"l1610";return""}   /* 回饋 889：1.04～1.3 也用橫版（原本 HMW_LAND＝1.3 起） */
 /* 現在這頁該用原圖（沒有變體）才有寬版：經典世界、季節／晨昏／夜景／雨雪圖都不換 */
-function hmwBase(){try{return!(typeof sw7HomeWx==="function"&&sw7HomeWx())}catch(e){return true}}   /* 開發者 11/15「首頁天氣的問題」→ 選「用四季長卷拼成寬版」：首頁有季節／夜景／雨雪變體（07w7 sw7HomeWx 有回傳）就用那張變體＋三屏長卷鋪滿 iPad，跟學習、對戰同一季；沒有變體才用寬版原圖。以下是 11/13 舊說明：開發者 11/13 選「iPad 先一律用寬版原圖」：寬版只有原圖（白天、預設世界）一張；原本經典世界、節氣天氣（季節、雨雪）時退回直式變體圖，iPad 上幾乎看不到寬版。改成 iPad／摺疊機寬版一律優先（暫時沒有季節、日夜變化），手機照舊 */
-const hmwSrc=k=>HMW[k]?`data/homemap/${HMW[k].f}.webp?v=${HMW_IMGV}`:`data/homemap/home.webp?v=${HM_IMGV}`;
-/* 入口座標表（含大字）：寬版用寬版那組座標，大字照 HM_SPOTS */
-const hmwSpots=k=>HMW[k]?HMW[k].S.map(([id,x,y])=>[id,x,y,(HM_SPOTS.find(s=>s[0]===id)||[])[3]]):HM_SPOTS;
+function hmwBase(){try{return!(typeof sw7HomeWx==="function"&&sw7HomeWx())||!!hmwClWv()}catch(e){return true}}   /* 11/28：經典世界有橫版的變體也算 */   /* 開發者 11/15「首頁天氣的問題」→ 選「用四季長卷拼成寬版」：首頁有季節／夜景／雨雪變體（07w7 sw7HomeWx 有回傳）就用那張變體＋三屏長卷鋪滿 iPad，跟學習、對戰同一季；沒有變體才用寬版原圖。以下是 11/13 舊說明：開發者 11/13 選「iPad 先一律用寬版原圖」：寬版只有原圖（白天、預設世界）一張；原本經典世界、節氣天氣（季節、雨雪）時退回直式變體圖，iPad 上幾乎看不到寬版。改成 iPad／摺疊機寬版一律優先（暫時沒有季節、日夜變化），手機照舊 */
+const hmwSrc=k=>{const cw=k==="l1610"?hmwClWv():"";if(cw)return`data/homemap/home_${cw}_l1610.webp?v=${HMW_CL_IMGV}`;return HMW[k]?`data/homemap/${HMW[k].f}.webp?v=${HMW_IMGV}`:`data/homemap/home.webp?v=${HM_IMGV}`};
+/* 入口座標表（含大字）：寬版用寬版那組座標，大字照 HM_SPOTS；經典世界橫版照 HMW_CL_FIX 微調（%） */
+function hmwSpotsW(k){const F=k==="l1610"&&HMW_CL_FIX[hmwClWv()]||{};
+  return HMW[k].S.map(([id,x,y])=>{const d=F[id]||[0,0];return[id,+(x+d[0]).toFixed(2),+(y+d[1]).toFixed(2),(HM_SPOTS.find(s=>s[0]===id)||[])[3]]})}
+const hmwSpots=k=>HMW[k]?hmwSpotsW(k):HM_SPOTS;
 const hmwWalkCfg=(k,P)=>{const c=Object.assign({},SHW_PG0,HMW[k]?HMW[k].walk:SHW_HOMEMAP);return!HMW[k]&&P&&P.dataset&&P.dataset.hmp&&typeof hmpWalk==="function"?hmpWalk(c):c};   /* 11/14 三屏長卷（07hmp-pano.js）：原圖、這一頁有長卷時，路網延伸到左邊西市、右邊觀星臺 */
 /* 量 P 在 #view 裡的可用寬高（跟 07t3 r07Wide、07fl xflPort 同一套算法） */
 function hmwMeasure(V,P){const vr=V.getBoundingClientRect(),pr=P.getBoundingClientRect(),pb=parseFloat(getComputedStyle(V).paddingBottom)||0;
   return{W:pr.width,av:V.clientHeight-pb-(pr.top-vr.top+V.scrollTop),vw:V.clientWidth,vh:document.documentElement.clientHeight||innerHeight}}
-const hmwPick=m=>hmwBase()?hmwKind(m.W,m.av,m.vw,m.vh):"";
+const hmwPick=m=>{if(!hmwBase())return"";const k=hmwKind(m.W,m.av,m.vw,m.vh);return k!=="l1610"&&hmwClWv()?"":k};   /* 11/28：經典世界只有橫版，直版那段照舊用直式變體 */
 /* 原地換圖、換入口座標、主張紙條、走路角色；k＝""＝換回原圖 */
 function hmwSet(P,k){const im=P.querySelector(":scope>img");if(!im)return;P.dataset.hmw=k;
   for(const[id,x,y]of hmwSpots(k)){const b=P.querySelector("#"+id);if(!b)continue;b.style.left=x+"%";b.style.top=y+"%";delete b.dataset.ttL;b.style.marginLeft=""}   /* ttL 是 07t3 記的原位，換座標要清掉，不然會被還原回舊位置 */
@@ -22848,10 +22931,12 @@ function homeMap(v){const home=v.querySelector(".home");if(!home||v.querySelecto
   let hk="";try{if(HMW_ON&&hmwBase()){const t=document.createElement("div");t.className="shp-page cq home-page";v.insertBefore(t,home);hk=hmwPick(hmwMeasure(v,t));t.remove()}}catch(e){hk=""}
   const wv=typeof sw7HomeWx==="function"&&!hk?sw7HomeWx():"";   /* 11/14：季節／夜景變體先算好（三屏長卷要照這張挑左右兩屏） */
   d.innerHTML=`<div class="shp-page cq home-page" data-hmw="${hk}"${hk?` style="--hmSlT:${HMW[hk].sl}%"`:""}><img src="${hk?hmwSrc(hk):`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`}" alt="${typeof hbIsCl==="function"&&hbIsCl()?"千秋時光之苑":"楚河渡口棋鎮"}"><div class="hm-fx" aria-hidden="true"></div>${hmFocusOrder(hmwSpots(hk)).map(([id,x,y])=>`<button class="shp-spot" id="${id}" style="left:${x}%;top:${y}%" aria-label="${esc(id==="hmQuick"?HM_PVP_AL:hmAl(lab(id)))}"><b>${esc(lab(id))}</b></button>`).join("")}${inst?'<button class="hm-inst" id="hmInst" aria-label="加到主畫面">📲 加到主畫面</button>':""}</div>`;
-  const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");P._hmSrc0=hk?`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`:P.querySelector(":scope>img").getAttribute("src");
+  const cw=hk==="l1610"?hmwClWv():"";   /* 11/28：經典世界用橫版＝記住是哪個變體；退回原圖時退回這個變體的直式圖 */
+  const P=d.firstElementChild;v.insertBefore(P,home);home.classList.add("hb-hidden");P._hmSrc0=cw?`data/homemap/home_${cw}.webp?v=${HM_IMGV}`:hk?`data/homemap/${typeof hbIsCl==="function"&&hbIsCl()?"home_classic":"home"}.webp?v=${HM_IMGV}`:P.querySelector(":scope>img").getAttribute("src");if(cw)P._hmWv=cw;
   if(hk){const im1=P.querySelector(":scope>img");im1.onerror=()=>hmwFail(P)}   /* 寬版載不到＝先等 00-util 的 CDN 補抓，CDN 也失敗才退回原圖（W109） */if(typeof hbCss==="function")hbCss();else home.style.display="none";
   try{if(typeof hmpInit==="function")hmpInit(P,hk,wv)}catch(e){}   /* 11/14 三屏長卷（07hmp-pano.js）：千秋時光之苑、原圖、這個變體有長卷＝左右各接一屏 */
   {const im0=P.querySelector(":scope>img");if(wv&&im0){const pre=new Image();pre.onload=()=>{if(!im0.isConnected)return;P._hmSrc0=pre.src;try{if(typeof sw7SeaTurn==="function"&&sw7SeaTurn(P,im0,pre.src))return}catch(e){}im0.src=pre.src};pre.src="data/homemap/home_"+wv+".webp?v="+HM_IMGV}}
+  if(cw){const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}try{hmWvRefresh(P)}catch(e){}},60000)}   /* 11/28：經典世界橫版也每分鐘問一次（跨入夜換下一張橫版，hmWvRefreshCl） */
   if(!hk){P._hmWv=wv;const tm=setInterval(()=>{if(!P.isConnected){clearInterval(tm);return}try{hmWvRefresh(P)}catch(e){}},60000)}   /* 11/17 第 28 輪 N28-1：首頁開著跨過入夜／天亮也換圖（hmWvRefresh） */   /* 回饋 811：下雪、下雨天換積雪版 home_snow／雨景版 home_rain（07w7-seasons.js 判斷；先載好再換，載不到留原圖） */
   const GO={hmShip:"#/adventure",hmBattle:"#/hub/battle",hmLearn:"#/hub/learn"};
   for(const[id]of HM_SPOTS){const b=P.querySelector("#"+id);if(!b)continue;   /* 寬版只換座標，id 跟點了去哪都一樣 */
@@ -22926,7 +23011,12 @@ html[data-hicon] .shp-spot.hot::before,html[data-hicon] .shp-hs.hot::before{left
 /* 11/17 第 28 輪 N28-1（測試員 B）：首頁開著跨過入夜（17:31）只蓋了月夜層，底圖還是白天那張，重新開首頁才是畫好的夜景圖；西市、觀星臺會當場換 →
    首頁每分鐘問一次 07w7 sw7HomeWx()（季節、晨昏、夜景、雨雪變體），跟開頁時挑的不一樣就換：先把新的中間那張、長卷左右兩屏（07hmp，有的話）都載好再一起換，不閃白；
    載不到就留原來那張。換好之後 07w7 重畫一次（月夜層只在沒換到夜景圖時才蓋，換到了就拿掉）。天亮、換季、晨昏同樣處理。寬版（07z hmw，沒有變體時才用）不在這裡換 */
-function hmWvRefresh(P){if(!P||!P.isConnected||P.dataset.hmw||P._hmWvBusy)return false;const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"";if(!wv||wv===P._hmWv)return false;
+/* 11/28：經典世界橫版開著跨過入夜／天亮：先載好下一張橫版，再原地換圖和入口（秋夜的山門位置不同）；載不到就留著現在這張 */
+function hmWvRefreshCl(P){const wv=hmwClWv();if(!wv||wv===P._hmWv)return false;const s=hmwSrc("l1610"),im=new Image();P._hmWvBusy=true;
+  im.onload=()=>{P._hmWvBusy=false;if(!P.isConnected||P.dataset.hmw!=="l1610")return;P._hmWv=wv;P._hmSrc0=`data/homemap/home_${wv}.webp?v=${HM_IMGV}`;hmwSet(P,"l1610");   /* 退回直式時退回新的這個變體（iMac Claude 2 驗 #256：原本退回開頁時那張白天圖） */try{if(typeof sw7Tick==="function")sw7Tick()}catch(e){}};
+  im.onerror=()=>{P._hmWvBusy=false};im.src=s;return true}
+function hmWvRefresh(P){if(P&&P.isConnected&&!P._hmWvBusy&&P.dataset.hmw==="l1610"&&HMW_CL.has(P._hmWv||""))return hmWvRefreshCl(P);
+  if(!P||!P.isConnected||P.dataset.hmw||P._hmWvBusy)return false;const wv=typeof sw7HomeWx==="function"?sw7HomeWx():"";if(!wv||wv===P._hmWv)return false;
   const im0=P.querySelector(":scope>img");if(!im0)return false;let cl=false;try{cl=typeof hbIsCl==="function"&&hbIsCl()}catch(e){}
   const pv=typeof hmpVar==="function"?hmpVar("",wv,cl):"",srcs=["data/homemap/home_"+wv+".webp?v="+HM_IMGV].concat(pv&&typeof hmpSrc==="function"?[hmpSrc(pv,"l"),hmpSrc(pv,"r")]:[]);
   P._hmWvBusy=true;let left=srcs.length,fail=false;const done=()=>{if(--left)return;P._hmWvBusy=false;if(fail||!P.isConnected)return;
@@ -30458,12 +30548,17 @@ function jhCanalXM(sid,day,pid){const st=jhCanalOf(sid),back=()=>"#/jianghu";if(
   return{id:pid,rk:"cjRunCy",back,top:jhL("🏮 漕運殘局","🏮 Canal Puzzle"),icon:"🏮",
     ans:re?jhL("這一班今天已經解開了，看答案不影響。確定？","Already solved today; viewing the answer changes nothing. Sure?"):jhL("看答案這一班就不算解開、沒有額外修為，確定？","Viewing the answer means no extra XP for this barge. Sure?"),
     head:P=>`<b>🏮 ${esc(jhL(`漕船・${st.zh}`,`Barge at ${st.en}`))}</b>・${esc(P.t)}・${typeof cjLv==="function"?cjLv(P.d):""}`,
-    mark:o=>jhCanalMark(sid,day,o),done:(xs)=>xs&&xs.first?`<p class="jh-windnote">${esc(jhL(`漕船脫困！修為 +${JH_CANAL_XP}`,`The barge is free! +${JH_CANAL_XP} XP`))}</p>`:"",
+    mark:o=>jhCanalMark(sid,day,o),done:(xs)=>(xs&&xs.first?`<p class="jh-windnote">${esc(jhL(`漕船脫困！修為 +${JH_CANAL_XP}`,`The barge is free! +${JH_CANAL_XP} XP`))}</p>`:"")+
+      (xs&&xs.key?`<p class="jh-windnote">${esc(jhL(`🗝 船工送你一把銅鑰匙：打得開${xs.key.zh}地底迷宮第二層的密室。`,`🗝 The boatman hands you a brass key: it opens the hidden room on level 2 of the ${xs.key.en} underground maze.`))}</p>`:""),   /* W172：漕運鑰匙（07z9m-vault.js） */
     next:back,nextL:()=>jhL("回十州棋館","Back to the Ten Prefectures")}}
-function jhCanalMark(sid,day,o){if(day!==jhCanalDay())return{first:false};const S=jhCanalGet(day);if(S.s[sid])return{first:false};
+function jhCanalMark(sid,day,o){if(day!==jhCanalDay())return{first:false};
+  /* W172（11/27）：解開這一班就發那一派的密室鑰匙（07z9m-vault.js 的 jhMzVaultGive；那一派有密室、還沒拿過才發）。
+     放在「今天解過沒」之前：功能上線前今天已經解過的，再解一次也拿得到 */
+  const key=typeof jhMzVaultGive==="function"?jhMzVaultGive(sid):null,K=key?{key}:{};   /* 沒發鑰匙就不帶 key 欄位，回傳值跟原本一樣 */
+  const S=jhCanalGet(day);if(S.s[sid])return{first:false,...K};
   S.s[sid]={t:Date.now(),p:o&&o.perfect?1:0};store.set("jhCanal",S);
   if(typeof addXP==="function")try{addXP(JH_CANAL_XP,jhL("漕運殘局","Canal puzzle"),"cy:"+day+":"+sid,{chipDelay:1600})}catch(e){}   /* W119：修為當下發，小標籤照舊 1.6 秒後 */
-  return{first:true}}
+  return{first:true,...K}}
 try{if(typeof cjXMode==="function"&&!cjXMode.jhCanal){const x0=cjXMode;cjXMode=function(id){const m=/^cy\/(\w+)\/(\d{4}-\d{2}-\d{2})\/(.+)$/.exec(String(id||""));if(m)return jhCanalXM(m[1],m[2],decodeURIComponent(m[3]));return x0.apply(this,arguments)};cjXMode.jhCanal=1}}catch(e){}
 const JH_CANAL_IMG="data/canal/barge.webp";
 /* 漕船圖：讀不到（還沒上 CDN、離線缺檔）就換成程式畫的 SVG，不留破圖 */
@@ -33533,7 +33628,7 @@ jhMzDef("palace_horse",{map:JH_MZ_PALACE_MAP,guards:JH_MZ_PALACE_GUARDS,pool:{do
 const JH_MZ_CENTRAL2_MAP=[
 "###############",
 "#####.>.#######",
-"#####...#######",
+"#####...Np#####",
 "######D########",
 "#T...........T#",
 "######.########",
@@ -34219,7 +34314,7 @@ jhMzLayer("pawn",2,{map:JH_MZ_PAWN2_MAP,guards:JH_MZ_PAWN2_GUARDS,river:JH_MZ_PA
 const JH_MZ_ELE2_MAP=[
 "###############",
 "#####.>.#######",
-"#####...#######",
+"#####...Np#####",
 "######D########",
 "#T...........T#",
 "#.mmmm...mmmm.#",
@@ -35258,6 +35353,87 @@ function jhFallPlay(lv,opt){opt=opt||{};jhFallCss();const N=Math.max(1,Math.floo
 /* 包住 JhMaze：從大廳進來才播（播完就清掉來源，同一次不重播） */
 try{if(typeof JhMaze==="function"&&!JhMaze.jhFall){const m0=JhMaze;JhMaze=function(v,sid){const r=m0.apply(this,arguments);
   try{const V=jhFallVisit();if(jhFallWant(V)&&(typeof jhMzOn!=="function"||jhMzOn())&&String(location.hash).indexOf("#/jianghu/maze")===0){JH_FALL_DONE=V.n;jhFallPlay(typeof jhMzLvN==="function"?jhMzLvN(sid,jhMzLayerOf(location.hash)):jhMzLv(sid))}}catch(e){}return r};JhMaze.jhFall=1}}catch(e){}
+/* ---------- W172 漕運鑰匙開地底迷宮的隱藏密室（11/27 Windows Claude 2）----------
+   開發者 11/26 用選單從 Gemini 跨系統文案選中；11/27 選單定規格：
+     先做漕船停靠的那幾派（漕運只停徐州、泗州、淮安、揚州四州＝起馬、飛相、中炮、仙人指路），密室放在第二層；
+     這次不做「用門派貢獻換鑰匙」，錯過就等下一班（四州輪流，每 8 小時輪回同一州）。
+   規則：
+     ・漕船停在某州時解開那一班的漕運殘局（07z9b-jianghu.js 的 jhCanalMark），就拿到那一州門派的密室鑰匙。
+       只有該派第二層的地圖上真的有密室門 N 才發（還沒做密室的派不發，免得拿到鑰匙卻找不到門）。
+     ・N＝密室門（漕幫的銅鎖門）：擋路、擋視線。有鑰匙朝它走就打開（不算回合），之後這一派的密室永久開著，下次進來也是開的。
+       沒鑰匙只說「漕船停在哪一州時解題可以拿到鑰匙」。
+     ・p＝殘譜架：擋路、不擋視線。朝它走就讀到這一派掌門的私房殘譜（卡片）；第一次讀給修為（去重鍵 vault:<派>），之後照樣讀得到。
+     ・鑰匙只開密室：這支只處理 N、p，其他格子（水窪、石門、踏板、各派機關）都交回原本的規則，鑰匙不會讓你跳過任何機關。
+   紀錄 jhMzKey（實際鍵 m_jhMzKey，跟著存檔格走）：{派:{got:拿到鑰匙的時間, open:打開密室的時間, read:第一次讀殘譜的時間}}。
+   這支排在 m.html 全部 07z9m-* 的最後（07z9m-fall.js 之後），包住四派第二層的 onStep 與共用的 jhMzReset，不改共用的 07z9m-maze.js。 */
+const JH_MZ_VAULT_KEY = "jhMzKey", JH_MZ_VAULT_XP = 20, JH_MZ_VAULT_LAYER = 2;
+/* 各派的密室：州名（給沒鑰匙時的提示）、殘譜內容。州名照漕運的 JH_CANAL */
+const JH_MZ_VAULT = {
+  central: { zh: "中炮門", en: "Central Cannon", port: ["淮安", "Huai'an"],
+    title: ["淮安碼頭私記・炮要車跟", "Huai'an Dock Notes: The Cannon Needs Its Chariot"],
+    body: ["中炮門掌門年輕時在淮安碼頭跟漕幫的船工下棋，回來在小冊子上記了一句：「當頭炮架好以後別急著衝。先看對面的馬出來沒有——馬還沒出，炮可以壓過去；馬出來了，先把車開出來再說。炮後面要有車跟著，才不會被人家的馬一口咬掉。」冊子最後一頁還畫著一艘漕船，船頭插著一面寫了「炮」字的小旗。",
+      "When the Central Cannon master was young, he played the boatmen on the Huai'an docks, and wrote one line in a little notebook: \"Once the central cannon is set, don't rush. See whether the other side's horses are out. If not, the cannon can press forward; if they are, bring out your chariot first. A cannon needs a chariot behind it, or a horse will snap it up.\" On the last page is a sketch of a grain barge flying a small flag marked \"Cannon\"."] },
+  elephant: { zh: "飛相門", en: "Flying Elephant", port: ["泗州", "Sizhou"],
+    title: ["泗州茶棚私記・先守後攻", "Sizhou Teahouse Notes: Defend First, Then Strike"],
+    body: ["飛相門掌門當年在泗州考場外的茶棚，看幾個落第的老考生下棋，悟出一句話，寫在帳本背面：「先把相飛起來，把中路守住，不急著出手。等人家把子一顆一顆壓過河，再用車馬從兩邊包回去。守得住，才有本錢反攻。」字跡旁邊有一圈茶漬，看得出是邊喝茶邊寫的。",
+      "Years ago, outside the Sizhou exam hall, the Flying Elephant master watched a few failed old candidates play in a tea stall, and wrote one line on the back of a ledger: \"Fly the elephant first and hold the centre; don't rush. Let them push their pieces across the river one by one, then swing your chariots and horses round both flanks. Only if you can hold do you have anything to counterattack with.\" A ring of tea stain sits beside the writing."] },
+};
+/* 紀錄：{派:{got,open,read}} */
+function jhMzVaultGet() { let o = null; try { o = store.get(JH_MZ_VAULT_KEY, null) } catch (e) { } return o && typeof o === "object" && !Array.isArray(o) ? o : {} }
+function jhMzVaultOf(sid) { const o = jhMzVaultGet()[sid]; return o && typeof o === "object" ? o : {} }
+function jhMzVaultSet(sid, k) { const all = jhMzVaultGet(), m = jhMzVaultOf(sid); if (!m[k]) m[k] = Date.now(); all[sid] = m; try { store.set(JH_MZ_VAULT_KEY, all) } catch (e) { } return m }
+/* 這一派第二層的地圖上有沒有密室門（沒有就不發鑰匙） */
+function jhMzVaultHas(sid) { const B = typeof JH_MZ_LV === "object" && JH_MZ_LV[sid], L = B && B.layers && B.layers[JH_MZ_VAULT_LAYER]; return !!(JH_MZ_VAULT[sid] && L && Array.isArray(L.map) && L.map.some((r) => String(r).includes("N"))) }
+/* 漕運解題時呼叫：這一派有密室、還沒拿過鑰匙、密室也還沒開，就發一把；回傳要顯示的派名，沒發回 null */
+function jhMzVaultGive(sid) { if (!jhMzVaultHas(sid)) return null; const m = jhMzVaultOf(sid); if (m.got || m.open) return null; jhMzVaultSet(sid, "got"); const V = JH_MZ_VAULT[sid]; return { zh: V.zh, en: V.en } }
+/* 這一層是不是有密室的那一層 */
+const jhMzVaultLv = (lv) => !!(lv && JH_MZ_VAULT[lv.sid] && lv.layer === JH_MZ_VAULT_LAYER);
+/* 走一步之前：N、p 照密室規則；其他交給原本的 onStep（碑刻、暗門、各派機關） */
+function jhMzVaultStep(S, dx, dy, c, prev) {
+  const nx = S.player.x + dx, ny = S.player.y + dy, V = JH_MZ_VAULT[S.lv.sid];
+  if (V && c === "N") {
+    const m = jhMzVaultOf(S.lv.sid);
+    /* ev 不用 "locked"：共用畫面遇到 locked 會改顯示石門那句固定的提示，蓋掉這裡的州名 */
+    if (!m.got && !m.open) return { ev: "bump", msg: [`門上掛著一把漕幫的銅鎖，鎖孔還很新。漕船停在${V.port[0]}的時候，解開那一班的漕運殘局，就能拿到鑰匙。`, `A canal guild's brass lock hangs on the door. Solve the canal puzzle when the barge is docked at ${V.port[1]} to get the key.`] };
+    jhMzVaultSet(S.lv.sid, "open"); S.grid[ny][nx] = ".";
+    return { ev: "secret", msg: ["你用漕幫給的鑰匙打開銅鎖，門後是一間小小的密室。", "You open the brass lock with the canal guild's key. Behind the door is a small hidden room."] };
+  }
+  if (V && c === "p") {
+    const first = !jhMzVaultOf(S.lv.sid).read;
+    if (first) { jhMzVaultSet(S.lv.sid, "read"); if (typeof addXP === "function") try { addXP(JH_MZ_VAULT_XP, jhL("迷宮密室", "Hidden room"), "vault:" + S.lv.sid) } catch (e) { } }
+    return { ev: "lore", id: "vault:" + S.lv.sid, first, card: { title: [`殘譜・${V.title[0]}`, `Manual fragment · ${V.title[1]}`], body: V.body },
+      msg: first ? [`收好了。修為 +${JH_MZ_VAULT_XP}`, `Kept. +${JH_MZ_VAULT_XP} XP`] : null };
+  }
+  return typeof prev === "function" ? prev(S, dx, dy, c) : null;
+}
+/* 包住有密室的那一層：N、p 擋路；N 擋視線，p 不擋（架子不高） */
+function jhMzVaultWrap(lv) {
+  if (!jhMzVaultLv(lv) || lv._vault) return; const prev = lv.onStep;
+  for (const ch of "Np") if (!lv.solid.includes(ch)) lv.solid += ch;
+  if (!lv.opaque.includes("N")) lv.opaque += "N";
+  lv.onStep = (S, dx, dy, c) => jhMzVaultStep(S, dx, dy, c, prev); lv._vault = 1;
+}
+for (const sid of Object.keys(JH_MZ_VAULT)) { const B = typeof JH_MZ_LV === "object" && JH_MZ_LV[sid]; if (B && B.layers) jhMzVaultWrap(B.layers[JH_MZ_VAULT_LAYER]) }
+/* 重建格子（新開局、被拖回入口）時，已經打開的密室維持打開 */
+try {
+  if (typeof jhMzReset === "function" && !jhMzReset.vault) {
+    const r0 = jhMzReset;
+    jhMzReset = function (S, full) { const v = r0(S, full); if (S && S.lv && jhMzVaultLv(S.lv) && jhMzVaultOf(S.lv.sid).open) for (let y = 0; y < S.H; y++) for (let x = 0; x < S.W; x++) if (S.grid[y][x] === "N") S.grid[y][x] = "."; return v };
+    jhMzReset.vault = 1;
+  }
+} catch (e) { }
+/* 3D：銅鎖木門（跟牆一樣高，門上一塊銅鎖）；殘譜架是一張矮几上放一卷書 */
+JH_MZ_OBJ.N = (H) => { const { T3, mesh, lam, WH } = H, g = new T3.Group(); g.add(mesh(new T3.BoxGeometry(1, WH, 1), lam("#5a3b22"), 0, WH / 2, 0));
+  g.add(mesh(new T3.BoxGeometry(.2, .22, .06), lam("#c79a3c"), 0, WH * .5, .52)); return g };
+JH_MZ_OBJ.p = (H) => { const { T3, mesh, lam } = H, g = new T3.Group(); g.add(mesh(new T3.BoxGeometry(.6, .06, .4), lam("#6b4a2e"), 0, .34, 0));
+  for (const [x, z] of [[-.26, -.16], [.26, -.16], [-.26, .16], [.26, .16]]) g.add(mesh(new T3.BoxGeometry(.05, .32, .05), lam("#4e3520"), x, .16, z));
+  g.add(mesh(new T3.CylinderGeometry(.06, .06, .42, 10), lam("#e6d7b0"), 0, .43, 0)); g.children[g.children.length - 1].rotation.z = Math.PI / 2; return g };
+/* 平面版 */
+JH_MZ_TILE.N = (cx, px, py, T) => { cx.fillStyle = "#5a3b22"; cx.fillRect(px, py, T, T); cx.strokeStyle = "rgba(0,0,0,.4)"; cx.lineWidth = 1; cx.strokeRect(px + T * .12, py + T * .08, T * .76, T * .84);
+  cx.fillStyle = "#c79a3c"; cx.fillRect(px + T * .42, py + T * .42, T * .16, T * .2) };
+JH_MZ_TILE.p = (cx, px, py, T) => { cx.fillStyle = "rgba(0,0,0,.3)"; cx.beginPath(); cx.ellipse(px + T * .5, py + T * .84, T * .32, T * .08, 0, 0, 7); cx.fill();
+  cx.fillStyle = "#6b4a2e"; cx.fillRect(px + T * .2, py + T * .46, T * .6, T * .12); cx.fillRect(px + T * .24, py + T * .58, T * .06, T * .24); cx.fillRect(px + T * .7, py + T * .58, T * .06, T * .24);
+  cx.fillStyle = "#e6d7b0"; cx.fillRect(px + T * .28, py + T * .34, T * .44, T * .12); cx.strokeStyle = "#8a7550"; cx.strokeRect(px + T * .28, py + T * .34, T * .44, T * .12) };
 /* ================= 🔎 滿版圖「點畫裡的東西看說明」（開發者回饋 818：「對所有繪製的圖可以讓玩家點選物件，然後跳出顯示相關文件說明，就像在環景圖或對戰時點桌子上的物件那樣……不要把物件名稱直接寫上去，會太累亂，玩家點了再顯示」）=================
    圖上平常什麼都不標；點到登記過的東西＝跳出小卡（名稱＋兩三句白話介紹，跟 06-cpu.js 的 parkInfo 同一個 sheet 樣式），07w 的角色照舊走過去、轉身看那個東西。
    點選順序：入口標籤／告示紙等按鈕（07w 先攔、或按鈕自己處理）＞這裡登記的物件＞空地（07w 走路）。只在點到「圖本身」時才判斷，按鈕、連結、角色身上的透明按鈕一律不碰；
@@ -42906,7 +43082,7 @@ const I18N_EN={
   "很少失誤":"rarely makes mistakes","幾乎不失誤":"almost never makes mistakes","不放水":"no mercy","人類幾乎贏不了":"nearly unbeatable for humans","段位與開新局":"Rank and new game","換難度":"Change level",
   /* 對局頁：工具列、狀態列、確認框 */
   "寶物":"Items","悔棋":"Undo","新局":"New","認輸":"Resign","檢討":"Review","擺盤":"Setup","偷看":"Peek","思考中":"Thinking","已預走":"Premove set","被將軍":"in check","⚠ 被將軍！":"⚠ Check!",
-  "提示":"Hint","輪到你":"Your move","輪到你走":"Your move","輪到電腦":"Computer's move","等電腦":"Waiting for the computer","電腦想太久了？":"Computer taking too long?","重新開一局":"Start a new game","還原大小":"Reset zoom","兩指往內捏，就能縮回原本大小":"Pinch in with two fingers to zoom back out","確定認輸？":"Resign this game?",
+  "提示":"Hint","輪到你":"Your move","落子":"Move","可以走這裡":"You can move here","移到要去的格子":"Move to your target","這裡不能走":"Can't move here","輪到你走":"Your move","輪到電腦":"Computer's move","等電腦":"Waiting for the computer","電腦想太久了？":"Computer taking too long?","重新開一局":"Start a new game","還原大小":"Reset zoom","兩指往內捏，就能縮回原本大小":"Pinch in with two fingers to zoom back out","確定認輸？":"Resign this game?",
   "悔棋以後，這一盤不算進「我的棋力」（輸贏照常算）。":"After an undo, this game no longer counts toward \"My strength\" (the result still counts).","用悔棋符":"Use undo token",
   "你還沒走棋，不用悔棋":"You haven't moved yet; nothing to undo","沒有悔棋符了":"No undo tokens left","這個難度不限次數":"unlimited at this difficulty",
   "均勢":"Even","雙方差不多":"roughly equal","領先非常多":"far ahead","能將死對方":"can force checkmate",
