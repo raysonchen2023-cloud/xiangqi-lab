@@ -109,20 +109,20 @@ function hqBuild(v,root){const dk=hqDark(),pn=document.createElement("div");pn.c
     act()};
   /* 轉移碼的狀態：左半券、半印、一炷香、書笈封條 */
   const act=()=>{if(HQ_ACT&&Date.now()>HQ_ACT.exp)HQ_ACT=null;const A=HQ_ACT;pn.classList.toggle("hq-on",!!A);
-    if(A){const left=Math.max(0,A.exp-Date.now()),mn=Math.ceil(left/60000);old.innerHTML=`<i class="hq-bi"><small>轉移碼</small><b class="code">${esc(A.code.slice(0,4))}</b><b class="code">${esc(A.code.slice(4))}</b><small>剩 ${mn} 分</small></i>`;old.setAttribute("aria-label",`轉移碼 ${A.code}，還剩 ${mn} 分鐘`);
+    if(A){const left=Math.max(0,A.exp-Date.now()),mn=Math.ceil(left/60000);old.innerHTML=`<i class="hq-bi"><small>轉移碼</small><b class="code">${esc(A.code.slice(0,5))}</b><b class="code">${esc(A.code.slice(5))}</b><small>剩 ${mn} 分</small></i>`;old.setAttribute("aria-label",`轉移碼 ${A.code}，還剩 ${mn} 分鐘`);
       ink.querySelector("i").style.height=(Math.max(.04,left/1800000)*100).toFixed(1)+"%";ink.querySelector("b").style.bottom=`calc(${(Math.max(.04,left/1800000)*100).toFixed(1)}% - 3px)`;ink.querySelector("em").style.bottom=(Math.max(.04,left/1800000)*100).toFixed(1)+"%"}
     else{old.innerHTML='<i class="hq-bi"><span>舊手機</span><span>產生碼</span></i>';old.setAttribute("aria-label","舊手機：產生轉移碼")}if(pn._tf)pn._tf()};
   const tk=setInterval(()=>{if(!pn.isConnected){clearInterval(tk);mo.disconnect();return}if(pn.classList.contains("open"))act()},15000);
   const gen=()=>{const o=root.querySelector("#xfOut");if(o)o.click();else if(typeof xfSend==="function")xfSend()};
   old.onclick=()=>{vibrate(5);if(!HQ_ACT){gen();return}const A=HQ_ACT;
-    sheet("轉移碼",b=>{b.innerHTML=`<p style="margin:0 0 6px">在新手機打開象棋千秋，點設定頁的包袱書箱，再點「新手機・輸入轉移碼」，輸入：</p><div style="font:900 30px/1.3 ui-monospace,monospace;letter-spacing:.12em;text-align:center;margin:10px 0">${esc(A.code.slice(0,4)+"-"+A.code.slice(4))}</div><p class="muted" style="font-size:13px">到 ${new Date(A.exp).toLocaleTimeString().slice(0,-3)} 前有效。要作廢這組碼，就產生一組新的（舊的會在 30 分鐘後自動失效）。</p><button class="btn ghost" id="hqRe" style="width:100%">產生新的轉移碼</button>`;
+    sheet("轉移碼",b=>{b.innerHTML=`<p style="margin:0 0 6px">在新手機打開象棋千秋，點設定頁的包袱書箱，再點「新手機・輸入轉移碼」，輸入：</p><div style="font:900 30px/1.3 ui-monospace,monospace;letter-spacing:.12em;text-align:center;margin:10px 0">${esc(A.code.slice(0,5)+"-"+A.code.slice(5))}</div><p class="muted" style="font-size:13px">到 ${new Date(A.exp).toLocaleTimeString().slice(0,-3)} 前有效。要作廢這組碼，就產生一組新的（舊的會在 30 分鐘後自動失效）。</p><button class="btn ghost" id="hqRe" style="width:100%">產生新的轉移碼</button>`;
       b.querySelector("#hqRe").onclick=()=>{closeSheet();setTimeout(gen,260)}})};
   pn.querySelector("#hqNew").onclick=()=>{vibrate(5);const o=root.querySelector("#xfIn");if(o)o.click();else if(typeof xfRecv==="function")xfRecv()};
   pn.querySelector("#hqBox").onclick=()=>{old.click()};
   pn.querySelector("#hqCheer").onclick=()=>{};
   /* 看原本的卡片：產生轉移碼的卡片出現碼＝記下來；按「作廢這組碼」＝收掉；「用舊手機的資料取代這支手機？」出現＝合券 */
   const mo=new MutationObserver(()=>{if(!pn.isConnected){mo.disconnect();return}
-    const sh=document.getElementById("sheet");if(sh&&!sh.dataset.hq){const c=[...sh.querySelectorAll(".sh-b div")].find(d=>/^[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(d.textContent.trim()));
+    const sh=document.getElementById("sheet");if(sh&&!sh.dataset.hq){const c=[...sh.querySelectorAll(".sh-b div")].find(d=>/^[A-Z0-9]{5}-[A-Z0-9]{5}$/.test(d.textContent.trim()));   /* W158②：轉移碼是 10 碼、5-5 顯示（05-settings xfSend）；原本只認 4-4（舊 8 碼，已停收），重新打開書箱時認不出、券上也切成 4＋6 */
       if(c){sh.dataset.hq="1";HQ_ACT={code:c.textContent.trim().replace("-",""),exp:Date.now()+30*60000};act();const x=sh.querySelector("#xfX");if(x)x.addEventListener("click",()=>{HQ_ACT=null;act()})}}
     const md=[...document.querySelectorAll(".modal h2")].find(h=>h.textContent.includes("取代這支手機"));if(md&&!md.dataset.hq){md.dataset.hq="1";q.classList.remove("join");void q.offsetWidth;q.classList.add("join");
       try{const c=pn.querySelector("#hqCheer");if(c)c.click()}catch(e){}}

@@ -279,6 +279,7 @@ async function xf2Check(){let O=null;try{O=JSON.parse(localStorage.getItem("xq_x
 /* 舊手機：碼還有效時每 45 秒查一次回條；之後只在打開 App 時查一次（24 小時內）。看到回條跳「進度已經轉到新手機」 */
 let XF2_T=null;
 function xf2Watch(){clearTimeout(XF2_T);XF2_T=null;let O=null;try{O=JSON.parse(localStorage.getItem("xq_xfOut")||"null")}catch(e){}if(!O||!window.XQNet)return;
+  if(xf4KidOff()&&!O.pg){try{localStorage.removeItem("xq_xfOut")}catch(e){}return}   /* W158②：兒童模式（或家長關掉大廳）下，沒有經過家長確認的那筆不連線、直接清掉（xf4KidOff 在下面 XFER4 區段） */
   xf2Check().then(r=>{if(r.st==="moved"){modal(`<div class="em">📱</div><h2>進度已經轉到新手機</h2><p class="muted">新手機在 ${fmtAt(r.at)} 收下了這支手機的進度（修為、戰績、存檔、棋譜）。之後請用新手機玩：這支手機的進度不會再跟新手機同步，兩支一起玩會各記各的。這支手機的資料沒有被刪掉。</p>`,[["知道了",null]]);return}
     if(r.st==="pending"||(r.st==="unknown"&&Date.now()<=(+O.exp||0)))XF2_T=setTimeout(xf2Watch,45000)}).catch(()=>{XF2_T=setTimeout(xf2Watch,45000)})}
 if(typeof xfUpload==="function"&&typeof xfDownload==="function"){xfUpload=xf2Upload;xfDownload=xf2Download}
@@ -295,6 +296,18 @@ if(typeof xfUpload==="function"&&typeof xfDownload==="function"){xfUpload=xf2Upl
 /* XFER4:BEGIN（只用 crypto、XQNet、XQSave、localStorage、05-settings 的 XFER 區段和上面的 XFER2 區段；test-xfer4.js 三段一起切出來在 node 跑） */
 const XF4_LEN=10,XF4_IT=300000,XF4_SALT="xqlab-xfer-v4",XF4_PB=90000,XF4_USED="xq_xfUsed",XF4_GOT=new Map();
 const XF4_OLD="這是舊版的 8 碼轉移碼，已經停用。請在舊手機打開 App（會自動更新），重新產生一組新的轉移碼。";   /* 評比第 18 輪第 4 項：8 碼停收（英文在 07i18n） */
+/* W158②（App Store 1.2、5.1，11/28）：
+   ① 換機兩端一致：新手機 xf4Fetch 只下載、解開、核對，不清分段、不寫回條、不記「收過了」；使用者按「取代」、資料寫完（XQSave.load＋存檔格）後才 xf4Commit：
+      記 xq_xfUsed、清分段、說明換成回條（舊手機看到回條才跳「進度已經轉到新手機」）。按「取消」什麼都不動，碼到期前都還能再輸入。
+      寫完到回條送出之間 App 被關掉、或沒網路：XF4_ACKQ（{id,ah,n,sid,exp}，不記碼本身）先跟著取代的資料一起寫進去，開機 9 秒時再送一次回條。
+      xf4Download（舊介面：下載＝馬上用掉）照舊給測試、工具用，裡面就是 xf4Fetch＋xf4Commit。
+   ② 兒童模式、或家長關掉線上大廳（xf4KidOff，直接讀 store 的 fmCfg，跟 02-shell NET_KIDOFF 同一套判斷）：產生轉移碼要先過家長確認題（07x4 包 xfSend 那層叫 fmGate，
+      答對才 xf4PgOk()，2 分鐘內有效、用一次就收掉）；xf4Upload 沒有這個許可就不上傳。xq_xfOut 記 pg:1＝家長確認過；
+      開機 9 秒、每 45 秒查回條（xf2Watch）時，兒童模式下沒有 pg 的那筆直接清掉、不連線。 */
+let XF4_PGT=0;
+const XF4_ACKQ="xq_xfAckQ",XF4_KIDMSG="兒童模式要先通過家長確認，才能產生轉移碼。";
+function xf4KidOff(){try{if(typeof store==="undefined"||!store||typeof store.get!=="function")return false;const c=store.get("fmCfg",null)||{};return c.kid===true||c.net===false}catch(e){return false}}
+function xf4PgOk(){XF4_PGT=Date.now()+120000}
 const xf4Hx=u=>Array.from(u,x=>x.toString(16).padStart(2,"0")).join("");
 function xf4Code(){const a=[],N=XF_ABC.length,lim=256-256%N;while(a.length<XF4_LEN)for(const x of crypto.getRandomValues(new Uint8Array(16)))if(x<lim&&a.length<XF4_LEN)a.push(XF_ABC[x%N]);return a.join("")}
 async function xf4Keys(code){const te=new TextEncoder(),c=xfNorm(code),base=await crypto.subtle.importKey("raw",te.encode(c),"PBKDF2",false,["deriveBits"]);
@@ -306,8 +319,10 @@ async function xf4Seal(K,u,aad){const iv=crypto.getRandomValues(new Uint8Array(1
 async function xf4Open(K,s,aad){const u=xfUnB64(String(s));if(u.length<28)throw new Error("太短");return new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:u.subarray(0,12),additionalData:aad},K.key,u.subarray(12)))}
 function xf4UsedAll(){let o=null;try{o=JSON.parse(localStorage.getItem(XF4_USED)||"null")}catch(e){}const t=Date.now(),r={};if(o&&typeof o==="object")for(const k in o)if(/^[0-9a-f]{32}$/.test(k)&&+o[k]>t)r[k]=+o[k];return r}
 /* 舊手機：同 xfUpload（回 {K,exp,n,kb,games}），另外記 xq_xfOut 等回條。code 要是 10 碼（xf4Code 產生） */
-async function xf4Upload(code){const c=xfNorm(code);if(c.length!==XF4_LEN)throw new Error("轉移碼要 10 碼");const K=await xf4Keys(c);let games={};try{games=await xfGamesAll()}catch(e){}
-  const dump=XQSave.dump();delete dump.xq_xfOut;delete dump.xq_xfMoved;delete dump[XF4_USED];delete dump.xqTtsBad;
+async function xf4Upload(code){const c=xfNorm(code);if(c.length!==XF4_LEN)throw new Error("轉移碼要 10 碼");
+  const kid=xf4KidOff(),pg=kid&&XF4_PGT>Date.now();XF4_PGT=0;if(kid&&!pg)throw new Error(XF4_KIDMSG);
+  const K=await xf4Keys(c);let games={};try{games=await xfGamesAll()}catch(e){}
+  const dump=XQSave.dump();delete dump.xq_xfOut;delete dump.xq_xfMoved;delete dump[XF4_USED];delete dump[XF4_ACKQ];delete dump.xqTtsBad;
   const te=new TextEncoder(),zip=await xfZip(te.encode(JSON.stringify({v:2,at:Date.now(),data:dump,slots:await slotAll(),games}))),n=Math.max(1,Math.ceil(zip.length/XF4_PB));
   if(n>500)throw new Error("資料太大，轉移碼帶不動：請改用「匯出成檔案」");
   const exp=Date.now()+XF_TTL,sid=xf4Hx(crypto.getRandomValues(new Uint8Array(16))),parts=[];
@@ -315,11 +330,14 @@ async function xf4Upload(code){const c=xfNorm(code);if(c.length!==XF4_LEN)throw 
   for(let i=0;i<n;i++)if(!await xf2Put(K.topic(i),parts[i])){xfWipe(K,n);throw new Error("上傳到一半斷線了，已上傳的部分已經清掉，請再按一次產生轉移碼")}
   const meta=JSON.stringify({v:4,n,exp,c:await xf4Seal(K,te.encode(JSON.stringify({sid,gz:!!window.CompressionStream,at:Date.now()})),xf4Aad("m",n,exp))});
   if(!await xf2Put(K.topic("m"),meta)){xfWipe(K,n);throw new Error("連不上線上伺服器，等一下再試")}
-  try{localStorage.setItem("xq_xfOut",JSON.stringify({id:K.id,ah:K.ah,exp,at:Date.now()}))}catch(e){}
+  try{localStorage.setItem("xq_xfOut",JSON.stringify(Object.assign({id:K.id,ah:K.ah,exp,at:Date.now()},pg?{pg:1}:{})))}catch(e){}
   try{if(typeof xf2Watch==="function")xf2Watch()}catch(e){}
   return{K,exp,n,kb:Math.ceil(parts.reduce((a,p)=>a+p.length,0)/1024),games:Object.values(games).reduce((a,l)=>a+l.length,0)}}
-/* 新手機：10 碼走 v4；8 碼是舊版（v3），已停收：連線之前就丟 XF4_OLD。回解開的資料，錯誤丟 Error（訊息直接給使用者看） */
-async function xf4Download(code,prog){const c=xfNorm(code);
+/* 舊介面：下載＝馬上用掉（測試、工具用；畫面改走 xf4Fetch → 按取代 → xf4Commit） */
+async function xf4Download(code,prog){const P=await xf4Fetch(code,prog);P.D.data[XF4_USED]=xf4UsedWith(P);await xf4Commit(P);return P.D}   /* 存檔取代（XQSave.load 會清 localStorage）後也記得收過 */
+/* 新手機：10 碼走 v4；8 碼是舊版（v3），已停收：連線之前就丟 XF4_OLD。只下載、解開、核對（W158②：不清分段、不寫回條、不記收過）。
+   回 P＝{D 解開的資料, id, ah, n, sid, exp, c 說明密文}；錯誤丟 Error（訊息直接給使用者看）。要用掉這組碼，資料寫完後叫 xf4Commit(P) */
+async function xf4Fetch(code,prog){const c=xfNorm(code);
   if(c.length===8)throw new Error(XF4_OLD);
   if(c.length!==XF4_LEN)throw new Error("轉移碼是 10 碼");
   const K=await xf4Keys(c),lost="找不到這組轉移碼：可能打錯、過期，或已經用過了",fake="說明對不上：轉移碼不對，或資料已經被換掉了。請在舊手機重新產生轉移碼";
@@ -340,13 +358,49 @@ async function xf4Download(code,prog){const c=xfNorm(code);
   let D=null;try{const all=new Uint8Array(got.p.reduce((a,p)=>a+p.length,0));let o=0;for(const p of got.p){all.set(p,o);o+=p.length}
     D=JSON.parse(new TextDecoder().decode(I.gz?await xfZip(all,true):all))}catch(e){XF4_GOT.delete(K.id);throw new Error("解不開：資料不完整，請在舊手機重新產生轉移碼")}
   if(!D||typeof D!=="object"||!D.data||typeof D.data!=="object"){XF4_GOT.delete(K.id);throw new Error("收到的資料格式不對，請在舊手機重新產生轉移碼")}
-  XF4_GOT.delete(K.id);U[I.sid]=exp+XF2_ACK_TTL;const us=JSON.stringify(U);try{localStorage.setItem(XF4_USED,us)}catch(e){}D.data[XF4_USED]=us;   /* 存檔取代（XQSave.load 會清 localStorage）後也記得收過 */
-  const a=[];for(let i=0;i<n;i++)a.push(XQNet.putRetained(K.topic(i),""));await Promise.all(a);
-  await XQNet.putRetained(K.topic("m"),JSON.stringify({v:4,done:Date.now(),ah:K.ah,exp:Date.now()+XF2_ACK_TTL}));
-  return D}
+  XF4_GOT.delete(K.id);
+  return{D,id:K.id,ah:K.ah,n,sid:I.sid,exp,c:M.c}}
+/* 收過的 sid 加上這一筆（回 JSON 字串，不寫進 localStorage）；XF4_ACKQ 的內容（不記碼本身） */
+function xf4UsedWith(P){const U=xf4UsedAll();U[P.sid]=P.exp+XF2_ACK_TTL;return JSON.stringify(U)}
+const xf4AckRec=P=>JSON.stringify({id:P.id,ah:P.ah,n:P.n,sid:P.sid,exp:P.exp});
+/* 按「取代」後、寫資料前再看一次：說明還是同一份＝"ok"；已經是這組碼的回條＝"used"（別支手機先收了）；讀不到又沒連上＝"unknown"；其他＝"gone"（過期、作廢） */
+async function xf4Still(P){const t=`${XQNet.root()}/x/${P.id}/m`;let m=null;for(let k=0;k<2&&!m;k++)m=await XQNet.getRetained(t,k?6000:10000);
+  let M=null;try{M=m?JSON.parse(m):null}catch(e){}
+  if(M&&M.v===4&&M.c===P.c&&Date.now()<=+P.exp)return"ok";if(M&&M.done&&M.ah===P.ah)return"used";
+  if(!m&&!(XQNet.status&&XQNet.status()==="up"))return"unknown";return"gone"}
+/* 資料寫完後才用掉這組碼：記收過、清分段、說明換成回條（舊手機這時才看得到「已轉到新手機」）。送不出去就留 XF4_ACKQ，下次開機再送。回 true＝回條送出了 */
+async function xf4Commit(P){try{localStorage.setItem(XF4_USED,xf4UsedWith(P))}catch(e){}
+  const T=k=>`${XQNet.root()}/x/${P.id}/${k}`,a=[];for(let i=0;i<P.n;i++)a.push(xf2Put(T(i),""));const r=await Promise.all(a);
+  const ok=await xf2Put(T("m"),JSON.stringify({v:4,done:Date.now(),ah:P.ah,exp:Date.now()+XF2_ACK_TTL}));
+  try{if(ok&&r.every(Boolean))localStorage.removeItem(XF4_ACKQ);else localStorage.setItem(XF4_ACKQ,xf4AckRec(P))}catch(e){}return ok}
+/* 開機時補送回條（上次寫完資料、回條沒送出）；兒童模式不連線，留到到期自己失效 */
+async function xf4AckRetry(){let Q=null;try{Q=JSON.parse(localStorage.getItem(XF4_ACKQ)||"null")}catch(e){}
+  const drop=()=>{try{localStorage.removeItem(XF4_ACKQ)}catch(e){}};
+  if(!Q||typeof Q.id!=="string"||!/^[0-9a-f]{20}$/.test(Q.id)||typeof Q.ah!=="string"||typeof Q.sid!=="string"||!Number.isInteger(+Q.n)||+Q.n<1||+Q.n>500){drop();return false}
+  if(Date.now()>(+Q.exp||0)+XF2_ACK_TTL){drop();return false}if(xf4KidOff())return false;
+  return xf4Commit({id:Q.id,ah:Q.ah,n:+Q.n,sid:Q.sid,exp:+Q.exp})}
 /* XFER4:END */
+/* W158② 新手機的畫面（取代 05-settings.js 的 xfRecv；畫面文字、#xfC／#xfGo／#xfM 照舊，07s4 驛券的「合券」照樣認「取代這支手機」）：
+   下載完只跳確認，碼還沒用掉；按「取代並重新開啟」→ 再確認一次說明還在（別支手機先收了就停）→ 換裝置代號、合併棋譜、XQSave.load、存檔格 → xf4Commit → 重開。
+   按「取消」：碼沒有用掉，舊手機不會顯示搬完。 */
+async function xf4Recv(){if(!OFF||!window.XQNet||!window.XQSave||!crypto.subtle)return toast("這個瀏覽器不支援轉移碼");
+  sheet("📱 輸入轉移碼",b=>{b.innerHTML='<p>輸入舊手機上顯示的 10 碼轉移碼：</p><input id="xfC" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="11" placeholder="ABCDE-23456" style="width:100%;font:900 26px ui-monospace,monospace;letter-spacing:.12em;text-align:center;padding:10px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:inherit"><button class="btn" id="xfGo" style="width:100%;margin-top:10px">下載資料</button><p class="muted" id="xfM" style="font-size:13px"></p>';
+    const msg=t=>{b.querySelector("#xfM").textContent=t};
+    b.querySelector("#xfGo").onclick=async()=>{const code=xfNorm(b.querySelector("#xfC").value);if(code.length===8)return msg(XF4_OLD);if(code.length!==XF4_LEN)return msg("轉移碼是 10 碼");msg("連線中…");
+      let P=null;try{P=await xf4Fetch(code,(i,n)=>msg(`下載中… ${i}／${n}`))}catch(e){return msg(e&&e.message||"解不開：轉移碼不對，或資料已經被換掉了")}
+      const D=P.D,n=Object.keys(D&&D.data||{}).length;if(!n)return msg("收到的資料是空的");const ng=Object.values(D.games||{}).reduce((a,l)=>a+(Array.isArray(l)?l.length:0),0);
+      modal(`<div class="em">📱</div><h2>用舊手機的資料取代這支手機？</h2><p class="muted">收到 ${n} 筆資料${ng?`、${ng} 盤棋譜`:""}（${new Date(D.at).toLocaleString()} 產生）。</p><p class="muted">這支手機原本的修為、戰績和設定會被換掉；棋譜是合併，這支手機原有的不會刪。這支手機會保留自己的裝置代號。</p><p class="muted">按「取代並重新開啟」、資料寫好以後，這組轉移碼才會用掉；按「取消」不會用掉，期限內還能再輸入。</p>`,
+        [["取代並重新開啟",()=>xf4Apply(P,msg)],["取消",()=>{msg("已取消：這組轉移碼沒有用掉，期限內還能再輸入。")},true]])}})}
+async function xf4Apply(P,msg){const say=t=>{try{if(msg)msg(t)}catch(e){}toast(t)};let st="unknown";try{st=await xf4Still(P)}catch(e){}
+  if(st==="used")return say("這組轉移碼已經轉到另一支手機，這支手機沒有被改動。要再搬一次，請在舊手機重新產生");
+  if(st==="gone")return say("這組轉移碼已經過期或作廢，這支手機沒有被改動。請在舊手機重新產生");
+  if(st!=="ok")return say("連不上線上伺服器，這支手機沒有被改動。等一下再輸入一次轉移碼");
+  const L=xfLocalize(P.D.data,meInfo().id);L.data[XF4_USED]=xf4UsedWith(P);L.data[XF4_ACKQ]=xf4AckRec(P);   /* 寫到一半 App 被關掉：下次開機照樣記得收過、補送回條 */
+  try{await xfGamesPut(P.D.games||{})}catch(e){}
+  XQSave.load(L.data,async()=>{try{await slotPutAll(P.D.slots||{})}catch(e){}try{await xf4Commit(P)}catch(e){}location.replace(location.pathname+"#/");setTimeout(()=>location.reload(),80)})}
 if(typeof xf4Upload==="function"&&typeof xf4Download==="function"){xfUpload=xf4Upload;xfDownload=xf4Download}
-setTimeout(()=>{try{if(localStorage.getItem("xq_xfOut"))xf2Watch()}catch(e){}},9000);
+if(typeof xfRecv==="function"&&typeof xf4Recv==="function")xfRecv=xf4Recv;
+setTimeout(()=>{try{if(localStorage.getItem("xq_xfOut"))xf2Watch()}catch(e){}try{if(localStorage.getItem(XF4_ACKQ))xf4AckRetry().catch(()=>{})}catch(e){}},9000);
 
 /* ---------- 存檔與讀檔（開頭畫面、設定、我的頁共用） ---------- */
 function saveList(box,inTitle){const M=slotMetaLive(slotMetaAll()),cur=curSlot(),J=journey(),ex=store.get("exportAt",0),paint=()=>saveList(box,inTitle);
