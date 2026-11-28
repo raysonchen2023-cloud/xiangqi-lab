@@ -8,7 +8,7 @@
      ① 這支模組＋它自己的測試（testkinds.js 還沒接上，行為不變）
      ② testkinds.js 直接執行時改用 runPool
      ③ 把這支加進 .github/scripts/base-guard.cjs 的 GUARD 清單
-   用法：const { runPool, testJobs } = require("./tk-pool.js");
+   用法：const { runPool, testJobs, runFileAsync } = require("./tk-pool.js");
      await runPool({ list, jobs, run: async (file, env) => [{name, ok, skip, todo, why}], kindOf, KINDS, env })
      ・list：測試檔名，結果照這個順序。
      ・jobs：同時跑幾支（正整數）；testJobs(env) 照環境變數 XQ_TEST_JOBS 或 CPU 核心數算。
@@ -50,4 +50,27 @@ async function runPool({ list, jobs, run, kindOf, KINDS, env = process.env }) {
   }
   return { files, total };
 }
-module.exports = { runPool, testJobs };
+/* 解析 node --test --test-reporter=tap 的輸出，回傳 [{name, ok, todo, skip, why}]（只取最上層的測試）。
+   這一段從 testkinds.js 的 runFile 原樣抄過來（11/28），規則要跟它一模一樣：test-tk-pool-1128.js 拿同一支真的測試檔，
+   比對 runFileAsync 跟 testkinds.js runFile 的結果，兩邊不一樣就紅。 */
+function tapParse(out, file) {
+  const res = [];
+  for (const line of out.split(/\r?\n/)) {
+    const m = /^(not ok|ok) \d+ - (.*)$/.exec(line);
+    if (!m) continue;
+    const name = m[2].replace(/\s+# (SKIP|TODO)\b.*$/i, "").replace(/\\#/g, "#").replace(/\\\\/g, "\\");
+    const sk = /\s# SKIP\b\s*(.*)$/i.exec(m[2]);   /* 11/14：SKIP＝略過（TAP 裡是 ok，但沒有跑），另外統計、不算通過 */
+    res.push({ name, ok: m[1] === "ok", todo: /\s# TODO\b/i.test(m[2]), skip: !!sk, why: sk ? sk[1].replace(/\\#/g, "#").replace(/\\\\/g, "\\") : undefined });   /* 第 17 輪 F3：todo＝還沒修的漏洞（預期失敗），另外統計 */
+  }
+  /* W69 流程盤點第 18 項（11/23）：檔裡一項 test() 都沒跑時，node --test 會把「這支檔本身」報成一項通過（名稱＝檔名），
+     等於沒測試卻算 1 項通過；還原成 0 項，下面判失敗。載入就壞的檔是「not ok - 檔名」，照常算失敗 */
+  if (res.length === 1 && res[0].ok && !res[0].skip && !res[0].todo && res[0].name === file) return [];
+  return res;
+}
+/* 非同步跑一支測試檔：參數、cwd、maxBuffer 跟 testkinds.js 的 runFile 一樣；跑失敗時只取 stdout（跟 runFile 的 catch 一樣）。env 給每支檔自己的環境變數 */
+function runFileAsync(file, env = process.env, cwd = __dirname) {
+  const cp = require("child_process");
+  return new Promise((res) => cp.execFile(process.execPath, ["--test", "--test-reporter=tap", file], { cwd, encoding: "utf8", maxBuffer: 64e6, env },
+    (err, stdout) => res(tapParse(String(stdout || ""), file))));
+}
+module.exports = { runPool, testJobs, tapParse, runFileAsync };
