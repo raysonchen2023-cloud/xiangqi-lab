@@ -28,6 +28,9 @@ const ARGS = {
   dTrap: [arg("--desc-trap", "暗匪把你按在糧袋堆旁：「解得開這局，就放你走。」紅方先走，{n} 步將死黑方。"), arg("--desc-trap-en", "The thief pins you by the grain sacks: \"Solve this and you can go.\" Red to move: checkmate in {n}.")],
 };
 const CHECK = process.argv.includes("--check"), GAMES = process.argv.includes("--allow-games");
+/* W188（11/28）：--multi 收的題目有 alt 樹時，用 core.js 獨立重算整棵樹（跟 test-jh-maze-multisol-1126 同一套算法：每層收齊、只收最快殺、黑方撐最久、終點將死、主變在樹上）。
+   重算超過 --alt-max-sec 秒（預設 60）就不收，免得 CI 的測試要跑很久；重算挑出問題的也不收。最後列出排除了哪幾題、各花幾秒。 */
+const ALT_MAX_SEC = +arg("--alt-max-sec", "60");
 /* --multi（W87-2，開發者 11/26 選單「放寬到不是唯一解，只要走的那步仍是最快殺就算對」）：紅方每一步收錄所有「剩下步數內最快殺」的著法（有更短的殺法就不收這題），
    黑方每一步照撐最久的方式應（主變那一步也是撐最久的就照主變）；題目多一個 alt 樹（只在真的有第二種殺法時才寫，唯一解的題輸出跟以前一樣）。
    不加 --multi 照舊只收唯一解（既有題庫 --check 逐字相同）。07z9m-maze.js 的 jhMzTry 照 alt 判斷。 */
@@ -73,6 +76,34 @@ async function verify(E, x) {
   ENG[key] = res; return res;
 }
 
+/* W188：core.js 獨立重算 alt 樹（照 test-jh-maze-multisol-1126 的 altProblems 寫；多一個 deadline，超過就丟 "timeout"）。回傳問題清單，空的＝通過 */
+function altRecheck(P, deadline) {
+  const tick = () => { if (Date.now() > deadline) throw new Error("timeout") };
+  const mvU = (b, u) => C.make(b, C.parseSq(u.slice(0, 2)), C.parseSq(u.slice(2, 4)));
+  const ucis = (b, s) => C.legal(b, s).map(([f, t]) => "abcdefghi"[f % 9] + (9 - ((f / 9) | 0)) + "abcdefghi"[t % 9] + (9 - ((t / 9) | 0)));
+  const isMated = (b, s) => C.inCheck(b, s) && C.legal(b, s).length === 0;
+  function mateIn(b, k) { tick(); return C.legal(b, "r").some(([f, t]) => { const b1 = C.make(b, f, t), R = C.legal(b1, "b"); if (!R.length) return C.inCheck(b1, "b"); if (k === 1) return false; return R.every(([f2, t2]) => mateIn(C.make(b1, f2, t2), k - 1)) }) }
+  const winsIn = (b, u, k) => { const b1 = mvU(b, u); if (isMated(b1, "b")) return true; if (k <= 1) return false; return C.legal(b1, "b").every(([f, t]) => mateIn(C.make(b1, f, t), k - 1)) };
+  const bad = [], n = (P.line.length + 1) / 2;
+  (function walk(node, b, left, tag) {
+    const legal = ucis(b, "r"), fast = legal.filter((u) => winsIn(b, u, left));
+    for (const u of Object.keys(node)) { if (!legal.includes(u)) { bad.push(tag + u + " 不合法"); continue } if (!fast.includes(u)) bad.push(tag + u + " 不是 " + left + " 步內殺"); else if (left > 1 && winsIn(b, u, left - 1)) bad.push(tag + u + " 有更短的殺法") }
+    for (const u of fast) if (!(u in node)) bad.push(tag + "少收了最快殺 " + u);
+    for (const [u, v] of Object.entries(node)) { if (!legal.includes(u)) continue; const b1 = mvU(b, u);
+      if (left === 1) { if (v !== 0 || !isMated(b1, "b")) bad.push(tag + u + " 最後一步要將死"); continue }
+      if (!Array.isArray(v) || v.length !== 2) { bad.push(tag + u + " 要有黑方應著和下一層"); continue }
+      const [r, sub] = v; if (!ucis(b1, "b").includes(r)) { bad.push(tag + u + " 黑方應著 " + r + " 不合法"); continue }
+      const b2 = mvU(b1, r); if (!mateIn(b2, left - 1)) bad.push(tag + u + "/" + r + " 之後殺不了"); if (left > 2 && mateIn(b2, left - 2)) bad.push(tag + u + "/" + r + " 黑方沒有撐最久");
+      walk(sub, b2, left - 1, tag + u + "/" + r + "：") } })(P.alt, C.parseFen(P.fen), n, "");
+  let node = P.alt; for (let i = 0; i < P.line.length; i += 2) { const v = node && node[P.line[i]]; if (v === undefined) { bad.push("主變第 " + (i + 1) + " 手不在 alt 裡"); break } if (v === 0) break; if (v[0] !== P.line[i + 1]) bad.push("主變的黑方應著不一樣"); node = v[1] }
+  return bad;
+}
+/* 回 {sec, why}：why 空字串＝收；"timeout"＝超過上限；其他＝重算挑出的問題 */
+function altGate(x) {
+  const t0 = Date.now(); let why = "";
+  try { const bad = altRecheck({ fen: String(x.fen).split(" ")[0], line: x.line, alt: x.alt }, t0 + ALT_MAX_SEC * 1000); if (bad.length) why = bad.slice(0, 3).join("；") } catch (e) { if (e && e.message === "timeout") why = "timeout"; else throw e }
+  return { sec: (Date.now() - t0) / 1000, why };
+}
 /* --multi：從起始局面建 alt 樹（見檔頭 MULTI 的說明）。回傳 {ok, why, alt}；alt 只在有分岔時給 */
 async function verifyMulti(E, x) {
   const key = "multi|" + String(x.fen).split(" ")[0] + "|" + x.line.join(" ") + "@" + ARGS.depth;
@@ -119,7 +150,11 @@ async function verifyMulti(E, x) {
   console.log(`候選 ${cand.length} 題（${ARGS.n.join("、")} 步殺、${ARGS.mate} 收尾、子數 ≤ ${ARGS.maxPieces}、${GAMES ? "含實戰對局" : "只收古譜"}）`);
   const E = process.env.PIKAFISH && !CHECK ? await require("./zm-engine.js").engine() : null;
   const ok = [];
-  for (const x of cand) { const r = MULTI ? await verifyMulti(E, x) : await verify(E, x); if (!r) continue; console.log((r.ok ? "✔ " : "✘ ") + x.id + " " + x.n + " 步" + (r.ok ? (r.alt ? "（有其他最快殺法）" : "") : "：" + r.why)); if (r.ok) { if (r.alt) x.alt = r.alt; ok.push(x) } }
+  const altOut = [];   /* W188：重算超時或挑出問題而排除的題 */
+  for (const x of cand) { const r = MULTI ? await verifyMulti(E, x) : await verify(E, x); if (!r) continue; console.log((r.ok ? "✔ " : "✘ ") + x.id + " " + x.n + " 步" + (r.ok ? (r.alt ? "（有其他最快殺法）" : "") : "：" + r.why));
+    if (r.ok && r.alt) { const g = altGate(Object.assign({}, x, { alt: r.alt })); if (g.why) { altOut.push({ id: x.id, sec: g.sec, why: g.why }); console.log(`  ↳ 不收：core.js 重算 alt 樹${g.why === "timeout" ? `超過 ${ALT_MAX_SEC} 秒` : "挑出問題：" + g.why}（花 ${g.sec.toFixed(1)} 秒）`); continue } }
+    if (r.ok) { if (r.alt) x.alt = r.alt; ok.push(x) } }
+  if (MULTI) console.log(altOut.length ? `排除 ${altOut.length} 題（重算上限 ${ALT_MAX_SEC} 秒）：` + altOut.map((o) => `${o.id}（${o.sec.toFixed(1)} 秒，${o.why === "timeout" ? "超時" : o.why}）`).join("、") : `alt 樹重算都在 ${ALT_MAX_SEC} 秒內、沒有問題，沒有排除`);
   if (E) { E.quit(); const o = {}; for (const k of Object.keys(ENG).sort()) o[k] = ENG[k]; fs.writeFileSync(ENG_F, JSON.stringify(o, null, 0).replace(/\},"/g, "},\n\"") + "\n") }
   /* 石門取步數多的、陷阱取剩下的；同一題不重複 */
   const ok2 = [...ok].sort((a, b) => pref(a) - pref(b)), byN = [...ok2].sort((a, b) => pref(a) - pref(b) || b.n - a.n || (a.id < b.id ? -1 : 1)), door = byN.slice(0, ARGS.door), used = new Set(door.map((x) => x.id)), trap = ok2.filter((x) => !used.has(x.id)).slice(0, ARGS.trap);

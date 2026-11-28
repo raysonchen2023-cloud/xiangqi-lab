@@ -82,7 +82,7 @@ const HMW={p34:{f:"home_p34",w:1536,h:2048,S:HM_SPOTS_P34,sl:1.4,safe:{l:.06,r:.
    構圖對齊 home_l1610，所以入口、主張紙條、走路節點都沿用 l1610 那一組；只有秋夜的書院山門（hmLearn）畫偏了，往右 9、往上 22 像素＝x +0.35%、y −1.4%）。
    經典世界的 sw7HomeWx() 一定回傳 classic_<季>[_night]，在這 8 個裡面就換橫版；直版（p34）沒有經典世界的圖，照舊用直式變體。
    圖跟 home_l1610 一樣不在公開倉庫，照發布流程上 CDN；HMW_CL_CDN＝false 時正式玩家照舊，只有開發用開關（localStorage xqScwDev=1，跟 07sw 同一個）才用；上 CDN 的同一個 PR 改成 true */
-let HMW_CL_CDN=false;
+let HMW_CL_CDN=true;
 const HMW_CL=new Set(["classic_spring","classic_spring_night","classic_summer","classic_summer_night","classic_autumn","classic_autumn_night","classic_winter","classic_winter_night"]),HMW_CL_IMGV="1128";
 const HMW_CL_FIX={classic_autumn_night:{hmLearn:[.35,-1.4]}};
 function hmwClOn(){if(HMW_CL_CDN)return true;try{return localStorage.getItem("xqScwDev")==="1"}catch(e){return false}}
