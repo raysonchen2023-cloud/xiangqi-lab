@@ -122,12 +122,13 @@ function lbsReport(p){if(!p||!p.id)return;const R=store.get("lbRep",{})||{},last
         chat.length?"對方最近的聊天：\n"+chat.join("\n"):"",also?"（檢舉的人同時封鎖了他）":""].filter(Boolean).join("\n");
       lbsMineAdd(rid,lbnShow(p),Date.now());   /* R05：「我的檢舉」只存畫面上顯示的名字（不合格的、兒童在看的都是稱號） */
       let ok=false;try{const info=await feedbackInfo();ok=await sendRecord(Object.assign({},info,{type:"🚩 檢舉",text,contact:"",rid}))}catch(err){ok=false;try{lbsMineSet(rid,"lost")}catch(e){}}   /* rid 不在 FEEDBACK_FORM.entries 裡，postForm 不會送出這一格，只拿來在 fbQueue 裡認出是哪一筆 */
-      const R3=store.get("lbRep",{})||{};R3[p.id]=Date.now();for(const k in R3)if(Date.now()-R3[k]>864e5)delete R3[k];store.set("lbRep",R3);
-      closeSheet();if(also)lbsBlock(p);setTimeout(()=>lbsReportDone(rid,ok),280)}})}   /* 開發者 11/11 選 ChatGPT UI-13、大廳規劃書案 01：表單送不回收件確認，所以只說「從手機送出」，不說「已收到」；沒網路時真的排在手機裡（fbQueue，開 App、恢復連線時補送） */
+      let st=ok?"sent":"q";try{if(!ok)st=lbsMineState(lbsMine().find(x=>x.rid===rid))}catch(e){}   /* W158①：回條照「我的檢舉」的實際狀態講；沒送出（lost）不記 30 分鐘防重複，讓他可以馬上再檢舉一次 */
+      if(st!=="lost"){const R3=store.get("lbRep",{})||{};R3[p.id]=Date.now();for(const k in R3)if(Date.now()-R3[k]>864e5)delete R3[k];store.set("lbRep",R3)}
+      closeSheet();if(also)lbsBlock(p);setTimeout(()=>lbsReportDone(rid,st),280)}})}   /* 開發者 11/11 選 ChatGPT UI-13、大廳規劃書案 01：表單送不回收件確認，所以只說「從手機送出」，不說「已收到」；沒網路時真的排在手機裡（fbQueue，開 App、恢復連線時補送） */
 /* 送出後的回條：給編號、說現在是排隊中還是已從手機送出 */
-function lbsReportDone(rid,ok){lbsCss();
+function lbsReportDone(rid,st){lbsCss();st=st===true?"sent":st==="sent"||st==="lost"?st:"q";   /* W158①：st＝sent／q／lost（舊呼叫傳 true／false 也接） */
   modal(`<div class="em">🚩</div><h2 style="margin-bottom:4px">檢舉編號</h2><div class="lbs-rid" style="font-size:24px;font-weight:900;margin:0 0 8px">${esc(rid)}</div>
-    <p style="text-align:left;line-height:1.75;font-size:14.5px;margin:6px 0">${ok?"✅ <b>已從手機送出</b>：手機已把檢舉送出去。":"📮 <b>排隊中</b>：現在送不出去，檢舉先存在這支手機，有網路會自動補送。"}開發者處理好以後，「🚩 我的檢舉」會標成「🛠 已處理」。</p>
+    <p style="text-align:left;line-height:1.75;font-size:14.5px;margin:6px 0">${st==="sent"?"✅ <b>已從手機送出</b>：手機已把檢舉送出去。開發者處理好以後，「🚩 我的檢舉」會標成「🛠 已處理」。":st==="lost"?"⚠ <b>沒送出</b>：這筆檢舉沒有送出去，也沒有排進待送清單，請再檢舉一次。":"📮 <b>還沒送出</b>：現在送不出去，檢舉先存在這支手機，連上網路會自動再試。送出後，「🚩 我的檢舉」會更新狀態。"}</p>
     <p class="muted" style="font-size:13px;margin:4px 0">如果要詢問進度，告訴開發者這個編號。對方不會知道是誰檢舉的。</p>`,[["知道了",null],["看我的檢舉",()=>lbsMineSheet(),true]])}
 
 /* ---------- 回饋 841：資料卡加按鈕（包一層 oppCard；07x3-rostermap.js 的名帖外觀也包在裡面） ---------- */

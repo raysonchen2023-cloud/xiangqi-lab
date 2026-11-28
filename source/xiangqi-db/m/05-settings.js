@@ -477,13 +477,16 @@ async function srvKeyV(k){const d=await crypto.subtle.digest("SHA-256",new TextE
 function srvDelRec(id,rid,at,forgot,ver,role,key){return{type:"🗑 刪除請求",text:["["+rid+"] 🗑 申請刪除伺服器上的資料","裝置代號："+id,"請求編號："+rid,"時間："+srvDelTw(at)+"（臺灣時間）",
   "要刪：這個裝置代號送過的意見回饋、檢舉、玩家登記；線上大廳的戰績摘要和對局棋譜","上線狀態和戰績摘要："+(forgot?"手機已經自己清掉":"手機沒連上大廳、沒清到，請開發者清")].concat(key?["本人證明："+key]:[]).join("\n"),contact:"",id,name:"",rank:"",ver:ver||"",dev:"",page:"",role:role||"玩家",rid}}   /* rid 不在表單欄位裡、不會送出；帶著是讓 07x4 包的 postForm 在沒網路時丟錯（sendBeacon 沒網路也回 true），這筆才會進 fbQueue 排隊，也拿來在 fbQueue 認出是哪一筆 */
 function srvDelList(){const L=store.get("srvDelReq",[]);return Array.isArray(L)?L.filter(x=>x&&typeof x.rid==="string"&&SRV_DEL_RE.test(x.rid)):[]}
-function srvDelState(x){if(!x)return"";if(x.st==="sent")return"sent";const q=store.get("fbQueue",[])||[];return q.some(r=>r&&(r.rid===x.rid||String(r.text||"").indexOf("["+x.rid+"]")===0))?"q":"sent"}
-function srvDelLine(){const x=srvDelList().slice(-1)[0];if(!x)return"";return"上次申請："+x.rid+"（"+srvDelTw(x.at)+"，"+(srvDelState(x)==="sent"?"✅ 已從手機送出":"📮 排隊中，有網路時自動送出")+"），開發者會在 30 天內處理"}
+function srvDelState(x){if(!x)return"";if(x.st==="sent")return"sent";if(x.st==="lost")return"lost";const q=store.get("fbQueue",[])||[];return(Array.isArray(q)?q:[]).some(r=>r&&(r.rid===x.rid||String(r.text||"").indexOf("["+x.rid+"]")===0))?"q":x.st==="w"?"lost":"?"}   /* W158①：原本「不在待送佇列裡」就當成已送出，被擠掉的也顯示「已從手機送出」。現在送出（sendRecord／flushFeedback 的 fbqSent）、擠掉（fbqTrim）都明確記在 st；這版起的請求 st:"w"，不在佇列又沒記送出＝沒送出；舊版的（st:"q"）沒記錄，照實說不確定 */
+function srvDelLine(){const x=srvDelList().slice(-1)[0];if(!x)return"";const k=srvDelState(x),h="上次申請："+x.rid+"（"+srvDelTw(x.at)+"，";
+  if(k==="lost")return h+"⚠ 沒送出：手機裡待送的東西太多被擠掉了），請再申請一次";
+  if(k==="?")return h+"❔ 舊版沒記下有沒有送出），不確定的話請再申請一次";
+  return h+(k==="sent"?"✅ 已從手機送出":"📮 排隊中，還沒送出，連上網路會自動再試")+"），開發者會在 30 天內處理"}
 async function srvDelSend(now){now=now||Date.now();const id=meInfo().id,have=new Set(srvDelList().map(x=>x.rid));let rid=srvDelRid(new Date(now));for(let k=0;k<20&&have.has(rid);k++)rid=srvDelRid(new Date(now));
   let forgot=false;try{forgot=!!(window.XQNet&&XQNet.forget&&XQNet.forget())}catch(e){}
   try{store.set("repOff",true)}catch(e){}
   const role=typeof DEVMODE==="function"&&DEVMODE()?"開發者":"玩家",ver=String(window.XQ_BUILD||"").slice(0,20);
-  store.set("srvDelReq",srvDelList().concat({rid,at:now,st:"q",forgot}).slice(-10));
+  store.set("srvDelReq",srvDelList().concat({rid,at:now,st:"w",forgot}).slice(-10));   /* W158①：st "w"＝這版起的請求，送出、擠掉都會明確記下來 */
   let key="";try{key=srvKey()}catch(e){}
   const ok=await sendRecord(srvDelRec(id,rid,now,forgot,ver,role,key));
   if(ok){const L=srvDelList(),x=L.find(q=>q.rid===rid);if(x){x.st="sent";store.set("srvDelReq",L)}}
@@ -492,7 +495,8 @@ async function srvDelSend(now){now=now||Date.now();const id=meInfo().id,have=new
 function srvDelAsk(){modal(`<div class="em">🗑</div><h2>申請刪除伺服器上的資料？</h2><p style="text-align:left">開發者收到後會刪掉：</p><ul style="text-align:left;margin:0 0 8px;padding-left:1.3em;font-size:14px;line-height:1.6"><li>意見回饋試算表裡，這支手機送過的意見回饋、檢舉和玩家登記（用裝置代號找）</li><li>線上大廳伺服器上你的戰績摘要和對局棋譜（上線狀態和戰績摘要，手機現在就先清）</li></ul><p class="muted" style="font-size:13px;text-align:left">匿名資料（卡住的地方、對局評分、學習進度）沒有名字和裝置代號，對不到你，所以不需要、也沒辦法刪，會照期限自動刪掉。這筆刪除請求本身會留一年，當作處理紀錄。別人手機上存的對局紀錄刪不到。手機裡的進度不會動（要刪請用隱私說明最下面的「刪除這支手機的全部資料」）。送出後也會關掉「📨 送出玩家登記」。</p>`,[["送出申請",()=>setTimeout(srvDelGo,120)],["先不要",null,true]])}
 async function srvDelGo(){let r;try{r=await srvDelSend()}catch(e){return toast("送不出去："+(e&&e.message||e))}
   const s=document.getElementById("srvDelSt");if(s)s.textContent=srvDelLine();const rp=document.getElementById("repS");if(rp)rp.checked=false;
-  modal(`<div class="em">📨</div><h2>已申請刪除</h2><p>請求編號：<b>${esc(r.rid)}</b></p><p>${r.ok?"已經從手機送出。":"現在沒網路，先排在手機裡，有網路時會自動送出。"}開發者會在 30 天內處理。</p><p class="muted" style="font-size:13px;text-align:left">${r.forgot?"線上大廳的上線狀態和戰績摘要，手機已經先清掉了。":"現在沒連上線上大廳，戰績摘要會由開發者一起清。"}之後再進線上大廳下棋，會產生新的戰績摘要。玩家登記已經關掉（設定 → 隱私可以再打開）。編號會記在設定 → 隱私這個按鈕下面。</p>`,[["好",null]])}
+  let k=r.ok?"sent":"q";try{if(!r.ok)k=srvDelState(srvDelList().find(x=>x.rid===r.rid))||"q"}catch(e){}   /* W158①：照實際狀態講，送不出去、被擠掉都不說「已申請」 */
+  modal(`<div class="em">${k==="sent"?"📨":k==="lost"?"⚠":"📮"}</div><h2>${k==="sent"?"已申請刪除":k==="lost"?"刪除申請沒送出":"刪除申請還沒送出"}</h2><p>請求編號：<b>${esc(r.rid)}</b></p><p>${k==="sent"?"已經從手機送出。開發者會在 30 天內處理。":k==="lost"?"手機裡待送的東西太多，這筆被擠掉了，請再申請一次。":"現在送不出去，先排在手機裡，連上網路會自動再試。送出後開發者會在 30 天內處理。"}</p><p class="muted" style="font-size:13px;text-align:left">${r.forgot?"線上大廳的上線狀態和戰績摘要，手機已經先清掉了。":"現在沒連上線上大廳，戰績摘要會由開發者一起清。"}之後再進線上大廳下棋，會產生新的戰績摘要。玩家登記已經關掉（設定 → 隱私可以再打開）。編號會記在設定 → 隱私這個按鈕下面。</p>`,[["好",null]])}
 
 // ================= 意見回饋：存到 Google 表單（沒網路先存在手機，之後自動補送） =================
 // 表單的「formResponse」網址和每一題的 entry 代號；空的時候回饋先存在手機佇列裡
@@ -514,10 +518,25 @@ async function postForm(rec){const F=FEEDBACK_FORM;if(!F.action)throw new Error(
   const body=new URLSearchParams();for(const k in F.entries)if(F.entries[k]&&rec[k]!=null)body.append(F.entries[k],String(rec[k]).slice(0,k==="img"?31000:k==="text"?45000:2000));
   // 用 sendBeacon「送出就好、不等回覆」：App 為了跑 Pikafish 開了嚴格的跨網域模式，fetch 讀不到 Google 的回覆會被當成失敗（其實已經送到），造成重複送出
   if(navigator.sendBeacon){if(navigator.sendBeacon(F.action,body))return;}
-  try{await fetch(F.action,{method:"POST",mode:"no-cors",body})}catch(e){if(!navigator.onLine)throw e}}   // 有網路時，讀不到回覆不算失敗
-async function flushFeedback(){const q=store.get("fbQueue",[]);if(!q.length||!FEEDBACK_FORM.action||!navigator.onLine)return;const left=[];
-  for(const r of q){try{await postForm(r);if(r.type&&!/玩家/.test(r.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:r.type,img:!!r.img,role:r.role||""})}catch(e){left.push(r)}}store.set("fbQueue",left)}
-async function sendRecord(rec){try{await postForm(rec);if(rec.type&&!/玩家/.test(rec.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:rec.type,img:!!rec.img,role:rec.role||""});return true}catch(e){const q=store.get("fbQueue",[]);q.push(rec);store.set("fbQueue",q.slice(-30));return false}}
+  try{await fetch(F.action,{method:"POST",mode:"no-cors",body})}catch(e){if(!navigator.onLine||rec.rid)throw e}}   /* 有網路時，一般回饋讀不到回覆不算失敗。W158①：檢舉、刪除請求（帶 rid）sendBeacon 被拒、fetch 也失敗＝兩條路都沒送出，不管 onLine 怎麼說都當失敗，進佇列再試（可能重送，開發者用編號去重） */
+async function flushFeedback(){const q=store.get("fbQueue",[]);if(!Array.isArray(q)||!q.length||!FEEDBACK_FORM.action||!navigator.onLine)return;const left=[];
+  for(const r of q){try{await postForm(r);fbqSent(r);if(r.type&&!/玩家/.test(r.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:r.type,img:!!r.img,role:r.role||""})}catch(e){left.push(r)}}fbqSave(left,q)}
+async function sendRecord(rec){try{await postForm(rec);fbqSent(rec);if(rec.type&&!/玩家/.test(rec.type)&&window.XQNet&&XQNet.bell)XQNet.bell({type:rec.type,img:!!rec.img,role:rec.role||""});return true}catch(e){const q0=store.get("fbQueue",[]),q=Array.isArray(q0)?q0:[];q.push(rec);store.set("fbQueue",fbqTrim(q));return false}}
+/* ---------- W158①（App Store 1.2、5.1.1）：待送佇列不能默默丟掉檢舉、刪除請求 ----------
+   原本 fbQueue 只留最新 30 筆（slice(-30)），排隊中的檢舉、刪除請求會被後面的意見回饋擠掉，畫面卻還寫「已從手機送出」。
+   現在分兩組：帶 rid 的重要請求（R- 檢舉、D- 刪除請求）另外最多留 FBQ_IMP_MAX 筆，不會被一般回饋擠掉；一般回饋照舊最多 FBQ_MAX 筆。
+   重要請求真的多到被擠掉時，明確記「沒送出」（我的檢舉 lost、刪除請求 st:"lost"）並跳提示，不默默消失。送出成功（含補送）記「已送出」。前綴 fbq */
+const FBQ_MAX=30,FBQ_IMP_MAX=60;
+function fbqImp(r){return!!(r&&typeof r.rid==="string"&&/^[RD]-\d{4}-/.test(r.rid))}
+function fbqDel(rid,st){try{const L=store.get("srvDelReq",[]);if(!Array.isArray(L))return;const x=L.find(q=>q&&q.rid===rid);if(x&&x.st!==st){x.st=st;store.set("srvDelReq",L)}}catch(e){}}
+function fbqSent(r){if(!fbqImp(r))return;if(/^D-/.test(r.rid))fbqDel(r.rid,"sent");else if(typeof lbsMineSet==="function")try{lbsMineSet(r.rid,"sent")}catch(e){}}
+function fbqLost(L){for(const r of L){if(/^D-/.test(r.rid))fbqDel(r.rid,"lost");else if(typeof lbsMineSet==="function")try{lbsMineSet(r.rid,"lost")}catch(e){}}
+  try{if(L.length&&typeof toast==="function")toast("⚠ 有檢舉或刪除申請排太久被擠掉了，沒有送出，請再送一次")}catch(e){}}
+function fbqTrim(q){q=(Array.isArray(q)?q:[]).filter(r=>r&&typeof r==="object");const I=q.filter(fbqImp),O=q.filter(r=>!fbqImp(r)),kI=new Set(I.slice(-FBQ_IMP_MAX)),kO=new Set(O.slice(-FBQ_MAX)),lost=I.filter(r=>!kI.has(r));
+  if(lost.length)fbqLost(lost);return q.filter(r=>kI.has(r)||kO.has(r))}
+/* flushFeedback 送的時候（await 期間）又有新的一筆排進來：寫回時要接上，不能被開始時的舊快照蓋掉 */
+function fbqSave(left,snap){let now=store.get("fbQueue",[]);now=Array.isArray(now)?now:[];const S=new Set((snap||[]).map(r=>JSON.stringify(r))),add=now.filter(r=>!S.has(JSON.stringify(r)));store.set("fbQueue",fbqTrim(left.concat(add)))}
+/* ---------- W158①：以上 ---------- */
 // 走棋音效選單（意見回饋 199、200）：開關＋分組卡片
 function sndPicker(){const on=store.get("mvSound",false),cur=store.get("sndStyle","wood");
   const G=[["合成",[["wood","實木"],["soft","輕敲"]]],["經典 01–10",SFX_SET.slice(0,10)],["園子擬音",SFX_SET.slice(10)]];
