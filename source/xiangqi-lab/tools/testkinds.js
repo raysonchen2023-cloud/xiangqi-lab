@@ -15,9 +15,12 @@ const DIR = __dirname;
 const SKIP = new Set(["test-home-focus.js", "testkinds.js"]);
 /* 11/12 已逐項分類（開發者稽核 story/102_評比灌水誠實稽核.md 第 3 項） */
 const CLASSIFIED = new Set([
+  "test-ship-map-l1610-1128.js",   /* 11/28 #255 第 2 項 星槎主畫面 iPad 橫向橫式圖 ship_map_l1610（07f SHPM_L1610、shpLKind、shpLMount；07w shipWalk 照 shpWalkCfg）：條目 ready:false、量好的點寫死、13／11 吋不被裁、路網連通、真的 07sw scwKind 判斷、載不到等 CDN 再退回、晚掛標籤換位置、改壞驗證（行為 7、原始碼 1、混合 1） */
   "test-jh-maze-vault-1127.js",   /* 11/27 W172 漕運鑰匙開地底迷宮的隱藏密室（m/07z9m-vault.js、07z9b-jianghu.js jhCanalMark）：只發給第二層有密室的派、只發一次；銅鎖門沒鑰匙打不開、開過永久開；殘譜架第一次給修為；鑰匙不開石門、不改水窪；改壞驗證四種 */
   "test-emu-ready-1127.js",   /* 11/27 W190 Android P0 開跑前的模擬器預檢 emu-ready.js：每一項壞掉都擋在那一項、後面不再跑；健康的不誤擋；不合格時照 --retries 重開再檢查；用法錯誤回 2；改壞驗證 */
   "test-w107-night-l1610.js",   /* 11/25 W107-L 夜景、四季 218 張 iPad 橫式圖（07sw scwVarList／scwVarInit）：清單逐類寫死、日間晚登記接得上、各類對應、夏季夏夜、scwPre／scwSw7、不蓋掉已有條目（行為 4、混合 1） */
+  "test-ipad-3d-landscape-1127.js",   /* 11/27 #255 iPad 橫向對局頁 3D 撐滿左欄高度（room() 只扣同一欄）、左欄把寬度讓給 3D（m.css；平面棋盤照舊） */
+  "test-home-wide-classic-1128.js",   /* 11/28 #255 第 4 項 經典世界首頁四季日夜 8 張 iPad 橫版（07z HMW_CL）：上 CDN 前預設關、直版照舊、座標沿用 l1610 只修秋夜山門、載不到只關經典、跨入夜先載好再換（vm 實跑） */
   "test-bhx-pad-turn-1128.js",   /* 11/28 黑洞序局：「輪到你」標籤照搖桿上緣擺、不壓 ▲（Android 12 P0-3D bhx-back）；英文十字鍵用字（落子＝Move、三句提示） */
   "test-w131b-hub-fill.js",   /* 11/26 W131b iPad 直向：對戰、學習大廳的朝代殘影（.cy）算可以裁，大廳照樣填滿寬度、不留模糊底 */
   "test-w107-hall-l1610.js",   /* 11/25 W107-L 第 5 批：江湖會館十派門內頁（07z9b／07z9l／07z9c／07z9m）iPad 橫向橫式圖：十派條目與量好的點、jhHallUse 整套換與還原、迷宮入口位置（行為 3、原始碼 1） */

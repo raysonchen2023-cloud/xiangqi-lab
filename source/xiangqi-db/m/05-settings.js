@@ -649,7 +649,16 @@ function renderStrip(box,moves,curIdx,onPick){
   const key=moves.map(m=>m.cn+(m.q||"")).join()+"|"+curIdx;if(box.dataset.k===key)return;box.dataset.k=key;box.innerHTML="";
   moves.forEach((m,i)=>{const c=document.createElement("button");c.className="chip "+(m.by||(i%2?"b":"r"))+(i===curIdx?" on":"");
     c.innerHTML=`<span class="n">${i+1}</span>${esc(m.cn)}${m.q&&m.q!=="—"?`<span class="q" style="color:${QC[m.q]}">${m.q}</span>`:""}`;if(onPick)c.onclick=()=>onPick(i);box.append(c)});
-  const on=box.children[curIdx<0?box.children.length-1:curIdx];if(on)box.scrollLeft=on.offsetLeft-box.clientWidth/2+on.offsetWidth/2;else box.scrollLeft=box.scrollWidth}
+  const on=box.children[curIdx<0?box.children.length-1:curIdx];if(on)box.scrollLeft=on.offsetLeft-box.clientWidth/2+on.offsetWidth/2;else box.scrollLeft=box.scrollWidth;
+  if(typeof stripFitV==="function")stripFitV(box,on)}   /* test-i18n 等只抽 renderStrip 出來跑，沒有 stripFitV 也不能壞 */
+/* #255（11/27 開發者選「直式著法紀錄撐滿」）：平板橫向兩欄時（m.css 把 #strip 改成直式兩欄），高度量到右欄底、捲到目前那一步；不是直式就把高度還原 */
+const STRIP_V_MQ="(orientation:landscape) and (min-width:900px) and (min-height:600px)";
+function stripFitV(box,on){try{if(!box)return;const v=box.parentElement;
+  if(!v||typeof matchMedia!=="function"||!matchMedia(STRIP_V_MQ).matches||getComputedStyle(box).display!=="grid"){if(box.style.height)box.style.height="";return}
+  box.style.height="0px";const vr=v.getBoundingClientRect(),pb=parseFloat(getComputedStyle(v).paddingBottom)||0,t=box.getBoundingClientRect().top;
+  box.style.height=Math.max(96,Math.floor(vr.top+v.clientHeight-pb-t-8))+"px";
+  const c=on||box.lastElementChild;if(c){const br=box.getBoundingClientRect(),cr=c.getBoundingClientRect();box.scrollTop+=cr.top-br.top-box.clientHeight/2+cr.height/2}}catch(e){}}
+if(typeof addEventListener==="function")addEventListener("resize",()=>{try{const b=document.getElementById("strip");if(b)stripFitV(b)}catch(e){}});
 function actionBar(box,items){box.innerHTML="";const out={};for(const[id,icon,label,fn,pri]of items){const b=document.createElement("button");if(pri)b.className="pri";
   b.innerHTML=`<span class="ic" aria-hidden="true">${icon}</span>${label}`;b.setAttribute("aria-label",String(label).replace(/<[^>]*>/g,""));b.dataset.act=id;b.onclick=()=>{vibrate(8);fn()};   /* 11/17 第 20 輪 D N4：data-act＝按鈕的代號（bag、undo…），07bht、07bhg 用它找悔棋、寶物鈕（英文介面 aria-label 是 Undo／Items） */
   if(/（剩 0）/.test(String(label))){b.disabled=true;b.title="用完了"}   /* 11/11 AI 模擬玩家報告問題 7：提示棋、悔棋符這類寫著「（剩 0）」的按鈕直接停用，不讓人按了才說沒有 */
