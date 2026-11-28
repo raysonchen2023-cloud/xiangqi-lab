@@ -192,7 +192,8 @@ if(typeof yzInn==="function"){const f0=yzInn;yzInn=function(v,k){const r=f0.appl
 function shwMount(o){if(shwRM()||!o.root||!o.frame||o.root.dataset.shw)return;o.root.dataset.shw="1";shwCss();o.root.classList.add("shw-iso");
   const C=o.cfg,box=document.createElement("div");box.className="shw";box.setAttribute("aria-hidden","true");box.innerHTML='<i class="shw-sh"></i>';o.layer.insertBefore(box,o.before&&o.before.parentNode===o.layer?o.before:o.layer.firstChild);
   const S={o,C,v:o.v,M:o.root,I:o.frame,box,ready:false,pass:false,go:null,at:shwSavedAt(C,o.mem)};
-  o.root.addEventListener("click",e=>shwClick(S,e),true);
+  /* #175 第 1 項：同一個頁框重掛（iPad 轉向）時先拿掉上一次的點擊監聽，不然每轉一次多一個，舊的 S 也還在收點擊 */
+  if(o.root._shwClk)o.root.removeEventListener("click",o.root._shwClk,true);o.root._shwClk=e=>shwClick(S,e);o.root.addEventListener("click",o.root._shwClk,true);
   shwLoad(S).then(()=>{try{if(WALK_BOT_MERGE&&o.characterActions!==false)shwBotHook(S)}catch(e){}}).catch(()=>{box.remove();S.ready=false;document.body.classList.remove("shw-on")})}
 function shwSavedAt(C,mem){
   const at=SHW_MEM[mem];
@@ -321,7 +322,7 @@ function shwBreath(S){if(!SHW_BR_ON||shwRM())return;const C=S.C,L=S.o.layer,I=S.
     L.insertBefore(e,S.box.parentNode===L?S.box:L.firstChild);setTimeout(()=>e.remove(),1500+(dl||0))};
   M.classList.add("shw-brfirst");setTimeout(()=>M.classList.remove("shw-brfirst"),4800);
   setTimeout(()=>{if(!document.hidden)keys().forEach((h,i)=>glow(h,i*140))},500);
-  let last=Date.now(),i=0,nx=0;M.addEventListener("pointerdown",()=>{last=Date.now()},true);
+  let last=Date.now(),i=0,nx=0;if(M._shwPd)M.removeEventListener("pointerdown",M._shwPd,true);M._shwPd=()=>{last=Date.now()};M.addEventListener("pointerdown",M._shwPd,true);   /* #175 第 1 項：重掛時換掉上一次的，不累積 */
   const it=(typeof bgpEvery==="function"?bgpEvery:setInterval)(()=>{if(!S.box.isConnected||!M.isConnected){(typeof bgpStop==="function"?bgpStop:clearInterval)(it);return}const now=Date.now();if(document.hidden||S.go||now-last<20000||now<nx)return;
     const K=keys();if(!K.length)return;glow(K[i++%K.length]);nx=now+7000},1000)}
 {const f1=shwStay;shwStay=function(S){f1(S);try{if(!S.o.br0){S.o.br0=1;shwBreath(S)}}catch(e){}}}

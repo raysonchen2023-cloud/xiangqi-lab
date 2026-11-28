@@ -76,8 +76,8 @@ async function ph4Load(P,box,hit,say,C,k,cid){
   /* 面向：朝畫面中間偏一點，不背對人 */
   const yaw0=()=>at?Math.max(-.6,Math.min(.6,(50-at[0])*.03)):0;
   const clips=B.mixer&&B.clips||null;let cur=null;const anim=n=>{if(!clips)return;const a=clips[n]||clips.idle;if(!a||a===cur)return;a.reset().fadeIn(.25).play();if(cur)cur.fadeOut(.2);cur=a};anim("idle");
-  let vis=true;try{const io=new IntersectionObserver(es=>{vis=es.some(e=>e.isIntersecting)});io.observe(P)}catch(e){}
-  if(window.ResizeObserver){const ro=new ResizeObserver(()=>{if(!box.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit();
+  let vis=true,io=null,ro=null;try{io=new IntersectionObserver(es=>{vis=es.some(e=>e.isIntersecting)});io.observe(P)}catch(e){io=null}   /* #175 第 1 項：io、ro 留著，主人收掉（end）時一起 disconnect，iPad 轉向重掛不會一直累積 */
+  if(window.ResizeObserver){ro=new ResizeObserver(()=>{if(!box.isConnected){ro.disconnect();return}fit()});ro.observe(P)}fit();
   /* 點她：說小卡那一句、小卡閃一下 */
   let sayT=0;hit.onclick=e=>{e.stopPropagation();e.preventDefault();if(typeof vibrate==="function")vibrate(5);const card=(P.closest(".view")||document).querySelector(".port-say"),cardOn=!!(card&&card.offsetParent);
     const p=card&&card.querySelector("p"),bn=p&&p.querySelector("b"),full=p?p.textContent:"",t=(full.match(/「([\s\S]*)」\s*$/)||[])[1]||full.replace(bn?bn.textContent:"","").trim();if(!t)return;
@@ -86,7 +86,7 @@ async function ph4Load(P,box,hit,say,C,k,cid){
     if(cardOn){card.classList.remove("ph4-flash");void card.offsetWidth;card.classList.add("ph4-flash");setTimeout(()=>{try{card.scrollIntoView({behavior:"smooth",block:"nearest"})}catch(err){}},350)}};
   const outside=e=>{if(!box.isConnected){document.removeEventListener("click",outside,true);return}if(e.target!==hit)say.classList.remove("on")};document.addEventListener("click",outside,true);
   let last=performance.now(),acc=0,fr=0,waveAt=performance.now()+4000+Math.random()*4000,nextWave=0,yawR=yaw0();
-  const end=()=>{try{cv.remove()}catch(e){}try{r.dispose();r.forceContextLoss()}catch(e){}hit.remove();say.remove()};
+  const end=()=>{try{cv.remove()}catch(e){}try{r.dispose();r.forceContextLoss()}catch(e){}hit.remove();say.remove();try{if(io)io.disconnect();if(ro)ro.disconnect()}catch(e){}document.removeEventListener("click",outside,true)};
   const loop=now=>{if(!box.isConnected||!P.isConnected){end();return}requestAnimationFrame(loop);if(document.hidden||!vis){last=now;return}
     if(P.classList.contains("pc-run")||document.querySelector(".walkc")){last=now;return}   /* 下船過場、步行小卡播完才出現（跟走路角色一樣） */
     const dt=Math.min(.05,(now-last)/1000);last=now;acc+=dt;
