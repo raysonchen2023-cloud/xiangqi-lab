@@ -21,12 +21,14 @@ function checkEntry(f) {
   const C = load(false, f), SCW = vm.runInContext("SCW", C), e = SCW["shipmap/ship_map"];
   assert.ok(e, "SCW 要有 shipmap/ship_map");
   assert.equal(e.f, "shipmap/ship_map_l1610"); assert.equal(e.w, 2560); assert.equal(e.h, 1600);
-  assert.equal(e.ready, false, "圖還沒上 CDN：ready 要是 false（上 CDN 的那個 PR 才改 true）");
+  assert.equal(e.ready, true, "11/28 圖已上 CDN（#255），#267 把 ready 改 true；要退回就改回 false");
   assert.ok(e.sw7 && typeof e.sw7 === "object", "要有 sw7（07w7 才會照原本的 shipMap 固定顏色，不是改成 m:in）");
-  assert.equal(vm.runInContext('scwEntry("shipmap/ship_map")', C), null, "沒開開發用開關：不用橫式圖");
+  assert.ok(vm.runInContext('scwEntry("shipmap/ship_map")', C), "ready:true：沒開開發用開關也用橫式圖");
+  const G = load(false, f.replace("SCW[SHP_LKEY]={ready:true,", "SCW[SHP_LKEY]={ready:false,"));
+  assert.equal(vm.runInContext('scwEntry("shipmap/ship_map")', G), null, "退回 ready:false 時：沒開開發用開關照舊不用橫式圖");
   const D = load(true, f); assert.ok(vm.runInContext('scwEntry("shipmap/ship_map")', D), "開發用開關：用橫式圖");
 }
-test("條目：登記在 07sw SCW、檔名 ship_map_l1610、2560×1600；還沒上 CDN＝ready:false，只有開發用開關才用", () => checkEntry(F));
+test("條目：登記在 07sw SCW、檔名 ship_map_l1610、2560×1600；11/28 已上 CDN＝ready:true，正式玩家也用（退回 false 時只有開發用開關才用）", () => checkEntry(F));
 
 function checkPoints(f) {
   const T = vm.runInContext("SHPM_L1610", load(true, f));
@@ -76,7 +78,9 @@ function checkKind(f) {
   assert.equal(k(375, 1024), "", "分割畫面 375 寬");
   assert.equal(k(844, 390), "", "手機橫放（短邊不到 600）");
   const D = load(false, f), m = stage(D, 1366, 1024);
-  assert.equal(vm.runInContext("shpLKind", D)(m), "", "沒開開發用開關（條目 ready:false）照舊原圖");
+  assert.equal(vm.runInContext("shpLKind", D)(m), "l1610", "條目 ready:true：沒開開發用開關也換橫式圖");
+  const D0 = load(false, f.replace("SCW[SHP_LKEY]={ready:true,", "SCW[SHP_LKEY]={ready:false,")), m0 = stage(D0, 1366, 1024);
+  assert.equal(vm.runInContext("shpLKind", D0)(m0), "", "退回 ready:false：沒開開發用開關照舊原圖");
   /* 框還沒放上去：照視窗估 */
   const E = load(true, f); stage(E, 1366, 1024); assert.equal(vm.runInContext("shpLKind", E)(null), "l1610");
   stage(E, 1024, 1366); assert.equal(vm.runInContext("shpLKind", E)(null), "");
@@ -136,9 +140,9 @@ test("〔原始碼〕Voyage 用橫式圖時：不掛 WebGL 視差、.shp-in 標 
   assert.equal(cfg({ dataset: { shpL: "l1610" } }).W, 2560); assert.equal(cfg({ dataset: {} }), null);
 });
 
-test("改壞驗證：條目改 ready:true、點抄錯、判斷門檻放寬、退回不等 CDN，都會被抓到", () => {
+test("改壞驗證：條目改回 ready:false、點抄錯、判斷門檻放寬、退回不等 CDN，都會被抓到", () => {
   const bad = [
-    ["ready:true", F.replace("SCW[SHP_LKEY]={ready:false,", "SCW[SHP_LKEY]={ready:true,"), checkEntry],
+    ["ready:false（11/28 #267 起正確是 true）", F.replace("SCW[SHP_LKEY]={ready:true,", "SCW[SHP_LKEY]={ready:false,"), checkEntry],
     ["入口點抄錯", F.replace("pz:[51,52]", "pz:[50,43]"), checkPoints],
     ["直向也換（不問 scwKind）", F.replace("return scwKind(r.width,Math.max(320,Math.round(bot-r.top)),vw,vh)}", 'return "l1610"}'), checkKind],
     ["不等 CDN 就退回", F.replace('im._scwCdn=u;return}\n      if(typeof SCW_BAD!=="undefined")SCW_BAD[SHP_LKEY]=1;', 'im._scwCdn=u}\n      if(typeof SCW_BAD!=="undefined")SCW_BAD[SHP_LKEY]=1;'), checkFallback],
