@@ -21,6 +21,7 @@ const CLASSIFIED = new Set([
   "test-w107-night-l1610.js",   /* 11/25 W107-L 夜景、四季 218 張 iPad 橫式圖（07sw scwVarList／scwVarInit）：清單逐類寫死、日間晚登記接得上、各類對應、夏季夏夜、scwPre／scwSw7、不蓋掉已有條目（行為 4、混合 1） */
   "test-ipad-3d-landscape-1127.js",   /* 11/27 #255 iPad 橫向對局頁 3D 撐滿左欄高度（room() 只扣同一欄）、左欄把寬度讓給 3D（m.css；平面棋盤照舊） */
   "test-home-wide-classic-1128.js",   /* 11/28 #255 第 4 項 經典世界首頁四季日夜 8 張 iPad 橫版（07z HMW_CL）：上 CDN 前預設關、直版照舊、座標沿用 l1610 只修秋夜山門、載不到只關經典、跨入夜先載好再換（vm 實跑） */
+  "test-quiz-dedup-1128.js",   /* 11/28 W207 棋力測驗：題庫重複題載入時去掉（實際 quiz.json 去 4 題，q60／q80 只留一題）；首頁入口說明改成「約 8～20 題」，跟自適應的結束條件一致 */
   "test-bhx-pad-turn-1128.js",   /* 11/28 黑洞序局：「輪到你」標籤照搖桿上緣擺、不壓 ▲（Android 12 P0-3D bhx-back）；英文十字鍵用字（落子＝Move、三句提示） */
   "test-w131b-hub-fill.js",   /* 11/26 W131b iPad 直向：對戰、學習大廳的朝代殘影（.cy）算可以裁，大廳照樣填滿寬度、不留模糊底 */
   "test-w107-hall-l1610.js",   /* 11/25 W107-L 第 5 批：江湖會館十派門內頁（07z9b／07z9l／07z9c／07z9m）iPad 橫向橫式圖：十派條目與量好的點、jhHallUse 整套換與還原、迷宮入口位置（行為 3、原始碼 1） */
