@@ -82,7 +82,7 @@ function regs(patch = {}) {
 const SHARED = "#.DCTSP>@", LORE = "LH";
 /* 漕運密室（W172，11/27，07z9m-vault.js）的 N（銅鎖門）、p（殘譜架）：只准由 07z9m-vault.js 登記，只准用在有密室的那幾層。
    名單寫死在這裡（不從 07z9m-vault.js 讀）：加派要連這支測試一起改、一起審 */
-const VAULT = "Np", VAULT_FILE = "07z9m-vault.js", VAULT_AT = new Set(["central:2", "elephant:2"]);
+const VAULT = "Np", VAULT_FILE = "07z9m-vault.js", VAULT_AT = new Set(["central:2", "elephant:2", "horse:2", "pawn:2"]);
 function mapProblems(patch = {}) {
   const { out, owner } = regs(patch), bad = [], mine = {};
   for (const r of out) (mine[r.f] = mine[r.f] || new Set()).add(r.ch);
